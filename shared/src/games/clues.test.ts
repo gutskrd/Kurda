@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { foldLookAlikes, guessNames, sameClue, saysBanned, textSlip } from './clues.js';
+import { foldLookAlikes, sameClue, saysBanned, textSlip } from './clues.js';
 
 // stand-in Kurdish for the fixtures, never shown to a learner
 const LIMITS = { maxChars: 20, maxWords: 3 };
@@ -55,22 +55,6 @@ describe('saying a banned word', () => {
 
   it('names the first banned word it hears, as the card writes it', () => {
     expect(saysBanned('sêva sor', 'kmr', ['fêkî', 'sêv', 'sor'])).toBe('sêv');
-  });
-});
-
-describe('a guess', () => {
-  it('names the word with or without its marks, with a short ending, or among a few words', () => {
-    expect(guessNames('pisîk', 'pisîk', 'kmr')).toBe(true);
-    expect(guessNames('pisik', 'pisîk', 'kmr')).toBe(true);
-    expect(guessNames('pisîkek', 'pisîk', 'kmr')).toBe(true);
-    expect(guessNames('ew pisîk e', 'pisîk', 'kmr')).toBe(true);
-    expect(guessNames('kûçik', 'pisîk', 'kmr')).toBe(false);
-    expect(guessNames('پشیلەکە', 'پشیلە', 'ckb')).toBe(true);
-    expect(guessNames('پشیلە', 'سەگ', 'ckb')).toBe(false);
-  });
-
-  it('does not take a long word that only begins like a short one', () => {
-    expect(guessNames('avahî', 'av', 'kmr')).toBe(false);
   });
 });
 

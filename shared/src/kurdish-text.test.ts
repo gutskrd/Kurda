@@ -54,11 +54,7 @@ describe('letterCount', () => {
     expect(letterCount('xwe-bi-xwe')).toBe(8);
   });
 
-  /**
-   * A decomposed ê is two code points and one letter. Counting it as two puts
-   * the word in the wrong Peyvok band, where it becomes a target the grid has
-   * no room for.
-   */
+  /** A decomposed ê is one letter: counting its two code points would put the word in the wrong Peyvok band. */
   it('counts a decomposed diacritic once', () => {
     expect(letterCount('sêv')).toBe(3);
     expect(letterCount('sêv')).toBe(3);
@@ -80,11 +76,7 @@ describe('letterKey and dictionaryKey', () => {
     }
   });
 
-  /**
-   * The whole reason there are two. A game compares a typed guess, where ê and
-   * e are different letters in different squares; a search and an importer look
-   * a word *up*, where somebody typing "sev" means sêv.
-   */
+  /** A game compares a typed guess, where ê and e are different letters; a search looks a word up, where "sev" means sêv. */
   it('differ on exactly one thing: the diacritics', () => {
     expect(letterKey('sêv')).toBe('sêv');
     expect(dictionaryKey('sêv')).toBe('sev');
@@ -94,11 +86,7 @@ describe('letterKey and dictionaryKey', () => {
     expect(dictionaryKey('çîrok')).toBe('cirok');
   });
 
-  /**
-   * The games hand `wordExists` a value that has already been through
-   * `letterKey`, so the lookup key is computed from a key rather than from the
-   * raw word. Applying it twice has to mean the same as applying it once.
-   */
+  /** The games pass `wordExists` a value already through `letterKey`, so applying the key twice must equal applying it once. */
   it('dictionaryKey is idempotent, and agrees whichever order it is reached by', () => {
     for (const word of ['sêv', 'Bi Rê!', 'ŞÛŞE', 'xwe-bi-xwe']) {
       const once = dictionaryKey(word);
@@ -134,11 +122,7 @@ describe('foldLetter', () => {
 const ZWNJ = '‌';
 
 describe('answerKey', () => {
-  /**
-   * The same Soranî word typed on a Kurdish keyboard and on an Arabic or
-   * Persian one. Every pair here is one word, and a learner who typed either
-   * half has typed it right.
-   */
+  /** The same Soranî word typed on a Kurdish keyboard and on an Arabic or Persian one: either half is the word typed right. */
   it('reads a Soranî word typed on an Arabic or Persian keyboard as the same word', () => {
     const pairs: Array<[kurdish: string, typed: string]> = [
       ['کوردستان', 'كوردستان'], // Arabic kaf
@@ -192,11 +176,7 @@ describe('answerKey', () => {
     expect(answerKey('١٠')).toBe('10');
   });
 
-  /**
-   * ê and e are different letters in Kurmancî. Whether a missing one is
-   * forgiven is the grader's call (lenient or strict), so the key must not
-   * make it for the grader.
-   */
+  /** ê and e are different letters in Kurmancî; forgiving a missing one is the grader's call, so the key must not make it. */
   it('keeps Kurmancî diacritics', () => {
     expect(answerKey('sêv')).toBe('sêv');
     expect(answerKey('sêv')).not.toBe(answerKey('sev'));

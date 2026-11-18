@@ -6,12 +6,9 @@ import { BLINK_STEPS } from './life.js';
 import type { EyeState } from './types.js';
 
 /**
- * What a speaking character looks like at one moment, worked out the same way
- * on the website and on the phone: the mouth from the recording's timeline,
- * a blink now and then, and a small nod while the words come.
- *
- * Pure and cheap, so a player can ask on every animation frame and draw the
- * answer with `headGroup` (or the layers of `characterArt`).
+ * What a speaking character looks like at one moment, alike on both apps: the mouth from the recording's timeline, a blink
+ * now and then, and a small nod while the words come. Pure and cheap, so a player can ask every frame and draw the answer
+ * with `headGroup` (or the layers of `characterArt`).
  */
 export interface SpeakingFrame {
   mouth: Viseme;
@@ -27,24 +24,20 @@ export interface SpeakingInput {
   ms: number;
   /** whether the recording is playing now */
   playing: boolean;
-  /** how long the character has been on screen, in milliseconds: drives the blinks */
+  /** how long the character has been on screen, in milliseconds, which drives the blinks */
   sinceMs: number;
-  /** the reader asked for less motion: no nod (the mouth still moves, since it carries the sound) */
+  /** less motion was asked for: no nod (the mouth still moves, since it carries the sound) */
   reducedMotion?: boolean;
 }
 
-/** How long a blink takes, from the lids starting down to the eyes open again: half shut, shut, half shut. */
+/** How long a blink takes, lids down and open again: half shut, shut, half shut. */
 export const BLINK_MS = 2 * BLINK_STEPS.half + BLINK_STEPS.shut;
 
-/**
- * The gaps between blinks, in turn. Uneven, as a person's are, and the same
- * every time, so two screens showing the same moment agree and a test can
- * hold them to it.
- */
+/** The gaps between blinks in turn: uneven as a person's are, and fixed, so two screens showing the same moment agree and tests can check them. */
 const BLINK_GAPS = [3200, 4700, 3900, 5600, 2800, 4300] as const;
 const BLINK_CYCLE = BLINK_GAPS.reduce((a, b) => a + b, 0);
 
-/** How the eyes are `sinceMs` after the character appeared: open, or somewhere in a blink at the end of each gap. */
+/** The eyes `sinceMs` after the character appeared: open, or somewhere in a blink at the end of each gap. */
 export function eyesAt(sinceMs: number): 'open' | 'half' | 'closed' {
   if (!(sinceMs >= 0)) return 'open';
   let t = sinceMs % BLINK_CYCLE;
@@ -59,7 +52,7 @@ export function eyesAt(sinceMs: number): 'open' | 'half' | 'closed' {
   return 'open';
 }
 
-/** The largest turn of the head in a nod, in degrees: enough to read as alive, never as a wobble. */
+/** The largest head turn in a nod, in degrees: enough to read as alive, never as a wobble. */
 export const NOD_DEGREES = 1.2;
 
 /** The character at one moment of a recording. */
@@ -71,10 +64,9 @@ export function speakingFrame(input: SpeakingInput): SpeakingFrame {
 }
 
 /**
- * The timeline to play a recording with: the one an editor saved with it, or,
- * when there is none (or it cannot be read), one made from the words being
- * said once the recording's length is known. Null when neither is possible,
- * and the character then listens with its mouth at rest.
+ * The timeline to play a recording with: the one saved with it, or, when there is none or it cannot be read, one made from
+ * the words once the recording's length is known. Null when neither is possible, and the character listens with its mouth
+ * at rest.
  */
 export function voiceTimeline(
   voice: RecordingVoice | null | undefined,

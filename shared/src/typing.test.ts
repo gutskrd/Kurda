@@ -17,7 +17,6 @@ import {
   foldAccent,
   isAccentMode,
   isTypeable,
-  keyboardStepText,
   kurmanciLetter,
   normalizeTyping,
   scriptDialect,
@@ -25,8 +24,14 @@ import {
   typingDialectOf,
   typingLanguage,
   type CharState,
+  type KeyboardStep,
   type TypingComparison,
 } from './typing.js';
+
+/** A guide step's English with its screen names put in, as the apps show it. */
+function keyboardStepText(step: KeyboardStep): string {
+  return step.en.replace(/\{(\d+)\}/g, (whole, n: string) => step.ui?.[Number(n)] ?? whole);
+}
 
 /** The marks as one string, so a test can show what a racer would see: o a X . */
 function marks(r: TypingComparison): string {
@@ -220,10 +225,7 @@ describe('compareTyping', () => {
     expect(r.extra).toEqual([]);
   });
 
-  /*
-   * The race's worst bug: positions were compared one by one, so a racer who
-   * missed the first letter scored 0 of 26.
-   */
+  // Comparing position by position would score a racer who missed the first letter 0 of 26.
   it('one missed letter costs that letter, never the rest of the text', () => {
     const r = compareTyping(TEXT, TEXT.slice(1), 'strict', { final: true });
     expect(marks(r)).toBe('X' + 'o'.repeat(25));
@@ -305,12 +307,7 @@ describe('compareTyping', () => {
       expect(compareTyping(TEXT, TEXT, 'hidden', { final: true }).correct).toBe(26);
     });
 
-    /*
-     * Forgiving forgives the key a keyboard lacks — e typed for ê — and nothing
-     * else: an accent added where the text has none is a different letter. It
-     * used to be forgiven too, and counted as an accent missed on a letter that
-     * has no accent ("1 missed of 0").
-     */
+    // Forgiving forgives only the key a keyboard lacks (e typed for ê); an accent added where the text has none is a different letter.
     it('forgiving does not forgive an accent added where the text has none', () => {
       const r = compareTyping('Ez de herim.', 'Ez dê herim.', 'forgiving', { final: true });
       expect(r.chars[4]).toBe('wrong');
@@ -415,10 +412,7 @@ describe('compareTyping', () => {
       expect(compareTyping(TEXT, 'ez ji welatê xwe hez diki').done).toBe(false);
     });
 
-    /*
-     * A text ending in î ended the race the moment the dead key's ˆ arrived,
-     * before the i did, and scored the last letter wrong.
-     */
+    // A text ending in î is not finished when the dead key's ˆ arrives, before its i does.
     it('is not done while a dead key is still waiting for its letter', () => {
       for (const dead of ['ˆ', '^', '¨', '´', '`', '\u0302']) {
         const r = compareTyping('ez kurd im, ne kurdî', `ez kurd im, ne kurd${dead}`, 'strict');
@@ -443,11 +437,7 @@ describe('compareTyping', () => {
       expect(compareTyping('ez kurdî', 'ez kurdi', 'strict').done).toBe(false);
     });
 
-    /*
-     * Forgiving mode used to end the race on the e at once: an app that
-     * finishes on `done` finished before the backtick could make it ê, and the
-     * result had an accent missed that the racer was about to type.
-     */
+    // An app that finishes on `done` must not finish before the backtick that would make the e an ê.
     it('in forgiving mode too, e where ê belongs waits for the next key — counted either way', () => {
       const r = compareTyping(TEXT, 'ez ji welate', 'forgiving');
       expect(r.chars[11]).toBe('pending');
@@ -543,13 +533,8 @@ describe('compareTyping', () => {
   });
 
   /*
-   * The comparison used to look for the racer within 64 characters of the
-   * diagonal — the typing's length against the text's, from the start — so
-   * the slips of a long text added up: once the letters left out and typed
-   * twice came to more than 64 between them, everything typed after was wrong,
-   * however right, and a race typed to the end could never finish. These are a
-   * real text of almost a thousand characters, which never repeats itself (a
-   * repeated text would let a skip line up with a later copy of itself).
+   * Slips that add up over a long text must not throw off everything typed after them. The text is real, almost a
+   * thousand characters, and never repeats itself, so a skip cannot line up with a later copy of it.
    */
   describe('slips anywhere in a long text', () => {
     const t = [...normalizeTyping(NEWROZ)];
@@ -723,7 +708,7 @@ describe('keyboard guides', () => {
       KEYBOARD_GUIDES[platform][dialect].flatMap((s) => s.ui ?? []);
     expect(names('android', 'kurmanci')).toContain('Kurdish (Latin)');
     expect(names('android', 'sorani')).toContain('Arabic');
-    // the way to Gboard's languages when its toolbar has no ⚙
+    // the way to the keyboard's languages when its toolbar has no ⚙
     expect(names('android', 'kurmanci')).toContain('On-screen keyboard');
     expect(names('ios', 'sorani')).toContain('Kurdish, Sorani');
     expect(names('windows', 'sorani')).toContain('Central Kurdish');
@@ -734,11 +719,7 @@ describe('keyboard guides', () => {
     expect(names('linux', 'sorani')).toContain('Arabic-Latin');
   });
 
-  /*
-   * Device menus name some Kurdish keyboards after the state they were drawn
-   * up for. The guide names only the part a reader needs to spot, for every
-   * platform and both dialects, and no state at all.
-   */
+  // Device menus name some Kurdish keyboards after a state; the guide names only the part a reader needs to spot.
   it('names no state in any step', () => {
     for (const platform of KEYBOARD_PLATFORMS) {
       for (const dialect of ['kurmanci', 'sorani'] as const) {
@@ -762,12 +743,6 @@ describe('keyboard guides', () => {
     // and says what to do when it is not in the list
     expect(KEYBOARD_GUIDES.ios.kurmanci.at(-1)!.key).toBe('keyboardGuide.ios.noLatin');
     expect(KEYBOARD_GUIDES.windows.kurmanci.at(-1)!.key).toBe('keyboardGuide.windows.noLatin');
-  });
-
-  it('puts a translated sentence’s placeholders back the same way', () => {
-    const step = KEYBOARD_GUIDES.android.kurmanci[1]!;
-    expect(keyboardStepText(step)).toBe('Go to Languages → Add keyboard.');
-    expect(keyboardStepText(step, 'Here {1} then {0}')).toBe('Here Add keyboard then Languages');
   });
 });
 

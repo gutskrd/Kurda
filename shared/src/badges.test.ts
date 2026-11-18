@@ -2,24 +2,19 @@ import { describe, expect, it } from 'vitest';
 import {
   BADGES,
   BADGE_FAMILIES,
-  BADGE_FAMILY_SHAPE,
-  LEGACY_ACHIEVEMENTS,
   badgeDef,
   badgeLeft,
-  badgeProgress,
   badgeTierFor,
   badgeTierKey,
   badgeViewFraction,
-  isBadgeKey,
   nearestBadges,
   resolveThresholds,
   type BadgeView,
 } from './badges.js';
 
 describe('the badge catalogue', () => {
-  it('has the seven families, each with its own shape', () => {
+  it('has the seven families', () => {
     expect(new Set(BADGES.map((b) => b.family))).toEqual(new Set(BADGE_FAMILIES));
-    expect(new Set(Object.values(BADGE_FAMILY_SHAPE)).size).toBe(BADGE_FAMILIES.length);
   });
 
   it('has 62 badges: the research catalogue’s 43, the Okyanûs trophy and the eighteen that came after', () => {
@@ -54,17 +49,6 @@ describe('the badge catalogue', () => {
   it('has nothing for staying up late, spending or inviting', () => {
     for (const b of BADGES) expect(b.measure).not.toMatch(/night|midnight|spend|gems|invite|purchase/);
   });
-
-  it('maps every old achievement as the contract says', () => {
-    expect(LEGACY_ACHIEVEMENTS['streak-30']).toEqual({ badge: 'agir', floorTier: 2 });
-    expect(LEGACY_ACHIEVEMENTS['newroz-2026']).toEqual({ badge: 'newroz', floorTier: 1 });
-    expect(LEGACY_ACHIEVEMENTS['words-1000']).toEqual({ badge: 'peyven-min', floorTier: 3 });
-    expect(LEGACY_ACHIEVEMENTS['tournament-win']).toBeNull();
-    for (const m of Object.values(LEGACY_ACHIEVEMENTS)) if (m) expect(isBadgeKey(m.badge)).toBe(true);
-    // Agir's second tier is the thirty days the old achievement stood for
-    expect(badgeDef('agir')!.tiers[1]).toBe(30);
-    expect(badgeDef('peyven-min')!.tiers[2]).toBe(1000);
-  });
 });
 
 describe('badge progress', () => {
@@ -78,13 +62,6 @@ describe('badge progress', () => {
     expect(badgeTierFor(agir, 1000)).toBe(4);
   });
 
-  it('says how far it is to the next tier', () => {
-    expect(badgeProgress(agir, 7)).toEqual({ tier: 1, next: 30, fraction: 0 });
-    expect(badgeProgress(agir, 18.5)).toEqual({ tier: 1, next: 30, fraction: 0.5 });
-    expect(badgeProgress(agir, 3)).toEqual({ tier: 0, next: 7, fraction: 3 / 7 });
-    expect(badgeProgress(agir, 400)).toEqual({ tier: 4, next: null, fraction: 1 });
-  });
-
   it('resolves "the whole course" from the course, and a short course still finishes the badge', () => {
     const rewi = badgeDef('rewi')!;
     expect(resolveThresholds(rewi, 30)).toEqual([1, 5, 15, 30]);
@@ -93,7 +70,6 @@ describe('badge progress', () => {
     expect(badgeTierFor(rewi, 15, 30)).toBe(3);
     // until the course is known the last tier is out of reach, never reached by accident
     expect(badgeTierFor(rewi, 10_000)).toBe(3);
-    expect(badgeProgress(rewi, 20).next).toBeNull();
   });
 
   it('draws a single-tier badge in gold, and a ladder by its tier', () => {

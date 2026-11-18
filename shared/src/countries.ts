@@ -1,17 +1,7 @@
 /**
- * Two-letter country codes → display names, for the profile country picker and
- * for naming a country wherever one is shown.
- *
- * Shared rather than web-only, for the reason the locale list next door is:
- * the phone needs the same roster, and a second copy would drift — most
- * consequentially over the row below, which a copy would quietly lose.
- *
- * All but one are ISO-3166 alpha-2. Kurdistan has no ISO code — it is not a
- * state — so it takes `KU`, which ISO has never assigned. For an app called
- * Hevalo, leaving it off the list was the odder choice.
- *
- * What is NOT here: where to find a flag image. That answer is different on a
- * web page and in a native app, so each keeps its own.
+ * Two-letter country codes and their names, for the profile country picker and wherever a country is named. Shared so the
+ * phone has the same roster. All are ISO 3166 alpha-2 except Kurdistan, which has no ISO code as it is not a state, and
+ * takes the unassigned `KU`. Flag images are platform-specific, so each app keeps its own.
  */
 export interface Country {
   code: string;
@@ -61,20 +51,9 @@ export const COUNTRIES: readonly Country[] = [
 ];
 
 /**
- * A code, in the reader's language.
- *
- * The names above are English, and 77 of them translated eight times would be
- * 616 strings to keep in step with the world — while every browser already
- * ships the whole list, in every language, as . So the
- * catalogue above is now only the roster of which countries the picker offers,
- * and what each one is CALLED comes from the platform.
- *
- * Kurdistan is the exception it has to be:  is not an ISO region, so no
- *  implementation knows it. It carries its own translations, which is
- * also the only honest place for them — nobody else is going to supply them.
- *
- * A locale the browser has no data for falls back to the English name, which
- * is exactly what this function returned before.
+ * Kurdistan's own translations. The roster's names are English, and every other country's name in the reader's language
+ * comes from the platform's `Intl.DisplayNames`, which does not know `KU` because it is not an ISO region. A locale without
+ * platform data falls back to the English name.
  */
 const KURDISTAN: Record<string, string> = {
   en: 'Kurdistan',
@@ -90,7 +69,7 @@ const KURDISTAN: Record<string, string> = {
 
 const NAME_BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c.name]));
 
-/** One  per locale — building one is not cheap. */
+/** One `Intl.DisplayNames` per locale, since building one is not cheap. */
 const displayNames = new Map<string, Intl.DisplayNames | null>();
 
 function namesFor(locale: string): Intl.DisplayNames | null {
@@ -98,7 +77,7 @@ function namesFor(locale: string): Intl.DisplayNames | null {
     try {
       displayNames.set(locale, new Intl.DisplayNames([locale], { type: 'region', fallback: 'none' }));
     } catch {
-      // an environment without the data, or a tag it will not parse
+      // An environment without the data, or a tag it will not parse.
       displayNames.set(locale, null);
     }
   }
@@ -106,13 +85,9 @@ function namesFor(locale: string): Intl.DisplayNames | null {
 }
 
 /**
- * Display name for a code (falls back to English, then to the code itself).
- *
- * Only codes on the roster above are handed to `Intl`. A code this app does not
- * offer — a retired one still saved on an old profile, say — shows as the code,
- * which is what it did before and is more honest than CLDR's answer for `ZZ`:
- * the words "Unknown Region", which tell the reader nothing and read like the
- * name of a real place.
+ * A code's display name, falling back to English and then to the code. Only roster codes are given to `Intl`: any other
+ * code, such as a retired one on an old profile, shows as the code rather than as "Unknown Region", which reads like a
+ * real place.
  */
 export function countryName(code?: string | null, locale = 'en'): string | null {
   if (!code) return null;
@@ -123,7 +98,7 @@ export function countryName(code?: string | null, locale = 'en'): string | null 
   return namesFor(locale)?.of(upper) ?? english;
 }
 
-/** The picker's list, named in one language and sorted the way it reads. */
+/** The picker's list, named in one language and sorted as it reads. */
 export function countriesIn(locale: string): Country[] {
   return COUNTRIES.map((c) => ({ code: c.code, name: countryName(c.code, locale) ?? c.name })).sort((a, b) =>
     a.name.localeCompare(b.name, locale),

@@ -1,14 +1,7 @@
 /**
- * Any number from 0 to 9999, spelled out in Kurmancî and in Soranî.
- *
- * Both say a number the same way, biggest part first, each part joined to the
- * next by "and" — û in Kurmancî, و in Soranî: 21 is bîst û yek / بیست و یەک,
- * 1999 is hezar û neh sed û not û neh / هەزار و نۆسەد و نەوەد و نۆ. A round
- * hundred or thousand is the number word before sed or hezar, with "one" left
- * out: sed, du sed; hezar, du hezar. Soranî writes its hundreds as one word
- * (دووسەد) and its thousands as two (دوو هەزار).
- *
- * Every word here is listed for a native speaker to check before it is relied on.
+ * Any number from 0 to 9999 spelled out in Kurmancî and Soranî: biggest part first, each part joined by "and" (û, و),
+ * so 21 is bîst û yek / بیست و یەک. A round hundred or thousand drops "one" (sed, du sed; hezar, du hezar). Soranî writes
+ * its hundreds as one word (دووسەد) and its thousands as two (دوو هەزار). Every word awaits a native speaker's check.
  */
 
 export type NumberDialect = 'kmr' | 'ckb';
@@ -61,9 +54,8 @@ const CKB_LATIN: Words = {
 export const KURDISH_NUMBER_MAX = 9999;
 
 /**
- * `n` in words: Kurmancî, or Soranî in its own script — or, with `latin`,
- * Soranî in Latin letters. Throws a RangeError outside 0–9999 or for a
- * fraction, which the caller is expected to have ruled out.
+ * `n` in words: Kurmancî, or Soranî in its own script or, with `latin`, in Latin letters. Throws a RangeError outside
+ * 0–9999 or for a fraction, which the caller should have ruled out.
  */
 export function kurdishNumber(n: number, dialect: NumberDialect, { latin = false }: { latin?: boolean } = {}): string {
   if (!Number.isInteger(n) || n < 0 || n > KURDISH_NUMBER_MAX) throw new RangeError(`no Kurdish words for ${n} here: 0 to ${KURDISH_NUMBER_MAX} only`);
@@ -95,10 +87,7 @@ export function easternDigits(n: number): string {
   return String(n).replace(/[0-9]/g, (d) => EASTERN[Number(d)]!);
 }
 
-/**
- * The number somebody typed, in whichever digits their keyboard has —
- * Western, Arabic or Persian — or null when it is not a whole number.
- */
+/** The number somebody typed in Western, Arabic or Persian digits, or null when it is not a whole number. */
 export function readDigits(text: string): number | null {
   const western = text.trim().replace(/[٠-٩۰-۹]/g, (d) => String(Math.max(EASTERN.indexOf(d), PERSIAN.indexOf(d))));
   return /^[0-9]+$/.test(western) ? Number(western) : null;

@@ -1,22 +1,13 @@
 /**
- * The speaking characters: Hevalo the deer, Hamo and Xezo, drawn as layered
- * SVG so that while a recording plays only the mouth (and now and then the
- * eyes) is redrawn.
- *
- * Two ways in. `characterSvg` gives a whole, standalone drawing — for a still
- * picture, or for a page that simply swaps the string. `characterArt` gives
- * the parts, for a player that keeps the body drawn and changes one small
- * layer at a time: the web puts them in groups of one inline <svg>, the phone
- * in react-native-svg, and they line up either way because every part is in
- * the same units.
- *
- * Like the rest of the app's art, a drawing is a string, the same on every
- * machine, with no images, fonts, filters or links; gradient and clip ids
- * carry a prefix so several characters can share a page.
+ * The speaking characters, Hevalo the deer, Hamo and Xezo, drawn as layered SVG so only the mouth (and now and then the
+ * eyes) is redrawn while a recording plays. `characterSvg` gives a whole standalone drawing; `characterArt` gives the parts
+ * for a player that keeps the body and swaps small layers (groups in one inline <svg> on the web, SVG elements on the
+ * phone), all in the same units. Drawings are strings, identical on every machine, with no images, fonts, filters or
+ * links; gradient and clip ids carry a prefix so several characters can share a page.
  */
 import { escapeXml, n, prefixFor } from '../art/svg.js';
 import type { BrowState, CharacterBox, CharacterArt, CharacterId, EyeState, MouthShape } from './types.js';
-import { BROW_STATES, CHARACTER_IDS, CHARACTER_NAMES, EYE_STATES, MOUTH_SHAPES } from './types.js';
+import { BROW_STATES, EYE_STATES, MOUTH_SHAPES } from './types.js';
 import { drawHevalo } from './hevalo.js';
 import { drawHamo } from './hamo.js';
 import { drawXezo } from './xezo.js';
@@ -28,7 +19,6 @@ export {
   EXPRESSION_MOUTHS,
   EYE_STATES,
   MOUTH_SHAPES,
-  isCharacterId,
   type BrowState,
   type CharacterBox,
   type CharacterArt,
@@ -46,7 +36,6 @@ export {
   BLINK_STEPS,
   BREATH,
   CHARACTER_HABITS,
-  CHARACTER_REACTIONS,
   GLANCE_ASIDE,
   HABITS,
   RESTING,
@@ -57,7 +46,6 @@ export {
   easeInOut,
   eyesMiddle,
   glanceTarget,
-  hasRig,
   keySteps,
   lookToward,
   pickAct,
@@ -111,20 +99,15 @@ const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {
   xezo: drawXezo,
 };
 
-/** Hevalo is the app's own mascot, so he speaks unless someone has chosen another. */
+/** Hevalo is the app's mascot, so he speaks unless someone chose another. */
 export const DEFAULT_CHARACTER: CharacterId = 'hevalo';
 
-/** Who can speak, in the order a picker shows them. */
-export const CHARACTERS: readonly { id: CharacterId; name: string }[] = CHARACTER_IDS.map((id) => ({ id, name: CHARACTER_NAMES[id] }));
-
-/** Drawings already made, by prefix: a player asks for the same parts on every frame. */
+/** Drawings already made, by prefix, since a player asks for the same parts every frame. */
 const made = new Map<string, CharacterArt>();
 
 /**
- * A character's parts, with every gradient and clip id starting with
- * `idPrefix` (by default one of the character's own, so the three never clash
- * with each other; pass another to show the same character twice on a page).
- * Drawn the first time it is asked for, then kept.
+ * A character's parts with every gradient and clip id starting with `idPrefix` (by default the character's own, so the
+ * three never clash; pass another to show one character twice on a page). Drawn on first request, then kept.
  */
 export function characterArt(id: CharacterId, idPrefix?: string): CharacterArt {
   const draw = DRAW[id];
@@ -139,31 +122,27 @@ export function characterArt(id: CharacterId, idPrefix?: string): CharacterArt {
   return art;
 }
 
-/**
- * How much of a character a picture shows: the whole figure, head to waist,
- * head and shoulders, or head and neck (put in at a window, `neck`).
- */
+/** How much of a character a picture shows: the whole figure, head to waist, head and shoulders, or head and neck at a window (`neck`). */
 export type CharacterCrop = 'full' | 'half' | 'bust' | 'head';
 
-/** The box a crop shows; a character drawn without a neck to put in at a window shows its head and shoulders for `head`. */
+/** The box a crop shows; a character drawn without a window neck shows head and shoulders for `head`. */
 export function cropBox(art: CharacterArt, crop: CharacterCrop): CharacterBox {
   if (crop === 'head') return art.neck?.box ?? art.bust;
   return crop === 'bust' ? art.bust : crop === 'half' ? art.half : art.viewBox;
 }
 
-/** The body a crop draws: for head and neck, the neck cut off under the chest, out of sight under the sill; otherwise all of it. */
+/** The body a crop draws: for head and neck, the neck cut off under the chest out of sight below the sill; otherwise all of it. */
 export function cropBody(art: CharacterArt, crop: CharacterCrop): string {
   return crop === 'head' && art.neck ? art.neck.body : art.body;
 }
 
-/** The most of a stage's width its character takes: the rest is for the buttons or the words beside it. */
+/** The most of a stage's width its character takes; the rest is for the buttons or words beside it. */
 export const STAGE_FIGURE_SHARE = 0.58;
 
 /**
- * How big a stage shows its character's head to waist (`half`), in points: as
- * tall as the stage less `headroom` above the head, unless that would take
- * more than `STAGE_FIGURE_SHARE` of its width, as a character with its elbows
- * out would; then smaller, and the stage shows it on down past the waist.
+ * How big a stage shows its character head to waist (`half`), in points: as tall as the stage less `headroom`, unless that
+ * would take more than `STAGE_FIGURE_SHARE` of its width (a character with elbows out); then smaller, showing on below the
+ * waist.
  */
 export function stageFigure(id: CharacterId, stageWidth: number, stageHeight: number, headroom: number): { width: number; height: number } {
   const half = characterArt(id).half;
@@ -171,31 +150,26 @@ export function stageFigure(id: CharacterId, stageWidth: number, stageHeight: nu
   return { width: (height * half.w) / half.h, height };
 }
 
-/** The eyes drawn whole for a state; a character drawn without half-shut eyes shuts them instead. */
+/** The eyes drawn whole for a state; a character without half-shut eyes shuts them instead. */
 export function eyesFor(art: CharacterArt, state: EyeState): string {
   if (state === 'half') return art.eyes.half ?? art.eyes.closed;
   return art.eyes[state];
 }
 
-/** What a face wears beyond its eyes and its mouth: how the brows sit, and whether the cheeks blush. */
+/** What a face wears beyond eyes and mouth: how the brows sit, and whether the cheeks blush. */
 export interface FaceOptions {
   brows?: BrowState;
   blush?: boolean;
 }
 
-/**
- * The head to draw a face on: whole, with its brows at rest and any loose
- * hair, unless `moving` — then without them, for a player that draws those
- * as layers of their own (`faceLayers`).
- */
+/** The head to draw a face on: whole, with brows at rest and any loose hair, unless `moving`, for a player that draws those as layers (`faceLayers`). */
 export function headFor(art: CharacterArt, moving: boolean): string {
   return moving && art.brows ? art.brows.bare : art.head;
 }
 
 /**
- * The layers of a face that a player moves or swaps, over `headFor(art, true)`
- * and the eyes: the loose hair, the brows as they sit, and the cheeks if they
- * blush. A character drawn without one of them draws nothing for it.
+ * The face layers a player moves or swaps over `headFor(art, true)` and the eyes: the loose hair, the brows, and the
+ * cheeks if blushing; nothing for parts a character lacks.
  */
 export function faceLayers(art: CharacterArt, face: FaceOptions = {}): string {
   return (art.hair?.art ?? '') + (art.brows?.states[face.brows ?? 'neutral'] ?? '') + (face.blush && art.cheeks ? art.cheeks.blush : '');
@@ -211,20 +185,18 @@ export interface CharacterSvgOptions {
   blush?: boolean;
   /** the whole figure, head to waist, head and shoulders, or head and neck */
   crop?: CharacterCrop;
-  /** how wide the drawing is shown, in pixels; by default the crop's own width in drawing units */
+  /** the shown width in pixels; by default the crop's own width in drawing units */
   width?: number;
   idPrefix?: string;
-  /** the drawing's text label for screen readers; the character's name by default */
+  /** the drawing's label for screen readers; the character's name by default */
   title?: string;
 }
 
 const box = (b: CharacterBox): string => `${n(b.x)} ${n(b.y)} ${n(b.w)} ${n(b.h)}`;
 
 /**
- * The group the head is drawn in: turned by `nod` degrees about the neck for
- * a small nod. With a `face` given, the brows and the cheeks are drawn as the
- * face asks, as layers over the bare head; without one, the head is drawn
- * whole, exactly as it always was.
+ * The group the head is drawn in, turned `nod` degrees about the neck. With a `face`, the brows and cheeks are drawn as
+ * asked as layers over the bare head; without one, the head is drawn whole.
  */
 export function headGroup(art: CharacterArt, mouth: MouthShape = 'rest', eyes: EyeState = 'open', nod = 0, face?: FaceOptions): string {
   const turn = nod === 0 ? '' : ` transform="rotate(${n(nod)} ${n(art.headPivot.x)} ${n(art.headPivot.y)})"`;

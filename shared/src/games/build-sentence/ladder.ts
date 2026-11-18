@@ -1,19 +1,10 @@
 /**
- * Build a Sentence: the ladder of structures a learner climbs, how a
- * sentence finds its rung, and how a wrong order is answered.
- *
- * The sentences are approved ones — published lessons' translations and
- * conversation lines, and published `sentence` rows — so nothing here writes
- * Kurdish. What is decided here is only where on the ladder an approved
- * sentence sits, read from its shape: a question, a "not", the ezafe linking
- * two words, a longer statement with its verb at the end, two clauses. Most of
- * that is read off the English meaning, which says it plainly ("not", "my",
- * "because"), and the rest off the Kurdish punctuation and word count. A
- * sentence put on a neighbouring rung is a step slightly easier or harder than
- * meant, never a wrong sentence.
- *
- * The ladder is one path for both varieties: Kurmancî and Soranî alike put the
- * verb last, mark "not" on the verb and link with the ezafe.
+ * Build a Sentence: the ladder of structures a learner climbs, which rung a sentence sits on, and how a wrong order is
+ * answered. Sentences are approved (published lessons' translations and conversation lines, published `sentence` rows),
+ * so nothing here writes Kurdish; a sentence's rung is read from its shape (a question, a "not", the ezafe, a longer
+ * verb-final statement, two clauses), mostly from the English ("not", "my", "because") and otherwise from the Kurdish
+ * punctuation and word count. A sentence put on a neighbouring rung is only slightly easier or harder than meant. One path
+ * serves both varieties, which both put the verb last, mark "not" on the verb and link with the ezafe.
  */
 import { foldForDialect, gameWords, type GameDialect } from '../dialect.js';
 import type { GameLevel, Meanings } from '../content.js';
@@ -23,21 +14,17 @@ import type { GameDifficulty } from '../solo.js';
 export const SENTENCE_RUNGS = ['short', 'question', 'negation', 'ezafe', 'verb-final', 'two-clauses'] as const;
 export type SentenceRung = (typeof SENTENCE_RUNGS)[number];
 
-export function isSentenceRung(v: unknown): v is SentenceRung {
-  return (SENTENCE_RUNGS as readonly unknown[]).includes(v);
-}
-
 /** A rung's place on the ladder, from 1. */
 export function rungStep(rung: SentenceRung): number {
   return SENTENCE_RUNGS.indexOf(rung) + 1;
 }
 
-/** The rung at a step (clamped to the ladder). */
+/** The rung at a step, clamped to the ladder. */
 export function rungAt(step: number): SentenceRung {
   return SENTENCE_RUNGS[Math.min(SENTENCE_RUNGS.length, Math.max(1, Math.round(step))) - 1]!;
 }
 
-/** Which rungs each difficulty climbs: beginner = levels 1–2, intermediate = 3, advanced = 4–5. */
+/** Which rungs each difficulty climbs: beginner levels 1–2, intermediate 3, advanced 4–5. */
 export const DIFFICULTY_RUNGS: Readonly<Record<GameDifficulty, readonly SentenceRung[]>> = {
   beginner: ['short', 'question', 'negation', 'ezafe'],
   intermediate: ['verb-final'],
@@ -49,12 +36,12 @@ const POSSESSIVE = /\b(my|your|his|her|its|our|their)\b|['’]s\b|\bof (the|my|y
 const CLAUSE_WORD = /\b(because|when|while|if|but|until|although|unless|whereas|before|after|so that|and then)\b/i;
 const QUESTION_MARK = /[?؟]\s*$/u;
 
-/** A Kurmancî ezafe ending on a word that has another after it: mala min, xwişka wî, sêva sor. */
+/** A Kurmancî ezafe ending on a word followed by another: mala min, xwişka wî, sêva sor. */
 const KMR_EZAFE = /(a|ê|ên|ya|yê|yên)$/u;
-/** A Soranî ezafe on a word that has another after it: ماڵی من, کچەکەی. */
+/** A Soranî ezafe on a word followed by another: ماڵی من, کچەکەی. */
 const CKB_EZAFE = /ی$/u;
 
-/** A comma between clauses: not one right after the first word (a greeting, a name called). */
+/** A comma between clauses, not right after the first word (a greeting, a name called). */
 function clauseComma(en: string): boolean {
   const at = en.indexOf(',');
   if (at < 0) return false;
@@ -87,7 +74,7 @@ export function sentenceShape(ku: string, en: string, dialect: GameDialect): Sen
   return { rung, level: rungLevel(rung, words), words };
 }
 
-/** The content level a rung's sentence counts at (two long clauses are the last level). */
+/** The content level a rung's sentence counts at; two long clauses are the last level. */
 export function rungLevel(rung: SentenceRung, words: number): GameLevel {
   switch (rung) {
     case 'short':
@@ -103,28 +90,22 @@ export function rungLevel(rung: SentenceRung, words: number): GameLevel {
   }
 }
 
-/** Tiles that are not the sentence's words, by difficulty: a wider choice is a harder one. */
+/** Tiles that are not the sentence's words, by difficulty: more choice is harder. */
 export const DECOYS: Readonly<Record<GameDifficulty, number>> = { beginner: 2, intermediate: 3, advanced: 4 };
 /** No more tiles than this in all. */
 export const MAX_TILES = 13;
 
-/** A round passed this well on its rung opens the next one: this many of the rung's own sentences right on the first try. */
+/** A round passed this well on its rung opens the next: this many of the rung's own sentences right on the first try. */
 export const STEP_UP_FIRST_TRY = 6;
 
-/**
- * The sentences of a round on the rung it was played on that were right on
- * the first try: what stepping up is judged by. The warm-ups from the rungs
- * below are easier by design, and do not count.
- */
+/** The round's sentences on its own rung that were right on the first try, which stepping up is judged by; easier warm-ups from lower rungs do not count. */
 export function rungFirstTries(items: ReadonlyArray<{ rung: SentenceRung; firstTry: boolean }>, rung: SentenceRung): number {
   return items.filter((i) => i.rung === rung && i.firstTry).length;
 }
 
 /**
- * The ladder after a round: a round on the learner's own rung (or above it),
- * with at least STEP_UP_FIRST_TRY of that rung's own sentences right on the
- * first try (`rungFirstTries`), opens the rung after the one it was played
- * on. Nothing ever closes a rung again.
+ * The ladder after a round: a round on or above the learner's rung with STEP_UP_FIRST_TRY of its own sentences right first
+ * time opens the next rung. Rungs never close again.
  */
 export function stepAfterRound(step: number, played: SentenceRung, firstTry: number): number {
   const at = rungStep(played);
@@ -133,10 +114,8 @@ export function stepAfterRound(step: number, played: SentenceRung, firstTry: num
 }
 
 /**
- * The rung a round of a difficulty is played on: the highest of its rungs the
- * learner has opened, among those with enough sentences; the difficulty's
- * first such rung when the learner has not reached it yet. Null when none of
- * its rungs has enough.
+ * The rung a round of a difficulty is played on: the highest opened rung with enough sentences, or the difficulty's first
+ * such rung; null when none has enough.
  */
 export function roundRung(difficulty: GameDifficulty, step: number, enough: (rung: SentenceRung) => boolean): SentenceRung | null {
   const rungs = DIFFICULTY_RUNGS[difficulty].filter(enough);
@@ -146,10 +125,8 @@ export function roundRung(difficulty: GameDifficulty, step: number, enough: (run
 }
 
 /**
- * Where a wrong line first goes astray: the first place where it differs from
- * the accepted order it shares the longest beginning with. Null when it is
- * one of them; `answer.length` when it is right as far as it goes and stops
- * short, so the place marked is the one after its last word.
+ * Where a wrong line first goes astray: the first difference from the accepted order sharing its longest beginning. Null
+ * when it is accepted; `answer.length` when right as far as it goes but short, marking the place after its last word.
  */
 export function firstMisplaced(answer: readonly string[], orders: readonly string[], dialect: GameDialect): number | null {
   const given = answer.map((w) => foldForDialect(w, dialect));
@@ -166,7 +143,7 @@ export function firstMisplaced(answer: readonly string[], orders: readonly strin
 
 // ---------- what the apps are sent ----------
 
-/** One sentence to build: its meaning, and the tiles (its words and a few that are not), shuffled. */
+/** One sentence to build: its meaning and the tiles (its words plus a few decoys), shuffled. */
 export interface SentenceItemView {
   index: number;
   meaning: Meanings;
@@ -175,7 +152,7 @@ export interface SentenceItemView {
   level: GameLevel;
 }
 
-/** An answer: the tiles laid on the line, by their places among `tiles`, in order. */
+/** An answer: the tiles laid on the line, by their places in `tiles`, in order. */
 export interface SentenceAnswer {
   order: number[];
 }
@@ -185,16 +162,16 @@ export interface SentenceHint {
   firstWrong: number | null;
 }
 
-/** Once an item is done: the sentence the right way round, every word with what it means where that is known. */
+/** Once an item is done: the sentence in the right order, each word with its meaning where known. */
 export interface SentenceCorrection {
   answer: string;
-  /** each word with its meanings by interface language, when an approved source gives one (`meaningIn` picks the reader's) */
+  /** each word with its meanings by interface language, where an approved source gives one (`meaningIn` picks the reader's) */
   words: Array<{ word: string; meanings: Partial<Meanings> | null }>;
   /** the place on the player's last line where it first went astray, null when it was right */
   firstWrong: number | null;
 }
 
-/** The ladder as the intro shows it: every rung, how many sentences it has, and how far this learner has climbed. */
+/** The ladder as the intro shows it: every rung, its sentence count, and how far this learner has climbed. */
 export interface SentenceLadderView {
   dialect: GameDialect;
   /** the highest rung opened, from 1 */

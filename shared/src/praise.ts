@@ -1,17 +1,9 @@
 /**
- * What a right answer is told, in Kurdish: "Aferîn!", "Pir baş!". Said in the
- * course's own variety, it teaches a little each time it is read, which an
- * English "Correct!" never does — the interface's language still says the
- * verdict to a screen reader, and a small gloss says what the word means.
- *
- * This is content, not interface copy: it is the same whatever language the
- * app is in, so it lives here rather than in the translation files. Every
- * word wants checking by a native Kurmancî and Soranî speaker before it ships
- * further than this list.
- *
- * Only a right answer is praised. "Almost", "not yet" and a spoken answer's
- * own rating keep their words, which must be true of the answer they are
- * shown for.
+ * What a right answer is told, in the course's Kurdish ("Aferîn!", "Pir baş!"), so it teaches a little each time; the
+ * interface language still gives the verdict to a screen reader, and a small gloss says what the word means. This is
+ * content, the same in every interface language, so it lives here rather than in the translation files, and every word
+ * needs a native speaker's check. Only right answers are praised; "almost", "not yet" and spoken self-ratings keep their
+ * own words, which must stay true of the answer.
  */
 import { isSoraniDialect } from './lesson-answers.js';
 
@@ -20,16 +12,14 @@ export const PRAISE = {
   ckb: ['ئافەرین!', 'زۆر باشە!', 'ڕاستە!', 'دەستخۆش!'],
 } as const;
 
-/** The praise words in a course's variety: Soranî's for Soranî, Kurmancî's otherwise. */
+/** The praise words for a course's variety: Soranî's for Soranî, Kurmancî's otherwise. */
 export function praiseWords(dialect: string | null | undefined): readonly string[] {
   return isSoraniDialect(dialect) ? PRAISE.ckb : PRAISE.kmr;
 }
 
 /**
- * The word for this right answer: chosen by the turn and the run, so the same
- * lesson played the same way says the same things (and a test can know which),
- * and never the word said last time, so two right answers in a row are not
- * told the same thing twice.
+ * The word for this right answer, chosen by the turn and the run so the same lesson played the same way says the same
+ * things, and never the last word said, so two right answers in a row are not told the same.
  */
 export function praiseFor(dialect: string | null | undefined, { index, run, previous = null }: { index: number; run: number; previous?: string | null }): string {
   const words = praiseWords(dialect);

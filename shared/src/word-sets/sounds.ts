@@ -3,18 +3,11 @@ import { WORD_CLIPS } from './clips.js';
 import { CALENDAR_MONTHS, WORD_SET_IDS, wordIn, wordSet, type Dialect, type SetWord } from './words.js';
 
 /**
- * Where each word in the word sets plays from, the same on the website and
- * the phone — the alphabet's way (alphabet/sounds.ts), on the same recordings.
- *
- * A word's sound is filed under `words:<set>:<kmr|ckb>:<id>`. The admin panel
- * records it in the alphabet's studio, the API stores it beside the letters'
- * (alphabet_audio, GET /alphabet/audio), and until it is recorded a
- * synthesised clip plays where one could be made accurately (`clips.ts`, by
- * web/scripts/alphabet-audio/words.py, served from `/audio/words/`). A word
- * with neither has no play button.
- *
- * A word said the same way twice in a set — Kurmancî's Gulan is a month on
- * both calendars — is recorded once, under the first key it has.
+ * Where each word in the word sets plays from, on the website and the phone, the way alphabet/sounds.ts does it. A word's
+ * sound is filed under `words:<set>:<kmr|ckb>:<id>` and recorded in the admin panel's alphabet studio; until then a
+ * synthesised clip plays where one exists (`clips.ts`, served from `/audio/words/`), and a word with neither has no play
+ * button. A word said the same way twice in a set (Kurmancî's Gulan, a month on both calendars) is recorded once, under
+ * its first key.
  */
 
 /** Where the synthesised clips are on the website. */
@@ -61,10 +54,7 @@ for (const set of WORD_SET_IDS) {
   }
 }
 
-/**
- * Every word's sound, set by set and Kurmancî before Soranî: part of the
- * alphabet's list of sounds to record (ALPHABET_CLIPS), whose shape it takes.
- */
+/** Every word's sound, set by set and Kurmancî before Soranî, in the shape of the alphabet's list to record (ALPHABET_CLIPS). */
 export const WORD_SET_CLIPS: readonly AlphabetClip[] = clips;
 
 const KEYS = new Set(clips.map((c) => c.key));
@@ -88,9 +78,8 @@ export interface WordSetSounds {
 }
 
 /**
- * The words' sounds, with `recorded` (from `wordSetRecordings`) in place of
- * their synthesised clips, and the synthesised clips found under `base`: the
- * website's own path, or that path on the website's address for the phone.
+ * The words' sounds, with `recorded` (from `wordSetRecordings`) in place of their synthesised clips, and those clips found
+ * under `base`: the website's own path, or the same path on the website's address for the phone.
  */
 export function wordSetSounds(recorded: Readonly<Record<string, string>> = {}, base: string = SYNTHESISED_WORDS_PATH): WordSetSounds {
   const url = (key: string | null): string | null => {
@@ -105,10 +94,7 @@ export function wordSetSounds(recorded: Readonly<Record<string, string>> = {}, b
   };
 }
 
-/**
- * The word sets' recordings in a GET /alphabet/audio answer that are worth
- * playing: https URLs under the words' keys. The letters' are the alphabet's.
- */
+/** The word sets' recordings in a GET /alphabet/audio answer worth playing: https URLs under the words' keys. */
 export function wordSetRecordings(clips: unknown): Record<string, string> {
   if (!clips || typeof clips !== 'object') return {};
   return Object.fromEntries(

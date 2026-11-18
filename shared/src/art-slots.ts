@@ -1,19 +1,9 @@
 /**
- * Every picture the apps draw from their own art that an admin can replace
- * with an uploaded one: a "slot" per picture, named `family:key` (one picture
- * for every level of a badge) or `family:key:level` (one level only, which
- * wins over the first).
- *
- * The art that ships stays the default. An uploaded picture is laid in place
- * of it wherever the slot is drawn, on the website and on the phone, and
- * taking it away brings the original back. The server keeps which slot holds
- * which upload; the apps load that list once (`GET /art/overrides`) and look
- * a slot up with `overrideFor`.
- *
- * Shop backgrounds and profile icons are items in the shop, with their own
- * pictures (Shop in the admin); every other shop item can carry a picture too.
- * The three characters are drawn and animated in layers to speak, so they are
- * not pictures that a single upload could stand in for.
+ * Every picture the apps draw from their own art that an admin can replace with an upload: one slot per picture, named
+ * `family:key` (every level of a badge) or `family:key:level` (one level, which wins). The shipped art stays the default,
+ * an upload replaces it everywhere the slot is drawn, and removing the upload restores it. The server keeps which slot
+ * holds which upload; the apps load the list once (`GET /art/overrides`) and look slots up with `overrideFor`. Shop items
+ * carry their own pictures, and the characters are layered rigs that one upload cannot replace.
  */
 import { BADGES, BADGE_TIERS, type BadgeTierKey } from './badges.js';
 import { LEAGUE_TIERS } from './leagues.js';
@@ -22,12 +12,12 @@ import { RANK_TIER_KEYS } from './ranks.js';
 export const ART_SLOT_FAMILIES = ['badge', 'rank', 'league', 'frame', 'avatar', 'event'] as const;
 export type ArtSlotFamily = (typeof ART_SLOT_FAMILIES)[number];
 
-/** What an upload for a family must be: the shop's square icon art, or its 16:9 background art. */
+/** What an upload for a family must be: the shop's square icon art or its 16:9 background art. */
 export type ArtSlotShape = 'square' | 'wide';
 
 export interface ArtSlotFamilyInfo {
   label: string;
-  /** what the pictures are, and what makes a good replacement */
+  /** what the pictures are and what makes a good replacement */
   hint: string;
   shape: ArtSlotShape;
 }
@@ -49,7 +39,7 @@ export const ART_SLOT_FAMILY_INFO: Readonly<Record<ArtSlotFamily, ArtSlotFamilyI
   event: { label: 'Event banners', hint: 'A 16:9 picture, at least 1280 × 720, behind an event’s name in the app.', shape: 'wide' },
 };
 
-/** The events that have a look of their own in the apps; an event with another theme can still be given a banner. */
+/** The events with a look of their own in the apps; an event with another theme can still get a banner. */
 export const EVENT_THEMES = ['newroz', 'yalda'] as const;
 
 /** How many default profile pictures there are (`default-01` …). */
@@ -76,11 +66,7 @@ export function artSlot(family: ArtSlotFamily, key: string, level?: string | nul
 
 const badgeTiers = new Map(BADGES.map((b) => [b.key, b.tiers.length]));
 
-/**
- * Whether a slot is one the apps draw: a known badge (and one of its levels,
- * when it has more than one), rank tier, league tier, season frame, default
- * profile picture, or an event theme. A level only where a badge has levels.
- */
+/** Whether a slot is one the apps draw: a known badge (or level, where it has them), rank or league tier, season frame, default avatar or event theme. */
 export function isArtSlot(slot: string): boolean {
   const p = parseArtSlot(slot);
   if (!p) return false;
@@ -129,25 +115,22 @@ export function artSlotsOf(family: ArtSlotFamily): ArtSlotEntry[] {
   }
 }
 
-/** Slot → the URL of the picture that replaces its art. */
+/** A slot to the URL of the picture replacing its art. */
 export type ArtOverrides = Readonly<Record<string, string>>;
 
-/** What `GET /art/overrides` answers: the list, and a version that changes whenever it does. */
+/** What `GET /art/overrides` answers: the list and a version that changes whenever it does. */
 export interface ArtOverridesResponse {
   version: string;
   overrides: ArtOverrides;
 }
 
-/**
- * The uploaded picture for a slot, or null to draw the art that ships: the
- * level's own picture first, then the one for every level.
- */
+/** The uploaded picture for a slot, or null for the shipped art: the level's own picture first, then the one for every level. */
 export function overrideFor(overrides: ArtOverrides | null | undefined, family: ArtSlotFamily, key: string, level?: string | null): string | null {
   if (!overrides) return null;
   return (level ? overrides[artSlot(family, key, level)] : undefined) ?? overrides[artSlot(family, key)] ?? null;
 }
 
-/** A badge level as the apps count it (1–4) by its name in the catalogue, for `overrideFor`. */
+/** A badge level as the apps count it (1–4), by its catalogue name, for `overrideFor`. */
 export function badgeLevelName(tier: number): BadgeTierKey | null {
   return BADGE_TIERS[Math.floor(tier) - 1] ?? null;
 }

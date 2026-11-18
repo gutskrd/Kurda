@@ -1,11 +1,6 @@
 /**
- * Who says a recording: the characters a learner sees speak it.
- *
- * One list for everyone who needs it: the database checks a recording's
- * speaker against the same three names, the admin panel offers them, and the
- * apps pick the drawing to show from them. A recording with no speaker shows no
- * character at all, which is what every recording made before the characters
- * existed does until an editor chooses one.
+ * Who says a recording: the characters a learner sees speak it. The database, the admin panel and the apps share this
+ * list; a recording with no speaker shows no character.
  */
 import type { LipsyncData } from './timeline.js';
 
@@ -25,18 +20,10 @@ export function isSpeakerId(value: unknown): value is SpeakerId {
 }
 
 /**
- * The character who says a recording, sent beside the recording's URL.
- *
- * Only sent when an editor has chosen a speaker, so a recording without one
- * costs a payload nothing. `lipsync` is missing when the speaker was chosen but
- * no timeline has been made for the recording yet: show the character, and
- * move its mouth from the text if the screen has it (`lipsyncFromText`), or
- * hold it at rest. Decode it once with `decodeLipsync` before playing.
- *
- * `lipsyncSource` says where the timeline came from. Missing, it was made
- * from the recording's own sound. `'text'` means none has been made from the
- * sound yet, so the server spread the recording's words over its length
- * instead (`lipsyncFromText`): it moves with the words, not with the voice.
+ * The character who says a recording, sent beside its URL only when an editor has chosen one. Without `lipsync` no
+ * timeline exists yet: animate from the text (`lipsyncFromText`) or hold the mouth at rest. Decode it with
+ * `decodeLipsync` before playing. `lipsyncSource` is missing when the timeline came from the sound, and `'text'` when the
+ * server spread the words over the recording's length instead.
  */
 export interface RecordingVoice {
   speaker: SpeakerId;
@@ -44,20 +31,13 @@ export interface RecordingVoice {
   lipsyncSource?: 'audio' | 'text';
 }
 
-/**
- * GET /alphabet/audio: the alphabet page's recordings by sound key, and who
- * says the ones that have a speaker, under the same keys.
- */
+/** GET /alphabet/audio: the alphabet page's recordings by sound key, and the speakers of those that have one. */
 export interface AlphabetAudioResponse {
   clips: Record<string, string>;
   voices?: Record<string, RecordingVoice>;
 }
 
-/**
- * One pronunciation of a dictionary entry, as GET /dictionary/entries/:id
- * lists them in `audio`. A recording is one object here, so its speaker and
- * timeline sit beside its URL rather than in a map.
- */
+/** One pronunciation of a dictionary entry as GET /dictionary/entries/:id lists it, its speaker and timeline beside its URL. */
 export interface DictionaryAudio {
   /** what an editor names it by to choose a speaker (PATCH /admin/audio/dictionary?key=…) */
   id: string;

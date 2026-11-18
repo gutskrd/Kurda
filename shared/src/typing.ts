@@ -1,22 +1,12 @@
 /**
- * Typing Kurdish: what a keyboard sends, read as what the writer meant — for
- * the typing race, the Peyvok keyboard and the "get the Kurmancî keyboard"
- * guide.
- *
- * The race used to compare what was typed with its text code point by code
- * point, as stored. Every way that goes wrong was found in practice
- * (map3-race-keyboards): a text saved decomposed (e + U+0302) could never be
- * typed by a keyboard that sends the precomposed ê; a curly apostrophe or a
- * no-break space in the text was a character nobody can type; a Turkish Q
- * keyboard sends ı for i; and one missed letter shifted everything after it,
- * so the rest of the race scored nothing. Here is one reading of a typed text
- * for the server that scores it, the two apps that colour it as it is typed,
- * and the admin screen that checks a text before it is saved — so none of them
- * can disagree about what counts.
+ * Typing Kurdish: what a keyboard sends, read as what the writer meant, for the typing race, the Peyvok keyboard and the
+ * keyboard guide. One reading of a typed text for the server that scores it, the apps that colour it as it is typed and
+ * the admin screen that checks a text before saving, so they cannot disagree about what counts: decomposed letters,
+ * curly punctuation, a Turkish keyboard's ı and a single missed letter must not cost a racer the rest of the race.
  */
 import { SORANI_KEYS } from './lesson-answers.js';
 
-// ---------- the two varieties a text can be in ----------
+// The two varieties a text can be in.
 
 export const TYPING_DIALECTS = ['kurmanci', 'sorani'] as const;
 export type TypingDialect = (typeof TYPING_DIALECTS)[number];
@@ -25,21 +15,14 @@ export function isTypingDialect(v: unknown): v is TypingDialect {
   return v === 'kurmanci' || v === 'sorani';
 }
 
-/**
- * The language code a race text is stored under (`race_texts.language`), by
- * variety: ISO 639-3, as the admin screen has always offered them.
- */
+/** The ISO 639-3 code a race text is stored under (`race_texts.language`). */
 export type TypingLanguage = 'kmr' | 'ckb';
 
 export function typingLanguage(dialect: TypingDialect): TypingLanguage {
   return dialect === 'sorani' ? 'ckb' : 'kmr';
 }
 
-/**
- * The variety a stored language code or a course's dialect name is in. Anything
- * that is not recognisably Soranî is Kurmancî, which is what every text was
- * before the column was read at all.
- */
+/** The variety of a stored language code or a course's dialect name: anything not recognisably Soranî is Kurmancî. */
 export function typingDialectOf(language: string | null | undefined): TypingDialect {
   const l = (language ?? '').trim().toLowerCase();
   return l === 'ckb' || l === 'sorani' || l === 'soranî' || l === 'central kurdish' ? 'sorani' : 'kurmanci';
@@ -47,19 +30,13 @@ export function typingDialectOf(language: string | null | undefined): TypingDial
 
 /** The Arabic script's characters, in the blocks `isArabicScript` reads. */
 const ARABIC_SCRIPT = /[\u0600-\u06ff\u0750-\u077f\ufb50-\ufdff\ufe70-\ufeff]/g;
-/** Latin letters, the accented ones included (and not × or ÷, which share their block). */
+/** Latin letters, accented ones included, but not × or ÷, which share their block. */
 const LATIN_LETTER = /[A-Za-z\u00c0-\u00d6\u00d8-\u00f6\u00f8-\u024f]/g;
 
 /**
- * The variety a text's script says it is in: Soranî when more of it is Arabic
- * script than Latin letters, Kurmancî the other way round, and null when it
- * cannot tell (no letters at all, or as many of each).
- *
- * A race text is handed out by the language it is stored under, and the admin
- * screen offered Kurmancî first: a Soranî text saved without changing that went
- * to Kurmancî racers. Saving a text whose script says otherwise is refused now,
- * and migration 1751000157000 relabelled the texts already saved by the same
- * count (in SQL — keep the two alike).
+ * The variety a text's script says: Soranî when it has more Arabic-script than Latin letters, Kurmancî the other way,
+ * null when it cannot tell. Saving a text whose script disagrees with its language is refused. Migration 1751000157000
+ * relabels stored texts by the same count in SQL; keep the two alike.
  */
 export function scriptDialect(text: string): TypingDialect | null {
   const arabic = text.match(ARABIC_SCRIPT)?.length ?? 0;
@@ -68,16 +45,12 @@ export function scriptDialect(text: string): TypingDialect | null {
   return arabic > latin ? 'sorani' : 'kurmanci';
 }
 
-// ---------- the letters a keyboard may lack ----------
+// The letters a keyboard may lack.
 
-/** The Kurmancî letters a Latin keyboard lacks, in alphabet order — the race's key bar. */
+/** The Kurmancî letters a Latin keyboard lacks, in alphabet order: the race's key bar. */
 export const KURMANCI_SPECIAL = ['ç', 'ê', 'î', 'ş', 'û'] as const;
 
-/**
- * The Soranî letters an Arabic or Persian keyboard lacks or types as a
- * lookalike — the lesson key bar's set, so a learner meets the same keys
- * everywhere.
- */
+/** The Soranî letters an Arabic or Persian keyboard lacks or types as a lookalike: the lesson key bar's set, so keys match. */
 export const SORANI_SPECIAL = SORANI_KEYS;
 
 /** The key bar for a text in this variety. */
@@ -94,36 +67,23 @@ export const KURMANCI_ALPHABET = [
 const KURMANCI_LETTERS = new Set<string>(KURMANCI_ALPHABET);
 
 /**
- * The Kurmancî letter a key press means, or null when it is not one.
- *
- * For Peyvok's physical keyboard, which used to drop every letter typed with a
- * modifier — and that is how most people type ç ê î ş û: Option+c on a Mac,
- * AltGr on Windows, a dead key, Shift+Ş. Rather than guess which modifiers are
- * innocent, read the character the key produced: if it is a letter of the
- * alphabet once normalised (ı is i, a decomposed ê is ê, Ş is ş), it is that
- * letter.
+ * The Kurmancî letter a key press means, or null. Most people type ç ê î ş û with a modifier (Option, AltGr, a dead key,
+ * Shift), so rather than judge modifiers this reads the character produced and accepts it if it normalises to a letter.
  */
 export function kurmanciLetter(key: string): string | null {
   const ch = normalizeTyping(key, 'kurmanci').toLowerCase();
   return KURMANCI_LETTERS.has(ch) ? ch : null;
 }
 
-// ---------- reading a text as a keyboard would type it ----------
+// Reading a text as a keyboard would type it.
 
 /**
- * Formatting nobody types and nobody sees: soft hyphen, the Arabic letter mark,
- * zero-width space and joiner, the direction marks, embeddings and isolates a
- * phone puts around right-to-left text, word joiners, the byte-order mark — and
- * tatweel, the stretch that lengthens a joined Arabic-script letter.
- * (The zero-width non-joiner is dealt with on its own, below.)
+ * Formatting nobody types or sees: soft hyphen, Arabic letter mark, zero-width space and joiner, direction marks,
+ * embeddings and isolates, word joiners, the byte-order mark and tatweel. The zero-width non-joiner is handled separately.
  */
 const INVISIBLE = /[\u00ad\u061c\u0640\u200b\u200d-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff]/g;
 
-/**
- * Characters a keyboard has no key for, as the character it does have. Typing
- * "Ez’ê bêm — sibê…" on any keyboard gives "Ez'ê bêm - sibê...", so that is
- * what both the text and the typing are read as.
- */
+/** Characters no keyboard has a key for, read as the one it does: "Ez’ê bêm — sibê…" as "Ez'ê bêm - sibê...". */
 const TYPOGRAPHIC: Record<string, string> = {
   '\u2018': "'", // ‘
   '\u2019': "'", // ’
@@ -148,16 +108,10 @@ const TYPOGRAPHIC: Record<string, string> = {
   '\u2015': '-', // horizontal bar
   '\u2212': '-', // minus sign
   '\u2026': '...', // …
-  /*
-   * The Turkish dotted and dotless i. Hawar has no ı, and a Turkish Q keyboard
-   * — the one Windows offers for Kurmancî — types it on the i key.
-   */
+  /* The Turkish dotless i: Hawar has no ı, and the Turkish Q layout Windows offers for Kurmancî types it on the i key. */
   '\u0131': 'i',
   '\u0130': 'I',
-  /*
-   * Arabic and Persian keyboards type these where a Kurdish one types the
-   * Kurdish letter: the same letter, another code point (kurdish-text.ts).
-   */
+  /* What Arabic and Persian keyboards type for these Kurdish letters: the same letter at another code point (kurdish-text.ts). */
   '\u0643': '\u06a9', // ك arabic kaf → ک keheh
   '\u064a': '\u06cc', // ي arabic yeh → ی farsi yeh
   '\u0649': '\u06cc', // ى alef maksura → ی
@@ -167,13 +121,9 @@ const TYPOGRAPHIC: Record<string, string> = {
 const TYPOGRAPHIC_RE = new RegExp(`[${Object.keys(TYPOGRAPHIC).join('')}]`, 'g');
 
 /**
- * Compatibility characters a text picks up when it is copied rather than
- * typed: the Latin ligatures (ﬁ), the Arabic presentation forms — every letter
- * of a Soranî text copied out of a PDF arrives as its shaped form (ﻛ ﻮ ﺭ ﺩ
- * ﯼ), not the letter — and full-width Latin from an East Asian input method.
- * No keyboard types them, so each is read as the letters it stands for (its
- * NFKC form). Only these blocks: NFKC on the whole text would also rewrite
- * characters that are what they look like.
+ * Compatibility characters that copying brings and no keyboard types: Latin ligatures, Arabic presentation forms (every
+ * letter of a Soranî text copied from a PDF) and full-width Latin. Each is read as its NFKC form; only these blocks, since
+ * NFKC on the whole text would rewrite characters that are what they look like.
  */
 const COMPATIBILITY = /[ﬀ-ﬆﭐ-﷿ﹰ-ﻼ！-～]/g;
 
@@ -186,37 +136,18 @@ const ARABIC_DIGIT = /[\u0660-\u0669\u06f0-\u06f9]/g;
 const ARABIC_PUNCTUATION: Record<string, string> = { '\u060c': ',', '\u061b': ';', '\u061f': '?' };
 
 export interface NormalizeTypingOptions {
-  /**
-   * The text is still being typed: one trailing space is kept, because it is
-   * the space that ends a word, not one to tidy away.
-   */
+  /** The text is still being typed, so one trailing space is kept: it ends a word. */
   partial?: boolean;
 }
 
 /**
- * A text as the race compares it, the same whichever keyboard typed it — and
- * the form a race text is saved in.
+ * A text as the race compares and stores it, the same whichever keyboard typed it: NFC; ı and İ as i and I; curly quotes,
+ * guillemets, dashes and the ellipsis as straight characters; runs of white space as one space; invisible formatting and
+ * tatweel removed; Soranî lookalikes as the Kurdish letter, and ه plus a zero-width non-joiner (a Persian keyboard's ە) as
+ * ە; copied compatibility forms as their letters; digits as the variety writes them (and Arabic punctuation as Latin in
+ * Kurmancî); trimmed unless `partial`.
  *
- * - Unicode NFC, so e + U+0302 is ê, one letter.
- * - ı and İ (a Turkish keyboard's i) as i and I.
- * - Curly quotes and apostrophes, guillemets, dashes and the ellipsis as the
- *   straight characters every keyboard has.
- * - Any run of spaces, tabs, line breaks or no-break spaces as one space.
- * - Invisible formatting removed, and Arabic tatweel with it.
- * - Soranî lookalikes as the Kurdish letter: ك → ک, ي and ى → ی, ۀ → ە; and
- *   ه followed by a zero-width non-joiner — how a Persian keyboard writes ە —
- *   as ە.
- * - What copying leaves behind as the letters it stands for: Arabic
- *   presentation forms (a Soranî text copied from a PDF), Latin ligatures,
- *   full-width letters.
- * - Digits as the variety writes them: Arabic-Indic in Soranî, Latin in
- *   Kurmancî (where Arabic punctuation also becomes the Latin mark).
- * - Trimmed (see `partial`).
- *
- * Case and accents are kept: whether e may stand for ê is the race's accent
- * mode, decided when comparing, never here.
- *
- * Idempotent, so text that has already been through it is unchanged.
+ * Case and accents stay: whether e may stand for ê is the accent mode's decision when comparing. Idempotent.
  */
 export function normalizeTyping(
   text: string,
@@ -229,7 +160,7 @@ export function normalizeTyping(
     .replace(/\u200c/g, '')
     .replace(INVISIBLE, '')
     .normalize('NFC')
-    // 'İ'.toLowerCase() is i + a combining dot, which no NFC form absorbs
+    // 'İ'.toLowerCase() is i plus a combining dot, which NFC does not absorb.
     .replace(/i\u0307/g, 'i')
     .replace(TYPOGRAPHIC_RE, (ch) => TYPOGRAPHIC[ch] ?? ch);
   out =
@@ -245,20 +176,16 @@ export function normalizeTyping(
   return options.partial ? out.trimStart() : out.trim();
 }
 
-// ---------- accents ----------
+// Accents.
 
 /**
- * How a race treats accented letters, chosen by the racer and stored with the
- * race. Personal bests and rankings only ever compare races in the same mode.
+ * How a race treats accented letters, chosen by the racer and stored with the race; bests and rankings compare only races
+ * in the same mode.
  *
- * - `strict` — exactly as written: e for ê is a mistake.
- * - `forgiving` (the default) — e counts for ê, i for î, u for û, c for ç, s
- *   for ş (and in Soranî ی for ێ, و for ۆ, ر for ڕ, ل for ڵ): the text is still
- *   shown with its accents, the letter still counts, and how many accents were
- *   left out is counted separately. Only that way round: ê typed where the text
- *   has e is a different letter, as in `strict` — what is forgiven is the key a
- *   keyboard lacks, not an accent the text does not have.
- * - `hidden` — the text is shown without accents and compared without them.
+ * - `strict`: exactly as written, so e for ê is a mistake.
+ * - `forgiving` (the default): e counts for ê, i for î, u for û, c for ç, s for ş (in Soranî ی for ێ, و for ۆ, ر for ڕ,
+ *   ل for ڵ), and the misses are counted separately. Only that way round: ê typed for e is a different letter.
+ * - `hidden`: the text is shown and compared without accents.
  */
 export const ACCENT_MODES = ['strict', 'forgiving', 'hidden'] as const;
 export type AccentMode = (typeof ACCENT_MODES)[number];
@@ -291,16 +218,13 @@ export function foldAccent(ch: string): string {
   return ACCENT_FOLD[ch] ?? ch;
 }
 
-/**
- * The text a racer sees: normalised, and without accents in `hidden` mode. One
- * character for one character, so it lines up with `compareTyping`'s `chars`.
- */
+/** The text a racer sees: normalised, without accents in `hidden` mode, one character per character of `compareTyping`'s `chars`. */
 export function displayTarget(target: string, mode: AccentMode, dialect: TypingDialect = 'kurmanci'): string {
   const text = normalizeTyping(target, dialect);
   return mode === 'hidden' ? [...text].map(foldAccent).join('') : text;
 }
 
-// ---------- the backtick shortcut ----------
+// The backtick shortcut.
 
 const BACKTICK: Record<string, string> = {
   e: 'ê',
@@ -316,16 +240,9 @@ const BACKTICK: Record<string, string> = {
 };
 
 /**
- * Type a character, where a base letter followed by a backtick is the accented
- * letter: e` is ê, i` î, u` û, c` ç, s` ş.
- *
- * A shortcut for a physical keyboard that needs no setup at all — the backtick
- * is on every Latin layout, in reach, and never part of a Kurdish text (the
- * Esperanto x-system works the same way). It does not touch Option or AltGr,
- * which would break the dead keys of people who did set up a layout.
- *
- * Returns the text after `nextChar` is typed. A backtick after anything else is
- * typed as itself.
+ * The text after `nextChar` is typed, where a base letter then a backtick is the accented letter: e` is ê, i` î, u` û,
+ * c` ç, s` ş. It needs no keyboard setup, since the backtick is on every Latin layout and never in a Kurdish text, and it
+ * leaves Option and AltGr alone so configured dead keys keep working. A backtick after anything else is itself.
  */
 export function applyBacktickShortcut(prev: string, nextChar: string): string {
   if (nextChar === '`') {
@@ -337,22 +254,17 @@ export function applyBacktickShortcut(prev: string, nextChar: string): string {
 }
 
 /**
- * What a dead key leaves in a text field while it waits for its letter (the
- * spacing accents, and a lone combining mark): not a character yet. A race
- * whose last letter is î ended the moment ˆ arrived, before the i did.
+ * What a dead key leaves in a field while it waits for its letter: not a character yet, or a race ending on î would end
+ * when the ˆ arrives.
  */
 const DEAD_KEY = /[\^`~\u00a8\u00af\u00b4\u00b8\u02c6\u02c7\u02d8-\u02dd\u0300-\u036f]$/;
 
-// ---------- comparing what was typed with the text ----------
+// Comparing what was typed with the text.
 
 /**
- * How one character of the text has been typed:
- * - `ok` — right (in `hidden` mode, right without its accent too);
- * - `accent` — `forgiving` mode: typed without its accent, and counted;
- * - `wrong` — a different character, or left out;
- * - `pending` — not reached yet (or the base letter just typed where an
- *   accented one belongs, which a backtick may still finish: see
- *   `awaitingBacktick`).
+ * How one character of the text has been typed: `ok` (in `hidden` mode also without its accent); `accent`, typed without
+ * its accent and counted (`forgiving`); `wrong`, a different character or left out; `pending`, not reached yet, or a base
+ * letter a backtick may still finish (`awaitingBacktick`).
  */
 export type CharState = 'ok' | 'accent' | 'wrong' | 'pending';
 
@@ -363,23 +275,16 @@ export interface TypingComparison {
   correct: number;
   /** accented letters typed without their accent (always 0 in `hidden` mode) */
   accentMisses: number;
-  /**
-   * accented letters of the text that typing has reached — the base of an
-   * accent accuracy (one still `pending` is in neither count yet)
-   */
+  /** accented letters reached so far, the base of an accent accuracy; one still `pending` is in neither count */
   accented: number;
   /** characters wrong or left out, and characters typed that the text does not have */
   errors: number;
-  /** the typing has reached the end of the text (and no accent is still being composed) */
+  /** the typing reached the end of the text with no accent still being composed */
   done: boolean;
   /**
-   * The last key typed is the base letter of an accented letter of the text
-   * (e where ê belongs) and a backtick may still make it that letter
-   * (`applyBacktickShortcut`), so the letter is `pending` rather than wrong
-   * (`strict`) or an accent missed (`forgiving`, where it is already counted
-   * in `correct`) — and when it is the text's last letter, `done` waits for it.
-   * The next key settles it; an app that finishes a race on `done` finishes
-   * one waiting here after `BACKTICK_WAIT_MS` without a key.
+   * The last key is the base of an accented letter of the text (e where ê belongs) and a backtick may still complete it, so
+   * that letter is `pending`, and `done` waits when it is the last one. The next key settles it; an app finishing on `done`
+   * finishes a race waiting here after `BACKTICK_WAIT_MS`.
    */
   awaitingBacktick: boolean;
   /** the index in `chars` the next character typed goes to */
@@ -391,55 +296,28 @@ export interface TypingComparison {
 export interface CompareTypingOptions {
   /** the variety the text is in, for `normalizeTyping` (default Kurmancî) */
   dialect?: TypingDialect;
-  /**
-   * The typing is over and is being scored (the server's finish). Without it,
-   * the typing is in progress: a trailing space is a word ended, and an accent
-   * still being composed is not a character yet.
-   */
+  /** The typing is finished and being scored. Otherwise a trailing space ends a word and an accent being composed is not a character yet. */
   final?: boolean;
   /**
-   * The racer can finish a letter with a backtick (`applyBacktickShortcut`),
-   * so the base letter last typed where an accented one belongs waits for the
-   * next key (`awaitingBacktick`). On by default, as the shortcut needs no
-   * setup; an app passes false where the racer switched it off, so a race ends
-   * on its last letter at once. Never applies to `final` or in `hidden` mode,
-   * where the accent is not shown.
+   * Whether the base letter last typed for an accented one waits for a backtick (`awaitingBacktick`). On by default; an app
+   * passes false when the racer turned the shortcut off. Never applies to `final` or in `hidden` mode.
    */
   backtickShortcut?: boolean;
 }
 
-/**
- * How long an app waits for a backtick after the base letter of a text's last
- * letter (`awaitingBacktick`) before it finishes the race anyway. Someone using
- * the shortcut types it straight after the letter; someone who is not should
- * not wait long for a race they have finished.
- */
+/** How long an app waits for a backtick after the base of a text's last letter before finishing the race anyway. */
 export const BACKTICK_WAIT_MS = 800;
 
 /**
- * How far from where the racer had got to, one key before, the comparison
- * looks for where they are now: this many characters on into the text, and
- * `behind` back. It bounds the stretch of text that can be left out at once (an
- * eye that jumped a line) or typed twice and still be found again afterwards —
- * about 100 characters either way, which is more than a line of the race text
- * on a wide screen (about 70) and two or three on a phone.
- *
- * It is further ahead than back because of what typing looks like before the
- * comparison can tell a stretch was skipped: what follows it does not match the
- * text where the racer seemed to be, and typing that matches nothing is read
- * as falling behind (about one character in three) — so a stretch left out ends
- * up further ahead of where the racer seems to be than one typed twice ends up
- * behind.
- *
- * It is measured from where the racer was, never from the start of the text,
- * so slips spread through a text add up to nothing: the window moves on with
- * the racer. (It used to be 64 either way from the start, and once a long
- * text's skipped and doubled letters came to more than that between them,
- * everything typed after that was wrong and the race could never finish.)
+ * How far from where the racer was one key before the comparison looks: `ahead` characters on and `behind` back. It bounds
+ * how much text can be skipped at once (an eye jumping a line) or typed twice and still be found again, more than a wide
+ * line of about 70 characters. Ahead is larger because typing that matches nothing reads as falling behind, so a skipped
+ * stretch ends up further ahead than a doubled one ends up behind. Measured from the racer's position, not the start, so
+ * slips spread through a long text never add up.
  */
 export const TYPING_WINDOW = { ahead: 160, behind: 96 } as const;
 
-// edit costs, in quarters, so a forgiven accent can sit between a match and a slip
+// Edit costs, in quarters, so a forgiven accent can sit between a match and a slip.
 const EDIT = 4; // a character wrong, left out or added
 const ACCENT_EDIT = 3; // e for ê (strict), or ê for e (but in hidden): a slip, the likeliest pairing
 const ACCENT_MATCH = 1; // an accent forgiven (forgiving, hidden): counted, a whisker behind exact
@@ -453,31 +331,20 @@ const OP_DEL = 4; // a character of the text left out
 const OP_INS = 5; // a character typed that the text does not have
 
 /**
- * Two code points for one Soranî letter that are kept apart in the text but
- * compared as one: ھ and ه are both h (the Central Kurdish keyboard's h key
- * types ه). Not rewritten in the text, because some texts use ه for the vowel
- * ە at the end of a word, and showing it as ھ there would misspell them.
+ * Soranî code points kept apart in the text but compared as one: ھ and ه are both h, since the Central Kurdish keyboard's
+ * h key types ه. The text is not rewritten because some texts use a final ه for the vowel ە.
  */
 function charKey(ch: string): string {
   return ch === '\u0647' ? '\u06be' : ch;
 }
 
 /**
- * The alignment of a typed text with its target, column by typed character.
+ * The alignment of the typing with the text, one column per typed character. Each column holds only the rows (text
+ * characters) within `TYPING_WINDOW` of the previous column's best end, from row `lo[j]`, so the band follows the racer.
+ * A text shorter than the band is compared whole.
  *
- * Each column holds only the rows (characters of the text) within
- * `TYPING_WINDOW` of where the racer had got to one key before — the best end
- * of the previous column — starting at row `lo[j]`. So the band follows the
- * racer through the text, and a racer can be any distance from the diagonal
- * (the typing's length against the text's) after enough small slips. A text
- * shorter than the band is compared whole.
- *
- * Kept between calls (see `aligner`): a racer only ever adds or removes
- * characters at the end, so each keystroke computes one new column instead of
- * the whole table — the difference between instant and a visible lag on a
- * long text on a slow phone. A column depends only on the ones before it, the
- * placing of its band included, so the columns of an unchanged prefix stay
- * right.
+ * Kept between calls (`aligner`): typing only changes at the end and a column depends only on those before it, so each key
+ * computes one new column. That keeps a long text responsive on a slow phone.
  */
 interface Alignment {
   key: string;
@@ -499,12 +366,7 @@ interface Alignment {
 
 let cached: Alignment | null = null;
 
-/**
- * How much typing of a text of `n` characters is compared with it: twice the
- * text, and the window. Typing more than that is not typing the text, so what
- * comes after is all extra — and a runaway input cannot make the table grow
- * without end.
- */
+/** How much typing is compared with a text of `n` characters: twice the text plus the window, so runaway input cannot grow the table. */
 function typingLimit(n: number): number {
   return 2 * n + TYPING_WINDOW.ahead;
 }
@@ -533,8 +395,7 @@ function newAlignment(key: string, target: string[], mode: AccentMode): Alignmen
 
 function ensureCapacity(a: Alignment, columns: number): void {
   if (columns <= a.capacity) return;
-  // doubling, so that typing on rarely copies, but never past the most columns
-  // a comparison makes (`typingLimit`)
+  // Doubling, so the table is rarely copied, but never past the most columns a comparison makes (`typingLimit`).
   const capacity = Math.max(columns, Math.min(a.capacity * 2, typingLimit(a.target.length) + 1));
   const grow = <T extends Int32Array | Uint8Array>(old: T, make: (n: number) => T): T => {
     const next = make(capacity * a.width);
@@ -551,16 +412,9 @@ function ensureCapacity(a: Alignment, columns: number): void {
 }
 
 /**
- * Where the typing's first `j` characters have got to in the text: the offset
- * in column `j` of the cheapest end, then the one with the most letters right,
- * then the furthest — so when a key is either a wrong letter or one too many,
- * it is read as the wrong letter, and each key moves the caret on as on any
- * typing test (and a race whose last letter was mistyped is over). The part of
- * the text after the end is not reached yet and costs nothing.
- *
- * Every column reaches some row (its band always holds the row its placing
- * was taken from, and that row can be reached by one character too many), so
- * this is never -1 for a filled column.
+ * Where the first `j` typed characters reached in the text: column `j`'s cheapest end, then the one with most letters
+ * right, then the furthest. So a key that is either a wrong letter or one too many reads as the wrong letter, and each key
+ * moves the caret on. Never -1 for a filled column: its band always holds a reachable row.
  */
 function bestEnd(a: Alignment, j: number): number {
   const base = j * a.width;
@@ -581,12 +435,8 @@ function bestEnd(a: Alignment, j: number): number {
 }
 
 /**
- * Fill column `j`: the typing's first `j` characters against every row of the
- * text in reach — `TYPING_WINDOW` around the row after where the first `j - 1`
- * had got to (`bestEnd`), which is the row the next key most likely types.
- * Where that would reach past the end of the text (or before its start), the
- * band stops at the end (or the start) and reaches the other way further
- * instead.
+ * Fills column `j` across the rows within `TYPING_WINDOW` of the row after the previous column's best end. Where that would
+ * run past either end of the text, the band stops there and reaches further the other way.
  */
 function fillColumn(a: Alignment, j: number): void {
   const n = a.target.length;
@@ -611,19 +461,18 @@ function fillColumn(a: Alignment, j: number): void {
       continue;
     }
     if (j === 0) {
-      // nothing typed yet: reaching row i means leaving out i characters
+      // Nothing typed yet: reaching row i means leaving out i characters.
       a.cost[cell] = EDIT * i;
       a.matches[cell] = 0;
       a.op[cell] = i === 0 ? OP_NONE : OP_DEL;
       continue;
     }
-    // the cheapest way here; on a tie the one with more letters right, and on
-    // a full tie the first considered (the diagonal, then a letter left out)
+    // The cheapest way here; on a tie the one with more letters right, then the first considered.
     let bestCost = INF;
     let bestMatches = 0;
     let bestOp = OP_NONE;
     if (i >= 1) {
-      // the diagonal, from (i - 1, j - 1), if the previous column's band holds it
+      // The diagonal, from (i - 1, j - 1), if the previous column's band holds it.
       const kd = i - 1 - prevLo;
       const from = prev + kd;
       if (kd >= 0 && kd < a.width && a.cost[from]! < INF) {
@@ -633,10 +482,8 @@ function fillColumn(a: Alignment, j: number): void {
           bestMatches++;
           bestOp = OP_MATCH;
         } else if (a.targetFolds[i - 1] === a.typedFolds[j - 1]) {
-          // the same letter but for its accent: `hidden` shows none, so either
-          // way round is that letter; `forgiving` forgives only the accent left
-          // out — the base letter typed (as the folded text has it) where the
-          // text has the accented one — never one added to a letter without
+          // The same letter but for its accent: `hidden` accepts either way round; `forgiving` only the base letter typed
+          // where the text has the accented one.
           if (hidden || (forgiving && a.typedKeys[j - 1] === a.targetFolds[i - 1])) {
             bestCost += ACCENT_MATCH;
             bestMatches++;
@@ -650,7 +497,7 @@ function fillColumn(a: Alignment, j: number): void {
           bestOp = OP_SUB;
         }
       }
-      // a character of the text left out, from (i - 1, j): this column, the cell before
+      // A character of the text left out, from (i - 1, j).
       const left = base + k - 1;
       if (k >= 1 && a.cost[left]! < INF) {
         const cost = a.cost[left]! + EDIT;
@@ -661,8 +508,7 @@ function fillColumn(a: Alignment, j: number): void {
         }
       }
     }
-    // a character typed that the text does not have, from (i, j - 1), if the
-    // previous column's band holds it
+    // A character typed that the text does not have, from (i, j - 1), if the previous column's band holds it.
     const ku = i - prevLo;
     const up = prev + ku;
     if (ku >= 0 && ku < a.width && a.cost[up]! < INF) {
@@ -684,7 +530,7 @@ function aligner(target: string[], typed: string[], mode: AccentMode): Alignment
   const key = `${mode}\u0000${target.join('')}`;
   const reuse = cached !== null && cached.key === key;
   const a = reuse && cached ? cached : newAlignment(key, target, mode);
-  // the columns of a typed prefix that has not changed are still right
+  // The columns of an unchanged typed prefix are still right.
   let same = 0;
   if (reuse) while (same < a.typed.length && same < typed.length && a.typed[same] === typed[same]) same++;
   a.typed = typed;
@@ -697,20 +543,10 @@ function aligner(target: string[], typed: string[], mode: AccentMode): Alignment
 }
 
 /**
- * Compare what was typed with the text, character by character.
- *
- * Aligned, not positional: a character left out or typed twice — a space
- * included — is one mistake, and everything after it is still compared with
- * what it was meant to be. The old scoring compared the i-th character with the
- * i-th, so one missed letter made the whole rest of the race wrong (a run that
- * missed only its first letter scored 0 of 26). This is an edit alignment
- * within `TYPING_WINDOW` characters of where the racer had got to, which moves
- * on with them, so slips anywhere in a text of any length cost only themselves
- * — the part of the text not reached yet costs nothing and is `pending`. When
- * two readings are equally good, the one with more letters right wins.
- *
- * Both texts are normalised here (`normalizeTyping`), so `chars` lines up with
- * the normalised target; show the racer `displayTarget`.
+ * Compares the typing with the text by an edit alignment, not position by position, so a character left out or doubled
+ * is one mistake and the rest is still compared with what it was meant to be. The alignment stays within `TYPING_WINDOW`
+ * of the racer, the text not reached yet is `pending` and costs nothing, and between equal readings the one with more
+ * letters right wins. Both texts are normalised here, so `chars` lines up with the normalised target: show `displayTarget`.
  */
 export function compareTyping(
   target: string,
@@ -725,7 +561,7 @@ export function compareTyping(
   let u = [...normalizeTyping(typed, dialect, { partial: !final })];
   const n = t.length;
 
-  // a dead key still waiting for its letter is not a character yet
+  // A dead key still waiting for its letter is not a character yet.
   let composing = false;
   if (u.length > 0 && DEAD_KEY.test(u[u.length - 1]!)) {
     u = u.slice(0, -1);
@@ -741,7 +577,7 @@ export function compareTyping(
   const m = u.length;
 
   const a = aligner(t, u, mode);
-  // where the typing has got to (`bestEnd`); a column always reaches a row
+  // Where the typing has got to; a column always reaches a row.
   const iEnd = a.lo[m]! + bestEnd(a, m);
 
   const chars: CharState[] = new Array<CharState>(n).fill('pending');
@@ -756,22 +592,17 @@ export function compareTyping(
     else extraAt.set(before, [ch]);
   };
 
-  // accents are only counted where they are shown
+  // Accents count only where they are shown.
   const isAccented = (at: number): boolean => mode !== 'hidden' && a.targetFolds[at] !== a.targetKeys[at];
 
-  // walk back from the end; the first step back is the last thing typed
+  // Walk back from the end; the first step back is the last key typed.
   let i = iEnd;
   let j = m;
   let backtickPending = false;
-  // e where ê belongs, as the very last thing typed: a backtick may be next,
-  // so it is not an accent missed yet — nor, in strict mode, a mistake
+  // e where ê belongs as the very last key: a backtick may follow, so it is neither an accent missed nor a strict mistake yet.
   const awaitsBacktick = (at: number): boolean =>
     backtickShortcut && j === m && i === iEnd && BACKTICK[a.typedKeys[j - 1]!] === a.targetKeys[at];
-  /**
-   * The cell (pi, pj) is in its column's band and reaches (i, j) with one
-   * character left out or added, as cheaply and with as many letters right as
-   * the way stored for (i, j) — the same reading, as far as the score goes.
-   */
+  /** Whether (pi, pj) is in its column's band and reaches (i, j) by one character left out or added with the same score. */
   const asGoodBy = (pi: number, pj: number): boolean => {
     const k = pi - a.lo[pj]!;
     if (k < 0 || k >= a.width) return false;
@@ -779,14 +610,11 @@ export function compareTyping(
     const here = j * a.width + (i - a.lo[j]!);
     return a.cost[from]! + EDIT === a.cost[here] && a.matches[from] === a.matches[here];
   };
-  // A run of characters left out (or typed extra) goes on for as long as that
-  // is as good a reading as the one stored: when a line is skipped, any letter
-  // in it that the next one typed happens to share could equally have been
-  // "typed" there, and the line would show with right letters scattered
-  // through it. Read on, it is one run — the same score, and what happened.
+  // A run of characters left out or added continues while that reads as well as the stored path. Otherwise a skipped line
+  // would show scattered "right" letters it happens to share with the next one typed.
   let run = OP_NONE;
   while (i > 0 || j > 0) {
-    // every step was taken from a cell in its column's band
+    // Every step was taken from a cell in its column's band.
     let op = a.op[j * a.width + (i - a.lo[j]!)]!;
     if (run === OP_DEL && i > 0 && asGoodBy(i - 1, j)) op = OP_DEL;
     else if (run === OP_INS && j > 0 && asGoodBy(i, j - 1)) op = OP_INS;
@@ -794,7 +622,7 @@ export function compareTyping(
     if (op === OP_MATCH || op === OP_ACCENT) {
       const at = i - 1;
       if (op === OP_ACCENT && awaitsBacktick(at)) {
-        // forgiving: the letter counts whichever key comes next
+        // Forgiving: the letter counts whichever key comes next.
         chars[at] = 'pending';
         backtickPending = true;
       } else {
@@ -858,16 +686,12 @@ export function compareTyping(
   };
 }
 
-// ---------- what a keyboard can type ----------
+// What a keyboard can type.
 
-/** Every printable ASCII character: on every Latin keyboard, and on the Soranî ones too. */
+/** Every printable ASCII character, on every Latin keyboard and on the Soranî ones too. */
 const ASCII_PRINTABLE = /^[\x20-\x7e]$/;
 
-/**
- * The Central Kurdish alphabet (and ه, which the Central Kurdish keyboard's h
- * key types), with the Arabic comma, semicolon and question mark and the
- * Arabic-Indic digits — what a Soranî keyboard has keys for.
- */
+/** What a Soranî keyboard types: the Central Kurdish alphabet, ه, the Arabic comma, semicolon and question mark, and Arabic-Indic digits. */
 const SORANI_TYPEABLE = new Set<string>([
   ...'\u0626\u0627\u0628\u067e\u062a\u062c\u0686\u062d\u062e\u062f\u0631\u0695\u0632\u0698\u0633\u0634\u0639\u063a\u0641\u06a4\u0642\u06a9\u06af\u0644\u06b5\u0645\u0646\u06be\u0647\u06d5\u0648\u06c6\u06cc\u06ce',
   '\u060c',
@@ -878,7 +702,7 @@ const SORANI_TYPEABLE = new Set<string>([
 
 const KURMANCI_TYPEABLE = new Set<string>([...KURMANCI_SPECIAL, ...KURMANCI_SPECIAL.map((c) => c.toUpperCase())]);
 
-/** Whether a racer with a keyboard for this variety (and the key bar) can type the character. */
+/** Whether a racer with a keyboard for this variety, and the key bar, can type the character. */
 export function isTypeable(ch: string, dialect: TypingDialect): boolean {
   if (ASCII_PRINTABLE.test(ch)) return true;
   return dialect === 'sorani' ? SORANI_TYPEABLE.has(ch) : KURMANCI_TYPEABLE.has(ch);
@@ -886,16 +710,12 @@ export function isTypeable(ch: string, dialect: TypingDialect): boolean {
 
 export interface UntypeableChar {
   char: string;
-  /** e.g. "U+00E9", so a character that looks like another can be told apart */
+  /** such as "U+00E9", so lookalikes can be told apart */
   codePoint: string;
   count: number;
 }
 
-/**
- * The characters of a text that nobody could type, after normalising — for the
- * admin screen's warning when a race text is saved (é in a Kurmancî text, a
- * Persian letter in a Soranî one). In order of first appearance.
- */
+/** The characters nobody could type after normalising, in order of first appearance, for the admin's warning on saving a text. */
 export function findUntypeable(text: string, dialect: TypingDialect): UntypeableChar[] {
   const found = new Map<string, UntypeableChar>();
   for (const ch of normalizeTyping(text, dialect)) {
@@ -910,19 +730,10 @@ export function findUntypeable(text: string, dialect: TypingDialect): Untypeable
   return [...found.values()];
 }
 
-// ---------- the race's API ----------
+// The race's API.
 
-/** 1 short, 2 medium, 3 long — the lengths an admin curates race texts at. */
+/** 1 short, 2 medium, 3 long: the lengths race texts are curated at. */
 export type RaceLength = 1 | 2 | 3;
-
-/** `POST /race`: a race in a variety, at a length (any when left out), in an accent mode. */
-export interface RaceStartRequest {
-  length?: RaceLength;
-  /** default Kurmancî */
-  dialect?: TypingDialect;
-  /** default `DEFAULT_ACCENT_MODE` */
-  accentMode?: AccentMode;
-}
 
 /** What `POST /race` answers: the text to type, and the race it is for. */
 export interface RaceGameView {
@@ -950,7 +761,7 @@ export interface RaceResultView {
   wpm: number;
   /** what the race is ranked on: speed weighted by accuracy (0 when implausible) */
   score: number;
-  /** the whole text, exactly — no mistakes and no accent left out */
+  /** the whole text exactly, with no mistakes and no accent left out */
   perfect: boolean;
   /** faster than a person can type: reported, but worth nothing */
   implausible: boolean;
@@ -976,36 +787,23 @@ export interface RaceRun {
   at: string;
 }
 
-/**
- * `GET /race/best[?accentMode=&dialect=]`: each accent mode's best runs, and
- * its personal best. Filtered to one mode, the others are empty and null; to
- * one variety, only its races count.
- */
+/** `GET /race/best[?accentMode=&dialect=]`: each accent mode's best runs and personal best, filtered to one mode or variety if asked. */
 export interface RaceBestView {
-  /**
-   * Each mode's best runs (up to 10), best first, ranked only against runs in
-   * the same mode — e counts for ê in a forgiving or hidden run, so one is not
-   * the same race as a strict one and never outranks it. Empty for a mode with
-   * no finished race.
-   */
+  /** Each mode's best runs, up to 10, best first; a forgiving or hidden run never outranks a strict one because they never compete. */
   racesByMode: Record<AccentMode, RaceRun[]>;
-  /** each mode's best run worth anything: the top of its list, unless that scored 0 */
+  /** each mode's best run worth anything: the top of its list unless that scored 0 */
   personalBests: Record<AccentMode, RaceRun | null>;
 }
 
-// ---------- setting up a Kurdish keyboard ----------
+// Setting up a Kurdish keyboard.
 
 export const KEYBOARD_PLATFORMS = ['ios', 'android', 'windows', 'mac', 'linux'] as const;
 export type KeyboardPlatform = (typeof KEYBOARD_PLATFORMS)[number];
 
 /**
- * One step of a keyboard guide.
- *
- * `key` is the i18n key of the sentence; `en` is its English, the source for
- * every catalogue. Names on the device's own screens stay as the device shows
- * them, in English — a translated "Kurdish (Latin)" is a menu item nobody can
- * find — so they are not in the sentence but in `ui`, and the sentence says
- * where they go with {0}, {1}, …
+ * One step of a keyboard guide. `key` is the sentence's i18n key and `en` its English source. Names on the device's own
+ * screens stay in English as the device shows them, since a translated menu item cannot be found, so they live in `ui`
+ * and the sentence places them with {0}, {1} and so on.
  */
 export interface KeyboardStep {
   key: string;
@@ -1019,14 +817,10 @@ export interface KeyboardGuide {
 }
 
 /**
- * How to add a Kurdish keyboard, per platform — two to four steps, from
- * research3-keyboards-review §1b. Kurmancî is "Kurdish (Latin)" where a device
- * has it — Gboard on Android, and on newer iPhones and Macs — so each guide
- * says to search for "Kurdish" and choose that, and says what to do when it
- * is not in the list: update the iPhone, add ABC – Extended on a Mac (it types
- * all five letters), or, on Windows, which offers only Central Kurdish
- * (Soranî), use Hevalo's own on-screen keys. Linux has a Kurdish Latin Q
- * layout. It never sends anybody to another language's keyboard.
+ * How to add a Kurdish keyboard on each platform, in two to four steps. Each guide searches for "Kurdish" and picks
+ * "Kurdish (Latin)" where the device has it, and says what to do otherwise: update the iPhone, add ABC – Extended on a Mac,
+ * or use Hevalo's own keys on Windows, which offers only Central Kurdish. Linux has a Kurdish Latin Q layout. No guide
+ * sends anybody to another language's keyboard.
  */
 export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
   android: {
@@ -1225,16 +1019,9 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
   },
 };
 
-/** A guide step's English with its screen names put in. */
-export function keyboardStepText(step: KeyboardStep, sentence: string = step.en): string {
-  return sentence.replace(/\{(\d+)\}/g, (whole, n: string) => step.ui?.[Number(n)] ?? whole);
-}
-
 /**
- * Which guide to show: from React Native's `Platform.OS` on a phone, else from
- * the browser's user agent. An iPad's Safari says it is a Mac, so a Mac with a
- * coarse (touch) pointer is an iPad. Null when it cannot tell (a Chromebook,
- * say) — the card then offers the list to choose from.
+ * Which guide to show: the phone's `Platform.OS`, else the browser's user agent. An iPad's browser says it is a Mac, so a
+ * Mac with a coarse pointer is an iPad. Null when it cannot tell; the card then offers the list.
  */
 export function detectKeyboardPlatform(
   userAgent: string,
