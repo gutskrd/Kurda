@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { jsonResponse } from '../test/utils';
+import { jsonResponse, withBothDialects } from '../test/utils';
 import { renderPlay } from '../play/testing';
 import { forgetPartyOffers } from '../party/offer';
 import { forgetImpostorCategories } from './categories';
@@ -93,19 +93,20 @@ const active = (b: Record<string, unknown> = {}, over: Record<string, unknown> =
 
 function serve(routes: Record<string, unknown>, calls: Array<{ url: string; method: string; body: unknown }> = []) {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  const answers = withBothDialects(routes);
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
       const method = init?.method ?? 'GET';
       calls.push({ url, method, body: init?.body ? JSON.parse(init.body as string) : null });
-      const key = Object.keys(routes).find((k) => {
+      const key = Object.keys(answers).find((k) => {
         const [m, path] = k.includes(' ') ? k.split(' ') : ['GET', k];
         return m === method && url.includes(path!);
       });
       if (key) {
-        const answer = routes[key] as { status?: number; body?: unknown } | undefined;
+        const answer = answers[key] as { status?: number; body?: unknown } | undefined;
         if (answer && typeof answer === 'object' && 'status' in answer && 'body' in answer) return jsonResponse(answer.status!, answer.body);
-        return jsonResponse(200, routes[key]);
+        return jsonResponse(200, answers[key]);
       }
       if (url.includes('/me')) return jsonResponse(200, me);
       return jsonResponse(200, {});

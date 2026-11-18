@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { GAME_DIALECTS, type GameDialect, type GameDifficulty, type GamesAvailability, type LearnGameId } from '@kurda/shared';
+import { readEveryDialect, type GameDialect, type GameDifficulty, type GamesAvailability, type LearnGameId } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import type { ApiError } from '../api/types';
 
 /**
  * Where Impostor is offered: per variety, the difficulties whose approved cards reach the game's minimum (`GET
@@ -28,11 +29,11 @@ export function usePartyOffer(game: PartyGame, enabled = true): PartyOffer[] | n
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
-    cached ??= Promise.all(GAME_DIALECTS.map((d) => client.get<GamesAvailability>(`/games/availability?dialect=${d}`))).then((all) => {
-      const ok = all.flatMap((r) => (r.ok && r.data && Array.isArray(r.data.games) ? [r.data] : []));
+    // both varieties in one read
+    cached ??= readEveryDialect<GamesAvailability, ApiError>(client, '/games/availability').then((res) => {
       // A failed read is not an answer, so ask again next time.
-      if (ok.length < all.length) cached = null;
-      return ok;
+      if (!res.ok) cached = null;
+      return res.ok ? res.data.filter((a) => Array.isArray(a?.games)) : [];
     });
     void cached.then((list) => {
       if (alive) setAnswer(list);

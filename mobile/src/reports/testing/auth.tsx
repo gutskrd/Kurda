@@ -15,17 +15,28 @@ export interface FakeCall {
   body: unknown;
 }
 
+/** The reads the apps make once for both varieties (shared `readEveryDialect`). */
+const BOTH_DIALECTS = new Set(['/games/availability', '/games/impostor/couch', '/games/who-am-i/couch']);
+
 /**
  * A client answering `"METHOD /path"` from `routes` (an exact path, query included). A call with no route fails as a
- * server error would, so a missing route shows up instead of hanging.
+ * server error would, so a missing route shows up instead of hanging. A read for both varieties with no route of its
+ * own is answered from the routes for each variety, as the server answers it.
  */
 export function fakeClient(routes: Record<string, Handler | ApiResult<unknown>> = {}): ApiClient & { calls: FakeCall[] } {
   const calls: FakeCall[] = [];
+  const resolve = async (route: Handler | ApiResult<unknown>, body?: unknown): Promise<ApiResult<unknown>> => (typeof route === 'function' ? route(body) : route);
   const answer = async (method: string, path: string, body?: unknown): Promise<ApiResult<unknown>> => {
     calls.push({ method, path, body });
     const route = routes[`${method} ${path}`];
+    const each = method === 'GET' && !route && BOTH_DIALECTS.has(path) ? ['kmr', 'ckb'].flatMap((d) => routes[`GET ${path}?dialect=${d}`] ?? []) : [];
+    if (each.length > 0) {
+      const answers = await Promise.all(each.map((r) => resolve(r)));
+      const failed = answers.find((a) => !a.ok);
+      return failed ?? { ok: true, data: { dialects: answers.map((a) => (a.ok ? a.data : null)) } };
+    }
     if (!route) return { ok: false, error: { kind: 'server', message: `no route for ${method} ${path}`, status: 500 } };
-    return typeof route === 'function' ? route(body) : route;
+    return resolve(route, body);
   };
   return {
     calls,

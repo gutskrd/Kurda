@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { jsonResponse } from '../test/utils';
+import { jsonResponse, withBothDialects } from '../test/utils';
 import { renderPlay } from '../play/testing';
 import { forgetPartyOffers } from '../party/offer';
 import { Impostor } from './Impostor';
@@ -37,19 +37,20 @@ const none = { dialect: 'ckb', difficulties: [] };
 function serve(routes: Record<string, unknown>): Array<{ url: string; method: string; body: unknown }> {
   const calls: Array<{ url: string; method: string; body: unknown }> = [];
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  const answers = withBothDialects(routes);
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
       const method = init?.method ?? 'GET';
       calls.push({ url, method, body: init?.body ? JSON.parse(init.body as string) : null });
-      const key = Object.keys(routes).find((k) => {
+      const key = Object.keys(answers).find((k) => {
         const [m, path] = k.includes(' ') ? k.split(' ') : ['GET', k];
         return m === method && url.includes(path!);
       });
       if (key) {
-        const answer = routes[key] as { status?: number; body?: unknown } | undefined;
+        const answer = answers[key] as { status?: number; body?: unknown } | undefined;
         if (answer && typeof answer === 'object' && 'status' in answer && 'body' in answer) return jsonResponse(answer.status!, answer.body);
-        return jsonResponse(200, routes[key]);
+        return jsonResponse(200, answers[key]);
       }
       if (url.includes('/me')) return jsonResponse(200, me);
       return jsonResponse(200, {});
@@ -154,6 +155,8 @@ describe('the setup', () => {
     expect(sent[0]!.method).toBe('POST');
     expect(sent[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'beginner', category: 'animals' });
     expect(JSON.stringify(calls)).not.toContain('Azad');
+    // where it is offered was asked once, for both varieties
+    expect(calls.filter((c) => c.method === 'GET' && c.url.endsWith('/games/impostor/couch'))).toHaveLength(1);
   });
 
   it('gives an empty box its number for a name, and refuses two players of one name', async () => {
