@@ -124,6 +124,15 @@ describe('an empty group chat', () => {
     expect(screen.getByRole('button', { name: 'چۆنی؟' })).toBeTruthy();
   });
 
+  it('lays the greetings out from the right on a Soranî screen', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    rememberCourseDialect('sorani', memoryStore());
+    open({ 'GET /groups/g1/chat': ok({ messages: [] }) });
+    const first = await screen.findByRole('button', { name: 'سڵاو! 👋' });
+    expect(getComputedStyle(first.parentElement!).flexDirection).toBe('row-reverse');
+    localStorage.removeItem('kurda_locale_v1');
+  });
+
   it('says when the reader cleared it for themselves, without greetings', async () => {
     open({ 'GET /groups/g1/chat': ok({ messages: [], cleared: { forEveryone: null, forMe: ago(2 * HOUR) } }) });
     expect(await screen.findByText('You cleared this chat 2h ago. New messages will show here.')).toBeTruthy();

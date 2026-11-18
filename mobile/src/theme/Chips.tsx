@@ -43,14 +43,15 @@ export function Chips<T extends string>({
   return (
     <ScrollView
       ref={scroller}
-      // Right to left, the first chip is on the right, so start the row there.
+      // Right to left, the first chip is on the right, so start the row there: a short row is as wide as the screen
+      // and starts at its right edge, a long one is scrolled to its start.
       onContentSizeChange={() => {
         if (mirrored) scroller.current?.scrollToEnd({ animated: false });
       }}
       horizontal
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[styles.row, rr.content, { flexDirection: dir.row }]}
+      contentContainerStyle={[styles.row, rr.content, { flexDirection: dir.row }, mirrored ? styles.rowMirrored : null]}
       style={[styles.scroller, rr.scroller]}
     >
       {/* Each chip reaches half the gap to the next, and vertically as far as the row's room (the group's row gap is twice it). */}
@@ -96,6 +97,7 @@ export function Chips<T extends string>({
 const styles = StyleSheet.create({
   scroller: { flexGrow: 0, marginHorizontal: -layout.gutter },
   row: { gap: spacing.sm, alignItems: 'center', paddingHorizontal: layout.gutter },
+  rowMirrored: { flexGrow: 1 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

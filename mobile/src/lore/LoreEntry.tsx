@@ -8,11 +8,11 @@ import { Icon, type IconName } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { PROVERBS_NAME, RIDDLES_NAME, besideName } from './labels';
+import { PROVERBS_NAME, RIDDLES_NAME, collectionName } from './labels';
 
 /**
  * The library's two companions at the top of the Stories shelves: the riddles (Metelok) and the proverbs (Gotinên
- * pêşiyan), each by its Kurmancî name with the reader's word under it, in one calm row rather than a new tab.
+ * pêşiyan), each by its Kurdish name with the reader's word under it, in one calm row rather than a new tab.
  */
 export function LoreEntry(): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -28,13 +28,14 @@ export function LoreEntry(): React.JSX.Element {
 
 function Shelf({ icon, kurmanci, localized, onPress, testID }: { icon: IconName; kurmanci: string; localized: string; onPress: () => void; testID: string }): React.JSX.Element {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const dir = useDirection();
-  const beside = besideName(kurmanci, localized);
+  const { name, beside, lang } = collectionName(kurmanci, localized, locale);
   return (
     <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={beside ? `${kurmanci}, ${beside}` : kurmanci}
+      accessibilityLabel={beside ? `${name}, ${beside}` : name}
       style={[styles.shelf, { backgroundColor: colors.surface }]}
       testID={testID}
     >
@@ -44,8 +45,8 @@ function Shelf({ icon, kurmanci, localized, onPress, testID }: { icon: IconName;
         </View>
         <Icon name="chevron-right" size={14} color={colors.textSecondary} style={dir.flip ?? undefined} />
       </View>
-      <Text style={[styles.name, dir.text, { color: colors.textPrimary }]} accessibilityLanguage="ku" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
-        {kurmanci}
+      <Text style={[styles.name, dir.text, { color: colors.textPrimary }]} accessibilityLanguage={lang} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+        {name}
       </Text>
       {beside ? (
         <Text style={[styles.beside, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>

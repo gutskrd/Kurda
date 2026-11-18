@@ -70,8 +70,9 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
         ref={scroller}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.row, { flexDirection: dir.row }]}
-        // Right to left, the first face is on the right: start the row there.
+        // Right to left, the first face is on the right: the row at least as wide as the screen, so a short one starts
+        // there too, and a long one scrolled to its start.
+        contentContainerStyle={[styles.row, { flexDirection: dir.row }, mirrored ? styles.rowMirrored : null]}
         onContentSizeChange={() => {
           if (mirrored) scroller.current?.scrollToEnd({ animated: false });
         }}
@@ -105,6 +106,7 @@ const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
   heading: { ...sectionLabel },
   row: { gap: spacing.md, paddingVertical: 2 },
+  rowMirrored: { flexGrow: 1 },
   friend: { width: 60, alignItems: 'center', gap: 4 },
   name: { fontSize: typography.sizes.xs, textAlign: 'center' },
   more: { fontSize: typography.sizes.sm },
