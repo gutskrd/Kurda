@@ -745,7 +745,6 @@ export const de: Catalogue = {
   'moderation.report': 'Melden',
   'moderation.blockWhoTitle': '{name} blockieren?',
   'moderation.blockNote': 'Diese Person kann dich nicht finden, dir nicht schreiben und dich nicht hinzufügen, und du siehst sie nirgends mehr. Sie erfährt nichts davon. Du kannst das in den Einstellungen rückgängig machen.',
-  'moderation.blocking': 'Wird blockiert…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'Du kannst gerade keine Nachrichten senden.',

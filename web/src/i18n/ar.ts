@@ -739,7 +739,6 @@ export const ar: Catalogue = {
   'moderation.report': 'إبلاغ',
   'moderation.blockWhoTitle': 'حظر {name}؟',
   'moderation.blockNote': 'لن يتمكن من العثور عليك أو مراسلتك أو إضافتك، ولن تراه في أي مكان. ولا يُبلَّغ بذلك. يمكنك التراجع عن هذا من الإعدادات.',
-  'moderation.blocking': 'جارٍ الحظر…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'لا يمكنك إرسال الرسائل الآن.',

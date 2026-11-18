@@ -743,7 +743,6 @@ export const es: Catalogue = {
   'moderation.report': 'Denunciar',
   'moderation.blockWhoTitle': '¿Bloquear a {name}?',
   'moderation.blockNote': 'No podrá encontrarte, escribirte ni añadirte, y tú no verás a esta persona en ningún sitio. No se le informa. Puedes deshacerlo en Ajustes.',
-  'moderation.blocking': 'Bloqueando…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'Ahora mismo no puedes enviar mensajes.',

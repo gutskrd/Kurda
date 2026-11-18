@@ -127,6 +127,27 @@ export const railEdits = {
         unread: { ...d.unread, requests: Math.max(0, d.unread.requests - 1) },
       };
     },
+  /** Blocked: gone from friends and requests, and from the request count if they had asked. */
+  personGone:
+    (userId: string): RailEdit =>
+    (d) => {
+      const asked = d.requests.some((r) => r.userId === userId && !r.answered);
+      if (!asked && !d.friends.some((f) => f.userId === userId) && !d.requests.some((r) => r.userId === userId)) return d;
+      return {
+        ...d,
+        friends: d.friends.filter((f) => f.userId !== userId),
+        requests: d.requests.filter((r) => r.userId !== userId),
+        unread: { ...d.unread, requests: asked ? Math.max(0, d.unread.requests - 1) : d.unread.requests },
+      };
+    },
+  /** Left: gone from the groups, its unread messages with it. */
+  groupGone:
+    (groupId: string): RailEdit =>
+    (d) => {
+      const group = d.groups.find((g) => g.id === groupId);
+      if (!group) return d;
+      return { ...d, groups: d.groups.filter((g) => g !== group), unread: { ...d.unread, groups: Math.max(0, d.unread.groups - group.unread) } };
+    },
   groupRead:
     (groupId: string): RailEdit =>
     (d) => {

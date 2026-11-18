@@ -352,6 +352,7 @@ export function DmThread({
         target={{ targetType: 'dm_message', targetId: reporting?.id ?? '' }}
         block={{ userId: otherId, name: otherName ?? t('chat.thisPerson') }}
         onBlocked={() => setBlockedHere(true)}
+        onBlockRefused={() => setBlockedHere(false)}
       />
       <Composer
         value={text}

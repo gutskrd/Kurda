@@ -744,7 +744,6 @@ export const fr: Catalogue = {
   'moderation.report': 'Signaler',
   'moderation.blockWhoTitle': 'Bloquer {name} ?',
   'moderation.blockNote': 'Cette personne ne pourra plus te trouver, t’écrire ni t’ajouter, et tu ne la verras plus nulle part. Elle n’en est pas informée. Tu peux annuler dans les Réglages.',
-  'moderation.blocking': 'Blocage…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'Tu ne peux pas envoyer de messages pour le moment.',

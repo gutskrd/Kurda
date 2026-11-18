@@ -751,7 +751,6 @@ export const ckb: Catalogue = {
   'moderation.report': 'ڕاپۆرت',
   'moderation.blockWhoTitle': '{name} بلۆک بکرێت؟',
   'moderation.blockNote': 'ناتوانێت بتدۆزێتەوە، نامەت بۆ بنێرێت یان زیادت بکات، و تۆش لە هیچ شوێنێک نایبینیت. پێی ناوترێت. لە ڕێکخستنەکاندا دەتوانیت هەڵیبوەشێنیتەوە.',
-  'moderation.blocking': 'بلۆک دەکرێت…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'ئێستا ناتوانیت نامە بنێریت.',

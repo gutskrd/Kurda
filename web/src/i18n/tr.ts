@@ -740,7 +740,6 @@ export const tr: Catalogue = {
   'moderation.report': 'Bildir',
   'moderation.blockWhoTitle': '{name} engellensin mi?',
   'moderation.blockNote': 'Seni bulamaz, sana mesaj gönderemez veya seni ekleyemez; sen de onu hiçbir yerde görmezsin. Kendisine bildirilmez. Bunu Ayarlar’dan geri alabilirsin.',
-  'moderation.blocking': 'Engelleniyor…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'Şu anda mesaj gönderemezsin.',

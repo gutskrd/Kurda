@@ -53,6 +53,8 @@ export function Friends(): React.JSX.Element {
   const [err, setErr] = useState<string | null>(null);
   const { adjust } = useRail();
   const sendShown = useOptimisticSend();
+  /** Friends blocked here, gone from the list before the server answers (reports/block.ts). */
+  const [blockedHere, setBlockedHere] = useState<ReadonlySet<string>>(() => new Set());
   /** Sent requests taken back here, gone from the list before the server answers. */
   const [withdrawn, setWithdrawn] = useState<ReadonlySet<string>>(() => new Set());
 
@@ -98,6 +100,7 @@ export function Friends(): React.JSX.Element {
   }
 
   const outgoing = (sent.data?.requests ?? []).filter((u) => !withdrawn.has(u.userId));
+  const yours = (friends.data?.friends ?? []).filter((u) => !blockedHere.has(u.userId));
 
   return (
     <div className="container container-narrow">
@@ -172,11 +175,11 @@ export function Friends(): React.JSX.Element {
           <FriendListSkeleton widths={[44, 36]} />
         ) : friends.error ? (
           <ErrorState message={friends.error} onRetry={friends.reload} />
-        ) : (friends.data?.friends.length ?? 0) === 0 ? (
+        ) : yours.length === 0 ? (
           <EmptyState title={t('friends.noneTitle')} message={t('friends.noneBody')} />
         ) : (
           <div className="post-list">
-            {friends.data!.friends.map((u) => (
+            {yours.map((u) => (
               <Row
                 key={u.userId}
                 user={u}
@@ -193,7 +196,14 @@ export function Friends(): React.JSX.Element {
                         title: t('friends.removeWho', { name: u.username }),
                         onConfirm: () => unfriend(u.userId),
                       }}
-                      onBlocked={friends.reload}
+                      onBlocked={() => setBlockedHere((s) => new Set(s).add(u.userId))}
+                      onBlockRefused={() =>
+                        setBlockedHere((s) => {
+                          const next = new Set(s);
+                          next.delete(u.userId);
+                          return next;
+                        })
+                      }
                     />
                   </>
                 }

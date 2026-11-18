@@ -805,7 +805,6 @@ export const en = {
   'moderation.report': 'Report',
   'moderation.blockWhoTitle': 'Block {name}?',
   'moderation.blockNote': 'They will not be able to find you, message you or add you, and you will not see them anywhere. They are not told. You can undo this in Settings.',
-  'moderation.blocking': 'Blocking…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'You can’t send messages right now.',

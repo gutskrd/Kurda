@@ -252,6 +252,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
             : undefined
         }
         onBlocked={() => setBlocked(true)}
+        onBlockRefused={() => setBlocked(false)}
       />
     ) : null;
   const place = country ? (countryName(country, locale) ?? country) : null;

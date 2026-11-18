@@ -745,7 +745,6 @@ export const nl: Catalogue = {
   'moderation.report': 'Melden',
   'moderation.blockWhoTitle': '{name} blokkeren?',
   'moderation.blockNote': 'Deze persoon kan je niet vinden, je geen bericht sturen en je niet toevoegen, en jij ziet deze persoon nergens meer. Die krijgt hier niets over te horen. Je kunt dit ongedaan maken in Instellingen.',
-  'moderation.blocking': 'Blokkeren…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'Je kunt nu geen berichten sturen.',

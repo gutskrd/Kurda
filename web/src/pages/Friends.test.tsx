@@ -229,6 +229,31 @@ describe('Friends', () => {
     await waitFor(() => expect(sent('POST', '/friends/u2/block')).toBe(true));
   });
 
+  it('takes a blocked friend off the list at once, and brings them back with a notice if the server refuses', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'POST' && url.endsWith('/friends/u2/block')) return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [{ userId: 'u2', username: 'zana', displayName: 'Zana' }] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Block' }));
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Block Zana' })).getByRole('button', { name: 'Block' }));
+    expect(screen.queryByRole('button', { name: 'Play with Zana' })).not.toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Play with Zana' })).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
+  });
+
   it('sends finding someone new to Search', async () => {
     vi.stubGlobal(
       'fetch',

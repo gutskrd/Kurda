@@ -747,7 +747,6 @@ export const ku: Catalogue = {
   'moderation.report': 'Ragihîne',
   'moderation.blockWhoTitle': '{name} asteng bikî?',
   'moderation.blockNote': 'Ew nikare te bibîne, peyamê ji te re bişîne an te lê zêde bike, û tu jî wî li tu derê nabînî. Jê re nayê gotin. Tu dikarî vê yekê di Mîhengan de vegerînî.',
-  'moderation.blocking': 'Tê astengkirin…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'Tu niha nikarî peyaman bişînî.',
