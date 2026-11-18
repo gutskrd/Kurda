@@ -1,30 +1,17 @@
 /**
- * Every game a player has finished, from the games' own tables — what the
- * rating box and the store prompt count (eligibility.ts).
- *
- * "Finished" is each game's own end, read where the game records it, never
- * the XP ledger (a game that paid nothing wrote nothing there):
- *   Peyvok, daily and practice    — won or lost, never left playing
- *   Rhyming Words (training)      — the round ended
- *   Typing Race                   — finished with something typed right.
- *                                   Giving up finishes a race too, and the
- *                                   server cannot tell the two apart later;
- *                                   but a race given up before a letter was
- *                                   typed right was never played (the apps
- *                                   do not show the box after a give-up)
+ * Every game a player has finished, read from each game's own table (never the XP ledger, since a game that paid
+ * nothing wrote nothing there), for the rating box and the store prompt:
+ *   Peyvok, daily and practice    — won or lost
+ *   Rhyming Words training        — the round ended
+ *   Typing Race                   — finished with something typed right; a race given up before that was never
+ *                                   played, and the apps show no box after a give-up
  *   Peyvok Battle                 — the player's own board finished
- *   Rhyme Match                   — the match finished with them in it,
- *                                   not left or taken out of it
- *   Stories (duo and group games) — the game finished with them in it, not
- *                                   left or taken out by the host; a solo
- *                                   quiz is a game too
- *   Multiplayer learning games    — the same, from the generic engine's
- *                                   tables; a game against Hevalo counts
+ *   Rhyme Match                   — finished with them in it, not left or removed
+ *   Stories (duo, group and solo) — finished with them in it, not left or removed by the host
+ *   Multiplayer learning games    — the same, from the engine's tables; games against Hevalo count
  *
- * Each source is one SELECT of (user_id, finished_at), so a new game is one
- * line here — on a table with an index that starts with user_id, because this
- * runs after every game (migration 156 added the two the multiplayer player
- * tables lacked; story_game_players has its own from migration 147).
+ * Each source is one SELECT of (user_id, finished_at) on a table with an index starting with user_id, because this
+ * runs after every game.
  */
 import type pg from 'pg';
 import { safeTimeZone } from '../streaks/streak-logic.js';
@@ -53,10 +40,8 @@ export interface FinishedGames {
 }
 
 /**
- * How many games a player has finished, and on how many days.
- *
- * The user filter is applied to the union as a whole; Postgres pushes it into
- * every branch, where each table's index on the player answers it.
+ * How many games a player has finished, and on how many days. The user filter on the union is pushed into every
+ * branch, where each table's player index answers it.
  */
 export async function countFinishedGames(
   executor: Pick<pg.Pool, 'query'>,
