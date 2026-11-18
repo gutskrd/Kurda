@@ -25,6 +25,7 @@ patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
   cleanup();
   resetCourseDialect();
+  localStorage.removeItem('kurda_locale_v1');
 });
 
 /** A message so many minutes before now, so "Today" is today whenever the test runs. */
@@ -107,6 +108,13 @@ describe('a conversation nobody has written in yet', () => {
     // The greeting is the conversation now: the welcome has made way for it.
     expect(await screen.findByText('Rojbaş!')).toBeTruthy();
     expect(screen.queryByText('This is the start of your conversation with rojda.')).toBeNull();
+  });
+
+  it('greets in Soranî for a reader of the Soranî interface, on any course', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    open({ 'GET /chat/u2/messages': ok({ messages: [] }) });
+    expect(await screen.findByRole('button', { name: 'سڵاو! 👋' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Rojbaş!' })).toBeNull();
   });
 });
 

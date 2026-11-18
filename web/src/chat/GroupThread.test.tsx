@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { GroupStanding } from '@kurda/shared';
@@ -160,6 +160,21 @@ describe('an empty group chat', () => {
     expect(chip).toHaveAttribute('lang', 'ckb');
     expect(chip).toHaveAttribute('dir', 'rtl');
     expect(screen.getByRole('button', { name: 'Send “چۆنی؟”' })).toBeInTheDocument();
+  });
+
+  it('greets in Sorani for a reader of the Sorani interface, whatever their course, and in Kurmanci for a Kurmanci one', async () => {
+    localStorage.setItem('hevalo.learn.courseDialect', 'kurmanci');
+    localStorage.setItem('hevalo_locale', 'ckb');
+    stubApi([history([]), group()]);
+    mount();
+    expect(await screen.findByText('سڵاو! 👋')).toHaveAttribute('dir', 'rtl');
+    cleanup();
+
+    localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
+    localStorage.setItem('hevalo_locale', 'ku');
+    stubApi([history([]), group()]);
+    mount();
+    expect(await screen.findByText('Silav! 👋')).toHaveAttribute('lang', 'ku');
   });
 
   it('says when you cleared it for yourself instead of the start', async () => {
