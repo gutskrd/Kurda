@@ -1,54 +1,24 @@
 /**
- * The XP rules, all in one place (contract 4 §L4): learning pays most, farming
- * pays less.
- *
- * Two numbers come out of every award. The XP *earned* (`amount` in the
- * ledger) is the learner's: it moves their level and their badges, and only
- * one rule here touches it — a lesson finished a third time in a day pays
- * nothing, which is the anti-farm rule Brilliant found works best. The XP
- * *counted* (`counted`) is what the weekly league and the weekly board rank by,
- * and it is where farming is made not to pay: game XP counts only up to 60 a
- * day across every game, and a day's XP past 300 counts at half, past 600 at a
- * fifth. Somebody who plays all evening still levels up; they just cannot buy
- * a promotion with it.
- *
- * Days here are UTC days, the same clock as the league week, so a day never
- * straddles two weeks.
+ * The XP rules: learning pays most, farming pays less. Every award yields two numbers. XP earned (`amount`) is the
+ * learner's, moving level and badges; only one rule touches it: a lesson finished a third time in a day pays nothing.
+ * XP counted (`counted`) is what the weekly league and board rank by, where farming is made not to pay: game XP counts
+ * only up to 60 a day across all games, and a day's XP past 300 counts at half, past 600 at a fifth. Days are UTC
+ * days, the league week's clock, so a day never straddles two weeks.
  */
 import { ACCURACY_BONUS_XP, BASE_LESSON_XP, LEARN_GAME_XP_SOURCES, REPEAT_XP_FACTOR, RIDDLE_XP_SOURCE } from '@kurda/shared';
 
 /** Learning: these join the week's league and build streaks (see `isLearningSource`). */
 export const LEARNING_XP_SOURCES = ['lesson_complete', 'practice_complete', 'story'] as const;
 /**
- * Games: rated or friendly — all of them share one daily league cap. The
- * learning games' sources come from their registry (`LEARN_GAME_XP_SOURCES`
- * in @kurda/shared), so a game added there is under the cap the day it is
- * added: a source missing from this list would escape it.
- *
- * Only a game played online with other people pays game XP now. A game played
- * alone pays none: Peyvok (`wordle`), rhyme training (`rhyme`), the typing
- * race (`race`), Memory Thief, Detective and The Last Letter against
- * Hevalo no longer write to the ledger, and neither does a game on one phone
- * passed round a room, which never did. Their sources stay in this list
- * because the ledger still holds what they paid while they did: that XP keeps
- * counting as game XP, under the cap, as it did the day it was earned. The
- * lessons' own exercises (Build a Sentence, Hear It, Find It) still
- * pay from game sources, and a solo round still counts for the streak and the
- * daily goal when at least half of it was right (games/rewards.ts).
- *
- * A riddle of the Stories solved by a guess, before its answer was shown,
- * pays a little once per riddle (`riddle`, lore/riddles.ts): it is thinking
- * in Kurdish, not a round tapped through, and it counts as game XP under the
- * same cap, so a day of riddles cannot climb the league either.
+ * Game XP sources, all sharing one daily league cap. The learning games' sources come from their registry
+ * (`LEARN_GAME_XP_SOURCES`), so a new game is capped from the day it is added. Only online games with other people pay
+ * game XP; solo games no longer write to the ledger, but their sources stay because the ledger still holds what they
+ * paid, which keeps counting under the cap. The lessons' own game exercises still pay from game sources. A riddle
+ * solved by guessing before a reveal pays a little once (`riddle`, lore/riddles.ts), under the same cap.
  */
 export const GAME_XP_SOURCES: readonly string[] = ['wordle', 'wordle_battle', 'rhyme', 'rhyme_match', 'race', RIDDLE_XP_SOURCE, ...LEARN_GAME_XP_SOURCES];
 
-/**
- * What a lesson pays — the base, the accuracy bonus on top of it, and the
- * share a repeat pays — lives in @kurda/shared, because the apps show it
- * before a lesson ("+10–20 XP" on a stop's card) and a copy kept here could
- * drift from what they promise.
- */
+/** What a lesson pays (base, accuracy bonus and repeat share) lives in @kurda/shared, since the apps show it before a lesson. */
 export { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR };
 /** Repeats of one lesson that still pay in a day; the next one pays nothing. */
 export const PAID_LESSON_REPEATS_PER_DAY = 2;
@@ -70,10 +40,7 @@ export function isGameSource(source: string): boolean {
   return (GAME_XP_SOURCES as readonly string[]).includes(source);
 }
 
-/**
- * Lesson-completion XP: base + accuracy bonus, decayed to a fraction when the
- * learner has completed this lesson before (KUR-030).
- */
+/** Lesson completion XP: base plus accuracy bonus, reduced for a lesson completed before. */
 export function lessonCompletionXp(accuracy: number, isRepeat: boolean): number {
   const clamped = Math.max(0, Math.min(1, accuracy));
   const base = BASE_LESSON_XP + Math.round(ACCURACY_BONUS_XP * clamped);
@@ -81,16 +48,13 @@ export function lessonCompletionXp(accuracy: number, isRepeat: boolean): number 
 }
 
 export interface LessonHistory {
-  /** completions of this lesson before this one, ever */
+  /** Completions of this lesson before this one, ever. */
   priorCompletions: number;
   /** …of which today (UTC) */
   priorCompletionsToday: number;
 }
 
-/**
- * Repeats of the lesson already finished today. When every earlier completion
- * was today, the first of them was the first time through, not a repeat.
- */
+/** Repeats of the lesson already finished today; when every earlier completion was today, the first was not a repeat. */
 export function repeatsToday(history: LessonHistory): number {
   const { priorCompletions, priorCompletionsToday } = history;
   if (priorCompletionsToday <= 0) return 0;
@@ -98,10 +62,8 @@ export function repeatsToday(history: LessonHistory): number {
 }
 
 /**
- * XP for finishing a lesson: full the first time, a quarter for a repeat, and
- * nothing for a third repeat in a day — practice and review still pay their own
- * amounts, so going over a lesson again is never the wrong thing to do, it just
- * stops being a way to climb.
+ * XP for finishing a lesson: full the first time, a quarter for a repeat, nothing for a third repeat in a day. Practice
+ * and review still pay their own amounts, so revisiting a lesson is never wrong; it just stops being a way to climb.
  */
 export function lessonXp(accuracy: number, history: LessonHistory): number {
   const isRepeat = history.priorCompletions > 0;
@@ -109,11 +71,7 @@ export function lessonXp(accuracy: number, history: LessonHistory): number {
   return lessonCompletionXp(accuracy, isRepeat);
 }
 
-/**
- * The counted value of a day's first `x` eligible XP: full to 300, half to
- * 600, a fifth after. Continuous, so splitting a day into more awards never
- * changes its total.
- */
+/** The counted value of a day's first `x` eligible XP: full to 300, half to 600, a fifth after; continuous, so splitting awards never changes the total. */
 export function countedCurve(x: number): number {
   const full = Math.min(Math.max(x, 0), FULL_RATE_XP);
   const half = Math.min(Math.max(x - FULL_RATE_XP, 0), HALF_RATE_XP - FULL_RATE_XP);
@@ -122,17 +80,15 @@ export function countedCurve(x: number): number {
 }
 
 export interface DayXp {
-  /** game XP earned earlier today (gross, positive awards only) */
+  /** Game XP earned earlier today (gross, positive awards only). */
   gameToday: number;
-  /** every other XP earned earlier today */
+  /** Every other XP earned earlier today. */
   otherToday: number;
 }
 
 /**
- * What an award counts for the league, given what was earned earlier the same
- * day. Game XP first meets its own cap; what is left, with everything else,
- * goes along the daily curve. Rounded down so the day's counted total is
- * exactly the curve's value at the day's eligible total, however it is split.
+ * What an award counts for the league, given the day's earlier XP: game XP first meets its cap, then everything goes
+ * along the daily curve. Rounded down so the day's counted total equals the curve at its eligible total.
  */
 export function countedXp(source: string, amount: number, day: DayXp): number {
   if (!Number.isFinite(amount) || amount <= 0) return 0;
@@ -144,7 +100,7 @@ export function countedXp(source: string, amount: number, day: DayXp): number {
   return Math.floor(countedCurve(eligibleBefore + eligible)) - Math.floor(countedCurve(eligibleBefore));
 }
 
-/** SQL: the counted XP of ledger row `alias` (a row from before `counted` counts as its positive amount). */
+/** SQL: the counted XP of ledger row `alias`; a row from before `counted` existed counts its positive amount. */
 export function countedXpSql(alias: string): string {
   return `COALESCE(${alias}.counted, GREATEST(${alias}.amount, 0))`;
 }
