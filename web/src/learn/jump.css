@@ -1,0 +1,32 @@
+/* A jump-ahead test that could not start, and its result (JumpTest.tsx, JumpResults.tsx): Hevalo, a heading, a line or two, the way on. */
+.jump-end {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  max-width: 440px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+.jump-end-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 1.3rem + 1vw, 2rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+/* the heading takes focus so it is read first; the focus is for screen readers, not a ring to see */
+.jump-end-title:focus {
+  outline: none;
+}
+.jump-end-line {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.jump-end-actions {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: var(--space-3);
+}

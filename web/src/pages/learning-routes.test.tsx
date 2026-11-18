@@ -613,13 +613,13 @@ describe('a course map', () => {
     expect(within(done).queryByText(/A1/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Topic a/ })).not.toBeInTheDocument();
 
-    // The shut one after it: what it is, how many chapters, what opens it; and it does not open.
+    // The shut one after it: what it is, how many chapters, what opens it; it does not open, but offers the test into it.
     const shut = screen.getByTestId('lp-section-3');
     expect(within(shut).getByText('Intermediate')).toBeInTheDocument();
     expect(within(shut).getByText('One chapter')).toBeInTheDocument();
     expect(within(shut).getByText('Opens when Section 2 is done')).toBeInTheDocument();
     expect(shut.tagName).not.toBe('BUTTON');
-    expect(within(shut).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(shut).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Jump ahead to Chapter 4: a short test opens it']);
 
     // Pressed, the finished one opens again, and the learner's own folds into a card that says they are there.
     expect(done).toHaveAccessibleName('Section 1, Starter, First words and short sentences, Section complete, One chapter');
@@ -629,6 +629,24 @@ describe('a course map', () => {
     expect(within(here).getByText('You are here · 0 of 2 chapters done')).toBeInTheDocument();
     await userEvent.click(here);
     expect(screen.getByRole('button', { name: /^Topic d, You are here/ })).toBeInTheDocument();
+  });
+
+  it('offers a test into a later chapter on its first stop and on its section’s card, saying what the test is', async () => {
+    serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+
+    // Chapter 3's first stop, in the open section, is the offer rather than its card.
+    await userEvent.click(await screen.findByRole('button', { name: 'Jump ahead to Chapter 3: a short test opens it' }));
+    const offer = screen.getByRole('dialog', { name: 'Jump to Chapter 3?' });
+    expect(within(offer).getByText('Chapter 3 · House')).toBeInTheDocument();
+    expect(within(offer).getByText('About 10 questions')).toBeInTheDocument();
+    expect(within(offer).getByText('Passed with 2 mistakes or fewer')).toBeInTheDocument();
+    expect(within(offer).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r3');
+    await userEvent.keyboard('{Escape}');
+
+    // The shut section after it offers its own first chapter.
+    await userEvent.click(within(screen.getByTestId('lp-section-3')).getByRole('button', { name: 'Jump ahead to Chapter 4: a short test opens it' }));
+    expect(within(screen.getByRole('dialog', { name: 'Jump to Chapter 4?' })).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r4');
   });
 
   it('rings each topic with a piece for each lesson, stands a star on its coin for each round, and says the round in its card', async () => {

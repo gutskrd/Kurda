@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { levelHintKey, levelNameKey, levelOfCefr, type PathSection, type PathUnit } from '@kurda/shared';
-import { BookIcon, CheckIcon, FlagIcon, LockIcon } from '../components/icons';
+import { Button } from '../components/Button';
+import { BookIcon, CheckIcon, FlagIcon, LockIcon, NextIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import type { SkillNode } from './types';
@@ -112,9 +113,10 @@ export function UnitDivider({ unit, id }: { unit: Unit; id: string }): React.JSX
 
 /**
  * A closed section as one card: its number, level name and hint, and where it stands (done, how far through, or shut
- * with its chapter count and what opens it). Done or begun sections open on a press; a shut one stays shut.
+ * with its chapter count and what opens it). Done or begun sections open on a press; a shut one stays shut, offering the
+ * test that jumps into it where there is one (`onJump`).
  */
-export function SectionCard({ section, here, onOpen }: { section: Section; here: boolean; onOpen: () => void }): React.JSX.Element {
+export function SectionCard({ section, here, onOpen, onJump }: { section: Section; here: boolean; onOpen: () => void; onJump?: () => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const n = (v: number): string => new Intl.NumberFormat(locale).format(v);
@@ -152,6 +154,19 @@ export function SectionCard({ section, here, onOpen }: { section: Section; here:
       <div className="lp-scard is-locked" data-section={section.key} data-testid={`lp-section-${section.number}`}>
         {badge}
         {words}
+        {onJump && (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="lp-scard-jump"
+            aria-label={t('coursemap.jump.label', { n: n(section.jumpTo?.number ?? section.units[0]!.number) })}
+            aria-haspopup="dialog"
+            onClick={onJump}
+          >
+            <NextIcon size={16} />
+            {t('coursemap.jump.bubble')}
+          </Button>
+        )}
       </div>
     );
   }
