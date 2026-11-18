@@ -7,7 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
-import { describeError, isMaintenance } from '../api/errors';
+import { describeError, isMaintenance, notReached } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
@@ -21,7 +21,7 @@ import { useBlock } from '../social/blocks';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { MessageField } from './SendButton';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -29,6 +29,7 @@ import { DmWelcome } from './DmWelcome';
 import { MessageRow, type RowMessage } from './MessageRow';
 import { JumpToLatest, useAwayFromLatest, useUnseenBelow } from './ThreadParts';
 import { TypingBubble } from './TypingBubble';
+import { useTypingSignal, useTypingWatch } from './typing';
 import { placeMessages } from './thread';
 import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
@@ -52,8 +53,10 @@ const ONLINE_DOT = 10;
  * A one-to-one conversation, drawn as it is read (chat/MessageRow.tsx, chat/thread.ts), with a typing bubble, a
  * back-to-newest button counting new messages, and a suggested first hello when empty. Messages render by kind
  * (chat/MessageContent); the composer's gift button sends a gift, and `openGift` unwraps one on open. Holding
- * their message reports it. Sends show at once as pending (chat/sending.ts); a refused one is removed, its text
- * restored and the reason shown. A failed load shows a retry rather than an empty thread.
+ * their message reports it. Your messages say whether they were sent, delivered or read, as on the website. Sends show
+ * at once as pending (chat/sending.ts): one the server was not reached for stays as "Not sent" with Try again and
+ * Cancel; a refused one is removed, its text restored and the reason shown. A failed load shows a retry rather than
+ * an empty thread.
  */
 export function ChatScreen({
   userId,
@@ -84,7 +87,6 @@ export function ChatScreen({
   // The conversation failed to load: say so with a retry rather than looking like one nobody has written in.
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [peerTyping, setPeerTyping] = useState(false);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [picking, setPicking] = useState(false);
   const [flying, setFlying] = useState<{ tier: GiftTier; key: number } | null>(null);
@@ -96,8 +98,8 @@ export function ChatScreen({
   const [other, setOther] = useState<{ avatarUrl: string | null; online: boolean } | null>(null);
   const list = useRef<FlatList<ShownMessage>>(null);
   const { away, onScroll } = useAwayFromLatest();
-  const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const lastTypingSent = useRef(0);
+  const { typing, note: noteTyping } = useTypingWatch();
+  const signalTyping = useTypingSignal(useCallback(() => void client.post(`/chat/${userId}/typing`), [client, userId]));
   // The gift the entry point asked for, once unwrapped, by id, so a second banner for this chat (with a new gift)
   // unwraps that one too.
   const autoOpened = useRef<string | null>(null);
@@ -108,10 +110,13 @@ export function ChatScreen({
   // The gift picker's one friend, the same array until the friend changes.
   const giftFriends = useMemo(() => [{ userId, name }], [userId, name]);
   // The messages sent from here that the server has not answered for yet.
-  const { outgoing, begin, settle, keyOf } = useOutgoing();
-  // The thread as it is read, oldest first, with what is still on its way after what the server has.
+  const { outgoing, begin, settle, keyOf, hold, resend, discard } = useOutgoing();
+  // The thread as it is read, oldest first, with what is still on its way, or did not go, after what the server has.
   const thread = useMemo<ShownMessage[]>(
-    () => [...messages, ...outgoing.map((m): ShownMessage => ({ ...m, senderId: me, kind: 'text', gift: null, game: null, pending: true }))],
+    () => [
+      ...messages,
+      ...outgoing.map((m): ShownMessage => ({ ...m, senderId: me, kind: 'text', gift: null, game: null, pending: m.failed ? 'failed' : 'sending' })),
+    ],
     [messages, outgoing, me],
   );
   // Newest first, for the inverted list below — once per change to the thread, not per keystroke.
@@ -175,15 +180,15 @@ export function ChatScreen({
         if (ev.type === 'dm' && ev.from === userId && ev.message) {
           setMessages((prev) => appendOnce(prev, ev.message as ChatMessage));
           markRead();
-        } else if (ev.type === 'dm_read' && ev.by === userId) {
-          setMessages((prev) => prev.map((m) => (m.senderId === me ? { ...m, readAt: new Date().toISOString() } : m)));
+        } else if ((ev.type === 'dm_read' || ev.type === 'dm_delivered') && ev.by === userId) {
+          const field = ev.type === 'dm_read' ? 'readAt' : 'deliveredAt';
+          const now = new Date().toISOString();
+          setMessages((prev) => prev.map((m) => (m.senderId === me && !m[field] ? { ...m, [field]: now } : m)));
         } else if (ev.type === 'dm_typing' && ev.from === userId) {
-          setPeerTyping(true);
-          if (typingTimer.current) clearTimeout(typingTimer.current);
-          typingTimer.current = setTimeout(() => setPeerTyping(false), 3000);
+          noteTyping(name);
         }
       },
-      [userId, me, markRead],
+      [userId, me, markRead, noteTyping, name],
     ),
   );
 
@@ -222,25 +227,29 @@ export function ChatScreen({
   const onType = (text: string) => {
     setDraft(text);
     setSendError(null);
-    const now = Date.now();
-    if (now - lastTypingSent.current > 2000) {
-      lastTypingSent.current = now;
-      void client.post(`/chat/${userId}/typing`);
-    }
+    signalTyping();
   };
 
-  /** Send words into the thread: null when they went, else the refusal, for whoever asked to say. */
+  /**
+   * Send words into the thread: null when they went, or when the server was not reached and they wait in the thread
+   * as not sent; else the refusal, for whoever asked to say. `again` is a not-sent message being tried again.
+   */
   const post = useCallback(
-    async (body: string): Promise<ApiError | null> => {
+    async (body: string, again?: string): Promise<ApiError | null> => {
       // In the thread at once, as one on its way; the server's copy takes its place, or it is taken out.
-      const sending = begin(body);
+      const sending = again ?? begin(body);
       const res = await client.post<ChatMessage>(`/chat/${userId}/messages`, { body });
+      if (!res.ok && notReached(res.error)) {
+        hold(sending);
+        haptic('error');
+        return null;
+      }
       settle(sending, res.ok ? res.data.id : undefined);
       if (!res.ok) return res.error;
       setMessages((prev) => appendOnce(prev, res.data));
       return null;
     },
-    [client, userId, begin, settle],
+    [client, userId, begin, settle, hold],
   );
 
   // The person, not one message: their profile, a report, or a block.
@@ -289,6 +298,30 @@ export function ChatScreen({
     setDraft((now) => restoredDraft(body, now));
   }, [draft, post, toLatest]);
 
+  /** Try again: the not-sent message goes once more; refused this time, its words come back as a fresh send's do. */
+  const retry = useCallback(
+    async (id: string) => {
+      const body = resend(id);
+      if (!body) return;
+      setSendError(null);
+      const refused = await post(body, id);
+      if (!refused) return;
+      haptic('error');
+      setSendError(refused);
+      setDraft((now) => restoredDraft(body, now));
+    },
+    [post, resend],
+  );
+
+  /** Cancel: the not-sent message leaves the thread, its words back in the field unless something is typed there. */
+  const cancel = useCallback(
+    (id: string) => {
+      const words = discard(id);
+      if (words) setDraft((now) => now || words);
+    },
+    [discard],
+  );
+
   /** A greeting from the welcome, sent as it is: the first message of the conversation. */
   const greet = useCallback(
     async (greeting: string) => {
@@ -313,7 +346,7 @@ export function ChatScreen({
           title={name}
           titleAvatar={
             <View>
-              <InitialsAvatar name={name} id={userId} size={HEADER_FACE} photoUrl={face} />
+              <Avatar name={name} size={HEADER_FACE} photoUrl={face} />
               {/* Online now: a green dot on the face, ringed in the page colour so it reads on any picture. */}
               {other?.online ? <View style={[styles.online, { backgroundColor: colors.success, borderColor: colors.background }]} testID="header-online" /> : null}
             </View>
@@ -336,7 +369,8 @@ export function ChatScreen({
         ) : thread.length === 0 ? (
           // Nothing said yet: who it is with, and a first hello to send.
           <ScrollView contentContainerStyle={styles.welcome} keyboardShouldPersistTaps="handled">
-            <DmWelcome userId={userId} name={name} photoUrl={face} onGreet={(greeting) => void greet(greeting)} />
+            <DmWelcome name={name} photoUrl={face} onGreet={(greeting) => void greet(greeting)} />
+            <TypingBubble names={typing} face={{ id: userId, name, photoUrl: face }} />
           </ScrollView>
         ) : (
           <View style={styles.flex}>
@@ -350,7 +384,7 @@ export function ChatScreen({
               onScroll={onScroll}
               scrollEventThrottle={64}
               // Under the newest message, where theirs is about to land (an inverted list's header is its foot).
-              ListHeaderComponent={<TypingBubble names={peerTyping ? [name] : []} face={{ id: userId, name, photoUrl: face }} />}
+              ListHeaderComponent={<TypingBubble names={typing} face={{ id: userId, name, photoUrl: face }} />}
               renderItem={({ item }) => {
                 const mine = item.senderId === me;
                 return (
@@ -359,10 +393,12 @@ export function ChatScreen({
                     mine={mine}
                     place={places.get(item.id) ?? LONE}
                     senderName={item.username || name}
-                    receipt={mine && item.readAt ? t('chat.receipt.read') : null}
+                    receipt={mine && !item.pending ? t(item.readAt ? 'chat.receipt.read' : item.deliveredAt ? 'chat.receipt.delivered' : 'chat.receipt.sent') : null}
                     onOpenGift={startUnwrap}
                     // The controls inside a message (a gift, an invite link) report it too.
                     onReport={mine ? undefined : () => setReporting(item.id)}
+                    onRetry={() => void retry(item.id)}
+                    onDiscard={() => cancel(item.id)}
                   />
                 );
               }}

@@ -21,11 +21,11 @@ import { useDirection } from '../reports/direction';
 import { Ticket, TicketStamp, useChangedSinceMount } from './Ticket';
 import { Loading } from '../theme/Loading';
 
-/** A card's state in words: "Open · 2 of 4 joined", "Under way", and so on. */
+/** A card's state in words: "2 of 4 joined", "Under way", and so on. */
 function cardStateText(card: LobbyCard, t: Translate): string {
   switch (card.status) {
     case 'open':
-      return t('play.card.open', { players: card.players, max: card.maxPlayers });
+      return t('play.card.joined', { count: card.players, max: card.maxPlayers });
     case 'full':
       return t('play.card.full');
     case 'started':
@@ -43,11 +43,11 @@ function cardStateText(card: LobbyCard, t: Translate): string {
  * The stamp a card's ticket wears: "You're in" while the viewer is in a game still on, how it ended once over, and
  * nothing while simply open. A game that is over is spent (greyed and punched), as is one this viewer may not see.
  */
-export function cardStamp(card: LobbyCard | null): { key: 'play.card.joined' | 'play.card.finished' | 'play.card.cancelled'; tone: 'success' | 'muted' } | null {
+export function cardStamp(card: LobbyCard | null): { key: 'play.ticket.joined' | 'play.card.finished' | 'play.card.cancelled'; tone: 'success' | 'muted' } | null {
   if (!card) return null;
   if (card.status === 'finished') return { key: 'play.card.finished', tone: 'muted' };
   if (card.status === 'cancelled') return { key: 'play.card.cancelled', tone: 'muted' };
-  if (card.isMember && card.status !== 'unavailable') return { key: 'play.card.joined', tone: 'success' };
+  if (card.isMember && card.status !== 'unavailable') return { key: 'play.ticket.joined', tone: 'success' };
   return null;
 }
 
@@ -162,7 +162,7 @@ export function ChatGameCard({
   const details = card ? summaryParts(card.summary, t).join(' · ') : '';
   const state = card ? cardStateText(card, t) : '';
   const offer = cardAction(card);
-  const action = offer ? (offer.kind === 'enter' ? t('play.card.enter') : t('play.card.join')) : null;
+  const action = offer ? (offer.kind === 'enter' ? t('play.card.open') : t('play.card.join')) : null;
 
   const stamp = cardStamp(card);
   const spent = cardSpent(card);

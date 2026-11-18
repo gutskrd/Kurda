@@ -9,7 +9,7 @@ import { TrophyIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard, useReveal } from '../components/WordleBoard';
 import { WordAnswer, type WordMeanings } from '../components/WordAnswer';
 import { useWordleKeys } from '../keyboard/wordleKeys';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
@@ -59,6 +59,56 @@ function writeChoice(choice: { mode: Mode; difficulty: Difficulty }): void {
   } catch {
     // Storage blocked: the choice lasts for this visit.
   }
+}
+
+/** GET /wordle/stats: the player's games alone, daily and practice together. */
+interface WordleStats {
+  played: number;
+  winPercentage: number;
+  currentStreak: number;
+  longestStreak: number;
+  /** Guesses per win; 0 before the first win. */
+  averageGuesses: number;
+}
+
+/** The figures under a result, side by side as a profile's are: each label first in the markup, its figure first on screen. */
+function WordleStatsRow({ stats }: { stats: WordleStats }): React.JSX.Element {
+  const t = useT();
+  const locale = useLocale();
+  const whole = new Intl.NumberFormat(locale);
+  const average = stats.averageGuesses > 0 ? new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(stats.averageGuesses) : '—';
+  const figures: Array<{ key: string; label: React.ReactNode; value: string }> = [
+    { key: 'played', label: t('games.wordle.stat.played'), value: whole.format(stats.played) },
+    { key: 'win', label: t('games.wordle.stat.winPct'), value: whole.format(stats.winPercentage) },
+    { key: 'streak', label: t('games.wordle.stat.streak'), value: whole.format(stats.currentStreak) },
+    { key: 'best', label: t('games.wordle.stat.best'), value: whole.format(stats.longestStreak) },
+    {
+      key: 'average',
+      // The short label is for the eye; a screen reader hears it in full.
+      label: (
+        <>
+          <span aria-hidden="true">{t('games.wordle.stat.average')}</span>
+          <span className="sr-only">{t('games.wordle.stat.averageLabel')}</span>
+        </>
+      ),
+      value: average,
+    },
+  ];
+  return (
+    <section className="wordle-stats" aria-labelledby="wordle-stats-title">
+      <h2 className="wordle-stats-title" id="wordle-stats-title">
+        {t('games.wordle.statistics')}
+      </h2>
+      <dl className="wordle-stats-row">
+        {figures.map((f) => (
+          <div key={f.key} className="wordle-stat">
+            <dt>{f.label}</dt>
+            <dd>{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
 }
 
 /** A server refusal in the reader's language. */
@@ -134,6 +184,22 @@ export function Wordle(): React.JSX.Element {
   const playing = game?.status === 'playing';
   // The rating box hears of a game played to its end here, not a daily reopened.
   useGameFinished('wordle', game?.id ?? null, game !== null && !playing);
+
+  // The figures are read whenever a result shows, so they count the game just finished; those read for an earlier game
+  // are not shown under this one.
+  const [stats, setStats] = useState<{ gameId: string; figures: WordleStats } | null>(null);
+  const finishedId = game && !playing ? game.id : null;
+  useEffect(() => {
+    if (!finishedId) return;
+    let live = true;
+    void client.get<WordleStats>('/wordle/stats').then((res) => {
+      if (live && res.ok) setStats({ gameId: finishedId, figures: res.data });
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, finishedId]);
+  const shownStats = stats && stats.gameId === finishedId && stats.figures.played > 0 ? stats.figures : null;
 
   const submit = useCallback(async () => {
     if (!game || !playing || submitting) return;
@@ -252,6 +318,7 @@ export function Wordle(): React.JSX.Element {
                 <p className="muted">{t('games.wordle.comeBackTomorrow')}</p>
               )}
               <ShareWin text={wordGameShare(game, { practice: t('games.wordle.practice'), difficulty: t(DIFFICULTY_KEY[game.difficulty]) })} />
+              {shownStats && <WordleStatsRow stats={shownStats} />}
             </div>
           )}
           <WordleKeyboard keyboard={game.keyboard} onPress={press} disabled={!playing} />

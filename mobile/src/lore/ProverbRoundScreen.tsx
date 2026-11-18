@@ -30,7 +30,7 @@ import { Tile, TileButton, type TileState } from '../theme/Tile';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { answerProverbRound, finishProverbRound, getProverbRound, openProverbRound, startProverbRound, type ProverbRoundResult, type ProverbRoundView } from './api';
-import { PROVERBS_NAME, centred, kurdishIn, textIn } from './labels';
+import { PROVERBS_NAME, centred, collectionName, kurdishIn, textIn } from './labels';
 import { dialectNameKey } from '../i18n/dialectName';
 
 const MODE_KEY: Record<ProverbRoundMode, { name: TranslationKey; line: TranslationKey; ask: TranslationKey }> = {
@@ -55,8 +55,10 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
+  // The collection's name, which Soranî readers get in Soranî.
+  const proverbs = collectionName(PROVERBS_NAME, t('lore.proverbs.name'), locale);
   const [phase, setPhase] = useState<Phase>('intro');
   const [mode, setMode] = useState<ProverbRoundMode>(asked ?? 'meaning');
   const [open, setOpen] = useState<string | null>(null);
@@ -192,7 +194,7 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
         ) : (
           <Text style={[...text, styles.honest]}>{t('games.solo.results.notCounted', { needed: results.needed, correct: results.firstTry })}</Text>
         )}
-        <Text style={muted}>{t('games.noXpAlone')}</Text>
+        <Text style={muted}>{t('lore.round.noXp')}</Text>
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
         <View style={styles.actions}>
           <TileButton label={t('games.solo.playAgain')} onPress={() => void start()} busy={busy} />
@@ -227,11 +229,11 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
   } else {
     body = (
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.kicker, ...muted]} accessibilityLanguage="ku">
-          {PROVERBS_NAME}
+        <Text style={[styles.kicker, ...muted]} accessibilityLanguage={proverbs.lang}>
+          {proverbs.name}
         </Text>
         <Text style={[styles.title, ...text]} accessibilityRole="header">
-          {t('lore.round.play')}
+          {t('lore.round.title')}
         </Text>
         <Text style={[...text, styles.blurb]}>{t('lore.round.blurb')}</Text>
         <Text style={muted}>{variety}</Text>
@@ -268,7 +270,7 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
         </View>
         {open ? <TileButton label={t('games.solo.continue')} onPress={() => void resume()} busy={busy} tone="success" /> : null}
         <TileButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} testID="proverb-round-start" />
-        <Text style={muted}>{t('games.noXpAlone')}</Text>
+        <Text style={muted}>{t('lore.round.noXp')}</Text>
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
       </ScrollView>
     );

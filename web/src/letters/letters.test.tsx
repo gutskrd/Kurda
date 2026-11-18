@@ -346,7 +346,7 @@ describe('letters by bird', () => {
   it('asks for a birth month before anybody can write', async () => {
     signIn({ 'GET /letters': home({ refusal: 'birth_month' }) });
     renderApp(<LettersPage />, ['/app/letters']);
-    expect(await screen.findByRole('link', { name: 'Add your birth month' })).toHaveAttribute('href', '/app/settings');
+    expect(await screen.findByRole('link', { name: 'Add your birth month' })).toHaveAttribute('href', '/app/settings/birth-month');
     expect(screen.queryByRole('button', { name: 'Write a letter' })).toBeNull();
   });
 

@@ -80,9 +80,9 @@ describe('old addresses', () => {
     for (const path of ['app/learn/practice/build-sentence', '/app/learn/practice/hear-it']) expect(legacyTabPath(path), path).toBe(path);
   });
 
-  it('opens Learn’s games for a game’s invite link, where the code is typed or pasted', () => {
-    expect(legacyTabPath('join/impostor/KVXV5E?from=0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f')).toBe('learn?view=games');
-    expect(legacyTabPath('/join/peyvok-battle/ABC234')).toBe('/learn?view=games');
+  it('opens Join with a code on Learn’s games for a game’s invite link, with the code filled in', () => {
+    expect(legacyTabPath('join/impostor/KVXV5E?from=0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f')).toBe('learn?view=games&code=KVXV5E');
+    expect(legacyTabPath('/join/peyvok-battle/abc234')).toBe('/learn?view=games&code=ABC234');
     // Only the link's own shape: anything longer is left for the navigator to refuse.
     expect(legacyTabPath('join/impostor/KVXV5E/more')).toBe('join/impostor/KVXV5E/more');
   });
@@ -112,17 +112,24 @@ describe('old addresses', () => {
     }
   });
 
-  /*
-   * The website's Learn addresses, as copied from a browser. Its old /app/stories is the community wall, so it is left
-   * alone.
-   */
+  /* The website's Learn addresses, as copied from a browser. */
   it('opens the website’s Learn addresses on the tab, its views and the reader', () => {
     expect(legacyTabPath('app/learn')).toBe('learn');
     expect(legacyTabPath('/app/learn/stories')).toBe('/learn?view=stories');
     expect(legacyTabPath('app/learn/stories?from=share')).toBe('learn?view=stories&from=share');
     expect(legacyTabPath('app/learn/games')).toBe('learn?view=games');
     expect(legacyTabPath('/app/learn/stories/nane-germ')).toBe('/app/games/stories/nane-germ');
-    expect(legacyTabPath('app/stories?section=poems')).toBe('app/stories?section=poems');
+  });
+
+  it('opens Home for the website’s wall, keeping its filter, and its three old walls on their kinds', () => {
+    expect(legacyTabPath('/app')).toBe('/home');
+    expect(legacyTabPath('app?section=dimen&kind=mim')).toBe('home?section=dimen&kind=mim');
+    expect(legacyTabPath('/app/civak?section=gotin')).toBe('/home?section=gotin');
+    expect(legacyTabPath('app/stories')).toBe('home?section=gotin&kind=cirok');
+    expect(legacyTabPath('/app/poems')).toBe('/home?section=gotin&kind=helbest');
+    expect(legacyTabPath('app/dimen')).toBe('home?section=dimen');
+    // A picture post keeps its own page.
+    expect(legacyTabPath('app/dimen/p1')).toBe('app/dimen/p1');
   });
 
   it('knows the three groups of Learn, in order, and nothing else', () => {

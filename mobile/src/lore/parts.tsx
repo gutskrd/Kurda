@@ -11,7 +11,7 @@ import { heldDim } from '../theme/MotionParts';
 import { Pressable } from '../theme/Pressable';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { besideName, textIn } from './labels';
+import { collectionName, textIn } from './labels';
 import { openableSourceUrl } from './sourceLink';
 import { dialectNameKey } from '../i18n/dialectName';
 
@@ -20,16 +20,17 @@ import { dialectNameKey } from '../i18n/dialectName';
  * translation set in its own language, and the list of sources.
  */
 
-/** "Metelok · Riddles": the Kurmancî name in the display face, the reader's own word after it. */
+/** "Metelok · Riddles": the Kurdish name in the display face, the reader's own word after it (`collectionName`). */
 export function CollectionTitle({ kurmanci, localized, line }: { kurmanci: string; localized: string; line?: string | null }): React.JSX.Element {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const dir = useDirection();
-  const beside = besideName(kurmanci, localized);
+  const { name, beside, lang } = collectionName(kurmanci, localized, locale);
   return (
-    <View style={styles.title} accessible accessibilityRole="header" accessibilityLabel={beside ? `${kurmanci}, ${beside}` : kurmanci}>
+    <View style={styles.title} accessible accessibilityRole="header" accessibilityLabel={beside ? `${name}, ${beside}` : name}>
       <View style={[styles.titleRow, { flexDirection: dir.row }]}>
-        <Text style={[styles.titleKu, { color: colors.textPrimary }]} accessibilityLanguage="ku">
-          {kurmanci}
+        <Text style={[styles.titleKu, { color: colors.textPrimary }]} accessibilityLanguage={lang}>
+          {name}
         </Text>
         {beside ? <Text style={[styles.titleBeside, dir.text, { color: colors.textSecondary }]}>{beside}</Text> : null}
       </View>

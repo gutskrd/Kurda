@@ -191,7 +191,7 @@ function Round({ dialect }: { dialect: GameDialect }): React.JSX.Element {
           ) : (
             <li className="solo-honest">{t('games.solo.results.notCounted', { needed: results.needed, correct: results.firstTry })}</li>
           )}
-          <li className="solo-muted">{t('games.noXpAlone')}</li>
+          <li className="solo-muted">{t('lore.round.noXp')}</li>
         </ul>
         {corrections.length > 0 && <MetInRound corrections={corrections} dialect={dialect} />}
         {error && <p className="field-error">{error}</p>}

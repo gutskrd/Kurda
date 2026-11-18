@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useScrollToTop } from '@react-navigation/native';
 import { StyleSheet, View, type ScrollView } from 'react-native';
 import { GradientBackground, Segmented } from '../theme/glass';
@@ -14,6 +14,7 @@ import { LessonsView } from './LessonsView';
 import { GamesView } from './GamesView';
 import { useLearnView } from './useLearnView';
 import { LearnBar } from './LearnBar';
+import { onDailyClaimed } from '../rewards/daily';
 
 /** The three groups, in the order the switch shows them: Lessons · Stories · Games. */
 export const VIEWS: readonly LearnView[] = LEARN_VIEWS;
@@ -30,9 +31,19 @@ const VIEW_LABEL: Record<LearnView, TranslationKey> = {
  * (theme/SwipePager), so a swipe or a tap turns between them, and each keeps its place.
  *
  * `view` is what a link asked for (`hevalo://play` asks for Games); `onViewShown` clears it so the same link
- * works again.
+ * works again. `code` is an invite link's join code, which Games opens Join with a code with; `onCodeShown` clears it.
  */
-export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView; onViewShown?: () => void }): React.JSX.Element {
+export function LearnScreen({
+  view: requested,
+  onViewShown,
+  code,
+  onCodeShown,
+}: {
+  view?: LearnView;
+  onViewShown?: () => void;
+  code?: string;
+  onCodeShown?: () => void;
+}): React.JSX.Element {
   const { t } = useI18n();
   const [view, setView] = useLearnView(requested, onViewShown);
 
@@ -59,6 +70,8 @@ export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView
   const [streak, setStreak] = useState<Streak | null>(null);
   const [barKey, setBarKey] = useState(0);
   const reloadBar = useCallback(() => setBarKey((k) => k + 1), []);
+  // Today's Zêr is claimed on Home; the purse here shows it when Learn is next in view.
+  useEffect(() => onDailyClaimed(reloadBar), [reloadBar]);
 
   return (
     <GradientBackground>
@@ -74,7 +87,7 @@ export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView
         testID="learn-pages"
         renderPage={(page) =>
           page === 'games' ? (
-            <GamesView scrollRef={gamesRef} />
+            <GamesView scrollRef={gamesRef} code={code} onCodeShown={onCodeShown} />
           ) : page === 'stories' ? (
             <StoriesView scrollRef={storiesRef} inTab />
           ) : (

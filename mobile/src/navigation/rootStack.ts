@@ -5,10 +5,13 @@ import type { AlphabetScript, GameDialect, PracticeMode, ProverbRoundMode, Ranke
 import type { LearnView } from './tabs';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 
-/** The four tabs and their params. Learn takes the view to open on, so `hevalo://play` lands on Games. */
+/**
+ * The four tabs and their params. Home takes the half and kind of the wall to open on (a link, or the menu); Learn
+ * takes the view to open on, so `hevalo://play` lands on Games, and an invite link's `code` for Join with a code.
+ */
 export type TabParamList = {
-  Home: undefined;
-  Learn: { view?: LearnView } | undefined;
+  Home: { section?: string; kind?: string } | undefined;
+  Learn: { view?: LearnView; code?: string } | undefined;
   Messages: undefined;
   Profile: undefined;
 };
@@ -27,6 +30,8 @@ export type RootStackParamList = {
    * course, and its results offer none.
    */
   Lesson: { lessonId: string; courseId?: string };
+  /** Finds the lesson Learn would start and opens it in its place (learn/NextLessonScreen): a new account's first. */
+  NextLesson: undefined;
   /**
    * A practice session, started at once. `exerciseIds`: practise these rather than what is due; `mode`: another kind of
    * practice from the hub, with `unitId` for a unit's review; `sessionId`: a review left part-way through, resumed.
@@ -126,7 +131,6 @@ export type RootStackParamList = {
   Proverb: { slug: string };
   /** A short round on the proverbs (lore/ProverbRoundScreen), in a variety, on one of its two kinds. */
   ProverbRound: { dialect: GameDialect; mode?: ProverbRoundMode };
-  Memes: undefined;
   MemeDetail: { postId: string };
   Tags: undefined;
   ChangeUsername: undefined;
@@ -139,7 +143,6 @@ export type RootStackParamList = {
    * password.
    */
   ForgotPassword: { email?: string } | undefined;
-  Library: undefined;
   /** The people you are friends with, and the requests in both directions (social/SocialScreen). */
   Friends: undefined;
   /** The dictionary, opened from Learn's tools (and a word found in Search opens its entry in place). */

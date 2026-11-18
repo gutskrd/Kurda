@@ -21,11 +21,11 @@ describe('Settings → Security', () => {
     navigation.navigate.mockClear();
   });
 
-  it('opens Change password and Signed-in devices from Account, and offers Sign out everywhere', () => {
+  it('opens Password and Signed-in devices from Account, and offers Sign out everywhere', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
     expect(screen.getByText('Account')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Password' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('ChangePassword');
     fireEvent.click(screen.getByRole('button', { name: 'Signed-in devices' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Devices');

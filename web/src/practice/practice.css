@@ -1,0 +1,73 @@
+/*
+ * Practice (PracticeHub.tsx): review at the head, then each kind as a row of the shared list (shell.css `.list`) with
+ * its badge in its own hue, and the chapters to review in a sheet.
+ */
+.practice-page {
+  max-width: var(--container-narrow);
+}
+.practice-page .learn-review {
+  margin: var(--space-5) 0 var(--space-6);
+}
+/* a kind's badge: its glyph in the deep step of its hue on the wash, a tile rather than an icon */
+.practice-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  background: var(--hue-wash);
+  color: var(--hue-deep);
+}
+/* a kind with nothing in it yet: dimmed, grey, and no way in, its line saying what would fill it */
+.list-row-main.is-off {
+  cursor: default;
+}
+.list-row-main.is-off:hover {
+  background: transparent;
+}
+.list-row-main.is-off .list-row-title {
+  color: var(--ink-3);
+}
+.list-row-main.is-off .practice-badge {
+  background: var(--surface-3);
+  color: var(--ink-4);
+}
+/* something waiting (mistakes to put right) is said in the accent too */
+.list-row-sub.is-waiting {
+  color: var(--primary);
+  font-weight: 600;
+}
+.practice-mic {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.practice-mic p {
+  margin: 0;
+}
+
+/* the chapters to review, each with its number on a disc in its colour (learn/path.css `lp-tone-*`) */
+.practice-units-title {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-section);
+}
+.practice-unit-disc {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  border-bottom: 3px solid var(--u-lip);
+  background: var(--u-fill);
+  color: var(--u-ink);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.practice-unit-eyebrow {
+  color: var(--u-text);
+  font-size: var(--text-caption);
+  font-weight: 650;
+}

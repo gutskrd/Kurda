@@ -69,7 +69,7 @@ describe('Settings', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'visibility' });
     fireEvent.click(screen.getByRole('button', { name: 'Sounds and vibration' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'sounds' });
-    fireEvent.click(screen.getByRole('button', { name: 'Notification settings' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Notifications' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Notifications');
     fireEvent.click(screen.getByRole('button', { name: 'Blocked people' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('BlockedUsers');
@@ -117,6 +117,32 @@ describe('Settings', () => {
 });
 
 describe('Settings pages', () => {
+  it('shows the birth month on record, given once, and whom to write to if it is wrong', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ME({ birthYear: 2001, birthMonth: 3 }) });
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Month and year of birth, March 2001' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'birthMonth' });
+    cleanup();
+
+    renderWithProviders(<SettingsPageScreen page="birthMonth" onExit={() => undefined} />);
+    expect((await screen.findByTestId('birth-month')).textContent).toBe('March 2001');
+    expect(screen.getByText(/write to support@hevalo\.app\.$/)).toBeTruthy();
+    expect(screen.queryByTestId('birth-month-add')).toBeNull();
+  });
+
+  it('with no birth month on record, says so and opens the one-time question', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ME({ birthYear: null, birthMonth: null }) });
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'Month and year of birth, Not added' })).toBeTruthy();
+    cleanup();
+
+    vi.mocked(testAuth.refreshUser).mockClear();
+    renderWithProviders(<SettingsPageScreen page="birthMonth" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('birth-month-add'));
+    // The account read again says one is missing, so the app puts the question in front of everything.
+    expect(testAuth.refreshUser).toHaveBeenCalledTimes(1);
+  });
+
   it('shows what each visibility means before it is chosen, and saves the choice at once', async () => {
     const client = fakeClient({ 'GET /me': ME(), 'PUT /me/privacy': ok({}) });
     testAuth.client = client;
@@ -215,7 +241,7 @@ describe('Settings pages', () => {
   it('chooses the theme from a list, with the seasonal themes beside it', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsPageScreen page="theme" onExit={() => undefined} />);
-    const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    const group = screen.getByRole('radiogroup', { name: 'Appearance' });
     expect(within(group).getAllByRole('radio')).toHaveLength(3);
     fireEvent.click(within(group).getByRole('radio', { name: 'Light' }));
     expect(within(group).getByRole('radio', { name: 'Light' }).getAttribute('aria-checked')).toBe('true');
@@ -225,7 +251,7 @@ describe('Settings pages', () => {
   it('ticks the chosen answer in violet, the colour everything chosen wears', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsPageScreen page="theme" onExit={() => undefined} />);
-    const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    const group = screen.getByRole('radiogroup', { name: 'Appearance' });
     fireEvent.click(within(group).getByRole('radio', { name: 'Light' }));
     const tick = within(group).getByRole('radio', { name: 'Light' }).querySelector('svg');
     expect(tick).toBeTruthy();

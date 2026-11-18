@@ -65,9 +65,10 @@ describe('weekLeftText', () => {
   const ends = '2026-10-26T00:00:00.000Z';
   const at = (iso: string) => new Date(iso).getTime();
   it('counts whole days while there are days, and gives the local closing time on the last', () => {
-    expect(weekLeftText(t, ends, 'en', at('2026-10-21T22:00:00Z'))).toBe('5 days left');
+    // The website’s count, so both apps show the same number at the same moment.
+    expect(weekLeftText(t, ends, 'en', at('2026-10-21T22:00:00Z'))).toBe('4 days left');
     expect(weekLeftText(t, ends, 'en', at('2026-10-24T00:00:00Z'))).toBe('2 days left');
-    expect(weekLeftText(t, ends, 'en', at('2026-10-24T12:00:00Z'))).toBe('2 days left');
+    expect(weekLeftText(t, ends, 'en', at('2026-10-24T12:00:00Z'))).toBe('1 day left');
     expect(weekLeftText(t, ends, 'en', at('2026-10-25T00:00:00Z'))).toBe('1 day left');
     // Under a day: when, not how many hours.
     expect(weekLeftText(t, ends, 'en', at('2026-10-25T09:00:00Z'), 'Asia/Baghdad')).toMatch(/^Week ends Mon.*0?3:00/);

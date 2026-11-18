@@ -180,7 +180,7 @@ describe('the lesson path', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     fireEvent.click(button('Greetings, done, and strong, round 2 of 3, 0 of 2 lessons'));
-    expect(screen.getByText('+3–5 XP')).toBeTruthy();
+    expect(screen.getByText('+3–5 XP, played again')).toBeTruthy();
   });
 
   it('has Hevalo beside the current skill, opening its sheet when he is tapped', () => {

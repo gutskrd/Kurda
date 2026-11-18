@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useI18n } from '../i18n/I18nContext';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -62,7 +62,7 @@ export function TypingBubble({
     <View style={[styles.row, { flexDirection: dir.row }, mirrored ? styles.rowRight : styles.rowLeft]} testID="typing-bubble">
       {face ? (
         <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <InitialsAvatar name={face.name} id={face.id} size={RUN_FACE} photoUrl={face.photoUrl} />
+          <Avatar name={face.name} size={RUN_FACE} photoUrl={face.photoUrl} />
         </View>
       ) : (
         <View style={styles.noFace} />

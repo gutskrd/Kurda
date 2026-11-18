@@ -26,10 +26,6 @@ export const ALLOWED_CONTENT_TYPES: Record<string, string> = {
   'application/json': 'json',
 };
 
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB
-
-export const UPLOAD_URL_TTL_SECONDS = 300;
-
 /** Content-hashed keys make objects immutable — same bytes, same key. */
 export function mediaKey(kind: string, sha256Hex: string, contentType: string): string {
   const ext = ALLOWED_CONTENT_TYPES[contentType];
@@ -82,15 +78,6 @@ export interface MediaStorageOptions {
   purge?: CdnPurge;
 }
 
-export interface UploadTicket {
-  key: string;
-  uploadUrl: string;
-  /** Headers the client MUST send on the PUT (they are part of the signature). */
-  requiredHeaders: Record<string, string>;
-  publicUrl: string;
-  expiresInSeconds: number;
-}
-
 export class MediaStorage {
   constructor(
     private readonly s3: S3Client,
@@ -127,38 +114,6 @@ export class MediaStorage {
 
   publicUrl(key: string): string {
     return `${this.cdnBaseUrl}/${key}`;
-  }
-
-  async createUploadUrl(input: {
-    kind: string;
-    contentType: string;
-    contentLength: number;
-    sha256Hex: string;
-  }): Promise<UploadTicket> {
-    if (input.contentLength <= 0 || input.contentLength > MAX_UPLOAD_BYTES) {
-      throw new Error(`contentLength must be 1..${MAX_UPLOAD_BYTES} bytes`);
-    }
-    const key = mediaKey(input.kind, input.sha256Hex, input.contentType);
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      ContentType: input.contentType,
-      ContentLength: input.contentLength,
-      CacheControl: IMMUTABLE_CACHE_CONTROL,
-    });
-    const uploadUrl = await getSignedUrl(this.s3, command, {
-      expiresIn: UPLOAD_URL_TTL_SECONDS,
-    });
-    return {
-      key,
-      uploadUrl,
-      requiredHeaders: {
-        'content-type': input.contentType,
-        'cache-control': IMMUTABLE_CACHE_CONTROL,
-      },
-      publicUrl: this.publicUrl(key),
-      expiresInSeconds: UPLOAD_URL_TTL_SECONDS,
-    };
   }
 
   /** Short-lived signed GET for a private file (a data export), wherever it is kept. */
@@ -219,7 +174,10 @@ export class MediaStorage {
     }
   }
 
-  /** Uploads a processed object directly. */
+  /**
+   * Stores an object the server has checked, under the type the server decided. There is no way for a client to write
+   * to the bucket itself: every upload comes through the api and these checks.
+   */
   async put(key: string, body: Buffer, contentType: string): Promise<void> {
     await this.s3.send(
       new PutObjectCommand({

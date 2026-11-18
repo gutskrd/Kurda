@@ -224,6 +224,22 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
     await pool.query(`DELETE FROM media_uploads WHERE key = ANY($1)`, [[profile, voice, legacy]]);
   });
 
+  it('matches a picture by its exact key, never by a path or address made from it', async () => {
+    const me = await person('pather');
+    const other = await person('pathed');
+    const mine = await upload(me);
+    const theirs = await upload(other);
+    const made = [`../${mine}`, `/${mine}`, `./${mine}`, `${mine}/../../${theirs}`, `https://cdn.test/${mine}`, `other-bucket/${mine}`, `${mine}?v=1`];
+    for (const mediaKey of [...made, ` ${mine}`]) {
+      const res = await call('POST', '/library/posts', me.token, { body: 'rê?', media: [{ mediaKey }] });
+      expect(res.statusCode, mediaKey).toBe(422);
+      expect(res.json().code).toBe('INVALID_MEDIA');
+    }
+    // nothing was claimed on the way, so the picture still goes on a post
+    expect(await confirmed(mine)).toBe(false);
+    expect((await call('POST', '/library/posts', me.token, { body: 'ev e', media: [{ mediaKey: mine }] })).statusCode).toBe(201);
+  });
+
   it('puts one picture on one post', async () => {
     const me = await person('once');
     const pic = await upload(me);

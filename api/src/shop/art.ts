@@ -11,6 +11,7 @@ import { createHash } from 'node:crypto';
 import type pg from 'pg';
 import sharp, { type Metadata, type Sharp } from 'sharp';
 import { artKindFor, isUploadedArtKey, uploadedArtKind, type ArtKind } from '../cosmetics/access.js';
+import { DECODED_FORMAT, IMAGE_TIMEOUT_SECONDS, MAX_INPUT_PIXELS } from '../media/imageProcess.js';
 import { sniffImageType } from '../media/mimeSniff.js';
 import { exceedsUploadSize, opLimitReached, wouldExceedStorage } from '../media/mediaLimits.js';
 import type { MediaStorage } from '../media/storage.js';
@@ -77,9 +78,6 @@ const ACCEPTED: ReadonlySet<string> = new Set(['image/png', 'image/jpeg', 'image
  */
 export const SHAPE_TOLERANCE = 0.03;
 
-/** As in imageProcess.ts: the most pixels an upload may decode to, so a tiny file cannot ask for a gigabyte. */
-const MAX_INPUT_PIXELS = 50_000_000;
-
 const WEBP_QUALITY = [82, 74, 66, 58];
 /** the last size goes further down before giving up */
 const WEBP_QUALITY_LAST = [...WEBP_QUALITY, 50, 42];
@@ -102,8 +100,8 @@ function orientedSize(meta: Metadata): { width: number; height: number } {
 
 /**
  * Checks and re-encodes one upload, buffers in and out (unit-tested in art.test.ts):
- *   1. the real type by its bytes: PNG, JPEG or WebP;
- *   2. it decodes within the pixel limit;
+ *   1. the real type by its bytes: PNG, JPEG or WebP, and the decoder reads it as that;
+ *   2. it decodes within the pixel and time limits;
  *   3. it has the kind's shape within SHAPE_TOLERANCE and at least its minimum size, then is trimmed to the exact
  *      shape from the centre;
  *   4. it is scaled down (never up) and encoded, lowering quality and then size until it fits the weight, without
@@ -120,6 +118,7 @@ export async function processArt(raw: Buffer, kind: ArtKind): Promise<ProcessedA
   } catch {
     return { ok: false, reason: 'malformed' };
   }
+  if (meta.format !== DECODED_FORMAT[sniffed]) return { ok: false, reason: 'invalid-type' };
   const { width, height } = orientedSize(meta);
   if (!width || !height) return { ok: false, reason: 'malformed' };
   // Shape first: an upright phone photo offered as a background is the wrong shape, not too small.
@@ -144,7 +143,8 @@ export async function processArt(raw: Buffer, kind: ArtKind): Promise<ProcessedA
       // `cover` at the exact size trims the sliver off both sides evenly and scales in one pass
       const base = sharp(raw, { failOn: 'error', limitInputPixels: MAX_INPUT_PIXELS })
         .rotate()
-        .resize(outW, outH, { fit: 'cover', position: 'centre' });
+        .resize(outW, outH, { fit: 'cover', position: 'centre' })
+        .timeout({ seconds: IMAGE_TIMEOUT_SECONDS });
       const encoded = kind === 'background' ? await encodeWebp(base, last, spec.maxBytes) : await encodePng(base, spec.maxBytes);
       if (encoded) return { ok: true, bytes: encoded, contentType: spec.contentType, width: outW, height: outH, trimmed };
     }

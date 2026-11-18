@@ -12,7 +12,7 @@ export * from './username.js';
 export { matchedParts, type TextPart } from './search-highlight.js';
 export { plan, toLexicon, type Chunk, type ConvertedEntry, type SourceEntry } from './ferheng.js';
 export { FERHENG_LANGS, publishedFerheng, type FerhengSource, type Manifest } from './ferheng-source.js';
-export { escapeHtml, stripControlChars } from './sanitize.js';
+export { escapeHtml, isPlainPath, stripControlChars, stripHiddenChars } from './sanitize.js';
 export { XSS_PAYLOADS } from './xss-corpus.js';
 export { COUNTRIES, countriesIn, countryName, type Country } from './countries.js';
 export {
@@ -97,6 +97,23 @@ export {
   type QuestRow,
   type QuestStep,
 } from './quests.js';
+/** Event quests: their order, whether each can be claimed, and what each pays. */
+export {
+  eventQuestShare,
+  eventQuestState,
+  eventQuestTitle,
+  eventRewardParts,
+  sortEventQuests,
+  type ActiveEvent,
+  type EventQuest,
+  type EventQuestReward,
+  type EventQuests,
+  type EventQuestState,
+  type EventQuestType,
+  type EventRewardCurrency,
+} from './event-quests.js';
+/** The daily XP goal's targets and its status. */
+export { GOAL_OPTIONS, isGoalOption, type DailyGoalStatus, type GoalOption } from './daily-goal.js';
 /** A right answer's praise in the course's own Kurdish: content, kept beside the player rather than in the translations. */
 export { PRAISE, praiseFor, praiseWords } from './praise.js';
 /** What a lesson pays, for the server's XP rules and the "+10–20 XP" a stop's card shows. */
@@ -546,9 +563,12 @@ export * from './games/index.js';
 
 /** Shop items by kind: the categories, search, filters and orders the shop, the inventory and the gift picker share. */
 export * from './shop-items.js';
+export * from './shop-descriptions.js';
 export * from './chat-cards.js';
 /** Unread chat counts for the badges, a group's capped, and how a badge writes one. */
 export * from './chat-unread.js';
+/** The Kurdish openers an empty chat offers, and which variety it offers them in. */
+export * from './chat-greetings.js';
 
 /** Typing Kurdish (the race, Peyvok's keyboard, the keyboard guide): how typed text is read and scored, and the race's shapes. */
 export * from './typing.js';

@@ -8,7 +8,7 @@ import { useDirection } from '../reports/direction';
 import { PressableScale } from '../theme/MotionParts';
 import { ReachGroup } from '../theme/Pressable';
 import { Icon, type IconName } from '../theme/Icon';
-import { fontScaleCap, radii, typography, wash } from '../theme/tokens';
+import { fontScaleCap, radii, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { HIDDEN } from './PaperSheet';
@@ -44,8 +44,8 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
         const atRight = mirrored ? i === 0 : i === TOOLS.length - 1;
         const reach = { top: BAR_PAD, bottom: BAR_PAD, left: atLeft ? BAR_PAD : BAR_GAP / 2, right: atRight ? BAR_PAD : BAR_GAP / 2 };
         const locked = each === 'draw' && !canDraw;
-        // The active tool gets the violet wash, like the tab bar and segmented controls.
-        const tint = active ? colors.primary : colors.textSecondary;
+        // The active tool is solid violet, like the segmented controls.
+        const tint = active ? colors.textOnPrimary : colors.textSecondary;
         return (
           <PressableScale
             key={each}
@@ -59,7 +59,7 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
             accessibilityHint={locked ? t('letters.paper.drawLocked') : undefined}
             testID={`letter-tool-${each}`}
             hitSlop={reach}
-            style={[styles.barItem, active ? { backgroundColor: wash(colors.primary) } : null, locked ? styles.locked : null]}
+            style={[styles.barItem, active ? { backgroundColor: colors.primary } : null, locked ? styles.locked : null]}
           >
             {each === 'draw' ? locked ? <Icon name="lock" size={17} color={tint} /> : <Glyph kind="draw" color={tint} /> : <Icon name={TOOL_ICON[each]} size={17} color={tint} />}
             <Text maxFontSizeMultiplier={fontScaleCap.fixedBox} numberOfLines={1} style={[styles.barText, { color: tint }, active ? styles.barTextOn : null]}>

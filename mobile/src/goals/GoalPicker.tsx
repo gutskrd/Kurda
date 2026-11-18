@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { fontScaleCap, radii, spacing, typography, wash } from '../theme/tokens';
+import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -16,7 +16,7 @@ interface Props {
 }
 
 /**
- * The daily goal, one of 10, 20, 30 or 50 XP, drawn as a segmented track with the chosen place washed in violet.
+ * The daily goal, one of 10, 20, 30 or 50 XP, drawn as a segmented track with the chosen place in solid violet.
  * Screen readers hear a radio group whose options are named in full ("20 XP a day"), not as bare numbers.
  */
 export function GoalPicker({ value, onChange, disabled }: Props) {
@@ -43,10 +43,10 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
             accessibilityRole="radio"
             accessibilityState={{ checked: selected, disabled: !!disabled }}
             accessibilityLabel={t('learn.today.goalOption', { xp: formatNumber(option, locale) })}
-            style={[styles.segment, selected && { backgroundColor: wash(colors.primary) }]}
+            style={[styles.segment, selected && { backgroundColor: colors.primary }]}
           >
             <Text
-              style={[styles.label, selected && styles.chosen, { color: selected ? colors.primary : colors.textSecondary }]}
+              style={[styles.label, selected && styles.chosen, { color: selected ? colors.textOnPrimary : colors.textSecondary }]}
               maxFontSizeMultiplier={fontScaleCap.fixedBox}
             >
               {formatNumber(option, locale)}

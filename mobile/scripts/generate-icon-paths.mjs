@@ -104,6 +104,7 @@ const MAP = {
   pencil: { glyph: 'PencilSimple', note: 'edit your own post' },
   'text-t': { glyph: 'TextT', note: 'give a post a title' },
   quotes: { glyph: 'Quotes', note: 'source / credit — where a quote or a picture came from' },
+  rules: { glyph: 'Scales', note: 'web RulesIcon — the terms of use' },
 
   // --- The way into everything the tab bar has no room for ---
   menu: { glyph: 'List', note: 'the profile menu; three lines, which is what a menu is understood to look like' },

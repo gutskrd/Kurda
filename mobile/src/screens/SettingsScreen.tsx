@@ -3,6 +3,7 @@ import { PROVIDER, foldForSearch } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { birthMonthLabel } from '../auth/birthMonth';
 import { describeError, isMaintenance } from '../api/errors';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -164,6 +165,11 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const leagues = account.leagues === null ? undefined : onOff(account.leagues);
   const visibility = account.visibility ? t(VISIBILITY_LABEL[account.visibility]) : undefined;
   const username = account.username ? `@${account.username}` : undefined;
+  const birth = account.birth
+    ? account.birth.year && account.birth.month
+      ? birthMonthLabel(t, account.birth.year, account.birth.month)
+      : t('settings.birthMonth.none')
+    : undefined;
 
   // A guest's account section is one row, the way to an account: there is no name, password or device list to change.
   const accountEntries: Entry[] = isGuest
@@ -189,9 +195,14 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           row: <SettingsRow icon="person" title={t('auth.username')} value={username} onPress={() => navigation.navigate('ChangeUsername')} />,
         },
         {
+          key: 'birthMonth',
+          terms: [t('age.label'), birth],
+          row: <SettingsRow icon="calendar" title={t('age.label')} value={birth} onPress={page('birthMonth')} testID="settings-birth-month" />,
+        },
+        {
           key: 'password',
-          terms: [t('security.password.title'), t('settings.group.security')],
-          row: <SettingsRow icon="lock" title={t('security.password.title')} onPress={() => navigation.navigate('ChangePassword')} />,
+          terms: [t('auth.password'), t('security.password.title'), t('settings.group.security')],
+          row: <SettingsRow icon="lock" title={t('auth.password')} onPress={() => navigation.navigate('ChangePassword')} />,
         },
         {
           key: 'devices',
@@ -216,7 +227,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           row: (
             <SettingsRow
               icon="bell"
-              title={t('settings.notifications')}
+              title={t('notifications.title')}
               // Notifications blocked by the phone is the one thing in this section to act on.
               value={attention.pushOff ? t('settings.off') : undefined}
               attention={attention.pushOff}
@@ -303,13 +314,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           // The FAQ first: most questions have been asked before.
           key: 'faq',
           terms: [t('settings.faq')],
-          row: <SettingsRow icon="question" title={t('settings.faq')} opens={false} onPress={() => openLegal('faq')} />,
+          row: <SettingsRow icon="question" title={t('settings.faq')} onPress={() => openLegal('faq')} />,
         },
         {
           // Opens the mail app, or copies the address when there is none.
           key: 'support',
           terms: [t('settings.support'), SUPPORT_EMAIL],
-          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => void contactSupport(t)} />,
+          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} onPress={() => void contactSupport(t)} />,
         },
       ],
     },
@@ -321,22 +332,22 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           // Each legal and about page opens on hevalo.app, so there is one copy of each.
           key: 'teaching',
           terms: [t('settings.teaching')],
-          row: <SettingsRow icon="book" title={t('settings.teaching')} opens={false} onPress={() => openLegal('teaching')} />,
+          row: <SettingsRow icon="book" title={t('settings.teaching')} onPress={() => openLegal('teaching')} />,
         },
         {
           key: 'aboutPage',
           terms: [t('settings.about')],
-          row: <SettingsRow icon="globe" title={t('settings.about')} opens={false} onPress={() => openLegal('about')} />,
+          row: <SettingsRow icon="globe" title={t('settings.about')} onPress={() => openLegal('about')} />,
         },
         {
           key: 'terms',
           terms: [t('auth.legal.terms')],
-          row: <SettingsRow icon="text" title={t('auth.legal.terms')} opens={false} onPress={() => openLegal('terms')} />,
+          row: <SettingsRow icon="rules" title={t('auth.legal.terms')} onPress={() => openLegal('terms')} />,
         },
         {
           key: 'privacyPolicy',
           terms: [t('auth.legal.privacy')],
-          row: <SettingsRow icon="lock" title={t('auth.legal.privacy')} opens={false} onPress={() => openLegal('privacy')} />,
+          row: <SettingsRow icon="lock" title={t('auth.legal.privacy')} onPress={() => openLegal('privacy')} />,
         },
         {
           key: 'copyright',
@@ -346,7 +357,6 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
               icon="quotes"
               title={t('settings.copyright.title')}
               subtitle={t('settings.copyright.hint')}
-              opens={false}
               onPress={() => openLegal('copyright')}
             />
           ),

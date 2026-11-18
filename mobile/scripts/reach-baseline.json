@@ -68,9 +68,6 @@
   "profile/ProfileFriends.tsx": {
     "scroller": 1
   },
-  "profile/ProgressShowcase.tsx": {
-    "scroller": 1
-  },
   "push/ReminderNudge.tsx": {
     "hitSlop": 1
   },

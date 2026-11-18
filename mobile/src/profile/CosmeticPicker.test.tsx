@@ -154,7 +154,7 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Frames, 3 items' }));
     // Its own name, where a season frame is named for its tier.
     const tile = await screen.findByRole('button', { name: 'Xeleka Laleyan' });
-    expect(tile.querySelector('img')?.getAttribute('src')).toContain('/cosmetics/frames/made-01-lale.png');
+    expect([...tile.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toContain('https://hevalo.app/cosmetics/frames/made-01-lale.png');
     await act(async () => {
       fireEvent.click(tile);
     });

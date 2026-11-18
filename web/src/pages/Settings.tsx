@@ -15,6 +15,7 @@ import {
   BellIcon,
   BlockIcon,
   BookIcon,
+  CalendarIcon,
   ChatsIcon,
   CopyrightIcon,
   DeviceIcon,
@@ -36,6 +37,7 @@ import {
   TrophyIcon,
   LockIcon,
 } from '../components/icons';
+import { MONTH_KEY } from '../auth/BirthMonthFields';
 import { BlockedUsers } from '../settings/BlockedUsers';
 import { ChangePassword } from '../settings/ChangePassword';
 import { ChangeUsername } from '../settings/ChangeUsername';
@@ -45,7 +47,7 @@ import { GiftSoundSetting } from '../gifts/GiftSoundSetting';
 import { VibrationSetting } from '../settings/VibrationSetting';
 import { NotificationPrefsCard } from '../notifications/NotificationPrefsCard';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
-import { useI18n, useT } from '../i18n/I18nProvider';
+import { useI18n, useT, type Translate } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { KeyboardCard } from '../keyboard/KeyboardCard';
 import { ACCENT_LABEL } from '../keyboard/KeyboardSettings';
@@ -87,6 +89,7 @@ const SUPPORT_EMAIL = 'support@hevalo.app';
 /** Every page Settings opens, each at /app/settings/<page>. */
 const PAGES = [
   'username',
+  'birth-month',
   'password',
   'devices',
   'notifications',
@@ -107,6 +110,7 @@ const isPage = (value: string | undefined): value is SettingsPage => (PAGES as r
 
 const PAGE_TITLE: Record<SettingsPage, MessageKey> = {
   username: 'settings.username.title',
+  'birth-month': 'age.label',
   password: 'settings.password.title',
   devices: 'settings.devices.title',
   notifications: 'notifications.title',
@@ -243,6 +247,7 @@ function SettingsIndex({ me, current }: { me: MeState; current?: SettingsPage })
     <span dir="ltr">@{user.username}</span>
   ) : undefined;
 
+  const birth = user ? birthMonthText(t, user) : undefined;
   const language = APP_LOCALES.find((l) => l.code === locale)?.nativeName ?? locale;
   const visibility = user ? t(VIS_LABEL_KEY[user.profileVisibility]) : undefined;
   const leagues = user ? t(user.leaguesEnabled !== false ? 'settings.on' : 'settings.off') : undefined;
@@ -269,6 +274,7 @@ function SettingsIndex({ me, current }: { me: MeState; current?: SettingsPage })
           terms: [t('settings.username.change')],
           ...go('username'),
         },
+        { key: 'birthMonth', icon: <CalendarIcon />, title: t('age.label'), value: fromAccount(birth), valueText: birth, ...go('birth-month') },
         { key: 'password', icon: <KeyIcon />, title: t('settings.password.title'), terms: [t('settings.password.change')], ...go('password') },
         {
           key: 'devices',
@@ -459,6 +465,9 @@ function SettingsPageView({
     case 'username':
       body = <ChangeUsername onChanged={(name) => me.onChanged({ username: name })} />;
       break;
+    case 'birth-month':
+      body = needsAccount((user) => <BirthMonth user={user} />);
+      break;
     case 'password':
       body = <ChangePassword />;
       break;
@@ -532,6 +541,35 @@ function SettingsPageView({
         {body}
       </div>
     </section>
+  );
+}
+
+/** The birth month on record as the reader says it ("March 2008"), or that there is none yet. */
+function birthMonthText(t: Translate, user: MeProfile): string {
+  const month = user.birthMonth ? MONTH_KEY[user.birthMonth - 1] : undefined;
+  return month && user.birthYear ? `${t(month)} ${user.birthYear}` : t('settings.birthMonth.none');
+}
+
+/**
+ * The birth month on record, given once. With none on record, the way to the one-time question, which the app shows
+ * over every page once the account it holds says one is missing.
+ */
+function BirthMonth({ user }: { user: MeProfile }): React.JSX.Element {
+  const t = useT();
+  const { refreshUser } = useAuth();
+  if (user.birthYear && user.birthMonth) {
+    return (
+      <>
+        <p className="settings-birth-month">{birthMonthText(t, user)}</p>
+        <p className="settings-page-intro">{t('settings.birthMonth.help', { email: SUPPORT_EMAIL })}</p>
+      </>
+    );
+  }
+  return (
+    <>
+      <p className="settings-page-intro">{t('age.prompt.body')}</p>
+      <Button onClick={() => void refreshUser()}>{t('letters.refusal.birthMonthAction')}</Button>
+    </>
   );
 }
 

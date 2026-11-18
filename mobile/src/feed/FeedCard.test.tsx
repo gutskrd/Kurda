@@ -10,7 +10,6 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { Alert } from 'react-native';
 import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -21,6 +20,7 @@ import { hideDeleting, onPostDeleted, postDeleted, unhideDeleting, type DeletedP
 import { DOUBLE_TAP_MS, FeedCard, pillCount } from './FeedCard';
 import { CivakScreen } from './CivakScreen';
 import type { FeedItem } from './types';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => {
@@ -206,7 +206,7 @@ describe('a post in the chain', () => {
   });
 
   it('puts a refused like back and says why', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     let answer: (r: unknown) => void = () => undefined;
     testAuth.client = fakeClient({ 'POST /posts/library/p1/like': () => new Promise((resolve) => (answer = resolve)) } as never);
     renderWithProviders(<FeedCard item={item({ engagement: { liked: false, likes: 4, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })} />);
@@ -330,5 +330,27 @@ describe('the wall', () => {
     act(() => unhideDeleting({ targetType: 'library', id: 'p1' }));
     const cards = screen.getAllByRole('button', { name: /^Poem: / }).map((b) => b.getAttribute('aria-label'));
     expect(cards).toEqual(['Poem: Şev', 'Poem: Roj']);
+  });
+
+  it('shows the empty wall, without the sort chip, while its only post is being deleted', async () => {
+    testAuth.client = fakeClient({
+      'GET /feed?section=all&limit=20&offset=0': ok({ items: [item()] }),
+      'GET /chat/conversations': ok({ conversations: [] }),
+      'GET /me/groups/unread': ok({ unread: [] }),
+      'GET /friends/requests': ok({ requests: [] }),
+      'GET /me/notifications/unread-count': ok({ count: 0 }),
+      'GET /me/gifts/unseen': ok({ unseen: 0 }),
+    });
+    renderWithProviders(
+      <UnreadProvider>
+        <CivakScreen />
+      </UnreadProvider>,
+    );
+    expect(await screen.findByRole('button', { name: 'Poem: Şev' })).toBeTruthy();
+    act(() => hideDeleting({ targetType: 'library', id: 'p1' }));
+    expect(screen.getByText('Welcome to Hevalo')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Sort and filter' })).toBeNull();
+    act(() => unhideDeleting({ targetType: 'library', id: 'p1' }));
+    expect(screen.getByRole('button', { name: 'Poem: Şev' })).toBeTruthy();
   });
 });

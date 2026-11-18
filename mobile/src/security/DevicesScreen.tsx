@@ -145,7 +145,7 @@ export function DevicesScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <ScreenHeader title={t('security.devices.heading')} onBack={onExit} />
+        <ScreenHeader title={t('security.devices.title')} onBack={onExit} />
         <ScrollView
           style={styles.screen}
           contentContainerStyle={[styles.column, { paddingBottom: bottom }]}

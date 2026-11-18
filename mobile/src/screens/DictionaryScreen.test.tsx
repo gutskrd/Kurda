@@ -9,12 +9,13 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
-import { Alert } from 'react-native';
+import { onNotice } from '../theme/notice';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ApiResult } from '../api/types';
 import type { SavedWord } from '../dictionary/types';
+import { navigation } from '../play/testing/navigation';
 import { DictionaryScreen } from './DictionaryScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -51,13 +52,28 @@ describe('the saved words', () => {
   it('puts the word back in its place and says why when the server did not let it go', async () => {
     const offline: ApiResult<never> = { ok: false, error: { kind: 'network', message: 'Network request failed' } };
     testAuth.client = fakeClient({ 'GET /me/saved-words': ok({ words: SAVED }), 'DELETE /dictionary/entries/e2/save': offline });
-    const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
     renderWithProviders(<DictionaryScreen onBack={() => undefined} />);
     await screen.findByText('av');
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Remove av' }));
     });
     expect(headwords()).toEqual(['mal', 'av', 'nan']);
-    expect(alert).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    expect(notices).toEqual(['Can’t reach Hevalo right now. Check your connection and try again.']);
+    stop();
+  });
+});
+
+describe('before a search', () => {
+  it('is never a blank page: it points a beginner to the alphabet and shows today’s word', async () => {
+    testAuth.client = fakeClient({
+      'GET /me/saved-words': ok({ words: [] }),
+      'GET /dictionary/word-of-day': ok({ word: { entryId: 'e9', headword: 'baran', pos: 'noun', definitionEn: 'rain', definitionKu: null } }),
+    });
+    renderWithProviders(<DictionaryScreen onBack={() => undefined} />);
+    expect(await screen.findByText('baran')).toBeTruthy();
+    fireEvent.click(screen.getByRole('link', { name: 'New to the letters? Start with the alphabet' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Alphabet');
   });
 });

@@ -10,6 +10,7 @@ import { EmptyState, ErrorState } from '../components/states';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 import { LearnHeader } from '../learn/LearnHeader';
+import { dialectName } from '../learn/map';
 import { PROVERB_ROUND, inReaderLanguage, inVariety, proverbPath, useLoreDialect } from './api';
 import { THEME_KEY, TRADITION_TAG_KEY } from './labels';
 import { ShelfSwitch, Translated, VarietySwitch } from './LoreParts';
@@ -84,7 +85,7 @@ function Proverbs(): React.JSX.Element {
 
       {load.state === 'error' && <ErrorState title={t('lore.proverbs.loadFailed')} message={load.message} onRetry={() => setNonce((n) => n + 1)} />}
       {load.state === 'loading' && <ListRowsSkeleton count={5} label="lore.proverbs.loading" />}
-      {list && list.proverbs.length === 0 && <EmptyState title={t('lore.proverbs.empty')} />}
+      {list && list.proverbs.length === 0 && <EmptyState title={t('lore.proverbs.empty', { variety: dialectName(dialect) })} />}
 
       {list && list.proverbs.length > 0 && (
         <>

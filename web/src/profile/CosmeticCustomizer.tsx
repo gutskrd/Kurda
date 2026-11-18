@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { applyItemFilter, countByCategory, DEFAULT_ITEM_FILTER, isFiltered, itemCategory, type ItemFilter } from '@kurda/shared';
+import { applyItemFilter, countByCategory, DEFAULT_ITEM_FILTER, isFiltered, itemCategory, shopItemDescription, type ItemFilter } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError, requestId } from '../lib/api';
 import type { ApiError, InventoryItem, MeProfile, PurchaseResult, ShopItem } from '../lib/types';
@@ -57,7 +57,7 @@ const EMPTY: Readonly<Record<Wearable, MessageKey>> = {
  * Owned items (`/me/inventory`) then items for sale (`/shop`), since an owned unique item is not in the shop. Season
  * frames appear only once owned, and tags only as owned, since the tag on sale is bought in the Shop.
  */
-function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>): Tile[] {
+function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>, locale: string): Tile[] {
   const map = new Map<string, Tile>();
   for (const inv of inventory) {
     const kind = itemCategory(inv.category);
@@ -66,7 +66,7 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
       sku: inv.sku,
       name: inv.name,
       // not sent by /me/inventory today; read when it is
-      description: inv.description ?? null,
+      description: shopItemDescription(inv, locale),
       category: kind,
       assetUrl: inv.assetUrl,
       premiumOnly: inv.premiumOnly,
@@ -80,7 +80,7 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
     map.set(it.sku, {
       sku: it.sku,
       name: it.name,
-      description: it.description ?? null,
+      description: shopItemDescription(it, locale),
       category: kind,
       assetUrl: it.assetUrl,
       premiumOnly: it.premiumOnly,
@@ -210,7 +210,7 @@ export function CosmeticCustomizer({
   if (loading) return <section className="card" style={{ marginTop: 24 }}><p className="muted">{t('edit.loadingCosmetics')}</p></section>;
   if (error) return <section className="card" style={{ marginTop: 24 }}><div className="msg msg-error">{error}</div></section>;
 
-  const tiles = mergeTiles(shop, inventory);
+  const tiles = mergeTiles(shop, inventory, locale);
   // a frame goes by its tier's name in the reader's language ("Gir season frame"), not its catalogue label
   const named = tiles.map((tile) => {
     const tier = tile.category === 'frame' ? frameTier(tile.sku) : null;

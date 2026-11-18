@@ -554,7 +554,19 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
       ) : null;
     const writeButton = <ClayButton label={t('letters.write')} onPress={write} tone="primary" style={styles.wide} testID="letters-write" />;
 
-    if (data.refusal === 'birth_month') status = <Text style={quiet}>{t('letters.refusal.birthMonth')}</Text>;
+    if (data.refusal === 'birth_month')
+      status = (
+        <>
+          <Text style={quiet}>{t('letters.refusal.birthMonth')}</Text>
+          <ClayButton
+            label={t('letters.refusal.birthMonthAction')}
+            onPress={() => navigation.navigate('SettingsPage', { page: 'birthMonth' })}
+            tone="primary"
+            style={styles.wide}
+            testID="letters-birth-month"
+          />
+        </>
+      );
     else if (data.refusal === 'restricted') status = <Text style={quiet}>{t('letters.refusal.restricted')}</Text>;
     else if (moment.kind === 'answered') {
       const { person, threadId } = moment;

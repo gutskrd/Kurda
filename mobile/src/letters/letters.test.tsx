@@ -114,6 +114,14 @@ describe('the letters screen', () => {
     expect(screen.getByText('No pen pals yet. Call a bird to your window, or send yours out, and someone will write back.')).toBeTruthy();
   });
 
+  it('asks for a birth month before anybody can write, and opens it in Settings', async () => {
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': ok(home({ refusal: 'birth_month' })) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('letters-birth-month'));
+    expect(navigation.navigate).toHaveBeenCalledWith('SettingsPage', { page: 'birthMonth' });
+    expect(screen.queryByTestId('letters-write')).toBeNull();
+  });
+
   it('says in plain words that nobody else has a bird out when yours flies off to wait, and how to call it back', async () => {
     let out: LettersHome['out'] = null;
     const client = fakeClient({

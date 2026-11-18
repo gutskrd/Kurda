@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { heldRow, heldDim } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
-import { describeError, isMaintenance } from '../api/errors';
+import { useSayNotSaved } from '../api/optimistic';
 import { EntryDetail } from '../dictionary/EntryDetail';
+import { WordOfDayCard } from '../dictionary/WordOfDayCard';
+import type { RootNavigation } from '../navigation/rootStack';
 import { SourceLine } from '../dictionary/SourceLine';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { pushRecent } from '../dictionary/recents';
@@ -31,6 +34,8 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const say = useSayNotSaved();
+  const navigation = useNavigation<RootNavigation>();
   // Rows mirror right to left, while headwords and meanings keep their own direction.
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
@@ -102,7 +107,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
       if (res.ok) return;
       // The removal failed: put the word back in its place and say why, as the entry's own bookmark does.
       setSaved((s) => (s.some((w) => w.entryId === entryId) ? s : [...s.slice(0, at), word, ...s.slice(at)]));
-      if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
+      say(res.error);
     });
   };
 
@@ -125,6 +130,22 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
         />
 
         {result?.fuzzy ? <Text style={[styles.banner, dir.text, { color: colors.textSecondary }]}>{t('dictionary.noExactMatch')}</Text> : null}
+
+        {/* Before a search, never a blank page: the way in for beginners, as on the website, and today's word. */}
+        {isEmpty ? (
+          <View style={styles.idle}>
+            <Pressable
+              onPress={() => navigation.navigate('Alphabet')}
+              accessibilityRole="link"
+              style={({ pressed }) => [styles.alphabetLink, { flexDirection: dir.row }, pressed && heldDim]}
+              testID="dictionary-alphabet"
+            >
+              <Text style={[styles.alphabetText, dir.text, { color: colors.primary }]}>{t('alphabet.link')}</Text>
+              <Icon name="chevron-right" size={14} color={colors.primary} style={dir.flip ?? undefined} />
+            </Pressable>
+            <WordOfDayCard />
+          </View>
+        ) : null}
 
         {showRecents ? (
           <View style={styles.recents}>
@@ -262,6 +283,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.sm },
   banner: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
+  idle: { gap: spacing.md },
+  alphabetLink: { alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
+  alphabetText: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   savedHeading: { alignItems: 'center', gap: spacing.xs },
   recentsTitle: { ...sectionLabel },
   // A fingertip tall, the word centred.

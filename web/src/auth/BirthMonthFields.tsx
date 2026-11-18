@@ -19,7 +19,8 @@ export function birthMonthOf(value: BirthMonthValue): { birthYear: number; birth
   return { birthYear, birthMonth };
 }
 
-const MONTH_KEY: readonly MessageKey[] = [
+/** The twelve month names' keys, January first. */
+export const MONTH_KEY: readonly MessageKey[] = [
   'age.month.1',
   'age.month.2',
   'age.month.3',

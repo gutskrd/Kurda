@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { BirdBadge } from './LetterParts';
+import { useDirection } from '../reports/direction';
 
 /** Each bird's accessible name, by its index in shared LETTER_BIRDS. */
 export const BIRD_NAMES: readonly TranslationKey[] = [
@@ -51,6 +52,8 @@ export function BirdPicker({
 }): React.JSX.Element {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
+  // Right to left, the first bird is on the right, as on the website and in the shop.
+  const dir = useDirection();
   const number = (n: number): string => formatNumber(n, locale);
   const short = first ? 0 : Math.max(0, LETTER_BIRD_PRICE - zer);
   const same = !first && picked === current;
@@ -63,7 +66,7 @@ export function BirdPicker({
       <Text style={[styles.status, { color: colors.textSecondary }]}>
         {first ? t('letters.bird.chooseLead', { price: number(LETTER_BIRD_PRICE) }) : t('letters.bird.changeLead', { price: number(LETTER_BIRD_PRICE), zer: number(zer) })}
       </Text>
-      <View style={styles.birds} accessibilityRole="radiogroup" accessibilityLabel={title}>
+      <View style={[styles.birds, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={title}>
         {LETTER_BIRD_ORDER.map((bird) => {
           const name = t(BIRD_NAMES[bird]!);
           const mine = !first && bird === current;

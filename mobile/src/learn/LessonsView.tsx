@@ -20,20 +20,19 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon, type IconName } from '../theme/Icon';
 import { display, sectionLabel } from '../theme/fonts';
-import { layout, radii, spacing, typography, wash } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useTabFocusLoad } from '../navigation/tabFocusLoad';
-import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
-import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
+import { LessonPath, LessonPathSkeleton, PinnedUnit, UnitFace, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
+import { TONES, awayFrom, centredOffset, firstCourse } from '../coursemap/path';
+import { courseName } from '../coursemap/courseName';
 import { UnitRailSheet, type RailSection } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
-import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { QuestsCard } from '../quests/QuestsCard';
 import { TreeCard } from '../tree/TreeCard';
 import { BookCard } from './BookCard';
 import { EventBanner } from '../events/EventBanner';
-import { LeagueLine } from '../leagues/LeagueLine';
 import type { CourseEntry } from '../coursemap/node';
 import type { CourseMap, CourseSummary } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -52,11 +51,10 @@ import { PressableScale } from '../theme/MotionParts';
 
 /**
  * Learn's first half, top to bottom: the next step (one card, one button, with a part-finished review offered
- * under it), the practice tools with today's quests, the course as a lesson path, then the league and the day's
- * extras under "More for today". The path shows one course and one section at a time and draws only the units
- * near the screen; it scrolls to the current skill on first show. Learn's one-at-a-time moments (a kept streak,
- * the reminder banner) show here. Pull to refresh reloads the course and, via `onRefresh`, the bar, which a daily
- * reward claimed here reloads too.
+ * under it), the practice tools with today's quests, the course as a lesson path, then the day's extras under "More
+ * for today". The path shows one course and one section at a time and draws only the units near the screen; it
+ * scrolls to the current skill on first show. Learn's one-at-a-time moments (a kept streak, the reminder banner) show
+ * here. Pull to refresh reloads the course and, via `onRefresh`, the bar.
  */
 export function LessonsView({
   scrollRef,
@@ -357,11 +355,11 @@ export function LessonsView({
                       onPress={() => setChosen(c.course.id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
-                      // The current course is washed in violet with its name in violet, like the current tab.
-                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? wash(colors.primary) : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                      // The current course in solid violet, as every chosen chip is.
+                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
-                      <Text style={[styles.chipText, dir.free, { color: on ? colors.primary : colors.textSecondary }]} numberOfLines={1}>
-                        {c.map?.course.title ?? c.course.title}
+                      <Text style={[styles.chipText, dir.free, { color: on ? colors.textOnPrimary : colors.textSecondary }]} numberOfLines={1}>
+                        {courseName(t, { slug: c.course.slug, title: c.map?.course.title ?? c.course.title })}
                       </Text>
                     </Pressable>
                   );
@@ -370,7 +368,7 @@ export function LessonsView({
             ) : null}
             {courses.length === 1 ? (
               <Text style={[styles.courseTitle, dir.free, { color: colors.textPrimary }]} accessibilityRole="header">
-                {entry?.map?.course.title ?? entry?.course.title}
+                {entry ? courseName(t, { slug: entry.course.slug, title: entry.map?.course.title ?? entry.course.title }) : null}
               </Text>
             ) : null}
             {entry?.map && dueSettled ? (
@@ -406,15 +404,12 @@ export function LessonsView({
           <EmptyState title={t('learn.noCourses')} />
         )}
 
-        {/* After the path: the week's league and your place in it (or your own week), and the day's extras. */}
+        {/* After the path, the day's extras; today's Zêr and the week's league are at the top of Home, as on the website. */}
         <View style={styles.more}>
           <Text style={[styles.mapLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
             {t('learn.more.title')}
           </Text>
-          <LeagueLine />
           <EventBanner />
-          {/* A claim pays Zêr, which the bar shows. */}
-          <DailyRewardCard onClaimed={onRefresh} />
           <WordOfDayCard />
         </View>
       </ScrollView>
@@ -474,11 +469,10 @@ const FOLLOW_MS = 4000;
 /** The next step: course and unit, the lesson's name, the course's progress, and one button. */
 function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
   const share = fraction(step.done, step.total);
-  const where = step.kind === 'review' ? step.courseTitle : `${step.courseTitle} · ${step.unitTitle}`;
   const title = step.kind === 'review' ? t('learn.continue.allDone') : step.skill.title;
   const button =
     step.kind === 'start' ? t('learn.continue.start') : step.kind === 'review' ? t('practice.title') : t('learn.continue.button');
@@ -487,10 +481,10 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
 
   return (
     <View style={[styles.hero, { backgroundColor: colors.surface }]} testID="learn-continue">
-      {/* The course's own words in whatever language it was written in, aligned with the page and read in their own direction. */}
-      <Text style={[styles.heroWhere, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
-        {where}
-      </Text>
+      {/* The chapter's heading in its colour, as the path and the website head it; with everything done, nothing to head. */}
+      {step.kind === 'review' ? null : (
+        <UnitFace number={step.unit.number} title={step.unitTitle} tone={TONES[scheme][step.unit.tone]} section={step.unit.section} testID="learn-continue-chapter" />
+      )}
       <Text style={[styles.heroTitle, step.kind === 'review' ? dir.text : dir.free, { color: colors.textPrimary }]} numberOfLines={2} accessibilityRole="header">
         {title}
       </Text>
@@ -530,13 +524,16 @@ function ContinueReview({ onPress }: { onPress: () => void }): React.JSX.Element
   );
 }
 
+/** The chapter band's height on the card, one line of eyebrow and one of title. */
+const CHAPTER_BAND = 64;
+
 /** The card while the course loads, line for line at the card's own sizes, so the arriving card matches the placeholder. */
 function ContinueSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const start = useStartEdge();
   return (
     <View style={[styles.hero, { backgroundColor: colors.surface }]}>
-      <SkeletonText size={typography.sizes.xs} width="52%" style={start} />
+      <Skeleton height={CHAPTER_BAND} radius={radii.lg} />
       <SkeletonText size={typography.sizes.lg} lineHeight={HERO_TITLE_LINE} width="38%" style={start} />
       <Skeleton height={6} radius={radii.pill} />
       <SkeletonText size={typography.sizes.xs} width={96} style={start} />
@@ -636,7 +633,6 @@ const styles = StyleSheet.create({
   header: { gap: layout.rowGap, marginBottom: spacing.sm },
 
   hero: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm },
-  heroWhere: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   heroTitle: { ...display(typography.sizes.lg) },
   heroProgress: { fontSize: typography.sizes.xs },
   heroButton: { marginTop: spacing.xs },

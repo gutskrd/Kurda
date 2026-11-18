@@ -9,11 +9,11 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
-import { Alert } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { TagsScreen } from './TagsScreen';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -25,7 +25,7 @@ const COFFEE = { key: 'coffee', label: 'Coffee lover', category: 'interest', val
 
 describe('showing a tag on your profile', () => {
   it('moves the switch at once, ends quick taps on the last one, and puts a refused one back with the reason', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     const answers: ((r: unknown) => void)[] = [];
     const client = fakeClient({
       'GET /me/tags': ok({ main: null, claimable: [] }),

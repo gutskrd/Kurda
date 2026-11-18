@@ -78,6 +78,22 @@ describe('ApiClient', () => {
     if (res.ok) expect(res.data.hello).toBe('world');
   });
 
+  it('sends nothing, session least of all, to a path a route parameter turned into another endpoint’s', async () => {
+    const fetchMock = vi.fn(async () => jsonResponse(200, {}));
+    vi.stubGlobal('fetch', fetchMock);
+    persistTokens({ accessToken: 'a', refreshToken: 'b' }, true);
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {});
+    // what /app/users/..%2F..%2Fgroups%2F<id>%2Fjoin puts into `/users/${id}`
+    for (const id of ['../../groups/g1/join', '%2e%2e/admin', '..\\admin']) {
+      const res = await client.post(`/users/${id}/like`);
+      expect(res.ok, id).toBe(false);
+      if (!res.ok) expect(res.error.code, id).toBe('NOT_FOUND');
+    }
+    expect((await client.uploadBytes('/me/../admin/art', new Blob(['x'], { type: 'image/png' }))).ok).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect((await client.get('/users/11111111-2222-4333-8444-555555555555')).ok).toBe(true);
+  });
+
   it('maps an error envelope to a typed client error', async () => {
     vi.stubGlobal(
       'fetch',

@@ -13,7 +13,7 @@ import { useGrowsFrom } from '../lib/viewTransition';
  * and nothing is drawn until the answer arrives so the row does not gain and then lose a card.
  */
 
-interface WebExercise {
+export interface WebExercise {
   href: string;
   nameKey: MessageKey;
   /** One line, as the other tools have. */
@@ -42,16 +42,23 @@ function ExerciseTool({ id, web }: { id: LearnGameId; web: WebExercise }): React
   );
 }
 
+/** The exercises offered in the learner's variety, each with its page; none until availability answers. */
+export function useLessonExercises(): Array<{ id: LearnGameId; web: WebExercise }> {
+  const dialect = useGameDialect();
+  return lessonExercises(useAvailability(dialect), PLAYABLE).flatMap(({ id }) => {
+    const web = WEB_LESSON_EXERCISES[id];
+    return web ? [{ id, web }] : [];
+  });
+}
+
 /** The exercises' cards for the practice tools row; signed-in only, since rounds are made and checked against the learner. */
 export function ExerciseTools(): React.JSX.Element {
-  const dialect = useGameDialect();
-  const offered = lessonExercises(useAvailability(dialect), PLAYABLE);
+  const offered = useLessonExercises();
   return (
     <>
-      {offered.map(({ id }) => {
-        const web = WEB_LESSON_EXERCISES[id];
-        return web ? <ExerciseTool key={id} id={id} web={web} /> : null;
-      })}
+      {offered.map(({ id, web }) => (
+        <ExerciseTool key={id} id={id} web={web} />
+      ))}
     </>
   );
 }

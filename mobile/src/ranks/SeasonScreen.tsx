@@ -21,7 +21,7 @@ import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -249,7 +249,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                           style={({ pressed }) => [styles.frameRow, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
                         >
                           <SeasonFramed tier={tier} size={64} label={t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
-                            <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={framedAvatarSize(64)} />
+                            <Avatar name={user?.displayName ?? user?.username ?? ''} size={framedAvatarSize(64)} />
                           </SeasonFramed>
                           <Text style={[styles.flex, styles.rewardName, { color: colors.textPrimary }]}>{t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}</Text>
                           <Text style={[styles.wearText, { color: on ? colors.success : colors.primary }]}>{on ? t('season.wearing') : t('season.wear')}</Text>

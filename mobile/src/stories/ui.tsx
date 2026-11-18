@@ -19,7 +19,7 @@ import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GlassCard } from '../theme/glass';
 import { useDirection } from '../reports/direction';
-import { hueSteps, type StoryDialect } from '@kurda/shared';
+import type { StoryDialect } from '@kurda/shared';
 import { storyTextProps, storyTextStyle } from './storyText';
 import { pressedDim } from '../theme/motion';
 
@@ -127,8 +127,7 @@ export function Pill({
 
 /**
  * Choices that wrap onto more lines than a segmented control fits (the length filter): a labelled radio group of
- * fingertip-tall chips. The chosen one has the violet wash with violet text, like the segmented control, since solid
- * violet is for the sheet's main button.
+ * fingertip-tall chips. The chosen one is solid violet, like the segmented control.
  */
 export function ChoiceChips<T extends string>({
   label,
@@ -143,8 +142,7 @@ export function ChoiceChips<T extends string>({
   onChange: (v: T) => void;
   labelOf: (v: T) => string;
 }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
-  const violet = hueSteps(scheme, 'violet');
+  const { colors } = useTheme();
   return (
     <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={label}>
       {/* Chips wrap with the same gap between rows as between chips; each reaches half the gap every way. */}
@@ -165,10 +163,10 @@ export function ChoiceChips<T extends string>({
               reach="open"
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: on ? violet.wash : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
               ]}
             >
-              <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
                 {labelOf(opt)}
               </Text>
             </Pressable>

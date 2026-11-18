@@ -84,11 +84,11 @@ describe('ChatScreen', () => {
       'POST /chat/u2/messages': fail({ code: 'MUTED', details: { scope: 'chat', until: null } }),
     });
     renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
-    const input = await screen.findByLabelText('Message…');
+    const input = await screen.findByLabelText('Write a message…');
     fireEvent.change(input, { target: { value: 'hello' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
-    expect((screen.getByLabelText('Message…') as HTMLTextAreaElement).value).toBe('hello');
+    expect((screen.getByLabelText('Write a message…') as HTMLTextAreaElement).value).toBe('hello');
   });
 
   it('opens the gift picker for this friend, and unwraps a gift it was asked to', async () => {

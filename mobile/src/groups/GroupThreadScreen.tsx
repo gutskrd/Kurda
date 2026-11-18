@@ -5,7 +5,7 @@ import { Pressable } from '../theme/Pressable';
 import { canModerateGroup, type GiftCard, type GiftTier, type GroupChatCleared } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
-import { describeError, isMaintenance } from '../api/errors';
+import { describeError, isMaintenance, notReached } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -51,8 +51,8 @@ import { Loading } from '../theme/Loading';
 const MAX_LEN = 2000;
 
 type Message = Omit<GroupMessage, 'body'> & ChatMessage & {
-  /** Sent from here and not yet answered by the server (chat/sending.ts). */
-  pending?: boolean;
+  /** Sent from here and on its way, or not sent because the server was not reached (chat/sending.ts). */
+  pending?: 'sending' | 'failed';
 };
 
 /** A refusal that means the reader is not in the group (any more): removed, banned, or never in it. */
@@ -113,12 +113,22 @@ export function GroupThreadScreen({
   const held = useRef<Message[]>([]);
   held.current = messages;
   // Messages sent from here that the server has not answered for yet, drawn after the ones it has.
-  const { outgoing, begin, settle, echoed, keyOf } = useOutgoing();
+  const { outgoing, begin, settle, echoed, keyOf, hold, resend, discard } = useOutgoing();
   const thread = useMemo<Message[]>(
     () => [
       ...messages,
       ...outgoing.map(
-        (m): Message => ({ ...m, senderId: me, username: user?.username ?? '', avatarUrl: null, deleted: false, kind: 'text', gift: null, game: null, pending: true }),
+        (m): Message => ({
+          ...m,
+          senderId: me,
+          username: user?.username ?? '',
+          avatarUrl: null,
+          deleted: false,
+          kind: 'text',
+          gift: null,
+          game: null,
+          pending: m.failed ? 'failed' : 'sending',
+        }),
       ),
     ],
     [messages, outgoing, me, user?.username],
@@ -392,19 +402,27 @@ export function GroupThreadScreen({
     useCallback(() => void sendGroupTyping(client, groupId), [client, groupId]),
   );
 
-  /** Send words into the room: null when they went, else the refusal. */
+  /**
+   * Send words into the room: null when they went, or when the server was not reached and they wait in the thread as
+   * not sent; else the refusal. `again` is a not-sent message being tried again.
+   */
   const post = useCallback(
-    async (body: string): Promise<ApiError | null> => {
+    async (body: string, again?: string): Promise<ApiError | null> => {
       // In the thread at once as on its way; the server's copy takes its place, or it is taken out.
-      const sending = begin(body);
+      const sending = again ?? begin(body);
       const res = await sendToGroup(client, groupId, body);
+      if (!res.ok && notReached(res.error)) {
+        hold(sending);
+        haptic('error');
+        return null;
+      }
       settle(sending, res.ok ? res.data.id : undefined);
       if (!res.ok) return res.error;
       // Once: the room may have echoed it already.
       setMessages((prev) => appendOnce(prev, res.data as Message));
       return null;
     },
-    [client, groupId, begin, settle],
+    [client, groupId, begin, settle, hold],
   );
 
   /**
@@ -441,6 +459,31 @@ export function GroupThreadScreen({
     setDraft((now) => restoredDraft(body, now));
     refusedSend(refused);
   }, [draft, post, refusedSend, toLatest]);
+
+  /** Try again: the not-sent message goes once more; refused this time, its words come back as a fresh send's do. */
+  const retry = useCallback(
+    async (id: string) => {
+      const body = resend(id);
+      if (!body) return;
+      setError(null);
+      setSendError(null);
+      const refused = await post(body, id);
+      if (!refused) return;
+      haptic('error');
+      setDraft((now) => restoredDraft(body, now));
+      refusedSend(refused);
+    },
+    [post, resend, refusedSend],
+  );
+
+  /** Cancel: the not-sent message leaves the thread, its words back in the field unless something is typed there. */
+  const cancel = useCallback(
+    (id: string) => {
+      const words = discard(id);
+      if (words) setDraft((now) => now || words);
+    },
+    [discard],
+  );
 
   /** A greeting from the welcome, sent as it is. */
   const greet = useCallback(
@@ -584,6 +627,8 @@ export function GroupThreadScreen({
                   senderName={item.username}
                   onOpenGift={startUnwrap}
                   onReport={() => setReporting({ target: { type: 'group_message', messageId: item.id }, senderId: item.senderId, sender: item.username })}
+                  onRetry={() => void retry(item.id)}
+                  onDiscard={() => cancel(item.id)}
                 />
               )}
             />

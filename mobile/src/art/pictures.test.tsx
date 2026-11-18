@@ -17,7 +17,7 @@ vi.mock('../theme/EventThemeContext', () => ({ useEventTheme: () => eventTheme.v
 import { act, cleanup, screen, waitFor } from '@testing-library/react';
 import { Text } from 'react-native';
 import { EventBanner } from '../events/EventBanner';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { BadgeMedal, Framed, LeagueEmblem, PlacementEmblem, RankEmblem, SeasonFramed } from '../ranks/art';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -228,7 +228,7 @@ describe('whatever frame is worn', () => {
 
 describe('a default profile picture', () => {
   it('is the uploaded picture where an admin replaced it, and the one that ships otherwise', async () => {
-    const { container } = renderWithProviders(<InitialsAvatar name="Rojda" id="u1" photoUrl="/cosmetics/avatars/default-03.png" />);
+    const { container } = renderWithProviders(<Avatar name="Rojda" photoUrl="/cosmetics/avatars/default-03.png" />);
     expect(await picture(container)).toBe('https://hevalo.app/cosmetics/avatars/default-03.png');
     await act(async () => {
       await overrides({ 'avatar:default-03': `${CDN}/avatar-03.png` });
@@ -236,15 +236,15 @@ describe('a default profile picture', () => {
     await waitFor(() => expect(container.querySelector('img')?.getAttribute('src')).toBe(`${CDN}/avatar-03.png`));
   });
 
-  it('shows a person, not letters, for a picture with no name that will not load', () => {
-    const { container } = renderWithProviders(<InitialsAvatar name="" id="default-03" photoUrl={null} />);
+  it('is the default deer, not letters, for somebody with no picture', async () => {
+    const { container } = renderWithProviders(<Avatar name="Rojda" photoUrl={null} />);
+    expect(await picture(container)).toBe('https://hevalo.app/cosmetics/avatars/default-01.png');
     expect(container.textContent).toBe('');
-    expect(container.querySelector('svg')).not.toBeNull();
   });
 
   it('leaves a photo of somebody’s own alone', async () => {
     await overrides({ 'avatar:default-03': `${CDN}/avatar-03.png` });
-    const { container } = renderWithProviders(<InitialsAvatar name="Rojda" id="u1" photoUrl="https://media.hevalo.app/profile/rojda.webp" />);
+    const { container } = renderWithProviders(<Avatar name="Rojda" photoUrl="https://media.hevalo.app/profile/rojda.webp" />);
     expect(await picture(container)).toBe('https://media.hevalo.app/profile/rojda.webp');
   });
 });

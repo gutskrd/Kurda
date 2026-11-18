@@ -683,9 +683,10 @@ function unitHeading(number: string, title: string, section?: string | null): st
 
 /**
  * A unit's heading in its colour: "Section 1 · Chapter 2" over its name (no section in a single-section course),
- * with the guide's book button where the unit has notes and the unit map beside it. PinnedUnit wears the same face.
+ * with the guide's book button where the unit has notes and the unit map beside it. PinnedUnit and Learn's next-step
+ * card wear the same face.
  */
-function UnitFace({
+export function UnitFace({
   number,
   title,
   tone,

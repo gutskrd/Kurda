@@ -2,7 +2,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { loadConfig } from '../config/env.js';
+import { voiceAttachable } from '../moderation/restrictions.js';
 import { FakeStorage } from '../test/fake-storage.js';
+import { mp3 as frames } from '../test/audio-files.js';
 import { AUDIO_DAILY_UPLOADS, storeAudioMedia, type AudioMediaDeps } from './audioMedia.js';
 import { audioLimits } from './mediaLimits.js';
 import { MediaUsageService } from './mediaUsage.js';
@@ -10,8 +12,8 @@ import { MediaService, ORPHAN_AGE_HOURS } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
-/** An ID3-tagged MP3, as long as asked, different for each `seed`. */
-const mp3 = (seed: number, pad = 512): Buffer => Buffer.concat([Buffer.from([0x49, 0x44, 0x33, 0x03, 0, 0, 0, 0]), Buffer.alloc(pad, seed % 251), Buffer.from(String(seed))]);
+/** A short MP3, different for each `seed`. */
+const mp3 = (seed: number): Buffer => frames(10, seed);
 
 describe.skipIf(!DATABASE_URL)('a member’s recordings (integration)', () => {
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
@@ -67,6 +69,29 @@ describe.skipIf(!DATABASE_URL)('a member’s recordings (integration)', () => {
     const lesson = await storeAudioMedia(deps, 'lesson-audio', mp3(1001), null);
     expect(lesson.ok).toBe(true);
     if (lesson.ok) await pool.query(`DELETE FROM media_uploads WHERE key = $1`, [lesson.mediaId]);
+  });
+
+  it('gives two people sending the same file an upload each, and refuses it to anyone once moderation takes one down', async () => {
+    const [first, second, third] = [await user('recd'), await user('rece'), await user('recf')];
+    const bytes = mp3(3001);
+    try {
+      const a = await storeAudioMedia(deps, 'voice-note', bytes, first);
+      const b = await storeAudioMedia(deps, 'voice-note', bytes, second);
+      expect(a.ok && b.ok).toBe(true);
+      if (!a.ok || !b.ok) return;
+      expect(a.mediaId).not.toBe(b.mediaId);
+      // each is its uploader's to attach, and nobody else's
+      expect(await voiceAttachable(pool, first, a.mediaId)).toBe(true);
+      expect(await voiceAttachable(pool, second, a.mediaId)).toBe(false);
+      expect(await voiceAttachable(pool, second, b.mediaId)).toBe(true);
+      // the same person sending it again is the same upload
+      expect(await storeAudioMedia(deps, 'voice-note', bytes, first)).toMatchObject({ ok: true, mediaId: a.mediaId, reused: true });
+
+      await pool.query(`UPDATE media_uploads SET quarantine_state = 'done' WHERE key = $1`, [a.mediaId]);
+      expect(await storeAudioMedia(deps, 'voice-note', bytes, third)).toMatchObject({ ok: false, code: 'MEDIA_REJECTED' });
+    } finally {
+      await pool.query(`DELETE FROM media_uploads WHERE uploader_id = ANY($1::uuid[])`, [[first, second, third]]);
+    }
   });
 
   it('removes a recording nobody posted after a day, and keeps one a comment or a post holds', async () => {

@@ -8,11 +8,11 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { useDirection } from '../reports/direction';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
-import { blockedUsers, unblockUser, unhideBlocked, type BlockedUser } from './blocks';
+import { blockedUsers, hideBlocked, unblockUser, unhideBlocked, type BlockedUser } from './blocks';
 import { EmptyState } from '../theme/EmptyState';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { Loading } from '../theme/Loading';
@@ -48,7 +48,6 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(
     (offset = 0) =>
@@ -78,8 +77,9 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
   const pull = usePullRefresh(() => load(0));
 
   /**
-   * Unblock, then remove the row rather than reload, which would shuffle the rows below. Only on success: a row that
-   * vanished after a failed unblock would suggest you had let someone back in.
+   * Unblock, once confirmed, as the website does: the row goes at once, without a reload that would shuffle the rows
+   * below, and the person is back in the lists that left them out. A refusal puts the row back in its place, still
+   * blocked, and says why.
    */
   const unblock = (user: BlockedUser): void => {
     const name = user.displayName || user.username;
@@ -88,18 +88,17 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
       {
         text: t('settings.blocked.unblock'),
         onPress: () => {
-          setBusy(user.userId);
+          const at = (list ?? []).findIndex((b) => b.userId === user.userId);
+          setError(null);
+          unhideBlocked(user.userId);
+          setList((prev) => (prev ?? []).filter((b) => b.userId !== user.userId));
+          setTotal((n) => Math.max(0, n - 1));
           void unblockUser(client, user.userId).then((res) => {
-            setBusy(null);
-            if (!res.ok) {
-              setError(describeError(res.error, t));
-              return;
-            }
-            setError(null);
-            // Blocked earlier from this phone: back in the lists that left them out.
-            unhideBlocked(user.userId);
-            setList((prev) => (prev ?? []).filter((b) => b.userId !== user.userId));
-            setTotal((n) => Math.max(0, n - 1));
+            if (res.ok) return;
+            hideBlocked(user.userId);
+            setList((prev) => (prev ?? []).some((b) => b.userId === user.userId) ? prev : [...(prev ?? []).slice(0, at), user, ...(prev ?? []).slice(at)]);
+            setTotal((n) => n + 1);
+            setError(describeError(res.error, t));
           });
         },
       },
@@ -130,32 +129,23 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                     key={u.userId}
                     style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
                   >
-                    <InitialsAvatar
-                      name={u.displayName || u.username}
-                      id={u.userId}
-                      size={40}
-                      photoUrl={u.avatarUrl}
-                    />
+                    <Avatar name={u.displayName || u.username} size={40} photoUrl={u.avatarUrl} />
                     <View style={styles.main}>
                       <Text style={[styles.name, dir.free, { color: colors.textPrimary }]}>{u.displayName || u.username}</Text>
                       <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
                         @{u.username} · {t('settings.blocked.since', { date: when(u.blockedAt, locale) })}
                       </Text>
                     </View>
-                    {busy === u.userId ? (
-                      <Loading />
-                    ) : (
-                      <Pressable
-                        onPress={() => unblock(u)}
-                        accessibilityRole="button"
-                        // One 18pt line of words, reaching a fingertip, alone at the end of its row.
-                        reach="open"
-                        reachSize={{ height: 18 }}
-                        style={({ pressed }) => pressed && heldDim}
-                      >
-                        <Text style={[styles.action, { color: colors.primary }]}>{t('settings.blocked.unblock')}</Text>
-                      </Pressable>
-                    )}
+                    <Pressable
+                      onPress={() => unblock(u)}
+                      accessibilityRole="button"
+                      // One 18pt line of words, reaching a fingertip, alone at the end of its row.
+                      reach="open"
+                      reachSize={{ height: 18 }}
+                      style={({ pressed }) => pressed && heldDim}
+                    >
+                      <Text style={[styles.action, { color: colors.primary }]}>{t('settings.blocked.unblock')}</Text>
+                    </Pressable>
                   </View>
                 ))}
 

@@ -248,14 +248,17 @@ describe('LastLetterScreen', () => {
     expect(await screen.findByText('This game isn’t available.')).toBeTruthy();
   });
 
-  it('offers the game only where the dictionary is big enough, without a promise', async () => {
+  it('offers the game only where the dictionary is big enough, without a promise, and leads back to the games', async () => {
     testAuth.client = fakeClient({
       ...quiet,
       'GET /mp/last-letter/availability': ok({ dialects: [{ dialect: 'kmr', group: false, solo: false }, { dialect: 'ckb', group: false, solo: false }] }),
     });
-    renderWithProviders(<LastLetterScreen onExit={() => undefined} />);
+    const onExit = vi.fn();
+    renderWithProviders(<LastLetterScreen onExit={onExit} />);
     expect(await screen.findByText('Tîpa Dawî isn’t offered in this Kurdish.')).toBeTruthy();
     expect(screen.queryByText(/soon/i)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to games' }));
+    expect(onExit).toHaveBeenCalled();
   });
 
   it('starts a game against Hevalo where it is offered', async () => {

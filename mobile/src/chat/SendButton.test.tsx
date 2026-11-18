@@ -30,7 +30,7 @@ describe('the composer’s Send', () => {
     });
     testAuth.client = client;
     renderWithProviders(<ChatScreen userId="u2" username="azad" onExit={() => undefined} />);
-    const field = await screen.findByLabelText('Message…');
+    const field = await screen.findByLabelText('Write a message…');
     expect(disabled(screen.getByRole('button', { name: 'Send' }))).toBe(true);
 
     // Spaces are not a message.
@@ -59,7 +59,7 @@ describe('a message being sent', () => {
       'POST /chat/u2/messages': () => new Promise<ApiResult<unknown>>((r) => (resolve = r)),
     });
     renderWithProviders(<ChatScreen userId="u2" username="azad" onExit={() => undefined} />);
-    const field = await screen.findByLabelText('Message…');
+    const field = await screen.findByLabelText('Write a message…');
     fireEvent.change(field, { target: { value: 'Silav' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     return { answer: (result) => act(async () => resolve(result)), field };

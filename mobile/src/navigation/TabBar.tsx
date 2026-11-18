@@ -16,7 +16,7 @@ import { haptic } from '../feedback/haptics';
 import { springTo, usePressScale } from '../theme/animate';
 import { TAB_BAR_HEIGHT, TAB_BAR_SIDE, tabBarLift, useKeyboardShown } from './tabBarLayout';
 import { TABS, type TabName } from './tabs';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useAuth } from '../auth/AuthContext';
 import { floating } from '../theme/floating';
 
@@ -132,18 +132,9 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                 onLongPress={() => navigation.emit({ type: 'tabLongPress', target: route.key })}
               >
                 {name === 'Profile' && user ? (
-                  /*
-                   * Your own face on your own tab, from the session already loaded so it costs no request; your
-                   * initials without a photo.
-                   */
+                  // Your own face on your own tab, from the session already loaded so it costs no request.
                   <View style={[styles.ring, { borderColor: focused ? colors.primary : 'transparent' }]}>
-                    <InitialsAvatar
-                      name={user.username}
-                      id={user.id}
-                      size={AVATAR}
-                      photoUrl={user.profilePhotoUrl ?? undefined}
-                      textStyle={styles.avatarText}
-                    />
+                    <Avatar name={user.username} size={AVATAR} photoUrl={ownAvatarUrl(user)} />
                   </View>
                 ) : (
                   <Icon name={(focused ? tab?.activeIcon : tab?.icon) ?? 'home'} size={GLYPH} color={ink} />
@@ -260,8 +251,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // The initials inside a small avatar: the smallest text size, which still fits two letters.
-  avatarText: { fontSize: 11 },
   badge: {
     position: 'absolute',
     top: -5,

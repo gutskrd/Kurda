@@ -1,9 +1,22 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
-import { rememberAfterSignup, safeFrom, takeAfterSignup } from './afterSignup';
+import { inAppPath, rememberAfterSignup, safeFrom, takeAfterSignup } from './afterSignup';
 
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
+});
+
+describe('inAppPath', () => {
+  it('keeps a path on this site, with its query and fragment', () => {
+    expect(inAppPath('/copyright#counter')).toBe('/copyright#counter');
+    expect(inAppPath('/app/stories?category=myth')).toBe('/app/stories?category=myth');
+  });
+
+  it('refuses anything a browser would take to another origin', () => {
+    for (const value of ['//evil.example', '/\\evil.example', '/\t/evil.example', '/\n/evil.example', 'https://evil.example', 'javascript:alert(1)', 'app', '', 7, null]) {
+      expect(inAppPath(value), String(value)).toBeNull();
+    }
+  });
 });
 
 describe('safeFrom', () => {

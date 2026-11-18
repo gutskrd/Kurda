@@ -22,10 +22,10 @@ import { useDirection } from './direction';
 import {
   APPEAL_STATUS_LABEL,
   CATEGORY_LABEL,
-  ORIGIN_LABEL,
   SANCTION_LABEL,
   SCOPE_LABEL,
   STANDING_STATUS_LABEL,
+  originKey,
 } from './labels';
 import { formatDay, formatUntil } from './sendErrors';
 import { heldDim } from '../theme/MotionParts';
@@ -207,7 +207,7 @@ function SanctionCard({
           .join(' · ')}
       </Text>
       <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
-        {`${t(ORIGIN_LABEL[sanction.origin])} · ${t(sanction.reviewedByPerson ? 'standing.reviewed' : 'standing.notReviewed')}`}
+        {t(originKey(sanction))}
       </Text>
 
       {appeal ? (

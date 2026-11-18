@@ -51,3 +51,18 @@ export function cellState(status: DailyStatus, day: number): CellState {
   }
   return day <= status.cycleDay ? 'claimed' : 'upcoming';
 }
+
+const claimedListeners = new Set<() => void>();
+
+/** Today's reward was claimed: a balance shown on another tab (Learn's bar) reads it again. */
+export function dailyClaimed(): void {
+  for (const l of claimedListeners) l();
+}
+
+/** Hear about claims. Returns how to stop. */
+export function onDailyClaimed(listener: () => void): () => void {
+  claimedListeners.add(listener);
+  return () => {
+    claimedListeners.delete(listener);
+  };
+}

@@ -3,7 +3,7 @@
  * language's catalogue. The week's end is a calm local time ("Mon 01:00"), never a countdown. An unknown tier is
  * shown as no tier at all.
  */
-import { isLeagueTier, type LeagueStandingRow, type LeagueTier, type LeagueWeekResult, type LeagueZone } from '@kurda/shared';
+import { isLeagueTier, weekDaysLeft, type LeagueStandingRow, type LeagueTier, type LeagueWeekResult, type LeagueZone } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
@@ -63,19 +63,14 @@ export function weekEndText(endsAt: string, locale: string, timeZone?: string): 
   }
 }
 
-const DAY = 86_400_000;
-
 /**
- * The week's time left in whole days ("3 days left", "1 day left"), and on its last day the local closing time
- * ("Week ends Mon 01:00"). Never hours and minutes.
+ * The week's time left in whole days ("3 days left", "1 day left"), counted as the website counts them (shared
+ * `weekDaysLeft`), and on its last day the local closing time ("Week ends Mon 01:00"). Never hours and minutes.
  */
 export function weekLeftText(t: Translate, endsAt: string, locale: string, now: number = Date.now(), timeZone?: string): string {
-  const at = new Date(endsAt).getTime();
-  if (Number.isNaN(at)) return '';
-  const left = at - now;
-  if (left < DAY) return t('leagues.endsAt', { time: weekEndText(endsAt, locale, timeZone) });
-  // A day begun is a day there is still time in: 2 days and an hour is "3 days left".
-  const days = Math.ceil(left / DAY);
+  const days = weekDaysLeft(endsAt, now);
+  if (days === null) return '';
+  if (days === 0) return t('leagues.endsAt', { time: weekEndText(endsAt, locale, timeZone) });
   return days === 1 ? t('leagues.dayLeft') : t('leagues.daysLeft', { count: days });
 }
 
