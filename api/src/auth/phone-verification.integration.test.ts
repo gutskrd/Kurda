@@ -1,4 +1,4 @@
-/** Optional phone (SMS) verification vs real Postgres (CI job). */
+/** Optional phone (SMS) verification vs real Postgres. */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { PhoneVerificationService } from './phone-verification-service.js';
