@@ -10,6 +10,7 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../theme/Pressable', () => import('../testing/reach'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { Alert } from 'react-native';
 import { forgetReach, reachOf } from '../testing/reach';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -178,22 +179,44 @@ describe('a post in the chain', () => {
     expect(screen.getByRole('button', { name: 'Remove from saved' })).toBeTruthy();
   });
 
-  it('does nothing at all for a second tap on a like already on its way: no buzz, no second call', async () => {
+  it('ends rapid taps on the last one, one request at a time, and sends the state rather than a toggle', async () => {
     const haptics = await import('../feedback/haptics');
     const felt = vi.spyOn(haptics, 'haptic').mockImplementation(() => undefined);
-    let answer: (r: unknown) => void = () => undefined;
-    const client = fakeClient({ 'POST /posts/library/p1/like': () => new Promise((resolve) => (answer = resolve)) } as never);
+    const answers: ((r: unknown) => void)[] = [];
+    const client = fakeClient({ 'POST /posts/library/p1/like': () => new Promise((resolve) => answers.push(resolve)) } as never);
     testAuth.client = client;
     renderWithProviders(<FeedCard item={item()} />);
     fireEvent.click(screen.getByRole('button', { name: 'Like' }));
     expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
-    expect(felt).toHaveBeenCalledTimes(1);
-    // Tapped again before the server has answered.
+    // Taken back and liked again before the server has answered: each tap shows at once.
     fireEvent.click(screen.getByRole('button', { name: 'Unlike (1)' }));
-    expect(client.calls).toHaveLength(1);
-    expect(felt).toHaveBeenCalledTimes(1);
-    await act(async () => answer(ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })));
-    expect(screen.getByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Like' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Unlike (1)' }));
+    expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
+    // Only the first went; the last wish waits for its answer. Taking a like back is not felt.
+    expect(client.calls.map((c) => c.body)).toEqual([{ on: true }]);
+    expect(felt).toHaveBeenCalledTimes(2);
+    await act(async () => answers[0]!(ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })));
+    expect(client.calls.map((c) => c.body)).toEqual([{ on: true }, { on: false }]);
+    expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
+    await act(async () => answers[1]!(ok({ on: false, engagement: { liked: false, likes: 0, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })));
+    expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
+    expect(client.calls).toHaveLength(2);
+  });
+
+  it('puts a refused like back and says why', async () => {
+    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({ 'POST /posts/library/p1/like': () => new Promise((resolve) => (answer = resolve)) } as never);
+    renderWithProviders(<FeedCard item={item({ engagement: { liked: false, likes: 4, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Like (4)' }));
+    // Shown before the server answers.
+    expect(await screen.findByRole('button', { name: 'Unlike (5)' })).toBeTruthy();
+    expect(said).not.toHaveBeenCalled();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByRole('button', { name: 'Like (4)' })).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
   });
 
   it('puts back only what was refused, leaving another change alone', async () => {

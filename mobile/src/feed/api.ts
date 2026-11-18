@@ -48,15 +48,16 @@ export const getEngagement = (
 ): Promise<ApiResult<{ engagement: PostEngagement }>> => client.get(`/posts/${item.targetType}/${item.id}/engagement`);
 
 /**
- * Like, save or repost as one toggle; a second press undoes it. The server answers with fresh totals, which keeps
- * counts right when others act meanwhile.
+ * Like, save or repost, or take it back. The state is sent rather than a toggle, so a repeated or late request
+ * changes nothing; the server answers with fresh totals, which keeps counts right when others act meanwhile.
  */
-export const toggleEngagement = (
+export const setEngagement = (
   client: ApiClient,
   item: Pick<FeedItem, 'targetType' | 'id'>,
   kind: EngagementKind,
+  on: boolean,
 ): Promise<ApiResult<{ on: boolean; engagement: PostEngagement }>> =>
-  client.post(`/posts/${item.targetType}/${item.id}/${kind}`);
+  client.post(`/posts/${item.targetType}/${item.id}/${kind}`, { on });
 
 /**
  * Delete your own post, written or a picture, as the web card does. The server checks ownership; the app only

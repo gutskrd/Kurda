@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Animated, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
+import { useIntents } from '../api/optimistic';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
 import { HeartBurst, heldDim } from '../theme/MotionParts';
@@ -19,8 +20,8 @@ import { formatCompact, formatNumber } from '../i18n/format';
 import type { Locale } from '../i18n/translations';
 import { springTo, timing } from '../theme/animate';
 import { useDirection } from '../reports/direction';
-import { postUrl, toggleEngagement } from './api';
-import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem } from './types';
+import { postUrl, setEngagement } from './api';
+import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem, type PostEngagement } from './types';
 import { PostPictures } from '../composer/PostPictures';
 import { usePostMenu } from '../composer/PostExtras';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -35,11 +36,26 @@ const AUTHOR = 32;
  */
 export const DOUBLE_TAP_MS = 220;
 
+const FLAG = { like: 'liked', repost: 'reposted', bookmark: 'bookmarked' } as const;
+const COUNT = { like: 'likes', repost: 'reposts', bookmark: 'bookmarks' } as const;
+
+/** The server's engagement with each wanted flag laid over it, its count moved by one where the two differ. */
+function withWishes(told: PostEngagement, wanted: (kind: EngagementKind) => boolean): PostEngagement {
+  const shown = { ...told };
+  for (const kind of ['like', 'repost', 'bookmark'] as const) {
+    const on = wanted(kind);
+    if (on === told[FLAG[kind]]) continue;
+    shown[FLAG[kind]] = on;
+    shown[COUNT[kind]] = Math.max(0, told[COUNT[kind]] + (on ? 1 : -1));
+  }
+  return shown;
+}
+
 /**
  * One post on the wall, written or a picture, in one shape: a header line (author, kind, age, "⋯"), the text, the
  * pictures, and a row of pills (like, comments, repost, share, save). A double tap likes with a blooming heart; a
- * single tap opens the post. Like, repost and save are optimistic, each waiting only on itself, and roll back on
- * refusal; guests are offered an account first (auth/AccountGate). `standalone` is the post on its own page.
+ * single tap opens the post. Like, repost and save are shown at once (api/optimistic.ts), each on its own, and go back
+ * with a short message on refusal; guests are offered an account first (auth/AccountGate). `standalone` is the post on its own page.
  * Memoised, since liking one post re-renders the wall.
  */
 export const FeedCard = memo(function FeedCard({
@@ -67,15 +83,10 @@ export const FeedCard = memo(function FeedCard({
   const [likes, setLikes] = useState(0);
   // Each like made by a double tap, for the heart in the middle of the post.
   const [blooms, setBlooms] = useState(0);
-  // The engagement shown: the server's, or the change just made while it answers.
-  const [shown, setShown] = useState(item.engagement);
+  // The engagement as the server last told it: the item's, or a fresher answer to a tap here.
+  const [told, setTold] = useState(item.engagement);
   const [reporting, setReporting] = useState(false);
-  // Which of the three is on its way to the server: each locks itself and nothing else.
-  const pending = useRef(new Set<EngagementKind>());
-  // What is shown now, for a change made while another kind's answer is pending.
-  const now = useRef(shown);
-  now.current = shown;
-  useEffect(() => setShown(item.engagement), [item.engagement]);
+  useEffect(() => setTold(item.engagement), [item.engagement]);
 
   const open = useCallback(() => {
     if (standalone) return;
@@ -83,67 +94,47 @@ export const FeedCard = memo(function FeedCard({
     else navigation.navigate('MemeDetail', { postId: item.id });
   }, [navigation, item.targetType, item.id, standalone]);
   // Your own post's Edit and Delete, on a long press, the "⋯" (and as an action for a screen reader).
-  const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onActivate: open, onDeleted });
+  const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onDeleted, onActivate: open });
   const openAuthor = useCallback(() => navigation.navigate('UserProfile', { userId: item.author.id }), [navigation, item.author.id]);
-  /**
-   * Like, repost or save optimistically, then tell the server; its answer brings the true totals, and a refusal
-   * restores what was there.
-   */
-  const toggle = useCallback(
-    async (kind: EngagementKind) => {
-      const flag = kind === 'like' ? 'liked' : kind === 'repost' ? 'reposted' : 'bookmarked';
-      const count = kind === 'like' ? 'likes' : kind === 'repost' ? 'reposts' : 'bookmarks';
-      const before = { on: now.current[flag], count: now.current[count] };
-      const on = !before.on;
-      pending.current.add(kind);
-      // Only this kind's flag and count: another kind's change, made meanwhile, is left as it stands.
-      setShown((s) => ({ ...s, [flag]: on, [count]: Math.max(0, s[count] + (on ? 1 : -1)) }));
-      const res = await toggleEngagement(client, item, kind);
-      pending.current.delete(kind);
-      if (!res.ok) {
-        setShown((s) => ({ ...s, [flag]: before.on, [count]: before.count }));
-        return;
-      }
-      // The server's totals, except for a kind whose own answer is still on its way.
-      const answered = res.data.engagement;
-      const waiting = pending.current;
-      setShown((s) => ({
-        ...answered,
-        ...(waiting.has('like') ? { liked: s.liked, likes: s.likes } : null),
-        ...(waiting.has('repost') ? { reposted: s.reposted, reposts: s.reposts } : null),
-        ...(waiting.has('bookmark') ? { bookmarked: s.bookmarked, bookmarks: s.bookmarks } : null),
-      }));
-      onChanged?.({ ...item, engagement: answered });
-    },
-    [client, item, onChanged],
-  );
 
-  /**
-   * Whether a tap on one of the three may proceed: an account, and nothing of the same kind pending. Checked
-   * before any feedback, so a tap that will do nothing shows nothing.
+  /*
+   * Like, repost and save are each shown at once and sent on their own; the server's answer brings the true totals.
+   * What is drawn is its last answer with each change still on its way laid over it.
    */
-  const may = useCallback(
-    (kind: EngagementKind): boolean => require(kind === 'bookmark' ? 'save' : 'react') && !pending.current.has(kind),
-    [require],
+  const wishes = useIntents<EngagementKind, boolean, { on: boolean; engagement: PostEngagement }>(
+    async (kind, on) => {
+      const res = await setEngagement(client, item, kind, on);
+      if (res.ok) {
+        setTold(res.data.engagement);
+        onChanged?.({ ...item, engagement: res.data.engagement });
+      }
+      return res;
+    },
+    { answered: (data) => data.on },
   );
+  const shown = withWishes(told, (kind) => wishes.shown(kind, told[FLAG[kind]]));
+  const now = useRef(shown);
+  now.current = shown;
+
+  /** Whether a tap on one of the three may go ahead: a guest is offered an account first, before any feedback. */
+  const may = useCallback((kind: EngagementKind): boolean => require(kind === 'bookmark' ? 'save' : 'react'), [require]);
 
   const act = useCallback(
     (kind: EngagementKind) => {
-      if (may(kind)) void toggle(kind);
+      if (may(kind)) wishes.want(kind, !now.current[FLAG[kind]], told[FLAG[kind]]);
     },
-    [may, toggle],
+    [may, wishes, told],
   );
 
   const like = useCallback(() => {
-    // The guard comes first: neither a guest's heart nor a pending one pops before refusing.
     if (!may('like')) return;
     // A like is felt and pops; taking one back is quiet.
     if (!now.current.liked) {
       haptic('tap');
       setLikes((n) => n + 1);
     }
-    void toggle('like');
-  }, [may, toggle]);
+    wishes.want('like', !now.current.liked, told.liked);
+  }, [may, wishes, told]);
 
   /*
    * One tap opens the post; two quick taps like it, so the first tap waits briefly for a second. A double tap on
