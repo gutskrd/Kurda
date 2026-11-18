@@ -1,9 +1,6 @@
 /*
- * What Impostor's page is built from on the website
- * (party/PartyPage.tsx): the three steps of how a round goes, the lobby's
- * settings line, and the timer bar that empties as a wait runs out. Flat
- * planes from the palette; under Reduce Motion the bar jumps rather than
- * glides.
+ * Impostor's page (party/PartyPage.tsx): the round steps, the lobby settings line and the timer bar. Under Reduce
+ * Motion the bar jumps rather than glides.
  */
 .party-steps {
   display: grid;
@@ -60,7 +57,7 @@
   background: var(--danger);
 }
 
-/* a box a clue or a guess is typed in */
+/* The box a clue or guess is typed in. */
 .party-compose {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -87,7 +84,7 @@
   }
 }
 
-/* on a phone the box takes the whole width, and its button sits under it */
+/* On a phone the box takes the full width, with its button below. */
 @media (max-width: 420px) {
   .party-compose {
     grid-template-columns: minmax(0, 1fr);
