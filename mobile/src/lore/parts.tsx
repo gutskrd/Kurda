@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Linking, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { Linking, StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 import { originalLocale, type AppLocale, type GameDialect, type LoreSource } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
@@ -16,10 +16,8 @@ import { openableSourceUrl } from './sourceLink';
 import { dialectNameKey } from '../i18n/dialectName';
 
 /**
- * Small pieces the riddle and proverb screens share: a collection's title
- * (its Kurmancî name, and the reader's word for it beside), the switch
- * between the two varieties, a labelled section, a translation set in its
- * own language, and the list of sources a riddle or a proverb was found in.
+ * Small pieces the riddle and proverb screens share: a collection's title, the variety switch, a labelled section, a
+ * translation set in its own language, and the list of sources.
  */
 
 /** "Metelok · Riddles": the Kurmancî name in the display face, the reader's own word after it. */
@@ -47,11 +45,11 @@ export function VarietySwitch({ value, onChange }: { value: GameDialect; onChang
 }
 
 /** A labelled part of a page: the small grey word, then what it is about. */
-export function Section({ label, children, style }: { label: string; children: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+export function Section({ label, children }: { label: string; children: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   return (
-    <View style={[styles.section, style]}>
+    <View style={styles.section}>
       <Text style={[sectionLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
         {label}
       </Text>
@@ -61,35 +59,30 @@ export function Section({ label, children, style }: { label: string; children: R
 }
 
 /**
- * A text in one of the app's languages — a translation, an explanation —
- * set in that language's direction and read in it, whatever the interface
- * is in. `align` centres it under a centred original.
+ * Text in one of the app's languages (a translation, an explanation), set and read in that language's direction
+ * whatever the interface is in. `align` centres it under a centred original.
  */
 export function InLanguage({
   text,
   lang,
   style,
   align,
-  numberOfLines,
 }: {
   text: string;
   lang: AppLocale;
   style?: StyleProp<TextStyle>;
   align?: 'center';
-  numberOfLines?: number;
 }): React.JSX.Element {
   const set = textIn(lang);
   return (
-    <Text {...set.props} style={[style, set.style, align === 'center' ? styles.centre : null]} numberOfLines={numberOfLines}>
+    <Text {...set.props} style={[style, set.style, align === 'center' ? styles.centre : null]}>
       {text}
     </Text>
   );
 }
 
 /**
- * The one line that says a translation is the English one because the
- * reader's language has none yet — and only then: a Kurmancî reader of a
- * Kurmancî riddle is reading their own language already, and is told nothing.
+ * The one line that says a translation is the English one because the reader's language has none yet, and only then.
  */
 export function EnglishNote({ lang, dialect }: { lang: AppLocale; dialect: GameDialect }): React.JSX.Element | null {
   const { t, locale } = useI18n();
@@ -100,9 +93,8 @@ export function EnglishNote({ lang, dialect }: { lang: AppLocale; dialect: GameD
 }
 
 /**
- * Where a riddle or a proverb was found: each source's title, who wrote it,
- * what it gives, and a link where it is online (opened in the browser).
- * Titles and authors are written as they were printed, in their own language.
+ * Where a riddle or proverb was found: each source's title, author, what it gives, and a link where it is online.
+ * Titles and authors are written as printed, in their own language.
  */
 export function SourcesList({ sources }: { sources: readonly LoreSource[] }): React.JSX.Element | null {
   const { t } = useI18n();
@@ -113,7 +105,7 @@ export function SourcesList({ sources }: { sources: readonly LoreSource[] }): Re
     <Section label={t('lore.sources')}>
       <View style={styles.sources}>
         {sources.map((s, i) => {
-          // only an https address is a link (sourceLink.ts); any other source reads as plain text
+          // Only an https address is a link (sourceLink.ts); any other source reads as plain text.
           const url = openableSourceUrl(s.url);
           const body = (
             <>

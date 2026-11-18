@@ -42,22 +42,14 @@ const MODE_KEY: Record<ProverbRoundMode, { name: TranslationKey; line: Translati
 type Phase = 'intro' | 'round' | 'results';
 
 /**
- * A short round on the proverbs, in the way the games played alone go on
- * the phone (games/SoloGameShell): a start with the two kinds of round to
- * choose from — what a proverb means, or which proverb fits a little scene —
- * and the round left unfinished to go back to; five items, a stone each,
- * three choices, a second try with the first one crossed out, and after each
- * item the proverb it was about with what it means, and a way to its page;
- * and results that say exactly what happened.
+ * A short round on the proverbs, run like the games played alone (games/SoloGameShell): a start choosing what a proverb
+ * means or which fits a little scene, and any unfinished round to resume; five items of three choices with a second
+ * try, each followed by the proverb with its meaning and a way to its page; and results that say exactly what happened.
  *
- * The round is the server's: made there with its answers kept there, checked
- * there, counted there. It pays no XP, as no game played alone does, and the
- * results say so in the same quiet line the games use; at least half right
- * on the first try counts for the streak and the day.
- *
- * The choices are in one language for the whole round — the reader's when
- * enough proverbs are translated into it, else English — and set in that
- * language's direction; the proverbs themselves are in their own Kurdish.
+ * The round is the server's: made, checked and counted there. It pays no XP, as no game played alone does, and says so
+ * in the games' quiet line; at least half right on the first try counts for the streak. The choices are in one language
+ * for the whole round (the reader's when enough proverbs are translated, else English); the proverbs stay in their
+ * Kurdish.
  */
 export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: GameDialect; mode?: ProverbRoundMode; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -77,7 +69,7 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // the round of this kind left unfinished, offered first
+  // The round of this kind left unfinished, offered first.
   useEffect(() => {
     let live = true;
     setOpen(null);
@@ -296,9 +288,8 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
 }
 
 /**
- * One item: the question in the round's language, the proverb (or the scene)
- * it is about, its three choices, and once it is done the right one with the
- * proverb's meaning and the way to its page.
+ * One item: the question in the round's language, the proverb (or scene) it is about, its three choices, and once done
+ * the right one with the proverb's meaning and the way to its page.
  */
 function RoundItem({
   item,
@@ -328,7 +319,7 @@ function RoundItem({
   const round = textIn(item.locale);
   const done = result?.done === true;
   const correction = done ? result?.correction : null;
-  // the choices are meanings in the round's language, or proverbs in their own Kurdish
+  // The choices are meanings in the round's language, or proverbs in their own Kurdish.
   const optionSet = item.mode === 'meaning' ? round : ku;
   const english = item.locale === 'en' && locale !== 'en' && locale !== originalLocale(item.dialect);
   const verdict = result
@@ -347,7 +338,7 @@ function RoundItem({
           {item.proverb}
         </Text>
       ) : item.mode === 'complete' ? (
-        // the missing word stays a gap until it is found, then shows in its place
+        // The missing word stays a gap until it is found, then shows in its place.
         <Text {...ku.props} style={[styles.proverb, { color: colors.textPrimary }, centred(ku.style)]} testID="proverb-round-prompt">
           {`${item.before} ${correction ? item.options[correction.choice] : '…'}${item.after}`}
         </Text>

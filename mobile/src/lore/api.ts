@@ -19,17 +19,10 @@ import type { ApiResult } from '../api/types';
 import { SITE_ORIGIN } from '../feed/api';
 
 /**
- * The riddles and the proverbs over the API (api/src/lore/routes.ts). The
- * shapes are @kurda/shared's (lore.ts); nothing is redefined here.
- *
- * A list and a riddle's page never carry a hint not yet taken, the answer or
- * its explanation: those come one call at a time, a hint when it is asked
- * for and the answer with a right guess or a reveal, and nothing on the phone
- * asks for one before the learner does.
- *
- * Reading and playing need no account; what a signed-in learner does is kept
- * by the server and what a solve pays is paid there. The proverbs' round is a
- * solo round and needs one (a guest's counts).
+ * The riddles and the proverbs over the API (api/src/lore/routes.ts), in @kurda/shared's shapes (lore.ts). A list and a
+ * riddle's page never carry an untaken hint, the answer or its explanation: a hint comes when asked for, and the answer
+ * with a right guess or a reveal. Reading and playing need no account; the server keeps a signed-in learner's progress
+ * and pays solves. The proverbs' round is a solo round and needs one (a guest's counts).
  */
 
 const slugPath = (slug: string): string => encodeURIComponent(slug);
@@ -67,9 +60,8 @@ export const answerProverbRound = (client: ApiClient, id: string, index: number,
 export const finishProverbRound = (client: ApiClient, id: string): Promise<ApiResult<SoloResults>> => client.post(`/proverbs/rounds/${id}/finish`);
 
 /**
- * A riddle's address, as anybody can open it: the website's page for it,
- * which the app opens too where it is installed. It names the riddle and
- * nothing else, so a friend sent it meets the question and has to think.
+ * A riddle's address as anybody can open it: the website's page, which the app opens where installed. It names only the
+ * riddle, so a friend sent it meets the question.
  */
 export const riddleUrl = (slug: string): string => `${SITE_ORIGIN}/app/learn/riddles/${slugPath(slug)}`;
 export const proverbUrl = (slug: string): string => `${SITE_ORIGIN}/app/learn/proverbs/${slugPath(slug)}`;

@@ -29,7 +29,7 @@ describe('the collections’ words', () => {
       for (const c of RIDDLE_CATEGORIES) expect(catalogue[CATEGORY_KEY[c]]).toBeTruthy();
       for (const th of PROVERB_THEMES) expect(catalogue[THEME_KEY[th]]).toBeTruthy();
     }
-    // twelve themes, twelve different names in each language
+    // Twelve themes, twelve different names in each language.
     for (const catalogue of Object.values(TRANSLATIONS)) expect(new Set(PROVERB_THEMES.map((th) => catalogue[THEME_KEY[th]])).size).toBe(12);
   });
 

@@ -18,15 +18,9 @@ import type { TranslationKey } from '../i18n/translations';
 import { storyTextProps, storyTextStyle, type StoryTextProps } from '../stories/storyText';
 
 /**
- * The words the riddle and proverb screens put on the shared lists, and the
- * two small rules every one of those screens follows: which translation a
- * reader is shown, and how a text in a language other than the interface's
- * is set.
- *
- * The two collections keep their Kurmancî names in every language, as the
- * games do (`games/names.ts` in shared): "Metelok" and "Gotinên pêşiyan" are
- * what they are called, and the reader's own word for them stands beside the
- * name rather than in its place.
+ * The words the riddle and proverb screens use, and their two rules: which translation a reader is shown, and how text
+ * in a language other than the interface's is set. Both collections keep their Kurmancî names in every language, as the
+ * games do, with the reader's own word beside the name.
  */
 export const RIDDLES_NAME = 'Metelok';
 export const PROVERBS_NAME = 'Gotinên pêşiyan';
@@ -75,8 +69,8 @@ export function besideName(kurmanci: string, localized: string): string | null {
 }
 
 /**
- * Where a riddle or a proverb comes from, in a short mark for a list ("Traditional", the region's
- * name, "Newly written"): a new one is never shown as old, and a regional one names its region.
+ * Where a riddle or proverb comes from, as a short mark for a list ("Traditional", the region's name, "Newly written"):
+ * a new one is never shown as old, and a regional one names its region.
  */
 export function traditionMark(tradition: LoreTradition, region: string | null, t: Translate): string {
   if (tradition === 'regional') return region ?? t('lore.tradition.regional');
@@ -91,9 +85,8 @@ export function traditionLine(kind: 'riddle' | 'proverb', tradition: LoreTraditi
 }
 
 /**
- * What a row says in the reader's language: their own translation, else the
- * English one, else nothing — never an empty block. `lang` is the language
- * it turned out to be, so it can be set and read in that language.
+ * What a row says in the reader's language: their translation, else the English one, else nothing. `lang` is the
+ * language it turned out to be, so it can be set and read in it.
  */
 export function inReaderLanguage<T>(translations: Partial<Record<AppLocale, T>>, locale: string): { value: T; lang: AppLocale } | null {
   const own = isAppLocale(locale) ? translations[locale] : undefined;
@@ -108,10 +101,8 @@ export function proverbTranslation(proverb: Pick<ProverbView, 'translations'>, l
 }
 
 /**
- * How a text in a given app language is set: its direction and its
- * alignment, and on iOS the language VoiceOver reads it in. A Soranî reader
- * shown the English translation (nothing in Soranî yet) gets it left to
- * right, and an English reader a Soranî riddle right to left.
+ * How text in a given app language is set: its direction and alignment, and on iOS the language VoiceOver reads it in,
+ * so English shown to a Soranî reader runs left to right and a Soranî riddle shown to an English reader right to left.
  */
 export function textIn(lang: AppLocale): { style: TextStyle; props: StoryTextProps } {
   const rtl = localeDir(lang) === 'rtl';
@@ -129,7 +120,10 @@ export function centred(style: TextStyle): TextStyle {
   return { ...style, textAlign: 'center' };
 }
 
-/** The variety a riddle or a proverb is in, read off its slug (`kmr-…`, `ckb-…`): its page can be set before it arrives. */
+/**
+ * The variety a riddle or proverb is in, read off its slug (`kmr-…`, `ckb-…`), so its page can be set before it
+ * arrives.
+ */
 export function dialectOfSlug(slug: string): GameDialect {
   return slug.startsWith('ckb-') ? 'ckb' : 'kmr';
 }
