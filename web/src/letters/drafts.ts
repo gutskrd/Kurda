@@ -1,26 +1,15 @@
 import { checkLetterDecor, DEFAULT_PAPER, type LetterPaper, type PaperNote, type PaperStroke } from '@kurda/shared';
 
 /**
- * Letters that are never lost while they are being written.
- *
- * A letter takes a while to write, in a language still being learned, and
- * the page it is written on can change under it: a bird that was waiting on
- * the sill flies on by itself, a pen pal says goodbye, two birds cross, the
- * tab is closed by mistake. So whatever is on the paper is kept as it is
- * written, one draft for each place a letter is written from: your own new
- * bird (`new`), an answer to the bird at your window (`visitor:<letter id>`),
- * and a correspondence (`thread:<id>`). The paper opens on it again, and it
- * is let go once that letter has been sent.
- *
- * Drafts are kept in this browser only, for the account that wrote them: a
- * draft of anybody else is dropped before one is read, nothing older than a
- * month is kept, and signing out lets them all go (auth/AuthProvider.tsx).
- * Storage a browser refuses (private windows, a full disk) only means the
- * draft lasts as long as the page.
+ * Letter drafts, kept as they are written since the page can change underneath (a bird leaves, a pen pal says
+ * goodbye, the tab closes). One draft per place: a new letter (`new`), an answer to the visiting bird
+ * (`visitor:<letter id>`) or a correspondence (`thread:<id>`), cleared once sent. Kept in this browser for the writing
+ * account only, for at most a month, and cleared on sign-out (auth/AuthProvider.tsx); without storage a draft lasts as
+ * long as the page.
  */
 
 /** What is on the paper of a letter not yet sent. */
-export interface LetterDraft {
+interface LetterDraft {
   body: string;
   paper: LetterPaper;
   strokes: PaperStroke[];
@@ -75,11 +64,7 @@ function write(store: Store): void {
   }
 }
 
-/**
- * The draft kept for `place`, checked as the composer will use it: a paper it
- * does not know falls back to the default one, and a drawing or a note that
- * is not one any more is left out rather than breaking the paper.
- */
+/** The draft for `place`, validated: an unknown paper falls back to the default and invalid strokes or notes are dropped. */
 export function draftOf(who: string | null, place: string): LetterDraft | null {
   if (!who) return null;
   const d = read(who).drafts[place];
@@ -92,7 +77,7 @@ export function draftOf(who: string | null, place: string): LetterDraft | null {
 }
 
 /** Whether a draft holds anything worth keeping: words, a line drawn or a note (a paper chosen alone is not a letter). */
-export function draftHasWork(d: LetterDraft): boolean {
+function draftHasWork(d: LetterDraft): boolean {
   return d.body.trim().length > 0 || d.strokes.length > 0 || d.notes.some((n) => n.text.trim().length > 0);
 }
 
@@ -107,10 +92,8 @@ export function keepDraft(who: string | null, place: string, draft: LetterDraft 
 }
 
 /**
- * Moves the draft for `from` to `to`: an answer whose bird has flown becomes
- * a letter for your own bird, or for a correspondence with that person. A
- * first letter to somebody new carries no drawing (`strokes: false`), so a
- * drawing does not go with it. Says whether there was a draft to move.
+ * Moves the draft from `from` to `to`, such as an answer whose bird has left; `strokes: false` drops the drawing, as
+ * for a first letter. Returns whether there was a draft to move.
  */
 export function moveDraft(who: string | null, from: string, to: string, opts: { strokes: boolean }): boolean {
   const d = draftOf(who, from);
@@ -125,11 +108,7 @@ export function moveDraft(who: string | null, from: string, to: string, opts: { 
   return true;
 }
 
-/**
- * The answers kept for birds no longer at the window: begun, and left when
- * the page was closed, while the bird's day ran out. `here` is the letter of
- * the bird at the window now, whose answer is not stray.
- */
+/** Answer drafts for birds no longer at the window; `here` is the current visitor's letter, whose answer is not stray. */
 export function strayAnswers(who: string | null, here: string | null): string[] {
   if (!who) return [];
   const mine = here ? visitorDraft(here) : null;

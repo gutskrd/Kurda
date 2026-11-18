@@ -25,6 +25,7 @@ import {
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useHistory } from '../images/useHistory';
+import { prefersReducedMotion } from '../lib/motion';
 import { useMemoryOwner } from '../lib/useApi';
 import { BaselineProbe, PaperArt, noteStyle, sheetStyle, useBaseline, useScheme, useUnitsTall } from './PaperSheet';
 import { DrawPanel, PaperPanel, TextPanel, ToolSwitch, type Tool } from './PaperTools';
@@ -32,24 +33,13 @@ import { DECOR_PROBLEM, NO_DRAWING, PAGE_FOOT, START_WIDTH, onPage, pagePoint, p
 import { draftOf, keepDraft } from './drafts';
 
 /**
- * Writing a letter on its own paper: the sheet, with the body typed on its
- * ruled lines in the ink, and under it the tools — Write · Draw · Text ·
- * Paper — and the bird's send.
+ * Writing a letter on its own paper: the body typed on the ruled lines, with Write, Draw, Text and Paper tools below
+ * and the send. The sheet is one page, two when the writing runs on. Drawing uses pointer events in page units, smoothed
+ * on lift (shared simplifyStroke and strokePath), and the sheet captures the gesture so the page never scrolls. Notes
+ * are dragged or moved with the arrow keys. Edits can be undone and redone, with a drag or slider turn as one step.
  *
- * The sheet is the whole page of a letter, a second one when the writing
- * runs on. Drawing on it is pointer events in the page's own units, a line
- * shown as it is drawn and kept, smoothed, when the pen lifts (the shared
- * simplifyStroke and strokePath); the sheet takes the whole gesture, so a
- * finger drawing never scrolls the page. Notes are typed in the Text tools,
- * then dragged where they belong or moved with the arrow keys. What is drawn
- * and placed can be undone and done again, a drag or a turn of a slider
- * being one step however long it took.
- *
- * Drawings travel between pen pals: a first letter to a stranger
- * (`canDraw` false) can choose its paper and carry notes, and its Draw is
- * shown closed with the reason. What the server would refuse — in the
- * letter or on a note — is said as it is written, so nothing is refused
- * after the bird has left.
+ * Drawings are only for pen pals: a first letter to a stranger (`canDraw` false) shows Draw closed with the reason.
+ * Problems the server would refuse are shown while writing, so nothing is refused after sending.
  */
 
 /** A letter as it is sent: the words and their paper. */
@@ -126,11 +116,7 @@ export function LetterComposer({
   paper?: LetterPaper;
   /** whether this letter may carry a drawing: not a first letter to a stranger */
   canDraw: boolean;
-  /**
-   * Where this letter is written from (letters/drafts.ts): what is on the
-   * paper is kept there as it is written, and the paper opens on it again.
-   * The page lets it go once the letter has been sent.
-   */
+  /** The draft key (letters/drafts.ts), where the paper's content is kept while writing and restored on reopening. */
   draft?: string;
 }): React.JSX.Element {
   const t = useT();
@@ -182,8 +168,7 @@ export function LetterComposer({
   useEffect(() => {
     if (!autoFocus) return;
     writing.current?.focus({ preventScroll: true });
-    const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    form.current?.scrollIntoView?.({ block: 'start', behavior: still ? 'auto' : 'smooth' });
+    form.current?.scrollIntoView?.({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   }, [autoFocus]);
 
   useEffect(() => {
