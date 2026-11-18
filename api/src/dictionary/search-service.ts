@@ -5,9 +5,8 @@ import { hasSearchableChars, isWithinOneEdit } from './search.js';
 import { escapeLike } from '../db/like.js';
 
 /**
- * How a hit answers the query: the headword is it, starts with it, holds it
- * somewhere inside, an English definition holds it, or the headword is only
- * close to it (nothing else matched).
+ * How a hit answers the query: the headword is it, starts with it, contains it, an English definition contains it,
+ * or the headword is only close to it.
  */
 export type MatchType = 'exact' | 'prefix' | 'contains' | 'definition' | 'fuzzy';
 
@@ -26,28 +25,21 @@ export interface SearchResult {
   results: SearchHit[];
 }
 
-/** Hot-query cache TTL (KUR-044). */
+/** Hot-query cache TTL. */
 export const SEARCH_CACHE_TTL_SECONDS = 300;
 const MAX_LIMIT = 50;
 const FUZZY_CANDIDATES = 400;
 /** The shortest query looked for inside a headword; two letters are inside most of them. */
 const MIN_INSIDE = 3;
 /**
- * At most this many rows holding the query are ranked: the best few hundred by
- * a cheap measure (a definition holding it as a word, a shorter headword or
- * definition). A short query can sit inside tens of thousands of rows; the
- * answers worth showing are among those few hundred, and ranking the rest
- * would only cost the database time.
+ * At most this many rows containing the query are ranked, the best few hundred by a cheap measure. A short query
+ * can sit inside tens of thousands of rows, and the answers worth showing are among these.
  */
 const RANKED_AT_MOST = 500;
 /** Up to this length a typo is looked for letter by letter as well: trigrams are too few to compare words this short. */
 const SHORT_WORD = 4;
 
-/**
- * A Postgres regular expression matching `text` as a whole word, its own
- * characters taken literally: a definition is free text and the query is
- * whatever was typed, so `.` or `(` in it must not mean anything.
- */
+/** A Postgres regular expression matching `text` as a whole word, its characters taken literally. */
 function wholeWord(text: string): string {
   return `\\m${text.replace(/[\\^$.|?*+()[\]{}]/g, (c) => `\\${c}`)}\\M`;
 }
@@ -60,15 +52,11 @@ interface EntryRow {
 }
 
 /**
- * Bidirectional dictionary search (KUR-044), by folded headword — "se" finds
- * "sê", "ser" and "şev", and so does "sê" — and by English definition, in
- * this order: words that start with the query; words defined by it as a word
- * of their own ("eat" → "to eat"); from three letters, words that hold it
- * anywhere ("serk" → "berserker"); words whose definition only holds its
- * letters ("eat" in "great"). When nothing matches at all, the closest
- * headwords by trigram similarity, a single slip first. Each step is
- * index-backed (1751000116000, 1751000203000) and hot queries are
- * Redis-cached.
+ * Two-way dictionary search by folded headword ("se" finds "sê", "ser" and "şev") and by English definition, in
+ * this order: headwords starting with the query; definitions with it as a whole word ("eat" in "to eat"); from
+ * three letters, headwords containing it; definitions containing its letters ("eat" in "great"). When nothing
+ * matches, the closest headwords by trigram similarity, a single slip first. Every step is index-backed and hot
+ * queries are cached in Redis.
  */
 export class DictionarySearchService {
   constructor(
@@ -86,8 +74,7 @@ export class DictionarySearchService {
       return { query: rawQuery, fuzzy: false, results: [] };
     }
 
-    // `v2`: the answers changed when words started matching from the middle,
-    // and an answer cached the old way should not outlive the deploy
+    // `v2` in the key keeps answers cached under the previous ranking from outliving a deploy.
     return this.cache.withCache('dict-search', `v2|${norm}|${english}|${cap}`, SEARCH_CACHE_TTL_SECONDS, () =>
       this.compute(rawQuery, norm, english, cap),
     );
@@ -112,16 +99,13 @@ export class DictionarySearchService {
       }
     }
 
-    // English → Kurdish: definition contains the (raw) query, taken literally,
-    // so a `%` or `_` in it is a character to find rather than a wildcard.
-    // A definition that is the word, then one with it as a whole word ("eat"
-    // in "to eat"), before one that only holds the letters ("eat" in "great").
+    // English to Kurdish: definitions containing the raw query taken literally, best first: equal to it, then holding
+    // it as a whole word, then holding its letters.
     const definitions = hits.size < cap && english.length >= 2 ? await this.byDefinition(english, cap) : [];
     const add = (rows: EntryRow[], type: MatchType): void => {
       for (const r of rows) if (!hits.has(r.id)) hits.set(r.id, this.hit(r, type));
     };
-    // a definition holding the query as a word answers it better than a
-    // headword merely holding its letters, and worse than one starting with them
+    // A definition holding the query as a word beats a headword merely containing it, and loses to one starting with it.
     add(definitions.filter((r) => r.rank < 2), 'definition');
 
     // ...then the query anywhere inside a headword, nearest the start first
@@ -151,7 +135,7 @@ export class DictionarySearchService {
     return { query: rawQuery, fuzzy, results };
   }
 
-  /** Entries whose English definition holds the query, best first, each with how well (0 is, 1 as a word, 2 inside one). */
+  /** Entries whose English definition contains the query, best first, with a rank (0 equal, 1 as a word, 2 inside one). */
   private async byDefinition(english: string, cap: number): Promise<Array<EntryRow & { rank: number }>> {
     const rows = await this.pool.query<EntryRow & { rank: number }>(
       `SELECT e.id, e.headword, e.headword_folded, e.dialect, m.rank FROM (
@@ -171,13 +155,9 @@ export class DictionarySearchService {
   }
 
   /**
-   * The headwords nearest a query nothing matched, a single slip first.
-   *
-   * Trigram similarity (the `%` operator, indexed) finds near spellings of a
-   * word of any length in one indexed pass, where comparing edit distances
-   * would mean reading the table. Below five letters a word has too few
-   * trigrams for that — "sav" and "sev" share one — so short queries also try
-   * the words of about their length that begin with the same letter.
+   * The headwords nearest a query nothing matched, a single slip first. Indexed trigram similarity finds near
+   * spellings in one pass; below five letters a word has too few trigrams ("sav" and "sev" share one), so short
+   * queries also try words of about their length starting with the same letter.
    */
   private async closest(norm: string, cap: number): Promise<EntryRow[]> {
     const similar = await this.pool.query<EntryRow>(
@@ -223,8 +203,7 @@ export class DictionarySearchService {
     const bySense = new Map(rows.rows.map((r) => [r.entry_id, r]));
     return hits.map((h) => {
       const s = bySense.get(h.entryId);
-      // the Kurdish one travels too: most of an imported lexicon has no English,
-      // and a result list of blank definitions reads as a broken search
+      // The Kurdish definition is sent too, since most imported words have no English one.
       return s ? { ...h, pos: s.pos, definitionEn: s.definition_en, definitionKu: s.definition_ku } : h;
     });
   }

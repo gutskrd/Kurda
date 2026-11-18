@@ -1,4 +1,4 @@
-/** Saved words → SM-2 feed against real Postgres (CI job). KUR-047. */
+/** Saved words feeding SM-2, against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -76,13 +76,13 @@ describe.skipIf(!DATABASE_URL)('saved words (integration)', () => {
     const queue = await authed('GET', '/review/queue');
     expect(queue.json().items.map((i: { itemId: string }) => i.itemId)).not.toContain(dictItemId(entryIds[0]!));
 
-    // history preserved: the review_items row still exists
+    // The review_items row survives the unsave.
     const row = await pool.query(`SELECT 1 FROM review_items WHERE user_id = $1 AND item_id = $2`, [userId, dictItemId(entryIds[0]!)]);
     expect(row.rowCount).toBe(1);
   });
 
   it('re-saving does not reset the existing history', async () => {
-    // age the item so we can tell it was not re-initialized
+    // Age the item, to tell that saving again does not reset it.
     await pool.query(`UPDATE review_items SET repetitions = 4 WHERE user_id = $1 AND item_id = $2`, [userId, dictItemId(entryIds[0]!)]);
     const res = await authed('PUT', `/dictionary/entries/${entryIds[0]}/save`);
     expect(res.json().scheduled).toBe(false); // already existed → not newly scheduled
@@ -100,11 +100,7 @@ describe.skipIf(!DATABASE_URL)('saved words (integration)', () => {
     expect(list.json().words.length).toBeGreaterThanOrEqual(10);
   });
 
-  /**
-   * The bookmark list shows each word's first definition, and after an import
-   * most words have only the Kurdish one. Without it here the list is a column
-   * of headwords with nothing under them.
-   */
+  /** After an import most words have only a Kurdish definition, so the list must show it. */
   it('lists the Kurdish definition for a word that has no English one', async () => {
     const id = entryIds[entryIds.length - 1]!;
     await authed('PUT', `/dictionary/entries/${id}/save`);
@@ -116,7 +112,7 @@ describe.skipIf(!DATABASE_URL)('saved words (integration)', () => {
   it('tells the badges of a word new to the list, past the day’s cap too, and of none saved again', async () => {
     const told: string[] = [];
     const counted = new SavedWordsService(pool, undefined, { onWordSaved: async (id) => void told.push(id) });
-    // the day's ten are scheduled already: this one is saved, not scheduled, and still a word on the list
+    // The day's ten are scheduled, so this one is saved but not scheduled.
     expect(await counted.save(userId, entryIds[11]!, 'UTC')).toMatchObject({ saved: true, scheduled: false });
     await counted.save(userId, entryIds[11]!, 'UTC');
     await counted.save(userId, entryIds[1]!, 'UTC');

@@ -6,7 +6,7 @@ import { limitReached, lockPersonFor } from '../limits/limits.js';
 import { ReviewService } from '../review/service.js';
 import type { PartOfSpeech } from './repository.js';
 
-/** New saved words scheduled into SM-2 per local day (KUR-047). */
+/** New saved words scheduled into SM-2 per local day. */
 export const NEW_WORDS_PER_DAY = 10;
 
 /** Review-item key for a saved dictionary entry. */
@@ -16,7 +16,7 @@ export function dictItemId(entryId: string): string {
 
 export interface SaveResult {
   saved: boolean;
-  /** whether it entered the SM-2 queue (false if the daily cap was hit) */
+  /** Whether it entered the SM-2 queue; false once the daily cap is reached. */
   scheduled: boolean;
 }
 
@@ -33,7 +33,7 @@ export interface SavedWordsBadges {
   onWordSaved(userId: string): Promise<void>;
 }
 
-/** Bookmark dictionary words and feed them into spaced repetition (KUR-047). */
+/** Bookmarks dictionary words and feeds them into spaced repetition. */
 export class SavedWordsService {
   private readonly reviews: ReviewService;
 
@@ -51,12 +51,9 @@ export class SavedWordsService {
   }
 
   /**
-   * Bookmark an entry and schedule it as a new SM-2 item, unless today's new
-   * cap (10) is reached — in which case it's still saved, just not scheduled.
-   *
-   * A list holds at most MAX_SAVED_WORDS, counted under the learner's lock in
-   * the transaction that adds to it. Saving a word already on the list is
-   * never refused: it changes nothing.
+   * Bookmarks an entry and schedules it as a new SM-2 item, unless today's cap is reached, when it is saved but not
+   * scheduled. A list holds at most MAX_SAVED_WORDS, counted under the learner's lock; saving a word already on it
+   * changes nothing and is never refused.
    */
   async save(userId: string, entryId: string, timeZone: string, now: Date = new Date()): Promise<SaveResult> {
     const added = await inTransaction(this.pool, async (client) => {
@@ -91,7 +88,7 @@ export class SavedWordsService {
     return { saved: true, scheduled };
   }
 
-  /** Remove the bookmark. The review_items history is kept (KUR-047). */
+  /** Removes the bookmark; the review history is kept. */
   async unsave(userId: string, entryId: string): Promise<void> {
     await this.pool.query(`DELETE FROM saved_words WHERE user_id = $1 AND entry_id = $2`, [userId, entryId]);
   }

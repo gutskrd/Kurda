@@ -13,7 +13,7 @@ export interface WordOfDay {
   date: string;
 }
 
-/** Curated daily word (KUR-046): deterministic per local calendar day. */
+/** Curated daily word, deterministic per local calendar day. */
 export class WordOfDayService {
   constructor(private readonly pool: pg.Pool) {}
 

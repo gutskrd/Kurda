@@ -2,18 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { toLexicon } from '@kurda/shared';
 import { validateLexicon } from './import.js';
 
-/**
- * The seam between the converter and the importer.
- *
- * `toLexicon` moved to @kurda/shared when the public dictionary pages started
- * needing it too, and its own tests moved with it — they are about converting a
- * source row and have nothing to say about this API. This is the half that does:
- * whatever the converter produces, the importer's schema has to accept it.
- *
- * Two packages now read the same function, so the contract between them is
- * worth a test of its own rather than an assertion buried in the other package's
- * suite, where a change here would not be obviously relevant.
- */
+/** The contract between the shared converter (`toLexicon`) and this importer: whatever it produces, the schema accepts. */
 describe('what the converter hands the importer', () => {
   const row = (over: Record<string, unknown>) => ({ word: 'x', pos: 'noun', glosses: ['g'], ...over });
 
