@@ -6,7 +6,7 @@ import type { ApiError } from '../api/types';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { listFriends, type FriendSummary } from '../play/api';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { SendErrorNotice } from '../reports/SendError';
 import { Sheet } from '../stories/ui';
@@ -133,7 +133,7 @@ export function SharePostSheet({ item, onClose }: { item: FeedItem; onClose: () 
                   accessibilityLabel={t('rail.messageWho', { name: f.displayName ?? f.username })}
                   style={[styles.friend, { flexDirection: dir.row }]}
                 >
-                  <InitialsAvatar name={f.username} id={f.userId} size={FACE} photoUrl={f.avatarUrl} />
+                  <Avatar name={f.username} size={FACE} photoUrl={f.avatarUrl} />
                   <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
                     {f.username}
                   </Text>
