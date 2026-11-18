@@ -1,25 +1,13 @@
 /**
- * Everything the course asks someone to say aloud, as one script per voice:
- * the data behind the admin's "Record by person" page (recording/routes.ts).
+ * Everything the course asks someone to say aloud, as one script per voice, behind the "Record by person" page. Lines
+ * come from lessons (drafts included), stories, word sets, the alphabet and the learning games, each keyed as the
+ * studio keys it (`lessonAudioKey`, `conversationLineKey`, or an alphabet clip key), so a take from this script plays
+ * everywhere the text is said and earlier studio takes show as done.
  *
- * The lines come from where they already are — the lessons (drafts included),
- * the stories, the word sets and the alphabet, and the learning games' own
- * content — and each is keyed exactly as the studio that records it keys it:
- * a lesson's or a story's text by `lessonAudioKey`, a conversation's line by
- * `conversationLineKey`, a letter or a word-set word by its clip key in the
- * alphabet's store. So a take recorded from this script is the recording
- * every place that says the text plays, and a take made in the studio before
- * shows here as done.
- *
- * A text said in several places is one line, filed where the course first
- * says it, with every place listed. It belongs to one voice: the first place
- * in course order that plans a character for it (a conversation part's
- * character, an exercise's `voice`, a game line's speaker) decides, as the
- * studio's `plannedSpeaker` does, and a text no place plans for anyone is the
- * narrator's of its variety.
- *
- * Pure: the service reads the tables and the course files and hands them in,
- * so the order, the keys and the merging are tested without a database.
+ * A text said in several places is one line, filed where the course first says it, listing every place. It belongs
+ * to the voice of the first place in course order that plans a character for it (a conversation part, an exercise's
+ * `voice`, a game line's speaker), as `plannedSpeaker` decides, else to its variety's narrator. Pure: the service
+ * supplies tables and files, so order, keys and merging are tested without a database.
  */
 import {
   GAME_NAMES,
@@ -48,17 +36,13 @@ import {
 
 /** The two varieties, as the alphabet's clips and the games name them. */
 export type ScriptDialect = 'kmr' | 'ckb';
-/** Which table a take is kept in: the lessons' (also the stories' and the games'), or the alphabet's (also the word sets'). */
+/** The table a take is kept in: the lessons' (also stories' and games'), or the alphabet's (also word sets'). */
 export type LineStore = 'lesson' | 'alphabet';
 /** How far the place a line comes from has got: learners meet only what is published. */
 export type SourceStatus = 'draft' | 'in_review' | 'published';
 export type LineStatusFilter = 'todo' | 'done' | 'all';
 
-/**
- * A voice, by the name the page and the links use: a character (`hamo`,
- * `xezo`, `hevalo`), a conversation part no character plays (`cast-<name>`),
- * or the narrator of one variety (`narrator-kmr`, `narrator-ckb`).
- */
+/** A voice as the page and links name it: a character (`hamo`, `xezo`, `hevalo`), an uncast part (`cast-<name>`), or a variety's narrator (`narrator-kmr`, `narrator-ckb`). */
 export type VoiceId = string;
 
 export const NARRATOR: Readonly<Record<ScriptDialect, VoiceId>> = { kmr: 'narrator-kmr', ckb: 'narrator-ckb' };
@@ -73,7 +57,7 @@ export function isVoiceId(v: unknown): v is VoiceId {
 /** The course the owner writes the voice plan for, first in every script. */
 export const ROAD_COURSE = 'kurmanji-road';
 
-/** What the course calls a character where the apps' label differs: the niece is Xezal, Xezo only to her uncle. */
+/** Where the course's name for a character differs from the apps' label: the niece is Xezal, Xezo only to her uncle. */
 const PLAN_NAMES: Partial<Record<SpeakerId, string>> = { xezo: 'Xezal' };
 
 const DIALECT_NAME: Record<ScriptDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
@@ -87,12 +71,7 @@ const TYPE_LABEL: Record<string, string> = {
   writing: 'writing',
 };
 
-/**
- * The learning games whose lines are spoken, in the order their lines are
- * listed, and what the page calls each. A row of any other kind was written
- * for a game that is no longer part of Hevalo (a scene of What Would You
- * Say?, say), and nobody is asked to record it.
- */
+/** The learning games whose lines are spoken, in listing order, with their page names; rows of any other kind belong to retired games. */
 const GAME_KINDS = ['case_file', 'question_template'] as const;
 const GAME_NAME: Record<(typeof GAME_KINDS)[number], string> = {
   case_file: GAME_NAMES.detective,
@@ -101,7 +80,7 @@ const GAME_NAME: Record<(typeof GAME_KINDS)[number], string> = {
 
 // ---------- what the service hands in ----------
 
-/** One exercise of one lesson version, from the tables, or from the course files for a lesson not seeded yet. */
+/** One exercise of one lesson version, from the tables or, for an unseeded lesson, the course files. */
 export interface ExerciseInput {
   courseSlug: string;
   courseTitle: string;
@@ -123,7 +102,7 @@ export interface ExerciseInput {
 
 export interface StoryInput {
   id: string;
-  /** a story whose slug names a chapter of the road (`road-01-…`) is Hamo's, told at that chapter's end */
+  /** A story whose slug names a road chapter (`road-01-…`) is Hamo's, told at that chapter's end. */
   slug?: string;
   /** 'kurmanci' or 'sorani' */
   dialect: string;
@@ -141,7 +120,7 @@ export interface GameInput {
   payload: unknown;
 }
 
-/** What the course's voice plan (api/content/lessons/road/plan.json) says about its people and its words. */
+/** What the course's voice plan (api/content/lessons/road/plan.json) says about its people and words. */
 export interface PlanInput {
   /** the characters with a part, in the plan's order */
   characters: readonly SpeakerId[];
@@ -187,7 +166,7 @@ export interface ScriptLine {
   text: string;
   dialect: ScriptDialect;
   voice: VoiceId;
-  /** the character a take is saved as said by; null for a narrator's line and for a part no character plays */
+  /** The character a take is saved as spoken by; null for narrator lines and uncast parts. */
   speaker: SpeakerId | null;
   /** what it means in English, when anything says */
   meaning: string | null;
@@ -195,7 +174,7 @@ export interface ScriptLine {
   hint: string | null;
   /** what is happening when it is said: the exercise's prompt, who a case's card comes from */
   cue: string | null;
-  /** a conversation's line is recorded with its conversation and part (`&line=`); `name` is the part's, as the conversation writes it */
+  /** A conversation line is recorded with its conversation and part (`&line=`); `name` is the part's as written. */
   conversation: { id: string; part: number; title: string | null; name: string | null } | null;
   /** the line before it, to act from */
   before: { name: string | null; text: string; meaning: string | null } | null;
@@ -292,20 +271,16 @@ function unquoted(text: string): string {
 }
 
 /**
- * A multiple-choice question that asks what the Kurdish says, so its right
- * option is the Kurdish in English: "What does he say?", "What is she
- * asking?". Asked anything else (why, who, what you would answer, what he
- * wants to know) its options are not a translation, and nothing is read off them.
+ * A multiple-choice question asking what the Kurdish says ("What does he say?"), so its right option is the English
+ * meaning. Other questions' options are not translations and are not read.
  */
 const ASKS_WHAT_IT_SAYS =
   /\bwhat (?:does|did) (?:he|she|it|they|[A-ZÇÊÎŞÛ][a-zçêîşû]+) (?:say|mean|ask|tell (?:you|him|her|them))\?|\bwhat (?:is|was|are) (?:he|she|it|they) (?:saying|asking|telling (?:you|him|her|them)|shouting)\?/i;
 
 /**
- * What an exercise's Kurdish means, read off the exercise itself. `sure` is
- * a pairing the exercise states outright (a card and its pair, a sentence and
- * the English its translation accepts); `guess` is read from the prompt's
- * wording, and is kept only when no surer meaning is known and it is not
- * itself a Kurdish line of the course (the finish checks that).
+ * What an exercise's Kurdish means, from the exercise itself: `sure` is a pairing it states outright (a card and its
+ * pair, a sentence and its accepted English); `guess` comes from the prompt's wording and is kept only when nothing
+ * surer is known and it is not itself a Kurdish line of the course.
  */
 export function exerciseMeaning(type: string, payload: unknown, text: string): { sure: string | null; guess: string | null } {
   const p = isRecord(payload) ? payload : {};
@@ -344,11 +319,9 @@ export function exerciseMeaning(type: string, payload: unknown, text: string): {
 }
 
 /**
- * Where a game line's take is filed. The importer that took a line from a
- * conversation names the conversation line's key (`recording`); the game
- * plays that, else a take of the words alone. A key that is not the one these
- * words would have under that conversation and part (the line was edited
- * since) is not trusted, and the words' own key is used.
+ * Where a game line's take is filed: the conversation line's key the importer recorded (`recording`), else the words'
+ * own key. A recorded key that no longer matches these words under that conversation and part (the line was edited)
+ * is not trusted.
  */
 export function gameLineKey(ku: string, recording: unknown): { key: string; conversation: { id: string; part: number } | null } {
   const plain = lessonAudioKey(ku);
@@ -435,9 +408,9 @@ class Builder {
   }
 
   finish(glossary: ReadonlyMap<string, string>): ScriptLine[] {
-    // every Kurdish line the course has: a guessed meaning that is one of these is Kurdish, not its meaning
+    // Every Kurdish line of the course; a guessed meaning that is one of these is Kurdish, not a meaning.
     const kurdish = new Set(this.order.map((d) => lessonAudioKey(d.text)));
-    // what each text means where something states it: a story's sentence or an alphabet word learns it from a lesson
+    // Meanings stated somewhere; a story sentence or alphabet word learns its meaning from a lesson.
     const stated = new Map(glossary);
     for (const d of this.order) {
       const k = lessonAudioKey(d.text);
@@ -469,7 +442,7 @@ class Builder {
   }
 }
 
-/** Road first, then the other courses by slug; within a course unit, skill and lesson; the newest version first; then the exercises. */
+/** Road first, then other courses by slug; within a course by unit, skill and lesson, newest version first, then exercises. */
 function courseOrder(a: ExerciseInput, b: ExerciseInput): number {
   const road = Number(b.courseSlug === ROAD_COURSE) - Number(a.courseSlug === ROAD_COURSE);
   return (
@@ -689,17 +662,15 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
         say(e.ku, e.recording, isSpeakerId(e.speaker) ? e.speaker : null, label, { sure: en(e.meanings), cue: from ? `From ${from}.` : null });
       });
     } else {
-      // every question of the deck, both varieties': the player who asks one reads it out loud, and the recording is its model
+      // Every question of the deck in both varieties: the asking player reads it aloud, and the recording is its model.
       say(p.ku, undefined, null, `${GAME_NAME.question_template} · a question the player reads out loud`, { sure: en(p.meanings) });
     }
   }
 }
 
 /**
- * The whole script, every voice's lines in one list, in course order: the
- * lessons unit by unit (the Kurmanji Road first, each conversation line by
- * line), then the stories paragraph by sentence, the word sets, the alphabet
- * and the learning games' lines.
+ * The whole script, every voice's lines in course order: lessons unit by unit (the Kurmanji Road first, conversations
+ * line by line), then stories by paragraph and sentence, word sets, the alphabet and the learning games.
  */
 export function buildScript(input: ScriptInput): ScriptLine[] {
   const builder = new Builder();
@@ -727,10 +698,8 @@ export function buildScript(input: ScriptInput): ScriptLine[] {
 }
 
 /**
- * Everyone who lends a voice: the plan's characters in the plan's order (with
- * or without lines yet), any other character a line is planned for, the
- * conversation parts no character plays, by name, then a narrator for each
- * variety.
+ * Everyone who lends a voice: the plan's characters in plan order (with or without lines), other characters lines
+ * are planned for, uncast conversation parts by name, then a narrator per variety.
  */
 export function peopleOf(lines: readonly ScriptLine[], plan: PlanInput): Person[] {
   const voices = new Set(lines.map((l) => l.voice));
@@ -784,7 +753,7 @@ export interface LineFilter {
   status?: LineStatusFilter;
 }
 
-/** One voice's lines, in script order, narrowed to a variety and to what is (or is not) recorded. */
+/** One voice's lines in script order, filtered by variety and recorded status. */
 export function linesFor(lines: readonly ScriptLine[], filter: LineFilter, done: (line: ScriptLine) => boolean): ScriptLine[] {
   const status = filter.status ?? 'all';
   return lines.filter(
@@ -795,7 +764,7 @@ export function linesFor(lines: readonly ScriptLine[], filter: LineFilter, done:
   );
 }
 
-/** The page after `cursor` (the last line's `seq` of the page before): the lines, and the cursor for the next, null at the end. */
+/** The page after `cursor` (the previous page's last `seq`): its lines and the next cursor, null at the end. */
 export function pageAfter<T extends Pick<ScriptLine, 'seq'>>(lines: readonly T[], cursor: number | null, limit: number): { lines: T[]; next: number | null } {
   const from = cursor === null ? 0 : lines.findIndex((l) => l.seq > cursor);
   if (from === -1) return { lines: [], next: null };
@@ -804,7 +773,7 @@ export function pageAfter<T extends Pick<ScriptLine, 'seq'>>(lines: readonly T[]
   return { lines: page, next: more && page.length > 0 ? page[page.length - 1]!.seq : null };
 }
 
-/** The headings a voice's lines fall under, in order, with what is recorded under each: the unit filter's choices. */
+/** The headings a voice's lines fall under, in order, with their recorded counts, for the unit filter. */
 export function sectionsOf(lines: readonly ScriptLine[], done: (line: ScriptLine) => boolean): Array<{ id: string; label: string } & Tally> {
   const out = new Map<string, { id: string; label: string } & Tally>();
   for (const l of lines) {
