@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { LANDINGS_MAX, LETTER_MAX } from '@kurda/shared';
+import { LANDINGS_MAX, LETTERS_PAGE_MAX, LETTER_MAX } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { requireBirthMonth } from '../users/age.js';
@@ -18,6 +18,8 @@ type LetterBody = { body: string; decor?: unknown };
 // Apps that read `landings` and report what they landed send `landings=1`; without it the request is from an older build.
 const homeQuery = z.object({ landings: z.string().optional() });
 const landedBody = z.object({ letterIds: z.array(z.uuid()).min(1).max(LANDINGS_MAX) });
+// Without either, every letter, as builds from before paging read it.
+const threadQuery = z.object({ before: z.uuid().optional(), limit: z.coerce.number().int().min(1).max(LETTERS_PAGE_MAX).optional() });
 
 /** The key an app sent a letter under (`Idempotency-Key`), or none, so a resend finds the letter already sent. */
 function idempotencyKey(req: FastifyRequest): string | null {
@@ -36,7 +38,8 @@ function idempotencyKey(req: FastifyRequest): string | null {
  *   POST   /letters/call                 call a waiting bird to your window, with its letter
  *   POST   /letters/visitor              answer the bird at your window; it carries your letter home
  *   DELETE /letters/visitor              send the bird at your window on its way
- *   GET    /letters/threads/:threadId    a correspondence, its shown letters marked read (they still land once)
+ *   GET    /letters/threads/:threadId    a correspondence, its shown letters marked read (they still land once); ?limit=
+ *                                         the newest that many, ?before=<letter> the ones before it
  *   POST   /letters/threads/:threadId    write back
  *   POST   /letters/threads/:threadId/end  say goodbye
  *
@@ -111,8 +114,8 @@ export function registerLetterRoutes(app: FastifyInstance, letters: LetterServic
     return reply.code(sent ? 204 : 404).send();
   });
 
-  app.get('/letters/threads/:threadId', { schema: { params: threadParam }, preHandler: requireAccount }, async (req) =>
-    letters.thread(req.user!.id, (req.params as { threadId: string }).threadId),
+  app.get('/letters/threads/:threadId', { schema: { params: threadParam, querystring: threadQuery }, preHandler: requireAccount }, async (req) =>
+    letters.thread(req.user!.id, (req.params as { threadId: string }).threadId, req.query as z.infer<typeof threadQuery>),
   );
 
   app.post(

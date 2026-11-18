@@ -4,6 +4,7 @@ import {
   BIRD_OUT_DAYS,
   LANDINGS_MAX,
   LETTERS_CHANGED,
+  LETTERS_PAGE,
   LETTERS_PER_DAY,
   LETTER_BIRD_PRICE,
   PEN_PALS_MAX,
@@ -978,19 +979,31 @@ export class LetterService {
   }
 
   /**
-   * A correspondence with every letter, oldest first. Only the letters of theirs shown here are marked read, so one
-   * arriving meanwhile stays unread; a letter read here still lands at the window once. Not found outside it or across
-   * a block.
+   * A correspondence, oldest letter first: every letter, or asked for a page, the newest `limit` of them (before the
+   * letter `before`, if given) and whether earlier ones remain. Only the letters of theirs shown here are marked read,
+   * so one arriving meanwhile stays unread; a letter read here still lands at the window once. Not found outside it or
+   * across a block.
    */
-  async thread(userId: string, threadId: string): Promise<LetterThread> {
+  async thread(userId: string, threadId: string, page?: { before?: string; limit?: number }): Promise<LetterThread> {
     const t = await this.threadRow(this.pool, userId, threadId);
+    const paged = page !== undefined && (page.before !== undefined || page.limit !== undefined);
+    const limit = page?.limit ?? LETTERS_PAGE;
     // Whose turn it is is read with the letters, so it describes the page; a reply arriving between two reads would offer
-    // paper under a letter not shown.
+    // paper under a letter not shown. A page reads one letter more than it shows, to know whether earlier ones remain.
     const rows = await this.pool.query<LetterRow & { recipient_id: string | null; your_turn: boolean }>(
-      `SELECT ${LETTER_COLUMNS()}, recipient_id, ${YOUR_TURN_SQL('$1::uuid', '$2::uuid')} AS your_turn FROM letters
-        WHERE thread_id = $1 AND status IN ('delivered','removed') ORDER BY created_at, id`,
-      [threadId, userId],
+      paged
+        ? `SELECT * FROM (
+             SELECT ${LETTER_COLUMNS()}, recipient_id, ${YOUR_TURN_SQL('$1::uuid', '$2::uuid')} AS your_turn FROM letters
+              WHERE thread_id = $1 AND status IN ('delivered','removed')
+                AND ($3::uuid IS NULL OR (created_at, id) < (SELECT b.created_at, b.id FROM letters b WHERE b.id = $3 AND b.thread_id = $1))
+              ORDER BY created_at DESC, id DESC LIMIT $4
+           ) page ORDER BY created_at, id`
+        : `SELECT ${LETTER_COLUMNS()}, recipient_id, ${YOUR_TURN_SQL('$1::uuid', '$2::uuid')} AS your_turn FROM letters
+            WHERE thread_id = $1 AND status IN ('delivered','removed') ORDER BY created_at, id`,
+      paged ? [threadId, userId, page.before ?? null, limit + 1] : [threadId, userId],
     );
+    const earlier = paged && rows.rows.length > limit;
+    if (earlier) rows.rows.shift();
     const unread = rows.rows.filter((r) => r.status === 'delivered' && r.recipient_id === userId && r.read_at === null).map((r) => r.id);
     if (unread.length > 0) {
       const read = await this.pool.query<{ id: string; read_at: Date }>(
@@ -1008,6 +1021,7 @@ export class LetterService {
       letters,
       yourTurn: !closed && rows.rows[0]?.your_turn === true,
       closed,
+      ...(paged ? { earlier } : {}),
     };
   }
 

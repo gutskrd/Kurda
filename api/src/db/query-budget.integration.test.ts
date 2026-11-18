@@ -212,6 +212,28 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(three.count, three.statements.join('\n')).toBeLessThanOrEqual(20);
     });
 
+    it('a correspondence’s newest page costs the same for three letters as for thirty, within its budget', async () => {
+      const thread = async (other: string, letters: number): Promise<string> => {
+        const { lo, hi } = canonicalPair(ids.la!, ids[other]!);
+        const made = await pool.query<{ id: string }>(`INSERT INTO letter_threads (user_lo, user_hi, last_letter_at) VALUES ($1, $2, now()) RETURNING id`, [lo, hi]);
+        await pool.query(
+          `INSERT INTO letters (sender_id, recipient_id, thread_id, body, age_band, status, created_at, delivered_at, read_at)
+           SELECT CASE WHEN i % 2 = 0 THEN $1 ELSE $2 END::uuid, CASE WHEN i % 2 = 0 THEN $2 ELSE $1 END::uuid, $3, 'Name ' || i, '18+',
+                  'delivered', now() + i * interval '1 second', now() + i * interval '1 second', now()
+             FROM generate_series(1, $4::int) i`,
+          [ids.la, ids[other], made.rows[0]!.id, letters],
+        );
+        return made.rows[0]!.id;
+      };
+      const short = await steady('GET', `/letters/threads/${await thread('lb', 3)}?limit=10`, 'la');
+      const long = await steady('GET', `/letters/threads/${await thread('solo', 30)}?limit=10`, 'la');
+      expect(short.body.letters).toHaveLength(3);
+      expect(long.body.letters).toHaveLength(10);
+      expect(long.count, long.statements.join('\n')).toBe(short.count);
+      // the session read, the correspondence and its page of letters
+      expect(long.count, long.statements.join('\n')).toBeLessThanOrEqual(3);
+    });
+
     it('the heartbeat is the session read and one statement', async () => {
       const beat = await steady('POST', '/me/heartbeat', 'me');
       expect(beat.count, beat.statements.join('\n')).toBeLessThanOrEqual(2);
