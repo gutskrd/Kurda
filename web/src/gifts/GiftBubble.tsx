@@ -11,18 +11,10 @@ import { haptic } from '../lib/haptics';
 type Phase = 'idle' | 'unwrapping' | 'revealed';
 
 /**
- * A gift in the chat (a message of kind 'gift').
- *
- * To its recipient, a wrapped present until they open it — a tap plays the
- * unwrap sized by the gift's tier: a burst right here in the bubble for an
- * everyday gift, a sheet with confetti for a rare one, the whole screen with
- * a Newroz fire for a legendary one. Every one can be skipped with a tap, and
- * with reduced motion it is a short fade. Then the item, who it is from, and
- * Wear it / Say thanks / Close.
- *
- * To its sender, the present they sent and whether it has been opened — "Opened ✓"
- * arrives live. In a group, everyone sees who it was for and who has opened
- * theirs; the item stays a surprise to anyone who has not opened one.
+ * A gift message in the chat. To its recipient it is a wrapped present; a tap plays the unwrap for its tier (a burst
+ * in the bubble, a confetti sheet, or a full-screen Newroz fire), skippable with a tap and a short fade under Reduce
+ * Motion, then shows the item with Wear it, Say thanks and Close. The sender sees whether it was opened, live. In a
+ * group everyone sees who it was for and who opened theirs; the item stays a surprise to anyone who has not.
  */
 export function GiftBubble({
   card,
@@ -34,15 +26,15 @@ export function GiftBubble({
   inGroup = false,
 }: {
   card: GiftCard;
-  /** the viewer sent it */
+  /** The viewer sent it. */
   mine: boolean;
-  /** it was given in a group chat, where who it was for is not obvious */
+  /** Given in a group chat, where the recipient is not obvious. */
   inGroup?: boolean;
   senderName: string;
   actions: GiftActions;
-  /** open it as soon as it is on screen (arrived from a notification or the banner) */
+  /** Opens it as soon as it is on screen, when arriving from a notification or the banner. */
   autoOpen?: boolean;
-  /** it has been opened from the address; the caller can forget the request */
+  /** Called once it opened from the address, so the caller can forget the request. */
   onAutoOpened?: () => void;
 }): React.JSX.Element {
   const t = useT();
@@ -66,7 +58,7 @@ export function GiftBubble({
     }
     setOpened(result);
     setPhase('revealed');
-    // the item seen: felt once, on a touch screen that can (lib/haptics.ts)
+    // The item is seen: one haptic, where supported (lib/haptics.ts).
     haptic('celebrate');
   }, []);
 
@@ -74,7 +66,7 @@ export function GiftBubble({
     if (!card.myGiftId || phase !== 'idle') return;
     setFailed(false);
     if (card.myOpened) {
-      // opened before: straight to the item, no second performance
+      // Opened before: straight to the item without replaying the unwrap.
       pending.current = Promise.resolve(card);
       void finish();
       return;
@@ -89,8 +81,7 @@ export function GiftBubble({
     if (timer.current !== null) window.clearTimeout(timer.current);
   }, []);
 
-  // from a notification or the banner: open it now, once. Through a ref, so
-  // `unwrap` changing as the phase moves does not ask again.
+  // From a notification or the banner, open it once, through a ref so `unwrap` changing does not open it again.
   const unwrapRef = useRef(unwrap);
   unwrapRef.current = unwrap;
   useEffect(() => {
@@ -100,8 +91,7 @@ export function GiftBubble({
     onAutoOpened?.();
   }, [autoOpen, onAutoOpened]);
 
-  // back on the gift once its reveal closes — after the bubble is drawn
-  // again, since an everyday gift's reveal stands in the bubble's place
+  // Refocus the gift once its reveal closes, after the bubble redraws, since an everyday reveal replaces the bubble.
   const refocus = useRef(false);
   const close = useCallback(() => {
     refocus.current = true;
@@ -113,7 +103,7 @@ export function GiftBubble({
     bubbleRef.current?.focus();
   }, [phase]);
 
-  // ---- the sender's view, and a group member's who was not given one ----
+  // ---- The sender's view, and a group member's who was not given one ----
   if (!recipient) {
     const anyOpened = card.recipients.some((r) => r.opened);
     return (
@@ -127,7 +117,7 @@ export function GiftBubble({
         </span>
         <span className="gift-bubble-text">
           <span className="gift-bubble-title">
-            {/* the item's name is the sender's to know; to anyone else it is a surprise */}
+            {/* Only the sender sees the item's name; to anyone else it is a surprise. */}
             {mine ? t('gift.youSent', { item: card.name }) : t('gift.someoneSent', { name: senderName })}
           </span>
           <Recipients recipients={card.recipients} named={inGroup} />
@@ -136,7 +126,7 @@ export function GiftBubble({
     );
   }
 
-  // ---- the recipient's ----
+  // ---- The recipient's view ----
   const legendaryOrRare = card.tier !== 'common';
   return (
     <>
@@ -145,7 +135,7 @@ export function GiftBubble({
           <GiftReveal card={shown} from={senderName} actions={actions} onClose={close} compact />
         </div>
       ) : phase === 'unwrapping' && !legendaryOrRare ? (
-        // the everyday unwrap: a burst here in the bubble; a tap skips it
+        // The everyday unwrap: a burst in the bubble; a tap skips it.
         <button type="button" className="gift-bubble is-bursting" onClick={() => void finish()} aria-label={t('gift.skip')}>
           <span className="gift-burst">
             <GiftBox tier="common" size={96} className="gift-opening" />
@@ -206,11 +196,7 @@ export function GiftBubble({
   );
 }
 
-/**
- * Who a gift was for, and who has opened theirs. In a direct chat there is
- * only one person it can have been for, so it is just "Opened ✓"; in a group
- * each recipient is named, even when there is only one.
- */
+/** Who a gift was for and who opened theirs: just "Opened ✓" in a direct chat, each recipient named in a group. */
 function Recipients({ recipients, named }: { recipients: GiftRecipient[]; named: boolean }): React.JSX.Element {
   const t = useT();
   if (recipients.length === 1 && !named) {

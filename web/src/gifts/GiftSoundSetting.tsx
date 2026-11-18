@@ -4,14 +4,9 @@ import { giftSoundOn, setGiftSound } from './motion';
 import { autoplayOn, lessonSoundsOn, playLessonSound, setAutoplay, setLessonSounds } from '../lib/sounds';
 
 /**
- * Settings → Sounds: whether opening a gift chimes, whether a lesson's
- * answers and its end do (lib/sounds.ts), and whether an answer's Kurdish is
- * heard by itself after the verdict. Turning lesson sounds on plays one, so
- * the switch shows what it does.
- *
- * On this device only, like the other things a browser remembers for itself
- * (it is a matter of where you are — a classroom, a bus — not of who you are).
- * With reduced motion asked for, there is no chime either way.
+ * Settings → Sounds: the gift chime, lesson answer and end sounds (lib/sounds.ts), and whether an answer's Kurdish is
+ * spoken after the verdict. Turning lesson sounds on plays one. Stored per device; under Reduce Motion there is no
+ * chime either way.
  */
 export function GiftSoundSetting(): React.JSX.Element {
   const t = useT();

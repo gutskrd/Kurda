@@ -1,18 +1,14 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import type { GiftCatalogItem } from '@kurda/shared';
+import { prefersReducedMotion } from '../lib/motion';
 import { GiftBox, GiftItemArt } from './GiftArt';
-import { prefersReducedMotion, sendMs } from './motion';
+import { sendMs } from './motion';
 
 /**
- * The send: the item you chose sits in the middle of the screen, a kilim box
- * closes over it, the lid drops, the bow pops — and the present flies down
- * into the chat, where the bubble lands as it arrives. With reduced
- * motion it fades in and out. A tap ends it early; it never blocks the page
- * for longer than it plays.
- *
- * `target` is where it flies to: the bottom of the thread, measured by the
- * caller. Without one it drops straight down.
+ * The send: a kilim box closes over the chosen item in the middle of the screen, the bow pops, and the present flies
+ * into the chat as its bubble lands; under Reduce Motion it fades. A tap ends it early. `target` is the bottom of the
+ * thread as measured by the caller; without one it drops straight down.
  */
 export function GiftFlight({
   item,
@@ -32,7 +28,7 @@ export function GiftFlight({
     return () => window.clearTimeout(timer);
   }, [reduced]);
 
-  // from the middle of the viewport to the end of the thread's last line
+  // From the middle of the viewport to the end of the thread's last line.
   const vw = typeof window !== 'undefined' ? window.innerWidth : 0;
   const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
   const toX = target ? target.left + target.width * 0.72 - vw / 2 : 0;

@@ -39,25 +39,21 @@ import {
 } from '../shop/ItemBrowser';
 import { GiftItemArt } from './GiftArt';
 
-/** A shelf item; a description is read when the catalogue sends one (it does not today). */
+/** A shelf item, with a description when the catalogue sends one. */
 type ShelfItem = GiftCatalogItem & { description?: string | null };
 
-/** Someone a gift can go to: a friend you are talking to, or a friend in the group. */
+/** Someone a gift can go to: the friend in a DM, or a friend in the group. */
 export interface GiftPerson {
   userId: string;
   name: string;
   avatarUrl: string | null;
 }
 
-/** What a send gave back: who got it, who did not and why, and the message to show. */
+/** What a send returned: who got it, who did not and why, and the message to show. */
 export interface GiftSent extends SendGiftResult {
   message: DmMessage | GroupMessage | null;
   item: GiftCatalogItem;
-  /**
-   * When some of the chosen friends were skipped: who did get it and why the
-   * others did not, in the reader's words ("Sent to rojda. dilan already has
-   * it."); null when everyone chosen was given it.
-   */
+  /** When some friends were skipped, who got it and why the others did not ("Sent to rojda. dilan already has it."); else null. */
   partialNote: string | null;
 }
 
@@ -91,14 +87,9 @@ function pickerError(error: ApiError, t: (key: MessageKey) => string): string | 
 }
 
 /**
- * The gift picker, from the chat's gift button.
- *
- * In a direct message the gift is for the friend you are talking to; in a
- * group you first choose who among the members — only your friends are
- * offered (gifts are only ever between friends), with "Select all" — and
- * then what. The shelf is `GET /gifts/catalog?to=…`: everything on sale with
- * a price, the price, who already has a one-of-a-kind item, and your balance.
- * Nothing is chosen for you and nothing nudges; there is no "send one back".
+ * The gift picker from the chat's gift button. In a DM the gift is for the friend; in a group the sender first picks
+ * among the members who are friends (with "Select all"). The shelf (`GET /gifts/catalog?to=…`) has every priced item,
+ * who already owns one-of-a-kind items, and the balance. Nothing is preselected.
  */
 export function GiftPicker({
   open,
@@ -110,7 +101,7 @@ export function GiftPicker({
   open: boolean;
   onClose: () => void;
   chat: GiftChatRef;
-  /** who may be chosen: the one friend in a DM, your friends among a group's members */
+  /** Who may be chosen: the friend in a DM, or the sender's friends among a group's members. */
   people: GiftPerson[] | null;
   onSent: (sent: GiftSent) => void;
 }): React.JSX.Element | null {
@@ -141,17 +132,15 @@ function PickerFlow({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | string | null>(null);
   const [skippedNote, setSkippedNote] = useState<string | null>(null);
-  // one key per attempt at one choice: a retry of the same send never pays twice
+  // One idempotency key per choice, so a retry of the same send never pays twice.
   const [key, setKey] = useState(() => requestId());
-  // what the shelf shows: a kind, words, an order — and the two narrowings a
-  // gift has that a purchase does not (the balance, and who has it already)
+  // The shelf's kind, search and order, plus the gift-only filters (balance, and who already owns it).
   const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
   const [affordOnly, setAffordOnly] = useState(false);
   const [hideOwned, setHideOwned] = useState(false);
   const ids = useIdPrefix('gift-shelf');
 
-  // in a direct message the one friend is the recipient as soon as they are known
-  // (the list arrives a moment after the sheet opens)
+  // In a DM the friend is the recipient as soon as known; the list arrives just after the sheet opens.
   const only = !group ? people?.[0]?.userId : undefined;
   useEffect(() => {
     if (only) setChosen((now) => (now.length === 0 ? [only] : now));
@@ -169,9 +158,7 @@ function PickerFlow({
     if (res.ok) {
       const items = res.data.items ?? [];
       setShelf({ items, balance: res.data.balance ?? { zer: 0, gems: 0 } });
-      // a reload (after a price change) keeps the choice, at what it costs now:
-      // the confirm bar, the affordability and the next send's expected price
-      // all read the fresh item, not the one that was refused
+      // A reload after a price change keeps the choice at its new price, so everything reads the fresh item.
       setPicked((p) => (p ? (items.find((i) => i.sku === p.sku) ?? null) : null));
     } else setShelfError(res.error);
   }, [client, chosen]);
@@ -180,7 +167,7 @@ function PickerFlow({
     if (step === 'what' && chosen.length > 0) void loadShelf();
   }, [step, loadShelf, chosen.length]);
 
-  // a different choice is a different send
+  // A different choice is a different send.
   useEffect(() => setKey(requestId()), [picked, chosen]);
 
   const getting = (item: GiftCatalogItem): string[] => chosen.filter((id) => !item.alreadyOwnedBy.includes(id));
@@ -210,7 +197,7 @@ function PickerFlow({
     }
     const why = res.data.skipped.map((s) => t(SKIP_REASON[s.reason], { name: nameOf.get(s.userId) ?? '' })).join(' ');
     if (res.data.sent.length === 0) {
-      // nobody could be given it: say why, and let them choose again
+      // Nobody could be given it: say why and let them choose again.
       setSkippedNote(why || t('gift.error.unavailable'));
       return;
     }
@@ -221,9 +208,9 @@ function PickerFlow({
     onSent({ ...res.data, item: picked, partialNote });
   }
 
-  // ---- the shelf, by kind: what the tabs count and what the panel shows ----
+  // ---- The shelf by kind: what the tabs count and the panel shows ----
   const items = shelf?.items ?? [];
-  // everyone chosen already has it: there is nobody left to give it to
+  // Everyone chosen already has it, so there is nobody to give it to.
   const everyoneHasIt = (item: ShelfItem): boolean => getting(item).length === 0;
   const keep = (item: ShelfItem): boolean => (!affordOnly || affordable(item)) && (!hideOwned || !everyoneHasIt(item));
   const kinds = categoriesIn(items);
@@ -237,7 +224,7 @@ function PickerFlow({
     setAffordOnly(false);
     setHideOwned(false);
   };
-  // the choice stays made when a filter hides it; the bar by Send says so
+  // The choice stays when a filter hides it; the bar by Send says so.
   const pickedHidden = picked !== null && !shown.some((item) => item.sku === picked.sku);
 
   const renderTile = (item: ShelfItem): React.JSX.Element => {
@@ -375,8 +362,7 @@ function PickerFlow({
 
           {picked && (
             <div className="gift-confirm">
-              {/* what is chosen, drawn, by the button that sends it — even when
-                  the filters above have since hidden it from the shelf */}
+              {/* The chosen item beside the send button, even when the filters hide it from the shelf. */}
               <GiftItemArt assetUrl={picked.assetUrl} category={picked.category} size={44} className="gift-confirm-art" />
               <span className="gift-confirm-text">
                 {t('gift.picker.confirm', {
@@ -387,16 +373,14 @@ function PickerFlow({
                   {picked.currency === 'gems' ? <GemIcon size={14} /> : <CoinIcon size={14} />} {fmt(cost(picked))}
                 </strong>
                 {pickedHidden && <span className="gift-confirm-hidden">{t('gift.picker.pickHidden')}</span>}
-                {/* said by the button that spends: a gift, like any purchase, is final
-                    (in the same small, quiet line as the note above it) */}
+                {/* Beside the button that spends: a gift, like any purchase, is final. */}
                 <span className="gift-confirm-hidden">{t('shop.giftFinal')}</span>
               </span>
               {!affordable(picked) && <span className="gift-confirm-short">{t('gift.error.funds')}</span>}
               <Button onClick={() => void send()} disabled={busy || !affordable(picked)}>
                 {busy ? t('gift.sending') : t('gift.send')}
               </Button>
-              {/* the answer sits by the button that asked, not under a shelf
-                  that may be scrolled far above it */}
+              {/* The result sits by the send button, not under a shelf that may be scrolled away. */}
               <SendError error={error ?? skippedNote} className="gift-confirm-note" />
             </div>
           )}
@@ -406,7 +390,7 @@ function PickerFlow({
   );
 }
 
-/** Choosing who, in a group: your friends among its members, up to seven at once. */
+/** Choosing recipients in a group: the sender's friends among its members, up to seven at once. */
 function WhoStep({
   people,
   chosen,
@@ -462,7 +446,7 @@ function WhoStep({
   );
 }
 
-/** The shelf while it loads: the same tiles, empty — the picture, the name, the line under it and the price. */
+/** The shelf while loading: empty tiles with placeholders for picture, name, subtitle and price. */
 function ShelfSkeleton({ count }: { count: number }): React.JSX.Element {
   const t = useT();
   return (

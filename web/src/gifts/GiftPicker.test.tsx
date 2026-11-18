@@ -55,7 +55,7 @@ describe('GiftPicker in a direct message', () => {
     const owned = screen.getByText('Pomegranate').closest('button')!;
     expect(owned).toBeDisabled();
     expect(within(owned).getByText('Already has it')).toBeInTheDocument();
-    // dearer than what you hold: shown, priced, but not sendable
+    // More than the balance: shown and priced, but not sendable.
     const night = screen.getByText('Night sky').closest('button')!;
     expect(within(night).getByText('Rare')).toBeInTheDocument();
     expect(screen.getByLabelText('You have 1,200 Zêr and 10 gems')).toBeInTheDocument();
@@ -69,7 +69,7 @@ describe('GiftPicker in a direct message', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
     expect(screen.getByText('Sunset over Amed for rojda')).toBeInTheDocument();
-    // by the button that spends: a gift is as final as any purchase
+    // Beside the send button: a gift is as final as any purchase.
     expect(screen.getByText('Gifts are final too: once it’s sent, it’s theirs to keep.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
 
@@ -85,7 +85,7 @@ describe('GiftPicker in a direct message', () => {
   });
 
   it('finds its recipient when the friend arrives after the sheet has opened', async () => {
-    // the chat opens the sheet at once; who the friend is comes a moment later
+    // The chat opens the sheet at once; the friend arrives a moment later.
     const calls = stub([item()]);
     function Thread(): React.JSX.Element {
       const [people, setPeople] = useState<(typeof rojda)[] | null>(null);
@@ -109,7 +109,7 @@ describe('GiftPicker in a direct message', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     const why = await screen.findByRole('alert');
     expect(why).toHaveTextContent('You’ve reached today’s gift limit for rojda.');
-    // beside the Send button, which stays on screen, not under a long shelf
+    // Beside the Send button, which stays on screen, not under a long shelf.
     expect(why.closest('.gift-confirm')).not.toBeNull();
     expect(onSent).not.toHaveBeenCalled();
   });
@@ -130,11 +130,11 @@ describe('GiftPicker in a direct message', () => {
     const onSent = vi.fn();
     renderApp(<GiftPicker open onClose={() => undefined} chat={{ kind: 'dm', userId: 'u-rojda' }} people={[rojda]} onSent={onSent} />);
     await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
-    price = 530; // it changes while they look
+    price = 530; // The price changes while they look.
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('The price just changed.');
 
-    // the shelf is fetched again, and the choice now costs what the shelf says
+    // The shelf is refetched, and the choice now costs what it says.
     const bar = (await screen.findByRole('button', { name: 'Send gift' })).closest('.gift-confirm') as HTMLElement;
     expect(await within(bar).findByText('530')).toBeInTheDocument();
     await userEvent.click(within(bar).getByRole('button', { name: 'Send gift' }));
@@ -173,7 +173,7 @@ describe('GiftPicker in a group', () => {
 
     expect(await screen.findByText('Already has it: baran')).toBeInTheDocument();
     expect(calls.find((c) => c.url.includes('/gifts/catalog'))!.url).toContain('to=u-rojda,u-baran');
-    // only the one who does not have it is given it, and only they are paid for
+    // Only the friend without it gets it, and only they are paid for.
     await userEvent.click(screen.getByRole('button', { name: /Sunset over Amed/ }));
     expect(screen.getByText('Sunset over Amed for rojda')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
@@ -216,7 +216,7 @@ describe('GiftPicker in a group', () => {
 });
 
 describe('GiftPicker’s shelf, by kind', () => {
-  /** The shelf as `/gifts/catalog` sends it: in the shop's order, every priced kind. */
+  /** The shelf as `/gifts/catalog` sends it, in the shop's order with every priced kind. */
   const shelf = (): GiftCatalogItem[] => [
     item({ sku: 'bg-sunset', name: 'Sunset over Amed', price: 500 }),
     item({ sku: 'bg-kilim', name: 'Kilîma Sor', price: 600, alreadyOwnedBy: ['u-rojda'] }),
@@ -236,7 +236,7 @@ describe('GiftPicker’s shelf, by kind', () => {
 
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['All6', 'Backgrounds3', 'Icons2', 'Tags1']);
     expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Backgrounds3', 'Icons2', 'Tags1']);
-    // each shelf is a list named by its heading
+    // Each shelf is a list named by its heading.
     expect(screen.getByRole('list', { name: /Icons/ })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
@@ -265,7 +265,7 @@ describe('GiftPicker’s shelf, by kind', () => {
   });
 
   it('holds each gift against its own currency, for everyone it would go to', async () => {
-    // 1,200 Zêr and 10 gems; two friends chosen, so each gift costs twice its price
+    // 1,200 Zêr and 10 gems; two friends chosen, so each gift costs twice its price.
     stub(shelf(), null, { zer: 1200, gems: 10 });
     open([rojda, { userId: 'u-baran', name: 'baran', avatarUrl: null }], { kind: 'group', groupId: 'g1' });
     await userEvent.click(screen.getByLabelText('Select all'));
@@ -273,8 +273,8 @@ describe('GiftPicker’s shelf, by kind', () => {
     await screen.findByText('Sunset over Amed');
 
     await userEvent.click(screen.getByLabelText('Within my balance'));
-    // 2 × 500 and 2 × 600 fit in 1,200 Zêr; Kilîma Sor is 600 for baran alone (rojda has it);
-    // 2 × 900 does not; 40 gems is more than the 10 held, whatever the Zêr
+    // 2 × 500 and 2 × 600 fit in 1,200 Zêr; Kilîma Sor is 600 for baran alone (rojda has it); 2 × 900 does not; 40
+    // gems is more than the 10 held.
     expect(tiles()).toEqual(['Sunset over Amed', 'Kilîma Sor', 'Roj', 'Kurdish Tag']);
   });
 
@@ -296,10 +296,10 @@ describe('GiftPicker’s shelf, by kind', () => {
     const bar = screen.getByRole('button', { name: 'Send gift' }).closest('.gift-confirm') as HTMLElement;
     expect(within(bar).queryByText('Your filters hide it, but it’s still chosen.')).not.toBeInTheDocument();
 
-    // a filter that hides it from the shelf
+    // A filter that hides it from the shelf.
     await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
     expect(screen.queryByRole('button', { name: /Sunset over Amed/ })).not.toBeInTheDocument();
-    // …and the bar still says what is chosen, drawn, and that the filter hides it
+    // The bar still shows what is chosen, and that the filter hides it.
     expect(within(bar).getByText('Sunset over Amed for rojda')).toBeInTheDocument();
     expect(within(bar).getByText('Your filters hide it, but it’s still chosen.')).toBeInTheDocument();
     expect(bar.querySelector('.gift-confirm-art')).not.toBeNull();
