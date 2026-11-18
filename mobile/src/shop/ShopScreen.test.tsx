@@ -122,9 +122,18 @@ describe('the Shop, by kind', () => {
   });
 
   /*
-   * Green is for a right answer, so "Free" is a price like any other, and a row's name and meaning may take a second
+   * Green is for a right answer, so "Free" is a price like any other, and a card's name and meaning may take a second
    * line.
    */
+  it('names both currencies in the purse, and lays the items out as cards two to a row', async () => {
+    open();
+    expect(await screen.findByLabelText('550 Zêr')).toBeTruthy();
+    expect(screen.getByLabelText('12 gems')).toBeTruthy();
+    const card = await screen.findByRole('button', { name: 'Hevalo, Hevalo violet, Free' });
+    expect(getComputedStyle(card.parentElement!).flexWrap).toBe('wrap');
+    expect(card.style.width || getComputedStyle(card).width).toBe('48.5%');
+  });
+
   it('prints Free as a price, not in green, and lets a name and its meaning take a second line', async () => {
     open();
     const free = await screen.findByRole('button', { name: 'Hevalo, Hevalo violet, Free' });
