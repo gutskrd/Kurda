@@ -110,6 +110,10 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Xapînok on one phone (integration
     expect(IMPOSTOR_GUESS_OPTIONS).toBeLessThan(IMPOSTOR_CATEGORY_MIN);
     expect(beginner.categories.find((c) => c.slug === small)).toBeUndefined();
     expect((await call(token, 'GET', '/games/impostor/couch?dialect=xx')).status).toBe(400);
+    // with no variety named, both, each as it is offered alone
+    const alone = await Promise.all(['kmr', 'ckb'].map(async (d) => (await call(token, 'GET', `/games/impostor/couch?dialect=${d}`)).body));
+    expect((await call(token, 'GET', '/games/impostor/couch')).body).toEqual({ dialects: alone });
+    expect((await call(null, 'GET', '/games/impostor/couch')).status).toBe(401);
   });
 
   it('deals an evening’s cards from approved cards of the level only, never to be kept on the way', async () => {

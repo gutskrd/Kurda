@@ -179,6 +179,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? and cards from picked w
       expect(offer).toMatchObject({ dialect: 'kmr', difficulties: expect.arrayContaining(['beginner']) });
       // a variety with no identities is offered at no difficulty, rather than with a deal that would fail
       expect((await call('GET', '/games/who-am-i/couch?dialect=ckb', learner)).json().difficulties).not.toContain('advanced');
+      // with no variety named, both, each as it is offered alone
+      const alone = await Promise.all(['kmr', 'ckb'].map(async (d) => (await call('GET', `/games/who-am-i/couch?dialect=${d}`, learner)).json()));
+      expect((await call('GET', '/games/who-am-i/couch', learner)).json()).toEqual({ dialects: alone });
     });
 
     it('deals a card for everyone in the room: each a different one, with the facts that answer its questions, and no tile another player wears', async () => {
