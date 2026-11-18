@@ -222,7 +222,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
           {t('edit.photoShown')}
         </p>
       )}
-      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
+      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`} role="status">{msg.text}</div>}
 
       <div className="avatar-grid" role="radiogroup" aria-label={t('edit.chooseAvatar')}>
         <button

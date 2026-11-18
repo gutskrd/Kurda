@@ -109,7 +109,7 @@ export function BlockedUsers(): React.JSX.Element {
         {t('settings.blocked.help')}
       </p>
 
-      {error && <div className="msg msg-error" style={{ marginBottom: 12 }}>{error}</div>}
+      {error && <div className="msg msg-error" role="status" style={{ marginBottom: 12 }}>{error}</div>}
 
       {state === 'loading' ? (
         <BlocklistSkeleton label="settings.blocked.loading" />

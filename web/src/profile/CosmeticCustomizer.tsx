@@ -245,7 +245,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
         </h2>
         <span className="field-hint">{balances.zer === undefined ? '' : t('edit.zerAmount', { amount: balances.zer.toLocaleString(locale) })}</span>
       </div>
-      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
+      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`} role="status">{msg.text}</div>}
 
       <KindTabs kinds={kinds} value={active} counts={counts} idPrefix={ids} onChange={(kind) => setTab(kind as Kind)} />
       <ItemToolbar>

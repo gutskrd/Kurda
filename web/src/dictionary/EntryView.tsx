@@ -103,7 +103,7 @@ export function EntryView({
         </div>
       </header>
 
-      {error ? <p className="msg msg-error">{error}</p> : null}
+      {error ? <p className="msg msg-error" role="status">{error}</p> : null}
 
       <ol className="dict-senses">
         {entry.senses.map((s) => (

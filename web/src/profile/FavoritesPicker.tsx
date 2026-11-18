@@ -87,7 +87,7 @@ function FavoriteKind({
         </div>
       </div>
 
-      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
+      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`} role="status">{msg.text}</div>}
 
       {open && (
         <div className="fav-browse">
