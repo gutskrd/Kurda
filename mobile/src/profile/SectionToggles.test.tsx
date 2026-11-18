@@ -12,10 +12,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { SectionToggles } from './SectionToggles';
 
-/*
- * Which sections your profile shows (profile/SectionToggles.tsx): each is a
- * row that is its switch, so its words turn it as well as the switch does.
- */
+/* Which sections your profile shows: each is a row that is its switch, so its words toggle it too. */
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(cleanup);

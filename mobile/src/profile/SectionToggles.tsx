@@ -21,18 +21,9 @@ const COPY: Record<ProfileSection, { label: TranslationKey; hint: TranslationKey
 };
 
 /**
- * Which activity sections your profile shows other people (KUR-089).
- *
- * The phone grew the activity tabs before it grew any way to turn one off, so
- * everything you had ever liked was on your profile whether you wanted it there
- * or not.
- *
- * The current values come from your own public profile rather than /me, because
- * that is the endpoint visitors read — so what this shows is literally what
- * they would see, not a second copy that could disagree with it.
- *
- * Each toggle saves on its own: no Save button to forget, and the API merges
- * one key at a time so two quick toggles cannot overwrite each other.
+ * Which activity sections your profile shows other people. The current values come from your own public profile rather
+ * than /me, since that is what visitors read. Each toggle saves on its own, and the API merges one key at a time, so
+ * two quick toggles cannot overwrite each other.
  */
 export function SectionToggles({ userId }: { userId: string }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -54,8 +45,8 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
   }, [client, userId]);
 
   const toggle = (key: ProfileSection, next: boolean): void => {
-    // optimistic: the switch has already moved under the thumb, and putting it
-    // back on failure is less confusing than a switch that lags a round trip
+    // Optimistic: the switch has already moved under the thumb, and putting it back on failure is less confusing than
+    // one that lags a round trip.
     setSections((prev) => (prev ? { ...prev, [key]: next } : prev));
     void client.patch<{ sections: ProfileSections }>('/me/profile/sections', { [key]: next }).then((res) => {
       if (res.ok) {
@@ -84,13 +75,9 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
   }
 
   /*
-   * Each switch says which section it shows, with what the section holds as
-   * its hint: a row of five switches that a screen reader called only
-   * "switch" could not be told apart. Right to left, the words start on the
-   * right and the switch closes the row on the left.
-   *
-   * The whole row is the switch, words and all: the words are what the eye
-   * goes to, and the switch alone was a 31pt target at the row's edge.
+   * Each switch names its section with what it holds as the hint, so a screen reader can tell them apart; right to left
+   * the words start on the right. The whole row is the switch, so the words are the target rather than a 31pt switch at
+   * the edge.
    */
   return (
     <View style={styles.wrap}>
@@ -126,7 +113,7 @@ const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.xs },
   heading: { ...sectionLabel },
   help: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
-  // ToggleRow lays the words and the switch out across the row and makes it at least a fingertip tall
+  // ToggleRow lays out the words and switch across the row and makes it at least a fingertip tall.
   row: { paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth },
   main: { flex: 1, gap: 2 },
   label: { fontSize: typography.ios.row },

@@ -1,6 +1,6 @@
 /**
- * The raw uploads that go past the API client (photoUpload.ts, library/voiceUpload.ts): a session that has run out
- * is renewed through the client and the bytes sent once more, as the post composer's pictures are.
+ * The raw uploads that bypass the API client (photoUpload.ts, library/voiceUpload.ts): an expired session is renewed
+ * through the client and the bytes sent once more, as for the composer's pictures.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 

@@ -19,25 +19,18 @@ import { useDirection } from '../reports/direction';
 /** The violet wash an option that is on wears, as everywhere a choice is marked. */
 const CHOSEN_WASH = '1F';
 
-/** How many published posts to offer — the browser offers the same fifty. */
+/** How many published posts to offer: the same fifty the browser offers. */
 const BROWSE = 50;
 
 /**
- * Remove and Change are a line of words, about 22 points tall: said as their
- * height, they answer a finger over 48 above and below, and only over their
- * own width sideways, where they stand a gap from each other.
+ * Remove and Change are a line of words about 22pt tall: they answer over 48pt above and below, and only their own
+ * width sideways, where they stand a gap apart.
  */
 const WORD = { height: 22 };
 
 /**
- * Choosing the poem and the story on your profile (KUR profile cosmetics).
- *
- * `ProfileScreen` already draws both, so this is the missing half rather than a
- * second design: until now the two slots could only ever be empty, because
- * nothing on the phone could fill them.
- *
- * Browsing reuses `library/api.ts`: a favourite is a published library post, so
- * the list to choose from is the list the Library tab already fetches.
+ * Choosing the poem and the story on your profile, which `ProfileScreen` draws. A favourite is a published library
+ * post, so the list to choose from is the one `library/api.ts` already fetches.
  */
 export function FavoritesPicker({
   favoritePoem,
@@ -46,7 +39,7 @@ export function FavoritesPicker({
 }: {
   favoritePoem: FavoriteRef | null;
   favoriteStory: FavoriteRef | null;
-  /** told after anything lands, so the screen above can re-read /me */
+  /** Told after anything lands, so the screen above can re-read /me. */
   onChanged: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -82,7 +75,7 @@ function Slot({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  // right to left, what is chosen is read first on the right and the way to change it closes the row on the left
+  // Right to left, the chosen post is read first on the right and the way to change it closes the row on the left.
   const dir = useDirection();
   const copy = favoriteCopy(kind);
 
@@ -92,10 +85,8 @@ function Slot({
   const [error, setError] = useState<string | null>(null);
 
   /*
-   * The list is fetched the first time it is opened and kept after that. What is
-   * published changes far more slowly than somebody opens and closes this, and
-   * re-reading fifty posts each time a slot is folded shut and open again buys
-   * nothing.
+   * The list is fetched the first time it is opened and kept, since published posts change far more slowly than this is
+   * opened and closed.
    */
   const toggle = useCallback(() => {
     const next = !open;
@@ -181,7 +172,7 @@ function Slot({
         ) : posts.length === 0 ? (
           <Text style={[styles.empty, dir.text, { color: colors.textSecondary }]}>{t(copy.empty)}</Text>
         ) : (
-          /* a plain map, not a list: this sits inside the edit screen's ScrollView */
+          /* A plain map, not a list: this sits inside the edit screen's ScrollView. */
           <View style={styles.options}>
             {posts.map((p) => {
               const on = current?.id === p.id;
@@ -193,7 +184,7 @@ function Slot({
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={postName(p)}
-                  // the one already chosen in the violet wash and ink every choice that is on wears
+                  // The one already chosen in the violet wash and ink every chosen option wears.
                   style={[
                     styles.option,
                     {

@@ -3,10 +3,7 @@ import { describeUploadFailure, normalizeContentType } from './photoUploadResult
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
-/**
- * The real catalogue rather than a stub: a stub that echoes the key would pass
- * while every sentence was missing, which is the failure this maps against.
- */
+/** The real catalogue rather than a stub, which would pass while every sentence was missing. */
 const tr =
   (locale: 'en' | 'ku') =>
   (key: TranslationKey, vars?: Record<string, string | number>): string => {
@@ -47,7 +44,7 @@ describe('describeUploadFailure', () => {
     ];
     for (const [status, code] of cases) {
       const msg = describeUploadFailure(status, body(code), t);
-      // never leaks the raw code or server message; always a real sentence
+      // Never leaks the raw code or server message; always a real sentence.
       expect(msg).not.toContain(code);
       expect(msg).not.toContain('server message');
       expect(msg.length).toBeGreaterThan(10);
@@ -78,7 +75,7 @@ describe('describeUploadFailure', () => {
     expect(describeUploadFailure(502, '<html>Bad Gateway</html>', t)).toBe(
       interpolate(TRANSLATIONS.en['upload.failedWithStatus'], { status: 502 }),
     );
-    // and in another language, because that is the point of the change
+    // And in another language.
     expect(describeUploadFailure(502, '<html>Bad Gateway</html>', tr('ku'))).toBe(
       interpolate(TRANSLATIONS.ku['upload.failedWithStatus'], { status: 502 }),
     );

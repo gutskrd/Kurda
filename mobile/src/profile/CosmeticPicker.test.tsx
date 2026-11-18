@@ -69,14 +69,14 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     open([...BACKGROUNDS, ...ICONS]);
     expect(await screen.findByText('Gola Şîn')).toBeTruthy();
     expect(screen.getByText('Hevalo')).toBeTruthy();
-    // what is worn is said in words, not only drawn
+    // What is worn is said in words, not only drawn.
     expect(screen.getByRole('button', { name: 'Hevalo, equipped' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Gola Şîn' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('tab', { name: 'Icons, 1 item' }));
     expect(screen.getByText('Îstîkan')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Îstîkan, equipped' })).toBeTruthy();
-    // the switch that hides the icon without giving it up lives with the icons
+    // The switch that hides the icon without giving it up lives with the icons.
     expect(screen.getByRole('switch', { name: 'Show the icon on my profile' })).toBeTruthy();
   });
 
@@ -95,16 +95,14 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
   it('wears and takes off season frames here, as the Season screen does', async () => {
     const { client } = open([...BACKGROUNDS, ...FRAMES], { frameSku: 'frame_rank_zozan' });
     fireEvent.click(await screen.findByRole('tab', { name: 'Frames, 2 items' }));
-    // a frame is named for its tier, in the reader's language
+    // A frame is named for its tier, in the reader's language.
     expect(screen.getByText('Gir')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Zozan season frame, equipped' })).toBeTruthy();
 
     /*
-     * Each tap is made inside act(), so its answer has come back and the tile
-     * has been told what it does now before it is tapped again. The tile's
-     * press handler hears that in an effect after the draw; a second tap that
-     * landed in between still ran the handler from while the first was
-     * saving, which ignores a tap, and nothing was sent.
+     * Each tap is made inside act(), so its answer is back and the tile knows what it does before the next tap; the
+     * tile's handler updates in an effect after the draw, and a tap in between would hit the handler from while the
+     * first was saving.
      */
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: 'Gir season frame' }));
@@ -134,7 +132,7 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     const lale = owned('frame-made-lale', 'Xeleka Laleyan', 'frame', '/cosmetics/frames/made-01-lale.png');
     const { client } = open([...BACKGROUNDS, ...FRAMES, lale]);
     fireEvent.click(await screen.findByRole('tab', { name: 'Frames, 3 items' }));
-    // its own name, where a season frame is named for its tier
+    // Its own name, where a season frame is named for its tier.
     const tile = await screen.findByRole('button', { name: 'Xeleka Laleyan' });
     expect(tile.querySelector('img')?.getAttribute('src')).toContain('/cosmetics/frames/made-01-lale.png');
     await act(async () => {
@@ -171,7 +169,7 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     fireEvent.change(field, { target: { value: 'xyzzy' } });
     expect(screen.getByText('Nothing matches that')).toBeTruthy();
 
-    // eight or fewer: no field
+    // Eight or fewer: no field.
     fireEvent.click(screen.getByRole('tab', { name: 'Icons, 0 items' }));
     expect(screen.queryByLabelText('Search what you own')).toBeNull();
   });

@@ -20,7 +20,7 @@ import { useDirection } from '../reports/direction';
 
 /** The chosen tab's wash: the violet at the strength the tab bar and the segmented control use to say "here". */
 const CHOSEN_WASH = '1F';
-/** A tab's height, and a strip taller than one row of them by half: it has taken a second row, even at the largest text. */
+/** A tab's height, and a strip taller than one row by half: it has taken a second row, even at the largest text. */
 const TAB_HEIGHT = 50;
 const TWO_ROWS_AT_LEAST = (TAB_HEIGHT + 3 * 2) * 1.5;
 
@@ -54,17 +54,9 @@ interface ActivityPage {
 }
 
 /**
- * What somebody has been doing, under their profile (KUR-086).
- *
- * The browser has had this since profiles were built and the phone never
- * called the endpoint, so a profile on the phone ended at the bio — you could
- * read who somebody was and not one thing they had written.
- *
- * The server answers in two shapes from the one route, and the reason is worth
- * keeping: posts, likes and reposts come back as whole feed items and are drawn
- * with the same card the wall uses, because a profile that shrank a picture to
- * a thumbnail and a poem to an icon was showing a list *about* posts rather
- * than the posts. Only games stay a row.
+ * What somebody has been doing, under their profile. The server answers in two shapes from one route: posts, likes and
+ * reposts as whole feed items, drawn with the wall's own card so a profile shows the posts themselves; games stay a
+ * row.
  */
 export function ProfileActivity({
   userId,
@@ -72,9 +64,9 @@ export function ProfileActivity({
   own = false,
 }: {
   userId: string;
-  /** what the owner lets people see; null when the profile is private */
+  /** What the owner lets people see; null when the profile is private. */
   sections?: ProfileSections | null;
-  /** your own profile: the hidden ones are still yours to look at, labelled */
+  /** Your own profile: the hidden ones are still yours to look at, labelled. */
   own?: boolean;
 }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -83,22 +75,17 @@ export function ProfileActivity({
   const dir = useDirection();
 
   /*
-   * A section the owner has turned off is not offered to anybody else. On
-   * your own profile it stays, marked, so that turning something off does not
-   * also hide it from you.
+   * A section the owner turned off is not offered to anybody else; on your own profile it stays, marked, so turning it
+   * off does not hide it from you.
    */
   const shown = PROFILE_SECTIONS.filter((key) => own || sections?.[key] !== false);
   const [section, setSection] = useState<ProfileSection>(shown[0] ?? 'posts');
-  // recomputed rather than stored, so a tab that disappears under you is
-  // replaced instead of leaving an empty panel
+  // Recomputed rather than stored, so a tab that disappears is replaced instead of leaving an empty panel.
   const active = shown.includes(section) ? section : (shown[0] ?? null);
   const [page, setPage] = useState<ActivityPage | null>(null);
   /*
-   * The strip's width once it has had to take a second row, and so set its
-   * tabs three to a row. Left to themselves the tabs fill a row before
-   * starting the next, which in most languages left four on the first and
-   * the fifth alone across the whole of the second. A new width (a turned
-   * tablet) lets them find their rows again.
+   * The strip's width once it has taken a second row, which sets the tabs three to a row; left alone they would put
+   * four on the first row and one on the second. A new width (a rotated tablet) lets them find their rows again.
    */
   const [thirds, setThirds] = useState<number | null>(null);
 
@@ -106,8 +93,8 @@ export function ProfileActivity({
     (kind: ProfileSection) => {
       setPage(null);
       void client.get<ActivityPage>(`/users/${userId}/activity?kind=${kind}&limit=12`).then((res) => {
-        // a section that will not load shows as empty rather than as an error:
-        // the profile above it is still worth reading
+        // A section that will not load shows as empty rather than as an error: the profile above it is still worth
+        // reading.
         setPage(res.ok ? res.data : { entries: [], items: [] });
       });
     },
@@ -118,7 +105,7 @@ export function ProfileActivity({
     if (active) load(active);
   }, [load, active]);
 
-  // this list loads once, so a post deleted from its own page is taken off it here
+  // This list loads once, so a post deleted from its own page is taken off it here.
   useEffect(
     () => onPostDeleted((gone) => setPage((prev) => prev && { ...prev, items: prev.items.filter((i) => !samePost(i, gone)) })),
     [],
@@ -136,21 +123,13 @@ export function ProfileActivity({
         {t('profile.activity')}
       </Text>
 
-      {/*
-        Scrollable would hide a tab off the edge, so they share the width and
-        keep their labels — the glyph above the word rather than beside it.
-        Each tab is as wide as its word and the row grows to fill the strip;
-        where five words do not fit across (German's "Gespeichert", Turkish's
-        "Yeniden paylaşılanlar", all of Soranî at 320), the strip takes a
-        second row rather than cutting them to "Gespeic…". The chosen tab is
-        a wash of violet with violet ink, as the tab bar and the segmented
-        control mark the place you are in, and right to left the first tab is
-        on the right.
-
-        On your own profile a section you have hidden from everybody else is
-        still here for you, marked with the closed eye and named "Hidden" to a
-        screen reader.
-      */}
+      {/* The tabs share the width rather than scroll, so none is hidden off the edge, with the glyph above the word.
+         Each starts as wide as its word and grows to fill its row; where five do not fit, the strip takes a second
+         row rather than cutting them. The chosen tab is a violet wash with violet ink, and right to left the first
+         tab is on the right.
+         
+         On your own profile a section hidden from others is still here, marked with the closed eye and named
+         "Hidden" to a screen reader. */}
       <View
         style={[styles.tabs, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
         accessibilityRole="tablist"
@@ -218,10 +197,7 @@ export function ProfileActivity({
   );
 }
 
-/**
- * The whole section in grey, for a profile that is itself still loading: the
- * heading, the tab strip, and the first posts.
- */
+/** The whole section in grey, for a profile still loading: the heading, the tab strip, and the first posts. */
 export function ProfileActivitySkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   return (
@@ -233,10 +209,7 @@ export function ProfileActivitySkeleton(): React.JSX.Element {
   );
 }
 
-/**
- * A section while it loads: the posts as the cards they will be, or the games
- * as the rows they will be — not a spinner over the space where they arrive.
- */
+/** A section while it loads: the posts as the cards they will be, or the games as rows, not a spinner. */
 function ActivitySkeleton({ games }: { games: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -264,9 +237,9 @@ const styles = StyleSheet.create({
     padding: 3,
     gap: 2,
   },
-  // the strip's own height: a tab is 50, inside 3 of padding
+  // The strip's own height: a tab is 50pt, inside 3pt of padding.
   tabsSkeleton: { height: TAB_HEIGHT + 3 * 2 },
-  // as wide as its word to begin with, then a share of what is left in its row
+  // As wide as its word to begin with, then a share of what is left in its row.
   tab: {
     flexGrow: 1,
     alignItems: 'center',
@@ -277,7 +250,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: radii.md,
   },
-  // three to a row at the most once the strip has two, so the rows come out three and two
+  // At most three to a row once the strip has two rows, so the rows come out three and two.
   tabThird: { minWidth: '30%' },
   tabLabel: { alignItems: 'center', gap: 3 },
   tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
