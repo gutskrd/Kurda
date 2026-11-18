@@ -4,6 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { fireLevel } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { useIntents } from '../api/optimistic';
 import { GoalPicker } from '../goals/GoalPicker';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
 import { formatNumber } from '../i18n/format';
@@ -68,14 +69,19 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
   );
   useTabFocusLoad(load);
 
-  const changeGoal = useCallback(
-    async (next: GoalOption) => {
-      setGoal((g) => (g ? { ...g, goal: next } : g));
+  // The choice is shown at once; the server's answer brings what follows from it (the ring's goal for today).
+  const choosing = useIntents<'goal', GoalOption, DailyGoalStatus>(
+    async (_key, next) => {
       const res = await client.put<DailyGoalStatus>('/me/daily-goal', { goal: next });
       if (res.ok) setGoal(res.data);
+      return res;
     },
-    [client],
+    { answered: (status) => status.goal },
   );
+  const chosen = goal ? choosing.shown('goal', goal.goal) : null;
+  const changeGoal = (next: GoalOption): void => {
+    if (goal) choosing.want('goal', next, goal.goal);
+  };
 
   const days = streak?.current ?? 0;
   const lit = days > 0;
@@ -158,8 +164,8 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
               <GoalRing xp={goal.earnedXp} goal={goal.effectiveGoal} size={56} tint={[colors.gold, colors.goldText]} showNumbers={false} />
               <Text style={[styles.goalWords, dir.text, { color: colors.textPrimary }]}>{goalWords}</Text>
             </View>
-            <Text style={[styles.caption, dir.text, { color: colors.textSecondary }]}>{t('learn.today.goalSetting', { xp: formatNumber(goal.goal, locale) })}</Text>
-            <GoalPicker value={goal.goal} onChange={(next) => void changeGoal(next)} />
+            <Text style={[styles.caption, dir.text, { color: colors.textSecondary }]}>{t('learn.today.goalSetting', { xp: formatNumber(chosen ?? goal.goal, locale) })}</Text>
+            <GoalPicker value={chosen ?? goal.goal} onChange={changeGoal} />
           </View>
         ) : null}
       </BottomSheet>

@@ -8,6 +8,7 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { isMaintenance } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import { haptic } from '../feedback/haptics';
 import { SendErrorNotice } from '../reports/SendError';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -29,6 +30,12 @@ import {
 
 const DEFAULT_QUIET = { start: 22 * 60, end: 7 * 60 };
 
+/** Quiet hours as one setting: the server takes both ends together, or neither. */
+interface Quiet {
+  start: number | null;
+  end: number | null;
+}
+
 /** This phone's notification permission, the per-category switches, and quiet hours. */
 export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
@@ -49,29 +56,46 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
 
   useFocusEffect(useCallback(() => load(), [load]));
 
-  /**
-   * Send a change after already moving the control, since a switch that waits for a round trip reads as one that did
-   * not register. The changed settings are kept so a refusal puts back only those (a second switch moved meanwhile
-   * keeps its own answer), and the reason is said above the list, as on the website.
+  /*
+   * A change is shown before it is sent, since a switch that waits for a round trip reads as one that did not
+   * register. Each switch, and quiet hours as one, keeps its own request; a refusal puts back only that one and the
+   * reason is said above the list, as on the website.
    */
   const [saveError, setSaveError] = useState<ApiError | null>(null);
-  const save = useCallback(
-    (patch: Partial<NotificationPrefs>) => {
-      if (!prefs) return;
-      const before = Object.fromEntries(Object.keys(patch).map((key) => [key, prefs[key as keyof NotificationPrefs]])) as Partial<NotificationPrefs>;
-      setSaveError(null);
-      setPrefs((p) => (p ? { ...p, ...patch } : p));
-      void client.put<NotificationPrefs>('/me/notification-prefs', patch).then((res) => {
-        if (res.ok) return;
-        setPrefs((p) => (p ? { ...p, ...before } : p));
-        // Hevalo being offline is shown by the screen over the app; the switch still goes back.
-        if (isMaintenance(res.error)) return;
-        haptic('error');
-        setSaveError(res.error);
-      });
-    },
-    [client, prefs],
-  );
+  const refused = (error: ApiError): void => {
+    // Hevalo being offline is shown by the screen over the app; the switch still goes back.
+    if (isMaintenance(error)) return;
+    haptic('error');
+    setSaveError(error);
+  };
+  const put = async (patch: Partial<NotificationPrefs>) => {
+    const res = await client.put<NotificationPrefs>('/me/notification-prefs', patch);
+    if (res.ok) setPrefs(res.data);
+    return res;
+  };
+  const switches = useIntents<NotificationCategory, boolean, NotificationPrefs>((cat, on) => put({ [cat]: on }), { failed: refused });
+  const quietHours = useIntents<'quiet', Quiet, NotificationPrefs>((_key, q) => put({ quietStartMin: q.start, quietEndMin: q.end }), {
+    failed: refused,
+    same: (a, b) => a.start === b.start && a.end === b.end,
+  });
+  const setCategory = (cat: NotificationCategory, on: boolean): void => {
+    if (!prefs) return;
+    setSaveError(null);
+    switches.want(cat, on, prefs[cat]);
+  };
+  const setQuiet = (next: Quiet): void => {
+    if (!prefs) return;
+    setSaveError(null);
+    quietHours.want('quiet', next, { start: prefs.quietStartMin, end: prefs.quietEndMin });
+  };
+  // The settings as they are drawn: the server's, with each change still on its way laid over them.
+  const quietShown = prefs ? quietHours.shown('quiet', { start: prefs.quietStartMin, end: prefs.quietEndMin }) : null;
+  const shown: NotificationPrefs | null = prefs && quietShown && {
+    ...prefs,
+    ...Object.fromEntries(NOTIFICATION_CATEGORIES.map((cat) => [cat, switches.shown(cat, prefs[cat])])),
+    quietStartMin: quietShown.start,
+    quietEndMin: quietShown.end,
+  };
 
   return (
     <GradientBackground>
@@ -79,10 +103,10 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
         {/* Named as the gear that opens it and the Settings row name it, since the list it came from is
            "Notifications". */}
         <ScreenHeader title={t('settings.notifications')} onBack={onExit} />
-        <AsyncBoundary loading={!prefs} error={!prefs ? error : null} onRetry={load} skeleton={<PrefsSkeleton />}>
+        <AsyncBoundary loading={!shown} error={!shown ? error : null} onRetry={load} skeleton={<PrefsSkeleton />}>
           {() => {
-            if (!prefs) return null;
-            const quiet = quietEnabled(prefs);
+            if (!shown) return null;
+            const quiet = quietEnabled(shown);
             return (
         <ScrollView contentContainerStyle={styles.content}>
           <SendErrorNotice error={saveError} onDismiss={() => setSaveError(null)} style={styles.notice} />
@@ -93,8 +117,8 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
               <SettingsSwitch
                 key={cat}
                 title={t(CATEGORY_LABEL[cat])}
-                value={prefs[cat]}
-                onValueChange={(on) => save({ [cat]: on } as Partial<NotificationPrefs>)}
+                value={shown[cat]}
+                onValueChange={(on) => setCategory(cat, on)}
               />
             ))}
           </SettingsSection>
@@ -103,9 +127,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
               icon="moon"
               title={t('notifications.enableQuietHours')}
               value={quiet}
-              onValueChange={(on) =>
-                save(on ? { quietStartMin: DEFAULT_QUIET.start, quietEndMin: DEFAULT_QUIET.end } : { quietStartMin: null, quietEndMin: null })
-              }
+              onValueChange={(on) => setQuiet(on ? DEFAULT_QUIET : { start: null, end: null })}
             />
             {quiet ? (
               <>
@@ -113,15 +135,15 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
                   label={t('notifications.quietFrom')}
                   earlier={t('notifications.quietFromEarlier')}
                   later={t('notifications.quietFromLater')}
-                  minute={prefs.quietStartMin!}
-                  onStep={(dir) => save({ quietStartMin: stepMinute(prefs.quietStartMin!, dir) })}
+                  minute={shown.quietStartMin!}
+                  onStep={(dir) => setQuiet({ start: stepMinute(shown.quietStartMin!, dir), end: shown.quietEndMin })}
                 />
                 <TimeRow
                   label={t('notifications.quietTo')}
                   earlier={t('notifications.quietToEarlier')}
                   later={t('notifications.quietToLater')}
-                  minute={prefs.quietEndMin!}
-                  onStep={(dir) => save({ quietEndMin: stepMinute(prefs.quietEndMin!, dir) })}
+                  minute={shown.quietEndMin!}
+                  onStep={(dir) => setQuiet({ start: shown.quietStartMin, end: stepMinute(shown.quietEndMin!, dir) })}
                 />
               </>
             ) : null}

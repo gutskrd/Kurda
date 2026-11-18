@@ -18,6 +18,7 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { Alert } from 'react-native';
 import { AccessibilityInfo } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -203,6 +204,28 @@ describe('Learn', () => {
     // The day's goal, where it can be changed.
     fireEvent.click(screen.getByRole('button', { name: '12 of 20 XP today' }));
     expect(await screen.findByText('Goal: 20 XP')).toBeTruthy();
+  });
+
+  it('changes the day’s goal at once, sends only the last of quick choices, and puts it back when refused', async () => {
+    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const answers: ((r: unknown) => void)[] = [];
+    client(STREAK, undefined, { 'PUT /me/daily-goal': () => new Promise((resolve) => answers.push(resolve)) } as never);
+    renderWithProviders(<LearnScreen />);
+    fireEvent.click(await screen.findByRole('button', { name: '12 of 20 XP today' }));
+    const goal = (xp: number) => screen.getByRole('radio', { name: `${xp} XP a day` });
+    fireEvent.click(await screen.findByRole('radio', { name: '30 XP a day' }));
+    fireEvent.click(goal(50));
+    expect(goal(50).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByText('Goal: 50 XP')).toBeTruthy();
+    const puts = () => (testAuth.client as unknown as { calls: { method: string; body: unknown }[] }).calls.filter((c) => c.method === 'PUT').map((c) => c.body);
+    expect(puts()).toEqual([{ goal: 30 }]);
+    await act(async () => answers[0]!(ok({ goal: 30, effectiveGoal: 30, earnedXp: 12, progress: 0.4, completed: false })));
+    expect(puts()).toEqual([{ goal: 30 }, { goal: 50 }]);
+    await act(async () => answers[1]!({ ok: false, error: { kind: 'server', status: 500, message: 'no' } }));
+    // Back to what the server holds now: the first choice, which it took.
+    expect(goal(30).getAttribute('aria-checked')).toBe('true');
+    expect(said).toHaveBeenCalledWith('Something went wrong on our end. Please try again shortly.');
+    said.mockRestore();
   });
 
   it('keeps the practice tools one tap away, and says what is due for review', async () => {

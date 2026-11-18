@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert } from 'react-native';
 import { describeError, isMaintenance } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { visibilityOffered, type Visibility } from '../social/format';
@@ -62,30 +63,45 @@ export function useMyAccount(): MyAccount {
   );
   const retry = useCallback(() => setRound((r) => r + 1), []);
 
-  /** Saved at once and shown at once; put back, and said why, if the server says no. */
+  // Each choice is shown at once and saved in the background; a refusal puts it back and says why.
+  const privacy = useIntents<'visibility', Visibility>(
+    async (_key, next) => {
+      const res = await client.put('/me/privacy', { visibility: next });
+      if (res.ok) setVisibility(next);
+      return res;
+    },
+    {
+      failed: (error) => {
+        if (!isMaintenance(error)) Alert.alert(t('settings.privacy.title'), describeError(error, t));
+      },
+    },
+  );
+  const shownVisibility = visibility === null ? null : privacy.shown('visibility', visibility);
   const changeVisibility = (next: Visibility): void => {
-    if (!visibilityOffered(next, minor) || next === visibility) return;
-    const before = visibility;
-    setVisibility(next);
-    void client.put('/me/privacy', { visibility: next }).then((res) => {
-      if (res.ok) return;
-      setVisibility(before);
-      if (!isMaintenance(res.error)) Alert.alert(t('settings.privacy.title'), describeError(res.error, t));
-    });
+    if (visibility === null || !visibilityOffered(next, minor)) return;
+    privacy.want('visibility', next, visibility);
   };
 
   /**
    * Join or leave the weekly leagues. Leaving removes you from this week's table at once and changes nothing else
    * you have earned.
    */
+  const taking = useIntents<'leagues', boolean>(
+    async (_key, on) => {
+      const res = await client.patch('/me', { leaguesEnabled: on });
+      if (res.ok) setLeagues(on);
+      return res;
+    },
+    {
+      failed: (error) => {
+        if (!isMaintenance(error)) Alert.alert(t('settings.leagues.title'), describeError(error, t));
+      },
+    },
+  );
+  const shownLeagues = leagues === null ? null : taking.shown('leagues', leagues);
   const changeLeagues = (on: boolean): void => {
-    setLeagues(on);
-    void client.patch('/me', { leaguesEnabled: on }).then((res) => {
-      if (res.ok) return;
-      setLeagues(!on);
-      if (!isMaintenance(res.error)) Alert.alert(t('settings.leagues.title'), describeError(res.error, t));
-    });
+    if (leagues !== null) taking.want('leagues', on, leagues);
   };
 
-  return { username, visibility, leagues, minor, failed, retry, changeVisibility, changeLeagues };
+  return { username, visibility: shownVisibility, leagues: shownLeagues, minor, failed, retry, changeVisibility, changeLeagues };
 }

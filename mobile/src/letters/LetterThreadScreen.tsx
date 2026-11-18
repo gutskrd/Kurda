@@ -56,7 +56,6 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   const [paperKey, setPaperKey] = useState(0);
   // The page the paper lies on: held still while drawing, with the writing kept above the keyboard.
   const page = usePaperScroll();
-  const widget = useWidgetPin(client);
 
   const load = useCallback(async (): Promise<void> => {
     const res = await client.get<LetterThread>(`/letters/threads/${encodeURIComponent(threadId)}`);
@@ -65,6 +64,8 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
       setError(null);
     } else setError(res.error);
   }, [client, threadId]);
+  // A letter removed meanwhile cannot be pinned: read again, and it shows as removed.
+  const widget = useWidgetPin(client, () => void load());
 
   const shownAt = useRef(0);
   useFocusEffect(
@@ -206,9 +207,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
                       !l.mine && widget.pinned !== undefined
                         ? {
                             pinned: widget.pinned === l.id,
-                            busy: widget.busy === l.id,
-                            // A letter removed meanwhile cannot be pinned: re-read, and it shows as removed.
-                            onToggle: () => void widget.toggle(l.id).then((code) => (code === 'LETTER_REMOVED' ? load() : undefined)),
+                            onToggle: () => widget.toggle(l.id),
                           }
                         : undefined
                     }

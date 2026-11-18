@@ -48,7 +48,6 @@ export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }):
 /** The widget action under a received letter. */
 interface WidgetAction {
   pinned: boolean;
-  busy: boolean;
   onToggle: () => void;
 }
 
@@ -100,12 +99,10 @@ export function LetterSheet({
           {widget ? (
             <PressableScale
               onPress={widget.onToggle}
-              disabled={widget.busy}
               accessibilityRole="button"
-              accessibilityState={{ disabled: widget.busy, busy: widget.busy }}
               accessibilityLabel={`${widget.pinned ? t('letters.pin.remove') : t('letters.pin.show')}, ${t('letters.fromWhom', { name: from })}`}
               testID={`letter-widget-${letter.id}`}
-              style={[styles.action, { flexDirection: dir.row }, widget.busy ? styles.busy : null]}
+              style={[styles.action, { flexDirection: dir.row }]}
             >
               <Icon name="pin" size={14} color={colors.textSecondary} />
               <Text style={[styles.actionText, { color: colors.textSecondary }]}>{widget.pinned ? t('letters.pin.remove') : t('letters.pin.show')}</Text>
@@ -137,7 +134,6 @@ const styles = StyleSheet.create({
   actions: { justifyContent: 'flex-end', flexWrap: 'wrap', columnGap: spacing.md },
   action: { alignItems: 'center', gap: 5, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.xs },
   actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  busy: { opacity: 0.5 },
 
   removedCard: { gap: spacing.sm, borderRadius: radii.lg, borderWidth: 1, paddingHorizontal: spacing.md, paddingTop: spacing.md - 2, paddingBottom: spacing.sm + 2 },
   removedHead: { justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },

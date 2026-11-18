@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WidgetSettings } from '@kurda/shared';
 import { Platform } from 'react-native';
@@ -94,6 +94,25 @@ describe('the letter widget’s page', () => {
     expect(screen.getByRole('switch', { name: 'Show the words' }).getAttribute('aria-checked')).toBe('false');
     // And why it matters, said beside the switch.
     expect(screen.getByText(TRANSLATIONS.en['letterWidget.wordsPrivate'])).toBeTruthy();
+  });
+
+  it('moves the switch before the server answers and sends only the last of quick taps after the first', async () => {
+    const answers: ((r: unknown) => void)[] = [];
+    testAuth.client = fakeClient({
+      'GET /letters/widget/prefs': ok(settings()),
+      'PUT /letters/widget/prefs': (body: unknown) => new Promise((resolve) => answers.push(() => resolve(ok(settings(body as Partial<WidgetSettings>))))),
+    } as never);
+    renderWithProviders(<LetterWidgetScreen onExit={() => undefined} />);
+    const words = () => screen.getByRole('switch', { name: 'Show the words' });
+    await screen.findByRole('switch', { name: 'Show the words' });
+    fireEvent.click(words());
+    fireEvent.click(words());
+    fireEvent.click(words());
+    expect(words().getAttribute('aria-checked')).toBe('false');
+    expect(puts().map((c) => c.body)).toEqual([{ showWords: false }]);
+    await act(async () => answers[0]!(undefined));
+    expect(puts().map((c) => c.body)).toEqual([{ showWords: false }]);
+    expect(words().getAttribute('aria-checked')).toBe('false');
   });
 
   it('puts the switch back and says why when the server would not take the change', async () => {

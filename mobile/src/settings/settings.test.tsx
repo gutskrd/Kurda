@@ -133,6 +133,28 @@ describe('Settings pages', () => {
     expect(within(group).getByRole('radio', { name: 'Friends only' }).getAttribute('aria-checked')).toBe('true');
   });
 
+  it('moves the visibility before the server answers, ends rapid choices on the last, and puts it back when refused', async () => {
+    const answers: ((r: unknown) => void)[] = [];
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const client = fakeClient({ 'GET /me': ME(), 'PUT /me/privacy': () => new Promise((resolve) => answers.push(resolve)) } as never);
+    testAuth.client = client;
+    renderWithProviders(<SettingsPageScreen page="visibility" onExit={() => undefined} />);
+    const group = await screen.findByRole('radiogroup', { name: 'Profile visibility' });
+    await waitFor(() => expect(within(group).getByRole('radio', { name: 'Hevalo members' }).getAttribute('aria-checked')).toBe('true'));
+    const chosen = (name: string) => within(group).getByRole('radio', { name }).getAttribute('aria-checked');
+    fireEvent.click(within(group).getByRole('radio', { name: 'Friends only' }));
+    fireEvent.click(within(group).getByRole('radio', { name: 'Anyone on the web' }));
+    expect(chosen('Anyone on the web')).toBe('true');
+    const sent = () => client.calls.filter((c) => c.method === 'PUT').map((c) => c.body);
+    expect(sent()).toEqual([{ visibility: 'friends' }]);
+    await act(async () => answers[0]!(ok({})));
+    expect(sent()).toEqual([{ visibility: 'friends' }, { visibility: 'everyone' }]);
+    // The last choice is refused: back to what the server holds, which is the first.
+    await act(async () => answers[1]!({ ok: false, error: { kind: 'server', status: 500, message: 'no' } }));
+    expect(chosen('Friends only')).toBe('true');
+    expect(alert).toHaveBeenCalledWith('Profile visibility', expect.any(String));
+  });
+
   it('does not offer the open web to someone under 18, and says why', async () => {
     testAuth.client = fakeClient({ 'GET /me': ME({ minor: true }) });
     renderWithProviders(<SettingsPageScreen page="visibility" onExit={() => undefined} />);

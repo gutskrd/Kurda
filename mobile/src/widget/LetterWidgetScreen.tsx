@@ -4,6 +4,7 @@ import { SvgXml } from 'react-native-svg';
 import { DEFAULT_PAPER, letterBirdSvg, letterPaperSvg, paperColors, type WidgetSettings } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
@@ -59,25 +60,30 @@ export function LetterWidgetScreen({ onExit }: { onExit: () => void }): React.JS
     void readWidgetConfig().then(setConfig);
   }, [fetchSettings]);
 
-  const save = useCallback(
-    async (change: { pinnedLetterId?: string | null; showWords?: boolean }) => {
-      if (load.kind !== 'ready') return;
-      const before = load.settings;
-      // The switch moves under the finger; it goes back if the server says no.
-      setLoad({ kind: 'ready', settings: { ...before, ...change } });
-      setBusy(true);
-      setProblem(null);
-      const res = await saveWidgetPrefs(client, change);
-      setBusy(false);
-      if (res.ok) {
-        setLoad({ kind: 'ready', settings: res.data });
-      } else {
-        setLoad({ kind: 'ready', settings: before });
-        setProblem(describeError(res.error, t));
-      }
+  // Back to the newest letter: the preview needs the server's answer to show which, so the row waits for it.
+  const showNewest = useCallback(async () => {
+    setBusy(true);
+    setProblem(null);
+    const res = await saveWidgetPrefs(client, { pinnedLetterId: null });
+    setBusy(false);
+    if (res.ok) setLoad({ kind: 'ready', settings: res.data });
+    else setProblem(describeError(res.error, t));
+  }, [client, t]);
+
+  // The switch moves under the finger and is sent in the background; it goes back if the server says no.
+  const words = useIntents<'showWords', boolean, WidgetSettings>(
+    async (_key, showWords) => {
+      const res = await saveWidgetPrefs(client, { showWords });
+      if (res.ok) setLoad({ kind: 'ready', settings: res.data });
+      return res;
     },
-    [client, load, t],
+    { failed: (error) => setProblem(describeError(error, t)) },
   );
+  const setWords = (on: boolean): void => {
+    if (load.kind !== 'ready') return;
+    setProblem(null);
+    words.want('showWords', on, load.settings.showWords);
+  };
 
   const takeOffOthers = useCallback(async () => {
     setBusy(true);
@@ -106,13 +112,13 @@ export function LetterWidgetScreen({ onExit }: { onExit: () => void }): React.JS
         />
       ) : (
         <WidgetSettingsBody
-          settings={load.settings}
+          settings={{ ...load.settings, showWords: words.shown('showWords', load.settings.showWords) }}
           config={config}
           busy={busy}
           problem={problem}
           othersGone={othersGone}
-          onNewest={() => void save({ pinnedLetterId: null })}
-          onWords={(showWords) => void save({ showWords })}
+          onNewest={() => void showNewest()}
+          onWords={setWords}
           onTakeOffOthers={() => void takeOffOthers()}
         />
       )}
