@@ -17,17 +17,9 @@ const PATH = '/app/games/impostor';
 const STEPS = ['games.impostor.how.card', 'games.impostor.how.clues', 'games.impostor.how.vote'] as const;
 
 /**
- * The start of Impostor (/app/games/impostor): what the game is in
- * one line, and one thing to press.
- *
- * The page is laid out in the order a person decides: the hand of cards and
- * "Play on this phone" first, since most games begin with people already in
- * a room; under it the three ways to play and the categories, each of which
- * opens the setup with that choice made; then how a round goes, and last the
- * game with friends who are somewhere else. Nothing here is offered where
- * there are no approved word cards, and the page says so plainly then. The
- * categories shown are the learner's own Kurdish where the game is offered
- * in it, as the setup they open is.
+ * Impostor's start page, in decision order: "Play on this phone" first, then the ways to play and categories (each
+ * opening the setup with that choice), how a round goes, and playing with friends elsewhere. Without approved word
+ * cards it says so instead. Categories are in the learner's own Kurdish where offered.
  */
 export function ImpostorStart(): React.JSX.Element {
   const t = useT();

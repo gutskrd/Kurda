@@ -5,9 +5,8 @@ import userEvent from '@testing-library/user-event';
 import { PictureRadio, type PictureOption } from './PictureRadio';
 
 /**
- * The choice among pictures: real radios under the cards and tiles, a long
- * list folded after its first rows without ever hiding the one chosen, and a
- * long name marked so a tile can set it smaller.
+ * Picture choices: real radios under the cards and tiles, long lists folded without hiding the chosen one, and long
+ * names marked so a tile can shrink them.
  */
 const options: PictureOption<string>[] = Array.from({ length: 15 }, (_, i) => ({
   value: `c${i}`,

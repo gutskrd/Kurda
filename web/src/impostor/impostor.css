@@ -1,10 +1,6 @@
 /*
- * Impostor's staging (impostor/Board.tsx): a table with the players
- * seated in a row along each side, the speaker in a pool of light, the
- * viewer's card on the tabletop, the clues round by round, and at the reveal
- * every seat's card turning over. Flat planes from the palette: the light is
- * a disc of the gold's soft tint, never a gradient. Under Reduce Motion the
- * light does not pulse and the cards are shown face up at once.
+ * Impostor's staging (impostor/Board.tsx): players along each side of a table, the speaker lit by a flat disc of soft
+ * gold, the viewer's card, the clues, and cards turning at the reveal. Under Reduce Motion nothing pulses or turns.
  */
 .imp-page {
   --imp-felt: color-mix(in srgb, var(--gold) 9%, var(--surface-solid));

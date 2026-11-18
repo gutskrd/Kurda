@@ -7,13 +7,8 @@ import { forgetPartyOffers } from '../party/offer';
 import { Impostor } from './Impostor';
 
 /**
- * Xapînok on one phone, from the way in to the score: the setup and
- * what it asks the server for (never a name), the phone going round with each
- * card shown only while it is pressed, the clues in turn with their clock,
- * the two kinds of vote, the caught impostor's guess, the reveal, and the
- * next game from the same cards. Then the taps that can be taken back for a
- * moment, the second vote of a round with two impostors, the evening keeping
- * the way the room chose, and the learner's own Kurdish first.
+ * Xapînok on one phone from setup to score, then undoable taps, the second vote with two impostors, the evening
+ * keeping the chosen way, and the learner's own Kurdish first.
  */
 
 // stand-in Kurdish for the fixtures, never shown to a learner
@@ -298,11 +293,7 @@ async function toVote(chips: Chip[]): Promise<{ impostor: string; others: string
   return { impostor, others: NAMES.filter((n) => n !== impostor) };
 }
 
-/**
- * Clocks a test can move on, that still run by themselves a millisecond at a
- * time (so the taps between are as quick as on real clocks): the moment to
- * take a tap back, or a vote's clock, can be let pass at once.
- */
+/** Fake clocks that also advance by themselves, so the undo window or a vote clock can be skipped at once. */
 function quickClock(): void {
   vi.useFakeTimers({ shouldAdvanceTime: true, advanceTimeDelta: 1, toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
 }

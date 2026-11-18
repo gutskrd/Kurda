@@ -3,14 +3,8 @@ import type { CouchCategory, CouchOffer, GameDialect, GameDifficulty } from '@ku
 import { useAuth } from '../auth/AuthProvider';
 
 /**
- * The categories a game of Impostor can draw its word from: per
- * variety and difficulty, those with enough approved cards for a word and the
- * guess’s other options (`GET /games/impostor/couch`, the list the game on one
- * phone chooses from too). A host picks one of these or none; the server
- * checks the choice again when the lobby is made.
- *
- * Read once per variety and page load: it changes when an editor publishes
- * cards, not while somebody is choosing a game.
+ * Impostor's playable categories per variety and difficulty (`GET /games/impostor/couch`, also used on one phone); the
+ * server checks the host's choice again. Fetched once per variety and page load, since only publishing changes it.
  */
 const cached = new Map<GameDialect, Promise<CouchOffer | null>>();
 
