@@ -1,10 +1,7 @@
 /**
- * Every letter lands at the window once, against real Postgres: a letter
- * opened first in the correspondence still lands, a landed one waits on the
- * sill until it is read, every pen pal's bird is listed (not only the newest),
- * the bridge for app builds from before landings, where your own bird is, a
- * bird home by itself, the ping that tells open windows, and the notification
- * in the reader's own language under letters' own setting.
+ * Every letter lands at the window once, against real Postgres: a letter opened first in the correspondence still
+ * lands, a landed one waits until read, every pen pal's bird is listed, older builds are bridged, a bird returns by
+ * itself, open windows are pinged, and notifications come in the reader's language under the letters setting.
  */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -66,7 +63,7 @@ describe.skipIf(!DATABASE_URL)('letters landing at the window (integration)', ()
     pool = new pg.Pool({ connectionString: DATABASE_URL });
   });
 
-  // every scenario starts with no bird out anywhere and none at a window, so the bird called is the one the test sent
+  // Every scenario starts with no bird out or visiting, so the bird called is the one the test sent.
   beforeEach(async () => {
     await pool.query(`UPDATE letter_visits SET ended_at = now(), outcome = 'closed' WHERE ended_at IS NULL`);
     await pool.query(`UPDATE letters SET status = 'recalled', landed_at = COALESCE(landed_at, now()) WHERE status = 'flying'`);
@@ -152,7 +149,7 @@ describe.skipIf(!DATABASE_URL)('letters landing at the window (integration)', ()
     const again = await home(a);
     expect(again).toMatchObject({ flight: 'sky', out: { visiting: false } });
     expect(again.landings).toEqual([expect.objectContaining({ threadId: met.threadId, how: 'home', landed: false })]);
-    // a build from before landings hides it while the bird is out, as it always did, and does not count it landed
+    // A build from before landings hides it while the bird is out and does not count it landed.
     expect((await oldHome(a)).homecoming).toMatchObject({ threadId: met.threadId });
     expect((await home(a)).landings![0]!.landed).toBe(false);
 
@@ -239,7 +236,7 @@ describe.skipIf(!DATABASE_URL)('letters landing at the window (integration)', ()
     const told = await pool.query(`SELECT category, title, body, data FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, [a.id]);
     expect(told.rows[0]).toMatchObject({ category: 'letters', title: 'Balindeyê te vegeriya malê' });
 
-    // a push quiet hours held back goes in the morning only while its letter still waits to land or be read
+    // A push held by quiet hours goes in the morning only while its letter still waits to land or be read.
     const stillNews = letterPushStillNews(pool);
     const held = { category: 'letters' as const, title: 't', body: 'b', data: told.rows[0].data as Record<string, string> };
     expect(await stillNews(a.id, held)).toBe(true);
@@ -263,7 +260,7 @@ describe.skipIf(!DATABASE_URL)('letters landing at the window (integration)', ()
     const met = await meet(a, b);
     const page = (await open(a, met.threadId)).json() as LetterThread;
     expect(page.letters.filter((l) => !l.mine).every((l) => l.readAt !== null)).toBe(true);
-    // a letter that comes after the page was read is still unread
+    // A letter arriving after the page was read is still unread.
     await write(a, met.threadId, 'Silav dîsa!');
     const unread = await pool.query(`SELECT read_at FROM letters WHERE thread_id = $1 AND recipient_id = $2 ORDER BY created_at DESC LIMIT 1`, [met.threadId, b.id]);
     expect(unread.rows[0]!.read_at).toBeNull();
@@ -277,7 +274,7 @@ describe.skipIf(!DATABASE_URL)('letters landing at the window (integration)', ()
     await restoreContent(pool, { type: 'letter', id: bird.rows[0]!.id, previousStatus: 'flying' });
     expect(await home(c)).toMatchObject({ out: null, flight: 'home', returned: null });
 
-    // a bird that came home by itself weeks ago, never shown home, then taken down and given back: old news too
+    // A bird that came home by itself weeks ago, never shown, then taken down and restored: old news too.
     await out(c, 'Silav! Kes gazî min nake.');
     const old = await pool.query<{ id: string }>(`SELECT id FROM letters WHERE sender_id = $1 AND status = 'flying'`, [c.id]);
     await pool.query(`UPDATE letters SET status = 'removed', recalled_at = now() - interval '20 days', recalled_why = 'unanswered' WHERE id = $1`, [

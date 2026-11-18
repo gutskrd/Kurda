@@ -44,76 +44,41 @@ import type { WalletService } from '../wallet/service.js';
 import { letterNoticeText, type LetterNoticeHow } from './notice.js';
 
 /**
- * Letters by bird (shared/src/letters.ts says what they are): sending a bird
- * out to somebody new, the meeting of two birds, pen pals writing in turn,
- * saying goodbye, and the page that shows it all.
+ * Letters by bird (shared/src/letters.ts). A bird sent out waits with its letter until somebody calls it to their
+ * window (`call`). Answered (`answer`), it carries the answer home and the two are pen pals; sent on (`sendOn`) or
+ * left a day, it flies back out and never returns to that window. Pen pals then write in turn, each letter carried by
+ * its writer's bird, which waits at the other's window until read.
  *
- * A bird sent out waits over the country, with its letter, until somebody
- * calls it to their window (`call`). It waits there while its letter is read;
- * answered (`answer`), it carries the answer home and the two are pen pals;
- * sent on (`sendOn`), or left unanswered a day, it flies back out for
- * somebody else, and never comes to that window again. After that each
- * letter is carried by its writer's own bird, which waits at the other's
- * window until the letter is read.
+ * Every letter lands at the window once (`home().landings`) and waits on the sill until read. Landing and reading are
+ * stored apart (`landed_at`, `read_at`) because notifications, the widget and the pen pal list open a correspondence
+ * directly. Every change pings both people's open windows with an empty `LETTERS_CHANGED`, and they reload.
  *
- * Every letter lands at the window once (`home().landings`): your own bird
- * home with an answer, or a pen pal's with their next letter, flies in the
- * first time the window is open after it came, however you heard of it, and
- * waits on the sill until the letter is read. Landing and reading are kept
- * apart (`landed_at`, `read_at`), because a notification, the widget and the
- * pen pal list all open the correspondence straight away, and a bird keyed
- * on reading was used up before the window ever showed it. The window says
- * it showed one with `landed`. Every change is told to the open windows of
- * both people as a ping that carries nothing (`LETTERS_CHANGED`), and they
- * read the page again.
+ * No concurrent actions lose a letter: a call claims its bird in one step; an answer takes both people's locks, so
+ * crossing answers take turns and the second joins the correspondence the first opened; a recall waits for a call in
+ * flight; and a resend after a lost reply returns the letter already sent (by `Idempotency-Key`, or the same words
+ * within minutes). A bird whose writer can no longer be written back to (muted, suspended, closed, or now in another
+ * age band) is not called and leaves any window; it comes home by itself after `BIRD_OUT_DAYS`, on a band change, or
+ * when its writer's pen pal places fill, and says so once (`returned`). A bird at someone's window holds one of its
+ * writer's places, so its answer always has room.
  *
- * Nothing two people do at the same moment loses a letter. A call claims its
- * bird in one step, so two windows never get the same bird. An answer takes
- * both people's locks, so two birds answered at each other's windows at once
- * take turns, and the second answer goes into the correspondence the first
- * opened. Calling a bird home waits for a call in flight. A letter sent again
- * after its reply was lost on the way comes back as the letter already sent
- * (its `Idempotency-Key`, or the same words within a few minutes).
+ * Safety is built in: nobody chooses whom they write to (a call brings the longest-waiting bird in the same age band,
+ * never from someone written to before or across a block, and only a few calls a day); bands are checked against
+ * both birth months at the meeting and every letter after; letters go one at a time in turn, and a goodbye ends it for
+ * both; letters and their notes hold no link, address, number or handle (`letterProblem`) and filtered words are
+ * masked; a first letter to a stranger carries no drawing; and a chat mute stops letters too, which can be reported
+ * like messages.
  *
- * A bird whose writer cannot be written back to now (muted, suspended,
- * closed, or in another age band since it flew) is not called, and leaves
- * any window it is at; one at the window of somebody who cannot answer it
- * leaves too. A bird comes home by itself after `BIRD_OUT_DAYS`, when its
- * writer moves into another band, or when their pen pal places fill up
- * meanwhile, and says so at the window once (`returned`). A bird of yours at
- * somebody's window holds one of your pen pal places, so the answer it
- * carries home always has room.
- *
- * Safety is the shape of the thing rather than a layer over it:
- *   - nobody chooses whom they write to; a call brings the bird that has
- *     waited longest, in the same age band, and never one from somebody they
- *     have written to before or with a block between them, and only a few
- *     birds a day can be called, so nobody can leaf through everybody's letters;
- *   - the band is checked against both birth months at the meeting and at
- *     every letter after it, so a pair whose bands part can write no more;
- *   - a letter is one at a time: you write, and wait for theirs. Nobody can be
- *     sent a stream of letters, and saying goodbye ends it for both;
- *   - a letter holds no link, email address, phone number or handle
- *     (`letterProblem`), and the words the rest of the app filters are masked;
- *     the notes stuck on its paper are held to the same rules, and the first
- *     letter to a stranger carries no drawing (shared/src/letter-paper.ts);
- *   - a person muted from chat by moderation cannot write letters either, and
- *     a letter can be reported like a message, with the letters around it kept.
- *
- * Each member chooses their bird once, for free; another after that is paid
- * for in Zêr (`chooseBird`). Until they choose, their bird comes from their id.
+ * Each member chooses their bird once for free, and after that for Zêr (`chooseBird`); until then it comes from
+ * their id.
  */
 
 /** The ledger's name for paying for a new bird. */
 export const LETTER_BIRD_REASON = 'letter_bird';
 
-/**
- * How long a letter sent again with the same words counts as the one already
- * sent: long enough for a lost reply, short enough not to swallow a real second letter.
- */
+/** How long a resend with the same words counts as the letter already sent: enough for a lost reply, not a real second letter. */
 const AGAIN_MINUTES = 10;
 
-/** What the service needs from the rest of the app: the word filter and the mute, a way to tell somebody a letter has come, and the open windows. */
+/** What the service needs from the app: the word filter and mute, a way to notify about a letter, and the open windows. */
 export interface LetterDeps {
   moderation?: {
     filter(text: string): { masked: string; flagged: boolean };
@@ -147,26 +112,22 @@ export function letterBandSql(alias: string): string {
 }
 
 /**
- * SQL: the account behind `alias` is not banned now. A suspension that has
- * run out leaves `banned_at` set until a sanction changes again, so the end
- * it was given is what counts, as at sign-in (plugins/auth.ts).
+ * SQL: the account behind `alias` is not banned now. An expired suspension leaves `banned_at` set until the next
+ * sanction change, so its end is what counts, as at sign-in (plugins/auth.ts).
  */
 export const NOT_BANNED_SQL = (alias: string): string => `(${alias}.banned_at IS NULL OR (${alias}.banned_until IS NOT NULL AND ${alias}.banned_until <= now()))`;
 
 /**
- * SQL: the person behind `alias` is muted from writing to people now: by the
- * column moderation keeps, by a chat mute in force, or by the word filter's
- * own escalation (moderation/service.ts). Never NULL.
+ * SQL: the person behind `alias` is muted from writing to people now, by moderation's column, a chat mute in force or
+ * the word filter's escalation (moderation/service.ts). Never NULL.
  */
 export const CHAT_MUTED_SQL = (alias: string): string => `(COALESCE(${alias}.muted_until > now(), false)
     OR EXISTS (SELECT 1 FROM sanctions s WHERE s.user_id = ${alias}.id AND s.kind = 'chat_mute' AND ${IN_FORCE_SQL})
     OR EXISTS (SELECT 1 FROM chat_offenses co WHERE co.user_id = ${alias}.id AND (co.perm_muted OR co.muted_until > now())))`;
 
 /**
- * SQL: the person behind `alias` can write a letter now, and be written back
- * to: an open account that is not being closed (signing in again within the
- * grace period stops that, and opens their letters again), not banned, not a
- * guest, not muted.
+ * SQL: the person behind `alias` can write and be written back to now: an open account not being closed (signing in
+ * within the grace period reopens their letters), not banned, not a guest, not muted.
  */
 const CAN_WRITE_SQL = (alias: string): string =>
   `(${alias}.deleted_at IS NULL AND ${alias}.deletion_requested_at IS NULL AND ${NOT_BANNED_SQL(alias)} AND NOT ${alias}.guest AND NOT ${CHAT_MUTED_SQL(alias)})`;
@@ -194,7 +155,7 @@ const LETTER_COLUMNS = (alias = ''): string => ['id', 'sender_id', 'body', 'deco
 const toItem = (row: LetterRow, me: string): LetterItem => ({
   id: row.id,
   mine: row.sender_id === me,
-  // a letter moderation took down says so in its place, in the app's own words, its drawing and notes gone with its words
+  // A letter moderation took down shows a notice in the app's words, its drawing and notes gone too.
   body: row.status === 'removed' ? '' : row.body,
   decor: row.status === 'removed' ? null : row.decor,
   removed: row.status === 'removed',
@@ -210,11 +171,7 @@ interface Written {
   paper: LetterPaper | null;
 }
 
-/**
- * The key a letter is kept under, so the same request sent again finds it:
- * the app's own key, behind what kind of letter it was, so a key can never
- * bring back a letter of another kind. None when the app sent none.
- */
+/** The key a letter is stored under: the app's key prefixed by the letter's kind, so it never matches another kind. */
 const keyed = (kind: 'out' | 'answer' | 'reply', key?: string | null): string | null => (key ? `${kind}:${key}` : null);
 
 /** Somebody as the letters show them: the bird they chose, or the one their id gives them until they choose. */
@@ -224,12 +181,9 @@ export const personOf = (id: string, name: string, bird: number | null): LetterP
 export const BIRD_SQL = (alias: string): string => `(SELECT lb.bird FROM letter_birds lb WHERE lb.user_id = ${alias}.id)`;
 
 /**
- * SQL: the birds out there that the person `$1`, in the band `$2`, could call
- * — out less than `BIRD_OUT_DAYS`, from somebody in the band now as when it
- * was sent, who can be written back to (an open account, not suspended, not
- * muted), no block either way, never a correspondence between the two, room
- * for another pen pal, at nobody's window now and never at this one before.
- * `l` is the letter and `u` its writer.
+ * SQL: the birds person `$1` in band `$2` could call: out under `BIRD_OUT_DAYS`, from a writer in the band now and
+ * when sent, who can be written back to, no block either way, no earlier correspondence between them, room for a pen
+ * pal, at nobody's window and never at this one before. `l` is the letter and `u` its writer.
  */
 const CALLABLE_SQL = `FROM letters l JOIN users u ON u.id = l.sender_id
    WHERE l.status = 'flying' AND l.age_band = $2 AND l.sender_id <> $1::uuid
@@ -250,11 +204,9 @@ const visitorItem = (row: LetterRow & { called_at: Date; name: string; bird: num
 });
 
 /**
- * SQL: it is `me`'s turn to write in the correspondence `thread` — the other
- * has written, and nothing of mine was delivered after their last letter.
- * The two letters that cross when two birds meet are delivered in the same
- * moment, so after a meeting either of the two may answer first; from then on
- * it goes a letter each in turn. `thread` and `me` are SQL literals, never input.
+ * SQL: it is `me`'s turn in correspondence `thread`: the other has written and nothing of mine was delivered after
+ * their last letter. The two letters crossing at a meeting are delivered together, so either may answer first; then
+ * it alternates. `thread` and `me` are SQL literals, never input.
  */
 export const YOUR_TURN_SQL = (thread: string, me: string): string => `(
   EXISTS (SELECT 1 FROM letters written WHERE written.thread_id = ${thread} AND written.sender_id <> ${me} AND written.status IN ('delivered','removed'))
@@ -265,7 +217,7 @@ export const YOUR_TURN_SQL = (thread: string, me: string): string => `(
 /** The name a pen pal is shown by: their display name, or their username. */
 export const NAME_SQL = (alias: string): string => `COALESCE(NULLIF(btrim(${alias}.display_name), ''), ${alias}.username)`;
 
-/** A refusal decided inside a transaction whose changes still have to stand, such as a visit closed because it cannot go on: thrown after COMMIT. */
+/** A refusal decided inside a transaction whose changes must still stand (such as a closed visit), thrown after COMMIT. */
 type Refusal = AppError | null;
 
 export class LetterService {
@@ -274,7 +226,7 @@ export class LetterService {
     private readonly deps: LetterDeps = {},
   ) {}
 
-  /** Who is writing: their birth month and name. A deleted, banned or guest account writes nothing; a suspension that has run out writes again. */
+  /** The writer's birth month and name. Deleted, banned or guest accounts write nothing; an expired suspension writes again. */
   private async me(db: Pick<pg.Pool, 'query'>, userId: string): Promise<MeRow> {
     const r = await db.query<MeRow>(
       `SELECT u.id, u.birth_year, u.birth_month, ${NAME_SQL('u')} AS name
@@ -292,11 +244,7 @@ export class LetterService {
     return band;
   }
 
-  /**
-   * The letters locks of these people, always taken in the same order, so two
-   * transactions that each need two of them wait for each other instead of
-   * deadlocking. One person's own sends and calls take only their own.
-   */
+  /** Takes these people's letters locks in a fixed order so two-person transactions never deadlock; solo actions lock only their own. */
   private async lockLetters(db: Pick<pg.Pool, 'query'>, people: string[]): Promise<void> {
     for (const id of [...new Set(people)].sort()) {
       await db.query(`SELECT pg_advisory_xact_lock(hashtext('letters:' || $1::text))`, [id]);
@@ -304,10 +252,8 @@ export class LetterService {
   }
 
   /**
-   * Tells the open windows of these people that something changed, after the
-   * change is committed. The ping carries nothing, so it needs no block check:
-   * what the window reads next shows nothing across a block. A ping that does
-   * not go only means the window catches up the next time it is opened.
+   * Pings these people's open windows after a commit. The ping carries nothing, so no block check is needed; a lost
+   * ping only means the window catches up next time.
    */
   private ping(...people: Array<string | null | undefined>): void {
     const realtime = this.deps.realtime;
@@ -318,13 +264,10 @@ export class LetterService {
   }
 
   /**
-   * A letter as it will be sent: control characters out, Kurdish letters in
-   * their one spelling, refused for a link or a way to be reached, and with
-   * the filtered words masked. Its decor is checked as the apps check it
-   * (`checkLetterDecor`; `strokes: false` for a first letter to a stranger,
-   * which carries no drawing), its notes held to the same rules as the words
-   * and masked by the same filter, and the words and notes read together, so
-   * a number cut between them is still found. A muted writer is refused here too.
+   * A letter as it will be sent: control characters removed, Kurdish letters normalized, refused for a link or contact
+   * detail, filtered words masked. Decor is checked as the apps check it (`checkLetterDecor`, `strokes: false` for a
+   * first letter), and notes follow the words' rules; words and notes are read together so a number split between them
+   * is still found. A muted writer is refused here too.
    */
   private async cleaned(me: string, raw: string, rawDecor: unknown, opts: { strokes: boolean }): Promise<Written> {
     const text = letterText(stripControlChars(raw));
@@ -375,12 +318,9 @@ export class LetterService {
   }
 
   /**
-   * Letters sent in the last day, refused past the day's number. A bird called
-   * home took its letter back, so it was not sent and does not count. A bird
-   * at this person's window holds the place of its answer, which the call made
-   * sure there was room for: other letters cannot use it up and leave the bird
-   * waiting on the sill for an answer that could not go. The answer itself
-   * (`answering`) takes the place it held.
+   * Letters sent in the last day, refused past the daily number. A recalled letter was not sent and does not count. A
+   * bird at this person's window holds a place for its answer, so other letters cannot use it up; the answer itself
+   * (`answering`) takes that place.
    */
   private async withinDay(db: Pick<pg.Pool, 'query'>, me: string, opts: { answering?: boolean } = {}): Promise<void> {
     const r = await db.query<{ n: number }>(
@@ -393,13 +333,10 @@ export class LetterService {
   }
 
   /**
-   * A bird of this person's that nobody can call any more comes home with its
-   * letter: out longer than `BIRD_OUT_DAYS`, its writer in another age band
-   * since it flew, or their pen pal places full meanwhile. One at somebody's
-   * window stays until that visit is over. It says why (`recalled_why`), and
-   * waits, not yet landed, for the window to show it home. Run inside a
-   * transaction: its bird row is locked first, which waits for a call in
-   * flight to commit, so the visit that call makes is seen and the bird stays.
+   * Brings home a bird of this person's that nobody can call any more: out past `BIRD_OUT_DAYS`, its writer in another
+   * band since, or their pen pal places full. One at a window stays until that visit ends. It records why
+   * (`recalled_why`) and waits to be shown home. Its bird row is locked first, waiting for a call in flight to commit,
+   * so that call's visit is seen and the bird stays.
    */
   private async comeHome(db: Pick<pg.Pool, 'query'>, me: string): Promise<void> {
     const flying = await db.query<{ id: string }>(`SELECT id FROM letters WHERE sender_id = $1 AND status = 'flying' FOR UPDATE`, [me]);
@@ -443,10 +380,8 @@ export class LetterService {
   }
 
   /**
-   * Pen pal places somebody has taken: their open correspondences, and one
-   * more while their own bird is at somebody's window, since its answer will
-   * open a correspondence when it comes. Not for the window of `with`, whose
-   * correspondence that answer would be.
+   * Pen pal places this person has taken: open correspondences, plus one while their bird is at someone's window,
+   * since its answer will open one. Not counted for the window of `withWhom`, whose correspondence it would be.
    */
   private async placesTaken(db: Pick<pg.Pool, 'query'>, me: string, withWhom?: string): Promise<number> {
     const visiting = await db.query(
@@ -458,14 +393,9 @@ export class LetterService {
   }
 
   /**
-   * Visits that are over without anybody saying so, at every window at once
-   * (the visits still going are few, and found by their index): a bird waits
-   * on a sill for its answer `VISIT_HOURS`, then flies back out for somebody
-   * else; and a visit neither side can go on with any more closes now, so the
-   * bird is back out for somebody else, or comes home, instead of sitting on
-   * a sill for the rest of the day — its writer, or the person whose window
-   * it is at, closed their account, was suspended or muted, or moved into
-   * another age band than the letter's.
+   * Ends overdue visits at every window at once (few are running, found by index): a bird waits `VISIT_HOURS` for its
+   * answer, then flies back out; and a visit neither side can continue (an account closed, suspended or muted, or a band
+   * change) closes now, so the bird goes back out or home instead of sitting on a sill.
    */
   private async flyOn(db: Pick<pg.Pool, 'query'>): Promise<void> {
     await db.query(
@@ -482,11 +412,7 @@ export class LetterService {
     );
   }
 
-  /**
-   * Visits to or from this person that can no longer go on: the letter was
-   * taken down or called home, or a block now stands between the two. Their
-   * bird leaves the window, and the visit is closed.
-   */
+  /** Closes visits to or from this person that cannot go on (letter removed or recalled, or a block), and the bird leaves. */
   private async settleVisits(db: Pick<pg.Pool, 'query'>, me: string): Promise<void> {
     await db.query(
       `UPDATE letter_visits v SET ended_at = now(), outcome = 'closed'
@@ -497,11 +423,7 @@ export class LetterService {
     );
   }
 
-  /**
-   * Birds called today, counted against `BIRD_CALLS_PER_DAY`. A bird its
-   * writer called home within a minute of its coming is not counted: the
-   * caller hardly saw it, and could do nothing about it.
-   */
+  /** Birds called today against `BIRD_CALLS_PER_DAY`; one its writer recalled within a minute of arriving does not count. */
   private async callsToday(db: Pick<pg.Pool, 'query'>, me: string): Promise<number> {
     const r = await db.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM letter_visits
@@ -524,7 +446,7 @@ export class LetterService {
     return row ? visitorItem(row, me) : null;
   }
 
-  /** Runs `fn` on one snapshot of the database, read only, so everything it reads agrees with everything else it reads. */
+  /** Runs `fn` on one read-only snapshot, so everything it reads agrees. */
   private async snapshot<T>(fn: (db: pg.PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
     try {
@@ -541,20 +463,11 @@ export class LetterService {
   }
 
   /**
-   * The letters page: your bird and where it is, a bird at your window, the
-   * birds out there, every letter still to land at your window, and your pen
-   * pals, the one most recently written to first.
-   *
-   * What time and other people changed is settled first; then everything is
-   * read in one snapshot, so the bird out, the bird at the window and the
-   * letters to land always agree (a homecoming never comes with its bird
-   * still out).
-   *
-   * `legacyWindow` is for app builds from before `landings`, which act out
-   * only `homecoming` or `arrival`, on their first look: the one letter such
-   * a build shows is counted as landed here, the way it would have posted it.
-   * Without that, every letter they read in the correspondence first would
-   * land again on each visit. Remove it once no build that old is supported.
+   * The letters page: your bird and where it is, a bird at your window, the birds out, every letter still to land, and
+   * your pen pals, most recently written first. Changes due to time and others are settled first, then everything is
+   * read in one snapshot so it agrees. `legacyWindow` serves builds from before `landings`, which show only
+   * `homecoming` or `arrival`: the one letter they show is counted as landed here, or every letter read in the
+   * correspondence would land again on each visit. Remove it once no such build is supported.
    */
   async home(userId: string, opts: { legacyWindow?: boolean } = {}): Promise<LettersHome> {
     const me = await this.me(this.pool, userId);
@@ -594,8 +507,8 @@ export class LetterService {
             [userId, band],
           )
         : null;
-      // every letter at this window not yet landed or not yet read, oldest first: your own bird home with the answer a
-      // visit carried (`home`), or a pen pal's bird with their next letter. One read and then answered is done with.
+      // Every letter at this window not yet landed or read, oldest first: your bird home with an answer (`home`), or a pen
+      // pal's bird with their next letter. Read and answered, it is done.
       const landings = await db.query<{
         id: string;
         thread_id: string;
@@ -686,8 +599,8 @@ export class LetterService {
     const arrival = newest('window');
 
     if (opts.legacyWindow) {
-      // what such a build's first look acts out: its own bird home with an answer while it is not out again, otherwise a
-      // pen pal's bird when the sill is free; and its bird at home, which is how it shows one that came back by itself
+      // What an older build's first look shows: its own bird home with an answer while it is not out again, else a pen pal's
+      // bird when the sill is free; and its bird at home, showing one that came back by itself.
       const back = homecoming && !out ? homecoming : null;
       const pal = !seen.visitor && !back ? arrival : null;
       const shown = [back?.letterId ?? pal?.letterId, returned?.letterId].filter((id): id is string => !!id);
@@ -717,10 +630,8 @@ export class LetterService {
   }
 
   /**
-   * The window saying it showed these letters land: each comes in on its bird
-   * once, and after that waits on the sill, without a flight, until it is
-   * read. A letter to this person still to land, or their own bird home by
-   * itself; any other id is passed over, so asking twice changes nothing.
+   * The window reports it showed these letters land; each flies in once, then waits on the sill until read. Only
+   * letters to this person still to land, or their own bird home by itself, count, so repeats change nothing.
    */
   async landed(userId: string, letterIds: string[]): Promise<void> {
     const r = await this.pool.query(
@@ -733,15 +644,10 @@ export class LetterService {
   }
 
   /**
-   * Choose your bird. The first choice is free; another after it costs
-   * `LETTER_BIRD_PRICE` Zêr, paid in the same transaction that changes it, so
-   * the bird and the payment go together or not at all. Each change is paid
-   * under a key of its own (the how-manyth change it is), so a request sent
-   * twice pays once: the second finds the bird already chosen. 404
-   * LETTER_BIRD_NOT_FOUND for no such bird, 409 LETTER_BIRD_SAME for the bird
-   * already yours, 402 INSUFFICIENT_FUNDS without the Zêr for a new one, and
-   * 409 BIRD_OUT while your bird is out: the bird that flew is the one that
-   * comes home, and the one strangers see on their sill.
+   * Chooses your bird: the first choice is free, later ones cost `LETTER_BIRD_PRICE` Zêr in the same transaction. Each
+   * change pays under its own key (its change number), so a repeated request pays once. 404 LETTER_BIRD_NOT_FOUND, 409
+   * LETTER_BIRD_SAME, 402 INSUFFICIENT_FUNDS, and 409 BIRD_OUT while your bird is out, since the bird that flew must be
+   * the one that returns.
    */
   async chooseBird(userId: string, bird: number): Promise<LettersHome> {
     if (!isLetterBird(bird)) throw new AppError('LETTER_BIRD_NOT_FOUND', 404, 'no such bird');
@@ -774,15 +680,12 @@ export class LetterService {
   }
 
   /**
-   * Send your bird out with a letter to somebody new. It waits out there,
-   * where anybody in your band can see it and call it, until somebody does or
-   * it comes home after `BIRD_OUT_DAYS`. Refused while a bird of your own is
-   * out, and while another's is at your window: that one is answered or sent
-   * on first. The same letter sent again, under the same key or with the same
-   * words while its bird is out, is the bird already out.
+   * Sends your bird out with a letter to somebody new; anyone in your band can call it until someone does or it returns
+   * after `BIRD_OUT_DAYS`. Refused while your bird is out or another is at your window. A resend under the same key, or
+   * with the same words while the bird is out, returns the bird already out.
    */
   async sendOut(userId: string, raw: string, rawDecor?: unknown, opts: { key?: string | null } = {}): Promise<BirdOutResult> {
-    // a first letter to a stranger may choose its paper and carry notes, but nothing drawn: drawings travel between pen pals
+    // A first letter to a stranger may choose paper and carry notes but no drawing; drawings are for pen pals.
     const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: false });
     const key = keyed('out', opts.key);
     const { result, fresh } = await inTransaction(this.pool, async (client): Promise<{ result: BirdOutResult; fresh: boolean }> => {
@@ -808,7 +711,7 @@ export class LetterService {
         }
         throw new AppError('BIRD_OUT', 409, 'your bird is already out');
       }
-      // a bird at the window is said first: it holds a place among the day's letters, which would otherwise be said instead
+      // A bird at the window is reported first, since it holds a place among the day's letters.
       if (await this.visitorOf(client, userId)) throw new AppError('VISITOR_HERE', 409, 'a bird is at your window: answer it or send it on first');
       await this.withinDay(client, userId);
       if ((await this.openThreads(client, userId)) >= PEN_PALS_MAX) throw new AppError('PEN_PALS_FULL', 409, 'you have as many pen pals as there is room for');
@@ -816,7 +719,7 @@ export class LetterService {
         `INSERT INTO letters (sender_id, body, decor, age_band, idempotency_key) VALUES ($1, $2, $3::jsonb, $4, $5) RETURNING created_at`,
         [userId, text, decor ? JSON.stringify(decor) : null, band, key],
       );
-      // a bird that came home by itself and was never shown so is going out again: its coming home is no news now
+      // A bird that came home by itself and was never shown is going out again, so its return is no longer news.
       await client.query(`UPDATE letters SET landed_at = now() WHERE sender_id = $1 AND status = 'recalled' AND landed_at IS NULL`, [userId]);
       await this.rememberPaper(client, userId, paper);
       return { result: { kind: 'waiting', since: out.rows[0]!.created_at.toISOString() }, fresh: true };
@@ -826,17 +729,11 @@ export class LetterService {
   }
 
   /**
-   * Call a bird to your window: the one out there that has waited longest,
-   * from somebody in your band you have never written to and have no block
-   * with, who has room for a pen pal, and that has not been to your window
-   * before. It comes with its letter, and waits for its answer. Refused while
-   * another bird is visiting, once the day's calls are made, once the day's
-   * letters are written (its answer could not go), or with no room for
-   * another pen pal; 404 NO_BIRDS_OUT when no bird is out for you.
-   *
-   * The bird is claimed in one step: when another window took it in the same
-   * moment, the next statement sees that visit and the call goes on to the
-   * next bird, instead of failing.
+   * Calls the longest-waiting bird to your window: from someone in your band you have never written to and have no block
+   * with, with room for a pen pal, never at your window before. It brings its letter and waits for an answer. Refused
+   * while another bird visits, once the day's calls or letters are used, or with no room for a pen pal; 404
+   * NO_BIRDS_OUT when none is out for you. The bird is claimed in one step, so if another window took it at the same
+   * moment the call moves on to the next bird.
    */
   async call(userId: string): Promise<LetterVisitor> {
     const { visitor, writer } = await inTransaction(this.pool, async (client): Promise<{ visitor: LetterVisitor; writer: string }> => {
@@ -884,20 +781,11 @@ export class LetterService {
   }
 
   /**
-   * Answer the bird at your window: your letter goes home with it, theirs is
-   * delivered to you, and the two of you are pen pals. Their bird is told it
-   * came home with an answer. 404 NO_VISITOR when no bird is waiting (it has
-   * flown on, or been called home); 409 BIRD_GONE when it can no longer take
-   * an answer (their pen pals have filled up meanwhile), and then it flies on.
-   *
-   * Two birds can cross: each of you sent one, and each called the other's.
-   * When they answered yours first, the correspondence is already open, and
-   * this answer is your turn in it: their letter on your sill and your answer
-   * go into it, and their bird carries your answer home. Both people's locks
-   * are held, so two such answers at the same moment take turns.
-   *
-   * The same answer sent again (the same key, or the same words just after
-   * the visit was answered) is the answer already sent, not a refusal.
+   * Answers the bird at your window: your letter goes home with it, theirs is delivered to you, and you become pen pals.
+   * 404 NO_VISITOR when no bird waits; 409 BIRD_GONE when it can no longer take an answer, and it flies on. If the birds
+   * crossed and they answered yours first, the correspondence is open and this answer is your turn in it. Both locks
+   * are held, so simultaneous crossing answers take turns. A resend (same key, or same words just after) returns the
+   * answer already sent.
    */
   async answer(userId: string, raw: string, rawDecor?: unknown, opts: { key?: string | null } = {}): Promise<VisitorAnswer> {
     const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: true });
@@ -934,7 +822,7 @@ export class LetterService {
         );
         const visit = v.rows[0];
         if (!visit) {
-          // the answer may have gone already, from the other device or with its reply lost on the way: then it is that one
+          // The answer may have gone already, from another device or with its reply lost: then it is that one.
           const last = await client.query<{ id: string; body: string }>(
             `SELECT a.id, a.body FROM letter_visits v JOIN letters a ON a.id = v.answer_id
               WHERE v.visitor_id = $1 AND v.outcome = 'answered' AND v.ended_at > now() - make_interval(mins => $2)
@@ -957,7 +845,7 @@ export class LetterService {
           const crossed = pair.rows[0];
           let threadId: string | null = null;
           if (crossed) {
-            // the birds crossed, and they answered yours first: this answer is your turn in the correspondence it opened
+            // The birds crossed and they answered yours first, so this answer is your turn in the correspondence it opened.
             if (!crossed.ended && (await this.yourTurn(client, crossed.id, userId))) threadId = crossed.id;
           } else {
             if ((await this.placesTaken(client, userId, visit.sender_id)) >= PEN_PALS_MAX) {
@@ -973,8 +861,8 @@ export class LetterService {
             await client.query(`UPDATE letter_visits SET ended_at = now(), outcome = 'closed' WHERE id = $1`, [visit.id]);
             refusal = new AppError('BIRD_GONE', 409, 'this bird can no longer take an answer, and has flown on');
           } else {
-            // theirs came to this window when it was called, and was read and seen land there; the answer is delivered
-            // after it, so it is their turn next, and it is the letter their bird carries home
+            // Theirs came to this window when called and was read and landed there; the answer is delivered after it, so it is
+            // their turn next and their bird carries the answer home.
             await client.query(
               `UPDATE letters SET recipient_id = $2, thread_id = $3, status = 'delivered', delivered_at = $4, read_at = now(), landed_at = now() WHERE id = $1`,
               [visit.letter_id, userId, threadId, visit.called_at],
@@ -1016,7 +904,7 @@ export class LetterService {
     return answered!;
   }
 
-  /** Send the bird at your window on its way: it flies back out for somebody else, and never comes to this window again. False when no bird was there. */
+  /** Sends the bird at your window on its way, never to return here. False when no bird was there. */
   async sendOn(userId: string): Promise<boolean> {
     const r = await this.pool.query<{ sender_id: string }>(
       `UPDATE letter_visits v SET ended_at = now(), outcome = 'sent_on'
@@ -1030,15 +918,9 @@ export class LetterService {
   }
 
   /**
-   * Call your bird back: the letter it carries is not sent, and if it is at
-   * somebody's window it leaves. When no bird is out, says what became of it:
-   * answered meanwhile (`answeredIn`, the correspondence its answer opened,
-   * still to land at the window), or simply home.
-   *
-   * One transaction under the writer's lock, which starts by locking the bird:
-   * a call in flight holds that row until it commits, so the visit it makes is
-   * seen and closed here too, and an answer in flight wins, its bird already
-   * delivered when this goes on.
+   * Calls your bird back: its letter is not sent and it leaves any window. When no bird is out, says what became of it:
+   * answered meanwhile (`answeredIn`, the correspondence still to land) or simply home. One transaction under the
+   * writer's lock, locking the bird first, so a call in flight is seen and closed and an answer in flight wins.
    */
   async recall(userId: string): Promise<{ recalled: true } | { recalled: false; answeredIn: string | null }> {
     type Recall = { recalled: true } | { recalled: false; answeredIn: string | null };
@@ -1070,16 +952,14 @@ export class LetterService {
   }
 
   /**
-   * A correspondence: who, and every letter, oldest first. The letters of
-   * theirs this shows are marked read, and only those: one that comes while
-   * it is read is not on the page, so it stays unread for the window. A
-   * letter read here still lands at the window once (`home().landings`).
-   * Not found for anybody outside it, or across a block.
+   * A correspondence with every letter, oldest first. Only the letters of theirs shown here are marked read, so one
+   * arriving meanwhile stays unread; a letter read here still lands at the window once. Not found outside it or across
+   * a block.
    */
   async thread(userId: string, threadId: string): Promise<LetterThread> {
     const t = await this.threadRow(this.pool, userId, threadId);
-    // whose turn it is is read in the same statement as the letters, so it is said of the letters on the page: a reply
-    // that comes between the two would otherwise offer the paper under a letter that is not there
+    // Whose turn it is is read with the letters, so it describes the page; a reply arriving between two reads would offer
+    // paper under a letter not shown.
     const rows = await this.pool.query<LetterRow & { recipient_id: string | null; your_turn: boolean }>(
       `SELECT ${LETTER_COLUMNS()}, recipient_id, ${YOUR_TURN_SQL('$1::uuid', '$2::uuid')} AS your_turn FROM letters
         WHERE thread_id = $1 AND status IN ('delivered','removed') ORDER BY created_at, id`,
@@ -1133,15 +1013,13 @@ export class LetterService {
   }
 
   /**
-   * Write back to a pen pal: refused when it is not your turn, after a
-   * goodbye, or once your bands have parted. The same letter sent again,
-   * under the same key or with the same words just after it went, is the
-   * letter already sent.
+   * Writes back to a pen pal; refused when it is not your turn, after a goodbye, or once your bands have parted. A
+   * resend (same key, or same words just after) returns the letter already sent.
    */
   async reply(userId: string, threadId: string, raw: string, rawDecor?: unknown, opts: { key?: string | null } = {}): Promise<LetterItem> {
     const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: true });
     let key = keyed('reply', opts.key);
-    // `told` is who to tell, for a letter sent now; none for the letter already sent, found again
+    // `told` is who to notify for a newly sent letter; none when the letter already sent was found again.
     const { sent, told } = await inTransaction(this.pool, async (client): Promise<{ sent: LetterItem; told: { other: string; name: string } | null }> => {
       const t = await this.threadRow(client, userId, threadId, true);
       if (key) {
@@ -1187,7 +1065,7 @@ export class LetterService {
     return sent;
   }
 
-  /** Say goodbye: the correspondence ends for both, and neither can write in it again. Not found for anybody outside it. */
+  /** Says goodbye: the correspondence ends for both and neither can write in it again. Not found outside it. */
   async end(userId: string, threadId: string): Promise<void> {
     const t = await this.threadRow(this.pool, userId, threadId);
     const r = await this.pool.query(`UPDATE letter_threads SET ended_at = now(), ended_by = $2 WHERE id = $1 AND ended_at IS NULL`, [threadId, userId]);
@@ -1195,13 +1073,9 @@ export class LetterService {
   }
 
   /**
-   * Tell somebody a letter has come: a pen pal's bird at their window, or
-   * (`home`) their own bird home from somebody's window with an answer. A line
-   * in their notifications and a push, under letters' own setting, in the
-   * language they chose in the app (notice.ts); the apps write their own words
-   * for the line from `data.kind` and `data.how`. `data.letterId` lets a push
-   * held back by quiet hours ask, when they end, whether the letter still waits.
-   * A block between the two keeps the line from being written at all
+   * Notifies someone a letter has come: a pen pal's bird at their window, or (`home`) their own bird back with an
+   * answer. A notification and a push under the letters setting, in their app language (notice.ts); `data.letterId`
+   * lets a push held for quiet hours check the letter still waits. A block keeps the notification from being written
    * (notifications/inbox-service.ts).
    */
   private async tell(to: string, threadId: string, from: string, fromName: string, how: LetterNoticeHow, letterId: string): Promise<void> {
