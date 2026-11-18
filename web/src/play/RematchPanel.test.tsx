@@ -126,7 +126,7 @@ describe('RematchPanel — more players', () => {
     renderPlay(panel(true));
     await userEvent.click(await screen.findByRole('button', { name: 'Play again' }));
     await waitFor(() => expect(where()).toBe('/app/games/rhyme-match?id=r3'));
-    // leaving a group's results takes nothing back: there is no offer to withdraw
+    // Leaving a group's results takes nothing back: there is no offer to withdraw.
     expect(calls.some((c: Call) => c.method === 'DELETE')).toBe(false);
   });
 
