@@ -21,7 +21,6 @@ import { AppError } from '../plugins/errors.js';
 import type { Notification } from '../push/service.js';
 import { isKnownAdultRow, areFriendsSql } from '../users/age.js';
 import { MEASURES, MeasureContext, daysPerMonth, monthlyGoal, previousMonth, type Measured } from './measures.js';
-import type { RankEventsListener, RatedGameFinished, SeasonClosed } from './rank-hooks.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 
 type Executor = Pick<pg.Pool, 'query'>;
@@ -51,10 +50,6 @@ export const BADGE_TRIGGERS = {
   letter: ['name'],
   saved: ['gencine'],
   league: ['hefte', 'pela'],
-  rated: [
-    'rank-dest', 'rank-gir', 'rank-zozan', 'rank-ciya', 'rank-lutke', 'rank-sterk',
-    'hilkiser', 'cihgirti', 'dilpak', 'kewe-ciye',
-  ],
 } as const satisfies Record<string, readonly string[]>;
 
 /**
@@ -124,7 +119,7 @@ const PLAY_GAMES: Record<string, { players: string; key: string }> = {
  * A learner's first count records what they did before badges existed quietly, as already seen; a newcomer with
  * no such past celebrates what the first count finds (`HAS_PAST_SQL`).
  */
-export class BadgeService implements MilestoneRecorder, RankEventsListener {
+export class BadgeService implements MilestoneRecorder {
   private readonly now: () => Date;
   /** games recently counted, so the several `play_changed` of one finish count it once */
   private readonly recentGames = new Map<string, number>();
@@ -205,82 +200,6 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     for (const id of userIds) {
       await this.evaluate(id, BADGE_TRIGGERS.league).catch((err) => this.deps.log?.warn({ err }, 'league badges not counted'));
     }
-  }
-
-  /**
-   * A rated game finished, reported once its rating changes commit. Each player's game is recorded once, their tier
-   * after it raises their season peak, then the ranked badges are counted. A player who walked out beats nobody.
-   */
-  async onRatedGameFinished(e: RatedGameFinished): Promise<void> {
-    const finishedAt = e.finishedAt ?? this.now();
-    // Every player's game and every peak in one statement each; a count reads only its own player's rows.
-    await this.pool.query(
-      `INSERT INTO badge_rated_games
-         (user_id, game, game_ref, season_id, finished_at, place, players, left_game, placement_done, tier_after, beat_higher_by)
-       SELECT p.user_id, $1::text, $2::text, $3::text, $4::timestamptz, p.place, $5::int, p.left_game, p.placement_done, p.tier_after, p.beat_higher_by
-         FROM unnest($6::uuid[], $7::int[], $8::boolean[], $9::boolean[], $10::int[], $11::int[])
-           AS p(user_id, place, left_game, placement_done, tier_after, beat_higher_by)
-       ON CONFLICT (user_id, game, game_ref) DO NOTHING`,
-      [
-        e.game,
-        e.gameRef,
-        e.seasonId,
-        finishedAt,
-        e.players.length,
-        e.players.map((p) => p.userId),
-        e.players.map((p) => p.place),
-        e.players.map((p) => p.left),
-        e.players.map((p) => p.placementDone),
-        e.players.map((p) => p.tierAfter),
-        e.players.map((p) => (p.left || p.tierBefore === null ? 0 : Math.max(0, p.beatTierGap))),
-      ],
-    );
-    await this.notePeaks(
-      e.seasonId,
-      e.players.flatMap((p) => (p.tierAfter !== null ? [{ userId: p.userId, game: e.game, tier: p.tierAfter, ratedGames: 0 }] : [])),
-    );
-    for (const p of e.players) {
-      await this.evaluate(p.userId, BADGE_TRIGGERS.rated).catch((err) =>
-        this.deps.log?.warn({ err }, 'ranked badges not counted'),
-      );
-    }
-  }
-
-  /** A season closed, with each player's final peak per game. */
-  async onSeasonClosed(e: SeasonClosed): Promise<void> {
-    await this.notePeaks(
-      e.seasonId,
-      e.results.map((r) => ({ userId: r.userId, game: r.game, tier: r.peakTier, ratedGames: r.ratedGames })),
-    );
-    // each learner's count is its own transaction under their own lock, so one at a time
-    for (const id of new Set(e.results.map((r) => r.userId))) {
-      await this.evaluate(id, BADGE_TRIGGERS.rated).catch((err) => this.deps.log?.warn({ err }, 'ranked badges not counted'));
-    }
-  }
-
-  /**
-   * Raises the season peaks in one statement. A learner and game named twice is merged first, keeping the higher of
-   * each, because one statement can touch a row only once.
-   */
-  private async notePeaks(seasonId: string, peaks: Array<{ userId: string; game: string; tier: number | null; ratedGames: number }>): Promise<void> {
-    const merged = new Map<string, { userId: string; game: string; tier: number | null; ratedGames: number }>();
-    for (const p of peaks) {
-      const key = `${p.userId}:${p.game}`;
-      const was = merged.get(key);
-      const tier = was && was.tier !== null && (p.tier === null || was.tier > p.tier) ? was.tier : p.tier;
-      merged.set(key, { ...p, tier, ratedGames: was ? Math.max(was.ratedGames, p.ratedGames) : p.ratedGames });
-    }
-    if (merged.size === 0) return;
-    const rows = [...merged.values()];
-    await this.pool.query(
-      `INSERT INTO badge_rank_seasons (user_id, season_id, game, peak_tier, rated_games)
-       SELECT p.user_id, $1::text, p.game, p.peak_tier, p.rated_games
-         FROM unnest($2::uuid[], $3::text[], $4::int[], $5::int[]) AS p(user_id, game, peak_tier, rated_games)
-       ON CONFLICT (user_id, season_id, game) DO UPDATE SET
-         peak_tier = GREATEST(badge_rank_seasons.peak_tier, EXCLUDED.peak_tier),
-         rated_games = GREATEST(badge_rank_seasons.rated_games, EXCLUDED.rated_games)`,
-      [seasonId, rows.map((r) => r.userId), rows.map((r) => r.game), rows.map((r) => r.tier), rows.map((r) => r.ratedGames)],
-    );
   }
 
   // ---- counting ------------------------------------------------------------------
@@ -475,19 +394,21 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     const byKey = new Map(rows.rows.map((r) => [r.badge_key, r]));
     const secretsFound = BADGES.filter((b) => b.secret && (byKey.get(b.key)?.tier ?? 0) > 0).length;
     const allTarget = units.allTarget;
-    const badges: BadgeView[] = BADGES.map((def) => {
+    const badges: BadgeView[] = BADGES.flatMap((def) => {
       const row = byKey.get(def.key);
       const tier = row?.tier ?? 0;
+      // A retired badge is no longer to win: shown only to those who earned it, its ladder ending where they got to.
+      if (def.retired && tier === 0) return [];
       const hidden = def.secret && tier === 0;
-      const thresholds = resolveThresholds(def, def.tiers.includes('all') ? allTarget : undefined).map((t) =>
-        Number.isFinite(t) ? t : 0,
-      );
+      const thresholds = resolveThresholds(def, def.tiers.includes('all') ? allTarget : undefined)
+        .map((t) => (Number.isFinite(t) ? t : 0))
+        .slice(0, def.retired ? tier : undefined);
       const next = tier < thresholds.length ? (thresholds[tier]! > 0 ? thresholds[tier]! : null) : null;
       return {
         key: def.key,
         family: def.family,
         tier,
-        tierCount: def.tiers.length,
+        tierCount: thresholds.length,
         tierKey: badgeTierKey(def, tier),
         progress: hidden ? 0 : (row?.progress ?? 0),
         thresholds: hidden ? [] : thresholds,
@@ -507,7 +428,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
       badges,
       showcase: showcase ?? [],
       secretsFound,
-      secretsTotal: BADGES.filter((b) => b.secret).length,
+      secretsTotal: badges.filter((b) => b.secret).length,
       legacy: legacyWin ? [{ key: 'tournament-win', earnedAt: legacyWin.toISOString() }] : [],
       monthlyChallenge: { month, days: per.get(month) ?? 0, goal: monthlyGoal(per.get(previousMonth(month)) ?? 0) },
     };

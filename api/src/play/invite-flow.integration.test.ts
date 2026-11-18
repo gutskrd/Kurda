@@ -66,7 +66,7 @@ describe.skipIf(!DATABASE_URL)('play: inviting a friend to every game (integrati
     return [host, friend];
   };
 
-  /** What the invite sheets send for each game (Stories as a duo of one story). */
+  /** What the invite sheets send for each game (Stories as a duo of one story); `rated` as older builds still send it. */
   const settingsFor = async (game: PlayGame, rated: boolean, tag: string): Promise<Record<string, unknown>> => {
     if (game === 'wordle-battle') return { difficulty: 'medium', rated };
     if (game === 'rhyme-match') return { dialect: 'kurmanci', rated };
@@ -119,7 +119,7 @@ describe.skipIf(!DATABASE_URL)('play: inviting a friend to every game (integrati
   const GAMES: PlayGame[] = ['wordle-battle', 'rhyme-match', 'stories'];
   for (const game of GAMES) {
     for (const rated of [false, true]) {
-      it(`${game}, ${rated ? 'Rated' : 'Friendly'}: the host invites a friend, the friend says yes, and the game starts`, async () => {
+      it(`${game}, asked ${rated ? 'Rated' : 'Friendly'}: the host invites a friend, the friend says yes, and it starts as a friendly game`, async () => {
         const tag = `${game.slice(0, 2)}${rated ? 'r' : 'f'}`;
         const [host, friend] = await pair(tag);
 
@@ -141,11 +141,12 @@ describe.skipIf(!DATABASE_URL)('play: inviting a friend to every game (integrati
         const go = await start(game, host, lobbyId);
         expect(go.status, JSON.stringify(go.body)).toBe(200);
         expect(await started(game, lobbyId)).toBe(true);
+        expect((await pool.query(`SELECT 1 FROM rated_games WHERE game_ref = $1`, [lobbyId])).rowCount).toBe(0);
       });
     }
   }
 
-  it('the host invites a friend into a lobby already made, after changing it to Rated', async () => {
+  it('the host invites a friend into a lobby already made, after an older build’s Rated toggle changed nothing', async () => {
     for (const game of GAMES) {
       const tag = `${game.slice(0, 2)}l`;
       const [host, friend] = await pair(tag);
@@ -154,6 +155,7 @@ describe.skipIf(!DATABASE_URL)('play: inviting a friend to every game (integrati
       const lobbyId = made.body.lobbyId as string;
       const rated = await call(host, 'PUT', `/play/${game}/${lobbyId}/rated`, { rated: true });
       expect(rated.status, JSON.stringify(rated.body)).toBe(200);
+      expect(rated.body).toEqual({ ok: true, rated: false });
       const asked = await call(host, 'POST', '/play/invites', { game, lobbyId, userIds: [friend.id] });
       expect(asked.body, game).toEqual({ ok: true, invited: 1 });
       const incoming = (await call(friend, 'GET', '/play/invites')).body.incoming as Array<{ id: string; lobbyId: string }>;

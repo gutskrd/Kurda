@@ -25,6 +25,12 @@ describe('the badge catalogue', () => {
     ]);
   });
 
+  it('retires the badges only rated play could earn: the ranked family, Dilpak and Kewê çiyê', () => {
+    const retired = BADGES.filter((b) => b.retired).map((b) => b.key);
+    expect(retired).toEqual(['dilpak', 'rank-dest', 'rank-gir', 'rank-zozan', 'rank-ciya', 'rank-lutke', 'rank-sterk', 'hilkiser', 'cihgirti', 'kewe-ciye']);
+    expect(BADGES.filter((b) => b.family === 'ranked').every((b) => b.retired)).toBe(true);
+  });
+
   it('has unique, URL-safe keys and the catalogue keys clients translate', () => {
     expect(new Set(BADGES.map((b) => b.key)).size).toBe(BADGES.length);
     for (const b of BADGES) {

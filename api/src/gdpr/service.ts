@@ -441,7 +441,7 @@ export class GdprService {
          FROM app_feedback WHERE user_id = $1 ORDER BY created_at`,
       [userId],
     );
-    // their Game Ranks, every change with its reason (ranks/gdpr.ts)
+    // their game ranks while they ran, every change with its reason (ranks/gdpr.ts)
     const ranks = await exportRanks(this.pool, userId);
     // The letters they wrote, each with its paper, drawing, notes and delivery; letters to them are their pen pals'
     // words.
@@ -695,7 +695,7 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // the voices they recorded for the course, and their name off the links they made for others
   await q(`DELETE FROM recording_voices WHERE user_id = $1`);
   await q(`UPDATE recording_voices SET linked_by = NULL WHERE linked_by = $1`);
-  // Their Game Ranks data (ranks/gdpr.ts).
+  // What game ranks stored about them while they ran (ranks/gdpr.ts).
   await eraseRanks(executor, userId);
 
   // Both sides of every conversation they were in, gifts included.

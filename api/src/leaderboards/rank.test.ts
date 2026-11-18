@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { BALANCE_BOARDS, isBalanceBoard, isBoardType, rankForScore, withRanks } from './rank.js';
+import { BALANCE_BOARDS, isBalanceBoard, isBoardType, isWeeklyBoard, rankForScore, withRanks } from './rank.js';
 
 describe('isBoardType', () => {
   it('accepts the known board types, and the frozen rating board is gone', () => {
     expect(isBoardType('rating')).toBe(false);
     expect(isBoardType('weekly_xp')).toBe(true);
+    expect(isBoardType('all_time_xp')).toBe(true);
     expect(isBoardType('zer')).toBe(true);
     expect(isBoardType('gewher')).toBe(true);
     // the wallet’s word for the currency is not a board of its own
@@ -14,9 +15,15 @@ describe('isBoardType', () => {
 
   it('knows which boards rank a balance, and the wallet currency behind each', () => {
     expect(isBalanceBoard('weekly_xp')).toBe(false);
+    expect(isBalanceBoard('all_time_xp')).toBe(false);
     expect(isBalanceBoard('zer')).toBe(true);
     expect(isBalanceBoard('gewher')).toBe(true);
     expect(BALANCE_BOARDS).toEqual({ zer: 'zer', gewher: 'gems' });
+  });
+
+  it('knows the one board that starts afresh each week', () => {
+    expect(isWeeklyBoard('weekly_xp')).toBe(true);
+    for (const type of ['all_time_xp', 'zer', 'gewher'] as const) expect(isWeeklyBoard(type)).toBe(false);
   });
 });
 

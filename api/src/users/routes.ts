@@ -174,7 +174,7 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
     // visible); ranks and badges are not part of the account.
     const [row, profile] = await Promise.all([
       app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]).then((r) => r.rows[0] as MeRow),
-      social.profile(userId, userId, { ranksAndBadges: false }),
+      social.profile(userId, userId, { badges: false }),
     ]);
     // Settle the streak on read so a lapsed day shows as broken.
     const streak = await streaks.get(row.id, row.timezone);

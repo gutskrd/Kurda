@@ -48,8 +48,8 @@ interface MatchRow {
 type Executor = Pick<pg.PoolClient, 'query'>;
 
 /**
- * Single-elimination tournaments: admins schedule, players register, and on start the field is seeded by Game Ranks
- * points and the bracket generated (top seeds get byes); winners move up by slot and the champion is paid once. There
+ * Single-elimination tournaments: admins schedule, players register, and on start the field is seeded by all-time XP
+ * and the bracket generated (top seeds get byes); winners move up by slot and the champion is paid once. There
  * is no game to play matches in yet, so results are entered by an admin and tournaments stay out of the apps.
  */
 /** Grants Gems for a rule and reference id. */
@@ -109,11 +109,8 @@ export class TournamentService {
       if (Number(count.rows[0]!.n) >= tourn.capacity) {
         throw new AppError('TOURNAMENT_FULL', 409, 'tournament is full');
       }
-      // seeding snapshot: the best Game Ranks points in any game (0 unranked)
-      const rating = await client.query<{ points: number }>(
-        `SELECT COALESCE(max(points), 0)::int AS points FROM game_ratings WHERE user_id = $1`,
-        [userId],
-      );
+      // seeding snapshot: the player's all-time XP
+      const rating = await client.query<{ points: number }>(`SELECT xp AS points FROM users WHERE id = $1`, [userId]);
       await client.query(
         `INSERT INTO tournament_participants (tournament_id, user_id, rating)
          VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,

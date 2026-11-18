@@ -159,7 +159,7 @@ export class PlayService {
     if (invitees.length > 0 && (await this.pendingFrom(this.pool, hostId, this.now())) >= MAX_PENDING_PLAY_INVITES) {
       throw tooManyInvites();
     }
-    const lobbyId = await adapter.create(hostId, input.settings, { chatGroupId: groupId, fromChat: input.chat !== undefined });
+    const lobbyId = await adapter.create(hostId, input.settings, { chatGroupId: groupId });
     if (groupId) {
       try {
         await this.deps.groupChat.sendCard(hostId, groupId, { game: input.game, lobbyId }, this.publicUrl);
@@ -494,16 +494,6 @@ export class PlayService {
       });
     }
     return { incoming, outgoing: [...groups.values()] };
-  }
-
-  // ---- Rated or Friendly -----------------------------------------------------------
-
-  /**
-   * `PUT /play/:game/:lobbyId/rated`: the host changes the badge, in the lobby only. Everyone in it is told
-   * (`play_changed`), and anyone who joined for the other kind may leave freely.
-   */
-  async setRated(hostId: string, game: PlayGame, lobbyId: string, rated: boolean): Promise<void> {
-    await this.adapter(game).setRated(hostId, lobbyId, rated);
   }
 
   // ---- chat cards -------------------------------------------------------------------

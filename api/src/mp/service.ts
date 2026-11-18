@@ -13,19 +13,17 @@ import {
   type MultiGame,
   type MultiSeat,
   type MultiView,
+  type RatedState,
   type RulesSeat,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { lockPersonFor } from '../limits/limits.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { canJoin, identities, mayHostOpen, maySitTogether, textApart } from '../play/access.js';
-import { gameNotFound, openGamesAdultsOnly, parseSettings, setRatedError } from '../play/errors.js';
+import { gameNotFound, openGamesAdultsOnly, parseSettings } from '../play/errors.js';
 import { seatId, tallySeries } from '../play/lobby.js';
 import type { JoinOutcome, LobbyChange, LobbyFacts, LobbyPhase, Series } from '../play/types.js';
-import { ratedStateOf } from '../ranks/games.js';
-import { RankService } from '../ranks/service.js';
 import { XpService } from '../xp/service.js';
-import { dropAfterCommit, runAfterCommit } from '../db/after-commit.js';
 import { Presence } from '../story-games/presence.js';
 import type { StoryGameNotifier } from '../story-games/notifier.js';
 import { awayAfter, controllerOf, dueStep, isAway, lobbyClosesAt, nextDue, type EngineSeat } from './engine.js';
@@ -48,6 +46,8 @@ const GAME_RETENTION_DAYS = 400;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // a timer further out than this is re-armed when it fires, rather than trusted for long
 const MAX_TIMER_MS = 60 * 60 * 1000;
+/** Every game is friendly; older phone builds read this from the view without checking it is there. */
+const OLD_BUILD_FRIENDLY: RatedState = { rated: false, counts: false, friendlyReason: 'chosen', damped: false };
 
 type Executor = Pick<pg.Pool, 'query'>;
 type Status = 'lobby' | 'active' | 'finished' | 'cancelled';
@@ -77,8 +77,6 @@ export interface LobbyRow {
   chat_group_id: string | null;
   next_lobby_id: string | null;
   rematch_of: string | null;
-  rated: boolean;
-  rated_state: string | null;
   code: string | null;
   created_at: Date;
   updated_at: Date;
@@ -124,7 +122,6 @@ type RunResult<T> = { value: T } | 'busy' | 'missing';
 
 export interface MultiplayerDeps {
   xp?: XpService;
-  ranks?: RankService;
   /** long-poll waiters and the cross-instance wake-ups; none in a worker */
   notifier?: StoryGameNotifier | null;
   presence?: Presence;
@@ -147,8 +144,8 @@ export interface MoveAnswer {
 
 /**
  * The engine every multiplayer learning game runs on (shared/src/games/multi): lobbies and seats in their own tables,
- * the play layer's lobby rules (joining, "Player N" seats, invites, codes, cards, rematches, Rated/Friendly), and a
- * phase engine.
+ * the play layer's lobby rules (joining, "Player N" seats, invites, codes, cards, rematches), and a phase
+ * engine.
  *
  * Invariants for several API instances sharing a ten-connection pool (as in story-games/service.ts):
  * - Every change is one transaction that locks the lobby row first (`FOR UPDATE`), reads the database clock after the
@@ -157,12 +154,11 @@ export interface MoveAnswer {
  *   touch a game also arms a timer. An advance takes the row with `SKIP LOCKED` and judges due-ness on the locked row,
  *   so two replicas never both apply a timeout.
  * - A long-poll holds no connection while it waits.
- * - Placement XP, Game Ranks and the game's end happen in the transaction that ends it.
+ * - Placement XP and the game's end happen in the transaction that ends it.
  * - Nothing waits on a pool connection while holding one: the free-text gate runs before the game's transaction,
  *   dictionary lookups inside it on its client. Membership and turn are checked cheaply outside the lock first (the
  *   rules judge again under it), so no text reaches the chat pipeline for a move that would be refused.
- * - A game that ends without counting (`counted`: called off, too few left) pays no placement and is closed as void for
- *   Game Ranks.
+ * - A game that ends without counting (`counted`: called off, too few left) pays no placement.
  * - Free text never passes between players who may not exchange it (`textApart`: a block, or a minor and a non-friend):
  *   they are never seated together in a free-text game, one's text is left out of the other's view, and a block during
  *   a game removes the blocked player (`onBlock`).
@@ -170,7 +166,6 @@ export interface MoveAnswer {
 export class MultiplayerService {
   readonly presence: Presence;
   private readonly xp: XpService;
-  private readonly ranks: RankService;
   private readonly notifier: StoryGameNotifier | null;
   private readonly onChange: NonNullable<MultiplayerDeps['onChange']>;
   private readonly publicUrl: PublicUrl;
@@ -186,7 +181,6 @@ export class MultiplayerService {
     private readonly deps: MultiplayerDeps = {},
   ) {
     this.xp = deps.xp ?? new XpService(pool);
-    this.ranks = deps.ranks ?? new RankService(pool);
     this.notifier = deps.notifier ?? null;
     this.presence = deps.presence ?? new Presence();
     this.onChange = deps.onChange ?? (() => undefined);
@@ -203,21 +197,19 @@ export class MultiplayerService {
    * presets (400 otherwise); 'open' only for a known adult; at most MAX_HOSTED_GAMES of this game at once, the oldest
    * unstarted lobby giving way.
    */
-  async create(hostId: string, game: MultiGame, raw: unknown, opts: { chatGroupId: string | null; fromChat: boolean }): Promise<string> {
+  async create(hostId: string, game: MultiGame, raw: unknown, opts: { chatGroupId: string | null }): Promise<string> {
     const m = moduleOf(game);
     const choices = parseSettings(m.lobbySchema, raw);
     if (choices.access === 'open' && !(await mayHostOpen(this.pool, hostId))) throw openGamesAdultsOnly();
     // a game is made only where it is offered: a word chain on a dictionary too small to know people's words is no game
     if (!(await this.availability(game, choices.dialect)).group) throw new AppError('GAME_UNAVAILABLE', 404, 'this game is not offered in this dialect yet');
     if (m.offers && !(await m.offers(this.pool, choices))) throw new AppError('GAME_UNAVAILABLE', 404, 'this game is not offered with these choices yet');
-    const rated =
-      choices.rated ?? (await this.ranks.defaultRated(this.pool, hostId, game, { fromChat: opts.fromChat, access: choices.access }));
     const { id, closed } = await this.tx(async (client) => {
       const closed = await this.makeRoomToHost(client, game, hostId);
       const row = await client.query<{ id: string }>(
         `INSERT INTO game_lobbies (game, host_id, mode, dialect, settings, min_players, max_players, teams, access,
-                                   chat_group_id, rated, seats_issued)
-         VALUES ($1, $2, 'group', $3, $4, $5, $6, $7, $8, $9, $10, 1) RETURNING id`,
+                                   chat_group_id, seats_issued)
+         VALUES ($1, $2, 'group', $3, $4, $5, $6, $7, $8, $9, 1) RETURNING id`,
         [
           game,
           hostId,
@@ -228,7 +220,6 @@ export class MultiplayerService {
           m.teams,
           choices.access,
           opts.chatGroupId,
-          rated,
         ],
       );
       const lobbyId = row.rows[0]!.id;
@@ -237,7 +228,6 @@ export class MultiplayerService {
         hostId,
         m.teams > 0 ? 1 : null,
       ]);
-      if (choices.rated !== undefined) await this.ranks.rememberChoice(client, hostId, game, choices.rated);
       return { id: lobbyId, closed };
     });
     if (closed) this.tell(game, closed, { card: true });
@@ -264,8 +254,8 @@ export class MultiplayerService {
       );
       for (const r of old.rows) ended.push(r.id);
       const row = await client.query<LobbyRow>(
-        `INSERT INTO game_lobbies (game, host_id, mode, status, dialect, settings, min_players, max_players, rated, rated_state, seats_issued)
-         VALUES ($1, $2, 'solo', 'active', $3, $4, 1, 2, false, 'solo', 2) RETURNING *`,
+        `INSERT INTO game_lobbies (game, host_id, mode, status, dialect, settings, min_players, max_players, seats_issued)
+         VALUES ($1, $2, 'solo', 'active', $3, $4, 1, 2, 2) RETURNING *`,
         [game, userId, choices.dialect, JSON.stringify(choices.settings)],
       );
       const lobby = row.rows[0]!;
@@ -347,7 +337,7 @@ export class MultiplayerService {
 
   /**
    * Leave a lobby (a host leaving calls it off, since the others joined as the host's friends) or a game under way (the
-   * seat is out, a Rated game counts a leave, and with every person gone the game ends).
+   * seat is out, and with every person gone the game ends).
    */
   async leave(lobbyId: string, userId: string): Promise<void> {
     await this.inLobby(lobbyId, async (t) => {
@@ -359,7 +349,6 @@ export class MultiplayerService {
         return this.bump(t, 'status = status', [], { card: true });
       }
       if (t.lobby.status !== 'active' || me.left_at !== null) return;
-      if (t.lobby.mode === 'group') await this.ranks.recordLeave(t.client, t.lobby.game, lobbyId, userId);
       await t.client.query(`UPDATE game_lobby_players SET left_at = $3 WHERE lobby_id = $1 AND seat = $2`, [lobbyId, me.seat, t.now]);
       await this.reload(t);
       await this.recordMove(t, me.seat, userId, 'leave', null, {});
@@ -401,21 +390,6 @@ export class MultiplayerService {
     return this.view(lobbyId, userId);
   }
 
-  /** Rated or Friendly, in the lobby only, by the host (the play layer's toggle). */
-  async setRated(hostId: string, lobbyId: string, rated: boolean): Promise<void> {
-    const res = await this.run<'not-found' | 'forbidden' | 'not-lobby' | null>(lobbyId, async (t) => {
-      const me = t.players.find((p) => p.user_id === hostId && !p.removed && p.left_at === null);
-      if (!me || t.lobby.mode === 'solo') return 'not-found';
-      if (t.lobby.host_id !== hostId) return 'forbidden';
-      if (t.lobby.status !== 'lobby' || this.idle(t)) return 'not-lobby';
-      await this.bump(t, 'rated = $3', [rated]);
-      await this.ranks.rememberChoice(t.client, hostId, t.lobby.game, rated);
-      return null;
-    });
-    const reason = res === 'missing' || res === 'busy' ? 'not-found' : res.value;
-    if (reason) throw setRatedError(reason);
-  }
-
   /** The host starts it, with at least the game's fewest players present. */
   async start(lobbyId: string, userId: string): Promise<MultiView> {
     await this.inLobby(lobbyId, async (t) => {
@@ -434,7 +408,7 @@ export class MultiplayerService {
     return this.view(lobbyId, userId);
   }
 
-  /** The rules' first state, Rated decided on who is actually starting, the first deadline. */
+  /** The rules' first state and the first deadline. */
   private async begin(t: Tx): Promise<void> {
     const m = moduleOf(t.lobby.game);
     if (t.lobby.teams > 0) {
@@ -445,20 +419,10 @@ export class MultiplayerService {
     }
     const seated = t.players.filter((p) => !p.removed && p.left_at === null);
     const seats: RulesSeat[] = seated.map((p) => ({ seat: p.seat, team: p.team, bot: p.bot }));
-    let decision = t.lobby.rated_state;
-    if (t.lobby.mode === 'group') {
-      decision = await this.ranks.decideAtStart(
-        t.client,
-        t.lobby.game,
-        t.lobby.id,
-        seated.filter((p) => p.user_id !== null).map((p) => ({ userId: p.user_id!, seat: p.seat })),
-        t.lobby.rated,
-      );
-    }
     // what the game is dealt from approved content goes to the rules alone: never into the lobby's stored settings
     const settings = m.deal ? await m.deal(t.client, t.lobby.settings, { dialect: t.lobby.dialect, seed: t.lobby.seed, seats }) : t.lobby.settings;
     const state = m.rules.init(settings, seats, { now: t.now.getTime(), seed: t.lobby.seed });
-    await this.bump(t, `status = 'active', started_at = $3, rated_state = $4`, [t.now, decision], { card: true });
+    await this.bump(t, `status = 'active', started_at = $3`, [t.now], { card: true });
     await this.saveState(t, state, { card: true });
   }
 
@@ -670,13 +634,13 @@ export class MultiplayerService {
 
   async summary(lobbyId: string): Promise<InviteSummary | null> {
     if (!UUID_RE.test(lobbyId)) return null;
-    const l = await this.pool.query<Pick<LobbyRow, 'game' | 'dialect' | 'settings' | 'rated'>>(
-      `SELECT game, dialect, settings, rated FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')}`,
+    const l = await this.pool.query<Pick<LobbyRow, 'game' | 'dialect' | 'settings'>>(
+      `SELECT game, dialect, settings FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')}`,
       [lobbyId],
     );
     const row = l.rows[0];
     if (!row) return null;
-    return { ...moduleOf(row.game).summary(row.dialect, row.settings), rated: row.rated };
+    return moduleOf(row.game).summary(row.dialect, row.settings);
   }
 
   /** A chat card, as one viewer sees it: live to members and to anyone the join rule lets in; 'unavailable' to everyone else. */
@@ -744,10 +708,10 @@ export class MultiplayerService {
       if (!allowed || (moduleOf(t.lobby.game).freeText && !(await maySitTogether(t.client, other.user_id!, [host.user_id!])))) throw gameNotFound();
       const row = await t.client.query<LobbyRow>(
         `INSERT INTO game_lobbies (game, host_id, mode, dialect, settings, min_players, max_players, teams, access, chat_group_id,
-                                   rematch_of, rated, seats_issued)
-         VALUES ($1, $2, 'group', $3, $4, $5, $6, $7, $8, $9, $10, $11, 2) RETURNING *`,
+                                   rematch_of, seats_issued)
+         VALUES ($1, $2, 'group', $3, $4, $5, $6, $7, $8, $9, $10, 2) RETURNING *`,
         [t.lobby.game, host.user_id, t.lobby.dialect, JSON.stringify(t.lobby.settings), t.lobby.min_players, t.lobby.max_players, t.lobby.teams,
-          access, t.lobby.chat_group_id, t.lobby.id, t.lobby.rated],
+          access, t.lobby.chat_group_id, t.lobby.id],
       );
       created = row.rows[0]!.id;
       await t.client.query(
@@ -782,10 +746,10 @@ export class MultiplayerService {
       const access = t.lobby.access === 'open' && (await mayHostOpen(t.client, userId)) ? 'open' : 'friends';
       const row = await t.client.query<{ id: string }>(
         `INSERT INTO game_lobbies (game, host_id, mode, dialect, settings, min_players, max_players, teams, access, chat_group_id,
-                                   rematch_of, rated, seats_issued)
-         VALUES ($1, $2, 'group', $3, $4, $5, $6, $7, $8, $9, $10, $11, 1) RETURNING id`,
+                                   rematch_of, seats_issued)
+         VALUES ($1, $2, 'group', $3, $4, $5, $6, $7, $8, $9, $10, 1) RETURNING id`,
         [t.lobby.game, userId, t.lobby.dialect, JSON.stringify(t.lobby.settings), t.lobby.min_players, t.lobby.max_players, t.lobby.teams,
-          access, t.lobby.chat_group_id, t.lobby.id, t.lobby.rated],
+          access, t.lobby.chat_group_id, t.lobby.id],
       );
       created = row.rows[0]!.id;
       await t.client.query(`INSERT INTO game_lobby_players (lobby_id, seat, user_id, team, last_seen_at) VALUES ($1, 1, $2, $3, now())`, [
@@ -924,8 +888,8 @@ export class MultiplayerService {
   /**
    * After a block commits, part the pair in every lobby and game they share. In a lobby the blocked player goes (the
    * blocker, if the blocked player hosts), as the join rule would not have seated them together. In a free-text game
-   * under way the blocked player is removed like a leave but neither rated nor paid, and the rules go on without them
-   * (`drop`). A game without free text plays on.
+   * under way the blocked player is removed like a leave but not paid, and the rules go on without them (`drop`). A game
+   * without free text plays on.
    */
   async onBlock(blockerId: string, blockedId: string): Promise<void> {
     const shared = await this.pool.query<{ id: string }>(
@@ -1072,10 +1036,9 @@ export class MultiplayerService {
 
   /**
    * The end, in the transaction that reached it: each seat's place and score, placement XP (only with at least two
-   * people who played to the end, reduced against the same people again today), and Game Ranks. A solo game against
-   * Hevalo pays nothing and rates nobody. A game that did not count (`counted`: called off, too few left, the impostor
-   * gone) shows places but pays no placement and is closed as void for Game Ranks, since otherwise everyone left would
-   * share first place.
+   * people who played to the end, reduced against the same people again today). A solo game against Hevalo pays
+   * nothing. A game that did not count (`counted`: called off, too few left, the impostor gone) shows places but pays no
+   * placement, since otherwise everyone left would share first place.
    */
   private async finish(t: Tx, m: AnyGameModule): Promise<void> {
     const placed = m.rules.places(t.lobby.state);
@@ -1085,11 +1048,8 @@ export class MultiplayerService {
     await this.reload(t);
     const award = (input: { userId: string; source: string; amount: number; refId: string }) => this.xp.award(input, t.client);
     const people = this.people(t.players);
-    // called off, or too few left to go on: a game nobody played out pays no placement and rates nobody
-    const counted = gameCounted(m.rules, t.lobby.state);
-    if (t.lobby.mode === 'group' && !counted) {
-      await this.ranks.closeUncounted(t.client, t.lobby.game, t.lobby.id);
-    } else if (t.lobby.mode === 'group') {
+    // called off, or too few left to go on: a game nobody played out pays no placement
+    if (t.lobby.mode === 'group' && gameCounted(m.rules, t.lobby.state)) {
       // played to the end: still in it, and made at least one move of their own
       const active = people.filter((p) => p.left_at === null && p.moves > 0);
       if (active.length >= MIN_HUMANS_FOR_PLACEMENT_XP) {
@@ -1103,15 +1063,6 @@ export class MultiplayerService {
           await t.client.query(`UPDATE game_lobby_players SET xp_awarded = $3 WHERE lobby_id = $1 AND seat = $2`, [t.lobby.id, p.seat, paid]);
         }
       }
-      await this.ranks.finish(
-        t.client,
-        t.lobby.game,
-        t.lobby.id,
-        people.flatMap((p) => {
-          const placeOf = placed.find((x) => x.seat === p.seat);
-          return placeOf ? [{ userId: p.user_id!, place: placeOf.place }] : [];
-        }),
-      );
     }
     // A game against Hevalo pays nothing: there is nobody to play against, and XP is for games with other people.
     await this.reload(t);
@@ -1196,7 +1147,6 @@ export class MultiplayerService {
       let skipped = false;
       try {
         await client.query('BEGIN');
-        dropAfterCommit(client);
         await client.query(`SET LOCAL lock_timeout = '${opts.skipLocked ? 2 : 5}s'`);
         const t = await this.lockWith(client, lobbyId, opts.skipLocked);
         if (!t) {
@@ -1206,13 +1156,11 @@ export class MultiplayerService {
         } else {
           const value = await fn(t);
           await client.query('COMMIT');
-          runAfterCommit(client);
           this.afterCommit(t);
           return { value };
         }
       } catch (err) {
         await client.query('ROLLBACK').catch(() => undefined);
-        dropAfterCommit(client);
         const code = (err as { code?: string }).code;
         if (attempt === 0 && (code === '40P01' || code === '40001')) continue;
         if (code === '55P03') throw new AppError('GAME_BUSY', 503, 'the game is busy, try again');
@@ -1433,7 +1381,7 @@ export class MultiplayerService {
       settings: m.publicSettings(lobby.settings),
       access: lobby.access,
       code: lobby.status === 'lobby' && !idle ? lobby.code : null,
-      rated: ratedStateOf(lobby),
+      rated: OLD_BUILD_FRIENDLY,
       minPlayers: lobby.min_players,
       maxPlayers: lobby.max_players,
       teams: lobby.teams,
@@ -1461,14 +1409,11 @@ export class MultiplayerService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      dropAfterCommit(client);
       const result = await fn(client);
       await client.query('COMMIT');
-      runAfterCommit(client);
       return result;
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
-      dropAfterCommit(client);
       throw err;
     } finally {
       client.release();

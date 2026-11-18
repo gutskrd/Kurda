@@ -1,9 +1,6 @@
 import type pg from 'pg';
-import { type GameAccess, type InviteSummary, type LobbyCard, type RatedState } from '@kurda/shared';
+import { type GameAccess, type InviteSummary, type LobbyCard } from '@kurda/shared';
 import { XpService } from '../xp/service.js';
-import { RankService } from '../ranks/service.js';
-import { ratedStateOf } from '../ranks/games.js';
-import { dropAfterCommit, runAfterCommit } from '../db/after-commit.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { canJoin, mayHostOpen } from '../play/access.js';
 import {
@@ -78,9 +75,6 @@ export type RemoveResult =
 export type NextResult =
   | { ok: true; id: string }
   | { ok: false; reason: 'not-found' | 'not-finished' | 'not-pair' | 'forbidden' | 'empty-pool' };
-export type SetRatedResult =
-  | { ok: true; battle: BattleState }
-  | { ok: false; reason: 'not-found' | 'forbidden' | 'not-lobby' };
 
 /** Opponent info shown mid-match: progress + finish status only, never letters. */
 export interface OpponentView {
@@ -110,8 +104,6 @@ export interface BattleState {
   createdBy: string;
   isHost: boolean;
   access: GameAccess;
-  /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
-  rated: RatedState;
   /** the code a friend types to join, while it is a lobby that can still be joined; null after */
   code: string | null;
   /** when an active battle ends on its own */
@@ -158,8 +150,6 @@ export interface BattleResults {
 }
 
 interface BattleRow extends LobbyRow {
-  rated: boolean;
-  rated_state: string | null;
   difficulty: Difficulty;
   target: string;
   target_length: number;
@@ -190,8 +180,6 @@ export interface WordleBattleDeps {
   onChange?: (battleId: string, opts?: LobbyChange) => void;
   /** turns an uploaded profile photo's key into its URL, for the players' faces */
   publicUrl?: PublicUrl;
-  /** Game Ranks: Rated/Friendly, decided at the start and applied at the finish */
-  ranks?: RankService;
 }
 
 /** best count of green letters across a player's guesses (for ranking non-solvers) */
@@ -221,21 +209,15 @@ export class WordleBattleService {
   private readonly now: () => Date;
   private readonly onChange: (battleId: string, opts?: LobbyChange) => void;
   private readonly publicUrl: PublicUrl;
-  private readonly ranks: RankService;
 
   constructor(private readonly pool: pg.Pool, deps: WordleBattleDeps = {}) {
     this.xp = deps.xp ?? new XpService(pool);
-    this.ranks = deps.ranks ?? new RankService(pool);
     this.now = deps.now ?? (() => new Date());
     this.onChange = deps.onChange ?? (() => undefined);
     this.publicUrl = deps.publicUrl ?? (() => null);
   }
 
-  /**
-   * A new lobby with its host in it. Rated or Friendly is the host's choice (remembered); omitted, it is their last
-   * choice, or Friendly for a first game among friends or from a chat (ranks/service.ts). At most MAX_HOSTED_GAMES
-   * battles per host (play/lobby.ts `makeRoomToHost`).
-   */
+  /** A new lobby with its host in it. At most MAX_HOSTED_GAMES battles per host (play/lobby.ts `makeRoomToHost`). */
   async create(
     userId: string,
     opts: {
@@ -243,9 +225,6 @@ export class WordleBattleService {
       maxPlayers?: number;
       access?: GameAccess;
       chatGroupId?: string | null;
-      rated?: boolean;
-      /** started from a direct or group chat */
-      fromChat?: boolean;
     },
   ): Promise<CreateResult> {
     const access = opts.access ?? 'friends';
@@ -253,18 +232,14 @@ export class WordleBattleService {
     const picked = await this.pickTarget(opts.difficulty, await recentTargets(this.pool, [userId]));
     if (!picked) return { ok: false, reason: 'empty-pool' };
     const maxPlayers = Math.min(8, Math.max(2, opts.maxPlayers ?? 8));
-    const rated =
-      opts.rated ??
-      (await this.ranks.defaultRated(this.pool, userId, 'wordle-battle', { fromChat: opts.fromChat ?? !!opts.chatGroupId, access }));
     const { id, closed } = await this.tx(async (client) => {
       // at most three of the host's own at once: the oldest lobby nobody started gives way
       const closed = await makeRoomToHost(client, T, userId, this.now());
       const b = await client.query<BattleRow>(
-        `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, max_players, access, chat_group_id, updated_at, rated)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
-        [userId, picked.difficulty, picked.target, toLetters(picked.target).length, maxPlayers, access, opts.chatGroupId ?? null, this.now(), rated],
+        `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, max_players, access, chat_group_id, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+        [userId, picked.difficulty, picked.target, toLetters(picked.target).length, maxPlayers, access, opts.chatGroupId ?? null, this.now()],
       );
-      if (opts.rated !== undefined) await this.ranks.rememberChoice(client, userId, 'wordle-battle', opts.rated);
       await client.query(`INSERT INTO wordle_battle_players (battle_id, user_id, seat) VALUES ($1,$2,1)`, [b.rows[0]!.id, userId]);
       return { id: b.rows[0]!.id, closed };
     });
@@ -317,17 +292,9 @@ export class WordleBattleService {
       if (battle.created_by !== userId) return { ok: false, reason: 'forbidden' };
       if (battle.status !== 'lobby' || lobbyIdle(battle, now)) return { ok: false, reason: 'not-lobby' };
       if (present(seats).length < 2) return { ok: false, reason: 'need-two' };
-      // Rated or not is decided now, on who is actually starting (R2)
-      const decision = await this.ranks.decideAtStart(
-        client,
-        'wordle-battle',
-        battleId,
-        present(seats).map((s) => ({ userId: s.user_id, seat: s.seat })),
-        battle.rated,
-      );
       await client.query(
-        `UPDATE wordle_battles SET status = 'active', started_at = $2, ends_at = $3, updated_at = $2, rated_state = $4 WHERE id = $1`,
-        [battleId, now, minutesAfter(now, BATTLE_MINUTES), decision],
+        `UPDATE wordle_battles SET status = 'active', started_at = $2, ends_at = $3, updated_at = $2 WHERE id = $1`,
+        [battleId, now, minutesAfter(now, BATTLE_MINUTES)],
       );
       // everyone starts out present: away is measured from here
       await client.query(`UPDATE wordle_battle_players SET last_seen_at = $2 WHERE battle_id = $1 AND NOT removed`, [battleId, now]);
@@ -438,13 +405,6 @@ export class WordleBattleService {
           await client.query(`UPDATE wordle_battles SET updated_at = $2 WHERE id = $1`, [battleId, now]);
         }
       } else if (battle.status === 'active' && mine.left_at === null) {
-        // leaving while still racing is a leave (last place, and the cooldown
-        // ladder); leaving the waiting screen after finishing is not
-        const still = await client.query<{ status: GameStatus }>(
-          `SELECT status FROM wordle_battle_players WHERE battle_id = $1 AND user_id = $2`,
-          [battleId, userId],
-        );
-        if (still.rows[0]?.status === 'playing') await this.ranks.recordLeave(client, 'wordle-battle', battleId, userId);
         await client.query(
           `UPDATE wordle_battle_players
               SET left_at = $3,
@@ -512,7 +472,6 @@ export class WordleBattleService {
       isHost: battle.created_by === userId,
       access: battle.access,
       code: battle.status === 'lobby' && !lobbyIdle(battle, this.now()) ? battle.code : null,
-      rated: ratedStateOf(battle),
       endsAt: battle.status === 'active' && battle.ends_at ? battle.ends_at.toISOString() : null,
       nextLobbyId: battle.next_lobby_id,
       players,
@@ -629,30 +588,19 @@ export class WordleBattleService {
         removed: false,
       });
       if (!allowed) return { ok: false, reason: 'not-found' };
-      // the rematch keeps the badge, and starts at once — so it is decided now
+      // the rematch starts at once
       const b = await client.query<{ id: string }>(
         `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, max_players, access, chat_group_id,
-                                     rematch_of, status, started_at, ends_at, updated_at, seats_issued, rated)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$10,$9,2,$11) RETURNING id`,
+                                     rematch_of, status, started_at, ends_at, updated_at, seats_issued)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$10,$9,2) RETURNING id`,
         [host.user_id, picked.difficulty, picked.target, toLetters(picked.target).length, battle.max_players, access,
-          battle.chat_group_id, battleId, now, minutesAfter(now, BATTLE_MINUTES), battle.rated],
+          battle.chat_group_id, battleId, now, minutesAfter(now, BATTLE_MINUTES)],
       );
       created = b.rows[0]!.id;
       await client.query(
         `INSERT INTO wordle_battle_players (battle_id, user_id, seat, last_seen_at) VALUES ($1,$2,1,$4), ($1,$3,2,$4)`,
         [created, host.user_id, other.user_id, now],
       );
-      const decision = await this.ranks.decideAtStart(
-        client,
-        'wordle-battle',
-        created,
-        [
-          { userId: host.user_id, seat: 1 },
-          { userId: other.user_id, seat: 2 },
-        ],
-        battle.rated,
-      );
-      await client.query(`UPDATE wordle_battles SET rated_state = $2 WHERE id = $1`, [created, decision]);
       await client.query(`UPDATE wordle_battles SET next_lobby_id = $2, updated_at = $3 WHERE id = $1`, [battleId, created, now]);
       return { ok: true, id: created };
     });
@@ -685,10 +633,10 @@ export class WordleBattleService {
       if (!picked) return { ok: false, reason: 'empty-pool' };
       const access: GameAccess = battle.access === 'open' && (await mayHostOpen(client, hostId)) ? 'open' : 'friends';
       const b = await client.query<{ id: string }>(
-        `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, max_players, access, chat_group_id, rematch_of, updated_at, rated)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+        `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, max_players, access, chat_group_id, rematch_of, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
         [hostId, picked.difficulty, picked.target, toLetters(picked.target).length, battle.max_players, access,
-          battle.chat_group_id, battleId, now, battle.rated],
+          battle.chat_group_id, battleId, now],
       );
       created = b.rows[0]!.id;
       await client.query(`INSERT INTO wordle_battle_players (battle_id, user_id, seat) VALUES ($1,$2,1)`, [created, hostId]);
@@ -731,33 +679,8 @@ export class WordleBattleService {
   }
 
   async summary(battleId: string): Promise<InviteSummary | null> {
-    const b = await this.pool.query<{ difficulty: Difficulty; rated: boolean }>(
-      `SELECT difficulty, rated FROM wordle_battles WHERE id = $1`,
-      [battleId],
-    );
-    return b.rows[0] ? { difficulty: b.rows[0].difficulty, rated: b.rows[0].rated } : null;
-  }
-
-  /**
-   * The host changes Rated/Friendly, in the lobby only (R2). Everyone sees the new badge at once (`play_changed`) and
-   * may leave at no cost before the start. The choice is remembered for the host's next game.
-   */
-  async setRated(battleId: string, hostId: string, rated: boolean): Promise<SetRatedResult> {
-    const now = this.now();
-    const res = await this.tx<SetRatedResult | null>(async (client) => {
-      const battle = await this.lock(client, battleId);
-      if (!battle) return { ok: false, reason: 'not-found' };
-      const seats = await seatsOf(client, T, battleId);
-      if (!present(seats).some((s) => s.user_id === hostId)) return { ok: false, reason: 'not-found' };
-      if (battle.created_by !== hostId) return { ok: false, reason: 'forbidden' };
-      if (battle.status !== 'lobby' || lobbyIdle(battle, now)) return { ok: false, reason: 'not-lobby' };
-      await client.query(`UPDATE wordle_battles SET rated = $2, updated_at = $3 WHERE id = $1`, [battleId, rated, now]);
-      await this.ranks.rememberChoice(client, hostId, 'wordle-battle', rated);
-      return null;
-    });
-    if (res) return res;
-    this.changed(battleId);
-    return { ok: true, battle: await this.state(battleId, hostId) };
+    const b = await this.pool.query<{ difficulty: Difficulty }>(`SELECT difficulty FROM wordle_battles WHERE id = $1`, [battleId]);
+    return b.rows[0] ? { difficulty: b.rows[0].difficulty } : null;
   }
 
   async card(viewerId: string, battleId: string): Promise<LobbyCard> {
@@ -870,9 +793,6 @@ export class WordleBattleService {
         WHERE p.battle_id = $1 AND p.user_id = v.user_id`,
       [battleId, placed.map((x) => x.userId), placed.map((x) => x.xp)],
     );
-    // a battle that counted moves the ratings, here in the same transaction
-    // (anyone who left mid-race is last, whatever the ranking said)
-    await this.ranks.finish(client, 'wordle-battle', battleId, ranked.map((r) => ({ userId: r.userId, place: r.rank })));
     await client.query(`UPDATE wordle_battles SET status = 'finished', finished_at = $2, updated_at = $2 WHERE id = $1`, [battleId, now]);
   }
 
@@ -893,15 +813,11 @@ export class WordleBattleService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      dropAfterCommit(client);
       const result = await fn(client);
       await client.query('COMMIT');
-      // what waited for the commit (Game Ranks telling the badges)
-      runAfterCommit(client);
       return result;
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
-      dropAfterCommit(client);
       throw err;
     } finally {
       client.release();

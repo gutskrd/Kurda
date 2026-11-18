@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { InviteSummary, LobbyCard } from '@kurda/shared';
 import { AppError } from '../../plugins/errors.js';
 import type { WordleBattleService } from '../../game/wordle-battle-service.js';
-import { nextGameError, openGamesAdultsOnly, parseSettings, setRatedError } from '../errors.js';
+import { nextGameError, openGamesAdultsOnly, parseSettings } from '../errors.js';
 import type { JoinOutcome, LobbyFacts, PlayAdapter, Series } from '../types.js';
 
 /** The presets a Peyvok Battle is created with from an invite (as on POST /wordle/battles). */
@@ -10,7 +10,6 @@ const settingsSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
   maxPlayers: z.number().int().min(2).max(8).optional(),
   access: z.enum(['friends', 'open']).optional(),
-  rated: z.boolean().optional(),
 });
 
 /** Peyvok Battle, as the play layer drives it: a thin translation of the battle service. */
@@ -19,9 +18,9 @@ export class WordleBattleAdapter implements PlayAdapter {
 
   constructor(private readonly battles: WordleBattleService) {}
 
-  async create(hostId: string, settings: unknown, opts: { chatGroupId: string | null; fromChat: boolean }): Promise<string> {
+  async create(hostId: string, settings: unknown, opts: { chatGroupId: string | null }): Promise<string> {
     const s = parseSettings(settingsSchema, settings);
-    const res = await this.battles.create(hostId, { ...s, chatGroupId: opts.chatGroupId, fromChat: opts.fromChat });
+    const res = await this.battles.create(hostId, { ...s, chatGroupId: opts.chatGroupId });
     if (res.ok) return res.battle.id;
     if (res.reason === 'open-needs-adult') throw openGamesAdultsOnly();
     throw new AppError('EMPTY_POOL', 503, 'no words available for play');
@@ -72,11 +71,6 @@ export class WordleBattleAdapter implements PlayAdapter {
 
   touch(lobbyId: string): Promise<void> {
     return this.battles.touch(lobbyId);
-  }
-
-  async setRated(hostId: string, lobbyId: string, rated: boolean): Promise<void> {
-    const res = await this.battles.setRated(lobbyId, hostId, rated);
-    if (!res.ok) throw setRatedError(res.reason);
   }
 
   async cancel(hostId: string, lobbyId: string): Promise<void> {

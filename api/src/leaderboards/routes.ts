@@ -6,8 +6,8 @@ import type { LeaderboardService } from './service.js';
 import { isBoardScope, isBoardType } from './rank.js';
 
 /**
- * Leaderboards: one page of a board plus the caller's own rank. `:type` is `weekly_xp`, `zer` or `gewher`
- * (rank.ts); `scope` is everyone, friends or country, and the caller's rank is computed within that same board.
+ * Leaderboards: one page of a board plus the caller's own rank. `:type` is `weekly_xp`, `all_time_xp`, `zer` or
+ * `gewher` (rank.ts); `scope` is everyone, friends or country, and the caller's rank is computed within that same board.
  */
 export function registerLeaderboardRoutes(app: FastifyInstance, boards: LeaderboardService): void {
   const query = z.object({
@@ -40,6 +40,7 @@ export function registerLeaderboardRoutes(app: FastifyInstance, boards: Leaderbo
     { config: { skipValidation: true }, preHandler: requireRoles('admin') },
     async () => ({
       weekly_xp: await boards.rebuild('weekly_xp'),
+      all_time_xp: await boards.rebuild('all_time_xp'),
       zer: await boards.rebuild('zer'),
       gewher: await boards.rebuild('gewher'),
     }),

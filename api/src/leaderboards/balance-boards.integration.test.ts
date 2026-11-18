@@ -13,7 +13,7 @@ import { loadConfig } from '../config/env.js';
 import { WalletService } from '../wallet/service.js';
 import { makeLearner, removeLearners, type LearnerOptions, type TestLearner } from '../test/progress.js';
 import { befriend } from '../test/social.js';
-import { BALANCE_BOARD_DEPTH, builtKeyFor, GLOBAL_BOARD_REBUILD_SECONDS, LeaderboardService, type Board } from './service.js';
+import { BOARD_DEPTH, builtKeyFor, GLOBAL_BOARD_REBUILD_SECONDS, LeaderboardService, type Board } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -126,7 +126,7 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
   it('ranks what people hold now, highest first, with a tie sharing one place', async () => {
     const board = await boards().board('zer', people.me!.id);
     expect(board.type).toBe('zer');
-    expect(board.depth).toBe(BALANCE_BOARD_DEPTH);
+    expect(board.depth).toBe(BOARD_DEPTH);
     const top = ours(board);
     expect(top.map((e) => e.userId).slice(0, 1)).toEqual([people.top!.id]);
     expect(top.map((e) => [e.username, e.rank, e.score])).toEqual([
@@ -243,7 +243,7 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
   });
 
   it('stops at its depth, and tells someone below the cut their balance with no place beside it', async () => {
-    const shallow = (r?: Redis) => new LeaderboardService(pool, r, { balanceDepth: 2 });
+    const shallow = (r?: Redis) => new LeaderboardService(pool, r, { depth: 2 });
     const check = async (service: LeaderboardService) => {
       const board = await service.board('zer', people.next!.id, { limit: 100 });
       expect(board.depth).toBe(2);
@@ -327,7 +327,7 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     for (const type of ['zer', 'gewher']) {
       const res = await app.inject({ method: 'GET', url: `/leaderboards/${type}?limit=5`, remoteAddress: '10.64.1.1' });
       expect(res.statusCode).toBe(200);
-      expect(res.json()).toMatchObject({ type, scope: 'global', me: null, depth: BALANCE_BOARD_DEPTH });
+      expect(res.json()).toMatchObject({ type, scope: 'global', me: null, depth: BOARD_DEPTH });
       expect(res.json().top.length).toBeLessThanOrEqual(5);
     }
     const gems = await app.inject({ method: 'GET', url: '/leaderboards/gems', remoteAddress: '10.64.1.1' });

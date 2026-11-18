@@ -6,7 +6,7 @@ import { AppError } from '../plugins/errors.js';
  * bot scorer, the anti-cheat shadow flag and the payment-fraud hold.
  *
  * - `economyBlockedSql`: may the system pay this account at all? Asked by unrequested payouts (league promotions,
- *   achievements, season rewards, tournament prizes), which skip a blocked account silently, and by the Zêr and
+ *   achievements, tournament prizes), which skip a blocked account silently, and by the Zêr and
  *   Gewher boards. Closed or banned accounts, confirmed bots, shadow-flagged cheaters and fraud-held accounts are
  *   blocked. Silence matters: a cheater must not learn of the shadow flag from a refusal.
  * - `economyHeldSql`: is the account paused from moving value, where the person asked and must be told? A

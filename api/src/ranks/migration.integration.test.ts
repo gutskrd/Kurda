@@ -8,7 +8,6 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { runner } from 'node-pg-migrate';
-import { pointsOf } from '@kurda/shared';
 import { deleteUsers, rankedUser } from '../test/ranks.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -75,13 +74,14 @@ describe.skipIf(!DATABASE_URL)('the Elo → OpenSkill migration (integration)', 
     expect(v.game).toBe('wordle-battle'); // a quiz room: no current game, so Wordle Battle
     expect(Number(v.mu)).toBeCloseTo(25 + 480 / 48, 9); // 35
     expect(Number(v.sigma)).toBe(4);
-    expect(v.points).toBe(pointsOf(35, 4));
+    // points were 40 × (μ − 3σ)
+    expect(v.points).toBe(920);
     expect(v.placement_done).toBe(true);
     const r = rows.rows.find((x) => x.user_id === rhymer)!;
     expect(r.game).toBe('rhyme-match');
     expect(Number(r.mu)).toBeCloseTo(25 - 96 / 48, 9); // 23
     expect(Number(r.sigma)).toBe(6);
-    expect(r.points).toBe(pointsOf(23, 6));
+    expect(r.points).toBe(200);
     // nothing to carry for someone who never finished a rated game
     expect(rows.rows.some((x) => x.user_id === unplayed)).toBe(false);
 

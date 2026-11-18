@@ -193,7 +193,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     expect(live.status).toBe('active');
     expect(live.code).toBeNull();
     expect(live.board!.turn!.seat).toBeGreaterThan(0);
-    expect(live.rated.counts).not.toBeNull();
+    // older phone builds read the lobby's old Rated/Friendly state: always friendly now
+    expect(live.rated).toEqual({ rated: false, counts: false, friendlyReason: 'chosen', damped: false });
     // a game under way is not joined late
     expect((await call(stranger, 'GET', `/mp/last-letter/${id}`)).status).toBe(404);
   });
@@ -251,7 +252,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     expect(v.players.find((p) => p.isMe)!.away).toBe(false);
   });
 
-  it('ends at the third strike, pays placement to two who played, and counts it for Game Ranks when Rated', async () => {
+  it('ends at the third strike and pays placement to two who played, as a friendly game even when asked Rated', async () => {
     const { host, guest, id } = await started('end', { rated: true });
     const [first, second] = await turnOf(id, host, guest);
     expect((await word(first, id, 'qaxar')).body.outcome.accepted).toBe(true);
@@ -269,8 +270,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     expect(done.results![0]!.xpAwarded).toBe(PLACEMENT_WIN_XP);
     const xp = await pool.query(`SELECT user_id, amount FROM xp_ledger WHERE source = 'game_last_letter' AND ref_id LIKE $1`, [`mp:${id}:%`]);
     expect(xp.rowCount).toBe(2);
-    const rated = await pool.query(`SELECT outcome FROM rated_games WHERE game = 'last-letter' AND game_ref = $1`, [id]);
-    expect(rated.rows[0]?.outcome ?? 'not rated (eligibility)').toBeDefined();
+    expect((await pool.query(`SELECT 1 FROM rated_games WHERE game_ref = $1`, [id])).rowCount).toBe(0);
+    expect((await pool.query(`SELECT 1 FROM rating_events WHERE game_ref = $1`, [id])).rowCount).toBe(0);
   });
 
   it('pays nothing to a game where only one person played, and less against the same person again today', async () => {
