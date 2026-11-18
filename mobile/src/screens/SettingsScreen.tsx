@@ -303,13 +303,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           // The FAQ first: most questions have been asked before.
           key: 'faq',
           terms: [t('settings.faq')],
-          row: <SettingsRow icon="question" title={t('settings.faq')} opens={false} onPress={() => openLegal('faq')} />,
+          row: <SettingsRow icon="question" title={t('settings.faq')} onPress={() => openLegal('faq')} />,
         },
         {
           // Opens the mail app, or copies the address when there is none.
           key: 'support',
           terms: [t('settings.support'), SUPPORT_EMAIL],
-          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => void contactSupport(t)} />,
+          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} onPress={() => void contactSupport(t)} />,
         },
       ],
     },
@@ -321,22 +321,22 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           // Each legal and about page opens on hevalo.app, so there is one copy of each.
           key: 'teaching',
           terms: [t('settings.teaching')],
-          row: <SettingsRow icon="book" title={t('settings.teaching')} opens={false} onPress={() => openLegal('teaching')} />,
+          row: <SettingsRow icon="book" title={t('settings.teaching')} onPress={() => openLegal('teaching')} />,
         },
         {
           key: 'aboutPage',
           terms: [t('settings.about')],
-          row: <SettingsRow icon="globe" title={t('settings.about')} opens={false} onPress={() => openLegal('about')} />,
+          row: <SettingsRow icon="globe" title={t('settings.about')} onPress={() => openLegal('about')} />,
         },
         {
           key: 'terms',
           terms: [t('auth.legal.terms')],
-          row: <SettingsRow icon="text" title={t('auth.legal.terms')} opens={false} onPress={() => openLegal('terms')} />,
+          row: <SettingsRow icon="rules" title={t('auth.legal.terms')} onPress={() => openLegal('terms')} />,
         },
         {
           key: 'privacyPolicy',
           terms: [t('auth.legal.privacy')],
-          row: <SettingsRow icon="lock" title={t('auth.legal.privacy')} opens={false} onPress={() => openLegal('privacy')} />,
+          row: <SettingsRow icon="lock" title={t('auth.legal.privacy')} onPress={() => openLegal('privacy')} />,
         },
         {
           key: 'copyright',
@@ -346,7 +346,6 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
               icon="quotes"
               title={t('settings.copyright.title')}
               subtitle={t('settings.copyright.hint')}
-              opens={false}
               onPress={() => openLegal('copyright')}
             />
           ),

@@ -20,9 +20,9 @@ import type { ApiError } from '../api/types';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
-import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
-import { LargeTitle } from '../navigation/LargeTitle';
-import { BackButton } from '../navigation/BackButton';
+import { useTabBarInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
+import { HeaderButton } from '../navigation/HeaderButton';
 import { Avatar } from '../profile/Avatar';
 import { EmptyState } from '../theme/EmptyState';
 import { mutualText, undoAction } from './format';
@@ -65,7 +65,6 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   // In right-to-left languages the rows start on the right, as the request tickets above do.
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
-  const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserRow[] | null>(null);
   const [friends, setFriends] = useState<UserRow[]>([]);
@@ -238,7 +237,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     // The person and the row's button side by side, never nested: a screen reader reaches only the outer of two nested
     // buttons.
     return (
-      <View key={u.userId} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
+      <View key={u.userId} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
         <PressableScale
           style={[styles.rowOpen, { flexDirection: dir.row }]}
           onPress={() => openProfile(u.userId)}
@@ -272,24 +271,14 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <LargeTitle
-          left={<BackButton onPress={onExit} />}
-          title={t('nav.friends')}
-          style={styles.head}
-          right={
-            <Pressable
-              onPress={() => navigation.popTo('Tabs', { screen: 'Messages' })}
-              reachSize={{ height: LINK_LINE }}
-              style={({ pressed }) => [styles.messagesLink, { flexDirection: dir.row }, pressed && heldDim]}
-              accessibilityRole="button"
-              accessibilityLabel={t('nav.messages')}
-            >
-              <Icon name="chat" size={18} tone="primary" />
-              <Text style={[styles.messages, { color: colors.primary }]}>{t('nav.messages')}</Text>
-            </Pressable>
-          }
-        />
+      {/* The bar every pushed page has, with Messages at its end, and what the page is for under it, as on the website. */}
+      <ScreenHeader
+        title={t('nav.friends')}
+        onBack={onExit}
+        right={<HeaderButton icon="chat" label={t('nav.messages')} onPress={() => navigation.popTo('Tabs', { screen: 'Messages' })} testID="friends-messages" />}
+      />
+      <View style={styles.screen}>
+        <Text style={[styles.intro, dir.text, { color: colors.textSecondary }]}>{t('friends.subtitle')}</Text>
         <SearchField value={query} onChangeText={search} label={t('friends.searchPlaceholder')} returnKeyType="done" />
 
         {showingSearch ? (
@@ -403,25 +392,24 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
 }
 
 /**
- * A line of words beside an 18pt glyph, as the Messages link and a request's Cancel are drawn; the Pressable reaches it
- * to a fingertip.
+ * A line of words beside an 18pt glyph, as a request's Cancel is drawn; the Pressable reaches it to a fingertip.
  */
 const LINK_LINE = 22;
 
-/** People in grey, row for row: the face, the name and its line, the button at the end. */
+/** People row for row, as their cards will stand: the face, the name and its line, the button at the end. */
 function PeopleSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
       {[0, 1, 2, 3, 4].map((i) => (
-        <View key={i} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
-          <Skeleton width={36} height={36} radius={radii.pill} raised />
+        <View key={i} style={[styles.row, { backgroundColor: colors.glassFill }]}>
+          <Skeleton width={36} height={36} radius={radii.pill} />
           <View style={styles.rowMain}>
-            <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '50%'} raised />
-            <SkeletonText size={typography.sizes.sm} width="28%" raised />
+            <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '50%'} />
+            <SkeletonText size={typography.sizes.sm} width="28%" />
           </View>
-          <Skeleton width={64} height={MIN_TOUCH_TARGET - 12} radius={radii.pill} raised />
+          <Skeleton width={64} height={MIN_TOUCH_TARGET - 12} radius={radii.pill} />
         </View>
       ))}
     </View>
@@ -430,10 +418,8 @@ function PeopleSkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   skeleton: { gap: spacing.xs },
-  screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg },
-  head: { marginBottom: spacing.md },
-  messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  screen: { flex: 1, paddingHorizontal: layout.gutter, paddingTop: spacing.xs },
+  intro: { fontSize: typography.sizes.md, lineHeight: 22, marginBottom: spacing.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CREDIT_LINES } from './credits';
+import { CREDIT_LINES, splitCredit } from './credits';
 import { LOCALES, TRANSLATIONS } from '../i18n/translations';
 
 describe('Settings → About Hevalo credits', () => {
@@ -17,5 +17,16 @@ describe('Settings → About Hevalo credits', () => {
       expect(TRANSLATIONS[locale]['settings.credits.art'], locale).toContain('Hevalo');
       expect(TRANSLATIONS[locale]['settings.credits.title'], locale).toBeTruthy();
     }
+  });
+
+  it('sets each line as the work and, under it, its licence, whichever dash the language uses', () => {
+    for (const locale of LOCALES) {
+      for (const key of CREDIT_LINES) {
+        const { work, licence } = splitCredit(TRANSLATIONS[locale][key]);
+        expect(work.length, `${locale} ${key}`).toBeGreaterThan(0);
+        expect(licence, `${locale} ${key}`).toMatch(/License/);
+      }
+    }
+    expect(splitCredit('No licence here')).toEqual({ work: 'No licence here', licence: null });
   });
 });

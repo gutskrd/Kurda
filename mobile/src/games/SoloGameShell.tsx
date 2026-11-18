@@ -418,7 +418,13 @@ export function SoloGameShell<Item, H, C, B = unknown>({
 
   return (
     <GradientBackground>
-      <ScreenHeader title={title} onBack={onExit} leading={phase === 'round' ? 'close' : 'back'} backLabel={phase === 'round' ? t('games.solo.exit') : undefined} />
+      {/* An exercise's first page is headed by its own large title, as on the website, so the bar does not say it twice. */}
+      <ScreenHeader
+        title={exercise && phase === 'intro' ? undefined : title}
+        onBack={onExit}
+        leading={phase === 'round' ? 'close' : 'back'}
+        backLabel={phase === 'round' ? t('games.solo.exit') : undefined}
+      />
       {body}
     </GradientBackground>
   );

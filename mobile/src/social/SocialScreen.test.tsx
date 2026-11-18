@@ -17,6 +17,7 @@ import { forgetReach, reachOf } from '../testing/reach';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
+import { navigation } from '../play/testing/navigation';
 import { SocialScreen } from './SocialScreen';
 import { hideBlocked, unhideBlocked } from './blocks';
 import { watchNotices } from '../testing/notices';
@@ -59,12 +60,19 @@ describe('Friends', () => {
     await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/friends/requests/u3/accept')).toBe(true));
   });
 
-  // A line of words and a button under a fingertip's height, each reached to one up and down, inside its row.
-  it('answers a finger a little above or below the Messages link and a suggestion’s Add', async () => {
+  // A button under a fingertip's height, reached to one up and down, inside its row.
+  it('answers a finger a little above or below a suggestion’s Add', async () => {
     open();
     await screen.findByText('zana');
-    expect(reachOf('Messages')).toEqual({ top: 13, bottom: 13, left: 0, right: 0 });
     expect(reachOf('Add')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
+  });
+
+  it('has the bar every page has, with Messages at its end and what the page is for under it', async () => {
+    open();
+    expect(await screen.findByRole('heading', { name: 'Friends' })).toBeTruthy();
+    expect(screen.getByText('Find other learners, send requests, and see who you’re learning alongside.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Messages' }));
+    expect(navigation.popTo).toHaveBeenCalledWith('Tabs', { screen: 'Messages' });
   });
 
   it('declines through the same route', async () => {

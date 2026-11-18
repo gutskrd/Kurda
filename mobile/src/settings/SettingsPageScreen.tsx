@@ -1,4 +1,3 @@
-import { StyleSheet, Text, View } from 'react-native';
 import { haptic } from '../feedback/haptics';
 import { playSound } from '../feedback/sounds';
 import { useSoundPref } from '../feedback/soundPref';
@@ -7,13 +6,12 @@ import { useVibrationPref } from '../feedback/vibrationPref';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
 import { KeyboardSettingsList } from '../keyboard/KeyboardSettings';
-import { useDirection } from '../reports/direction';
-import { CREDIT_LINES } from '../screens/credits';
+import { CREDIT_LINES, splitCredit } from '../screens/credits';
 import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
 import { PREFERENCE_LABEL, THEME_PREFERENCES, type ThemePreference } from '../theme/appearance';
 import { useEventTheme } from '../theme/EventThemeContext';
+import type { IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { layout, spacing, typography } from '../theme/tokens';
 import { useMyAccount } from './account';
 import { SettingsChoice, SettingsNote, SettingsPage, SettingsRow, SettingsSection, SettingsSwitch } from './list';
 
@@ -194,27 +192,22 @@ function VisibilityList(): React.JSX.Element {
   );
 }
 
-/** Whose work the app uses, and under which licence (see ../screens/credits). */
+/** Whose work the app uses, and under which licence (see ../screens/credits): one row each, on the list's card. */
 function Credits(): React.JSX.Element {
   const { t } = useI18n();
-  const { colors } = useTheme();
-  const dir = useDirection();
   return (
-    <SettingsSection first>
-      <View style={styles.credits}>
-        <Text style={[styles.credit, dir.text, { color: colors.textSecondary }]}>{t('settings.credits.lead')}</Text>
-        {CREDIT_LINES.map((key) => (
-          <Text key={key} style={[styles.credit, dir.text, { color: colors.textPrimary }]}>
-            {t(key)}
-          </Text>
-        ))}
-        <Text style={[styles.credit, dir.text, { color: colors.textSecondary }]}>{t('settings.credits.art')}</Text>
-      </View>
-    </SettingsSection>
+    <>
+      <SettingsNote>{t('settings.credits.lead')}</SettingsNote>
+      <SettingsSection footer={t('settings.credits.art')}>
+        {CREDIT_LINES.map((key, i) => {
+          const { work, licence } = splitCredit(t(key));
+          return <SettingsRow key={key} icon={CREDIT_ICONS[i]} title={work} subtitle={licence ?? undefined} />;
+        })}
+      </SettingsSection>
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  credits: { paddingHorizontal: layout.gutter, gap: spacing.sm, paddingTop: spacing.xs },
-  credit: { fontSize: typography.sizes.sm, lineHeight: 21 },
-});
+/** The typeface, the icons and the emoji, in `CREDIT_LINES` order. */
+const CREDIT_ICONS: readonly IconName[] = ['text', 'star', 'image'];
+

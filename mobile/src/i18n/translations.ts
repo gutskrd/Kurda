@@ -1932,6 +1932,7 @@ export type TranslationKey =
   | 'comments.replyingTo'
   | 'comments.cancelReply'
   | 'friends.searchPlaceholder'
+  | 'friends.subtitle'
   | 'search.friend'
   | 'chat.receipt.read'
   | 'chat.send'
@@ -5306,6 +5307,7 @@ const en: Catalog = {
   'comments.replyingTo': 'Replying to @{name}',
   'comments.cancelReply': 'Cancel reply',
   'friends.searchPlaceholder': 'Search by name or username…',
+  'friends.subtitle': 'Find other learners, send requests, and see who you’re learning alongside.',
   'search.friend': 'Friend',
   'chat.receipt.read': 'Read',
   'chat.send': 'Send',
@@ -9208,6 +9210,7 @@ const ku: Catalog = {
   'comments.replyingTo': 'Bersiva @{name} didî',
   'comments.cancelReply': 'Bersivê betal bike',
   'friends.searchPlaceholder': 'Li gorî nav an navê bikarhêner bigere…',
+  'friends.subtitle': 'Fêrbûyên din bibîne, daxwaz bişîne, û bibîne tu bi kê re fêr dibî.',
   'search.friend': 'Heval',
   'chat.receipt.read': 'Xwendî',
   'chat.send': 'Bişîne',
@@ -13109,6 +13112,7 @@ const de: Catalog = {
   'comments.replyingTo': 'Antwort an @{name}',
   'comments.cancelReply': 'Antwort abbrechen',
   'friends.searchPlaceholder': 'Nach Name oder Benutzername suchen…',
+  'friends.subtitle': 'Finde andere Lernende, schicke Anfragen und sieh, mit wem du lernst.',
   'search.friend': 'Befreundet',
   'chat.receipt.read': 'Gelesen',
   'chat.send': 'Senden',
@@ -17010,6 +17014,7 @@ const es: Catalog = {
   'comments.replyingTo': 'Respondiendo a @{name}',
   'comments.cancelReply': 'Cancelar respuesta',
   'friends.searchPlaceholder': 'Busca por nombre o nombre de usuario…',
+  'friends.subtitle': 'Encuentra a otros que aprenden, envía solicitudes y mira con quién aprendes.',
   'search.friend': 'Amigo/a',
   'chat.receipt.read': 'Leído',
   'chat.send': 'Enviar',
@@ -20911,6 +20916,7 @@ const tr: Catalog = {
   'comments.replyingTo': '@{name} adlı kişiye yanıt veriyorsun',
   'comments.cancelReply': 'Yanıtı iptal et',
   'friends.searchPlaceholder': 'Ada veya kullanıcı adına göre ara…',
+  'friends.subtitle': 'Başka öğrenenleri bul, istek gönder ve kiminle birlikte öğrendiğini gör.',
   'search.friend': 'Arkadaş',
   'chat.receipt.read': 'Okundu',
   'chat.send': 'Gönder',
@@ -24812,6 +24818,7 @@ const ar: Catalog = {
   'comments.replyingTo': 'ردًا على @{name}',
   'comments.cancelReply': 'إلغاء الرد',
   'friends.searchPlaceholder': 'ابحث بالاسم أو اسم المستخدم…',
+  'friends.subtitle': 'اعثر على متعلّمين آخرين، وأرسل طلبات الصداقة، واعرف من يتعلّم معك.',
   'search.friend': 'من أصدقائك',
   'chat.receipt.read': 'مقروء',
   'chat.send': 'إرسال',
@@ -28713,6 +28720,7 @@ const fr: Catalog = {
   'comments.replyingTo': 'En réponse à @{name}',
   'comments.cancelReply': 'Annuler la réponse',
   'friends.searchPlaceholder': 'Rechercher par nom ou nom d’utilisateur…',
+  'friends.subtitle': 'Trouve d’autres apprenants, envoie des demandes et vois avec qui tu apprends.',
   'search.friend': 'Ami·e',
   'chat.receipt.read': 'Lu',
   'chat.send': 'Envoyer',
@@ -32614,6 +32622,7 @@ const nl: Catalog = {
   'comments.replyingTo': 'Reageren op @{name}',
   'comments.cancelReply': 'Reageren annuleren',
   'friends.searchPlaceholder': 'Zoek op naam of gebruikersnaam…',
+  'friends.subtitle': 'Vind andere leerlingen, stuur verzoeken en zie met wie je samen leert.',
   'search.friend': 'Bevriend',
   'chat.receipt.read': 'Gelezen',
   'chat.send': 'Versturen',
@@ -36516,6 +36525,7 @@ const ckb: Catalog = {
   'comments.replyingTo': 'وەڵامدانەوەی @{name}',
   'comments.cancelReply': 'وەڵامدانەوە هەڵبوەشێنەوە',
   'friends.searchPlaceholder': 'بەپێی ناو یان ناوی بەکارهێنەر بگەڕێ…',
+  'friends.subtitle': 'فێرخوازانی تر بدۆزەرەوە، داواکاری بنێرە، و ببینە لەگەڵ کێ فێر دەبیت.',
   'search.friend': 'هاوڕێ',
   'chat.receipt.read': 'خوێندراوە',
   'chat.send': 'بنێرە',
