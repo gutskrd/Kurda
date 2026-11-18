@@ -40,7 +40,8 @@ vi.mock('../auth/AuthProvider', () => {
   return { useAuth: () => ({ client, status: 'signedIn', user: { id: 'me' } }) };
 });
 
-import { useSocialRail } from './useSocialRail';
+import { railEdits, useSocialRail } from './useSocialRail';
+import type { ShownChange } from '../lib/optimistic';
 
 function setVisible(visible: boolean): void {
   Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (visible ? 'visible' : 'hidden') });
@@ -220,5 +221,62 @@ describe('the purse after the reader’s own writes', () => {
     wrote('/me/heartbeat');
     await wait(5_000);
     expect(server.reads).toBe(before + 2);
+  });
+});
+
+const note = (id: string, readAt: string | null) => ({ id, category: 'social', title: id, body: null, createdAt: '2026-11-01T10:00:00Z', readAt });
+const person = (userId: string) => ({ userId, username: userId, displayName: null, avatarUrl: null, online: false, lastSeenAt: null, activity: null });
+
+describe('changes drawn on the rail before the server has them', () => {
+  it('shows a change at once and takes it back on undo', async () => {
+    server.answer = { notifications: [note('n1', null)], unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 } };
+    const view = await mount();
+    let change!: ShownChange;
+    act(() => {
+      change = view.result.current.adjust(railEdits.notificationRead('n1'));
+    });
+    expect(view.result.current.data.unread.notifications).toBe(0);
+    expect(view.result.current.data.notifications[0]!.readAt).not.toBeNull();
+    act(() => change.undo());
+    expect(view.result.current.data.unread.notifications).toBe(1);
+    expect(view.result.current.data.notifications[0]!.readAt).toBeNull();
+  });
+
+  it('holds a kept change over the read it began under, and hands over to the first read begun after it', async () => {
+    server.answer = { requests: [person('rojda')], unread: { notifications: 0, groups: 0, requests: 1, challenges: 0 } };
+    const view = await mount();
+    let change!: ShownChange;
+    act(() => {
+      change = view.result.current.adjust(railEdits.requestAnswered('rojda'));
+    });
+    expect(view.result.current.data.unread.requests).toBe(0);
+    expect(view.result.current.data.requests[0]!.answered).toBe(true);
+    const before = server.reads;
+    act(() => change.keep!());
+    // The server has it now; a read is asked for soon, and its answer replaces the drawing.
+    server.answer = { requests: [], unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 } };
+    await wait(20_000);
+    expect(server.reads).toBeGreaterThan(before);
+    expect(view.result.current.data.requests).toEqual([]);
+    expect(view.result.current.data.unread.requests).toBe(0);
+  });
+
+  it('gives the same answer on a read that already has the change', () => {
+    const data = {
+      you: null,
+      friends: [],
+      requests: [],
+      challenges: [],
+      groups: [{ id: 'g1', name: 'Kurmancî', memberCount: 3, unread: 0 }],
+      notifications: [note('n1', '2026-11-01T11:00:00Z')],
+      unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 },
+    };
+    expect(railEdits.notificationRead('n1')(data)).toBe(data);
+    expect(railEdits.notificationRemoved('n2')(data)).toBe(data);
+    expect(railEdits.requestAnswered('rojda')(data)).toBe(data);
+    expect(railEdits.groupRead('g1')(data)).toBe(data);
+    const unreadGroup = { ...data, groups: [{ ...data.groups[0]!, unread: 4 }], unread: { ...data.unread, groups: 6 } };
+    expect(railEdits.groupRead('g1')(unreadGroup).unread.groups).toBe(2);
+    expect(railEdits.groupRead('g1')(railEdits.groupRead('g1')(unreadGroup)).unread.groups).toBe(2);
   });
 });

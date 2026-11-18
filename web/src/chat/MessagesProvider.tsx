@@ -40,6 +40,8 @@ interface MessagesContextValue {
   unreadTotal: number;
   /** Re-read the counts (after opening or reading a conversation). */
   refreshUnread: () => void;
+  /** Clears one conversation's count at once, before its read receipt is answered; `refreshUnread` brings the truth. */
+  markSeen: (kind: 'dm' | 'group', id: string) => void;
   toasts: MessageToast[];
   dismissToast: (id: string) => void;
 }
@@ -50,9 +52,12 @@ const MessagesCtx = createContext<MessagesContextValue | null>(null);
 const NO_PROVIDER: MessagesContextValue = {
   unreadTotal: 0,
   refreshUnread: () => undefined,
+  markSeen: () => undefined,
   toasts: [],
   dismissToast: () => undefined,
 };
+
+const NOTHING_UNREAD = { dm: {}, group: {} };
 
 /** How long an arrival banner stays before it disappears. */
 const TOAST_MS = 6000;
@@ -72,7 +77,8 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
   const signedIn = status === 'signedIn';
   const location = useLocation();
   const [groups, setGroups] = useState<MyGroup[]>([]);
-  const [unreadTotal, setUnreadTotal] = useState(0);
+  /** Unread messages by conversation: people by their id, groups by theirs. */
+  const [unread, setUnread] = useState<{ dm: Record<string, number>; group: Record<string, number> }>(NOTHING_UNREAD);
   const [toasts, setToasts] = useState<MessageToast[]>([]);
 
   // Which conversation is on screen right now. Derived from the URL rather than
@@ -102,16 +108,17 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
         client.get<{ conversations: Conversation[] }>('/chat/conversations'),
         client.get<{ unread: Array<{ groupId: string; unread: number }> }>('/me/groups/unread'),
       ]);
-      const dmCount = dms.ok ? (dms.data.conversations ?? []).reduce((n, c) => n + (c.unread ?? 0), 0) : 0;
-      const groupCount = gs.ok ? (gs.data.unread ?? []).reduce((n, g) => n + (g.unread ?? 0), 0) : 0;
-      setUnreadTotal(dmCount + groupCount);
+      setUnread({
+        dm: dms.ok ? Object.fromEntries((dms.data.conversations ?? []).map((c) => [c.userId, c.unread ?? 0])) : {},
+        group: gs.ok ? Object.fromEntries((gs.data.unread ?? []).map((g) => [g.groupId, g.unread ?? 0])) : {},
+      });
     })();
   }, [client, signedIn]);
 
   useEffect(() => {
     if (!signedIn) {
       setGroups([]);
-      setUnreadTotal(0);
+      setUnread(NOTHING_UNREAD);
       setToasts([]);
       return;
     }
@@ -189,9 +196,14 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
     setToasts((list) => list.filter((t) => t.id !== id));
   }, []);
 
+  const markSeen = useCallback((kind: 'dm' | 'group', id: string) => {
+    setUnread((u) => (u[kind][id] ? { ...u, [kind]: { ...u[kind], [id]: 0 } } : u));
+  }, []);
+
+  const unreadTotal = useMemo(() => [...Object.values(unread.dm), ...Object.values(unread.group)].reduce((n, c) => n + c, 0), [unread]);
   const value = useMemo<MessagesContextValue>(
-    () => ({ unreadTotal, refreshUnread, toasts, dismissToast }),
-    [unreadTotal, refreshUnread, toasts, dismissToast],
+    () => ({ unreadTotal, refreshUnread, markSeen, toasts, dismissToast }),
+    [unreadTotal, refreshUnread, markSeen, toasts, dismissToast],
   );
 
   return (

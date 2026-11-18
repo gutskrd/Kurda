@@ -41,7 +41,8 @@ import { progressNotification } from '../ranks/notifications';
 import { groupNotification } from '../groups/notifications';
 import { usePlayInvites } from '../play/PlayProvider';
 import { useRail } from '../social/RailProvider';
-import type { RailNotification } from '../social/useSocialRail';
+import { railEdits, type RailNotification } from '../social/useSocialRail';
+import { useOptimisticSend } from '../lib/optimistic';
 import { groupByTime, noteKind, noteWhen, splitAtName, type NoteGroupKey, type NoteKind } from './rows';
 import { useAvatarSrc } from '../art/overrides';
 import { seasonalLogo } from '../brand/season';
@@ -52,60 +53,42 @@ import { ticketToneClass, type TicketTone } from '../ui/Ticket';
 import { useSwipe } from './swipe';
 
 /**
- * Which notifications are new and which were removed, with ways to mark them read or remove them. Changes go to the
- * server and show at once rather than after the next poll; the server keeps them, so the phone agrees.
+ * Marking notifications read and removing them. Each change shows at once on the rail's copy, so the bell and every
+ * count agree, and is taken back with a notice if the server refuses (lib/optimistic.ts); the server keeps them, so
+ * the phone agrees.
  */
-export function useNotificationReads(
-  items: readonly RailNotification[],
-  onActed: () => void,
-): {
+export function useNotificationReads(): {
   isUnread: (n: RailNotification) => boolean;
-  isRemoved: (n: RailNotification) => boolean;
   unread: number;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   remove: (id: string) => Promise<void>;
 } {
   const { client } = useAuth();
-  const [read, setRead] = useState<Set<string>>(() => new Set());
-  const [removed, setRemoved] = useState<Set<string>>(() => new Set());
-  const isUnread = useCallback((n: RailNotification) => n.readAt === null && !read.has(n.id), [read]);
-  const isRemoved = useCallback((n: RailNotification) => removed.has(n.id), [removed]);
+  const { data, adjust } = useRail();
+  const sendShown = useOptimisticSend();
+  const isUnread = useCallback((n: RailNotification) => n.readAt === null, []);
 
   const markRead = useCallback(
     async (id: string) => {
-      setRead((prev) => new Set(prev).add(id));
-      await client.post(`/me/notifications/${id}/read`);
-      onActed();
+      await sendShown(() => client.post(`/me/notifications/${id}/read`), adjust(railEdits.notificationRead(id)), { goneIsDone: true });
     },
-    [client, onActed],
+    [client, adjust, sendShown],
   );
 
   const markAllRead = useCallback(async () => {
-    setRead(new Set(items.map((n) => n.id)));
-    await client.post('/me/notifications/read-all');
-    onActed();
-  }, [client, items, onActed]);
+    await sendShown(() => client.post('/me/notifications/read-all'), adjust(railEdits.allNotificationsRead()));
+  }, [client, adjust, sendShown]);
 
   const remove = useCallback(
     async (id: string) => {
-      setRemoved((prev) => new Set(prev).add(id));
-      const res = await client.delete(`/me/notifications/${id}`);
-      // A removal that failed (and was not already gone) brings the row back.
-      if (!res.ok && res.error.status !== 404) {
-        setRemoved((prev) => {
-          const next = new Set(prev);
-          next.delete(id);
-          return next;
-        });
-      }
-      onActed();
+      // One already gone from the server is gone here too.
+      await sendShown(() => client.delete(`/me/notifications/${id}`), adjust(railEdits.notificationRemoved(id)), { goneIsDone: true });
     },
-    [client, onActed],
+    [client, adjust, sendShown],
   );
 
-  const live = items.filter((n) => !removed.has(n.id));
-  return { isUnread, isRemoved, unread: live.filter(isUnread).length, markRead, markAllRead, remove };
+  return { isUnread, unread: data.notifications.filter(isUnread).length, markRead, markAllRead, remove };
 }
 
 const GROUP_LABEL: Record<NoteGroupKey, MessageKey> = {
@@ -162,7 +145,7 @@ export function NotificationList({
   settingsTo,
 }: {
   items: RailNotification[];
-  reads: Pick<ReturnType<typeof useNotificationReads>, 'isUnread' | 'isRemoved' | 'markRead' | 'remove'>;
+  reads: Pick<ReturnType<typeof useNotificationReads>, 'isUnread' | 'markRead' | 'remove'>;
   /** Called when one is followed to its page, so the holder can close. */
   onFollow?: () => void;
   /** The notification settings page, for each row's link there. */
@@ -182,11 +165,10 @@ export function NotificationList({
   // Rows being removed, animated out before they leave the list.
   const [leaving, setLeaving] = useState<Set<string>>(() => new Set());
 
-  const live = items.filter((n) => !reads.isRemoved(n));
-  const filters = noticeFiltersFor(live);
+  const filters = noticeFiltersFor(items);
   // A filter whose last notification was removed falls back to all.
   const current = filters.includes(filter) ? filter : 'all';
-  const shown = live.filter((n) => noticeShows(n, current));
+  const shown = items.filter((n) => noticeShows(n, current));
 
   const actorOf = (n: RailNotification): Actor | null => {
     const kind = n.data?.kind;
@@ -204,8 +186,14 @@ export function NotificationList({
   const takeAway = (id: string): void => {
     setOpen(null);
     setLeaving((prev) => new Set(prev).add(id));
-    // The row slides out and closes up first, unless Reduce Motion is on.
-    window.setTimeout(() => void reads.remove(id), prefersReducedMotion() ? 0 : 280);
+    // The row slides out and closes up first, unless Reduce Motion is on; one the server keeps comes back whole.
+    const settle = (): void =>
+      setLeaving((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    window.setTimeout(() => void reads.remove(id).then(settle), prefersReducedMotion() ? 0 : 280);
   };
 
   const groups = groupByTime(shown);

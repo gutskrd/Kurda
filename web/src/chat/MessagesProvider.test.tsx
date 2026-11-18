@@ -39,10 +39,17 @@ function makeFakeClient(): { client: RealtimeClient; emit: (env: RealtimeEventEn
   return { client: fake as unknown as RealtimeClient, emit: (env) => listeners.forEach((h) => h(env)) };
 }
 
-/** Shows the unread total so a test can assert on it. */
+/** Shows the unread total so a test can assert on it, and reads one conversation as opening it does. */
 function UnreadProbe(): React.JSX.Element {
-  const { unreadTotal } = useMessages();
-  return <span data-testid="unread">{unreadTotal}</span>;
+  const { unreadTotal, markSeen } = useMessages();
+  return (
+    <>
+      <span data-testid="unread">{unreadTotal}</span>
+      <button type="button" onClick={() => markSeen('dm', 'u2')}>
+        Read zana
+      </button>
+    </>
+  );
 }
 
 function setup(route: string, fetchImpl?: (url: string) => Promise<Response>) {
@@ -200,6 +207,9 @@ describe('MessagesProvider', () => {
     });
 
     expect(await screen.findByText('5')).toBeInTheDocument();
+    // Reading one conversation takes its messages off the total before any receipt is answered.
+    await userEvent.click(screen.getByRole('button', { name: 'Read zana' }));
+    expect(screen.getByTestId('unread')).toHaveTextContent('3');
   });
 
   it('counts again each minute and says it is here every two while the tab is in view, and asks nothing while it is hidden', async () => {
