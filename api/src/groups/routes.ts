@@ -176,7 +176,7 @@ export function registerGroupRoutes(
    */
   const leaveRoom = async (groupId: string, userIds: readonly string[]): Promise<void> => {
     if (!app.hasDecorator('realtime')) return;
-    for (const userId of userIds) await app.realtime.revoke(groupRoom(groupId), userId).catch(() => undefined);
+    await app.realtime.revokeAll(groupRoom(groupId), userIds).catch(() => undefined);
   };
 
   // Nobody joins a group by themselves; kept so older apps showing a Join button are told why.

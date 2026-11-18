@@ -127,8 +127,14 @@ export class RealtimeGateway {
    * theirs in it leaves on whichever node holds it (instructed over the bus, never seen by clients).
    */
   async revoke(roomId: string, userId: string): Promise<void> {
-    await this.kv.del(`rt:invite:${roomId}:${userId}`);
-    await this.bus.publish(roomId, { type: REVOKE_EVENT, userId });
+    await this.revokeAll(roomId, [userId]);
+  }
+
+  /** `revoke` for several people at once: their invites go in one delete, and each is told to leave. */
+  async revokeAll(roomId: string, userIds: readonly string[]): Promise<void> {
+    if (userIds.length === 0) return;
+    await this.kv.del(...userIds.map((userId) => `rt:invite:${roomId}:${userId}`));
+    await Promise.all(userIds.map((userId) => this.bus.publish(roomId, { type: REVOKE_EVENT, userId })));
   }
 
   /**
@@ -265,9 +271,10 @@ export class RealtimeGateway {
         const parsed = JSON.parse(state) as { userId: string; rooms: string[] };
         if (parsed.userId === userId) {
           // Only rooms the user may still be in: a revoked invite is not undone by reconnecting.
-          for (const room of parsed.rooms) {
-            if (await this.kv.get(`rt:invite:${room}:${userId}`)) resumedRooms.push(room);
-          }
+          const invited = await this.kv.getMany(parsed.rooms.map((room) => `rt:invite:${room}:${userId}`));
+          parsed.rooms.forEach((room, i) => {
+            if (invited[i]) resumedRooms.push(room);
+          });
           for (const room of resumedRooms) this.joinLocal(conn, room);
         }
       }
