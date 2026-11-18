@@ -9,26 +9,19 @@ import { useReportAction } from '../reports/reportAction';
 import type { ChatMessage } from '../gifts/api';
 
 /**
- * What a chat message shows, by its kind — the one place a DM and a group
- * thread decide it, so the two cannot disagree.
+ * What a chat message shows, by kind; the one place a DM and a group thread decide it, so they cannot disagree.
  *
- * - `text` — the words. A text that carries a game invite link (from before
- *   invites were cards, or pasted) is drawn as the game's live card, with
- *   what else was written above it.
- * - `gift` — the present (gifts/GiftBubble).
- * - `game` — the game's live card (play/ChatGameCard): whether it can still
- *   be joined, and Join. An invitation to a game Hevalo no longer has, as a
- *   game message or as an old link in a text, is a quiet line saying the game
- *   is no longer played, with nothing to press.
+ * - `text`: the words. A text carrying a game invite link (older invites, or pasted) is drawn as the game's live
+ *   card,
+ *   with any other text above it.
+ * - `gift`: the present (gifts/GiftBubble).
+ * - `game`: the game's live card (play/ChatGameCard), joinable or not. An invitation to a retired game, as a game
+ *   message or an old link in a text, is a quiet line with nothing to press.
  *
- * Returns the content alone: the thread's row (chat/MessageRow.tsx) draws
- * the bubble around a text message, and nothing around a card, which is its
- * own surface.
- *
- * `onReport` (someone else's message): a control inside the message — a gift
- * to open, a game to join — takes the touch, so the row's press-and-hold never
- * fires there; each one reports on a long press too, and carries Report among
- * its screen-reader actions, so a lure link or an unwanted gift can be reported.
+ * Returns the content alone: the thread row (chat/MessageRow.tsx) draws a bubble around text and nothing around a
+ * card. `onReport` (someone else's message): controls inside a message (a gift, a game) take the touch so the
+ * row's long press never fires there, so each also reports on a long press and lists Report among its
+ * screen-reader actions.
  */
 export function MessageContent({
   message,
@@ -41,7 +34,7 @@ export function MessageContent({
   mine: boolean;
   senderName: string;
   onOpenGift: (giftId: string) => void;
-  /** report this message; undefined for your own */
+  /** Report this message; undefined for your own. */
   onReport?: () => void;
 }): React.JSX.Element {
   if (message.kind === 'gift') {
@@ -51,10 +44,10 @@ export function MessageContent({
       <GoneCard onReport={onReport} />
     );
   }
-  // an invitation to a game that has since been retired: nothing to join, so nothing to press
+  // An invitation to a game that has since been retired: nothing to join, so nothing to press.
   const retired = retiredGameOf(message);
   if (retired) return <RetiredGame rest={retired.rest} mine={mine} onReport={onReport} />;
-  // a game card, or an old invite link in a text
+  // A game card, or an old invite link in a text.
   const game = gameCardOf(message);
   if (game) return <GameMessage game={game} mine={mine} from={mine ? undefined : senderName || undefined} onReport={onReport} />;
   if (message.kind === 'game') return <GameFallback onReport={onReport} />;
@@ -67,21 +60,20 @@ function TextBody({ body, mine }: { body: string; mine: boolean }): React.JSX.El
   return <Text style={[styles.body, { color: mine ? colors.bubbleMineInk : colors.bubbleTheirsInk }]}>{body}</Text>;
 }
 
-/** Is this message drawn as its own card (no bubble around it)? A gift, a game card, or an old invite link. */
+/** Is this message drawn as its own card (no bubble)? A gift, a game card, or an old invite link. */
 export function isCardMessage(message: ChatMessage): boolean {
   return message.kind === 'gift' || message.kind === 'game' || gameCardOf(message) !== null || retiredGameOf(message) !== null;
 }
 
 /**
- * Does this message hold something to press — a gift, a game card? A screen
- * reader reaches such a message part by part; any other is read as one
- * element, which is where "Report" sits among its actions.
+ * Does this message contain something to press (a gift, a game card)? Screen readers then reach it part by part;
+ * any other message is one element, carrying "Report" among its actions.
  */
 export function hasControls(message: ChatMessage): boolean {
   return isCardMessage(message);
 }
 
-/** A game in the thread: any words sent with an old invite link in their own bubble, then the live card, saying who posted it. */
+/** A game in the thread: any words sent with an old invite link in their own bubble, then the live card naming who posted it. */
 function GameMessage({
   game,
   mine,
@@ -119,10 +111,8 @@ function GameFallback({ onReport }: { onReport?: () => void }): React.JSX.Elemen
 }
 
 /**
- * An invitation to a game Hevalo no longer has: any words sent with it in
- * their own bubble, then one quiet line. The game cannot be opened, so the
- * line is not a control; it is read as one element, and that is where Report
- * sits for a message somebody else sent.
+ * An invitation to a retired game: any words sent with it in their own bubble, then one quiet line, not a
+ * control, read as one element that carries Report for someone else's message.
  */
 function RetiredGame({ rest, mine, onReport }: { rest: string; mine: boolean; onReport?: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -143,7 +133,7 @@ function RetiredGame({ rest, mine, onReport }: { rest: string; mine: boolean; on
   );
 }
 
-/** A gift whose card is gone (its recipient's account closed): it was a gift, and that is all. */
+/** A gift whose card is gone (its recipient's account closed): it says only that it was a gift. */
 function GoneCard({ onReport }: { onReport?: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -160,7 +150,7 @@ const styles = StyleSheet.create({
   body: { fontSize: typography.sizes.md, lineHeight: 23 },
   game: { gap: spacing.xs, alignItems: 'flex-start' },
   gameMine: { alignItems: 'flex-end' },
-  // the words sent with a card, in a bubble of the thread's own shape (chat/Bubble.tsx), with no tail: the card under it ends the message
+  // Words sent with a card, in a tailless bubble of the thread's shape (chat/Bubble.tsx): the card below ends the message.
   bubble: { borderRadius: radii.lg, paddingVertical: 9, paddingHorizontal: spacing.md - 2 },
   card: {
     flexDirection: 'row',

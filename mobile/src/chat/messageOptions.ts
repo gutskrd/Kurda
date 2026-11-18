@@ -7,13 +7,9 @@ import { showActions, type SheetAction } from '../theme/actionSheet';
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 /**
- * What can be done with a message in a thread: Copy its words, and Report
- * somebody else's. Nothing sits beside a message for this — it is held, as
- * a message is in every messaging app, and the options rise from the bottom
- * of the screen where the thumb already is.
- *
- * A light knock says the hold took. With nothing to offer (your own card,
- * a deleted message) the hold does nothing at all.
+ * What can be done with a message: Copy its words, and Report someone else's. Options come from a hold, as in
+ * every messaging app, rising from the bottom where the thumb is. A light haptic confirms the hold; with nothing
+ * to offer (your own card, a deleted message) the hold does nothing.
  */
 export function messageActions(t: Translate, { words, onReport }: { words?: string | null; onReport?: () => void }): SheetAction[] {
   const actions: SheetAction[] = [];
@@ -30,10 +26,7 @@ export function openMessageOptions(t: Translate, what: { words?: string | null; 
   showActions({ actions, cancel: t('common.cancel') });
 }
 
-/**
- * The same options for a screen reader, as the message's own actions — a
- * hold is not a gesture VoiceOver users make — and what each one does.
- */
+/** The same options as the message's screen-reader actions, since a hold is not a VoiceOver gesture, and what each does. */
 export function messageA11y(
   t: Translate,
   what: { words?: string | null; onReport?: () => void },

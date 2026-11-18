@@ -10,12 +10,11 @@ import { pressedDim } from '../theme/motion';
 import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 
 /**
- * The small parts of a thread that are not messages: the name of a day over
- * its first message, and the round button that leads back down to the newest
- * one. The same in a chat with one friend and in a group's.
+ * The small non-message parts of a thread: a day's name over its first message, and the round button back down to
+ * the newest. Shared by DMs and group chats.
  */
 
-/** "Today", "Yesterday", "Tuesday", "3 March": a small pill in the middle of the thread, over the day's first message. */
+/** "Today", "Yesterday", "Tuesday", "3 March": a small centred pill over the day's first message. */
 export function DayPill({ label }: { label: string }): React.JSX.Element {
   const { colors } = useTheme();
   return (
@@ -27,14 +26,10 @@ export function DayPill({ label }: { label: string }): React.JSX.Element {
   );
 }
 
-/** How far up from the newest message the reader has to be before the way back is offered: a few messages. */
+/** How far above the newest message the reader must be before the way back is offered: a few messages. */
 const AWAY_PX = 240;
 
-/**
- * Whether the reader has scrolled up from the newest message, from the
- * scroll of a list drawn newest-at-the-bottom (inverted): there, the foot of
- * the thread is where the list begins, at an offset of nothing.
- */
+/** Whether the reader has scrolled up from the newest message, in an inverted list where the thread's foot is offset zero. */
 export function useAwayFromLatest(): { away: boolean; onScroll: (e: NativeSyntheticEvent<NativeScrollEvent>) => void } {
   const [away, setAway] = useState(false);
   const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>): void => {
@@ -45,11 +40,8 @@ export function useAwayFromLatest(): { away: boolean; onScroll: (e: NativeSynthe
 }
 
 /**
- * How many messages from other people have come in below while the reader
- * was up the thread: the number on the way back down.
- *
- * Counted from the last message that was there when they were at the foot.
- * Their own never count: sending one is what takes them down.
+ * How many messages from others arrived below while the reader was up the thread, counted from the last message
+ * seen at the foot; their own never count, since sending scrolls them down.
  */
 export function useUnseenBelow(messages: readonly { id: string; senderId: string }[], away: boolean, myId: string): number {
   const seen = useRef<string | null>(null);
@@ -62,16 +54,15 @@ export function useUnseenBelow(messages: readonly { id: string; senderId: string
       return;
     }
     const from = messages.findIndex((m) => m.id === seen.current);
-    // the message they were last at is gone (the chat was cleared): nothing to count from
+    // The message they were last at is gone (the chat was cleared): nothing to count from.
     setCount(from === -1 ? 0 : messages.slice(from + 1).filter((m) => m.senderId !== myId).length);
   }, [messages, away, myId]);
   return count;
 }
 
 /**
- * The way back down: a round button over the foot of the thread, on the
- * side the reader's own words are, with how many messages have come in
- * since they went up. Only there while they are away from the newest.
+ * The way back down: a round button over the thread's foot on the reader's side, with the count of new messages.
+ * Shown only while away from the newest.
  */
 export function JumpToLatest({ unseen, onPress }: { unseen: number; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -112,7 +103,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md - 4,
     paddingVertical: 3,
   },
-  // the touch is 44; the disc drawn in it is a little smaller, as the send button's is
+  // The touch is 44; the disc drawn in it is a little smaller, as the send button's is.
   jump: { position: 'absolute', bottom: spacing.sm, width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   jumpRight: { right: spacing.md - 4 },
   jumpLeft: { left: spacing.md - 4 },

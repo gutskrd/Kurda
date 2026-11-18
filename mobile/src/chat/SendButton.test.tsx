@@ -33,7 +33,7 @@ describe('the composer’s Send', () => {
     const field = await screen.findByLabelText('Message…');
     expect(disabled(screen.getByRole('button', { name: 'Send' }))).toBe(true);
 
-    // spaces are not a message
+    // Spaces are not a message.
     fireEvent.change(field, { target: { value: '   ' } });
     expect(disabled(screen.getByRole('button', { name: 'Send' }))).toBe(true);
 
@@ -45,11 +45,7 @@ describe('the composer’s Send', () => {
   });
 });
 
-/*
- * A message used to leave the field and be nowhere until the server answered.
- * It is in the thread at once, drawn as one on its way, and is never left
- * looking sent when the server would not take it.
- */
+/* A message is in the thread at once, drawn as pending, and is never left looking sent when the server refuses it. */
 describe('a message being sent', () => {
   const sent = { id: 'm1', senderId: 'me', recipientId: 'u2', body: 'Silav', createdAt: '2026-10-20T10:00:00Z', readAt: null };
 
@@ -71,7 +67,7 @@ describe('a message being sent', () => {
 
   it('is in the thread at once, as one on its way, and becomes the server’s when it answers', async () => {
     const { answer, field } = await open();
-    // before the server has said anything: there, marked as on its way, and the field is free for the next one
+    // Before the server has answered: shown as pending, and the field is free for the next one.
     const sending = screen.getByTestId('message-sending');
     expect(sending.textContent).toContain('Silav');
     expect(sending.getAttribute('aria-busy')).toBe('true');
@@ -85,7 +81,7 @@ describe('a message being sent', () => {
     const { answer, field } = await open();
     expect(screen.getByTestId('message-sending')).toBeTruthy();
     await answer(fail({ message: 'You can’t message this person.' }));
-    // never left looking sent
+    // Never left looking sent.
     expect(screen.queryByTestId('message-sending')).toBeNull();
     expect(screen.getAllByText('Silav')).toEqual([field]);
     expect((field as HTMLTextAreaElement).value).toBe('Silav');

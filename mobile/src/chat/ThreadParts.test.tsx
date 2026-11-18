@@ -21,11 +21,11 @@ describe('how many messages came in below', () => {
     const first = [m('a', 'u2'), m('b', 'me')];
     const { result, rerender } = renderHook(({ messages, away }) => useUnseenBelow(messages, away, 'me'), { initialProps: { messages: first, away: false } });
     expect(result.current).toBe(0);
-    // up the thread, and two arrive: one theirs, one the reader’s own from another phone
+    // Up the thread, and two arrive: one theirs, one the reader’s own from another phone.
     rerender({ messages: first, away: true });
     rerender({ messages: [...first, m('c', 'u2'), m('d', 'me'), m('e', 'u2')], away: true });
     expect(result.current).toBe(2);
-    // back at the foot: seen
+    // Back at the foot: seen.
     rerender({ messages: [...first, m('c', 'u2'), m('d', 'me'), m('e', 'u2')], away: false });
     expect(result.current).toBe(0);
   });
@@ -33,7 +33,7 @@ describe('how many messages came in below', () => {
   it('counts nothing when the message they were at is gone', () => {
     const { result, rerender } = renderHook(({ messages, away }) => useUnseenBelow(messages, away, 'me'), { initialProps: { messages: [m('a', 'u2')], away: false } });
     rerender({ messages: [m('a', 'u2')], away: true });
-    // the chat was cleared and started again
+    // The chat was cleared and started again.
     rerender({ messages: [m('x', 'u2'), m('y', 'u2')], away: true });
     expect(result.current).toBe(0);
   });

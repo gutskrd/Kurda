@@ -25,16 +25,15 @@ function show(m: ChatMessage, mine = false): ReturnType<typeof fakeClient> {
 }
 
 /*
- * Don't Say the Word! and Kurdish Bluff are no longer part of Hevalo, and a
- * chat still holds the invitations sent while they were. Such a message is a
- * quiet line that says so, with nothing to press and no room asked about.
+ * Invitations to retired games (Don't Say the Word!, Kurdish Bluff) still in a chat show a quiet line saying so,
+ * with nothing to press and no room fetched.
  */
 describe('an invitation to a game that has been retired, in a chat', () => {
   it('is one quiet line saying the game is no longer played, with nothing to press', () => {
     const client = show(message({ kind: 'game', game: { game: 'dont-say', lobbyId: LOBBY } } as never));
     expect(screen.getByText('This game is no longer played.')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
-    // the room is not looked up: there is no such game to ask about
+    // The room is not looked up: there is no such game to ask about.
     expect(client.calls).toEqual([]);
   });
 

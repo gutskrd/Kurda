@@ -9,20 +9,14 @@ export const RUN_FACE = 28;
 
 /** The tail's own box: a corner drawn out to a point, half of it under the bubble. */
 const TAIL = { width: 14, height: 15, reach: 7 } as const;
-/** From where it joins the bubble, round and down to its point, and back along the foot. Drawn for a speaker on the left. */
+/** The tail's outline, from where it joins the bubble round to its point and back along the foot, drawn for a speaker on the left. */
 const TAIL_PATH = 'M14 0C13.4 8.6 9 13.4 0 15H14Z';
 
 /**
- * A speech bubble, in one of the conversation's two voices.
- *
- * Messages from one person in a row are one block: the corners on the
- * speaker's side tighten between them, so the eye reads the run as a single
- * turn, and the last of the run draws its corner out into a tail pointing at
- * whoever said it. Your own are in the sun's gold on your side of the
- * thread, the other side's in a quiet neutral on theirs.
- *
- * `side` is where the speaker is on the glass, not who they are: a thread
- * read from the right has your words on the left, and the tail goes with them.
+ * A speech bubble in one of the conversation's two voices. Consecutive messages from one person form one block:
+ * the corners on the speaker's side tighten between them, and the last draws a tail toward the speaker. Your own
+ * are gold on your side, theirs a quiet neutral on theirs. `side` is the speaker's position, not their identity:
+ * in a right-to-left thread your words are on the left, and the tail goes with them.
  */
 export function Bubble({
   mine,
@@ -33,18 +27,18 @@ export function Bubble({
   style,
 }: {
   mine: boolean;
-  /** the edge of the screen the speaker is on */
+  /** The edge of the screen the speaker is on. */
   side: 'left' | 'right';
-  /** the first of its run */
+  /** The first of its run. */
   first: boolean;
-  /** the last of its run: it wears the tail */
+  /** The last of its run: it wears the tail. */
   last: boolean;
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const fill = mine ? colors.bubbleMine : colors.bubbleTheirs;
-  // the two corners by the speaker: tight where another of their messages is above or below, and at the tail
+  // The two corners by the speaker: tight where another of their messages is above or below, and at the tail.
   const top = first ? radii.lg : radii.xs;
   const bottom = radii.xs;
   const corners: ViewStyle = side === 'left' ? { borderTopLeftRadius: top, borderBottomLeftRadius: bottom } : { borderTopRightRadius: top, borderBottomRightRadius: bottom };
@@ -72,6 +66,6 @@ const styles = StyleSheet.create({
   bubble: { borderRadius: radii.lg, paddingVertical: 9, paddingHorizontal: spacing.md - 2 },
   tail: { position: 'absolute', bottom: 0, width: TAIL.width, height: TAIL.height },
   tailLeft: { left: -TAIL.reach },
-  // the same shape, turned to point the other way
+  // The same shape, turned to point the other way.
   tailRight: { right: -TAIL.reach, transform: [{ scaleX: -1 }] },
 });
