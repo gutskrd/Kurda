@@ -880,7 +880,7 @@ export const tr: Catalogue = {
   'letters.error.today': 'Bugünlük bu kadar. Kuşun yarın yine uçabilir.',
   'letters.error.bands': 'Artık birbirinize yazamazsınız: mektuplar yalnızca yaşça yakın kişiler arasında gider.',
   'letters.thread.closed': 'Bu yazışma sona erdi. Artık ikiniz de buraya yazamazsınız.',
-  'letters.thread.waiting': 'Kuşun mektubunu götürdü. {name} yazınca cevabı pencerene gelecek.',
+  'letters.thread.waiting': 'Mektubun ulaştı. {name} cevap yazınca kuşu onu pencerene getirecek.',
   'letters.goodbye': 'Veda et',
   'letters.goodbye.title': '{name} ile vedalaşmak istiyor musun? Artık ikiniz de buraya yazamazsınız ve kuşlarınız bir daha karşılaşmaz.',
   'letters.you': 'Sen',

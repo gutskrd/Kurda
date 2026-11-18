@@ -884,7 +884,7 @@ export const fr: Catalogue = {
   'letters.error.today': 'C’est assez pour aujourd’hui. Ton oiseau pourra repartir demain.',
   'letters.error.bands': 'Vous ne pouvez plus vous écrire : les lettres ne circulent qu’entre personnes d’âge proche.',
   'letters.thread.closed': 'Cette correspondance est terminée. Aucun de vous deux ne peut plus écrire ici.',
-  'letters.thread.waiting': 'Ton oiseau est chez {name}. Sa lettre arrivera à ta fenêtre.',
+  'letters.thread.waiting': 'Ta lettre est chez {name}. Sa réponse arrivera à ta fenêtre avec son oiseau.',
   'letters.goodbye': 'Dire au revoir',
   'letters.goodbye.title': 'Dire au revoir à {name} ? Aucun de vous deux ne pourra plus écrire ici, et vos oiseaux ne se rencontreront plus.',
   'letters.you': 'Toi',

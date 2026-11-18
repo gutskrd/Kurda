@@ -879,7 +879,7 @@ export const ar: Catalogue = {
   'letters.error.today': 'يكفي هذا لليوم. يمكن لطائرك أن يطير مجددًا غدًا.',
   'letters.error.bands': 'لم يعد بإمكانكما المراسلة: الرسائل لا تُرسَل إلا بين أشخاص متقاربين في العمر.',
   'letters.thread.closed': 'انتهت هذه المراسلة. لم يعد بإمكان أيٍّ منكما الكتابة هنا.',
-  'letters.thread.waiting': 'طائرك عند {name}. ستصل رسالته إلى نافذتك.',
+  'letters.thread.waiting': 'رسالتك عند {name}. وحين يُكتب الرد، سيحمله طائرٌ إلى نافذتك.',
   'letters.goodbye': 'ودّع',
   'letters.goodbye.title': 'هل تودّع {name}؟ لن يتمكن أيٌّ منكما من الكتابة هنا مجددًا، ولن يلتقي طائراكما مرة أخرى.',
   'letters.you': 'أنت',

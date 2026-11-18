@@ -945,7 +945,7 @@ export const en = {
   'letters.error.today': 'That’s enough letters for today. Your bird can fly again tomorrow.',
   'letters.error.bands': 'You can’t write to each other any more: letters only go between people of a similar age.',
   'letters.thread.closed': 'These letters have ended. Neither of you can write here again.',
-  'letters.thread.waiting': 'Your bird is with {name}. Their letter will come to your window.',
+  'letters.thread.waiting': 'Your letter is with {name}. When they write back, their bird will bring it to your window.',
   'letters.goodbye': 'Say goodbye',
   'letters.goodbye.title': 'Say goodbye to {name}? Neither of you can write here again, and your birds won’t meet again.',
   'letters.you': 'You',
