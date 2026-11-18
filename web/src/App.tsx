@@ -35,6 +35,7 @@ const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })
 const BuildSentence = lazy(() => import('./games/BuildSentence').then((m) => ({ default: m.BuildSentence })));
 const MemoryThief = lazy(() => import('./games/MemoryThief').then((m) => ({ default: m.MemoryThief })));
 const HearIt = lazy(() => import('./games/HearIt').then((m) => ({ default: m.HearIt })));
+const PracticeHub = lazy(() => import('./practice/PracticeHub').then((m) => ({ default: m.PracticeHub })));
 const Detective = lazy(() => import('./games/Detective').then((m) => ({ default: m.Detective })));
 const WhoAmI = lazy(() => import('./whoami/WhoAmI').then((m) => ({ default: m.WhoAmI })));
 const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
@@ -58,6 +59,7 @@ const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn
 const CourseMap = lazy(() => import('./pages/CourseMap').then((m) => ({ default: m.CourseMap })));
 const Lesson = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.Lesson })));
 const Review = lazy(() => import('./pages/Review').then((m) => ({ default: m.Review })));
+const JumpTest = lazy(() => import('./learn/JumpTest').then((m) => ({ default: m.JumpTest })));
 const NextLesson = lazy(() => import('./pages/NextLesson').then((m) => ({ default: m.NextLesson })));
 const Dictionary = lazy(() => import('./pages/Dictionary').then((m) => ({ default: m.Dictionary })));
 const Alphabet = lazy(() => import('./pages/Alphabet').then((m) => ({ default: m.Alphabet })));
@@ -70,6 +72,8 @@ const BadgesPage = lazy(() => import('./badges/BadgesPage').then((m) => ({ defau
 const TreePage = lazy(() => import('./tree/TreePage').then((m) => ({ default: m.TreePage })));
 const SeasonPage = lazy(() => import('./ranks/SeasonPage').then((m) => ({ default: m.SeasonPage })));
 const RanksPage = lazy(() => import('./ranks/RanksPage').then((m) => ({ default: m.RanksPage })));
+// The events running now, with their quests and rewards.
+const EventsPage = lazy(() => import('./events/EventsPage').then((m) => ({ default: m.EventsPage })));
 const Friends = lazy(() => import('./pages/Friends').then((m) => ({ default: m.Friends })));
 const Search = lazy(() => import('./pages/Search').then((m) => ({ default: m.Search })));
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
@@ -219,6 +223,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="learn/lesson/:lessonId" element={<RequireAccount what="gate.what.course"><Lesson /></RequireAccount>} />
         <Route path="learn/review" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
         <Route path="learn/review/:sessionId" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
+        {/* A test that jumps ahead to a later chapter, from the offer on the path (learn/JumpTest.tsx). */}
+        <Route path="learn/jump/:courseId/:unitId" element={<RequireAccount what="gate.what.course"><JumpTest /></RequireAccount>} />
       </Route>
 
       {/* The app, open to read; pages about you or reaching others ask for an account themselves. */}
@@ -249,6 +255,8 @@ export function AppRoutes(): React.JSX.Element {
         {/* The first thing a beginner needs, open to everyone; see pages/Alphabet.tsx. */}
         <Route path="alphabet" element={<Alphabet />} />
         {/* The words after the letters (colours, numbers, days, months), open to everyone (pages/Words.tsx, WordSet.tsx). */}
+        {/* Every kind of practice, each a session of the review player (practice/PracticeHub.tsx). */}
+        <Route path="learn/practice" element={<RequireAccount what="gate.what.course"><PracticeHub /></RequireAccount>} />
         {/* The two lesson exercises that were games: rounds checked against the learner, so they need an account; their old addresses lead here. */}
         <Route path="learn/practice/build-sentence" element={<RequireAccount what="gate.what.course"><BuildSentence /></RequireAccount>} />
         <Route path="learn/practice/hear-it" element={<RequireAccount what="gate.what.course"><HearIt /></RequireAccount>} />
@@ -315,6 +323,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />
         <Route path="badges" element={<RequireAccount what="gate.what.profile"><BadgesPage /></RequireAccount>} />
         <Route path="tree" element={<RequireAccount what="gate.what.profile"><TreePage /></RequireAccount>} />
+        {/* The events running now and their quests, reached from Learn while one runs (events/EventsPage.tsx). */}
+        <Route path="events" element={<RequireAccount what="gate.what.play"><EventsPage /></RequireAccount>} />
         <Route path="season" element={<RequireAccount what="gate.what.play"><SeasonPage /></RequireAccount>} />
         <Route path="ranks" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />
         <Route path="ranks/:game" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />

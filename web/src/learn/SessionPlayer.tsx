@@ -257,6 +257,7 @@ export function SessionPlayer({
   exitLabel,
   onPractise,
   onRestart,
+  renderResults,
 }: {
   session: PlayableSession;
   kind: 'lesson' | 'practice';
@@ -276,6 +277,8 @@ export function SessionPlayer({
   onPractise: (exerciseIds: string[]) => void;
   /** Opens the lesson afresh when the server has closed this session. */
   onRestart?: () => void;
+  /** The end of a session that is not a lesson or a review (a jump-ahead test), in place of the usual results. */
+  renderResults?: (results: SessionResults) => React.ReactNode;
 }): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
@@ -523,6 +526,7 @@ export function SessionPlayer({
 
   // The end: the results take the screen and the lesson's header goes.
   if (results && state.status === 'finished' && !closed) {
+    if (renderResults) return <div className="lesson is-done">{renderResults(results)}</div>;
     return (
       <div className="lesson is-done">
         <Results

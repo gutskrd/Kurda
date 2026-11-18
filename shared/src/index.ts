@@ -97,6 +97,23 @@ export {
   type QuestRow,
   type QuestStep,
 } from './quests.js';
+/** Event quests: their order, whether each can be claimed, and what each pays. */
+export {
+  eventQuestShare,
+  eventQuestState,
+  eventQuestTitle,
+  eventRewardParts,
+  sortEventQuests,
+  type ActiveEvent,
+  type EventQuest,
+  type EventQuestReward,
+  type EventQuests,
+  type EventQuestState,
+  type EventQuestType,
+  type EventRewardCurrency,
+} from './event-quests.js';
+/** The daily XP goal's targets and its status. */
+export { GOAL_OPTIONS, isGoalOption, type DailyGoalStatus, type GoalOption } from './daily-goal.js';
 /** A right answer's praise in the course's own Kurdish: content, kept beside the player rather than in the translations. */
 export { PRAISE, praiseFor, praiseWords } from './praise.js';
 /** What a lesson pays, for the server's XP rules and the "+10–20 XP" a stop's card shows. */

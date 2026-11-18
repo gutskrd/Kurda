@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import type { StoryDetail } from '@kurda/shared';
 import { renderApp } from '../test/utils';
 import { soundPlayer } from '../lib/sound';
-import { StoryPlayerBar, clockText } from './ReaderControls';
+import { StoryPlayerBar } from './ReaderControls';
+import { clockText } from '../lib/clock';
 import { nextRate, useStoryAudio } from './useStoryAudio';
 import { detail, fakeApi } from './testing';
 

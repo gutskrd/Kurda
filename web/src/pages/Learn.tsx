@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { fireLevel } from '@kurda/shared';
+import { fireLevel, type DailyGoalStatus } from '@kurda/shared';
 import { useApiGet, type ApiState } from '../lib/useApi';
 import { useGrowsFrom } from '../lib/viewTransition';
 import { LinkButton } from '../components/Button';
@@ -14,12 +14,16 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { courseProgress, dialectName } from '../learn/map';
 import { CoursePath } from '../learn/CoursePath';
 import { ExerciseTools } from '../learn/practiceTools';
+import { ReviewEntry } from '../learn/ReviewEntry';
 import type { PracticeDue } from '../learn/types';
 import type { MeProfile, StreakSummary } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
 import { LearnHeader } from '../learn/LearnHeader';
 import { StreakSheet } from '../learn/StreakSheet';
+import { GoalRing, GoalSheet } from '../learn/GoalSheet';
+import { WordOfDayTool } from '../learn/WordOfDayTool';
 import { QuestsCard } from '../quests/QuestsCard';
+import { EventCard } from '../events/EventCard';
 import { TreeCard } from '../tree/TreeCard';
 import { BookCard } from '../learn/BookCard';
 import { publishedDictionary } from '../layouts/navLinks';
@@ -27,90 +31,30 @@ import { publishedDictionary } from '../layouts/navLinks';
 /** Three letters a beginner meets first: a familiar one, one with a cedilla, one with a circumflex. */
 const ALPHABET_TEASER = 'Aa Çç Êê';
 
-/** GET /me/daily-goal. */
-interface DailyGoal {
-  goal: number;
-  effectiveGoal: number;
-  earnedXp: number;
-  progress: number;
-  completed: boolean;
-}
-
 /**
- * Review among the practice tools: what is due and the way in. The count matches what a session will find
- * (GET /practice/due), and a review left part-way is offered first at its own address. Its button stays secondary, since
- * the path's "Start" or "Continue" is the page's one primary action.
- */
-function ReviewEntry({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element {
-  const t = useT();
-  const { data, error, loading } = due;
-  let body: React.ReactNode;
-  let action: React.ReactNode = null;
-  if (loading && !data) {
-    body = <Skeleton line w="60%" />;
-  } else if (error || !data) {
-    body = t('review.dueFailed');
-    action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.start')}</LinkButton>;
-  } else if (data.open) {
-    body = t('review.open');
-    action = (
-      <LinkButton to={`/app/learn/review/${encodeURIComponent(data.open)}`} variant="secondary" size="sm">
-        {t('review.continue')}
-      </LinkButton>
-    );
-  } else if (data.available === 0) {
-    body = t('review.none');
-  } else if (data.due > 0) {
-    body = t('review.due', { count: data.due });
-    action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.start')}</LinkButton>;
-  } else {
-    body = t('review.notDue');
-    action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.practise')}</LinkButton>;
-  }
-  return (
-    <section className="learn-tool learn-review" aria-labelledby="learn-review-title">
-      <div className="learn-review-text">
-        <h3 className="learn-tool-title" id="learn-review-title">
-          {t('review.title')}
-        </h3>
-        <p className="learn-review-body">{body}</p>
-      </div>
-      {action}
-    </section>
-  );
-}
-
-/** Today's goal as a small ring. */
-function GoalRing({ share, met }: { share: number; met: boolean }): React.JSX.Element {
-  const r = 11;
-  const c = 2 * Math.PI * r;
-  return (
-    <svg className={`learn-strip-ring${met ? ' is-met' : ''}`} width="28" height="28" viewBox="-14 -14 28 28" aria-hidden="true" focusable="false">
-      <circle className="learn-strip-ring-track" r={r} />
-      {share > 0 && <circle className="learn-strip-ring-fill" r={r} strokeDasharray={`${c * Math.min(1, share)} ${c}`} />}
-    </svg>
-  );
-}
-
-/**
- * Today in one row above the path: the streak (opening `StreakSheet`), today's goal as a ring with its XP, and review's
- * count as a chip. Nothing counts down or warns. It holds its shape until the answers arrive, and a failed part is left
- * out, since the path is the page.
+ * Today in one row above the path: the streak (opening `StreakSheet`), today's goal as a ring with its XP (opening
+ * `GoalSheet` to change it), and review's count as a chip. Nothing counts down or warns. It holds its shape until the
+ * answers arrive, and a failed part is left out, since the path is the page.
  */
 function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
-  const goal = useApiGet<DailyGoal>('/me/daily-goal');
+  const goal = useApiGet<DailyGoalStatus>('/me/daily-goal');
   const me = useApiGet<{ user: MeProfile }>('/me');
   const [streakOpen, setStreakOpen] = useState(false);
+  const [goalOpen, setGoalOpen] = useState(false);
   // A streak restored in the sheet becomes the strip's streak from then on.
   const [restored, setRestored] = useState<StreakSummary | null>(null);
-  const g = goal.data;
+  // Likewise a goal changed in its sheet, as the server answered the change.
+  const [changed, setChanged] = useState<DailyGoalStatus | null>(null);
+  const g = changed ?? goal.data;
   const summary = restored ?? me.data?.user?.streak;
   const streak = summary?.current;
   const number = (n: number): string => n.toLocaleString(locale);
   const waiting = (goal.loading && !g) || (me.loading && !me.data);
   const target = g ? g.effectiveGoal || g.goal : 0;
+  // The goal shows once the server has answered with one; a reply without it leaves the strip without a ring.
+  const goalShown = g && typeof g.earnedXp === 'number' && target > 0 ? g : null;
   const reviewHref = due.data?.open ? `/app/learn/review/${encodeURIComponent(due.data.open)}` : '/app/learn/review';
   return (
     <section className={`learn-strip${waiting ? ' skeleton-late' : ''}`} aria-labelledby="learn-today-title">
@@ -131,27 +75,25 @@ function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element 
               <span className="sr-only">{streak > 0 ? t('learn.today.streak', { count: streak }) : t('learn.today.noStreak')}</span>
             </button>
           )}
-          {g && typeof g.earnedXp === 'number' && target > 0 && (
-            <p
+          {goalShown && (
+            <button
+              type="button"
               className="learn-strip-item learn-strip-goal"
-              role="progressbar"
-              aria-label={t('learn.today.goalLabel')}
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(Math.max(0, Math.min(1, g.progress)) * 100)}
-              aria-valuetext={g.completed ? t('learn.today.done') : t('learn.today.goal', { xp: number(g.earnedXp), goal: number(target) })}
+              aria-haspopup="dialog"
+              aria-label={goalShown.completed ? t('learn.today.done') : `${t('learn.today.goalLabel')}, ${t('learn.today.goal', { xp: number(goalShown.earnedXp), goal: number(target) })}`}
+              onClick={() => setGoalOpen(true)}
             >
-              <GoalRing share={g.progress} met={g.completed} />
+              <GoalRing share={goalShown.progress} met={goalShown.completed} />
               {/* A passed goal shows as done with what was earned, not "130/20 XP". */}
-              {g.completed ? (
+              {goalShown.completed ? (
                 <>
-                  <span aria-hidden="true">{t('leagues.result.xp', { xp: number(g.earnedXp) })}</span>
+                  <span aria-hidden="true">{t('leagues.result.xp', { xp: number(goalShown.earnedXp) })}</span>
                   <CheckIcon size={16} className="learn-strip-done" />
                 </>
               ) : (
-                <span aria-hidden="true">{t('learn.today.goalShort', { xp: number(g.earnedXp), goal: number(target) })}</span>
+                <span aria-hidden="true">{t('learn.today.goalShort', { xp: number(goalShown.earnedXp), goal: number(target) })}</span>
               )}
-            </p>
+            </button>
           )}
           {due.data && (due.data.open || due.data.due > 0) && (
             <Link to={reviewHref} className="learn-strip-item learn-strip-chip">
@@ -161,14 +103,16 @@ function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element 
         </>
       )}
       <StreakSheet streak={streakOpen && summary ? summary : null} onClose={() => setStreakOpen(false)} onRestored={setRestored} />
+      {goalShown && <GoalSheet status={goalShown} open={goalOpen} onClose={() => setGoalOpen(false)} onSaved={setChanged} />}
     </section>
   );
 }
 
 /**
- * Practice tools in one row: review, the alphabet, the words to know and the dictionary, then the two lesson exercises
- * where the variety has enough content (learn/practiceTools.tsx). Visitors get the published dictionary but not review
- * or the exercises, which are the learner's own.
+ * Practice tools in one row: review with the way to every other kind of practice, the alphabet, the words to know, the
+ * dictionary and today's word, then the two lesson exercises where the variety has enough content
+ * (learn/practiceTools.tsx). Visitors get the published dictionary but not review, today's word or the exercises, which
+ * are the learner's own.
  */
 function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Element {
   const t = useT();
@@ -197,7 +141,7 @@ function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Elemen
         {t('learn.tools.title')}
       </h2>
       <div className={`learn-tools${signedIn ? '' : ' is-guest'}`}>
-        {due && <ReviewEntry due={due} />}
+        {due && <ReviewEntry due={due} toPractice />}
         {/* The letters every course is written in, then the first words: one way in (pages/Words.tsx). */}
         <Link ref={wordsCard} to="/app/learn/words" className="learn-tool learn-tool-link">
           <span className="learn-tool-letters" lang="ku" aria-hidden="true">
@@ -207,6 +151,7 @@ function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Elemen
           <span className="learn-tool-body">{t('words.toolHint')}</span>
         </Link>
         {dictionary}
+        {signedIn && <WordOfDayTool />}
         {signedIn && <ExerciseTools />}
       </div>
     </section>
@@ -316,6 +261,7 @@ function Lessons(): React.JSX.Element {
     <>
       <TodayStrip due={due} />
       <QuestsCard />
+      <EventCard />
       <TreeCard />
       <BookCard />
       {entries && entries.length > 1 && (
@@ -371,8 +317,9 @@ function Lessons(): React.JSX.Element {
 }
 
 /**
- * Learn (/app/learn), Lessons half: today's row and quests card (quests/QuestsCard.tsx), the current course's path, the
- * practice tools, and every course with its progress. The Games half is pages/Games.tsx, under the same header.
+ * Learn (/app/learn), Lessons half: today's row, the quests card (quests/QuestsCard.tsx) and an event's while one runs
+ * (events/EventCard.tsx), the current course's path, the practice tools, and every course with its progress. The Games
+ * half is pages/Games.tsx, under the same header.
  */
 export function Learn(): React.JSX.Element {
   const { status } = useAuth();

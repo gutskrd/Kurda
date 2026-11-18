@@ -112,6 +112,21 @@ export interface Streak {
   recent?: RecentDay[];
 }
 
+/** POST /courses/:id/jump: a test that opens a later unit, answered as a practice session (api/src/jump/service.ts). */
+export interface JumpTestStart extends PracticeSessionView {
+  jump: { unitId: string; unitNumber: number; unitTitle: string; mistakesAllowed: number; triesLeft: number };
+}
+
+/** How a jump-ahead test went, as the server decided it when the session completed. */
+export interface JumpOutcome {
+  unitId: string;
+  passed: boolean;
+  /** Right the first time, of every item asked. */
+  correct: number;
+  total: number;
+  mistakesAllowed: number;
+}
+
 /** POST …/complete; a lesson's results carry `firstCompletion`, practice's do not. */
 export interface SessionResults {
   correct: number;
@@ -125,6 +140,8 @@ export interface SessionResults {
   quests?: QuestStep[];
   /** Water this session earned the learner's tree, and their total (absent when none, or on an older server). */
   tree?: { gained: number; water: number };
+  /** A jump-ahead test's outcome. */
+  jump?: JumpOutcome;
 }
 
 /** POST …/answers. */

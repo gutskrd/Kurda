@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Comments } from './Comments';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -61,6 +61,27 @@ describe('Comments', () => {
     expect(await screen.findByText('nice picture')).toBeInTheDocument();
     // The same component with a different set of paths.
     expect(urls[0]).toContain('/images/p1/comments');
+  });
+
+  it('plays a voice comment from the phone rather than showing it blank', async () => {
+    const voice = comment('c1', '', { body: null, audioMediaId: 'voice/v1.m4a', audioUrl: 'https://media.example.test/voice/v1.m4a' });
+    const { fetch } = commentFetch([voice, comment('c2', 'said and written', { audioMediaId: 'voice/v2.m4a', audioUrl: 'https://media.example.test/voice/v2.m4a' })]);
+    vi.stubGlobal('fetch', fetch);
+    renderApp(<Comments postId="p1" commentCount={2} />);
+
+    expect(await screen.findByText('said and written')).toBeInTheDocument();
+    const players = screen.getAllByRole('group', { name: 'Voice comment' });
+    expect(players).toHaveLength(2);
+    expect(within(players[0]!).getByRole('button', { name: 'Play' })).toBeInTheDocument();
+  });
+
+  it('names a voice comment the server cannot serve, so it is not blank either', async () => {
+    const { fetch } = commentFetch([comment('c1', '', { body: null, audioMediaId: 'voice/v1.m4a', audioUrl: null })]);
+    vi.stubGlobal('fetch', fetch);
+    renderApp(<Comments postId="p1" commentCount={1} />);
+
+    expect(await screen.findByText('Voice comment')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Play' })).toBeNull();
   });
 
   it('counts the comment you just wrote', async () => {

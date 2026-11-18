@@ -5,6 +5,7 @@ import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { ErrorState } from '../components/states';
 import { CommentsSkeleton } from '../components/skeletons';
+import { VoicePlayer } from '../components/VoicePlayer';
 import { PostAuthor, type Author } from './PostAuthor';
 import { useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
@@ -44,6 +45,9 @@ interface Comment {
   parentCommentId: string | null;
   depth: number;
   body: string | null;
+  /** A voice note recorded on the phone; the URL is null where the server has no storage to serve it from. */
+  audioMediaId?: string | null;
+  audioUrl?: string | null;
   status: 'visible' | 'removed';
   replyCount: number;
   createdAt: string;
@@ -274,9 +278,26 @@ function CommentNode({
         }
       />
 
-      <div className="comment-body">
-        {removed ? <em className="muted">{t('comments.removed')}</em> : comment.body}
-      </div>
+      {removed ? (
+        <div className="comment-body">
+          <em className="muted">{t('comments.removed')}</em>
+        </div>
+      ) : (
+        <>
+          {/* Isolated, so the comment's own language sets its direction while the row keeps the page's. */}
+          {comment.body && (
+            <div className="comment-body">
+              <bdi>{comment.body}</bdi>
+            </div>
+          )}
+          {comment.audioUrl ? (
+            <VoicePlayer src={comment.audioUrl} label={t('comments.voice')} />
+          ) : (
+            // A voice note this server cannot serve is still named, so the comment is not blank.
+            !comment.body && comment.audioMediaId && <div className="comment-body muted">{t('comments.voice')}</div>
+          )}
+        </>
+      )}
 
       {pending ? (
         <p className={`comment-actions comment-pending${pending === 'failed' ? ' is-failed' : ''}`} role="status">

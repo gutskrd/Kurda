@@ -1787,7 +1787,7 @@ export type TranslationKey =
   | 'common.remove'
   | 'common.tryAgain'
   | 'events.quest.earnXp'
-  | 'events.quest.winGames'
+  | 'events.quest.storyQuizzes'
   | 'events.quest.completeLessons'
   | 'rewards.claimZer'
   | 'rewards.claimedZer'
@@ -5131,7 +5131,7 @@ const en: Catalog = {
   'common.remove': 'Remove',
   'common.tryAgain': 'Please try again.',
   'events.quest.earnXp': 'Earn XP',
-  'events.quest.winGames': 'Win games',
+  'events.quest.storyQuizzes': 'Finish story games',
   'events.quest.completeLessons': 'Complete lessons',
   'rewards.claimZer': 'Claim {amount} Zêr',
   'rewards.claimedZer': '+{amount} Zêr claimed!',
@@ -9033,7 +9033,7 @@ const ku: Catalog = {
   'common.remove': 'Rake',
   'common.tryAgain': 'Ji kerema xwe dîsa biceribîne.',
   'events.quest.earnXp': 'XP bi dest bixe',
-  'events.quest.winGames': 'Lîstikan bi ser bixe',
+  'events.quest.storyQuizzes': 'Lîstikên çîrokê biqedîne',
   'events.quest.completeLessons': 'Waneyan biqedîne',
   'rewards.claimZer': '{amount} Zêr bistîne',
   'rewards.claimedZer': '+{amount} Zêr hate stendin!',
@@ -12934,7 +12934,7 @@ const de: Catalog = {
   'common.remove': 'Entfernen',
   'common.tryAgain': 'Bitte versuche es erneut.',
   'events.quest.earnXp': 'XP verdienen',
-  'events.quest.winGames': 'Spiele gewinnen',
+  'events.quest.storyQuizzes': 'Geschichtenspiele abschließen',
   'events.quest.completeLessons': 'Lektionen abschließen',
   'rewards.claimZer': '{amount} Zêr abholen',
   'rewards.claimedZer': '+{amount} Zêr abgeholt!',
@@ -16835,7 +16835,7 @@ const es: Catalog = {
   'common.remove': 'Quitar',
   'common.tryAgain': 'Inténtalo de nuevo.',
   'events.quest.earnXp': 'Gana XP',
-  'events.quest.winGames': 'Gana partidas',
+  'events.quest.storyQuizzes': 'Termina partidas de historia',
   'events.quest.completeLessons': 'Completa lecciones',
   'rewards.claimZer': 'Reclamar {amount} Zêr',
   'rewards.claimedZer': '¡+{amount} Zêr reclamados!',
@@ -20736,7 +20736,7 @@ const tr: Catalog = {
   'common.remove': 'Kaldır',
   'common.tryAgain': 'Lütfen tekrar dene.',
   'events.quest.earnXp': 'XP kazan',
-  'events.quest.winGames': 'Oyun kazan',
+  'events.quest.storyQuizzes': 'Hikâye oyunlarını bitir',
   'events.quest.completeLessons': 'Dersleri tamamla',
   'rewards.claimZer': '{amount} Zêr al',
   'rewards.claimedZer': '+{amount} Zêr alındı!',
@@ -24637,7 +24637,7 @@ const ar: Catalog = {
   'common.remove': 'إزالة',
   'common.tryAgain': 'يُرجى المحاولة مرة أخرى.',
   'events.quest.earnXp': 'اكسب XP',
-  'events.quest.winGames': 'اربح مباريات',
+  'events.quest.storyQuizzes': 'أكمل ألعاب القصص',
   'events.quest.completeLessons': 'أكمل الدروس',
   'rewards.claimZer': 'احصل على {amount} Zêr',
   'rewards.claimedZer': 'تم الحصول على +{amount} Zêr!',
@@ -28538,7 +28538,7 @@ const fr: Catalog = {
   'common.remove': 'Retirer',
   'common.tryAgain': 'Réessaie.',
   'events.quest.earnXp': 'Gagner de l’XP',
-  'events.quest.winGames': 'Gagner des parties',
+  'events.quest.storyQuizzes': 'Terminer des parties d’histoire',
   'events.quest.completeLessons': 'Terminer des leçons',
   'rewards.claimZer': 'Récupérer {amount} Zêr',
   'rewards.claimedZer': '+{amount} Zêr récupérés !',
@@ -32439,7 +32439,7 @@ const nl: Catalog = {
   'common.remove': 'Verwijderen',
   'common.tryAgain': 'Probeer het opnieuw.',
   'events.quest.earnXp': 'XP verdienen',
-  'events.quest.winGames': 'Spellen winnen',
+  'events.quest.storyQuizzes': 'Verhaalspellen afronden',
   'events.quest.completeLessons': 'Lessen afronden',
   'rewards.claimZer': '{amount} Zêr ophalen',
   'rewards.claimedZer': '+{amount} Zêr opgehaald!',
@@ -36341,7 +36341,7 @@ const ckb: Catalog = {
   'common.remove': 'لابردن',
   'common.tryAgain': 'تکایە دووبارە هەوڵ بدەرەوە.',
   'events.quest.earnXp': 'XP بەدەست بهێنە',
-  'events.quest.winGames': 'یارییەکان ببەرەوە',
+  'events.quest.storyQuizzes': 'یارییەکانی چیرۆک تەواو بکە',
   'events.quest.completeLessons': 'وانەکان تەواو بکە',
   'rewards.claimZer': '{amount} Zêr وەربگرە',
   'rewards.claimedZer': '+{amount} Zêr وەرگیرا!',

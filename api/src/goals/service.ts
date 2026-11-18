@@ -1,30 +1,15 @@
 import type pg from 'pg';
+import { GOAL_OPTIONS, isGoalOption, type DailyGoalStatus, type GoalOption } from '@kurda/shared';
 import { localDate } from '../streaks/streak-logic.js';
 import { AppError } from '../plugins/errors.js';
 
-/** Selectable daily XP targets. */
-export const GOAL_OPTIONS = [10, 20, 30, 50] as const;
-export type GoalOption = (typeof GOAL_OPTIONS)[number];
+// The targets and the status are the apps' too, so they live in @kurda/shared.
+export { GOAL_OPTIONS, isGoalOption, type DailyGoalStatus, type GoalOption };
 
 export const DEFAULT_DAILY_GOAL: GoalOption = 20;
 
 /** Executor: a pool or a client, so evaluation can join a transaction. */
 type Executor = Pick<pg.Pool, 'query'>;
-
-export interface DailyGoalStatus {
-  /** the learner's current goal setting */
-  goal: GoalOption;
-  /** the goal today is actually judged against (min in force today) */
-  effectiveGoal: GoalOption;
-  earnedXp: number;
-  /** 0..1, capped at 1 */
-  progress: number;
-  completed: boolean;
-}
-
-export function isGoalOption(n: number): n is GoalOption {
-  return (GOAL_OPTIONS as readonly number[]).includes(n);
-}
 
 /** Progress toward the goal, clamped to [0, 1]. */
 export function goalProgress(earnedXp: number, effectiveGoal: number): number {
