@@ -31,7 +31,7 @@ describe('the lesson’s chimes on the website', () => {
     const heard: string[] = [];
     const stop = onLessonSound((s) => heard.push(s));
     playLessonSound('correct');
-    playLessonSound('wrong'); // within 90 ms of the last: not heard
+    playLessonSound('wrong'); // Within 90 ms of the last: not heard.
     resetLessonSounds();
     setLessonSounds(false);
     playLessonSound('complete');

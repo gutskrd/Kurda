@@ -38,7 +38,7 @@ describe('pollWhileVisible', () => {
 
     show();
     expect(tick).toHaveBeenCalledTimes(1);
-    // the catch-up is spent: another flip without a missed tick asks nothing
+    // The catch-up is spent: another flip without a missed tick asks nothing.
     show();
     expect(tick).toHaveBeenCalledTimes(1);
     stop();

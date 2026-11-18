@@ -57,11 +57,11 @@ describe('useApiGet', () => {
     await waitFor(() => expect(screen.getByTestId('friends')).toHaveTextContent('rojda'));
     first.unmount();
 
-    // a friend was made meanwhile; and the visit is not within the moment an answer counts as the page's own
+    // A friend was made meanwhile; and the visit is not within the moment an answer counts as the page's own.
     names = ['rojda', 'baran'];
     vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 60_000);
     renderApp(<Friends />);
-    // never "loading": what it showed last time is there from the first frame it draws
+    // Never "loading": what it showed last time is there from the first frame it draws.
     const seen: string[] = [];
     await waitFor(() => {
       seen.push(screen.getByTestId('friends').textContent ?? '');
@@ -94,7 +94,7 @@ describe('useApiGet', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     await act(async () => undefined);
-    // read as the same account would: had anything been kept, this is where it would be
+    // Read as the same account would: had anything been kept, this is where it would be.
     expect(lastAnswer('u1', '/friends')).toBeNull();
   });
 

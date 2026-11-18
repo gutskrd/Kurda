@@ -30,10 +30,7 @@ describe('describeError', () => {
     expect(describeError({ kind: 'client', message: 'Email already taken' }, t)).toBe('Email already taken');
   });
 
-  /**
-   * These are the sentences a person sees when something breaks, which is the
-   * worst moment to be handed a language they do not read.
-   */
+  // Error sentences are read at the worst moment to be handed an unreadable language.
   it('says it in the reader’s language', () => {
     const french = translator(fr);
     expect(describeError({ kind: 'network', message: 'x' }, french)).toMatch(/connexion/i);
@@ -41,21 +38,12 @@ describe('describeError', () => {
     expect(describeError({ kind: 'rate_limited', message: 'x', retryAfterSec: 5 }, french)).toMatch(/5 s/);
   });
 
-  /**
-   * The server's own message is more specific than anything here — "Email
-   * already taken" beats "Something went wrong" — so it still comes through as
-   * it arrived. That it arrives in English is a gap in the API, not one this
-   * function can close by discarding what it knows.
-   */
-  /**
-   * A route the API does not have is a build newer than its server, not
-   * anything the reader did: "route not found" is no sentence to show them.
-   */
+  // A route the API lacks means a build newer than its server, not anything the reader did.
   it('says plainly when the server does not have something yet', () => {
     const missing = { kind: 'client' as const, code: 'NOT_FOUND', message: 'route not found', status: 404 };
     expect(describeError(missing, t)).toBe(t('error.notOnServer'));
     expect(describeError(missing, translator(fr))).toBe(fr['error.notOnServer']);
-    // any other NOT_FOUND keeps the server's own words
+    // Any other NOT_FOUND keeps the server's own words.
     expect(describeError({ ...missing, message: 'no such image' }, t)).toBe('no such image');
   });
 
@@ -65,12 +53,7 @@ describe('describeError', () => {
     );
   });
 
-  /**
-   * The exception to the rule above. An unconfirmed account is refused every
-   * write by the server now, and its reply is a sentence in English telling
-   * you what to do about it — which is the one kind of message that is worse
-   * in a language the reader does not have.
-   */
+  // The exception: the server's English instruction to an unconfirmed account is the message that most needs translating.
   it('translates the not-activated refusal rather than passing it through', () => {
     const notActivated = {
       kind: 'client' as const,
@@ -133,11 +116,7 @@ describe('ApiClient', () => {
     if (!res.ok) expect(res.error.details).toEqual({ scope: 'chat', until: null });
   });
 
-  /**
-   * A ban that lands while someone is signed in answers every request with a
-   * bare ACCOUNT_DISABLED. The refresh is where the reasons and the appeal
-   * token are, so the client asks it once and hands them to the app.
-   */
+  // A ban mid-session answers a bare ACCOUNT_DISABLED; the refresh carries the reasons and appeal token.
   it('finds out why when the account is suspended mid-session', async () => {
     persistTokens({ accessToken: 'a', refreshToken: 'r' }, true);
     const suspended = { until: null, policy: 'spam', statement: 'Spam.', appealable: true, appealToken: 'appeal' };
@@ -154,15 +133,11 @@ describe('ApiClient', () => {
     const res = await client.get('/me');
     expect(res.ok).toBe(false);
     expect(onSuspended).toHaveBeenCalledWith(suspended);
-    // the API ended the sessions; nothing is left that could be replayed
+    // The API ended the sessions; nothing is left to replay.
     expect(storage.get()).toBeNull();
   });
 
-  /**
-   * Hevalo taken offline from the admin console: every request answers 503
-   * MAINTENANCE with what to show, and whichever one finds out first hands it
-   * to the app, which puts the offline screen up.
-   */
+  // Maintenance answers 503 MAINTENANCE with the notice, which the first request to see it hands to the app.
   it('hands on the notice when Hevalo is offline', async () => {
     const maintenance = { title: 'Back soon', message: null, pictureUrl: 'https://cdn.test/a.png', since: '2026-10-27T08:00:00.000Z', backBy: null };
     vi.stubGlobal(
@@ -177,7 +152,7 @@ describe('ApiClient', () => {
     expect(res.ok).toBe(false);
     if (!res.ok) {
       expect(res.error.code).toBe('MAINTENANCE');
-      // said in the reader's words, not "something went wrong on our end"
+      // In the reader's words, not the generic server error.
       expect(describeError(res.error, t)).toBe(en['maintenance.title']);
     }
   });
@@ -200,7 +175,7 @@ describe('ApiClient', () => {
   });
 
   it('sends a credential the caller passed, not the stored session', async () => {
-    // the suspension screen reads with its appeal token; any other session must not stand in for it
+    // The suspension screen reads with its appeal token; no other session may stand in for it.
     persistTokens({ accessToken: 'someone-else', refreshToken: 'r' }, true);
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResponse(200, {}));
     vi.stubGlobal('fetch', fetchMock);
@@ -218,7 +193,7 @@ describe('ApiClient', () => {
     const storage = createTokenStorage();
     const client = new ApiClient('https://api.test', storage, () => {});
 
-    // read before the caller clears storage, as sign-out does
+    // Read before the caller clears storage, as sign-out does.
     const pending = client.endSession();
     storage.clear();
     await pending;
@@ -227,7 +202,7 @@ describe('ApiClient', () => {
     const [url, init] = fetchMock.mock.calls[0]!;
     expect(url).toBe('https://api.test/auth/logout');
     expect(JSON.parse(init!.body as string)).toEqual({ refreshToken: 'the-refresh-token' });
-    // the refresh token is the credential here; no access token rides along
+    // The refresh token is the credential here; no access token rides along.
     expect((init!.headers as Record<string, string>).authorization).toBeUndefined();
   });
 
@@ -255,7 +230,7 @@ describe('ApiClient', () => {
   });
 
   it('gives up on a request when the caller aborts it', async () => {
-    // a long-poll left waiting: the fetch only ends when its signal fires
+    // A long-poll left waiting: the fetch ends only when its signal fires.
     const fetchMock = vi.fn(
       (_url: string, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
@@ -288,12 +263,7 @@ describe('ApiClient', () => {
 });
 
 describe('the sign-up, sign-in and confirmation refusals', () => {
-  /**
-   * Every code the auth routes raise (api/src/auth/routes.ts and service.ts)
-   * answers in the reader's words. The server's English for these is either
-   * vague on purpose or technical, and "Something went wrong" under a sign-up
-   * form once made an iCloud address look as if it could not be used.
-   */
+  /** Every code the auth routes raise (api/src/auth/routes.ts and service.ts), whose server English is vague or technical. */
   const AUTH_CODES = [
     'WEAK_PASSWORD',
     'INVALID_USERNAME',
@@ -326,7 +296,7 @@ describe('the sign-up, sign-in and confirmation refusals', () => {
     const refused = { kind: 'client' as const, code: 'REGISTRATION_FAILED', message: 'unable to register with these details', status: 409 };
     const said = describeError(refused, t);
     expect(said).toBe(en['error.code.registrationFailed']);
-    // the two ways on are named, and nothing confirms the address is registered
+    // Both ways on are named, and nothing confirms the address is registered.
     expect(said).toMatch(/sign in/i);
     expect(said).toMatch(/reset your password/i);
     expect(said).not.toMatch(/already (registered|in use|taken)/i);
@@ -338,7 +308,7 @@ describe('the sign-up, sign-in and confirmation refusals', () => {
     expect(describeError(weak('too-short'), t)).toBe('Use at least 8 characters for your password.');
     expect(describeError(weak('needs-number'), t)).toBe(en['error.code.passwordNeedsNumber']);
     expect(describeError(weak('needs-letter'), t)).toBe(en['error.code.passwordNeedsLetter']);
-    // a rule this build does not know yet still says what a password needs
+    // A rule this build does not know yet still says what a password needs.
     expect(describeError(weak('something-new'), t)).toBe(en['auth.passwordHint']);
   });
 
@@ -349,7 +319,7 @@ describe('the sign-up, sign-in and confirmation refusals', () => {
     expect(describeError(bad('double-punctuation'), t)).toBe(en['error.code.usernameSideBySide']);
     expect(describeError(bad('numbers-only'), t)).toBe(en['error.code.usernameLetter']);
     expect(describeError(bad('reserved'), t)).toBe(en['error.code.usernameUnavailable']);
-    // a reason this page does not know gets the rule as a whole
+    // An unknown reason gets the whole rule.
     expect(describeError(bad('something-newer'), t)).toBe(en['error.code.usernameChars']);
   });
 
@@ -358,7 +328,7 @@ describe('the sign-up, sign-in and confirmation refusals', () => {
     expect(describeError(chars(['!', '?']), t)).toBe('“! ?” can’t be in a username.');
     expect(describeError(chars([' ', '@']), t)).toBe('“@” can’t be in a username.');
     expect(describeError(chars([' ']), t)).toBe(en['error.code.usernameSpaces']);
-    // an older answer without the characters still says what may be used
+    // An older answer without the characters still says what may be used.
     expect(describeError(chars(undefined), t)).toBe(en['error.code.usernameChars']);
   });
 
@@ -370,12 +340,6 @@ describe('the sign-up, sign-in and confirmation refusals', () => {
 });
 
 describe('CODE_COPY', () => {
-  /**
-   * Every 4xx the API raises carries an English message, and describeError
-   * handed it straight to the reader — so a wrong password said "invalid email
-   * or password" in all nine languages. These are the codes that now answer in
-   * the reader's own.
-   */
   it('answers every mapped code from the catalogue rather than the server', () => {
     for (const [code, key] of Object.entries(CODE_COPY)) {
       const said = describeError({ kind: 'client', code, message: 'raw technical detail' }, t);
@@ -388,11 +352,7 @@ describe('CODE_COPY', () => {
     expect(describeError(wrong, translator(fr))).toBe(fr['error.code.invalidCredentials']);
   });
 
-  /**
-   * 105 codes are not in the table, 17 of them carrying several different
-   * messages apiece, so the code alone cannot say which. The server's own
-   * sentence is the honest thing to show for those.
-   */
+  // Unmapped codes, some carrying several different messages, show the server's own sentence.
   it('falls through to the server message for a code it does not know', () => {
     expect(describeError({ kind: 'client', code: 'BAD_ROSTER', message: 'duplicate players in the roster' }, t)).toBe(
       'duplicate players in the roster',
@@ -414,13 +374,10 @@ describe('the sign-in protection refusals', () => {
     ...(details !== undefined ? { details } : {}),
   });
 
-  /**
-   * A lockout is a quarter of an hour at least, and up to a day. It is said the
-   * way a person says it, never as 792 seconds.
-   */
+  // Lockouts last from 15 minutes to a day, said in words rather than seconds.
   it('says how long a lockout lasts in words, not in seconds', () => {
     expect(describeError(locked(900), t, 'en')).toBe(en['error.code.lockedFor'].replace('{duration}', '15 minutes'));
-    // 13.2 minutes left is "about 14 minutes": the sentence says "about"
+    // 13.2 minutes left is "about 14 minutes".
     expect(describeError(locked(792), t, 'en')).toContain('about 14 minutes');
     expect(describeError(locked(792), t, 'en')).not.toMatch(/792|\ds\b/);
     expect(describeError(locked(2 * 3600), t, 'en')).toContain('about 2 hours');
@@ -486,12 +443,12 @@ describe('the device id header', () => {
     await client.delete('/me/sessions?except=current');
     await client.uploadBytes('/me/photo', new Blob(['x'], { type: 'image/png' }));
     await client.endSession();
-    await client.get('/stale'); // a 401: the refresh goes out too
+    await client.get('/stale'); // A 401, so the refresh goes out too.
 
     const sent = fetchMock.mock.calls.map(([url, init]) => [url, (init!.headers as Record<string, string>)['x-device-id']]);
     expect(sent.map(([u]) => u)).toEqual(expect.arrayContaining(['https://api.test/auth/refresh', 'https://api.test/auth/logout']));
     for (const [url, id] of sent) expect(id, String(url)).toBe(deviceId());
-    // an id for a header, never a part of an address
+    // A header, never part of an address.
     for (const [url] of sent) expect(String(url)).not.toContain(deviceId());
   });
 });
@@ -503,7 +460,7 @@ describe('replacing the access token', () => {
     const client = new ApiClient('https://api.test', storage, () => {});
     client.replaceAccessToken('new');
     expect(storage.get()).toEqual({ accessToken: 'new', refreshToken: 'keep-me' });
-    // a session that was not remembered is still not remembered
+    // A session that was not remembered stays unremembered.
     expect(localStorage.getItem('hevalo_tokens')).toBeNull();
     expect(sessionStorage.getItem('hevalo_tokens')).not.toBeNull();
   });

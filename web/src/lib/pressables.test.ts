@@ -3,23 +3,9 @@ import ts from 'typescript';
 import { HAND_TUNED, LARGE_ENOUGH, REACH_CONTROLS, STANDALONE_LINKS } from './reach';
 
 /*
- * Every clickable on the website, counted file by file: has it been looked at
- * for how far it answers a finger, or not yet?
- *
- * A clickable is reviewed when its own classes, as written, name a control in
- * one of the lists in reach.ts (one that reaches, one cut by hand, or one
- * large enough already), or when it is one of the shared buttons that always
- * draw such a class. Everything else is counted, and the counts are kept in
- * reach-unreviewed.json. A file may fall below its count, as its controls are
- * reviewed, but never rise above it: a new button joins a list, or takes a
- * class that is in one.
- *
- * When counts have fallen, `REACH_UPDATE=1` writes the lower numbers back.
- * It never raises one: a count that rose fails here first.
- *
- * The sources are read from the disk, and this workspace's types are the
- * browser's, so the little asked of the machine the suite runs on is
- * described here in full.
+ * Counts every clickable not yet reviewed for its touch reach, file by file. A clickable is reviewed when its classes
+ * name a control in one of reach.ts's lists, or it is a shared button that always draws one. Counts are kept in
+ * reach-unreviewed.json and may fall but never rise; `REACH_UPDATE=1` writes lower counts back.
  */
 interface FileSystem {
   readFileSync(file: URL, encoding: 'utf8'): string;
@@ -29,13 +15,13 @@ interface FileSystem {
 }
 const fileSystem = 'node:fs';
 const { readFileSync, writeFileSync, existsSync, readdirSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
-// the app's sources, wherever the suite is run from; held in a name, so the build does not take it for an asset of its own
+// The app's sources wherever the suite runs from; kept in a variable so the build does not treat it as an asset.
 const here = import.meta.url;
 const src = new URL('../', here);
 const countsFile = new URL('reach-unreviewed.json', here);
 const update = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env.REACH_UPDATE === '1';
 
-/** The shared buttons, which draw a reviewed class of their own whatever a caller adds (components/Button.tsx, CloseButton.tsx, learn/Tile.tsx). */
+/** Shared buttons that always draw a reviewed class (components/Button.tsx, CloseButton.tsx, learn/Tile.tsx). */
 const REVIEWED_COMPONENTS = new Set(['Button', 'LinkButton', 'CloseButton', 'Tile']);
 /** Elements that are clickable by what they are. */
 const CLICKABLE_TAGS = new Set(['button', 'a', 'summary', 'Link', 'NavLink', 'ConfirmButton', ...REVIEWED_COMPONENTS]);
@@ -63,7 +49,7 @@ const tagName = (node: Jsx): string => opening(node).tagName.getText();
 const attribute = (node: Jsx, name: string): ts.JsxAttribute | undefined =>
   opening(node).attributes.properties.find((p): p is ts.JsxAttribute => ts.isJsxAttribute(p) && p.name.getText() === name);
 
-/** Every word written into a class name, in a string, a template's fixed text, or any branch of an expression. */
+/** Every word written into a class name: strings, template text, or any branch of an expression. */
 function classTokens(node: Jsx): string[] {
   const value = attribute(node, 'className')?.initializer;
   if (!value) return [];
@@ -93,7 +79,7 @@ function roleOf(node: Jsx): string | null {
   return null;
 }
 
-/** A label that holds a field: pressing the label presses the field. */
+/** A label wrapping a field, which presses the field. */
 function labelsAField(node: Jsx): boolean {
   if (!ts.isJsxElement(node)) return false;
   let found = false;
@@ -122,7 +108,7 @@ function holders(node: ts.Node): Jsx[] {
   return out;
 }
 
-/** Whether a list names this element: by its own classes and tag, and by what holds it where the entry asks for that. */
+/** Whether a list names this element, by its own classes and tag and by its holders where the entry asks. */
 function isReviewed(node: Jsx): boolean {
   if (REVIEWED_COMPONENTS.has(tagName(node))) return true;
   const own = classTokens(node);
@@ -199,7 +185,7 @@ describe('the clickables on the website', () => {
       .map(([p, n]) => `${p}: ${n}, counted ${base[p] ?? 0}: ${found.get(p)!.map((u) => `${u.line} ${u.what}`).join(', ')}`);
     expect(rose).toEqual([]);
     if (update && kept) {
-      // fewer than counted: write the lower numbers back, and drop the files with none
+      // Fewer than counted: write the lower numbers back and drop files with none.
       const lower = Object.fromEntries(
         Object.keys(kept)
           .filter((p) => (counts[p] ?? 0) > 0)

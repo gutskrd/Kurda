@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { CarriedRouter, HOLD_MS, carriesPages, forgetCarried, isAnotherPage, useGrowsFrom, useGrowsInto } from './viewTransition';
 
-/** A browser that plays motion, or one whose reader asked for less of it. */
+/** A browser that plays motion, or one with reduced motion. */
 function withMotion(reduced = false): void {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: reduced && query.includes('prefers-reduced-motion'),
@@ -12,31 +12,27 @@ function withMotion(reduced = false): void {
   }));
 }
 
-/** What wears a travelling name right now, by test id. */
+/** The test ids of elements wearing a transition name now. */
 function wearing(): string[] {
   return [...document.querySelectorAll<HTMLElement>('[data-testid]')]
     .filter((el) => el.style.viewTransitionName)
     .map((el) => `${el.dataset.testid}=${el.style.viewTransitionName}`);
 }
 
-/** One transition the page asked the browser for, as the stand-in below saw it. */
+/** One transition the page asked for, as the stand-in saw it. */
 interface Asked {
-  /** what wore a name when the picture of the old page was taken */
+  /** What wore a name when the old page's picture was taken. */
   before: string[];
-  /** whether the root said a page was changing at that moment */
+  /** Whether the root said a page was changing at that moment. */
   changing: boolean;
-  /** settles when the next page has been drawn for the new picture */
+  /** Settles when the next page has been drawn. */
   updated: Promise<void>;
   skipped: boolean;
-  /** the movement ends */
+  /** Ends the animation. */
   finish: () => void;
 }
 
-/**
- * The browser's side of a view transition, as far as the page can tell: it
- * takes the old picture when it is asked, calls back a moment later for the
- * new page, and is over when it is told to be.
- */
+/** A stand-in for the browser's view transitions: takes the old picture, calls back for the new page, ends when told. */
 function withTransitions(): Asked[] {
   const asked: Asked[] = [];
   const start = (update: () => Promise<void>): ViewTransition => {
@@ -56,7 +52,7 @@ function withTransitions(): Asked[] {
   return asked;
 }
 
-/** Lets the page catch up: the browser's turn, and the page's own drawing after it. */
+/** Lets the browser's turn and the page's own drawing after it run. */
 async function settled(ms = 30): Promise<void> {
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, ms));
@@ -64,22 +60,20 @@ async function settled(ms = 30): Promise<void> {
 }
 
 /**
- * Waits until the next page has been drawn for the browser's new picture.
- * In two steps, because of how a test draws: what the page schedules while a
- * test is waiting on it is only drawn once that wait is over, so the wait for
- * the page cannot be the same wait as the one the page is drawn in.
+ * Waits until the next page is drawn for the new picture, in two steps: what the page schedules during a test's wait
+ * only runs once that wait is over.
  */
 async function pictured(one: Asked): Promise<void> {
   await settled();
   await act(async () => one.updated);
 }
 
-/** Puts the window at a place down the page: a browser without layout never scrolls by itself. */
+/** Sets the window's scroll; a browser without layout never scrolls by itself. */
 function scrolledTo(top: number): void {
   Object.defineProperty(window, 'scrollY', { value: top, configurable: true });
 }
 
-/** Which cards are off the screen, by test id: a browser without layout puts everything at nowhere, so the tests say where things are. */
+/** Test ids of cards off screen; without layout everything is nowhere, so the tests say where things are. */
 let offScreen: string[] = [];
 
 /** A list with the same card on two shelves, and a link that belongs to neither. */
@@ -134,7 +128,7 @@ function Hurried(): React.JSX.Element {
   );
 }
 
-/** Says where the router thinks the reader is, which has to be where the address bar says. */
+/** Shows where the router thinks the reader is, which must match the address bar. */
 function Elsewhere(): React.JSX.Element {
   const { search } = useLocation();
   return <h1>elsewhere{search}</h1>;
@@ -150,7 +144,7 @@ function Thing(): React.JSX.Element {
   );
 }
 
-/** A page of two cards: one opens a page that says a head is coming and never shows it, the other a page that says nothing. */
+/** Two cards: one opens a page that promises a head and never shows it, the other a page that promises nothing. */
 function Slow(): React.JSX.Element {
   const slow = useGrowsFrom('slow:1');
   const bare = useGrowsFrom('bare:1');
@@ -167,7 +161,7 @@ function Slow(): React.JSX.Element {
   );
 }
 
-/** Its head is promised from the start and waits for something that never arrives. */
+/** Promises its head from the start and waits for something that never arrives. */
 function SlowThing(): React.JSX.Element {
   useGrowsInto('slow:1');
   return <h1>the slow thing</h1>;
@@ -192,12 +186,12 @@ function App(): React.JSX.Element {
 beforeEach(() => {
   window.history.replaceState(null, '', '/');
   offScreen = [];
-  // everything is a hundred pixels square near the top of the window, unless a test has put it off the screen
+  // Everything is a 100px square near the top of the window unless a test puts it off screen.
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function box(this: HTMLElement) {
     const away = offScreen.includes(this.dataset.testid ?? '') ? 5000 : 0;
     return { left: 10, top: 10 + away, right: 110, bottom: 110 + away, width: 100, height: 100, x: 10, y: 10 + away, toJSON: () => ({}) } as DOMRect;
   });
-  // a window that scrolls where it is told to, as far as it is told
+  // A window that scrolls where it is told.
   window.scrollTo = vi.fn((to: ScrollToOptions) => scrolledTo(to.top ?? 0)) as unknown as typeof window.scrollTo;
 });
 
@@ -267,7 +261,7 @@ describe('a change of page', () => {
     fireEvent.click(screen.getByRole('link', { name: 'a page with no head' }));
     expect(asked).toHaveLength(1);
     expect(asked[0]!.changing).toBe(true);
-    // the old page is still the one drawn while its picture is taken
+    // The old page is still drawn while its picture is taken.
     expect(screen.getByRole('heading', { name: 'the list' })).toBeInTheDocument();
     await settled();
     expect(screen.getByRole('heading', { name: 'the slow page' })).toBeInTheDocument();
@@ -338,7 +332,7 @@ describe('a card pressed', () => {
     const asked = withTransitions();
     render(<App />);
     fireEvent.click(screen.getByRole('link', { name: 'open from the second shelf' }));
-    // the same card is on the page twice: only the one that was pressed is named
+    // The card is on the page twice; only the pressed one is named.
     expect(asked[0]!.before).toEqual(['second-picture=carried-picture']);
     await pictured(asked[0]!);
     expect(screen.getByRole('heading', { name: 'the thing' })).toBeInTheDocument();
@@ -354,7 +348,7 @@ describe('a card pressed', () => {
     fireEvent.click(screen.getByRole('link', { name: 'a bare link to the thing' }));
     expect(asked[0]!.before).toEqual([]);
     await pictured(asked[0]!);
-    // the page changes all the same, plainly
+    // The page still changes, plainly.
     expect(screen.getByRole('heading', { name: 'the thing' })).toBeInTheDocument();
     expect(wearing()).toEqual([]);
   });
@@ -390,7 +384,7 @@ describe('a card pressed', () => {
     withMotion();
     const asked = withTransitions();
     render(<App />);
-    // the browser would open the link elsewhere; here there is no elsewhere, so the press is simply let go
+    // The browser would open the link elsewhere; here the press is simply let go.
     document.addEventListener('click', (e) => e.preventDefault(), { once: true });
     fireEvent.click(screen.getByRole('link', { name: 'open from the first shelf' }), { ctrlKey: true });
     expect(asked).toHaveLength(0);
@@ -411,7 +405,7 @@ describe('a card pressed', () => {
     fireEvent.click(screen.getByRole('link', { name: 'open the slow thing' }));
     expect(asked[1]!.before).toEqual(['slow-card=carried-picture']);
     await pictured(asked[1]!);
-    // the page was held for the head, and no longer than that
+    // The page was held for the head, and no longer.
     expect(Date.now() - began).toBeGreaterThanOrEqual(HOLD_MS - 20);
     expect(Date.now() - began).toBeLessThan(HOLD_MS + 400);
     expect(screen.getByRole('heading', { name: 'the slow thing' })).toBeInTheDocument();
@@ -421,7 +415,7 @@ describe('a card pressed', () => {
 });
 
 describe('going back', () => {
-  /** From the list into the thing, through the second shelf’s card, and the movement over. */
+  /** From the list into the thing through the second shelf’s card, animation finished. */
   async function opened(asked: Asked[]): Promise<void> {
     fireEvent.click(screen.getByRole('link', { name: 'open from the second shelf' }));
     await pictured(asked[0]!);
@@ -439,7 +433,7 @@ describe('going back', () => {
     expect(asked[1]!.before).toEqual(['page-head=carried-picture']);
     await pictured(asked[1]!);
     expect(screen.getByRole('heading', { name: 'the list' })).toBeInTheDocument();
-    // one of the two cards for it, and one only
+    // Only one of the two cards.
     expect(wearing()).toHaveLength(1);
     expect(wearing()[0]).toMatch(/^(first|second)-picture=carried-picture$/);
     await act(async () => asked[1]!.finish());
@@ -467,7 +461,7 @@ describe('going back', () => {
     render(<App />);
     scrolledTo(640);
     await opened(asked);
-    // the thing's own page is at its top
+    // The thing's own page is at its top.
     scrolledTo(0);
     act(() => window.history.back());
     await settled();
@@ -483,7 +477,7 @@ describe('going back', () => {
     scrolledTo(640);
     await opened(asked);
     scrolledTo(0);
-    // the list comes back short, and is its full length a moment later: until then it cannot be scrolled past 100
+    // The list comes back short and reaches full length a moment later; until then it cannot scroll past 100.
     let long = false;
     window.scrollTo = vi.fn((to: ScrollToOptions) => scrolledTo(long ? (to.top ?? 0) : Math.min(to.top ?? 0, 100))) as unknown as typeof window.scrollTo;
     window.setTimeout(() => (long = true), 150);
@@ -494,7 +488,7 @@ describe('going back', () => {
     expect(window.scrollY).toBe(640);
     expect(Date.now() - began).toBeGreaterThanOrEqual(140);
     expect(Date.now() - began).toBeLessThan(HOLD_MS);
-    // and the head still found its card, at the place the reader left
+    // The head still found its card at the reader's place.
     expect(wearing()).toHaveLength(1);
   });
 
@@ -519,8 +513,7 @@ describe('going back', () => {
   it('is not carried a second time when the browser has already moved the page across, under a swipe', async () => {
     withMotion();
     const asked = withTransitions();
-    // what a phone's browser says of a Back made by swiping from the edge of the screen; said before the page is
-    // there to hear it, so the page hears it said
+    // What a phone's browser reports for an edge-swipe Back, set in the capture phase before the page hears it.
     window.addEventListener('popstate', (e) => Object.defineProperty(e, 'hasUAVisualTransition', { value: true }), { capture: true, once: true });
     render(<App />);
     await opened(asked);
@@ -536,7 +529,7 @@ describe('going back', () => {
     const asked = withTransitions();
     render(<App />);
     await opened(asked);
-    // the tab was loaded again on the thing’s page: what was remembered of the list is gone
+    // The tab was reloaded on the thing’s page, so what was remembered of the list is gone.
     forgetCarried();
     act(() => window.history.back());
     await settled();

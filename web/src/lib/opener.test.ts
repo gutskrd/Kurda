@@ -57,7 +57,7 @@ describe('where something was opened from', () => {
 
   it('is the middle of the control, for a click the keyboard made', () => {
     const button = control('button', { left: 100, top: 400, width: 80, height: 40 });
-    // Enter on a button: a click with no pointer behind it, at no point at all
+    // Enter on a button: a click with no pointer behind it, at no point at all.
     fireEvent.click(button, { clientX: 0, clientY: 0, detail: 0 });
     expect(openerPoint()).toEqual({ x: 140, y: 420 });
   });
@@ -90,7 +90,7 @@ describe('the point a panel grows from', () => {
     withMotion();
     const button = control('button', { left: 100, top: 400, width: 80, height: 40 });
     fireEvent.click(button, { clientX: 112, clientY: 431, detail: 1 });
-    // a panel 400 by 300 whose corner is at 440, 250: its middle is at 640, 400
+    // A panel 400 by 300 whose corner is at 440, 250: its middle is at 640, 400.
     expect(originIn(panelAt(440, 250, 400, 300))).toBe('calc(50% - 528px) calc(50% + 31px)');
   });
 

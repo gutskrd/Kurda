@@ -1,19 +1,10 @@
 /**
- * The build's own step for the styles of pressing and pointing (vite.config.ts).
- *
- *   - A pressed look written as `:active` is drawn from the `is-pressed` class
- *     instead, which `press.ts` sets only for a real press: at once for a
- *     mouse, but for a finger only once it is not scrolling, so a scroll that
- *     starts on a button no longer lights it up.
- *   - A look written for `:hover` is kept to screens with a pointer that can
- *     hover. On a touch screen a tap leaves the browser's hover stuck on
- *     whatever was tapped, so a button stayed lit after it was let go.
- *
- * The styles are written the ordinary way; this keeps every one of them, now
- * and later, from lighting anything up that the reader did not press.
+ * A PostCSS step in the build (vite.config.ts). `:active` rules become `.is-pressed`, which `press.ts` sets only for a
+ * real press, so scrolls do not light up buttons. `:hover` rules apply only under `(hover: hover)`, since a tap leaves
+ * hover stuck on touch screens.
  */
 
-/** The little of a stylesheet's tree this step reads and writes. */
+/** The part of a stylesheet's tree this step reads and writes. */
 interface Node {
   type: string;
   parent?: Container;
@@ -35,12 +26,12 @@ interface Helpers {
   AtRule: new (props: { name: string; params: string }) => Container;
 }
 
-/** A selector's `:active`, as the class `press.ts` sets for a real press. */
+/** A selector with `:active` replaced by the class `press.ts` sets. */
 export function pressedSelector(selector: string): string {
   return selector.replace(/:active(?![\w-])/g, '.is-pressed');
 }
 
-/** Whether a rule already stands under a condition about hovering, which it is then left to. */
+/** Whether a rule already sits under a hover media condition, in which case it is left alone. */
 function underHoverCondition(rule: Node): boolean {
   for (let p = rule.parent; p; p = p.parent) if (p.type === 'atrule' && p.name === 'media' && /hover/.test(p.params ?? '')) return true;
   return false;

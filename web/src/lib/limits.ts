@@ -6,11 +6,8 @@ import type { ApiError } from './types';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * What each limit says when it is reached (@kurda/shared limits): what the
- * limit is, its number, and the one thing that makes room — never that the
- * reader did something wrong. `theirs` is for a limit that is somebody
- * else's: the friend whose list is full, the member who already runs as many
- * groups as anyone may. The phone says the same sentences
+ * What each limit says when reached (@kurda/shared limits): the limit, its number, and what makes room, never blaming
+ * the reader. `theirs` is for someone else's limit, such as a friend's full list. The phone uses the same sentences
  * (mobile/src/limits/limitCopy.ts).
  */
 const LIMIT_COPY: Record<LimitKind, { mine: MessageKey; theirs?: MessageKey }> = {
@@ -19,12 +16,12 @@ const LIMIT_COPY: Record<LimitKind, { mine: MessageKey; theirs?: MessageKey }> =
   group_members: { mine: 'limits.groupMembers' },
   friends: { mine: 'limits.friends', theirs: 'limits.friendsTheirs' },
   friend_requests_sent: { mine: 'limits.friendRequestsSent' },
-  // only ever somebody else's
+  // Only ever somebody else's.
   friend_requests_received: { mine: 'limits.friendRequestsReceived' },
   blocks: { mine: 'limits.blocks' },
   saved_words: { mine: 'limits.savedWords' },
   play_invites_pending: { mine: 'limits.playInvites' },
-  // the games and the reports said these before there was a limit list
+  // Existing sentences from before the limit list.
   hosted_games: { mine: 'stories.error.tooMany' },
   library_drafts: { mine: 'limits.drafts' },
   reports_per_day: { mine: 'report.error.limit' },
@@ -36,7 +33,7 @@ export function limitText(limit: LimitDetails, t: Translate): string {
   return t(limit.theirs && copy.theirs ? copy.theirs : copy.mine, { max: limit.max });
 }
 
-/** The sentence for an error from the API when it is a limit, or null when it is not one. */
+/** The sentence for an API error that is a limit, or null. */
 export function limitErrorText(error: ApiError | null | undefined, t: Translate): string | null {
   const limit = limitOf(error);
   return limit ? limitText(limit, t) : null;

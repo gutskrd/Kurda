@@ -1,16 +1,8 @@
 import { useEffect, useState } from 'react';
 
 /**
- * True while a CSS media query matches, and re-renders when that changes.
- *
- * Used where a layout decision cannot be expressed in CSS alone — the Peyvok
- * keyboard needs a different ROW SPLIT on a narrow screen, not just different
- * sizes, and rendering both layouts to toggle with CSS would duplicate every key
- * in the accessibility tree.
- *
- * Returns false where matchMedia is unavailable (jsdom under test), which lands
- * on the wide layout — the safe default, since it is the one with no assumptions
- * about the viewport.
+ * Whether a media query matches, re-rendering on change. For layout choices CSS cannot make alone, such as the Peyvok
+ * keyboard's row split. False without matchMedia (tests), which gives the wide layout.
  */
 export function useMediaQuery(query: string): boolean {
   const [matches, setMatches] = useState(() => globalThis.matchMedia?.(query).matches ?? false);
@@ -19,7 +11,7 @@ export function useMediaQuery(query: string): boolean {
     const mq = globalThis.matchMedia?.(query);
     if (!mq) return;
     const onChange = (): void => setMatches(mq.matches);
-    onChange(); // the query may already differ from the initial guess
+    onChange(); // The query may already differ from the initial guess.
     mq.addEventListener('change', onChange);
     return () => mq.removeEventListener('change', onChange);
   }, [query]);
