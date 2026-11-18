@@ -15,7 +15,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { display } from '../theme/fonts';
-import { radii, spacing, typography, wash } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -202,7 +202,7 @@ export function RatingBox({
       ) : null}
 
       {settings || followUp === 'improve' ? (
-        // What it is about, as many as apply: one that is on is a wash of violet with violet words.
+        // What it is about, as many as apply: one that is on is solid violet, as every chosen chip is.
         <View style={[styles.chips, { flexDirection: dir.row }]}>
           {APP_FEEDBACK_CATEGORIES.map((c) => {
             const on = categories.includes(c);
@@ -212,9 +212,9 @@ export function RatingBox({
                 onPress={() => toggle(c)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
-                style={({ pressed }) => [styles.chip, { backgroundColor: on ? wash(colors.primary) : colors.controlTrack }, pressed && heldDim]}
+                style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }, pressed && heldDim]}
               >
-                <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.primary : colors.textPrimary }]}>
+                <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
                   {t(CATEGORY_LABEL[c])}
                 </Text>
               </Pressable>

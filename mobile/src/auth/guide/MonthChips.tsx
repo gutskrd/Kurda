@@ -7,7 +7,7 @@ import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
 import { PressableScale } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
-import { radii, spacing, typography, wash } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
 import { MONTH_KEYS } from '../birthMonth';
 
 /**
@@ -56,11 +56,11 @@ export function MonthChips({
             style={[
               styles.chip,
               columns === 3 ? styles.third : styles.half,
-              { backgroundColor: chosen ? wash(colors.primary) : colors.controlTrack },
+              { backgroundColor: chosen ? colors.primary : colors.controlTrack },
               disabled && styles.dim,
             ]}
           >
-            <Text style={[styles.label, { color: chosen ? colors.primary : colors.textPrimary }, chosen && styles.labelChosen]} numberOfLines={2}>
+            <Text style={[styles.label, { color: chosen ? colors.textOnPrimary : colors.textPrimary }, chosen && styles.labelChosen]} numberOfLines={2}>
               {label}
             </Text>
           </PressableScale>

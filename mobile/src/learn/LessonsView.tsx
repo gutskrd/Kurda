@@ -20,7 +20,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon, type IconName } from '../theme/Icon';
 import { display, sectionLabel } from '../theme/fonts';
-import { layout, radii, spacing, typography, wash } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useTabFocusLoad } from '../navigation/tabFocusLoad';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
@@ -357,10 +357,10 @@ export function LessonsView({
                       onPress={() => setChosen(c.course.id)}
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
-                      // The current course is washed in violet with its name in violet, like the current tab.
-                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? wash(colors.primary) : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                      // The current course in solid violet, as every chosen chip is.
+                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
-                      <Text style={[styles.chipText, dir.free, { color: on ? colors.primary : colors.textSecondary }]} numberOfLines={1}>
+                      <Text style={[styles.chipText, dir.free, { color: on ? colors.textOnPrimary : colors.textSecondary }]} numberOfLines={1}>
                         {c.map?.course.title ?? c.course.title}
                       </Text>
                     </Pressable>

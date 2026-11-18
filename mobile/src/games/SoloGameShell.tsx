@@ -30,7 +30,7 @@ import { PressableScale } from '../theme/MotionParts';
 import { TileButton } from '../theme/Tile';
 import { useTheme } from '../theme/ThemeProvider';
 import { displayFont } from '../theme/fonts';
-import { layout, radii, spacing, typography, wash } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GameArt } from './GameArt';
 import { DIFFICULTY_KEY } from './partyChoices';
 import { dialectNameKey } from '../i18n/dialectName';
@@ -393,10 +393,10 @@ export function SoloGameShell<Item, H, C, B = unknown>({
                 accessibilityRole="radio"
                 accessibilityState={{ checked: on, disabled: !can }}
                 accessibilityLabel={t(DIFFICULTY_KEY[d])}
-                // The chosen one is marked as the segmented control and the tab bar mark theirs: a wash of the violet.
-                style={[styles.chip, { backgroundColor: on ? wash(colors.primary) : colors.controlTrack, opacity: can ? 1 : 0.5 }]}
+                // The chosen one is marked as every chosen chip and segment is: solid violet.
+                style={[styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: can ? 1 : 0.5 }]}
               >
-                <Text style={[styles.chipText, { color: on ? colors.primary : colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular }]}>
+                <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary, fontWeight: on ? typography.weights.semibold : typography.weights.regular }]}>
                   {t(DIFFICULTY_KEY[d])}
                 </Text>
               </PressableScale>
