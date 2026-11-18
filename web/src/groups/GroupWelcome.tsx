@@ -9,14 +9,9 @@ import { GroupAvatar } from './GroupAvatar';
 import { GREETINGS } from './standing';
 
 /**
- * What an empty group chat shows instead of nothing: the group's picture,
- * large, and its name; where the chat stands — brand new, or cleared by you
- * (cleared for everyone says so in its own line above this) — and three
- * greetings in the Kurdish the learner is learning, any of which a tap sends
- * (it is in the thread at once, so this card is gone with the tap).
- * The greetings are left out for someone who cannot post now. The owner and
- * admins of a group that has nobody else in it yet are offered
- * to add friends, since nobody else can be in it otherwise.
+ * An empty group chat: the group's picture and name, whether it is new or cleared by the reader, and three greetings
+ * in the learner's Kurdish that send on a tap (hidden when the reader cannot post). Owners and admins of a group with
+ * nobody else yet are offered to add friends.
  */
 export function GroupWelcome({
   group,
@@ -26,7 +21,7 @@ export function GroupWelcome({
   onAddFriends,
 }: {
   group: { id: string; name: string; photoUrl?: string | null };
-  /** whose clear left it empty, if anyone's: yours is said here, in place of "the start" */
+  /** Whose clear left it empty, if any; the reader's own is shown here instead of "the start". */
   cleared: { kind: 'me'; at: string } | { kind: 'everyone' } | null;
   canPost: boolean;
   onGreet: (text: string) => void;
@@ -35,7 +30,7 @@ export function GroupWelcome({
   const t = useT();
   const locale = useLocale();
   const id = useId();
-  // the learner's own course, as this device knows it; Kurmancî before their first lesson
+  // The learner's course as this device knows it; Kurmancî before the first lesson.
   const dialect = courseDialect() ?? 'kurmanci';
   const { lang, dir } = storyTextDirection(dialect);
 
@@ -82,13 +77,13 @@ export function GroupWelcome({
   );
 }
 
-/** Who cleared a chat for everyone, and when, in words: you, an admin by name, or one whose account is gone. */
+/** Who cleared a chat for everyone and when: you, an admin by name, or a deleted account. */
 export function clearedWords(t: ReturnType<typeof useT>, locale: string, by: string | null, at: string, mine: boolean): string {
   const when = formatUntil(at, locale);
   return mine ? t('groups.cleared.byYou', { when }) : by ? t('groups.cleared.by', { name: by, when }) : t('groups.cleared.byAdmin', { when });
 }
 
-/** The line at the top of a chat cleared for everyone: who did it, and when. */
+/** The line at the top of a chat cleared for everyone: who did it and when. */
 export function ClearedLine({ by, at, mine }: { by: string | null; at: string; mine: boolean }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();

@@ -9,11 +9,7 @@ import { formatUntil } from '../reports/restriction';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
-/**
- * The owner's and the admins' two lists: who asks to come back, and who is
- * banned. Loaded once the page opens and kept here, so a yes asked for in
- * between does not empty them.
- */
+/** The owner's and admins' two lists, requests to come back and bans, loaded once and kept so a confirmation step keeps them. */
 export function useModeration(
   groupId: string,
   enabled: boolean,
@@ -63,7 +59,7 @@ function ListSkeleton(): React.JSX.Element {
   );
 }
 
-/** A person in one of the lists: their face and name open their profile; a quiet line under the name. */
+/** A person in one of the lists: face and name open their profile, with a quiet line under the name. */
 function Who({ userId, username, avatarUrl, sub }: { userId: string; username: string; avatarUrl: string | null; sub: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
   return (
@@ -80,10 +76,8 @@ function Who({ userId, username, avatarUrl, sub }: { userId: string; username: s
 }
 
 /**
- * "Requests to come back": each with the person, their note, when they asked
- * and how often they were turned down before — what the decision needs — and
- * Approve and Decline. The group's page shows it only while somebody asks, so
- * it never has an empty list to explain.
+ * "Requests to come back": each with the person, their note, when they asked and how often they were declined, with
+ * Approve and Decline. Shown only while there are requests.
  */
 export function RequestsSection({
   requests,
@@ -94,7 +88,7 @@ export function RequestsSection({
   onDecline,
 }: {
   requests: GroupRejoinRequest[] | null;
-  /** how many the group says are waiting, for the badge before the list has come */
+  /** How many the group says are waiting, for the badge before the list loads. */
   waiting: number;
   error: string | null;
   busy: boolean;
@@ -149,7 +143,7 @@ export function RequestsSection({
   );
 }
 
-/** "Banned": until when (or for good), why, and who did it; Unban at the end. An empty list says so. */
+/** "Banned": until when or for good, why, and by whom, with Unban; an empty list says so. */
 export function BansSection({
   bans,
   error,

@@ -11,15 +11,9 @@ import { ConversationsSkeleton } from '../components/skeletons';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Adding friends to a group, as its owner or an admin, which is the only way
- * anyone gets into one: your friends who are not in it yet, each with Add.
- * Adding puts them straight in (the server's rule: your own friends only),
- * and the sheet stays open for the next one, with Done at its foot to go on
- * to the chat. Someone banned from the group has to be unbanned first, and is
- * told so by name.
- *
- * With no friends yet there is nobody to list, so it says so in a sentence
- * and offers the way to find people, rather than an empty sheet.
+ * Adding friends to a group as its owner or an admin, the only way anyone joins: friends not yet in it, each with Add,
+ * which puts them straight in. The sheet stays open, with Done at its foot. A banned friend must be unbanned first, as
+ * the sheet says by name. With no friends it offers a way to find people instead.
  */
 export function AddFriendsSheet({
   open,
@@ -32,10 +26,10 @@ export function AddFriendsSheet({
   open: boolean;
   groupId: string;
   groupName: string;
-  /** who is in the group already, so they are not offered */
+  /** Who is in the group already, so they are not offered. */
   memberIds: ReadonlySet<string>;
   onClose: () => void;
-  /** somebody was added: the group is read again */
+  /** Somebody was added, so the group reloads. */
   onAdded: () => void;
 }): React.JSX.Element | null {
   if (!open) return null;
@@ -63,7 +57,7 @@ function AddFriends({
   const [problem, setProblem] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
   const all = data?.friends ?? [];
-  // a friend added here stays listed, as Added, so the list does not jump under the pointer
+  // A friend added here stays listed as Added, so the list does not jump under the pointer.
   const friends = all.filter((f) => !memberIds.has(f.userId) || added.has(f.userId));
 
   async function add(f: UserSummary): Promise<void> {
@@ -84,7 +78,7 @@ function AddFriends({
   return (
     <Sheet open onClose={onClose} label={t('groups.addFriends')}>
       <p className="report-eyebrow">
-        {/* the group's name in its own direction, the line in the page's, clear of the close */}
+        {/* The group's name in its own direction, the line in the page's, clear of the close button. */}
         <bdi>{groupName}</bdi>
       </p>
       <h2 className="report-heading">{t('groups.addFriends')}</h2>

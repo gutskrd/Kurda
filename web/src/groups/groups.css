@@ -1,12 +1,9 @@
 /*
- * Groups: their picture, a group's own page, and its chat (web/src/groups).
- *
- * A group is a rounded square everywhere and a person a circle, so the two are
- * told apart before a name is read. Lists are rows on hairlines, not boxes;
- * ink for what is pressed, the danger colour only for remove, leave and delete.
+ * Groups: their picture, page and chat. A group is a rounded square and a person a circle. Lists are rows on
+ * hairlines; the danger colour is only for remove, leave and delete.
  */
 
-/* ---- a group's picture --------------------------------------------------- */
+/* ---- A group's picture --------------------------------------------------- */
 .group-pic {
   flex: none;
   display: inline-grid;
@@ -17,7 +14,7 @@
   letter-spacing: 0.02em;
   line-height: 1;
   background: var(--surface-2);
-  /* a picture with white in its corners still has an edge on a white page */
+  /* A picture with white corners still has an edge on a white page. */
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
   user-select: none;
 }
@@ -28,7 +25,7 @@
   display: block;
 }
 
-/* ---- starting a group: "New group" beside the new message, on Messages ---- */
+/* ---- Starting a group: "New group" beside the new message, on Messages ---- */
 .chat-head-actions {
   flex: none;
   display: inline-flex;
@@ -39,7 +36,7 @@
   gap: 6px;
   min-height: 44px;
 }
-/* nothing here yet: find people, or start a group */
+/* Nothing here yet: find people or start a group. */
 .chat-empty-actions {
   display: flex;
   flex-wrap: wrap;
@@ -47,7 +44,7 @@
   gap: var(--space-2);
 }
 
-/* ---- a group's own page ------------------------------------------------- */
+/* ---- A group's own page ------------------------------------------------- */
 .ginfo {
   display: flex;
   flex-direction: column;
@@ -88,7 +85,7 @@
   color: var(--ink-3);
   font-size: var(--text-caption);
 }
-/* "Add friends", leading the members: the one way anyone comes in */
+/* "Add friends", leading the members. */
 .ginfo-add {
   align-self: flex-start;
   margin-top: var(--space-2);
@@ -124,7 +121,7 @@
 .ginfo-member:last-child {
   border-bottom: 0;
 }
-/* the person is the row, and the row is a full target */
+/* The row is the person, and a full target. */
 .ginfo-who {
   flex: 1;
   min-width: 0;
@@ -176,7 +173,7 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-/* the owner and the admins, said quietly under the name: a word, not a badge */
+/* The owner's and admins' role, quietly under the name as a word rather than a badge. */
 .ginfo-role {
   color: var(--ink-3);
   font-size: var(--text-caption);
@@ -193,7 +190,7 @@
   bottom: calc(100% + 4px);
 }
 
-/* the end of the page: about the group, not its members */
+/* The end of the page: actions on the group, not its members. */
 .ginfo-end {
   list-style: none;
   margin: 0;
@@ -230,7 +227,7 @@
   line-height: 1.4;
 }
 
-/* a yes for something that cannot be taken back */
+/* A confirmation for something irreversible. */
 .ginfo-ask {
   display: flex;
   flex-direction: column;
@@ -265,7 +262,7 @@
   margin-top: var(--space-2);
 }
 
-/* ---- changing a group -------------------------------------------------- */
+/* ---- Editing a group --------------------------------------------------- */
 .gedit {
   display: flex;
   flex-direction: column;
@@ -339,7 +336,7 @@
   gap: var(--space-2);
 }
 
-/* ---- a group thread's header: its picture and name open its page -------- */
+/* ---- A group thread's header: its picture and name open its page -------- */
 .ghead {
   flex: 1;
   min-width: 0;
@@ -360,7 +357,7 @@
 .ghead:hover {
   background: var(--surface);
 }
-/* out of the group its name is only a name: nothing opens */
+/* Out of the group, its name opens nothing. */
 .ghead.is-plain,
 .ghead.is-plain:hover {
   background: none;
@@ -385,7 +382,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* the thread's own ⋯, at the end of its bar: clearing the chat */
+/* The thread's own ⋯ at the end of its bar, for clearing the chat. */
 .ghead-menu .msg-menu-btn {
   width: 40px;
   height: 40px;
@@ -394,7 +391,7 @@
   min-width: 228px;
 }
 
-/* ---- an empty chat: the group, where the chat stands, a hello to tap ----- */
+/* ---- An empty chat: the group, its state, and greetings to tap ----------- */
 .gwelcome,
 .gout {
   margin: auto;
@@ -461,7 +458,7 @@
     background var(--dur-fast) ease,
     border-color var(--dur-fast) ease;
 }
-/* Soranî in a face made for Arabic script, as a story's words are */
+/* Soranî in a typeface made for Arabic script, as in stories. */
 .gwelcome-chip[lang='ckb'] {
   font-family: 'Vazirmatn Variable', var(--font-sans);
 }
@@ -478,7 +475,7 @@
   gap: 6px;
 }
 
-/* a chat cleared for everyone says so once, at the top of what is left */
+/* A chat cleared for everyone says so once, at the top of what is left. */
 .gcleared {
   align-self: center;
   max-width: 100%;
@@ -493,7 +490,7 @@
   overflow-wrap: anywhere;
 }
 
-/* ---- out of a group: where a ban stands, or that an admin can add you again */
+/* ---- Out of a group: where a ban stands, or that an admin can add you again */
 .gstand {
   width: 100%;
   margin-top: var(--space-4);
@@ -548,13 +545,13 @@
   width: 100%;
 }
 
-/* ---- the owner's and admins' lists: requests to come back, and who is banned */
+/* ---- The owner's and admins' lists: requests to come back, and bans ------- */
 .gmod-title {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-/* a count, not a word: its own colours, and no capitals to shout in */
+/* A count in its own colours, without capitals. */
 .gmod-count {
   min-width: 20px;
   height: 20px;
@@ -588,7 +585,7 @@
 .gmod-row:last-child {
   border-bottom: 0;
 }
-/* the note and the buttons line up under the name, past the face */
+/* The note and buttons line up under the name, past the face. */
 .gmod-note,
 .gmod-quiet,
 .gmod-actions {
@@ -632,7 +629,7 @@
   gap: var(--space-3);
   padding: 8px 4px;
 }
-/* a narrow phone gives the words the whole row */
+/* A narrow phone gives the words the whole row. */
 @media (max-width: 380px) {
   .gmod-note,
   .gmod-quiet,
@@ -640,7 +637,7 @@
     flex-basis: 100%;
     margin-inline-start: 0;
   }
-  /* and a ban's Unban goes under its words rather than squeezing them */
+  /* A ban's Unban goes under its words rather than squeezing them. */
   .gmod-row.is-ban .ginfo-who {
     flex-basis: 100%;
   }
@@ -649,13 +646,13 @@
     margin-top: var(--space-2);
   }
 }
-/* what the last action did, clear of the dialog's close */
+/* What the last action did, clear of the dialog's close button. */
 .ginfo-done {
   margin: 0;
   margin-inline-end: 40px;
 }
 
-/* ---- banning, and asking to come back -------------------------------------- */
+/* ---- Banning, and asking to come back -------------------------------------- */
 .gban {
   display: flex;
   flex-direction: column;
@@ -681,7 +678,7 @@
 .gask-field {
   margin-top: var(--space-4);
 }
-/* a choice with a switch at its end, the way Settings draws one */
+/* A choice with a switch at its end, as in Settings. */
 .gswitch {
   display: flex;
   align-items: center;
@@ -703,7 +700,7 @@
   font-size: var(--text-caption);
 }
 
-/* ---- adding friends -------------------------------------------------------- */
+/* ---- Adding friends -------------------------------------------------------- */
 .gadd-list {
   margin-top: var(--space-4);
 }
@@ -713,7 +710,7 @@
 .gadd-who:hover {
   background: transparent;
 }
-/* the one thing to press on a friend's row: Add in ink, Added as its outline */
+/* A friend row's button: Add filled in ink, Added as an outline. */
 .gadd-btn {
   flex: none;
   min-width: 68px;
@@ -732,7 +729,7 @@
   cursor: pointer;
   position: relative;
 }
-/* the pill stays slim; the place to press is a full 44px */
+/* The pill stays slim with a full 44px target. */
 .gadd-btn::after {
   content: '';
   position: absolute;
@@ -750,14 +747,14 @@
   opacity: 0.55;
   cursor: default;
 }
-/* Done, at the sheet's foot and its end: on to the chat */
+/* Done at the sheet's foot, on to the chat. */
 .gadd-actions {
   justify-content: flex-end;
 }
 .gadd-actions .btn {
   min-width: 112px;
 }
-/* nobody to add yet: a sentence, and the way to find people */
+/* Nobody to add yet: a sentence and a link to find people. */
 .gadd-nobody {
   display: flex;
   flex-direction: column;

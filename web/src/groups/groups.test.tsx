@@ -5,7 +5,7 @@ import type { GroupDetail } from '../lib/types';
 import { renderApp, jsonResponse } from '../test/utils';
 import { AddFriendsSheet } from './AddFriendsSheet';
 import { GroupInfo } from './GroupInfo';
-import { groupInitials } from './GroupAvatar';
+import { initialsOf as groupInitials } from '../lib/initials';
 import { pictureBlob } from './GroupEdit';
 
 afterEach(() => {
@@ -15,7 +15,7 @@ afterEach(() => {
 
 type Call = { url: string; method: string; body: unknown; type: string | null };
 
-/** The API as a table of answers; every call is kept, with its body and content type. */
+/** The API as a table of answers; every call is recorded with its body and content type. */
 function stubApi(routes: Array<[method: string, path: RegExp, answer: (call: Call) => Response]>): Call[] {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   const calls: Call[] = [];
@@ -89,11 +89,11 @@ describe("a group's page", () => {
     expect(await screen.findByRole('heading', { name: 'Test Group' })).toBeInTheDocument();
     expect(screen.getByText('4 members')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit group' })).toBeInTheDocument();
-    // nobody manages themselves
+    // Nobody manages themselves.
     expect(await menuOf('ada')).toBeNull();
     expect(await menuOf('mira')).toEqual(['View profile', 'Remove admin', 'Make owner', 'Remove from group', 'Ban…']);
     expect(await menuOf('zana')).toEqual(['View profile', 'Make admin', 'Make owner', 'Remove from group', 'Ban…']);
-    // the owner deletes rather than leaves, and is told why
+    // The owner deletes rather than leaves, and is told why.
     expect(screen.getByText(/To leave, make someone else the owner first/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete group' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Report this group' })).not.toBeInTheDocument();
@@ -383,7 +383,7 @@ describe('requests to come back, and who is banned', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Decline berfin' }));
     const ask = within(screen.getByRole('alertdialog', { name: 'Decline berfin’s request?' }));
-    // turned down twice before: the third wait is the longest
+    // Turned down twice before, so the third wait is the longest.
     expect(ask.getByText('berfin can ask again in 30 days.')).toBeInTheDocument();
     await userEvent.click(ask.getByRole('switch', { name: /Stop requests from berfin/ }));
     await userEvent.click(ask.getByRole('button', { name: 'Decline' }));
@@ -428,7 +428,7 @@ describe('adding friends to a group', () => {
     renderApp(sheetFor(closed, added));
 
     const sheet = within(await screen.findByRole('dialog', { name: 'Add friends' }));
-    // zana is in the group already, so only Roj is offered
+    // zana is in the group already, so only Roj is offered.
     await userEvent.click(await sheet.findByRole('button', { name: 'Add Roj' }));
     expect(await sheet.findByRole('button', { name: 'Roj is added' })).toBeDisabled();
     expect(sheet.queryByText('zana')).not.toBeInTheDocument();

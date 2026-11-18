@@ -11,22 +11,13 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from './GroupAvatar';
 
 /** Someone banned from a group: until when, why, and where asking to come back stands. */
-export type Banned = Extract<GroupStanding, { kind: 'banned' }>;
+type Banned = Extract<GroupStanding, { kind: 'banned' }>;
 
 /**
- * A group in place of its chat, for someone who is out of it.
- *
- * A group is private: only its members see it. So this has just two readers.
- * Someone banned sees the group's picture and name, how long the ban lasts,
- * the reason if the admins gave one, and where asking to come back stands:
- * they can ask (with a short note), their request is waiting (and can be
- * withdrawn), they can ask again from a date, or the admins are not taking
- * requests from them. And someone taken out while its chat was open (`gone`)
- * is told so first, calmly, with the focus, since the box they were typing in
- * has gone; if they were only removed, an admin can add them again.
- *
- * Anyone else who opens a group's address is shown `GroupMissing`: the server
- * tells them nothing about it, not even whether it exists.
+ * A group in place of its chat for someone out of it. A banned person sees the group, the ban's length and reason, and
+ * where asking to come back stands (ask with a note, withdraw, wait for a date, or not accepted). Someone removed while
+ * the chat was open (`gone`) is told first, with focus, since their text box is gone; if only removed, an admin can
+ * add them again. Anyone else gets `GroupMissing`, since the server reveals nothing.
  */
 export function GroupOutside({
   group,
@@ -34,12 +25,12 @@ export function GroupOutside({
   gone,
   onChanged,
 }: {
-  /** what the page still knows of the group: its picture and name */
+  /** What the page still knows of the group: its picture and name. */
   group: { id: string; name: string; photoUrl?: string | null };
-  /** the ban, when that is why they are out; null for someone only removed */
+  /** The ban, when that is why they are out; null for someone only removed. */
   banned: Banned | null;
   gone: boolean;
-  /** the reader's standing changed here (asked, withdrew, let back): read the group again */
+  /** The reader's standing changed here (asked, withdrew, let back), so the group reloads. */
   onChanged: () => Promise<void>;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -48,7 +39,7 @@ export function GroupOutside({
   const id = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** where asking stands, as this page last heard it (a request sent or withdrawn shows at once) */
+  /** Where asking stands as this page last heard, so a request sent or withdrawn shows at once. */
   const [request, setRequest] = useState<GroupRequestState | null>(banned?.request ?? null);
   const [asking, setAsking] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
@@ -59,7 +50,7 @@ export function GroupOutside({
     if (gone) headRef.current?.focus();
   }, [gone]);
 
-  /** A refusal that says where asking really stands is shown as that; anything else is said as an error. */
+  /** A refusal that reveals where asking stands is shown as that state; anything else as an error. */
   async function refused(e: ApiError): Promise<void> {
     switch (e.code) {
       case 'REQUEST_WAIT': {
@@ -69,7 +60,7 @@ export function GroupOutside({
       }
       case 'REQUESTS_CLOSED':
         return setRequest({ kind: 'closed' });
-      // already waiting, not banned any more, or the group itself gone: the group says how things are now
+      // Already waiting, no longer banned, or the group gone: reload to show the current state.
       case 'REQUEST_PENDING':
       case 'NOT_BANNED':
       case 'GROUP_NOT_FOUND':
@@ -147,11 +138,7 @@ export function GroupOutside({
   );
 }
 
-/**
- * What a group's address shows someone who is not in it: that there is no
- * such group here, and the way back to their own conversations. The same
- * whether the group exists or not, because the server says the same.
- */
+/** What a group's address shows a non-member: no such group, and a link back to their conversations, whether or not it exists. */
 export function GroupMissing(): React.JSX.Element {
   const t = useT();
   return (
@@ -167,7 +154,7 @@ export function GroupMissing(): React.JSX.Element {
   );
 }
 
-/** Where asking to come back stands, and the one thing to do about it, if there is one. */
+/** Where asking to come back stands, and the one action, if any. */
 function AskState({
   request,
   busy,
@@ -204,11 +191,7 @@ function AskState({
   }
 }
 
-/**
- * Asking to come back: a short note, if they want one, that the admins will
- * read. One request waits at a time and the server holds the rest of the
- * rules; whatever it says is shown where asking stands.
- */
+/** Asking to come back with an optional note for the admins; the server enforces one request at a time and the rest. */
 function AskSheet({
   open,
   groupId,
@@ -222,7 +205,7 @@ function AskSheet({
   groupName: string;
   onClose: () => void;
   onSent: (state: GroupRequestState) => void;
-  /** a refusal about the request itself (a wait, closed, already waiting, not banned any more) */
+  /** A refusal about the request itself, such as a wait or an already pending request. */
   onRefused: (error: ApiError) => void;
 }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -254,7 +237,7 @@ function AskSheet({
   return (
     <Sheet open onClose={onClose} label={t('groups.ask.button')}>
       <p className="report-eyebrow">
-        {/* the group's name in its own direction, the line in the page's, clear of the close */}
+        {/* The group's name in its own direction, the line in the page's, clear of the close button. */}
         <bdi>{groupName}</bdi>
       </p>
       <form onSubmit={(e) => void send(e)}>

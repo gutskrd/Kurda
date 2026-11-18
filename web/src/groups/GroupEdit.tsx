@@ -17,9 +17,8 @@ const REFUSED: Record<string, MessageKey> = {
 };
 
 /**
- * A picture's type as the server will check it. The operating system's own
- * answer (`file.type`) is empty for plenty of real photographs; the name's
- * ending is the next best thing, and the server sniffs the bytes either way.
+ * A picture's type for the upload: `file.type` is empty for many real photos, so the name's extension is the
+ * fallback; the server sniffs the bytes either way.
  */
 export function pictureBlob(file: File): Blob {
   if (file.type.startsWith('image/')) return file;
@@ -29,14 +28,9 @@ export function pictureBlob(file: File): Blob {
 }
 
 /**
- * Changing how a group presents itself, as its owner or an admin: its
- * picture, its name and what it is about.
- *
- * The picture goes up the moment one is chosen, through every guard a
- * profile photo has on the server, and comes down the same way; the name and
- * description wait for Save, which sends only what changed and is not
- * pressable until something has and the name is a name (2–60 characters).
- * Every limit is the shared one the server holds as well.
+ * Editing a group's picture, name and description as its owner or an admin. The picture uploads or is removed at
+ * once, with the server's profile-photo checks; the name and description wait for Save, which sends only what changed
+ * and is enabled only once something has and the name is 2–60 characters. The limits are the shared ones.
  */
 export function GroupEdit({
   detail,
@@ -44,9 +38,9 @@ export function GroupEdit({
   onChanged,
 }: {
   detail: GroupDetail;
-  /** back to the group's page */
+  /** Back to the group's page. */
   onDone: () => void;
-  /** something was saved: the group reloads where it is shown */
+  /** Something was saved, so the group reloads where it is shown. */
   onChanged: () => Promise<void>;
 }): React.JSX.Element {
   const t = useT();
@@ -108,7 +102,7 @@ export function GroupEdit({
   }
 
   const refused = (error: ApiError): string => (error.code && REFUSED[error.code] ? t(REFUSED[error.code]!) : describeError(error, t));
-  // a picture's refusal in the composer's words (too large, not a picture, paused); a lost connection in this page's own
+  // A picture's refusal in the composer's words; a lost connection in this page's own.
   const pictureRefused = (error: ApiError): string => (error.kind === 'network' ? t('groups.photo.failed') : composerErrorText(error, t));
 
   return (

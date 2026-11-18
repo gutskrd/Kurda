@@ -6,7 +6,7 @@ import type { InboxNote, NoteView } from '../reports/notifications';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
-/** A push's data is all strings: 'true' is true, whether it came as a string or as itself. */
+/** A push's data is all strings, so 'true' counts as true. */
 const yes = (v: unknown): boolean => v === true || v === 'true';
 
 const BANNED_FOR: Record<string, MessageKey> = {
@@ -16,19 +16,10 @@ const BANNED_FOR: Record<string, MessageKey> = {
 };
 
 /**
- * What happened between you and a group — removed, banned, someone asking to
- * come back, your request approved or turned down — said in the reader's own
- * language from `data`, and opening the group (a request opens it on the
- * group's own page, where the requests are answered).
- *
- * A group is private, so a line that leaves the reader out of it and not
- * banned — removed, or let back without being put back in — opens their
- * conversations instead: the group's own address would only tell them there
- * is no such group. An admin has to add them again, and the line says so.
- *
- * The server writes these in English too; that is what is shown when `data`
- * does not name the group, rather than half a sentence in each language.
- * Anything that is not about a group is null, for the next reader to try.
+ * Group notifications (removed, banned, a request to come back, a request answered) worded from `data` in the reader's
+ * language, opening the group or, for requests, its page. One that leaves the reader outside without a ban opens
+ * their conversations instead, since the group's address would show nothing. Without a group name in `data` the
+ * server's English is used. Anything not about a group is null.
  */
 export function groupNotification(note: InboxNote, t: Translate, locale: string): NoteView | null {
   const data = note.data;
@@ -37,7 +28,7 @@ export function groupNotification(note: InboxNote, t: Translate, locale: string)
   const kind = data.kind;
   if (!groupId || typeof kind !== 'string' || !kind.startsWith('group_')) return null;
   const to = `/app/messages?group=${encodeURIComponent(groupId)}`;
-  // where a line goes when the reader is out of the group it is about
+  // Where a line goes when the reader is out of the group.
   const mine = '/app/messages';
   const group = str(data.groupName);
   const letBackOnly = kind === 'group_request_approved' && (data.rejoined === false || data.rejoined === 'false');
@@ -65,7 +56,7 @@ export function groupNotification(note: InboxNote, t: Translate, locale: string)
       };
     }
     case 'group_request_approved':
-      // let back but not put back: the ban is lifted, and an admin who is their friend can add them again
+      // Let back but not re-added: the ban is lifted, and an admin who is their friend can add them again.
       if (letBackOnly) return { title: t('notify.groupApproved.out', { group }), body: null, to: mine };
       return { title: t('notify.groupApproved.in', { group }), body: null, to };
     case 'group_request_declined': {

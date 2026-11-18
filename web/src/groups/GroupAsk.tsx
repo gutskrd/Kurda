@@ -2,11 +2,7 @@ import { useId } from 'react';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 
-/**
- * A yes for something that cannot be taken back: what it is, in a step of its
- * own, with the plain consequences and Cancel beside it — first, so the
- * keyboard lands on the way out rather than the way through.
- */
+/** A confirmation step for something irreversible, with its consequences and Cancel first so the keyboard lands on it. */
 export function GroupAsk({
   title,
   body,
@@ -19,7 +15,7 @@ export function GroupAsk({
   children,
 }: {
   title: string;
-  /** what will happen, said plainly */
+  /** What will happen, said plainly. */
   body?: React.ReactNode;
   action: string;
   danger?: boolean;
@@ -27,7 +23,7 @@ export function GroupAsk({
   error?: string | null;
   onCancel: () => void;
   onConfirm: () => void;
-  /** a choice that goes with the yes (stop someone's requests) */
+  /** A choice that goes with the confirmation, such as stopping someone's requests. */
   children?: React.ReactNode;
 }): React.JSX.Element {
   const t = useT();
