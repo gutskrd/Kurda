@@ -1,4 +1,4 @@
-/** Groups / clubs (KUR-084) against real Postgres: every group is private, and a friend who runs it is the only way in. */
+/** Groups against real Postgres: every group is private, and a friend who runs it is the only way in. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -48,8 +48,7 @@ describe.skipIf(!DATABASE_URL)('groups (integration)', () => {
   });
 
   afterAll(async () => {
-    // the weekly-XP test inserts an xp_ledger row; the user cascade needs the
-    // append-only escape hatch to clear it
+    // The weekly-XP test inserts an xp_ledger row, so the cleanup needs the append-only bypass.
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -72,8 +71,7 @@ describe.skipIf(!DATABASE_URL)('groups (integration)', () => {
     expect(g).not.toHaveProperty('privacy');
   });
 
-  // deliberately so: an add puts someone in outright, so it is for the
-  // friends of whoever adds them — the same rule whoever is added
+  // An add puts someone in outright, so it is only for the adder's friends, whoever is added.
   it('lets people in one way: the owner or an admin adds one of their own friends', async () => {
     const { id: gid } = await groups.create(id.a!, { name: `Secret ${suffix}` });
     // not friends yet: nobody is added
@@ -157,7 +155,7 @@ describe.skipIf(!DATABASE_URL)('groups (integration)', () => {
       const nowhere = await groups.get('00000000-0000-4000-8000-000000000000', id.c!).catch((err: unknown) => err);
       expect(nowhere).toMatchObject({ code: 'GROUP_NOT_FOUND', statusCode: 404 });
       expect((outsider as Error).message).toBe((nowhere as Error).message);
-      // someone who left, or was removed, is an outsider again
+      // Someone who left or was removed is an outsider again.
       await addFriendsToGroup(pool, gid, id.a!, id.d!);
       await groups.removeMember(id.a!, gid, id.d!);
       await expect(groups.get(gid, id.d!)).rejects.toMatchObject({ code: 'GROUP_NOT_FOUND' });
@@ -166,7 +164,7 @@ describe.skipIf(!DATABASE_URL)('groups (integration)', () => {
     });
 
     it('shows a member what the members of a group always saw: all of it, every member whatever their age', async () => {
-      // b is no friend of the teenager's: members see one another because somebody each of them chose put them there
+      // b is not the teenager's friend: members see one another because somebody each of them chose put them there.
       const seen = await groups.get(gid, id.b!);
       expect(seen).toMatchObject({
         id: gid,

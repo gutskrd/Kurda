@@ -1,12 +1,6 @@
 /**
- * Leaving a group, or being removed from it, takes you out of its live chat
- * (integration, with real WebSocket clients).
- *
- * Reading a group's chat checks membership every time, but the live room was
- * another matter: the history read that let a member into it handed out an
- * invite for a week, and nothing took it back. Somebody removed from a group
- * went on receiving every message on the socket they had, and could join the
- * room again from a new one, for the rest of that week.
+ * Leaving or being removed from a group takes you out of its live chat room, tested with real WebSocket clients: an
+ * existing socket stops receiving messages and a new one cannot rejoin.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -82,7 +76,7 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
     return { ws, answer: await answer };
   }
 
-  /** A group of `owner`'s, `members` added to it as the owner's friends, each having read its chat (which lets them into the room). */
+  /** A group of `owner`'s with `members` added as friends, each having read the chat, which lets them into the room. */
   async function groupOf(owner: { id: string; token: string }, members: Array<{ id: string; token: string }>): Promise<string> {
     const { id } = await groups.create(owner.id, { name: `Kom ${s} ${++n}` });
     for (const m of members) {
@@ -127,7 +121,7 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
     const heard = next(kept.ws, (m) => m.type === 'event');
     expect((await call(owner.token, 'POST', `/groups/${gid}/chat`, { body: 'Silav li hemûyan' })).statusCode).toBe(200);
     await heard;
-    // a round trip on the removed socket: anything sent to it before now has arrived
+    // A round trip on the removed socket, so anything sent before now has arrived.
     const pong = next(gone.ws, (m) => m.type === 'pong');
     gone.ws.send(JSON.stringify({ type: 'ping' }));
     await pong;
