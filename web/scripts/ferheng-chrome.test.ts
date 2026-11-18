@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { APP_LOCALES } from '@kurda/shared';
-import { CHROME_KEYS, chromeScript, chromeTable } from './ferheng-chrome';
+import { BAR_KEYS, PAGE_KEYS, chromeScript, chromeTable } from './ferheng-chrome';
 import { COPY, PAGE_TEXT } from './ferheng-copy';
 import { indexPage, letterPage, notFoundPage, wordsPage, type Word } from './ferheng-pages';
 
@@ -47,15 +47,15 @@ afterEach(() => {
 });
 
 describe('the dictionary bar, in the reader’s language', () => {
-  /** The first report: German in the app, English in the bar the moment you open the dictionary. */
+  /** German in the app should mean German in the bar on opening the dictionary. */
   it('keeps the bar in the language the app was set to', () => {
     const doc = open(pages.words('en'), 'de');
-    expect(new Set(text(doc, 'nav.home'))).toEqual(new Set(['Start'])); // the bar and the footer
+    expect(new Set(text(doc, 'nav.home'))).toEqual(new Set(['Start'])); // The bar and the footer.
     expect(text(doc, 'nav.dictionary')[0]).toBe('Wörterbuch');
     expect(text(doc, 'nav.games')[0]).toBe('Spiele');
     expect(text(doc, 'nav.login')).toEqual(['Anmelden', 'Anmelden', 'Anmelden']);
     expect(doc.querySelector('[data-copy="nav.menu"]')?.getAttribute('aria-label')).toBe('Menü');
-    // a screen reader picks its voice from lang, so the words say what they are
+    // A screen reader picks its voice from lang.
     expect(doc.querySelector('[data-copy="nav.home"]')?.getAttribute('lang')).toBe('de');
   });
 
@@ -73,7 +73,7 @@ describe('the dictionary bar, in the reader’s language', () => {
     expect(doc.querySelector('[data-copy="nav.home"]')?.hasAttribute('lang')).toBe(false);
   });
 
-  /** The same order as the app's own `resolveLocale`: a choice, then the browser, then English. */
+  /** The same order as the app's `resolveLocale`: a choice, then the browser, then English. */
   it('falls back to the browser’s language when nothing was chosen, as the app does', () => {
     expect(text(open(pages.words('en'), null, 'fr-FR'), 'nav.games')[0]).toBe('Jeux');
     expect(text(open(pages.words('ku'), null, 'xx'), 'nav.games')[0]).toBe('Games');
@@ -91,7 +91,7 @@ describe('the dictionary bar, in the reader’s language', () => {
     expect(home.textContent).not.toBe('Home');
   });
 
-  /** As the app's bar: the same shape in every language — only the footer follows the reader's direction. */
+  /** As the app's bar: the same shape in every language; only the footer follows the reader's direction. */
   it('never mirrors the bar, even for a right-to-left reader', () => {
     for (const locale of ['ar', 'ckb']) {
       const doc = open(pages.words('en'), locale);
@@ -109,7 +109,7 @@ describe('the dictionary bar, in the reader’s language', () => {
     expect(text(open(pages.words('en'), 'klingon', 'de-DE'), 'nav.games')[0]).toBe('Spiele');
   });
 
-  /** `dir` on a block would flip its alignment too; on an inline element it only orders the letters. */
+  /** `dir` on a block would flip its alignment; on an inline element it only orders the letters. */
   it('only ever relabels an inline element, so a right-to-left word cannot move the layout', () => {
     for (const page of Object.values(pages)) {
       const doc = open(page('en'), 'ckb');
@@ -120,23 +120,20 @@ describe('the dictionary bar, in the reader’s language', () => {
   });
 });
 
-/**
- * The second report: the bar followed the reader, and the page under it still
- * turned English. Everything that is ours rather than the corpus's follows now.
- */
+/** Everything that is ours rather than the corpus's follows the reader's language, the page as well as the bar. */
 describe('the dictionary page, in the reader’s language', () => {
   it('turns the front page’s words', () => {
     const doc = open(pages.index('en'), 'de');
     expect(text(doc, 'page.index.eyebrow')).toEqual(['Kurdisches Wörterbuch']);
     expect(text(doc, 'page.index.lead')[0]).toMatch(/^Bedeutungen/);
-    // the search box's placeholder is an attribute, and turns too
+    // The search box's placeholder is an attribute, and turns too.
     expect(doc.querySelector('[data-copy="page.search.placeholder"]')!.getAttribute('placeholder')).toBe('409,435 Wörter durchsuchen');
     expect(text(doc, 'page.index.selected')).toEqual(['Ausgewählte Wörter']);
     expect(text(doc, 'page.alphabets.hawar')).toEqual(['Hawar-Alphabet']);
     expect(doc.title).toBe('Kurdisches Wörterbuch — Hevalo');
   });
 
-  /** The headline is two lines, and the break is drawn with an element, not by parsing markup. */
+  /** The headline is two lines, the break drawn with an element rather than by parsing markup. */
   it('keeps the headline on two lines without writing any markup', () => {
     const h = open(pages.index('en'), 'fr').querySelector('[data-copy="page.index.headline"]')!;
     expect(h.querySelectorAll('br')).toHaveLength(1);
@@ -158,7 +155,7 @@ describe('the dictionary page, in the reader’s language', () => {
     expect(text(doc, 'page.rows.arabic')).toEqual(['Arabisch']);
     expect(text(doc, 'page.rows.synonyms')).toEqual(['Synonyme']);
     expect(doc.querySelector('.hw')?.textContent).toBe('av');
-    // the definitions are the corpus's, and exist in English and Kurmancî only
+    // Definitions are the corpus's, in English and Kurmancî only.
     expect(doc.querySelector('[itemprop="description"]')?.textContent).toBe('water');
   });
 
@@ -185,7 +182,7 @@ describe('the dictionary page, in the reader’s language', () => {
     expect(doc.title).toBe('This page was not found · Kurdish dictionary');
   });
 
-  /** Run twice — once after the bar, once when the page has parsed — and it must not stack up. */
+  /** It runs twice (after the bar, then once parsed) and must not stack up. */
   it('can run again over a page it already turned', () => {
     const doc = open(pages.words('en'), 'de');
     new Function(chromeScript())();
@@ -198,11 +195,11 @@ describe('what chrome.js is allowed to be', () => {
   it('has a word for every label in every language the app speaks', () => {
     const table = chromeTable();
     for (const { code } of APP_LOCALES) {
-      for (const key of CHROME_KEYS) expect(table[code].words[key], `${code} ${key}`).toMatch(/\S/);
+      for (const key of [...BAR_KEYS, ...PAGE_KEYS]) expect(table[code].words[key], `${code} ${key}`).toMatch(/\S/);
     }
   });
 
-  /** Every part of speech English names, every other language names too — Kurmancî is the corpus's own. */
+  /** Every part of speech English names, every other language names too; Kurmancî is the corpus's own. */
   it('names every part of speech in every language', () => {
     const labels = Object.keys(PAGE_TEXT.en.pos);
     for (const { code } of APP_LOCALES) {
@@ -221,7 +218,7 @@ describe('what chrome.js is allowed to be', () => {
     }
   });
 
-  /** The promise the policy relies on: it relabels, and that is all it can do. */
+  /** The policy relies on this: it relabels, and that is all it can do. */
   it('writes text and moves its own links — no markup, no requests, no storage writes', () => {
     const js = chromeScript();
     expect(js).not.toMatch(/innerHTML|outerHTML|insertAdjacentHTML|document\.write/);
@@ -229,12 +226,7 @@ describe('what chrome.js is allowed to be', () => {
     expect(js).not.toMatch(/eval\(|new Function|setItem/);
   });
 
-  /**
-   * `'self'` and nothing more: no inline script, no other host, still no
-   * connections. Not a full URL, which names a host — that was refused on
-   * every preview deployment and left the page English exactly where the fix
-   * was being checked.
-   */
+  // `'self'` and nothing more; a full URL names a host, which preview deployments would refuse.
   it('is allowed by the dictionary’s policy, and nothing else is', () => {
     const headers = readFileSync(resolve(__dirname, '../public/_headers'), 'utf8');
     expect(headers).toMatch(/X-Content-Type-Options: nosniff/);

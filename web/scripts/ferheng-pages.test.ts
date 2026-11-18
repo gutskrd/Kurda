@@ -52,19 +52,11 @@ describe('escaping', () => {
   });
 });
 
-/**
- * The definitions are Wiktionary text, so a page is the one place where a
- * stranger's writing reaches a reader's browser. This is the test that would
- * fail if a template ever interpolated one without escaping it.
- */
+/** Definitions are strangers' Wiktionary text, so this fails if a template ever interpolates one unescaped. */
 describe('a page carries no markup it was not given', () => {
   const nasty = '<img src=x onerror="alert(1)">';
 
-  /**
-   * The shell has an `<img>` of its own — the deer in the brand — so "the page
-   * contains no img tag" stopped being the question. The question is whether
-   * the *attacker's* tag survived, which is what `src=x` asks.
-   */
+  /** The shell has its own `<img>` (the brand's deer), so the question is whether the attacker's tag survived. */
   const injected = /<img[^>]*src=x/;
 
   it('escapes a definition', () => {
@@ -84,7 +76,7 @@ describe('a page carries no markup it was not given', () => {
   it('escapes the id it builds out of a key, and the links around it', () => {
     const html = wordsPage({ prefix: '"x', words: [word('a', '"x')] }, '"p', '"n');
     expect(html).toContain('id="&quot;x"');
-    // no attribute value is closed early by a quote that came from the data
+    // No attribute value is closed early by a quote from the data.
     expect(html).not.toMatch(/id="[^"]*"[^\s>]/);
   });
 
@@ -97,17 +89,13 @@ describe('a page carries no markup it was not given', () => {
     expect(html).toContain('&lt;b&gt;');
   });
 
-  /**
-   * Nothing executable but our own file, by construction — the policy is the
-   * second line, not the first. The one script is chrome.js, which relabels
-   * the bar; it is empty-bodied and named by path, and nothing else may be.
-   */
+  // Nothing executable but our own files, by construction; the policy is the second line, not the first.
   it('runs no script but its own two files, and no inline style', () => {
     const html = wordsPage({ prefix: 'a', words: [word('av')] }, null, null);
-    // the relabelling and the search box, both files on this origin
+    // The relabelling and the search box, both files on this origin.
     expect(html.match(/<script[^>]*>/gi)).toEqual(['<script src="/ferheng/chrome.js">', '<script src="/ferheng/search.js" defer>']);
     expect(html).not.toMatch(/<style/i);
-    expect(html).not.toMatch(/\son\w+=/i); // onclick, onerror, onload…
+    expect(html).not.toMatch(/\son\w+=/i); // onclick, onerror, onload and the rest.
     expect(html).not.toMatch(/javascript:/i);
   });
 });
@@ -137,11 +125,7 @@ describe('splitting the dictionary into pages', () => {
     expect(new Set(seen).size).toBe(words.length);
   });
 
-  /**
-   * Words whose whole key is identical cannot be split apart by taking another
-   * letter. Recursing on them would never terminate; the page is kept whole
-   * instead, oversized and addressable, which is the lesser of the two.
-   */
+  // Identical keys cannot be split by another letter, so the page is kept whole and oversized rather than recursing forever.
   it('stops rather than recursing forever on identical keys', () => {
     const identical = Array.from({ length: WORDS_PER_PAGE + 5 }, (_, i) => word(`av${i}`, 'av'));
     const pages = paginate(identical);
@@ -155,14 +139,9 @@ describe('splitting the dictionary into pages', () => {
     expect(new Set(prefixes).size).toBe(prefixes.length);
   });
 
-  /**
-   * The expensive mistake, and the one the first version made: splitting "a"
-   * because it is too big also splits every rare prefix under it into a page of
-   * four words. On the real corpus that was 17,652 pages against a 20,000-file
-   * deployment limit. Merging the small ones back took it to 3,446.
-   */
+  // Splitting a big letter splits every rare prefix under it into tiny pages, so the small ones must be merged back.
   it('merges the small pages a split leaves behind', () => {
-    // one crowded prefix and a long tail of rare ones, which is the real shape
+    // One crowded prefix and a long tail of rare ones, the corpus's real shape.
     const words = [
       ...many('aa', 300),
       ...'bcdefghijklmnop'.split('').map((c) => word(`a${c}x`, `a${c}x`)),
@@ -190,12 +169,7 @@ describe('splitting the dictionary into pages', () => {
     for (const p of pages) expect(p.prefix).not.toContain('/');
   });
 
-  /**
-   * Coalescing runs at every depth, so a page being merged may already be a
-   * range. Widening then has to read `-` as "to" and not as a separator. The
-   * real corpus produced `a-ab-abb` — three bounds for a thing that has two —
-   * and no test built from a tidy fixture had shown it.
-   */
+  // Merging runs at every depth, so widening a range that is already a range must not stack bounds (`a-ab-abb`).
   it('widens a range that is already a range, without stacking bounds', () => {
     const deep = Array.from({ length: 900 }, (_, i) =>
       word(`w${i}`, `a${String(i).padStart(5, '0')}`),
@@ -224,34 +198,21 @@ describe('what a page tells a search engine', () => {
     expect(html).toMatch(/<meta name="description" content="2 peyvên kurdî ji abc heta abz/);
   });
 
-  /**
-   * Three levels, because one was too many words on one page: the A–Z lists
-   * letters, a letter lists its ranges, a range lists the words. The old
-   * single index listed all 3,413 ranges and came to 145 KB.
-   */
+  // Three levels: the A–Z lists letters, a letter its ranges, a range its words.
   it('lists letters from the A–Z, not every range', () => {
     const html = indexPage([{ letter: 'a', words: 120 }, { letter: 'b', words: 40 }], 160, 4, [], new Map());
     expect(html).toContain('href="/ferheng/a/"');
     expect(html).toContain('href="/ferheng/b/"');
     expect(html).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
-    // what this guards is the INDEX, not the chrome: listing every range put
-    // this page at 145 KB once. The app's nav and footer are a fixed ~5 KB
-    // that every page carries so that none of them looks like a different site
-    // — with the menu's cross beside its bars, and every label marked for
-    // chrome.js — and now the search box. Fourteen thousand characters is
-    // still a long way under 145 KB.
+    // This guards the index, not the chrome: listing every range once made this page 145 KB, while the nav, footer and
+    // search box are a fixed few KB.
     expect(html.length, 'the landing page should not list every range').toBeLessThan(14_000);
   });
 
-  /**
-   * The front page used to be 53 bordered boxes with a letter in each: a table
-   * of contents pretending to be a page, with nothing on it to read and no
-   * reason to be there except to leave.
-   */
   it('opens the dictionary with words, not only with letters', () => {
     const sev: Word = { ...word('sêv', 'sev', 'Fêkiyeke sor an kesk e, ji dara sêvê.'), sorani: ['سێو'] };
     const html = indexPage([{ letter: 's', words: 1 }], 1, 1, featured([sev], 4), new Map());
-    // as a card: the word and its meaning, linking to the full entry
+    // As a card: the word and its meaning, linking to the full entry.
     expect(html).toContain('>sêv</span>');
     expect(html).toContain('Fêkiyeke sor an kesk e, ji dara sêvê.');
     expect(html).toContain('class="word-card"');
@@ -265,10 +226,7 @@ describe('what a page tells a search engine', () => {
     expect(featured([thin, full], 4).map((w) => w.headword)).toEqual(['azz']);
   });
 
-  /**
-   * The first run featured a, b, c, d and e: the corpus does gloss the letters
-   * of the alphabet, and they sort first.
-   */
+  // The corpus glosses the letters of the alphabet, and they sort first.
   it('does not feature a letter of the alphabet as though it were a word', () => {
     const letter: Word = { ...word('a', 'a', 'Yekem tîpa alfabeya kurdî ye û nîşana dengekî dirêj e.'), arabic: ['ا'] };
     const stub: Word = { ...word('bbb', 'bbb', 'kurt'), arabic: ['ب'] };
@@ -281,10 +239,8 @@ describe('what a page tells a search engine', () => {
   });
 
   /**
-   * Kurdish is written in two alphabets and a reader of one often cannot read
-   * the other, so an index running A…Z straight into ئ, ب, پ is not one
-   * alphabet with an odd tail. Hawar is the Latin alphabet from Celadet Alî
-   * Bedirxan's journal; Soranî is the Arabic-script one.
+   * Readers of one Kurdish alphabet often cannot read the other, so the index names them: Hawar, the Latin alphabet from
+   * Celadet Alî Bedirxan's journal, and the Arabic-script Soranî.
    */
   it('names the two alphabets instead of running them together', () => {
     const html = indexPage(
@@ -296,7 +252,7 @@ describe('what a page tells a search engine', () => {
     );
     expect(html).toContain('Alfabeya Hawarê');
     expect(html).toContain('Alfabeya Soranî');
-    // each letter sits under its own heading, in the order the alphabets are listed
+    // Each letter under its own heading, in the alphabets' listed order.
     expect(html.indexOf('Alfabeya Hawarê')).toBeLessThan(html.indexOf('Alfabeya Soranî'));
     expect(html.indexOf('/ferheng/a/')).toBeLessThan(html.indexOf('Alfabeya Soranî'));
     expect(html.indexOf('Alfabeya Soranî')).toBeLessThan(html.indexOf('/ferheng/ب/'));
@@ -309,12 +265,7 @@ describe('what a page tells a search engine', () => {
     expect(html).not.toContain('Tîpên din');
   });
 
-  /**
-   * By membership of the two alphabets, not by Unicode script. `Ḧ` is Latin
-   * and `ط` is Arabic, and neither is one of the 31 or the 33 — calling them
-   * Hawar and Soranî would be wrong in a dictionary, and hiding them would lose
-   * the 250 words that begin with `ḧ`.
-   */
+  // By membership, not Unicode script: `Ḧ` is Latin and `ط` Arabic, yet neither belongs to the 31 or the 33.
   it('sorts a letter by which alphabet it is actually in', () => {
     expect(alphabetOf('a')).toBe('hawar');
     expect(alphabetOf('ş')).toBe('hawar');
@@ -322,7 +273,7 @@ describe('what a page tells a search engine', () => {
     expect(alphabetOf('ڕ')).toBe('sorani');
     expect(alphabetOf('ط')).toBe('other');
     expect(alphabetOf('щ')).toBe('other');
-    // one letter written two ways still belongs to its alphabet
+    // One letter written two ways still belongs to its alphabet.
     expect(alphabetOf('ك')).toBe('sorani');
     expect(alphabetName('s')).toBe('Alfabeya Hawarê');
     expect(alphabetName('ش')).toBe('Alfabeya Soranî');
@@ -335,14 +286,11 @@ describe('what a page tells a search engine', () => {
     expect(SORANI).toHaveLength(33);
     expect(SORANI[0]).toBe('ا');
     expect(SORANI.at(-1)).toBe('ێ');
-    // every letter appears once
+    // Every letter appears once.
     expect(new Set([...HAWAR, ...SORANI]).size).toBe(64);
   });
 
-  /**
-   * The point the whole change turns on: Ş is a letter, not a decoration on S,
-   * so it sorts after S and before T rather than wherever folding put it.
-   */
+  // Ş is a letter, not a decorated S, so it sorts after S and before T.
   it('puts a diacritic letter in its own place, not beside its base', () => {
     const order = ['sal', 'sor', 'şal', 'şor', 'tar'];
     expect([...order].reverse().sort(compareKeys)).toEqual(order);
@@ -352,11 +300,7 @@ describe('what a page tells a search engine', () => {
     expect(compareKeys('ç', 'd')).toBeLessThan(0);
   });
 
-  /**
-   * Merging by size alone produced `چە-ح`: 93 ح words on a page named for چ,
-   * so `letterOf` filed them under چ and ح had no section in the index at all.
-   * Thirteen letters went missing that way.
-   */
+  // Merging by size alone once filed ح words under چ, leaving ح and other letters without a section.
   it('never merges a page across two letters', () => {
     const words = [
       ...['sal', 'sar', 'sor'].map((w) => word(w)),
@@ -368,7 +312,7 @@ describe('what a page tells a search engine', () => {
       const letters = new Set(p.words.map((w) => [...w.key][0]));
       expect([...letters], `page ${p.prefix} spans ${[...letters].join('')}`).toHaveLength(1);
     }
-    // and so every letter present keeps a page of its own to be indexed under
+    // So every letter present keeps a page of its own to be indexed under.
     expect(new Set(pages.map((p) => letterOf(p.prefix)))).toEqual(new Set(['s', 'ş', 't']));
   });
 
@@ -421,26 +365,22 @@ describe('how an entry reads', () => {
       ],
     };
     const html = wordsPage({ prefix: 'ser', words: [w] }, null, null);
-    // two parts of speech, not three undifferentiated lines
+    // Two parts of speech, not three undifferentiated lines.
     expect(html.match(/class="row sense"/g)).toHaveLength(2);
     expect(html).toMatch(/Navdêr<\/span><ol><li[^>]*>serî<\/li><li[^>]*>jor<\/li><\/ol>/);
   });
 
-  /**
-   * Half the corpus is inflected forms, and the source's own label is the only
-   * thing that says which. `sabatan` is not a noun; it is the oblique plural
-   * of one, and it must not be set as though it were a word of its own.
-   */
+  // Half the corpus is inflected forms, which the source's label alone identifies; `sabatan` is a plural, not a word of its own.
   it('sets an inflected form apart from a word in its own right', () => {
     const form: Word = {
       ...word('sabatan'),
       senses: [{ pos: 'Formeke navdêrê', definition: 'Rewşa çemandî ya pirjimar a binavkirî ya sabat.' }],
     };
     const html = wordsPage({ prefix: 'sa', words: [form, word('sabat')] }, null, null, new Map([['sabat', 'sa'], ['sabatan', 'sa']]));
-    // one compact line: the kind of form, an arrow, the word it is a form of
+    // One compact line: the kind of form, an arrow, the word it is a form of.
     expect(html).toContain('class="entry form-entry" id="sabatan"');
     expect(html).toMatch(/→<\/span> <a href="#sabat"[^>]*>sabat<\/a>/);
-    // the grammar is still there, a tap away
+    // The grammar is still there, a tap away.
     expect(html).toContain('Rewşa çemandî ya pirjimar a binavkirî ya sabat.');
     expect(html.match(/class="row sense"/g)).toHaveLength(1);
   });
@@ -476,11 +416,7 @@ describe('how an entry reads', () => {
     expect(html.match(/>ava</g)).toHaveLength(1);
   });
 
-  /**
-   * Links come from the source's own synonym list, not from reading the prose,
-   * so a cross-reference is something the corpus stated rather than a guess at
-   * what a definition meant.
-   */
+  // Links come from the source's own synonym list, so a cross-reference is something the corpus stated.
   it('links a synonym to the page that holds it', () => {
     const w: Word = { ...word('mezin'), synonyms: ['gir'] };
     const html = wordsPage({ prefix: 'me', words: [w] }, null, null, new Map([['gir', 'gi-gq']]));
@@ -499,11 +435,7 @@ describe('how an entry reads', () => {
 describe('reading the corpus', () => {
   const row = (over: Record<string, unknown>) => ({ word: 'x', pos_title: 'Navdêr', glosses: ['wate'], ...over });
 
-  /**
-   * 4% of the corpus is Wiktionary asking a reader to write the meaning. A word
-   * whose only gloss is that has nothing to print, and ~15,000 pages saying so
-   * tell a search engine the site is mostly empty.
-   */
+  // 4% of the corpus is a request to write the meaning; a word with only that has nothing to print.
   it('drops a word whose only meaning is a request to write one', () => {
     const entries = toEntries([
       row({ word: 'sabûn di ser dan', glosses: ['Maneya vê madeyê hê nehatiye nivîsîn. Heke hûn maneya wê bizanin, kerem bikin binivîsin.'] }),
@@ -555,11 +487,7 @@ describe('reading the corpus', () => {
     expect(entries[0]).toMatchObject({ sorani: ['ساڵ'], arabic: ['سَنَة'], synonyms: ['bihar'] });
   });
 
-  /**
-   * 25 cross-reference values in 5,208 are a lone comma, a bracket or "(2)" —
-   * the wreckage of whatever split the source's prose into a list. Printed as
-   * written, `îsot` listed a comma among its synonyms.
-   */
+  // Some cross-reference values are a lone comma, a bracket or "(2)", left over from splitting prose.
   it('drops a cross-reference that is punctuation rather than a word', () => {
     const entries = toEntries([row({ word: 'îsot', synonyms: ['filfil', ',', '(2)', '..', 'bîber'] })]);
     expect(entries[0]!.synonyms).toEqual(['filfil', 'bîber']);
@@ -572,18 +500,12 @@ describe('reading the corpus', () => {
 });
 
 describe('an address with no page behind it', () => {
-  /**
-   * It has to be a file in here rather than the app's own not-found screen:
-   * Cloudflare answers an unmatched path with the SPA shell, and `_headers`
-   * applies this directory's policy by URL, so the shell arrived under
-   * `default-src 'none'` and its own bundle was refused. The reader got a
-   * blank page.
-   */
+  // It must be a file here: the app shell served under this directory's `default-src 'none'` loads nothing and is blank.
   it('is a page of its own, and needs no script to say so', () => {
     const html = notFoundPage();
     expect(html).toContain('nehat dîtin');
     expect(html).toContain('href="/ferheng/"');
-    // only the bar's relabelling, which every page carries; nothing of the app's
+    // Only the bar's relabelling and the search box, which every page carries.
     expect(html.match(/<script[^>]*>/gi)).toEqual(['<script src="/ferheng/chrome.js">', '<script src="/ferheng/search.js" defer>']);
   });
 
@@ -603,28 +525,13 @@ describe('an address with no page behind it', () => {
 });
 
 /**
- * The dictionary copies the app's tokens and shell rules rather than importing
- * them, because these pages load no bundle — that is what makes them free to
- * serve. The cost is that the copy can drift, and it did, twice, in ways a
- * reader could see but not name: `.eyebrow` at 0.78rem against the app's 12px,
- * and the nav's 1440px cap missing entirely, so clicking Ferheng made the
- * navigation visibly narrower than everywhere else.
- *
- * Reading the app's own CSS and comparing is what turns the next drift into a
- * failing test instead of a judgement call.
+ * The dictionary copies the app's tokens and shell rules rather than importing them, since its pages load no bundle.
+ * Reading the app's own CSS here turns the next drift into a failing test.
  */
 describe('what the dictionary copies from the app', () => {
-  /*
-   * Resolved from the workspace root rather than from `import.meta.url`, which
-   * vitest rewrites — the first version of this silently read the test file
-   * itself, and a looser assertion would have passed against it and proved
-   * nothing. The guard is the point: a test that reads the wrong file must
-   * fail, not quietly succeed.
-   */
+  /* Resolved from the workspace root, not `import.meta.url`, which vitest rewrites; a test reading the wrong file must fail. */
   const read = (p: string): string => {
-    // vitest may be rooted at the workspace or at the repo, and `import.meta.url`
-    // is rewritten under it — the first version of this silently read the test
-    // file itself, which a looser assertion would have passed against.
+    // Vitest may be rooted at the workspace or the repo.
     const candidates = ['src/styles', 'web/src/styles'].map((d) => resolve(process.cwd(), d, p));
     const found = candidates.find((f) => existsSync(f));
     if (!found) throw new Error(`cannot find ${p}; looked in ${candidates.join(', ')}`);
@@ -648,34 +555,26 @@ describe('what the dictionary copies from the app', () => {
     const wrong: string[] = [];
     for (const [name, value] of mine) {
       const theirs = app.get(name);
-      // the dictionary copies a subset; what it does copy must match
+      // The dictionary copies a subset; what it copies must match.
       if (theirs !== undefined && theirs !== value) wrong.push(`${name}: ${value} ≠ ${theirs}`);
     }
     expect(wrong).toEqual([]);
   });
 
-  /**
-   * The bar is not a column of text and does not take a column of text's cap.
-   * Missing this one rule is what "the navbar becomes less wide" was.
-   */
+  /** The bar is not a column of text, so it does not take the content column's cap. */
   it('lets the bar run wider than the content column, as the app does', () => {
     expect(read('layout.css')).toMatch(/min-width:\s*1180px[\s\S]{0,120}max-width:\s*1440px/);
     expect(STYLE).toMatch(/min-width:\s*1180px[\s\S]{0,120}max-width:\s*1440px/);
   });
 
-  /** The value one declaration has in the first rule for `selector` — the base rule, ahead of any media query. */
+  /** The value one declaration has in the first rule for `selector`: the base rule, ahead of any media query. */
   const declOf = (css: string, selector: string, prop: string): string | undefined => {
     const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const block = new RegExp(`(?:^|\\n)\\s*${esc}\\s*\\{([^}]*)\\}`).exec(css)?.[1];
     return block ? new RegExp(`(?:^|[;\\s])${prop}\\s*:\\s*([^;]+);`).exec(block)?.[1]?.trim() : undefined;
   };
 
-  /**
-   * Clicking Dictionary used to move the bar: the dictionary had a copy of the
-   * app's nav from before the app's changed, so the links were dimmer, the
-   * page you were on lost its highlight, and Log in and Get started sat 28px
-   * apart instead of 14 on slightly smaller buttons. The copy has to keep up.
-   */
+  // The copied nav must keep up with the app's measurements, or clicking Dictionary visibly moves the bar.
   it('draws the bar with the app’s own measurements', () => {
     const layout = read('layout.css');
     const ui = read('ui.css');
@@ -699,15 +598,11 @@ describe('what the dictionary copies from the app', () => {
       .filter(([, , app, mine]) => app === undefined || app !== mine)
       .map(([sel, prop, app, mine]) => `${sel} ${prop}: ${mine} ≠ ${app}`);
     expect(wrong).toEqual([]);
-    // the page you are on is not bolder: a wider link moves every link after it
+    // The current page is not bolder, since a wider link moves every link after it.
     for (const css of [layout, STYLE]) expect(declOf(css, '.nav-link.active', 'font-weight')).toBeUndefined();
   });
 
-  /**
-   * The menu runs on a checkbox, and every style for its label reaches it from
-   * the checkbox with `~`. Moving the label into the right-hand group without
-   * moving those selectors silently took away its keyboard focus ring.
-   */
+  // Every style for the menu label reaches it from the checkbox with `~`, including its focus ring.
   it('reaches the menu toggle from its checkbox, focus ring and cross included', () => {
     const doc = new DOMParser().parseFromString(wordsPage({ prefix: 'a', words: [word('av')] }, null, null), 'text/html');
     const box = doc.querySelector('.nav-toggle-state')!;
@@ -728,10 +623,8 @@ describe('what the dictionary copies from the app', () => {
 });
 
 /**
- * The footer under the words is the app's footer, so a page the app's footer
- * links to is linked from here too, in the words the app uses for it — read
- * from the same catalogue key, so chrome.js can put it in the reader's
- * language like the rest of the footer.
+ * The dictionary's footer is the app's, so a page the app's footer links to is linked here too, with the same catalogue
+ * key so chrome.js can translate it.
  */
 describe('the dictionary’s footer, beside the app’s', () => {
   const sev = word('sêv', 'sev');
@@ -748,7 +641,7 @@ describe('the dictionary’s footer, beside the app’s', () => {
       expect(footer, copy.base).toContain(
         `<a href="/how-hevalo-teaches"><span data-copy="footer.teach">${escapeHtml(label ?? '')}</span></a>`,
       );
-      // the words are the app's own, not a second translation of them
+      // The app's own words, not a second translation.
       expect(copy.footer.teach, copy.base).toBe(label);
     }
   });
@@ -758,11 +651,7 @@ describe('the dictionary’s footer, beside the app’s', () => {
   });
 });
 
-/**
- * Clicking Dictionary in an app set to English turned the whole screen
- * Kurmancî. The words are Kurdish and always will be — that is the dictionary —
- * but the bar, the footer and the labels belong to whoever is reading.
- */
+/** The words are Kurdish always, but the bar, footer and labels belong to whoever is reading. */
 describe('the language around the words', () => {
   const sev: Word = { ...word('sêv', 'sev', 'Fêkiyeke sor e.'), sorani: ['سێو'] };
   const pages = paginate([sev]);
@@ -773,10 +662,10 @@ describe('the language around the words', () => {
     expect(html).toContain('>Home<');
     expect(html).toContain('>Dictionary<');
     expect(html).toContain('1 words');
-    // the entry itself is untouched
+    // The entry itself is untouched.
     expect(html).toContain('sêv');
     expect(html).toContain('Fêkiyeke sor e.');
-    // and none of the Kurmancî chrome survives
+    // And none of the Kurmancî chrome survives.
     expect(html).not.toContain('>Mal<');
     expect(html).not.toContain('peyv</p>');
   });
@@ -830,12 +719,7 @@ describe('the language around the words', () => {
     expect(alphabetName('s', COPY.ku)).toBe('Alfabeya Hawarê');
   });
 
-  /**
-   * The part of speech was the last Kurmancî left on an English page, sitting
-   * in the margin of every entry. The corpus writes it; the English set turns
-   * it over, and anything unlisted falls through as written rather than being
-   * guessed at.
-   */
+  // The English set translates the corpus's part-of-speech labels, passing through any it does not know.
   it('turns the part of speech over too, and passes through what it cannot', () => {
     const w: Word = {
       ...word('sal'),
@@ -851,14 +735,14 @@ describe('the language around the words', () => {
     expect(html).toContain('>Tiştekî nenas<');
     expect(html).not.toContain('>Navdêr<');
 
-    // and the rows that are ours rather than the corpus's
+    // And the rows that are ours rather than the corpus's.
     const rich: Word = { ...word('sal'), sorani: ['ساڵ'], arabic: ['سَنَة'], synonyms: ['bihar'] };
     const rows = wordsPage({ prefix: 'sa', words: [rich] }, null, null, new Map(), COPY.en);
     expect(rows).toContain('>Synonyms<');
     expect(rows).toContain('>Arabic<');
     expect(rows).not.toContain('>Hevmane<');
     expect(rows).not.toContain('>Erebî<');
-    // the dialect's name, spelled the way the alphabet heading spells it
+    // The dialect's name, spelt as the alphabet heading spells it.
     expect(rows).toContain('>Sorani<');
     expect(alphabetName('ش', COPY.en)).toContain('Sorani');
 
@@ -874,18 +758,12 @@ describe('the language around the words', () => {
 });
 
 describe('the stylesheet', () => {
-  /**
-   * `bab` lists thirty synonyms. Joined by a bare "·" with no whitespace they
-   * are one token a browser cannot break, so the row measured 2,296px inside a
-   * 625px page and the whole dictionary scrolled sideways. Inline margins are
-   * not break opportunities; wrapping flex items need none.
-   */
+  // `bab` lists thirty synonyms; joined without whitespace they were one unbreakable 2,296px token on a 625px page.
   it('lets a long list of cross-references wrap', () => {
     expect(STYLE).toMatch(/\.vals\s*\{[^}]*flex-wrap:\s*wrap/);
   });
 
-  /** Clip and not hidden: `hidden` on body turns every anchor jump into a
-      scroll container, and these pages are nothing but anchors. */
+  /** Clip and not hidden: `hidden` on body makes a scroll container, which breaks anchor jumps on pages made of anchors. */
   it('keeps a backstop against sideways drift that does not break anchors', () => {
     expect(STYLE).toMatch(/overflow-x:\s*clip/);
     expect(STYLE).not.toMatch(/overflow-x:\s*hidden/);
@@ -893,12 +771,7 @@ describe('the stylesheet', () => {
 });
 
 describe('what a word is filed under', () => {
-  /**
-   * `dictionaryKey` keeps anything Unicode calls a letter, and the *modifier*
-   * letters are letters. A headword beginning with Arabic tatweel — a
-   * typographic elongation, not a sound — sorted ahead of the whole Latin
-   * alphabet and opened the A–Z with a section named after it.
-   */
+  // Tatweel is a Unicode modifier letter but a typographic stretch, and a headword starting with one opened the A–Z.
   it('files a word under its first real letter, not a stretch', () => {
     expect(pageKey('ـrojname')).toBe('rojname');
     expect(pageKey('roـj')).toBe('roj');
@@ -910,11 +783,7 @@ describe('what a word is filed under', () => {
     expect(pageKey('123')).toBe('');
   });
 
-  /**
-   * The diacritics stay. `dictionaryKey` folds them so a search for "sev"
-   * finds "sêv"; an index must not, or five of Kurmancî's letters have no
-   * section and `şev` is filed under S.
-   */
+  // An index keeps the diacritics that search folds, or five Kurmancî letters lose their section.
   it('keeps a word’s own letters', () => {
     expect(pageKey('sêv')).toBe('sêv');
     expect(pageKey('şev')).toBe('şev');
@@ -923,25 +792,16 @@ describe('what a word is filed under', () => {
     expect(pageKey('щрщ')).toBe('щрщ');
   });
 
-  /**
-   * One letter written two ways is still one letter. The corpus proves each of
-   * these: it holds `هات` beside `ھاتن` — the same verb — and `كابانی` beside
-   * `کا`. Unfolded, every one of them split a letter in two down the index.
-   */
+  // The corpus has each pair as the same word (`هات` beside `ھاتن`, `كابانی` beside `کا`), so they are one letter.
   it('folds the Arabic letters that are one letter in Kurdish', () => {
     expect(pageKey('كا')).toBe(pageKey('کا'));
     expect(pageKey('يا')).toBe(pageKey('یا'));
     expect(pageKey('هات')).toBe(pageKey('ھات'));
-    // and the presentation forms NFKC turns back into ordinary letters
+    // And the presentation forms NFKC turns back into ordinary letters.
     expect(pageKey('ﻛا')).toBe(pageKey('کا'));
   });
 
-  /**
-   * Hawar has i and î and no dotless ı, so in Kurmancî it is a slip of a
-   * Turkish keyboard. It also uppercases to `I`, so leaving it out of the
-   * alphabet put a letter in the leftover block that a reader could not tell
-   * apart from Hawar's own I.
-   */
+  // Hawar has no dotless ı, which in Kurmancî is a Turkish keyboard slip and uppercases to an indistinguishable I.
   it('folds the Turkish dotless i, which Hawar does not have', () => {
     expect(pageKey('ısot')).toBe('isot');
     expect(alphabetOf('ı')).toBe('hawar');

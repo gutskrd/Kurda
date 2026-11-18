@@ -26,7 +26,7 @@ OUT = os.path.join(generate.ROOT, 'public', 'audio', 'words')
 MANIFEST = os.path.join(generate.ROOT, '..', 'shared', 'src', 'word-sets', 'clips.ts')
 
 WORDS = [
-    # colours
+    # Colours
     ('colours:kmr:red', 'ku', 'sor', 'sor'), ('colours:kmr:blue', 'ku', 'şîn', 'ʃin'),
     ('colours:kmr:green', 'ku', 'kesk', 'kɛsk'), ('colours:kmr:yellow', 'ku', 'zer', 'zɛr'),
     ('colours:kmr:black', 'ku', 'reş', 'rɛʃ'), ('colours:kmr:white', 'ku', 'spî', 'spi'),
@@ -38,7 +38,7 @@ WORDS = [
     ('colours:ckb:black', 'ku', 'reş', 'rɛʃ'), ('colours:ckb:white', 'ku', 'spî', 'spi'),
     ('colours:ckb:brown', 'ku', 'qaweyî', 'qaweɪi'), ('colours:ckb:purple', 'ku', 'mor', 'mor'),
     ('colours:ckb:pink', 'ku', 'pemeyî', 'pɛmeɪi'),
-    # numbers
+    # Numbers
     ('numbers:kmr:0', 'ku', 'sifir', 'sɪfɪr'), ('numbers:kmr:1', 'ku', 'yek', 'jɛk'), ('numbers:kmr:2', 'ku', 'du', 'dʊ'),
     ('numbers:kmr:3', 'ku', 'sê', 'se'), ('numbers:kmr:4', 'ku', 'çar', 'tʃar'), ('numbers:kmr:5', 'ku', 'pênc', 'pendʒ'),
     ('numbers:kmr:6', 'ku', 'şeş', 'ʃɛʃ'), ('numbers:kmr:7', 'ku', 'heft', 'hɛft'), ('numbers:kmr:8', 'ku', 'heşt', 'hɛʃt'),
@@ -66,7 +66,7 @@ WORDS = [
     ('numbers:ckb:70', 'ar', 'حَفتا', 'ħaftaː'), ('numbers:ckb:80', 'ku', 'heşta', 'hɛʃta'),
     ('numbers:ckb:90', 'ku', 'newed', 'neʊɛd'), ('numbers:ckb:100', 'ku', 'sed', 'sɛd'),
     ('numbers:ckb:1000', 'ku', 'hezar', 'hɛzar'),
-    # days
+    # Days
     ('days:kmr:sat', 'ku', 'şemî', 'ʃɛmi'), ('days:kmr:sun', 'ku', 'yekşem', 'jɛkʃɛm'),
     ('days:kmr:mon', 'ku', 'duşem', 'dʊʃɛm'), ('days:kmr:tue', 'ku', 'sêşem', 'seʃɛm'),
     ('days:kmr:wed', 'ku', 'çarşem', 'tʃarʃɛm'), ('days:kmr:thu', 'ku', 'pêncşem', 'pendʒʃɛm'),
@@ -75,7 +75,7 @@ WORDS = [
     ('days:ckb:mon', 'ku', 'dûşemme', 'duʃɛmmɛ'), ('days:ckb:tue', 'ku', 'sêşemme', 'seʃɛmmɛ'),
     ('days:ckb:wed', 'ku', 'çwarşemme', 'tʃwarʃɛmmɛ'), ('days:ckb:thu', 'ku', 'pêncşemme', 'pendʒʃɛmmɛ'),
     ('days:ckb:fri', 'ku', 'heynî', 'heɪni'),
-    # months
+    # Months
     ('months:kmr:jan', 'ku', 'kanûna paşîn', 'kanunapaʃin'), ('months:kmr:feb', 'ku', 'sibat', 'sɪbat'),
     ('months:kmr:mar', 'ku', 'adar', 'adar'), ('months:kmr:apr', 'ku', 'nîsan', 'nisan'),
     ('months:kmr:may', 'ku', 'gulan', 'ɡʊlan'), ('months:kmr:jun', 'ku', 'hezîran', 'hɛziran'),

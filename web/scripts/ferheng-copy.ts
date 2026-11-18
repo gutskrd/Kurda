@@ -1,37 +1,10 @@
 /**
- * The dictionary's chrome, in the two languages it is published in.
+ * The dictionary's chrome in its two published languages. The words are Kurdish always; the bar, footer and labels
+ * belong to the reader. Two sets, not nine, because each is about 3,360 files against a 20,000-file limit: Kurmancî for
+ * a reader who chose it, English for everyone else, as emails do (`api/src/email/templates.ts`).
  *
- * ── why the pages were only Kurmancî, and why that was wrong ─────────────
- *
- * The words in this dictionary are Kurdish and always will be — that is the
- * dictionary. The bar above them, the footer below them and the labels around
- * them are not: they belong to whoever is reading. Clicking Ferheng in an app
- * set to English turned the whole screen Kurmancî, which reads as having left
- * the product rather than having opened a page of it.
- *
- * ── why two languages and not nine ──────────────────────────────────────
- *
- * The app speaks nine. These pages are files, and there are 3,360 of them per
- * language: nine would be 30,240 against a 20,000-file deployment limit, so the
- * choice is not between two and nine, it is between two and none.
- *
- * Which two follows the precedent already set for email in
- * `api/src/email/templates.ts`: Kurmancî for a reader who chose Kurmancî,
- * English for everyone else, because English is the catalogue every other
- * locale falls back to anyway. A reader of Soranî is not served by Kurmancî in
- * a script they may not read. Each becomes its own set the day the file budget
- * and the copy both exist.
- *
- * ── why the paths differ rather than nesting ────────────────────────────
- *
- * `/ferheng/` and `/dictionary/`, two siblings, rather than `/ferheng/en/`.
- * Everything one level under `/ferheng/` is a letter or a range of words, and
- * those names come from the corpus: `ku` and `en` are both plausible range
- * names, so a locale segment there is a collision waiting for the next import
- * to produce it. A sibling path cannot collide with anything.
- *
- * It also keeps every `/ferheng/` URL already indexed, linked or bookmarked
- * exactly where it was.
+ * The sets are sibling paths, `/ferheng/` and `/dictionary/`, not `/ferheng/en/`: everything under `/ferheng/` is a
+ * letter or range named from the corpus, where `ku` or `en` could collide, and existing `/ferheng/` URLs stay put.
  */
 
 import type { AppLocale } from '@kurda/shared';
@@ -40,9 +13,9 @@ export const FERHENG_LOCALES = ['ku', 'en'] as const;
 export type FerhengLocale = (typeof FERHENG_LOCALES)[number];
 
 export interface Copy {
-  /** the single path segment these pages live under */
+  /** The single path segment these pages live under. */
   base: string;
-  /** what `<html lang>` says; the words themselves are marked Kurdish inline */
+  /** What `<html lang>` says; the words themselves are marked Kurdish inline. */
   htmlLang: string;
   nav: {
     home: string;
@@ -57,19 +30,19 @@ export interface Copy {
     tagline: string;
     learn: string;
     lessons: string;
-    /** the link to "How Hevalo teaches", in the words the app's footer uses */
+    /** The link to "How Hevalo teaches", in the app footer's words. */
     teach: string;
     community: string;
     join: string;
     app: string;
     ios: string;
     android: string;
-    /** the CC BY-SA sentence, with {wiki} and {licence} as the two link slots */
+    /** The CC BY-SA sentence, with {wiki} and {licence} as the two link slots. */
     licence: string;
-    /** the imprint beside the copyright line */
+    /** The imprint beside the copyright line. */
     byZagrosian: string;
   };
-  /** the three alphabets, in the order they are listed */
+  /** The three alphabets, in listing order. */
   alphabets: { hawar: string; sorani: string; other: string };
   index: {
     eyebrow: string;
@@ -78,17 +51,17 @@ export interface Copy {
     selected: string;
     about: string;
     aboutBody: string;
-    /** the way from the letter index to the app's alphabet, where each letter's sound is explained */
+    /** The way from the letter index to the app's alphabet, where each letter's sound is explained. */
     alphabet: string;
     description: (total: string) => string;
   };
-  /** the search box on every page */
+  /** The search box on every page. */
   search: {
     label: string;
     placeholder: (words: string) => string;
     more: string;
     none: string;
-    /** before a letter, linking to its page: "Every word under S" */
+    /** Before a letter, linking to its page: "Every word under S". */
     letter: string;
   };
   letter: {
@@ -102,21 +75,13 @@ export interface Copy {
     description: (n: number, first: string, last: string) => string;
   };
   notFound: { title: string; heading: string; body: string; action: string; here: string; description: string };
-  /**
-   * The corpus's own part-of-speech labels, turned into this language.
-   *
-   * These come from the source as Kurmancî — `Navdêr`, `Formeke navdêrê` — and
-   * on a Kurmancî page that is exactly right. On an English page it is the one
-   * piece of chrome left in the wrong language, sitting in the margin of every
-   * entry. Anything not listed falls through as the source wrote it, which is
-   * better than guessing at a label nobody has translated.
-   */
+  /** The corpus's Kurmancî part-of-speech labels in this language; unlisted ones fall through as the source wrote them. */
   pos: Record<string, string>;
-  /** the labelled rows under an entry that are ours rather than the corpus's */
+  /** The labelled rows under an entry that are ours rather than the corpus's. */
   rows: { sorani: string; arabic: string; synonyms: string };
-  /** what the breadcrumb calls the dictionary's own root */
+  /** What the breadcrumb calls the dictionary's root. */
   root: string;
-  /** the `· Ferhenga kurdî` tail every page title carries */
+  /** The `· Ferhenga kurdî` tail every page title carries. */
   titleSuffix: string;
 }
 
@@ -183,7 +148,7 @@ const KU: Copy = {
     here: 'Nehat dîtin',
     description: 'Ev navnîşan di ferhengê de nîne.',
   },
-  // the source already writes them in Kurmancî
+  // The source already writes them in Kurmancî.
   pos: {},
   rows: { sorani: 'Soranî', arabic: 'Erebî', synonyms: 'Hevmane' },
   root: 'Ferheng',
@@ -253,8 +218,7 @@ const EN: Copy = {
     here: 'Not found',
     description: 'This address is not in the dictionary.',
   },
-  /* every label the corpus used across a 44,000-row sample; the two "Formeke"
-     ones alone are 55% of it */
+  /* Every label the corpus used across a 44,000-row sample; the two "Formeke" ones alone are 55% of it. */
   pos: {
     'Navdêr': 'Noun',
     'Formeke navdêrê': 'Noun form',
@@ -289,36 +253,18 @@ const EN: Copy = {
 
 export const COPY: Record<FerhengLocale, Copy> = { ku: KU, en: EN };
 
-/**
- * Which published set a reader gets, from the nine the app speaks.
- *
- * The same rule `emailLocaleFor` uses, and for the same reason: Kurmancî for a
- * reader who chose Kurmancî, English for everyone else, because English is what
- * every other locale already falls back to.
- */
+/** Which published set a reader gets: Kurmancî for Kurmancî readers, English for the rest, as `emailLocaleFor` decides. */
 export function ferhengLocaleFor(locale: string | null | undefined): FerhengLocale {
   return locale === 'ku' ? 'ku' : 'en';
 }
 
 /**
- * The pages' own words — everything that is not the bar or the footer — in all
- * nine of the app's languages.
- *
- * Only Kurmancî and English are published as files (see the top of this file
- * for why). The other seven are what chrome.js swaps in for a reader using the
- * app in them, so that clicking Dictionary from German or Arabic does not turn
- * the page English around the words. The definitions themselves stay as the
- * corpus has them — in English on these pages, in Kurmancî on the others —
- * because no translation of them exists; everything around them is the
- * reader's.
- *
- * Kurmancî and English are read off the two published copies rather than
- * written out a second time, so the files and the swap cannot disagree. The
- * spellings follow the app's catalogues: Kurmandschi and Sorani in German,
- * kurmanji and sorani in Spanish, and so on.
+ * The pages' own words in all nine app languages: Kurmancî and English are published as files, and the other seven are
+ * what chrome.js swaps in, so the page around the words is the reader's. Definitions stay as the corpus has them. The
+ * published two are read from their copies, so files and swap cannot disagree; spellings follow the app's catalogues.
  */
 export type PageText = Pick<Copy, 'alphabets' | 'index' | 'search' | 'letter' | 'words' | 'notFound' | 'pos' | 'rows' | 'root' | 'titleSuffix'> & {
-  /** the CC BY-SA sentence, with {wiki} and {licence} as the two link slots */
+  /** The CC BY-SA sentence, with {wiki} and {licence} as the two link slots. */
   licence: string;
 };
 

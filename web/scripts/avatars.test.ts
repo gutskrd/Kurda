@@ -4,9 +4,8 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../src/lib/cosmetics';
 
 /**
- * The picker's offline list, the API's manifest and the pictures on disk are
- * three copies of one list. They drifted once (40 keys, 16 pictures); this keeps
- * them equal. Paths are tried from both roots vitest may run from.
+ * The picker's offline list, the API's manifest and the pictures on disk are three copies of one list, kept equal here.
+ * Paths are tried from both roots vitest may run from.
  */
 function repoPath(p: string): string {
   const candidates = [resolve(process.cwd(), '..', p), resolve(process.cwd(), p)];

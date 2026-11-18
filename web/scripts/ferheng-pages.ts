@@ -1,35 +1,9 @@
 /**
- * Rendering the public dictionary pages: the pure half of the build script.
+ * Renders the public dictionary pages: the pure half of the build script, strings in and strings out (no network,
+ * filesystem or clock), so it, and above all its escaping, can be tested without fetching the corpus.
  *
- * Split out so it can be tested without fetching 65 MB and writing 3,000
- * files. Everything here is a string in and a string out — no network, no
- * filesystem, no clock — which is what makes the escaping testable, and the
- * escaping is the part that has to be right.
- *
- * ── the house style ──────────────────────────────────────────────────────
- *
- * Hevalo is a Zagrosian product, and these pages are set the way zagrosian.com
- * is set, because a reader who follows a search result here and then follows
- * the footer there should not feel handed between two companies. Read off the
- * live site rather than guessed at: #0a0a0a under #f2f2f2, Inter for running
- * text, a monospace at 13px for labels and counts, a Palatino-class serif for
- * Kurdish, 0.8px hairlines, pills at 999px, and whitespace between sections
- * measured in whole screens rather than in pixels.
- *
- * Two things are deliberately not borrowed. There is no gold here — the app
- * uses it for Zêr and XP, which mean nothing in a dictionary. And the display
- * sizes are a step down from the marketing site's, because these pages are for
- * reading rather than for arriving at.
- *
- * ── why it is not a wall of letter buttons ───────────────────────────────
- *
- * The first version of the A–Z was 53 bordered boxes with a letter in each,
- * and the letter pages were more of the same with ranges in them. That is a
- * table of contents pretending to be a page: nothing on it to read, and no
- * reason to be on it except to leave. So the front page now opens with actual
- * entries, the index is set as a printed dictionary's thumb index rather than
- * as a grid of controls, and a letter's ranges are named by the words they
- * start and end at instead of by the folded prefix the build happens to use.
+ * The pages look like the app (its tokens, nav and footer; see `STYLE`). The front page opens with real entries, the
+ * A–Z is set as a thumb index, and a letter's ranges are named by their first and last words.
  */
 import { PROVIDER, foldLetter, letterKey } from '@kurda/shared';
 import { escapeHtml as escape } from './escape.js';
@@ -42,71 +16,37 @@ import { formOf, isInflected, type Entry } from './ferheng-entries.js';
 export const ORIGIN = 'https://hevalo.app';
 
 /**
- * How many words a page holds before it is split by taking another letter.
- *
- * 150 is a page of about 35 KB — small enough to open on a phone over a slow
- * connection, large enough that the whole dictionary stays near 3,000 files
- * rather than tens of thousands, against a 20,000-file deployment limit.
+ * How many words a page holds before it splits on another letter: about 35 KB, light enough on a slow phone, and the
+ * dictionary stays near 3,000 files against a 20,000-file deployment limit.
  */
 export const WORDS_PER_PAGE = 150;
 
 /**
- * The one typeface these pages load, copied out of node_modules at build time
- * and served from /ferheng/fonts/.
- *
- * Only Arabic. Latin text is set in the app's own `--font-sans`, which is the
- * system stack and downloads nothing — these pages carried a Latin webfont for
- * a while and it was part of why they did not look like the rest of Hevalo.
- * The Arabic script has no system face worth relying on across platforms, and
- * a quarter of this dictionary is written in it.
- *
- * Self-hosted rather than fetched from a font CDN for two reasons: these pages
- * are served under `default-src 'none'`, so a third party would need a hole in
- * it, and a file on Cloudflare's edge is unmetered where a third party's is a
- * request a reader makes to a company that did not ask them.
- *
- * Its `unicode-range` means a page of Kurmancî never fetches it at all.
+ * The one webfont, copied from node_modules at build time and served from /ferheng/fonts/: Arabic only, since Latin uses
+ * the system stack and no system Arabic face is reliable. Self-hosted because the pages run under `default-src 'none'`;
+ * its `unicode-range` keeps Kurmancî pages from fetching it.
  */
 export const FONTS = [
   { from: '@fontsource-variable/vazirmatn/files/vazirmatn-arabic-wght-normal.woff2', as: 'vazirmatn-arabic.woff2' },
 ] as const;
 
-/**
- * An entry, plus where this build decided to file it.
- *
- * `Entry` is what the corpus said. `key` is the folded form the word sorts
- * under and the anchor it is addressed by, which is a decision made here and
- * nowhere in the source.
- */
+/** An entry plus where this build files it: `key` is the folded sort form and anchor, decided here, not in the source. */
 export interface Word extends Entry {
-  /** what it is grouped and sorted by: letters only, diacritics folded */
+  /** What it is grouped and sorted by: letters only, diacritics folded. */
   key: string;
 }
 
 export interface Page {
-  /** the address: /ferheng/<prefix>/ */
+  /** The address: /ferheng/<prefix>/. */
   prefix: string;
   words: Word[];
 }
 
 /**
- * The prefix tree, flattened into pages, then put back together again.
- *
- * Splitting alone is not enough, and the first version that only split made the
- * point: 391,757 words became **17,652 pages** against a 20,000-file deployment
- * limit, because splitting "a" because it is too big also splits every rare
- * two-letter prefix under it into a page holding four words. Tiny pages are the
- * expensive ones — they cost a file each and the limit counts files.
- *
- * So after a group splits, its children are walked in order and merged back
- * while they fit. A merged page is named for the range it covers — `aa-ac` —
- * which is still an address a person can read and a crawler can keep. That
- * takes the same corpus to roughly 2,600 pages, an order of magnitude under the
- * limit, with every page a useful size.
- *
- * A run that cannot be split further — every word in it sharing the whole key —
- * is kept whole and oversized, because splitting it would produce a page with
- * no address of its own.
+ * The prefix tree flattened into pages. Splitting alone made 17,652 pages from 391,757 words (every rare prefix under a
+ * big letter became a tiny page), so after a split the children are merged back in order while they fit, named for their
+ * range (`aa-ac`): about 2,600 pages. A run sharing the whole key is kept whole and oversized, since splitting it would
+ * leave a page without an address.
  */
 export function paginate(words: Word[], depth = 1): Page[] {
   const groups = new Map<string, Word[]>();
@@ -130,32 +70,16 @@ export function paginate(words: Word[], depth = 1): Page[] {
 }
 
 /**
- * What a word is filed under: its own letters, in their own alphabet.
- *
- * `letterKey` and not `dictionaryKey`. The second folds the diacritics — ş to
- * s, ê to e — which is right for a search box, where somebody typing "sev"
- * should find "sêv", and wrong for an index: Ş is a letter of the Kurdish
- * alphabet and not a decoration on S. Filed by the folded key, five of
- * Kurmancî's thirty-one letters had no section at all and `şev` sorted in among
- * the s-words.
- *
- * Three things are still folded, because they are one letter written two ways
- * rather than two letters: `ك`/`ک`, `ي`/`ی` and `ه`/`ھ`. NFKC first, which
- * turns the Arabic presentation forms (`ﻛ`, `ﻫ`, `ﻋ`) into the ordinary ones.
- *
- * Modifier letters go. Unicode counts Arabic tatweel (U+0640) as a letter, but
- * it is a typographic stretch rather than a sound, and a headword starting with
- * one was sorting ahead of the entire Latin alphabet and opening the A–Z with a
- * section called `ـ`.
- *
- * Returns an empty string for a headword that is nothing but stretches, which
- * the caller skips.
+ * What a word is filed under: its own letters in their own alphabet. `letterKey`, not `dictionaryKey`, because Ş is a
+ * letter, not a decorated S; folding diacritics left five Kurmancî letters without a section. Only one letter written two
+ * ways is folded (`ك`/`ک`, `ي`/`ی`, `ه`/`ھ`), after NFKC turns presentation forms into ordinary ones. Tatweel (U+0640) is
+ * dropped, since it is a stretch, not a sound. Returns '' for a headword of stretches only, which the caller skips.
  */
 export function pageKey(headword: string): string {
   return (
     letterKey(headword.normalize('NFKC'))
       .replace(/\p{Lm}/gu, '')
-      // ك and ک are one letter in Kurdish, as are ي and ی, ه and ھ
+      // ك and ک are one letter in Kurdish, as are ي and ی, ه and ھ.
       .replace(/./gu, (ch) => foldLetter(ch))
   );
 }
@@ -166,22 +90,14 @@ function coalesce(parts: Page[]): Page[] {
   for (const part of parts) {
     const last = merged[merged.length - 1];
     /*
-     * A page never spans two letters, however much room is left on it.
-     *
-     * Merging purely by size produced `چە-ح`: ninety-three ح words on a page
-     * named for چ, so `letterOf` filed them under چ and ح got no section in the
-     * index at all. Thirteen letters disappeared that way. It read badly even
-     * where it was harmless — `şablon – sabotortî` is a page that begins in one
-     * letter and ends in another, which is not how a dictionary is divided.
+     * A page never spans two letters, however much room is left: merging by size alone filed a page like `چە-ح` under چ
+     * and left ح, and twelve other letters, without a section.
      */
     const sameLetter = last !== undefined && letterOf(last.prefix) === part.prefix.slice(0, 1);
     if (last && sameLetter && last.words.length + part.words.length <= WORDS_PER_PAGE) {
       /*
-       * Either side may already be a range, because coalescing happens at every
-       * depth and a child can arrive merged. Widening has to take the low end
-       * of one and the high end of the other — reading `-` as "to" rather than
-       * as a separator — or a page ends up called `a-ab-abb`, which is three
-       * bounds for a thing that has two.
+       * Either side may already be a range, since merging happens at every depth, so take the low end of one and the
+       * high end of the other, or a page is named `a-ab-abb`.
        */
       const from = last.prefix.split('-')[0]!;
       const ends = part.prefix.split('-');
@@ -195,39 +111,27 @@ function coalesce(parts: Page[]): Page[] {
   return merged;
 }
 
-/** What a page of words spans, in words rather than in folded prefixes. */
+/** What a page spans, in words rather than folded prefixes. */
 function span(page: Page): string {
   const first = page.words[0]!.headword;
   const last = page.words[page.words.length - 1]!.headword;
   return first === last ? first : `${first} – ${last}`;
 }
 
-/**
- * Whether a string is written in the Arabic script, tested per value.
- *
- * Needed because the fields do not say. `sorani_equivalents` holds "ساڵ" for
- * `sal` and "rojjmêrî zayînî" for `salnameya zayînî` — the same field, two
- * scripts — and marking a Latin string rtl reverses the punctuation around it.
- */
+/** Whether a string is Arabic script, per value: `sorani_equivalents` mixes scripts, and marking Latin rtl reverses its punctuation. */
 function isArabic(s: string): boolean {
   return /\p{Script=Arabic}/u.test(s);
 }
 
-/** `dir` and `lang`, for a value whose script is not known until it is read. */
+/** `dir` and `lang` for a value whose script is known only once read. */
 function scriptAttrs(value: string, lang: string): string {
   return ` lang="${lang}"${isArabic(value) ? ' dir="rtl"' : ''}`;
 }
 
 /**
- * A trail, as microdata a search engine reads and as a line a reader clicks.
- *
- * `BreadcrumbList` is what turns a bare URL in a search result into
- * "hevalo.app › Ferheng › S". It is attributes rather than a JSON-LD script,
- * for the same reason everything else here is: these pages are served under a
- * policy that allows no inline script at all (only chrome.js, a file of ours),
- * and markup that needs an exception is markup that will eventually get one.
+ * One step of a breadcrumb trail, drawn as `BreadcrumbList` microdata (attributes, not JSON-LD, since these pages allow no
+ * inline script); `copy` when its name is a word chrome.js may relabel.
  */
-/** One step of the trail; `copy` when its name is a word chrome.js may relabel. */
 interface Crumb {
   name: string;
   url: string;
@@ -251,17 +155,8 @@ function breadcrumb(trail: Crumb[], here: string, hereCopy?: PageKey): string {
 }
 
 /**
- * The four glyphs the app's nav draws, as markup.
- *
- * The same Phosphor icons at the same weight the app imports — House,
- * BookOpenText, PuzzlePiece, Trophy — because a bar with four words and no
- * glyphs beside them is one of the things that made this read as a different
- * site. Inline SVG rather than a sprite or an icon font: `default-src 'none'`
- * means nothing can be fetched to draw them, and inline SVG is markup rather
- * than script, so it needs no exception at all.
- *
- * Repeated on every page, which sounds wasteful and is not: it is the same
- * 1.8 KB on all 3,363 of them, and it compresses to nothing on the wire.
+ * The app nav's four glyphs (Phosphor House, BookOpenText, PuzzlePiece, Trophy at the app's weight) as inline SVG, since
+ * `default-src 'none'` allows nothing to be fetched; repeated on every page, it compresses to nothing.
  */
 const NAV_ICONS: Record<string, string> = {
   mal: 'M219.31,108.68l-80-80a16,16,0,0,0-22.62,0l-80,80A15.87,15.87,0,0,0,32,120v96a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V160h32v56a8,8,0,0,0,8,8h64a8,8,0,0,0,8-8V120A15.87,15.87,0,0,0,219.31,108.68ZM208,208H160V152a8,8,0,0,0-8-8H104a8,8,0,0,0-8,8v56H48V120l80-80,80,80Z',
@@ -274,23 +169,9 @@ const NAV_ICONS: Record<string, string> = {
 };
 
 /**
- * The app's footer, in Kurmancî, with the dictionary's own licence line added.
- *
- * Section for section and link for link the same as `web/src/components/
- * Footer.tsx`: the brand and its tagline, the Kurdish motto, the three columns,
- * the bottom bar with the business and its KvK number. These pages had a
- * two-column footer of their own for a while, which is the kind of difference
- * a reader cannot name and can see.
- *
- * The strings are the `ku` catalogue's, read from web/src/i18n/ku.ts rather
- * than translated again — these pages are `lang="ku"` and have no reader whose
- * language to follow, so they are Kurmancî always.
- *
- * The motto is deliberately not translated anywhere in the app: it is the
- * app's own line, the way a masthead keeps its motto.
- *
- * The year is the build's. A static page cannot read a clock, and a copyright
- * line one year stale is a smaller wrong than a line that says nothing.
+ * The app's footer in Kurmancî, matching web/src/components/Footer.tsx section for section, plus the dictionary's licence
+ * line. Strings come from web/src/i18n/ku.ts, since these pages are `lang="ku"`; the motto is never translated. The year
+ * is the build's.
  */
 function footer(c: Copy): string {
   const licence = `<span${copyHook('page.licence')} data-copy-slots>${escape(c.footer.licence)
@@ -341,23 +222,14 @@ ${/* the imprint, drawn exactly as the app draws it — see ZagrosianCredit.tsx 
 }
 
 /**
- * A word in the bar or footer that chrome.js may put into the reader's language.
- *
- * Always an inline span of its own, never the link or heading around it: the
- * script sets `dir` on what it relabels, and on a block that would also flip
- * the block's alignment — Arabic links hard right in an otherwise left-hand
- * column. On a span it orders the letters and leaves the layout alone.
+ * A bar or footer word chrome.js may translate, always in its own span: chrome.js sets `dir` on what it relabels, and on
+ * a block that would also flip its alignment.
  */
 function labelled(key: ChromeKey, text: string, vars?: Record<string, string | number>): string {
   return `<span${copyHook(key, undefined, vars)}>${escape(text)}</span>`;
 }
 
-/**
- * One nav entry, drawn the way the app draws one: glyph, then word.
- *
- * The word is in a span of its own (see `labelled`) so chrome.js can relabel it
- * without taking the glyph with it.
- */
+/** One nav entry, glyph then word, the word in its own span (see `labelled`) so chrome.js can relabel it alone. */
 function navLink(key: string, href: string, label: string, copy: ChromeKey, current = false): string {
   return (
     `<a class="nav-link${current ? ' active' : ''}" href="${escape(href)}"${current ? ' aria-current="page"' : ''}>` +
@@ -368,13 +240,9 @@ function navLink(key: string, href: string, label: string, copy: ChromeKey, curr
 }
 
 /**
- * This page in each language it is published in, for a search engine.
- *
- * Page for page, not set for set: the words and the paging are the same in
- * both, so `/ferheng/ab/` and `/dictionary/ab/` are one page in two languages.
- * Naming the two front pages from every page contradicted each page's own
- * canonical, and a search engine discards annotations like that. `x-default`
- * is English, the rule `ferhengLocaleFor` applies to a reader.
+ * This page in each published language, for search engines. Page for page, since both sets page identically
+ * (`/ferheng/ab/` and `/dictionary/ab/`); naming the front pages from every page contradicted the canonicals. `x-default`
+ * is English, as `ferhengLocaleFor` picks.
  */
 function alternates(canonical: string, c: Copy): string {
   const rest = canonical.slice(`${ORIGIN}/${c.base}/`.length);
@@ -386,26 +254,23 @@ function alternates(canonical: string, c: Copy): string {
   );
 }
 
-/**
- * The shell every page shares: nothing fetched off this origin, and one script
- * — chrome.js, which only relabels the bar and footer. See ferheng-chrome.ts.
- */
+/** The shell every page shares: nothing fetched off this origin, and one script, chrome.js, which only relabels (ferheng-chrome.ts). */
 export function document_(opts: {
   title: string;
   description: string;
   canonical: string;
   body: string;
-  /** which of chrome.js's title templates this title is, and what fills it */
+  /** Which chrome.js title template this title is, and what fills it. */
   titleCopy?: { key: PageKey; vars?: Record<string, string | number> };
-  /** the steps above this page; the page itself is added as the last one */
+  /** The steps above this page; the page itself is added last. */
   breadcrumb?: Crumb[];
-  /** what the trail calls this page, when it is not the title */
+  /** What the trail calls this page, when not the title. */
   here?: string;
-  /** the template for `here`, when it is a word of ours rather than the corpus's */
+  /** The template for `here`, when it is our word rather than the corpus's. */
   hereCopy?: PageKey;
-  /** which of the published languages this page is one of */
+  /** Which published language this page is in. */
   copy: Copy;
-  /** the 404: `noindex`, and no claim to an address or a twin */
+  /** The 404: `noindex`, with no canonical or alternates. */
   missing?: boolean;
 }): string {
   const c = opts.copy;
@@ -465,22 +330,9 @@ ${/* the search box; hidden in the markup, so without this nothing pretends to s
 }
 
 /**
- * One sense, as a dictionary prints one: numbered within its part of speech.
- *
- * Grouping first and numbering second is what makes an entry read like an
- * entry. A word that is a noun twice and a verb once has two numbered noun
- * senses and one verb sense, not three undifferentiated lines.
- *
- * The labels are the source's own and therefore Kurdish — "Navdêr", "Lêker",
- * "Formeke navdêrê" — which is both what a reader of a Kurdish dictionary
- * expects and finer than the importer's thirteen-value enum. Half the corpus
- * is inflected forms, and only this label says so, so the ones that are get a
- * class and are set back from the words that stand on their own.
- *
- * Regrouping here rather than trusting the converter's order is deliberate: a
- * page entry can be two writings of one key merged together — `Kurd` and
- * `kurd`, `كا` and `کا` — and their senses arrive concatenated rather than
- * interleaved.
+ * Senses grouped by part of speech and numbered within each, as a dictionary prints them. Labels are the source's own
+ * Kurdish ("Navdêr", "Lêker"); inflected forms, half the corpus, get a class and are set back. Regrouped here because a
+ * page entry can merge two writings of one key (`Kurd` and `kurd`), whose senses arrive concatenated.
  */
 function senseList(senses: Word['senses'], copy: Copy): string {
   const byPos = new Map<string, string[]>();
@@ -500,17 +352,8 @@ function senseList(senses: Word['senses'], copy: Copy): string {
 }
 
 /**
- * The same word in the other Kurdish, and in Arabic.
- *
- * This is the row a Kurdish dictionary is asked for most and the one no
- * single-dialect dictionary prints: Kurmancî and Soranî are written in
- * different scripts by readers who often cannot read the other, and the corpus
- * states the pairing outright rather than leaving it to be inferred.
- *
- * `alternateName` is claimed only for Soranî. It is the same word in the same
- * language, which is what the property means; the Arabic is a translation, and
- * saying otherwise in markup a search engine reads would be a small lie that
- * costs nothing to avoid.
+ * The same word in the other Kurdish and in Arabic, the row most asked for, since the two Kurdish scripts are often
+ * unreadable to each other's readers. Only Soranî is marked `alternateName`; the Arabic is a translation.
  */
 function equivalents(word: Word, copy: Copy): string {
   const row = (key: PageKey, label: string, values: string[], lang: string, prop: string | null): string => {
@@ -526,15 +369,7 @@ function equivalents(word: Word, copy: Copy): string {
   );
 }
 
-/**
- * The words this one points at, as links.
- *
- * These come from the source's own `synonyms` field rather than from reading
- * the prose, so a link is a fact the corpus stated and not a guess at what a
- * definition meant. A synonym whose page does not exist is printed without a
- * link: the word is still worth showing, and a link to nothing is worse than
- * no link.
- */
+/** Synonyms from the source's own field, as links; one whose page does not exist is printed unlinked. */
 function synonymList(words: string[], pageOf: Map<string, string>, copy: Copy): string {
   if (words.length === 0) return '';
   const link = (w: string): string => {
@@ -546,7 +381,7 @@ function synonymList(words: string[], pageOf: Map<string, string>, copy: Copy): 
       : `<span${attrs}>${escape(w)}</span>`;
   };
   const sep = '<span class="sep">·</span>';
-  // some words list forty; eight are enough to read, the rest wait behind a tap
+  // Some words list forty; eight are enough to read, the rest wait behind a tap.
   const shown = words.slice(0, SYNONYMS_SHOWN).map(link).join(sep);
   const rest = words.slice(SYNONYMS_SHOWN);
   const more = rest.length
@@ -556,18 +391,13 @@ function synonymList(words: string[], pageOf: Map<string, string>, copy: Copy): 
 }
 
 /** How many synonyms an entry shows before "+N". */
-export const SYNONYMS_SHOWN = 8;
+const SYNONYMS_SHOWN = 8;
 
 /**
- * A word that is only a grammatical form of another, with nothing else to say.
- *
- * Over half the corpus: `dadana`, `dadanan`, `dadane`… each printed as a full
- * entry whose one line is "Rewşa îzafeyî ya yekjimar a binavkirî ya dadan." A
- * page of those reads as a wall, and the thing a reader wants from one is the
- * word it is a form of. So it is one line — the kind of form, an arrow, the
- * base word as a link — and the grammar is a tap away rather than gone.
+ * A word that is only a grammatical form of another, with nothing else to say (over half the corpus). Shown as one line,
+ * the kind of form, an arrow and the base word as a link, with the grammar a tap away.
  */
-export function isFormOnly(w: Word): boolean {
+function isFormOnly(w: Word): boolean {
   return (
     w.senses.length > 0 &&
     w.senses.every((s) => isInflected(s.pos)) &&
@@ -618,12 +448,8 @@ function entriesOf(words: Word[], pageOf: Map<string, string>, here: string, cop
   return out.join('\n');
 }
 
-/**
- * The search box. Hidden until search.js shows it, so a browser that runs no
- * script never sees a box that does nothing. Its words are hooked like the
- * rest of the page, so chrome.js puts them in the reader's language.
- */
-export function searchBox(copy: Copy, total: number, id: string, big = false): string {
+/** The search box, hidden until search.js shows it so a script-free browser never sees a dead box; chrome.js translates its words. */
+function searchBox(copy: Copy, total: number, id: string, big = false): string {
   const n = total.toLocaleString('en');
   const placeholder = total
     ? ` placeholder="${escape(copy.search.placeholder(n))}"${copyHook('page.search.placeholder', 'placeholder', { n })}`
@@ -641,8 +467,7 @@ export function searchBox(copy: Copy, total: number, id: string, big = false): s
 function entry(w: Word, pageOf: Map<string, string>, copy: Copy): string {
   return (
     `<article class="entry" id="${escape(w.key)}" itemscope itemtype="https://schema.org/DefinedTerm">` +
-    // the headword links to its own anchor, so a reader who wants to send
-    // somebody one word has an address for exactly that word
+    // The headword links to its own anchor, so one word can be sent on its own.
     `<h2 class="hw" itemprop="name" dir="auto"><a href="#${escape(w.key)}">${escape(w.headword)}</a></h2>` +
     `<div class="body">${senseList(w.senses, copy)}${equivalents(w, copy)}${synonymList(w.synonyms, pageOf, copy)}</div>` +
     `</article>`
@@ -650,16 +475,8 @@ function entry(w: Word, pageOf: Map<string, string>, copy: Copy): string {
 }
 
 /**
- * One page of words.
- *
- * `pageOf` maps a word's key to the page holding it, which is what lets a
- * synonym become a link. It is built once for the whole dictionary and passed
- * in; a page cannot know on its own where another word lives.
- *
- * The microdata — `DefinedTermSet` and `DefinedTerm` — is schema.org as plain
- * attributes rather than as a JSON-LD `<script>`, which keeps these pages
- * exactly as script-free as the policy serving them claims. Search engines read
- * both; only one of them survives `script-src 'none'` without an argument.
+ * One page of words. `pageOf` maps every key to its page, built once for the whole dictionary, so synonyms can link.
+ * `DefinedTermSet` and `DefinedTerm` are microdata attributes rather than JSON-LD, which `script-src 'none'` allows.
  */
 export function wordsPage(
   page: Page,
@@ -667,7 +484,7 @@ export function wordsPage(
   next: string | null,
   pageOf: Map<string, string> = new Map(),
   copy: Copy = COPY.ku,
-  /** every word in the dictionary, for the search box's placeholder */
+  /** Every word in the dictionary, for the search box's placeholder. */
   total = 0,
 ): string {
   const entries = entriesOf(page.words, pageOf, page.prefix, copy);
@@ -716,15 +533,7 @@ export function letterOf(prefix: string): string {
   return prefix.split('-')[0]!.slice(0, 1);
 }
 
-/**
- * One letter's pages, named by the words in them.
- *
- * A row used to read `sa-sc · 150`, which is the build's own filing system
- * showing through: `sa-sc` is where the pagination happened to cut, and it
- * tells a reader looking for a word nothing about whether the word is in
- * there. Printed dictionaries solved this centuries ago with the running head,
- * so a row names the first and last word on the page it leads to.
- */
+/** One letter's pages, each row named by its first and last words, like a printed running head. */
 export function letterPage(letter: string, pages: Page[], total: number, copy: Copy = COPY.ku): string {
   const rows = pages
     .map(
@@ -758,25 +567,14 @@ ${searchBox(copy, total, 'search-top')}
 }
 
 /**
- * Words worth opening the dictionary with.
- *
- * A front page whose whole content is a list of letters gives a reader nothing
- * to read and a crawler nothing to index. These are real entries, chosen for
- * being the kind that shows what the dictionary holds: a word in its own right
- * rather than an inflection, a definition that is a sentence rather than a list
- * of six near-synonyms, and at least one of a Soranî form, an Arabic form or a
- * cross-reference, so that the shape of a full entry is visible from the front.
- *
- * Taken one per letter, in order, so the selection is a spread across the
- * alphabet and is the same on every build — a front page that reshuffles
- * whenever the corpus is re-imported is a front page nobody can cite.
+ * Entries to open the dictionary with: words in their own right (not inflections) with a sentence of definition and at
+ * least one Soranî or Arabic form or cross-reference, so a full entry's shape shows. One per letter, in order, so the
+ * choice is spread across the alphabet and stable between builds.
  */
 export function featured(words: Word[], count: number): Word[] {
   /** 0 disqualifies; above that, how much of a full entry the word shows. */
   const score = (w: Word): number => {
-    // a single character is a letter of the alphabet, not a word — the first
-    // run of this picked a, b, c, d and e, because they sort first and the
-    // corpus does gloss them
+    // A single character is a letter of the alphabet, not a word, though the corpus glosses them.
     if ([...w.headword].length < 2) return 0;
     const main = w.senses.find((s) => !isInflected(s.pos));
     if (!main) return 0;
@@ -796,7 +594,7 @@ export function featured(words: Word[], count: number): Word[] {
     if (n === 0) continue;
     const letter = word.key.slice(0, 1);
     const at = best.get(letter);
-    // ties go to the earlier word, so the choice does not depend on iteration
+    // Ties go to the earlier word, so the choice does not depend on iteration order.
     if (!at || n > at.score) best.set(letter, { word, score: n });
   }
 
@@ -808,21 +606,10 @@ export function featured(words: Word[], count: number): Word[] {
 }
 
 /**
- * The page for a dictionary address that has nothing behind it.
- *
- * It has to exist, and it has to be a file here rather than the app's own
- * not-found screen, because of how the two overlap. Cloudflare answers an
- * unmatched path with the SPA shell, and `_headers` applies this directory's
- * policy by URL rather than by file — so the shell arrived under
- * `default-src 'none'`, its own bundle was refused, React never booted, and the
- * reader got a white page with nothing on it. Measured live on
- * /ferheng/sa-sc/: "Loading the script … violates the following Content
- * Security Policy directive: default-src 'none'".
- *
- * These addresses are not rare. Page boundaries are a property of how the words
- * divide, so a re-import moves them: every range URL from the previous build —
- * bookmarked, linked, or sitting in somebody's history — becomes one of these.
- * The letters never move, which is why this page sends a reader to them.
+ * The page for a dictionary address with nothing behind it. It must be a file here, not the app's not-found screen:
+ * Cloudflare answers unmatched paths with the app shell, but `_headers` applies this directory's `default-src 'none'` by
+ * URL, so the shell's bundle was refused and the page was blank. Re-imports move page ranges, so old range URLs land here
+ * and are sent to the letters, which never move.
  */
 export function notFoundPage(copy: Copy = COPY.ku): string {
   return document_({
@@ -845,20 +632,9 @@ export function notFoundPage(copy: Copy = COPY.ku): string {
 }
 
 /**
- * The three blocks the index is shown in, in order.
- *
- * Kurdish is written in two alphabets, and a reader of one frequently cannot
- * read the other — so an index that runs A, B, C … Z and then straight into
- * ئ, ب, پ is not one alphabet with an odd tail. It is two, and saying which is
- * which is the difference between a reader finding their own letters and
- * scrolling past a block of script they do not use.
- *
- * The third block is for the letters that are in neither: the Latin `ḧ` and
- * `ẍ` some Kurmancî orthographies use, the Arabic `ط ص ظ` of unassimilated
- * loanwords, the handful of Cyrillic. They are shown rather than hidden —
- * 250 words begin with `ḧ` and somebody looking for one needs to find it —
- * but they are not claimed as Hawar's or Soranî's. Which letters belong to
- * which is in ferheng-alphabet.ts.
+ * The three blocks of the index: Hawar, Soranî, and letters in neither (`ḧ`, `ẍ`, loanword `ط ص ظ`, a little Cyrillic),
+ * shown so they can be found but not claimed for either alphabet. Readers of one alphabet often cannot read the other, so
+ * the blocks are named. Membership is in ferheng-alphabet.ts.
  */
 const ALPHABETS = ['hawar', 'sorani', 'other'] as const;
 
@@ -867,14 +643,7 @@ export function alphabetName(letter: string, copy: Copy = COPY.ku): string {
   return copy.alphabets[alphabetOf(letter)];
 }
 
-/**
- * The front page: what this is, a few words of it, and the way in.
- *
- * The thumb index at the bottom is the A–Z, set as a printed dictionary sets
- * one — letters at reading size with their counts under them, no boxes and no
- * borders. It was 53 bordered buttons, which made the most-used page on the
- * site look like a control panel.
- */
+/** The front page: what this is, a few words of it, and the A–Z as a printed thumb index with counts. */
 export function indexPage(
   letters: Array<{ letter: string; words: number }>,
   total: number,
@@ -896,7 +665,7 @@ export function indexPage(
   const index = ALPHABETS.map((id) => {
     const group = letters.filter((l) => alphabetOf(l.letter) === id);
     if (group.length === 0) return '';
-    // the letters in neither alphabet are a handful of words each; findable, but not a third block to read past
+    // Letters in neither alphabet have a handful of words each: findable, but not a third block to read past.
     if (id === 'other') {
       return `<details class="other-letters"><summary class="eyebrow">${labelled('page.alphabets.other', copy.alphabets.other)} · ${group.length}</summary>\n<div class="thumbs">${thumbs(group)}</div></details>`;
     }
@@ -943,10 +712,7 @@ ${/* how each of these letters sounds lives in the app, which explains it agains
   });
 }
 
-/**
- * A word on the front page, as a card: the word, what kind, and its first
- * meaning. The full entry is one tap away; the front page is for wanting to.
- */
+/** A front-page word card: the word, its kind and first meaning; the full entry is a tap away. */
 function card(w: Word, pageOf: Map<string, string>, copy: Copy): string {
   const main = w.senses.find((s) => !isInflected(s.pos)) ?? w.senses[0]!;
   const page = pageOf.get(w.key);
@@ -961,50 +727,14 @@ function card(w: Word, pageOf: Map<string, string>, copy: Copy): string {
 }
 
 /**
- * The stylesheet, which is the whole design: the one script, chrome.js, only
- * relabels, so there is nothing else to lean on.
- *
- * The custom properties are zagrosian.com's, read off the running site rather
- * than matched by eye — the neutrals, the type scale, the easing curves and
- * the gutter formula are the same values. What differs is noted where it
- * differs.
- */
-/**
- * The stylesheet, which is the whole design: the one script, chrome.js, only
- * relabels, so there is nothing else to lean on.
- *
- * These are the app's own tokens and its own nav, footer and surfaces, copied
- * from web/src/styles/. They were a separate monochrome design for a while, and
- * the verdict on that was "the whole site changes when I click on the
- * dictionary" — which it did: different background, different type, a different
- * bar along the top. A reader should not be able to tell they have left the app.
- *
- * Copied rather than imported because these pages load no bundle, which is the
- * point of them. The duty that comes with copying is to stay in step.
- */
-/**
- * The stylesheet: the app's, then the dictionary's.
- *
- * Everything above the second banner is web/src/styles/tokens.css, base.css
- * and the nav and footer rules out of layout.css, value for value. Copied and
- * not imported because these pages load no bundle, which is what makes them
- * free to serve; the duty that comes with copying is to stay in step.
- *
- * The one that mattered most and was missed twice: the app sets h1-h4 in
- * --font-display, the Palatino serif. A page whose headings are bold sans is
- * not the same site, however well its colours match.
+ * The stylesheet: web/src/styles/tokens.css, base.css and layout.css's nav and footer, value for value, then the
+ * dictionary's own rules. Copied rather than imported because these pages load no bundle, so keep it in step with the
+ * app; a reader should not be able to tell they left it.
  */
 export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/ferheng/fonts/vazirmatn-arabic.woff2) format('woff2-variations'); unicode-range: U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200E; }
 
 /* ======================================================================== *
- * Copied from the app, value for value. Everything down to "the dictionary"
- * below is web/src/styles/tokens.css + base.css + the nav and footer rules
- * out of layout.css, and it is copied rather than imported because these
- * pages load no bundle — that is what makes them free to serve.
- *
- * So the duty is to stay in step. If a token or either of those two
- * components moves there, move it here: a reader who clicks Ferheng must not
- * be able to tell they have left the app.
+ * Copied from the app, value for value: tokens.css, base.css and layout.css's nav and footer. Keep it in step.
  * ======================================================================== */
 
 /* ---- tokens.css -------------------------------------------------------- */
@@ -1044,8 +774,7 @@ export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal;
 /* ---- base.css ---------------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
-/* clip, not hidden: hidden makes the element a scroll container, which breaks
-   the sticky nav inside it */
+/* Clip, not hidden: hidden makes a scroll container, which breaks the sticky nav. */
 html, body { overflow-x: clip; max-width: 100%; }
 body {
   margin: 0;
@@ -1061,8 +790,7 @@ body {
   html { scroll-behavior: auto; }
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
-/* the app sets every heading in the display serif — this is most of why a page
-   looks like Hevalo rather than like a generic dark site */
+/* The app sets every heading in the display serif. */
 h1, h2, h3, h4 {
   font-family: var(--font-display);
   font-weight: 600;
@@ -1093,16 +821,7 @@ img { max-width: 100%; display: block; }
 .lead { font-size: 1.175rem; line-height: 1.6; color: var(--ink-2); }
 
 /* ---- layout.css: the nav ----------------------------------------------- */
-/*
- * The bar is allowed wider than the page it sits over — 1440px against the
- * content column's 1120px.
- *
- * This rule was missed when the rest of the nav was copied, and it is the one
- * a reader can see without being able to name: above 1180px the app's bar
- * reaches 1440px and the dictionary's stopped at 1120px, so clicking Ferheng
- * made the navigation visibly narrow. The bar is not a column of text and does
- * not want a column of text's cap.
- */
+/* The bar may be wider than the page: 1440px against the content column's 1120px. */
 @media (min-width: 1180px) {
   .nav .container.nav-inner { max-width: 1440px; }
 }
@@ -1131,7 +850,7 @@ img { max-width: 100%; display: block; }
 .nav-link-icon { flex: none; margin-inline-end: 8px; color: inherit; }
 .nav-spacer { flex: 1; }
 .nav-actions { display: flex; align-items: center; gap: 14px; }
-/* ui.css's .btn + .btn-sm, folded together: the bar's two buttons are the app's two buttons */
+/* ui.css's .btn and .btn-sm folded together: the bar's two buttons are the app's. */
 .btn-sm {
   display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px;
   border: 1px solid transparent; border-radius: var(--r-pill);
@@ -1143,18 +862,9 @@ img { max-width: 100%; display: block; }
 .btn-ghost { background: transparent; color: var(--ink-2); }
 .btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
 /*
- * The toggle is a checkbox and a label, because these pages run no app code.
- *
- * The app opens its mobile menu with React state; here the only script is
- * chrome.js, which relabels and nothing else, so the menu must work without
- * any — the open/closed state is a checkbox the label flips and the
- * panel reads with ":checked ~". Same breakpoint, same panel, same behaviour —
- * the bar was keeping its glyphs on a phone while the app showed a hamburger,
- * which is a difference a reader meets on the device most of them are on.
- *
- * The checkbox is moved off-screen rather than "hidden", so it keeps its place
- * in the tab order and can still be operated from the keyboard; the focus ring
- * is drawn on the label instead.
+ * The menu toggle is a checkbox and a label, since these pages run no app code: the panel reads ":checked ~". Same
+ * breakpoint, panel and behaviour as the app. The checkbox is moved off-screen rather than hidden, so it stays in the tab
+ * order; the focus ring is drawn on the label.
  */
 .nav-toggle-state { position: absolute; width: 1px; height: 1px; opacity: 0; margin: 0; }
 .nav-toggle {
@@ -1164,13 +874,13 @@ img { max-width: 100%; display: block; }
   align-items: center; justify-content: center; cursor: pointer;
 }
 .nav-toggle-state:focus-visible ~ .nav-actions .nav-toggle { outline: 2px solid var(--focus); outline-offset: 2px; }
-/* the app's toggle turns into a cross while the menu is open; so does this one */
+/* The toggle turns into a cross while the menu is open, as the app's does. */
 .nav-toggle-close { display: none; }
 .nav-toggle-state:checked ~ .nav-actions .nav-toggle-open { display: none; }
 .nav-toggle-state:checked ~ .nav-actions .nav-toggle-close { display: block; }
 .nav-mobile-actions { display: none; }
 
-/* between 861 and 1179 the app drops the words and keeps the glyphs */
+/* Between 861 and 1179 the app drops the words and keeps the glyphs. */
 @media (min-width: 861px) and (max-width: 1179px) {
   .nav-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
   .nav-link-icon { margin-inline-end: 0; }
@@ -1193,14 +903,14 @@ img { max-width: 100%; display: block; }
   }
   .nav-toggle-state:checked ~ .nav-links { transform: translateY(0); opacity: 1; pointer-events: auto; }
   .nav-link { height: 44px; font-size: 1rem; }
-  /* the app's links sit in list items and are as wide as their words; these are the panel's own children, so say so */
+  /* The app's links sit in list items as wide as their words; these are the panel's own children. */
   .nav-links > .nav-link { align-self: flex-start; }
   .nav-desktop-only { display: none; }
   .nav-mobile-actions {
     display: flex; flex-direction: column; gap: 2px;
     margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--border);
   }
-  /* in the menu, Get started is the button it is on the bar, not one more link */
+  /* In the menu, Get started is the button it is on the bar. */
   .nav-mobile-actions .nav-cta {
     justify-content: center; margin-top: 8px;
     background: var(--primary); color: var(--primary-ink); font-weight: 600;
@@ -1234,16 +944,13 @@ img { max-width: 100%; display: block; }
 .footer-imprint { color: var(--ink-3); }
 .footer-imprint:hover { color: var(--ink); }
 @media (pointer: coarse) { .footer-imprint { display: inline-flex; align-items: center; min-height: 44px; } }
-/* who made this — an imprint, not an advertisement. It sits at the weight of
-   the copyright line beside it and only lifts when somebody reaches for it;
-   the mark is drawn in currentColor so it brightens with the words rather than
-   staying lit while they move */
+/* The maker's imprint at the copyright line's weight, lifting on hover; the mark uses currentColor. */
 .by-zagrosian { display: inline-flex; align-items: center; gap: 8px; color: var(--ink-3); white-space: nowrap; transition: color 0.18s ease; }
 .by-zagrosian:hover { color: var(--ink); }
 .by-zagrosian-mark { height: 17px; width: auto; flex: none; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45)); }
 
 /* ======================================================================== *
- * The dictionary's own, below here. Nothing above this line is invented.
+ * The dictionary's own rules, below here.
  * ======================================================================== */
 
 main { padding-bottom: 8px; }
@@ -1266,8 +973,7 @@ main { padding-bottom: 8px; }
 .hero .display { margin-bottom: 18px; }
 .hero .lead { max-width: 36rem; }
 
-/* the same two-column hero the app's landing page has, so the two front pages
-   are the same shape and the deer appears on both — see pages.css */
+/* The app landing page's two-column hero, so both front pages share a shape (see pages.css). */
 .hero-grid { display: grid; gap: clamp(28px, 5vw, 64px); align-items: center; }
 @media (min-width: 900px) { .hero-grid { grid-template-columns: minmax(0, 1fr) auto; } }
 .hero-art { position: relative; display: flex; justify-content: center; }
@@ -1318,33 +1024,23 @@ main { padding-bottom: 8px; }
 .hw { font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); margin: 0 0 10px; }
 .hw a:hover { color: var(--gold); }
 
-/* one grid for every labelled row, so the parts of speech and the Soranî line
-   up — two numbers for one column is how they drift apart */
+/* One grid for every labelled row, so parts of speech and the Soranî line up. */
 .row { display: grid; grid-template-columns: 7.5rem 1fr; gap: 4px 18px; align-items: baseline; margin: 0 0 8px; }
-/* the app sets a part of speech in italics at 0.78rem (.dict-pos), not in
-   uppercase — which also stops "Formeke navdêrê", the commonest label in the
-   corpus, from wrapping onto two lines in the column */
+/* Italic at 0.78rem like the app's .dict-pos, which also keeps "Formeke navdêrê" on one line. */
 .row .label { font-size: 0.78rem; font-style: italic; color: var(--ink-3); text-align: right; line-height: 1.9; }
 .sense ol { margin: 0; padding-left: 1.2rem; color: var(--ink-2); }
 .sense ol li { margin-bottom: 4px; }
 .sense ol li::marker { color: var(--ink-4); font-size: 0.85em; }
 .sense ol:not(:has(li + li)) { list-style: none; padding-left: 0; }
 
-/* an inflected form is not a word in its own right, and reads as one if it is
-   given the same weight — half the corpus is these */
+/* An inflected form is set back, since half the corpus is these. */
 .sense.form ol { color: var(--ink-3); font-size: 0.94rem; }
 
-/*
- * Flex rather than a run of inline text, because the separator is a glyph and
- * not a space. The word "bab" lists thirty synonyms, and joined with a "·" they
- * were one unbreakable 2,296px token: inline margins are not break
- * opportunities, so the row never wrapped and the whole page scrolled
- * sideways. Wrapping flex items need no whitespace to break between.
- */
+/* Flex, not inline text: a long synonym row joined by a glyph separator is one unbreakable token, but flex items wrap. */
 .vals { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5em; color: var(--ink-2); }
 .vals a { border-bottom: 1px solid var(--border); }
 .vals a:hover { color: var(--ink); border-color: var(--ink); }
-/* the corpus's Soranî and Arabic forms — not the bar, the footer or chrome.js's words, which keep the app's own type */
+/* The corpus's Soranî and Arabic forms, not the bar, footer or chrome.js's words, which keep the app's type. */
 :is([lang="ar"], [dir="rtl"]):not(.nav, .footer, [data-copy], [data-copy-pos]) { font-family: 'Vazirmatn', var(--font-sans); font-size: 1.06em; }
 
 .pager { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 40px 0 0; }
@@ -1363,11 +1059,10 @@ main { padding-bottom: 8px; }
 }
 
 /* ======================================================================== *
- * Calmer pages: a search box first, one line per grammatical form, and the
- * long lists folded behind a tap.
+ * Calmer pages: the search box first, one line per grammatical form, long lists folded.
  * ======================================================================== */
 [hidden] { display: none !important; }
-/* on a phone the search box is the first thing, not the deer above it */
+/* On a phone the search box comes first, not the deer. */
 @media (max-width: 899px) { .hero-art { display: none; } .hero { padding-top: 28px; } }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
