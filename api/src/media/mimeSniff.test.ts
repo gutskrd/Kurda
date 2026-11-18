@@ -63,8 +63,7 @@ describe('sniffAudioType', () => {
   });
 
   it('recognises the WebM a browser records, and not a Matroska video', () => {
-    // MediaRecorder produces WebM on Chrome and Firefox; the speaking exercise
-    // used to relabel it as m4a on the way out and nothing checked.
+    // Browser recording produces WebM, which must be recognised as such.
     const ebml = [0x1a, 0x45, 0xdf, 0xa3];
     const webm = Uint8Array.from([...ebml, 0x42, 0x82, 0x84, ...Buffer.from('webm'), 0, 0, 0, 0]);
     expect(sniffAudioType(webm)).toBe('audio/webm');

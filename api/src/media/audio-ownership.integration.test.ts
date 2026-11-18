@@ -1,7 +1,4 @@
-/**
- * A member's recording belongs to them, is counted, and does not outlive its
- * use: against real Postgres, with storage held in memory.
- */
+/** A member's recording belongs to them, is counted, and does not outlive its use; real Postgres, in-memory storage. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { loadConfig } from '../config/env.js';

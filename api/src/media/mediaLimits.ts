@@ -1,6 +1,6 @@
 import type { AppConfig } from '../config/env.js';
 
-/** Numeric cost-safety limits derived from env config (KUR-177 hardening). */
+/** Numeric media cost limits derived from config. */
 export interface MediaLimits {
   maxUploadBytes: number;
   maxStoredBytes: number;
@@ -31,11 +31,7 @@ export function mediaLimits(config: AppConfig): MediaLimits {
   };
 }
 
-/**
- * Limits for community image/meme posts (KUR-290/291): same storage/op ceilings
- * and accepted types as avatars (shared R2 budget), but a larger dimension + stored
- * cap and its own upload rate limit.
- */
+/** Limits for image posts: the avatar's storage and op ceilings and types, with a larger size and its own rate limit. */
 export function imagePostLimits(config: AppConfig): MediaLimits {
   return {
     ...mediaLimits(config),
@@ -46,8 +42,7 @@ export function imagePostLimits(config: AppConfig): MediaLimits {
   };
 }
 
-/** Cost-safety limits for voice-note audio (KUR-282). Stored as-is (no transcode),
- *  so `maxUploadBytes` is the cost lever; shares the storage/op ceilings. */
+/** Limits for voice-note audio, stored as uploaded, so `maxUploadBytes` is the cost lever; shares the storage and op ceilings. */
 export interface AudioLimits {
   maxUploadBytes: number;
   maxSeconds: number;
@@ -78,19 +73,15 @@ export function exceedsUploadSize(byteLength: number, maxUploadBytes: number): b
   return byteLength > maxUploadBytes;
 }
 
-/**
- * Fail-closed storage gate: if current usage is unknown (`null` — e.g. the count
- * query failed), block the upload rather than risk uncontrolled growth.
- */
+/** Fail-closed storage gate: unknown usage (`null`, e.g. a failed count) blocks the upload. */
 export function wouldExceedStorage(currentBytes: number | null, addBytes: number, limitBytes: number): boolean {
   if (currentBytes === null) return true;
   return currentBytes + addBytes > limitBytes;
 }
 
 /**
- * Class A/B op ceiling. Soft guard (the storage limit is the hard cost cap, and
- * each op is tied to a storage-gated upload), so an unknown count (`null`) is
- * allowed — the caller logs it. `>=` so we stop *at* the threshold.
+ * Class A/B op ceiling. A soft guard, since the storage limit is the hard cap and every op belongs to a gated upload,
+ * so an unknown count (`null`) is allowed and logged. Stops at the threshold.
  */
 export function opLimitReached(count: number | null, limit: number): boolean {
   if (count === null) return false;

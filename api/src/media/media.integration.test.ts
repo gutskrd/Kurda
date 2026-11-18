@@ -1,11 +1,6 @@
 /**
- * End-to-end media flow against real Postgres + MinIO (CI integration
- * job). Skipped unless both DATABASE_URL and S3_ENDPOINT are set.
- *
- * This used to drive the signed-URL flow — ask the service for a ticket, PUT
- * the bytes straight to the bucket. That flow is gone: it let a client store
- * bytes the server never saw. What is left is the part that still matters,
- * which is what happens to an object nothing ends up referencing.
+ * The media orphan flow against real Postgres and a real bucket: what happens to an object nothing references.
+ * Skipped unless DATABASE_URL and S3_ENDPOINT are set.
  */
 import { createHash } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -26,10 +21,7 @@ describe.skipIf(!ready)('media pipeline (integration)', () => {
   const body = Buffer.from(`kurda-media-test-${Date.now()}`);
   const sha256Hex = createHash('sha256').update(body).digest('hex');
 
-  /**
-   * Store an object the way every real upload path does: write the row, write
-   * the bytes, and confirm only once it is safe to serve.
-   */
+  /** Stores an object as every upload path does: the row, the bytes, and confirmation only once it is safe to serve. */
   async function store(kind: string, contentType: string, confirm: boolean): Promise<string> {
     const key = mediaKey(kind, sha256Hex, contentType);
     await pool.query(

@@ -8,17 +8,9 @@ export type ProcessReject =
   | 'too-large-after-compression';
 
 /**
- * Formats whose container we recognise but whose picture data needs a codec the
- * build may not carry.
- *
- * sharp's prebuilt binaries ship AV1 (so AVIF decodes) but not HEVC, which is
- * what an iPhone's HEIC actually contains — it is patent-encumbered and left
- * out. So a HEIC arrives, sniffs correctly, and then fails to decode, and
- * "the image could not be decoded" is a true but useless thing to tell someone
- * whose photo is not corrupt at all.
- *
- * This is not hardcoded as "HEIC never works": if a deployment's libvips does
- * carry the decoder, the decode simply succeeds and none of this runs.
+ * Formats whose container is recognised but whose data needs a codec the build may lack. Prebuilt sharp decodes AVIF
+ * but not HEVC, which HEIC photos contain, so a HEIC sniffs correctly and then fails to decode; it must not be
+ * reported as corrupt. Where libvips has the decoder, decoding simply succeeds.
  */
 const CODEC_DEPENDENT: ReadonlySet<string> = new Set(['image/heic']);
 
@@ -36,19 +28,9 @@ export interface ProcessOptions {
 }
 
 /**
- * How many pixels an upload may decode to.
- *
- * The byte limit does not bound this. Compression is the whole point of an
- * image format, and a few kilobytes of PNG can describe a canvas of tens of
- * thousands of pixels a side — which sharp will happily allocate four bytes per
- * pixel for. sharp's own default already stops the extreme case at 268
- * megapixels, but 268 MP is about a gigabyte of resident memory for one
- * request, and the API runs on a small instance where that is the whole box.
- *
- * 50 MP is roughly an 8000×6000 photograph — larger than anything a phone or a
- * full-frame camera produces, and the output is being resized to 1280 px on its
- * longest edge regardless. Over the limit sharp refuses to decode, which the
- * caller already reports as a malformed image.
+ * The most pixels an upload may decode to. The byte limit does not bound this: a few kilobytes of PNG can describe a
+ * huge canvas at four bytes a pixel, and sharp's own 268 MP default is about a gigabyte for one request on a small
+ * instance. 50 MP (about 8000×6000) exceeds any phone or camera photo, and output is resized to 1280 px anyway.
  */
 const MAX_INPUT_PIXELS = 50_000_000;
 
@@ -56,16 +38,10 @@ const MAX_INPUT_PIXELS = 50_000_000;
 const QUALITY_LADDER = [82, 72, 62, 52, 42, 32];
 
 /**
- * Validate + normalise an image for storage (KUR-177 hardening; shared by profile
- * photos and community image/meme posts KUR-290):
- *   1. sniff the real type (magic bytes) and reject anything not allowed,
- *   2. decode with sharp (rejects malformed images),
- *   3. auto-orient, strip metadata, resize to fit `maxDimension` (never enlarge),
- *   4. encode WebP, stepping quality down until it fits `maxStoredBytes`; if even
- *      the lowest quality is too big, reject rather than store an oversized file.
- * Pure w.r.t. I/O — takes and returns buffers, so it is fully unit-testable.
- * Caller supplies the dimension/size/type limits, so the same code caps a 512 px
- * avatar and a 1280 px meme.
+ * Validates and normalises an image for storage, for profile photos and image posts: sniff the real type and reject
+ * what is not allowed; decode with sharp; auto-orient, strip metadata and resize to fit `maxDimension` without
+ * enlarging; encode WebP, lowering quality until it fits `maxStoredBytes`, rejecting it if even the lowest does not.
+ * Pure buffers in and out; the caller supplies the limits.
  */
 export async function processImage(input: Buffer, opts: ProcessOptions): Promise<ProcessResult> {
   const sniffed = sniffImageType(input);
@@ -76,7 +52,7 @@ export async function processImage(input: Buffer, opts: ProcessOptions): Promise
     base = sharp(input, { failOn: 'error', limitInputPixels: MAX_INPUT_PIXELS })
       .rotate() // apply EXIF orientation, then drop it
       .resize(opts.maxDimension, opts.maxDimension, { fit: 'inside', withoutEnlargement: true });
-    // force a decode now so a malformed image is caught here, not later
+    // Force a decode now, so a malformed image is caught here.
     await base.clone().metadata();
   } catch {
     // a format we admit but cannot decode is a missing codec, not a bad file
