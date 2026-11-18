@@ -1,30 +1,18 @@
 /**
- * Two drawings in, four files out.
+ * Writes the four empty-state PNGs from two source drawings: a silver-blue fawn in an open box (an empty list)
+ * and one with an unplugged cable (a failed load), mean ink rgb(195,203,214).
  *
- * The empty-state art is a fawn in silver-blue — one sitting in an open box
- * for a list with nothing in it, one with an unplugged cable for a screen that
- * could not load. Mean ink rgb(195,203,214).
+ * That ink is about 12:1 on the dark theme's #0B0D10 but only 1.4:1 on the light theme's #F3F3F3, so each drawing
+ * is written twice: as drawn, and at 72% brightness, about 3:1 on light. Both are resized to 480 wide, exactly
+ * @3x for `EmptyState`'s 160 points, as palette PNGs, which keep alpha at about a quarter of the bytes with no
+ * visible loss on flat art.
  *
- * Against the dark theme's #0B0D10 that is about 12:1 and looks exactly right.
- * Against the light theme's #F3F3F3 it is 1.4:1 — the outlines survive and the
- * body of the animal does not, which is worse than no picture at all. So each
- * drawing is written twice: once as drawn, and once at 72% brightness, which
- * lands around 3:1 on light. Soft, which is what a background illustration
- * should be, and present, which the original was not.
- *
- * Both are resized to 480 wide. `EmptyState` draws them at 160 points, so 480
- * is exactly @3x and there is nothing to gain from the 544 the sources have.
- * A palette PNG keeps the alpha and roughly quarters the bytes; the art is
- * flat and vector-drawn, so 256 colours costs it nothing visible.
- *
- * Run from the repo root, with the sources present:
+ * Run from the repo root with the sources present:
  *
  *   node mobile/scripts/generate-empty-art.mjs
  *
- * The sources live in `/empty` at the repo root and are gitignored, the same
- * way sticker originals are — what ships is what this writes. So this is here
- * for provenance and for the next time the art changes, not as part of a
- * build: the four PNGs under `mobile/assets/empty` are committed.
+ * The sources live in `/empty` at the repo root and are gitignored; the four PNGs under `mobile/assets/empty` are
+ * committed. This is here for provenance and the next art change, not part of a build.
  */
 import fs from 'node:fs';
 import path from 'node:path';

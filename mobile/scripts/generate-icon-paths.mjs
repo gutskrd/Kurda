@@ -1,41 +1,30 @@
 /**
- * Generate the phone's icon path data from Phosphor — the same family, at the
- * same weight, that the browser renders.
- *
- * The phone used to carry a hand-drawn set: ~35 filled silhouettes written by
- * hand, which is exactly what `web/src/components/icons.tsx` says the browser
- * gave up for the same reasons — every new screen needed another one drawn, and
- * they drifted in weight and optical size. The browser imports Phosphor as a
- * package; React Native cannot, without adding a dependency that ships ~1500
- * glyphs to a phone. So the path data for the ones we name is extracted here
- * and committed, which gives the phone identical artwork and no new dependency.
+ * Generates the phone's icon path data from the icon family the web app uses (`@phosphor-icons/react`), at the
+ * same weight. React Native cannot use that package without shipping every glyph, so the path data for the icons
+ * the app names is extracted here and committed: identical artwork, no new dependency.
  *
  * Run from the repo root after changing MAP:
  *
  *   node mobile/scripts/generate-icon-paths.mjs
  *
- * It reads `@phosphor-icons/react` out of node_modules — the very copy the
- * browser builds against — so the two cannot drift to different versions of the
- * same glyph without this being re-run and the diff showing up.
+ * It reads the package from node_modules, the same copy the web app builds against, so the two cannot drift
+ * without this being rerun and the diff showing.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
-// from this file, not from cwd: npm runs a workspace's scripts with cwd set to
-// that workspace, so `--check` from mobile/ has to find the repo root anyway
+// Relative to this file, not cwd: npm runs workspace scripts from the workspace directory, so `--check` from
+// mobile/ must still find the repo root.
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const DEFS = path.join(ROOT, 'node_modules/@phosphor-icons/react/dist/defs');
 const OUT = path.join(ROOT, 'mobile/src/theme/icon-paths.ts');
 
 /**
- * What each name in the app is drawn as.
- *
- * Where the browser already names an icon for the same job, this uses the same
- * glyph it does — the comment says which, so a change on one side is visibly a
- * change on the other. `weight` defaults to regular, which is what
- * `ICON_WEIGHT` in the browser's façade is set to.
+ * What each icon name in the app is drawn as. Where the web app names an icon for the same job this uses the same
+ * glyph, and the comment says which, so a change on one side is visible on the other. `weight` defaults to
+ * regular, as `ICON_WEIGHT` in the web façade does.
  */
 const MAP = {
   // --- the shell, matched to the browser's nav one destination at a time ---
@@ -47,7 +36,7 @@ const MAP = {
   person: { glyph: 'User', note: 'web UserIcon — one person, an account, you' },
   home: { glyph: 'House', note: 'web HomeIcon — the tab bar falls back to it' },
   search: { glyph: 'MagnifyingGlass', note: 'web SearchIcon — one field for people, words, lessons and games' },
-  // the tab you are on is drawn solid, the others in outline: a change of shape, not only of colour
+  // The tab you are on is drawn solid, the others in outline: a change of shape, not only of colour.
   'home-fill': { glyph: 'House', weight: 'fill', note: 'the Home tab, while you are on it' },
   'book-fill': { glyph: 'BookOpen', weight: 'fill', note: 'the Learn tab, while you are on it' },
   'send-fill': { glyph: 'PaperPlaneTilt', weight: 'fill', note: 'the Messages tab, while you are on it' },
@@ -202,8 +191,7 @@ function shapes(glyph, weight) {
 
   const at = src.indexOf(`"${weight}"`);
   if (at < 0) throw new Error(`${glyph}: no ${weight} weight`);
-  // up to the start of the next weight entry, so one weight's shapes cannot
-  // bleed into the next
+  // Up to the start of the next weight entry, so one weight's shapes cannot bleed into the next.
   const next = src.indexOf('\n  [\n    "', at);
   const block = src.slice(at, next < 0 ? src.length : next);
 
@@ -219,13 +207,7 @@ function shapes(glyph, weight) {
   return out;
 }
 
-/**
- * The whole generated file, as text.
- *
- * Exported rather than written straight to disk so the test can build it and
- * compare — a hand-edit to a file that says "do not edit by hand" should fail
- * CI rather than survive until somebody regenerates and wonders what changed.
- */
+/** The whole generated file as text, exported so the check can build and compare it: a hand edit to a generated file should fail CI. */
 export function buildIconPaths() {
   const rows = [];
   const problems = [];
@@ -250,9 +232,8 @@ export function buildIconPaths() {
 
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'node_modules/@phosphor-icons/react/package.json'), 'utf8'));
 
-  // The glyphs are Phosphor's work under the MIT licence, which asks that its
-  // notice travel with every copy — and this file is a copy. Read from the
-  // package rather than typed out, so it is the notice that came with them.
+  // The glyphs are Phosphor's work under the MIT licence, which asks that its notice travel with every copy, and
+  // this file is one. Read from the package rather than typed out, so it is the notice that came with them.
   const licence = fs
     .readFileSync(path.join(ROOT, 'node_modules/@phosphor-icons/react/LICENSE'), 'utf8')
     .replace(/\r\n/g, '\n')
@@ -292,22 +273,12 @@ export type IconName = keyof typeof ICON_PATHS;
 export const ICON_PATHS_FILE = OUT;
 
 /**
- * Compare without line endings in the way.
- *
- * The file is stored LF and checked out CRLF on Windows (core.autocrlf), so
- * the bytes on disk differ by platform while the content does not. Comparing
- * them raw passed on my machine and failed on the Linux runner, which is the
- * least useful way for a gate to behave.
+ * Compare ignoring line endings: the file is stored LF but checked out CRLF on Windows (core.autocrlf), so the
+ * bytes differ by platform while the content does not.
  */
 const sameContent = (a, b) => a.replace(/\r\n/g, '\n') === b.replace(/\r\n/g, '\n');
 
-/**
- * Only when run as a script.
- *
- * Importing this module must not touch the disk — the earlier version wrote
- * the file on import, so merely importing it (to read `ICON_PATHS_FILE`)
- * rewrote the thing the caller was about to inspect.
- */
+/** Only when run as a script: importing this module must not touch the disk. */
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const built = buildIconPaths();
   if (process.argv.includes('--check')) {
