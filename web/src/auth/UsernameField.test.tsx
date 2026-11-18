@@ -10,7 +10,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** The field as a form holds it: the text in the form's own state, and an outside problem when one is given. */
+/** The field inside a form that holds its text, with an outside problem when given. */
 function Form({ problem = null }: { problem?: string | null }): React.JSX.Element {
   const [name, setName] = useState('');
   return (
@@ -30,7 +30,7 @@ describe('the username field', () => {
     expect(field()).toHaveAttribute('autocorrect', 'off');
     expect(field()).toHaveAttribute('spellcheck', 'false');
     expect(field()).toHaveAttribute('dir', 'ltr');
-    // no length of its own: a name too long is said, not cut short at the next key
+    // No maxlength: a name too long is reported rather than cut short.
     expect(field()).not.toHaveAttribute('maxlength');
     expect(field()).toHaveAccessibleDescription(en['auth.usernameRule'].replace('{min}', '3').replace('{max}', '30'));
   });
@@ -75,7 +75,7 @@ describe('the username field', () => {
     expect(document.querySelector('.field-problem')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'elsewhere' }));
     expect(screen.getByText(en['error.code.usernameEdge'])).toHaveClass('field-problem');
-    // and stops saying it the moment the name is being mended
+    // The message clears as soon as the name is edited.
     await userEvent.type(field(), 'k');
     expect(document.querySelector('.field-problem')).toBeNull();
   });
@@ -97,7 +97,7 @@ describe('the username field', () => {
     expect(field()).toHaveValue('sêr');
     expect(field()).toHaveFocus();
     expect(field().selectionStart).toBe(2);
-    // the five letters, lowercase, and no shift
+    // The five letters, lowercase, with no shift key.
     const keys = screen.getAllByRole('button', { name: /^Type / }).map((b) => b.textContent);
     expect(keys).toEqual(['ç', 'ê', 'î', 'ş', 'û']);
   });

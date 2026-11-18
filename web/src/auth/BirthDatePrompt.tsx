@@ -8,17 +8,9 @@ import { BirthMonthFields, EMPTY_BIRTH_MONTH, birthMonthOf } from './BirthMonthF
 import { rememberAgeStop } from './AgeStop';
 
 /**
- * The one question an account without a birth month is asked before anything
- * else: everyone who signed up before it was asked.
- *
- * Blocking, because the answer decides what the rest of the app may do — who
- * can find you, who can message you, whether you are in a league — and every
- * one of those would otherwise run on a guess. Small, because it is one
- * question. It can be answered once, which the card says before it is saved.
- *
- * Under 13 the server closes the account; the session goes with it, and the
- * explanation takes over from the sign-up page so it is still there after a
- * reload. Signing out is offered too, so the question is never a dead end.
+ * The blocking question for an account with no birth month, since the answer decides who can find or message the
+ * person and whether they join leagues. It can be answered once. Under 13 the server closes the account and the age
+ * explanation takes over; signing out is offered so the prompt is never a dead end.
  */
 export function BirthDatePrompt(): React.JSX.Element {
   const t = useT();
@@ -49,7 +41,7 @@ export function BirthDatePrompt(): React.JSX.Element {
       navigate('/register', { replace: true });
       return;
     }
-    // answered from another tab or device in the meantime: nothing left to ask
+    // Answered from another tab or device in the meantime, so nothing is left to ask.
     if (res.error.code === 'BIRTH_DATE_ALREADY_SET') {
       await refreshUser();
       return;
@@ -79,8 +71,7 @@ export function BirthDatePrompt(): React.JSX.Element {
           </Button>
         </form>
 
-        {/* blocking, but not a trap: someone who would rather not answer now
-            (or is on somebody else's account) can leave */}
+        {/* Blocking, but not a trap: someone who would rather not answer now can sign out. */}
         <div className="auth-alt">
           <button type="button" className="link-btn" disabled={busy} onClick={() => void logout()}>
             {t('settings.sessions.signOut')}

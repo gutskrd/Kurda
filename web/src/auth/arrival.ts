@@ -1,17 +1,14 @@
 import { prefersReducedMotion } from '../lib/motion';
 
 /**
- * A moment between getting in and leaving the sign-in page, for Hevalo's hop
- * (auth/AuthCard). Signing in changes the session at once, and the
- * signed-in redirect would take the page away before he is seen to be
- * pleased; while a page holds the moment, the redirect waits and the page
- * leaves by itself when it is over.
+ * A pause between signing in and leaving the sign-in page, so Hevalo's hop (auth/AuthCard) is seen. While a page
+ * holds it, the signed-in redirect waits and the page leaves by itself afterwards.
  */
-export const ARRIVAL_MS = 700;
+const ARRIVAL_MS = 700;
 
 let held = 0;
 
-/** Hold the redirect until the returned function is called (once is enough; more do nothing). None for whoever asks for less motion. */
+/** Holds the redirect until the returned function is called; null under Reduce Motion. Extra calls do nothing. */
 export function holdArrival(): (() => void) | null {
   if (prefersReducedMotion()) return null;
   held += 1;

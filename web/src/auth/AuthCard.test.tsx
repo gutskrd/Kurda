@@ -4,11 +4,11 @@ import userEvent from '@testing-library/user-event';
 import { AuthCard } from './AuthCard';
 import { arrivalHeld, holdArrival } from './arrival';
 
-/** Which way a foreleg's hoof points from the knee, in degrees from straight down, from its group's transform: about 180 over an eye. */
+/** The angle of a foreleg from straight down, in degrees, read from its group's transform; about 180 over an eye. */
 function legTurn(container: HTMLElement, side: 'left' | 'right'): number {
   const t = container.querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '';
   const turn = Number(/rotate\((\S+)\)/.exec(t)?.[1] ?? Number.NaN);
-  // how far round from hanging, either way: a hoof turned up past the top one way is as far round as the other
+  // How far round from hanging, in either direction.
   return Math.abs((((turn % 360) + 540) % 360) - 180);
 }
 
@@ -49,7 +49,7 @@ describe('AuthCard', () => {
     await waitFor(() => expect(lid(container, 'left', 'closed')).toBe('visible'));
     expect(lid(container, 'right', 'closed')).toBe('visible');
 
-    // leaving it, the legs go back down over the sill
+    // Leaving the field, the legs go back down over the sill.
     await userEvent.click(container.querySelector('#email')!);
     await waitFor(() => expect(legTurn(container, 'left')).toBeLessThan(5));
   });

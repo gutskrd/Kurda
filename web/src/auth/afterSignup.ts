@@ -1,12 +1,7 @@
 /**
- * Where somebody was going when they were asked to make an account — a
- * friend's game invite, a story's quiz — so that, once the account exists and
- * its email is confirmed, they land there rather than on the first lesson.
- *
- * Remembered on the device rather than carried in the navigation state: the
- * confirmation link in the email opens a new tab, which has no state, and the
- * code typed in this tab arrives after two redirects that do not pass it on.
- * Kept for a day at most, and read once.
+ * Where somebody was going when asked to make an account, such as a game invite, so they land there once their email
+ * is confirmed. Kept in storage rather than navigation state, since the email link opens a new tab; kept for a day at
+ * most and read once.
  */
 import { joinLinkPath, parseJoinLink } from '@kurda/shared';
 
@@ -14,13 +9,8 @@ const KEY = 'hevalo.afterSignup';
 const KEEP_MS = 24 * 60 * 60 * 1000;
 
 /**
- * An in-app address only: a path in this app, never another origin. Navigation
- * state can be written by any page that links here, so it is checked rather
- * than trusted.
- *
- * One page outside the app counts: a game's invite link (/join/<game>/<CODE>),
- * where a newcomer is asked to make an account and is promised the way back.
- * It is rebuilt from what the link says rather than passed through as written.
+ * An in-app path only, never another origin, since any page linking here can write navigation state. A game invite
+ * link (/join/<game>/<CODE>) also counts, rebuilt from what it says rather than passed through.
  */
 export function safeFrom(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -37,11 +27,11 @@ export function rememberAfterSignup(from: unknown): void {
     if (path) localStorage.setItem(KEY, JSON.stringify({ path, at: Date.now() }));
     else localStorage.removeItem(KEY);
   } catch {
-    // nowhere to keep it: the account still works, it just starts at the first lesson
+    // Nowhere to keep it: the account still works and starts at the first lesson.
   }
 }
 
-/** The remembered address, once: it is forgotten as it is read. */
+/** The remembered address, forgotten as it is read. */
 export function takeAfterSignup(): string | null {
   try {
     const raw = localStorage.getItem(KEY);

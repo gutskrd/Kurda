@@ -4,7 +4,7 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /** What the two selects hold: '' until something is chosen. */
-export interface BirthMonthValue {
+interface BirthMonthValue {
   month: string;
   year: string;
 }
@@ -35,13 +35,8 @@ const MONTH_KEY: readonly MessageKey[] = [
 ];
 
 /**
- * Birth month and year, asked the neutral way.
- *
- * Both start empty, with no default to accept and no year pre-chosen, and every
- * year back to 1900 is listed — the young ones too — so nothing on the form
- * hints at which answer gets you in or gets you more. The month names are in
- * the catalogue rather than from `Intl`, because browsers that ship without
- * Kurdish locale data would otherwise show English months in a Kurdish form.
+ * Birth month and year, asked neutrally: both start empty and every year back to 1900 is listed, so nothing hints at
+ * which answer gets in. Month names come from the catalogue rather than `Intl`, which lacks Kurdish in some browsers.
  */
 export function BirthMonthFields({
   value,
@@ -53,9 +48,9 @@ export function BirthMonthFields({
   value: BirthMonthValue;
   onChange: (next: BirthMonthValue) => void;
   disabled?: boolean;
-  /** what is wrong with the answer, said under the two of them (a form sent with neither chosen) */
+  /** What is wrong with the answer, shown under both selects. */
   problem?: string | null;
-  /** the wrapper's classes, when a form marks it (auth/fieldProblem.ts) */
+  /** The wrapper's classes, when a form marks it (auth/fieldProblem.ts). */
   className?: string;
 }): React.JSX.Element {
   const t = useT();
