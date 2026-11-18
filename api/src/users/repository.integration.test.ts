@@ -1,8 +1,4 @@
-/**
- * Integration tests — require a migrated Postgres via DATABASE_URL.
- * Skipped in the plain unit-test CI job; executed in the `migrations`
- * CI job right after `migrate:up`.
- */
+/** User repository against a migrated Postgres; skipped without DATABASE_URL. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import {
