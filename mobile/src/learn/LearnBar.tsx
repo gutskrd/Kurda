@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { fireLevel } from '@kurda/shared';
@@ -10,6 +10,7 @@ import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { GoalRing } from '../leagues/GoalRing';
 import type { RootNavigation } from '../navigation/rootStack';
+import { useTabFocusLoad } from '../navigation/tabFocusLoad';
 import { useDirection } from '../reports/direction';
 import { streakLabelKey, type Streak } from '../streak/format';
 import { StreakSheet } from '../streak/StreakSheet';
@@ -44,29 +45,28 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
   const [settled, setSettled] = useState(false);
   const [open, setOpen] = useState<'streak' | 'goal' | null>(null);
 
-  // Fresh each time Learn comes back into view: a lesson just finished moved all three.
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      void Promise.all([
+  // Fresh each time Learn comes back from a lesson or any other page, since a lesson moves all three; a quick tab
+  // switch keeps them (navigation/tabFocusLoad). The streak is only on GET /me.
+  const load = useCallback(
+    async (live: () => boolean) => {
+      const [g, me, wallet] = await Promise.all([
         client.get<DailyGoalStatus>('/me/daily-goal'),
         client.get<{ user: { streak?: Streak } }>('/me'),
         client.get<{ balances: { zer: number } }>('/me/wallet'),
-      ]).then(([g, me, wallet]) => {
-        if (!active) return;
-        if (g.ok) setGoal(g.data);
-        if (me.ok && me.data.user.streak) {
-          setStreak(me.data.user.streak);
-          onStreak?.(me.data.user.streak);
-        }
-        if (wallet.ok) setZer(wallet.data.balances.zer);
-        setSettled(true);
-      });
-      return () => {
-        active = false;
-      };
-    }, [client, reloadKey, onStreak]),
+      ]);
+      if (!live()) return false;
+      if (g.ok) setGoal(g.data);
+      if (me.ok && me.data.user.streak) {
+        setStreak(me.data.user.streak);
+        onStreak?.(me.data.user.streak);
+      }
+      if (wallet.ok) setZer(wallet.data.balances.zer);
+      setSettled(true);
+      return g.ok && me.ok && wallet.ok;
+    },
+    [client, reloadKey, onStreak],
   );
+  useTabFocusLoad(load);
 
   const changeGoal = useCallback(
     async (next: GoalOption) => {

@@ -73,4 +73,5 @@ npm run -w @kurda/api content:import -- content/events/newroz-lesson.json --publ
    lesson. No code change, no deploy.
 
 The event surfaces automatically through `GET /events/active` (KUR-089), which
-returns live events priority-ordered and cached to the next boundary.
+returns live events priority-ordered with the next boundary (`nextChangeAt`),
+cached to that boundary.

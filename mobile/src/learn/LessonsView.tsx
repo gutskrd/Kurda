@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {
   RefreshControl,
   ScrollView,
@@ -22,6 +22,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabFocusLoad } from '../navigation/tabFocusLoad';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
 import { UnitRailSheet, type RailSection } from '../coursemap/PathWorld';
@@ -54,7 +55,8 @@ import { PressableScale } from '../theme/MotionParts';
  * under it), the practice tools with today's quests, the course as a lesson path, then the league and the day's
  * extras under "More for today". The path shows one course and one section at a time and draws only the units
  * near the screen; it scrolls to the current skill on first show. Learn's one-at-a-time moments (a kept streak,
- * the reminder banner) show here. Pull to refresh reloads the course and, via `onRefresh`, the bar's streak.
+ * the reminder banner) show here. Pull to refresh reloads the course and, via `onRefresh`, the bar, which a daily
+ * reward claimed here reloads too.
  */
 export function LessonsView({
   scrollRef,
@@ -84,30 +86,31 @@ export function LessonsView({
   const [refreshing, setRefreshing] = useState(false);
   const [chosen, setChosen] = useState<string | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
+  // Asked again on return from a lesson or any other page, and kept over a quick tab switch (navigation/tabFocusLoad).
+  const load = useCallback(
+    async (live: () => boolean) => {
       setFailed(false);
-      void client.get<{ due: number; open?: string | null }>('/practice/due').then((res) => {
-        if (!active) return;
+      const review = client.get<{ due: number; open?: string | null }>('/practice/due').then((res) => {
+        if (!live()) return false;
         if (res.ok) {
           setDue(res.data.due);
           setOpenReview(res.data.open ?? null);
         }
         setDueSettled(true);
+        return res.ok;
       });
-      void (async () => {
+      const course = (async () => {
         const list = await client.get<{ courses: CourseSummary[] }>('/courses');
-        if (!active) return;
+        if (!live()) return false;
         if (!list.ok) {
           setFailed(true);
           setLoading(false);
           setRefreshing(false);
-          return;
+          return false;
         }
         // Every course, in the server's order; one whose map failed to load stays listed, saying so.
         const loaded = await Promise.all(list.data.courses.map((c) => client.get<CourseMap>(`/courses/${c.id}/map`)));
-        if (!active) return;
+        if (!live()) return false;
         setCourses(
           list.data.courses.map((c, i) => {
             const map = loaded[i]!;
@@ -116,12 +119,14 @@ export function LessonsView({
         );
         setLoading(false);
         setRefreshing(false);
+        return loaded.every((map) => map.ok);
       })();
-      return () => {
-        active = false;
-      };
-    }, [client, reloadKey]),
+      const [reviewed, mapped] = await Promise.all([review, course]);
+      return reviewed && mapped;
+    },
+    [client, reloadKey],
   );
+  useTabFocusLoad(load);
 
   // The course on the path: the one chosen, else the one the learner is furthest into.
   const courseId = chosen && courses?.some((c) => c.course.id === chosen) ? chosen : courses ? firstCourse(courses) : null;
@@ -408,7 +413,8 @@ export function LessonsView({
           </Text>
           <LeagueLine />
           <EventBanner />
-          <DailyRewardCard />
+          {/* A claim pays Zêr, which the bar shows. */}
+          <DailyRewardCard onClaimed={onRefresh} />
           <WordOfDayCard />
         </View>
       </ScrollView>

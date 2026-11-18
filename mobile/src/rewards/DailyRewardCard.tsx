@@ -24,8 +24,9 @@ import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
  *
  * Days are told apart by more than colour: a taken day shows a check on gold, today a violet wash and edge, and
  * days to come stay plain. The week runs right to left in Soranî and Arabic, and each day is read out whole.
+ * `onClaimed` is told after a claim is paid.
  */
-export function DailyRewardCard() {
+export function DailyRewardCard({ onClaimed }: { onClaimed?: () => void }) {
   const { client } = useAuth();
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
@@ -53,10 +54,11 @@ export function DailyRewardCard() {
       // A light tick as the Zêr counts up; it comes daily, so nothing grander.
       haptic('tap');
       setJustEarned(res.data);
+      onClaimed?.();
     }
     // Refused (for example a stale status with nothing learned today): reload so the card shows what is needed.
     load();
-  }, [client, load]);
+  }, [client, load, onClaimed]);
 
   if (!status) return settled ? null : <DailyRewardSkeleton />;
   const action = dailyAction(status);

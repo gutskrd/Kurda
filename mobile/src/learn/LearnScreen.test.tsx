@@ -22,7 +22,8 @@ import { AccessibilityInfo } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
-import { navigation } from '../play/testing/navigation';
+import { backFromPage, navigation, refocus } from '../play/testing/navigation';
+import { TAB_REUSE_MS } from '../navigation/tabFocusLoad';
 import { LearnScreen } from './LearnScreen';
 import { LEARN_VIEW_KEY } from './useLearnView';
 import { onHaptic } from '../feedback/haptics';
@@ -97,7 +98,6 @@ function client(
   more: Parameters<typeof fakeClient>[0] = {},
 ) {
   testAuth.client = fakeClient({
-    ...more,
     'GET /courses': ok({ courses: [{ id: 'c1', slug: 'kmr', title: 'Kurmancî', dialect: 'kmr' }] }),
     'GET /courses/c1/map': ok(MAP),
     'GET /me/daily-goal': ok({ goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false }),
@@ -109,6 +109,7 @@ function client(
     'GET /story-games/active': ok({ games: [] }),
     'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
     'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+    ...more,
   });
 }
 
@@ -364,5 +365,47 @@ describe('Learn', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
     await waitFor(() => expect(count('/courses/c1/map')).toBe(before.map + 1));
     await waitFor(() => expect(count('/me')).toBe(before.me + 1));
+  });
+
+  /* A tab switch keeps what was just read; a page closed over the tabs (a lesson) or half a minute gone reads it again. */
+  it('keeps the course and the bar over a quick tab switch, and reads them again back from a lesson', async () => {
+    client();
+    renderWithProviders(<LearnScreen />);
+    await screen.findByRole('button', { name: 'Continue' });
+    await screen.findByRole('button', { name: 'Streak: 6 days' });
+    const paths = ['/courses', '/courses/c1/map', '/practice/due', '/me', '/me/daily-goal', '/me/wallet'];
+    const asked = () => paths.map((path) => (testAuth.client as ReturnType<typeof fakeClient>).calls.filter((c) => c.path === path).length);
+    const settle = () => act(async () => new Promise((resolve) => setTimeout(resolve, 50)));
+    await settle();
+    const first = asked();
+    expect(first).toEqual([1, 1, 1, 1, 1, 1]);
+
+    act(() => refocus());
+    await settle();
+    expect(asked()).toEqual(first);
+
+    act(() => backFromPage());
+    await waitFor(() => expect(asked()).toEqual([2, 2, 2, 2, 2, 2]));
+    await settle();
+
+    vi.setSystemTime(Date.now() + TAB_REUSE_MS);
+    act(() => refocus());
+    await waitFor(() => expect(asked()).toEqual([3, 3, 3, 3, 3, 3]));
+  });
+
+  it('shows the Zêr a daily reward claimed here brings, in the corner at once', async () => {
+    let zer = 1240;
+    client(STREAK, undefined, {
+      'GET /me/wallet': () => ok({ balances: { zer, gems: 3 } }),
+      'GET /rewards/daily': ok({ canClaim: true, claimableDay: 3, reward: 15, schedule: [5, 10, 15, 20, 25, 30, 50], alreadyClaimedToday: false, cycleDay: 3, learnedToday: true }),
+      'POST /rewards/daily/claim': () => {
+        zer += 15;
+        return ok({ reward: 15 });
+      },
+    });
+    renderWithProviders(<LearnScreen />);
+    expect(await screen.findByRole('button', { name: '1,240 Zêr. Open the shop' })).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Claim 15 Zêr' }));
+    expect(await screen.findByRole('button', { name: '1,255 Zêr. Open the shop' })).toBeTruthy();
   });
 });

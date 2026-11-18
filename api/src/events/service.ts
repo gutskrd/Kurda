@@ -1,9 +1,10 @@
 import type pg from 'pg';
 import type { Cache } from '../cache/cache.js';
-import { activeEvents, cacheTtlSeconds, type EventDef } from './window.js';
+import { activeEvents, cacheTtlSeconds, nextBoundary, type EventDef } from './window.js';
 
 const CACHE_DOMAIN = 'events';
-const CACHE_ID = 'active';
+// Renamed whenever the cached shape changes, since old and new servers share Redis during a deploy.
+const CACHE_ID = 'active-next';
 
 interface EventRow {
   id: string;
@@ -17,6 +18,13 @@ interface EventRow {
   quests: unknown[];
   rewards: Record<string, unknown>;
   enabled: boolean;
+}
+
+/** The events live now, and when that set can next change. */
+export interface ActiveEvents {
+  events: EventDef[];
+  /** The soonest start or end still ahead among enabled events (ISO-8601 UTC), or null when none remain. */
+  nextChangeAt: string | null;
 }
 
 export interface UpsertEventInput {
@@ -111,13 +119,14 @@ export class EventService {
   }
 
   /**
-   * Events live now, highest priority first. Cached until the next boundary among the enabled events still ahead,
-   * which is exactly when the set could change.
+   * Events live now, highest priority first, and the next boundary among the enabled events still ahead, which is
+   * exactly when the set could change. Cached until that boundary.
    */
-  async active(now: Date = new Date()): Promise<EventDef[]> {
+  async active(now: Date = new Date()): Promise<ActiveEvents> {
     const nowMs = now.getTime();
-    const cached = await this.cache?.get<EventDef[]>(CACHE_DOMAIN, CACHE_ID);
-    if (cached) return cached;
+    const cached = await this.cache?.get<ActiveEvents>(CACHE_DOMAIN, CACHE_ID);
+    // The cache's TTL jitter can outlast the boundary; an entry from before it is read again.
+    if (cached && (cached.nextChangeAt === null || Date.parse(cached.nextChangeAt) > nowMs)) return cached;
 
     // Enabled events whose window has not ended and whose boundary is within the cache horizon: enough for both the
     // active set and when it next changes.
@@ -126,10 +135,10 @@ export class EventService {
       [now],
     );
     const upcoming = res.rows.map(toDef);
-    const live = activeEvents(upcoming, nowMs);
-    const ttl = cacheTtlSeconds(upcoming, nowMs);
-    await this.cache?.set(CACHE_DOMAIN, CACHE_ID, live, ttl);
-    return live;
+    const boundary = nextBoundary(upcoming, nowMs);
+    const active = { events: activeEvents(upcoming, nowMs), nextChangeAt: boundary === null ? null : new Date(boundary).toISOString() };
+    await this.cache?.set(CACHE_DOMAIN, CACHE_ID, active, cacheTtlSeconds(upcoming, nowMs));
+    return active;
   }
 
   private async invalidate(): Promise<void> {
