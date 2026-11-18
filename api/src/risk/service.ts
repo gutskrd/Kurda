@@ -6,6 +6,7 @@ import { isDisposableEmail } from '../auth/disposable-domains.js';
 import { safeLookup, type IpReputationProvider } from './ip-reputation.js';
 import { networkHashOf } from '../net/network-key.js';
 import { networkIsBusy } from '../net/evidence.js';
+import { deleteInBatches } from '../db/batches.js';
 
 export type RiskEvent = 'signup' | 'login';
 
@@ -83,15 +84,11 @@ export class RiskService {
     olderThanDays: number = RISK_RETENTION_DAYS,
     sightingsOlderThanDays: number = SIGHTING_RETENTION_DAYS,
   ): Promise<{ decisions: number; sightings: number }> {
-    const decisions = await this.pool.query(
-      `DELETE FROM risk_decisions WHERE created_at < now() - make_interval(days => $1::int)`,
-      [olderThanDays],
-    );
-    const sightings = await this.pool.query(
-      `DELETE FROM network_sightings WHERE day < (now() AT TIME ZONE 'UTC')::date - $1::int`,
-      [sightingsOlderThanDays],
-    );
-    return { decisions: decisions.rowCount ?? 0, sightings: sightings.rowCount ?? 0 };
+    const decisions = await deleteInBatches(this.pool, 'risk_decisions', `created_at < now() - make_interval(days => $1::int)`, [olderThanDays]);
+    const sightings = await deleteInBatches(this.pool, 'network_sightings', `day < (now() AT TIME ZONE 'UTC')::date - $1::int`, [
+      sightingsOlderThanDays,
+    ]);
+    return { decisions, sightings };
   }
 
   private async assess(event: RiskEvent, input: AssessInput): Promise<AssessResult> {

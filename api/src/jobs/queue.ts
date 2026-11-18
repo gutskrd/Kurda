@@ -44,10 +44,17 @@ export function jobRetryOptions(def: Pick<JobDefinition<unknown>, 'retry'>, opts
   };
 }
 
+/** Jobs added per round trip by `enqueueMany`: one transaction in Redis each, so a large run does not stall it. */
+export const ENQUEUE_BATCH = 500;
+
 function validPayload<T>(def: JobDefinition<T>, payload: T): T {
   const parsed = def.schema.safeParse(payload);
   if (!parsed.success) {
-    throw new Error(`invalid payload for job "${def.name}": ${parsed.error.issues.map((i) => `${i.path.join('.')}: ${i.message}`).join('; ')}`);
+    throw new Error(
+      `invalid payload for job "${def.name}": ${parsed.error.issues
+        .map((i) => `${i.path.join('.')}: ${i.message}`)
+        .join('; ')}`,
+    );
   }
   return parsed.data;
 }
@@ -76,11 +83,14 @@ export class JobQueue {
     return job.id as string;
   }
 
-  /** `enqueue` for many payloads of one job in a single round trip; none is queued unless every one is valid. */
-  async enqueueAll<T>(def: JobDefinition<T>, payloads: readonly T[]): Promise<void> {
-    if (payloads.length === 0) return;
+  /**
+   * Many jobs of one kind, validated as `enqueue` does (none is queued if any is invalid) and added a few hundred per
+   * round trip rather than one each.
+   */
+  async enqueueMany<T>(def: JobDefinition<T>, payloads: readonly T[]): Promise<void> {
     const opts = { priority: priorityForJob(def.name), ...jobRetryOptions(def) };
-    await this.queue.addBulk(payloads.map((payload) => ({ name: def.name, data: validPayload(def, payload), opts })));
+    const jobs = payloads.map((payload) => ({ name: def.name, data: validPayload(def, payload), opts }));
+    for (let i = 0; i < jobs.length; i += ENQUEUE_BATCH) await this.queue.addBulk(jobs.slice(i, i + ENQUEUE_BATCH));
   }
 
   /** The waiting-job depth, the backpressure signal. */

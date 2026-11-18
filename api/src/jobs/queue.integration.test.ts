@@ -4,7 +4,7 @@ import { QueueEvents } from 'bullmq';
 import pino from 'pino';
 import { z } from 'zod';
 import { loadConfig } from '../config/env.js';
-import { FAILED_JOB_RETENTION, JobQueue, QUEUE_NAME, createQueueConnection } from './queue.js';
+import { ENQUEUE_BATCH, FAILED_JOB_RETENTION, JobQueue, QUEUE_NAME, createQueueConnection } from './queue.js';
 import { defineJob, JobRegistry } from './registry.js';
 import { createWorker } from './worker.js';
 import { sendEmailJob } from './email.js';
@@ -73,20 +73,6 @@ describe.skipIf(!REDIS_URL)('job queue (integration)', () => {
     });
   });
 
-  it('queues many jobs at once, and none when one of them is invalid', async () => {
-    await queue.enqueueAll(okJob, [{ msg: 'yek' }, { msg: 'du' }, { msg: 'sê' }]);
-    await vi.waitFor(
-      () => {
-        for (const msg of ['yek', 'du', 'sê']) expect(processed).toHaveBeenCalledWith(msg);
-      },
-      { timeout: 10_000, interval: 100 },
-    );
-    const waiting = await queue.raw.getJobCounts('waiting', 'prioritized', 'delayed');
-    await expect(queue.enqueueAll(okJob, [{ msg: 'çar' }, { msg: 5 } as unknown as { msg: string }])).rejects.toThrow(/invalid payload/);
-    expect(await queue.raw.getJobCounts('waiting', 'prioritized', 'delayed')).toEqual(waiting);
-    expect(processed).not.toHaveBeenCalledWith('çar');
-  });
-
   it('rejects invalid payloads at enqueue time (queue never sees them)', async () => {
     await expect(
       queue.enqueue(sendEmailJob, { to: 'not-an-email', template: 'verify-email', vars: {} }),
@@ -120,6 +106,21 @@ describe.skipIf(!REDIS_URL)('job queue (integration)', () => {
     await queue.enqueue(flakyJob, {}, { attempts: 2, backoffDelayMs: 50 });
     await vi.waitFor(() => expect(keys).toHaveLength(4), { timeout: 10_000, interval: 100 });
     expect(keys[2]).not.toBe(keys[0]);
+  });
+
+  it('queues many jobs of a kind in batches, and none of them when one is invalid', async () => {
+    const msgs = Array.from({ length: ENQUEUE_BATCH + 3 }, (_, i) => `many-${i}`);
+    const adds = vi.spyOn(queue.raw, 'addBulk');
+    await queue.enqueueMany(okJob, msgs.map((msg) => ({ msg })));
+    expect(adds).toHaveBeenCalledTimes(2);
+    await vi.waitFor(() => expect(processed.mock.calls.filter(([m]) => String(m).startsWith('many-'))).toHaveLength(msgs.length), {
+      timeout: 15_000,
+      interval: 100,
+    });
+    adds.mockClear();
+    await expect(queue.enqueueMany(okJob, [{ msg: 'fine' }, { msg: 7 } as unknown as { msg: string }])).rejects.toThrow(/invalid payload/);
+    expect(adds).not.toHaveBeenCalled();
+    adds.mockRestore();
   });
 
   it('deduplicates by idempotency key', async () => {

@@ -48,6 +48,7 @@ import {
 import { AppError } from '../plugins/errors.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import { payRound, type ItemOutcome, type RewardDeps } from './rewards.js';
+import { deleteInBatches } from '../db/batches.js';
 
 /** What every stored item has, whatever the game: its stable key, its level, and whether it was answered right lately. */
 export interface StoredItem {
@@ -471,11 +472,12 @@ export class SoloService {
    * run it at once.
    */
   async housekeeping(): Promise<{ sessions: number; seen: number }> {
-    const sessions = await this.pool.query(
-      `DELETE FROM game_sessions WHERE (finished_at IS NOT NULL AND finished_at < now() - interval '90 days')
-          OR (finished_at IS NULL AND expires_at < now() - interval '7 days')`,
+    const sessions = await deleteInBatches(
+      this.pool,
+      'game_sessions',
+      `(finished_at IS NOT NULL AND finished_at < now() - interval '90 days') OR (finished_at IS NULL AND expires_at < now() - interval '7 days')`,
     );
-    const seen = await this.pool.query(`DELETE FROM game_seen WHERE last_seen_at < now() - interval '365 days'`);
-    return { sessions: sessions.rowCount ?? 0, seen: seen.rowCount ?? 0 };
+    const seen = await deleteInBatches(this.pool, 'game_seen', `last_seen_at < now() - interval '365 days'`);
+    return { sessions, seen };
   }
 }
