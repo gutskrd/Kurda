@@ -1,18 +1,9 @@
 /**
- * Kurdish text as a sequence of sounds, each with the mouth shape it is said
- * with and how long it lasts relative to the others.
+ * Kurdish text as a sequence of sounds: the mouth shape each is said with and its length relative to the others.
  *
- * Both scripts are read: Kurmancî in the Latin (Hawar) alphabet, where every
- * vowel is written, and Soranî in the Arabic script, where the short i is not
- * and و and ی are each a vowel or a consonant depending on their neighbours.
- * The result does not try to be a pronunciation: it only has to say which
- * shape the mouth makes, in what order, and roughly for how long, which is all
- * a drawn mouth can show.
- *
- * Words are numbered, so an aligner knows where one ends and the next begins,
- * and punctuation becomes a pause: a comma short, a full stop or a question
- * mark longer. Characters that say nothing (quotes, symbols, emoji, invisible
- * formatting) are left out.
+ * Reads Kurmancî in the Latin (Hawar) alphabet and Soranî in the Arabic script, which leaves the short i unwritten and
+ * uses و and ی as vowel or consonant by context. It is a reading for the mouth, not a pronunciation. Words are numbered
+ * for the aligner, punctuation becomes a short or long pause, and characters that say nothing are left out.
  */
 import { foldLetter } from '../kurdish-text.js';
 import { isInvisibleChar } from '../lesson-audio.js';
@@ -25,11 +16,7 @@ export type SoundKind = 'vowel' | 'consonant' | 'pause';
 export interface Sound {
   viseme: Viseme;
   kind: SoundKind;
-  /**
-   * How long the sound lasts, relative to the others: a long vowel about
-   * twice a stop. Only ratios matter; the aligner spreads them over the time
-   * there is.
-   */
+  /** Length relative to the other sounds (a long vowel about twice a stop); only the ratios matter. */
   weight: number;
   /** which word it is in, from 0; a pause carries the number of the word it follows */
   word: number;
@@ -40,11 +27,8 @@ export interface Sound {
 }
 
 /*
- * Weights. A long vowel (a, ê, î, o, û) is held about twice as long as a stop
- * (b, t, k) — the stop is a closure and a release, the vowel is the syllable —
- * and the continuous consonants (f, s, ş, x, the nasals) come between. The
- * short vowels (e, u, and i, which is barely there in fast speech) are shorter
- * than the long ones; the vowel Soranî leaves unwritten is the shortest.
+ * Weights. A long vowel (a, ê, î, o, û) is held about twice as long as a stop (b, t, k), with the continuous consonants
+ * (f, s, ş, x, the nasals) between. Short vowels (e, u, i) are shorter, and the vowel Soranî leaves unwritten is shortest.
  */
 const LONG_VOWEL = 1.6;
 const MID_VOWEL = 1.5;
@@ -69,12 +53,7 @@ export const LONG_PAUSE_WEIGHT = 4.5;
 /** A doubled letter is one sound, held longer. */
 const DOUBLED = 1.5;
 
-/*
- * How loud a consonant is, for deciding where a Soranî word hides an i: a
- * syllable rises in loudness to its vowel and falls after it, so two
- * consonants can end one only when the second is quieter than the first
- * (dest, kurd, germ), never the other way about.
- */
+// Consonant loudness, for placing Soranî's unwritten i: two consonants close a syllable only when the second is quieter.
 const SONORITY_STOP = 1;
 const SONORITY_FRICATIVE = 2;
 const SONORITY_NASAL = 3;
@@ -97,10 +76,8 @@ const consonant = (viseme: Viseme, weight: number, sonority: number): Letter => 
 });
 
 /**
- * The Hawar alphabet. A vowel shows its own shape; b, m, p press the lips; f
- * and v tuck the lip under the teeth; l, n, t, d show the tongue at the teeth;
- * w rounds the lips as u does. Every other consonant is said with the teeth
- * nearly together, which is the one shape `etc`.
+ * The Hawar alphabet. Vowels show their own shape; b, m, p press the lips; f, v tuck the lip under the teeth; l, n, t, d
+ * show the tongue at the teeth; w rounds like u; every other consonant is `etc`.
  */
 const LATIN: Record<string, Letter> = {
   a: vowel('a', LONG_VOWEL),
@@ -138,18 +115,12 @@ const LATIN: Record<string, Letter> = {
   z: consonant('etc', FRICATIVE, SONORITY_FRICATIVE),
 };
 
-/**
- * Two letters for one sound, as Kurdish is typed on a keyboard without ş, ç,
- * x's dotted partner or j: "sh" for ş, "ch" for ç, "kh" for x, "gh" for ẍ,
- * "zh" for j. Each is one sound, so it gets one sound's time. (Hawar's own xw
- * is two sounds, x and a rounding of the lips, and is read as two.)
- */
+/** Digraphs typed on keyboards without ş, ç, x, ẍ or j, each one sound. Hawar's own xw is two sounds and is read as two. */
 const LATIN_DIGRAPHS: Record<string, string> = { sh: 'ş', ch: 'ç', kh: 'x', gh: 'ẍ', zh: 'j' };
 
 /**
- * The Soranî alphabet, less و and ی (which depend on their neighbours, see
- * `soraniWord`) and the ambiguous ه. The Arabic letters that only loanwords
- * use are read as Kurdish says them: ط as t, ض and ظ as z, ص and ث as s.
+ * The Soranî alphabet, less و, ی and ه, which are decided by their neighbours. Loanword letters are read as Kurdish says
+ * them: ط as t, ض and ظ as z, ص and ث as s.
  */
 const ARABIC: Record<string, Letter> = {
   ا: vowel('a', LONG_VOWEL),
@@ -199,11 +170,7 @@ const H_CONSONANT = ARABIC['ھ']!;
 const E_VOWEL = ARABIC['ە']!;
 const I_UNWRITTEN = vowel('i', UNWRITTEN_VOWEL);
 
-/**
- * Arabic-script letters typed on another keyboard, read as the Kurdish letter
- * they stand for. `foldLetter` covers kaf and yeh; the alefs with a hamza or a
- * madda are the vowel a, and ؤ the و it sits on. (ه is decided per word.)
- */
+/** Arabic-script letters from other keyboards, read as the Kurdish letter they stand for; `foldLetter` covers kaf and yeh. */
 const ARABIC_VARIANTS: Record<string, string> = { أ: 'ا', إ: 'ا', آ: 'ا', ٱ: 'ا', ؤ: 'و', ة: 'ە' };
 
 /** Arabic short-vowel marks, rare in Kurdish but read when they are written. */
@@ -221,10 +188,7 @@ const MARK_VOWELS: Record<string, Letter> = {
 };
 
 const ZWNJ = '‌';
-/**
- * The seat of a hamza, which starts every Soranî word that starts with a
- * vowel, and the hamza alone: neither has a mouth shape of its own.
- */
+/** The hamza seat, which starts every vowel-initial Soranî word, and the bare hamza: neither has a mouth shape. */
 const GLOTTAL = new Set(['ئ', 'ء']);
 
 /** Digits are said as their names, so the mouth moves while a number is read out. */
@@ -302,17 +266,9 @@ function isVowelUnit(unit: Unit | undefined): boolean {
 }
 
 /**
- * Where a Soranî word leaves out an i, and the word with it put back.
- *
- * The Arabic script as Soranî uses it writes every vowel but one: the short i
- * (as in dil, min, sipas) is left for the reader to supply. Left out here as
- * well, a word like من or سپاس would be a run of consonants with the mouth
- * never opening, which looks wrong at once. So it goes back where Kurdish
- * syllables need it: a word never starts with two consonants (سپاس is sipas,
- * من is min), a syllable ends in at most two, and two only when the second is
- * quieter than the first (dest, kurd, germ, but bizanim and destim). This is
- * a reading for the mouth, not a spelling: an i in the wrong place of a long
- * cluster still opens the mouth about when the speaker did.
+ * Puts back the short i that Soranî spelling leaves out, so a word like من or سپاس opens the mouth. It goes where Kurdish
+ * syllables need it: never two consonants at the start of a word, at most two closing a syllable, and two only when the
+ * second is quieter (dest, kurd, germ, but bizanim). A reading for the mouth, not a spelling.
  */
 function withUnwrittenVowels(units: Array<Letter & { letters: string; closed?: boolean }>): Array<Letter & { letters: string }> {
   const out: Array<Letter & { letters: string }> = [];
@@ -345,17 +301,14 @@ function clusterWithVowels<T extends Letter & { letters: string; closed?: boolea
   // a written sukun or vowel mark says what follows that consonant: nothing to supply
   const open = (c: T): boolean => !c.closed;
   if (!vowelBefore) {
-    // no word starts with two consonants: an i after the first. The one
-    // exception is a consonant and the glide w, which Kurdish starts words
-    // with (خوا xwa, کوێ kwê): the lips round straight into the vowel
+    // No word starts with two consonants, so an i follows the first, except before the glide w (خوا xwa, کوێ kwê).
     if (run.length === 1) return run;
     const [first, second, ...rest] = run;
     const tail = clusterWithVowels([second!, ...rest], true, vowelAfter, i);
     return open(first!) && second!.viseme !== 'u' ? [first!, i(), ...tail] : [first!, ...tail];
   }
   if (vowelAfter) {
-    // between vowels: up to two close the syllable before and one opens the next;
-    // any more each need an i of their own
+    // Between vowels, two may close the syllable before and one open the next; any more each need an i.
     if (run.length <= 3) return run;
     const out: Array<Letter & { letters: string }> = [run[0]!, run[1]!];
     for (let k = 2; k < run.length - 1; k++) {
@@ -510,16 +463,8 @@ function parts(chars: string[]): Array<{ digit: number } | { letters: string[] }
 }
 
 /**
- * The sounds of a Kurdish text, in order.
- *
- * `script` says which script the text is in; without it, the one most of its
- * letters are in. A word in the other script (a name, a loanword) is still
- * read by its own letters' rules, so no letter goes unread. Digits are said as
- * their names in the text's language: a number read out moves the mouth for
- * about as long as it takes to say.
- *
- * Pauses come only between words: one before the first word or after the last
- * would be silence the recording's own edges already are.
+ * The sounds of a Kurdish text, in order. Without `script`, the script most of its letters are in; a word in the other
+ * script is still read by its own rules. Digits are said as their names, and pauses come only between words.
  */
 export function textToSounds(text: string, options: { script?: LipsyncScript } = {}): Sound[] {
   const script = options.script ?? detectScript(text);
