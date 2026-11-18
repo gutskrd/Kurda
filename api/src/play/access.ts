@@ -35,27 +35,42 @@ export interface JoinCheck {
  * refusal reveals nothing about age or blocks.
  */
 export async function canJoin(executor: Executor, check: JoinCheck): Promise<boolean> {
-  if (check.removed || check.hostId === null) return false;
-  const others = [...new Set([check.hostId, ...check.memberIds])].filter((id) => id !== check.joinerId);
-  const res = await executor.query<{ blocked: boolean; adult: boolean; friends: boolean; in_group: boolean }>(
-    `SELECT
+  return (await canJoinEach(executor, check, [{ id: check.joinerId, removed: check.removed }]))[0]!;
+}
+
+/** `canJoin` for several people asking to join the same game, in their order, in one query. */
+export async function canJoinEach(
+  executor: Executor,
+  game: Omit<JoinCheck, 'joinerId' | 'removed'>,
+  joiners: ReadonlyArray<{ id: string; removed: boolean }>,
+): Promise<boolean[]> {
+  const asked = joiners.filter((j) => !j.removed);
+  if (game.hostId === null || asked.length === 0) return joiners.map(() => false);
+  // everyone in the game; a joiner is left out of their own block check
+  const everyone = [...new Set([game.hostId, ...game.memberIds])];
+  const res = await executor.query<{ n: number; blocked: boolean; adult: boolean; friends: boolean; in_group: boolean }>(
+    `SELECT t.n::int AS n,
        EXISTS (SELECT 1 FROM blocks b
-                WHERE (b.blocker_id = $1 AND b.blocked_id = ANY($2::uuid[]))
-                   OR (b.blocked_id = $1 AND b.blocker_id = ANY($2::uuid[]))) AS blocked,
-       COALESCE((SELECT NOT ${notKnownAdultSql('u')} FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL), false) AS adult,
-       ${areFriendsSql('$1::uuid', '$3::uuid')} AS friends,
+                WHERE (b.blocker_id = t.id AND b.blocked_id = ANY($2::uuid[]) AND b.blocked_id <> t.id)
+                   OR (b.blocked_id = t.id AND b.blocker_id = ANY($2::uuid[]) AND b.blocker_id <> t.id)) AS blocked,
+       COALESCE((SELECT NOT ${notKnownAdultSql('u')} FROM users u WHERE u.id = t.id AND u.deleted_at IS NULL), false) AS adult,
+       ${areFriendsSql('t.id', '$3::uuid')} AS friends,
        ($4::uuid IS NOT NULL AND EXISTS (
           SELECT 1 FROM group_members gm JOIN groups g ON g.id = gm.group_id
-           WHERE gm.group_id = $4 AND gm.user_id = $1
+           WHERE gm.group_id = $4 AND gm.user_id = t.id
              AND g.archived_at IS NULL AND g.privacy <> 'open'
-             AND EXISTS (SELECT 1 FROM group_members h WHERE h.group_id = $4 AND h.user_id = $3))) AS in_group`,
-    [check.joinerId, others, check.hostId, check.chatGroupId],
+             AND EXISTS (SELECT 1 FROM group_members h WHERE h.group_id = $4 AND h.user_id = $3))) AS in_group
+       FROM unnest($1::uuid[]) WITH ORDINALITY AS t(id, n)`,
+    [asked.map((j) => j.id), everyone, game.hostId, game.chatGroupId],
   );
-  const r = res.rows[0]!;
-  if (r.blocked) return false;
-  if (check.access === 'open') return r.adult;
-  if (check.joinerId === check.hostId) return true;
-  return r.friends || r.in_group;
+  const allowed = new Map<string, boolean>();
+  for (const r of res.rows) {
+    const id = asked[r.n - 1]!.id;
+    if (r.blocked) allowed.set(id, false);
+    else if (game.access === 'open') allowed.set(id, r.adult);
+    else allowed.set(id, id === game.hostId || r.friends || r.in_group);
+  }
+  return joiners.map((j) => !j.removed && allowed.get(j.id) === true);
 }
 
 /**

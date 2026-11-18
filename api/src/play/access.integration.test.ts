@@ -1,7 +1,8 @@
 /** The join and identity rules every online game shares, against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
-import { canJoin, identities, mayHostOpen, type JoinCheck } from './access.js';
+import { canJoin, canJoinEach, identities, mayHostOpen, type JoinCheck } from './access.js';
+import { queriesDuring } from '../test/query-count.js';
 import { bornYearsAgo } from '../test/age.js';
 import { befriend, block } from '../test/social.js';
 
@@ -164,6 +165,27 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
       await block(pool, host, exFriend);
       expect(await canJoin(pool, check({ joinerId: exFriend, hostId: host }))).toBe(false);
       expect(await canJoin(pool, check({ joinerId: exFriend, hostId: host, access: 'open' }))).toBe(false);
+    });
+
+    it('answers for several people asking at once as for each of them, in one query', async () => {
+      const host = await makeUser();
+      const other = await makeUser();
+      const [friend, minorFriend, stranger, blocked, removed] = [await makeUser(), await makeUser('minor'), await makeUser(), await makeUser(), await makeUser()];
+      for (const u of [other, friend, minorFriend, blocked, removed]) await befriend(pool, host, u);
+      await block(pool, other, blocked);
+      const joiners = [friend, minorFriend, stranger, blocked, removed, host, friend].map((id) => ({ id, removed: id === removed }));
+      const expected = {
+        friends: [true, true, false, false, false, true, true],
+        open: [true, false, true, false, false, true, true],
+      };
+      for (const access of ['friends', 'open'] as const) {
+        const run = await queriesDuring(pool, () => canJoinEach(pool, { hostId: host, access, memberIds: [host, other], chatGroupId: null }, joiners));
+        expect(run.result, access).toEqual(expected[access]);
+        expect(run.count).toBe(1);
+        for (const [i, j] of joiners.entries()) {
+          expect(await canJoin(pool, check({ joinerId: j.id, hostId: host, memberIds: [host, other], access, removed: j.removed }))).toBe(expected[access][i]);
+        }
+      }
     });
 
     it('refuses someone the host removed, and any game whose host is gone', async () => {
