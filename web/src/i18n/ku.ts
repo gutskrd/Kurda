@@ -3642,6 +3642,8 @@ export const ku: Catalogue = {
 
   // ---- age, minors, the daily reward, streaks and leagues ------------------
   'age.label': 'Meh û sala jidayikbûnê',
+  'settings.birthMonth.none': 'Hê nehatiye zêdekirin',
+  'settings.birthMonth.help': 'Ew diyar dike ka kî dikare te bibîne û ji te re binivîse, û nameyên te diçin ba kê. Li vir nayê guhertin: heke şaş be, ji {email} re binivîse.',
   'age.month': 'Meh',
   'age.year': 'Sal',
   'age.help': 'Em vê ji her kesî dipirsin. Tenê meh û sal tên tomarkirin.',

@@ -605,6 +605,9 @@ export type TranslationKey =
   | 'games.whoAmI.gameLeft'
   // --- end Stories and playing with friends ---
   | 'age.label'
+  | 'settings.birthMonth.none'
+  | 'settings.birthMonth.help'
+  | 'age.prompt.body'
   | 'age.month.1'
   | 'age.month.2'
   | 'age.month.3'
@@ -2300,6 +2303,7 @@ export type TranslationKey =
   | 'letters.title'
   | 'letters.lead'
   | 'letters.refusal.birthMonth'
+  | 'letters.refusal.birthMonthAction'
   | 'letters.refusal.restricted'
   | 'letters.flying'
   | 'letters.out.title'
@@ -5698,6 +5702,7 @@ const en: Catalog = {
   'letters.title': 'Letters',
   'letters.lead': 'Write to someone new, even a single word. Send your bird out, or call one to your window.',
   'letters.refusal.birthMonth': 'Add your birth month to write letters: they only go between people of a similar age.',
+  'letters.refusal.birthMonthAction': 'Add your birth month',
   'letters.refusal.restricted': 'You can’t write letters at the moment.',
   'letters.flying': 'Your bird is on its way…',
   'letters.out.title': 'Your bird is out',
@@ -6105,6 +6110,9 @@ const en: Catalog = {
   'favorites.noStories': 'No published stories yet.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Month and year of birth',
+  'settings.birthMonth.none': 'Not added',
+  'settings.birthMonth.help': 'It decides who can find and message you, and who your letters go to. It can’t be changed here: if it’s wrong, write to {email}.',
+  'age.prompt.body': 'When were you born? We ask everyone this once, and keep only the month and year.',
   'age.month.1': 'January',
   'age.month.2': 'February',
   'age.month.3': 'March',
@@ -9593,6 +9601,7 @@ const ku: Catalog = {
   'letters.title': 'Name',
   'letters.lead': 'Ji kesekî nû re binivîse, bila tenê peyvek be jî. Balindeyê xwe bişîne, an gazî balindeyekî bike ber pencereya xwe.',
   'letters.refusal.birthMonth': 'Ji bo nivîsandina nameyan meha xwe ya jidayikbûnê lê zêde bike: name tenê di navbera kesên ku temenê wan nêzî hev e de diçin.',
+  'letters.refusal.birthMonthAction': 'Meha jidayikbûnê lê zêde bike',
   'letters.refusal.restricted': 'Tu niha nikarî nameyan binivîsî.',
   'letters.flying': 'Balindeyê te di rê de ye…',
   'letters.out.title': 'Balindeyê te li derve ye',
@@ -10000,6 +10009,9 @@ const ku: Catalog = {
   'favorites.noStories': 'Hê çîrokên weşandî tune ne.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Meh û sala jidayikbûnê',
+  'settings.birthMonth.none': 'Hê nehatiye zêdekirin',
+  'settings.birthMonth.help': 'Ew diyar dike ka kî dikare te bibîne û ji te re binivîse, û nameyên te diçin ba kê. Li vir nayê guhertin: heke şaş be, ji {email} re binivîse.',
+  'age.prompt.body': 'Tu kengî ji dayik bûyî? Em vê carekê ji her kesî dipirsin û tenê meh û salê tomar dikin.',
   'age.month.1': 'Kanûna paşîn',
   'age.month.2': 'Sibat',
   'age.month.3': 'Adar',
@@ -13488,6 +13500,7 @@ const de: Catalog = {
   'letters.title': 'Briefe',
   'letters.lead': 'Schreib jemand Neuem, auch nur ein Wort. Schick deinen Vogel los oder ruf einen an dein Fenster.',
   'letters.refusal.birthMonth': 'Gib deinen Geburtsmonat an, um Briefe zu schreiben: Sie gehen nur zwischen Menschen ähnlichen Alters hin und her.',
+  'letters.refusal.birthMonthAction': 'Geburtsmonat angeben',
   'letters.refusal.restricted': 'Du kannst gerade keine Briefe schreiben.',
   'letters.flying': 'Dein Vogel ist unterwegs …',
   'letters.out.title': 'Dein Vogel ist ausgeflogen',
@@ -13895,6 +13908,9 @@ const de: Catalog = {
   'favorites.noStories': 'Noch keine veröffentlichten Geschichten.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Geburtsmonat und -jahr',
+  'settings.birthMonth.none': 'Nicht angegeben',
+  'settings.birthMonth.help': 'Er bestimmt, wer dich finden und dir schreiben kann und an wen deine Briefe gehen. Hier lässt er sich nicht ändern: Wenn er falsch ist, schreib an {email}.',
+  'age.prompt.body': 'Wann bist du geboren? Wir fragen alle einmal danach und speichern nur Monat und Jahr.',
   'age.month.1': 'Januar',
   'age.month.2': 'Februar',
   'age.month.3': 'März',
@@ -17383,6 +17399,7 @@ const es: Catalog = {
   'letters.title': 'Cartas',
   'letters.lead': 'Escribe a alguien nuevo, aunque sea una sola palabra. Envía tu pájaro o llama a uno a tu ventana.',
   'letters.refusal.birthMonth': 'Añade tu mes de nacimiento para escribir cartas: solo van entre personas de edad parecida.',
+  'letters.refusal.birthMonthAction': 'Añadir mes de nacimiento',
   'letters.refusal.restricted': 'Ahora mismo no puedes escribir cartas.',
   'letters.flying': 'Tu pájaro va de camino…',
   'letters.out.title': 'Tu pájaro ha salido',
@@ -17790,6 +17807,9 @@ const es: Catalog = {
   'favorites.noStories': 'Todavía no hay relatos publicados.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Mes y año de nacimiento',
+  'settings.birthMonth.none': 'Sin añadir',
+  'settings.birthMonth.help': 'Decide quién puede encontrarte y escribirte, y a quién llegan tus cartas. Aquí no se puede cambiar: si no es correcto, escribe a {email}.',
+  'age.prompt.body': '¿Cuándo naciste? Se lo preguntamos una vez a todo el mundo y solo guardamos el mes y el año.',
   'age.month.1': 'Enero',
   'age.month.2': 'Febrero',
   'age.month.3': 'Marzo',
@@ -21278,6 +21298,7 @@ const tr: Catalog = {
   'letters.title': 'Mektuplar',
   'letters.lead': 'Yeni birine yaz, tek bir kelime bile olur. Kuşunu gönder ya da bir kuşu pencerene çağır.',
   'letters.refusal.birthMonth': 'Mektup yazmak için doğum ayını ekle: mektuplar yalnızca yaşça birbirine yakın kişiler arasında gider.',
+  'letters.refusal.birthMonthAction': 'Doğum ayını ekle',
   'letters.refusal.restricted': 'Şu anda mektup yazamazsın.',
   'letters.flying': 'Kuşun yolda…',
   'letters.out.title': 'Kuşun dışarıda',
@@ -21685,6 +21706,9 @@ const tr: Catalog = {
   'favorites.noStories': 'Henüz yayımlanmış hikâye yok.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Doğum ayı ve yılı',
+  'settings.birthMonth.none': 'Eklenmedi',
+  'settings.birthMonth.help': 'Seni kimlerin bulup sana yazabileceğini ve mektuplarının kime gideceğini belirler. Burada değiştirilemez: yanlışsa {email} adresine yaz.',
+  'age.prompt.body': 'Ne zaman doğdun? Bunu herkese bir kez soruyoruz ve yalnızca ayı ve yılı saklıyoruz.',
   'age.month.1': 'Ocak',
   'age.month.2': 'Şubat',
   'age.month.3': 'Mart',
@@ -25173,6 +25197,7 @@ const ar: Catalog = {
   'letters.title': 'المراسلة',
   'letters.lead': 'اكتب لشخص جديد، ولو كلمة واحدة. أرسل طائرك، أو نادِ طائرًا إلى نافذتك.',
   'letters.refusal.birthMonth': 'أضف شهر ميلادك لتكتب الرسائل: فهي لا تُرسَل إلا بين أشخاص متقاربين في العمر.',
+  'letters.refusal.birthMonthAction': 'أضف شهر ميلادك',
   'letters.refusal.restricted': 'لا يمكنك كتابة الرسائل حاليًا.',
   'letters.flying': 'طائرك في الطريق…',
   'letters.out.title': 'طائرك في الخارج',
@@ -25580,6 +25605,9 @@ const ar: Catalog = {
   'favorites.noStories': 'لا توجد قصص منشورة بعد.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'شهر وسنة الميلاد',
+  'settings.birthMonth.none': 'لم يُضف بعد',
+  'settings.birthMonth.help': 'يحدّد من يمكنه العثور عليك ومراسلتك، وإلى من تذهب رسائلك. لا يمكن تغييره هنا: إن كان خطأً فاكتب إلى {email}.',
+  'age.prompt.body': 'متى وُلدت؟ نسأل الجميع هذا مرة واحدة، ولا نحتفظ إلا بالشهر والسنة.',
   'age.month.1': 'يناير',
   'age.month.2': 'فبراير',
   'age.month.3': 'مارس',
@@ -29068,6 +29096,7 @@ const fr: Catalog = {
   'letters.title': 'Lettres',
   'letters.lead': 'Écris à quelqu’un de nouveau, même un seul mot. Envoie ton oiseau, ou appelle-en un à ta fenêtre.',
   'letters.refusal.birthMonth': 'Ajoute ton mois de naissance pour écrire des lettres : elles ne circulent qu’entre personnes d’âge proche.',
+  'letters.refusal.birthMonthAction': 'Ajouter mon mois de naissance',
   'letters.refusal.restricted': 'Tu ne peux pas écrire de lettres pour le moment.',
   'letters.flying': 'Ton oiseau est en route…',
   'letters.out.title': 'Ton oiseau est parti',
@@ -29475,6 +29504,9 @@ const fr: Catalog = {
   'favorites.noStories': 'Aucune histoire publiée pour l’instant.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Mois et année de naissance',
+  'settings.birthMonth.none': 'Non renseigné',
+  'settings.birthMonth.help': 'Il détermine qui peut te trouver et t’écrire, et à qui vont tes lettres. Il ne peut pas être modifié ici : s’il est faux, écris à {email}.',
+  'age.prompt.body': 'Quelle est ta date de naissance ? Nous posons la question une fois à tout le monde et ne gardons que le mois et l’année.',
   'age.month.1': 'Janvier',
   'age.month.2': 'Février',
   'age.month.3': 'Mars',
@@ -32963,6 +32995,7 @@ const nl: Catalog = {
   'letters.title': 'Brieven',
   'letters.lead': 'Schrijf iemand nieuws, al is het maar één woord. Stuur je vogel op pad of roep er een naar je raam.',
   'letters.refusal.birthMonth': 'Vul je geboortemaand in om brieven te schrijven: ze gaan alleen tussen mensen van ongeveer dezelfde leeftijd.',
+  'letters.refusal.birthMonthAction': 'Geboortemaand invullen',
   'letters.refusal.restricted': 'Je kunt nu even geen brieven schrijven.',
   'letters.flying': 'Je vogel is onderweg…',
   'letters.out.title': 'Je vogel is uitgevlogen',
@@ -33370,6 +33403,9 @@ const nl: Catalog = {
   'favorites.noStories': 'Nog geen gepubliceerde verhalen.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Geboortemaand en -jaar',
+  'settings.birthMonth.none': 'Niet ingevuld',
+  'settings.birthMonth.help': 'Die bepaalt wie je kan vinden en je kan schrijven, en bij wie je brieven terechtkomen. Je kunt hem hier niet wijzigen: klopt hij niet, schrijf dan naar {email}.',
+  'age.prompt.body': 'Wanneer ben je geboren? We vragen het iedereen één keer en bewaren alleen de maand en het jaar.',
   'age.month.1': 'Januari',
   'age.month.2': 'Februari',
   'age.month.3': 'Maart',
@@ -36859,6 +36895,7 @@ const ckb: Catalog = {
   'letters.title': 'نامەگۆڕینەوە',
   'letters.lead': 'بۆ کەسێکی نوێ بنووسە، با تەنها وشەیەکیش بێت. باڵندەکەت بنێرە، یان بانگی باڵندەیەک بکە بۆ بەر پەنجەرەکەت.',
   'letters.refusal.birthMonth': 'بۆ نووسینی نامە مانگی لەدایکبوونت زیاد بکە: نامەکان تەنها لە نێوان کەسانی تەمەن نزیک دەچن.',
+  'letters.refusal.birthMonthAction': 'مانگی لەدایکبوون زیاد بکە',
   'letters.refusal.restricted': 'ئێستا ناتوانیت نامە بنووسیت.',
   'letters.flying': 'باڵندەکەت لە ڕێگادایە…',
   'letters.out.title': 'باڵندەکەت لە دەرەوەیە',
@@ -37266,6 +37303,9 @@ const ckb: Catalog = {
   'favorites.noStories': 'هێشتا چیرۆکی بڵاوکراوە نییە.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'مانگ و ساڵی لەدایکبوون',
+  'settings.birthMonth.none': 'هێشتا زیاد نەکراوە',
+  'settings.birthMonth.help': 'ئەوە دیاری دەکات کێ دەتوانێت بتدۆزێتەوە و نامەت بۆ بنێرێت، و نامەکانت بۆ کێ دەچن. لێرە ناگۆڕدرێت: ئەگەر هەڵەیە، بۆ {email} بنووسە.',
+  'age.prompt.body': 'کەی لەدایک بوویت؟ ئەمە یەک جار لە هەموو کەسێک دەپرسین و تەنها مانگ و ساڵ هەڵدەگرین.',
   'age.month.1': 'کانوونی دووەم',
   'age.month.2': 'شوبات',
   'age.month.3': 'ئازار',

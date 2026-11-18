@@ -3635,6 +3635,8 @@ export const fr: Catalogue = {
 
   // ---- age, minors, the daily reward, streaks and leagues ------------------
   'age.label': 'Mois et année de naissance',
+  'settings.birthMonth.none': 'Non renseigné',
+  'settings.birthMonth.help': 'Il détermine qui peut te trouver et t’écrire, et à qui vont tes lettres. Il ne peut pas être modifié ici : s’il est faux, écris à {email}.',
   'age.month': 'Mois',
   'age.year': 'Année',
   'age.help': 'Nous posons la question à tout le monde. Seuls le mois et l’année sont conservés.',

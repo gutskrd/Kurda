@@ -3634,6 +3634,8 @@ export const ckb: Catalogue = {
 
   // ---- age, minors, the daily reward, streaks and leagues ------------------
   'age.label': 'مانگ و ساڵی لەدایکبوون',
+  'settings.birthMonth.none': 'هێشتا زیاد نەکراوە',
+  'settings.birthMonth.help': 'ئەوە دیاری دەکات کێ دەتوانێت بتدۆزێتەوە و نامەت بۆ بنێرێت، و نامەکانت بۆ کێ دەچن. لێرە ناگۆڕدرێت: ئەگەر هەڵەیە، بۆ {email} بنووسە.',
   'age.month': 'مانگ',
   'age.year': 'ساڵ',
   'age.help': 'ئەمە لە هەموو کەسێک دەپرسین. تەنها مانگ و ساڵ هەڵدەگیرێن.',

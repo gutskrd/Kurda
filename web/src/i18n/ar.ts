@@ -3627,6 +3627,8 @@ export const ar: Catalogue = {
 
   // ---- age, minors, the daily reward, streaks and leagues ------------------
   'age.label': 'شهر وسنة الميلاد',
+  'settings.birthMonth.none': 'لم يُضف بعد',
+  'settings.birthMonth.help': 'يحدّد من يمكنه العثور عليك ومراسلتك، وإلى من تذهب رسائلك. لا يمكن تغييره هنا: إن كان خطأً فاكتب إلى {email}.',
   'age.month': 'الشهر',
   'age.year': 'السنة',
   'age.help': 'نسأل الجميع هذا السؤال. نحتفظ بالشهر والسنة فقط.',

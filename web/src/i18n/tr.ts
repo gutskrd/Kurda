@@ -3631,6 +3631,8 @@ export const tr: Catalogue = {
 
   // ---- age, minors, the daily reward, streaks and leagues ------------------
   'age.label': 'Doğum ayı ve yılı',
+  'settings.birthMonth.none': 'Eklenmedi',
+  'settings.birthMonth.help': 'Seni kimlerin bulup sana yazabileceğini ve mektuplarının kime gideceğini belirler. Burada değiştirilemez: yanlışsa {email} adresine yaz.',
   'age.month': 'Ay',
   'age.year': 'Yıl',
   'age.help': 'Bunu herkese soruyoruz. Yalnızca ay ve yıl saklanır.',

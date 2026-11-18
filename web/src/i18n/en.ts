@@ -3734,6 +3734,8 @@ export const en = {
   // The birth month question is neutral: no default, every year listed, and
   // nothing that says which answer gets more.
   'age.label': 'Month and year of birth',
+  'settings.birthMonth.none': 'Not added',
+  'settings.birthMonth.help': 'It decides who can find and message you, and who your letters go to. It can’t be changed here: if it’s wrong, write to {email}.',
   'age.month': 'Month',
   'age.year': 'Year',
   'age.help': 'We ask everyone. Only the month and year are kept.',

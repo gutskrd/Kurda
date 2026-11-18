@@ -3635,6 +3635,8 @@ export const nl: Catalogue = {
 
   // ---- age, minors, the daily reward, streaks and leagues ------------------
   'age.label': 'Geboortemaand en -jaar',
+  'settings.birthMonth.none': 'Niet ingevuld',
+  'settings.birthMonth.help': 'Die bepaalt wie je kan vinden en je kan schrijven, en bij wie je brieven terechtkomen. Je kunt hem hier niet wijzigen: klopt hij niet, schrijf dan naar {email}.',
   'age.month': 'Maand',
   'age.year': 'Jaar',
   'age.help': 'We vragen het iedereen. Alleen de maand en het jaar worden bewaard.',

@@ -3,6 +3,7 @@ import { PROVIDER, foldForSearch } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
 import { Alert, Linking, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { birthMonthLabel } from '../auth/birthMonth';
 import { describeError, isMaintenance } from '../api/errors';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -164,6 +165,11 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const leagues = account.leagues === null ? undefined : onOff(account.leagues);
   const visibility = account.visibility ? t(VISIBILITY_LABEL[account.visibility]) : undefined;
   const username = account.username ? `@${account.username}` : undefined;
+  const birth = account.birth
+    ? account.birth.year && account.birth.month
+      ? birthMonthLabel(t, account.birth.year, account.birth.month)
+      : t('settings.birthMonth.none')
+    : undefined;
 
   // A guest's account section is one row, the way to an account: there is no name, password or device list to change.
   const accountEntries: Entry[] = isGuest
@@ -187,6 +193,11 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           key: 'username',
           terms: [t('auth.username'), username],
           row: <SettingsRow icon="person" title={t('auth.username')} value={username} onPress={() => navigation.navigate('ChangeUsername')} />,
+        },
+        {
+          key: 'birthMonth',
+          terms: [t('age.label'), birth],
+          row: <SettingsRow icon="calendar" title={t('age.label')} value={birth} onPress={page('birthMonth')} testID="settings-birth-month" />,
         },
         {
           key: 'password',

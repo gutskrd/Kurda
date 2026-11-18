@@ -117,6 +117,32 @@ describe('Settings', () => {
 });
 
 describe('Settings pages', () => {
+  it('shows the birth month on record, given once, and whom to write to if it is wrong', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ME({ birthYear: 2001, birthMonth: 3 }) });
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Month and year of birth, March 2001' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'birthMonth' });
+    cleanup();
+
+    renderWithProviders(<SettingsPageScreen page="birthMonth" onExit={() => undefined} />);
+    expect((await screen.findByTestId('birth-month')).textContent).toBe('March 2001');
+    expect(screen.getByText(/write to support@hevalo\.app\.$/)).toBeTruthy();
+    expect(screen.queryByTestId('birth-month-add')).toBeNull();
+  });
+
+  it('with no birth month on record, says so and opens the one-time question', async () => {
+    testAuth.client = fakeClient({ 'GET /me': ME({ birthYear: null, birthMonth: null }) });
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'Month and year of birth, Not added' })).toBeTruthy();
+    cleanup();
+
+    vi.mocked(testAuth.refreshUser).mockClear();
+    renderWithProviders(<SettingsPageScreen page="birthMonth" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('birth-month-add'));
+    // The account read again says one is missing, so the app puts the question in front of everything.
+    expect(testAuth.refreshUser).toHaveBeenCalledTimes(1);
+  });
+
   it('shows what each visibility means before it is chosen, and saves the choice at once', async () => {
     const client = fakeClient({ 'GET /me': ME(), 'PUT /me/privacy': ok({}) });
     testAuth.client = client;

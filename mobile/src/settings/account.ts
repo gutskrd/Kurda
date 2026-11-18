@@ -8,13 +8,15 @@ import { useI18n } from '../i18n/I18nContext';
 import { visibilityOffered, type Visibility } from '../social/format';
 
 /**
- * The account fields Settings shows and changes, from GET /me: username, profile visibility, league
+ * The account fields Settings shows and changes, from GET /me: username, birth month, profile visibility, league
  * participation, and whether the user is 13–17 (which decides what is offered). Refetched whenever a settings
  * screen comes into view, so rows reflect changes made on a page behind them. Each is null until loaded, so a row
  * shows no value rather than a guess.
  */
 export interface MyAccount {
   username: string | null;
+  /** The birth month on record, its fields null when none is. */
+  birth: { year: number | null; month: number | null } | null;
   visibility: Visibility | null;
   leagues: boolean | null;
   minor: boolean;
@@ -26,13 +28,21 @@ export interface MyAccount {
 }
 
 interface Me {
-  user: { profileVisibility: Visibility; username: string; minor?: boolean; leaguesEnabled?: boolean };
+  user: {
+    profileVisibility: Visibility;
+    username: string;
+    minor?: boolean;
+    leaguesEnabled?: boolean;
+    birthYear?: number | null;
+    birthMonth?: number | null;
+  };
 }
 
 export function useMyAccount(): MyAccount {
   const { client } = useAuth();
   const { t } = useI18n();
   const [username, setUsername] = useState<string | null>(null);
+  const [birth, setBirth] = useState<MyAccount['birth']>(null);
   const [visibility, setVisibility] = useState<Visibility | null>(null);
   const [leagues, setLeagues] = useState<boolean | null>(null);
   const [minor, setMinor] = useState(false);
@@ -51,6 +61,7 @@ export function useMyAccount(): MyAccount {
           return;
         }
         setUsername(res.data.user.username);
+        setBirth({ year: res.data.user.birthYear ?? null, month: res.data.user.birthMonth ?? null });
         setVisibility(res.data.user.profileVisibility);
         setMinor(res.data.user.minor === true);
         setLeagues(res.data.user.leaguesEnabled !== false);
@@ -103,5 +114,5 @@ export function useMyAccount(): MyAccount {
     if (leagues !== null) taking.want('leagues', on, leagues);
   };
 
-  return { username, visibility: shownVisibility, leagues: shownLeagues, minor, failed, retry, changeVisibility, changeLeagues };
+  return { username, birth, visibility: shownVisibility, leagues: shownLeagues, minor, failed, retry, changeVisibility, changeLeagues };
 }
