@@ -79,6 +79,12 @@ describe('the stamp', () => {
     expect(svg).toContain('aria-hidden="true"');
   });
 
+  it('names itself with a title that cannot leave its attribute', () => {
+    const svg = stampSvg({ width: 160, height: 200, paper: '#e8f2ff', glow: '#007df2', title: '"><script>alert(1)</script>' });
+    expect(svg).toContain('role="img" aria-label="&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;"');
+    expect(svg).not.toContain('<script');
+  });
+
   it('draws no light at strength 0, and then takes no room for it', () => {
     const svg = stampSvg({ width: 160, height: 200, paper: '#e8f2ff', glow: '#007df2', strength: 0 });
     expect(svg).not.toContain('stroke=');

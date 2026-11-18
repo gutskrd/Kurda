@@ -9,15 +9,24 @@ const KEY = 'hevalo.afterSignup';
 const KEEP_MS = 24 * 60 * 60 * 1000;
 
 /**
+ * A path on this site, or null: one leading slash, and nothing a browser would read as another origin (`//host`,
+ * `/\host`) or tidy into one (white space, control characters).
+ */
+export function inAppPath(value: unknown): string | null {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) return null;
+  return /[\s\\\p{Cc}]/u.test(value) ? null : value;
+}
+
+/**
  * An in-app path only, never another origin, since any page linking here can write navigation state. A game invite
  * link (/join/<game>/<CODE>) also counts, rebuilt from what it says rather than passed through.
  */
 export function safeFrom(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  if (value.startsWith('//') || /[\s\\]/.test(value)) return null;
-  if (value.startsWith('/app')) return value;
-  const q = value.indexOf('?');
-  const invite = parseJoinLink(q < 0 ? value : value.slice(0, q), q < 0 ? '' : value.slice(q));
+  const path = inAppPath(value);
+  if (path === null) return null;
+  if (path.startsWith('/app')) return path;
+  const q = path.indexOf('?');
+  const invite = parseJoinLink(q < 0 ? path : path.slice(0, q), q < 0 ? '' : path.slice(q));
   return invite ? joinLinkPath(invite.game, invite.code, invite.from) : null;
 }
 

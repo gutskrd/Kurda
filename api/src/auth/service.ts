@@ -17,6 +17,7 @@ import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
 import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { isMinorRow } from '../users/age.js';
+import { cleanDisplayName } from '../users/display-name.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { createVerificationCode, verifyCode, type VerifyResult } from './verification-codes.js';
 import { allowVerificationEmail } from './pending-signups.js';
@@ -580,7 +581,7 @@ export class AuthService {
         email: input.email,
         username: input.username,
         passwordHash,
-        displayName: input.displayName,
+        displayName: cleanDisplayName(input.displayName) ?? undefined,
         locale: input.locale,
         timezone: input.timezone,
       });

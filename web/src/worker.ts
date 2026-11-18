@@ -552,70 +552,101 @@ function notFound(): Response {
   });
 }
 
+/**
+ * The site's security headers, as `public/_headers` gives them to every path (`/*`); a test keeps the two equal.
+ * Cloudflare applies that file to static assets but documents it as not applying to what a Worker returns, so each
+ * one a response from here lacks is added, and one already there is left as it is.
+ */
+const SITE_HEADERS: ReadonlyArray<readonly [string, string]> = [
+  [
+    'content-security-policy',
+    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com wss://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests",
+  ],
+  ['x-frame-options', 'DENY'],
+  ['x-content-type-options', 'nosniff'],
+  ['referrer-policy', 'strict-origin-when-cross-origin'],
+  ['strict-transport-security', 'max-age=63072000; includeSubDomains; preload'],
+  ['permissions-policy', 'camera=(), microphone=(self), geolocation=(), payment=(), usb=()'],
+  ['cross-origin-opener-policy', 'same-origin'],
+];
+
+/** `res` with every site header it lacks. */
+function withSiteHeaders(res: Response): Response {
+  const missing = SITE_HEADERS.filter(([name]) => !res.headers.has(name));
+  if (missing.length === 0) return res;
+  const out = new Response(res.body, res);
+  for (const [name, value] of missing) out.headers.set(name, value);
+  return out;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-
-    if (isScannerProbe(url.pathname, url.search)) return notFound();
-
-    /* Built here, not shipped as a file, so it lists what is published now, and answered first so no stray sitemap.xml can shadow it. */
-    if (request.method === 'GET' && url.pathname === '/sitemap.xml') {
-      return sitemap(env.API_ORIGIN ?? DEFAULT_API, url.origin);
-    }
-
-    // The asset binding answers everything else; this only rewrites what comes back.
-    const assets = await env.ASSETS.fetch(request);
-
-    if (request.method !== 'GET') return assets;
-
-    // A path that resolved to a real file is left alone, whatever it looks like.
-    const type = assets.headers.get('content-type') ?? '';
-    if (!type.includes('text/html')) return assets;
-
-    const dictionary = dictionaryOf(url.pathname);
-    if (dictionary) return ferheng(assets, url, env, dictionary);
-
-    /* A listed page: its own title, description and address, from a table, so nothing can fail. */
-    const page = STATIC_PAGES.find((p) => p.path === url.pathname);
-    if (page) {
-      // The canonical drops the query, which would otherwise invite indexing ?ref=… as its own page.
-      const clean = new URL(url.pathname, url.origin).toString();
-      return withHead(assets, staticHead(page, clean));
-    }
-
-    /* An invitation: the game's own card from the link alone, kept out of search results, its canonical without the sharer. */
-    const invite = parseJoinLink(url.pathname, url.search);
-    if (invite) {
-      const clean = new URL(url.pathname.replace(/\/$/, ''), url.origin).toString();
-      const invited = withHead(assets, inviteHead(invite, clean));
-      invited.headers.set('x-robots-tag', 'noindex');
-      return invited;
-    }
-
-    /* A shared win: its kind's postcard from the link alone, kept out of search results, its canonical as read. */
-    const win = parseWinLink(url.pathname);
-    if (win) {
-      const shared = withHead(assets, winHead(win, new URL(winLinkPath(win), url.origin).toString()));
-      shared.headers.set('x-robots-tag', 'noindex');
-      return shared;
-    }
-
-    const route = routeFor(url.pathname);
-    if (!route) return assets;
-
-    const post = await fetchPost(env.API_ORIGIN ?? DEFAULT_API, route.api);
-    if (!post) return assets;
-
-    const preview = previewOf(post, route.kind);
-    if (!preview) return assets;
-
-    const clean = new URL(url.pathname, url.origin).toString();
-    const rewritten = withHead(assets, previewHead(preview, clean));
-    // The preview is public and the same for everyone who opens this link.
-    rewritten.headers.set('cache-control', `public, max-age=0, s-maxage=${PREVIEW_TTL_SECONDS}`);
-    return rewritten;
+    return withSiteHeaders(await respond(request, env));
   },
 };
+
+async function respond(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+
+  if (isScannerProbe(url.pathname, url.search)) return notFound();
+
+  /* Built here, not shipped as a file, so it lists what is published now, and answered first so no stray sitemap.xml can shadow it. */
+  if (request.method === 'GET' && url.pathname === '/sitemap.xml') {
+    return sitemap(env.API_ORIGIN ?? DEFAULT_API, url.origin);
+  }
+
+  // The asset binding answers everything else; this only rewrites what comes back.
+  const assets = await env.ASSETS.fetch(request);
+
+  if (request.method !== 'GET') return assets;
+
+  // A path that resolved to a real file is left alone, whatever it looks like.
+  const type = assets.headers.get('content-type') ?? '';
+  if (!type.includes('text/html')) return assets;
+
+  const dictionary = dictionaryOf(url.pathname);
+  if (dictionary) return ferheng(assets, url, env, dictionary);
+
+  /* A listed page: its own title, description and address, from a table, so nothing can fail. */
+  const page = STATIC_PAGES.find((p) => p.path === url.pathname);
+  if (page) {
+    // The canonical drops the query, which would otherwise invite indexing ?ref=… as its own page.
+    const clean = new URL(url.pathname, url.origin).toString();
+    return withHead(assets, staticHead(page, clean));
+  }
+
+  /* An invitation: the game's own card from the link alone, kept out of search results, its canonical without the sharer. */
+  const invite = parseJoinLink(url.pathname, url.search);
+  if (invite) {
+    const clean = new URL(url.pathname.replace(/\/$/, ''), url.origin).toString();
+    const invited = withHead(assets, inviteHead(invite, clean));
+    invited.headers.set('x-robots-tag', 'noindex');
+    return invited;
+  }
+
+  /* A shared win: its kind's postcard from the link alone, kept out of search results, its canonical as read. */
+  const win = parseWinLink(url.pathname);
+  if (win) {
+    const shared = withHead(assets, winHead(win, new URL(winLinkPath(win), url.origin).toString()));
+    shared.headers.set('x-robots-tag', 'noindex');
+    return shared;
+  }
+
+  const route = routeFor(url.pathname);
+  if (!route) return assets;
+
+  const post = await fetchPost(env.API_ORIGIN ?? DEFAULT_API, route.api);
+  if (!post) return assets;
+
+  const preview = previewOf(post, route.kind);
+  if (!preview) return assets;
+
+  const clean = new URL(url.pathname, url.origin).toString();
+  const rewritten = withHead(assets, previewHead(preview, clean));
+  // The preview is public and the same for everyone who opens this link.
+  rewritten.headers.set('cache-control', `public, max-age=0, s-maxage=${PREVIEW_TTL_SECONDS}`);
+  return rewritten;
+}
 
 // Exported for the tests, the only reason these are not file-local.
 export const __test = {
@@ -635,4 +666,5 @@ export const __test = {
   ferheng,
   dictionaryOf,
   notFound,
+  SITE_HEADERS,
 };

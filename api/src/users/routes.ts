@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { APP_LOCALE_CODES, normalizeKurdish, stripControlChars } from '@kurda/shared';
+import { APP_LOCALE_CODES, normalizeKurdish } from '@kurda/shared';
 import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { appleTokens } from '../auth/apple-tokens.js';
@@ -8,6 +8,7 @@ import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
 import { guestAccountError, requireAccount, requireAuth, requireRoles } from '../plugins/auth.js';
 import { USERNAME_CHANGE_COOLDOWN_DAYS, UsernameChangeService } from './username-change.js';
+import { cleanDisplayName, DISPLAY_NAME_MAX } from './display-name.js';
 import { StreakService } from '../streaks/service.js';
 import { SocialService } from '../social/service.js';
 import { FriendService } from '../friends/service.js';
@@ -63,7 +64,7 @@ export const consentBodySchema = z
 
 export const patchMeBodySchema = z
   .object({
-    displayName: z.string().min(1).max(60).optional(),
+    displayName: z.string().min(1).max(DISPLAY_NAME_MAX).optional(),
     bio: z.string().max(1_000).optional(),
     /* Every interface language, from one list, so the picker cannot offer something the server would refuse. */
     locale: z.enum(APP_LOCALE_CODES).optional(),
@@ -508,7 +509,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         sets.push(`${column} = $${values.length}`);
       };
 
-      if (body.displayName !== undefined) add('display_name', stripControlChars(normalizeKurdish(body.displayName)));
+      if (body.displayName !== undefined) add('display_name', cleanDisplayName(body.displayName));
       if (body.bio !== undefined) add('bio', sanitizeBio(body.bio));
       if (body.locale !== undefined) add('locale', body.locale);
       if (body.skipSpeaking !== undefined) add('skip_speaking', body.skipSpeaking);

@@ -116,6 +116,41 @@ describe('Login', () => {
     await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument(), MOVES_ON);
   });
 
+  /** Signs in on /login with `from` in the navigation state as the page that asked. */
+  async function signInFrom(from: string): Promise<void> {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        jsonResponse(200, {
+          user: { id: '1', email: 'a@b.com', username: 'ada', displayName: null, emailVerified: true },
+          tokens: { accessToken: 'x', refreshToken: 'y' },
+        }),
+      ),
+    );
+    renderApp(
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/app" element={<div>App home</div>} />
+        <Route path="/app/stories" element={<div>Stories</div>} />
+      </Routes>,
+      [{ pathname: '/login', state: { from } }],
+    );
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'rightpass');
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+  }
+
+  it('returns to the page that asked for sign-in', async () => {
+    await signInFrom('/app/stories');
+    await screen.findByText('Stories', {}, MOVES_ON);
+  });
+
+  // inAppPath's own tests (auth/afterSignup.test.ts) cover each kind of address; this checks that sign-in uses it.
+  it('goes into the app instead of to another site the navigation state names', async () => {
+    await signInFrom('//evil.example/app');
+    await screen.findByText('App home', {}, MOVES_ON);
+  });
+
   // The name is what Settings lists the session under; the id is what sign-in protection keys on, sent as a header.
   it('says which browser this is: a name for the devices list, an id for sign-in protection', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(

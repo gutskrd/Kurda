@@ -480,6 +480,52 @@ describe('a scanner’s probe', () => {
   });
 });
 
+/** What the edge script returns may not carry `_headers`, so it brings the site's security headers itself. */
+describe('the site’s security headers', () => {
+  const { SITE_HEADERS } = __test;
+  const fileSystem = 'node:fs';
+  const here = import.meta.url;
+
+  it('are the ones `_headers` gives every path', async () => {
+    const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as { readFileSync(file: URL, encoding: 'utf8'): string };
+    const file = readFileSync(new URL('../public/_headers', here), 'utf8').split('\n');
+    const block: Array<[string, string]> = [];
+    for (const line of file.slice(file.indexOf('/*') + 1)) {
+      if (!/^\s+\S/.test(line)) break;
+      const at = line.indexOf(':');
+      block.push([line.slice(0, at).trim().toLowerCase(), line.slice(at + 1).trim()]);
+    }
+    expect(block.length).toBeGreaterThan(5);
+    expect(SITE_HEADERS.map(([name, value]) => [name, value])).toEqual(block);
+  });
+
+  const serve = (res: Response, path = '/app/library') => {
+    const env = { ASSETS: { fetch: vi.fn(async () => res) } } as unknown as Parameters<typeof worker.fetch>[1];
+    return worker.fetch(new Request(`https://hevalo.app${path}`), env);
+  };
+
+  it('are on the app’s shell, the sitemap and a probe’s 404, whatever the asset binding sent', async () => {
+    const shell = await serve(new Response('<!doctype html><div id="root"></div>', { status: 200, headers: { 'content-type': 'text/html' } }));
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('{"posts":[]}', { status: 200 })));
+    const map = await serve(new Response(''), '/sitemap.xml');
+    vi.unstubAllGlobals();
+    const probe = await serve(new Response(''), '/wp-login.php');
+    for (const res of [shell, map, probe]) {
+      for (const [name, value] of SITE_HEADERS) expect(res.headers.get(name), name).toBe(value);
+    }
+    expect(shell.status).toBe(200);
+    expect(await shell.text()).toContain('root');
+    expect(probe.status).toBe(404);
+  });
+
+  it('leave a header the asset binding already sent as it was, so none is doubled', async () => {
+    const strict = "default-src 'none'; frame-ancestors 'none'";
+    const res = await serve(new Response('<!doctype html>', { status: 200, headers: { 'content-type': 'text/html', 'content-security-policy': strict } }));
+    expect(res.headers.get('content-security-policy')).toBe(strict);
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+});
+
 describe('an invitation to a game', () => {
   const { inviteHead, REPLACED } = __test;
   const head = (tags: ReadonlyArray<string | ''>) => tags.filter(Boolean).join('');
