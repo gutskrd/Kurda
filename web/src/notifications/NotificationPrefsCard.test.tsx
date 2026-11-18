@@ -181,7 +181,8 @@ describe('NotificationPrefsCard', () => {
     renderApp(<NotificationPrefsCard />);
 
     expect(await screen.findByRole('heading', { name: 'Bildirimler' })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'Seri hatırlatmaları' })).toBeInTheDocument();
+    // The heading shows before the saved preferences arrive; the switches come with them.
+    expect(await screen.findByRole('checkbox', { name: 'Seri hatırlatmaları' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Sessiz saatleri aç' })).toBeInTheDocument();
     // The two ends are labelled start and finish rather than from and to.
     expect(screen.getByLabelText('Başlangıç')).toHaveValue('22:00');
