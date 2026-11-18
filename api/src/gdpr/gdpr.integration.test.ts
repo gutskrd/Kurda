@@ -195,11 +195,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(doc.user).toMatchObject({ birth_year: 1990, birth_month: 4 });
   });
 
-  /*
-   * What the app says when somebody deletes their account — "your account and
-   * all your data will be permanently deleted" — is what happens, whatever
-   * their age: what they posted goes, not just their name from it.
-   */
+  /* The app says deleting an account removes all its data, whatever the age, so posts go and not just the name. */
   it('an adult’s deletion removes what they posted, as the app says it will', async () => {
     const adult = await makeUser('deladult');
     const post = await app.inject({

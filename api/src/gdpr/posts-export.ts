@@ -30,11 +30,8 @@ export interface ExportedPicturePost {
 }
 
 /**
- * Everything someone posted, for their data export (KUR-024): their written
- * posts with the pictures on them, and their older picture posts — drafts and
- * removed ones too, since we still hold those. Pictures are links to the files
- * rather than the files: the export is a document, and the links are what the
- * person can open.
+ * Everything someone posted, for their data export: written posts with their pictures and older picture posts,
+ * drafts and removed ones included. Pictures are links, since the export is a document.
  */
 export async function exportPosts(
   executor: Pick<pg.Pool, 'query'>,
