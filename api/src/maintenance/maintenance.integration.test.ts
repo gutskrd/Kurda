@@ -1,12 +1,8 @@
 /**
- * Taking Hevalo offline, against real Postgres: a superadmin turns it on with
- * a title, a message, a picture and a time it is back; everyone else is then
- * answered 503 with that notice, while the console, staff and keeping a
- * session stay open; a start set for later waits for it, an end that reopens
- * does, and both going offline and coming back are in the security log.
- *
- * The setting is one row every test file shares, so this file runs its app
- * three weeks ahead (`maintenanceClock`): only this app sees it on.
+ * Taking Hevalo offline against real Postgres: a superadmin turns it on with a title, message, picture and return
+ * time; everyone else gets 503 with that notice while the console, staff and session upkeep stay open; scheduled
+ * starts and ends apply on time; and both changes are in the security log. The setting is one shared row, so this
+ * file runs its app three weeks ahead (`maintenanceClock`) to see it on alone.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
