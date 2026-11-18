@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { CompanionStatus } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { AuthCard } from '../auth/AuthCard';
+import { inAppPath } from '../auth/afterSignup';
 import { arrivalPause, holdArrival } from '../auth/arrival';
 import { useFieldProblem, type AuthField } from '../auth/fieldProblem';
 import { Button } from '../components/Button';
@@ -23,7 +24,8 @@ export function Login(): React.JSX.Element {
   const navigate = useNavigate();
   const t = useT();
   const location = useLocation();
-  const from = (location.state as { from?: string } | null)?.from ?? '/app';
+  // Only a page on this site, whatever the navigation state holds.
+  const from = inAppPath((location.state as { from?: unknown } | null)?.from) ?? '/app';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
