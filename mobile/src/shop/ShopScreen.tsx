@@ -12,6 +12,7 @@ import {
   groupByCategory,
   isFiltered,
   itemCategory,
+  shopItemDescription,
   type ItemCategory,
   type ItemFilter,
 } from '@kurda/shared';
@@ -114,7 +115,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       letters.reload(),
       tree.reload(),
     ]).then(([cat, wallet]) => {
-      if (cat.ok) setItems(cat.data.items);
+      // Each description in the reader's language, so what is searched is what is read.
+      if (cat.ok) setItems(cat.data.items.map((item) => ({ ...item, description: shopItemDescription(item, locale) })));
       if (wallet.ok) {
         setBalances(wallet.data.balances);
         setPurseRead(true);
@@ -122,7 +124,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       setError(cat.ok ? null : cat.error); // The catalogue is the screen's core data.
       setLoading(false);
     });
-  }, [client, letters.reload, tree.reload]);
+  }, [client, locale, letters.reload, tree.reload]);
   /** The Zêr a new bird or a tree kind left, which the purse at the top and every price then go by. */
   const learnZer = useCallback((zer: number) => setBalances((b) => ({ ...b, zer })), []);
   const purse = purseRead ? balances.zer : null;

@@ -17,6 +17,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { DEFAULT_PAPER, TREE_KINDS, TREE_SPECIES, treeView, type LettersHome, type TreeRecord, type TreeView } from '@kurda/shared';
 import type { MyTree } from '../tree/api';
+import { TRANSLATIONS } from '../i18n/translations';
 import type { ShopItem } from './format';
 import { ShopScreen } from './ShopScreen';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
@@ -27,6 +28,7 @@ beforeEach(() => vi.spyOn(Alert, 'alert').mockImplementation(() => undefined));
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  localStorage.removeItem('kurda_locale_v1');
 });
 
 const item = (over: Partial<ShopItem> & Pick<ShopItem, 'sku' | 'name' | 'category'>): ShopItem => ({
@@ -176,6 +178,16 @@ describe('the Shop, by kind', () => {
     expect(rowNames()).toEqual(['Gola Şîn']);
     search('sin');
     expect(rowNames()).toEqual(['Gola Şîn']);
+  });
+
+  it('describes what the shop ships with in the reader’s language, and finds it by those words', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    open();
+    expect(await screen.findByText('شەو لە کوێستان')).toBeTruthy();
+    expect(screen.queryByText('Night on the high pastures')).toBeNull();
+    fireEvent.change(screen.getByLabelText(TRANSLATIONS.ckb['shop.search.label']), { target: { value: 'خۆر' } });
+    // the sun, and the sun seal
+    expect(rowNames()).toEqual(['Roj', 'Mohra Rojê']);
   });
 
   it('puts each kind in price order (low to high: Zêr, then gems), either way, or by name', async () => {
