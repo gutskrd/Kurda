@@ -1,7 +1,6 @@
 /**
- * The book's routes against the app: open to anyone, holding only the road's
- * chapters that are online — none under test, where the road is not seeded —
- * so they answer that there is no book yet rather than print one.
+ * The book routes against the app: open to anyone and holding only online road chapters. None are online under test
+ * (the road is not seeded), so they answer that there is no book yet.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

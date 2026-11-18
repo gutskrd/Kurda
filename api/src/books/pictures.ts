@@ -1,23 +1,14 @@
 /**
- * Which drawing goes with what in the Hevalo book: a word's picture, the
- * little scene a lesson opens with, a person's emblem, and each chapter's
- * colour. Pure: it names drawings (pdf.ts draws them), so every choice can be
- * tested without printing a page.
+ * Which drawing goes with what in the book: word pictures, the scene each lesson opens with, a person's emblem, and
+ * each chapter's colour. Pure: it names drawings (pdf.ts draws them), so every choice is testable without printing.
  *
- * A word's picture is the one the lessons themselves show for it (the right
- * card of a "pick the picture" item), or the word picture drawn for that very
- * word; a number is its figure and a colour a dab of its paint; and a few
- * words the road is fond of have a drawing made for the book (Hamo's
- * moustache, his father's flute). A word with no drawing of exactly that
- * thing gets none: a picture dictionary that guesses teaches the wrong word.
+ * A word's picture is the one the lessons show for it (the right card of a "pick the picture" item) or the word picture
+ * of that exact word; numbers get their figure, colours a dab of paint, and a few road words have book-only drawings. A
+ * word without a drawing of exactly that thing gets none: a picture dictionary that guesses teaches the wrong word.
  *
- * A scene is composed from the lesson's own beat: who of the three friends is
- * in it and how they feel about it, by day, at dusk, by night or in the snow,
- * and the two or three things it names that there is a drawing of. So when
- * the plan retells a lesson, its scene follows. Its sky keeps to one light:
- * the sun or the moon, never both, and nothing hung in it or standing in
- * front of it ever covers them (`sceneLayout` places every part of a scene
- * and says what the sky must keep clear of).
+ * A scene is composed from the lesson's beat: which friends are in it and their mood, the time of day or snow, and the
+ * two or three named things that have drawings, so a retold lesson's scene follows. The sky has one light (sun or moon,
+ * never both), and nothing covers it (`sceneLayout` places every part and keeps the sky clear).
  */
 import { readFileSync } from 'node:fs';
 import {
@@ -25,7 +16,6 @@ import {
   BOOK_POSES,
   BOOK_SETTINGS,
   BOOK_SPOTS,
-  HUE_NAMES,
   PATH_LANDMARKS,
   WORD_PICTURES,
   bookRidgeAt,
@@ -96,10 +86,8 @@ const FIGURES: Readonly<Record<string, string>> = {
 };
 
 /**
- * The picture that goes with a word, or null when nothing drawn is exactly
- * that word: the lessons' own picture for it first, then the word picture of
- * that very word, a number's figure, a colour's paint, and the few things
- * drawn for the book.
+ * A word's picture, or null when nothing drawn is exactly that word: the lessons' own picture, then the word picture of
+ * that word, a number's figure, a colour's paint, and the book's own drawings.
  */
 export function pictureForWord(w: Pick<BookWord, 'ku' | 'en' | 'pos' | 'picture'>): BookPicture | null {
   if (w.picture && isWordPicture(w.picture)) return word(w.picture);
@@ -144,14 +132,8 @@ export function pictureForName(name: string): BookPicture | null {
 // ───────────────────────────────────────────────────────────── chapter colours
 
 /**
- * Each chapter's hue, from the app's nine families: the blue of the gate,
- * the orange of tea, the green of the village, the red of market awnings,
- * the indigo of the clock's small hours, the teal of the town, the gold of
- * the Newroz fire, the pink of a heart that needs a doctor, the blue of the
- * river, the green of the pastures, the orange of the harvest and the violet
- * of winter tales. No chapter wears the hue of the one before it, nor the
- * hue beside that one on the wheel, so turning into a new chapter always
- * changes the page's colour.
+ * Each chapter's hue from the app's nine families. No chapter repeats the previous chapter's hue or its neighbour on
+ * the wheel, so each new chapter visibly changes colour.
  */
 export const CHAPTER_HUES: readonly HueName[] = ['blue', 'orange', 'green', 'red', 'indigo', 'teal', 'gold', 'pink', 'blue', 'green', 'orange', 'violet'];
 
@@ -161,15 +143,8 @@ export function chapterHue(chapter: number): HueName {
   return CHAPTER_HUES[at]!;
 }
 
-/** How far apart two hues sit on the wheel (`HUE_NAMES` in order, joined end to end): 0 the same, 1 neighbours. */
-export function hueDistance(a: HueName, b: HueName): number {
-  const d = Math.abs(HUE_NAMES.indexOf(a) - HUE_NAMES.indexOf(b));
-  return Math.min(d, HUE_NAMES.length - d);
-}
-
 /**
- * The drawing a chapter is known by: its landmark beside the lesson path,
- * except the sixth, whose road now leads to Kobanî and not to a walled city.
+ * The drawing a chapter is known by: its landmark beside the lesson path, except the sixth, whose road leads to Kobanî.
  */
 export function chapterEmblem(chapter: number): BookPicture {
   if (chapter === 6) return spot('town');
@@ -183,9 +158,8 @@ export function chapterEmblem(chapter: number): BookPicture {
 const HELD = '\ue000';
 
 /**
- * A beat's sentences. A closing quote belongs to the sentence it ends, and
- * what is said inside a quotation never ends the sentence it is said in,
- * however many sentences are said there.
+ * A beat's sentences. A closing quote belongs to the sentence it ends, and sentences inside a quotation never end the
+ * sentence quoting them.
  */
 export function sentencesOf(text: string): string[] {
   return text
@@ -226,11 +200,9 @@ const count = (text: string, mark: string): number => text.split(mark).length - 
 const balanced = (text: string): boolean => count(text, '“') === count(text, '”') && count(text, '(') === count(text, ')');
 
 /**
- * The start of a sentence too long to tell whole, in at most `max`
- * characters: up to the last clause that ends in that room, or the last
- * place the sentence is joined on from (either is `clean`), or, in a
- * sentence with neither, up to a word that can end a line; and never into
- * something said or bracketed, which would leave it open.
+ * The start of an over-long sentence in at most `max` characters: up to the last clause ending in that room, or the
+ * last join point (either is `clean`), else up to a word that can end a line; never into an unclosed quotation or
+ * bracket.
  */
 function cutShort(sentence: string, max: number): { cut: string; clean: boolean } {
   const head = sentence.slice(0, Math.max(0, max - 1));
@@ -249,25 +221,18 @@ function cutShort(sentence: string, max: number): { cut: string; clean: boolean 
 }
 
 /**
- * The ends of a sentence too long to tell whole that fit in `room`
- * characters, the longest first: each from the start of one of its clauses,
- * as long as that is still something to say and opens no quotation it does
- * not close.
+ * The endings of an over-long sentence that fit in `room` characters, longest first: each from the start of a clause,
+ * as long as it still says something and opens no unclosed quotation.
  */
 function tailsOf(sentence: string, room: number): string[] {
   return [...sentence.matchAll(CLAUSE)].map((m) => sentence.slice(m.index + m[0].length)).filter((tail) => tail.length <= room && tail.length >= 24 && balanced(tail));
 }
 
 /**
- * A beat told in a line or two, in at most `max` characters: all of it when
- * it is short enough, and otherwise how it opens and how it ends — with the
- * last thing it says of Hevalo, who usually has the last word, or with its
- * last sentence. The ending is told whole where it can be, with what leads
- * up to it when it is too short to stand alone, and what Hevalo does is
- * told from one of its clauses on when the whole sentence is too long; the
- * opening is as many whole sentences as fit before it, the last of them cut
- * at a clause where even one is too long. An ellipsis stands wherever
- * something is left out.
+ * A beat told in at most `max` characters: whole if short enough, else its opening and its ending. The ending is the
+ * last thing said of Hevalo (who usually has the last word) or the last sentence, told whole where possible, with what
+ * leads up to it if too short alone, and from a clause on if too long. The opening is as many whole sentences as fit,
+ * the last cut at a clause if even one is too long. An ellipsis marks every omission.
  */
 export function tellBeat(beat: string, max: number): string {
   const all = sentencesOf(beat);
@@ -336,12 +301,9 @@ export function tellBeat(beat: string, max: number): string {
 export type SceneShot = 'wide' | 'mid' | 'close';
 
 /**
- * Where a thing is in a scene: standing on the floor among the people
- * (`ground`), set back where the land begins (`back`), in front of everyone
- * at the scene's near edge (`front`), held at someone's hands or in the
- * deer's mouth (`hand`, `mouth`), worn on someone's head (`head`), set down
- * on another thing (`on`), hung on a room's wall or put on its window sill
- * (`wall`, `sill`), or up in the sky.
+ * Where a thing stands in a scene: on the floor among the people (`ground`), set back where the land begins (`back`),
+ * at the near edge (`front`), in someone's hands or the deer's mouth (`hand`, `mouth`), on someone's head (`head`), on
+ * another thing (`on`), on a room's wall or sill (`wall`, `sill`), or in the sky.
  */
 export type ScenePlace = 'ground' | 'back' | 'front' | 'hand' | 'mouth' | 'head' | 'on' | 'wall' | 'sill' | 'sky';
 
@@ -426,11 +388,9 @@ const HAMO_MOODS: ReadonlyArray<readonly [RegExp, BookPose<'hamo'>]> = [
 const XEZAL_MOODS: ReadonlyArray<readonly [RegExp, BookPose<'xezo'>]> = [[named('teaching|tells|says|speech|decided|stands up|turns to'), 'telling']];
 
 /**
- * What the beats name that there is a drawing of, small enough to read in a
- * scene. Where a thing stands among the props is where the beat first names
- * it. The land itself (a mountain, a river, a town) is the scene's backdrop
- * and never a thing standing in it, and a thing a beat only likens something
- * to ("as big as a horse") is not there at all.
+ * What beats name that has a drawing small enough to read in a scene; a thing's place among the props is where the beat
+ * first names it. The land itself (mountain, river, town) is the backdrop, never a prop, and a thing only used in a
+ * comparison ("as big as a horse") is not there.
  */
 const PROPS: ReadonlyArray<readonly [RegExp, BookPicture]> = (
   [
@@ -592,12 +552,9 @@ const SET_BACK = new Set([
 ]);
 
 /**
- * The scene a lesson opens with, composed from what its printed text says
- * and its new words: who is in it and how they hold themselves, by day, at
- * dusk, by night or in the snow, indoors or out, and the things it names
- * that there is a drawing of, the lesson's own pictured words among them,
- * each put where such a thing goes: the small ones in Hamo's hands, the
- * animals on the ground, the buildings and the trees set back.
+ * The scene a lesson opens with, composed from its printed text and new words: who is in it and how they stand, time of
+ * day or snow, indoors or out, and the named things with drawings (the lesson's pictured words among them), each where
+ * such a thing goes: small things in Hamo's hands, animals on the ground, buildings and trees set back.
  */
 export function sceneFor(beat: string, words: ReadonlyArray<Pick<BookWord, 'ku' | 'en' | 'pos' | 'picture'>> = []): BookScene {
   const sentences = sentencesOf(beat);
@@ -737,9 +694,8 @@ export function composedScenes(): ReadonlyMap<string, BookScene> {
 }
 
 /**
- * The scene a lesson opens with: the one composed for it by hand, and
- * otherwise the one its printed text and its new words make, so the
- * drawing shows what the text beside it says.
+ * The scene a lesson opens with: its hand-composed one, else the one its printed text and new words make, so the
+ * drawing shows what the text says.
  */
 export function lessonScene(lesson: SceneLesson): BookScene {
   return composedScenes().get(lesson.key) ?? sceneFor(lesson.told ?? lesson.beat, lesson.words);
@@ -800,11 +756,9 @@ const TALL: Readonly<Record<CharacterId, number>> = { hamo: 1.76, xezo: 1.66, he
 const HOLD: Readonly<Record<CharacterId, { x: number; y: number }>> = { hamo: { x: 0.5, y: 0.44 }, xezo: { x: 0.46, y: 0.48 }, hevalo: { x: 0.5, y: 0.27 } };
 
 /**
- * The measure of each shot: how many points a metre is drawn on the near
- * floor (`near`), at the scene's near edge (`front`) and where the land
- * begins (`back`), and how far down each stands. In a wide scene everyone
- * stands whole on the floor; in a mid one they stand below the panel, so it
- * cuts them at the waist; in a close one only head and shoulders show.
+ * Each shot's measure: points per metre on the near floor (`near`), at the near edge (`front`) and where the land
+ * begins (`back`), and how far down each stands. In a wide shot people stand whole; in a mid shot the panel cuts them
+ * at the waist; in a close shot only head and shoulders show.
  */
 const SHOTS: Readonly<Record<SceneShot, { people: number; feet: number; near: { ppm: number; foot: number }; front: { ppm: number; foot: number }; back: { ppm: number } }>> = {
   wide: { people: 24.5, feet: 61, near: { ppm: 24.5, foot: 61 }, front: { ppm: 30, foot: 66 }, back: { ppm: 9.5 } },
@@ -813,10 +767,8 @@ const SHOTS: Readonly<Record<SceneShot, { people: number; feet: number; near: { 
 };
 
 /**
- * How big each drawing's 120-unit canvas is in the world, in metres: an
- * apple's canvas is a hand's width, a house's a street's. A thing is drawn
- * as big as that makes it where it stands, so a phone is never taller than a
- * house; and never smaller than reads on the page.
+ * How big each drawing's 120-unit canvas is in the world, in metres (an apple's is a hand's width, a house's a
+ * street's), so things keep their relative size, never smaller than reads on the page.
  */
 const WORLD: Readonly<Record<string, number>> = {
   'word:apple': 0.16, 'word:tea': 0.2, 'word:water': 0.3, 'word:sugar': 0.14, 'word:house': 6, 'word:hen': 0.65, 'word:dog': 1, 'word:cat': 0.55, 'word:donkey': 1.8,
@@ -921,16 +873,11 @@ function windowBox(across: number): PanelBox {
 }
 
 /**
- * Where everything of a scene goes in its panel, for a panel on the `side`
- * of the page it stands on (the lesson's number goes in its outer corner).
- * Everyone and everything is drawn to one measure for the shot, so a phone
- * is a phone's size beside Hamo and a house a house's: what stands on the
- * floor stands on it with its shade under it, what is set back stands where
- * the land begins, what is held is at the hands that hold it, and what is
- * put on a table or a tray or a rock stands on its top. Then the sun or the
- * moon is hung in the first of its places that nothing comes near; where
- * none is free, the sky does without it rather than have something drawn
- * over it.
+ * Where everything in a scene goes in its panel, for a panel on the given `side` (the lesson number goes in the outer
+ * corner). Everything is drawn to the shot's one measure, so sizes stay true: floor things stand on the floor with
+ * their shade, set-back things where the land begins, held things at the hands holding them, and things put on a table,
+ * tray or rock on its top. The sun or moon then goes in the first of its places nothing comes near; if none is free the
+ * sky goes without.
  */
 export function sceneLayout(scene: BookScene, side: 'left' | 'right'): SceneLayout {
   const { w, h } = PANEL;

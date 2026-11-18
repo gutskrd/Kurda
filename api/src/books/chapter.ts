@@ -1,15 +1,10 @@
 /**
- * A chapter of the Hevalo book, set: its opening page under its landmark,
- * then one run of blocks — for each of its four parts the grammar in a few
- * lines and its four lessons, every lesson opening with its little scene (a
- * drawing composed from the plan's beat, the beat told beside it, and the
- * line to say after Hamo in a speech bubble), then its new words with their
- * pictures, its lines to read aloud beside their English, and its
- * conversation; the story Hamo tells, with its questions; practice for a
- * pencil; and the chapter's stamp, cancelled.
+ * One chapter of the book, set: its opening page under its landmark, then one run of blocks. For each of its four
+ * parts: the grammar note and four lessons, each opening with its scene (a drawing composed from the plan's beat, the
+ * beat beside it, and Hamo's line in a speech bubble), then new words with pictures, lines to read aloud with their
+ * English, and the conversation. Then Hamo's story with questions, pencil practice, and the chapter's cancelled stamp.
  *
- * The chapter wears its hue throughout, and the apple in the corner of its
- * pages loses a bite every few pages until only the core is left.
+ * The chapter wears its hue throughout, and the corner apple loses a bite every few pages until only the core is left.
  */
 import { BOOK_APPLE_BITES, BOOK_BACKDROP, WORD_PICTURES, bookBackdropSvg, bookSpotSvg, parseMarkdown, type BookPose, type BookSetting, type CharacterId, type HueSteps, type Span as MarkSpan } from '@kurda/shared';
 import { keepList, paginate } from './flow.js';
@@ -24,9 +19,8 @@ const tones = (hue: HueSteps): { band: string; card: string; hill: string } => (
 // ───────────────────────────────────────────────────────────── the opening page
 
 /**
- * Who stands at a chapter's landmark on its opening page where it is not
- * the road's own host for that land: Hamo, where the chapter is his (the
- * market he takes the apples to, his own town, his own aches).
+ * Who stands at the landmark on an opening page where it is not the road's own host for that land: Hamo, in his own
+ * chapters.
  */
 const OPENER_HOST: Readonly<Record<number, CharacterId>> = { 4: 'hamo', 6: 'hamo', 8: 'hamo' };
 
@@ -151,20 +145,16 @@ function partHead(press: Press, c: BookChapter, p: BookPart): Block {
 }
 
 /**
- * How a grammar note's marks are set: what it puts in bold is Kurdish to
- * remember, what it puts in italics is Kurdish said. The dot a note puts
- * between two forms stays at the end of the line with the form before it,
- * so no line of a note opens on a separator.
+ * How a grammar note's marks are set: bold is Kurdish to remember, italics Kurdish said. A separator dot stays at the
+ * end of the line with the form before it, so no line opens on one.
  */
 function noteSpans(spans: readonly MarkSpan[]): Span[] {
   return spans.map((s) => ({ text: s.text.replace(/ ·(?= )/g, '\u00a0·'), ...(s.bold ? { font: 'semi' as const } : s.italic ? { font: 'italic' as const } : {}) }));
 }
 
 /**
- * A part's grammar, as a note in the margin of the road: a card with the
- * hue's bar down its side. It is set a paragraph at a time, so a long note
- * can run on over a page break (never leaving one of its paragraphs alone),
- * and each piece draws its own stretch of the card.
+ * A part's grammar as a margin card with the hue's bar down its side. Set a paragraph at a time so a long note can
+ * break across pages (never leaving a paragraph alone), each piece drawing its own stretch of the card.
  */
 function grammarNote(press: Press, c: BookChapter, p: BookPart): Block[] {
   if (p.grammarMd.trim() === '') return [];
@@ -212,10 +202,8 @@ function grammarNote(press: Press, c: BookChapter, p: BookPart): Block[] {
 // ───────────────────────────────────────────────────────────── a lesson: its scene
 
 /**
- * The colours a scene is painted in, from its chapter's hue: by day its wash
- * and a hill of it; at dusk a warmer sky over land gone dark; by night the
- * hue's deep shade; in the snow white land under the wash, with mountains a
- * little darker than the sky so they still show.
+ * A scene's colours from its chapter's hue: by day its wash and a hill of it; at dusk a warmer sky over dark land; at
+ * night the hue's deep shade; in snow white land under the wash, with mountains a little darker than the sky.
  */
 function sceneColours(hue: HueSteps, setting: BookSetting): { sky: string; ground: string; light: string; far?: string } {
   switch (setting) {
@@ -240,13 +228,9 @@ const NIGHT_LAND = '#121631';
 const MOON = '#fbf0d0';
 
 /**
- * A lesson's scene, drawn: the one composed for it by hand (or, without
- * one, the one its printed text makes), its sky, its land or its room in the
- * chapter's colours, then everyone and everything in it from the farthest to
- * the nearest, each where and as big as `sceneLayout` puts it: the friends
- * whole, head to waist or head and shoulders as the shot shows them, turned
- * to look into the scene, and a landmark casting the shade of the ground it
- * stands on.
+ * Draw a lesson's scene: the hand-composed one (or the one its printed text makes), its sky, land or room in the
+ * chapter's colours, then everything from farthest to nearest where `sceneLayout` puts it. People are drawn whole, to
+ * the waist or head and shoulders as the shot says, turned into the scene; a landmark casts the ground's shade.
  */
 function drawScene(press: Press, c: BookChapter, lesson: BookLesson, x: number, y: number, side: 'left' | 'right'): void {
   const hue = hueOf(c);
@@ -334,16 +318,10 @@ function genderMark(press: Press, gender: BookWord['gender'], x: number, y: numb
 }
 
 /**
- * A lesson's new words. Most are cards, three across, or two across when
- * there are four, so no card is left on a row of its own: each with its
- * picture where it has one, its gender where it has one, and its meaning,
- * and every word of a row on one line, centred on the pictures where the
- * row has any. A word whose meaning takes explaining (a phrase learnt
- * whole, an ending) is set across the page under them instead, with its
- * meaning where the lesson's English stands (`en`, from `englishColumn`),
- * or under it when the word itself runs that far, so no card has to stand
- * four lines tall beside two short ones. The rows are a list: the last of
- * them never heads a page alone.
+ * A lesson's new words. Most are cards, three across (two across when there are four, so none is alone on a row), each
+ * with its picture, gender and meaning, a row's words on one line. A word whose meaning needs explaining (a phrase, an
+ * ending) is set across the page instead, its meaning in the lesson's English column (`en`, from `englishColumn`), or
+ * under it when the word runs that far. The rows are a list, so the last never heads a page alone.
  */
 function wordRows(press: Press, c: BookChapter, lesson: BookLesson, en: number): Block[] {
   const hue = hueOf(c);
@@ -432,13 +410,9 @@ function pairRow(press: Press, pair: { ku: string; en: string | null }, left: nu
 }
 
 /**
- * Where a lesson's English stands, from the left of the measure: Kurdish on
- * the left and its meaning on the right, as the book always sets the two,
- * with one column for the English of all of a lesson's lines (those to read
- * aloud and its conversation, and its long words), so its meanings stand
- * one under another. The column is whichever of a few places takes the
- * least room for these lines, so short lines sit on one row and long ones
- * do not wrap more than they must.
+ * Where a lesson's English column starts, from the left of the measure. One column serves all the lesson's lines
+ * (read-aloud, conversation and long words) so meanings line up; it is whichever of a few positions takes the least
+ * room for these lines.
  */
 function englishColumn(press: Press, lesson: BookLesson): number {
   const lines: Array<[{ ku: string; en: string | null }, number]> = [
@@ -472,10 +446,8 @@ function pairRows(press: Press, c: BookChapter, pairs: readonly BookPair[], en: 
 }
 
 /**
- * A question's options as spans to run on after it: each option's letter
- * held to its first word by a no-break space, and an em space between one
- * option and the next, so they stand apart and a letter never ends a line
- * without its option.
+ * A question's options as spans run on after it: each letter held to its first word by a no-break space, and an em
+ * space between options, so a letter never ends a line alone.
  */
 function optionSpans(options: readonly string[], hue: HueSteps): Span[] {
   return options.flatMap((o, k): Span[] => [...(k > 0 ? [{ text: '\u2003' }] : []), { text: 'abcdef'[k]!, font: 'bold', color: hue.deep }, { text: `\u00a0${o}` }]);
@@ -534,10 +506,8 @@ function dialogueRows(press: Press, c: BookChapter, dialogue: BookDialogue, en: 
 // ───────────────────────────────────────────────────────────── the story
 
 /**
- * What the band over each chapter's story shows beside Hamo, by chapter:
- * the things the story turns on, chosen by hand, since a story names far
- * more than three things and the first three it names are seldom the ones
- * it is about. A chapter missing here gets what its English names first.
+ * What the band over each chapter's story shows beside Hamo, chosen by hand, since a story's first-named things are
+ * seldom what it is about. Chapters missing here get what their English names first.
  */
 const TALE_PICTURES: Readonly<Record<number, readonly BookPicture[]>> = {
   1: [{ kind: 'word', id: 'tea' }, { kind: 'word', id: 'bread' }, { kind: 'word', id: 'apple' }],
@@ -566,10 +536,8 @@ function storyProps(c: BookChapter): readonly BookPicture[] {
 const quoted = (text: string): string => text.replace(/«\s*/g, '“').replace(/\s*»/g, '”');
 
 /**
- * A question's options under it: on one line, an em space apart, when they
- * all fit on it; else two to a line in two columns, or one under another,
- * each by its letter, so a long option is never mistaken for the start of
- * the next.
+ * A question's options under it: on one line an em space apart when they fit; else two columns or one per line, each
+ * with its letter, so a long option is not mistaken for the next.
  */
 function optionList(press: Press, options: readonly string[], width: number, type: Type, hue: HueSteps): { height: number; draw: (x: number, y: number) => void } {
   const inline = press.para(optionSpans(options, hue), width, type);
@@ -919,11 +887,9 @@ function practiceBlocks(press: Press, c: BookChapter, places: Places): Block[] {
 // ───────────────────────────────────────────────────────────── how a chapter ends
 
 /**
- * How a chapter ends: its stamp, cancelled, its own line about Hevalo and
- * his apples, and the core of the apple in the corner, set clear of the
- * words. `small` is the same with a smaller stamp, for a chapter whose last
- * page has just that much room left; `drop` is how far down its page the
- * block starts, when it stands on a page of its own.
+ * How a chapter ends: its cancelled stamp, its line about Hevalo and his apples, and the apple core in the corner,
+ * clear of the words. `small` uses a smaller stamp for a nearly full last page; `drop` is how far down its page the
+ * block starts when it stands alone.
  */
 function endBlock(press: Press, c: BookChapter, places: Places, small = false, drop = 0): Block {
   const hue = hueOf(c);
@@ -978,8 +944,8 @@ function endBlock(press: Press, c: BookChapter, places: Places, small = false, d
 }
 
 /**
- * What stands at the foot of a page that ends early: Hevalo's tracks leading
- * on, or one of the two of them up to something, and a line about it.
+ * What stands at the foot of a page that ends early: Hevalo's tracks, or one of the two up to something, with a line
+ * about it.
  */
 const ASIDES: ReadonlyArray<readonly [who: 'tracks' | 'hevalo' | 'hamo', pose: string, line: string]> = [
   ['tracks', '', 'This way. There may be apples.'],
@@ -1003,18 +969,15 @@ const ASIDES_PER_CHAPTER = 2;
 const ASIDE_ROOM = 90;
 
 /**
- * Which aside a book tells next, so they run on from chapter to chapter
- * without repeating. Kept by the press, so each book is told its asides in
- * the same order every time it is made.
+ * Which aside a book tells next, so they run on through chapters without repeating. Kept per press, so a book always
+ * gets the same order.
  */
 const asidesTold = new WeakMap<Press, { next: number }>();
 
 /**
- * The pages of a chapter's run that end on an aside, from how much each
- * page has left over (`slack`, by its place in the run) and the number of
- * its first page in the book: the roomiest of them, at most two, never two
- * on the pages of one spread (an even page and the odd one after it), and
- * never the last, which ends on the chapter's pictures.
+ * The pages of a chapter's run that end on an aside, from each page's leftover space (`slack`, by position in the run)
+ * and the chapter's first page number: the roomiest, at most two, never two on one spread (an even page and the odd one
+ * after), and never the last page, which ends on the chapter's pictures.
  */
 export function asidePages(slack: readonly number[], first: number): Set<number> {
   const facing = (a: number, b: number): boolean => Math.abs(a - b) === 1 && (first + Math.min(a, b)) % 2 === 0;
@@ -1037,9 +1000,8 @@ const stripRows = (count: number, room: number): number => (count < STRIP.least 
 const stripHeight = (rows: number): number => rows * STRIP.cell + 10;
 
 /**
- * Every word of a chapter that has a drawing, to cover and name at its
- * end: but never the ones "Name the pictures" asks for, which would be that
- * task's answers.
+ * Every word of a chapter that has a drawing, to show and name at its end, except those "Name the pictures" asks for,
+ * which would give its answers away.
  */
 export function chapterPictures(c: BookChapter): Array<{ picture: BookPicture; ku: string }> {
   const asked = new Set(c.practice.pictures.map((p) => p.picture));
@@ -1058,11 +1020,9 @@ export function chapterPictures(c: BookChapter): Array<{ picture: BookPicture; k
 }
 
 /**
- * What fills the space a page of the chapter has left over. On its last
- * page, a little way under the stamp, the chapter in pictures (when they
- * make a row of seven at least). On a page that ends early, one of the
- * asides above, a different one each time: at most two to a chapter, never
- * two on one spread, and only where there is room for one to breathe.
+ * What fills a page's leftover space: on the last page, under the stamp, the chapter in pictures (when they make a row
+ * of at least seven); on a page ending early, one of the asides (at most two per chapter, never two on one spread, only
+ * where there is room).
  */
 function chapterFiller(press: Press, c: BookChapter, slack: readonly number[]): Filler {
   const hue = hueOf(c);
@@ -1124,10 +1084,8 @@ function chapterFiller(press: Press, c: BookChapter, slack: readonly number[]): 
 // ───────────────────────────────────────────────────────────── the chapter
 
 /**
- * A lesson's blocks: its scene with its name, its rows of new words, and its
- * lines (to read aloud, and its conversation). The scene never ends a page
- * without its first row of words, and the last row of words holds to the
- * first lines, so the lines never open a page cut off from their lesson.
+ * A lesson's blocks: its scene with its name, its word rows, and its lines (read-aloud and conversation). The scene
+ * never ends a page without its first word row, and the last word row holds to the first lines.
  */
 export function lessonBlocks(press: Press, c: BookChapter, lesson: BookLesson): { strip: Block; words: Block[]; lines: Block[] } {
   const en = englishColumn(press, lesson);
@@ -1164,9 +1122,8 @@ export function chapterBlocks(press: Press, c: BookChapter, places: Places): Blo
 }
 
 /**
- * A chapter's pages, and where its parts, its story and its practice begin,
- * counted from its opening page (0). The apple in the corner loses a bite
- * every few pages, and is a core on the chapter's last.
+ * A chapter's pages and where its parts, story and practice begin, counted from its opening page (0). The corner apple
+ * loses a bite every few pages and is a core on the last.
  */
 export function chapterSheets(press: Press, c: BookChapter, places: Places): { sheets: Sheet[]; anchors: Array<[string, number]> } {
   const anchors: Array<[string, number]> = [[`${c.number}:opener`, 0]];

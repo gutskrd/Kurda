@@ -1,9 +1,7 @@
 /**
- * Which drawing goes with what in the Hevalo book (pictures.ts): a word's
- * picture and no guesses, a person's emblem, each chapter's colour and
- * emblem, a lesson's beat told in a line or two, and the scene composed from
- * it. Checked on small examples, and then held against every lesson of the
- * road as the course files have it.
+ * Which drawing goes with what in the book (pictures.ts): word pictures without guessing, a person's emblem, each
+ * chapter's colour and emblem, a lesson's beat in a line or two, and the composed scene. Checked on small examples,
+ * then against every road lesson in the course files.
  */
 import {
   BOOK_PAINTS,
@@ -17,6 +15,7 @@ import {
   bookRidgeAt,
   bookSkyMarks,
   type CharacterId,
+  type HueName,
 } from '@kurda/shared';
 import { describe, expect, it } from 'vitest';
 import {
@@ -27,7 +26,6 @@ import {
   chapterEmblem,
   chapterHue,
   composedScenes,
-  hueDistance,
   lessonScene,
   pictureForName,
   pictureForWord,
@@ -45,6 +43,12 @@ import {
 import { chapterWords, roadBookCast, roadBookChapters } from './road-book.js';
 import { INK } from './sheet.js';
 import { loadRoadBookSources } from './sources.js';
+
+/** How far apart two hues sit on the wheel (`HUE_NAMES` in order, joined end to end): 0 the same, 1 neighbours. */
+function hueDistance(a: HueName, b: HueName): number {
+  const d = Math.abs(HUE_NAMES.indexOf(a) - HUE_NAMES.indexOf(b));
+  return Math.min(d, HUE_NAMES.length - d);
+}
 
 const ALL = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
 const word = (ku: string, en: string, pos: string | null = 'noun', picture: string | null = null): Parameters<typeof pictureForWord>[0] => ({ ku, en, pos, picture });

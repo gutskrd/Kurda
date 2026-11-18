@@ -1,18 +1,13 @@
 /**
- * The few things the Hevalo book says in its own words rather than the
- * course's: Hamo's letter at the front, who the three friends are on the
- * people pages, and the author's own note at the back.
+ * What the book says in its own words rather than the course's: Hamo's letter, the three friends on the people pages,
+ * and the author's note at the back.
  *
- * They are written for a reader holding the book, not for the people who
- * write the course: each says what the reader does not know yet and nothing
- * they do, and the friends are introduced as the road shows them, without
- * their families, whom the chapters bring in themselves. The author's note is
- * the owner's own text, in their voice and under their name, edited only so
- * that it reads smoothly on the page.
+ * Written for a reader holding the book: each says only what the reader does not know yet, and the friends are
+ * introduced as the road shows them, without families (the chapters bring those in). The author's note is the owner's
+ * text, edited only to read smoothly.
  *
- * There is no Kurdish here but the road's own names (Hevalo, Sêvan, Kobanî,
- * Amed) and the author's town as the author writes it, so nothing in these
- * pages needs the course's review.
+ * No Kurdish here but the road's names (Hevalo, Sêvan, Kobanî, Amed) and the author's town as the author writes it, so
+ * nothing here needs the course's language review.
  */
 import type { CharacterId } from '@kurda/shared';
 import type { Span } from './sheet.js';

@@ -1,12 +1,8 @@
 /**
- * A chapter of the Hevalo book set into pages (chapter.ts), on the road's
- * own chapters: practice that always opens a page and keeps its matching
- * task whole on it; a part that never opens at the foot of a page with its
- * lessons overleaf; a lesson whose lines never open a page cut off from its
- * words, and a last word never alone at the head of a page; the chapter's
- * pictures at its end that never give away the answers to "Name the
- * pictures"; and the asides at the foot of a short page, at most two to a
- * chapter and never two on one spread.
+ * A chapter set into pages (chapter.ts) on the road's own chapters: practice always opens a page and keeps its matching
+ * task whole; a part never opens at a page foot with its lessons overleaf; a lesson's lines never open a page cut off
+ * from its words, and a last word never heads a page alone; the closing pictures never give away "Name the pictures";
+ * and asides sit at the foot of short pages, at most two per chapter and never two on one spread.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { asidePages, chapterBlocks, chapterPictures, lessonBlocks } from './chapter.js';

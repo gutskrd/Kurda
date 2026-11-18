@@ -1,8 +1,7 @@
 /**
- * The book's SVG converter (svg-to-pdf.ts): a clip-path of one plain shape
- * becomes a real PDF clipping path, laid down where the shape is, moved by
- * its own transform and by the clip path's units; anything a clipping path
- * cannot say alone keeps the soft mask the converter draws by default.
+ * The book's SVG converter (svg-to-pdf.ts): a clip-path of one plain shape becomes a real PDF clipping path, placed
+ * where the shape is and moved by its transform and the clip path's units; anything a clipping path cannot express
+ * keeps the converter's default soft mask.
  */
 import PDFDocument from 'pdfkit';
 import { describe, expect, it } from 'vitest';

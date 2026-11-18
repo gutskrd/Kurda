@@ -1,10 +1,7 @@
 /**
- * How the Hevalo book breaks into pages (flow.ts), as arithmetic on heights:
- * blocks set one under another until a page is full; a heading never left at
- * the foot of a page; a list never leaving one line behind, unless that
- * would leave a page badly short; a section that always opens a page; the
- * space above a block dropped at the top of a page; and a nearly full page
- * spread to its foot.
+ * How the book breaks into pages (flow.ts), as arithmetic on heights: blocks stack until a page is full; a heading is
+ * never left at a page foot; a list never leaves one line behind unless that would leave a page badly short; a section
+ * always opens a page; space above a block is dropped at a page top; and a nearly full page is spread to its foot.
  */
 import { describe, expect, it } from 'vitest';
 import { HOLD_SHARE, SETTLE_SHARE, keepList, paginate, settle, type FlowItem } from './flow.js';

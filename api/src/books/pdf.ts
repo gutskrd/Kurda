@@ -1,24 +1,15 @@
 /**
- * The Hevalo book laid out as a PDF: an illustrated coursebook of the
- * Kurmanji Road, A5 on warm paper, made on request from the course's own
+ * The book as a PDF: an illustrated A5 coursebook of the Kurmanji Road on warm paper, made on request from the course's
  * files (road-book.ts gathers them; this file sets the book in order).
  *
- * The order: a cover; a letter from Hamo and how to read the book; the
- * contents; the passport of the road, with a stamp to cancel for each
- * chapter; the alphabet in pictures; the people of the road; then each
- * chapter (chapter.ts) — an opening page under its landmark, its four parts
- * lesson by lesson, the story Hamo tells, practice for a pencil, and its
- * stamp — and at the back the answers, the word list and the author's note.
- * What the book says in its own words is in prose.ts.
+ * Order: cover; Hamo's letter and how to read the book; contents; the road passport with a stamp per chapter; the
+ * alphabet in pictures; the people of the road; each chapter (chapter.ts); then the answers, the word list and the
+ * author's note. The book's own prose is in prose.ts.
  *
- * Each chapter wears one of the app's hues (pictures.ts), and an apple sits
- * in the corner of every one of its pages, a bite smaller every few pages:
- * the deer who is never hungry, he says, has been at it again.
+ * Each chapter wears one of the app's hues (pictures.ts), with a corner apple that loses a bite every few pages.
  *
- * Pages are broken by rule (flow.ts): everything is measured first, so a
- * heading never ends a page and a list never leaves one line behind; and
- * since the whole book is measured before a page is drawn, the contents and
- * every chapter's opening page can say where things are.
+ * Pages break by rule (flow.ts). The whole book is measured before anything is drawn, so the contents and each
+ * chapter's opening page can give page numbers.
  */
 import { HUES, bookAppleSvg, bookPostmarkSvg, letterBirdSvg, likeFor, pathLandmarkSvg, stampBox, stampShapeFor, stampSvg, BOOK_APPLE_BITES, type BookPose, type CharacterId } from '@kurda/shared';
 import { chapterSheets } from './chapter.js';
@@ -255,11 +246,9 @@ function passportSheet(press: Press, chapters: readonly BookChapter[], places: P
 // ───────────────────────────────────────────────────────────── a word's meaning, short
 
 /**
- * A word's meaning as short as `fits` asks, shortened only at its joints:
- * first a note in brackets at its end, then its last clause after a
- * semicolon, then after a comma, until it fits. A meaning is never cut in
- * the middle of a clause and never left empty, and a bracket it opens with
- * ("(not) at all") is part of it, not a note.
+ * A word's meaning shortened to what `fits` allows, only at its joints: first a trailing bracketed note, then the last
+ * clause after a semicolon, then after a comma. Never cut mid-clause or left empty; an opening bracket ("(not) at all")
+ * is part of the meaning.
  */
 export function glossFor(en: string, fits: (text: string) => boolean): string {
   let text = en.trim();
@@ -381,10 +370,8 @@ function alphabetSheets(press: Press, chapters: readonly BookChapter[]): Sheet[]
 export const isFamily = (p: BookName): boolean => p.kind === 'family' || /^Hamo’s (father|mother|(\p{L}+ )?(brother|sister))\b/u.test(p.en);
 
 /**
- * How wide each friend's bust is drawn in a round portrait 80 points across:
- * Xezal a little smaller than the others, so her hair and her chin are inside
- * the round. Each bust stands on the round's foot and runs out of it, so it
- * never ends in a cut across the round.
+ * Bust width of each friend in an 80-point round portrait (Xezal slightly smaller so her hair and chin fit). Each bust
+ * stands on the round's foot and runs out of it, so it never ends in a cut.
  */
 const PORTRAIT: Readonly<Record<CharacterId, number>> = { hamo: 76, hevalo: 76, xezo: 68 };
 
@@ -535,13 +522,10 @@ function answerSheets(press: Press, chapters: readonly BookChapter[], noted: (an
 const WORDS_BEGIN = 200;
 
 /**
- * The word list, three columns to a page. Each entry is its Kurdish, its
- * gender, and what it means, run on after it and wrapped under it, so no
- * entry is ever cut short: only a long meaning is shortened, at a joint
- * (`glossFor`), to keep an entry to two lines where it can. It begins
- * `start` points down its first page, so it can follow the answers on
- * theirs; and its last page is shared out evenly among the columns, with
- * Hevalo asleep under them where they leave him room.
+ * The word list, three columns to a page. Each entry is its Kurdish, gender and meaning, run on and wrapped so none is
+ * cut; only a long meaning is shortened at a joint (`glossFor`) to keep entries to two lines. It begins `start` points
+ * down its first page so it can follow the answers, and its last page is shared evenly among the columns, with Hevalo
+ * asleep under them when there is room.
  */
 function wordListSheets(press: Press, chapters: readonly BookChapter[], start = 0): Sheet[] {
   const words = roadBookWordList(chapters);

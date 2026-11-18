@@ -1,25 +1,16 @@
 /**
- * How the Hevalo book breaks into pages: the rules a typesetter keeps, as
- * arithmetic on heights, so they can be tested without drawing a page.
+ * How the book breaks into pages: a typesetter's rules as arithmetic on heights, testable without drawing.
  *
- * A chapter is a run of blocks, each of a known height with a known space
- * above it. They are set one under another until the page is full, and a
- * break never falls where it would leave something stranded:
+ * A chapter is a run of blocks of known height and space above. They stack until the page is full, and a break never
+ * strands anything:
+ * - a `keep` block is never last on a page (a heading stays with what it heads, a picture with its caption);
+ * - a list never leaves one line behind: its first two and last two items stay together (`keepList` marks them `hold`).
+ *   A hold gives way when keeping it would leave the page more than `HOLD_SHARE` empty;
+ * - space above a block is dropped at the top of a page;
+ * - a `fresh` block always opens a page (a section the reader is sent to by page number).
  *
- *  - a block marked `keep` is never the last thing on a page: a heading
- *    stays with what it heads, a picture with its caption;
- *  - a list never leaves one line behind: its first two items stay together
- *    and so do its last two (`keepList` marks them `hold`). A hold is the
- *    softer rule: it is kept unless keeping it would leave the page more
- *    than `HOLD_SHARE` empty, where a line on its own is the lesser harm;
- *  - the space above a block is dropped at the top of a page;
- *  - a block marked `fresh` always opens a page of its own, wherever the
- *    one before it ends: a section the reader is sent to by its page.
- *
- * A page that is nearly full is then spread to the foot (`settle`): the
- * little that is left over is shared out among the spaces between its
- * blocks, so pages end on one line as a set book's do. A page left more
- * than that short is left as it is, with its space at the bottom.
+ * A nearly full page is then spread to its foot (`settle`), sharing the leftover among the gaps; a page shorter than
+ * that keeps its space at the bottom.
  */
 
 export interface FlowItem {
@@ -43,9 +34,8 @@ export interface FlowPage {
 }
 
 /**
- * Break a run of blocks into pages of `room` points (the first may have less
- * room left, `firstRoom`). A block taller than a page still gets a page to
- * itself rather than being lost.
+ * Break a run of blocks into pages of `room` points (the first may have less, `firstRoom`). A block taller than a page
+ * still gets a page of its own.
  */
 export function paginate(items: readonly FlowItem[], room: number, firstRoom = room): FlowPage[] {
   const pages: FlowPage[] = [];
@@ -97,10 +87,8 @@ export function paginate(items: readonly FlowItem[], room: number, firstRoom = r
 }
 
 /**
- * Mark a list's items so that a page break never leaves one of them alone:
- * the first holds to the second and the one before the last to the last; a
- * list of three or fewer holds together whole. Returns the same items,
- * marked.
+ * Mark a list's items so a page break never leaves one alone: the first holds to the second and the second-last to the
+ * last; a list of three or fewer holds together whole. Returns the same items, marked.
  */
 export function keepList<T extends { hold?: boolean }>(items: T[]): T[] {
   const n = items.length;
@@ -120,11 +108,8 @@ export const HOLD_SHARE = 0.25;
 export const SETTLE_SHARE = 0.13;
 
 /**
- * Where each block of a page sits, from the top of its room: one under
- * another with their spaces, and, when the page is nearly full and is not
- * the last of its run, spread so that the last block ends at the foot. The
- * space left over is shared among the gaps in proportion to their size, so
- * the wide space above a heading opens more than the hair between two lines.
+ * Where each block of a page sits from the top of its room. A nearly full page that is not the last of its run is
+ * spread so the last block ends at the foot, the leftover shared among gaps in proportion to their size.
  */
 export function settle(items: readonly FlowItem[], page: FlowPage, room: number, last: boolean): number[] {
   const slack = room - page.used;
