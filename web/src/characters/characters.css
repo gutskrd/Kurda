@@ -287,3 +287,64 @@
     opacity: 0;
   }
 }
+
+/* ---- Hevalo through a torn page (HevaloPeek) ----------------------------------------------------------------------- */
+.hevalo-peek {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+}
+.hevalo-peek-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hevalo-peek-art > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* Drawn for the page's scheme: dusk unless the page is light. */
+.hevalo-peek-art.is-light {
+  display: none;
+}
+:root[data-theme='light'] .hevalo-peek-art.is-light {
+  display: block;
+}
+:root[data-theme='light'] .hevalo-peek-art.is-dark {
+  display: none;
+}
+.hevalo-peek.is-mirrored .hevalo-peek-art > svg {
+  transform: scaleX(-1);
+}
+.hevalo-peek-cut {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(-30% -30% calc(100% - var(--peek-cut, 70%)) -30%);
+}
+.hevalo-peek-place {
+  position: absolute;
+}
+.hevalo-peek .speaking-character > svg {
+  overflow: visible;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hevalo-peek.is-popping .hevalo-peek-place {
+    animation: hevalo-peek-rise var(--peek-pop-ms, 620ms) var(--ease-spring) var(--peek-pop-delay, 220ms) both;
+  }
+  .hevalo-peek.is-popping :is(.hevalo-peek-art.is-cast, .hevalo-peek-art.is-shadow) {
+    animation: hevalo-peek-shade var(--peek-pop-ms, 620ms) var(--ease-out) var(--peek-pop-delay, 220ms) both;
+  }
+}
+/* Up through the tear from behind the page, all of him under its foot before he comes. */
+@keyframes hevalo-peek-rise {
+  from {
+    transform: translateY(var(--peek-drop, 120px));
+  }
+}
+@keyframes hevalo-peek-shade {
+  from {
+    opacity: 0;
+  }
+}

@@ -1,18 +1,16 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BadgeMedal, FrameOverlay, LeagueEmblem, PictureFrame, PlacementEmblem, RankEmblem, SeasonFrame, frameTier } from './art';
+import { BadgeMedal, FrameOverlay, LeagueEmblem, PictureFrame, SeasonFrame, frameTier } from './art';
 
 describe('the art, inlined', () => {
   it('labels every drawing with the title it is given', () => {
     render(
       <>
-        <RankEmblem tier="ciya" division={2} title="Çiya II (Mountain)" />
-        <PlacementEmblem done={3} title="Placing 3/5" />
         <LeagueEmblem tier="kani" title="Kanî (Spring)" />
         <BadgeMedal badgeKey="agir" tier={3} title="Agir (Fire), Zêr" />
       </>,
     );
-    for (const name of ['Çiya II (Mountain)', 'Placing 3/5', 'Kanî (Spring)', 'Agir (Fire), Zêr']) {
+    for (const name of ['Kanî (Spring)', 'Agir (Fire), Zêr']) {
       expect(screen.getByRole('img', { name })).toBeInTheDocument();
     }
   });
@@ -22,27 +20,27 @@ describe('the art, inlined', () => {
     const page = (note: string): React.JSX.Element => (
       <>
         <p>{note}</p>
-        <RankEmblem tier="ciya" season={{ name: 'havin', year: 2026 }} size={84} title="Çiya (Mountain), Havîn 2026" />
+        <LeagueEmblem tier="cem" size={84} title="Çem (River)" />
         <SeasonFrame tier="sterk" size={64} title="Stêrk season frame">
           <span />
         </SeasonFrame>
       </>
     );
     const { rerender, container } = render(page('first'));
-    const emblem = screen.getByRole('img', { name: 'Çiya (Mountain), Havîn 2026' });
+    const emblem = screen.getByRole('img', { name: 'Çem (River)' });
     const layers = [...container.querySelectorAll('svg')];
     rerender(page('second'));
     expect(screen.getByText('second')).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Çiya (Mountain), Havîn 2026' })).toBe(emblem);
+    expect(screen.getByRole('img', { name: 'Çem (River)' })).toBe(emblem);
     expect([...container.querySelectorAll('svg')]).toEqual(layers);
     for (const layer of layers) expect(layer.isConnected).toBe(true);
     // One that did change is redrawn.
     rerender(
       <>
-        <RankEmblem tier="ciya" season={{ name: 'payiz', year: 2026 }} size={84} title="Çiya (Mountain), Payîz 2026" />
+        <LeagueEmblem tier="gol" size={84} title="Gol (Lake)" />
       </>,
     );
-    expect(screen.getByRole('img', { name: 'Çiya (Mountain), Payîz 2026' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Gol (Lake)' })).toBeInTheDocument();
     expect(emblem.isConnected).toBe(false);
   });
 
@@ -51,7 +49,6 @@ describe('the art, inlined', () => {
     const title = '</title><img src="x" onerror="alert(1)"><script>alert(2)</script> & Çiya';
     const { container } = render(
       <>
-        <RankEmblem tier="ciya" division={2} title={title} />
         <LeagueEmblem tier="gol" title={title} />
         <BadgeMedal badgeKey="agir" tier={3} title={title} />
         <SeasonFrame tier="sterk" size={64} title={title}>
@@ -60,22 +57,22 @@ describe('the art, inlined', () => {
       </>,
     );
     expect(container.querySelector('img, script, [onerror]')).toBeNull();
-    // The frame's shine is a hidden layer of its own; the four drawings carry the title.
+    // The frame's shine is a hidden layer of its own; the three drawings carry the title.
     const titles = [...container.querySelectorAll('title')].filter((t) => !t.closest('[aria-hidden="true"]'));
-    expect(titles).toHaveLength(4);
+    expect(titles).toHaveLength(3);
     for (const t of titles) {
       expect(t.textContent).toBe(title);
       expect(t.children).toHaveLength(0);
     }
-    expect(screen.getAllByRole('img', { name: title })).toHaveLength(4);
+    expect(screen.getAllByRole('img', { name: title })).toHaveLength(3);
   });
 
   /** Two copies of one drawing must not share gradient ids, or a hidden first copy blanks the second. */
   it('gives each copy of a drawing its own ids', () => {
     const { container } = render(
       <>
-        <RankEmblem tier="gir" division={3} title="a" />
-        <RankEmblem tier="gir" division={3} title="b" />
+        <LeagueEmblem tier="gol" title="a" />
+        <LeagueEmblem tier="gol" title="b" />
       </>,
     );
     const ids = [...container.querySelectorAll('[id]')].map((el) => el.id);

@@ -235,45 +235,18 @@ describe('WordleBattle', () => {
     expect(document.querySelector('.wg-meaning-line')).toBeNull();
   });
 
-  it('shows everyone in the lobby that it is Rated, and what a win or a loss would do', async () => {
-    const rated = { rated: true, counts: null, friendlyReason: null, damped: false };
-    const guestLobby = { ...lobby, isHost: false, rated, players: [seat(1, { name: 'Rojda', isHost: true }), seat(2, { userId: 'me', isMe: true })] };
+  it('shows no rank change after the results, nor asks for one', async () => {
+    const finished = { ...activeBattle, status: 'finished', target: 'kar' };
+    const asked: string[] = [];
     signedIn((url) => {
-      if (url.includes('/ranks/expected/wordle-battle/b1'))
-        return jsonResponse(200, {
-          game: 'wordle-battle', lobbyId: 'b1', rated: true, wouldCount: true, friendlyReason: null, self: false,
-          me: { points: 450, tier: 'gir', division: 2, placing: false },
-          opponents: [{ seat: 1, tier: 'ciya', division: 3, placing: false, win: 24, lose: -8 }],
-          first: null, last: null,
-        });
-      if (url.includes('/wordle/battles/b1')) return jsonResponse(200, guestLobby);
-      return undefined;
-    });
-    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
-
-    expect(await screen.findByText('Rated')).toBeInTheDocument();
-    expect(await screen.findByText('Win ≈ +24 · Lose ≈ −8')).toBeInTheDocument();
-    expect(screen.getByText('Çiya III')).toBeInTheDocument();
-    // Only the host changes it.
-    expect(screen.queryByRole('radio', { name: /Friendly/ })).not.toBeInTheDocument();
-  });
-
-  it('shows what the battle did to your rank after the results', async () => {
-    const finished = { ...activeBattle, status: 'finished', target: 'kar', rated: { rated: true, counts: true, friendlyReason: null, damped: false } };
-    signedIn((url) => {
-      if (url.includes('/ranks/results/wordle-battle/b1'))
-        return jsonResponse(200, {
-          game: 'wordle-battle', gameRef: 'b1', counted: true, pointsBefore: 448, pointsAfter: 472, delta: 24, reason: 'beat-stronger',
-          tierBefore: 'gir', tierAfter: 'gir', divisionBefore: 2, divisionAfter: 2, tierUp: false, divisionUp: false,
-          placement: null, shieldGames: 0, weight: 1, damping: 1, newAccountLimit: 1, progress: { next: { tier: 'gir', division: 1 }, from: 400, to: 500, fraction: 0.72, pointsToGo: 28 },
-        });
+      asked.push(url);
       if (url.includes('/wordle/battles/b1/results')) return jsonResponse(200, { id: 'b1', target: 'kar', difficulty: 'medium', ranking: [] });
       if (url.includes('/wordle/battles/b1')) return jsonResponse(200, finished);
       return undefined;
     });
     renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
-
-    expect(await screen.findByText('you beat a higher-ranked player')).toBeInTheDocument();
+    expect(await screen.findByText('The word was kar.')).toBeInTheDocument();
+    expect(asked.some((url) => url.includes('/ranks/'))).toBe(false);
   });
 
   it('makes a new battle through the play layer, with its difficulty, and goes to its lobby', async () => {
@@ -291,7 +264,7 @@ describe('WordleBattle', () => {
 
     await userEvent.click(await screen.findByRole('radio', { name: 'Hard' }));
     await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
-    await waitFor(() => expect(created).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard', rated: false } }));
+    await waitFor(() => expect(created).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard' } }));
     // Its lobby, with the code to hand out.
     expect(await screen.findByRole('button', { name: 'Copy the join code A B C 2 3 4' })).toBeInTheDocument();
   });

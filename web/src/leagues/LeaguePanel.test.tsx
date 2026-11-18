@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resolveGroup, type LeagueTier, type LeagueView } from '@kurda/shared';
 import { LeaguePanel, weekEnds, weekLeft } from './LeaguePanel';
@@ -165,7 +165,15 @@ describe('LeaguePanel', () => {
     const { container } = renderApp(<LeaguePanel />);
     await screen.findByRole('heading', { name: 'Dilop League' });
 
-    expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBeInTheDocument();
+    // His head through the page, already there and dozing, never the whole figure, and no cheer while he sleeps.
+    const peek = container.querySelector<HTMLElement>('.league-resting .hevalo-peek')!;
+    expect(peek).not.toHaveClass('is-popping');
+    const deer = peek.querySelector('.speaking-character')!;
+    expect(deer).toHaveAttribute('data-crop', 'head');
+    expect(deer).toHaveClass('is-resting');
+    expect(container.querySelector('.speaking-character[data-crop="full"]')).toBeNull();
+    await act(() => new Promise((r) => setTimeout(r, 1000)));
+    expect(deer.querySelector('[data-eyes="happy"]')).toHaveAttribute('visibility', 'hidden');
     expect(screen.getByRole('heading', { name: en['leagues.resting.title'] })).toBeInTheDocument();
     expect(screen.getByText(en['leagues.joinHint'])).toBeInTheDocument();
     expect(screen.getByRole('link', { name: en['leagues.notJoined.start'] })).toHaveAttribute('href', '/app/learn');

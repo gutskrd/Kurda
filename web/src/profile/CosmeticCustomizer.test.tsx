@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { CosmeticCustomizer } from './CosmeticCustomizer';
 import { renderApp, jsonResponse } from '../test/utils';
 import type { MeProfile } from '../lib/types';
+import { en } from '../i18n/en';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -172,10 +173,9 @@ describe('CosmeticCustomizer', () => {
     expect(await screen.findByText('No backgrounds available yet.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
     expect(screen.getByText('No icons available yet.')).toBeInTheDocument();
-    // and where a frame comes from, when the shop has none to sell either
+    // and frames, when the shop has none to sell either
     await userEvent.click(screen.getByRole('tab', { name: /Frames/ }));
-    expect(screen.getByText(/No frames yet/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'See this season' })).toHaveAttribute('href', '/app/season');
+    expect(screen.getByText(en['edit.noFrames'])).toBeInTheDocument();
   });
 
   it('toggles premium-icon visibility, on the Icons tab, when an icon is equipped', async () => {

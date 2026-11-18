@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { applyItemFilter, countByCategory, DEFAULT_ITEM_FILTER, isFiltered, itemCategory, type ItemFilter } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError, requestId } from '../lib/api';
@@ -55,7 +54,8 @@ const EMPTY: Readonly<Record<Wearable, MessageKey>> = {
 
 /**
  * Owned items (`/me/inventory`) then items for sale (`/shop`), since an owned unique item is not in the shop. Season
- * frames appear only once owned, and tags only as owned, since the tag on sale is bought in the Shop.
+ * frames, given while game ranks ran, appear only once owned, and tags only as owned, since the tag on sale is bought in
+ * the Shop.
  */
 function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>): Tile[] {
   const map = new Map<string, Tile>();
@@ -129,7 +129,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     if (inv.ok) setInventory(inv.data.items ?? []);
     if (w.ok) setBalances({ zer: w.data.balances?.zer, gems: w.data.balances?.gems });
     if (!s.ok && !inv.ok) setError(describeError(s.ok ? inv.error : s.error, t));
-    // /me does not say which frame is worn; your own public profile does, as on the season page
+    // /me does not say which frame is worn; your own public profile does
     if (inv.ok && (inv.data.items ?? []).some((i) => itemCategory(i.category) === 'frame')) {
       const p = await client.get<{ frameSku?: string | null }>(`/users/${me.id}`);
       if (p.ok) setEquipped((e) => ({ ...e, frame: p.data.frameSku ?? null }));
@@ -310,21 +310,13 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
   );
 }
 
-/** A kind with nothing in it yet: what it is for, and for frames, where one comes from. */
+/** A kind with nothing in it yet. */
 function EmptyKind({ kind }: { kind: Kind }): React.JSX.Element | null {
   const t = useT();
   if (kind === 'tag') return null;
   return (
     <p className="muted" style={{ margin: 0 }}>
       {t(EMPTY[kind])}
-      {kind === 'frame' && (
-        <>
-          {' '}
-          <Link to="/app/season" className="link">
-            {t('edit.seeSeason')}
-          </Link>
-        </>
-      )}
     </p>
   );
 }

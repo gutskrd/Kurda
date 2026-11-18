@@ -1,32 +1,27 @@
 import { Link } from 'react-router-dom';
-import { isRankedGame, toLeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { toLeagueTier, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { Medal } from '../badges/parts';
-import { LeagueEmblem, PlacementEmblem, RankEmblem } from '../ranks/art';
-import { badgeNamed, gameName, leagueName, leagueNamed, rankLabel, rankTierNamed, withMeaning } from '../ranks/names';
+import { LeagueEmblem } from '../ranks/art';
+import { badgeNamed, leagueName, leagueNamed, withMeaning } from '../ranks/names';
 
 /**
- * A profile's play: the three chosen badges, the season rank in each game with the best ever reached, and the league,
- * all translated and labelled. A rank without a tier shows placing, resting (after four weeks without a rated game)
- * or not played; a missing league tier means not taking part, and shows nothing.
+ * A profile's progress: the three chosen badges and the league, translated and labelled. A missing league tier means
+ * not taking part, and shows nothing.
  */
 export function ProfileProgress({
-  ranks,
   badges,
   league,
   own = false,
 }: {
-  ranks?: ProfileRank[];
   badges?: ShowcaseBadge[];
   league?: ProfileLeague | null;
   own?: boolean;
 }): React.JSX.Element | null {
   const t = useT();
-  // a rank in a game that is no longer part of Hevalo is not shown: there is nowhere left to play it
-  const shown = (ranks ?? []).filter((r) => isRankedGame(r.game) && (r.tier || r.placing || r.resting || r.bestTier));
   const leagueTier = toLeagueTier(league?.tier ?? null);
   const showcase = badges ?? [];
-  if (shown.length === 0 && showcase.length === 0 && !leagueTier && !own) return null;
+  if (showcase.length === 0 && !leagueTier && !own) return null;
 
   return (
     <div className="mkp-showcase-block profile-progress">
@@ -61,52 +56,20 @@ export function ProfileProgress({
         </>
       )}
 
-      {(shown.length > 0 || leagueTier) && (
+      {leagueTier && (
         <>
-          <div className="mkp-showcase-label">{t('profile.ranks')}</div>
+          <div className="mkp-showcase-label">{t('profile.stat.league')}</div>
           <ul className="profile-ranks">
-            {shown.map((r) => (
-              <ProfileRankItem key={r.game} rank={r} />
-            ))}
-            {leagueTier && (
-              <li className={`profile-rank league-${leagueTier}`}>
-                <LeagueEmblem tier={leagueTier} size={56} title={withMeaning(t, leagueNamed(t, leagueTier))} />
-                <span className="profile-rank-text">
-                  <span className="profile-rank-game">{t('profile.stat.league')}</span>
-                  <span className="profile-rank-tier">{leagueName(t, leagueTier)}</span>
-                  {leagueNamed(t, leagueTier).meaning && <span className="profile-rank-best">{leagueNamed(t, leagueTier).meaning}</span>}
-                </span>
-              </li>
-            )}
+            <li className={`profile-rank league-${leagueTier}`}>
+              <LeagueEmblem tier={leagueTier} size={56} title={withMeaning(t, leagueNamed(t, leagueTier))} />
+              <span className="profile-rank-text">
+                <span className="profile-rank-tier">{leagueName(t, leagueTier)}</span>
+                {leagueNamed(t, leagueTier).meaning && <span className="profile-rank-best">{leagueNamed(t, leagueTier).meaning}</span>}
+              </span>
+            </li>
           </ul>
         </>
       )}
     </div>
-  );
-}
-
-function ProfileRankItem({ rank }: { rank: ProfileRank }): React.JSX.Element {
-  const t = useT();
-  // the emblem is the best this season, where there is one; the line says where they are now
-  const emblemTier = rank.seasonPeakTier ?? rank.tier ?? rank.bestTier;
-  let now: string;
-  // how far through placement, where the API says ("Placing 2/5"); a bare "Placing" otherwise
-  const placing = rank.placement ? t('ranks.placing', { played: rank.placement.played, of: rank.placement.of }) : t('ranks.placingShort');
-  if (rank.resting) now = t('ranks.resting');
-  else if (rank.placing || !rank.tier) now = placing;
-  else now = rankLabel(t, rank.tier, rank.division);
-  return (
-    <li className={`profile-rank${emblemTier ? ` tier-${emblemTier}` : ''}${rank.resting ? ' is-resting' : ''}`}>
-      {emblemTier && !rank.placing ? (
-        <RankEmblem tier={emblemTier} size={56} title={t('profile.seasonBest', { tier: withMeaning(t, rankTierNamed(t, emblemTier)) })} />
-      ) : (
-        <PlacementEmblem done={rank.placement?.played ?? 0} size={56} title={placing} />
-      )}
-      <span className="profile-rank-text">
-        <span className="profile-rank-game">{gameName(t, rank.game)}</span>
-        <span className="profile-rank-tier">{now}</span>
-        {rank.bestTier && <span className="profile-rank-best">{t('profile.bestEver', { tier: rankTierNamed(t, rank.bestTier).name })}</span>}
-      </span>
-    </li>
   );
 }

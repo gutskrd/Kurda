@@ -16,7 +16,7 @@ import { Modal } from '../components/Modal';
 import { LeagueCardSkeleton } from '../components/skeletons';
 import { ErrorState } from '../components/states';
 import { BookIcon, DownIcon, PersonGlyph, ShieldIcon, SparkleIcon, TimerIcon, UpIcon } from '../components/icons';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloPeek } from '../characters/HevaloPeek';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
 import type { Translate } from '../i18n/I18nProvider';
@@ -27,7 +27,7 @@ import { GoalRing } from './GoalRing';
 import { LeagueMoment } from './LeagueMoment';
 
 /**
- * This week's league, the League tab of Rankings: a group of up to twenty in one of six water tiers. The top quarter
+ * This week's league, the page Rankings' league card opens: a group of up to twenty in one of six water tiers. The top quarter
  * move up if they met the weekly goal; the bottom 15% move down only if they missed it, never from Dilop or Kanî.
  *
  * From the top: the league name and whole days left, the six tiers in a row, the goal ring, then the table (or a
@@ -185,12 +185,13 @@ function GoalRow({ league }: { league: LeagueView }): React.JSX.Element {
   );
 }
 
-/** Not in a group yet this week: a sleeping Hevalo and the invitation to start a lesson, instead of a table. */
+/** Not in a group yet this week: Hevalo dozing through the page and the invitation to start a lesson, instead of a table. */
 function Resting(): React.JSX.Element {
   const t = useT();
+  const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
   return (
     <div className="league-resting">
-      <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={150} resting className="league-resting-figure" />
+      <HevaloPeek size={150} resting pop={false} flip={rtl} className="league-resting-figure" />
       <h3 className="league-resting-title">{t('leagues.resting.title')}</h3>
       <p className="league-resting-body">{t('leagues.joinHint')}</p>
       <LinkButton to="/app/learn" block className="league-resting-go">

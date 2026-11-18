@@ -12,7 +12,6 @@ import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CheckIcon, CloseIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import { RankResult } from '../ranks/RankResult';
 import { STORIES_LIBRARY, readerPath } from './api';
 import { Evidence, helpDir, playerName, questionHelp, type Announce } from './GameParts';
 import { rememberedEnglish, showEnglishFor } from './prefs';
@@ -74,9 +73,6 @@ export function GameResults({
           {repeat && <p className="sg-repeat-note">{repeat}</p>}
         </div>
       )}
-
-      {/* A game with others: what it did to your Stories rank. */}
-      {me && view.mode !== 'solo' && <RankResult game="stories" gameRef={view.id} />}
 
       {results && view.mode !== 'solo' && <Standings view={view} standings={results.standings} />}
       {view.mode !== 'solo' && <OtherPlayers view={view} />}
