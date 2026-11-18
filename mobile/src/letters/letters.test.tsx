@@ -379,7 +379,7 @@ describe('a correspondence', () => {
     testAuth.client = fakeClient({ [`GET /letters/threads/${THREAD}`]: ok(thread({ yourTurn: false })) });
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     expect(await screen.findByTestId('letters-waiting')).toBeTruthy();
-    expect(screen.getByText('Your bird is with Baran. Their letter will come to your window.')).toBeTruthy();
+    expect(screen.getByText('Your letter is with Baran. When they write back, their bird will bring it to your window.')).toBeTruthy();
     expect(screen.queryByTestId('letters-reply-input')).toBeNull();
   });
 

@@ -888,7 +888,7 @@ export const nl: Catalogue = {
   'letters.error.today': 'Genoeg voor vandaag. Morgen kan je vogel weer vliegen.',
   'letters.error.bands': 'Jullie kunnen elkaar niet meer schrijven: brieven gaan alleen tussen mensen van ongeveer dezelfde leeftijd.',
   'letters.thread.closed': 'Deze briefwisseling is afgelopen. Jullie kunnen hier geen van beiden meer schrijven.',
-  'letters.thread.waiting': 'Je vogel is bij {name}. Het antwoord komt naar je raam.',
+  'letters.thread.waiting': 'Je brief is bij {name}. Een vogel brengt het antwoord naar je raam.',
   'letters.goodbye': 'Afscheid nemen',
   'letters.goodbye.title': 'Afscheid nemen van {name}? Jullie kunnen hier geen van beiden meer schrijven, en jullie vogels ontmoeten elkaar niet meer.',
   'letters.you': 'Jij',

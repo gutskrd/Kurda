@@ -890,7 +890,7 @@ export const ku: Catalogue = {
   'letters.error.today': 'Ji bo îro bes e. Balindeyê te dikare sibê dîsa bifire.',
   'letters.error.bands': 'Hûn êdî nikarin ji hev re binivîsin: name tenê di navbera kesên ku temenê wan nêzî hev e de diçin.',
   'letters.thread.closed': 'Ev name bi dawî bûn. Êdî tu kes ji we nikare li vir binivîse.',
-  'letters.thread.waiting': 'Balindeyê te li cem {name} e. Nameya wan dê were ber pencereya te.',
+  'letters.thread.waiting': 'Nameya te li cem {name} e. Gava bersivê binivîsin, balindeyê wan dê wê bîne ber pencereya te.',
   'letters.goodbye': 'Xatir bixwaze',
   'letters.goodbye.title': 'Tu dixwazî xatir ji {name} bixwazî? Êdî tu kes ji we nikare li vir binivîse, û balindeyên we dê careke din hev nebînin.',
   'letters.you': 'Tu',
