@@ -140,7 +140,7 @@ describe('a streak that can be restored', () => {
     testAuth.client = client;
     open(ended(paid));
     expect(await screen.findByText('Your gems: 20')).toBeTruthy();
-    expect(screen.getByText('Gems come from moving up a league, season rewards and events.')).toBeTruthy();
+    expect(screen.getByText('Gems come from moving up a league and from events.')).toBeTruthy();
     const restore = screen.getByRole('button', { name: 'Restore for 50 gems' });
     expect(restore.getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(restore);
