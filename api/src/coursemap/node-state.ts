@@ -1,12 +1,11 @@
 /**
- * Course-map node state (KUR-040). Pure, so the lock/complete/gold/decay
- * rules are unit-testable. A skill's node is:
+ * Course-map node state, pure so the rules are unit-testable:
  *
- *   locked    — not yet unlocked (previous skill not done, and not tested out)
- *   unlocked  — available to learn, not finished
+ *   locked    — previous skill not done and not tested out
+ *   unlocked  — available, not finished
  *   completed — every published lesson done, strength healthy
  *   gold      — completed and very strong
- *   decayed   — completed but strength has slipped (cracked ring → practice)
+ *   decayed   — completed but strength has slipped (cracked ring, practice)
  */
 
 export type SkillState = 'locked' | 'unlocked' | 'completed' | 'gold' | 'decayed';
@@ -31,10 +30,7 @@ export function skillState({ unlocked, completed, strength }: SkillProgress): Sk
   return 'completed';
 }
 
-/**
- * A skill is unlocked when it's the first in the course, its predecessor is
- * completed, or the learner tested out through its level (KUR-039).
- */
+/** A skill is unlocked when it is the first, its predecessor is completed, or the learner tested out through its level. */
 export function isUnlocked(level: number, previousCompleted: boolean, unlockedThrough: number): boolean {
   return level === 1 || previousCompleted || level <= unlockedThrough;
 }

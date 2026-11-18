@@ -17,7 +17,7 @@ export interface LessonNode {
   lessonId: string;
   position: number;
   title: string;
-  /** this learner has finished this lesson — this version or an earlier one */
+  /** This learner finished this lesson, in this version or an earlier one. */
   completed: boolean;
   /** how many times they have finished it, any version, replays included */
   times: number;
@@ -34,11 +34,7 @@ export interface SkillNode {
   firstLessonId: string | null;
   /** the skill's published lessons in order, so a map can show each one */
   lessons: LessonNode[];
-  /**
-   * Full rounds of its lessons played (0–3, the stars on its stop) and the
-   * pieces of its ring filled, by the shared rule (`topicRounds`), so both
-   * apps draw the same ring.
-   */
+  /** Full rounds of its lessons played (0–3, the stars) and ring pieces filled, by the shared `topicRounds`. */
   rounds: number;
   pieces: number;
 }
@@ -50,10 +46,8 @@ export interface UnitStory {
 }
 
 /**
- * The chapter after the last one online: there to say what comes next while
- * it is still being made. `recordedBy` names who is recording it, for a
- * course whose chapters go online as their recordings are done (the road,
- * which Hamo records); null for any other course.
+ * The chapter after the last one online, shown as coming next. `recordedBy` names who records it for a course
+ * whose chapters go online as recordings finish (the road); null otherwise.
  */
 export interface UpcomingUnit {
   number: number;
@@ -64,18 +58,12 @@ export interface UpcomingUnit {
 export interface CourseMap {
   course: { id: string; title: string };
   /**
-   * The course's units up to the last one with a lesson out: a unit still
-   * being made at the end is not shown as empty stops, it is `upcoming`.
-   * `level` is the unit's level in the course plan ('A1'), which the path
-   * groups units into sections by; null where the course gives none.
+   * Units up to the last one with a lesson out; an unfinished unit at the end is `upcoming` instead. `level` is the
+   * unit's plan level ('A1'), which the path groups sections by; null where the course gives none.
    */
   units: Array<{ unitId: string; title: string; level: string | null; skills: SkillNode[]; story: UnitStory | null }>;
   upcoming: UpcomingUnit | null;
-  /**
-   * Skills up to this level are open because a test let the learner through
-   * (placement, or jumping ahead); 0 for none. The apps read it to put the
-   * learner where the test left them (shared `lessonPath`).
-   */
+  /** Skills up to this level are open because a placement or jump test let the learner through; 0 for none. */
   unlockedThrough: number;
 }
 
@@ -90,13 +78,11 @@ interface SkillRow {
 }
 
 /**
- * Course map with per-skill lock/complete/gold/decay state (KUR-040), how
- * many times each lesson was finished and so each skill's rounds and ring
- * (shared `topicRounds`), and each unit's level, which the lesson path
- * groups units into sections by.
+ * Course map with each skill's lock, completion, gold and decay state, each lesson's finish count and so each
+ * skill's rounds and ring, and each unit's level.
  */
 export class CourseMapService {
-  /** `roadCourse`: the slug of the course whose chapters end with Hamo's stories (a test names its own) */
+  /** `roadCourse`: the slug of the course whose chapters end with Hamo's stories. */
   constructor(
     private readonly pool: pg.Pool,
     private readonly roadCourse: string = ROAD_COURSE,
@@ -140,13 +126,8 @@ export class CourseMapService {
          ORDER BY l.skill_id, l.position, l.version DESC`,
         [courseId],
       ),
-      // how many times each lesson was finished, by place, not by row: a
-      // corrected version of a lesson is a new row at the same place, and to
-      // the learner who finished the old one it is still the lesson they
-      // finished (as `LessonSlot` in content/sessions.ts) — keyed by row, a
-      // content fix re-locked the rest of the course behind a lesson they had
-      // already done. Every replay is a session of its own, so the count is
-      // the rounds the rings show; one read for the whole map.
+      // Finishes per lesson place, not row: a corrected lesson is a new row at the same place, and keyed by row a
+      // content fix would re-lock the rest of the course. Every replay is its own session, so the count is the rounds.
       this.pool.query<{ skill_id: string; position: number; times: number }>(
         `SELECT l.skill_id, l.position, count(*)::int times
          FROM lesson_sessions ls
@@ -169,7 +150,7 @@ export class CourseMapService {
         `SELECT unlocked_through_position FROM user_course_progress WHERE user_id = $1 AND course_id = $2`,
         [userId, courseId],
       ),
-      // the road's chapters each end with a story Hamo tells (road-NN-…), shown once learners can read it
+      // Each road chapter ends with a story Hamo tells (road-NN-…), shown once learners can read it.
       road
         ? this.pool.query<{ slug: string; title: string }>(`SELECT s.slug, s.title FROM stories s WHERE s.slug LIKE 'road-%' AND ${PUBLISHED_SQL}`)
         : Promise.resolve({ rows: [] as Array<{ slug: string; title: string }> }),
@@ -234,7 +215,7 @@ export class CourseMapService {
       previousCompleted = completedSkill;
     });
 
-    // the course ends, for the learner, at its last unit with a lesson out; the one after it is on its way
+    // The course ends at its last unit with a lesson out; the next one is shown as coming.
     let shown = units.length;
     while (shown > 0 && units[shown - 1]!.skills.every((sk) => sk.lessons.length === 0)) shown -= 1;
     const next = units[shown];
