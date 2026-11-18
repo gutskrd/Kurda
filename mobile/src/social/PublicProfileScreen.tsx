@@ -5,7 +5,6 @@ import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
-import { describeError, isMaintenance } from '../api/errors';
 import { useIntents, useSayNotSaved } from '../api/optimistic';
 import { useUnread } from '../messages/unread';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -106,7 +105,6 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const dir = useDirection();
   const { width: windowWidth } = useWindowDimensions();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
@@ -131,9 +129,9 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   useFocusEffect(useCallback(() => load(), [load]));
 
   /*
-   * Asking, accepting and withdrawing show at once and are sent after, the last tap winning; the answer's status is kept
-   * and the profile read again. A refusal (a full friend list, too many outgoing: limits/limitCopy.ts) goes back and
-   * says why.
+   * Asking, accepting, withdrawing and, once confirmed, unfriending show at once and are sent after, the last tap
+   * winning; the answer's status is kept and the profile read again. A refusal (a full friend list, too many outgoing:
+   * limits/limitCopy.ts) goes back and says why.
    */
   const befriending = useIntents<string, FriendStatus, { outcome?: string } | null>(
     async (id, wanted, confirmed) => {
@@ -174,23 +172,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   }, [status, announce, t]);
 
   const perform = useCallback(
-    async (from: FriendStatus) => {
+    (from: FriendStatus) => {
       if (!profile) return;
       // An offer made (a request sent, or accepted) is felt; taking one back is quiet.
       if (from === 'none' || from === 'pending_in') haptic('tap');
       if (from === 'pending_in') report((now) => ({ requests: Math.max(0, now.requests - 1) }));
-      if (from !== 'friends') {
-        befriending.want(profile.userId, from === 'none' ? 'pending_out' : from === 'pending_in' ? 'friends' : 'none', profile.friendStatus);
-        return;
-      }
-      // Ending a friendship waits for the server: only the other person could make it again.
-      setBusy(true);
-      const res = await client.delete(`/friends/${encodeURIComponent(userId)}`);
-      setBusy(false);
-      if (!res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
-      load();
+      befriending.want(profile.userId, from === 'none' ? 'pending_out' : from === 'pending_in' ? 'friends' : 'none', profile.friendStatus);
     },
-    [client, userId, load, t, profile, befriending, report],
+    [profile, befriending, report],
   );
 
   /**
@@ -202,13 +191,13 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     (status: FriendStatus) => {
       const undo = undoAction(status);
       if (!undo) {
-        void perform(status);
+        perform(status);
         return;
       }
       const name = profile?.displayName ?? profile?.username ?? '';
       Alert.alert(t(undo.label), t(undo.prompt, { name }), [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: t(undo.label), style: 'destructive', onPress: () => void perform(status) },
+        { text: t(undo.label), style: 'destructive', onPress: () => perform(status) },
       ]);
     },
     [perform, profile, t],
@@ -341,7 +330,6 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     // An undo is pressable but not an invitation, so it stays neutral.
                     tone={isActionable(shown) && !isUndo(shown) ? 'primary' : 'neutral'}
                     size="large"
-                    busy={busy}
                     disabled={!isActionable(shown)}
                     onPress={() => require('friends') && act(shown)}
                   />

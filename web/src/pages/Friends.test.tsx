@@ -200,7 +200,7 @@ describe('Friends', () => {
       '/friends': { friends: [{ userId: 'u2', username: 'zana', displayName: 'Zana' }] },
     });
     vi.stubGlobal('fetch', fetchMock);
-    renderApp(<Friends />);
+    const first = renderApp(<Friends />);
     const sent = (method: string, path: string): boolean =>
       fetchMock.mock.calls.some(([url, init]) => String(url).endsWith(path) && init?.method === method);
 
@@ -219,9 +219,11 @@ describe('Friends', () => {
     await userEvent.click(within(menu).getByRole('menuitem', { name: /press again to confirm/i }));
     await waitFor(() => expect(sent('DELETE', '/friends/u2')).toBe(true));
     await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    first.unmount();
 
     // A block says what it does before it is done.
-    await userEvent.click(screen.getByRole('button', { name: 'More about Zana' }));
+    renderApp(<Friends />);
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Block' }));
     const ask = screen.getByRole('dialog', { name: 'Block Zana' });
     expect(sent('POST', '/friends/u2/block')).toBe(false);
@@ -247,6 +249,31 @@ describe('Friends', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'More about Zana' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Block' }));
     await userEvent.click(within(screen.getByRole('dialog', { name: 'Block Zana' })).getByRole('button', { name: 'Block' }));
+    expect(screen.queryByRole('button', { name: 'Play with Zana' })).not.toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Play with Zana' })).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
+  });
+
+  it('takes a removed friend off the list once confirmed, and brings them back with a notice if the server refuses', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'DELETE' && url.endsWith('/friends/u2')) return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [{ userId: 'u2', username: 'zana', displayName: 'Zana' }] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Remove zana as a friend' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /press again to confirm/i }));
     expect(screen.queryByRole('button', { name: 'Play with Zana' })).not.toBeInTheDocument();
     answer(jsonResponse(503, {}));
     expect(await screen.findByRole('button', { name: 'Play with Zana' })).toBeInTheDocument();

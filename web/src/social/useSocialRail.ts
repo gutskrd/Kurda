@@ -127,7 +127,7 @@ export const railEdits = {
         unread: { ...d.unread, requests: Math.max(0, d.unread.requests - 1) },
       };
     },
-  /** Blocked: gone from friends and requests, and from the request count if they had asked. */
+  /** Blocked or unfriended: gone from friends and requests, and from the request count if they had asked. */
   personGone:
     (userId: string): RailEdit =>
     (d) => {
