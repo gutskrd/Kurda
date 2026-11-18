@@ -13,8 +13,7 @@ import { forgetReach, reachOf } from '../testing/reach';
 import { KindChips } from './ItemFilters';
 
 /*
- * The shop's row of kinds (shop/ItemFilters.tsx): chips a fingertip tall in
- * a row that scrolls sideways, which would cut off whatever reaches past it.
+ * The shop's row of kinds: fingertip-tall chips in a sideways scroller, which would cut off whatever reaches past it.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -37,7 +36,7 @@ describe('a row of kinds', () => {
       />,
     );
     expect(reachOf('All')).toEqual({ top: 2, bottom: 2, left: 0, right: 0 });
-    // the row is padded by the reach and the scroller pulled back by as much, so nothing moves
+    // The row is padded by the reach and the scroller pulled back by as much, so nothing moves.
     const row = screen.getByRole('radio', { name: 'All' }).parentElement!;
     expect(getComputedStyle(row).paddingTop).toBe('2px');
     expect(getComputedStyle(row).paddingBottom).toBe('2px');

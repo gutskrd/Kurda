@@ -32,7 +32,7 @@ describe('the one-time notice', () => {
     renderWithProviders(<RefreshedNotice />);
     expect(await screen.findByText('We refreshed some backgrounds and icons — yours have new art. They’re still yours.')).toBeTruthy();
 
-    // one button, and all it does is close the notice
+    // One button, and all it does is close the notice.
     expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(['Got it']);
     expect(screen.queryByRole('button', { name: /return|shop/i })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Got it' }));

@@ -25,13 +25,13 @@ const item = (over: Partial<ShopItem>): ShopItem => ({
   ...over,
 });
 
-// a translator that shows which key it was asked for, with its values
+// A translator that shows which key it was asked for, with its values.
 const t = (key: string, vars?: Record<string, string | number>): string =>
   `translated:${key}${vars ? `(${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join(',')})` : ''}`;
 
 describe('the shop’s sections', () => {
   it('are the shared kinds, in the order every screen shows them', () => {
-    // GET /shop orders by category name; the sections do not follow it
+    // GET /shop orders by category name; the sections do not follow it.
     const sections = groupByCategory([
       item({ sku: 'tag', category: 'tag' }),
       item({ sku: 'i1', category: 'icon' }),
@@ -84,7 +84,7 @@ describe('needsConfirmation', () => {
     expect(needsConfirmation(item({ currency: 'zer', price: CONFIRM_THRESHOLD_ZER }))).toBe(false);
     expect(needsConfirmation(item({ currency: 'gems', price: 100_000 }))).toBe(true);
     expect(needsConfirmation(item({ currency: 'gems', price: 1 }))).toBe(true);
-    // nothing is spent on a free item, so there is nothing to be sure about
+    // Nothing is spent on a free item, so there is nothing to be sure about.
     expect(needsConfirmation(item({ currency: 'gems', price: 0 }))).toBe(false);
   });
 });
