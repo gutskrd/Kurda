@@ -12,7 +12,7 @@ interface JobDef {
   describe: (res: Record<string, unknown>) => string;
 }
 
-/** The jobs a person may run from here; the league settle and season close are on the Leagues and Seasons pages. */
+/** The jobs a person may run from here; the league settle and merge are on the Leagues page. */
 const JOBS: JobDef[] = [
   {
     key: 'leaderboards',
@@ -85,7 +85,7 @@ function Jobs(): React.JSX.Element {
       title="Maintenance jobs"
       description={
         <>
-          Each is safe to run twice. The league settle and the season close are on the <a href="#/leagues">Leagues</a> and <a href="#/seasons">Seasons</a> pages.
+          Each is safe to run twice. The league settle and merge are on the <a href="#/leagues">Leagues</a> page.
         </>
       }
     >

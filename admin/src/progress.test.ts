@@ -1,16 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   badgeTierName,
-  gameName,
-  holdsRankTools,
-  rankLine,
+  holdsProgressTools,
   rankTierName,
   reasonProblem,
-  reasonText,
   runResult,
   runState,
-  seasonName,
-  signed,
   thresholdText,
   utcOffset,
   weekLabel,
@@ -30,39 +25,17 @@ const run = (over: Partial<LeagueRunStatus> = {}): LeagueRunStatus => ({
 });
 
 describe('names', () => {
-  it('says a tier in Kurmancî with its meaning, and a rank with its division', () => {
+  it('says a frame’s tier in Kurmancî with its meaning', () => {
     expect(rankTierName('ciya')).toBe('Çiya (Mountain)');
     expect(rankTierName('sterk')).toBe('Stêrk (Star)');
-    expect(rankLine('ciya', 2)).toBe('Çiya II');
-    expect(rankLine('sterk', 1)).toBe('Stêrk');
-    expect(rankLine(null, null, { played: 2, of: 5 })).toBe('Placing 2/5');
   });
 
-  it('names a game on a stored row, one that is no longer played as it was called, and never a blank', () => {
-    expect(gameName('impostor')).toBe('Xapînok');
-    expect(gameName('bluff')).toBe('Kurdish Bluff (no longer played)');
-    expect(gameName('what-would-you-say')).toBe('What Would You Say? (no longer played)');
-    // A name nobody has heard of is shown as it is stored.
-    expect(gameName('no-such-game')).toBe('no-such-game');
-  });
-
-  it('names seasons, badge tiers and what a tier needs', () => {
-    expect(seasonName('2026-Q4')).toBe('Payîz 2026 (Autumn)');
-    expect(seasonName('nope')).toBe('nope');
+  it('names badge tiers and what a tier needs', () => {
     expect(badgeTierName(3)).toBe('Zêr (Gold)');
     expect(badgeTierName(0)).toBe('None');
     expect(thresholdText({ unit: 'days' }, 30)).toBe('30 days');
     expect(thresholdText({ unit: 'days' }, 1)).toBe('1 day');
     expect(thresholdText({ unit: 'units' }, 'all')).toBe('all units');
-  });
-
-  it('words a rating change the way the apps do', () => {
-    expect(signed(18)).toBe('+18');
-    expect(signed(-6)).toBe('−6');
-    expect(signed(0)).toBe('±0');
-    expect(reasonText('beat-stronger')).toBe('beat a higher-ranked player');
-    expect(reasonText('something-new')).toBe('something new');
-    expect(reasonText(null)).toBe('');
   });
 
   it('reads a group’s XP band and clock', () => {
@@ -103,9 +76,9 @@ describe('reasons and roles', () => {
     expect(reasonProblem('x'.repeat(501))).toMatch(/under 500/);
   });
 
-  it('opens the rank tools to the legacy admin role and superadmin, as the routes are guarded', () => {
-    expect(holdsRankTools(['admin'])).toBe(true);
-    expect(holdsRankTools(['superadmin', 'moderator'])).toBe(true);
-    expect(holdsRankTools(['moderator', 'support', 'content_editor', 'founder'])).toBe(false);
+  it('opens the league and badge tools to the legacy admin role and superadmin, as the routes are guarded', () => {
+    expect(holdsProgressTools(['admin'])).toBe(true);
+    expect(holdsProgressTools(['superadmin', 'moderator'])).toBe(true);
+    expect(holdsProgressTools(['moderator', 'support', 'content_editor', 'founder'])).toBe(false);
   });
 });

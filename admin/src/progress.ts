@@ -1,53 +1,25 @@
 /**
- * What the Ranks, Seasons, Leagues and Badges pages read: the API shapes @kurda/shared does not carry, and plain words
- * for their keys. Names are the Kurmancî ones with the English meaning beside them ("Çiya (Mountain)"), as the apps
+ * What the Leagues, Badges and Pictures pages read: the API shapes @kurda/shared does not carry, and plain words for
+ * their keys. Names are the Kurmancî ones with the English meaning beside them ("Çiya (Mountain)"), as the apps
  * show them; the console is in English, so nothing here is translated.
  */
 import {
-  GAME_NAMES,
   APEX_TIER,
   BADGE_TIERS,
   BADGE_TIER_META,
   LEAGUE_TIER_META,
-  RANK_REASONS,
   RANK_TIERS,
-  SEASON_LABELS,
   XP_BANDS,
-  isSeasonId,
-  seasonById,
   type BadgeDef,
   type BadgeFamily,
-  type Division,
   type LeagueStanding,
   type LeagueTier,
-  type RankReason,
   type RankTier,
-  type RankedGame,
 } from '@kurda/shared';
-import { RANK_TOOL_ROLES } from './navigation';
+import { PROGRESS_TOOL_ROLES } from './navigation';
 import type { Tone } from './ui';
 
 // ---- Names -----------------------------------------------------------------------
-
-/** Each ranked game by its own name, which is Kurmancî in every language the apps speak. */
-export const GAME_NAME: Readonly<Record<RankedGame, string>> = {
-  'wordle-battle': GAME_NAMES['wordle-battle'],
-  'rhyme-match': GAME_NAMES['rhyme-match'],
-  stories: 'Stories',
-  'last-letter': GAME_NAMES['last-letter'],
-  impostor: GAME_NAMES.impostor,
-  'who-am-i': GAME_NAMES['who-am-i'],
-};
-
-/** Games no longer ranked, which old rows (a season's standings, an old rating) still name: shown by name and marked. */
-const RETIRED_GAME_NAME: Readonly<Record<string, string>> = {
-  'dont-say': 'Don’t Say the Word! (no longer played)',
-  bluff: 'Kurdish Bluff (no longer played)',
-  'what-would-you-say': 'What Would You Say? (no longer played)',
-};
-export function gameName(game: string): string {
-  return (GAME_NAME as Readonly<Record<string, string>>)[game] ?? RETIRED_GAME_NAME[game] ?? game;
-}
 
 /** "Çiya (Mountain)". */
 export function rankTierName(tier: RankTier): string {
@@ -55,30 +27,10 @@ export function rankTierName(tier: RankTier): string {
   return `${t.name} (${t.meaning})`;
 }
 
-/** The Kurmancî name alone, for a tight cell: "Çiya". */
-export function rankTierShort(tier: RankTier): string {
-  return tier === 'sterk' ? APEX_TIER.name : RANK_TIERS.find((r) => r.key === tier)!.name;
-}
-
-const ROMAN: Readonly<Record<Division, string>> = { 1: 'I', 2: 'II', 3: 'III' };
-
-/** "Çiya II", "Stêrk", or "Placing 2/5" while there is no tier yet. */
-export function rankLine(tier: RankTier | null, division: Division | null, placement?: { played: number; of: number } | null): string {
-  if (tier === null) return placement ? `Placing ${placement.played}/${placement.of}` : 'Placing';
-  return division && tier !== 'sterk' ? `${rankTierShort(tier)} ${ROMAN[division]}` : rankTierShort(tier);
-}
-
 /** "Çem (River)". */
 export function leagueTierName(tier: LeagueTier): string {
   const m = LEAGUE_TIER_META[tier];
   return `${m.nameKu} (${m.meaningEn})`;
-}
-
-/** "Payîz 2026 (Autumn)", or the id itself when it is not one. */
-export function seasonName(id: string): string {
-  if (!isSeasonId(id)) return id;
-  const s = seasonById(id);
-  return `${SEASON_LABELS[s.name].ku} ${s.year} (${SEASON_LABELS[s.name].en})`;
 }
 
 /** "Zêr (Gold)" for tier 3; tier 0 is "none". */
@@ -110,54 +62,7 @@ function singular(unit: string): string {
   return unit.endsWith('s') ? unit.slice(0, -1) : unit;
 }
 
-/** The plain reason a rated game moved a player, as the apps word it. */
-export const REASON_TEXT: Readonly<Record<RankReason, string>> = {
-  placement: 'placement game',
-  'beat-stronger': 'beat a higher-ranked player',
-  'expected-win': 'expected win',
-  won: 'won',
-  draw: 'draw',
-  'lost-to-stronger': 'lost to a stronger player',
-  'lost-to-weaker': 'lost to a lower-ranked player',
-  lost: 'lost',
-  left: 'left the game',
-  shield: 'held by the shield',
-};
-
-export function reasonText(reason: string | null): string {
-  if (!reason) return '';
-  return (RANK_REASONS as readonly string[]).includes(reason) ? REASON_TEXT[reason as RankReason] : reason.replace(/-/g, ' ');
-}
-
-/** "+18", "−6", "±0" — the true minus sign, as the apps write a change. */
-export function signed(n: number): string {
-  if (n === 0) return '±0';
-  return n > 0 ? `+${n.toLocaleString()}` : `−${Math.abs(n).toLocaleString()}`;
-}
-
-export function percent(share: number): string {
-  if (share === 0) return '0%';
-  const p = share * 100;
-  return `${p < 1 ? p.toFixed(1) : Math.round(p)}%`;
-}
-
 // ---- What the API sends -----------------------------------------------------------
-
-/** `GET /admin/ranks/top/:game`. */
-export interface TopPlayer {
-  userId: string;
-  username: string;
-  points: number;
-  ratedGames: number;
-  wins: number;
-  lastRatedAt: string | null;
-}
-
-/** `GET /admin/seasons`. */
-export interface SeasonList {
-  current: string;
-  seasons: Array<{ id: string; closedAt: string | null; rewardedAt: string | null; rewards: number; gems: number }>;
-}
 
 /** A league run (`league_runs`): the Monday settle or the Wednesday merge of one week. */
 export interface LeagueRunStatus {
@@ -283,7 +188,7 @@ export function utcOffset(minutes: number): string {
   return `UTC${sign}${h}${m ? `:${String(m).padStart(2, '0')}` : ''}`;
 }
 
-/** The longest reason the rank and badge routes take; they ask for at least three characters. */
+/** The longest reason the badge routes take; they ask for at least three characters. */
 export const REASON_MAX = 500;
 export function reasonProblem(value: string): string | null {
   const t = value.trim();
@@ -292,7 +197,7 @@ export function reasonProblem(value: string): string | null {
   return null;
 }
 
-/** Whether these staff roles may use the rank, league, season and badge tools, as their routes check (RANK_TOOL_ROLES). */
-export function holdsRankTools(staffRoles: readonly string[]): boolean {
-  return RANK_TOOL_ROLES.some((r) => staffRoles.includes(r));
+/** Whether these staff roles may use the league and badge tools, as their routes check (PROGRESS_TOOL_ROLES). */
+export function holdsProgressTools(staffRoles: readonly string[]): boolean {
+  return PROGRESS_TOOL_ROLES.some((r) => staffRoles.includes(r));
 }
