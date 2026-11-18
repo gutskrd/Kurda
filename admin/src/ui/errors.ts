@@ -9,17 +9,17 @@ import { ApiError } from '../api';
 import { waitText } from './Time';
 
 export type ErrorKind =
-  /** signed in, but this account's role is not allowed this */
+  /** Signed in, but this account's role is not allowed this. */
   | 'forbidden'
-  /** the 2FA window ran out: a code is needed again */
+  /** The 2FA window ran out: a code is needed again. */
   | 'two_factor'
-  /** this account has not set up 2FA yet */
+  /** This account has not set up 2FA yet. */
   | 'two_factor_setup'
   | 'signed_out'
   | 'not_found'
-  /** the request reached nothing: no connection, or the server is down */
+  /** The request reached nothing: no connection, or the server is down. */
   | 'offline'
-  /** the server refused what was sent (a form problem, a state that changed) */
+  /** The server refused what was sent (a form problem, a state that changed). */
   | 'invalid'
   | 'conflict'
   | 'rate_limited'
@@ -29,7 +29,7 @@ export interface DescribedError {
   kind: ErrorKind;
   title: string;
   message: string;
-  /** the server's id for the request, to quote in a bug report */
+  /** The server's id for the request, to quote in a bug report. */
   requestId: string | null;
 }
 
@@ -66,8 +66,8 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
         requestId,
       };
     }
-    // a refusal about who, not about the role: the person is part of the case,
-    // or the second pair of eyes cannot be the first
+    // A refusal about who, not about the role: the person is part of the case,
+    // or the second pair of eyes cannot be the first.
     if (err.status === 403 && SOMEONE_ELSE.has(err.code)) {
       return {
         kind: 'conflict',
@@ -94,7 +94,7 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
       return { kind: 'conflict', title: 'Something changed', message: serverMessage(err) || 'Reload and try again.', requestId };
     }
     if (err.status === 429) {
-      // the server says how long; "wait a minute" was wrong for a fifteen-minute lockout
+      // The server says how long; "wait a minute" was wrong for a fifteen-minute lockout.
       const wait = err.retryAfterSec ? waitText(err.retryAfterSec) : 'a few minutes';
       if (err.code === 'TOTP_LOCKED') {
         return {
@@ -129,7 +129,7 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
       requestId,
     };
   }
-  // fetch rejects with a TypeError when the request never got an answer
+  // Fetch rejects with a TypeError when the request never got an answer.
   if (err instanceof TypeError) {
     return {
       kind: 'offline',
@@ -149,7 +149,7 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
 /** One line for a toast or an inline message: the title and what to do. */
 export function errorLine(err: unknown, what?: string): string {
   const d = describeError(err, what);
-  // a form problem's own words say more than the title does
+  // A form problem's own words say more than the title does.
   if (d.kind === 'invalid' || d.kind === 'conflict' || d.kind === 'not_found') return d.message;
   return `${d.title}. ${d.message}`;
 }

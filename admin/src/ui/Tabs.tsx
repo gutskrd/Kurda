@@ -14,7 +14,7 @@ import { useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'rea
 export interface TabItem<K extends string> {
   key: K;
   label: ReactNode;
-  /** a count beside the label: "Still to record (12)" */
+  /** A count beside the label: "Still to record (12)". */
   count?: number;
   href?: string;
 }
@@ -30,16 +30,16 @@ export function Tabs<K extends string>({
   items: ReadonlyArray<TabItem<K>>;
   value: K;
   onChange?: (key: K) => void;
-  /** what the row chooses, for screen readers: "Status", "Show" */
+  /** What the row chooses, for screen readers: "Status", "Show". */
   label: string;
-  /** with a panel, `${idBase}-panel` labels it and the tabs control it */
+  /** With a panel, `${idBase}-panel` labels it and the tabs control it. */
   idBase?: string;
   className?: string;
 }): React.JSX.Element {
   const refs = useRef(new Map<K, HTMLElement>());
   const list = useRef<HTMLDivElement>(null);
 
-  // the row only: scrollIntoView would move the page too
+  // The row only: scrollIntoView would move the page too.
   useLayoutEffect(() => {
     const row = list.current;
     const tab = refs.current.get(value);

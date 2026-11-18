@@ -76,7 +76,7 @@ export function Events(): React.JSX.Element {
   const toast = useToast();
   const dialogs = useDialogs();
   const list = useLoad(() => api<{ events: GameEvent[] }>('/admin/events').then((r) => r.events), []);
-  // an event with rewards waits in Approvals, so it is not on this list yet: say so
+  // An event with rewards waits in Approvals, so it is not on this list yet: say so.
   const pending = useLoad(
     () => api<{ pending: { target: string }[] }>('/admin/config/changes').then((r) => r.pending.filter((c) => c.target === 'event').length),
     [],
@@ -251,7 +251,7 @@ function EventForm({ event, onClose, onSaved }: { event: GameEvent | null; onClo
     setBusy(true);
     try {
       if (rewardsChanged) {
-        // anything that grants currency waits for a second admin
+        // Anything that grants currency waits for a second admin.
         const res = await api<{ status: 'applied' | 'pending' }>('/admin/config/changes', {
           method: 'POST',
           body: { target: 'event', payload: { ...body, rewards: rewardMap } },

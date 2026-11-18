@@ -33,7 +33,7 @@ export interface Person extends Tally {
   about: string | null;
   dialect: ScriptDialect | null;
   dialects: Array<Tally & { dialect: ScriptDialect }>;
-  /** the accounts that record this voice (empty for a voice actor, who sees only their own) */
+  /** The accounts that record this voice (empty for a voice actor, who sees only their own). */
   linked: Array<{ id: string; username: string }>;
 }
 
@@ -44,9 +44,9 @@ export interface RoadChapter {
   titleEn: string;
   lessons: number;
   published: number;
-  /** the story Hamo tells at the chapter's end, which goes online with it; absent from an older server */
+  /** The story Hamo tells at the chapter's end, which goes online with it; absent from an older server. */
   story?: { slug: string; title: string; online: boolean } | null;
-  /** the recordings its lessons and story play, and how many are made */
+  /** The recordings its lessons and story play, and how many are made. */
   lines: number;
   recorded: number;
   online: boolean;
@@ -54,11 +54,11 @@ export interface RoadChapter {
 
 export interface PeopleListing {
   people: Person[];
-  /** the voices linked to the account asking */
+  /** The voices linked to the account asking. */
   mine: VoiceId[];
-  /** the account records only its own voices */
+  /** The account records only its own voices. */
   ownVoicesOnly: boolean;
-  /** the road's chapters in order; absent from a server that does not say */
+  /** The road's chapters in order; absent from a server that does not say. */
   chapters?: RoadChapter[];
 }
 
@@ -127,9 +127,9 @@ export type SourceFilter = 'all' | 'published' | 'draft';
 
 export interface Filters {
   status: StatusFilter;
-  /** one heading's lines (a unit, a story, a word set), or every heading's */
+  /** One heading's lines (a unit, a story, a word set), or every heading's. */
   section: string | null;
-  /** lines learners meet today, or lines only drafts have so far */
+  /** Lines learners meet today, or lines only drafts have so far. */
   source: SourceFilter;
 }
 
@@ -222,7 +222,7 @@ export function savePlace(voice: VoiceId, lineId: string): void {
   try {
     localStorage.setItem(`${RESUME_KEY}:${voice}`, lineId);
   } catch {
-    // a blocked storage only means the next visit starts at the first line to record
+    // A blocked storage only means the next visit starts at the first line to record.
   }
 }
 
@@ -330,7 +330,7 @@ export function scriptCsv(lines: readonly Line[]): string {
       .map(csvCell)
       .join(','),
   );
-  // a byte-order mark, so a spreadsheet opens the Kurdish letters as Unicode
+  // A byte-order mark, so a spreadsheet opens the Kurdish letters as Unicode.
   return `﻿${[head.join(','), ...rows].join('\r\n')}\r\n`;
 }
 

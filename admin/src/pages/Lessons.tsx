@@ -58,7 +58,7 @@ function LessonListPage({ initialStatus, initialCourse }: { initialStatus: strin
   const [q, setQ] = useState('');
   const query = useDebounced(q.trim(), 250);
   const [creating, setCreating] = useState(false);
-  // everything at once (a few hundred rows at most): the tabs count by status; the course and the search ask the server
+  // Everything at once (a few hundred rows at most): the tabs count by status; the course and the search ask the server.
   const list = useLoad(
     () => api<LessonList>(`/admin/content/lessons?status=all${course ? `&course=${encodeURIComponent(course)}` : ''}${query ? `&q=${encodeURIComponent(query)}` : ''}`),
     [query, course],
@@ -67,8 +67,8 @@ function LessonListPage({ initialStatus, initialCourse }: { initialStatus: strin
   const courseTitle = courses.find((c) => c.slug === course)?.title;
 
   const all = list.data?.lessons ?? null;
-  // the server sends at most 500 rows (LESSON_LIST_MAX); past that, the list and its counts
-  // are the first part only, and the page says so rather than letting the rest vanish
+  // The server sends at most 500 rows (LESSON_LIST_MAX); past that, the list and its counts
+  // are the first part only, and the page says so rather than letting the rest vanish.
   const cut = list.data && list.data.total > list.data.lessons.length ? list.data.total : null;
   const counts = useMemo(() => {
     const c: Record<StatusFilter, number> = { current: 0, draft: 0, in_review: 0, published: 0, archived: 0 };
@@ -165,7 +165,7 @@ function LessonListPage({ initialStatus, initialCourse }: { initialStatus: strin
                       {c.title}
                     </option>
                   ))}
-                  {/* a course the address names that the list does not know (yet) is still the one chosen */}
+                  {/* A course the address names that the list does not know (yet) is still the one chosen. */}
                   {course && !courses.some((c) => c.slug === course) && <option value={course}>{course}</option>}
                 </select>
               </>
@@ -192,7 +192,7 @@ function LessonListPage({ initialStatus, initialCourse }: { initialStatus: strin
           error={list.error}
           onRetry={() => void list.reload()}
           what="lessons"
-          // five columns and two buttons: on a tablet the titles wrapped a word to a line, so cards there
+          // Five columns and two buttons: on a tablet the titles wrapped a word to a line, so cards there.
           wide="medium"
           empty={
             query

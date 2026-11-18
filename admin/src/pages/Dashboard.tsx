@@ -63,7 +63,7 @@ export function Dashboard(): React.JSX.Element {
 
       {can('security-log') && <SecurityStatus />}
       {can('audio') && <Recordings />}
-      {/* someone who only records: their own voices, since the studio's counts are not theirs to open */}
+      {/* Someone who only records: their own voices, since the studio's counts are not theirs to open. */}
       {can('record') && !can('audio') && <YourRecording />}
       {moderator && <ModerationPanel />}
       <Waiting
@@ -128,7 +128,7 @@ function Recordings(): React.JSX.Element {
   const lessonNeeded = items ? items.filter((i) => i.usedIn.some((u) => !isStoryUsage(u))).length : null;
   const storyNeeded = items ? items.filter((i) => i.usedIn.some(isStoryUsage)).length : null;
 
-  // the words to know are recorded on the alphabet's side of the studio, and counted on a line of their own
+  // The words to know are recorded on the alphabet's side of the studio, and counted on a line of their own.
   const rows = [
     { key: 'letters', side: 'letters', label: 'Alphabet: letters and example words', missing: missingOf(LETTER_CLIPS), total: LETTER_CLIPS.length, error: letters.error },
     { key: 'words', side: 'letters', label: 'Words to know: colours, numbers, days, months', missing: missingOf(WORD_SET_CLIPS), total: WORD_SET_CLIPS.length, error: letters.error },
@@ -198,7 +198,7 @@ function Recordings(): React.JSX.Element {
 
 function ModerationPanel(): React.JSX.Element {
   const summary = useLoad(() => api<ModerationSummary>('/admin/moderation/summary'), []);
-  // how long a case takes to decide, typically; a quiet extra, left out when it can't be read
+  // How long a case takes to decide, typically; a quiet extra, left out when it can't be read.
   const sla = useLoad(() => api<{ medianSeconds: number | null; resolved: number }>('/admin/moderation/sla'), []);
   const s = summary.data;
   return (

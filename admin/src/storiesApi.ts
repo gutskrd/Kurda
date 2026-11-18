@@ -168,16 +168,16 @@ export function categoryInUse(err: unknown): number | null {
 // ── refusals ────────────────────────────────────────────────────────────────
 
 export type StoryFailure =
-  /** someone changed the story since it was loaded: reload before going on */
+  /** Someone changed the story since it was loaded: reload before going on. */
   | { kind: 'stale'; message: string }
-  /** the server found problems; `validation` has them by field when it said which */
+  /** The server found problems; `validation` has them by field when it said which. */
   | { kind: 'invalid'; message: string; validation: StoryValidation | null }
   | { kind: 'slug_taken'; message: string }
-  /** a game has used the story, so it cannot be deleted (archive it instead) */
+  /** A game has used the story, so it cannot be deleted (archive it instead). */
   | { kind: 'in_use'; message: string }
-  /** its status changed under the editor (published, archived) */
+  /** Its status changed under the editor (published, archived). */
   | { kind: 'state'; message: string }
-  /** no reviewer has approved it, so it cannot be published yet */
+  /** No reviewer has approved it, so it cannot be published yet. */
   | { kind: 'not_reviewed'; message: string }
   | { kind: 'not_found'; message: string }
   | { kind: 'forbidden'; message: string }
@@ -241,7 +241,7 @@ export function storyFailure(err: unknown): StoryFailure {
 }
 
 export type ActionOutcome =
-  /** `story` is the story as it now is, or null once deleted */
+  /** `story` is the story as it now is, or null once deleted. */
   | { ok: true; story: AdminStory | null }
   /**
    * `story` is set when an earlier step went through — "save and publish"
@@ -285,7 +285,7 @@ export async function runStoryAction(
     });
     return { ok: true, story: current };
   } catch (err) {
-    // `current` is still what the last successful step returned (or the story as loaded)
+    // `current` is still what the last successful step returned (or the story as loaded).
     return { ok: false, failure: storyFailure(err), story: current !== ctx.story ? current : null };
   }
 }

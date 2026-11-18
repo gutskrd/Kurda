@@ -97,7 +97,7 @@ export default function Console({ onSignOut }: { onSignOut: () => void }): React
   const route = useRoute();
   const landing = landingRoute(session);
 
-  // no address, or the bare #/: start on the first page this role can open
+  // No address, or the bare #/: start on the first page this role can open.
   useEffect(() => {
     if (!route.page) location.replace(`#/${landing}`);
   }, [route.page, landing]);

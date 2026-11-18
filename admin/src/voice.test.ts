@@ -82,7 +82,7 @@ describe('uploading a recording with its voice', () => {
     const [call] = api.calls;
     expect(call!.path).toMatch(/^\/admin\/lesson-audio\?text=Silav&speaker=xezo&lipsync=/);
     expect(lipsyncIn(call!.path)!.durationMs).toBe(1200);
-    // decoding takes over the buffer it is given, so it is given a copy and the upload keeps the original
+    // Decoding takes over the buffer it is given, so it is given a copy and the upload keeps the original.
     expect(decoded[0]).not.toBe(wav.buffer);
     expect(decoded[0]!.byteLength).toBe(wav.byteLength);
     expect((sent.mock.calls[0]![1] as RequestInit).body).toBe(wav);

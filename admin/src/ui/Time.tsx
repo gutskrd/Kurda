@@ -89,7 +89,7 @@ export function Time({
   mode = 'relative',
 }: {
   value: string | Date | null | undefined;
-  /** relative: "3 h ago"; date: "12 Oct"; absolute: date and time in full */
+  /** Relative: "3 h ago"; date: "12 Oct"; absolute: date and time in full. */
   mode?: 'relative' | 'date' | 'absolute';
 }): React.JSX.Element {
   if (!value) return <span className="subtle">—</span>;

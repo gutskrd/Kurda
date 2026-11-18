@@ -56,7 +56,7 @@ function remember(filter: ListFilter, page: number): void {
   try {
     sessionStorage.setItem(FILTER_KEY, JSON.stringify({ ...filter, page }));
   } catch {
-    // a blocked storage only means the filter is not remembered
+    // A blocked storage only means the filter is not remembered.
   }
 }
 
@@ -90,7 +90,7 @@ export function StoryList({ onNew }: { onNew: () => void }): React.JSX.Element {
       remember(merged, 0);
       return merged;
     });
-    // another filter is another list: it starts on its first page
+    // Another filter is another list: it starts on its first page.
     setPageState(0);
   };
   const setPage = (next: number): void => {
@@ -100,7 +100,7 @@ export function StoryList({ onNew }: { onNew: () => void }): React.JSX.Element {
 
   const total = list.data?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  // a page past the end (the list shrank since it was remembered) goes to the last one there is
+  // A page past the end (the list shrank since it was remembered) goes to the last one there is.
   useEffect(() => {
     if (!list.data || page <= pageCount - 1) return;
     setPageState(pageCount - 1);
@@ -209,7 +209,7 @@ function Filters({
             {c.name.en}
           </option>
         ))}
-        {/* a remembered category that is gone stays choosable until it is changed, so the filter is not silently dropped */}
+        {/* A remembered category that is gone stays choosable until it is changed, so the filter is not silently dropped. */}
         {filter.category !== 'all' && categories && !categories.some((c) => c.slug === filter.category) && (
           <option value={filter.category}>{filter.category} (no longer a category)</option>
         )}

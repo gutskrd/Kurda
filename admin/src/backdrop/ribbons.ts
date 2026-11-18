@@ -29,14 +29,14 @@ export function fitScene(width: number, height: number): Fit {
 
 /** One ribbon: the waves its middle follows, how wide it is and how it twists, and where it sits. */
 interface Ribbon {
-  /** the middle's two waves: height, length and speed, and where each starts */
+  /** The middle's two waves: height, length and speed, and where each starts. */
   waves: readonly (readonly [amp: number, length: number, speed: number, start: number])[];
-  /** half the ribbon's width, the length of its twist, how fast it turns and where it starts */
+  /** Half the ribbon's width, the length of its twist, how fast it turns and where it starts. */
   twist: readonly [half: number, length: number, speed: number, start: number];
-  /** how far its middle sits below the scene's, and how far and how fast it drifts up and down */
+  /** How far its middle sits below the scene's, and how far and how fast it drifts up and down. */
   offset: number;
   drift: readonly [amp: number, speed: number];
-  /** how many lines it is woven of, and how bright it is */
+  /** How many lines it is woven of, and how bright it is. */
   lines: number;
   light: number;
 }
@@ -76,23 +76,23 @@ function ribbonGlsl(r: Ribbon): string {
   return `
   {
     float mid = ${f(SCENE.height / 2 + r.offset)} + ${f(r.drift[0])} * sin(${f(r.drift[1])} * t) + reach * (${middle});
-    // half the band's width: where the band twists it turns edge-on, but a fold is never thinner than this
+    // Half the band's width: where the band twists it turns edge-on, but a fold is never thinner than this.
     float open = reach * ${f(half)} * sin(${f(TAU / length)} * s.x + ${f(speed)} * t + ${f(start)});
     float hw = sqrt(open * open + 100.0);
     float d = abs(s.y - mid);
-    // its edge soft, as silk's is, and lit along it
+    // Its edge soft, as silk's is, and lit along it.
     float inside = 1.0 - smoothstep(hw - 2.0, hw + 2.5, d);
     float rim = exp(-pow((d - hw) / 3.0, 2.0)) * (20.0 / (hw + 20.0));
-    // the lines' light, spread over the band: the narrower the band, the brighter
+    // The lines' light, spread over the band: the narrower the band, the brighter.
     float spacing = 2.0 * hw / ${f(r.lines)};
     float mean = ${f(r.light)} * 14.0 / (hw + 2.0);
-    // a line every spacing, each LINE_PX wide on the screen, drawn as lines while they are far enough apart to see
+    // A line every spacing, each LINE_PX wide on the screen, drawn as lines while they are far enough apart to see.
     float across = (s.y - mid + hw) / spacing;
     float off = abs(fract(across) - 0.5) * spacing / pixel;
     float apart = spacing / pixel;
     float weave = (1.0 - smoothstep(0.0, LINE_PX, off)) * apart / LINE_PX;
     light += fade * (inside * mean * mix(1.0, weave * (0.7 + 0.3 * grain), smoothstep(1.6, 3.2, apart)) + ${f(r.light)} * 0.9 * rim);
-    // the glow round it, brighter where it folds
+    // The glow round it, brighter where it folds.
     float reachOut = hw + 26.0;
     glow += fade * ${f(r.light)} * (18.0 / (hw + 18.0)) * exp(-(d * d) / (2.0 * reachOut * reachOut));
   }`;
@@ -113,7 +113,7 @@ void main() {
   float pixel = 1.0 / scale;
   float envelope = pow(sin(3.14159265 * clamp(s.x / ${f(SCENE.width)}, 0.0, 1.0)), 0.7);
   float reach = 0.3 + 0.7 * envelope;
-  // the light dies away toward the sides faster than the ribbons narrow
+  // The light dies away toward the sides faster than the ribbons narrow.
   float fade = pow(envelope, 1.6);
   float grain = hash(floor(px));
   float light = 0.0;

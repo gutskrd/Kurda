@@ -26,7 +26,7 @@ export function VocabularyPicker({
   label: string;
   onPick: (word: VocabularyPick) => void;
   disabled?: boolean;
-  /** words already on the card, not offered again */
+  /** Words already on the card, not offered again. */
   exclude?: readonly string[];
 }): React.JSX.Element {
   const [query, setQuery] = useState('');

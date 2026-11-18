@@ -50,7 +50,7 @@ export function Leagues(): React.JSX.Element {
   if (route.rest[0] === 'group' && route.rest[1]) return <GroupPage id={route.rest[1]} />;
   const asked = route.query.get('week');
   const thisWeek = weekStart(new Date());
-  // any day of a week names that week; the API wants its Monday
+  // Any day of a week names that week; the API wants its Monday.
   const week = asked && WEEK.test(asked) ? weekStart(new Date(`${asked}T12:00:00Z`)) : thisWeek;
   return <WeekPage week={week} thisWeek={thisWeek} />;
 }

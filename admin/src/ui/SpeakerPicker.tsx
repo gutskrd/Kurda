@@ -40,7 +40,7 @@ export function SpeakerPicker({
   value: Speaker;
   onChange: (next: Speaker) => void;
   label?: string;
-  /** offer "None" as well as the three */
+  /** Offer "None" as well as the three. */
   none?: boolean;
   disabled?: boolean;
   hint?: ReactNode;
@@ -48,7 +48,7 @@ export function SpeakerPicker({
   const id = useId();
   const options: Speaker[] = none ? [...SPEAKERS, null] : [...SPEAKERS];
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
-  // the chosen one takes the Tab stop; the first, when none of these is chosen
+  // The chosen one takes the Tab stop; the first, when none of these is chosen.
   const stop = Math.max(0, options.indexOf(value));
 
   const move = (e: KeyboardEvent, at: number): void => {

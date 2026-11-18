@@ -103,7 +103,7 @@ export function AiModeration(): React.JSX.Element {
             <Badge tone={actionTone(f.action)}>{f.action}</Badge>
             {f.csamMatch && <Badge tone="bad">CSAM</Badge>}
           </span>
-          {/* said on the row rather than in a tooltip on the disabled button, which a finger never brings up */}
+          {/* Said on the row rather than in a tooltip on the disabled button, which a finger never brings up. */}
           {f.preserveEvidence && <span className="cell-sub">Evidence is kept: it can be upheld, not overturned.</span>}
         </>
       ),
@@ -164,7 +164,7 @@ export function AiModeration(): React.JSX.Element {
           actions={(f) => (
             <Resolve
               busy={busy === f.id}
-              // a preserved-evidence CSAM flag can only be actioned, never overturned
+              // A preserved-evidence CSAM flag can only be actioned, never overturned.
               noReverse={f.preserveEvidence}
               onResolve={(o) => void resolve('image-flags', f.id, o)}
             />

@@ -78,7 +78,7 @@ describe('the email, first', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('heading', { name: 'Enter your password' })).toBeInTheDocument();
     expect(onRail()).toBe('Password');
-    // nothing about the account was asked of the server: whether it exists is never said
+    // Nothing about the account was asked of the server: whether it exists is never said.
     expect(api.calls.some((c) => c.path.startsWith('/admin/auth') || c.path.startsWith('/auth'))).toBe(false);
   });
 
@@ -134,10 +134,10 @@ describe('the password, under its email', () => {
     expect(await screen.findByRole('heading', { name: 'Enter your 2FA code' })).toBeInTheDocument();
     expect(onRail()).toBe('Two-step');
     const login = api.calls.find((c) => c.path === '/admin/auth/login')!;
-    // named for the admin's own list of signed-in devices, and remembered unless told otherwise
+    // Named for the admin's own list of signed-in devices, and remembered unless told otherwise.
     expect(login.body).toEqual({ email: 'rojda@hevalo.app', password: 'right', deviceName: expect.stringMatching(/^Admin console/), remember: true });
     expect(login.headers['x-device-id']).toMatch(/^[0-9a-f-]{36}$/);
-    // the session is kept to be renewed, not signed in to again in fifteen minutes
+    // The session is kept to be renewed, not signed in to again in fifteen minutes.
     expect(getToken()).toBe('tok-9');
     expect(getRefreshToken()).toBe('ref-9');
   });
@@ -198,7 +198,7 @@ describe('the code', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(await said('alert')).toHaveTextContent('Enter all six digits from your authenticator app.');
     expect(api.calls.some((c) => c.path === '/admin/auth/verify')).toBe(false);
-    // gone as soon as the code is being put right
+    // Gone as soon as the code is being put right.
     await userEvent.type(box, '4');
     expect(saysNothing('alert')).toBe(true);
   });
@@ -242,7 +242,7 @@ describe('after too many wrong codes', () => {
     const alert = await said('alert');
     expect(alert).toHaveTextContent('Code entry is paused');
     expect(alert).toHaveTextContent('You can try again in 5 minutes.');
-    // the server's own words, lower case and without a time, are not what is shown
+    // The server's own words, lower case and without a time, are not what is shown.
     expect(alert).not.toHaveTextContent('try again later');
     expect(screen.getByRole('button', { name: /Try again in 4:4\d/ })).toBeDisabled();
   });
@@ -291,7 +291,7 @@ describe('a way out', () => {
 
   it('ends the session on the server when signing out, so it leaves the list of signed-in devices', async () => {
     const { api } = show(true, on('POST', '/auth/logout', json({ ok: true })));
-    // a sign-in that kept its refresh token, as every one does now
+    // A sign-in that kept its refresh token, as every one does now.
     setToken('tok', true, 'ref-7');
     await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
     expect(getToken()).toBeNull();
@@ -353,7 +353,7 @@ describe('Hevalo on the sign-in', () => {
   it('shows only his head and neck over the card for the email, and climbs out over it once the email is given', async () => {
     const user = userEvent.setup();
     show(false);
-    // up as far as his neck, his forelegs shut in behind the card
+    // Up as far as his neck, his forelegs shut in behind the card.
     await waitFor(
       () => {
         expect(below()).toBeGreaterThan(140);
@@ -382,7 +382,7 @@ describe('Hevalo on the sign-in', () => {
     await waitFor(() => expect(lid('right', 'closed')).toBe('visible'));
     await user.click(screen.getByRole('button', { name: 'Show password' }));
     await waitFor(() => expect(lid('right', 'half')).toBe('visible'));
-    // the hoof comes down under the eye a moment after it opens, as a leg follows
+    // The hoof comes down under the eye a moment after it opens, as a leg follows.
     await waitFor(() => expect(hoofY('right')).toBeGreaterThan(hoofY('left') + 20));
     await user.click(screen.getByRole('button', { name: 'Change the email, rojda@hevalo.app' }));
     await waitFor(() => expect(legTurn('left')).toBeLessThan(5));

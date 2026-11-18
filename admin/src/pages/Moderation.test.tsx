@@ -72,7 +72,7 @@ describe('the queue', () => {
     expect(within(rows[2]!).getByText('2 reports')).toBeInTheDocument();
     expect(within(rows[2]!).getByText('by 2 people')).toBeInTheDocument();
     expect(calls.find((c) => c.path.startsWith('/admin/moderation/queue'))!.path).toBe('/admin/moderation/queue?status=open&limit=50');
-    // the counts by priority, and what else waits
+    // The counts by priority, and what else waits.
     expect(screen.getByRole('button', { name: /Urgent\s*1\s*1 overdue/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '2 appeals waiting' })).toHaveAttribute('href', '#/appeals');
   });
@@ -144,7 +144,7 @@ describe('a case', () => {
   it('shows the content in its conversation, the reporters and how far to trust them, and the reported person’s past', async () => {
     show(at, detailRoute(caseDetail()));
     expect(await screen.findByRole('heading', { name: 'Bullying or harassment' })).toBeInTheDocument();
-    // the second report's capture is folded away below; the first is the content
+    // The second report's capture is folded away below; the first is the content.
     const reported = screen.getAllByText('Reported message')[0]!.closest('li')!;
     expect(reported).toHaveAttribute('aria-current', 'true');
     expect(within(reported).getByText('nobody wants you here')).toBeInTheDocument();
@@ -152,7 +152,7 @@ describe('a case', () => {
     expect(screen.getByText('He keeps saying this to new people.')).toBeInTheDocument();
     expect(screen.getByText(/80% of their decided reports led to action/)).toBeInTheDocument();
     expect(screen.getByText(/None of their reports has been decided yet/)).toBeInTheDocument();
-    // the child reporter is marked as one
+    // The child reporter is marked as one.
     const zana = screen.getAllByRole('link', { name: '@zana' })[0]!.closest('.user-link')!;
     expect(within(zana as HTMLElement).getByText('Minor')).toBeInTheDocument();
     expect(screen.getByText('1 earlier sanction')).toBeInTheDocument();
@@ -179,13 +179,13 @@ describe('a case', () => {
     });
     show(at, detailRoute(d));
     const figure = (await screen.findByRole('button', { name: 'Show picture' })).closest('figure')!;
-    // no <img src> before the reveal: the file is not on the moderator's device, not even in the cache
+    // No <img src> before the reveal: the file is not on the moderator's device, not even in the cache.
     expect(document.querySelector('img')).toBeNull();
     expect(document.body.innerHTML).not.toContain('cdn.test/a.webp');
     await user.click(screen.getByRole('button', { name: 'Show picture' }));
     const ask = await screen.findByRole('alertdialog', { name: 'Show this picture?' });
     expect(ask).toHaveTextContent('Never download, forward or screenshot it');
-    // saying no keeps it unfetched
+    // Saying no keeps it unfetched.
     await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
     expect(document.querySelector('img')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Show picture' }));
@@ -215,7 +215,7 @@ describe('a case', () => {
   it('renews its own claim before it runs out while the moderator is at work', async () => {
     const mineSoon = caseDetail({ case: { status: 'in_review', claimedBy: { id: ME_ID, username: 'rojda' }, leaseUntil: new Date(Date.now() + 60_000).toISOString() } });
     const { calls } = show(at, detailRoute(mineSoon), on('POST', /\/claim$/, json({ leaseUntil: new Date(Date.now() + 900_000).toISOString() })));
-    // a minute left: renewed at once (opening the case counts as being at work), then read again
+    // A minute left: renewed at once (opening the case counts as being at work), then read again.
     await waitFor(() => expect(posts(calls, `/admin/moderation/cases/${CASE_ID}/claim`)).toHaveLength(1));
     await waitFor(() => expect(calls.filter((c) => c.method === 'GET' && c.path === `/admin/moderation/cases/${CASE_ID}`)).toHaveLength(2));
     expect(screen.getByText(/^Yours until/)).toBeInTheDocument();
@@ -233,14 +233,14 @@ describe('a case', () => {
     const user = userEvent.setup();
     const { calls } = show(at, detailRoute(caseDetail()), previewRoute(), on('POST', /\/claim$/, json({ claimed: true })));
     await user.click(await screen.findByRole('button', { name: 'Sanction this person' }));
-    // the case's own rule is chosen; the moderator picks a chat mute for 7 days
+    // The case's own rule is chosen; the moderator picks a chat mute for 7 days.
     expect(screen.getByLabelText(/^Rule broken/)).toHaveValue('harassment');
     await user.selectOptions(screen.getByLabelText('Action'), 'chat_mute');
     await user.click(screen.getByRole('radio', { name: '7 d' }));
     expect(screen.getByLabelText('What @baran is told')).toHaveValue('Your messages broke Hevalo’s rule on bullying and harassment.');
     await user.click(screen.getByLabelText('Remove the content'));
 
-    // the server's own preview of what people will read
+    // The server's own preview of what people will read.
     expect(await screen.findByText("You can't send messages for a while", {}, { timeout: 2000 })).toBeInTheDocument();
     expect(screen.getByText('To The reporters')).toBeInTheDocument();
     await waitFor(() =>
@@ -288,7 +288,7 @@ describe('a case', () => {
     const { calls } = show(at, detailRoute(caseDetail()), previewRoute(ban));
     await user.click(await screen.findByRole('button', { name: 'Sanction this person' }));
     await user.selectOptions(screen.getByLabelText('Action'), 'suspension');
-    // "Permanent" on a suspension is a permanent ban
+    // "Permanent" on a suspension is a permanent ban.
     await user.click(screen.getByRole('radio', { name: 'Permanent' }));
     expect(screen.getByLabelText('Action')).toHaveValue('permanent_ban');
     expect(await screen.findByText(/You are the only moderator/, {}, { timeout: 2000 })).toBeInTheDocument();
@@ -322,7 +322,7 @@ describe('a case', () => {
       await user.click(within(ask).getByRole('button', { name: 'Ban for good' }));
     }
     await waitFor(() => expect(applied(calls)).toHaveLength(1));
-    // each ban is confirmed by its own name: with only the last one sent, the first would be refused
+    // Each ban is confirmed by its own name: with only the last one sent, the first would be refused.
     expect(applied(calls)[0]!.body).toMatchObject({ confirmUsernames: ['baran', 'rojin'] });
     expect(applied(calls)[0]!.body).not.toHaveProperty('confirmUsername');
   });
@@ -344,7 +344,7 @@ describe('a case', () => {
   it('helps someone who may hurt themselves instead of sanctioning them', async () => {
     const user = userEvent.setup();
     const { calls } = show(at, detailRoute(caseDetail({ case: { category: 'self_harm', priority: 0 } })), previewRoute(preview({ messages: [] })));
-    // the person's panel offers help, not a sanction
+    // The person's panel offers help, not a sanction.
     expect(await screen.findByRole('button', { name: 'Send a caring message' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Sanction this person' })).not.toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Add a caring message' }));

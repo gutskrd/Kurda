@@ -11,17 +11,17 @@ import { errorLine } from '../ui';
 import type { ArtKind } from './model';
 
 export interface ArtRule {
-  /** width ÷ height */
+  /** Width ÷ height. */
   ratio: number;
-  /** the shape in words, for "a background must be …" */
+  /** The shape in words, for "a background must be …" */
   shape: string;
   minWidth: number;
   minHeight: number;
-  /** what the server stores it as, for the hint */
+  /** What the server stores it as, for the hint. */
   stored: string;
-  /** the most the stored file may weigh */
+  /** The most the stored file may weigh. */
   weight: string;
-  /** an example size, for the hint */
+  /** An example size, for the hint. */
   example: string;
 }
 
@@ -44,7 +44,7 @@ export const KIND_NAME: Record<ArtKind, { one: string; a: string; plural: string
   icon: { one: 'icon', a: 'an icon', plural: 'Icons' },
 };
 
-/** "16:9, at least 1280×720 · PNG, WebP or JPEG up to 5 MB" */
+/** "16:9, at least 1280×720 · PNG, WebP or JPEG up to 5 MB". */
 export function ruleText(kind: ArtKind): string {
   const r = ART_RULES[kind];
   return `${r.shape === 'square' ? 'Square' : r.shape}, at least ${r.minWidth}×${r.minHeight} (${r.example} is ideal). PNG, WebP or JPEG up to 5 MB.`;

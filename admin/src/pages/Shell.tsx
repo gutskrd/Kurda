@@ -25,8 +25,8 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
   const counts = useNavCounts(session.capabilities.includes('moderation.act'));
   const routeKey = `${route.page}/${route.rest.join('/')}`;
 
-  // a new page: the menu closes, the tab says where you are, and a screen
-  // reader starts at the new page's heading rather than where the click was
+  // A new page: the menu closes, the tab says where you are, and a screen
+  // reader starts at the new page's heading rather than where the click was.
   const first = useRef(true);
   useEffect(() => {
     setMenuOpen(false);
@@ -51,7 +51,7 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
         className="skip-link"
         href="#main"
         onClick={(e) => {
-          // the address is the router's: move focus without touching it
+          // The address is the router's: move focus without touching it.
           e.preventDefault();
           document.getElementById('main')?.focus();
         }}
@@ -107,7 +107,7 @@ function Brand(): React.JSX.Element {
 }
 
 interface NavCounts {
-  /** open moderation cases, and whether any is urgent or overdue */
+  /** Open moderation cases, and whether any is urgent or overdue. */
   moderation?: { open: number; urgent: boolean };
 }
 
@@ -148,7 +148,7 @@ function NavPanel({
   active: NavEntry | undefined;
   counts: NavCounts;
   onPick?: () => void;
-  /** "/" jumps to the search box — only for the sidebar, which is always on screen */
+  /** "/" jumps to the search box — only for the sidebar, which is always on screen. */
   shortcut?: boolean;
 }): React.JSX.Element {
   const [query, setQuery] = useState('');

@@ -37,7 +37,7 @@ function cookieStored(): string | null {
       return value && value.length <= MAX ? value : null;
     }
   } catch {
-    // no cookies here; localStorage or a fresh id answers instead
+    // No cookies here; localStorage or a fresh id answers instead.
   }
   return null;
 }
@@ -46,13 +46,13 @@ function keep(id: string): void {
   try {
     localStorage.setItem(KEY, id);
   } catch {
-    // kept in memory for this tab
+    // Kept in memory for this tab.
   }
   try {
     const secure = location.protocol === 'https:' ? '; Secure' : '';
     document.cookie = `${KEY}=${encodeURIComponent(id)}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
   } catch {
-    // without the copy, a purged localStorage makes this a new device again
+    // Without the copy, a purged localStorage makes this a new device again.
   }
 }
 

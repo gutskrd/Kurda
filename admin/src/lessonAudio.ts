@@ -39,10 +39,10 @@ export interface Usage {
   lessonTitle: string;
   lessonStatus: 'draft' | 'in_review' | 'published' | 'archived';
   lessonVersion: number;
-  /** the published version uses it: learners meet it today */
+  /** The published version uses it: learners meet it today. */
   live: boolean;
   exerciseTypes: ExerciseType[];
-  /** a listening item here has no clip of its own and plays this text: it cannot be done until it is recorded */
+  /** A listening item here has no clip of its own and plays this text: it cannot be done until it is recorded. */
   listeningNeedsIt: boolean;
 }
 
@@ -53,23 +53,23 @@ export interface Item {
   url: string | null;
   durationMs: number | null;
   updatedAt: string | null;
-  /** who is shown saying it, or null for no character */
+  /** Who is shown saying it, or null for no character. */
   speaker?: SpeakerId | null;
   /**
-   * who is to record it: the `voice` of the first exercise in course order
+   * Who is to record it: the `voice` of the first exercise in course order
    * that names one, or a conversation line's character; null when nothing
    * plans it (missing from an older API, and on a phrase added here)
    */
   plannedSpeaker?: SpeakerId | null;
-  /** it has a mouth timeline */
+  /** It has a mouth timeline. */
   hasLipsync?: boolean;
   /**
-   * the timeline itself, null for none: the list carries it only when asked
+   * The timeline itself, null for none: the list carries it only when asked
    * (`withLipsync`), and a save made here answers with it; missing while not known
    */
   lipsync?: LipsyncData | null;
   usedIn: Usage[];
-  /** recorded, but no lesson uses it (or added here by hand) */
+  /** Recorded, but no lesson uses it (or added here by hand). */
   unused: boolean;
   /**
    * A conversation's line: which conversation, and who says it. Recorded with
@@ -134,9 +134,9 @@ export function scriptOf(text: string): { lang: 'ckb' | 'ku'; dir: 'rtl' | 'ltr'
 }
 
 export interface LessonGroup {
-  /** the lesson across its versions: skill and position */
+  /** The lesson across its versions: skill and position. */
   id: string;
-  /** a story rather than a lesson: its title is the whole of its heading */
+  /** A story rather than a lesson: its title is the whole of its heading. */
   story: boolean;
   title: string;
   skillTitle: string;
@@ -404,7 +404,7 @@ export function voiceCounts(items: readonly Item[]): Record<VoiceFilter, number>
 }
 
 export interface PlanLine {
-  /** the character, or null for what nothing plans yet */
+  /** The character, or null for what nothing plans yet. */
   voice: SpeakerId | null;
   recorded: number;
   total: number;
@@ -413,7 +413,7 @@ export interface PlanLine {
 export interface CoursePlan {
   slug: string;
   title: string;
-  /** Hamo, Xezal and Hevalo in that order, then what is planned for nobody when there is any */
+  /** Hamo, Xezal and Hevalo in that order, then what is planned for nobody when there is any. */
   lines: PlanLine[];
 }
 

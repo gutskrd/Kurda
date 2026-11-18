@@ -7,7 +7,7 @@ import { BLINK_MS, type LipsyncData } from '@kurda/shared';
 import { renderUi } from '../test/render';
 import { SpeakingPreview } from './SpeakingPreview';
 
-// rest from 0, the open a from 100 ms, the lips pressed from 300 ms, rest from 600 ms
+// Rest from 0, the open a from 100 ms, the lips pressed from 300 ms, rest from 600 ms.
 const TIMELINE: LipsyncData = { v: 1, d: 1000, k: [[0, 0], [100, 5], [300, 1], [600, 0]] };
 
 let frames = new Map<number, FrameRequestCallback>();
@@ -63,7 +63,7 @@ describe('the speaking preview', () => {
     const user = userEvent.setup();
     const { container } = renderUi(<SpeakingPreview speaker="hamo" url="https://media.test/silav.wav" text="Silav" lipsync={TIMELINE} durationMs={1000} />);
     const { audio, at } = clock(container);
-    // the ten visemes and the two expressions, the grin and the tongue
+    // The ten visemes and the two expressions, the grin and the tongue.
     expect(container.querySelectorAll('[data-mouth]')).toHaveLength(12);
     frame(0);
     expect(shownMouths(container)).toEqual(['rest']);
@@ -78,14 +78,14 @@ describe('the speaking preview', () => {
     at(0.35);
     frame(32);
     expect(shownMouths(container)).toEqual(['mbp']);
-    // a small nod while the words come, about the neck
+    // A small nod while the words come, about the neck.
     expect(head(container).getAttribute('transform')).toMatch(/^rotate\(-?\d/);
 
     act(() => void audio.dispatchEvent(new Event('pause')));
     frame(48);
     expect(shownMouths(container)).toEqual(['rest']);
     expect(head(container).hasAttribute('transform')).toBe(false);
-    // with a stored timeline there is nothing to explain
+    // With a stored timeline there is nothing to explain.
     expect(screen.queryByText(/timed from the words/)).toBeNull();
   });
 
@@ -111,12 +111,12 @@ describe('the speaking preview', () => {
 
   it('blinks now and then while it is on screen', () => {
     const { container } = renderUi(<SpeakingPreview speaker="hevalo" url="https://media.test/a.wav" text="a" />);
-    // a timeline not known here is not said to be missing
+    // A timeline not known here is not said to be missing.
     expect(screen.queryByText(/timed from the words/)).toBeNull();
     const shut = (): boolean => container.querySelector('[data-eyes="closed"]')!.getAttribute('display') !== 'none';
     frame(0);
     expect(shut()).toBe(false);
-    // the first blink ends the first gap, 3.2 s in
+    // The first blink ends the first gap, 3.2 s in.
     frame(3200 - BLINK_MS / 2);
     expect(shut()).toBe(true);
     expect(container.querySelector('[data-eyes="open"]')!.getAttribute('display')).toBe('none');

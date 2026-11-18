@@ -15,7 +15,7 @@ const DEFAULT_API_URL = 'https://kurda-api.onrender.com';
 
 function readApiBase(): string {
   const fromEnv = import.meta.env.VITE_API_URL?.trim();
-  // no trailing slash, so `${API_BASE}${path}` is always clean
+  // No trailing slash, so `${API_BASE}${path}` is always clean.
   if (fromEnv) return fromEnv.endsWith('/') ? fromEnv.slice(0, -1) : fromEnv;
   return import.meta.env.DEV ? '' : DEFAULT_API_URL;
 }
@@ -77,12 +77,12 @@ function renewOnce(expired: string): Promise<boolean> {
 
 function withRenewLock(run: () => Promise<boolean>): Promise<boolean> {
   const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
-  // a browser without Web Locks renews unguarded, as the website does
+  // A browser without Web Locks renews unguarded, as the website does.
   return locks ? locks.request('kurda-admin-renew', run) : run();
 }
 
 async function renew(expired: string): Promise<boolean> {
-  // renewed already, by another tab or by this one's last turn with the lock
+  // Renewed already, by another tab or by this one's last turn with the lock.
   const stored = storedToken();
   if (stored && stored !== expired) {
     token = stored;
@@ -103,9 +103,9 @@ async function renew(expired: string): Promise<boolean> {
   if (!res.ok) return false;
   const next = (await res.json().catch(() => null)) as { accessToken?: unknown; refreshToken?: unknown } | null;
   if (typeof next?.accessToken !== 'string' || typeof next.refreshToken !== 'string') return false;
-  // signed out (or in again) while this was on its way: that stands
+  // Signed out (or in again) while this was on its way: that stands.
   if (getRefreshToken() !== presented) return false;
-  // renewed where the session already lives, so "Remember me" holds
+  // Renewed where the session already lives, so "Remember me" holds.
   setToken(next.accessToken, localStorage.getItem(TOKEN_KEY) !== null, next.refreshToken);
   return true;
 }
@@ -125,7 +125,7 @@ export async function endSession(refresh: string | null): Promise<void> {
       body: JSON.stringify({ refreshToken: refresh }),
     });
   } catch {
-    // offline: the session still ends here, and on the server when it runs out
+    // Offline: the session still ends here, and on the server when it runs out.
   }
 }
 
@@ -134,7 +134,7 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    /** the envelope's `details`, when the API sent any (a refused story's problems, say) */
+    /** The envelope's `details`, when the API sent any (a refused story's problems, say). */
     readonly details?: unknown,
     /**
      * The whole error envelope. Some routes put what went wrong beside the
@@ -171,7 +171,7 @@ const answers401Itself = (path: string): boolean => ANSWERS_401_ITSELF.some((p) 
 
 function sessionEnded(path: string): void {
   if (answers401Itself(path)) return;
-  // the session is over and could not be renewed — drop it and bounce to the login screen
+  // The session is over and could not be renewed — drop it and bounce to the login screen.
   setToken(null);
   location.reload();
 }
@@ -226,7 +226,7 @@ async function read<T>(path: string, res: Response): Promise<T> {
     location.reload();
   }
   if (!res.ok) {
-    // an older route answers { error: { code, message } } rather than the usual envelope
+    // An older route answers { error: { code, message } } rather than the usual envelope.
     const inner = (typeof data.error === 'object' && data.error !== null ? data.error : data) as Record<string, unknown>;
     throw new ApiError(res.status, String(inner.code ?? 'ERROR'), String(inner.message ?? res.statusText), data.details, data, retryAfterOf(res, data));
   }

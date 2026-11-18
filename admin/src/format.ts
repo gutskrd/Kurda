@@ -2,7 +2,7 @@
 
 /** The shape the ratio tile needs; matches the drift endpoint's response. */
 export interface RatioLike {
-  /** null when nothing was spent, so faucet/sink is infinite. */
+  /** Null when nothing was spent, so faucet/sink is infinite. */
   ratio: number | null;
   faucet: number;
 }

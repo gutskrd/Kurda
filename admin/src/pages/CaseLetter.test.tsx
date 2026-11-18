@@ -66,9 +66,9 @@ describe('a reported letter in the case', () => {
     expect(screen.getByText('Silav! Tu çawa yî?')).toBeTruthy();
     expect(screen.getByText('Lined with a margin · rose · crimson ink')).toBeTruthy();
     expect(screen.getByText('Drawn on: 1 line')).toBeTruthy();
-    // the paper is drawn, but not yet what is on it
+    // The paper is drawn, but not yet what is on it.
     expect(sheetSvg()).not.toContain('stroke-linecap="round" stroke-linejoin="round"');
-    // its notes are on the sheet where they were put, and listed to read
+    // Its notes are on the sheet where they were put, and listed to read.
     const list = screen.getByRole('heading', { name: 'The 2 notes on it' }).parentElement!;
     expect(within(list).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ji bo te!', 'سڵاو']);
     expect(screen.getAllByText('Ji bo te!')).toHaveLength(2);
@@ -98,7 +98,7 @@ describe('a reported letter in the case', () => {
     const broken = renderUi(<Snapshot snapshot={snapshot({ decor: { paper: 'x' } as never })} media={[]} sensitive={false} />);
     expect(screen.getByText(/cannot be drawn/)).toBeTruthy();
     broken.unmount();
-    // evidence frozen before letters had paper has no decor at all
+    // Evidence frozen before letters had paper has no decor at all.
     const older = snapshot();
     delete older.decor;
     renderUi(<Snapshot snapshot={older} media={[]} sensitive={false} />);

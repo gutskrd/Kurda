@@ -34,7 +34,7 @@ export function pickMimeType(isSupported: ((type: string) => boolean) | undefine
 export type MicPlatform = 'ios' | 'android' | 'other';
 
 export function micPlatform(userAgent: string, maxTouchPoints = 0): MicPlatform {
-  // an iPad asking for the desktop site says "Macintosh", but has a touch screen
+  // An iPad asking for the desktop site says "Macintosh", but has a touch screen.
   if (/iPhone|iPad|iPod/.test(userAgent) || (/Macintosh/.test(userAgent) && maxTouchPoints > 1)) return 'ios';
   if (/Android/.test(userAgent)) return 'android';
   return 'other';
@@ -66,11 +66,11 @@ export function micProblem(err: unknown, platform: MicPlatform, secure: boolean)
 }
 
 export interface Capture {
-  /** the loudest sample since the last call, 0–1, for the level meter */
+  /** The loudest sample since the last call, 0–1, for the level meter. */
   level: () => number;
-  /** stop and hand over the take, in whatever format the browser wrote it */
+  /** Stop and hand over the take, in whatever format the browser wrote it. */
   stop: () => Promise<ArrayBuffer>;
-  /** stop and throw the take away (the editor left mid-take) */
+  /** Stop and throw the take away (the editor left mid-take). */
   cancel: () => void;
 }
 
@@ -85,7 +85,7 @@ export interface Capture {
 export async function startCapture(): Promise<Capture> {
   const Ctx = audioContextClass();
   const ctx = Ctx ? new Ctx() : null;
-  // synchronously, still inside the tap (see above)
+  // Synchronously, still inside the tap (see above).
   void ctx?.resume?.();
   const media = typeof navigator !== 'undefined' ? navigator.mediaDevices : undefined;
   if (!media?.getUserMedia) {
@@ -94,13 +94,13 @@ export async function startCapture(): Promise<Capture> {
   }
   let stream: MediaStream;
   try {
-    // the browser's own gain control would undo the levelling, so it is off
+    // The browser's own gain control would undo the levelling, so it is off.
     stream = await media.getUserMedia({ audio: { channelCount: 1, autoGainControl: false, noiseSuppression: true, echoCancellation: true } });
   } catch (err) {
     void ctx?.close();
     throw err;
   }
-  // and again once permission is granted, for browsers that suspend it while the prompt is open
+  // And again once permission is granted, for browsers that suspend it while the prompt is open.
   void ctx?.resume?.();
 
   const release = (): void => {
@@ -108,7 +108,7 @@ export async function startCapture(): Promise<Capture> {
     void ctx?.close();
   };
 
-  // the live level, so a muted or wrong microphone shows before the take is wasted
+  // The live level, so a muted or wrong microphone shows before the take is wasted.
   let analyser: AnalyserNode | null = null;
   let source: MediaStreamAudioSourceNode | null = null;
   const buf = new Float32Array(512);

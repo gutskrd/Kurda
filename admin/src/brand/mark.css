@@ -12,7 +12,7 @@
 .hevalo-pupil {
   position: absolute; top: 17.7%; width: 53.79%; height: 70.59%;
   border-radius: 50%; background: #532e28;
-  /* kept in forced colours too: the picture has no pupils of its own */
+  /* Kept in forced colours too: the picture has no pupils of its own. */
   forced-color-adjust: none;
 }
 .hevalo-eye.is-left .hevalo-pupil { left: 43.1%; }

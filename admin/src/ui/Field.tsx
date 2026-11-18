@@ -12,7 +12,7 @@ interface FieldProps {
   hint?: ReactNode;
   error?: ReactNode;
   required?: boolean;
-  /** the label beside the control rather than above it */
+  /** The label beside the control rather than above it. */
   inline?: boolean;
   className?: string;
   children: ReactElement<Record<string, unknown>>;

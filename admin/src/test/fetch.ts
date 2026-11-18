@@ -42,7 +42,7 @@ export function fakeApi(...routes: Route[]): { calls: Call[]; use: (...more: Rou
       } as Call;
       Object.defineProperty(call, 'headers', { value: Object.fromEntries(new Headers(init.headers).entries()), enumerable: false });
       calls.push(call);
-      // newest routes first, so a test can override what it set up
+      // Newest routes first, so a test can override what it set up.
       const reply = [...all].reverse().reduce<Reply | undefined>((found, route) => found ?? route(call), undefined) ?? failure(404, 'NOT_FOUND', 'route not found');
       return new Response(reply.body === undefined ? null : JSON.stringify(reply.body), {
         status: reply.status ?? 200,

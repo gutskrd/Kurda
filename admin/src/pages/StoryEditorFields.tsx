@@ -113,10 +113,10 @@ export function EditorSection({
   children,
   className,
 }: {
-  /** the section's key: 'about' → aria-labelledby st-about */
+  /** The section's key: 'about' → aria-labelledby st-about. */
   id: string;
   title: string;
-  /** "(3 of 20)" after the title */
+  /** "(3 of 20)" after the title. */
   count?: React.ReactNode;
   tools?: React.ReactNode;
   hint?: React.ReactNode;

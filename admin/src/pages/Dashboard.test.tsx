@@ -65,7 +65,7 @@ describe('the dashboard', () => {
     const card = (await screen.findByRole('heading', { name: 'What still needs a recording' })).closest('section')!;
     await waitFor(() => expect(within(card).getByText(`of ${LETTER_CLIPS.length} still to record`)).toBeInTheDocument());
     expect(within(card).getByRole('link', { name: 'Record: Alphabet: letters and example words' })).toHaveAttribute('href', '#/audio/letters?show=missing');
-    // the colours, numbers, days and months, counted on a line of their own and recorded on the same side
+    // The colours, numbers, days and months, counted on a line of their own and recorded on the same side.
     const words = within(card).getByText('Words to know: colours, numbers, days, months').closest('li')!;
     expect(within(words).getByText(`${WORD_SET_CLIPS.length - 2}`)).toBeInTheDocument();
     expect(within(words).getByText(`of ${WORD_SET_CLIPS.length} still to record`)).toBeInTheDocument();
@@ -74,7 +74,7 @@ describe('the dashboard', () => {
     expect(within(card).getByRole('link', { name: 'Record: Story sentences' })).toHaveAttribute('href', '#/audio/stories?show=missing');
     expect(within(card).getByRole('link', { name: /record what’s missing/i })).toHaveAttribute('href', '#/audio/letters?show=missing');
 
-    // and what is waiting for review, for the pages this role opens — nothing about people or money
+    // And what is waiting for review, for the pages this role opens — nothing about people or money.
     await waitFor(() => expect(screen.getByRole('link', { name: /lessons in review/i })).toHaveTextContent('2'));
     expect(screen.getByRole('link', { name: /stories in review/i })).toHaveTextContent('1');
     expect(screen.queryByText('Moderation')).not.toBeInTheDocument();

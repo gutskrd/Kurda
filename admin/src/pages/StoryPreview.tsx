@@ -30,10 +30,10 @@ export function StoryPreview({
   const draft = useMemo(() => draftFromForm(form), [form]);
   const translated = translationChecks(form).filter((c) => c.state !== 'empty');
   const [locale, setLocale] = useState<string>('');
-  // the chosen translation, or English, or the first there is; none when there is none
+  // The chosen translation, or English, or the first there is; none when there is none.
   const shownLocale = translated.find((c) => c.locale === locale)?.locale ?? translated.find((c) => c.locale === 'en')?.locale ?? translated[0]?.locale ?? null;
   const translation = shownLocale ? storyParagraphs(draft.translations[shownLocale] ?? '') : [];
-  // what the apps lay the story on, over that picture's own ground while it loads: storyCoverFor picks the same rug for them
+  // What the apps lay the story on, over that picture's own ground while it loads: storyCoverFor picks the same rug for them.
   const art = storyCoverFor({ slug: draft.slug, cover: draft.cover });
   const cover = artSrc(art.path);
   const minutes = draft.readingMinutes ?? facts.minutes;

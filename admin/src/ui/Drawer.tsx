@@ -21,12 +21,12 @@ export function Drawer({
   open: boolean;
   onClose: () => void;
   title: ReactNode;
-  /** start: the menu's side; end: details and forms (a bottom sheet on a phone) */
+  /** Start: the menu's side; end: details and forms (a bottom sheet on a phone). */
   side?: 'start' | 'end';
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
-  /** for the button that opens it to name it (aria-controls) */
+  /** For the button that opens it to name it (aria-controls). */
   id?: string;
 }): React.JSX.Element | null {
   const ref = useRef<HTMLDivElement>(null);

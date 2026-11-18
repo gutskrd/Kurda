@@ -61,12 +61,12 @@ export function DecisionPanel({
   detail: CaseDetail;
   draft: DecisionDraft;
   setDraft: SetDraft;
-  /** why this moderator cannot decide right now (another holds the claim) */
+  /** Why this moderator cannot decide right now (another holds the claim). */
   locked: string | null;
   onDecided: () => void;
-  /** a person's name in the decision: "@heval" */
+  /** A person's name in the decision: "@heval". */
   names: (target: DecisionTarget) => string;
-  /** off inside the phone's sheet, whose own title says "Decision" */
+  /** Off inside the phone's sheet, whose own title says "Decision". */
   heading?: boolean;
 }): React.JSX.Element {
   const c = detail.case;
@@ -78,7 +78,7 @@ export function DecisionPanel({
   const decidable = open && c.status !== 'needs_second_approval';
   const actioned = draft.outcome === 'actioned';
   const canRemove = contentTarget(c.targetType, c.source);
-  // a copyright notice about a post still up is upheld only by taking it down (CONTENT_REMOVAL_REQUIRED)
+  // A copyright notice about a post still up is upheld only by taking it down (CONTENT_REMOVAL_REQUIRED).
   const problems = draftProblems(draft, names, { takedown: needsTakedown(c, canRemove) });
   const preview = usePreview(c.id, draft, decidable && !locked && problems.length === 0);
   const reporters = useMemo(() => {
@@ -100,12 +100,12 @@ export function DecisionPanel({
 
   async function decide(): Promise<void> {
     await act('decide', async () => {
-      // the preview again, now, so the confirmation describes exactly this decision
+      // The preview again, now, so the confirmation describes exactly this decision.
       const check = await api<DecideResult>(`/admin/moderation/cases/${c.id}/decide`, {
         method: 'POST',
         body: decisionRequest(draft, { preview: true }),
       });
-      // every name typed: a decision may ban two people for good (the reported person and a bad-faith reporter)
+      // Every name typed: a decision may ban two people for good (the reported person and a bad-faith reporter).
       const confirmUsernames: string[] = [];
       for (const ban of check.permanentBans) {
         const yes = await dialogs.confirm({
@@ -411,7 +411,7 @@ function ActionRow({
           hours={a.durationHours}
           onPick={(h) =>
             onChange((x) => {
-              // "Permanent" on a suspension makes it a ban: its words follow, unless typed
+              // "Permanent" on a suspension makes it a ban: its words follow, unless typed.
               const next = withDuration(x.kind, h);
               const reword = !x.statementEdited && next.kind !== x.kind;
               return { ...x, ...next, statement: reword ? defaultStatement(next.kind, policy, !forSubject) : x.statement };

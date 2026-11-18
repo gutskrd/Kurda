@@ -24,7 +24,7 @@ export interface Column<T> {
   key: string;
   header: ReactNode;
   cell: (row: T) => ReactNode;
-  /** sorting by this column: how two rows compare (ascending) */
+  /** Sorting by this column: how two rows compare (ascending). */
   sort?: (a: T, b: T) => number;
   align?: 'start' | 'end';
   /**
@@ -32,7 +32,7 @@ export interface Column<T> {
    * off (something the title already says), and by default it is a labelled line.
    */
   card?: 'title' | 'hidden';
-  /** the label on the card when the header is not plain text */
+  /** The label on the card when the header is not plain text. */
   cardLabel?: string;
   className?: string;
 }
@@ -43,7 +43,7 @@ export interface Paging {
   page: number;
   pageCount: number;
   onPage: (page: number) => void;
-  /** "1–50 of 312" */
+  /** "1–50 of 312". */
   total?: number;
   pageSize?: number;
 }
@@ -66,24 +66,24 @@ export function Table<T>({
   layout = 'cards',
 }: {
   columns: ReadonlyArray<Column<T>>;
-  /** null while the first load is running */
+  /** Null while the first load is running. */
   rows: readonly T[] | null;
   rowKey: (row: T) => string;
-  /** what the table lists, for screen readers ("Shop items") */
+  /** What the table lists, for screen readers ("Shop items"). */
   caption: string;
   loading?: boolean;
   error?: unknown;
   onRetry?: () => void;
   empty?: ReactNode;
-  /** the row's buttons, last on a wide screen and at the foot of its card on a phone */
+  /** The row's buttons, last on a wide screen and at the foot of its card on a phone. */
   actions?: (row: T) => ReactNode;
   defaultSort?: SortState;
   paging?: Paging;
   rowClassName?: (row: T) => string | undefined;
-  /** for the error's "your role doesn't include …" */
+  /** For the error's "your role doesn't include …" */
   what?: string;
   /**
-   * many columns: cards below 960 px rather than 640, so a tablet never cuts
+   * Many columns: cards below 960 px rather than 640, so a tablet never cuts
    * the row off; 'medium' for a few wide ones, cards below 860 px
    */
   wide?: boolean | 'medium';
@@ -151,7 +151,7 @@ export function Table<T>({
               .filter(Boolean)
               .join(' ') || undefined}
           >
-            {/* one box, so a card's label and value sit side by side however many parts the value has */}
+            {/* One box, so a card's label and value sit side by side however many parts the value has. */}
             <div className="cell">{c.cell(row)}</div>
           </td>
         ))}
@@ -245,11 +245,11 @@ function useFit(ref: RefObject<HTMLDivElement | null>, cardsBelow: number, deps:
     if (!over) return 'table';
     return cardsBelow > 0 ? 'cards' : 'scrolls';
   };
-  // read by the observer, which is set up once
+  // Read by the observer, which is set up once.
   const latest = useRef(measure);
   latest.current = measure;
 
-  // before the first paint, and again whenever what is in the table changes
+  // Before the first paint, and again whenever what is in the table changes.
   useLayoutEffect(() => {
     setFit(measure());
   }, [cardsBelow, ...deps]);
@@ -258,7 +258,7 @@ function useFit(ref: RefObject<HTMLDivElement | null>, cardsBelow: number, deps:
     const box = ref.current;
     if (!box || typeof ResizeObserver === 'undefined') return;
     let width = box.clientWidth;
-    // a new width only: the height changes every time the rows turn into cards and back
+    // A new width only: the height changes every time the rows turn into cards and back.
     const observer = new ResizeObserver(() => {
       if (box.clientWidth === width) return;
       width = box.clientWidth;

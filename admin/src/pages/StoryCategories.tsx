@@ -52,7 +52,7 @@ export function StoryCategories(): React.JSX.Element {
     setBusy(c.slug);
     try {
       if (distinct) {
-        // the moved row takes its neighbour's place, then the neighbour takes the moved row's
+        // The moved row takes its neighbour's place, then the neighbour takes the moved row's.
         await updateCategory(c.slug, { name: c.name, position: rows[to]!.position });
         await updateCategory(rows[to]!.slug, { name: rows[to]!.name, position: c.position });
       } else {
@@ -207,7 +207,7 @@ function CategoryForm({
 
   const setName = (locale: string, value: string): void => {
     setNames((n) => ({ ...n, [locale]: value }));
-    // the slug follows the English name until the editor writes their own
+    // The slug follows the English name until the editor writes their own.
     if (locale === 'en' && !slugEdited) setSlug(categorySlugFrom(value));
   };
 

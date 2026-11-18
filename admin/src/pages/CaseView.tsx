@@ -54,7 +54,7 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
   const [claiming, setClaiming] = useState(false);
   const aside = useRef<HTMLElement>(null);
 
-  // a fresh draft for each case, from its own rule; kept while the same case reloads
+  // A fresh draft for each case, from its own rule; kept while the same case reloads.
   const draftFor = useRef<string | null>(null);
   useEffect(() => {
     if (detail && draftFor.current !== detail.case.id) {
@@ -119,19 +119,19 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
   const leaseUntil = detail?.case.leaseUntil ?? null;
   const reload = loaded.reload;
   useEffect(() => {
-    // a claim that already ran out is the queue's again: claiming it is a choice, not a renewal
+    // A claim that already ran out is the queue's again: claiming it is a choice, not a renewal.
     if (!mine || !open || !leaseUntil || Date.parse(leaseUntil) <= Date.now()) return;
     const renewIn = Math.max(0, Date.parse(leaseUntil) - Date.now() - RENEW_BEFORE_MS);
     const timer = window.setTimeout(() => {
       if (Date.now() - lastActive.current > ACTIVE_WITHIN_MS) return;
       api(`/admin/moderation/cases/${caseId}/claim`, { method: 'POST' })
-        .catch(() => undefined) // the reload below shows who holds it now
+        .catch(() => undefined) // The reload below shows who holds it now.
         .finally(() => void reload());
     }, renewIn);
     return () => window.clearTimeout(timer);
   }, [mine, open, leaseUntil, caseId, reload]);
 
-  // j / k / c, never while typing or with a dialog open
+  // J / k / c, never while typing or with a dialog open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.defaultPrevented) return;

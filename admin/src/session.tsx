@@ -7,9 +7,9 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type { SessionAccess } from './navigation';
 
 export interface AdminSession extends SessionAccess {
-  /** the RBAC roles (superadmin, content_editor, moderator, support) */
+  /** The RBAC roles (superadmin, content_editor, moderator, support). */
   roles: string[];
-  /** the voices this account records; none from an API older than the people page */
+  /** The voices this account records; none from an API older than the people page. */
   voices?: string[];
   needsEnrollment: boolean;
   needsVerification: boolean;

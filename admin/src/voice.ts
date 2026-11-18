@@ -39,7 +39,7 @@ export function rememberedSpeaker(): Speaker {
     if (saved === 'none') return null;
     if (isSpeakerId(saved)) return saved;
   } catch {
-    // a blocked storage only means the choice is not remembered
+    // A blocked storage only means the choice is not remembered.
   }
   return DEFAULT_CHARACTER;
 }
@@ -48,7 +48,7 @@ export function rememberSpeaker(speaker: Speaker): void {
   try {
     localStorage.setItem(SPEAKER_KEY, speaker ?? 'none');
   } catch {
-    // as above
+    // As above.
   }
 }
 
@@ -58,7 +58,7 @@ export async function decodeMono(data: ArrayBuffer): Promise<{ pcm: Float32Array
   if (!Ctx) throw new Error('this browser cannot work with sound');
   const ctx = new Ctx();
   try {
-    // with callbacks as well: older Safari's decodeAudioData returns no promise
+    // With callbacks as well: older Safari's decodeAudioData returns no promise.
     const decoded = await new Promise<AudioBuffer>((resolve, reject) => {
       const answer = ctx.decodeAudioData(data, resolve, reject) as Promise<AudioBuffer> | undefined;
       answer?.then(resolve, reject);
@@ -93,7 +93,7 @@ export async function timelineFromSound(audio: ArrayBuffer, text: string, script
 
 export interface MadeTimeline {
   lipsync: LipsyncData;
-  /** what it was timed by: the recording itself, or only its words over its length */
+  /** What it was timed by: the recording itself, or only its words over its length. */
   from: 'sound' | 'text';
 }
 
@@ -111,7 +111,7 @@ export async function makeTimeline(
   try {
     return { lipsync: await timelineFromSound(audio, text, script), from: 'sound' };
   } catch {
-    // the words alone, below
+    // The words alone, below.
   }
   if (!durationMs || !(durationMs > 0)) return null;
   try {

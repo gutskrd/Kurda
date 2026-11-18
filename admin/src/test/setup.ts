@@ -38,8 +38,8 @@ configure({
       actGlobal.IS_REACT_ACT_ENVIRONMENT = before;
     }
   },
-  // each event dispatched is one act(), so React has finished rendering it —
-  // with act switched on for it even inside a wait, as @testing-library/react does
+  // Each event dispatched is one act(), so React has finished rendering it —
+  // with act switched on for it even inside a wait, as @testing-library/react does.
   eventWrapper: (cb) => {
     const before = actGlobal.IS_REACT_ACT_ENVIRONMENT;
     actGlobal.IS_REACT_ACT_ENVIRONMENT = true;
@@ -56,7 +56,7 @@ configure({
 });
 
 if (typeof window !== 'undefined') {
-  // jsdom has no layout, so no scrollIntoView, and media elements cannot play
+  // jsdom has no layout, so no scrollIntoView, and media elements cannot play.
   if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = function scrollIntoView(): void {};
   HTMLMediaElement.prototype.play = function play(): Promise<void> {
     return Promise.resolve();

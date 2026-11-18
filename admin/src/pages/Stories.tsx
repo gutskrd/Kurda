@@ -17,8 +17,8 @@ export function Stories(): React.JSX.Element {
   const route = useRoute();
   const toast = useToast();
   const sub = route.rest[0] ?? '';
-  // a story just created is handed to its own page, so it is not loaded again —
-  // once: opened again later, it is loaded like any other, or it would be stale
+  // A story just created is handed to its own page, so it is not loaded again —
+  // once: opened again later, it is loaded like any other, or it would be stale.
   const created = useRef<AdminStory | null>(null);
   useEffect(() => {
     if (created.current && sub !== created.current.id) created.current = null;
@@ -36,7 +36,7 @@ export function Stories(): React.JSX.Element {
       initial={initial}
       onCreated={(story) => {
         created.current = story;
-        // replace, so Back from the new story goes to the list, not to an empty form
+        // Replace, so Back from the new story goes to the list, not to an empty form.
         location.replace(`#/stories/${story.id}`);
       }}
       onDeleted={(title) => {

@@ -170,7 +170,7 @@ function ConversationStudio({ id, lessonId, partParam }: { id: string; lessonId:
     }
   }, [id, lessonId]);
 
-  // first load: open on the part asked for (or remembered), at its first line still to record
+  // First load: open on the part asked for (or remembered), at its first line still to record.
   useEffect(() => {
     void load().then((first) => {
       if (!first) return;
@@ -180,7 +180,7 @@ function ConversationStudio({ id, lessonId, partParam }: { id: string; lessonId:
     });
   }, [load, id, partParam]);
 
-  // the others' takes, as they are made: asked for again every few seconds while the page is in view
+  // The others' takes, as they are made: asked for again every few seconds while the page is in view.
   useEffect(() => {
     const tick = window.setInterval(() => {
       if (document.visibilityState === 'visible') void load();
@@ -193,7 +193,7 @@ function ConversationStudio({ id, lessonId, partParam }: { id: string; lessonId:
     setPart(p);
     rememberPart(id, p);
     setSelected(nextLineFor(rec, p, null) ?? rec.lines.find((l) => l.part === p)?.index ?? null);
-    // the address says whose page this is, so a reload or a shared link opens the same part
+    // The address says whose page this is, so a reload or a shared link opens the same part.
     history.replaceState(null, '', conversationHref(id, rec.lesson.id, p));
   };
 
@@ -227,7 +227,7 @@ function ConversationStudio({ id, lessonId, partParam }: { id: string; lessonId:
     const name = conversation.speakers[p]!.name;
     const text = `Record ${name}’s part of “${conversation.title || lesson.titleEn}” in the Hevalo admin:`;
     try {
-      // a phone shares to wherever the person is reached (a message, a mail); a computer copies the link
+      // A phone shares to wherever the person is reached (a message, a mail); a computer copies the link.
       if (typeof navigator.share === 'function' && window.matchMedia?.('(pointer: coarse)').matches) {
         await navigator.share({ title: `${name}’s part`, text, url });
         return;

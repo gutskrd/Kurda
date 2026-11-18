@@ -38,13 +38,13 @@ interface Job {
   name: JobName;
   status: 'running' | 'paused' | 'stopping' | 'done' | 'cancelled';
   total: number;
-  /** settled, saved or failed */
+  /** Settled, saved or failed. */
   done: number;
   saved: number;
   failures: Failure[];
-  /** waiting until then (Date.now() ms) because the server asked to slow down */
+  /** Waiting until then (Date.now() ms) because the server asked to slow down. */
   holdUntil: number | null;
-  /** the dictionary's list could not be read on: the job did what it had */
+  /** The dictionary's list could not be read on: the job did what it had. */
   problem: string | null;
 }
 
@@ -53,9 +53,9 @@ type Work = (r: VoiceRecording, signal: AbortSignal) => Promise<void>;
 type DictionaryCounts = DictionaryAudioAdminPage['counts'];
 
 interface Loaded {
-  /** lesson, story and alphabet recordings, read whole */
+  /** Lesson, story and alphabet recordings, read whole. */
   listed: VoiceRecording[];
-  /** the dictionary's, which are only counted here and read a page at a time by a job */
+  /** The dictionary's, which are only counted here and read a page at a time by a job. */
   dictionary: DictionaryCounts;
 }
 
@@ -81,7 +81,7 @@ async function loadRecordings(): Promise<Loaded> {
 function dictionarySource(filter: DictionaryFilter, keep: (r: VoiceRecording) => boolean, signal: AbortSignal): BatchSource<VoiceRecording> {
   return pagedSource(async (cursor) => {
     const page = await dictionaryPage(filter, cursor, { signal });
-    // the server filtered them; this only makes sure nothing else is touched
+    // The server filtered them; this only makes sure nothing else is touched.
     return { items: page.items.map(fromDictionary).filter(keep), nextCursor: page.nextCursor };
   });
 }
@@ -122,7 +122,7 @@ export function Characters(): React.JSX.Element {
   const control = useRef<BatchControl | null>(null);
   const work = useRef<Work | null>(null);
 
-  // leaving the page stops the job: nothing is left running where no one can see it
+  // Leaving the page stops the job: nothing is left running where no one can see it.
   useEffect(() => () => control.current?.cancel(), []);
 
   const busy = job !== null && (job.status === 'running' || job.status === 'paused' || job.status === 'stopping');
@@ -218,7 +218,7 @@ export function Characters(): React.JSX.Element {
 
   const retry = (failures: Failure[]): void => {
     if (!job || !work.current) return;
-    // as the list has them now, not as they were when they failed
+    // As the list has them now, not as they were when they failed.
     const current = new Map((loaded?.listed ?? []).map((r) => [idOf(r), r]));
     const again = new Set(failures.map((f) => idOf(f.recording)));
     const items = failures.map((f) => current.get(idOf(f.recording)) ?? f.recording);
@@ -341,7 +341,7 @@ function JobPanel({
   const failed = job.failures.length;
   const running = job.status === 'running' || job.status === 'paused' || job.status === 'stopping';
   const waiting = job.status === 'running' && job.holdUntil !== null;
-  // the counts were taken when the page loaded; the job may find a few more
+  // The counts were taken when the page loaded; the job may find a few more.
   const total = Math.max(job.total, job.done);
   const saved = `${job.saved} saved${failed ? `, ${failed} failed` : ''}`;
   const status =

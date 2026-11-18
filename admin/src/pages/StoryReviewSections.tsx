@@ -22,11 +22,11 @@ export function VersionsSection({ story, form, dispatch }: { story: AdminStory |
   const ro = useContext(ReadOnly);
   const [q, setQ] = useState('');
   const query = useDebounced(q.trim(), 300);
-  // the other variety first: the usual other version is the same story told in the other script
+  // The other variety first: the usual other version is the same story told in the other script.
   const other: StoryDialect = STORY_DIALECTS.find((d) => d !== form.dialect) ?? form.dialect;
   const [dialect, setDialect] = useState<StoryDialect | 'all'>(other);
   const results = useLoad(() => (query ? searchStories(query, dialect) : Promise.resolve<AdminStorySummary[]>([])), [query, dialect]);
-  // the editor moved to a story of the other variety: offer that variety's opposite
+  // The editor moved to a story of the other variety: offer that variety's opposite.
   useEffect(() => {
     setDialect(other);
   }, [other]);
@@ -148,7 +148,7 @@ export function ReviewSection({
 }: {
   story: AdminStory | null;
   busy: boolean;
-  /** unsaved edits touch what a reviewer read: saving will need approval again */
+  /** Unsaved edits touch what a reviewer read: saving will need approval again. */
   contentPending: boolean;
   onReview: (approved: boolean) => void;
 }): React.JSX.Element {

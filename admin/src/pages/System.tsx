@@ -7,7 +7,7 @@ interface JobDef {
   label: string;
   what: string;
   path: string;
-  /** asked first: it changes what players see */
+  /** Asked first: it changes what players see. */
   ask?: string;
   describe: (res: Record<string, unknown>) => string;
 }

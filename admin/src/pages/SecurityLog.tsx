@@ -153,7 +153,7 @@ export function SecurityLog({ route }: { route?: Route }): React.JSX.Element {
   const [more, setMore] = useState(false);
   const [looking, setLooking] = useState<SecurityEvent | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  /** addresses revealed in this visit, by event: shown in its details, never kept */
+  /** Addresses revealed in this visit, by event: shown in its details, never kept. */
   const [revealed, setRevealed] = useState<Record<string, string | null>>({});
   const paged = useRef(false);
 
@@ -212,7 +212,7 @@ export function SecurityLog({ route }: { route?: Route }): React.JSX.Element {
     void loadTop().then(() => setUpdatedAt(new Date()));
   }, [loadTop]);
 
-  // kept up to date while open and in view; a page someone is reading further down is left alone
+  // Kept up to date while open and in view; a page someone is reading further down is left alone.
   useEffect(() => {
     const tick = setInterval(() => {
       if (document.visibilityState === 'visible' && !looking) void refresh();
@@ -228,7 +228,7 @@ export function SecurityLog({ route }: { route?: Route }): React.JSX.Element {
       label: 'Note (optional)',
       body: 'Say what you found, so whoever looks next knows. “It was me”, “Blocked network”, “Password changed”.',
       maxLength: 500,
-      // a note helps, but is not required
+      // A note helps, but is not required.
       validate: () => null,
       confirmLabel: 'Mark reviewed',
     });
@@ -536,7 +536,7 @@ function EventDrawer({
   onAccount,
 }: {
   event: SecurityEvent;
-  /** the address, once revealed; null when it was no longer kept */
+  /** The address, once revealed; null when it was no longer kept. */
   address: string | null | undefined;
   onClose: () => void;
   onReview: () => void;

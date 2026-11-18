@@ -72,10 +72,10 @@ export function DurationChips({
 export interface SanctionDraft {
   kind: SanctionKind;
   durationHours: number | null;
-  /** '' until one is chosen */
+  /** '' until one is chosen. */
   policy: string;
   statement: string;
-  /** typed by the moderator: a change of rule or kind leaves it alone */
+  /** Typed by the moderator: a change of rule or kind leaves it alone. */
   statementEdited: boolean;
   internalNote: string;
 }
@@ -134,7 +134,7 @@ export function SanctionFields({
 }: {
   draft: SanctionDraft;
   onChange: (next: SanctionDraft) => void;
-  /** "@heval" */
+  /** "@heval". */
   who: string;
   kinds?: readonly SanctionKind[];
   withPolicy?: boolean;
@@ -167,7 +167,7 @@ export function SanctionFields({
           hint="Someone who may hurt themselves is helped from a case, with a caring message — never sanctioned."
           options={[
             { value: '', label: 'Choose a rule…', disabled: true },
-            // self-harm is never a reason to sanction (the API refuses it too)
+            // self-harm is never a reason to sanction (the API refuses it too).
             ...REPORT_CATEGORIES.filter((c) => c.key !== 'self_harm').map((c) => ({ value: c.key, label: categoryName(c.key) })),
           ]}
         />

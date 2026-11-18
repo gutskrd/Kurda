@@ -14,7 +14,7 @@ const ids = (s: SessionAccess): string[] => visibleNav(s).map((n) => n.id);
 describe('who sees which page — what the API allows, not a guess', () => {
   it('a moderator sees the queue and the people, and not what refuses them', () => {
     expect(ids(MODERATOR)).toEqual(['dashboard', 'users', 'moderation', 'appeals', 'ban-approvals', 'aimod', 'feedback', 'playbook', 'security']);
-    // the old nav showed these to everyone; the API answers a moderator 403
+    // The old nav showed these to everyone; the API answers a moderator 403.
     for (const page of ['analytics', 'shop', 'economy', 'antibot', 'lessons', 'audit']) expect(mayOpenPage(page, MODERATOR)).toBe(false);
   });
 
@@ -43,7 +43,7 @@ describe('who sees which page — what the API allows, not a guess', () => {
     const seen = ids(LEGACY);
     for (const id of ['analytics', 'record-lessons', 'moderation', 'antibot', 'stories', 'events', 'shop', 'fraud', 'approvals', 'flags', 'system'])
       expect(seen).toContain(id);
-    // Users, Lessons and the audit log are requireAdmin(…) with RBAC roles only
+    // Users, Lessons and the audit log are requireAdmin(…) with RBAC roles only.
     for (const id of ['users', 'lessons', 'audit']) expect(seen).not.toContain(id);
   });
 
@@ -83,7 +83,7 @@ describe('who sees which page — what the API allows, not a guess', () => {
   it('starts someone who lends a voice on their own lines', () => {
     expect(landingRoute(VOICE_ACTOR)).toBe('record/xezo');
     expect(landingRoute({ ...EDITOR, voices: ['hamo', 'narrator-kmr'] })).toBe('record');
-    // a voice with no role that opens the page is no way in
+    // A voice with no role that opens the page is no way in.
     expect(landingRoute({ ...MODERATOR, voices: ['hamo'] })).toBe('dashboard');
     expect(landingRoute({ ...EDITOR, voices: [] })).toBe('dashboard');
   });
@@ -112,7 +112,7 @@ describe('addresses', () => {
     expect(parseRoute('#/experiments')).toMatchObject({ page: 'flags' });
     expect(parseRoute('#/ops')).toMatchObject({ page: 'system' });
     expect(parseRoute('#/games')).toMatchObject({ page: 'words' });
-    // pages that kept their name are themselves
+    // Pages that kept their name are themselves.
     for (const page of ['moderation', 'antibot', 'aimod', 'users', 'analytics', 'events', 'economy', 'fraud', 'shop', 'tags', 'audit', 'security', 'stories', 'audio'])
       expect(parseRoute(`#/${page}`).page).toBe(page);
   });

@@ -20,9 +20,9 @@ export function UserLink({
   minor,
   fallback = 'Deleted account',
 }: {
-  /** null when the account is gone (its rows are kept, the person is not) */
+  /** Null when the account is gone (its rows are kept, the person is not). */
   user: UserRef | null | undefined;
-  /** true under 18; null or undefined when not known */
+  /** True under 18; null or undefined when not known. */
   minor?: boolean | null;
   fallback?: string;
 }): React.JSX.Element {

@@ -31,7 +31,7 @@ export function Companion({
   const host = useRef<HTMLSpanElement>(null);
   const player = useRef<CompanionPlayer | null>(null);
   const prefix = `cp${useId().replace(/[^\w-]/g, '')}`;
-  // as he is when he first comes up; later changes are played as they come
+  // As he is when he first comes up; later changes are played as they come.
   const lowAtFirst = useRef(low);
 
   useEffect(() => {

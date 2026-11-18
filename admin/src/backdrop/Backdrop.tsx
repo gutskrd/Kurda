@@ -54,7 +54,7 @@ export function startRibbons(canvas: HTMLCanvasElement): () => void {
   const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   let frame = 0;
   let last = 0;
-  // the ribbons' own clock, which stops while the page is hidden so they carry on from where they were
+  // The ribbons' own clock, which stops while the page is hidden so they carry on from where they were.
   let clock = STILL_AT;
 
   const draw = (): void => {
@@ -63,10 +63,10 @@ export function startRibbons(canvas: HTMLCanvasElement): () => void {
   };
 
   const size = (): void => {
-    // the box the ribbons fill is the screen at its largest (backdrop.css): a keyboard or a browser bar
-    // coming and going leaves it as it is, and the ribbons where they are; a new width redraws them
+    // The box the ribbons fill is the screen at its largest (backdrop.css): a keyboard or a browser bar
+    // coming and going leaves it as it is, and the ribbons where they are; a new width redraws them.
     const box = canvas.parentElement;
-    // sharp on a high-density screen, but no more than twice over: the finest line is under a pixel already
+    // Sharp on a high-density screen, but no more than twice over: the finest line is under a pixel already.
     const pixels = Math.min(window.devicePixelRatio || 1, 2);
     const width = Math.round((box?.clientWidth || window.innerWidth) * pixels);
     const height = Math.round((box?.clientHeight || window.innerHeight) * pixels);
@@ -86,7 +86,7 @@ export function startRibbons(canvas: HTMLCanvasElement): () => void {
     const since = last ? now - last : FRAME_MS;
     if (since < FRAME_MS) return;
     last = now;
-    // a long gap (the tab was asleep) does not jump the ribbons ahead
+    // A long gap (the tab was asleep) does not jump the ribbons ahead.
     clock += Math.min(since, 100) / 1000;
     draw();
   };

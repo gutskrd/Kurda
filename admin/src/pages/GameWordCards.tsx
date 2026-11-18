@@ -89,7 +89,7 @@ export function FactsTable({ facts, onChange, readOnly }: { facts: Facts; onChan
                 <option value="">Not said</option>
                 <option value="yes">Yes</option>
                 <option value="no">No</option>
-                {/* once the card has its share of "sometimes", only a row that already says it keeps the choice */}
+                {/* Once the card has its share of "sometimes", only a row that already says it keeps the choice. */}
                 <option value="sometimes" disabled={sometimes >= WHO_AM_I_MAX_SOMETIMES && facts[f.key] !== 'sometimes'}>
                   Sometimes
                 </option>
@@ -259,7 +259,7 @@ function MakeCard({ word, kind, onMade }: { word: GameWordCandidate; kind: WordC
 export function WordPicker({ kind, dialect: fixed }: { kind: WordCardKind; dialect?: GameDialect }): React.JSX.Element {
   const [dialect, setDialect] = useState<GameDialect>(fixed ?? 'kmr');
   const [query, setQuery] = useState('');
-  // an identity is always a word the lessons teach
+  // An identity is always a word the lessons teach.
   const from: GameWordSource = 'vocabulary';
   const [open, setOpen] = useState<string | null>(null);
   const q = useDebounced(query, 300);

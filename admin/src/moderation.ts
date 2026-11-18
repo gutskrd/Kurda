@@ -337,7 +337,7 @@ export function sanctionPeriod(
 ): string {
   if (s.revokedAt) return `Lifted ${shortDate(new Date(s.revokedAt), now)}`;
   if (s.pendingApproval) return 'Waiting for a second admin';
-  // a warning and a removal happen once; they have a day, not a length
+  // A warning and a removal happen once; they have a day, not a length.
   if (s.kind === 'warning' || s.kind === 'content_removal') return `Given ${shortDate(new Date(s.startsAt), now)}`;
   if (!s.endsAt) return s.active ? 'No end' : 'Ended';
   const end = new Date(s.endsAt);
@@ -357,7 +357,7 @@ export function slaState(
   const due = new Date(c.slaDueAt).getTime();
   const left = (due - now.getTime()) / 1000;
   if (c.slaBreached || left <= 0) return { text: `Overdue by ${duration(Math.abs(left))}`, tone: 'bad' };
-  // the last quarter of the time it was given: soon
+  // The last quarter of the time it was given: soon.
   const soon = left <= (PRIORITY_SLA_HOURS[c.priority] * 3600) / 4;
   return { text: `Due in ${duration(left)}`, tone: soon ? 'warn' : 'neutral' };
 }
@@ -387,7 +387,7 @@ export function filtersFrom(query: URLSearchParams): QueueFilters {
   };
 }
 
-/** the longest search the queue API takes; a longer paste would be refused, not searched */
+/** The longest search the queue API takes; a longer paste would be refused, not searched. */
 export const QUEUE_Q_MAX = 200;
 
 /** The filters as a query string, the defaults left out: "priority=0&source=bots". */
@@ -424,7 +424,7 @@ export function rememberQueueOrder(ids: readonly string[], query = ''): void {
   try {
     sessionStorage.setItem(ORDER_KEY, JSON.stringify({ ids, query }));
   } catch {
-    // private mode, or storage full: j/k then simply has nowhere to go
+    // Private mode, or storage full: j/k then simply has nowhere to go.
   }
 }
 
@@ -436,7 +436,7 @@ export function queueOrder(): { ids: string[]; query: string } {
       return { ids: parsed.ids.filter((x): x is string => typeof x === 'string'), query: typeof parsed.query === 'string' ? parsed.query : '' };
     }
   } catch {
-    // unreadable: no order
+    // Unreadable: no order.
   }
   return { ids: [], query: '' };
 }
@@ -453,24 +453,24 @@ export function neighbourCase(id: string, step: 1 | -1, order = queueOrder().ids
 // ---------------------------------------------------------------------------
 
 export interface ActionDraft {
-  /** the panel's own key for the row */
+  /** The panel's own key for the row. */
   key: string;
   target: DecisionTarget;
   kind: DecisionActionKind;
   durationHours: number | null;
   statement: string;
-  /** typed by the moderator: a change of rule or kind leaves it alone */
+  /** Typed by the moderator: a change of rule or kind leaves it alone. */
   statementEdited: boolean;
 }
 
 export interface DecisionDraft {
   outcome: 'actioned' | 'no_violation';
-  /** '' until one is chosen */
+  /** '' until one is chosen. */
   policy: string;
   actions: ActionDraft[];
   removeContent: boolean;
   notifyReporters: boolean;
-  /** for the case record, not the person */
+  /** For the case record, not the person. */
   note: string;
 }
 
@@ -510,7 +510,7 @@ export function withKind(a: ActionDraft, kind: DecisionActionKind, policy: strin
   let hours: number | null;
   if (!hasDuration(kind) || kind === 'permanent_ban') hours = null;
   else if (!hasDuration(a.kind) || a.kind === 'permanent_ban') hours = defaultDuration(kind);
-  // "no end" is a length for a mute, not for a suspension
+  // "no end" is a length for a mute, not for a suspension.
   else hours = a.durationHours === null && kind === 'suspension' ? defaultDuration(kind) : a.durationHours;
   return {
     ...a,
@@ -522,7 +522,7 @@ export function withKind(a: ActionDraft, kind: DecisionActionKind, policy: strin
 
 /** The request the draft is: what the preview asks about and what the decision sends. */
 export function decisionRequest(d: DecisionDraft, extra: { preview?: boolean; confirmUsernames?: string[] } = {}): DecideRequest {
-  // one name typed goes as confirmUsername; a decision that bans two people for good sends both
+  // One name typed goes as confirmUsername; a decision that bans two people for good sends both.
   const typed = extra.confirmUsernames ?? [];
   const actioned = d.outcome === 'actioned';
   return {

@@ -31,9 +31,9 @@ export const KIND_NAMES: Record<AudioKind, string> = {
 
 export interface VoiceRecording {
   kind: AudioKind;
-  /** what PATCH /admin/audio/:kind names it by: a sentence's or a sound's key, a pronunciation's id */
+  /** What PATCH /admin/audio/:kind names it by: a sentence's or a sound's key, a pronunciation's id. */
   key: string;
-  /** the words said, as the timeline reads them */
+  /** The words said, as the timeline reads them. */
   text: string;
   script?: LipsyncScript;
   url: string;
@@ -89,7 +89,7 @@ export function fromDictionary(item: DictionaryAudioAdminItem): VoiceRecording {
 export interface DictionaryFilter {
   speaker?: 'none' | 'any' | SpeakerId;
   lipsync?: 'missing' | 'present';
-  /** the start of the headword */
+  /** The start of the headword. */
   q?: string;
 }
 
@@ -133,7 +133,7 @@ export interface KindCounts {
   kind: AudioKind;
   recorded: number;
   noSpeaker: number;
-  /** a character and no timeline */
+  /** A character and no timeline. */
   noTimeline: number;
 }
 
@@ -194,7 +194,7 @@ export function failureLine(err: unknown): string {
       const own = FROM_ITS_SITE.has(reason) ? undefined : UNREACHABLE[reason];
       return own ?? (detail ? `Could not get the file: ${detail}.` : 'Could not get the file.');
     }
-    // a site recordings are not fetched from, or an address that leads inside a private network
+    // A site recordings are not fetched from, or an address that leads inside a private network.
     if (err.code === 'AUDIO_HOST_NOT_ALLOWED') return detail ? `The server will not fetch it: ${detail}.` : 'The server will not fetch it.';
     if (err.code === 'MEDIA_UNAVAILABLE') return 'The server has no media storage set up, so the file cannot be read.';
     if (err.status === 404) return 'It is gone: the recording, or its file, was removed after the list was loaded.';

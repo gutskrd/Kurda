@@ -16,11 +16,11 @@ export function PageHeader({
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
-  /** buttons on the right (under the title on a phone) */
+  /** Buttons on the right (under the title on a phone). */
   actions?: ReactNode;
-  /** a link up a level: the list a detail page came from */
+  /** A link up a level: the list a detail page came from. */
   back?: { href: string; label: string };
-  /** badges beside the title: a status, a version */
+  /** Badges beside the title: a status, a version. */
   meta?: ReactNode;
 }): React.JSX.Element {
   return (
@@ -33,7 +33,7 @@ export function PageHeader({
           </a>
         )}
         <div className="page-title-row">
-          {/* the shell moves focus here on every new page, so a screen reader starts at the top */}
+          {/* The shell moves focus here on every new page, so a screen reader starts at the top. */}
           <h1 id="page-title" tabIndex={-1}>
             {title}
           </h1>
@@ -60,11 +60,11 @@ export function Section({
   actions?: ReactNode;
   children: ReactNode;
   className?: string;
-  /** no padding: a table that runs edge to edge */
+  /** No padding: a table that runs edge to edge. */
   flush?: boolean;
   id?: string;
 }): React.JSX.Element {
-  // named by its heading, so a screen reader's list of regions reads "Standing", "Notes"…
+  // Named by its heading, so a screen reader's list of regions reads "Standing", "Notes"…
   const headingId = useId();
   return (
     <section
@@ -141,7 +141,7 @@ export function Stat({
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'default' | 'primary' | 'danger' | 'ghost';
-  /** working on it: disabled, with the label the caller gives (e.g. "Saving…") */
+  /** Working on it: disabled, with the label the caller gives (e.g. "Saving…") */
   busy?: boolean;
   icon?: IconName;
 };

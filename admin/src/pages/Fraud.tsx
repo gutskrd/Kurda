@@ -7,7 +7,7 @@ type FraudFlag = 'VELOCITY' | 'REFUND_ABUSE' | 'RECEIPT_REUSE';
 interface FraudReview {
   id: string;
   userId: string;
-  /** null once the account is gone */
+  /** Null once the account is gone. */
   username?: string | null;
   receiptId: string | null;
   flags: FraudFlag[];
@@ -22,7 +22,7 @@ const FLAG: Record<FraudFlag, { label: string; meaning: string }> = {
   RECEIPT_REUSE: { label: 'Receipt used by another account', meaning: 'The store receipt was already used on a different account, and not through family sharing.' },
 };
 
-/** "maxPerHour" → "Max per hour" */
+/** "maxPerHour" → "Max per hour". */
 function words(key: string): string {
   const w = key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ').toLowerCase();
   return w.charAt(0).toUpperCase() + w.slice(1);

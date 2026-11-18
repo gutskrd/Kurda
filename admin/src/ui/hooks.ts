@@ -12,7 +12,7 @@ export interface Loaded<T> {
   error: unknown;
   loading: boolean;
   reload: () => Promise<void>;
-  /** change what is shown without asking the server (after a save that answered with the new row) */
+  /** Change what is shown without asking the server (after a save that answered with the new row). */
   setData: (next: T | ((prev: T | undefined) => T)) => void;
 }
 
@@ -22,7 +22,7 @@ export function useLoad<T>(load: () => Promise<T>, deps: DependencyList): Loaded
   const [loading, setLoading] = useState(true);
   const latest = useRef(0);
   const alive = useRef(true);
-  // the caller's deps decide when to load again, as with useEffect
+  // The caller's deps decide when to load again, as with useEffect.
   const run = useCallback(load, deps);
 
   const reload = useCallback(async () => {

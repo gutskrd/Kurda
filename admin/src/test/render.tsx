@@ -27,7 +27,7 @@ export function withKit(ui: ReactNode): React.JSX.Element {
 /** Mount `ui` as the app would: inside #root, with the kit's providers. */
 export function renderUi(ui: ReactNode, { kit = true }: { kit?: boolean } = {}): Rendered {
   const container = document.createElement('div');
-  // the app's root: an open layer makes it inert behind itself
+  // The app's root: an open layer makes it inert behind itself.
   if (!document.getElementById('root')) container.id = 'root';
   document.body.appendChild(container);
   const root = createRoot(container);

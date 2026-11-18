@@ -29,10 +29,10 @@ export type Capability =
 
 /** What this session holds, from GET /admin/session. */
 export interface SessionAccess {
-  /** every staff role, the legacy `admin` and `founder` included */
+  /** Every staff role, the legacy `admin` and `founder` included. */
   staffRoles: readonly string[];
   capabilities: readonly string[];
-  /** the voices this account records (Hamo, a narrator…): the console opens on them */
+  /** The voices this account records (Hamo, a narrator…): the console opens on them. */
   voices?: readonly string[];
 }
 
@@ -62,7 +62,7 @@ const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /
 const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit, /admin/security, /admin/maintenance
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
 const SUPPORT_READERS = { roles: ['superadmin', 'admin', 'support'] } as const; // email/admin-routes.ts SUPPORT_READERS (the settings half: EMAIL_ADMINS)
-/** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts */
+/** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts. */
 export const RANK_TOOL_ROLES = ['admin', 'superadmin'] as const;
 const RANK_TOOLS = { roles: RANK_TOOL_ROLES } as const;
 
@@ -105,8 +105,8 @@ export const NAV: readonly NavEntry[] = [
   { id: 'dashboard', label: 'Dashboard', group: 'overview', icon: 'home', page: 'dashboard', access: { anyone: true }, keywords: 'home start summary' },
   { id: 'analytics', label: 'Analytics', group: 'overview', icon: 'chart', page: 'analytics', access: LEGACY_ADMIN, keywords: 'dau mau retention funnel' },
 
-  // the owner could not find where to record: it gets a group of its own, near the top, in plain words,
-  // opening on each person's own lines — what they have to say, in order — before the studio's sides
+  // The owner could not find where to record: it gets a group of its own, near the top, in plain words,
+  // opening on each person's own lines — what they have to say, in order — before the studio's sides.
   { id: 'record-people', label: 'Record by person', group: 'record', icon: 'users', page: 'record', access: VOICES, keywords: 'voice actor people hamo xezo xezal hevalo narrator script lines to record dashboard' },
   { id: 'record-letters', label: 'Record the alphabet and words', group: 'record', icon: 'letters', page: 'audio', sub: 'letters', access: RECORDERS, keywords: 'audio studio letters alphabet words colours numbers days months voice microphone' },
   { id: 'record-lessons', label: 'Record lesson sentences', group: 'record', icon: 'mic', page: 'audio', sub: 'lessons', access: RECORDERS, keywords: 'audio studio words sentences voice microphone' },
@@ -135,7 +135,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'wordle', label: 'Peyvok', group: 'games', icon: 'grid', page: 'wordle', access: GAME_EDITORS, keywords: 'coverage word game' },
   { id: 'rhyme', label: 'Rhyme', group: 'games', icon: 'rhyme', page: 'rhyme', access: GAME_EDITORS, keywords: 'rhymes base words' },
   { id: 'race', label: 'Race texts', group: 'games', icon: 'keyboard', page: 'race', access: GAME_EDITORS, keywords: 'typing race' },
-  // the learning games' own content, behind the capability its API routes ask for (api/src/games/routes.ts)
+  // The learning games' own content, behind the capability its API routes ask for (api/src/games/routes.ts).
   { id: 'game-content', label: 'Learning game content', title: 'Game content', group: 'games', icon: 'list', page: 'game-content', access: { capability: 'content.edit' }, keywords: 'learning games sentences passages cards review readiness import build a sentence' },
 
   { id: 'ranks', label: 'Game ranks', group: 'ranks', icon: 'mountain', page: 'ranks', access: RANK_TOOLS, keywords: 'rating tiers top players suspicious pairs void reset' },
@@ -178,9 +178,9 @@ export const ALIASES: Readonly<Record<string, string>> = {
 };
 
 export interface Route {
-  /** the page key: #/lessons/<id> → lessons */
+  /** The page key: #/lessons/<id> → lessons. */
   page: string;
-  /** the parts below it: #/lessons/<id> → [<id>] */
+  /** The parts below it: #/lessons/<id> → [<id>]. */
   rest: string[];
   query: URLSearchParams;
 }
@@ -205,7 +205,7 @@ export function parseRoute(hash: string): Route {
   return { page: first, rest, query: new URLSearchParams(search) };
 }
 
-/** The address of a page: href('audio', 'lessons') → #/audio/lessons */
+/** The address of a page: href('audio', 'lessons') → #/audio/lessons. */
 export function href(page: string, ...rest: string[]): string {
   return `#/${[page, ...rest].map(encodeURIComponent).join('/')}`;
 }

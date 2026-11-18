@@ -55,7 +55,7 @@ const STATUS_TABS: ReadonlyArray<{ key: StatusFilter; label: string }> = [
 
 export interface FeedbackFilters {
   status: StatusFilter;
-  /** chosen star counts, e.g. [1, 2]; empty is every answer */
+  /** Chosen star counts, e.g. [1, 2]; empty is every answer. */
   stars: number[];
   category: string;
   platform: string;
@@ -90,7 +90,7 @@ export function feedbackQuery(f: FeedbackFilters): string {
 }
 
 export const FEEDBACK_PAGE = 50;
-/** the longest search the API takes; a longer paste would be refused, not searched */
+/** The longest search the API takes; a longer paste would be refused, not searched. */
 export const FEEDBACK_Q_MAX = 80;
 
 /**
@@ -147,17 +147,17 @@ export function Feedback(): React.JSX.Element {
   const [loadingMore, setLoadingMore] = useState(false);
   const toast = useToast();
 
-  // the search box types freely; the list follows once typing pauses
+  // The search box types freely; the list follows once typing pauses.
   const [q, setQ] = useState(filters.q);
   const settledQ = useDebounced(q, 400);
   useEffect(() => {
     if (settledQ.trim() !== filters.q) setFilters({ ...filters, q: settledQ });
-    // only the typed text moves the address; the rest is already there
+    // Only the typed text moves the address; the rest is already there.
   }, [settledQ]);
 
   const items = list?.items ?? null;
   const total = list?.total ?? 0;
-  // still to load: the answers that match now, less those on screen that still match
+  // Still to load: the answers that match now, less those on screen that still match.
   const left = items ? Math.max(0, total - items.filter((i) => inStatus(filters, i)).length) : 0;
 
   async function loadMore(): Promise<void> {
@@ -185,7 +185,7 @@ export function Feedback(): React.JSX.Element {
     setShown((s) => {
       const base = s?.from === from ? s : fresh(from);
       const before = base.items.find((i) => i.id === next.id);
-      // marked out of this tab (or back into it): the filter's count moves with it
+      // Marked out of this tab (or back into it): the filter's count moves with it.
       const moved = before && inStatus(filters, before) !== inStatus(filters, next) ? (inStatus(filters, next) ? 1 : -1) : 0;
       return { from, items: base.items.map((i) => (i.id === next.id ? next : i)), total: base.total + moved };
     });
@@ -358,7 +358,7 @@ function SummaryPanel({ loaded }: { loaded: Loaded<AdminFeedbackSummary> }): Rea
           {recent.averageStars !== null && <Stars n={Math.round(recent.averageStars)} />}
           <span className="subtle">
             {statLine(recent)}
-            {/* all time only when it says something more */}
+            {/* All time only when it says something more. */}
             {s.total.count !== recent.count &&
               ` · ${s.total.count.toLocaleString()} in all${s.total.averageStars !== null ? `, ${s.total.averageStars.toFixed(1)} ★ average` : ''}`}
           </span>
@@ -431,7 +431,7 @@ function FeedbackRow({ item, onChanged }: { item: AdminFeedbackItem; onChanged: 
       initial: item.adminNote ?? '',
       multiline: true,
       maxLength: 2000,
-      // an emptied note clears it
+      // An emptied note clears it.
       validate: () => null,
       confirmLabel: 'Save note',
     });
@@ -464,7 +464,7 @@ function FeedbackRow({ item, onChanged }: { item: AdminFeedbackItem; onChanged: 
         <UserLink user={item.user} />
         <span>
           {PLATFORM_NAME[item.platform] ?? item.platform}
-          {/* the web has no version of its own (it sends "web") */}
+          {/* The web has no version of its own (it sends "web"). */}
           {item.platform !== 'web' && item.appVersion && item.appVersion !== 'web' ? ` ${item.appVersion}` : ''}
         </span>
         <span>{SOURCE_NAME[item.source] ?? item.source}</span>

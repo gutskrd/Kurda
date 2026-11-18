@@ -22,11 +22,11 @@ export interface ShopItem {
   assetKey: string | null;
   premiumOnly: boolean;
   displayOrder: number;
-  /** deleted while people owned it: kept for them, gone from the shop */
+  /** Deleted while people owned it: kept for them, gone from the shop. */
   retiredAt?: string | null;
-  /** how many people own it */
+  /** How many people own it. */
   owners?: number;
-  /** where its art is served from: a CDN URL, or a path on the site for the art that ships with it */
+  /** Where its art is served from: a CDN URL, or a path on the site for the art that ships with it. */
   assetUrl?: string | null;
 }
 

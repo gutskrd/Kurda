@@ -45,7 +45,7 @@ export function ErrorState({
 }: {
   error: unknown;
   onRetry?: () => void;
-  /** what the page shows, for "your role doesn't include …" */
+  /** What the page shows, for "your role doesn't include …" */
   what?: string;
   compact?: boolean;
 }): React.JSX.Element {
@@ -58,7 +58,7 @@ export function ErrorState({
       <div className="state-text">{d.message}</div>
       <div className="state-action">
         {d.kind === 'two_factor' || d.kind === 'two_factor_setup' ? (
-          // the gate asks for the code (or the setup) when the page loads again
+          // The gate asks for the code (or the setup) when the page loads again.
           <button type="button" className="primary" onClick={() => location.reload()}>
             {d.kind === 'two_factor' ? 'Enter a code' : 'Set up 2FA'}
           </button>

@@ -88,13 +88,13 @@ export function RankEmblem({
 }: {
   tier: RankTier | null;
   division?: Division | null;
-  /** placement games played, when there is no tier yet */
+  /** Placement games played, when there is no tier yet. */
   placing?: number;
   size?: number;
   label?: string;
 }): React.JSX.Element {
   const id = useArtId();
-  // drawn once per look: a list re-renders on every menu opened, and fifty emblems redrawn each time add up
+  // Drawn once per look: a list re-renders on every menu opened, and fifty emblems redrawn each time add up.
   const svg = useMemo(
     () =>
       tier === null
@@ -258,7 +258,7 @@ export function useResetRating(): (user: { id: string; username: string }, game:
 
 function GameState({ g }: { g: { voided: boolean; voidReason: string | null; weight: number } }): React.JSX.Element {
   if (g.voided) {
-    // the reason on the page, not in a tooltip a finger never brings up
+    // The reason on the page, not in a tooltip a finger never brings up.
     return (
       <>
         <Badge tone="neutral">Voided</Badge>

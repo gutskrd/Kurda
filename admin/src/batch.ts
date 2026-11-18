@@ -18,14 +18,14 @@
 export interface BatchControl {
   readonly paused: boolean;
   readonly cancelled: boolean;
-  /** aborted on cancel */
+  /** Aborted on cancel. */
   readonly signal: AbortSignal;
   pause(): void;
   resume(): void;
   cancel(): void;
-  /** resolves at once unless paused; then when resumed or cancelled */
+  /** Resolves at once unless paused; then when resumed or cancelled. */
   wait(): Promise<void>;
-  /** resolves after `ms`, or at once on cancel */
+  /** Resolves after `ms`, or at once on cancel. */
   sleep(ms: number): Promise<void>;
 }
 
@@ -79,9 +79,9 @@ export function batchControl(): BatchControl {
 
 /** Where a run's items come from. */
 export interface BatchSource<T> {
-  /** the next item, or null when there are no more; asked again after it throws, it carries on where it was */
+  /** The next item, or null when there are no more; asked again after it throws, it carries on where it was. */
   next(): Promise<T | null>;
-  /** known to have nothing left, without asking */
+  /** Known to have nothing left, without asking. */
   done(): boolean;
 }
 
@@ -144,11 +144,11 @@ export interface BatchOptions<T> {
   control: BatchControl;
   concurrency?: number;
   onOutcome?: (outcome: BatchOutcome<T>) => void;
-  /** how long the server asked to wait, in ms, when `error` is it asking to slow down; null otherwise */
+  /** How long the server asked to wait, in ms, when `error` is it asking to slow down; null otherwise. */
   retryAfter?: (error: unknown) => number | null;
-  /** the run is waiting until this time (Date.now() ms) at the server's asking; null when it goes on */
+  /** The run is waiting until this time (Date.now() ms) at the server's asking; null when it goes on. */
   onHold?: (until: number | null) => void;
-  /** the source could not give its next item, for a reason other than slowing down: it is not asked again */
+  /** The source could not give its next item, for a reason other than slowing down: it is not asked again. */
   onSourceError?: (error: unknown) => void;
 }
 
@@ -163,7 +163,7 @@ export async function runBatch<T>(
   { control, concurrency = 2, onOutcome, retryAfter, onHold, onSourceError }: BatchOptions<T>,
 ): Promise<void> {
   const source = Array.isArray(items) ? listSource(items as readonly T[]) : (items as BatchSource<T>);
-  // items to try again after a wait the server asked for, first in line
+  // Items to try again after a wait the server asked for, first in line.
   const again: T[] = [];
   let ended = false;
   let resumeAt = 0;
@@ -173,7 +173,7 @@ export async function runBatch<T>(
     resumeAt = Math.max(resumeAt, Date.now() + Math.max(0, ms));
     onHold?.(resumeAt);
     if (holding) return;
-    // a later request to wait moves resumeAt on, and the wait goes on with it
+    // A later request to wait moves resumeAt on, and the wait goes on with it.
     const wait = async (): Promise<void> => {
       do await control.sleep(Math.max(0, resumeAt - Date.now()));
       while (!control.cancelled && Date.now() < resumeAt);
@@ -207,7 +207,7 @@ export async function runBatch<T>(
 
   const worker = async (): Promise<void> => {
     for (;;) {
-      // a pause with nothing left to start is the end, not a wait
+      // A pause with nothing left to start is the end, not a wait.
       if (nothingLeft()) return;
       await control.wait();
       while (holding) {
@@ -222,7 +222,7 @@ export async function runBatch<T>(
         await work(item, control.signal);
         onOutcome?.({ item, ok: true });
       } catch (error) {
-        // stopped by the cancel, not by a fault of its own
+        // Stopped by the cancel, not by a fault of its own.
         if (control.cancelled && control.signal.aborted && isAbort(error)) return;
         const wait = control.cancelled ? null : (retryAfter?.(error) ?? null);
         if (wait !== null) {

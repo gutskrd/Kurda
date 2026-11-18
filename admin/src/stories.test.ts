@@ -76,7 +76,7 @@ describe('the form and the request', () => {
     expect(draft.title).toBe('Rêya Dibistanê');
     expect(draft.summary).toBeNull();
     expect(draft.body).toBe(BODY);
-    // an empty meaning is no meaning; English is always there
+    // An empty meaning is no meaning; English is always there.
     expect(draft.glossary[0]).toEqual({ term: 'dilovan', meanings: { en: 'kind' } });
     expect(draft.glossary[1]).toEqual({ term: 'zeviyan', meanings: { de: 'Felder', en: 'fields' } });
     expect(draft.questions[1]!.explanation).toBeNull();
@@ -97,7 +97,7 @@ describe('the form and the request', () => {
   it('reads a stored story back into the same draft it came from', () => {
     const story = storyFixture();
     const draft = draftFromForm(formFromStory(story));
-    // the API answers every question with its translations, none in the fixture
+    // The API answers every question with its translations, none in the fixture.
     expect(draft.questions).toEqual(story.questions.map(({ id: _id, ...q }) => ({ ...q, translations: {} })));
     expect(draft.glossary).toEqual(story.glossary);
   });
@@ -140,10 +140,10 @@ describe('the form and the request', () => {
       cover: 'gola-sin',
       readingMinutes: 3,
     });
-    // a category, a cover or a reading time taken away is null, not an empty string
+    // A category, a cover or a reading time taken away is null, not an empty string.
     const cleared = edit(form, { type: 'lib/category', value: null }, { type: 'lib/cover', value: null }, { type: 'lib/minutes', value: null });
     expect(draftFromForm(cleared)).toMatchObject({ category: null, cover: null, readingMinutes: null });
-    // what was loaded comes back the same, so nothing counts as unsaved
+    // What was loaded comes back the same, so nothing counts as unsaved.
     expect(isDirty(formFromStory(storyFixture()), formFromStory(storyFixture()))).toBe(false);
   });
 
@@ -166,7 +166,7 @@ describe('the form and the request', () => {
     expect(checks.find((c) => c.locale === 'en')).toMatchObject({ paragraphs: 3, expected: 3, state: 'ok' });
     expect(checks.find((c) => c.locale === 'de')).toMatchObject({ paragraphs: 2, expected: 3, state: 'mismatch' });
     expect(checks.find((c) => c.locale === 'fr')).toMatchObject({ paragraphs: 0, state: 'empty' });
-    // the mismatch is what the server refuses too
+    // The mismatch is what the server refuses too.
     expect(codes(liveChecks(form).blocking)).toEqual(['TRANSLATION_PARAGRAPHS@translations.de']);
     expect(describePath('translations.de')).toBe('Translation (German)');
   });
@@ -182,7 +182,7 @@ describe('the form and the request', () => {
     const kept = edit(unlinked, { type: 'link', sameStoryAs: undefined });
     expect('sameStoryAs' in draftFromForm(kept)).toBe(false);
     expect(isDirty(kept, loaded)).toBe(false);
-    // a save loads the story afresh, with no change pending
+    // A save loads the story afresh, with no change pending.
     expect('sameStoryAs' in formFromStory(storyFixture(), { previous: linked })).toBe(false);
   });
 
@@ -192,7 +192,7 @@ describe('the form and the request', () => {
     expect(contentChanged(edit(loaded, { type: 'text', field: 'summary', value: 'Changed.' }), loaded)).toBe(true);
     expect(contentChanged(edit(loaded, { type: 'translation', locale: 'en', value: 'A.\n\nB.\n\nC.' }), loaded)).toBe(true);
     expect(contentChanged(edit(loaded, { type: 'q/correct', index: 0, option: 1 }), loaded)).toBe(true);
-    // whitespace the API trims is no change
+    // Whitespace the API trims is no change.
     expect(contentChanged(edit(loaded, { type: 'text', field: 'title', value: 'Rêya Dibistanê ' }), loaded)).toBe(false);
   });
 });
@@ -243,7 +243,7 @@ describe('the slug', () => {
     const typed = edit(form, { type: 'text', field: 'title', value: 'کلیلی ماڵەوە' });
     expect(typed.slug).toBe(form.slug);
     expect(autoSlug(typed)).toBe(form.slug);
-    // a warning, not a refusal: it is a working address, just not a readable one
+    // A warning, not a refusal: it is a working address, just not a readable one.
     const checks = liveChecks(typed);
     expect(codes(checks.warnings)).toContain('SLUG_RANDOM@slug');
     expect(checks.blocking.filter((p) => p.path === 'slug')).toEqual([]);
@@ -292,14 +292,14 @@ describe('editing questions', () => {
   const form = formFromStory(storyFixture());
 
   it('removing an option moves the right answer with it, and removing the right one clears it', () => {
-    // right answer is option 2 of 3 (index 1)
+    // Right answer is option 2 of 3 (index 1).
     const q = (f: StoryForm) => f.questions[1]!;
     expect(q(edit(form, { type: 'q/option-remove', index: 1, option: 0 }))).toMatchObject({
       options: ['Li ber çiyayekî', 'Li nav bajêr'],
       correctIndex: 0,
     });
     expect(q(edit(form, { type: 'q/option-remove', index: 1, option: 2 })).correctIndex).toBe(1);
-    // never quietly makes another option right
+    // Never quietly makes another option right.
     const cleared = edit(form, { type: 'q/option-remove', index: 1, option: 1 });
     expect(q(cleared).correctIndex).toBe(-1);
     expect(codes(liveChecks(cleared).blocking)).toContain('CORRECT_INDEX@questions[1].correctIndex');
@@ -315,7 +315,7 @@ describe('editing questions', () => {
   it('forgets the sentence when the evidence moves to another paragraph', () => {
     const moved = edit(form, { type: 'q/evidence', index: 0, paragraph: 1 });
     expect(moved.questions[0]).toMatchObject({ evidenceParagraph: 1, evidenceSentence: null });
-    // choosing the same paragraph again keeps the sentence
+    // Choosing the same paragraph again keeps the sentence.
     expect(edit(form, { type: 'q/evidence', index: 0, paragraph: 0 }).questions[0]!.evidenceSentence).toBe(0);
   });
 
@@ -382,13 +382,13 @@ describe('evidence when the text changes', () => {
     const joined = [`${P1} ${P2}`, P3].join('\n\n');
     expect(quotes(edit(loaded, { type: 'text', field: 'body', value: joined }))).toEqual(before);
 
-    // a new opening paragraph typed in front of the first: the first sentence is
-    // "Destpêk.Rojîn deh salî ye." for a few keystrokes, and is followed still
+    // A new opening paragraph typed in front of the first: the first sentence is
+    // "Destpêk.Rojîn deh salî ye." for a few keystrokes, and is followed still.
     const opened = typed(loaded, BODY, `Destpêk. Ev çîrok kurt e.\n\n${BODY}`);
     expect(quotes(opened)).toEqual(before);
     expect(liveChecks(opened).warnings).toEqual([]);
 
-    // paragraph 1 taken out: what quoted it has nothing to follow, and says so
+    // Paragraph 1 taken out: what quoted it has nothing to follow, and says so.
     const cut = edit(loaded, { type: 'text', field: 'body', value: [P2, P3].join('\n\n') });
     expect(quotes(cut).slice(2)).toEqual(before.slice(2));
     expect(codes(liveChecks(cut).warnings)).toEqual([
@@ -404,7 +404,7 @@ describe('evidence when the text changes', () => {
     const moved = edit(form, { type: 'text', field: 'body', value: `Destpêk.\n\n${body}` });
     expect(moved.questions[2]).toMatchObject({ evidenceParagraph: 3, evidenceSentence: 4 });
     expect(moved.questions[4]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: 3 });
-    // the last one's words edited: it stays, rather than going to the same words in paragraph 2
+    // The last one's words edited: it stays, rather than going to the same words in paragraph 2.
     const edited = typed(form, body, body.replace(/ sor hez dike\.$/, ' sor û zer hez dike.'));
     expect(edited.questions[2]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: 4 });
     expect(codes(liveChecks(edited).warnings)).toEqual(['EVIDENCE_CHANGED@questions[2].evidenceSentence']);
@@ -429,7 +429,7 @@ describe('evidence when the text changes', () => {
     expect(form.questions[2]).toMatchObject({ evidenceParagraph: 2, evidenceSentence: 1 });
     expect(codes(liveChecks(form).warnings)).toEqual(['EVIDENCE_CHANGED@questions[2].evidenceSentence']);
     expect(liveChecks(form).warnings[0]!.message).toBe('the sentence it points at was changed: check it still holds the answer');
-    // still followed after that, by its new words
+    // Still followed after that, by its new words.
     const split = edit(form, { type: 'text', field: 'body', value: form.body.replace('Mamosteya wan Şîlan e. ', 'Mamosteya wan Şîlan e.\n\n') });
     expect(split.questions[2]).toMatchObject({ evidenceParagraph: 3, evidenceSentence: 0 });
 
@@ -437,7 +437,7 @@ describe('evidence when the text changes', () => {
     const saved = storyFixture({ body: form.body });
     expect(liveChecks(formFromStory(saved, { previous: form })).warnings).toEqual([]);
 
-    // a paragraph chosen whole asks when anything in it is changed
+    // A paragraph chosen whole asks when anything in it is changed.
     const whole = edit(loaded, { type: 'q/evidence', index: 0, paragraph: 0 }, { type: 'q/evidence-sentence', index: 0, sentence: null });
     const changed = edit(whole, { type: 'text', field: 'body', value: BODY.replace('deh salî', 'neh salî') });
     expect(codes(liveChecks(changed).warnings)).toEqual(['EVIDENCE_CHANGED@questions[0].evidenceParagraph']);
@@ -467,19 +467,19 @@ describe('the live checks', () => {
   });
 
   it('let an unfinished draft be saved, but not published', () => {
-    // a new story with only a title: no text yet is fine in a draft
+    // A new story with only a title: no text yet is fine in a draft.
     const started = edit(blankForm('kurmanci', fixed), { type: 'text', field: 'title', value: 'Qelema Şîn' });
     expect(liveChecks(started).blocking).toEqual([]);
-    // a new story is filed under no category yet, and that too waits until it is published
+    // A new story is filed under no category yet, and that too waits until it is published.
     expect(codes(liveChecks(started).beforePublish)).toEqual(['CATEGORY_MISSING@category', 'BODY_EMPTY@body']);
-    // a text between the lengths (144 words: past short, short of medium) likewise
+    // A text between the lengths (144 words: past short, short of medium) likewise.
     const between = edit(formFromStory(storyFixture()), { type: 'text', field: 'body', value: `${BODY}\n\n${BODY}` });
     expect(liveChecks(between).blocking).toEqual([]);
     expect(codes(liveChecks(between).beforePublish)).toEqual([expect.stringMatching(/@body$/)]);
   });
 
   it('refuse at any stage what is broken, not unfinished', () => {
-    // cut to one paragraph, the evidence in the others points past the text
+    // Cut to one paragraph, the evidence in the others points past the text.
     const cut = edit(formFromStory(storyFixture()), { type: 'text', field: 'body', value: BODY.split('\n\n')[0]! });
     expect(codes(liveChecks(cut).blocking)).toEqual(
       expect.arrayContaining(['EVIDENCE_PARAGRAPH@questions[2].evidenceParagraph', 'GLOSS_NOT_IN_TEXT@glossary[0].term']),
@@ -494,7 +494,7 @@ describe('the live checks', () => {
       { type: 'gloss/set', index: 2, field: 'en', value: 'heart' },
     );
     expect(codes(liveChecks(form).blocking)).toEqual(['GLOSS_NOT_IN_TEXT@glossary[2].term']);
-    // letter case does not matter to the reader, and so not here
+    // Letter case does not matter to the reader, and so not here.
     const upper = edit(form, { type: 'gloss/set', index: 2, field: 'term', value: 'ŞÎLAN' });
     expect(liveChecks(upper).blocking).toEqual([]);
     expect(glossPlaces(upper)).toEqual([[2], [1], [2]]);
@@ -598,7 +598,7 @@ describe('status', () => {
 
   it('marks a starter story until someone has published it', () => {
     expect(needsNativeReview({ origin: 'starter', publishedAt: null })).toBe(true);
-    // unpublished again after a review, it has been read once already
+    // Unpublished again after a review, it has been read once already.
     expect(needsNativeReview({ origin: 'starter', publishedAt: '2026-10-05T10:00:00.000Z' })).toBe(false);
     expect(needsNativeReview({ origin: 'admin', publishedAt: null })).toBe(false);
   });
@@ -636,7 +636,7 @@ describe('the list', () => {
       featured: true,
       query: 'x',
     });
-    // a stale or hand-edited one asks for nothing the server would refuse
+    // A stale or hand-edited one asks for nothing the server would refuse.
     expect(readListFilter({ status: 'gone', dialect: 'latin', level: 9, category: '', review: 'maybe', featured: 'yes', query: 3 })).toEqual(DEFAULT_FILTER);
   });
 
@@ -667,12 +667,12 @@ describe('one language at a time', () => {
   it('writes a question’s translation with as many options as the question, in its order', () => {
     const form = edit(loaded, { type: 'tr/question', locale: 'de', index: 0, field: 'prompt', value: ' Wie alt ist Rojîn? ' }, { type: 'tr/option', locale: 'de', index: 0, option: 1, value: 'Neun' });
     expect(form.questions[0]!.translations.de).toEqual({ prompt: ' Wie alt ist Rojîn? ', options: ['', 'Neun', ''] });
-    // half written: sent for the check to point at, the empty options included
+    // Half written: sent for the check to point at, the empty options included.
     expect(draftFromForm(form).questions[0]!.translations).toEqual({ de: { prompt: 'Wie alt ist Rojîn?', options: ['', 'Neun', ''] } });
     expect(codes(liveChecks(form).blocking)).toEqual(['QUESTION_TRANSLATION_OPTION_EMPTY@questions[0].translations.de.options[0]', 'QUESTION_TRANSLATION_OPTION_EMPTY@questions[0].translations.de.options[2]']);
     expect(localeProblems(liveChecks(form).blocking, 'de')).toHaveLength(2);
     expect(localeProblems(liveChecks(form).blocking, 'en')).toEqual([]);
-    // written in full, it is a question in German
+    // Written in full, it is a question in German.
     const whole = edit(form, { type: 'tr/option', locale: 'de', index: 0, option: 0, value: 'Zehn' }, { type: 'tr/option', locale: 'de', index: 0, option: 2, value: 'Acht' });
     expect(liveChecks(whole).blocking).toEqual([]);
     expect(localeCoverage(whole, 'de')).toMatchObject({ text: 'empty', title: false, questions: { done: 1, total: 6 }, any: true });
@@ -682,13 +682,13 @@ describe('one language at a time', () => {
     const german = edit(loaded, { type: 'tr/meta', locale: 'de', field: 'title', value: 'Der Schulweg' }, { type: 'translation', locale: 'en', value: 'One.\n\nTwo.\n\nThree.' });
     expect(changedLocales(german, loaded)).toEqual(['en', 'de']);
     expect(changedBesidesTranslations(german, loaded)).toBe(false);
-    // translations are content for the whole-story save, but not the Kurdish a reviewer approved
+    // Translations are content for the whole-story save, but not the Kurdish a reviewer approved.
     expect(contentChanged(german, loaded)).toBe(true);
     expect(kurdishChanged(german, loaded)).toBe(false);
     const both = edit(german, { type: 'text', field: 'summary', value: 'Nû.' });
     expect(changedBesidesTranslations(both, loaded)).toBe(true);
     expect(kurdishChanged(both, loaded)).toBe(true);
-    // a whitespace-only edit is no change
+    // A whitespace-only edit is no change.
     expect(changedLocales(edit(loaded, { type: 'tr/meta', locale: 'fr', field: 'title', value: '  ' }), loaded)).toEqual([]);
   });
 
@@ -702,7 +702,7 @@ describe('one language at a time', () => {
       reflections: [],
       notes: [],
     });
-    // the server saved German; the editor meanwhile started on French
+    // The server saved German; the editor meanwhile started on French.
     const saved = formFromStory(storyFixture({ translations: { de: 'Eins.\n\nZwei.\n\nDrei.' }, metaTranslations: { de: { summary: 'Ein Schulweg.' } } }));
     const typing = edit(form, { type: 'tr/meta', locale: 'fr', field: 'title', value: 'Le chemin' });
     const merged = withLocaleFrom(typing, saved, 'de');
@@ -719,14 +719,14 @@ describe('one language at a time', () => {
     expect(draft.reflections).toEqual([{ text: 'Çima?', translations: { en: 'Why?' } }]);
     expect(draft.notes).toEqual([{ kind: 'legend', title: 'Efsane', body: 'Ne dîrok e.', translations: { en: { title: 'Legend', body: '' } } }]);
     expect(draft.sources).toEqual([{ title: 'Mem û Zîn', type: 'literary' }]);
-    // a note translated only half is refused for that language
+    // A note translated only half is refused for that language.
     expect(codes(liveChecks(form).blocking)).toEqual(['NOTE_TRANSLATION_EMPTY@notes[0].translations.en']);
     expect(describePath('notes[0].translations.en')).toBe('Note 1 · Translation (English)');
     expect(describePath('questions[2].translations.de.options[1]')).toBe('Question 3 · Translation (German) · option 2');
     expect(describePath('metaTranslations.fr.title')).toBe('Title and summary (French) · Title');
     expect(describePath('sources[1].url')).toBe('Source 2 · address');
     expect(describePath('reflections[0].text')).toBe('To think about 1 · text');
-    // six questions to think about, four notes and eight sources at most
+    // Six questions to think about, four notes and eight sources at most.
     let full = loaded;
     for (let i = 0; i < 10; i++) full = edit(full, { type: 'reflection/add' }, { type: 'note/add' }, { type: 'source/add' });
     expect([full.library.reflections!.length, full.library.notes!.length, full.library.sources!.length]).toEqual([6, 4, 8]);

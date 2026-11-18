@@ -113,14 +113,14 @@ describe('Table', () => {
     expect(container.querySelector('.table-wrap')).toHaveClass('is-wide');
     renderUi(<Table caption="Tags" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} />);
     expect(screen.getByRole('table', { name: 'Tags' }).parentElement).not.toHaveClass('is-wide');
-    // a few wide columns: cards a little later, so a laptop with the sidebar keeps the table
+    // A few wide columns: cards a little later, so a laptop with the sidebar keeps the table.
     renderUi(<Table caption="Cases" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} wide="medium" />);
     expect(screen.getByRole('table', { name: 'Cases' }).parentElement).toHaveClass('is-medium');
     expect(screen.getByRole('table', { name: 'Cases' }).parentElement).not.toHaveClass('is-wide');
   });
 
   it('is cards in a narrow box, and in a wide one its table would not fit — never cut off at the edge', () => {
-    // jsdom lays nothing out: the box and the table are given their widths
+    // jsdom lays nothing out: the box and the table are given their widths.
     const restore = layout({ box: 1000, table: 800 });
     try {
       const { container } = renderUi(<Table caption="Shop items" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} />);
@@ -132,7 +132,7 @@ describe('Table', () => {
     try {
       const { container } = renderUi(<Table caption="Long names" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} />);
       expect(container.querySelector('.table-wrap')).toHaveClass('is-cards');
-      // the cards still say what each value is
+      // The cards still say what each value is.
       expect(within(screen.getByRole('table', { name: 'Long names' })).getAllByRole('cell')[1]).toHaveAttribute('data-label', 'Price');
     } finally {
       tooWide();
@@ -235,7 +235,7 @@ describe('ErrorState', () => {
     );
     expect(within(container).getByRole('alert')).toHaveTextContent('Your role can’t open this');
     expect(within(container).getByRole('alert')).toHaveTextContent('doesn’t include the shop');
-    // retrying will not change a role
+    // Retrying will not change a role.
     expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
     unmount();
 
@@ -260,7 +260,7 @@ describe('ErrorState', () => {
     expect(code.message).toBe('Too many codes didn’t match. To keep this account safe, no more can be tried for a while. You can try again in 5 minutes.');
     expect(describeError(new ApiError(429, 'LOCKED', 'too many failed attempts — try again later', undefined, {}, 900)).message).toMatch(/try again in 15 minutes\.$/);
     expect(describeError(new ApiError(429, 'RATE_LIMITED', 'too many requests', undefined, {}, 3600)).message).toBe('Wait 1 hour, then try again.');
-    // no wait given: still a sensible one
+    // No wait given: still a sensible one.
     expect(describeError(new ApiError(429, 'RATE_LIMITED', 'too many requests')).message).toBe('Wait a minute, then try again.');
   });
 
@@ -334,7 +334,7 @@ describe('ConfirmDialog', () => {
     const { container } = renderUi(<Harness onAnswer={answer} />);
     const opener = screen.getByRole('button', { name: 'Ban' });
     await user.click(opener);
-    // a danger question starts on the safe answer
+    // A danger question starts on the safe answer.
     expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus();
     expect(container).toHaveAttribute('inert');
     await user.keyboard('{Escape}');
@@ -394,7 +394,7 @@ describe('useDialogs', () => {
     expect(field).toHaveValue('heval');
     await user.clear(field);
     await user.click(screen.getByRole('button', { name: 'Save' }));
-    // an empty name is not sent
+    // An empty name is not sent.
     expect(screen.getByText('This can’t be empty.')).toBeInTheDocument();
     await user.type(field, 'hevalê');
     await user.keyboard('{Enter}');
@@ -452,7 +452,7 @@ describe('useDialogs', () => {
     expect(within(dialog).getByRole('button', { name: 'Void it' })).toHaveClass('danger-solid');
     await user.type(within(dialog).getByLabelText('Why'), 'win trading');
     await user.click(document.querySelector('.layer-scrim')!);
-    // still open, with what was typed
+    // Still open, with what was typed.
     expect(within(screen.getByRole('alertdialog')).getByLabelText('Why')).toHaveValue('win trading');
     await user.click(within(dialog).getByRole('button', { name: 'Void it' }));
     expect(await screen.findByText('win trading')).toBeInTheDocument();
@@ -488,7 +488,7 @@ describe('Toast', () => {
 
     act(() => vi.advanceTimersByTime(TOAST_MS.success + 10));
     expect(screen.queryByText('Saved.')).not.toBeInTheDocument();
-    // a failure stays longer
+    // A failure stays longer.
     expect(screen.getByText(/Could not save/)).toBeInTheDocument();
     act(() => vi.advanceTimersByTime(TOAST_MS.error));
     expect(screen.queryByText(/Could not save/)).not.toBeInTheDocument();
@@ -528,7 +528,7 @@ describe('Drawer', () => {
 
 describe('Tabs', () => {
   it('brings the chosen tab into view when the row scrolls sideways', () => {
-    // a phone's row: 300 px showing of 600, each tab 140 px wide and 150 apart
+    // A phone's row: 300 px showing of 600, each tab 140 px wide and 150 apart.
     const scrollWidth = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollWidth')!;
     const clientWidth = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth')!;
     const offsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')!;
@@ -554,7 +554,7 @@ describe('Tabs', () => {
           ]}
         />,
       );
-      // the fourth tab starts at 450: centred in the 300 px that show
+      // The fourth tab starts at 450: centred in the 300 px that show.
       expect(screen.getByRole('tablist', { name: 'Family' }).scrollLeft).toBe(370);
     } finally {
       Object.defineProperty(Element.prototype, 'scrollWidth', scrollWidth);
@@ -586,7 +586,7 @@ describe('Tabs', () => {
     const [missing, recorded, all] = within(list).getAllByRole('tab');
     expect(missing).toHaveAttribute('aria-selected', 'true');
     expect(missing).toHaveTextContent('Still to record12');
-    // only the chosen tab is in the Tab order
+    // Only the chosen tab is in the Tab order.
     expect(recorded).toHaveAttribute('tabindex', '-1');
     missing!.focus();
     await user.keyboard('{ArrowRight}');
@@ -716,7 +716,7 @@ describe('useLoad', () => {
     }
     const { rerender } = renderUi(<Search q="hev" />);
     rerender(<Search q="heval" />);
-    // the second request answers first, then the first one straggles in
+    // The second request answers first, then the first one straggles in.
     await act(async () => answers[1]!(''));
     await act(async () => answers[0]!(''));
     await waitFor(() => expect(document.querySelector('output')).toHaveTextContent('results for heval'));

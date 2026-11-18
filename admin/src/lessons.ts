@@ -87,7 +87,7 @@ export interface CourseOption {
 export interface LessonList {
   lessons: LessonRow[];
   skills: SkillOption[];
-  /** every course; missing from an API older than this panel, which then offers no course filter */
+  /** Every course; missing from an API older than this panel, which then offers no course filter. */
   courses?: CourseOption[];
   total: number;
 }
@@ -100,7 +100,7 @@ export interface Exercise {
   payload: Payload;
 }
 
-/** GET /admin/content/lessons/:id */
+/** GET /admin/content/lessons/:id. */
 export interface LessonDetail {
   id: string;
   skillId: string;
@@ -142,7 +142,7 @@ export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
   const carried = { ...(typeof from.say === 'string' && from.say ? { say: from.say } : {}), ...(isSpeakerId(from.voice) ? { voice: from.voice } : {}) };
   switch (type) {
     case 'conversation':
-      // Xezo and Hamo to start, each with a line: the smallest conversation there is
+      // Xezo and Hamo to start, each with a line: the smallest conversation there is.
       return {
         id: typeof from.id === 'string' && from.id ? from.id : newConversationId(),
         title: '',
@@ -286,7 +286,7 @@ function conversationIssues(p: Payload, out: Issue[]): void {
   if (speakers.length > 0 && speakers.every((s) => s.learner === true)) out.push({ path: 'speakers', message: 'The learner needs a character to talk with.' });
   const cast = new Set<string>();
   speakers.forEach((s, i) => {
-    // the learner's own part: theirs to read and say, recorded by nobody
+    // The learner's own part: theirs to read and say, recorded by nobody.
     if (s.learner === true) {
       if (cast.has('learner')) out.push({ path: `speakers.${i}.character`, message: 'The learner already has a part.' });
       cast.add('learner');

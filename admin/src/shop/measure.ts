@@ -6,13 +6,13 @@
 export async function measureImage(file: Blob): Promise<{ width: number; height: number } | null> {
   if (typeof createImageBitmap === 'function') {
     try {
-      // honours the picture's EXIF orientation, as the server does
+      // Honours the picture's EXIF orientation, as the server does.
       const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
       const size = { width: bitmap.width, height: bitmap.height };
       bitmap.close();
       return size;
     } catch {
-      // not a picture this browser can read; the server will say what it is
+      // Not a picture this browser can read; the server will say what it is.
     }
   }
   if (typeof URL.createObjectURL !== 'function') return null;

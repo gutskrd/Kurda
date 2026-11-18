@@ -188,7 +188,7 @@ function AnswerDrawer({
   const toast = useToast();
   const [outcome, setOutcome] = useState<AppealOutcome>('upheld');
   const [note, setNote] = useState('');
-  // the new sanction keeps the rule of the one it replaces
+  // The new sanction keeps the rule of the one it replaces.
   const [draft, setDraft] = useState<SanctionDraft>(() => newSanctionDraft('warning', appeal.sanction?.policy ?? ''));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -68,9 +68,9 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
   const [session, setSession] = useState<AdminSession | null>(null);
   const [problem, setProblem] = useState<unknown>(null);
   const [email, setEmail] = useState('');
-  // how the face on show is going, for Hevalo: each face says it
+  // How the face on show is going, for Hevalo: each face says it.
   const [face, setFace] = useState<CompanionStatus>('idle');
-  // came through the steps on this visit: the console opens with a moment for Hevalo to be pleased
+  // Came through the steps on this visit: the console opens with a moment for Hevalo to be pleased.
   const fresh = useRef(false);
   const card = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
@@ -84,7 +84,7 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
     setStep(next);
   }, []);
 
-  // the console's own code, fetched in the background while the steps are being filled in
+  // The console's own code, fetched in the background while the steps are being filled in.
   useEffect(() => {
     const timer = window.setTimeout(() => void warm().catch(() => undefined), 300);
     return () => window.clearTimeout(timer);
@@ -107,7 +107,7 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
       if (next.needsEnrollment) go('enroll');
       else if (next.needsVerification) go('code');
       else {
-        // the console's code is nearly always here already; a moment to be pleased about it, if this was a sign-in
+        // The console's code is nearly always here already; a moment to be pleased about it, if this was a sign-in.
         if (fresh.current) {
           go('opening');
           await Promise.all([warm().catch(() => undefined), stillWanted() ? null : wait(HAPPY_MS)]);
@@ -115,8 +115,8 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
         setStep('in');
       }
     } catch (err) {
-      // an account the console is not for is answered as if it were not there
-      // (404), or refused (403): back to the start, with nothing said about why
+      // An account the console is not for is answered as if it were not there
+      // (404), or refused (403): back to the start, with nothing said about why.
       if (err instanceof ApiError && (err.status === 403 || err.status === 404)) {
         out.current();
         restart();
@@ -127,10 +127,10 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
     }
   }, [go, restart, warm]);
 
-  // a session kept from before: straight to what it still needs
+  // A session kept from before: straight to what it still needs.
   useEffect(() => {
     if (step === 'checking') void check();
-    // once, as the page opens; later checks come from the steps themselves
+    // Once, as the page opens; later checks come from the steps themselves.
   }, []);
 
   const signOut = (): void => {
@@ -227,7 +227,7 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
           <Rail at={at} busy={step === 'checking'} />
         </header>
         <div ref={stage} className="login-stage">
-          {/* the email first: only his head and neck over the card; then he climbs out over it */}
+          {/* The email first: only his head and neck over the card; then he climbs out over it. */}
           <Companion status={companion} watch={card} low={step === 'email'} className="login-companion" />
           <div ref={card} className="login-card gate-card has-companion" aria-busy={step === 'checking' || step === 'opening' || undefined}>
             <Wheel face={step === 'in' ? 'checking' : step} back={back}>
@@ -282,16 +282,16 @@ function useInSight(stage: RefObject<HTMLDivElement | null>): void {
     let timer = 0;
     const place = (): void => {
       window.clearTimeout(timer);
-      // the keyboard comes up over a moment, telling of each step of it: wait for the last
+      // The keyboard comes up over a moment, telling of each step of it: wait for the last.
       timer = window.setTimeout(() => {
         const box = document.activeElement;
         const at = stage.current;
         if (!at || !(box instanceof HTMLInputElement) || !at.contains(box)) return;
-        // the keyboard is up when what can be seen is well short of the page's window
+        // The keyboard is up when what can be seen is well short of the page's window.
         if (seen.height > document.documentElement.clientHeight * 0.8) return;
         const head = at.getBoundingClientRect().top;
         if (box.getBoundingClientRect().bottom + 16 - head > seen.height) return;
-        // already there: his head just under the top of what is seen
+        // Already there: his head just under the top of what is seen.
         if (Math.abs(head - seen.offsetTop - 8) <= 4 || performance.now() - inSightAt < 400) return;
         inSightAt = performance.now();
         at.scrollIntoView({ block: 'start', behavior: stillWanted() ? 'auto' : 'smooth' });
@@ -319,7 +319,7 @@ function Wheel({ face, back, children }: { face: string; back: boolean; children
   const [shown, setShown] = useState(face);
   const [gone, setGone] = useState<{ key: string; node: ReactNode; back: boolean } | null>(null);
   if (shown !== face) {
-    // the face that was on show turns away, as it last was
+    // The face that was on show turns away, as it last was.
     setShown(face);
     setGone(stillWanted() ? null : { key: latest.current.key, node: latest.current.node, back });
   }
@@ -331,7 +331,7 @@ function Wheel({ face, back, children }: { face: string; back: boolean; children
     return () => window.clearTimeout(timer);
   }, [gone]);
 
-  // the card's height follows the face on show, so the card grows and shrinks rather than jumps
+  // The card's height follows the face on show, so the card grows and shrinks rather than jumps.
   const wheel = useRef<HTMLDivElement>(null);
   const current = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -401,7 +401,7 @@ function EmailStep({ email, onEmail, onNext }: { email: string; onEmail: (v: str
               onEmail(e.target.value);
               if (error) setError(emailProblem(e.target.value));
             }}
-            // an empty box is not wrong yet: it is said on "Continue", not on the way past
+            // An empty box is not wrong yet: it is said on "Continue", not on the way past.
             onBlur={() => setError(email.trim() ? emailProblem(email) : null)}
             autoFocus
           />
@@ -464,10 +464,10 @@ function PasswordStep({
   const left = useCountdown(pausedUntil);
   const paused = left > 0;
 
-  // paused, he naps until it is time to try again
+  // Paused, he naps until it is time to try again.
   useEffect(() => onStatus(busy ? 'busy' : paused ? 'waiting' : error ? 'error' : 'idle'), [busy, paused, error, onStatus]);
 
-  // the pause is over: the message that said to wait would now be wrong
+  // The pause is over: the message that said to wait would now be wrong.
   useEffect(() => {
     if (pausedUntil === null || paused) return;
     setPausedUntil(null);
@@ -517,7 +517,7 @@ function PasswordStep({
           </span>
         </button>
       </div>
-      {/* for a password manager: the account this password belongs to */}
+      {/* For a password manager: the account this password belongs to. */}
       <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
       <div className="login-field">
         <label className="login-label" htmlFor={`${id}-password`}>
@@ -539,7 +539,7 @@ function PasswordStep({
             }}
             autoFocus
           />
-          {/* one name, and pressed or not: a name that also flipped said "Hide password, pressed" */}
+          {/* One name, and pressed or not: a name that also flipped said "Hide password, pressed". */}
           <button
             type="button"
             className="login-eye"
@@ -623,8 +623,8 @@ function SignOutFoot({ onSignOut }: { onSignOut: () => void }): React.JSX.Elemen
 
 /** Render an otpauth:// URI as an inline SVG QR, no network involved. */
 function QrSvg({ text, size = 190 }: { text: string; size?: number }): React.JSX.Element {
-  // type 0 = pick the smallest version that fits; 'M' is the usual level for
-  // otpauth URIs, tolerant enough for a phone camera on a screen
+  // Type 0 = pick the smallest version that fits; 'M' is the usual level for
+  // otpauth URIs, tolerant enough for a phone camera on a screen.
   const qr = qrcode(0, 'M');
   qr.addData(text);
   qr.make();
@@ -647,7 +647,7 @@ function EnrollStep({ onStatus, onDone, onSignOut }: { onStatus: (s: CompanionSt
   const [secret, setSecret] = useState<{ secret: string; otpauthUri: string } | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   // React's development mode runs an effect twice; two enrollments made two
-  // secrets, and the QR on screen could be the one the server had replaced
+  // secrets, and the QR on screen could be the one the server had replaced.
   const asked = useRef(false);
 
   useEffect(() => {
@@ -715,7 +715,7 @@ function CodeForm({
   path: string;
   label: string;
   busyLabel: string;
-  /** whether there is anything to confirm yet (the setup's secret has arrived) */
+  /** Whether there is anything to confirm yet (the setup's secret has arrived). */
   ready: boolean;
   onStatus: (s: CompanionStatus) => void;
   onDone: () => Promise<void>;
@@ -735,7 +735,7 @@ function CodeForm({
 
   useEffect(() => onStatus(passed ? 'success' : busy ? 'busy' : paused ? 'waiting' : problem ? 'error' : 'idle'), [passed, busy, paused, problem, onStatus]);
 
-  // the pause is over: say so, and put the cursor back in the box
+  // The pause is over: say so, and put the cursor back in the box.
   useEffect(() => {
     if (!pause || paused) return;
     setPause(null);
@@ -796,10 +796,10 @@ function CodeForm({
           onChange={(e) => {
             const next = e.target.value.replace(/\D/g, '').slice(0, 6);
             setCode(next);
-            // a problem with the last code is gone once a new one is being typed
+            // A problem with the last code is gone once a new one is being typed.
             if (problem) setProblem(null);
             if (note) setNote(null);
-            // the sixth digit sends it: nothing more to press
+            // The sixth digit sends it: nothing more to press.
             if (next.length === 6 && next !== code) void send(next);
           }}
           inputMode="numeric"

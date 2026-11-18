@@ -224,7 +224,7 @@ function Rows(): React.JSX.Element {
         );
       },
     },
-    // a row of a kind this console no longer knows (written for a game that is gone) is named by what it is stored as
+    // A row of a kind this console no longer knows (written for a game that is gone) is named by what it is stored as.
     { key: 'kind', header: 'Kind', cell: (r) => KIND_NAME[r.kind] ?? r.kind },
     { key: 'game', header: 'Game', cell: (r) => (r.game ? (GAME_NAME[r.game as LearnGameId] ?? r.game) : isLoreKind(r.kind) ? COLLECTION_NAME : '—') },
     { key: 'dialect', header: 'Variety', cell: (r) => GAME_DIALECT_NAME[r.dialect] },
@@ -591,7 +591,7 @@ function ReviewPanel({ row, busy, pending, onReview }: { row: AdminGameContent |
                 <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} maxLength={600} />
               </Field>
               <div className="row st-review-actions">
-                {/* a starter row nobody has read can be approved as it stands: that puts a reader's name on it, and it stays live */}
+                {/* A starter row nobody has read can be approved as it stands: that puts a reader's name on it, and it stays live. */}
                 {approved && row.reviewedBy !== null ? (
                   row.status === 'published' ? (
                     <span className="subtle">Unpublish it first to withdraw its approval.</span>
@@ -626,7 +626,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // what was loaded becomes what is edited, and again after every save
+  // What was loaded becomes what is edited, and again after every save.
   const take = (r: AdminGameContent): void => {
     setRow(r);
     setKind(r.kind);
@@ -634,14 +634,14 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
     setLevel(r.level);
     setPayload(r.payload as unknown as Record<string, unknown>);
   };
-  // a row written for a game that is no longer part of Hevalo has no schema and no fields here: it is never taken up for editing
+  // A row written for a game that is no longer part of Hevalo has no schema and no fields here: it is never taken up for editing.
   const retired = !!loaded.data && !isKind(loaded.data.kind);
   useEffect(() => {
     if (loaded.data && !retired) take(loaded.data);
   }, [loaded.data, retired]);
 
   const checked = useMemo(() => checkGameContent(kind, dialect, payload), [kind, dialect, payload]);
-  // a riddle's level is its difficulty's, never chosen on its own
+  // A riddle's level is its difficulty's, never chosen on its own.
   const riddleLevel = kind === 'riddle' ? RIDDLE_LEVELS[payload.difficulty as keyof typeof RIDDLE_LEVELS] : undefined;
   const effectiveLevel = riddleLevel ?? level;
   const pending = !!row && (effectiveLevel !== row.level || JSON.stringify(payload) !== JSON.stringify(row.payload));
@@ -760,7 +760,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
 
       <Section title="Content">
         {!row && kind === 'identity' ? (
-          // a card of a picked word: its Kurdish is copied from approved content, never typed in a blank
+          // A card of a picked word: its Kurdish is copied from approved content, never typed in a blank.
           <WordPicker kind={kind} dialect={dialect} />
         ) : kind === 'identity' ? (
           <IdentityFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
@@ -830,7 +830,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
       </Section>
 
       {row && isLoreKind(row.kind) && (
-        // a translation saved changes the row's translations only: the Kurdish being edited above stays as it is
+        // A translation saved changes the row's translations only: the Kurdish being edited above stays as it is.
         <TranslationsPanel row={row} onSaved={(r) => setRow((cur) => (cur ? { ...cur, translations: r.translations } : r))} />
       )}
 

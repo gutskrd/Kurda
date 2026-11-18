@@ -31,16 +31,16 @@ interface PromptWord {
   isRhymePrompt: boolean;
   perfect: number;
   near: number;
-  /** words you ruled out that the endings would have accepted */
+  /** Words you ruled out that the endings would have accepted. */
   ruledOut: number;
-  /** how many pairs you have decided by hand */
+  /** How many pairs you have decided by hand. */
   decided: number;
 }
 
 interface PromptList {
   total: number;
   poolSize: number;
-  /** nothing is curated, so rounds are drawing from the whole pool */
+  /** Nothing is curated, so rounds are drawing from the whole pool. */
   usingFallback: boolean;
   words: PromptWord[];
 }
@@ -58,7 +58,7 @@ interface RebuildResult {
 interface RhymeRow {
   word: string;
   quality: Quality;
-  /** what the word endings say, before any decision */
+  /** What the word endings say, before any decision. */
   derived: Quality;
   source: 'derived' | 'decided';
 }
@@ -69,9 +69,9 @@ interface RhymeView {
   inDictionary: boolean;
   rhymes: RhymeRow[];
   ruledOut: RhymeRow[];
-  /** what the game accepts, whether or not it fitted in `rhymes` */
+  /** What the game accepts, whether or not it fitted in `rhymes`. */
   total: { perfect: number; near: number };
-  /** true when `rhymes` was cut short — the counts above are the real ones */
+  /** True when `rhymes` was cut short — the counts above are the real ones. */
   truncated: boolean;
 }
 
@@ -371,7 +371,7 @@ function RhymePanel({ word, dialect, onChanged }: { word: string; dialect: strin
         body: { word, rhyme, quality: q, addToPool, dialect: dialect === 'sorani' ? 'sorani' : 'kurmanji' },
       });
       await view.reload();
-      onChanged(); // the base-word list shows counts, so it moves too
+      onChanged(); // The base-word list shows counts, so it moves too.
     } catch (err) {
       toast.error(errorLine(err, 'rhyme words'));
     } finally {

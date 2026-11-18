@@ -86,7 +86,7 @@ import {
 // ---------------------------------------------------------------------------
 
 export type StoryStatus = 'draft' | 'in_review' | 'published' | 'archived';
-/** 'starter': one of the stories the app shipped with, waiting for a native speaker to read and publish it */
+/** 'starter': one of the stories the app shipped with, waiting for a native speaker to read and publish it. */
 export type StoryOrigin = 'admin' | 'starter';
 export type StoryReviewStatus = 'unreviewed' | 'approved';
 export type StoryAudioCoverage = 'none' | 'partial' | 'full';
@@ -134,21 +134,21 @@ export interface AdminStory {
   category: string | null;
   tradition: StoryTradition;
   author: string | null;
-  /** the collection, teller, region or publication it comes from */
+  /** The collection, teller, region or publication it comes from. */
   source: string | null;
   sourceUrl: string | null;
   attributionNote: string | null;
   translations: Record<string, string>;
-  /** by interface language, the title and summary */
+  /** By interface language, the title and summary. */
   metaTranslations: Record<string, StoryMetaTranslation>;
-  /** open questions to think about after reading, each with its translations */
+  /** Open questions to think about after reading, each with its translations. */
   reflections: StoryReflectionInput[];
   notes: StoryNoteInput[];
   sources: StorySourceInput[];
-  /** by interface language, whether a native speaker has read its translation; a language with none is unreviewed */
+  /** By interface language, whether a native speaker has read its translation; a language with none is unreviewed. */
   translationReview: Record<string, StoryTranslationReviewEntry>;
   cover: string | null;
-  /** the editor's reading time, null for the estimate (`readingMinutes` is whichever applies) */
+  /** The editor's reading time, null for the estimate (`readingMinutes` is whichever applies). */
   readingMinutesOverride: number | null;
   status: StoryStatus;
   origin: StoryOrigin;
@@ -167,10 +167,10 @@ export interface AdminStory {
   reviewNote: string | null;
   translationGroup: string | null;
   versions: AdminStoryVersion[];
-  /** the glossary terms that are dictionary headwords, with the entry each was linked to */
+  /** The glossary terms that are dictionary headwords, with the entry each was linked to. */
   glossaryMatches: Array<{ term: string; entryId: string; headword: string }>;
   audio: { sentences: StorySentenceAudio[]; recorded: number; total: number };
-  /** what would stop it being published (errors) and what is worth a look (warnings) */
+  /** What would stop it being published (errors) and what is worth a look (warnings). */
   problems: StoryValidation;
 }
 
@@ -197,7 +197,7 @@ export interface AdminStorySummary {
   featured: boolean;
   audio: StoryAudioCoverage;
   translationGroup: string | null;
-  /** how many problems `validateStory(…, 'publish')` finds */
+  /** How many problems `validateStory(…, 'publish')` finds. */
   problems: { errors: number; warnings: number };
 }
 
@@ -320,11 +320,11 @@ export function needsNativeReview(story: { origin: StoryOrigin; publishedAt: str
 // ---------------------------------------------------------------------------
 
 export interface GlossRow {
-  /** stable across reorders, for React; never sent */
+  /** Stable across reorders, for React; never sent. */
   key: string;
   term: string;
   en: string;
-  /** meanings in other interface languages, in the order the editor added them */
+  /** Meanings in other interface languages, in the order the editor added them. */
   extra: Array<{ locale: string; text: string }>;
 }
 
@@ -334,7 +334,7 @@ export interface QuestionForm {
   prompt: string;
   promptEn: string;
   options: string[];
-  /** -1 until the editor marks one: removing the right option never quietly makes another one right */
+  /** -1 until the editor marks one: removing the right option never quietly makes another one right. */
   correctIndex: number;
   explanation: string;
   explanationEn: string;
@@ -347,7 +347,7 @@ export interface QuestionForm {
    * editor knows to ask for a look.
    */
   evidenceQuote: string | null;
-  /** the question in interface languages, as typed: options in the order of `options` (the Translations section edits them) */
+  /** The question in interface languages, as typed: options in the order of `options` (the Translations section edits them). */
   translations: Record<string, StoryQuestionTranslation>;
 }
 
@@ -407,7 +407,7 @@ export function autoSlug(form: Pick<StoryForm, 'title' | 'dialect' | 'slugSeed'>
   return storySlugFor(form.title, form.dialect, seeded(form.slugSeed));
 }
 
-// what storySlugFor falls back to: the variety, then six characters from its alphabet (no l, o, 0 or 1)
+// What storySlugFor falls back to: the variety, then six characters from its alphabet (no l, o, 0 or 1).
 const RANDOM_SLUG = new RegExp(`^(?:${STORY_DIALECTS.join('|')})-[a-km-np-z2-9]{6}$`);
 
 /**
@@ -477,7 +477,7 @@ export function formFromStory(
     level: story.level,
     title: story.title,
     slug: story.slug,
-    // the story has an address already, and links may point at it
+    // The story has an address already, and links may point at it.
     slugEdited: true,
     slugSeed: Array.from({ length: 6 }, () => random()),
     summary: story.summary ?? '',
@@ -563,7 +563,7 @@ export function draftFromForm(form: StoryForm): StoryDraft {
   const translations: Record<string, string> = {};
   for (const [locale, text] of Object.entries(lib.translations)) {
     const tidy = tidyBody(text);
-    // a translation left empty is no translation, not an empty one the reader would be shown
+    // A translation left empty is no translation, not an empty one the reader would be shown.
     if (tidy) translations[locale] = tidy;
   }
   return {
@@ -755,13 +755,13 @@ export function withLocaleFrom(form: StoryForm, from: StoryForm, locale: string)
 /** How much of the story one language covers, as the Translations section summarises it. */
 export interface LocaleCoverage {
   locale: string;
-  /** the text: none yet, lined up with the Kurdish paragraph for paragraph, or not */
+  /** The text: none yet, lined up with the Kurdish paragraph for paragraph, or not. */
   text: 'empty' | 'ok' | 'mismatch';
   title: boolean;
   questions: { done: number; total: number };
   reflections: { done: number; total: number };
   notes: { done: number; total: number };
-  /** whether any of it is written */
+  /** Whether any of it is written. */
   any: boolean;
 }
 
@@ -799,9 +799,9 @@ export function localeReview(story: Pick<AdminStory, 'translationReview'> | null
 export interface TranslationCheck {
   locale: string;
   text: string;
-  /** blank-line-separated paragraphs in the translation */
+  /** blank-line-separated paragraphs in the translation. */
   paragraphs: number;
-  /** paragraphs in the body, which the translation's must match one for one */
+  /** Paragraphs in the body, which the translation's must match one for one. */
   expected: number;
   state: 'empty' | 'ok' | 'mismatch';
 }
@@ -837,13 +837,13 @@ export type EditorAction =
   | { type: 'lib/cover'; value: string | null }
   | { type: 'lib/minutes'; value: number | null }
   | { type: 'translation'; locale: string; value: string }
-  /** one language of the title or summary, a question, a reflection or a note (the Translations section) */
+  /** One language of the title or summary, a question, a reflection or a note (the Translations section). */
   | { type: 'tr/meta'; locale: string; field: 'title' | 'summary'; value: string }
   | { type: 'tr/question'; locale: string; index: number; field: 'prompt' | 'explanation'; value: string }
   | { type: 'tr/option'; locale: string; index: number; option: number; value: string }
   | { type: 'tr/reflection'; locale: string; index: number; value: string }
   | { type: 'tr/note'; locale: string; index: number; field: 'title' | 'body'; value: string }
-  /** one language as the server saved it, the rest of the form left as it is */
+  /** One language as the server saved it, the rest of the form left as it is. */
   | { type: 'tr/merge'; locale: string; from: StoryForm }
   | { type: 'reflection/add' }
   | { type: 'reflection/set'; index: number; value: string }
@@ -854,7 +854,7 @@ export type EditorAction =
   | { type: 'source/add' }
   | { type: 'source/set'; index: number; field: 'title' | 'author' | 'url' | 'type' | 'note'; value: string }
   | { type: 'source/remove'; index: number }
-  /** join another story's group (its id), leave the group (null), or take the change back (undefined) */
+  /** Join another story's group (its id), leave the group (null), or take the change back (undefined). */
   | { type: 'link'; sameStoryAs: string | null | undefined }
   | { type: 'gloss/add'; row?: GlossRow }
   | { type: 'gloss/remove'; index: number }
@@ -909,7 +909,7 @@ export function editorReducer(form: StoryForm, action: EditorAction): StoryForm 
       return next;
     }
     case 'slug':
-      // emptied, it goes back to following the title — the way to undo an edit
+      // Emptied, it goes back to following the title — the way to undo an edit.
       return action.value === ''
         ? followTitle({ ...form, slugEdited: false })
         : { ...form, slug: action.value.toLowerCase().replace(/\s+/g, '-'), slugEdited: true };
@@ -1044,7 +1044,7 @@ export function editorReducer(form: StoryForm, action: EditorAction): StoryForm 
     case 'q/correct':
       return withQuestion(form, action.index, (q) => ({ ...q, correctIndex: action.option }));
     case 'q/evidence':
-      // a sentence index means nothing in another paragraph
+      // A sentence index means nothing in another paragraph.
       return withQuestion(form, action.index, (q) =>
         q.evidenceParagraph === action.paragraph
           ? q
@@ -1101,7 +1101,7 @@ function followEvidence(questions: QuestionForm[], before: string, after: string
     if (p === null || paragraph === undefined || now[p] === paragraph) return q;
     const from = { p, s: s ?? 0 };
 
-    // the paragraph, unchanged, somewhere else: others came or went before it
+    // The paragraph, unchanged, somewhere else: others came or went before it.
     const words = s === null ? [paragraph, q.evidenceQuote] : [paragraph];
     for (const w of words) {
       const moved = w ? nearest(now.flatMap((text, i) => (text === w ? [{ p: i, s: 0 }] : [])), from) : null;
@@ -1109,9 +1109,9 @@ function followEvidence(questions: QuestionForm[], before: string, after: string
     }
     if (s === null) return q;
 
-    // the paragraph itself changed: find the sentence — in another paragraph
+    // The paragraph itself changed: find the sentence — in another paragraph
     // only when paragraphs were split, joined, added or taken out, so editing
-    // a sentence said twice does not send its question to the other one
+    // a sentence said twice does not send its question to the other one.
     const sentence = storySentences(paragraph)[s];
     if (sentence === undefined) return q;
     if (sentences().some((c) => c.p === p && c.s === s && c.text === sentence)) return q;
@@ -1130,13 +1130,13 @@ function followEvidence(questions: QuestionForm[], before: string, after: string
 
 export interface SentenceFacts {
   text: string;
-  /** counted the way the audio studio counts a text it will record */
+  /** Counted the way the audio studio counts a text it will record. */
   chars: number;
-  /** said aloud in the reader and listed in the audio studio (not a lone "* * *") */
+  /** Said aloud in the reader and listed in the audio studio (not a lone "* * *"). */
   recordable: boolean;
-  /** past STORY_SENTENCE_SOFT_MAX: may not fit one 15-second recording */
+  /** Past STORY_SENTENCE_SOFT_MAX: may not fit one 15-second recording. */
   long: boolean;
-  /** past LESSON_AUDIO_TEXT_MAX: no recording can hold it */
+  /** Past LESSON_AUDIO_TEXT_MAX: no recording can hold it. */
   tooLong: boolean;
 }
 
@@ -1144,18 +1144,18 @@ export interface ParagraphFacts {
   text: string;
   words: number;
   sentences: SentenceFacts[];
-  /** the title, when the paragraph is a section heading ("## …"); null for text */
+  /** The title, when the paragraph is a section heading ("## …"); null for text. */
   heading: string | null;
 }
 
 export interface TextFacts {
   words: number;
-  /** null when the count is in no band (or there is no text) */
+  /** Null when the count is in no band (or there is no text). */
   length: StoryLength | null;
-  /** estimated, as learners are shown it ("~2 min") */
+  /** Estimated, as learners are shown it ("~2 min"). */
   minutes: number;
   paragraphs: ParagraphFacts[];
-  /** one per heading; the paragraphs before the first are the introduction */
+  /** One per heading; the paragraphs before the first are the introduction. */
   sections: StorySection[];
 }
 
@@ -1245,11 +1245,11 @@ export function bankNeeds(length: StoryLength | null): { min: number; counts: re
 // ---------------------------------------------------------------------------
 
 export interface LiveChecks {
-  /** the API would refuse to save the draft: these must go first */
+  /** The API would refuse to save the draft: these must go first. */
   blocking: StoryProblem[];
-  /** fine in a draft, but stop it being submitted or published */
+  /** Fine in a draft, but stop it being submitted or published. */
   beforePublish: StoryProblem[];
-  /** worth a second look; never stop anything */
+  /** Worth a second look; never stop anything. */
   warnings: StoryProblem[];
 }
 
@@ -1288,7 +1288,7 @@ export function liveChecks(form: StoryForm, opts: { publishedBefore?: boolean; s
       message: `links to the old address (${opts.savedSlug}) will stop working`,
     });
   }
-  // evidence that kept its place while the words there changed may no longer hold the answer
+  // Evidence that kept its place while the words there changed may no longer hold the answer.
   const paragraphs = storyParagraphs(draft.body);
   form.questions.forEach((q, i) => {
     const now = evidenceText(paragraphs, q.evidenceParagraph, q.evidenceSentence);
@@ -1384,12 +1384,12 @@ export function describePath(path: string): string {
                       : `${m[1]} ${n}`,
       );
     } else if (parts.length > 0 && BY_LANGUAGE.has(parts[parts.length - 1]!)) {
-      // 'translations.de' reads as "Translation (German)", 'glossary[0].meanings.de' as "meaning (German)"
+      // 'translations.de' reads as "Translation (German)", 'glossary[0].meanings.de' as "meaning (German)".
       parts[parts.length - 1] = `${parts[parts.length - 1]} (${localeName(segment)})`;
     } else if (segment === 'body' && /^notes\[\d+\](\.translations\.[a-z]+)?\.body$/.test(path)) {
       parts.push('text');
     } else if ((segment === 'body' && path !== 'body') || segment === 'term') {
-      // 'body.paragraphs[1]' reads as "Paragraph 2", 'glossary[0].term' as "Glossary word 1"
+      // 'body.paragraphs[1]' reads as "Paragraph 2", 'glossary[0].term' as "Glossary word 1".
       continue;
     } else {
       parts.push(FIELD_NAME[segment] ?? segment);
@@ -1461,10 +1461,10 @@ export interface ListFilter {
   status: StoryStatus | 'all';
   dialect: StoryDialect | 'all';
   level: StoryLevel | 'all';
-  /** a category slug */
+  /** A category slug. */
   category: string | 'all';
   review: StoryReviewStatus | 'all';
-  /** only the library's featured stories */
+  /** Only the library's featured stories. */
   featured: boolean;
   query: string;
 }

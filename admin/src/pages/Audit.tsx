@@ -112,11 +112,11 @@ export function Audit(): React.JSX.Element {
 
   useEffect(() => {
     void load(applied);
-    // the first page, once; after that the form asks
+    // The first page, once; after that the form asks.
   }, []);
 
   const shown = entries ? entries.filter((e) => !quiet || !QUIET.test(e.action)) : null;
-  // what was done first: it heads each card on a phone, then when and by whom
+  // What was done first: it heads each card on a phone, then when and by whom.
   const columns: Column<AuditRow>[] = [
     {
       key: 'what',
@@ -205,7 +205,7 @@ export function Audit(): React.JSX.Element {
           error={error}
           onRetry={() => void load(applied)}
           what="the audit log"
-          // ids, routes and names that do not break well: cards on a tablet rather than a column per word
+          // Ids, routes and names that do not break well: cards on a tablet rather than a column per word.
           wide="medium"
           empty="No entries match."
           actions={(e) => <Button onClick={() => setLooking(e)}>Details</Button>}

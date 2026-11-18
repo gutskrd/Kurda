@@ -8,7 +8,7 @@ import { fakeApi, json, on } from '../test/fetch';
 import { renderUi } from '../test/render';
 import { AudioStudio } from './AudioStudio';
 
-// the microphone and the trimming are the browser's: here a take is three bytes, ready at once
+// The microphone and the trimming are the browser's: here a take is three bytes, ready at once.
 vi.mock('../micCapture', async (original) => ({
   ...(await original<typeof import('../micCapture')>()),
   micPermission: async () => 'granted',
@@ -56,7 +56,7 @@ beforeEach(() => {
   try {
     localStorage.clear();
   } catch {
-    // nothing to clear
+    // Nothing to clear.
   }
 });
 
@@ -73,11 +73,11 @@ describe('recording a conversation', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Li parkê' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Hamo/ })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('radio', { name: /Xezo/ })).toHaveTextContent('1 of 2 recorded · by rojda');
-    // Hamo's first line is open to record, after Xezo's, which can be heard first
+    // Hamo's first line is open to record, after Xezo's, which can be heard first.
     expect(screen.getByRole('group', { name: 'Record “Silav Xezo! Navê min Hamo ye.”' })).toBeInTheDocument();
     expect(screen.getByText('Before you: Xezo says “Silav! Navê min Xezo ye.”')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Hear it first' })).toBeInTheDocument();
-    // the other part's line still to record waits for them
+    // The other part's line still to record waits for them.
     expect(screen.getAllByText('Waiting for Xezo')).toHaveLength(1);
   });
 
@@ -102,7 +102,7 @@ describe('recording a conversation', () => {
     expect(put.path).toContain(`text=${encodeURIComponent('Silav Xezo! Navê min Hamo ye.')}`);
     expect(put.path).toContain('&line=kmrnasin01%3A1');
     expect(put.path).toContain('speaker=hamo');
-    // on to Hamo's next line
+    // On to Hamo's next line.
     expect(await screen.findByRole('group', { name: 'Record “Ez baş im, spas.”' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /Hamo/ })).toHaveTextContent('1 of 2 recorded · by azad');
   });

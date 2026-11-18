@@ -35,7 +35,7 @@ const CURRENCY: Readonly<Record<string, string>> = { zer: 'Zêr', gems: 'Gems' }
 const LEDGER_REASON: Readonly<Record<string, string>> = {
   admin_adjustment: 'Changed by an admin',
   shop_purchase: 'Shop purchase',
-  // from before purchases were final: the ledger keeps every row it ever had
+  // From before purchases were final: the ledger keeps every row it ever had.
   shop_return: 'Shop return (no longer offered)',
   daily_quest: 'Daily quest chest',
   event_quest: 'Event quest reward',
@@ -149,7 +149,7 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
     if (!yes) return;
     setBusy(true);
     try {
-      // one key per confirmed change: a double click or a retry moves the money once
+      // One key per confirmed change: a double click or a retry moves the money once.
       const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, {
         method: 'POST',
         body: { currency, amount: value, reason: reason.trim(), idempotencyKey: crypto.randomUUID() },
@@ -235,7 +235,7 @@ function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdj
     e.preventDefault();
     setTouched(true);
     if (daysError || reasonError) return;
-    // as the API counts: from the end they have while it is still to come, from now otherwise
+    // As the API counts: from the end they have while it is still to come, from now otherwise.
     const end = new Date((member ? until.getTime() : Date.now()) + value * 86_400_000);
     const count = `${value.toLocaleString()} ${value === 1 ? 'day' : 'days'}`;
     const yes = await dialogs.confirm({
@@ -246,7 +246,7 @@ function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdj
     if (!yes) return;
     setBusy(true);
     try {
-      // one key per confirmed grant: a double click or a retry adds the days once
+      // One key per confirmed grant: a double click or a retry adds the days once.
       const res = await api<{ premiumUntil: string }>(`/admin/users/${user.id}/plus`, {
         method: 'POST',
         body: { days: value, reason: reason.trim(), idempotencyKey: crypto.randomUUID() },
@@ -313,7 +313,7 @@ export function ItemsPanel({ user, canAdjust }: { user: { id: string; username: 
   const [sku, setSku] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  // as in the balance form: what is missing is said on "Give the item", and each goes once it is filled
+  // As in the balance form: what is missing is said on "Give the item", and each goes once it is filled.
   const [touched, setTouched] = useState(false);
   const skuError = sku ? null : 'Choose the item to give.';
   const reasonError = reason.trim() ? null : 'Say why, for the audit log.';

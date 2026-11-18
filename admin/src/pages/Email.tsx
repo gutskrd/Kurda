@@ -27,7 +27,7 @@ export interface EmailStatus {
   replyTo: string | null;
   supportFrom: string;
   inbox: { webhook: boolean; canReadBodies: boolean; unread: number };
-  /** null when the API runs without a job queue (no Redis) */
+  /** Null when the API runs without a job queue (no Redis). */
   failures: { count: number; lastError: string | null; lastAt: string | null } | null;
 }
 
@@ -138,7 +138,7 @@ export function Email(): React.JSX.Element {
                 <button type="button" className={`mail-row${m.readAt ? '' : ' is-unread'}`} onClick={() => setOpenId(m.id)}>
                   <span className="mail-row-top">
                     <span className="mail-from">
-                      {/* the dot and the bold are for the eye; a screen reader is told in words (a label on a plain span is not read) */}
+                      {/* The dot and the bold are for the eye; a screen reader is told in words (a label on a plain span is not read). */}
                       {!m.readAt && (
                         <>
                           <span className="mail-dot" aria-hidden="true" />
@@ -262,16 +262,16 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
   const toast = useToast();
   const mail = useLoad(async () => (id ? api<SupportEmail>(`/admin/support/emails/${id}/open`, { method: 'POST', body: {} }) : null), [id]);
   const [answer, setAnswer] = useState('');
-  // said when "Send answer" is pressed with nothing written, and gone once something is
+  // Said when "Send answer" is pressed with nothing written, and gone once something is.
   const [answerError, setAnswerError] = useState<string | null>(null);
   const [busy, setBusy] = useState<'send' | 'archive' | 'unread' | null>(null);
   const m = mail.data;
 
-  // the list's unread dot goes once the mail is opened
+  // The list's unread dot goes once the mail is opened.
   const openedId = m?.id;
   useEffect(() => {
     if (openedId) onChanged();
-    // once per mail opened, not on every change of the parent's callback
+    // Once per mail opened, not on every change of the parent's callback.
   }, [openedId]);
 
   async function act(kind: 'archive' | 'unread', run: () => Promise<unknown>, done: string): Promise<void> {
@@ -378,7 +378,7 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
                 {m.attachmentList.map((a, i) => (
                   <li key={a.id ?? i}>
                     <Icon name="list" size={16} />
-                    {/* one run of text, so a long name wraps with its type after it rather than beside it */}
+                    {/* One run of text, so a long name wraps with its type after it rather than beside it. */}
                     <span>
                       {a.filename ?? 'A file'}
                       {a.contentType && <span className="subtle"> · {a.contentType}</span>}
@@ -408,7 +408,7 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
             className="mail-reply"
             onSubmit={(e) => {
               e.preventDefault();
-              // nothing written: back to the box, whose error now says so
+              // Nothing written: back to the box, whose error now says so.
               if (!answer.trim()) e.currentTarget.querySelector('textarea')?.focus();
               void send();
             }}

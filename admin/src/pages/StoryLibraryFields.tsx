@@ -81,7 +81,7 @@ export function LibraryFields({
   facts: TextFacts;
   categories: Loaded<StoryCategory[]>;
   story: AdminStory | null;
-  /** a feature request is out */
+  /** A feature request is out. */
   featuring: boolean;
   onFeature: (featured: boolean) => void;
 }): React.JSX.Element {
@@ -118,7 +118,7 @@ export function LibraryFields({
                 {c.name.en}
               </option>
             ))}
-            {/* a category deleted since the story was filed stays on the story until the editor chooses another */}
+            {/* A category deleted since the story was filed stays on the story until the editor chooses another. */}
             {unknownCategory && <option value={category}>{category} (no longer a category)</option>}
           </select>
         </Field>
@@ -186,7 +186,7 @@ export function LibraryFields({
 function CoverPicker({ value, onChange, problems }: { value: string | null; onChange: (cover: string | null) => void; problems: ProblemsAt }): React.JSX.Element {
   const ro = useContext(ReadOnly);
   const current = storyCover(value);
-  // a key the catalogue no longer has is kept and shown, so a save does not quietly drop it
+  // A key the catalogue no longer has is kept and shown, so a save does not quietly drop it.
   const unknown = value && !current ? value : null;
   const tile = (key: string | null, label: string, sub: string | undefined, picture: string | null): React.JSX.Element => {
     const on = (value ?? null) === key;
@@ -500,15 +500,15 @@ export function AfterReadingSection({ form, dispatch, at }: { form: StoryForm; d
 
 /** What the Translations section needs to save or review one language on its own. */
 export interface LocaleActions {
-  /** the languages whose translation has unsaved edits */
+  /** The languages whose translation has unsaved edits. */
   changed: readonly string[];
-  /** the languages the story has a saved translation in, of any part */
+  /** The languages the story has a saved translation in, of any part. */
   saved: readonly string[];
-  /** why no language can be saved on its own right now, or null when one can */
+  /** Why no language can be saved on its own right now, or null when one can. */
   blocked: string | null;
-  /** the language a request is out for */
+  /** The language a request is out for. */
   busy: string | null;
-  /** the problems the editor finds as it is typed, to hold a save of a language with its own */
+  /** The problems the editor finds as it is typed, to hold a save of a language with its own. */
   blocking: readonly StoryProblem[];
   onSave: (locale: string) => void;
   onReview: (locale: string, status: StoryTranslationReviewStatus) => void;
@@ -538,7 +538,7 @@ export function TranslationsSection({
   at: ProblemsAt;
   facts: TextFacts;
   story: AdminStory | null;
-  /** the translations can be edited while the rest of a published story cannot: only an archived story or a request out stops them */
+  /** The translations can be edited while the rest of a published story cannot: only an archived story or a request out stops them. */
   readOnly: boolean;
   locales: LocaleActions;
 }): React.JSX.Element {

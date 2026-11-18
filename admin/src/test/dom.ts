@@ -5,7 +5,7 @@
 import { act, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-// tells React these renders are driven by a test, so it flushes effects inside act()
+// Tells React these renders are driven by a test, so it flushes effects inside act().
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 /** Let pending fetches, timers and hash changes run, inside act. */

@@ -36,9 +36,9 @@ export function ExerciseCard({
   index: number;
   count: number;
   exercise: Exercise;
-  /** a conversation's recording page: null while it is not saved yet, so there is nothing there to record */
+  /** A conversation's recording page: null while it is not saved yet, so there is nothing there to record. */
   recordHref?: string | null;
-  /** problems in this exercise, paths inside its payload ('prompt', 'options.1') */
+  /** Problems in this exercise, paths inside its payload ('prompt', 'options.1'). */
   issues: readonly Issue[];
   readOnly: boolean;
   onChange: (next: Exercise) => void;
@@ -48,7 +48,7 @@ export function ExerciseCard({
   const id = useId();
   const p = exercise.payload;
   const set = (patch: Payload): void => onChange({ ...exercise, payload: { ...p, ...patch } });
-  // the asks its kind can make; a pairs game or a conversation asks the one way it always does
+  // The asks its kind can make; a pairs game or a conversation asks the one way it always does.
   const asks = ASKS_BY_TYPE[exercise.type];
   const at = (path: string): string => `ex-${index}-${path.replace(/\./g, '-')}`;
   const field = (name: string, label: string, opts: { hint?: string; multiline?: boolean; required?: boolean; max?: number; placeholder?: string } = {}) => (
@@ -410,17 +410,17 @@ function ConversationFields({
     const who = characterOf(i);
     return who ? CHARACTER_NAMES[who] : learnerAt(i) ? 'the learner' : `Person ${i + 1}`;
   };
-  // the learner's own part, when a character talks with them: one at most
+  // The learner's own part, when a character talks with them: one at most.
   const learnerFree = !speakers.some((_, j) => learnerAt(j));
   const cast = (i: number, who: SpeakerId | typeof LEARNER): void =>
     set({ speakers: speakers.map((s, j) => (j === i ? (who === LEARNER ? learnerPart() : conversationSpeaker(who)) : s)) });
-  // the characters nobody plays yet: a new part is the first of them
+  // The characters nobody plays yet: a new part is the first of them.
   const free = SPEAKERS.filter((who) => !speakers.some((_, j) => characterOf(j) === who));
   const setLine = (i: number, patch: Record<string, unknown>): void => set({ lines: lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) });
   const removeSpeaker = (i: number): void =>
     set({
       speakers: speakers.filter((_, j) => j !== i),
-      // their lines go with them; the people after them keep their own lines
+      // Their lines go with them; the people after them keep their own lines.
       lines: lines.filter((l) => l.speaker !== i).map((l) => (typeof l.speaker === 'number' && l.speaker > i ? { ...l, speaker: l.speaker - 1 } : l)),
     });
   const moveLine = (i: number, by: -1 | 1): void => {
@@ -429,7 +429,7 @@ function ConversationFields({
     next.splice(i + by, 0, it!);
     set({ lines: next });
   };
-  // a new line is the next person's turn
+  // A new line is the next person's turn.
   const addLine = (): void => {
     const last = lines[lines.length - 1]?.speaker;
     set({ lines: [...lines, { speaker: typeof last === 'number' ? (last + 1) % Math.max(speakers.length, 1) : 0, text: '', en: '' }] });
@@ -457,7 +457,7 @@ function ConversationFields({
               onChange={(e) => (e.target.value === LEARNER ? cast(i, LEARNER) : isSpeakerId(e.target.value) ? cast(i, e.target.value) : undefined)}
             >
               {characterOf(i) === null && !learnerAt(i) && <option value="">Choose a character</option>}
-              {/* a character already playing another part is not offered again */}
+              {/* A character already playing another part is not offered again. */}
               {SPEAKERS.filter((who) => who === characterOf(i) || free.includes(who)).map((who) => (
                 <option key={who} value={who}>
                   {CHARACTER_NAMES[who]}
@@ -620,7 +620,7 @@ function TextList({
 }: {
   label: string;
   hint: string;
-  /** the add button's words, where two lists sit side by side */
+  /** The add button's words, where two lists sit side by side. */
   addLabel?: string;
   values: string[];
   max: number;

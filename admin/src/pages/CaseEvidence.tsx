@@ -20,10 +20,10 @@ import { LetterPaperEvidence } from './CaseLetter';
 export function Evidence({ detail, sensitive }: { detail: CaseDetail; sensitive: boolean }): React.JSX.Element {
   const snapshots = detail.reports.map((r) => r.evidence).filter(isSnapshot);
   const first = snapshots[0] ?? null;
-  // the same thing captured again later, changed in between: say so
+  // The same thing captured again later, changed in between: say so.
   const changed = snapshots.some((s) => first && (s.text !== first.text || s.caption !== first.caption || s.title !== first.title));
   const automated = detail.case.evidence as Record<string, unknown>;
-  // an automatic flag keeps its capture under `snapshot`; a report's case is the capture itself
+  // An automatic flag keeps its capture under `snapshot`; a report's case is the capture itself.
   const ownSnapshot = isSnapshot(automated);
   const autoSnapshot = isSnapshot(automated.snapshot) ? automated.snapshot : ownSnapshot ? automated : null;
   const legacy = !first && detail.reports.some((r) => (r.evidence as { legacy?: unknown }).legacy === true);
@@ -87,7 +87,7 @@ function automatedFacts(evidence: Record<string, unknown>): Array<{ label: strin
 export function Snapshot({ snapshot: s, media, sensitive }: { snapshot: EvidenceSnapshot; media: CaseMediaItem[]; sensitive: boolean }): React.JSX.Element {
   const byKey = new Map(media.map((m) => [m.key, m]));
   const pictures = s.pictures ?? s.mediaKeys.map((k) => ({ mediaKey: k, altText: null }));
-  // a plain text message says nothing by being one
+  // A plain text message says nothing by being one.
   const extra = s.extra ? noticeFields(s.extra).filter((f) => !(f.label === 'Kind' && f.value === 'text')) : [];
   return (
     <div className="snapshot">
@@ -129,7 +129,7 @@ export function Snapshot({ snapshot: s, media, sensitive }: { snapshot: Evidence
           {s.text}
         </blockquote>
       )}
-      {/* a letter is its words and the paper they are on: its drawing and its notes are part of what was reported */}
+      {/* A letter is its words and the paper they are on: its drawing and its notes are part of what was reported. */}
       {s.targetType === 'letter' && 'decor' in s && <LetterPaperEvidence raw={s.decor} sensitive={sensitive} />}
       {s.caption && (
         <p className="snapshot-caption" dir="auto">
@@ -192,7 +192,7 @@ function ChatContext({ messages }: { messages: EvidenceMessage[] }): React.JSX.E
             <div className="chat-line-body" dir="auto">
               {m.body ?? <span className="subtle">{m.kind === 'text' ? 'No text' : `A ${m.kind.replace(/_/g, ' ')}`}</span>}
             </div>
-            {/* a letter's notes are words like its body; its drawing is shown only on the letter reported */}
+            {/* A letter's notes are words like its body; its drawing is shown only on the letter reported. */}
             {(m.drawn || (m.notes && m.notes.length > 0)) && (
               <ul className="chat-line-notes">
                 {m.drawn && (
@@ -273,7 +273,7 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
     <figure className={`media-item is-image${shown ? ' is-shown' : ''}`}>
       <div className="media-frame">
         {shown ? (
-          // only now is the file requested: before the reveal it is not on this device at all, not even in the cache
+          // Only now is the file requested: before the reveal it is not on this device at all, not even in the cache.
           <img src={item.url} alt={alt ?? 'The reported picture'} draggable={false} referrerPolicy="no-referrer" />
         ) : (
           <>

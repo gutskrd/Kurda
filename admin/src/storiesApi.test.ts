@@ -152,7 +152,7 @@ describe('saving', () => {
       failure: { kind: 'stale', message: 'someone else changed this story since you opened it — reload it first' },
       story: null,
     });
-    // the publish never went out
+    // The publish never went out.
     expect(api.calls.map((c) => c.method)).toEqual(['PUT']);
   });
 
@@ -199,7 +199,7 @@ describe('saving', () => {
     expect(kind(404, 'NOT_FOUND')).toBe('not_found');
     expect(kind(403, 'FORBIDDEN')).toBe('forbidden');
     expect(kind(500, 'INTERNAL_ERROR')).toBe('other');
-    // a 422 without the list still says it was refused
+    // A 422 without the list still says it was refused.
     expect(storyFailure(new ApiError(422, 'INVALID', 'm'))).toEqual({ kind: 'invalid', message: 'm', validation: null });
     expect(storyFailure(new TypeError('Failed to fetch'))).toEqual({ kind: 'other', message: 'Failed to fetch' });
   });

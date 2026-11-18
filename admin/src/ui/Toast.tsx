@@ -47,7 +47,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
   const show = useCallback(
     (message: string, tone: ToastTone = 'info') => {
       const id = next.current++;
-      // at most three on screen: the oldest makes way
+      // At most three on screen: the oldest makes way.
       setItems((all) => [...all.slice(-2), { id, tone, message }]);
       timers.current.set(id, window.setTimeout(() => dismiss(id), TOAST_MS[tone]));
     },
@@ -94,7 +94,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
   return (
     <ToastContext.Provider value={api}>
       {children}
-      {/* outside the app root, which goes inert while a dialog is open */}
+      {/* Outside the app root, which goes inert while a dialog is open. */}
       <Layer>
         <div className="toasts">
           {render('polite')}

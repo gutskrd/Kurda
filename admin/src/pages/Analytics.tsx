@@ -12,7 +12,7 @@ interface ActivityPoint {
 interface FunnelStep {
   step: string;
   users: number;
-  /** of the first step's people, the share still here */
+  /** Of the first step's people, the share still here. */
   rateFromFirst: number;
   rateFromPrev: number;
 }
@@ -106,7 +106,7 @@ export function Analytics(): React.JSX.Element {
 
   const data = useLoad(async () => {
     const q = `from=${from}&to=${to}`;
-    // the same number of days just before, to compare with
+    // The same number of days just before, to compare with.
     const before = `from=${daysBefore(from, days)}&to=${daysBefore(from, 1)}`;
     const [a, p, on, le, re] = await Promise.all([
       api<{ points: ActivityPoint[] }>(`/admin/analytics/activity?${q}`),
@@ -188,7 +188,7 @@ export function Analytics(): React.JSX.Element {
               tone={d.previous.length > 0 ? versus(average(d.activity), average(d.previous), days).tone : 'neutral'}
               icon="users"
             />
-            {/* the last day shown, which is today only when the range ends today */}
+            {/* The last day shown, which is today only when the range ends today. */}
             <Stat label="Active in a day" value={(latest?.dau ?? 0).toLocaleString()} hint={latest ? `On ${dayLabel(latest.day)}` : 'No data in this range'} />
             <Stat label="Active in a month" value={(latest?.mau ?? 0).toLocaleString()} hint={latest ? `The 30 days to ${dayLabel(latest.day)}` : undefined} />
             <Stat
@@ -240,7 +240,7 @@ export function Bars({ points, unit, total: showTotal = true }: { points: Array<
   const peak = points.reduce((a, b) => (b.value > a.value ? b : a));
   const chosen = at === null ? undefined : points[at];
 
-  // the bar under the pointer, or the nearest one: a bar can be a few pixels wide
+  // The bar under the pointer, or the nearest one: a bar can be a few pixels wide.
   const pick = (e: React.PointerEvent<HTMLDivElement>): void => {
     const bars = [...e.currentTarget.children] as HTMLElement[];
     let best = 0;
@@ -289,7 +289,7 @@ export function Bars({ points, unit, total: showTotal = true }: { points: Array<
         ) : (
           <span />
         )}
-        {/* one day is named once */}
+        {/* One day is named once. */}
         <span>{points.length > 1 ? dayLabel(points[points.length - 1]!.day) : ''}</span>
       </figcaption>
     </figure>

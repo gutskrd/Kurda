@@ -45,7 +45,7 @@ import {
   type ShopItem,
 } from '../shop/model';
 
-// what the page has always offered to other modules and its tests
+// What the page has always offered to other modules and its tests.
 export { APPROVAL_PRICE, CATEGORIES, needsApproval, priceText, saleState, type SaleState, type ShopItem } from '../shop/model';
 
 const PAGE = 50;
@@ -86,9 +86,9 @@ type View = ArtKind | 'other';
  */
 export function Shop(): React.JSX.Element {
   const toast = useToast();
-  // retired items too: the views leave them out until asked for
+  // Retired items too: the views leave them out until asked for.
   const items = useLoad(() => api<{ items: ShopItem[] }>('/admin/shop/items?retired=include').then((r) => r.items), []);
-  // shop changes waiting for a second admin, so a saved-but-pending price is not a mystery
+  // Shop changes waiting for a second admin, so a saved-but-pending price is not a mystery.
   const pending = useLoad(
     () => api<{ pending: { target: string }[] }>('/admin/config/changes').then((r) => r.pending.filter((c) => c.target === 'shop_item').length),
     [],
@@ -227,7 +227,7 @@ function OtherItems({
   const all = useMemo(() => (items ? items.filter((i) => !isArtKind(i.category)) : null), [items]);
   const shown = useMemo(() => {
     if (!all) return null;
-    // (Kurdish letters folded, as the shop folds them: "istikan" finds Îstîkan)
+    // (Kurdish letters folded, as the shop folds them: "istikan" finds Îstîkan).
     const words = foldForSearch(q).split(/\s+/).filter(Boolean);
     return all.filter(
       (i) =>
@@ -357,7 +357,7 @@ function OtherItems({
         empty={all && all.length > 0 ? 'No item matches these filters.' : 'No items yet. Add one with New item.'}
         paging={{ page: at, pageCount, onPage: setPage, total, pageSize: PAGE }}
         actions={(i) => (
-          // Edit last, so it sits in the same place on every row
+          // Edit last, so it sits in the same place on every row.
           <>
             {i.active && !i.retiredAt && (
               <Button onClick={() => void toggleSale(i)} busy={busy === i.sku}>
@@ -409,12 +409,12 @@ function ItemForm({
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  // the server's line is the one that counts: once it has said "needs approval", the next save asks for one
+  // The server's line is the one that counts: once it has said "needs approval", the next save asks for one.
   const [serverSaysDear, setServerSaysDear] = useState(false);
   const value = Number(price);
   const dear = serverSaysDear || (price !== '' && Number.isInteger(value) && needsApproval(item, value, currency));
-  // the categories the server accepts, but for backgrounds and icons, which are added with a picture in their own
-  // views; plus one an older item may carry
+  // The categories the server accepts, but for backgrounds and icons, which are added with a picture in their own
+  // views; plus one an older item may carry.
   const categories = OTHER_CATEGORIES.some((c) => c.value === category) ? OTHER_CATEGORIES : [...OTHER_CATEGORIES, { value: category, label: categoryName(category) }];
 
   function check(): Record<string, string> {
@@ -456,13 +456,13 @@ function ItemForm({
     setBusy(true);
     try {
       if (dear) {
-        // a price at or over the line waits for a second admin; this route takes nulls for "clear it"
+        // A price at or over the line waits for a second admin; this route takes nulls for "clear it".
         const res = await api<{ status: 'applied' | 'pending' }>('/admin/config/changes', { method: 'POST', body: { target: 'shop_item', payload } });
         await onSaved(
           res.status === 'pending' ? `“${payload.name}” is waiting in Approvals: a second admin signs off on its price.` : `Saved “${payload.name}”.`,
         );
       } else {
-        // the catalogue route writes the whole row: a field left out is cleared, which is what null meant above
+        // The catalogue route writes the whole row: a field left out is cleared, which is what null meant above.
         const body = Object.fromEntries(Object.entries(payload).filter(([, v]) => v !== null));
         await api('/shop/items', { method: 'POST', body });
         await onSaved(item ? `Saved “${payload.name}”.` : `Added “${payload.name}” to the shop.`);
@@ -544,7 +544,7 @@ function ItemForm({
         <FieldRow>
           <TextInput label="Order" hint="Lower shows first in its category." inputMode="numeric" value={order} onChange={(e) => setOrder(e.target.value.replace(/\D/g, ''))} error={errors.order} />
         </FieldRow>
-        {/* any item may carry a square picture; without one the apps draw the glyph of its kind */}
+        {/* Any item may carry a square picture; without one the apps draw the glyph of its kind. */}
         <ArtPicker
           kind="icon"
           optional

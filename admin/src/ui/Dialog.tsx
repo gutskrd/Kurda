@@ -22,10 +22,10 @@ export interface DialogProps {
   onClose: () => void;
   children?: ReactNode;
   footer?: ReactNode;
-  /** a dangerous choice: the scrim does not close it, so a stray tap cannot answer it either */
+  /** A dangerous choice: the scrim does not close it, so a stray tap cannot answer it either. */
   dismissable?: boolean;
   size?: 'small' | 'medium' | 'large';
-  /** for role="alertdialog": something the person must answer, not just read */
+  /** For role="alertdialog": something the person must answer, not just read. */
   alert?: boolean;
 }
 
@@ -68,7 +68,7 @@ export function Dialog({ open, title, onClose, children, footer, dismissable = t
 
 export interface ConfirmOptions {
   title: ReactNode;
-  /** what will happen, in plain words */
+  /** What will happen, in plain words. */
   body?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
@@ -151,7 +151,7 @@ export interface PromptOptions {
   initial?: string;
   placeholder?: string;
   confirmLabel?: string;
-  /** a problem with the value, or null when it can be sent */
+  /** A problem with the value, or null when it can be sent. */
   validate?: (value: string) => string | null;
   multiline?: boolean;
   maxLength?: number;
@@ -175,7 +175,7 @@ function PromptDialog({
   const [value, setValue] = useState(options.initial ?? '');
   const [touched, setTouched] = useState(false);
   const id = useId();
-  // a page's own check replaces the default one (a note may be emptied to clear it)
+  // A page's own check replaces the default one (a note may be emptied to clear it).
   const problem = options.validate ? options.validate(value) : value.trim() ? null : 'This can’t be empty.';
   const danger = options.tone === 'danger';
   const send = (): void => {
@@ -258,7 +258,7 @@ const DialogContext = createContext<Dialogs | null>(null);
 /** One dialog at a time for the whole admin; a second question waits for the first answer. */
 export function DialogProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const [queue, setQueue] = useState<Pending[]>([]);
-  // a key per question, so a prompt's field starts empty for the next one
+  // A key per question, so a prompt's field starts empty for the next one.
   const seq = useRef(0);
   const [keys, setKeys] = useState<number[]>([]);
 

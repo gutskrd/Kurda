@@ -58,7 +58,7 @@ function frame(): void {
       pupil.x = to.x;
       pupil.y = to.y;
     }
-    // in the eye's own pixels on the screen, from where the icon draws the pupil
+    // In the eye's own pixels on the screen, from where the icon draws the pupil.
     const scale = box.width / EYE.width;
     const x = (pupil.x - pupil.rest.x) * scale;
     const y = (pupil.y - pupil.rest.y) * scale;
@@ -75,7 +75,7 @@ function wake(): void {
 }
 
 function look(event: PointerEvent): void {
-  // a finger is followed only while it touches the screen
+  // A finger is followed only while it touches the screen.
   if (event.pointerType === 'touch' && event.type === 'pointermove' && event.buttons === 0) return;
   window.clearTimeout(release);
   pointer = { x: event.clientX, y: event.clientY };

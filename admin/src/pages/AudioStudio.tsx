@@ -97,13 +97,13 @@ export function AudioStudio(): React.JSX.Element {
     try {
       localStorage.setItem(TAB_KEY, side.key);
     } catch {
-      // a blocked storage only means the side is not remembered
+      // A blocked storage only means the side is not remembered.
     }
   }, [side]);
 
   if (!side) return <div />;
 
-  // one conversation has a page of its own, with its own header: #/audio/conversations/<id>
+  // One conversation has a page of its own, with its own header: #/audio/conversations/<id>.
   const conversation = side.key === 'conversations' ? (route.rest[1] ?? null) : null;
   if (conversation) return <ConversationAudio id={conversation} lessonId={route.query.get('lesson')} part={route.query.get('part')} />;
 

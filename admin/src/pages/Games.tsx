@@ -31,17 +31,17 @@ interface Word {
   normalized: string;
   dialect: string;
   length: number;
-  /** used as a rhyme-round prompt */
+  /** Used as a rhyme-round prompt. */
   isRhymePrompt: boolean;
-  /** in the pool a game chooses from, rather than only in the dictionary */
+  /** In the pool a game chooses from, rather than only in the dictionary. */
   inGames: boolean;
 }
 interface Stats {
-  /** words a game can choose from */
+  /** Words a game can choose from. */
   total: number;
-  /** every headword, imports included — what a guess is checked against */
+  /** Every headword, imports included — what a guess is checked against. */
   dictionary: number;
-  /** how many words are curated as rhyme prompts */
+  /** How many words are curated as rhyme prompts. */
   rhymePrompts: number;
   byLength: { length: number; words: number }[];
   difficulties: { difficulty: string; lengths: number[]; words: number }[];
@@ -96,7 +96,7 @@ function WordsPage(): React.JSX.Element {
   const [page, setPage] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
 
-  // a newer search wins: an answer to "hev" arriving after "heval" is dropped
+  // A newer search wins: an answer to "hev" arriving after "heval" is dropped.
   const words = useLoad(() => {
     const params = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE), inGames: String(inPool) });
     if (query) params.set('q', query);
@@ -184,14 +184,14 @@ function WordsPage(): React.JSX.Element {
           <input
             type="checkbox"
             checked={w.isRhymePrompt}
-            // a word outside the pool cannot be a prompt, so the control says
-            // so rather than accepting a click the server would undo
+            // A word outside the pool cannot be a prompt, so the control says
+            // so rather than accepting a click the server would undo.
             disabled={busy === w.id || !w.inGames}
             onChange={(e) => void patch(w, { isRhymePrompt: e.target.checked }, e.target.checked ? `Rounds can open with “${w.headword}”.` : `Rounds no longer open with “${w.headword}”.`)}
           />
           <span>
             {w.isRhymePrompt ? 'Yes' : 'No'}
-            {/* why it cannot be ticked, in words a finger can read too (the title is a mouse's tooltip) */}
+            {/* Why it cannot be ticked, in words a finger can read too (the title is a mouse's tooltip). */}
             {!w.inGames && <span className="cell-sub">Only a word in the games can open a round.</span>}
           </span>
         </label>

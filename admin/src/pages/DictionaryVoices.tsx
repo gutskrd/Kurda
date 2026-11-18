@@ -59,7 +59,7 @@ export function DictionaryVoices(): React.JSX.Element {
   const [error, setError] = useState<unknown>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const player = usePlayer();
-  // an older search that answers after a newer one is dropped
+  // An older search that answers after a newer one is dropped.
   const ticket = useRef(0);
   const latest = useRef(items);
   latest.current = items;

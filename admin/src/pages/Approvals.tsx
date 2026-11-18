@@ -152,7 +152,7 @@ export function Approvals(): React.JSX.Element {
           what="approvals"
           empty="Nothing is waiting. Changes that need a second admin will appear here."
           actions={(c) => {
-            // the server refuses approving your own, so it is not offered: yours can only be withdrawn
+            // The server refuses approving your own, so it is not offered: yours can only be withdrawn.
             if (me && c.proposerId === me.id) {
               return (
                 <>

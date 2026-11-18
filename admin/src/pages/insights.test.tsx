@@ -38,12 +38,12 @@ describe('the bar chart', () => {
     ];
     const { container } = renderUi(<Bars points={points} unit="sign-ups" />);
     expect(screen.getByText('21 in all')).toBeInTheDocument();
-    // the bars side by side, 10 px apart
+    // The bars side by side, 10 px apart.
     const bars = [...container.querySelectorAll<HTMLElement>('.bars .b')];
     bars.forEach((b, i) => {
       b.getBoundingClientRect = () => new DOMRect(i * 10, 0, 8, 100);
     });
-    // jsdom has no PointerEvent: a mouse event of the same name carries the position
+    // jsdom has no PointerEvent: a mouse event of the same name carries the position.
     fireEvent(container.querySelector('.bars')!, new MouseEvent('pointerdown', { bubbles: true, clientX: 23 }));
     const label = new Date('2026-10-13T00:00:00Z').toLocaleDateString(undefined, { day: 'numeric', month: 'short', timeZone: 'UTC' });
     expect(container.querySelector('.chart-at')).toHaveTextContent(`${label}: 7 sign-ups`);
@@ -128,12 +128,12 @@ describe('Analytics', () => {
     answers();
     renderUi(<Analytics />);
     const grid = await screen.findByRole('table', { name: 'Retention by the day people joined' });
-    // newest first; a group too young for a week says so
+    // Newest first; a group too young for a week says so.
     const rows = within(grid).getAllByRole('row');
     expect(rows[1]).toHaveTextContent('50 joined');
     expect(within(rows[1]!).getByRole('cell', { name: 'After a week: not yet' })).toBeInTheDocument();
     expect(within(rows[2]!).getByRole('cell', { name: 'Next day: 40%, 40 of 100' })).toBeInTheDocument();
-    // of everyone who joined, weighted by how many joined each day: 70 of 150
+    // Of everyone who joined, weighted by how many joined each day: 70 of 150.
     const totals = screen.getByText('Next day', { selector: '.stat-label' }).closest('.stat') as HTMLElement;
     expect(totals.textContent).toContain('47%');
     expect(totals.textContent).toContain('of 150');
@@ -191,7 +191,7 @@ describe('Economy', () => {
     );
     renderUi(<Economy />);
     await screen.findByText('Healthy');
-    // it reads the whole ledger, so it waits to be asked
+    // It reads the whole ledger, so it waits to be asked.
     expect(calls.some((c) => c.path.startsWith('/admin/economy/reconcile'))).toBe(false);
 
     await user.click(screen.getByRole('button', { name: 'Check now' }));
@@ -202,7 +202,7 @@ describe('Economy', () => {
     const table = await screen.findByRole('table', { name: 'Balances that differ from their ledger' });
     expect(within(table).getByText('+5')).toBeInTheDocument();
     expect(within(table).getByRole('link', { name: 'User 11111111' })).toHaveAttribute('href', '#/users/11111111-2222-3333-4444-555555555555');
-    // and nothing was written: the check only reads
+    // And nothing was written: the check only reads.
     expect(calls.filter((c) => c.method !== 'GET')).toEqual([]);
   });
 
@@ -256,7 +256,7 @@ describe('My security', () => {
     expect(await screen.findByText('Signed in as @rojin.')).toBeInTheDocument();
     expect(screen.getByText('Two-factor authentication is on')).toBeInTheDocument();
     expect(screen.getByText('Admin')).toBeInTheDocument();
-    // no /admin/me (which refuses this role) and no way to re-enrol from here
+    // No /admin/me (which refuses this role) and no way to re-enrol from here.
     expect(calls.some((c) => c.path === '/admin/me')).toBe(false);
     expect(screen.queryByRole('button', { name: /set up 2fa/i })).not.toBeInTheDocument();
     expect(screen.getByText(/Live events/)).toBeInTheDocument();

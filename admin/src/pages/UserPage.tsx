@@ -55,17 +55,17 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   displayName: string | null;
   roles: string[];
   createdAt: string;
-  /** older APIs leave it out */
+  /** Older APIs leave it out. */
   age?: AgeBadge;
   ban: BanState;
   bannedUntil: string | null;
   mutedUntil: string | null;
   balances: { zer: number; gems: number };
-  /** when their Hevalo+ membership ends, past or to come; null if they never had it (absent from an older API) */
+  /** When their Hevalo+ membership ends, past or to come; null if they never had it (absent from an older API). */
   premiumUntil?: string | null;
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: string }>;
   sessions: Array<{ deviceName: string | null; createdAt: string; expiresAt: string }>;
-  /** adminUsername: who did it, by name (absent from an older API; null when their account is gone) */
+  /** adminUsername: who did it, by name (absent from an older API; null when their account is gone). */
   actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; adminUsername?: string | null; createdAt: string }>;
 }
 
@@ -526,7 +526,7 @@ function StandingTab({ user: u, canModerate, onChanged }: { user: UserDetail; ca
                 onClick={() =>
                   void withReason({
                     title: `Lift the mute on @${u.username}?`,
-                    // the API lifts every limit with it, not only the chat mute: say so
+                    // The API lifts every limit with it, not only the chat mute: say so.
                     body: 'Every mute and limit in force is lifted with it — on chat, on posting and on features. They can send messages and post again at once.',
                     confirmLabel: 'Lift it',
                     run: async (reason) => {

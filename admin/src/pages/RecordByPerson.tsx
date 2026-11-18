@@ -54,7 +54,7 @@ async function loadAllLines(
   const lines: Line[] = [];
   let first: LinesPage | null = null;
   let cursor: string | null = null;
-  // a few pages of a few hundred lines: a guard against a cursor that never ends
+  // A few pages of a few hundred lines: a guard against a cursor that never ends.
   for (let page = 0; page < 200; page++) {
     const query = new URLSearchParams({ status: 'all', limit: '500' });
     if (dialect) query.set('dialect', dialect);
@@ -352,7 +352,7 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
       setLines(all);
       setFound(first.person);
       setLoading({ sofar: all.length, total: all.length, done: true });
-      // where they left off, in this browser; else the first line still to record
+      // Where they left off, in this browser; else the first line still to record.
       setCurrent((was) => was ?? resumeAt(all, savedPlace(voice))?.id ?? null);
     } catch (err) {
       if (ticket === attempt.current) setError(err);
@@ -365,11 +365,11 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
 
   const byId = useMemo(() => new Map(lines.map((l, i) => [l.id, { line: l, number: i + 1 }])), [lines]);
   const inDialect = useMemo(() => (dialect ? lines.filter((l) => l.dialect === dialect) : lines), [lines, dialect]);
-  // the line on screen stays listed when the filter would hide it — it was just recorded, say
+  // The line on screen stays listed when the filter would hide it — it was just recorded, say.
   const shown = useMemo(() => inDialect.filter((l) => matchesFilters(l, filters) || l.id === current), [inDialect, filters, current]);
   const n = counts(inDialect, filters);
   const line = current ? (byId.get(current)?.line ?? null) : null;
-  // counted from the lines on screen, so each take kept here shows at once
+  // Counted from the lines on screen, so each take kept here shows at once.
   const person = useMemo(() => (found ? { ...found, ...tallyOf(lines) } : null), [found, lines]);
   const sections = useMemo(() => sectionsOf(inDialect), [inDialect]);
 
@@ -396,7 +396,7 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
     const saved = await uploadWithVoice<Uploaded>(uploadPath(line), wav, uploadVoice(line, person));
     const after = withTake(lines, line.id, saved, me?.username ?? null);
     setLines(after);
-    // on to the next line still to record, in the order on screen
+    // On to the next line still to record, in the order on screen.
     const listed = after.filter((l) => (!dialect || l.dialect === dialect) && (matchesFilters(l, filters) || l.id === line.id));
     const next = nextTodo(listed, line.id);
     if (next) setCurrent(next.id);
@@ -406,7 +406,7 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
     }
   };
 
-  // a click leaves no button focused, so Space and Enter go to the recorder and not to the last button pressed
+  // A click leaves no button focused, so Space and Enter go to the recorder and not to the last button pressed.
   const unfocus = (e: MouseEvent): void => {
     const button = (e.target as HTMLElement).closest('button');
     if (button && e.detail > 0) button.blur();
@@ -487,7 +487,7 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
         meta={<ProgressRing done={person.done} total={person.total} size={44} />}
         actions={wide ? <ScriptMenu person={person} lines={lines} /> : undefined}
       />
-      {/* on a phone the filters and the script live with the list, so the line to say is the first thing on screen */}
+      {/* On a phone the filters and the script live with the list, so the line to say is the first thing on screen. */}
       {wide && filterBar}
       {!wide && (
         <Tabs
@@ -660,7 +660,7 @@ function TakeStage({
   const saved = useRef<HTMLAudioElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const script = scriptOf(line.text);
-  // a meaning of nothing but spaces is no meaning: the row is left out rather than drawn as a label beside a blank
+  // A meaning of nothing but spaces is no meaning: the row is left out rather than drawn as a label beside a blank.
   const meaning = line.meaning?.trim() || null;
   const status = line.places.some((p) => p.status === 'published') ? 'published' : line.places.some((p) => p.status === 'in_review') ? 'in_review' : 'draft';
   const judging = phase.name === 'ready' || phase.name === 'saving';
@@ -726,7 +726,7 @@ function TakeStage({
         {meaning && (
           <p className="rp-means">
             <span className="rp-label">Means</span>
-            {/* in quotation marks: the "I" that "ez" means read as a rule beside the label without them */}
+            {/* In quotation marks: the "I" that "ez" means read as a rule beside the label without them. */}
             <q lang="en">{meaning}</q>
           </p>
         )}

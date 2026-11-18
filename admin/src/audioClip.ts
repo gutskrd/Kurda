@@ -19,11 +19,11 @@
  * before saving it.
  */
 export const RATE = 22050;
-/** before the voice starts and after it stops */
+/** Before the voice starts and after it stops. */
 const LEAD_S = 0.08;
 const TAIL_S = 0.15;
 const FADE_S = 0.01;
-/** loudness to aim for (RMS of the voiced part) and the peak never to pass */
+/** Loudness to aim for (RMS of the voiced part) and the peak never to pass. */
 const TARGET_RMS = 0.12;
 const MAX_PEAK = 0.89;
 
@@ -42,7 +42,7 @@ export function voicedRange(samples: Float32Array, rate = RATE): [number, number
     levels.push(rms);
     peak = Math.max(peak, rms);
   }
-  // relative to the loudest moment, so a quiet room and a loud voice both work
+  // Relative to the loudest moment, so a quiet room and a loud voice both work.
   const floor = Math.max(peak * 0.08, 0.004);
   if (peak < 0.01) return null;
   const first = levels.findIndex((l) => l > floor);
@@ -152,7 +152,7 @@ async function decode(data: ArrayBuffer, what: string): Promise<Float32Array> {
   const ctx = new Ctx();
   let decoded: AudioBuffer;
   try {
-    // with callbacks as well: older Safari's decodeAudioData returns no promise
+    // With callbacks as well: older Safari's decodeAudioData returns no promise.
     decoded = await new Promise<AudioBuffer>((resolve, reject) => {
       const answer = ctx.decodeAudioData(data, resolve, reject) as Promise<AudioBuffer> | undefined;
       answer?.then(resolve, reject);
@@ -166,7 +166,7 @@ async function decode(data: ArrayBuffer, what: string): Promise<Float32Array> {
   if (frames === 0) throw new ClipError('That file has no sound in it.');
   if (decoded.duration > 30) throw new ClipError(`That file is long. Cut it down to ${what} first.`);
   try {
-    // an offline render does the mixing to mono and the resampling in one step
+    // An offline render does the mixing to mono and the resampling in one step.
     const offline = new OfflineAudioContext(1, frames, RATE);
     const src = offline.createBufferSource();
     src.buffer = decoded;
@@ -175,7 +175,7 @@ async function decode(data: ArrayBuffer, what: string): Promise<Float32Array> {
     const rendered = await offline.startRendering();
     return rendered.getChannelData(0);
   } catch {
-    // a renderer that will not run at this rate: mix and resample here instead
+    // A renderer that will not run at this rate: mix and resample here instead.
     const channels = Array.from({ length: decoded.numberOfChannels }, (_, i) => decoded.getChannelData(i));
     return resampleLinear(mixToMono(channels), decoded.sampleRate, RATE);
   }

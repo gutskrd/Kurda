@@ -22,10 +22,10 @@ interface Recording {
   url: string;
   durationMs: number | null;
   updatedAt: string;
-  /** who is shown saying it, or null for no character */
+  /** Who is shown saying it, or null for no character. */
   speaker?: SpeakerId | null;
   hasLipsync?: boolean;
-  /** the stored timeline, null for none, as the list and a save made here send it */
+  /** The stored timeline, null for none, as the list and a save made here send it. */
   lipsync?: LipsyncData | null;
 }
 
@@ -59,13 +59,13 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'missing');
   const [selected, setSelectedKey] = useState<string>(ALPHABET_CLIPS[0]!.key);
   const studio = useRef<HTMLElement>(null);
-  // who says the next new recording: the last choice made for one
+  // Who says the next new recording: the last choice made for one.
   const [nextSpeaker, setNextSpeaker] = useState<Speaker>(rememberedSpeaker);
   const changeSpeaker = useSpeakerChange('alphabet', (key, speaker) =>
     setRecordings((all) => (all[key] ? { ...all, [key]: { ...all[key], speaker } } : all)),
   );
 
-  // on a phone the studio sits above the list: a tap on a letter far down brings it back into view
+  // On a phone the studio sits above the list: a tap on a letter far down brings it back into view.
   const setSelected = (key: string, reveal = false): void => {
     setSelectedKey(key);
     if (!reveal || typeof matchMedia !== 'function' || !matchMedia('(max-width: 899px)').matches) return;
@@ -89,7 +89,7 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
     void load();
   }, [load]);
 
-  // start on the first sound still missing, once we know which those are
+  // Start on the first sound still missing, once we know which those are.
   const started = useRef(false);
   useEffect(() => {
     if (!loaded || started.current) return;
@@ -238,7 +238,7 @@ function Studio({
   ref: React.Ref<HTMLElement>;
   clip: AlphabetClip;
   recording: Recording | null;
-  /** who says it when it is recorded now, if it has no recording yet */
+  /** Who says it when it is recorded now, if it has no recording yet. */
   nextSpeaker: Speaker;
   onSpeaker: (speaker: Speaker) => void;
   onPrev: () => void;
@@ -249,7 +249,7 @@ function Studio({
   const group = ALPHABET_CLIP_GROUPS.find((g) => g.group === clip.group)!.title;
   const speaker = recording ? (recording.speaker ?? null) : nextSpeaker;
   const word = isWordSetClipKey(clip.key);
-  // a few words no voice could say accurately have no synthesised clip: until recorded they are silent
+  // A few words no voice could say accurately have no synthesised clip: until recorded they are silent.
   const synthesised = Object.hasOwn(SYNTHESISED_ALPHABET_CLIPS, clip.key) || Object.hasOwn(SYNTHESISED_WORD_CLIPS, clip.key);
 
   return (

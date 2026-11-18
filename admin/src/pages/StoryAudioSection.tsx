@@ -51,14 +51,14 @@ export function AudioSection({
   onAudio,
 }: {
   story: AdminStory | null;
-  /** the text has unsaved changes, so the sentences here may not be the ones on screen */
+  /** The text has unsaved changes, so the sentences here may not be the ones on screen. */
   textChanged: boolean;
   onAudio: (next: StoryAudio) => void;
 }): React.JSX.Element {
   const dialogs = useDialogs();
   const player = usePlayer();
   const [open, setOpen] = useState<string | null>(null);
-  // who says the next new recording: the last choice made for one
+  // Who says the next new recording: the last choice made for one.
   const [nextSpeaker, setNextSpeaker] = useState<Speaker>(rememberedSpeaker);
   const changeSpeaker = useSpeakerChange('lesson', (key, speaker) => {
     if (story) onAudio(withSentenceSpeaker(story.audio, key, speaker));

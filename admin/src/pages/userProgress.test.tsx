@@ -155,7 +155,7 @@ describe('the Ranks tab', () => {
     expect(within(cards[0]!).getByRole('progressbar', { name: 'Progress to Gir II' })).toHaveAttribute('aria-valuenow', '53');
     expect(cards[1]).toHaveTextContent('Placing 2/5');
     expect(cards[1]).toHaveTextContent('Resting');
-    // no rating yet: nothing to reset
+    // No rating yet: nothing to reset.
     expect(within(cards[2]!).getByRole('button', { name: 'Reset rating…' })).toBeDisabled();
 
     const games = screen.getByRole('table', { name: 'Rated games' });

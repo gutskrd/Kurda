@@ -80,7 +80,7 @@ export function DictionaryImport(): React.JSX.Element | null {
     if (mayImport) void load();
   }, [load, mayImport]);
 
-  // poll only while something is actually moving, and stop when it stops
+  // Poll only while something is actually moving, and stop when it stops.
   useEffect(() => {
     if (state?.run?.status !== 'running') return;
     timer.current = window.setTimeout(() => void load(), POLL_MS);

@@ -33,8 +33,8 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
-    // there is no error reporting service wired up; the console is what an
-    // admin can actually hand over when reporting a broken page
+    // There is no error reporting service wired up; the console is what an
+    // admin can actually hand over when reporting a broken page.
     console.error('[admin] page crashed', error, info.componentStack);
   }
 

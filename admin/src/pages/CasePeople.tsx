@@ -51,7 +51,7 @@ export function SanctionLine({
   s: CaseSanctionView;
   who?: React.ReactNode;
   actions?: React.ReactNode;
-  /** after the dates: where it came from ("Open the case") */
+  /** After the dates: where it came from ("Open the case"). */
   link?: React.ReactNode;
 }): React.JSX.Element {
   return (
@@ -67,7 +67,7 @@ export function SanctionLine({
         {s.active && !s.pendingApproval && <Badge tone="bad">In force</Badge>}
       </div>
       <div className="cell-sub">
-        {/* a warning or a removal happens once: its day is the whole story */}
+        {/* A warning or a removal happens once: its day is the whole story. */}
         {(s.kind === 'warning' || s.kind === 'content_removal') && !s.revokedAt ? (
           <>
             Given <Time value={s.createdAt} />
@@ -104,7 +104,7 @@ export function SubjectPanel({
   subject: NonNullable<CaseDetail['subject']>;
   onSanction: () => void;
   canAct: boolean;
-  /** someone who may hurt themselves gets a caring message, never a sanction */
+  /** Someone who may hurt themselves gets a caring message, never a sanction. */
   selfHarm?: boolean;
 }): React.JSX.Element {
   return (
@@ -200,12 +200,12 @@ export function ReportersPanel({
   media: CaseDetail['media'];
   onSanction: (reporterId: string) => void;
   canAct: boolean;
-  /** reporters who already have an action in the decision */
+  /** Reporters who already have an action in the decision. */
   inDraft: ReadonlySet<string>;
-  /** pictures may be child abuse material: ask before showing one */
+  /** Pictures may be child abuse material: ask before showing one. */
   sensitive: boolean;
 }): React.JSX.Element {
-  // a later report that captured something different (an edit in between, another message) shows its own capture
+  // A later report that captured something different (an edit in between, another message) shows its own capture.
   const first = reports.map((r) => r.evidence).find(isSnapshot) ?? null;
   const differs = (e: unknown): boolean =>
     isSnapshot(e) && !!first && (e.targetId !== first.targetId || e.text !== first.text || e.caption !== first.caption || e.title !== first.title);

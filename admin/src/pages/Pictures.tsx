@@ -121,7 +121,7 @@ export function Pictures(): React.JSX.Element {
   const data = useLoad(() => api<{ overrides: Override[] }>('/admin/art'), []);
   const bySlot = useMemo(() => new Map((data.data?.overrides ?? []).map((o) => [o.slot, o])), [data.data]);
 
-  // a badge is one card, its levels inside it
+  // A badge is one card, its levels inside it.
   const cards = useMemo(() => artSlotsOf(family).filter((e) => e.level === null), [family]);
   const replacedIn = (f: ArtSlotFamily): number => artSlotsOf(f).filter((e) => bySlot.has(e.slot)).length;
   const anyReplaced = (e: ArtSlotEntry): boolean => artSlotsOf(e.family).some((x) => x.key === e.key && bySlot.has(x.slot));
@@ -212,7 +212,7 @@ function SlotDrawer({
           key={s.slot}
           entry={s}
           override={overrides.get(s.slot)}
-          // a level with no picture of its own shows the one for every level, as the apps do
+          // A level with no picture of its own shows the one for every level, as the apps do.
           inherited={s.level ? overrides.get(slots[0]!.slot) : undefined}
           levelled={slots.length > 1}
           onChanged={onChanged}

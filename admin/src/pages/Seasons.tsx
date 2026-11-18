@@ -256,7 +256,7 @@ function SeasonPage({ id, list }: { id: string; list: SeasonList | undefined }):
   const back = { href: href('seasons'), label: 'Seasons' };
   const isCurrent = list?.current === id;
   const past = list?.seasons.find((s) => s.id === id);
-  // the address says which; without it, a season with nothing still due opens on what it handed out
+  // The address says which; without it, a season with nothing still due opens on what it handed out.
   const asked = route.query.get('show');
   const nothingDue = !!loaded.data && loaded.data.rewards.length === 0 && loaded.data.given.length > 0;
   const tab: 'preview' | 'given' = asked === 'given' || asked === 'preview' ? asked : nothingDue ? 'given' : 'preview';

@@ -72,12 +72,12 @@ export function SpeakingPreview({
 }: {
   speaker: SpeakerId;
   url: string;
-  /** the words said: the mouth follows them when no timeline is stored */
+  /** The words said: the mouth follows them when no timeline is stored. */
   text: string;
-  /** the stored timeline; null when there is none, left out when it is not known here */
+  /** The stored timeline; null when there is none, left out when it is not known here. */
   lipsync?: LipsyncData | null;
   durationMs?: number | null;
-  /** the drawing's width and height, in pixels */
+  /** The drawing's width and height, in pixels. */
   size?: number;
 }): React.JSX.Element {
   const name = CHARACTER_NAMES[speaker];
@@ -92,9 +92,9 @@ export function SpeakingPreview({
     () => voiceTimeline(lipsync ? { speaker, lipsync } : { speaker }, text, durationMs),
     [speaker, lipsync, text, durationMs],
   );
-  // what the frame loop reads, kept current without restarting it; `measured` is
+  // What the frame loop reads, kept current without restarting it; `measured` is
   // the words timed to the recording's length once the file says what it is, and
-  // `beamUntil` when the smile a finished recording put on comes off
+  // `beamUntil` when the smile a finished recording put on comes off.
   const live = useRef<{ playing: boolean; reduced: boolean; timeline: LipsyncTimeline | null; measured: LipsyncTimeline | null; beamUntil: number }>({
     playing: false,
     reduced,
@@ -129,7 +129,7 @@ export function SpeakingPreview({
         sinceMs: now - since,
         reducedMotion: live.current.reduced,
       });
-      // a recording just finished: the smile it earns, over the blinks and the resting mouth
+      // A recording just finished: the smile it earns, over the blinks and the resting mouth.
       const beaming = !live.current.playing && now < live.current.beamUntil;
       const next: { mouth: MouthShape; eyes: EyeState; nod: number } = beaming ? { ...frameNow, mouth: 'grin', eyes: 'happy' } : frameNow;
       if (next.mouth !== shown.mouth) {
@@ -151,7 +151,7 @@ export function SpeakingPreview({
     return () => cancelAnimationFrame(frame);
   }, [speaker]);
 
-  // the recording's own events say when it plays; when its length is known, the words can be timed to it
+  // The recording's own events say when it plays; when its length is known, the words can be timed to it.
   useEffect(() => {
     const el = audio.current;
     if (!el) return;
@@ -186,7 +186,7 @@ export function SpeakingPreview({
     };
   }, [speaker, text]);
 
-  // a detached audio element goes on playing: stop it when the preview goes
+  // A detached audio element goes on playing: stop it when the preview goes.
   useEffect(() => {
     const el = audio.current;
     return () => {
@@ -202,7 +202,7 @@ export function SpeakingPreview({
       try {
         el.currentTime = 0;
       } catch {
-        // not seekable yet: it starts from where it stopped
+        // Not seekable yet: it starts from where it stopped.
       }
       return;
     }

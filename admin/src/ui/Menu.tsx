@@ -19,9 +19,9 @@ export function ActionMenu({
   buttonText,
 }: {
   items: ReadonlyArray<MenuItem>;
-  /** the button's accessible name: "More actions for heval" */
+  /** The button's accessible name: "More actions for heval". */
   label?: string;
-  /** visible text on the button; an icon alone when left out */
+  /** Visible text on the button; an icon alone when left out. */
   buttonText?: string;
 }): React.JSX.Element | null {
   const [open, setOpen] = useState(false);

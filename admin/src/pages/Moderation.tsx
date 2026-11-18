@@ -67,12 +67,12 @@ function Queue(): React.JSX.Element {
   const key = filtersQuery(filters);
   const toast = useToast();
 
-  // the search box types freely; the queue follows it once typing pauses
+  // The search box types freely; the queue follows it once typing pauses.
   const [q, setQ] = useState(filters.q);
   const settledQ = useDebounced(q, 400);
   useEffect(() => {
     if (settledQ.trim() !== filters.q) applyFilters({ ...filters, q: settledQ });
-    // only the typed text moves the address; the rest is already there
+    // Only the typed text moves the address; the rest is already there.
   }, [settledQ]);
 
   const first = useLoad(() => api<CaseQueuePage>(queuePath(filters)), [key]);

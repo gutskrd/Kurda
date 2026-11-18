@@ -21,20 +21,20 @@ export interface LineRecording {
   updatedAt: string;
   speaker: SpeakerId | null;
   hasLipsync: boolean;
-  /** who made this take: null when the account is gone */
+  /** Who made this take: null when the account is gone. */
   recordedBy: { id: string; username: string | null } | null;
 }
 
 export interface LineState {
   index: number;
-  /** who says it, by place */
+  /** Who says it, by place. */
   part: number;
-  /** what its recording is filed under; null for a line too malformed to file */
+  /** What its recording is filed under; null for a line too malformed to file. */
   key: string | null;
   recording: LineRecording | null;
 }
 
-/** GET /admin/lesson-audio/conversations/:id */
+/** GET /admin/lesson-audio/conversations/:id. */
 export interface ConversationRecording {
   lesson: {
     id: string;
@@ -68,10 +68,10 @@ export interface PartProgress {
   part: number;
   name: string;
   character: SpeakerId | null;
-  /** lines of theirs with a recording, and lines of theirs */
+  /** Lines of theirs with a recording, and lines of theirs. */
   recorded: number;
   total: number;
-  /** who has recorded this part so far, by username, most takes first */
+  /** Who has recorded this part so far, by username, most takes first. */
   by: string[];
 }
 
@@ -196,6 +196,6 @@ export function rememberPart(id: string, part: number): void {
   try {
     localStorage.setItem(PART_KEY(id), String(part));
   } catch {
-    // a blocked storage only means the part is not remembered
+    // A blocked storage only means the part is not remembered.
   }
 }

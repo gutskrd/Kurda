@@ -23,7 +23,7 @@ export function QuickBuild({
   onAdd,
 }: {
   open: boolean;
-  /** how many more exercises the lesson takes */
+  /** How many more exercises the lesson takes. */
   room: number;
   onClose: () => void;
   onAdd: (exercises: Exercise[]) => void;
@@ -138,7 +138,7 @@ export function LessonReadiness({
   titles: { ku: string; en: string };
   dirty: boolean;
 }): React.JSX.Element {
-  // read again after every save (its lockVersion moves), which is when the recordings asked for change
+  // Read again after every save (its lockVersion moves), which is when the recordings asked for change.
   const audio = useLoad(() => api<Listing>('/admin/lesson-audio'), [lesson.id, lesson.lockVersion]);
 
   const checks = useMemo((): Check[] => {

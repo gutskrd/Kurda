@@ -25,7 +25,7 @@ type Language = 'kmr' | 'ckb';
 /** A character nobody could type in a text, as the API reports it after a save. */
 export interface Untypeable {
   char: string;
-  /** "U+00E9": a character that looks like another can be told apart */
+  /** "U+00E9": a character that looks like another can be told apart. */
   codePoint: string;
   count: number;
 }
@@ -37,7 +37,7 @@ export interface RaceText {
   language: Language;
   difficulty: number;
   active: boolean;
-  /** absent from an older API; the screen treats that as nothing to warn about */
+  /** Absent from an older API; the screen treats that as nothing to warn about. */
   untypeable?: Untypeable[];
 }
 
@@ -108,7 +108,7 @@ export function RaceTexts(): React.JSX.Element {
 
   const list = texts.data ?? [];
   const active = list.filter((t) => t.active).length;
-  // a length with nothing active in a variety cannot be raced in it, and that is worth seeing
+  // A length with nothing active in a variety cannot be raced in it, and that is worth seeing.
   const coverage = (['kmr', 'ckb'] as const).flatMap((language) =>
     [1, 2, 3].map((difficulty) => ({
       language,
@@ -245,7 +245,7 @@ function TextForm({
   );
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  // the API's answer when the text's script says another variety: the code it says
+  // The API's answer when the text's script says another variety: the code it says.
   const [suggested, setSuggested] = useState<Language | null>(null);
   const s = stats(form.body);
   const outOfBounds = s.chars > 0 && (s.chars < MIN_CHARS || s.chars > MAX_CHARS);
@@ -257,7 +257,7 @@ function TextForm({
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    // the same bounds the API enforces, said before the request is sent
+    // The same bounds the API enforces, said before the request is sent.
     if (s.chars < MIN_CHARS || s.chars > MAX_CHARS) {
       setProblem(`A race text has to be between ${MIN_CHARS} and ${MAX_CHARS} characters.`);
       return;

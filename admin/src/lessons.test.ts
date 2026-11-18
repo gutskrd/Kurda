@@ -12,7 +12,7 @@ describe('an exercise’s checks — the server’s limits, in words', () => {
     ]);
     expect(exerciseIssues(ex('translate', { prompt: 'Hello', accepted: ['Silav'] }))).toEqual([]);
     expect(exerciseIssues(ex('speaking', { prompt: 'Say it', reference: '' })).map((i) => i.path)).toEqual(['reference']);
-    // a listening item needs no prompt, only what it plays
+    // A listening item needs no prompt, only what it plays.
     expect(exerciseIssues(ex('listening', { accepted: ['Ez baş im'] }))).toEqual([]);
   });
 
@@ -49,7 +49,7 @@ describe('who records an exercise', () => {
       accepted: [''],
     });
     expect(blankPayload('conversation', { prompt: 'x', voice: 'hamo' })).not.toHaveProperty('voice');
-    // only one of the characters is carried
+    // Only one of the characters is carried.
     expect(blankPayload('speaking', { voice: 'kawa' })).not.toHaveProperty('voice');
   });
 

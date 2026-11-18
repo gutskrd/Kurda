@@ -33,11 +33,11 @@ export function ArtForm({
   onSaved,
 }: {
   kind: ArtKind;
-  /** the item being edited, or null for a new one */
+  /** The item being edited, or null for a new one. */
   item: ShopItem | null;
-  /** every SKU in the catalogue, so a new one can be checked before it is sent */
+  /** Every SKU in the catalogue, so a new one can be checked before it is sent. */
   taken: ReadonlySet<string>;
-  /** where a new item goes in its list: after the last one */
+  /** Where a new item goes in its list: after the last one. */
   nextOrder: number;
   onClose: () => void;
   onSaved: (message: string) => Promise<void>;
@@ -56,10 +56,10 @@ export function ArtForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // the server's line is the one that counts: once it has said "needs approval", the next save asks for one
+  // The server's line is the one that counts: once it has said "needs approval", the next save asks for one.
   const [serverSaysDear, setServerSaysDear] = useState(false);
 
-  // a new item's SKU follows its name until someone types one
+  // A new item's SKU follows its name until someone types one.
   const skuValue = item ? item.sku : (sku ?? skuFrom(kind, name));
   const value = Number(price);
   const dear = serverSaysDear || (price !== '' && Number.isInteger(value) && needsApproval(item, value, currency));
@@ -89,7 +89,7 @@ export function ArtForm({
     if (Number(order) !== was.displayOrder) c.displayOrder = Number(order);
     if (art) c.assetKey = art.key;
     if (onSale !== onSaleNow(was)) {
-      // on sale is listed and in stock (and so no longer retired); off sale only takes it out of stock
+      // On sale is listed and in stock (and so no longer retired); off sale only takes it out of stock.
       if (onSale) Object.assign(c, { active: true, inStock: true });
       else c.inStock = false;
     }
@@ -139,7 +139,7 @@ export function ArtForm({
         return;
       }
       if (dear) {
-        // the approval applies what it names and keeps the rest of the item
+        // The approval applies what it names and keeps the rest of the item.
         await api('/admin/config/changes', {
           method: 'POST',
           body: { target: 'shop_item', payload: { sku: item.sku, name: label, currency, price: value, ...c } },

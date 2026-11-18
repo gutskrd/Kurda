@@ -105,7 +105,7 @@ export function buildExercises(pairs: readonly WordPair[], kinds: ReadonlySet<Bu
     const size = Math.ceil(pairs.length / boards);
     for (let b = 0; b < boards; b++) {
       const board = pairs.slice(b * size, (b + 1) * size);
-      // a board of one is no matching: it joins the one before
+      // A board of one is no matching: it joins the one before.
       if (board.length < 2) continue;
       out.push({ type: 'match_pairs', payload: { pairs: board.map((p) => ({ left: p.ku, right: p.en })) } });
     }

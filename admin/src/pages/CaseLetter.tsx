@@ -34,7 +34,7 @@ function LetterSheet({ decor, sensitive }: { decor: LetterDecor; sensitive: bool
   const dialogs = useDialogs();
   const drawn = decor.strokes.length > 0;
   const length = decorLength(decor);
-  // drawn by the shared builder from a decor that has just passed the letter's own checks, and shown as an image, where nothing in it could run
+  // Drawn by the shared builder from a decor that has just passed the letter's own checks, and shown as an image, where nothing in it could run.
   const svg = letterPaperSvg({ paper: decor.paper, strokes: drawn && shown ? decor.strokes : [], length, title: 'The letter’s paper' });
   const src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
 
