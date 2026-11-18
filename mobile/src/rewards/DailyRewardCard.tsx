@@ -6,7 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { hueSteps } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useDirection } from '../reports/direction';
-import { radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography, wash } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -75,7 +75,7 @@ export function DailyRewardCard() {
           const state = cellState(status, day);
           const name = t('daily.day', { day: formatNumber(day, locale) });
           const zer = formatNumber(amount, locale);
-          const face = state === 'claimed' ? gold.wash : state === 'today' ? `${colors.primary}${TODAY_WASH}` : colors.controlTrack;
+          const face = state === 'claimed' ? gold.wash : state === 'today' ? wash(colors.primary) : colors.controlTrack;
           const ink = state === 'claimed' ? gold.deep : state === 'today' ? colors.primary : colors.textSecondary;
           return (
             <View
@@ -145,8 +145,6 @@ function DailyRewardSkeleton(): React.JSX.Element {
 
 /** A day: two 13pt lines, 2 between, 8 above and below, inside its 2pt edge. */
 const DAY_CELL = lineOf(typography.sizes.xs) * 2 + 2 + spacing.sm * 2 + 4;
-/** Hex alpha suffix for today's violet wash, as the tab bar uses. */
-const TODAY_WASH = '1F';
 
 /** The Zêr just claimed, counting up (theme/animate.ts); read out as the final amount. */
 function ClaimedLine({ amount }: { amount: number }): React.JSX.Element {

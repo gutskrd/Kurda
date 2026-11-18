@@ -37,7 +37,7 @@ import { directionFor, useDirection } from '../reports/direction';
 import { ClayButton } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography, wash } from '../theme/tokens';
 import { TABLE } from '../impostor/table';
 import { heldDim } from '../theme/MotionParts';
 import { turnCard } from '../theme/animate';
@@ -356,7 +356,7 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
             accessibilityState={{ selected: s.onTurn }}
             style={[
               wide ? styles.seatWide : styles.seat,
-              { borderColor: s.onTurn ? colors.primary : 'transparent', backgroundColor: s.onTurn ? `${colors.primary}1F` : 'transparent', opacity: s.left ? 0.5 : 1 },
+              { borderColor: s.onTurn ? colors.primary : 'transparent', backgroundColor: s.onTurn ? wash(colors.primary) : 'transparent', opacity: s.left ? 0.5 : 1 },
             ]}
           >
             <View style={styles.mini}>

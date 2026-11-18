@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
+import { fontScaleCap, radii, spacing, typography, wash } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -14,9 +14,6 @@ interface Props {
   onChange: (goal: GoalOption) => void;
   disabled?: boolean;
 }
-
-/** Hex alpha suffix for the chosen goal's violet wash, as the tab bar uses. */
-const CHOSEN_WASH = '1F';
 
 /**
  * The daily goal, one of 10, 20, 30 or 50 XP, drawn as a segmented track with the chosen place washed in violet.
@@ -46,7 +43,7 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
             accessibilityRole="radio"
             accessibilityState={{ checked: selected, disabled: !!disabled }}
             accessibilityLabel={t('learn.today.goalOption', { xp: formatNumber(option, locale) })}
-            style={[styles.segment, selected && { backgroundColor: `${colors.primary}${CHOSEN_WASH}` }]}
+            style={[styles.segment, selected && { backgroundColor: wash(colors.primary) }]}
           >
             <Text
               style={[styles.label, selected && styles.chosen, { color: selected ? colors.primary : colors.textSecondary }]}

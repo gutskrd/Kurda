@@ -6,7 +6,7 @@ import { FeedCard, FeedCardSkeleton } from '../feed/FeedCard';
 import { SkeletonText } from '../theme/Skeleton';
 import type { FeedItem } from '../feed/types';
 import { onPostDeleted, samePost } from '../composer/postDeleted';
-import { radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography, wash } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -18,8 +18,6 @@ import { EmptyState } from '../theme/EmptyState';
 import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 
-/** The chosen tab's wash: the violet at the strength the tab bar and the segmented control use to say "here". */
-const CHOSEN_WASH = '1F';
 /** A tab's height, and a strip taller than one row by half: it has taken a second row, even at the largest text. */
 const TAB_HEIGHT = 50;
 const TWO_ROWS_AT_LEAST = (TAB_HEIGHT + 3 * 2) * 1.5;
@@ -153,7 +151,7 @@ export function ProfileActivity({
               style={({ pressed }) => [
                 styles.tab,
                 thirds !== null ? styles.tabThird : null,
-                on ? { backgroundColor: `${colors.primary}${CHOSEN_WASH}` } : null,
+                on ? { backgroundColor: wash(colors.primary) } : null,
                 pressed && heldDim,
               ]}
             >

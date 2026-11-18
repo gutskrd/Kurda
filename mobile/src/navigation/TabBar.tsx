@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
-import { fontScaleCap, radii, typography } from '../theme/tokens';
+import { fontScaleCap, radii, typography, wash } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { unreadBadge } from '../notifications/inbox';
@@ -92,7 +92,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
               pointerEvents="none"
               testID="tab-pill"
               // A faint wash of the violet the chosen tab is written in, so capsule, glyph and word read as one.
-              style={[styles.capsule, { width: slot, backgroundColor: `${colors.primary}1F`, transform: [{ translateX: capsuleX }] }]}
+              style={[styles.capsule, { width: slot, backgroundColor: wash(colors.primary), transform: [{ translateX: capsuleX }] }]}
             />
           ) : null}
           {state.routes.map((route, i) => {

@@ -33,7 +33,7 @@ import { Icon } from '../theme/Icon';
 import { duration, pressedDim } from '../theme/motion';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
-import { layout, radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { JumpSheet } from './JumpSheet';
 import { REST, TONES, levelWords, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
@@ -721,7 +721,7 @@ function UnitFace({
             accessibilityRole="button"
             accessibilityLabel={t('coursemap.path.guideFor', { unit: title })}
             testID="lp-unit-guide"
-            style={({ pressed }) => [styles.pinButton, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? pressedDim : 1 }]}
+            style={({ pressed }) => [styles.pinButton, { backgroundColor: wash(tone.ink), opacity: pressed ? pressedDim : 1 }]}
           >
             <Icon name="book" size={20} color={tone.ink} />
           </Pressable>
@@ -732,7 +732,7 @@ function UnitFace({
             accessibilityRole="button"
             accessibilityLabel={t('learn.map.title')}
             testID="lp-unit-rail"
-            style={({ pressed }) => [styles.pinButton, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? pressedDim : 1 }]}
+            style={({ pressed }) => [styles.pinButton, { backgroundColor: wash(tone.ink), opacity: pressed ? pressedDim : 1 }]}
           >
             <Icon name="flag" size={20} color={tone.ink} />
           </Pressable>
@@ -777,7 +777,7 @@ function SectionCard({ section, here, onOpen, onJump }: { section: Section; here
         <Icon name="lock" size={20} color={colors.textSecondary} />
       </View>
     ) : (
-      <View style={[styles.cardBadge, { backgroundColor: `${colors.primary}1F` }]}>
+      <View style={[styles.cardBadge, { backgroundColor: wash(colors.primary) }]}>
         <Text style={[styles.cardBadgeNumber, { color: colors.primary }]}>{n(section.number)}</Text>
       </View>
     );

@@ -9,7 +9,7 @@ import { Icon } from '../theme/Icon';
 import { ToggleRow } from '../theme/Toggle';
 import { useTheme } from '../theme/ThemeProvider';
 import { useDirection } from '../reports/direction';
-import { radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography, wash } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { getExpectedGains, setLobbyRated } from './api';
 import { friendlyReasonKey, rankName, signed } from './format';
@@ -71,7 +71,7 @@ export function RatedChoice({ value, onChange }: { value: boolean; onChange: (ra
               styles.tile,
               {
                 flexDirection: dir.row,
-                backgroundColor: on ? `${colors.primary}1F` : colors.controlTrack,
+                backgroundColor: on ? wash(colors.primary) : colors.controlTrack,
                 borderColor: on ? colors.primary : 'transparent',
                 opacity: pressed ? pressedDim : 1,
               },

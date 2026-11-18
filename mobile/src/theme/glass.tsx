@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Animated, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Pressable, type Reach } from './Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
-import { fontScaleCap, radii, spacing, typography } from './tokens';
+import { fontScaleCap, radii, spacing, typography, wash } from './tokens';
 import { MIN_REACH, MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from './ThemeProvider';
 import { Icon, type IconName } from './Icon';
@@ -242,8 +242,6 @@ export function ErrorRetry({
 
 /** Inset of the sliding capsule from its track's edge. */
 const SEG_PAD = 3;
-/** The capsule's violet wash as a hex alpha suffix, matching the tab bar. */
-const SEG_WASH = '1F';
 
 /**
  * A labelled (radio) segment's vertical padding: 11 + an 18-point line + 11 makes 40. Each segment reaches over
@@ -326,7 +324,7 @@ export function Segmented<T extends string>({
           pointerEvents="none"
           style={[
             styles.segCapsule,
-            { width: seg, backgroundColor: `${colors.primary}${SEG_WASH}`, transform: [{ translateX: x }] },
+            { width: seg, backgroundColor: wash(colors.primary), transform: [{ translateX: x }] },
           ]}
         />
       ) : null}

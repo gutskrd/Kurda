@@ -8,7 +8,7 @@ import { useDirection } from '../reports/direction';
 import { PressableScale } from '../theme/MotionParts';
 import { ReachGroup } from '../theme/Pressable';
 import { Icon, type IconName } from '../theme/Icon';
-import { fontScaleCap, radii, typography } from '../theme/tokens';
+import { fontScaleCap, radii, typography, wash } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { HIDDEN } from './PaperSheet';
@@ -59,7 +59,7 @@ export function ToolBar({ tool, onTool, canDraw }: { tool: PaperTool; onTool: (t
             accessibilityHint={locked ? t('letters.paper.drawLocked') : undefined}
             testID={`letter-tool-${each}`}
             hitSlop={reach}
-            style={[styles.barItem, active ? { backgroundColor: `${colors.primary}${CHOSEN_WASH}` } : null, locked ? styles.locked : null]}
+            style={[styles.barItem, active ? { backgroundColor: wash(colors.primary) } : null, locked ? styles.locked : null]}
           >
             {each === 'draw' ? locked ? <Icon name="lock" size={17} color={tint} /> : <Glyph kind="draw" color={tint} /> : <Icon name={TOOL_ICON[each]} size={17} color={tint} />}
             <Text maxFontSizeMultiplier={fontScaleCap.fixedBox} numberOfLines={1} style={[styles.barText, { color: tint }, active ? styles.barTextOn : null]}>
@@ -84,9 +84,6 @@ const BAR_GAP = 2;
  */
 const ROW_GAP = 2;
 const ROWS_APART = 4;
-
-/** The chosen tool's violet wash as a hex alpha suffix, matching the segmented control (theme/glass). */
-const CHOSEN_WASH = '1F';
 
 /** A named group of choices that scrolls sideways when wider than the phone, starting from the right in right-to-left languages. */
 export function SwatchRow({ label, shown = false, children, testID }: { label: string; shown?: boolean; children: ReactNode; testID?: string }): React.JSX.Element {

@@ -15,7 +15,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { display } from '../theme/fonts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography, wash } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -24,9 +24,6 @@ import { dismissFeedback, sendFeedback } from './api';
 import { APP_VERSION, appPlatform } from './appInfo';
 import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
-
-/** The violet wash for a selected option, as the tab bar and segmented control use. */
-const CHOSEN_WASH = '1F';
 
 const CATEGORY_LABEL: Record<AppFeedbackCategory, TranslationKey> = {
   lessons: 'appFeedback.category.lessons',
@@ -215,7 +212,7 @@ export function RatingBox({
                 onPress={() => toggle(c)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
-                style={({ pressed }) => [styles.chip, { backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack }, pressed && heldDim]}
+                style={({ pressed }) => [styles.chip, { backgroundColor: on ? wash(colors.primary) : colors.controlTrack }, pressed && heldDim]}
               >
                 <Text style={[styles.chipText, on && styles.chipTextOn, { color: on ? colors.primary : colors.textPrimary }]}>
                   {t(CATEGORY_LABEL[c])}

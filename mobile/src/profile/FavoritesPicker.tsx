@@ -6,7 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { listPosts } from '../library/api';
 import { postName, type LibraryPost } from '../library/types';
-import { radii, spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography, wash } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
@@ -15,9 +15,6 @@ import { FAVORITE_KINDS, clearFavorite, favoriteCopy, setFavorite, type Favorite
 import type { FavoriteRef } from './types';
 import { Loading } from '../theme/Loading';
 import { useDirection } from '../reports/direction';
-
-/** The violet wash an option that is on wears, as everywhere a choice is marked. */
-const CHOSEN_WASH = '1F';
 
 /** How many published posts to offer: the same fifty the browser offers. */
 const BROWSE = 50;
@@ -188,7 +185,7 @@ function Slot({
                   style={[
                     styles.option,
                     {
-                      backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack,
+                      backgroundColor: on ? wash(colors.primary) : colors.controlTrack,
                       borderWidth: 1,
                       borderColor: on ? colors.primary : colors.glassBorder,
                     },

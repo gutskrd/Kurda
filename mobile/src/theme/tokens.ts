@@ -89,3 +89,6 @@ export const layout = {
   /** The widest a list or reading page gets on a tablet or wide window, past which the eye loses its place between lines. */
   column: 680,
 } as const;
+
+/** The tint behind a chosen or current item, as the tab bar draws it: the colour at 12% (hex alpha 1F). */
+export const wash = (colour: string): string => `${colour}1F`;

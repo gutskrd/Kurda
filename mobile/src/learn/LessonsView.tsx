@@ -20,7 +20,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon, type IconName } from '../theme/Icon';
 import { display, sectionLabel } from '../theme/fonts';
-import { layout, radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
@@ -353,7 +353,7 @@ export function LessonsView({
                       accessibilityRole="button"
                       accessibilityState={{ selected: on }}
                       // The current course is washed in violet with its name in violet, like the current tab.
-                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+                      style={({ pressed }) => [styles.chip, { backgroundColor: on ? wash(colors.primary) : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
                       <Text style={[styles.chipText, dir.free, { color: on ? colors.primary : colors.textSecondary }]} numberOfLines={1}>
                         {c.map?.course.title ?? c.course.title}
@@ -560,8 +560,6 @@ function useStartEdge(): { alignItems: 'flex-start' | 'flex-end' } {
 const HERO_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
 /** ClayButton's large size. */
 const LARGE_BUTTON = 50;
-/** Hex alpha suffix for the chosen course chip's violet wash, as the tab bar uses. */
-const CHOSEN_WASH = '1F';
 
 /** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
 const LATIN_TEASER = { text: 'Aa Çç Êê', rtl: false } as const;

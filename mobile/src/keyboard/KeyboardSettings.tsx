@@ -9,16 +9,13 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GlassRow } from '../theme/glass';
 import { SettingsChoice, SettingsRow, SettingsSection, SettingsSwitch } from '../settings/list';
 import { Icon } from '../theme/Icon';
-import { layout, radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 import { KeyboardGuide } from './KeyboardGuide';
 import { useKeyboardPrefs, type WordleLayout } from './prefs';
-
-/** The violet wash for an option that is on, as the tab bar and segmented control use. */
-const CHOSEN_WASH = '1F';
 
 export const ACCENT_LABEL: Record<AccentMode, TranslationKey> = {
   strict: 'keyboard.accent.strict',
@@ -68,7 +65,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
               accessibilityLabel={`${t(ACCENT_LABEL[mode])}. ${t(ACCENT_HINT[mode])}`}
               style={[
                 styles.mode,
-                { backgroundColor: on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack, borderColor: on ? colors.primary : 'transparent' },
+                { backgroundColor: on ? wash(colors.primary) : colors.controlTrack, borderColor: on ? colors.primary : 'transparent' },
               ]}
             >
               <View style={[styles.modeHead, { flexDirection: dir.row }]}>

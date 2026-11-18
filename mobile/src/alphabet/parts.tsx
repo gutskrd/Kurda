@@ -17,7 +17,7 @@ import { useDirection } from '../reports/direction';
 import { display, sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii, typography } from '../theme/tokens';
+import { radii, typography, wash } from '../theme/tokens';
 import type { AlphabetAudio } from './audio';
 import type { ClipPlayer } from './useClipPlayer';
 import { pressedDim } from '../theme/motion';
@@ -41,8 +41,6 @@ export function scriptText(script: AlphabetScript): TextStyle {
 export const scriptLanguage = (script: AlphabetScript): string => (script === 'ckb' ? 'ckb' : 'ku');
 
 const BUTTON = { regular: MIN_TOUCH_TARGET, large: 52 } as const;
-/** Hex alpha suffix for a sounding button's violet wash, as the tab bar uses. */
-const ON_WASH = '1F';
 
 /**
  * A round button that plays one sound, or nothing when there is no clip or nothing to play it with. Its style
@@ -75,7 +73,7 @@ export function PlayButton({
         {
           width: side,
           height: side,
-          backgroundColor: on ? `${colors.primary}${ON_WASH}` : colors.controlTrack,
+          backgroundColor: on ? wash(colors.primary) : colors.controlTrack,
           borderColor: on ? colors.primary : 'transparent',
           opacity: pressed ? pressedDim : 1,
         },

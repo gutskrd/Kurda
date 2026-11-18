@@ -7,11 +7,8 @@ import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
 import { PressableScale } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
-import { radii, spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography, wash } from '../../theme/tokens';
 import { MONTH_KEYS } from '../birthMonth';
-
-/** The violet wash an option that is on wears, as the tab bar and the segmented control mark where you are. */
-const CHOSEN_WASH = '1F';
 
 /**
  * The twelve months as chips for a birth month: one tap, none chosen at first so nothing suggests an answer, announced
@@ -59,7 +56,7 @@ export function MonthChips({
             style={[
               styles.chip,
               columns === 3 ? styles.third : styles.half,
-              { backgroundColor: chosen ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack },
+              { backgroundColor: chosen ? wash(colors.primary) : colors.controlTrack },
               disabled && styles.dim,
             ]}
           >

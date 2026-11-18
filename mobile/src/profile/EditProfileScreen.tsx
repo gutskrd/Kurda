@@ -16,7 +16,7 @@ import { useDirection } from '../reports/direction';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { layout, radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
@@ -53,9 +53,6 @@ interface AvatarOption {
 }
 
 const MAX_BIO = 1000;
-
-/** The violet wash an option that is on wears, as the tab bar and the segmented control mark where you are. */
-const CHOSEN_WASH = '1F';
 
 /**
  * Everything about you that you can change: display name, bio, country, username, photo and avatar. What a save or a
@@ -398,7 +395,7 @@ function CountryChip({
   accessibilityLabel?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const fill = on ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack;
+  const fill = on ? wash(colors.primary) : colors.controlTrack;
   const ink = on ? colors.primary : colors.textPrimary;
   if (!onPress) {
     return (

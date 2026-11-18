@@ -15,7 +15,7 @@ import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { layout, radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography, wash } from '../theme/tokens';
 import { FIRE_STAGE_NAME } from './fireWords';
 import { learningStats, streakLabelKey, type Streak } from './format';
 import { freezeSlots } from './kept';
@@ -255,8 +255,6 @@ const PLACE_WORDS: Record<FireLadderPlace, TranslationKey> = {
 /** The square each ladder fire is framed to fill (so every stage reads and every row is as tall), and the disc it stands on. */
 const RUNG_FIRE = 44;
 const RUNG_ART = 52;
-/** Hex alpha suffix for the current row's violet wash, as the tab bar uses. */
-const NOW_WASH = '1F';
 
 /**
  * The fire stages from spark to Newroz fire (shared `fireLadder`), each a small fire with its name and day:
@@ -280,7 +278,7 @@ function FireLadder({ days }: { days: number }): React.JSX.Element {
         return (
           <View
             key={step.stage}
-            style={[styles.rung, { flexDirection: dir.row }, now && { backgroundColor: `${colors.primary}${NOW_WASH}` }]}
+            style={[styles.rung, { flexDirection: dir.row }, now && { backgroundColor: wash(colors.primary) }]}
             accessible
             accessibilityLabel={t(PLACE_WORDS[step.place], { stage: name, count: day })}
             testID={`rung-${step.place}`}

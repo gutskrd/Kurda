@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { reachRoom } from '../a11y/a11y';
 import { Pressable, ReachGroup } from './Pressable';
-import { layout, radii, spacing, typography } from './tokens';
+import { layout, radii, spacing, typography, wash } from './tokens';
 import { useTheme } from './ThemeProvider';
 import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
@@ -74,7 +74,7 @@ export function Chips<T extends string>({
               reach="open"
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: active ? `${colors.primary}${CHOSEN_WASH}` : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                { backgroundColor: active ? wash(colors.primary) : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
               ]}
             >
               <Text style={[styles.text, { color: active ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
@@ -92,9 +92,6 @@ export function Chips<T extends string>({
     </ScrollView>
   );
 }
-
-/** A chosen chip's violet wash as a hex alpha suffix, matching the tab bar. */
-const CHOSEN_WASH = '1F';
 
 const styles = StyleSheet.create({
   scroller: { flexGrow: 0, marginHorizontal: -layout.gutter },
