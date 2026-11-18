@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-// react-native-web with the accessibility state kept, so the test can see the button busy
+// react-native-web with the accessibility state kept, so the test can see the button busy.
 vi.mock('react-native', () => import('../../play/testing/native'));
 vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
@@ -20,11 +20,9 @@ import { GuideField } from './GuideField';
 import { StepFlow, type FlowStep, type StepOutcome } from './StepFlow';
 
 /*
- * One question per screen: an answer that is refused stays, with a line under
- * the field and Hevalo's doubt; one that passes gets a tick and the next
- * question, the bar a step fuller; the chevron goes back a question and out of
- * the flow from the first; the server's refusal about an earlier answer goes
- * back to that question; and the last step going through finishes the flow.
+ * One question per screen: a refused answer stays with a line under the field; a passing one gets a tick and the next
+ * question; the chevron goes back a question, and out from the first; a refusal about an earlier answer goes back to
+ * it; and the last step finishes the flow.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -78,7 +76,7 @@ function Flow({
   return <StepFlow steps={steps} onFinish={onFinish} onExit={onExit} presented={presented} />;
 }
 
-/** a step on its way out has gone */
+/** A step on its way out has gone. */
 async function turned(): Promise<void> {
   await waitFor(() => expect(document.querySelector('[data-testid^="slide-out"]')).toBeNull());
 }
@@ -121,7 +119,7 @@ describe('StepFlow', () => {
     expect(felt).toEqual(['select']);
     expect(bar().getAttribute('aria-valuenow')).toBe('2');
     expect(bubble()).toBe('Any word.');
-    // the step before is on its way out, to the start side, and then gone
+    // The step before is on its way out, to the start side, and then gone.
     await turned();
     expect(screen.queryByText('What is your name?')).toBeNull();
   });
@@ -195,13 +193,13 @@ describe('StepFlow', () => {
     fireEvent.change(screen.getByTestId('word'), { target: { value: 'av' } });
     await press('Send');
     expect(screen.getByRole('button', { name: 'Send' }).getAttribute('aria-busy')).toBe('true');
-    // a person takes longer than the pacer's gap between two buzzes
+    // A person takes longer than the pacer's gap between two buzzes.
     await new Promise((resolve) => setTimeout(resolve, PACING.minGapMs + 10));
     await act(async () => answer({ ok: false, error: 'Not that word.', says: 'Another word, maybe?' }));
     expect(screen.getByTestId('step-error').textContent).toBe('Not that word.');
     expect(bubble()).toBe('Another word, maybe?');
     expect(screen.getByText('A word?')).toBeTruthy();
-    // the server refused something that was asked for: felt as that, after the tick of the step before it
+    // The server refused something that was asked for: felt as that, after the tick of the step before it.
     expect(felt).toEqual(['select', 'error']);
   });
 
@@ -222,7 +220,7 @@ describe('StepFlow', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'Rojda' } });
     await press(en['common.continue']);
     await screen.findByText('A word?');
-    // a person takes longer than the pacer's gap between two taps; a test that did not lost the second buzz
+    // A person takes longer than the pacer's gap between two taps; a test that did not lost the second buzz.
     await new Promise((resolve) => setTimeout(resolve, PACING.minGapMs + 10));
     await press('Send');
     await waitFor(() => expect(onFinish).toHaveBeenCalledTimes(1));

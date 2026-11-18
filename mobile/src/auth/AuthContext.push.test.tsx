@@ -1,10 +1,7 @@
 // @vitest-environment jsdom
 /**
- * Signing out and deleting the account take this phone off the account's
- * notifications first, while the session can still say whose phone it is:
- * once the session is cleared, the removal would go without one and be
- * refused without a word, and the phone would go on being told what the
- * account receives.
+ * Signing out and deleting the account take this phone off the account's notifications first, while the session can
+ * still say whose phone it is; afterwards the removal would be refused silently.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('react-native-web'));
@@ -55,7 +52,7 @@ async function signedIn(storage: MemoryTokenStorage) {
   await storage.set({ accessToken: 'acc', refreshToken: 'ref' });
   const hook = renderHook(() => useAuth(), { wrapper: wrapperWith(storage) });
   await waitFor(() => expect(hook.result.current.status).toBe('signedIn'));
-  // registered for the account, as PushRegistration does once the app is signed in
+  // Registered for the account, as PushRegistration does once the app is signed in.
   rememberPushToken(PHONE);
   return hook;
 }
@@ -81,7 +78,7 @@ describe('this phone’s notifications as the session ends', () => {
     const removal = calls.findIndex((c) => c.path === '/me/devices/remove');
     expect(removal).toBeGreaterThan(-1);
     expect(calls[removal]).toMatchObject({ method: 'POST', authorization: 'Bearer acc', body: { token: PHONE } });
-    // and only then is the session ended, on the server and on the phone
+    // And only then is the session ended, on the server and on the phone.
     expect(calls.findIndex((c) => c.path === '/auth/logout')).toBeGreaterThan(removal);
     expect(await storage.get()).toBeNull();
     expect(result.current.status).toBe('signedOut');

@@ -20,39 +20,19 @@ import { onGuestRefused } from './guestRefused';
 import { pressedDim } from '../theme/motion';
 
 /**
- * The account gate: where a guest meets the things only an account can do.
+ * The account gate: where a guest (AuthContext `isGuest`) meets the things only an account can do. Guests learn like
+ * anyone, but posting, messaging, friends, groups, the shop, the league and a profile need an account, and the server
+ * refuses a guest at each (403 GUEST_ACCOUNT). A screen asks here first:
  *
- * A guest (AuthContext `isGuest`) learns like anyone — the lessons, the map,
- * the games, the dictionary. Posting, liking, writing to somebody, friends,
- * clubs, the shop, the league, a profile of their own: those need an account,
- * and the server refuses a guest at each of them (403 GUEST_ACCOUNT). Rather
- * than let a tap reach that refusal and come back as an error, a screen asks
- * here first:
+ * const gate = useAccountGate(); if (!gate.require('post')) return;
  *
- *   const gate = useAccountGate();
- *   if (!gate.require('post')) return;
+ * For an account `require` is true and nothing shows. For a guest it opens the offer (a sheet titled for `reason`, with
+ * the two ways to an account and "not now") and answers false. `GuestWall` is the same offer as a whole screen, for a
+ * route a guest should not see at all. A refusal nothing asked about first reaches the client, which tells
+ * `guestRefused`, and the provider opens the generic offer instead of an alert.
  *
- * For a full account `require` is true and nothing shows. For a guest it opens
- * the offer — a sheet from the foot of the screen that says, in one line, what
- * this needs and what an account keeps, with the two ways to one (make it, or
- * sign in to one you have) and a way to say not now — and answers false, so
- * the screen does nothing else. `reason` picks the sheet's title: "Create an
- * account to post", not a sentence about accounts in general.
- *
- * `GuestWall` is the same offer as a whole screen, for a route a guest should
- * not see at all (a chat, the shop, the friends list): a deep link or a tap
- * that reaches one lands on the offer with a way back, never on a screen that
- * half works.
- *
- * And the net under both: a refusal the gate did not ask about first — a route
- * nothing gated, a server with a new rule — reaches the client, which tells
- * `guestRefused`, and the provider opens the generic offer instead of leaving
- * an alert with the server's words in it.
- *
- * `AccountGateProvider` is mounted once, under the signed-in screens and above
- * the root stack, so one sheet serves every screen and the hook works in any
- * of them. Outside the provider (a screen rendered on its own in a test) the
- * hook still answers, and opening the sheet does nothing.
+ * `AccountGateProvider` is mounted once, under the signed-in screens and above the root stack. Outside it (a screen
+ * rendered alone in a test) the hook still answers, and opening the sheet does nothing.
  */
 export type GateReason = 'post' | 'react' | 'comment' | 'message' | 'friends' | 'groups' | 'shop' | 'league' | 'profile' | 'play' | 'save' | 'generic';
 
@@ -73,10 +53,8 @@ const TITLE: Record<GateReason, TranslationKey> = {
 };
 
 /**
- * What an account keeps and opens, four lines: progress that follows you to
- * another phone, friends to play and talk with, a name and a face of your own,
- * and the league with its gifts and the shop. The same four everywhere the
- * offer is made, so it reads as one offer.
+ * What an account keeps and opens, the same four lines wherever the offer is made: progress across phones, friends,
+ * your own name and face, and the league and shop.
  */
 const BENEFITS: ReadonlyArray<{ icon: IconName; key: TranslationKey }> = [
   { icon: 'devices', key: 'guest.benefit.progress' },
@@ -86,11 +64,8 @@ const BENEFITS: ReadonlyArray<{ icon: IconName; key: TranslationKey }> = [
 ];
 
 /**
- * How long after the offer is put away a refusal from the server is left
- * unanswered. A screen that asked for three things at once has them refused
- * together; the first opens the sheet and the rest arrive while it is up, or
- * just after it was dismissed — and an offer that comes straight back after
- * "Not now" is not an offer, it is nagging.
+ * How long after the offer is dismissed a server refusal is ignored: a screen that asked for several things has them
+ * refused together, and an offer that returns straight after "Not now" is nagging.
  */
 const QUIET_AFTER_DISMISS_MS = 1500;
 
@@ -103,10 +78,10 @@ const GateContext = createContext<GateValue>({ open: () => undefined });
 
 export function AccountGateProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { isGuest } = useAuth();
-  // above the root stack there is no screen's navigation, so this is the container's own
+  // Above the root stack there is no screen's navigation, so this is the container's own.
   const navigation = useNavigation<RootNavigation>();
   const [reason, setReason] = useState<GateReason | null>(null);
-  // the state as the next caller sees it, so two refusals in one frame open one sheet and buzz once
+  // The state as the next caller sees it, so two refusals in one frame open one sheet and buzz once.
   const showing = useRef<GateReason | null>(null);
   const dismissedAt = useRef(0);
 
@@ -123,7 +98,7 @@ export function AccountGateProvider({ children }: { children: ReactNode }): Reac
     setReason(null);
   }, []);
 
-  // the net under the gate: a refusal nothing asked about first
+  // The net under the gate: a refusal nothing asked about first.
   useEffect(() => {
     if (!isGuest) return;
     return onGuestRefused(() => {
@@ -132,7 +107,7 @@ export function AccountGateProvider({ children }: { children: ReactNode }): Reac
     });
   }, [isGuest, open]);
 
-  // the account changed hands (claimed, or signed in to another): nothing to offer any more
+  // The account changed hands (claimed, or signed in to another): nothing to offer any more.
   useEffect(() => {
     if (!isGuest && showing.current !== null) close();
   }, [isGuest, close]);
@@ -159,10 +134,7 @@ export function AccountGateProvider({ children }: { children: ReactNode }): Reac
   );
 }
 
-/**
- * Whether the person may do something only an account can, and the offer when
- * they may not.
- */
+/** Whether the person may do something only an account can, opening the offer when they may not. */
 export function useAccountGate(): { isGuest: boolean; require: (reason: GateReason) => boolean } {
   const { isGuest } = useAuth();
   const { open } = useContext(GateContext);
@@ -180,9 +152,8 @@ export function useAccountGate(): { isGuest: boolean; require: (reason: GateReas
 }
 
 /**
- * A route a guest should not see, behind the offer. The screen is drawn for
- * an account; a guest gets the offer as a whole screen, with the way back the
- * screen would have had.
+ * A route a guest should not see, behind the offer: an account gets the screen; a guest gets the offer as a whole
+ * screen, with the screen's way back.
  */
 export function GuestWall({ reason = 'generic', onBack, children }: { reason?: GateReason; onBack: () => void; children: ReactNode }): React.JSX.Element {
   const { isGuest } = useAuth();
@@ -210,9 +181,8 @@ function GuestWallScreen({ reason, onBack }: { reason: GateReason; onBack: () =>
 }
 
 /**
- * The offer itself, as the sheet and the wall both make it: what this needs,
- * the four things an account keeps, and the two ways to one — then a quiet
- * line to say not now.
+ * The offer itself, as the sheet and the wall make it: what this needs, the four things an account keeps, the two ways
+ * to one, and a quiet "not now".
  */
 function Offer({
   reason,

@@ -4,7 +4,7 @@ import appJson from '../../app.json';
 import appConfig, { GOOGLE_SIGNIN_PLUGIN, googleIosUrlScheme, googleSignInPlugin } from '../../app.config';
 import { googleSignInAvailable } from './googleClientIds';
 
-// made-up ids in the shape Google issues them; no real client is named in the repository
+// made-up ids in the shape Google issues them; no real client is named in the repository.
 const IOS_ID = '123456789012-abcdefghijklmnopqrstuvwxyz012345.apps.googleusercontent.com';
 const IOS_SCHEME = 'com.googleusercontent.apps.123456789012-abcdefghijklmnopqrstuvwxyz012345';
 const WEB_ID = '123456789012-zyxwvutsrqponmlkjihgfedcba543210.apps.googleusercontent.com';

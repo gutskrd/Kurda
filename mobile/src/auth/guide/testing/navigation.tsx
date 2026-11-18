@@ -1,9 +1,6 @@
 /**
- * @react-navigation/native for a test of a guided screen: the shared stand-in
- * (play/testing/navigation), with the navigation context the guide reads to
- * know whether its screen is in front. Nobody provides it in a test, so a
- * screen rendered on its own counts as in front, as one with no navigator
- * does in the app. Wired with
+ * @react-navigation/native for a test of a guided screen: the shared stand-in (play/testing/navigation) plus the
+ * navigation context the guide reads, which nobody provides in a test, so a screen counts as in front. Wired with
  * `vi.mock('@react-navigation/native', () => import('…/auth/guide/testing/navigation'))`.
  */
 import { createContext } from 'react';

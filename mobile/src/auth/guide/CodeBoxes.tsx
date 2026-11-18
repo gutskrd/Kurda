@@ -12,26 +12,14 @@ import { fontScaleCap, radii, spacing, typography } from '../../theme/tokens';
 const BOX_HEIGHT = 60;
 
 /**
- * A code typed a digit to a box.
+ * A code typed a digit to a box, with the next box lit and a gap after the third (three and three, as read off an
+ * email).
  *
- * One grey field with "000000" in it did not say how long the code was or how
- * far along the typing had got, and looked like any other field. Six boxes
- * do: each takes its digit as it is typed, with a small settle, the next one
- * to fill is the lit one, and a gap after the third sets the code out the way
- * people read it off an email, three and three.
- *
- * Underneath it is still one text field, laid over the boxes and invisible:
- * the phone offers the code from the email or the clipboard to a field, not
- * to six, a screen reader meets one control with one name, and a backspace
- * simply works. The boxes are only how it is drawn. The field has no length
- * of its own, so a code pasted as "482 913" is not cut short before it is
- * read (shared `codeDigits` keeps the six digits meant).
- *
- * `onComplete` is told the moment the last digit lands, so the code can be
- * sent without reaching for the button. A code that was refused is shown in
- * the refusal's colour until it is edited; one being checked dims. Digits run
- * left to right in every language. Under Reduce Motion a digit simply appears
- * and the lit box does not pulse.
+ * Underneath it is one invisible text field over the boxes, so the phone can offer the emailed code, a screen reader
+ * meets one control, and backspace just works. The field has no length limit, so a pasted "482 913" is not cut short
+ * (shared `codeDigits` keeps the six digits). `onComplete` fires as the last digit lands. A refused code shows in the
+ * refusal's colour until edited; one being checked dims. Digits run left to right in every language; under Reduce
+ * Motion a digit simply appears and the lit box does not pulse.
  */
 export function CodeBoxes({
   value,
@@ -41,32 +29,28 @@ export function CodeBoxes({
   label,
   refused = false,
   busy = false,
-  autoFocus = true,
-  testID = 'code',
 }: {
   value: string;
   onChange: (code: string) => void;
-  /** every box is full: told once, with the code */
+  /** Every box is full: told once, with the code. */
   onComplete?: (code: string) => void;
   length?: number;
-  /** what the field is, for a screen reader */
+  /** What the field is, for a screen reader. */
   label: string;
-  /** the last code sent was not right */
+  /** The last code sent was not right. */
   refused?: boolean;
-  /** the code is with the server */
+  /** The code is with the server. */
   busy?: boolean;
-  autoFocus?: boolean;
-  testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const [focused, setFocused] = useState(autoFocus);
+  const [focused, setFocused] = useState(true);
   const input = useRef<TextInput>(null);
   const digits = value.slice(0, length).split('');
-  // the box the next digit goes in; none once the code is whole
+  // The box the next digit goes in; none once the code is whole.
   const next = focused && digits.length < length ? digits.length : -1;
 
   const type = (text: string): void => {
-    // read as it was meant: the digits of an Arabic or a Soranî keyboard, a code pasted with its space or its sentence
+    // Read as meant: the digits of an Arabic or Soranî keyboard, or a code pasted with its space or its sentence.
     const code = codeDigits(text, length);
     if (code === value) return;
     onChange(code);
@@ -86,7 +70,7 @@ export function CodeBoxes({
         onChangeText={type}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        autoFocus={autoFocus}
+        autoFocus
         editable={!busy}
         keyboardType="number-pad"
         inputMode="numeric"
@@ -94,11 +78,10 @@ export function CodeBoxes({
         autoComplete="one-time-code"
         caretHidden
         accessibilityLabel={label}
-        // over the boxes with nothing of its own drawn: the field takes the touch and the typing, the boxes show
-        // it. Its letters are clear rather than the field faded out, because a phone gives no touch to a view
-        // that is fully faded, and a tap on the boxes has to bring the keyboard back.
+        // Over the boxes with nothing of its own drawn: the field takes the touch and typing, the boxes show it. Its
+        // text is transparent rather than the field faded out, because a phone gives no touch to a fully faded view.
         style={styles.field}
-        testID={testID}
+        testID="code"
       />
     </View>
   );
@@ -121,7 +104,7 @@ function Box({
   const pulse = useRef(new Animated.Value(1)).current;
   const alive = useMotionAlive();
 
-  // a digit arrives with a small settle; one taken back is simply gone
+  // A digit arrives with a small settle; one taken back is simply gone.
   useEffect(() => {
     if (!digit) {
       settle.setValue(0);
@@ -132,13 +115,13 @@ function Box({
       return;
     }
     settle.setValue(0.6);
-    // typing is the interface answering a key: there inside 300 ms, as a tab or a switch is
+    // Typing is the interface answering a key: there within 300 ms, as a tab or a switch is.
     const run = springTo(settle, 1, 'chrome');
     run.start();
     return () => run.stop();
   }, [digit, reduce, settle]);
 
-  // the lit box's mark breathes, the way a caret does, so the eye finds where the next digit goes — while the page is the one in front
+  // The lit box's mark breathes like a caret, while the page is in front.
   useEffect(() => {
     if (!lit || !alive) {
       pulse.setValue(1);
@@ -166,17 +149,17 @@ function Box({
 }
 
 const styles = StyleSheet.create({
-  // digits read left to right in every language
+  // Digits read left to right in every language.
   row: { flexDirection: 'row', direction: 'ltr', gap: spacing.sm, alignSelf: 'stretch' },
   busy: { opacity: 0.6 },
   slot: { flex: 1 },
-  // three and three, as a code is read off an email
+  // Three and three, as a code is read off an email.
   afterGap: { marginLeft: spacing.sm },
   box: { height: BOX_HEIGHT, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
   digit: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   mark: { width: 2, height: 26, borderRadius: radii.pill },
-  // no ring of its own when it has the focus: the lit box is what shows where the typing goes. In a browser the
-  // ring is drawn by its style, whatever its width, so the style is turned off there too (a phone has neither).
+  // No focus ring of its own: the lit box shows where typing goes. In a browser the ring comes from its style, so the
+  // style is turned off there too.
   field: {
     position: 'absolute',
     top: 0,

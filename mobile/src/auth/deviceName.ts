@@ -8,25 +8,21 @@ const TABLET_MIN_SIDE = 600;
 
 export interface DeviceFacts {
   os: string;
-  /** iOS: an iPad, or an iPhone app running on one */
+  /** iOS: an iPad, or an iPhone app running on one. */
   isPad?: boolean;
-  /** Android's own Build fields, as Platform.constants carries them */
+  /** Android's own Build fields, as Platform.constants carries them. */
   manufacturer?: string;
   model?: string;
-  /** the screen's shorter side, in points */
+  /** The screen's shorter side, in points. */
   shortSide?: number;
 }
 
 const tidy = (s: string | undefined): string => (s ?? '').replace(/\p{Cc}/gu, '').replace(/\s+/g, ' ').trim();
 
 /**
- * What the list of signed-in devices calls this one.
- *
- * Only what the platform says without asking: iPhone or iPad, and on Android
- * whether it is a phone or a tablet, with the maker and model Android reports
- * ("Android phone (Google Pixel 8)"). Never the name the owner gave the phone,
- * which is often their own name. Nothing at all off iOS and Android, where
- * the server keeps the session nameless.
+ * What the list of signed-in devices calls this one: only what the platform says without asking (iPhone or iPad; on
+ * Android phone or tablet with maker and model). Never the name the owner gave the phone, which is often their own
+ * name. Nothing off iOS and Android.
  */
 export function deviceNameFor(facts: DeviceFacts): string | undefined {
   if (facts.os === 'ios') return facts.isPad ? 'iPad' : 'iPhone';

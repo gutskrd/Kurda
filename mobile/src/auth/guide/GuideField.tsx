@@ -20,22 +20,14 @@ const TEXT_CONTENT_TYPE = {
 } as const;
 
 /**
- * The one field of a step.
+ * The one field of a step: large, focused as its step arrives, with the return key going on as Continue does
+ * (`tools.submit`); typing clears the last refusal (`tools.edited`). The question over it is its visible label; `label`
+ * is what a screen reader calls it.
  *
- * Large, since it is the only thing on the screen to type in, and ready: it
- * takes the focus as its step arrives, so the keyboard is up without a tap,
- * and the keyboard's return key goes on the way the Continue button does
- * (`tools.submit`). Typing takes away the line under it that refused the last
- * answer (`tools.edited`). The question over it is its visible label; the
- * `label` is what a screen reader calls it.
- *
- * A secure field gets the eye, because a password you cannot read is a
- * password you mistype on a phone keyboard. `complete` tells the keychain and
- * the password manager what they may offer. In Soranî and Arabic the typing
- * and the eye start on the right. Nothing typed is capitalised, corrected or
- * underlined as misspelt. A field that puts text in at the caret (the
- * username's Kurdish keys) passes the caret it wants once (`selection`) and
- * hears where it is (`onSelectionChange`).
+ * A secure field gets the eye toggle, since a password you cannot read gets mistyped on a phone. `complete` tells the
+ * keychain and password managers what to offer. Nothing typed is capitalised or autocorrected. A field that inserts
+ * text at the caret (the username's Kurdish keys) passes the caret it wants once (`selection`) and hears where it is
+ * (`onSelectionChange`).
  */
 export function GuideField({
   tools,
@@ -59,9 +51,9 @@ export function GuideField({
   keyboardType?: 'default' | 'email-address';
   complete?: 'email' | 'username' | 'current-password' | 'new-password';
   placeholder?: string;
-  /** the last field of the flow: the return key says Done rather than Next */
+  /** The flow's last field: the return key says Done rather than Next. */
   last?: boolean;
-  /** where the caret goes, once, after the screen put text in at it */
+  /** Where the caret goes, once, after the screen inserted text at it. */
   selection?: { start: number; end: number };
   onSelectionChange?: (e: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => void;
   testID?: string;
@@ -101,7 +93,7 @@ export function GuideField({
         autoFocus
         returnKeyType={last ? 'done' : 'next'}
         onSubmitEditing={tools.submit}
-        // the keyboard stays up between one step and the next, rather than dropping and coming back
+        // The keyboard stays up between one step and the next, rather than dropping and coming back.
         submitBehavior={last ? 'blurAndSubmit' : 'submit'}
         editable={!tools.busy}
         testID={testID}

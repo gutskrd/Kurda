@@ -14,11 +14,8 @@ import { RULER, ageRange, offsetForAge } from './age';
 import { AgeRuler } from './AgeRuler';
 
 /*
- * The ruler: the big number and "years old" over it, a tick a year with the
- * numbers every ten, the age under the pointer following the scroll a year
- * at a time with a tick in the hand, and to a screen reader one adjustable
- * control that says the age. Before it is moved there is no age at all, only
- * a dash and the invitation to slide.
+ * The ruler: the age under the pointer follows the scroll a year at a time with a haptic tick, and a screen reader
+ * meets one adjustable control. Before it is moved there is no age, only a dash and the invitation to slide.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -54,7 +51,7 @@ function Ruler({ start = 20 }: { start?: number | null }) {
   );
 }
 
-/** the ruler scrolled to `x` points */
+/** The ruler scrolled to `x` points. */
 function scrollTo(x: number): void {
   act(() => {
     fireEvent.scroll(screen.getByTestId('age-ruler-scroll'), { target: { scrollLeft: x } });
@@ -66,7 +63,7 @@ describe('AgeRuler', () => {
     renderWithProviders(<Ruler />);
     expect(screen.getByTestId('age-ruler-number').textContent).toBe('20');
     expect(screen.getByText('years old')).toBeTruthy();
-    // the numbers under the tall ticks, every ten years to the oldest
+    // The numbers under the tall ticks, every ten years to the oldest.
     for (let age = 10; age <= range.max; age += 10) expect(screen.getAllByText(String(age)).length).toBeGreaterThan(0);
     expect(screen.queryByText('15')).toBeNull();
   });
@@ -78,7 +75,7 @@ describe('AgeRuler', () => {
     expect(slider.getAttribute('aria-valuemax')).toBe(String(range.max));
     expect(slider.getAttribute('aria-valuenow')).toBe('20');
     expect(slider.getAttribute('aria-valuetext')).toBe('20 years old');
-    // the ticks themselves are not read: the control says it all
+    // The ticks themselves are not read: the control says it all.
     expect(screen.getByTestId('age-ruler-ticks').getAttribute('aria-hidden')).toBe('true');
   });
 
@@ -95,7 +92,7 @@ describe('AgeRuler', () => {
     renderWithProviders(<Ruler />);
     scrollTo(offsetForAge(20, range.min) + RULER.tick * 0.3);
     expect(changes).toEqual([]);
-    // a second move straight after the first is read when the scroll comes to rest
+    // A second move straight after the first is read when the scroll comes to rest.
     scrollTo(offsetForAge(20, range.min) + RULER.tick * 0.7);
     await waitFor(() => expect(changes).toEqual([21]));
   });

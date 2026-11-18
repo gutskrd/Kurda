@@ -1,10 +1,6 @@
 /**
- * Hevalo's reactions on a guided flow, one after another.
- *
- * A speaking character reacts when its `reaction` changes, so the same
- * reaction given twice in a row — two refused answers — would play once.
- * This clears it for a frame before giving it again, so every refusal gets
- * its tilt of the head and every pass its cheer.
+ * Hevalo's reactions on a guided flow, one after another. A character reacts when its `reaction` changes, so the same
+ * reaction twice in a row would play once; this clears it for a frame before giving it again.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CharacterReaction } from '../../characters/SpeakingCharacter';

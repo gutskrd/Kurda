@@ -23,29 +23,14 @@ const NUMBER_SIZE = 72;
 const NO_NUMBER = '–';
 
 /**
- * "How old are you?", answered by scrolling a ruler.
+ * "How old are you?", answered by scrolling a ruler: a large number over a ruler with a tick a year (a tall numbered
+ * one every ten), snapping a year at a time with a haptic tick under the pointer. Its ends fade, so it reads as going
+ * on past the screen.
  *
- * A huge number, "years old" under it, and under that a ruler of tick marks
- * — one a year, a tall one with its number every ten — with a pointer in the
- * middle in the brand's colour. The ruler scrolls sideways and snaps a year
- * at a time; the number counts with it, and every year that passes under the
- * pointer is a tick in the hand. The ends fade out, so the ruler reads as
- * going on past the screen.
- *
- * It starts with no age at all (guide/age.ts): the ruler rests at its young
- * end, a dash stands where the number goes with "slide to your age" under it,
- * and the pointer is grey. The first scroll off the resting year chooses an
- * age, and from then on the number and the brand's colour follow the ruler.
- * The screen asks for an age before it goes on, so nobody is given one they
- * did not pick.
- *
- * To a screen reader it is one adjustable control: it says the age, and a
- * swipe up or down moves it a year (`increment`, `decrement`), scrolling the
- * ruler there; with no age chosen it says so, and the first swipe starts from
- * the resting year. Two more actions move it ten years at a time, since the
- * ruler now starts at its young end and a year a swipe from there is a long
- * way to most people's age. The years it offers run from one to the earliest the server
- * takes (guide/age.ts), the young ones too, since leaving them out would say
+ * It starts with no age (guide/age.ts): resting at its young end with a dash for the number and a grey pointer; the
+ * first scroll off the resting year chooses one, so nobody is given an age they did not pick. To a screen reader it is
+ * one adjustable control moving a year per swipe, with two more actions moving ten years, since a year a swipe from the
+ * young end is a long way. It offers every year the server takes, the young ones too, since leaving them out would hint
  * which to pick.
  */
 /** What each of the control's actions does to the age: a year a swipe, or ten from the actions menu. */
@@ -60,26 +45,24 @@ export function AgeRuler({
   value,
   onChange,
   now,
-  testID = 'age-ruler',
 }: {
-  /** the age chosen, or null while none is */
+  /** The age chosen, or null while none is. */
   value: number | null;
   onChange: (age: number) => void;
-  /** today, for the tests; the range of ages runs up from it */
+  /** Today, for the tests; the range of ages runs up from it. */
   now?: Date;
-  testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const range = useMemo(() => ageRange(now), [now]);
   const [width, setWidth] = useState(0);
   const scroller = useRef<ScrollView>(null);
-  // the age under the pointer as last read, so a scroll that stays on a year changes nothing; null until one is chosen
+  // The age under the pointer as last read, so a scroll that stays on a year changes nothing; null until one is chosen.
   const shown = useRef(value);
   const lastTick = useRef(0);
   const side = Math.max(0, width / 2 - RULER.tick / 2);
 
-  // onto the age already chosen, once the ruler knows how wide it is; with none chosen it stays at rest, at its start
+  // Onto the chosen age once the ruler knows its width; with none chosen it stays at rest, at its start.
   useEffect(() => {
     if (width > 0 && shown.current !== null) scroller.current?.scrollTo({ x: offsetForAge(shown.current, range.min), animated: false });
   }, [width, range.min]);
@@ -127,7 +110,7 @@ export function AgeRuler({
       ]}
       onAccessibilityAction={adjust}
       style={styles.root}
-      testID={testID}
+      testID="age-ruler"
     >
       <Text style={[styles.number, { color: chosen ? colors.textPrimary : colors.textSecondary }]} testID="age-ruler-number">
         {chosen ? formatNumber(value, locale) : NO_NUMBER}
@@ -137,7 +120,7 @@ export function AgeRuler({
       </Text>
 
       <View style={styles.ruler} onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}>
-        {/* the ticks are not read out one by one: the control above says the age */}
+        {/* The ticks are not read out one by one: the control above says the age. */}
         <View aria-hidden style={styles.ticks} testID="age-ruler-ticks">
           <ScrollView
             ref={scroller}
@@ -154,7 +137,7 @@ export function AgeRuler({
             <Ticks min={range.min} max={range.max} colour={colors.textSecondary} numberColour={colors.textPrimary} locale={locale} />
           </ScrollView>
         </View>
-        {/* the pointer, over the middle of the ruler; the ruler itself runs under it, and it takes the brand's colour once an age is chosen */}
+        {/* The pointer over the ruler's middle; it takes the brand's colour once an age is chosen. */}
         <View pointerEvents="none" style={[styles.pointer, { backgroundColor: chosen ? colors.primary : colors.textSecondary }]} />
         <LinearGradient colors={[colors.background, 'transparent']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.fade, styles.fadeStart]} pointerEvents="none" />
         <LinearGradient colors={['transparent', colors.background]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={[styles.fade, styles.fadeEnd]} pointerEvents="none" />
@@ -163,7 +146,7 @@ export function AgeRuler({
   );
 }
 
-/** The tick marks, drawn once: they change only with the colours and the language the numbers are written in. */
+/** The tick marks, drawn once: they change only with the colours and the numerals' language. */
 const Ticks = memo(function Ticks({
   min,
   max,

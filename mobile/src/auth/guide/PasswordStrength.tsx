@@ -10,11 +10,9 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { STRENGTH_KEY, STRENGTH_LEVELS, passwordStrength } from './password';
 
 /**
- * How strong the password being typed is: four short bars that light up one
- * by one as it grows, red for one, gold for two, green from three, with the
- * word for it beside them. Each bar fades in on the native driver; under
- * Reduce Motion it is simply lit. Nothing shows for an empty field. The word
- * is what a screen reader hears, as the meter changes.
+ * How strong the password being typed is: four short bars lighting up as it grows (red, gold, then green), with the
+ * word beside them, which is what a screen reader hears. Nothing shows for an empty field; under Reduce Motion a bar is
+ * simply lit.
  */
 export function PasswordStrengthMeter({ password }: { password: string }): React.JSX.Element {
   const { colors } = useTheme();

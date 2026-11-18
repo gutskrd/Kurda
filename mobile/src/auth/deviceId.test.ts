@@ -32,9 +32,8 @@ describe('a new device id', () => {
   });
 
   /*
-   * Hermes has no global crypto at all. Whatever is missing or throws, an id
-   * still comes back, because a request with none is a device the server
-   * cannot recognise next time.
+   * Hermes has no global crypto. Whatever is missing or throws, an id still comes back, since a request without one is
+   * a device the server cannot recognise next time.
    */
   it('still makes one when every source is missing or throws', () => {
     const broken = {
@@ -53,7 +52,7 @@ describe('a new device id', () => {
     expect(isDeviceId('x'.repeat(DEVICE_ID_MAX))).toBe(true);
     expect(isDeviceId('x'.repeat(DEVICE_ID_MAX + 1))).toBe(false);
     expect(isDeviceId(null)).toBe(false);
-    // it travels as a header
+    // It travels as a header.
     expect(isDeviceId('café-phone')).toBe(false);
     expect(isDeviceId('two words')).toBe(false);
   });
@@ -70,7 +69,7 @@ describe('the stored device id', () => {
   it('is the same one on every launch after', async () => {
     const store = memoryStore();
     const first = await loadDeviceId(store);
-    forgetDeviceId(); // the app is closed and opened again
+    forgetDeviceId(); // The app is closed and opened again.
     const second = await loadDeviceId(store, () => 'a-different-one');
     expect(second).toBe(first);
     expect(store.set).toHaveBeenCalledTimes(1);
@@ -85,7 +84,7 @@ describe('the stored device id', () => {
   });
 
   it('stores a fresh id even when the keystore cannot be read, so the next launch is the same device', async () => {
-    // an entry the keystore can no longer decrypt: reads fail until a write replaces it
+    // An entry the keystore can no longer decrypt: reads fail until a write replaces it.
     let kept: string | null = null;
     const store: DeviceIdStore = {
       get: vi.fn(async () => {
@@ -98,7 +97,7 @@ describe('the stored device id', () => {
     };
     expect(await loadDeviceId(store, () => 'rescued')).toBe('rescued');
     expect(store.set).toHaveBeenCalledWith('rescued');
-    forgetDeviceId(); // the app is closed and opened again
+    forgetDeviceId(); // The app is closed and opened again.
     expect(await loadDeviceId(store, () => 'a-different-one')).toBe('rescued');
   });
 
