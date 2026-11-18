@@ -54,7 +54,7 @@ afterEach(() => {
 const show = () => renderApp(<CopyrightPage />, ['/copyright']);
 const form = () => screen.getByRole('form', { name: 'Copyright notice' });
 
-/** Fill in a complete notice, the way a rights holder would. */
+/** Fills in a complete notice, as a rights holder would. */
 async function fillIn(): Promise<void> {
   const f = form();
   await userEvent.type(within(f).getByLabelText('Your full name'), 'Rojda Amed');
@@ -152,7 +152,7 @@ describe('the copyright notice form', () => {
       locale: 'en',
     });
 
-    // and another one starts from an empty form
+    // Another one starts from an empty form.
     await userEvent.click(screen.getByRole('button', { name: 'Send another notice' }));
     expect(within(form()).getByLabelText('Your full name')).toHaveValue('');
   });
@@ -163,7 +163,7 @@ describe('the copyright notice form', () => {
     await fillIn();
     await userEvent.click(within(form()).getByRole('button', { name: 'Send notice' }));
     expect(await within(form()).findByRole('alert')).toBeInTheDocument();
-    // what they typed is still there to send later
+    // What they typed is still there to send later.
     expect(within(form()).getByLabelText('Your full name')).toHaveValue('Rojda Amed');
   });
 });
@@ -174,7 +174,7 @@ describe('the provider details', () => {
     show();
     const agent = screen.queryByRole('heading', { name: 'DMCA designated agent' });
     if (PROVIDER.dmcaAgent.name.startsWith('[')) {
-      // not registered with the US Copyright Office yet: no section of placeholders on a live page
+      // No agent registered yet, so no section of placeholders on a live page.
       expect(agent).toBeNull();
     } else {
       expect(within(agent!.closest('section')!).getByText(PROVIDER.dmcaAgent.name)).toBeInTheDocument();
@@ -215,7 +215,7 @@ describe('counter-notices', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Send a counter-notice' }));
     const f = screen.getByRole('form', { name: 'Counter-notice for CN-9F8E7D6C' });
     expect(within(f).getByText(/go to the person who sent the notice, as the law asks/)).toBeInTheDocument();
-    // the email starts as the account's own
+    // The email starts as the account's own.
     expect(within(f).getByLabelText('Email')).toHaveValue('rojda@example.com');
 
     await userEvent.type(within(f).getByLabelText('Your full name'), 'Rojda Amed');

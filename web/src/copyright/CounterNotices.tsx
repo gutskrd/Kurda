@@ -23,20 +23,12 @@ import { Confirm, TextField, useFormProblems, useProblemText } from './fields';
 import { Email } from './ProviderDetails';
 
 /**
- * The other side of a notice: somebody whose post was taken down after a
- * copyright notice, and who made it, or may use it, can say so — the DMCA's
- * counter-notice (§512(g)). The statement of reasons they were sent points
- * here (api/src/moderation/notices.ts).
+ * Counter-notices (DMCA §512(g)) for someone whose post was taken down after a copyright notice, linked from the
+ * statement of reasons (api/src/moderation/notices.ts). Only their own notices are listed, answerable for six months.
  *
- * Only the notices that took something of theirs down are listed, and only
- * while the six months to answer last can one be answered.
- *
- * Not from an account under 18: the counter-notice's copy, with the sender's
- * name, home address and phone, goes to whoever filed the notice — anyone,
- * unverified. A minor sees how a parent or guardian sends it by email instead,
- * and that the review request from Account standing shares nothing with them.
- * The API refuses it too (COUNTER_NOTICE_ADULT_REQUIRED), which also covers an
- * account with no birth month on record; that answer switches to the same copy.
+ * Accounts under 18 cannot send one, since the copy with name, address and phone goes to the unverified notice filer.
+ * A minor sees how a parent or guardian can send it by email instead. The API refuses too
+ * (COUNTER_NOTICE_ADULT_REQUIRED), including for accounts with no birth month, and that answer shows the same copy.
  */
 export function CounterNotices(): React.JSX.Element {
   const { status } = useAuth();
@@ -64,13 +56,13 @@ function MyNotices(): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
   const { user } = useAuth();
-  // notices against the account are asked every time, as its standing is
+  // Fetched fresh every time, like the account's standing.
   const { data, error, loading, reload } = useApiGet<MyCopyrightNoticesPage>('/me/copyright/notices', { fresh: true });
   const [open, setOpen] = useState<string | null>(null);
   const [adultRefused, setAdultRefused] = useState(false);
   const guardianOnly = user?.minor === true || adultRefused;
   const whyRef = useRef<HTMLParagraphElement>(null);
-  // the form the reader was in is gone: take them to why, and to what to do instead
+  // The form the reader was in is gone, so move focus to the explanation.
   useEffect(() => {
     if (adultRefused) whyRef.current?.focus();
   }, [adultRefused]);
@@ -193,7 +185,7 @@ function CounterForm({
 }: {
   notice: MyCopyrightNotice;
   onCancel: () => void;
-  /** the API answered that this account may not send one (not known to be 18 or over) */
+  /** The API refused because the account is not known to be 18 or over. */
   onAdultRequired: () => void;
   onSent: (receipt: CounterNoticeReceipt) => void;
 }): React.JSX.Element {

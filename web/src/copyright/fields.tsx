@@ -4,14 +4,9 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /*
- * The pieces both copyright forms are made of: a labelled field that says what
- * is wrong with it, and the rule for when it says so.
- *
- * Both forms run the shared check (copyrightNoticeProblems,
- * counterNoticeProblems) on every change — the same check the API runs, so
- * what the form lets through the server accepts. A field's problem is shown
- * once the field has been left (or the form sent), and goes the moment it is
- * fixed; nobody is told off for a field they have not reached yet.
+ * The parts both copyright forms use: labelled fields with their problems, and when to show them. Both forms run the
+ * API's own shared check on every change; a problem shows once the field is left or the form sent, and clears when
+ * fixed.
  */
 
 const PROBLEM_COPY: Record<CopyrightProblem['code'], MessageKey> = {
@@ -35,10 +30,7 @@ export function useProblemText(): (problem: CopyrightProblem | undefined) => str
   );
 }
 
-/**
- * Which problems to show, and where to send focus when the form is sent with
- * some left.
- */
+/** Which problems to show, and where to send focus when the form is sent with some left. */
 export function useFormProblems(problems: CopyrightProblem[], idPrefix: string) {
   const [touched, setTouched] = useState<ReadonlySet<CopyrightField>>(new Set());
   const [submitted, setSubmitted] = useState(false);
@@ -56,12 +48,12 @@ export function useFormProblems(problems: CopyrightProblem[], idPrefix: string) 
   const touch = (field: CopyrightField) => () =>
     setTouched((prev) => (prev.has(field) ? prev : new Set(prev).add(field)));
 
-  /** Send the form only if nothing is wrong; otherwise show everything and go to the first problem. */
+  /** True when nothing is wrong; otherwise shows every problem and focuses the first. */
   function check(): boolean {
     setSubmitted(true);
     const first = problems[0];
     if (!first) return true;
-    // the first problem is the first field on the page: the checks list them in the form's order
+    // The checks list problems in the form's order, so the first is the first field on the page.
     const el = formRef.current?.querySelector<HTMLElement>(`#${idPrefix}-${first.field}`);
     el?.focus();
     return false;
@@ -104,9 +96,9 @@ export function TextField({
   onBlur?: () => void;
   type?: 'text' | 'email' | 'tel' | 'url';
   autoComplete?: string;
-  /** links and emails read left to right in every language */
+  /** Links and emails read left to right in every language. */
   dir?: 'ltr';
-  /** a hard stop a little past the limit, so a paste is not silently cut at the limit itself */
+  /** A hard stop a little past the limit, so a paste is not silently cut at the limit itself. */
   maxLength?: number;
 }): React.JSX.Element {
   const t = useT();
