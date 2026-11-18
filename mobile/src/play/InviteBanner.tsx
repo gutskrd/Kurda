@@ -6,7 +6,8 @@ import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DeclineReason, IncomingInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { describeError, type Translate } from '../api/errors';
+import { describeError, isRetryable, type Translate } from '../api/errors';
+import { useIntents, useSayNotSaved } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -85,6 +86,32 @@ export function InviteBanner(): React.JSX.Element | null {
     setInvites((list) => list.filter((i) => i.id !== id));
   }, []);
 
+  /*
+   * "Not now" folds the ticket away at once and tells the host after. If it did not get through, the invite comes back
+   * to be answered and why is said; one the server no longer has (withdrawn, expired) stays gone.
+   */
+  const say = useSayNotSaved();
+  const declined = useRef(new Map<string, IncomingInvite>());
+  // How often each invite has come back: a returned one is a fresh ticket, not the one still folding away.
+  const [returns, setReturns] = useState<Readonly<Record<string, number>>>({});
+  const declining = useIntents<string, DeclineReason | null>((id, reason) => declineInvite(client, id, reason ?? undefined), {
+    failed: (error, id) => {
+      const invite = declined.current.get(id);
+      if (!invite || !isRetryable(error)) return;
+      answered.current.delete(id);
+      setReturns((r) => ({ ...r, [id]: (r[id] ?? 0) + 1 }));
+      setInvites((list) => (list.some((i) => i.id === id) ? list : [invite, ...list]));
+      say(error);
+    },
+  });
+  const decline = useCallback(
+    (invite: IncomingInvite, reason: DeclineReason) => {
+      declined.current.set(invite.id, invite);
+      declining.want(invite.id, reason, null);
+    },
+    [declining],
+  );
+
   const now = Date.now();
   const shown = liveInvites(invites, now);
   const invite = shown[0] ?? null;
@@ -117,13 +144,14 @@ export function InviteBanner(): React.JSX.Element | null {
   // Keyed by invite, so a new front invite starts open whatever was done with the last.
   return (
     <InviteCard
-      key={invite.id}
+      key={`${invite.id}:${returns[invite.id] ?? 0}`}
       invite={invite}
       headline={headline}
       count={shown.length}
       behind={shown.slice(1, 3)}
       bottom={bottom}
       onAnswer={answer}
+      onDecline={decline}
       onGone={remove}
     />
   );
@@ -166,6 +194,7 @@ function InviteCard({
   behind,
   bottom,
   onAnswer,
+  onDecline,
   onGone,
 }: {
   invite: IncomingInvite;
@@ -175,6 +204,7 @@ function InviteCard({
   behind: IncomingInvite[];
   bottom: number;
   onAnswer: (id: string) => void;
+  onDecline: (invite: IncomingInvite, reason: DeclineReason) => void;
   onGone: (id: string) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -264,7 +294,7 @@ function InviteCard({
 
   const decline = (reason: DeclineReason): void => {
     onAnswer(invite.id);
-    void declineInvite(client, invite.id, reason);
+    onDecline(invite, reason);
     if (!reduce) timing(fold, 1, FOLD_MS, { easing: Easing.in(Easing.quad) }).start();
     after(reduce ? 0 : FOLD_MS, () => onGone(invite.id));
   };

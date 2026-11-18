@@ -33,7 +33,7 @@ import { usePullRefresh } from '../net/usePullRefresh';
 import {
   deleteGroup,
   groupDetail,
-  leaveGroup,
+  useLeaveGroup,
   removeMember,
   setMemberRole,
   transferOwnership,
@@ -121,6 +121,7 @@ export function GroupMembersScreen({
   const myRole = detail?.myRole ?? null;
   const groupName = detail?.name ?? '';
   const clearChat = useClearChat(groupId, detail?.memberCount ?? 0, setError);
+  const leaveNow = useLeaveGroup();
   const roleName = (role: Role): string | null => (role === 'owner' ? t('groups.role.owner') : role === 'moderator' ? t('groups.role.admin') : null);
 
   /** Only what you may do about this person, the one that cannot be undone last and in red. */
@@ -175,7 +176,10 @@ export function GroupMembersScreen({
       {
         text: t('groups.leave', { group: groupName }),
         style: 'destructive',
-        onPress: () => void act('leave', () => leaveGroup(client, groupId)).then((ok) => ok && onLeft()),
+        onPress: () => {
+          leaveNow(groupId);
+          onLeft();
+        },
       },
     ]);
   };

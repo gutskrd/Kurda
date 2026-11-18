@@ -255,6 +255,23 @@ describe('a group’s own page', () => {
   });
 });
 
+describe('leaving a group', () => {
+  it('goes at once, once confirmed, and says why when the server refused', async () => {
+    testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({ 'GET /groups/g1': detail('member'), 'POST /groups/g1/leave': () => new Promise((resolve) => (answer = resolve)) } as never);
+    const onLeft = vi.fn();
+    renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={onLeft} onEdit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave Hevalên Kurmancî' }));
+    // Gone before the server has answered.
+    expect(onLeft).toHaveBeenCalledTimes(1);
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(alert).toHaveBeenLastCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    alert.mockRestore();
+  });
+});
+
 describe('a group’s own page, in its one order', () => {
   const page = () => renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
   /** Each of these, in the order it is met going down the page. */

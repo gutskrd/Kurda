@@ -32,7 +32,7 @@ import { NewGroupSheet } from '../groups/NewGroupSheet';
 import { resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { messagePreview, previewIcon } from '../chat/preview';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
-import type { Group } from '../groups/api';
+import { useLeftGroups, type Group } from '../groups/api';
 import { membersLine } from '../groups/memberCount';
 import {
   FILTER_LABEL,
@@ -164,11 +164,19 @@ export function MessagesScreen(): React.JSX.Element {
     [t],
   );
 
-  // Somebody just blocked from their chat or profile leaves the list at once (social/blocks.ts).
-  const gone = useHiddenByBlock();
+  // Somebody just blocked, or a group just left, leaves the list at once (social/blocks.ts, groups/api.ts).
+  const blocked = useHiddenByBlock();
+  const left = useLeftGroups();
   const rows = useMemo(
-    () => messageRows({ chats: (chats ?? []).filter((c) => !gone.has(c.userId)), groups, filter, query, preview }),
-    [chats, gone, groups, filter, query, preview],
+    () =>
+      messageRows({
+        chats: (chats ?? []).filter((c) => !blocked.has(c.userId)),
+        groups: groups.filter((g) => !left.has(g.id)),
+        filter,
+        query,
+        preview,
+      }),
+    [chats, blocked, groups, left, filter, query, preview],
   );
   // The first screenful of conversations rises in once, as the list arrives.
   const entering = useListEntrance(chats !== null && rows.length > 0);
