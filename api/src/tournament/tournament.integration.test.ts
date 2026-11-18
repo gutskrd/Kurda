@@ -1,4 +1,4 @@
-/** Tournament lifecycle (KUR-060) against real Postgres. */
+/** Tournament lifecycle against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -50,8 +50,7 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     const admin = await register('admin');
     adminToken = admin.token;
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [admin.id]);
-    // scheduling a tournament and declaring its winner is staff surface, so it
-    // needs a second factor like the rest of the panel
+    // Scheduling a tournament and declaring a winner are staff surface and need the second factor.
     await pass2fa(app, adminToken);
     for (const tag of ['p1', 'p2', 'p3', 'p4']) players.push(await register(tag));
   });
@@ -125,7 +124,7 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
 
     expect(view.status).toBe('completed');
     expect(view.winnerId).toBeTruthy();
-    // the champion was paid the configured reward
+    // The champion was paid the configured reward.
     expect((await wallet.balances(view.winnerId!)).zer).toBe(500);
     // everyone but the champion is eliminated
     expect(view.participants.filter((p) => !p.eliminated)).toHaveLength(1);

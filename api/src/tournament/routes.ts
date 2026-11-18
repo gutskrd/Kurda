@@ -15,7 +15,7 @@ const createBody = z.object({
 const idParam = z.object({ id: z.uuid() });
 const matchParam = z.object({ id: z.uuid(), matchId: z.uuid() });
 
-/** Tournaments (KUR-060): admin scheduling + player registration + bracket view. */
+/** Tournaments: admin scheduling, player registration and the bracket view. */
 export function registerTournamentRoutes(app: FastifyInstance, tournaments: TournamentService): void {
   /** Admin: schedule a tournament. */
   app.post(
