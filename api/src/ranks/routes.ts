@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { PLAY_GAMES } from '@kurda/shared';
+import { PLAY_GAMES, seasonDaysLeft, seasonOf, type MyRanks, type SeasonEmblem, type SeasonOverview } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 
 /**
@@ -9,27 +9,16 @@ import { requireAccount } from '../plugins/auth.js';
  * stays in the data export (gdpr.ts).
  */
 
-const SEASON_NAMES = ['zivistan', 'bihar', 'havin', 'payiz'] as const;
-
 /** The calendar quarter `now` falls in, the season older builds expect beside their ranks. */
-function seasonNow(now: Date) {
-  const year = now.getUTCFullYear();
-  const quarter = Math.floor(now.getUTCMonth() / 3);
-  const endsAt = new Date(Date.UTC(year, quarter * 3 + 3, 1));
-  return {
-    id: `${year}-Q${quarter + 1}`,
-    name: SEASON_NAMES[quarter]!,
-    year,
-    startsAt: new Date(Date.UTC(year, quarter * 3, 1)).toISOString(),
-    endsAt: endsAt.toISOString(),
-    daysLeft: Math.max(0, Math.floor((endsAt.getTime() - now.getTime()) / 86_400_000)),
-  };
+function seasonNow(now: Date): MyRanks['season'] {
+  const season = seasonOf(now);
+  return { ...season, daysLeft: seasonDaysLeft(season, now) };
 }
 
 const resultParams = z.object({ game: z.string().max(40), ref: z.uuid() });
 
 export function registerRankRoutes(app: FastifyInstance): void {
-  app.get('/ranks/me', { preHandler: requireAccount }, async () => ({ ranks: [], cooldownUntil: null, season: seasonNow(new Date()) }));
+  app.get('/ranks/me', { preHandler: requireAccount }, async (): Promise<MyRanks> => ({ ranks: [], cooldownUntil: null, season: seasonNow(new Date()) }));
 
   /** Older builds ask what a finished game did to their rank: nothing, it was friendly. */
   app.get('/ranks/results/:game/:ref', { schema: { params: resultParams }, preHandler: requireAccount }, async (req) => {
@@ -42,7 +31,7 @@ export function registerRankRoutes(app: FastifyInstance): void {
     preferences: Object.fromEntries(PLAY_GAMES.map((g) => [g, false])),
   }));
 
-  app.get('/ranks/seasons/current', { preHandler: requireAccount }, async () => ({
+  app.get('/ranks/seasons/current', { preHandler: requireAccount }, async (): Promise<SeasonOverview> => ({
     season: seasonNow(new Date()),
     rewards: [],
     // older builds divide by it
@@ -50,5 +39,5 @@ export function registerRankRoutes(app: FastifyInstance): void {
     lastSeason: null,
   }));
 
-  app.get('/ranks/seasons/me', { preHandler: requireAccount }, async () => ({ emblems: [] }));
+  app.get('/ranks/seasons/me', { preHandler: requireAccount }, async (): Promise<{ emblems: SeasonEmblem[] }> => ({ emblems: [] }));
 }
