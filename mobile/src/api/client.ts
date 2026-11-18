@@ -1,4 +1,4 @@
-import { maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
+import { isPlainPath, maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
 import { GUEST_ACCOUNT_CODE } from './errors';
 import type { ApiError, ApiResult, TokenPair, TokenStorage } from './types';
@@ -157,6 +157,8 @@ export class ApiClient {
   }
 
   async request<T>(method: string, path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
+    // A link's parameter can turn a path into another endpoint's (shared `isPlainPath`); then nothing is sent.
+    if (!isPlainPath(path)) return { ok: false, error: { kind: 'client', status: 404, code: 'NOT_FOUND', message: 'not found' } };
     const headers: Record<string, string> = { ...options.headers };
     // A raw body brings its own content-type; JSON is the default for everything else.
     if (options.body !== undefined && options.rawBody === undefined) {

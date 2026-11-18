@@ -40,3 +40,13 @@ describe('how far an empty screen’s ways out answer a finger', () => {
     expect(reachOf(retry.getAttribute('aria-label')!)).toEqual({ top: 4, bottom: 4, left: 8, right: 8 });
   });
 });
+
+describe('the empty-state picture', () => {
+  it('draws Hevalo in the app’s own art, hidden from screen readers and with no tap of his own', () => {
+    renderWithProviders(<EmptyState title="Nothing here yet" />);
+    expect(screen.getByTestId('hevalo-peek')).toBeTruthy();
+    expect(screen.queryAllByRole('button')).toHaveLength(0);
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(screen.getByText('Nothing here yet')).toBeTruthy();
+  });
+});

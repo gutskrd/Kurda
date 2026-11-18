@@ -24,7 +24,6 @@ vi.mock('../messages/unread', async (original) => ({
   useUnread: () => ({ counts: { chats: 0, groups: 0, requests: 0, notifications: 0, gifts: 0 }, messages: 0, refresh: () => undefined, report }),
 }));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { Alert } from 'react-native';
 import type { IncomingInvite } from '@kurda/shared';
 import type { InboxItem } from './inbox';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -32,6 +31,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { NotificationCenterScreen } from './NotificationCenterScreen';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb();
 
@@ -119,7 +119,7 @@ describe('the notification list', () => {
   });
 
   it('marks everything read and the bell clear before the server answers, and puts both back with the reason when refused', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     let answer: (r: unknown) => void = () => undefined;
     testAuth.client = fakeClient({
       'GET /me/notifications': ok({ notifications: [notice('n1', {}), notice('n2', { title: 'Safe this week', readAt: null })] }),
@@ -137,7 +137,6 @@ describe('the notification list', () => {
     expect(report).toHaveBeenLastCalledWith({ notifications: 2 });
     expect(screen.getByRole('button', { name: 'Mark all as read' })).toBeTruthy();
     expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
-    said.mockRestore();
   });
 
   /*
@@ -276,7 +275,7 @@ describe('a notification row pulled aside', () => {
   });
 
   it('puts a row back when the server would not delete it, and says why', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     // Something went wrong on the server's side, a moment after it was asked.
     const refused = { ok: false as const, error: { kind: 'server' as const, message: 'boom', status: 500 } };
     serve(two(), [], { 'DELETE /me/notifications/n2': () => new Promise((answer) => setTimeout(() => answer(refused), 60)) });
@@ -291,7 +290,6 @@ describe('a notification row pulled aside', () => {
     await act(() => new Promise((done) => setTimeout(done, 400)));
     expect(screen.getByText('Safe this week')).toBeTruthy();
     expect(said).toHaveBeenCalledWith('Something went wrong on our end. Please try again shortly.');
-    said.mockRestore();
   });
 
   it('springs back closed when let go short of halfway, and closes on a tap rather than opening', async () => {

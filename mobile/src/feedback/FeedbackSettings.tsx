@@ -40,7 +40,7 @@ export function FeedbackSettingsRows({
     <>
       <SettingsRow icon="chat" title={t('appFeedback.sendRow')} onPress={() => setOpen(true)} />
       {store ? (
-        <SettingsRow icon="star" title={t('appFeedback.rateRow')} opens={false} onPress={() => void Linking.openURL(store).catch(() => undefined)} />
+        <SettingsRow icon="star" title={t('appFeedback.rateRow')} onPress={() => void Linking.openURL(store).catch(() => undefined)} />
       ) : null}
       <Modal visible={open} animationType={slide} presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
         {/* A sheet of its own, not beside the settings' controls: their groups' caps stop here. */}

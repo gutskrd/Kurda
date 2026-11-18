@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, peekArt, type CharacterPoint } from '@kurda/shared';
+import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, characterSvg, peekArt, type BrowState, type CharacterPoint } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
@@ -27,6 +27,7 @@ export interface PeekSpeech {
  * where told (`gaze`), follows a finger, cheers as he comes through, and reacts to `reaction`; `resting`, he dozes
  * instead, with no cheer, blinks or glances. `speech` and `text` make him say a line (auth/guide/speech.ts); `flip`
  * mirrors the whole picture. The tear is decorative for screen readers; he is named and answers taps as everywhere.
+ * `still` draws him once, with no life and no taps, for a picture that only decorates.
  */
 export function HevaloPeek({
   size,
@@ -35,6 +36,8 @@ export function HevaloPeek({
   resting = false,
   flip = false,
   pop = true,
+  still = false,
+  brows,
   speech = null,
   text = null,
   onPress,
@@ -48,6 +51,9 @@ export function HevaloPeek({
   flip?: boolean;
   /** He rises through the tear as it appears; false, he is already there. */
   pop?: boolean;
+  still?: boolean;
+  /** How his brows sit while `still`; at rest by default. */
+  brows?: BrowState;
   /** The line he is saying, and its clock; null when he is quiet. */
   speech?: PeekSpeech | null;
   text?: string | null;
@@ -58,6 +64,9 @@ export function HevaloPeek({
   const reduce = useReducedMotion();
   const art = useMemo(() => peekArt({ dark: scheme === 'dark' }), [scheme]);
   const width = (size * PEEK_VIEW.w) / PEEK_VIEW.h;
+  const { figure } = PEEK_PLACE;
+  const figureWidth = figure.width * width;
+  const drawn = useMemo(() => (still ? characterSvg('hevalo', { crop: 'head', width: figureWidth, brows }) : null), [still, figureWidth, brows]);
   const drop = PEEK_PLACE.drop * size;
   const rise = useRef(new Animated.Value(pop && !reduce ? drop : 0)).current;
   // Through the page, he cheers as the spring settles, unless the screen has a reaction of its own for him; asleep, never.
@@ -85,7 +94,6 @@ export function HevaloPeek({
   const shade = useMemo(() => rise.interpolate({ inputRange: [0, drop], outputRange: [1, 0], extrapolate: 'clamp' }), [rise, drop]);
 
   const room = size * ROOM;
-  const { figure } = PEEK_PLACE;
   const mirrored = flip ? styles.flip : null;
   return (
     // The tear is decorative for screen readers; he is named and answers a tap as everywhere.
@@ -106,20 +114,24 @@ export function HevaloPeek({
           style={[styles.place, { left: room + figure.left * width, top: room + figure.top * size, transform: [{ translateY: rise }] }]}
           testID="hevalo-peek-figure"
         >
-          <SpeakingCharacter
-            speaker="hevalo"
-            player={speech?.player ?? null}
-            playing={speech?.playing ?? false}
-            source={speech?.source ?? null}
-            text={text}
-            crop="head"
-            size={figure.width * width}
-            flip={flip}
-            gaze={gaze}
-            reaction={reaction ?? (resting ? null : glad)}
-            resting={resting}
-            onPress={onPress}
-          />
+          {drawn ? (
+            <SvgXml xml={drawn} width={figureWidth} height={figure.height * size} style={flip ? styles.flip : null} />
+          ) : (
+            <SpeakingCharacter
+              speaker="hevalo"
+              player={speech?.player ?? null}
+              playing={speech?.playing ?? false}
+              source={speech?.source ?? null}
+              text={text}
+              crop="head"
+              size={figureWidth}
+              flip={flip}
+              gaze={gaze}
+              reaction={reaction ?? (resting ? null : glad)}
+              resting={resting}
+              onPress={onPress}
+            />
+          )}
         </Animated.View>
       </View>
       <View style={[StyleSheet.absoluteFill, mirrored]} pointerEvents="none" aria-hidden>

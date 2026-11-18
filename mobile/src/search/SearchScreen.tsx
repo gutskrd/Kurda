@@ -21,7 +21,7 @@ import type { TranslationKey } from '../i18n/translations';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { BackButton } from '../navigation/BackButton';
 import { useDirection } from '../reports/direction';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { deviceStore } from '../keyboard/deviceStore';
 import { pushRecent } from '../dictionary/recents';
 import { mutualText } from '../social/format';
@@ -387,7 +387,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
               suggestions.slice(0, 5).map((u) =>
                 row(
                   's-' + u.userId,
-                  <InitialsAvatar name={u.username} id={u.userId} size={40} photoUrl={u.avatarUrl ?? undefined} />,
+                  <Avatar name={u.username} size={40} photoUrl={u.avatarUrl ?? undefined} />,
                   u.username,
                   u.mutualCount > 0 ? mutualText(t, u.mutualCount) : (u.displayName ?? null),
                   () => navigation.navigate('UserProfile', { userId: u.userId }),
@@ -413,7 +413,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           peopleShown.map((u) =>
             row(
               'p-' + u.userId,
-              <InitialsAvatar name={u.username} id={u.userId} size={40} photoUrl={u.avatarUrl ?? undefined} />,
+              <Avatar name={u.username} size={40} photoUrl={u.avatarUrl ?? undefined} />,
               u.username,
               // A friend says so, the way a list of people you follow does.
               u.friend ? [u.displayName, t('search.friend')].filter(Boolean).join(' · ') : (u.displayName ?? null),

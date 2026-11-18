@@ -62,6 +62,8 @@ import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { PracticeHubScreen } from './src/practice/PracticeHubScreen';
 import { JumpTestScreen } from './src/coursemap/JumpTestScreen';
+import { NextLessonScreen } from './src/learn/NextLessonScreen';
+import { takeFirstLesson } from './src/learn/firstLesson';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
 import { ActionSheetHost } from './src/theme/ActionSheetHost';
@@ -78,6 +80,7 @@ import { FriendRequestsScreen } from './src/messages/FriendRequestsScreen';
 import { LettersScreen } from './src/letters/LettersScreen';
 import { LetterThreadScreen } from './src/letters/LetterThreadScreen';
 import { LETTER_LINKS } from './src/letters/links';
+import { WEB_PATH_LINKS } from './src/navigation/webPaths';
 import { LetterWidgetScreen } from './src/widget/LetterWidgetScreen';
 import { LetterWidgetSync } from './src/widget/LetterWidgetSync';
 import { UnreadProvider, useUnread } from './src/messages/unread';
@@ -100,6 +103,7 @@ import { Arrive, originOf } from './src/theme/origin';
 import { useReducedMotion } from './src/a11y/useReducedMotion';
 import { duration } from './src/theme/motion';
 import { OfflineBanner } from './src/net/OfflineBanner';
+import { NoticeToasts } from './src/theme/NoticeToasts';
 import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { noteScreen } from './src/errors/crashReporting';
 import { SettingsScreen } from './src/screens/SettingsScreen';
@@ -121,13 +125,11 @@ import { WhoAmIScreen } from './src/whoami/WhoAmIScreen';
 import { MemoryThiefScreen } from './src/games/MemoryThiefScreen';
 import { HearItScreen } from './src/games/HearItScreen';
 import { DetectiveScreen } from './src/games/DetectiveScreen';
-import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
 import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
 import { ChangePasswordScreen } from './src/security/ChangePasswordScreen';
 import { DevicesScreen } from './src/security/DevicesScreen';
-import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { ComposeScreen } from './src/composer/ComposeScreen';
 import { StoriesScreen } from './src/stories/StoriesScreen';
@@ -175,14 +177,15 @@ const linking: LinkingOptions<RootStackParamList> = {
     screens: {
       // `?view=games` on Learn arrives as the tab's own param.
       Tabs: { screens: linkingScreens() },
-      // `hevalo://search` was the Search tab's address and is now the search page's.
-      Search: 'search',
+      // Search, a lesson and the words at the website's addresses, the phone's older ones kept as aliases.
+      ...WEB_PATH_LINKS,
       // A shared profile (Profile → Share) opens in the app for anyone who has it.
       UserProfile: 'app/users/:userId',
       // The website's rankings and its league; its old league, ranks and season addresses are rewritten to these.
       Rankings: 'app/rankings',
       LeagueTable: 'app/rankings/league',
-      Lesson: 'lesson/:lessonId',
+      // The website's "your next lesson", where a new account lands.
+      NextLesson: 'app/learn/next',
       // Practice opens on its hub, where every kind is one tap away.
       PracticeHub: 'practice',
       // The two former games, at the lessons' own addresses (the website's too); their old `app/games/…` addresses are
@@ -191,9 +194,6 @@ const linking: LinkingOptions<RootStackParamList> = {
       HearIt: 'app/learn/practice/hear-it',
       // The website's alphabet, `?script=ckb` included, opens the phone's.
       Alphabet: 'app/alphabet',
-      // The colours, numbers, days and months, and one set by name: `app/words/colours?script=ckb`.
-      Words: 'app/words',
-      WordSet: 'app/words/:set',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
       LastLetter: inviteRoutePath('last-letter'),
@@ -228,16 +228,21 @@ const backFrom = (navigation: { isFocused(): boolean; goBack(): void }) => (): v
 };
 
 /**
- * Opens a link that arrived before sign-in (navigation/heldLink.ts) once the signed-in screens exist. An unplaceable
- * path is dropped, landing on Home as it would anyway.
+ * Opens a link that arrived before sign-in (navigation/heldLink.ts) once the signed-in screens exist; an unplaceable
+ * path is dropped, landing on Home as it would anyway. Without one, a new account opens its first lesson over Learn
+ * (learn/firstLesson.ts), as on the website.
  */
 function OpenHeldLink(): null {
   const linkTo = useLinkTo();
   useEffect(() => {
     const path = takeHeldLink();
-    if (!path) return;
+    const firstLesson = takeFirstLesson();
     try {
-      linkTo(legacyTabPath(path));
+      if (path) linkTo(legacyTabPath(path));
+      else if (firstLesson) {
+        linkTo('/learn?view=lessons');
+        linkTo('/app/learn/next');
+      }
     } catch {
       // Not a screen this version of the app has.
     }
@@ -246,8 +251,9 @@ function OpenHeldLink(): null {
 }
 
 /**
- * The profile menu: everywhere the five tabs have no room for, such as the shop, settings, saved items, the library,
- * memes and the league, one tap from the profile where people look for their own things. `giftBadge` counts unopened
+ * The profile menu: everywhere the five tabs have no room for, such as the shop, settings, saved items and the league,
+ * one tap from the profile where people look for their own things. Writing and Pictures open Home on that half of the
+ * wall. `giftBadge` counts unopened
  * gifts on the Shop row, as the dot on the Profile tab and the menu button does. Rows needing an account go through
  * the gate (auth/AccountGate), so a guest gets the offer to make one rather than a screen that cannot load.
  */
@@ -265,8 +271,8 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
     {
       titleKey: 'nav.menu.discover',
       links: [
-        { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
-        { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
+        { key: 'writing', labelKey: 'civak.section.writing', icon: 'book', onPress: () => navigation.navigate('Tabs', { screen: 'Home', params: { section: 'gotin' } }) },
+        { key: 'pictures', labelKey: 'civak.section.pictures', icon: 'image', onPress: () => navigation.navigate('Tabs', { screen: 'Home', params: { section: 'dimen' } }) },
         ...(eventLive ? [{ key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') } as const] : []),
         { key: 'rankings', labelKey: 'rankings.title', icon: 'trophy', onPress: () => require('league') && navigation.navigate('Rankings') },
       ],
@@ -320,20 +326,27 @@ function SignedInTabs() {
         tab.name === 'Learn' ? (
           <Tab.Screen key={tab.name} name="Learn">
             {({ route, navigation: tabs }) => (
-              <LearnScreen view={route.params?.view} onViewShown={() => tabs.setParams({ view: undefined })} />
+              <LearnScreen
+                view={route.params?.view}
+                onViewShown={() => tabs.setParams({ view: undefined })}
+                code={route.params?.code}
+                onCodeShown={() => tabs.setParams({ code: undefined })}
+              />
+            )}
+          </Tab.Screen>
+        ) : tab.name === 'Home' ? (
+          <Tab.Screen key={tab.name} name="Home">
+            {({ route, navigation: tabs }) => (
+              <CivakScreen
+                section={route.params?.section}
+                kind={route.params?.kind}
+                onFilterShown={() => tabs.setParams({ section: undefined, kind: undefined })}
+              />
             )}
           </Tab.Screen>
         ) : (
           <Tab.Screen key={tab.name} name={tab.name}>
-            {() =>
-              tab.name === 'Home' ? (
-                <CivakScreen />
-              ) : tab.name === 'Messages' ? (
-                <MessagesScreen />
-              ) : (
-                <ProfileScreen />
-              )
-            }
+            {() => (tab.name === 'Messages' ? <MessagesScreen /> : <ProfileScreen />)}
           </Tab.Screen>
         ),
       )}
@@ -400,6 +413,14 @@ function SignedInRoot() {
           />
         )}
       </RootStack.Screen>
+      <RootStack.Screen name="NextLesson" options={{ presentation: 'fullScreenModal' }}>
+        {({ navigation }) => (
+          <NextLessonScreen
+            onLesson={(lessonId, courseId) => navigation.replace('Lesson', { lessonId, courseId })}
+            onLearn={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+          />
+        )}
+      </RootStack.Screen>
       <RootStack.Screen name="Practice" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
           <PracticeScreen
@@ -428,7 +449,7 @@ function SignedInRoot() {
       </RootStack.Screen>
       {/*
         Guest-restricted routes sit behind the account offer (auth/AccountGate `GuestWall`), so a tap or link lands on the
-        offer with a way back. Lessons, practice, the dictionary, solo games, badges, the library and profiles stay open.
+        offer with a way back. Lessons, practice, the dictionary, solo games, badges, posts and profiles stay open.
       */}
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
@@ -642,12 +663,9 @@ function SignedInRoot() {
       <RootStack.Screen name="WhoAmI" options={card}>
         {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} way={route.params?.way} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
+      {/* A solo game, open to a guest as the others are; the server lets guests race. */}
       <RootStack.Screen name="Race" options={card}>
-        {({ navigation }) => (
-          <GuestWall reason="play" onBack={backFrom(navigation)}>
-            <RaceScreen onExit={backFrom(navigation)} />
-          </GuestWall>
-        )}
+        {({ navigation }) => <RaceScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/*
         The lessons' two exercises (practice/exercises.ts), opened from the practice hub or Lessons. Leaving goes back
@@ -700,9 +718,6 @@ function SignedInRoot() {
       {/* A round must not be left by a swipe meant to scroll its choices. */}
       <RootStack.Screen name="ProverbRound" options={heldCard}>
         {({ route, navigation }) => <ProverbRoundScreen dialect={route.params.dialect} mode={route.params.mode} onExit={backFrom(navigation)} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="Memes" options={card}>
-        {({ navigation }) => <MemeFeedScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/* Writing or editing a post: full screen without swipe-down, since the composer asks before discarding text. */}
       <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
@@ -794,9 +809,6 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="ForgotPassword" options={card}>
         {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={backFrom(navigation)} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="Library" options={card}>
-        {({ navigation }) => <LibraryScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="LibraryPost" options={card}>
         {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={backFrom(navigation)} />}
@@ -980,6 +992,8 @@ function ThemedNavigation() {
         {/* Over every screen, the crash screen included: maintenance. */}
         <MaintenanceScreen />
         <OfflineBanner />
+        {/* Short notices, such as a change that did not save. */}
+        <NoticeToasts />
         {/* What every "⋯" opens on Android and the web (theme/actionSheet.ts). */}
         <ActionSheetHost />
       </View>

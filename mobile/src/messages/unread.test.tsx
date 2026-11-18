@@ -31,15 +31,14 @@ function Messages(): React.JSX.Element {
 
 function countsClient() {
   const client = fakeClient({
-    'GET /chat/conversations': ok({ conversations: [{ unread: 2 }] }),
-    'GET /me/groups/unread': ok({ unread: [] }),
+    'GET /chat/unread': ok({ direct: [{ userId: 'u1', unread: 2 }], groups: [] }),
     'GET /friends/requests': ok({ requests: [] }),
     'GET /me/notifications/unread-count': ok({ count: 0 }),
     'GET /me/gifts/unseen': ok({ unseen: 0 }),
     'POST /realtime/ticket': ok({ ticket: 'tk' }),
   });
   testAuth.client = client;
-  return { client, rounds: () => client.calls.filter((c) => c.path === '/chat/conversations').length };
+  return { client, rounds: () => client.calls.filter((c) => c.path === '/chat/unread').length };
 }
 
 const pass = (ms: number) =>
@@ -133,5 +132,25 @@ describe('the badges’ counts', () => {
     send('active');
     await pass(OPEN_WAIT_MS);
     await waitFor(() => expect(rounds()).toBe(2));
+  });
+
+  it('sum direct and group counts from the counts alone, never the conversation list', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    appState();
+    const client = fakeClient({
+      'GET /chat/unread': ok({ direct: [{ userId: 'u1', unread: 2 }, { userId: 'u2', unread: 1 }], groups: [{ groupId: 'g1', unread: 100 }] }),
+      'GET /friends/requests': ok({ requests: [{}] }),
+      'GET /me/notifications/unread-count': ok({ count: 0 }),
+      'GET /me/gifts/unseen': ok({ unseen: 0 }),
+    });
+    testAuth.client = client;
+    const shown = render(
+      <UnreadProvider>
+        <Messages />
+      </UnreadProvider>,
+    );
+    await pass(OPEN_WAIT_MS);
+    await waitFor(() => expect(shown.container.textContent).toBe('104'));
+    expect(client.calls.some((c) => c.path === '/chat/conversations' || c.path === '/me/groups/unread')).toBe(false);
   });
 });

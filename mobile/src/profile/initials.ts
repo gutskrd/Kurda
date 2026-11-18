@@ -1,7 +1,7 @@
 /**
- * Monogram avatar fallback, pure and deterministic: a 1–2 character monogram from a display name and a stable
- * background colour from the user's id, so a user without a photo always gets the same avatar with no network round
- * trip. Kurdish Latin diacritics (ê î û ç ş) are preserved.
+ * Monograms, pure and deterministic: a 1–2 character monogram from a name and a stable background colour from an id, for
+ * a group without a picture (groups/GroupAvatar.tsx) and the people in a lesson's conversation. People without a photo
+ * wear the default avatar instead (profile/Avatar.tsx). Kurdish Latin diacritics (ê î û ç ş) are preserved.
  */
 import { TONES } from '../coursemap/path';
 
@@ -65,13 +65,13 @@ export function avatarColor(seed: string): string {
   return AVATAR_COLORS[hashString(seed) % AVATAR_COLORS.length]!;
 }
 
-export interface InitialsAvatarData {
+export interface AvatarData {
   initials: string;
   backgroundColor: string;
   textColor: string;
 }
 
 /** Everything a monogram avatar needs, from a display name and a stable id. */
-export function initialsAvatar(name: string, seed: string): InitialsAvatarData {
+export function initialsAvatar(name: string, seed: string): AvatarData {
   return { initials: deriveInitials(name), backgroundColor: avatarColor(seed), textColor: AVATAR_TEXT_COLOR };
 }

@@ -149,6 +149,9 @@ export interface MeProfile extends SessionUser, ProfileCosmetics {
   equippedIconSku?: string | null;
   premiumIconEnabled?: boolean;
   premiumUntil?: string | null;
+  /** The birth month on record, shown in Settings; null until answered, absent from older servers. */
+  birthYear?: number | null;
+  birthMonth?: number | null;
 }
 
 export type FriendStatus = 'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked' | 'self';

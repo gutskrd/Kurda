@@ -46,6 +46,9 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   PASSWORD_BREACHED: 'error.code.passwordBreached',
   // Changing the password while signed in (POST /me/password).
   WRONG_PASSWORD: 'error.code.wrongPassword',
+  // A recording the server could not read as sound alone, or one past its length limit (api media/audioCheck.ts).
+  MALFORMED_AUDIO: 'error.code.malformedAudio',
+  AUDIO_TOO_LONG: 'error.code.audioTooLong',
   NO_PASSWORD: 'error.code.noPassword',
   SESSION_NOT_FOUND: 'error.code.sessionNotFound',
   SIGNUP_REJECTED: 'error.code.signupRejected',
@@ -188,6 +191,11 @@ export function isMaintenance(error: ApiError): boolean {
 /** Does this failure look like lost connectivity? Drives the offline banner. */
 export function isOffline(error: ApiError): boolean {
   return error.kind === 'network';
+}
+
+/** The server was not reached, or failed before it could take the request: what was sent is kept for a retry. */
+export function notReached(error: ApiError): boolean {
+  return error.kind === 'network' || error.kind === 'server';
 }
 
 /** Can the same action be meaningfully retried? */

@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { stripControlChars, type ChatGameRef, type ChatMessageExtras } from '@kurda/shared';
+import { GROUP_UNREAD_CAP, stripControlChars, type ChatGameRef, type ChatMessageExtras } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
 import { gameRef, type KindColumns } from '../chat/kinds.js';
@@ -390,24 +390,27 @@ export class GroupChatService {
   }
 
   /**
-   * Unread counts for the caller's groups. Messages history would not show them (across a block, or before a clear)
-   * are not counted, or the badge would announce messages that never appear.
+   * Unread counts for the caller's groups, each counted up to GROUP_UNREAD_CAP, so a group unread for months reads no
+   * more than that many messages. Messages history would not show them (across a block, or before a clear) are not
+   * counted, or the badge would announce messages that never appear.
    */
   async unread(userId: string): Promise<Array<{ groupId: string; unread: number }>> {
     const rows = await this.pool.query<{ group_id: string; unread: number }>(
-      `SELECT me.group_id,
-              count(gm.id) FILTER (
-                WHERE gm.deleted_at IS NULL AND gm.sender_id <> $1
-                  AND ${notBlockedSql('gm.sender_id', '$1::uuid')}
-              )::int AS unread
+      `SELECT me.group_id, unread.n AS unread
          FROM group_members me
          JOIN groups g ON g.id = me.group_id
          LEFT JOIN group_reads r ON r.group_id = me.group_id AND r.user_id = $1
-         LEFT JOIN group_messages gm ON gm.group_id = me.group_id
-               AND gm.created_at > GREATEST(${CLEARED_BEFORE}, r.last_read_at)
-        WHERE me.user_id = $1
-        GROUP BY me.group_id`,
-      [userId],
+         CROSS JOIN LATERAL (
+           SELECT count(*)::int AS n FROM (
+             SELECT 1 FROM group_messages gm
+              WHERE gm.group_id = me.group_id AND gm.created_at > GREATEST(${CLEARED_BEFORE}, r.last_read_at)
+                AND gm.deleted_at IS NULL AND gm.sender_id <> $1
+                AND ${notBlockedSql('gm.sender_id', '$1::uuid')}
+              LIMIT $2
+           ) counted
+         ) unread
+        WHERE me.user_id = $1`,
+      [userId, GROUP_UNREAD_CAP],
     );
     return rows.rows.map((r) => ({ groupId: r.group_id, unread: r.unread }));
   }

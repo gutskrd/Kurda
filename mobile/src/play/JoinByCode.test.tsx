@@ -227,4 +227,32 @@ describe('JoinCodeCard', () => {
     await act(async () => undefined);
     expect(screen.queryByLabelText('Join code')).toBeNull();
   });
+
+  /* An invite link names its code: it is filled in and waits for Join, as the website's invite page waits for a tap. */
+  it('opens with an invite link’s code filled in, and joins only on Join', async () => {
+    const client = fakeClient({ 'POST /play/join': ok({ game: 'impostor', lobbyId: LOBBY }) });
+    testAuth.client = client;
+    const shown = vi.fn();
+    renderWithProviders(<JoinCodeCard code="KVXV5E" onCodeShown={shown} />);
+    const field = (await screen.findByLabelText('Join code')) as HTMLInputElement;
+    expect(field.value).toBe('KVXV5E');
+    expect(shown).toHaveBeenCalledTimes(1);
+    expect(client.calls.filter((c) => c.path === '/play/join')).toHaveLength(0);
+    onTheClock();
+    fireEvent.click(screen.getByRole('button', { name: 'Join' }));
+    await answered();
+    expect(client.calls.filter((c) => c.path === '/play/join')).toEqual([{ method: 'POST', path: '/play/join', body: { code: 'KVXV5E' } }]);
+    after(SUCCESS_MS);
+    expect(navigation.navigate).toHaveBeenCalledWith('Impostor', { id: LOBBY });
+  });
+
+  it('offers a guest who follows an invite link an account first', async () => {
+    testAuth.client = fakeClient();
+    testAuth.user = { ...testAuth.user, guest: true };
+    const shown = vi.fn();
+    renderWithProviders(<JoinCodeCard code="KVXV5E" onCodeShown={shown} />);
+    await act(async () => undefined);
+    expect(screen.queryByLabelText('Join code')).toBeNull();
+    expect(shown).toHaveBeenCalledTimes(1);
+  });
 });

@@ -8,7 +8,7 @@ import { TONES, type ToneColors } from '../coursemap/path';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -90,7 +90,7 @@ export function TeamPicker({
               const who = multiSeatName(p, t);
               return (
                 <View key={p.seat} style={styles.member}>
-                  <InitialsAvatar name={p.name ?? String(p.seat)} id={`seat-${p.seat}`} size={30} photoUrl={p.avatarUrl} />
+                  <Avatar name={p.name ?? String(p.seat)} size={30} photoUrl={p.avatarUrl} />
                   <Text style={[styles.memberName, { color: p.isMe ? tone.text : colors.textPrimary }]} numberOfLines={1}>
                     {who}
                   </Text>

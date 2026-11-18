@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { mp3, webm } from '../test/audio-files.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 /**
@@ -13,15 +14,9 @@ const DATABASE_URL = process.env.DATABASE_URL;
  */
 const ready = Boolean(DATABASE_URL && process.env.S3_ENDPOINT);
 
-/** A believable little MP3: an ID3v2 header and some padding. */
-const MP3 = Buffer.concat([Buffer.from('ID3'), Buffer.alloc(512, 0x11)]);
-/** An EBML header whose DocType says "webm" — what a browser records. */
-const WEBM = Buffer.concat([
-  Buffer.from([0x1a, 0x45, 0xdf, 0xa3]),
-  Buffer.from([0x42, 0x82, 0x84]),
-  Buffer.from('webm'),
-  Buffer.alloc(512, 0x22),
-]);
+const MP3 = mp3(20);
+/** What a browser records: WebM whose segment and clusters have unknown sizes. */
+const WEBM = webm({ streamed: true });
 /** Script bytes labelled as audio. */
 const SCRIPT = Buffer.from('<script>alert(document.domain)</script>');
 
@@ -85,6 +80,13 @@ describe.skipIf(!ready)('POST /media/uploads (integration)', () => {
     const res = await upload(SCRIPT, 'audio/mpeg');
     expect(res.statusCode).toBe(415);
     expect(res.json().code).toBe('INVALID_AUDIO');
+  });
+
+  it('refuses a file that only starts like audio', async () => {
+    // the bytes after an audio header must be audio all the way through
+    const res = await upload(Buffer.concat([Buffer.from('ID3'), SCRIPT]), 'audio/mpeg');
+    expect(res.statusCode).toBe(422);
+    expect(res.json().code).toBe('MALFORMED_AUDIO');
   });
 
   it('refuses a content type it does not take bodies for', async () => {

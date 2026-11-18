@@ -7,7 +7,7 @@ import { describeError } from '../api/errors';
 import { useIntents } from '../api/optimistic';
 import { listPosts } from '../library/api';
 import { postName, type LibraryPost } from '../library/types';
-import { radii, spacing, typography, wash } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
@@ -180,17 +180,17 @@ function Slot({
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
                   accessibilityLabel={postName(p)}
-                  // The one already chosen in the violet wash and ink every chosen option wears.
+                  // The one already chosen in the solid violet every chosen option wears.
                   style={[
                     styles.option,
                     {
-                      backgroundColor: on ? wash(colors.primary) : colors.controlTrack,
+                      backgroundColor: on ? colors.primary : colors.controlTrack,
                       borderWidth: 1,
                       borderColor: on ? colors.primary : colors.glassBorder,
                     },
                   ]}
                 >
-                  <Text style={[styles.optionText, dir.free, { color: on ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
+                  <Text style={[styles.optionText, dir.free, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
                     {postName(p)}
                   </Text>
                 </PressableScale>

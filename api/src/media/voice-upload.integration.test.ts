@@ -14,13 +14,10 @@ import { MediaUsageService } from './mediaUsage.js';
 import { audioLimits, type AudioLimits } from './mediaLimits.js';
 import { storeAudioMedia, type AudioMediaDeps } from './audioMedia.js';
 import { activate } from '../test/activate.js';
+import { m4a, mp3 } from '../test/audio-files.js';
 
 const ready = Boolean(process.env.DATABASE_URL && process.env.S3_ENDPOINT);
 const KIND = 'voice-note';
-
-// Minimal valid-looking payloads, an ID3-tagged MP3 and an ftyp (m4a) container, padded to a non-trivial size.
-const mp3 = (pad = 4096): Buffer => Buffer.concat([Buffer.from([0x49, 0x44, 0x33, 0x03, 0, 0, 0, 0]), Buffer.alloc(pad, 0x11)]);
-const m4a = (pad = 4096): Buffer => Buffer.concat([Buffer.from([0, 0, 0, 0x20, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20]), Buffer.alloc(pad, 0x22)]);
 
 describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
   const config = loadConfig();
@@ -60,7 +57,7 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
   });
 
   it('stores valid audio as a confirmed object (mp3 + m4a)', async () => {
-    const a = await storeAudioMedia(deps(), KIND, mp3(), null);
+    const a = await storeAudioMedia(deps(), KIND, mp3(40, 5000), null);
     expect(a.ok).toBe(true);
     if (a.ok) {
       expect(a.mediaId).toMatch(/^voice-note\/.*\.mp3$/);
@@ -73,9 +70,34 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
       expect(row.rows[0]?.confirmed_at).not.toBeNull();
       expect(row.rows[0]?.content_type).toBe('audio/mpeg');
     }
-    const b = await storeAudioMedia(deps(), KIND, m4a(), null);
+    const b = await storeAudioMedia(deps(), KIND, m4a({ seed: 5000 }), null);
     expect(b.ok).toBe(true);
     if (b.ok) expect(b.mediaId).toMatch(/^voice-note\/.*\.m4a$/);
+  });
+
+  it('stores the checked bytes, without what rode along', async () => {
+    // a cover-art tag holding a page: the file is kept, the tag blanked before it reaches the bucket
+    const page = Buffer.from('<html><script>alert(1)</script></html>');
+    const tagged = m4a({ seed: 7, moovExtra: [Buffer.concat([Buffer.from([0, 0, 0, 8 + page.length]), Buffer.from('udta'), page])] });
+    const res = await storeAudioMedia(deps(), KIND, tagged, null);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const stored = await storage.read(res.mediaId);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stored!.body) chunks.push(chunk as Buffer);
+    const bytes = Buffer.concat(chunks);
+    expect(bytes.length).toBe(tagged.length);
+    expect(bytes.includes('<script')).toBe(false);
+    expect(stored!.contentType).toBe('audio/mp4');
+  });
+
+  it('refuses a recording past the length limit, and one hiding a page', async () => {
+    const long = await storeAudioMedia(deps({ limits: { ...audioLimits(config), maxSeconds: 5 } }), KIND, m4a({ seconds: 20, seed: 8 }), null);
+    expect(long.ok).toBe(false);
+    if (!long.ok) expect([long.status, long.code]).toEqual([422, 'AUDIO_TOO_LONG']);
+    const appended = await storeAudioMedia(deps(), KIND, Buffer.concat([m4a({ seed: 9 }), Buffer.from('<html><script>alert(1)</script></html>')]), null);
+    expect(appended.ok).toBe(false);
+    if (!appended.ok) expect([appended.status, appended.code]).toEqual([422, 'MALFORMED_AUDIO']);
   });
 
   it('rejects non-audio and oversized uploads', async () => {
@@ -84,13 +106,13 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
     if (!notAudio.ok) expect(notAudio.reason).toBe('invalid-type');
 
     const tiny = { ...audioLimits(config), maxUploadBytes: 100 };
-    const oversize = await storeAudioMedia(deps({ limits: tiny }), KIND, mp3(8192), null);
+    const oversize = await storeAudioMedia(deps({ limits: tiny }), KIND, mp3(20), null);
     expect(oversize.ok).toBe(false);
     if (!oversize.ok) expect(oversize.reason).toBe('oversize');
   });
 
   it('is idempotent for identical bytes', async () => {
-    const buf = mp3(2048);
+    const buf = mp3(10, 5001);
     const a = await storeAudioMedia(deps(), KIND, buf, null);
     const b = await storeAudioMedia(deps(), KIND, buf, null);
     expect(a.ok && b.ok).toBe(true);
@@ -101,7 +123,7 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
   });
 
   it('fails closed at the storage limit', async () => {
-    const res = await storeAudioMedia(deps({ limits: { ...audioLimits(config), storageLimitBytes: 1 } }), KIND, mp3(), null);
+    const res = await storeAudioMedia(deps({ limits: { ...audioLimits(config), storageLimitBytes: 1 } }), KIND, mp3(40, 5000), null);
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.reason).toBe('storage-limit');
   });
@@ -121,7 +143,7 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
       method: 'POST',
       url: '/media/voice',
       headers: { authorization: `Bearer ${token}`, 'content-type': 'audio/mpeg' },
-      payload: mp3(1024),
+      payload: mp3(10, 5002),
       remoteAddress: '10.64.0.9',
     });
     expect(up.statusCode).toBe(201);
@@ -133,7 +155,7 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
         method: 'POST',
         url: '/media/voice',
         headers: { authorization: `Bearer ${token}`, 'content-type': 'audio/mpeg' },
-        payload: mp3(512 + i), // distinct bytes → distinct object
+        payload: mp3(10, 5003 + i), // distinct bytes → distinct object
         remoteAddress: '10.64.0.9',
       });
       codes.push(r.statusCode);

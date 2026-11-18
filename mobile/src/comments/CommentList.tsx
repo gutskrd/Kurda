@@ -10,7 +10,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { noticeTime } from '../notifications/inbox';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { EmptyState } from '../theme/EmptyState';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -21,6 +21,7 @@ import type { CommentThread } from './useCommentThread';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
+import { UnsentNote } from '../chat/UnsentNote';
 
 /**
  * A post's comments with one level of replies and the composer for both, matching the web thread
@@ -113,7 +114,7 @@ function CommentRow({
   const voiceOnly = !removed && !c.body && Boolean(c.audioMediaId || c.audioUrl);
 
   return (
-    <View style={[styles.comment, { flexDirection: dir.row }, c.pending ? styles.pending : null]}>
+    <View style={[styles.comment, { flexDirection: dir.row }, c.pending && !c.failed ? styles.pending : null]}>
       {/* The picture also opens the profile, for a thumb; screen readers get the name alone, not the same button twice. */}
       <Pressable
         onPress={openProfile}
@@ -123,7 +124,7 @@ function CommentRow({
         testID={`comment-face-${c.id}`}
         style={({ pressed }) => pressed && heldDim}
       >
-        <InitialsAvatar name={author.username} id={author.id} size={size} photoUrl={author.avatarUrl} />
+        <Avatar name={author.username} size={size} photoUrl={author.avatarUrl} />
       </Pressable>
       <View style={styles.main}>
         <View style={[styles.byline, { flexDirection: dir.row }]}>
@@ -140,7 +141,7 @@ function CommentRow({
             </Text>
           </Pressable>
           <Text style={[styles.age, { color: colors.textSecondary }]} numberOfLines={1}>
-            {c.pending ? t('comments.posting') : noticeTime(c.createdAt, t, locale)}
+            {c.failed ? '' : c.pending ? t('comments.posting') : noticeTime(c.createdAt, t, locale)}
           </Text>
         </View>
         {audio}
@@ -155,6 +156,7 @@ function CommentRow({
           )
         ) : null}
 
+        {c.failed ? <UnsentNote onRetry={() => thread.retry(c)} onDiscard={() => thread.discard(c)} style={{ alignSelf: edge }} /> : null}
         {/* Nothing to answer or take back until the server has it. */}
         {!c.pending && !removed ? (
           <View style={[styles.actions, { flexDirection: dir.row }]}>

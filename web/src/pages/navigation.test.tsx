@@ -7,7 +7,7 @@ import { renderApp, jsonResponse } from '../test/utils';
 
 /*
  * The five places as the real route table draws them, and the old addresses that must still land: /app/games, the
- * stories' old game addresses, the phone's old Play and Inbox, Friends, and Search.
+ * stories' old game addresses, the phone's old Play, Inbox, words, search and lesson addresses, Friends, and Search.
  */
 
 afterEach(() => {
@@ -232,6 +232,21 @@ describe('the five places', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Months' })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Soranî', selected: true })).toBeInTheDocument();
     expect(where()).toBe('/app/learn/words/months?script=ckb');
+  });
+
+  it('sends the phone’s older addresses for the words, search and a lesson to the website’s, keeping the query', async () => {
+    serve();
+    const words = visit('/app/words');
+    await waitFor(() => expect(where()).toBe('/app/learn/words'));
+    words.unmount();
+    const set = visit('/app/words/months?script=ckb');
+    await waitFor(() => expect(where()).toBe('/app/learn/words/months?script=ckb'));
+    set.unmount();
+    const search = visit('/search?q=dar');
+    await waitFor(() => expect(where()).toBe('/app/search?q=dar'));
+    search.unmount();
+    visit('/lesson/l1');
+    await waitFor(() => expect(where()).toBe('/app/learn/lesson/l1'));
   });
 
   it('shows a visitor on Search where words and people are', async () => {

@@ -1,14 +1,21 @@
 /** The one next step on the Lessons view and the course's progress. Pure, so the choice is tested apart from the screen. */
-import { lessonPath } from '@kurda/shared';
+import { lessonPath, type UnitTone } from '@kurda/shared';
 import type { CourseEntry } from '../coursemap/node';
 import { firstCourse } from '../coursemap/path';
 import type { SkillNode } from '../coursemap/types';
 
+/** The chapter a step is in, as the path heads it: its number, its section (null where a course has one), its colour. */
+export interface StepUnit {
+  number: number;
+  section: number | null;
+  tone: UnitTone;
+}
+
 export type NextStep =
   /** Nothing finished anywhere yet: the very first lesson (`courseId` is its course, for the lesson's own next one). */
-  | { kind: 'start'; courseId: string; courseTitle: string; unitTitle: string; skill: SkillNode; lessonId: string; done: number; total: number }
+  | { kind: 'start'; courseId: string; courseTitle: string; unitTitle: string; unit: StepUnit; skill: SkillNode; lessonId: string; done: number; total: number }
   /** The first open skill that is not finished: the path's current stop. */
-  | { kind: 'continue'; courseId: string; courseTitle: string; unitTitle: string; skill: SkillNode; lessonId: string; done: number; total: number }
+  | { kind: 'continue'; courseId: string; courseTitle: string; unitTitle: string; unit: StepUnit; skill: SkillNode; lessonId: string; done: number; total: number }
   /** Everything open is finished: review is the next step, until more opens. */
   | { kind: 'review'; courseTitle: string; done: number; total: number };
 
@@ -45,6 +52,7 @@ export function nextStep(courses: readonly CourseEntry[]): NextStep | null {
           courseId: entry.course.id,
           courseTitle: entry.map.course.title,
           unitTitle: unit.title,
+          unit: { number: unit.number, section: path.sections.length > 1 ? unit.section : null, tone: unit.tone },
           skill: stop.skill,
           lessonId: stop.launch,
           ...counts,

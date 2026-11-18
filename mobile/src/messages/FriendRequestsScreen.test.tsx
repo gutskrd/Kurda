@@ -11,13 +11,13 @@ vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 // The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { Alert } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ApiResult } from '../api/types';
 import { UnreadProvider, useUnread } from './unread';
 import { FriendRequestsScreen } from './FriendRequestsScreen';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -27,8 +27,7 @@ afterEach(() => {
 
 const serverDown: ApiResult<never> = { ok: false, error: { kind: 'server', message: 'unavailable', status: 503 } };
 const unread = {
-  'GET /chat/conversations': ok({ conversations: [] }),
-  'GET /me/groups/unread': ok({ unread: [] }),
+  'GET /chat/unread': ok({ direct: [], groups: [] }),
   'GET /me/notifications/unread-count': ok({ count: 0 }),
   'GET /me/gifts/unseen': ok({ unseen: 0 }),
 };
@@ -75,7 +74,7 @@ describe('the request count', () => {
   }
 
   it('drops as a request is answered, before the server has it, and comes back with the reason when refused', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     let answer: (r: ApiResult<never>) => void = () => undefined;
     testAuth.client = fakeClient({
       ...unread,

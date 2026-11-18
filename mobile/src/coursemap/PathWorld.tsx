@@ -28,7 +28,7 @@ import { useAuth } from '../auth/AuthContext';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { useEnter } from '../theme/animate';
 import { sectionLabel } from '../theme/fonts';
@@ -252,7 +252,7 @@ export function LearnerToken({
       testID="lp-learner"
     >
       <View style={[styles.tokenRing, { borderColor: tone.fill, backgroundColor: colors.surfaceRaised }]}>
-        <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? 'me'} size={TOKEN.size - 2} photoUrl={user?.profilePhotoUrl ?? null} />
+        <Avatar name={user?.displayName ?? user?.username ?? ''} size={TOKEN.size - 2} photoUrl={ownAvatarUrl(user)} />
       </View>
       <View style={[styles.stem, { backgroundColor: tone.fill }]} />
     </Animated.View>

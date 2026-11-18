@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { stripControlChars } from '@kurda/shared';
+import { stripControlChars, stripHiddenChars } from '@kurda/shared';
 import { levelForXp } from './level.js';
 
 export type TagKind = 'main' | 'claimable';
@@ -118,7 +118,7 @@ export class TagService {
     if (tag.acquisition !== 'self_claim') return { ok: false, reason: 'not-claimable' };
     if (tag.sensitive && consent !== true) return { ok: false, reason: 'consent-required' };
 
-    const clean = value != null ? stripControlChars(value).trim().slice(0, MAX_VALUE_LEN) || null : null;
+    const clean = value != null ? stripHiddenChars(value).trim().slice(0, MAX_VALUE_LEN) || null : null;
     await this.pool.query(
       `INSERT INTO user_tags (user_id, tag_id, source, value, displayed)
        VALUES ($1, $2, 'self_claim', $3, true)

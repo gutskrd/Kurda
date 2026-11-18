@@ -25,7 +25,7 @@ import { TIER_NAME_KEY } from '../ranks/format';
 import { KIND_LABEL, kindWithCount } from '../shop/format';
 import { ItemArt, KindChips, SEARCH_MAX } from '../shop/ItemFilters';
 import { equip, inventory, setIconVisibility, type CosmeticSlot, type InventoryItem } from './cosmetics';
-import { InitialsAvatar } from './InitialsAvatar';
+import { Avatar, ownAvatarUrl } from './Avatar';
 import { Loading } from '../theme/Loading';
 
 type Kind = ItemCategory;
@@ -211,22 +211,14 @@ export function CosmeticPicker({
           {tier ? (
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
               <SeasonFramed tier={tier} size={Math.round(art * 0.86)} label={name}>
-                <InitialsAvatar
-                  name={user?.displayName ?? user?.username ?? ''}
-                  id={user?.id ?? ''}
-                  size={framedAvatarSize(Math.round(art * 0.86))}
-                />
+                <Avatar name={user?.displayName ?? user?.username ?? ''} size={framedAvatarSize(Math.round(art * 0.86))} photoUrl={ownAvatarUrl(user)} />
               </SeasonFramed>
             </View>
           ) : current === 'frame' && item.assetUrl ? (
             // One of the shop's frames, round your own face as a season frame is.
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
               <PictureFramed url={item.assetUrl} size={Math.round(art * 0.86)}>
-                <InitialsAvatar
-                  name={user?.displayName ?? user?.username ?? ''}
-                  id={user?.id ?? ''}
-                  size={framedAvatarSize(Math.round(art * 0.86))}
-                />
+                <Avatar name={user?.displayName ?? user?.username ?? ''} size={framedAvatarSize(Math.round(art * 0.86))} photoUrl={ownAvatarUrl(user)} />
               </PictureFramed>
             </View>
           ) : (

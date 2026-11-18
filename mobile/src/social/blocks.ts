@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { ApiClient } from '../api/client';
 import { createHiddenSet, useIntents, useSayNotSaved } from '../api/optimistic';
-import type { ApiResult } from '../api/types';
+import type { ApiError, ApiResult } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 
 /** The server's page size, so "show more" asks for exactly one more page. */
@@ -45,15 +45,16 @@ export const useHiddenByBlock = blocked.useHidden;
 
 /**
  * Block someone, once the question has been answered: they leave the lists at once and the server is told after. A
- * refusal (the block limit, a lost connection) brings them back and says why, wherever the reader has gone since.
+ * refusal (the block limit, a lost connection) brings them back and says why, wherever the reader has gone since;
+ * `saidHere` may say it in place instead, returning true when it did.
  */
-export function useBlock(): (userId: string) => void {
+export function useBlock(saidHere?: (error: ApiError) => boolean): (userId: string) => void {
   const { client } = useAuth();
   const say = useSayNotSaved();
   const blocking = useIntents<string, boolean>((userId) => blockUser(client, userId), {
     failed: (error, userId) => {
       unhideBlocked(userId);
-      say(error);
+      if (!saidHere?.(error)) say(error);
     },
   });
   return useCallback(

@@ -273,9 +273,10 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
   describe('the one-time birth month question', () => {
     it('is answered once and cannot be changed after', async () => {
       const user = await signUp('once', null);
+      expect((await call(user, 'GET', '/me')).json().user).toMatchObject({ birthYear: null, birthMonth: null });
       const first = await call(user, 'POST', '/me/birth-date', bornYearsAgo(25));
       expect(first.statusCode).toBe(200);
-      expect(first.json().user).toMatchObject({ birthDateRequired: false, minor: false });
+      expect(first.json().user).toMatchObject({ birthDateRequired: false, minor: false, ...bornYearsAgo(25) });
 
       // not even to an age that would lift or add protections
       const again = await call(user, 'POST', '/me/birth-date', bornYearsAgo(40));

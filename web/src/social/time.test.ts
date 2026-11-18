@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { badgeLabel, elapsed, lastSeen } from './time';
+import { elapsed, lastSeen } from './time';
 import { englishOnly as t, translator } from '../i18n/I18nProvider';
 import { tr } from '../i18n/tr';
 
@@ -50,13 +50,5 @@ describe('the abbreviations themselves', () => {
     expect(elapsed(ago(HOUR + 4 * MIN), turkish, NOW)).toBe('1 sa 4 dk');
     expect(lastSeen(ago(3 * HOUR), turkish, NOW)).toBe('3 sa önce');
     expect(lastSeen(null, turkish, NOW)).toBe('bir süre önce');
-  });
-});
-
-describe('badgeLabel', () => {
-  it('caps so a badge cannot stretch the button it sits on', () => {
-    expect(badgeLabel(3)).toBe('3');
-    expect(badgeLabel(99)).toBe('99');
-    expect(badgeLabel(100)).toBe('99+');
   });
 });

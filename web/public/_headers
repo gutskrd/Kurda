@@ -13,6 +13,9 @@
 # 'wss://kurda-api.onrender.com/realtime…' … violates connect-src"), so every
 # realtime feature fell back to nothing.
 #
+# img-src allows blob: for the pictures a person has just picked, which the composer and the photo editor show from a
+# local object URL before anything is uploaded.
+#
 # style-src carries 'unsafe-inline' because React writes every inline style as
 # a style attribute, and this app has 128 of them across 44 files. Without it
 # the browser blocks the attribute — not only <style> blocks — and drops the
@@ -38,7 +41,7 @@
 # blob: URL beside the native recording. With microphone=() the browser never
 # asked and recording always failed; without blob: the take would not play.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com wss://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com wss://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin

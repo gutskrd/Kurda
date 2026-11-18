@@ -93,6 +93,9 @@ describe('BuildSentenceScreen', () => {
     testAuth.client = routes('kmr', ['a', 'b'], []);
     renderWithProviders(<BuildSentenceScreen onExit={() => undefined} />);
     expect(await screen.findByText('The ladder')).toBeTruthy();
+    // Its name once, as the page's heading, not again in the bar above it.
+    expect(screen.getAllByText('Build a Sentence')).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'Build a Sentence' })).toBeTruthy();
     expect(screen.getByLabelText('1. Short sentences, You are here')).toBeTruthy();
     expect(screen.getByLabelText('2. Questions, Opens after a good round on the rung before')).toBeTruthy();
     expect(await screen.findByText('Up to 16 XP')).toBeTruthy();

@@ -12,10 +12,11 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useGameBack } from '../navigation/hardwareBack';
-import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
+import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
+import { FriendPicker, togglePick, useFriendsToAsk } from '../play/FriendPicker';
+import { inviteFriends } from '../play/api';
+import { showNotice } from '../theme/notice';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
-import { LobbyRated, RatedChoice, RatedPill } from '../ranks/Rated';
-import { useRatedChoice } from '../ranks/ratedPrefs';
 import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
@@ -47,6 +48,7 @@ import { MissedRhymes, wordDirection } from '../wordle/WordAnswer';
 import { Shell } from '../wordle/WordleBattleScreen';
 import { isRhymeOffered, offeredRhymeDialects, openingRhymeDialect, useRhymeOffered } from './availability';
 import { dialectNameKey } from '../i18n/dialectName';
+import { MAX_INVITEES_PER_REQUEST } from '@kurda/shared';
 
 const REJECT_KEY: Record<RhymeReject, TranslationKey> = {
   'not-a-word': 'games.rhyme.reject.notAWord',
@@ -96,7 +98,10 @@ export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExi
   );
 }
 
-/** Pick a dialect and open a room — or join one with the code a friend gave you. */
+/**
+ * Pick a dialect and friends to ask, and open a room — or join one with the code a friend gave you. As on the
+ * website, asking nobody is fine. Games are played for fun, so every match is friendly.
+ */
 function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -110,14 +115,20 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
   const dialect = picked && isRhymeOffered(offered, picked) ? picked : openingRhymeDialect(offered, course, locale);
   const canCreate = isRhymeOffered(offered, dialect);
   const choices = offeredRhymeDialects(offered);
-  const [rated, setRated] = useRatedChoice('rhyme-match');
+  const { friends, recentIds } = useFriendsToAsk();
+  const [asked, setAsked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const create = async (): Promise<void> => {
     setBusy(true);
     setError(null);
-    const res = await createMatch(client, dialect, rated);
+    const res = await createMatch(client, dialect, false);
+    if (res.ok && asked.length > 0) {
+      // The room exists whatever happens to the invites; one that did not go is said, and the room can ask again.
+      const sent = await inviteFriends(client, 'rhyme-match', res.data.id, asked);
+      if (!sent.ok) showNotice(describeError(sent.error, t));
+    }
     setBusy(false);
     if (res.ok) onEnter(res.data.id);
     else setError(res.error.code === 'EMPTY_LEXICON' ? t('games.emptyPool') : describeError(res.error, t));
@@ -148,10 +159,21 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
               </View>
             </>
           ) : null}
-          {/* Rated or Friendly, before the room exists: the host can still change it in the lobby. */}
-          <View style={styles.stretch}>
-            <RatedChoice value={rated} onChange={setRated} />
-          </View>
+          {/* Who to ask, in the same step, as the website's page has it. */}
+          {canCreate ? (
+            <View style={[styles.stretch, styles.who]}>
+              <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+                {t('play.invite.friends')}
+              </Text>
+              <FriendPicker
+                friends={friends}
+                recentIds={recentIds}
+                picked={asked}
+                onToggle={(friend) => setAsked((list) => togglePick(list, friend, false, MAX_INVITEES_PER_REQUEST))}
+                limit={MAX_INVITEES_PER_REQUEST}
+              />
+            </View>
+          ) : null}
           {/* A variety with no matches yet says so where Create would be. */}
           {canCreate ? (
             <ClayButton
@@ -364,20 +386,6 @@ function MatchRoom({
                 onRemove={isHost ? (seat) => void act(() => removeFromMatch(client, id, seat)) : undefined}
               />
             ) : null}
-            {/* Rated or Friendly, said before anyone joins; the host may change it here and only here. */}
-            {match.me != null ? (
-              <LobbyRated
-                game="rhyme-match"
-                lobbyId={id}
-                rated={match.rated}
-                isHost={isHost}
-                players={playerCount}
-                seatName={seatNamer(match.players ?? [], t)}
-                onChanged={() => void load()}
-              />
-            ) : match.rated ? (
-              <RatedPill rated={match.rated.rated} />
-            ) : null}
             {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
             {match.me == null ? (
               <ClayButton
@@ -482,8 +490,6 @@ function MatchRoom({
   // ---- the timed round -------------------------------------------------------
   return (
     <>
-      {/* The game's header says what it is playing for, decided at the start. */}
-      {match.rated ? <RatedPill rated={match.rated.counts ?? match.rated.rated} small /> : null}
       <View style={styles.stage}>
         <View>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.rhyme.rhymeWith')}</Text>
@@ -565,6 +571,7 @@ const styles = StyleSheet.create({
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   // A field's label sits at the start of the line above its control, not centred in the card.
   label: { alignSelf: 'stretch', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
+  who: { gap: spacing.xs },
   input: {
     minHeight: MIN_TOUCH_TARGET,
     alignSelf: 'stretch',

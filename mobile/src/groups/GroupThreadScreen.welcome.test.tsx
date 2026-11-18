@@ -70,7 +70,7 @@ describe('an empty group chat', () => {
     });
     expect(await screen.findByText('This is the start of Newroz club')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Newroz club' })).toBeTruthy();
-    expect(screen.getByText('Say hello')).toBeTruthy();
+    expect(screen.getByText('Say hello in Kurdish')).toBeTruthy();
     const chips = ['Silav! 👋', 'Rojbaş!', 'Çawa yî?'].map((g) => screen.getByRole('button', { name: g }));
     // Read in Kurmancî by a screen reader, whatever language the app is in.
     expect(chips[0]!.getAttribute('lang')).toBe('ku');
@@ -80,7 +80,7 @@ describe('an empty group chat', () => {
     expect(client.calls.find((c) => c.method === 'POST' && c.path === '/groups/g1/chat')?.body).toEqual({ body: 'Rojbaş!' });
     // Said, so the chat is no longer empty.
     expect(await screen.findByText('Rojbaş!')).toBeTruthy();
-    expect(screen.queryByText('Say hello')).toBeNull();
+    expect(screen.queryByText('Say hello in Kurdish')).toBeNull();
   });
 
   it('shows a greeting in the thread at once, as one on its way, until the server has it', async () => {
@@ -93,7 +93,7 @@ describe('an empty group chat', () => {
     // Before the server has answered, the welcome gives way to the thread with the message marked as on its way.
     const sending = await screen.findByTestId('message-sending');
     expect(sending.textContent).toContain('Rojbaş!');
-    expect(screen.queryByText('Say hello')).toBeNull();
+    expect(screen.queryByText('Say hello in Kurdish')).toBeNull();
     const bubble = screen.getByText('Rojbaş!');
     await act(async () => answer(ok(sent('Rojbaş!'))));
     expect(screen.queryByTestId('message-sending')).toBeNull();
@@ -124,17 +124,26 @@ describe('an empty group chat', () => {
     expect(screen.getByRole('button', { name: 'چۆنی؟' })).toBeTruthy();
   });
 
+  it('lays the greetings out from the right on a Soranî screen', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    rememberCourseDialect('sorani', memoryStore());
+    open({ 'GET /groups/g1/chat': ok({ messages: [] }) });
+    const first = await screen.findByRole('button', { name: 'سڵاو! 👋' });
+    expect(getComputedStyle(first.parentElement!).flexDirection).toBe('row-reverse');
+    localStorage.removeItem('kurda_locale_v1');
+  });
+
   it('says when the reader cleared it for themselves, without greetings', async () => {
     open({ 'GET /groups/g1/chat': ok({ messages: [], cleared: { forEveryone: null, forMe: ago(2 * HOUR) } }) });
     expect(await screen.findByText('You cleared this chat 2h ago. New messages will show here.')).toBeTruthy();
-    expect(screen.queryByText('Say hello')).toBeNull();
+    expect(screen.queryByText('Say hello in Kurdish')).toBeNull();
     expect(screen.queryByText('This is the start of Newroz club')).toBeNull();
   });
 
   it('says who cleared it for everyone, with the welcome under it', async () => {
     open({ 'GET /groups/g1/chat': ok({ messages: [], cleared: { forEveryone: { at: ago(3 * HOUR), by: 'azad' }, forMe: null } }) });
     expect(await screen.findByText('azad cleared the chat · 3h ago')).toBeTruthy();
-    expect(screen.getByText('Say hello')).toBeTruthy();
+    expect(screen.getByText('Say hello in Kurdish')).toBeTruthy();
   });
 
   it('names the reader, or an admin whose account is gone, as the one who cleared it', async () => {
@@ -161,7 +170,7 @@ describe('an empty group chat', () => {
     await act(async () => {
       fireEvent.click(hello);
     });
-    await waitFor(() => expect(screen.queryByText('Say hello')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('Say hello in Kurdish')).toBeNull());
     expect(screen.getByText('This is the start of Newroz club')).toBeTruthy();
   });
 });
@@ -229,7 +238,7 @@ describe('bringing friends into a group', () => {
     // Closing reads the group again, for whoever was added, and leaves its chat.
     await waitFor(() => expect(asked()).toBe(before + 1));
     expect(screen.getByText('This is the start of Newroz club')).toBeTruthy();
-    expect(screen.getByLabelText('Message…')).toBeTruthy();
+    expect(screen.getByLabelText('Write a message…')).toBeTruthy();
   });
 
   it('tells a new group’s owner with no friends yet so, with the way to find people, not an empty sheet', async () => {

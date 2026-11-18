@@ -27,8 +27,8 @@ import { pressedDim } from '../theme/motion';
 const RING = 24;
 
 /**
- * Today's status in Learn's top corner: the streak, the daily goal as a filling ring, and the Zêr balance, each
- * opening more (the streak sheet, the goal picker, the shop). The numbers are plain: nothing counts down or warns
+ * Today's status in Learn's top corner: the streak, the daily goal as a filling ring with its XP beside it, as on the
+ * website, and the Zêr balance, each opening more (the streak sheet, the goal picker, the shop). The numbers are plain: nothing counts down or warns
  * of loss, and a zero streak shows a cold fire saying a lesson today starts one. Some readers are children.
  *
  * The streak it reads is passed on (`onStreak`) for Learn's own moments; a new `reloadKey` reloads all three
@@ -123,16 +123,18 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
           onPress={() => show('goal')}
           accessibilityRole="button"
           accessibilityLabel={goalWords}
-          style={({ pressed }) => [styles.stat, { opacity: pressed ? pressedDim : 1 }]}
+          style={({ pressed }) => [styles.stat, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
           testID="learn-bar-goal"
         >
           <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
             <GoalRing xp={goal.earnedXp} goal={goal.effectiveGoal} size={RING} tint={[colors.gold, colors.goldText]} showNumbers={false} />
-            {/* The XP bolt in the middle: an empty ring alone, before the day's first lesson, looked like a picture that failed to load. */}
-            <View style={styles.ringMark} pointerEvents="none">
-              <Icon name="bolt" size={11} color={goal.earnedXp > 0 ? colors.goldText : colors.textSecondary} />
-            </View>
           </View>
+          {/* A passed goal shows what was earned, not "130/20 XP". */}
+          <Text style={[styles.number, { color: colors.textPrimary }]}>
+            {goal.completed
+              ? t('leagues.xpCount', { xp: formatNumber(goal.earnedXp, locale) })
+              : t('learn.today.goalShort', { xp: formatNumber(goal.earnedXp, locale), goal: formatNumber(goal.effectiveGoal, locale) })}
+          </Text>
         </Pressable>
       ) : null}
       {zer !== null ? (
@@ -180,7 +182,6 @@ const styles = StyleSheet.create({
   // Each stat is a 44pt target however small its number.
   stat: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
   number: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  ringMark: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   sheetBody: { gap: spacing.md, paddingBottom: spacing.sm },
   goalHead: { alignItems: 'center', gap: spacing.md },
   goalWords: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

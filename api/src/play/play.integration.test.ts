@@ -2,12 +2,13 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { MAX_INVITEES_PER_REQUEST, REMATCH_OFFER_SECONDS, dictionaryKey, letterKey } from '@kurda/shared';
+import { MAX_INVITEES_PER_REQUEST, PLAY_CARDS_PER_READ, REMATCH_OFFER_SECONDS, dictionaryKey, letterKey } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
 import { befriend, block } from '../test/social.js';
+import { queriesDuring } from '../test/query-count.js';
 import { deleteStories, insertStory } from '../test/story-fixtures.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -396,6 +397,41 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     // and a lobby that does not exist looks exactly the same
     const missing = await call(stranger, 'GET', `/play/cards/wordle-battle/${crypto.randomUUID()}`);
     expect(missing.body.status).toBe('unavailable');
+  });
+
+  it('a chat’s cards are read together, in the order asked, each as the one read alone shows it', async () => {
+    const host = await register('host7b');
+    const friend = await register('friend7b');
+    await befriend(pool, host.id, friend.id);
+    const [first, second] = [await lobby(host), await lobby(host)];
+    const gone = crypto.randomUUID();
+    const refs = [`wordle-battle:${second.lobbyId}`, `wordle-battle:${gone}`, `wordle-battle:${first.lobbyId}`, `wordle-battle:${second.lobbyId}`];
+    const together = await call(friend, 'GET', `/play/cards?cards=${refs.join(',')}`);
+    expect(together.status).toBe(200);
+    const alone = await Promise.all([second.lobbyId, gone, first.lobbyId, second.lobbyId].map(async (id) => (await call(friend, 'GET', `/play/cards/wordle-battle/${id}`)).body));
+    expect(together.body.cards).toEqual(alone);
+    expect(together.body.cards.map((c: { status: string }) => c.status)).toEqual(['open', 'unavailable', 'open', 'open']);
+    // a list the server cannot take is refused, not half read
+    for (const bad of ['', 'chess:' + first.lobbyId, 'wordle-battle:nope', Array.from({ length: PLAY_CARDS_PER_READ + 1 }, () => refs[0]).join(',')]) {
+      expect((await call(friend, 'GET', `/play/cards?cards=${bad}`)).status, bad.slice(0, 40)).toBe(400);
+    }
+  });
+
+  it('reading a chat’s cards together costs one session read, not one per card', async () => {
+    const host = await register('host7c');
+    const friend = await register('friend7c');
+    await befriend(pool, host.id, friend.id);
+    const made = [await lobby(host), await lobby(host), await lobby(host)];
+    const url = `/play/cards?cards=${made.map((m) => `wordle-battle:${m.lobbyId}`).join(',')}`;
+    await call(friend, 'GET', url);
+    const one = await queriesDuring(app.db, () => call(friend, 'GET', `/play/cards/wordle-battle/${made[0]!.lobbyId}`));
+    const three = await queriesDuring(app.db, () => call(friend, 'GET', url));
+    // the offline gate's setting is read now and then by whichever request comes, so it is left out
+    const counted = (run: { statements: readonly string[] }) => run.statements.filter((sql) => !/\bFROM maintenance\b/.test(sql));
+    const sessionReads = (run: { statements: readonly string[] }) => counted(run).filter((sql) => /\btoken_version\b/.test(sql)).length;
+    expect([sessionReads(one), sessionReads(three)], three.statements.join('\n')).toEqual([1, 1]);
+    // each card costs what it costs alone, and no more
+    expect(counted(three).length - 1, three.statements.join('\n')).toBeLessThanOrEqual(3 * (counted(one).length - 1));
   });
 
   it("a lobby shared into a group posts its card there, and the group's members may join", async () => {

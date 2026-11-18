@@ -73,6 +73,8 @@ function thread(state: ThreadState): CommentThread {
     cancelReply: vi.fn(),
     confirmDelete: vi.fn(),
     send: vi.fn(async () => true),
+    retry: vi.fn(),
+    discard: vi.fn(),
   };
 }
 

@@ -86,7 +86,7 @@ describe('rankings by XP', () => {
     const card = await screen.findByTestId('league-card');
     expect(within(card).getByText('Çem League')).toBeTruthy();
     expect(within(card).getByText('#2 of 20 · 140 XP')).toBeTruthy();
-    expect(within(card).getByText('3 days left')).toBeTruthy();
+    expect(within(card).getByText('2 days left')).toBeTruthy();
     expect(within(card).getByText('Top 5 move up')).toBeTruthy();
     expect(within(card).getByText('Bottom 3 may move down')).toBeTruthy();
     fireEvent.click(card);

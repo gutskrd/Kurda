@@ -34,7 +34,7 @@ import { useDirection } from '../reports/direction';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import type { DeviceStore } from '../keyboard/deviceStore';
 import {
@@ -494,7 +494,7 @@ export function ComposeScreen({
             ) : null}
 
             <View style={[styles.writeRow, { flexDirection: dir.row }]}>
-              <InitialsAvatar name={who} id={user?.id ?? 'me'} size={40} photoUrl={user?.profilePhotoUrl ?? null} />
+              <Avatar name={who} size={40} photoUrl={ownAvatarUrl(user)} />
               <View style={styles.writeMain}>
                 {showTitle ? (
                   <View>

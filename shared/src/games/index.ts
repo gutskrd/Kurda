@@ -2,6 +2,7 @@
 export * from './registry.js';
 export * from './names.js';
 export * from './dialect.js';
+export * from './every-dialect.js';
 export * from './content.js';
 export * from './solo.js';
 export * from './build-sentence/ladder.js';

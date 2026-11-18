@@ -1,6 +1,6 @@
-import type { DeclineReason, InviteLists, JoinedByCode, LobbyCard, PlayGame, RematchState } from '@kurda/shared';
+import { batchedCardReads, type ChatGameRef, type DeclineReason, type InviteLists, type JoinedByCode, type LobbyCard, type PlayGame, type RematchState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
-import type { ApiResult } from '../api/types';
+import type { ApiError, ApiResult } from '../api/types';
 
 /**
  * Playing with friends over the API (contract §B3): one set of routes for every online game, covering lobbies,
@@ -57,8 +57,14 @@ export const declineInvite = (client: ApiClient, inviteId: string, reason?: Decl
 export const cancelInvite = (client: ApiClient, inviteId: string): Promise<ApiResult<{ ok: true }>> =>
   client.delete(`/play/invites/${inviteId}`);
 
-export const lobbyCard = (client: ApiClient, game: PlayGame, lobbyId: string): Promise<ApiResult<LobbyCard>> =>
-  client.get(`/play/cards/${game}/${lobbyId}`);
+const cardReads = new WeakMap<ApiClient, (ref: ChatGameRef) => Promise<ApiResult<LobbyCard>>>();
+
+/** A chat card's live state, read together with the other cards asked for in the same moment (GET /play/cards). */
+export function lobbyCard(client: ApiClient, game: PlayGame, lobbyId: string): Promise<ApiResult<LobbyCard>> {
+  let read = cardReads.get(client);
+  if (!read) cardReads.set(client, (read = batchedCardReads<ApiError>(client)));
+  return read({ game, lobbyId });
+}
 
 export const rematchState = (client: ApiClient, game: PlayGame, lobbyId: string): Promise<ApiResult<RematchState>> =>
   client.get(`/play/${game}/${lobbyId}/rematch`);

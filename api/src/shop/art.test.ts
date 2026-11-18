@@ -93,6 +93,18 @@ describe('an icon upload', () => {
 });
 
 describe('what is not a picture it takes', () => {
+  it('keeps nothing that rode along with the picture', async () => {
+    const tagged = await sharp(await picture(512, 512, 'png'))
+      .withExif({ IFD0: { ImageDescription: '<script>alert(1)</script>' } })
+      .png()
+      .toBuffer();
+    const res = await processArt(Buffer.concat([tagged, Buffer.from('<html><script>alert(1)</script></html>')]), 'icon');
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.bytes.includes('<script')).toBe(false);
+    expect((await sharp(res.bytes).metadata()).exif).toBeUndefined();
+  });
+
   it('refuses SVG, GIF and anything else by its bytes, whatever it is called', async () => {
     const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><script>alert(1)</script></svg>');
     const gif = Buffer.concat([Buffer.from('GIF89a'), Buffer.alloc(64)]);

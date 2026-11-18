@@ -5,7 +5,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
 import { Ticket, TicketBurst, TicketStamp, ticketTone, TEAR_MS } from '../play/Ticket';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { timing } from '../theme/animate';
 import { ClayButton } from '../theme/glass';
@@ -102,7 +102,7 @@ export function FriendRequestTicket({
       // Held, the row fills as a list row does; it opens their profile.
       style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
     >
-      <InitialsAvatar name={person.username} id={person.userId} size={compact ? 36 : 44} photoUrl={person.avatarUrl ?? undefined} />
+      <Avatar name={person.username} size={compact ? 36 : 44} photoUrl={person.avatarUrl ?? undefined} />
       <View style={styles.names}>
         <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
           {person.username}

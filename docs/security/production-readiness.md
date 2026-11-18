@@ -137,23 +137,27 @@ reserved names), and the format is DB-enforced (see §11).
 
 ## 12. File uploads (`api/src/media/`)
 
-Uploads go **through the server**. Bytes are read, the real type is taken from
-the magic bytes (never the declared content type or the filename), images are
-re-encoded to WebP — which is what makes a polyglot harmless, since nothing of
-the original file survives — and only then stored, under a key that is a hash of
-the stored bytes with a prefix the route chooses rather than the caller. Size
-caps, a storage ceiling, an operation ceiling and per-user rate limits all apply
-on the way in; an image must clear moderation before its row is confirmed and
-the object becomes servable.
+Uploads go **through the server**; no client is ever given a way to write to the
+bucket. Bytes are read, the real type is taken from the magic bytes (never the
+declared content type or the filename), and only then stored, under a key that is
+a hash of the stored bytes with a prefix the route chooses rather than the caller.
+Size caps, a storage ceiling, an operation ceiling and per-user rate limits all
+apply on the way in.
 
-This section used to describe **presigned direct-to-storage** uploads with
-"size + MIME limits". That was the shape of the hole rather than a defence: with
-the client PUTting straight to the bucket, those limits were numbers the client
-declared about bytes the server never saw, and a ticket asking for an image
-would happily store a script. Wording like that is part of why it lasted — a
-reviewer reads it and stops looking. The presigned path is gone;
-`createUploadUrl` remains for server-side use only, where the bytes are the
-server's own.
+- **Pictures** are decoded (first frame only, within a pixel and a time limit, and
+  only when the decoder agrees with the sniffed format) and re-encoded to WebP or
+  PNG with no metadata, which is what makes a polyglot harmless: nothing of the
+  original file survives. An image must clear moderation before its row is
+  confirmed and the object becomes servable.
+- **Recordings** are stored as sent, so their container is read end to end
+  (`audioCheck.ts`): every byte must belong to it, every track must be sound, the
+  length must be within `MEDIA_AUDIO_MAX_SECONDS`, and text that marks a page or a
+  script is refused. Tags, cover art, attachments, padding and media bytes no
+  sample uses are blanked in place; MP3 tags are dropped and a WAV is rewritten as
+  its format and samples alone.
+- Objects are written with the content type the server decided. The media host
+  should also send `X-Content-Type-Options: nosniff`, which object storage cannot
+  set per object; that header belongs in the CDN's response rules.
 
 ## 13. Privacy & GDPR (`api/src/gdpr/`)
 

@@ -96,6 +96,7 @@ export function registerImagePostRoutes(
     '/images/upload',
     {
       config: {
+        rawBody: true,
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },

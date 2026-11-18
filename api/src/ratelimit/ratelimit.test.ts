@@ -103,6 +103,16 @@ describe('rate limiting', () => {
     expect((await a.inject({ url: '/slide' })).statusCode).toBe(200);
   });
 
+  it('gives every address no route answers one budget, however the path is varied', async () => {
+    const a = limitedApp();
+    const statuses: number[] = [];
+    for (let i = 0; i < 102; i++) statuses.push((await a.inject({ url: `/made-up-${i}?q=${i}` })).statusCode);
+    expect(statuses.slice(0, 100).every((s) => s === 404)).toBe(true);
+    expect(statuses.slice(100)).toEqual([429, 429]);
+    // a real route keeps its own budget
+    expect((await a.inject({ url: '/other' })).statusCode).toBe(200);
+  });
+
   it('exempts /health and /metrics regardless of route config', async () => {
     const a = limitedApp();
     expect((await a.inject({ url: '/health' })).statusCode).toBe(200);

@@ -1,27 +1,27 @@
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { Pressable, ReachGroup } from './Pressable';
 import { PressableScale } from './MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from './fonts';
 import { useTheme } from './ThemeProvider';
-import nothingHereDark from '../../assets/empty/nothing-here-dark.png';
-import nothingHereLight from '../../assets/empty/nothing-here-light.png';
-import offlineDark from '../../assets/empty/offline-dark.png';
-import offlineLight from '../../assets/empty/offline-light.png';
+import { HevaloPeek } from '../characters/HevaloPeek';
 import { pressedDim } from './motion';
 
-/**
- * The drawings, one per theme. The silver-blue fawn is about 12:1 on the dark theme but only 1.4:1 on the light one,
- * so each is bundled twice, the light one at 72% brightness (3:1 against #F3F3F3). Imported rather than required, so
- * the type is `ImageSourcePropType`; the bundler needs literal paths either way.
- */
-const ART = {
-  empty: { dark: nothingHereDark, light: nothingHereLight },
-  offline: { dark: offlineDark, light: offlineLight },
-} as const;
+/** Hevalo greets an empty list and looks puzzled at one that could not load. */
+type EmptyArt = 'empty' | 'offline';
 
-type EmptyArt = keyof typeof ART;
+/** How tall the picture is drawn, in points. */
+const ART_HEIGHT = 132;
+
+/** The picture alone, decorative and hidden from screen readers: for a screen that lays out its own words (the crash screen). */
+export function EmptyPicture({ art = 'empty', style, testID }: { art?: EmptyArt; style?: StyleProp<ViewStyle>; testID?: string }): React.JSX.Element {
+  return (
+    <View style={style} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={testID}>
+      <HevaloPeek size={ART_HEIGHT} pop={false} still brows={art === 'offline' ? 'one' : undefined} />
+    </View>
+  );
+}
 
 /**
  * What a screen says when it has nothing to show: a drawing, the message as a heading, an optional line saying what
@@ -47,16 +47,10 @@ export function EmptyState({
   /** A second, quieter way out, never instead of `action` and never a third (an empty feed: find people, or write something). */
   secondary?: { label: string; onPress: () => void };
 }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   return (
     <View style={styles.wrap}>
-      <Image
-        source={ART[art][scheme === 'dark' ? 'dark' : 'light']}
-        style={styles.art}
-        resizeMode="contain"
-        accessibilityElementsHidden
-        importantForAccessibility="no"
-      />
+      <EmptyPicture art={art} style={styles.art} />
 
       <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
       {body ? <Text style={[styles.body, { color: colors.textSecondary }]}>{body}</Text> : null}
@@ -92,8 +86,7 @@ export function EmptyState({
 
 const styles = StyleSheet.create({
   wrap: { alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
-  // 160 points from a 480-pixel source is exactly @3x, the densest screen there is.
-  art: { width: 160, height: 135, marginBottom: spacing.xs },
+  art: { marginBottom: spacing.xs },
   title: { ...display(typography.sizes.lg), textAlign: 'center' },
   body: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center', maxWidth: 300 },
   action: {

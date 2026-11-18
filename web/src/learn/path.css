@@ -890,6 +890,80 @@ button.lp-scard:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
+/* "Jump here?" over a later chapter that can be tested into: quieter than the way into the lesson to do now */
+.lp-callout.is-jump,
+:root[data-theme='light'] .lp-callout.is-jump {
+  background: var(--surface-solid);
+  color: var(--ink);
+  box-shadow: 0 3px 0 var(--border-strong);
+  cursor: pointer;
+}
+.lp-callout.is-jump:hover,
+:root[data-theme='light'] .lp-callout.is-jump:hover {
+  color: var(--ink);
+}
+
+/* The jump offer's sheet (JumpSheet.tsx), in the chapter's colour. */
+.lp-jump-offer {
+  display: grid;
+  gap: var(--space-3);
+}
+.lp-jump-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.lp-jump-head .lp-guide-title {
+  margin: 0;
+}
+.lp-jump-badge {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--u-fill);
+  color: var(--u-ink);
+}
+.lp-jump-line {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.lp-jump-facts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+.lp-jump-facts li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-secondary);
+  font-weight: 650;
+}
+.lp-jump-facts svg {
+  flex: none;
+  color: var(--u-text);
+}
+/* forward points the way the page reads */
+[dir='rtl'] .lp-jump-badge svg,
+[dir='rtl'] .lp-scard-jump svg {
+  transform: scaleX(-1);
+}
+/* a shut section's way in by a test, under its words and lined up with them, as the phone has it */
+.lp-scard.is-locked {
+  flex-wrap: wrap;
+}
+.lp-scard.is-locked .lp-scard-words {
+  flex-basis: calc(100% - 44px - var(--space-4));
+}
+.lp-scard-jump {
+  margin-inline-start: calc(44px + var(--space-4));
+}
 
 /*
  * Hevalo beside the current stop (shared `mascotSpot`), placed from the logical start like the stops and as tall as the

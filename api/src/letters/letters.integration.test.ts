@@ -175,6 +175,46 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     expect((await write(b)).statusCode).toBe(200);
   });
 
+  it('opens a long correspondence on its newest letters and shows the earlier ones when asked, and all of them without asking', async () => {
+    const [a, b] = [await adult('pagea'), await adult('pageb')];
+    const met = await meet(a, b);
+    // 24 more letters, straight into the store since the day's limit would stop them; the last is hers, unread by him
+    await pool.query(
+      `INSERT INTO letters (sender_id, recipient_id, thread_id, body, age_band, status, created_at, delivered_at, read_at)
+       SELECT CASE WHEN i % 2 = 0 THEN $1 ELSE $2 END::uuid, CASE WHEN i % 2 = 0 THEN $2 ELSE $1 END::uuid, $3, 'Name ' || i, '18+',
+              'delivered', now() + i * interval '1 second', now() + i * interval '1 second', CASE WHEN i < 24 THEN now() END
+         FROM generate_series(1, 24) i`,
+      [a.id, b.id, met.threadId],
+    );
+    const open = async (query = ''): Promise<LetterThread> => {
+      const res = await call('GET', `/letters/threads/${met.threadId}${query}`, b.token);
+      expect(res.statusCode, res.body).toBe(200);
+      return res.json() as LetterThread;
+    };
+    const ids = (t: LetterThread) => t.letters.map((l) => l.id);
+
+    const newest = await open('?limit=10');
+    expect(newest.earlier).toBe(true);
+    // the unread letter is on the first page, and reading it there marks it read
+    expect(newest.letters.at(-1)).toMatchObject({ mine: false, body: 'Name 24' });
+    expect(newest.letters.at(-1)!.readAt).not.toBeNull();
+    const before = await open(`?before=${newest.letters[0]!.id}&limit=10`);
+    const first = await open(`?before=${before.letters[0]!.id}&limit=10`);
+    expect([before.earlier, first.earlier]).toEqual([true, false]);
+
+    const all = await open();
+    expect('earlier' in all).toBe(false);
+    expect(all.letters).toHaveLength(26);
+    expect([...ids(first), ...ids(before), ...ids(newest)]).toEqual(ids(all));
+    expect(newest).toMatchObject({ yourTurn: all.yourTurn, closed: all.closed, person: all.person });
+    expect((await open('?limit=26')).earlier).toBe(false);
+    expect((await open('?limit=25')).earlier).toBe(true);
+    // a letter of another correspondence marks no place in this one
+    const elsewhere = await meet(await adult('pagec'), await adult('paged'));
+    expect((await open(`?before=${elsewhere.letter.id}&limit=10`)).letters).toEqual([]);
+    for (const limit of ['0', '101', 'ten']) expect((await call('GET', `/letters/threads/${met.threadId}?limit=${limit}`, b.token)).statusCode).toBe(400);
+  });
+
   it('keeps a letter’s own lines and the empty line between its paragraphs', async () => {
     const [a, b] = [await adult('linesa'), await adult('linesb')];
     const met = await meet(a, b);

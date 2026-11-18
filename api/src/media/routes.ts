@@ -24,6 +24,7 @@ export function registerMediaRoutes(app: FastifyInstance, config: AppConfig): vo
     '/media/uploads',
     {
       config: {
+        rawBody: true,
         rateLimit: {
           max: limits.uploadRateMax,
           windowMs: limits.uploadRateWindowMs,

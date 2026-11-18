@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { groupLimits, type LettersHome, type LimitDetails } from '@kurda/shared';
+import { groupLimits, unreadLabel, type LettersHome, type LimitDetails } from '@kurda/shared';
 import { useApiGet, useMemoryOwner } from '../lib/useApi';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
@@ -292,8 +292,8 @@ function ConvoRow({
         <span className="chat-convo-bottom">
           <span className="chat-convo-last" dir="auto">{preview}</span>
           {unread > 0 && (
-            <span className="chat-unread" aria-label={t('nav.unreadCount', { count: unread })}>
-              {unread}
+            <span className="chat-unread" aria-label={t('nav.unreadCount', { count: unreadLabel(unread) })}>
+              {unreadLabel(unread)}
             </span>
           )}
         </span>

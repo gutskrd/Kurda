@@ -32,8 +32,3 @@ export function lastSeen(iso: string | null, t: Translate, now = Date.now()): st
   // Past a month the exact number is not useful on a friends list.
   return days > 30 ? t('time.aWhileAgo') : t('time.daysAgo', { count: days });
 }
-
-/** A badge number capped at "99+" so it fits the fixed-width circle; not translated, since it is digits. */
-export function badgeLabel(count: number): string {
-  return count > 99 ? '99+' : String(count);
-}

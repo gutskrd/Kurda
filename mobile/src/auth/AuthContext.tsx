@@ -18,6 +18,7 @@ import { suspendedDetails } from '../reports/suspension';
 import { onMaintenanceOver, showMaintenance } from '../maintenance/maintenance';
 import { notifyGuestRefused } from './guestRefused';
 import { unregisterThisDevice } from '../push/thisDevice';
+import { openFirstLessonNext } from '../learn/firstLesson';
 
 export interface SessionUser {
   id: string;
@@ -26,6 +27,8 @@ export interface SessionUser {
   displayName: string | null;
   /** Their own picture, for the profile tab. `/me` returns it, so the session already holds it. */
   profilePhotoUrl: string | null;
+  /** The avatar everyone sees: their photo, their chosen avatar or the default deer (/me only). */
+  avatarUrl?: string | null;
   /** Whether the user has confirmed their email address. */
   emailVerified: boolean;
   /**
@@ -344,6 +347,10 @@ export function AuthProvider({
     });
     setUser(payload.user);
     setStatus('signedIn');
+    // Signing in answers with the account's identity only; the rest of it (the avatar, leagues, age) follows from /me.
+    void client.get<{ user: SessionUser }>('/me').then((me) => {
+      if (me.ok) setUser(me.data.user);
+    });
   };
 
   const value: AuthContextValue = {
@@ -380,6 +387,8 @@ export function AuthProvider({
       // The language chosen in the intro is the account's, as for a sign-up; a later claim keeps it.
       const res = await client.post<AuthPayload>('/auth/guest', { ...device, ...zone(), locale });
       if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
+      // Start learning means a lesson, as a new account's first screen is.
+      openFirstLessonNext();
       await applyAuth(res.data);
       return null;
     },
@@ -421,7 +430,7 @@ export function AuthProvider({
               ...(apple?.fullName ? { fullName: apple.fullName } : {}),
             }
           : {};
-      const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken, ...extras, ...device });
+      const res = await client.post<AuthPayload & { created?: boolean }>('/auth/oauth', { provider, idToken, ...extras, ...device });
       if (!res.ok) {
         const suspended = res.error.code === 'ACCOUNT_SUSPENDED' ? suspendedDetails(res.error.details) : null;
         if (suspended) {
@@ -432,12 +441,16 @@ export function AuthProvider({
         // the plain "couldn't confirm that sign-in", never the server's English.
         return describeErrorOr(res.error, t, 'error.code.oauthFailed');
       }
+      // A new account starts in its first lesson, once its birth month is asked.
+      if (res.data.created === true) openFirstLessonNext();
       await applyAuth(res.data);
       return null;
     },
     verifyEmailCode: async (code) => {
       const res = await client.post<{ verified: boolean }>('/auth/verify-email-code', { code });
       if (!res.ok) return describeError(res.error, t);
+      // Confirmed: the account's first screen is its first lesson, as on the website.
+      openFirstLessonNext();
       setUser((prev) => (prev ? { ...prev, emailVerified: true } : prev));
       return null;
     },

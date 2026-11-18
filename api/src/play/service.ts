@@ -69,6 +69,8 @@ const OUTGOING_HOURS = 1;
 const KEEP_INVITE_DAYS = 30;
 /** Deleting old invites and offers is not urgent: once an hour is plenty. */
 const CLEANUP_EVERY_MS = 60 * 60 * 1000;
+/** Cards of one read looked up side by side; each takes a few statements, and the pool is small. */
+const CARD_READS_AT_ONCE = 4;
 
 interface InviteRow {
   id: string;
@@ -505,6 +507,22 @@ export class PlayService {
       return { game, lobbyId, status: 'unavailable', players: 0, maxPlayers: 0, summary: {}, canJoin: false, isMember: false };
     }
     return adapter.card(viewerId, lobbyId);
+  }
+
+  /**
+   * `GET /play/cards`: several cards in the order asked, each read once however often it is named, a few at a time so a
+   * long chat never takes the whole pool.
+   */
+  async cards(viewerId: string, refs: ReadonlyArray<{ game: PlayGame; lobbyId: string }>): Promise<LobbyCard[]> {
+    const key = (ref: { game: PlayGame; lobbyId: string }): string => `${ref.game}:${ref.lobbyId}`;
+    const unique = [...new Map(refs.map((ref) => [key(ref), ref])).values()];
+    const read = new Map<string, LobbyCard>();
+    for (let i = 0; i < unique.length; i += CARD_READS_AT_ONCE) {
+      const part = unique.slice(i, i + CARD_READS_AT_ONCE);
+      const cards = await Promise.all(part.map((ref) => this.card(viewerId, ref.game, ref.lobbyId)));
+      part.forEach((ref, at) => read.set(key(ref), cards[at]!));
+    }
+    return refs.map((ref) => read.get(key(ref))!);
   }
 
   // ---- playing again ----------------------------------------------------------------

@@ -18,7 +18,6 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { Alert } from 'react-native';
 import { AccessibilityInfo } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -26,10 +25,12 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { backFromPage, navigation, refocus } from '../play/testing/navigation';
 import { TAB_REUSE_MS } from '../navigation/tabFocusLoad';
 import { LearnScreen } from './LearnScreen';
+import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { LEARN_VIEW_KEY } from './useLearnView';
 import { onHaptic } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { keptKey } from '../streak/kept';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => {
@@ -206,7 +207,7 @@ describe('Learn', () => {
   });
 
   it('changes the day’s goal at once, sends only the last of quick choices, and puts it back when refused', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     const answers: ((r: unknown) => void)[] = [];
     client(STREAK, undefined, { 'PUT /me/daily-goal': () => new Promise((resolve) => answers.push(resolve)) } as never);
     renderWithProviders(<LearnScreen />);
@@ -225,7 +226,6 @@ describe('Learn', () => {
     // Back to what the server holds now: the first choice, which it took.
     expect(goal(30).getAttribute('aria-checked')).toBe('true');
     expect(said).toHaveBeenCalledWith('Something went wrong on our end. Please try again shortly.');
-    said.mockRestore();
   });
 
   it('keeps the practice tools one tap away, and says what is due for review', async () => {
@@ -414,7 +414,7 @@ describe('Learn', () => {
     await waitFor(() => expect(asked()).toEqual([3, 3, 3, 3, 3, 3]));
   });
 
-  it('shows the Zêr a daily reward claimed here brings, in the corner at once', async () => {
+  it('shows the Zêr a daily reward claimed on Home brings, in the corner at once', async () => {
     let zer = 1240;
     client(STREAK, undefined, {
       'GET /me/wallet': () => ok({ balances: { zer, gems: 3 } }),
@@ -424,7 +424,12 @@ describe('Learn', () => {
         return ok({ reward: 15 });
       },
     });
-    renderWithProviders(<LearnScreen />);
+    renderWithProviders(
+      <>
+        <LearnScreen />
+        <DailyRewardCard />
+      </>,
+    );
     expect(await screen.findByRole('button', { name: '1,240 Zêr. Open the shop' })).toBeTruthy();
     fireEvent.click(await screen.findByRole('button', { name: 'Claim 15 Zêr' }));
     expect(await screen.findByRole('button', { name: '1,255 Zêr. Open the shop' })).toBeTruthy();

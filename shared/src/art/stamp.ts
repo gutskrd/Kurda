@@ -6,7 +6,7 @@
  * fix a picture stamp's proportions and colours here, so the two apps cannot drift apart.
  */
 import { hueSteps, type HueName, type HueScheme } from '../hues.js';
-import { mix, n2 as num, n3 } from './svg.js';
+import { escapeXml, mix, n2 as num, n3 } from './svg.js';
 
 export interface StampShape {
   /** The radius of one perforation. */
@@ -146,7 +146,7 @@ export function stampSvg(opts: StampOptions): string {
         ).join('')
       : '';
   const line = edge ? `<path d="${d}" fill="none" stroke="${edge}" stroke-width="1" stroke-opacity="0.35"/>` : '';
-  const label = opts.title ? `role="img" aria-label="${opts.title}"` : 'aria-hidden="true"';
+  const label = opts.title ? `role="img" aria-label="${escapeXml(opts.title)}"` : 'aria-hidden="true"';
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${num(box.width)}" height="${num(box.height)}" viewBox="0 0 ${num(box.width)} ${num(box.height)}" ${label}>` +
     `<g transform="translate(${box.inset} ${box.inset})">${light}<path d="${d}" fill="${paper}"/>${line}</g></svg>`

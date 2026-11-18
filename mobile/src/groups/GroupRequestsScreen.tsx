@@ -10,7 +10,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { noticeTime } from '../notifications/inbox';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { SettingsSwitch } from '../settings/list';
 import { BottomSheet } from '../theme/BottomSheet';
@@ -110,7 +110,7 @@ export function GroupRequestsScreen({ groupId, onExit }: { groupId: string; onEx
               // Held, the row fills as a list row does; it opens their profile.
               style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
             >
-              <InitialsAvatar name={r.username} id={r.userId} size={44} photoUrl={r.avatarUrl} />
+              <Avatar name={r.username} size={44} photoUrl={r.avatarUrl} />
               <View style={styles.names}>
                 <Text style={[styles.name, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
                   {r.username}

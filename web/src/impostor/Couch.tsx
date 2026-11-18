@@ -13,7 +13,7 @@ import {
   COUCH_TWO_IMPOSTORS_FROM,
   COUCH_VOTES,
   COUCH_WAYS,
-  GAME_DIALECTS,
+  readEveryDialect,
   IMPOSTOR_POINTS,
   couchCastVote,
   couchGuess,
@@ -48,6 +48,7 @@ import {
   type GameDifficulty,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
 import { CaretDownIcon, ChatsIcon, CloseIcon, ImpostorIcon, PlusIcon, RedoIcon, SlidersIcon, TimerIcon, UndoIcon } from '../components/icons';
 import { Loading } from '../components/states';
@@ -167,8 +168,9 @@ export function Couch(): React.JSX.Element {
 
   useEffect(() => {
     let alive = true;
-    void Promise.all(GAME_DIALECTS.map((d) => client.get<CouchOffer>(`/games/impostor/couch?dialect=${d}`))).then((all) => {
-      if (alive) setOffers(all.flatMap((r) => (r.ok && Array.isArray(r.data?.difficulties) && r.data.difficulties.length > 0 ? [r.data] : [])));
+    // both varieties in one read
+    void readEveryDialect<CouchOffer, ApiError>(client, '/games/impostor/couch').then((res) => {
+      if (alive) setOffers(res.ok ? res.data.filter((o) => Array.isArray(o?.difficulties) && o.difficulties.length > 0) : []);
     });
     return () => {
       alive = false;

@@ -3,7 +3,6 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { loadConfig } from '../config/env.js';
 import {
   IMMUTABLE_CACHE_CONTROL,
-  MAX_UPLOAD_BYTES,
   MediaStorage,
   PRIVATE_CACHE_CONTROL,
   PrivateStorageUnavailable,
@@ -83,42 +82,14 @@ describe('createStorage', () => {
   it('returns null when the S3 group is not configured', () => {
     expect(createStorage(loadConfig({ NODE_ENV: 'test' }))).toBeNull();
   });
+});
 
-  it('presigns PUT urls offline with immutable cache headers', async () => {
-    const storage = createStorage(offlineConfig);
-    expect(storage).not.toBeNull();
-    const ticket = await storage!.createUploadUrl({
-      kind: 'lesson-audio',
-      contentType: 'audio/mpeg',
-      contentLength: 1024,
-      sha256Hex: HASH,
-    });
-    expect(ticket.key).toBe(`lesson-audio/${HASH}.mp3`);
-    expect(ticket.uploadUrl).toContain('X-Amz-Signature=');
-    expect(ticket.uploadUrl).toContain(ticket.key);
-    expect(ticket.requiredHeaders['cache-control']).toBe(IMMUTABLE_CACHE_CONTROL);
-    expect(ticket.publicUrl).toBe(`http://localhost:9000/kurda-test/${ticket.key}`);
-    expect(ticket.expiresInSeconds).toBe(300);
-  });
-
-  it('rejects oversized and empty uploads', async () => {
-    const storage = createStorage(offlineConfig)!;
-    await expect(
-      storage.createUploadUrl({
-        kind: 'avatar',
-        contentType: 'image/png',
-        contentLength: MAX_UPLOAD_BYTES + 1,
-        sha256Hex: HASH,
-      }),
-    ).rejects.toThrow(/contentLength/);
-    await expect(
-      storage.createUploadUrl({
-        kind: 'avatar',
-        contentType: 'image/png',
-        contentLength: 0,
-        sha256Hex: HASH,
-      }),
-    ).rejects.toThrow(/contentLength/);
+describe('put', () => {
+  it('writes the type the server decided, cached as immutable', async () => {
+    const sent: Array<Record<string, unknown>> = [];
+    const s3 = { send: async (cmd: { input: Record<string, unknown> }) => void sent.push(cmd.input) } as unknown as S3Client;
+    await new MediaStorage(s3, 'pub', 'https://cdn.test').put(`voice-note/${HASH}.m4a`, Buffer.from('x'), 'audio/mp4');
+    expect(sent[0]).toMatchObject({ Bucket: 'pub', Key: `voice-note/${HASH}.m4a`, ContentType: 'audio/mp4', CacheControl: IMMUTABLE_CACHE_CONTROL });
   });
 });
 

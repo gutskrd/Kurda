@@ -4,7 +4,7 @@ import { PressableScale } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
-import { InitialsAvatar } from './InitialsAvatar';
+import { Avatar } from './Avatar';
 import { spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
@@ -70,8 +70,9 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
         ref={scroller}
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={[styles.row, { flexDirection: dir.row }]}
-        // Right to left, the first face is on the right: start the row there.
+        // Right to left, the first face is on the right: the row at least as wide as the screen, so a short one starts
+        // there too, and a long one scrolled to its start.
+        contentContainerStyle={[styles.row, { flexDirection: dir.row }, mirrored ? styles.rowMirrored : null]}
         onContentSizeChange={() => {
           if (mirrored) scroller.current?.scrollToEnd({ animated: false });
         }}
@@ -84,12 +85,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
             accessibilityLabel={f.displayName || f.username}
             style={styles.friend}
           >
-            <InitialsAvatar
-              name={f.displayName || f.username}
-              id={f.userId}
-              size={52}
-              photoUrl={f.avatarUrl ?? null}
-            />
+            <Avatar name={f.displayName || f.username} size={52} photoUrl={f.avatarUrl} />
             <Text style={[styles.name, { color: colors.textSecondary }]} numberOfLines={1}>
               {f.displayName || f.username}
             </Text>
@@ -110,6 +106,7 @@ const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
   heading: { ...sectionLabel },
   row: { gap: spacing.md, paddingVertical: 2 },
+  rowMirrored: { flexGrow: 1 },
   friend: { width: 60, alignItems: 'center', gap: 4 },
   name: { fontSize: typography.sizes.xs, textAlign: 'center' },
   more: { fontSize: typography.sizes.sm },

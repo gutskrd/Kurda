@@ -10,6 +10,7 @@ import { EmptyState, ErrorState } from '../components/states';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 import { LearnHeader } from '../learn/LearnHeader';
+import { dialectName } from '../learn/map';
 import { inReaderLanguage, rememberTranslations, rememberedTranslations, riddlePath, useLoreDialect, visitorRiddle } from './api';
 import { CATEGORY_KEY, DIFFICULTY_KEY, STATE_KEY } from './labels';
 import { GuestNote, ShelfSwitch, Translated, VarietySwitch } from './LoreParts';
@@ -113,7 +114,7 @@ function Riddles(): React.JSX.Element {
 
       {load.state === 'error' && <ErrorState title={t('lore.riddles.loadFailed')} message={load.message} onRetry={() => setNonce((n) => n + 1)} />}
       {load.state === 'loading' && <ListRowsSkeleton count={5} label="lore.riddles.loading" />}
-      {list && list.total === 0 && <EmptyState title={t('lore.riddles.empty')} />}
+      {list && list.total === 0 && <EmptyState title={t('lore.riddles.empty', { variety: dialectName(dialect) })} />}
 
       {list && list.total > 0 && (
         <>

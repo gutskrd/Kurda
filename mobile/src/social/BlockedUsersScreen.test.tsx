@@ -10,7 +10,9 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 // The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { Alert } from 'react-native';
+import type { ApiResult } from '../api/types';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -32,6 +34,36 @@ describe('the people you have blocked', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
     expect(screen.queryByText(/You haven’t blocked anyone/)).toBeNull();
     expect(await screen.findByText('rojda')).toBeTruthy();
+  });
+
+  /* As on the website: the row goes as Unblock is confirmed; the last one gone leaves the empty state. */
+  it('unblocks at once, before the server answers, down to the empty list', async () => {
+    let answer: (res: ApiResult<unknown>) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'GET /friends/blocks?limit=25&offset=0': ok({ blocked: [rojda], total: 1 }),
+      'DELETE /friends/u2/block': () => new Promise((resolve) => (answer = resolve)),
+    });
+    const confirm = vi.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[1]?.onPress?.());
+    renderWithProviders(<BlockedUsersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Unblock' }));
+    expect(screen.queryByText('rojda')).toBeNull();
+    expect(screen.getByText('You haven’t blocked anyone.')).toBeTruthy();
+    await act(async () => answer(ok({ ok: true })));
+    expect(screen.queryByText('rojda')).toBeNull();
+    confirm.mockRestore();
+  });
+
+  it('puts the row back, still blocked, and says why when the server refuses', async () => {
+    testAuth.client = fakeClient({
+      'GET /friends/blocks?limit=25&offset=0': ok({ blocked: [rojda], total: 1 }),
+      'DELETE /friends/u2/block': fail({ kind: 'network', status: 0, message: 'offline' }),
+    });
+    const confirm = vi.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.[1]?.onPress?.());
+    renderWithProviders(<BlockedUsersScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Unblock' }));
+    expect(await screen.findByText('rojda')).toBeTruthy();
+    expect(screen.queryByText('You haven’t blocked anyone.')).toBeNull();
+    confirm.mockRestore();
   });
 
   it('says since when in the app’s own language', async () => {

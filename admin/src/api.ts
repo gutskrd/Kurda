@@ -2,6 +2,7 @@
  * The admin API client: attaches the session's bearer token, renews it when it runs out, and throws `ApiError` with
  * the server's error envelope on a refusal.
  */
+import { isPlainPath } from '@kurda/shared';
 import { deviceId } from './deviceId';
 
 /**
@@ -151,6 +152,8 @@ function sessionEnded(path: string): void {
  * call made once more; only when that fails too does the 401 reach `read`, which ends the session.
  */
 async function send(path: string, init: RequestInit = {}): Promise<Response> {
+  // A path an id from the address turned into another endpoint's goes nowhere with this session.
+  if (!isPlainPath(path)) throw new ApiError(404, 'NOT_FOUND', 'not found');
   const go = (): Promise<Response> =>
     fetch(`${API_BASE}${path}`, {
       ...init,

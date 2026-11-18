@@ -16,7 +16,7 @@ import { useDirection } from '../reports/direction';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { layout, radii, spacing, typography, wash } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
@@ -24,7 +24,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { SearchField } from '../theme/SearchField';
-import { InitialsAvatar } from './InitialsAvatar';
+import { Avatar } from './Avatar';
 import { CosmeticPicker } from './CosmeticPicker';
 import { FavoritesPicker } from './FavoritesPicker';
 import type { FavoriteRef } from './types';
@@ -60,7 +60,7 @@ const MAX_BIO = 1000;
  * scrolled away from.
  */
 export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
-  const { client, user } = useAuth();
+  const { client, user, refreshUser } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
@@ -196,13 +196,14 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
       setBusy(false);
       if (res.ok) {
         setMe((prev) => (prev ? { ...prev, selectedAvatarKey: key, profilePhotoUrl: null } : prev));
+        void refreshUser();
         setNotice({ ok: true, text: key ? t('edit.photoUpdated') : t('edit.avatarCleared'), at: 'avatar' });
       } else {
         setSelected(previous);
         setNotice({ ok: false, text: describeError(res.error, t), at: 'avatar' });
       }
     },
-    [me, busy, selected, client, t],
+    [me, busy, selected, client, t, refreshUser],
   );
 
   /** What the last save or choice did, under the part of the page it was done in. */
@@ -343,7 +344,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                       { borderColor: selected === a.key ? colors.primary : colors.glassBorder },
                     ]}
                   >
-                    <InitialsAvatar name="" id={a.key} size={44} photoUrl={avatarAssetUrl(a.key)} />
+                    <Avatar name="" size={44} photoUrl={avatarAssetUrl(a.key)} />
                   </PressableScale>
                 );
               })}
@@ -379,8 +380,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 }
 
 /**
- * A country as a choice to tap, or (without `onPress`) as the one chosen, marked with a violet wash and ink as every
- * chosen option is. Drawn 36pt tall and answering over 48pt; where the matches wrap, their group holds each to half the
+ * A country as a choice to tap, or (without `onPress`) as the one chosen, in solid violet as every chosen option
+ * is. Drawn 36pt tall and answering over 48pt; where the matches wrap, their group holds each to half the
  * gap between rows.
  */
 function CountryChip({
@@ -395,8 +396,8 @@ function CountryChip({
   accessibilityLabel?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const fill = on ? wash(colors.primary) : colors.controlTrack;
-  const ink = on ? colors.primary : colors.textPrimary;
+  const fill = on ? colors.primary : colors.controlTrack;
+  const ink = on ? colors.textOnPrimary : colors.textPrimary;
   if (!onPress) {
     return (
       <View style={[styles.chip, { backgroundColor: fill }]}>

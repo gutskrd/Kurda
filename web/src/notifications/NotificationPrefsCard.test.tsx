@@ -53,7 +53,7 @@ describe('NotificationPrefsCard', () => {
     expect(await screen.findByRole('checkbox', { name: 'Streak reminders' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Friend activity' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Game invites & results' })).not.toBeChecked();
-    expect(screen.getByRole('checkbox', { name: 'Events & quests' })).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Events and quests' })).toBeChecked();
     // League and badge news has its own switch.
     expect(screen.getByRole('checkbox', { name: 'Leagues and badges' })).toBeChecked();
     // The opt-in category is off until chosen.
@@ -181,7 +181,8 @@ describe('NotificationPrefsCard', () => {
     renderApp(<NotificationPrefsCard />);
 
     expect(await screen.findByRole('heading', { name: 'Bildirimler' })).toBeInTheDocument();
-    expect(screen.getByRole('checkbox', { name: 'Seri hatırlatmaları' })).toBeInTheDocument();
+    // The heading shows before the saved preferences arrive; the switches come with them.
+    expect(await screen.findByRole('checkbox', { name: 'Seri hatırlatmaları' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Sessiz saatleri aç' })).toBeInTheDocument();
     // The two ends are labelled start and finish rather than from and to.
     expect(screen.getByLabelText('Başlangıç')).toHaveValue('22:00');

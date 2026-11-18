@@ -32,6 +32,8 @@ export interface ThreadComment {
   createdAt: string;
   /** Written on this phone and not yet taken by the server. */
   pending?: boolean;
+  /** Pending, and the server was not reached: it waits for Try again or Cancel. */
+  failed?: boolean;
   /** The id it had while pending, kept once the server's copy replaces it so its row keeps its key and place. */
   localId?: string;
 }
@@ -53,6 +55,7 @@ export interface Me {
   id: string;
   username: string;
   profilePhotoUrl: string | null;
+  avatarUrl?: string | null;
 }
 
 /**
@@ -61,7 +64,7 @@ export interface Me {
  */
 export function authorOf(c: Pick<ThreadComment, 'author' | 'authorId'>, me: Me | null): CommentAuthor {
   if (c.author) return c.author;
-  if (me && c.authorId === me.id) return { id: me.id, username: me.username, avatarUrl: me.profilePhotoUrl };
+  if (me && c.authorId === me.id) return { id: me.id, username: me.username, avatarUrl: me.avatarUrl ?? me.profilePhotoUrl };
   return { id: c.authorId, username: '', avatarUrl: null };
 }
 

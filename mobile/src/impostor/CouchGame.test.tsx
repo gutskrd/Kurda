@@ -223,6 +223,8 @@ describe('the setup', () => {
     expect(sent).toHaveLength(1);
     expect(sent[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'beginner', category: 'animals' });
     expect(JSON.stringify(client.calls)).not.toContain('Azad');
+    // where it is offered was asked once, for both varieties
+    expect(client.calls.filter((c) => c.method === 'GET' && c.path.startsWith('/games/impostor/couch')).map((c) => c.path)).toEqual(['/games/impostor/couch']);
   });
 
   it('keeps the names and the settings on the phone for next time, and nothing else', async () => {

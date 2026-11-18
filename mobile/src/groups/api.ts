@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { ApiClient } from '../api/client';
 import { createHiddenSet, useIntents, useSayNotSaved } from '../api/optimistic';
-import type { ApiResult } from '../api/types';
+import type { ApiError, ApiResult } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 // One definition of the hierarchy, shared with the API and the browser.
 export type { Role } from '@kurda/shared';
@@ -87,15 +87,16 @@ export const useLeftGroups = left.useHidden;
 
 /**
  * Leave a group, once the question has been answered: it leaves the list at once and the server is told after. A
- * refusal brings it back and says why, wherever the reader has gone since.
+ * refusal brings it back and says why, wherever the reader has gone since; `saidHere` may say it in place instead,
+ * returning true when it did.
  */
-export function useLeaveGroup(): (groupId: string) => void {
+export function useLeaveGroup(saidHere?: (error: ApiError) => boolean): (groupId: string) => void {
   const { client } = useAuth();
   const say = useSayNotSaved();
   const leaving = useIntents<string, boolean>((groupId) => leaveGroup(client, groupId), {
     failed: (error, groupId) => {
       left.unhide(groupId);
-      say(error);
+      if (!saidHere?.(error)) say(error);
     },
   });
   return useCallback(

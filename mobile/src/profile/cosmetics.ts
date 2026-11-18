@@ -46,6 +46,9 @@ export function avatarAssetUrl(key: string, overrides: ArtOverrides = artOverrid
 /** Where the site keeps a default avatar's picture. */
 const shippedAvatar = (key: string): string | null => assetUrl(`/cosmetics/avatars/${key}.png`);
 
+/** The deer the server gives anyone without a photo or a chosen avatar (api/src/cosmetics/avatars.ts `DEFAULT_AVATAR_KEY`). */
+export const DEFAULT_AVATAR_PATH = '/cosmetics/avatars/default-01.png';
+
 /**
  * The default avatar a picture's address is (`/cosmetics/avatars/default-03.png` as the API sends it for everyone
  * without a photo, or the same file as a whole site address), or null for any other picture.

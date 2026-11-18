@@ -86,7 +86,7 @@ import { registerFeedRoutes } from './feed/routes.js';
 import { ActivityService } from './activity/service.js';
 import { registerActivityRoutes } from './activity/routes.js';
 import { ChatService } from './chat/service.js';
-import { registerChatRoutes } from './chat/routes.js';
+import { registerChatRoutes, registerChatUnreadRoute } from './chat/routes.js';
 import { registerLetterRoutes } from './letters/routes.js';
 import { LetterService } from './letters/service.js';
 import { GroupService } from './groups/service.js';
@@ -185,6 +185,7 @@ import { setupSecurityLog, type SecurityLogOptions } from './security/wire.js';
 import { registerSecurityLogRoutes } from './security/routes.js';
 import { SecurityLogReader } from './security/search.js';
 import { installScannerShield } from './security/shield.js';
+import { installRawBodyGate } from './plugins/raw-body-gate.js';
 import { MaintenanceService } from './maintenance/service.js';
 import { installMaintenanceGate, registerMaintenanceRoutes } from './maintenance/routes.js';
 import { Counter } from 'prom-client';
@@ -374,6 +375,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   // Scanner probes (PHP scripts, CMS admin pages, secrets files) are answered "not found" at once, and a network that
   // keeps probing is shut out while signed out: after the session is read, before any rate limit is spent.
   installScannerShield(app, { redis: app.hasDecorator('redis') ? app.redis : undefined });
+  // Upload bodies only for the routes that store uploads, refused before they are read anywhere else.
+  installRawBodyGate(app);
 
   // Hevalo taken offline from the admin: every request but the console's and staff's gets the offline notice, before
   // any route and any rate limit.
@@ -785,12 +788,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerModerationRoutes(app, moderation);
 
     // Direct messages: sent over HTTP, pushed and acknowledged over the WebSocket; a message to a friend moves the Name badge.
-    registerChatRoutes(
-      app,
-      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation, badges),
-      trust,
-      aiMod,
-    );
+    const chat = new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation, badges);
+    registerChatRoutes(app, chat, trust, aiMod);
 
     // Letters by bird: pen pals in Kurdish, met by sending a bird out, within an age band (letters/service.ts).
     registerLetterRoutes(
@@ -814,6 +813,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       moderation,
     );
     registerGroupChatRoutes(app, groupChat);
+    // The badges' unread counts, direct and group, without the conversation list.
+    registerChatUnreadRoute(app, chat, groupChat);
 
     // Story games: Postgres holds the game, and long-polls are woken across instances over the room bus.
     const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: badges, friends });

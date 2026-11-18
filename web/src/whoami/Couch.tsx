@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   BURST,
-  GAME_DIALECTS,
+  readEveryDialect,
   GAME_DIFFICULTIES,
   WHO_AM_I_COUCH_MAX_PLAYERS,
   WHO_AM_I_COUCH_MIN_PLAYERS,
@@ -26,6 +26,7 @@ import {
   type WhoAmITableState,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
 import { CloseIcon, HelpIcon, PlusIcon } from '../components/icons';
 import { Modal } from '../components/Modal';
@@ -122,8 +123,9 @@ export function useCouchOffers(): WhoAmICouchOffer[] | null {
   const [offers, setOffers] = useState<WhoAmICouchOffer[] | null>(null);
   useEffect(() => {
     let alive = true;
-    void Promise.all(GAME_DIALECTS.map((d) => client.get<WhoAmICouchOffer>(`/games/who-am-i/couch?dialect=${d}`))).then((all) => {
-      if (alive) setOffers(all.flatMap((r) => (r.ok && Array.isArray(r.data?.difficulties) && r.data.difficulties.length > 0 ? [r.data] : [])));
+    // both varieties in one read
+    void readEveryDialect<WhoAmICouchOffer, ApiError>(client, '/games/who-am-i/couch').then((res) => {
+      if (alive) setOffers(res.ok ? res.data.filter((o) => Array.isArray(o?.difficulties) && o.difficulties.length > 0) : []);
     });
     return () => {
       alive = false;

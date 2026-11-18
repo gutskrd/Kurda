@@ -6,7 +6,7 @@ import { badgeSvg, gameEmblemSvg, leagueEmblemSvg, letterEnvelopeSvg, type Notic
 import MASCOT from '../../assets/mascot-deer.png';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useI18n } from '../i18n/I18nContext';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { Fire } from '../theme/Fire';
@@ -263,7 +263,7 @@ function Face({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; kind
   return (
     <View style={styles.face} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {actor ? (
-        <InitialsAvatar name={actor.name} id={actor.id} size={NOTICE.avatar} photoUrl={actor.photoUrl} />
+        <Avatar name={actor.name} size={NOTICE.avatar} photoUrl={actor.photoUrl} />
       ) : (
         <View style={[styles.hevalo, { backgroundColor: colors.surface }]} testID="notice-from-hevalo">
           <Image source={MASCOT} style={styles.deer} resizeMode="contain" />

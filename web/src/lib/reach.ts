@@ -60,6 +60,8 @@ export const REACH_CONTROLS = [
   '.letters-change',
   // A suspect's notes in Detective (games/detective.css).
   '.dt-note',
+  // Today's goal on Learn, a 40px pill that opens the goal picker.
+  '.learn-strip-goal',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */
@@ -111,6 +113,10 @@ export const LARGE_ENOUGH = [
   '.wa-answer-btn',
   // Rankings' league card, a whole card wide and over 80px tall (styles/ranks.css).
   '.league-card-mini',
+  // Learn's practice tools, cards at least 64px tall in a row of two or three (styles/shell.css).
+  '.learn-tool-link',
+  // The event card on Learn, 64px tall across the column (events/events.css).
+  '.event-card',
 ] as const;
 
 /** Sideways-scrolling rows of controls, padded above and below for their reach. */

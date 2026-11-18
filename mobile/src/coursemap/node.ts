@@ -18,8 +18,8 @@ type MapRow = { kind: 'header'; key: string; title: string } | { kind: 'node'; k
 
 /** A course as the Learn tab holds it; `map` is null when it failed to load, and the course offers a retry. */
 export interface CourseEntry {
-  /** As `/courses` lists it: 'kurmanji' or 'sorani'. */
-  course: { id: string; title: string; dialect?: string };
+  /** As `/courses` lists it; `dialect` is 'kurmanji' or 'sorani'. */
+  course: { id: string; title: string; slug?: string; dialect?: string };
   map: CourseMap | null;
 }
 

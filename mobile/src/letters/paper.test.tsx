@@ -18,6 +18,7 @@ import {
   NOTE_TURN_MAX,
   PAPER_H,
   PAPER_W,
+  letterThreadPath,
   paperColors,
   type LetterDecor,
   type LetterItem,
@@ -450,7 +451,7 @@ describe('a letter on your widget', () => {
   it('is put on your widget from under it, and taken off again, the widget asked each time to show it', async () => {
     let pinned: string | null = null;
     const client = fakeClient({
-      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+      [`GET ${letterThreadPath(THREAD)}`]: ok(thread()),
       'GET /letters/widget/prefs': () => Promise.resolve(ok({ pinnedLetterId: pinned, showWords: false })),
       'PUT /letters/widget/prefs': (body: unknown) => {
         pinned = (body as { pinnedLetterId: string | null }).pinnedLetterId;
@@ -476,7 +477,7 @@ describe('a letter on your widget', () => {
   it('pins at once, ends rapid taps on the last one, and puts a refused pin back', async () => {
     const answers: ((r: unknown) => void)[] = [];
     const client = fakeClient({
-      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+      [`GET ${letterThreadPath(THREAD)}`]: ok(thread()),
       'GET /letters/widget/prefs': ok({ pinnedLetterId: null, showWords: false }),
       'PUT /letters/widget/prefs': () => new Promise((resolve) => answers.push(resolve)),
     } as never);
@@ -498,7 +499,7 @@ describe('a letter on your widget', () => {
   it('says so when the letter was taken down meanwhile, and reads the letters again', async () => {
     let removed = false;
     const client = fakeClient({
-      [`GET /letters/threads/${THREAD}`]: () => {
+      [`GET ${letterThreadPath(THREAD)}`]: () => {
         const now = thread();
         return Promise.resolve(ok(removed ? { ...now, letters: [now.letters[0]!, letter({ removed: true, body: '' })] } : now));
       },
@@ -518,7 +519,7 @@ describe('a letter on your widget', () => {
   });
 
   it('offers nothing to pin until the server has said what is pinned', async () => {
-    testAuth.client = fakeClient({ [`GET /letters/threads/${THREAD}`]: ok(thread()) });
+    testAuth.client = fakeClient({ [`GET ${letterThreadPath(THREAD)}`]: ok(thread()) });
     renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
     expect(await screen.findByTestId('letter-report-l2')).toBeTruthy();
     expect(screen.queryByTestId('letter-widget-l2')).toBeNull();
@@ -526,7 +527,7 @@ describe('a letter on your widget', () => {
 
   it('answers on paper of your own, and a pen pal’s answer may carry a drawing', async () => {
     const client = fakeClient({
-      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+      [`GET ${letterThreadPath(THREAD)}`]: ok(thread()),
       [`POST /letters/threads/${THREAD}`]: (body: unknown) => Promise.resolve(ok({ letter: letter({ id: 'l3', mine: true, body: 'Spas!', decor: (body as ComposedLetter).decor }) })),
     } as never);
     testAuth.client = client;

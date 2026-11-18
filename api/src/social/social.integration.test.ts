@@ -124,6 +124,16 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     expect(found(exact, id.berserker!)).toBe(false);
   });
 
+  it('a near miss leaves out whoever a match leaves out: blocks either way and hidden profiles', async () => {
+    // one letter dropped, so no name holds it; someone with no block between them finds the name by it
+    expect(found(await social.search(id.named!, `blckme${suffix}`), id.blocked!)).toBe(true);
+    await friends.block(id.viewer!, id.blocked!);
+    expect(found(await social.search(id.viewer!, `blckme${suffix}`), id.blocked!)).toBe(false);
+    expect(found(await social.search(id.blocked!, `vewer${suffix}`), id.viewer!)).toBe(false);
+    expect(found(await social.search(id.named!, `vewer${suffix}`), id.viewer!)).toBe(true);
+    expect(found(await social.search(id.named!, `hiden${suffix}`), id.hidden!)).toBe(false);
+  });
+
   it('search puts the exact username first, then friends, then how well a name matches', async () => {
     await friends.request(id.viewer!, id.inside!);
     await friends.respond(id.inside!, id.viewer!, true);

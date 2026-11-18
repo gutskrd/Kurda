@@ -252,8 +252,6 @@ export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): NoticeKi
 /** Somebody a notification is about: whose picture it wears, and whose name is set in bold. */
 export interface NoticeActor {
   name: string;
-  /** What the monogram's colour is keyed on. */
-  id: string;
   photoUrl: string | null;
 }
 
@@ -274,14 +272,14 @@ export function noticeActor(item: Pick<InboxItem, 'data'>, invites: readonly Inc
   const { data } = item;
   if (data.kind === 'play_invite') {
     const invite = invites.find((i) => i.id === data.inviteId);
-    return invite ? { name: invite.from.name, id: invite.from.name, photoUrl: invite.from.avatarUrl } : null;
+    return invite ? { name: invite.from.name, photoUrl: invite.from.avatarUrl } : null;
   }
   if ((data.kind === 'gift' || data.kind === 'letter') && typeof data.fromUserId === 'string') {
     const who = friends.find((f) => f.userId === data.fromUserId);
-    return who ? { name: who.displayName || who.username, id: who.userId, photoUrl: who.avatarUrl ?? null } : null;
+    return who ? { name: who.displayName || who.username, photoUrl: who.avatarUrl ?? null } : null;
   }
   if (data.screen === 'Chat' && typeof data.username === 'string' && data.username && typeof data.userId === 'string') {
-    return { name: data.username, id: data.userId, photoUrl: null };
+    return { name: data.username, photoUrl: null };
   }
   return null;
 }

@@ -144,6 +144,12 @@ describe('the riddles’ list', () => {
     await waitFor(() => expect(calls.some((c) => c.path === '/riddles?dialect=ckb')).toBe(true));
   });
 
+  it('says when a variety has no riddles yet, naming it, and points to the other', async () => {
+    fakeApi({ 'GET /riddles': riddleList({ riddles: [], daily: null, solved: 0, total: 0 }) }, { signedIn: true });
+    pages('/app/learn/riddles');
+    expect(await screen.findByText('There are no riddles in Kurmancî yet. Try the other variety.')).toBeInTheDocument();
+  });
+
   it('tells a visitor once, gently, what an account keeps, and shows no solved count', async () => {
     server({ signedIn: false });
     pages('/app/learn/riddles');

@@ -192,6 +192,26 @@ describe('RhymeMatchScreen', () => {
       await waitFor(() => expect(client.calls.find((c) => c.path === '/rhyme/matches')?.body).toMatchObject({ dialect: 'kurmanci' }));
     });
 
+    it('asks friends in the same step, makes the match friendly, and invites them once it exists', async () => {
+      const client = fakeClient({
+        'GET /rhyme/availability': availability(false),
+        'GET /friends?limit=500': ok({ total: 1, friends: [{ userId: 'u-azad', username: 'azad', displayName: 'Azad', online: false, avatarUrl: null }] }),
+        'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+        'POST /rhyme/matches': ok(lobby()),
+        'POST /play/invites': ok({ ok: true, invited: 1 }),
+        'GET /rhyme/matches/m1': ok(lobby()),
+      });
+      testAuth.client = client;
+      renderWithProviders(<RhymeMatchScreen onExit={() => undefined} />);
+      expect(await screen.findByRole('heading', { name: 'Who to invite' })).toBeTruthy();
+      expect(screen.queryByRole('radio', { name: /^Rated/ })).toBeNull();
+      fireEvent.click(await screen.findByRole('checkbox', { name: 'Azad' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Create match' }));
+      await waitFor(() => expect(client.calls.some((c) => c.path === '/play/invites' && c.method === 'POST')).toBe(true));
+      expect(client.calls.find((c) => c.path === '/rhyme/matches')?.body).toEqual({ dialect: 'kurmanci', rated: false });
+      expect(client.calls.find((c) => c.path === '/play/invites' && c.method === 'POST')?.body).toEqual({ game: 'rhyme-match', lobbyId: 'm1', userIds: ['u-azad'] });
+    });
+
     it('opens on the variety a Soranî learner is learning, once matches are offered in it', async () => {
       rememberCourseDialect('sorani');
       const client = fakeClient({ 'GET /rhyme/availability': availability(true), 'POST /rhyme/matches': ok(lobby({ dialect: 'sorani' })), 'GET /rhyme/matches/m1': ok(lobby({ dialect: 'sorani' })) });

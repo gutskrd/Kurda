@@ -12,7 +12,7 @@ import { Chips } from '../theme/Chips';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { formatCompact, formatNumber } from '../i18n/format';
@@ -73,7 +73,7 @@ export interface BoardEntry {
   score: number;
   /** Ties share a place, so two rows can carry the same one. */
   rank: number;
-  /** Already resolved; an older server sends none, and the row draws initials. */
+  /** Already resolved; an older server sends none, and the row draws the default avatar. */
   avatarUrl?: string | null;
 }
 interface Board {
@@ -261,7 +261,7 @@ export function BoardRow({
       style={[styles.row, { flexDirection: dir.row }, self && { backgroundColor: colors.glassFill, borderColor: colors.primary, borderWidth: 1 }]}
     >
       <Text style={[styles.rank, { color: colors.textSecondary }]}>{place ?? '–'}</Text>
-      <InitialsAvatar name={entry.username} id={entry.userId} size={32} photoUrl={entry.avatarUrl ?? null} />
+      <Avatar name={entry.username} size={32} photoUrl={entry.avatarUrl ?? null} />
       <Text style={[styles.name, dir.free, self && styles.nameSelf, { color: colors.textPrimary }]} numberOfLines={1}>
         {name}
       </Text>
@@ -391,7 +391,7 @@ function BoardList({
               username: user?.displayName ?? user?.username ?? t('games.you'),
               score: board.me.score,
               rank: board.me.rank,
-              avatarUrl: user?.profilePhotoUrl ?? null,
+              avatarUrl: ownAvatarUrl(user),
             }}
             type={type}
             self

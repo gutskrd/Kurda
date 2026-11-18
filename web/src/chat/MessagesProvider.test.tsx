@@ -59,11 +59,10 @@ function setup(route: string, fetchImpl?: (url: string) => Promise<Response>) {
     vi.fn(
       fetchImpl ??
         (async (url: string) => {
-          if (String(url).includes('/me/groups/unread')) return jsonResponse(200, { unread: [] });
           if (String(url).includes('/me/groups')) {
             return jsonResponse(200, { groups: [{ id: 'g1', name: 'Hevalên Kurmancî', memberCount: 4, myRole: 'member' }] });
           }
-          if (String(url).includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+          if (String(url).includes('/chat/unread')) return jsonResponse(200, { direct: [], groups: [] });
           // must come after the /me/groups branches above — it is a prefix of them
           if (String(url).includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
           return jsonResponse(200, {});
@@ -112,7 +111,7 @@ describe('MessagesProvider', () => {
   it('counts the unread messages again when a group chat is cleared for everyone', async () => {
     const rt = setup('/app/games');
     await ready();
-    const unreadReads = () => (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(([u]) => String(u).includes('/me/groups/unread')).length;
+    const unreadReads = () => (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(([u]) => String(u).includes('/chat/unread')).length;
     await waitFor(() => expect(unreadReads()).toBeGreaterThan(0));
     const before = unreadReads();
     await waitFor(() => {
@@ -194,15 +193,10 @@ describe('MessagesProvider', () => {
     expect(screen.queryByText('my own message')).not.toBeInTheDocument();
   });
 
-  it('totals unread across direct and group conversations', async () => {
+  it('totals unread across direct and group conversations from the counts alone, never the conversation list', async () => {
     setup('/app', async (url: string) => {
-      if (String(url).includes('/me/groups/unread')) {
-        return jsonResponse(200, { unread: [{ groupId: 'g1', unread: 3 }] });
-      }
       if (String(url).includes('/me/groups')) return jsonResponse(200, { groups: [] });
-      if (String(url).includes('/chat/conversations')) {
-        return jsonResponse(200, { conversations: [{ userId: 'u2', username: 'zana', lastMessage: 'hi', lastAt: '', lastFromMe: false, unread: 2 }] });
-      }
+      if (String(url).includes('/chat/unread')) return jsonResponse(200, { direct: [{ userId: 'u2', unread: 2 }], groups: [{ groupId: 'g1', unread: 3 }] });
       return jsonResponse(200, {});
     });
 
@@ -210,6 +204,26 @@ describe('MessagesProvider', () => {
     // Reading one conversation takes its messages off the total before any receipt is answered.
     await userEvent.click(screen.getByRole('button', { name: 'Read zana' }));
     expect(screen.getByTestId('unread')).toHaveTextContent('3');
+    const asked = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.map(([u]) => String(u));
+    expect(asked.some((u) => u.includes('/chat/conversations') || u.includes('/me/groups/unread'))).toBe(false);
+  });
+
+  it('keeps the total it has when a count cannot be read', async () => {
+    let fail = false;
+    const rt = setup('/app/games', async (url: string) => {
+      if (String(url).includes('/me/groups')) return jsonResponse(200, { groups: [{ id: 'g1', name: 'Kom', memberCount: 2, myRole: 'member' }] });
+      if (String(url).includes('/chat/unread')) return fail ? jsonResponse(503, {}) : jsonResponse(200, { direct: [{ userId: 'u2', unread: 4 }], groups: [] });
+      if (String(url).includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
+      return jsonResponse(200, {});
+    });
+    await waitFor(() => expect(screen.getByTestId('unread')).toHaveTextContent('4'));
+    fail = true;
+    const reads = () => (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(([u]) => String(u).includes('/chat/unread')).length;
+    const before = reads();
+    rt.emit({ room: 'group:g1', event: { type: 'group_chat_cleared', groupId: 'g1', at: '2026-10-29T10:00:00.000Z', by: 'owen' } });
+    await waitFor(() => expect(reads()).toBeGreaterThan(before));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.getByTestId('unread')).toHaveTextContent('4');
   });
 
   it('counts again each minute and says it is here every two while the tab is in view, and asks nothing while it is hidden', async () => {
@@ -221,27 +235,27 @@ describe('MessagesProvider', () => {
     await eventually(() => expect(asked('/me/heartbeat')).toBe(1));
     // what mounting asks has settled
     await new Promise((r) => setTimeout(r, 50));
-    const counted = asked('/chat/conversations');
+    const counted = asked('/chat/unread');
     const beats = asked('/me/heartbeat');
     expect(counted).toBeGreaterThan(0);
 
     vi.advanceTimersByTime(60_000);
-    await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 1));
+    await eventually(() => expect(asked('/chat/unread')).toBe(counted + 1));
     expect(asked('/me/heartbeat')).toBe(beats);
     vi.advanceTimersByTime(60_000);
-    await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 2));
+    await eventually(() => expect(asked('/chat/unread')).toBe(counted + 2));
     expect(asked('/me/heartbeat')).toBe(beats + 1);
 
     // a tab behind another one: neither the count nor the presence beat is asked for
     hidden(true);
     vi.advanceTimersByTime(10 * 60_000);
-    expect(asked('/chat/conversations')).toBe(counted + 2);
+    expect(asked('/chat/unread')).toBe(counted + 2);
     expect(asked('/me/heartbeat')).toBe(beats + 1);
 
     // and coming back asks once, at once, for what it missed
     hidden(false);
     document.dispatchEvent(new Event('visibilitychange'));
-    await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 3));
+    await eventually(() => expect(asked('/chat/unread')).toBe(counted + 3));
     expect(asked('/me/heartbeat')).toBe(beats + 2);
   });
 

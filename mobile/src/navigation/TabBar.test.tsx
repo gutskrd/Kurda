@@ -30,8 +30,7 @@ afterEach(() => {
 
 function open({ index = 0, chats = [] as number[], groups = [] as number[], requests = 0, gifts = 0 } = {}) {
   testAuth.client = fakeClient({
-    'GET /chat/conversations': ok({ conversations: chats.map((unread, i) => ({ userId: `u${i}`, username: `u${i}`, lastMessage: '', lastFromMe: false, unread })) }),
-    'GET /me/groups/unread': ok({ unread: groups.map((unread, i) => ({ groupId: `g${i}`, unread })) }),
+    'GET /chat/unread': ok({ direct: chats.map((unread, i) => ({ userId: `u${i}`, unread })), groups: groups.map((unread, i) => ({ groupId: `g${i}`, unread })) }),
     'GET /friends/requests': ok({ requests: Array.from({ length: requests }, (_, i) => ({ userId: `r${i}`, username: `r${i}` })) }),
     'GET /me/notifications/unread-count': ok({ count: 0 }),
     'GET /me/gifts/unseen': ok({ unseen: gifts }),

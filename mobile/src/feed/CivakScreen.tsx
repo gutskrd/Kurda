@@ -25,7 +25,7 @@ import { getFeed } from './api';
 import { useQuietRefocus } from './keep';
 import { FeedCard, FeedSkeleton } from './FeedCard';
 import { FriendsRow } from './FriendsRow';
-import type { FeedItem } from './types';
+import { asSection, type FeedItem } from './types';
 import {
   DEFAULT_FILTER,
   FeedFilterSheet,
@@ -39,21 +39,29 @@ import { onPostDeleted, samePost, useDeleting } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
 import { FilterChip, FilterChips } from '../theme/FilterSheet';
 import { Loading } from '../theme/Loading';
+import { DailyRewardCard } from '../rewards/DailyRewardCard';
+import { LeagueLine } from '../leagues/LeagueLine';
 
 const PAGE = 20;
 
 /**
- * Home: everything the community has written and posted, on one wall, reading the same `/feed` as the web app,
- * with a filter for one kind.
+ * Home, laid out as the website's: the page's name and line, today's Zêr and the week's league, then the row of
+ * friends' faces, the filters and everything the community has written and posted, reading the same `/feed`. Posts
+ * are at full screen width, so a picture is the size of the phone.
  *
- * The header follows the familiar social-home shape: the name at the start, and at the end a "+" to post and the
- * notifications bell with a dot while any are unread. Below are the row of friends' faces, the filters, then the
- * posts at full screen width, so a picture is the size of the phone.
- *
- * The wall loads from its skeleton only on first open and when the way of reading it changes. Returning to it
- * keeps the posts and position and refreshes silently.
+ * `section` and `kind` open the wall on one half or kind (a link, or the menu's Writing and Pictures); the screen
+ * applies them once and calls `onFilterShown`. The wall loads from its skeleton only on first open and when the way
+ * of reading it changes; returning to it keeps the posts and position and refreshes silently.
  */
-export function CivakScreen(): React.JSX.Element {
+export function CivakScreen({
+  section,
+  kind,
+  onFilterShown,
+}: {
+  section?: string;
+  kind?: string;
+  onFilterShown?: () => void;
+} = {}): React.JSX.Element {
   const { client } = useAuth();
   // A guest reads the wall; writing on it is the account's (auth/AccountGate).
   const { require } = useAccountGate();
@@ -85,6 +93,13 @@ export function CivakScreen(): React.JSX.Element {
     setFilter(normalise(next));
     listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, []);
+
+  useEffect(() => {
+    if (!section) return;
+    choose({ ...DEFAULT_FILTER, section: asSection(section), kind: kind ?? null });
+    onFilterShown?.();
+    // Once per request: the caller clears the params it came with.
+  }, [section, kind]);
 
   const fetchPage = useCallback(
     (offset: number) => getFeed(client, { section: filter.section, kind: filter.kind, sort: filter.sort, period: filter.period, limit: PAGE, offset }),
@@ -182,9 +197,10 @@ export function CivakScreen(): React.JSX.Element {
     setItems((prev) => (prev ?? []).map((i) => (i.key === next.key ? next : i)));
   }, []);
 
-  // A post you deleted leaves the wall at once, reposts of it included.
+  // A post you deleted leaves the wall at once, reposts of it included; the last one gone leaves the empty wall.
   useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
   const deleting = useDeleting();
+  const shown = (items ?? []).filter((i) => !deleting(i));
 
   // The first screenful rises in once, as the wall arrives.
   const entering = useListEntrance(!!items && items.length > 0);
@@ -204,12 +220,12 @@ export function CivakScreen(): React.JSX.Element {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        {/* The app's own name where a tab's is, and the one thing only this tab does: write on the wall. */}
-        <TabHeader title="Hevalo" action={<HeaderButton icon="plus" label={t('post.open')} onPress={compose} testID="home-post" />} />
+        {/* The page's name, and the one thing only this tab does: write on the wall. */}
+        <TabHeader title={t('civak.title')} action={<HeaderButton icon="plus" label={t('post.open')} onPress={compose} testID="home-post" />} />
 
         <FlatList
           ref={listRef}
-          data={(items ?? []).filter((i) => !deleting(i))}
+          data={shown}
           keyExtractor={(i) => i.key}
           renderItem={renderItem}
           contentContainerStyle={{ paddingBottom: tabBarInset }}
@@ -221,10 +237,15 @@ export function CivakScreen(): React.JSX.Element {
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <>
+              <View style={styles.top}>
+                <Text style={[styles.subtitle, dir.text, { color: colors.textSecondary }]}>{t('civak.subtitle')}</Text>
+                <DailyRewardCard onLearn={() => navigation.navigate('Learn', { view: 'lessons' })} />
+                <LeagueLine />
+              </View>
               <FriendsRow refreshKey={pulls} />
               {plain ? (
                 /* Sorting and filtering: one quiet chip over the first post saying the current choice, offered only once there are posts to sort. */
-                (items?.length ?? 0) > 0 ? (
+                shown.length > 0 ? (
                   <View style={[styles.filterChips, { flexDirection: dir.row }]}>
                     <Pressable
                       onPress={() => setFiltering(true)}
@@ -317,6 +338,9 @@ const styles = StyleSheet.create({
   sortChip: { alignItems: 'center', gap: spacing.xs + 2, minHeight: CHIP, paddingHorizontal: spacing.md - 4, borderRadius: radii.pill },
   sortChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   waiting: { paddingHorizontal: layout.gutter },
+  // The page's line, today's reward and the week, inside the gutter above the faces.
+  top: { paddingHorizontal: layout.gutter, gap: spacing.sm, paddingBottom: spacing.md },
+  subtitle: { fontSize: typography.sizes.md, lineHeight: 22 },
   // The chips under the faces, inside the page's gutter.
   filterChips: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
 });

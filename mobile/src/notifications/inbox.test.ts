@@ -178,8 +178,8 @@ describe('when a notification came, after its words on the same line', () => {
 describe('what a notification is, and who it is from', () => {
   it('names who sent a gift or a letter when they are a friend, and nobody when they are not', () => {
     const friends = [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: '/b.png' }];
-    expect(noticeActor({ data: { kind: 'gift', fromUserId: 'u-berfin' } }, [], friends)).toEqual({ name: 'Berfin', id: 'u-berfin', photoUrl: '/b.png' });
-    expect(noticeActor({ data: { kind: 'letter', fromUserId: 'u-berfin' } }, [], [{ userId: 'u-berfin', username: 'berfin' }])).toEqual({ name: 'berfin', id: 'u-berfin', photoUrl: null });
+    expect(noticeActor({ data: { kind: 'gift', fromUserId: 'u-berfin' } }, [], friends)).toEqual({ name: 'Berfin', photoUrl: '/b.png' });
+    expect(noticeActor({ data: { kind: 'letter', fromUserId: 'u-berfin' } }, [], [{ userId: 'u-berfin', username: 'berfin' }])).toEqual({ name: 'berfin', photoUrl: null });
     expect(noticeActor({ data: { kind: 'gift', fromUserId: 'u-stranger' } }, [], friends)).toBeNull();
     expect(noticeActor({ data: { kind: 'badge', fromUserId: 'u-berfin' } }, [], friends)).toBeNull();
   });
@@ -201,12 +201,12 @@ describe('what a notification is, and who it is from', () => {
   it('names the host of an invite only while it can still be answered', () => {
     const invite = { id: 'i1', from: { name: 'Azad', avatarUrl: '/a.png' } } as IncomingInvite;
     const item = { data: { kind: 'play_invite', inviteId: 'i1' } };
-    expect(noticeActor(item, [invite])).toEqual({ name: 'Azad', id: 'Azad', photoUrl: '/a.png' });
+    expect(noticeActor(item, [invite])).toEqual({ name: 'Azad', photoUrl: '/a.png' });
     expect(noticeActor(item, [])).toBeNull();
   });
 
   it('names the sender of a message, and nobody for a notice from Hevalo', () => {
-    expect(noticeActor({ data: { screen: 'Chat', userId: 'u3', username: 'rojhat' } })).toEqual({ name: 'rojhat', id: 'u3', photoUrl: null });
+    expect(noticeActor({ data: { screen: 'Chat', userId: 'u3', username: 'rojhat' } })).toEqual({ name: 'rojhat', photoUrl: null });
     expect(noticeActor({ data: { kind: 'badge' } })).toBeNull();
   });
 

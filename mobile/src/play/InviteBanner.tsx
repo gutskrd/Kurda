@@ -14,7 +14,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { TAB_BAR_HEIGHT, tabBarLift } from '../navigation/tabBarLayout';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
@@ -282,7 +282,7 @@ function InviteCard({
     // Joining: the stub comes off, then the lobby opens.
     onAnswer(invite.id);
     haptic('tap');
-    announce(t('play.card.joined'));
+    announce(t('play.ticket.joined'));
     setTorn(true);
     const route = lobbyRoute(res.data.game, res.data.lobbyId);
     after(reduce ? 0 : TEAR_MS + 40, () => {
@@ -315,7 +315,7 @@ function InviteCard({
           >
             <View style={[styles.pillInner, row, lifted]}>
               <View>
-                <InitialsAvatar name={invite.from.name} id={invite.from.name} size={28} photoUrl={invite.from.avatarUrl} />
+                <Avatar name={invite.from.name} size={28} photoUrl={invite.from.avatarUrl} />
                 <View style={[styles.pillBadge, rtl ? styles.pillBadgeLeft : styles.pillBadgeRight]}>
                   <TicketBadge tone={invite.game} size={16} ring={colors.background} />
                 </View>
@@ -388,7 +388,7 @@ function InviteCard({
             accessibilityLiveRegion="polite"
           >
             <View style={[styles.head, row]}>
-              <InitialsAvatar name={invite.from.name} id={invite.from.name} size={40} photoUrl={invite.from.avatarUrl} />
+              <Avatar name={invite.from.name} size={40} photoUrl={invite.from.avatarUrl} />
               <View style={styles.text}>
                 <Text style={[styles.headline, { color: colors.textPrimary }, dir]}>{headline}</Text>
                 {details ? (

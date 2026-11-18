@@ -46,13 +46,13 @@ export function LastLetterScreen({ id: initialId, onExit }: { id?: string; onExi
     <GradientBackground>
       <ScreenHeader title={t('games.lastLetter.name')} onBack={onExit} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {id ? <Room key={id} id={id} onNew={() => setId(null)} onOpen={setId} /> : <Start onEnter={setId} />}
+        {id ? <Room key={id} id={id} onNew={() => setId(null)} onOpen={setId} /> : <Start onEnter={setId} onExit={onExit} />}
       </ScrollView>
     </GradientBackground>
   );
 }
 
-function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Element {
+function Start({ onEnter, onExit }: { onEnter: (id: string) => void; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -72,6 +72,8 @@ function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Elemen
         <View style={styles.card}>
           <GameArt game="last-letter" size={72} />
           <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.notOffered')}</Text>
+          {/* Not a dead end: the way back to the other games, as the website offers. */}
+          <ClayButton label={t('games.solo.backToGames')} variant="outline" tone="primary" onPress={onExit} />
         </View>
       </GlassCard>
     );

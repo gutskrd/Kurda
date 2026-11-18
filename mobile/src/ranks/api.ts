@@ -1,4 +1,4 @@
-import type { BadgesResponse, ExpectedGains, LeagueView, RankResult, RankedGame, UnseenBadge } from '@kurda/shared';
+import type { BadgesResponse, LeagueView, RankResult, RankedGame, UnseenBadge } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
@@ -7,18 +7,6 @@ import type { ApiResult } from '../api/types';
 /** What a finished game did to your rank, with its one plain reason. */
 export const getRankResult = (client: ApiClient, game: RankedGame, ref: string): Promise<ApiResult<RankResult>> =>
   client.get(`/ranks/results/${game}/${ref}`);
-
-/** In a lobby: roughly what a win and a loss against each opponent would do, and whether it would count now. */
-export const getExpectedGains = (client: ApiClient, game: RankedGame, lobbyId: string): Promise<ApiResult<ExpectedGains>> =>
-  client.get(`/ranks/expected/${game}/${lobbyId}`);
-
-/** Your remembered Rated/Friendly choice per game (what a setup sheet starts on). */
-export const getRatedPreferences = (client: ApiClient): Promise<ApiResult<{ preferences: Partial<Record<RankedGame, boolean>> }>> =>
-  client.get('/ranks/preferences');
-
-/** The host changes a lobby's Rated/Friendly badge (the lobby is the only place it can change). */
-export const setLobbyRated = (client: ApiClient, game: RankedGame, lobbyId: string, rated: boolean): Promise<ApiResult<{ ok: true; rated: boolean }>> =>
-  client.put(`/play/${game}/${lobbyId}/rated`, { rated });
 
 export const getLeague = (client: ApiClient): Promise<ApiResult<LeagueView>> => client.get('/me/league');
 

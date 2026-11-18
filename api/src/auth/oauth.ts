@@ -1,11 +1,12 @@
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose';
 import type pg from 'pg';
-import { checkUsername, normalizeKurdish, numberedUsername, stripControlChars, suggestUsername } from '@kurda/shared';
+import { checkUsername, numberedUsername, suggestUsername } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
 import { issueTokenPair, type IssuedTokens } from './tokens.js';
 import { toPublicUser, type PublicUser } from './service.js';
 import type { UserRow } from '../users/repository.js';
+import { cleanDisplayName } from '../users/display-name.js';
 import { isBannedEmail } from '../moderation/ban-registry.js';
 import { suspensionError } from '../moderation/suspension.js';
 import { signupRejected } from './rejections.js';
@@ -20,16 +21,6 @@ export interface AppleSignInExtras {
   authorizationCode?: string;
   /** the name the person shared, which Apple gives the app on their first sign-in only */
   fullName?: string;
-}
-
-/** The longest display name an account can have (as PATCH /me allows). */
-const DISPLAY_NAME_MAX = 60;
-
-/** A name the app passed on, as a display name: plain text, or null when nothing is left of it. */
-function displayNameFrom(raw: string | undefined): string | null {
-  if (!raw) return null;
-  const clean = stripControlChars(normalizeKurdish(raw)).replace(/\s+/g, ' ').trim().slice(0, DISPLAY_NAME_MAX).trim();
-  return clean || null;
 }
 
 interface ProviderSpec {
@@ -234,7 +225,7 @@ export class OAuthService {
     // Apple's identity token never carries a name: the app passes on the one
     // the person shared, which Apple gives it on their first sign-in only. It
     // names a new account; an existing one keeps the name it has.
-    const name = identity.name ?? (identity.provider === 'apple' ? displayNameFrom(extras.fullName) : null);
+    const name = cleanDisplayName(identity.name ?? (identity.provider === 'apple' ? extras.fullName : null));
 
     // 3a) A guest asked: their row becomes the account, keeping username and progress. Still `created`, since the
     //     sign-up steps that follow (the birth month question) are still to come.

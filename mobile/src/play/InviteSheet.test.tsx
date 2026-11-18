@@ -12,7 +12,8 @@ import { forgetImpostorCategories } from '../impostor/categories';
 import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { forgetPartyOffers } from '../party/offer';
 import { navigation } from './testing/navigation';
-import { InviteSheet, orderFriends, recentPlayers, sentText } from './InviteSheet';
+import { InviteSheet, sentText } from './InviteSheet';
+import { orderFriends, recentPlayers } from './FriendPicker';
 import { flightMs } from './SentTickets';
 import type { FriendSummary } from './api';
 

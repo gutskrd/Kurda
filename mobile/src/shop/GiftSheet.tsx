@@ -9,7 +9,7 @@ import { restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
 import { newGiftKey } from '../gifts/api';
 import { giftErrorText } from '../gifts/GiftPickerSheet';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { spacing, typography } from '../theme/tokens';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { useTheme } from '../theme/ThemeProvider';
@@ -126,7 +126,7 @@ export function GiftSheet({
                 accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
                 style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
               >
-                <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
+                <Avatar name={f.displayName || f.username} size={34} photoUrl={f.avatarUrl} />
                 <Text style={[styles.who, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
                   {f.displayName || f.username}
                 </Text>

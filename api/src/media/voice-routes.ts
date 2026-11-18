@@ -24,6 +24,7 @@ export function registerVoiceRoutes(app: FastifyInstance, config: AppConfig): vo
     '/media/voice',
     {
       config: {
+        rawBody: true,
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },

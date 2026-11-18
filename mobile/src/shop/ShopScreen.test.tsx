@@ -17,6 +17,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { DEFAULT_PAPER, TREE_KINDS, TREE_SPECIES, treeView, type LettersHome, type TreeRecord, type TreeView } from '@kurda/shared';
 import type { MyTree } from '../tree/api';
+import { TRANSLATIONS } from '../i18n/translations';
 import type { ShopItem } from './format';
 import { ShopScreen } from './ShopScreen';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
@@ -27,6 +28,7 @@ beforeEach(() => vi.spyOn(Alert, 'alert').mockImplementation(() => undefined));
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  localStorage.removeItem('kurda_locale_v1');
 });
 
 const item = (over: Partial<ShopItem> & Pick<ShopItem, 'sku' | 'name' | 'category'>): ShopItem => ({
@@ -122,9 +124,18 @@ describe('the Shop, by kind', () => {
   });
 
   /*
-   * Green is for a right answer, so "Free" is a price like any other, and a row's name and meaning may take a second
+   * Green is for a right answer, so "Free" is a price like any other, and a card's name and meaning may take a second
    * line.
    */
+  it('names both currencies in the purse, and lays the items out as cards two to a row', async () => {
+    open();
+    expect(await screen.findByLabelText('550 Zêr')).toBeTruthy();
+    expect(screen.getByLabelText('12 gems')).toBeTruthy();
+    const card = await screen.findByRole('button', { name: 'Hevalo, Hevalo violet, Free' });
+    expect(getComputedStyle(card.parentElement!).flexWrap).toBe('wrap');
+    expect(card.style.width || getComputedStyle(card).width).toBe('48.5%');
+  });
+
   it('prints Free as a price, not in green, and lets a name and its meaning take a second line', async () => {
     open();
     const free = await screen.findByRole('button', { name: 'Hevalo, Hevalo violet, Free' });
@@ -139,8 +150,8 @@ describe('the Shop, by kind', () => {
   it('shows a frame the way it will be worn: round your own picture, in its row and in its sheet', async () => {
     open([...CATALOGUE, item({ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', price: 1400, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' })], { zer: 2000, gems: 0 });
     const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr$/ });
-    await waitFor(() => expect(row.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/frames/made-01-lale.png'));
-    // Your own picture inside it (here with no photo, your initials on their disc).
+    await waitFor(() => expect([...row.querySelectorAll('img')].map((img) => img.getAttribute('src'))).toContain('https://hevalo.app/cosmetics/frames/made-01-lale.png'));
+    // Your own picture inside it (here with no photo, the default avatar).
     expect(row.querySelector('[role="img"][aria-label*="rojda"]')).not.toBeNull();
     // And again, larger, in the sheet the row opens: the frame and your picture are each on screen twice.
     fireEvent.click(row);
@@ -176,6 +187,16 @@ describe('the Shop, by kind', () => {
     expect(rowNames()).toEqual(['Gola Şîn']);
     search('sin');
     expect(rowNames()).toEqual(['Gola Şîn']);
+  });
+
+  it('describes what the shop ships with in the reader’s language, and finds it by those words', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    open();
+    expect(await screen.findByText('شەو لە کوێستان')).toBeTruthy();
+    expect(screen.queryByText('Night on the high pastures')).toBeNull();
+    fireEvent.change(screen.getByLabelText(TRANSLATIONS.ckb['shop.search.label']), { target: { value: 'خۆر' } });
+    // the sun, and the sun seal
+    expect(rowNames()).toEqual(['Roj', 'Mohra Rojê']);
   });
 
   it('puts each kind in price order (low to high: Zêr, then gems), either way, or by name', async () => {

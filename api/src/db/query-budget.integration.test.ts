@@ -212,6 +212,28 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(three.count, three.statements.join('\n')).toBeLessThanOrEqual(20);
     });
 
+    it('a correspondence’s newest page costs the same for three letters as for thirty, within its budget', async () => {
+      const thread = async (other: string, letters: number): Promise<string> => {
+        const { lo, hi } = canonicalPair(ids.la!, ids[other]!);
+        const made = await pool.query<{ id: string }>(`INSERT INTO letter_threads (user_lo, user_hi, last_letter_at) VALUES ($1, $2, now()) RETURNING id`, [lo, hi]);
+        await pool.query(
+          `INSERT INTO letters (sender_id, recipient_id, thread_id, body, age_band, status, created_at, delivered_at, read_at)
+           SELECT CASE WHEN i % 2 = 0 THEN $1 ELSE $2 END::uuid, CASE WHEN i % 2 = 0 THEN $2 ELSE $1 END::uuid, $3, 'Name ' || i, '18+',
+                  'delivered', now() + i * interval '1 second', now() + i * interval '1 second', now()
+             FROM generate_series(1, $4::int) i`,
+          [ids.la, ids[other], made.rows[0]!.id, letters],
+        );
+        return made.rows[0]!.id;
+      };
+      const short = await steady('GET', `/letters/threads/${await thread('lb', 3)}?limit=10`, 'la');
+      const long = await steady('GET', `/letters/threads/${await thread('solo', 30)}?limit=10`, 'la');
+      expect(short.body.letters).toHaveLength(3);
+      expect(long.body.letters).toHaveLength(10);
+      expect(long.count, long.statements.join('\n')).toBe(short.count);
+      // the session read, the correspondence and its page of letters
+      expect(long.count, long.statements.join('\n')).toBeLessThanOrEqual(3);
+    });
+
     it('the heartbeat is the session read and one statement', async () => {
       const beat = await steady('POST', '/me/heartbeat', 'me');
       expect(beat.count, beat.statements.join('\n')).toBeLessThanOrEqual(2);
@@ -242,6 +264,24 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(long.body.messages).toHaveLength(20);
       expect(long.count, long.statements.join('\n')).toBe(short.count);
       expect(long.count, long.statements.join('\n')).toBeLessThanOrEqual(2);
+    });
+
+    it('the badges’ unread counts cost the same for one conversation as for six, and read no conversation list', async () => {
+      const groups = new GroupService(pool);
+      await message(ids.f1!, ids.solo!, 'one');
+      for (const tag of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6']) await message(ids[tag]!, ids.me!, `from ${tag}`);
+      for (const [owner, tag] of [['solo', 'One'], ['me', 'Six']] as const) {
+        const { id } = await groups.create(ids[owner]!, { name: `${tag} unread ${suffix}`.slice(0, 40) });
+        await pool.query(`INSERT INTO group_messages (group_id, sender_id, body) VALUES ($1, $2, 'hello')`, [id, ids.f1]);
+      }
+      const one = await steady('GET', '/chat/unread', 'solo');
+      const six = await steady('GET', '/chat/unread', 'me');
+      expect(one.body.direct).toEqual([{ userId: ids.f1, unread: 1 }]);
+      expect(six.body.direct.length).toBeGreaterThanOrEqual(6);
+      expect(six.count, six.statements.join('\n')).toBe(one.count);
+      // the session read, the direct counts and the group counts
+      expect(six.count, six.statements.join('\n')).toBeLessThanOrEqual(3);
+      expect(six.statements.join('\n')).not.toMatch(/row_number\(\)|last_seen_at/);
     });
 
     it('sending a direct message stays within its budget', async () => {
