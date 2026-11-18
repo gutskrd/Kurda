@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml, stripControlChars, stripHiddenChars } from './sanitize.js';
+import { escapeHtml, isPlainPath, stripControlChars, stripHiddenChars } from './sanitize.js';
 import { XSS_PAYLOADS } from './xss-corpus.js';
 
 describe('escapeHtml vs the XSS corpus', () => {
@@ -55,5 +55,22 @@ describe('stripHiddenChars', () => {
     for (const s of ['\u0645\u06CC\u200C\u0646', '\u{1F469}\u200D\u{1F4BB}', 'Hevalo \u200F\u06A9\u0648\u0631\u062F\u06CC', 'Şêrko Bêkes']) {
       expect(stripHiddenChars(s)).toBe(s);
     }
+  });
+});
+
+describe('isPlainPath', () => {
+  it('passes the paths the apps call, ids, queries and encoded text included', () => {
+    for (const path of ['/me', '/users/11111111-2222-4333-8444-555555555555/friends?limit=6', '/stories/%C3%A7%C3%AErok', '/dictionary/search?q=../x', '/a.b/c..d', '/x#..']) {
+      expect(isPlainPath(path), path).toBe(true);
+    }
+  });
+
+  it('refuses every path a URL parser would take to another endpoint', () => {
+    for (const path of ['/users/../admin/users', '/users/..', '/users/./x', '/users/%2e%2e/admin', '/users/.%2E/admin', '/users/%2E./admin', '/users/..\\admin', '/users/.\t./admin', '/users/x\n']) {
+      expect(isPlainPath(path), JSON.stringify(path)).toBe(false);
+    }
+    // Each of these is read as another address than the one written.
+    expect(new URL('https://api.test/users/%2e%2e/admin').pathname).toBe('/admin');
+    expect(new URL('https://api.test/users/.\t./admin').pathname).toBe('/admin');
   });
 });

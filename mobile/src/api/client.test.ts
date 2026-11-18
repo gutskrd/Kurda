@@ -37,6 +37,18 @@ describe('ApiClient', () => {
     expect(fetchFn.mock.calls[0]![1].headers.authorization).toBe('Bearer acc-1');
   });
 
+  it('sends nothing to a path a link’s parameter turned into another endpoint’s', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, {}));
+    const { client, ready } = makeClient(fetchFn);
+    await ready;
+    // hevalo://app/users/..%2F..%2Fgroups%2Fg1%2Fjoin hands the screen the id "../../groups/g1/join"
+    for (const path of ['/users/../../groups/g1/join', '/users/%2E%2E/admin', '/users/..\\admin']) {
+      const res = await client.post(path);
+      expect(res, path).toEqual({ ok: false, error: { kind: 'client', status: 404, code: 'NOT_FOUND', message: 'not found' } });
+    }
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
+
   /**
    * Signing in is a 401 on a request without a token; it must keep the server's code (a wrong password) rather
    * than read as an expired session.

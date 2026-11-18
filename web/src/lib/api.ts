@@ -2,7 +2,7 @@ import { API_URL } from './config';
 import type { ApiError, ApiResult, TokenPair } from './types';
 import { createTokenStorage, persistTokens, type TokenStorage } from './tokenStorage';
 import type { MessageKey } from '../i18n/en';
-import { isMissingRoute, MAINTENANCE_CODE, maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
+import { isMissingRoute, isPlainPath, MAINTENANCE_CODE, maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
 import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
@@ -21,6 +21,9 @@ import type { Translate } from '../i18n/I18nProvider';
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const TIMEOUT_MS = 30_000; // Render's free tier can take 20–40 s to cold-start.
+
+/** The answer for a path that would reach another endpoint than it names (shared `isPlainPath`); nothing is sent. */
+const OFF_PATH = { ok: false, error: { kind: 'client', status: 404, code: 'NOT_FOUND', message: 'not found' } } as const satisfies ApiResult<never>;
 
 export function requestId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -82,6 +85,7 @@ export class ApiClient {
 
   /** Sends raw bytes (a profile photo) with their own content type instead of JSON; no auto-refresh, the caller retries. */
   async uploadBytes<T>(path: string, blob: Blob): Promise<ApiResult<T>> {
+    if (!isPlainPath(path)) return OFF_PATH;
     const tokens = this.storage.get();
     try {
       const res = await this.timedFetch(`${this.baseUrl}${path}`, {
@@ -102,7 +106,7 @@ export class ApiClient {
 
   /** `uploadBytes` with upload progress (0–1), which fetch cannot report, so this uses XMLHttpRequest. */
   uploadWithProgress<T>(path: string, blob: Blob, onProgress: (fraction: number) => void): Promise<ApiResult<T>> {
-    if (typeof XMLHttpRequest === 'undefined') return this.uploadBytes<T>(path, blob);
+    if (typeof XMLHttpRequest === 'undefined' || !isPlainPath(path)) return this.uploadBytes<T>(path, blob);
     const tokens = this.storage.get();
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
@@ -157,6 +161,7 @@ export class ApiClient {
   }
 
   private async send<T>(method: string, path: string, options: RequestOptions): Promise<ApiResult<T>> {
+    if (!isPlainPath(path)) return OFF_PATH;
     const headers: Record<string, string> = { ...options.headers, 'x-device-id': deviceId() };
     if (options.body !== undefined) headers['content-type'] = 'application/json';
     if (MUTATING.has(method)) headers['idempotency-key'] = requestId();

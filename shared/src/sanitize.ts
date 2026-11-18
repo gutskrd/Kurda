@@ -39,6 +39,18 @@ export function stripHiddenChars(input: string): string {
   return stripControlChars(input).replace(HIDING_CHARS, '');
 }
 
+/**
+ * Whether a request path reaches the endpoint it names: no `.` or `..` segment in any spelling a URL parser reads as one
+ * (`%2e`), and no backslash, tab or line break, which parsers read as a slash or drop. The apps put route parameters
+ * decoded from the page's address into API paths, so a link to `/app/users/..%2Fadmin` would otherwise send the
+ * reader's session to another endpoint.
+ */
+export function isPlainPath(path: string): boolean {
+  const pathname = path.split(/[?#]/, 1)[0]!;
+  if (/[\\\t\n\r]/.test(pathname)) return false;
+  return !pathname.split('/').some((segment) => /^(?:\.|%2e){1,2}$/i.test(segment));
+}
+
 /** A plain object, as untrusted JSON gives one: not null and not an array. */
 export function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
