@@ -1,19 +1,7 @@
 /**
- * How loud a recording is, every 10 ms: where the speech starts and stops,
- * where the speaker paused, and where each syllable's vowel is loudest.
- *
- * Speech has a rhythm a loudness curve shows plainly. Every syllable swells to
- * its vowel and falls away after it, so the loud moments are the syllables'
- * nuclei; a pause is a stretch near the room's own noise. Nothing here knows
- * what was said: the aligner (align.ts) matches the text to these landmarks.
- *
- * Every threshold is relative to the recording itself. The quietest frames
- * give the noise floor and the loudest the speech level, so a studio take
- * with digital silence around it and a phone memo in a noisy room come out
- * alike, and a clip levelled to any volume reads the same.
- *
- * It is one pass over the samples and a few over the frames: a ten-second clip
- * at 48 kHz takes a few milliseconds.
+ * How loud a recording is every 10 ms: where speech starts and stops, where the speaker paused, and where each syllable's
+ * vowel peaks. Every threshold is relative to the recording's own noise floor and speech level, so a studio take and a
+ * noisy phone memo read alike. It knows nothing of the text; align.ts matches the text to these landmarks.
  */
 
 export const ENVELOPE_FRAME_MS = 10;
@@ -56,11 +44,7 @@ const MIN_MARGIN_DB = 6;
 const MARGIN_SHARE = 0.2;
 /** Anything within 40 dB of the loudest speech counts, however quiet the room: a faint s is still speech. */
 const MAX_BELOW_PEAK_DB = 40;
-/**
- * A recording that varies less than this has no pauses to find: the same
- * level all through. If that level is loud it is all sound (a held vowel cut
- * tight); if quiet, it is a room with nobody speaking.
- */
+/** A recording varying less than this is one level throughout: all sound if loud, an empty room if quiet. */
 const FLAT_RANGE_DB = 8;
 const LOUD_FLAT_DB = -35;
 /** Once speech has started it continues until the level falls this much under the threshold. */
@@ -69,11 +53,7 @@ const HYSTERESIS_DB = 4;
 export const MIN_PAUSE_MS = 120;
 /** A shorter burst on its own is a click or a knock, not speech. */
 const MIN_SEGMENT_MS = 50;
-/**
- * How far before the first loud frame and after the last the speech may
- * reach, while it stays a little over the floor: a soft s or h at the start,
- * a fading vowel at the end.
- */
+/** How far speech may reach past its loud part while it stays a little over the floor: a soft s or h, a fading vowel. */
 const LEAD_REACH_MS = 100;
 const TAIL_REACH_MS = 150;
 const REACH_OVER_FLOOR_DB = 3;
@@ -129,8 +109,7 @@ function segmentPeaks(curve: Float32Array, seg: VoicedSegment, floorDb: number, 
   for (let i = seg.start; i < seg.end; i++) {
     const h = curve[i]!;
     if (!(h > at(i - 1) && h >= at(i + 1)) || h <= floorDb) continue;
-    // the deepest dip on each side before the curve climbs higher than this
-    // peak; reaching the segment's edge first, the dip is the silence beyond it
+    // The deepest dip on each side before the curve climbs above this peak; at the segment's edge, the silence beyond it.
     let left = h;
     let j = i - 1;
     for (; j >= seg.start && curve[j]! <= h; j--) left = Math.min(left, curve[j]!);
@@ -167,10 +146,8 @@ function segmentPeaks(curve: Float32Array, seg: VoicedSegment, floorDb: number, 
 }
 
 /**
- * The loudness envelope of mono PCM samples (-1 to 1) at `sampleRate`.
- *
- * Loudness is the RMS of each 10 ms frame with its mean taken out, so a DC
- * offset from a cheap microphone does not read as sound; in dB, over 30 ms.
+ * The loudness envelope of mono PCM samples (-1 to 1) at `sampleRate`: each 10 ms frame's RMS with its mean removed, so
+ * a DC offset is not sound, in dB smoothed over 30 ms.
  */
 export function analyzeEnvelope(pcm: Float32Array, sampleRate: number): Envelope {
   const durationMs = sampleRate > 0 ? (pcm.length / sampleRate) * 1000 : 0;

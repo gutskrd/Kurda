@@ -1,13 +1,7 @@
 /**
- * Chunky round figures, for the milestone a badge was earned at: "7", "100",
- * "3000". There is no text in a drawing (a font is not drawn the same
- * everywhere), so each figure is a centre line drawn with a thick round pen,
- * and the number is that line three times — a dark edge, the edge again a
- * little lower for its thickness, and the face — which is what makes a figure
- * read as one solid, puffy piece at any size.
- *
- * Each figure is drawn in a box one unit tall, its width its own: a 1 is
- * narrow, an 8 is full.
+ * Chunky round figures for a badge's milestone ("7", "100"). Drawings carry no text, since fonts differ between
+ * renderers, so each figure is a centre line stroked with a thick round pen three times: a dark edge, the edge again
+ * lower for thickness, and the face. Each figure's box is one unit tall and as wide as the figure needs.
  */
 import type { Drawing } from './svg.js';
 import { linearAt, n, n2 } from './svg.js';
@@ -76,7 +70,7 @@ const FIGURES: Record<string, Figure> = {
 const PEN = 0.27;
 const GAP = 0.05;
 
-/** The figures of a number this module can draw: digits only. */
+/** The figures of `text`; anything that is not a digit is skipped. */
 const figuresOf = (text: string): Figure[] => [...text].map((ch) => FIGURES[ch]).filter((f): f is Figure => f !== undefined);
 
 /** How wide a number is, pen and all, as a share of its height. */
@@ -104,20 +98,17 @@ function centreLine(text: string, cx: number, y: number, h: number): string {
 }
 
 export interface NumeralStyle {
-  /** the edge round the figures and the thickness under them */
+  /** The edge round the figures and the thickness under them. */
   edge: string;
-  /** the face, top to bottom */
+  /** The face, top to bottom. */
   top: string;
   bottom: string;
-  /** how wide the edge is round the figures, and how far its copy falls under them, as shares of the height */
+  /** The edge width and how far its copy drops, as shares of the height. */
   rim?: number;
   drop?: number;
 }
 
-/**
- * A number in chunky round figures, `h` tall, centred on cx with its top at y:
- * a dark edge with its thickness under it, and a face lit from above.
- */
+/** A number `h` tall, centred on cx with its top at y: a dark edge with its thickness below, and a face lit from above. */
 export function numeral(dr: Drawing, text: string, cx: number, y: number, h: number, style: NumeralStyle): string {
   const d = centreLine(text, cx, y, h);
   if (!d) return '';

@@ -1,25 +1,15 @@
 /**
- * Riddles and proverbs: the Stories section's two collections that are not
- * stories. A riddle is *mamik* or *metelok* in Kurmancî and *metel* (مەتەڵ) in
- * Soranî; a proverb is one of the *gotinên pêşiyan*, the sayings of those who
- * came before.
+ * Riddles (Kurmancî *mamik* or *metelok*, Soranî *metel* مەتەڵ) and proverbs (*gotinên pêşiyan*): the Stories section's
+ * two collections that are not stories.
  *
- * Both are `game_content` rows of their own kinds (`riddle`, `proverb`; the
- * schemas are in games/content.ts), so they go through the one content
- * workflow every game's rows go through — draft, review, approval, publish,
- * the lock version, starter drafts — rather than a second one. Their Kurdish
- * is the row; what they say in the app's other languages is a translation of
- * its own per language (`game_content_translations`), each with its own
- * review, so one language can be corrected on a published row without taking
- * the row offline or the approval of its Kurdish away.
+ * Both are `game_content` rows of their own kinds (schemas in games/content.ts), so they share every game row's workflow:
+ * draft, review, approval, publish, the lock version and starter drafts. The Kurdish is the row; each other language is
+ * a translation with its own review, so one language can be corrected without unpublishing the row.
  *
- * What lives here is what the API, both apps and the admin panel must agree
- * on: the lists every row is filed by, what a translation holds, what counts
- * as solving a riddle, which riddle and proverb a day puts forward, what a
- * solve pays, and the shapes the learner routes send. A riddle never spoils
- * itself: a list or a riddle's page carries its question and how many hints
- * it has, never a hint not yet taken, its answer, the forms accepted or the
- * explanation — those come one call at a time, when the learner asks.
+ * Here is what the API, both apps and the admin agree on: the lists rows are filed by, translations, what solves a
+ * riddle, the day's riddle and proverb, what a solve pays, and the learner routes' shapes. A riddle never spoils itself:
+ * lists and pages carry the question and the hint count, never an untaken hint, the answer, the accepted forms or the
+ * explanation, which come one call at a time when asked for.
  */
 import { z } from 'zod';
 import { APP_LOCALE_CODES, type AppLocale } from './locales.js';
@@ -27,7 +17,7 @@ import { fitsDialect, foldForDialect, gameWords, type GameDialect } from './game
 
 // ---------- what every row is filed by ----------
 
-/** The two kinds of `game_content` row that make up the collections, and belong to no game. */
+/** The two `game_content` kinds that make up the collections and belong to no game. */
 export const LORE_KINDS = ['riddle', 'proverb'] as const;
 export type LoreKind = (typeof LORE_KINDS)[number];
 
@@ -38,21 +28,16 @@ export function isLoreKind(v: unknown): v is LoreKind {
 export const RIDDLE_DIFFICULTIES = ['easy', 'medium', 'hard'] as const;
 export type RiddleDifficulty = (typeof RIDDLE_DIFFICULTIES)[number];
 
-/**
- * The content level a riddle is stored at, by its difficulty: the table keeps
- * one level per row for every kind, and a riddle's is not chosen separately,
- * so the two can never say different things.
- */
+/** The content level a riddle is stored at, derived from its difficulty so the two can never disagree. */
 export const RIDDLE_LEVELS: Readonly<Record<RiddleDifficulty, 1 | 3 | 5>> = { easy: 1, medium: 3, hard: 5 };
 
 export const RIDDLE_CATEGORIES = ['nature', 'everyday', 'wordplay', 'logic', 'funny', 'culture', 'children'] as const;
 export type RiddleCategory = (typeof RIDDLE_CATEGORIES)[number];
 
 /**
- * Where a riddle or a proverb comes from: attested in the tradition, a local
- * form of it (which names its region), or newly written in its spirit. A new
- * one is never presented as old, and a traditional or regional one names at
- * least one source (`checkGameContent`).
+ * Where a riddle or proverb comes from: attested in the tradition, a regional form (naming its region), or newly written
+ * in its spirit. A new one is never presented as old, and a traditional or regional one names a source
+ * (`checkGameContent`).
  */
 export const LORE_TRADITIONS = ['traditional', 'regional', 'new'] as const;
 export type LoreTradition = (typeof LORE_TRADITIONS)[number];
@@ -104,13 +89,13 @@ export const LORE_LIMITS = {
   translationLong: 1200,
 } as const;
 
-/** Where a riddle or a proverb was found: a book, an article, a collection online. */
+/** Where a riddle or proverb was found: a book, an article or a collection online. */
 export interface LoreSource {
   title: string;
   author?: string;
   /** https only */
   url?: string;
-  /** what it gives: the riddle as told in it, the page, the form */
+  /** what it gives: the riddle as told there, the page, the form */
   note?: string;
 }
 
@@ -124,7 +109,7 @@ export interface RiddleTranslation {
   explanation: string;
 }
 
-/** A proverb in another language: a natural rendering, what it means and when it is said, and a little scene. */
+/** A proverb in another language: a natural rendering, its meaning and use, and a short scene. */
 export interface ProverbTranslation {
   translation: string;
   /** the word-for-word sense, where it differs from the translation and helps */
@@ -145,10 +130,8 @@ export const TRANSLATION_REVIEW = ['unreviewed', 'reviewed'] as const;
 export type TranslationReview = (typeof TRANSLATION_REVIEW)[number];
 
 /**
- * The interface language a row's own Kurdish is: Kurmancî rows are the `ku`
- * interface's language, Soranî rows `ckb`'s. That language is the original,
- * never a translation of itself; a Soranî riddle's `ku` translation is its
- * Kurmancî rendering, and the other way round.
+ * The interface language a row's Kurdish is in: Kurmancî rows are `ku`'s, Soranî rows `ckb`'s. That language is the
+ * original, never a translation of itself; a Soranî riddle's `ku` translation is its Kurmancî rendering, and the reverse.
  */
 export function originalLocale(dialect: GameDialect): AppLocale {
   return dialect === 'ckb' ? 'ckb' : 'ku';
@@ -162,7 +145,7 @@ export function translationLocales(dialect: GameDialect): AppLocale[] {
 
 function buildTranslations() {
   const text = (max: number) => z.string().trim().min(1, 'fill this in').max(max, `keep it to ${max} characters`);
-  // an optional field is left out rather than sent empty: what is there is never blank
+  // An optional field is left out rather than sent empty, so what is there is never blank.
   const optional = (max: number) => text(max).optional();
   const riddle = z.strictObject({
     question: text(LORE_LIMITS.question),
@@ -184,7 +167,7 @@ function buildTranslations() {
 
 let translationSchemas: ReturnType<typeof buildTranslations> | null = null;
 
-/** The schema of one kind's translation (zod), built the first time any is asked for. */
+/** One kind's translation schema (zod), built on first use. */
 export function loreTranslationSchema<K extends LoreKind>(kind: K): ReturnType<typeof buildTranslations>[K] {
   translationSchemas ??= buildTranslations();
   return translationSchemas[kind];
@@ -201,12 +184,9 @@ function translationTexts(payload: LoreTranslation): Array<{ path: string; text:
 }
 
 /**
- * Whether a translation may be stored for a row: its kind's schema, a language
- * that is not the row's own, the two Kurdish interface languages in their own
- * scripts (a `ku` rendering in Latin letters, a `ckb` one in Arabic script),
- * and for a riddle exactly as many hints as the Kurdish has, so each hint's
- * translation stands beside the hint it translates. Returns the payload as it
- * will be stored (trimmed) or every issue.
+ * Whether a translation may be stored: its kind's schema, not the row's own language, the Kurdish interface languages in
+ * their own scripts (`ku` in Latin, `ckb` in Arabic), and for a riddle exactly as many hints as the Kurdish, so each
+ * stands beside its hint. Returns the trimmed payload or every issue.
  */
 export function checkLoreTranslation<K extends LoreKind>(
   kind: K,
@@ -242,42 +222,34 @@ export interface AdminContentTranslation {
   reviewedAt: string | null;
   reviewNote: string | null;
   updatedAt: string;
-  /** what would stop it being stored as it is now: a riddle whose hints changed after it was translated */
+  /** what would stop it being stored now, such as a riddle whose hints changed after it was translated */
   issues: Array<{ path: string; message: string }>;
 }
 
 // ---------- what counts as solving a riddle ----------
 
 /**
- * What a typed guess is matched by, in each variety. Folded as the games fold
- * a typed answer (`foldForDialect`, lenient): case, spacing and punctuation do
- * not count, nor do Kurmancî's marks on ê î û ç ş or Soranî's on ێ ۆ ڵ ڕ.
- * Around the answer a learner may also write:
- *   - a demonstrative before it: "ew sî", "ev dem"; ئەو، ئەم
- *   - the copula after it, as a word of its own: "sî ye", "pirtûk e"
- *   - one ending on its last word: in Kurmancî the indefinite -ek/-yek (and
- *     -ekê, -ekî), the ezafe or oblique -a/-ya, -ê/-yê, -ên/-yên, -î/-yî; in
- *     Soranî the definite -ەکە/-کە, the indefinite -ێک/-یەک, the ezafe -ی and
- *     the copula -ە/-یە (-ەکەیە with both).
- * The rest of the guess must be one of the answers as written — the answer
- * itself or a form it accepts — whole, not a word inside a longer guess: "sî"
- * solves a riddle whose answer is sî, "siya" and "ew sî ye" do too, "sîber"
- * does only when the riddle accepts it. An ending is taken off only where a
- * stem of two letters or more is left, so a short word is never cut down to
- * another.
+ * What a typed guess is matched by, per variety. Folded as the games fold a typed answer (`foldForDialect`, lenient), so
+ * case, spacing, punctuation and the marks on ê î û ç ş or ێ ۆ ڵ ڕ do not count. Around the answer a learner may also
+ * write a demonstrative before it ("ew sî", ئەو), the copula after it as its own word ("sî ye"), and one ending on its last
+ * word: in Kurmancî -ek/-yek (-ekê, -ekî), -a/-ya, -ê/-yê, -ên/-yên, -î/-yî; in Soranî -ەکە/-کە, -ێک/-یەک, -ی and
+ * -ە/-یە (-ەکەیە with both).
+ *
+ * The rest must be one of the answers as written, whole: "sî", "siya" and "ew sî ye" solve a riddle whose answer is sî;
+ * "sîber" does only if the riddle accepts it. An ending comes off only where a stem of two letters or more remains.
  */
 export const RIDDLE_MATCHING = {
   kmr: {
     before: ['ew', 'ev'],
     after: ['e', 'ye'],
-    // as `foldForDialect` leaves them: ê î û without their marks, the longest first
+    // As `foldForDialect` leaves them, ê î û without their marks, longest first.
     endings: ['yeke', 'yeki', 'eke', 'eki', 'yek', 'yen', 'ek', 'en', 'ya', 'ye', 'yi', 'a', 'e', 'i'],
   },
   ckb: {
-    // ئەوە and ئەمە: "it is …" as it is most often said (ئەوە دەرزییە)
+    // ئەوە and ئەمە: "it is …", as it is most often said (ئەوە دەرزییە).
     before: ['ئەو', 'ئەم', 'ئەوە', 'ئەمە'],
     after: ['ە', 'یە'],
-    // as the lenient fold leaves them: ێ as ی; یەکەیە and یەکە are the definite form after a vowel (دەرزییەکە)
+    // As the lenient fold leaves them, ێ as ی; یەکەیە and یەکە are the definite form after a vowel (دەرزییەکە).
     endings: ['یەکەیە', 'ەکەیە', 'یەکە', 'ەکە', 'یەک', 'کە', 'یک', 'یە', 'ە', 'ی'],
   },
 } as const satisfies Record<GameDialect, { before: readonly string[]; after: readonly string[]; endings: readonly string[] }>;
@@ -290,7 +262,7 @@ export function riddleKey(text: string, dialect: GameDialect): string {
   return foldForDialect(text, dialect, true);
 }
 
-/** Every reading of a typed guess the rule allows: as typed, without the words around it, without an ending on its last word. */
+/** Every reading of a typed guess the rule allows: as typed, without the words around it, and without an ending on its last word. */
 export function riddleGuessForms(guess: string, dialect: GameDialect): string[] {
   const rule = RIDDLE_MATCHING[dialect];
   const words = riddleKey(guess, dialect).split(' ').filter((w) => w !== '');
@@ -330,7 +302,7 @@ export function loreDayNumber(localDate: string): number {
   return Math.floor(Date.parse(`${localDate}T00:00:00Z`) / DAY_MS);
 }
 
-/** A small stable hash (FNV-1a), so the day's order is the same on every server and every app. */
+/** A small stable hash (FNV-1a), so the day's order is the same on every server and app. */
 function stableHash(text: string): number {
   let h = 0x811c9dc5;
   for (const ch of text) {
@@ -341,12 +313,9 @@ function stableHash(text: string): number {
 }
 
 /**
- * The one of a variety's published riddles (or proverbs) a calendar day puts
- * forward, by slug, as the word of the day is picked: the day's number taken
- * round the collection, so consecutive days step through all of it before any
- * comes back. The collection is walked in a fixed order shuffled by each
- * slug's hash rather than alphabetically, so a day's neighbours are not the
- * riddles whose slugs sort beside it. Null while there is none.
+ * The riddle or proverb slug a calendar day puts forward: the day's number taken round the collection, so consecutive
+ * days step through all of it before any repeats. The order is shuffled by each slug's hash rather than alphabetical, so
+ * neighbouring days are not neighbouring slugs. Null while there is none.
  */
 export function dailyLorePick(slugs: readonly string[], localDate: string): string | null {
   if (slugs.length === 0) return null;
@@ -364,18 +333,12 @@ export const RIDDLE_XP_SOURCE = 'riddle';
 /** XP for solving a riddle by a guess, by its difficulty, before any hint. */
 export const RIDDLE_XP: Readonly<Record<RiddleDifficulty, number>> = { easy: 3, medium: 5, hard: 8 };
 
-/**
- * Guesses a solve may take and still pay: a riddle is thought about, not
- * typed at until something sticks, and a solve past this many guesses is
- * still a solve but pays nothing.
- */
+/** Guesses a solve may take and still pay, since a riddle is to be thought about, not typed at; later solves still count but pay nothing. */
 export const RIDDLE_PAID_GUESSES = 10;
 
 /**
- * What solving a riddle pays, once per learner and riddle: its difficulty's
- * XP, half of it (rounded up) when a hint was taken, nothing when the answer
- * was revealed first or the solve took more than RIDDLE_PAID_GUESSES guesses.
- * Opening a riddle, taking a hint or revealing it pays nothing.
+ * What solving a riddle pays, once per learner and riddle: its difficulty's XP, half (rounded up) after a hint, nothing
+ * after a reveal or past RIDDLE_PAID_GUESSES guesses. Opening, hints and reveals pay nothing.
  */
 export function riddleXp(difficulty: RiddleDifficulty, outcome: { hintsUsed: number; guesses: number; revealed: boolean }): number {
   if (outcome.revealed || outcome.guesses > RIDDLE_PAID_GUESSES) return 0;
@@ -409,7 +372,7 @@ export interface RiddleHint {
   translations: Partial<Record<AppLocale, string>>;
 }
 
-/** A riddle's page: the card, and the hints this learner has already taken (a visitor keeps theirs in the app). */
+/** A riddle's page: the card and the hints this learner already took (a visitor keeps theirs in the app). */
 export type RiddleDetail = RiddleCard & { hintsUsed: RiddleHint[] };
 
 /** The answer, once it is solved or asked for. */
@@ -431,21 +394,19 @@ export interface RiddleList {
 }
 
 /**
- * How a wrong guess was near, when it was:
- *   close    — a word a thinking player might give, which the riddle lists as near (`near`)
- *   spelling — one letter away from the answer or a form it accepts
- *   language — the answer, but in the learner's own language rather than Kurdish
- * A near guess still counts as a guess, and pays and reveals nothing.
+ * How a wrong guess was near: `close`, a word the riddle lists as near; `spelling`, one letter from the answer or an
+ * accepted form; `language`, the answer in the learner's own language. A near guess still counts as a guess and pays and
+ * reveals nothing.
  */
 export const RIDDLE_NEAR_KINDS = ['close', 'spelling', 'language'] as const;
 export type RiddleNear = (typeof RIDDLE_NEAR_KINDS)[number];
 
 export type RiddleGuessResult = { correct: false; near?: RiddleNear } | { correct: true; answer: RiddleAnswer; xp: number };
 
-/** The shortest answer a spelling slip is allowed for: a shorter word one letter away is another word. */
+/** The shortest answer a spelling slip is allowed for; a shorter word one letter away is another word. */
 export const RIDDLE_SPELLING_MIN = 4;
 
-/** Whether two words are one edit apart (a letter more, less or different), compared letter by letter. */
+/** Whether two words are one edit apart (a letter more, less or different). */
 export function oneEditApart(a: string, b: string): boolean {
   const x = [...a];
   const y = [...b];
@@ -470,12 +431,7 @@ export function oneEditApart(a: string, b: string): boolean {
   return edits + (x.length - i) + (y.length - j) <= 1;
 }
 
-/**
- * How near a wrong guess is (pure, for the server and the tests): one the
- * riddle lists as near, then one letter away from an answer of four letters
- * or more, then the answer in the learner's own language. Null when it is
- * none of these.
- */
+/** How near a wrong guess is: listed as near, then one letter from an answer of four letters or more, then the answer in the learner's language; else null. */
 export function riddleGuessNear(
   guess: string,
   riddle: { answers: readonly string[]; near?: readonly string[]; translated?: readonly string[] },
@@ -514,7 +470,7 @@ export interface ProverbView {
   sources: LoreSource[];
 }
 
-/** GET /proverbs: a variety's published proverbs (of a theme, when one is asked for), the themes they cover, and the day's. */
+/** GET /proverbs: a variety's published proverbs (of a theme, if asked), their themes, and the day's. */
 export interface ProverbList {
   proverbs: ProverbView[];
   themes: ProverbTheme[];
@@ -524,22 +480,16 @@ export interface ProverbList {
 // ---------- the proverbs' round ----------
 
 /**
- * A short round on the proverbs, played on the solo games' machinery (the
- * server makes it and keeps its answers):
- *   meaning   — a proverb, and three meanings to choose its own from
- *   situation — a little scene, and three proverbs to choose the one that fits
- *   complete  — a proverb with its last word missing, and three Kurdish words
- *               to finish it with: the one way to play that is all in Kurdish
- * The first two have their options in one language, the learner's when enough
- * proverbs are translated into it, else English, so no option stands out by
- * being in another language. It pays no XP, as no game played alone does; a round
- * with at least half its items right on the first try counts for the streak
- * and the daily goal, as those rounds do.
+ * A short proverb round on the solo games' machinery, the server holding the answers: `meaning`, pick a proverb's meaning
+ * from three; `situation`, pick the proverb that fits a scene; `complete`, finish a proverb with one of three Kurdish
+ * words, the all-Kurdish mode. The first two show options in one language, the learner's when enough proverbs are
+ * translated into it, else English, so none stands out. It pays no XP, like every solo game; half the items right on
+ * first try counts for the streak and the daily goal.
  */
 export const PROVERB_ROUND_MODES = ['meaning', 'situation', 'complete'] as const;
 export type ProverbRoundMode = (typeof PROVERB_ROUND_MODES)[number];
 
-/** The round's name among the solo rounds, by mode: what its sessions are filed under. */
+/** The round's name among the solo rounds, by mode, which its sessions are filed under. */
 export const PROVERB_ROUND_GAMES = {
   meaning: 'proverb-meaning',
   situation: 'proverb-situation',
@@ -551,10 +501,8 @@ export const PROVERB_ROUND_ITEMS = 5;
 export const PROVERB_ROUND_OPTIONS = 3;
 
 /**
- * One item, without its answer. In a scene the proverb it is about is never
- * written out: it is shown as … And a proverb to finish has its missing word
- * as … too, with what stands before and after the gap (`before`, `after`) for
- * a screen that draws the gap itself.
+ * One item without its answer. In a scene the proverb is shown as …, and a proverb to finish has its missing word as …
+ * with the text around the gap (`before`, `after`) for a screen that draws the gap itself.
  */
 export type ProverbRoundItemView =
   | { index: number; mode: 'meaning'; dialect: GameDialect; proverb: string; locale: AppLocale; options: string[] }
@@ -565,7 +513,7 @@ export interface ProverbRoundAnswer {
   choice: number;
 }
 
-/** After a wrong first try: the option picked is struck out. */
+/** After a wrong first try, the option picked is struck out. */
 export interface ProverbRoundHint {
   struck: number;
 }

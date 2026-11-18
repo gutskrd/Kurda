@@ -1,23 +1,15 @@
 /**
- * Writing a story: the checks a story passes before it is saved, submitted or
- * published, and the slug it gets from its title.
+ * Writing a story: the checks before it is saved, submitted or published, and the slug it gets from its title. The admin
+ * API, the import command, the starter seeding and the admin editor all run `validateStory`, so they never disagree.
  *
- * One copy for every place a story is written — the admin API, the import
- * command and the starter seeding all run `validateStory`, and the admin
- * editor can run the same function as the editor types — so a story the
- * importer accepted is one the publish button accepts, and the editor never
- * shows a problem the server does not have (or misses one it does).
- *
- * A draft is allowed to be unfinished: a text still between lengths, too few
- * questions, a saga not yet cut into sections, even no text yet. Those are
- * warnings while it is a draft and errors when it is submitted or published.
- * Everything else — a broken question, a gloss for a word the text does not
- * have, a sentence too long to record, a translation in a language the app is
- * not offered in — is wrong at any stage, and is an error from the first save.
+ * A draft may be unfinished (a text between lengths, too few questions, a saga without sections, no text yet): warnings
+ * in a draft, errors on submit or publish. Everything else, such as a broken question, a gloss for a word not in the text,
+ * a sentence too long to record or a translation in a language the app does not offer, is an error from the first save.
  */
 import { LESSON_AUDIO_TEXT_MAX } from './lesson-audio.js';
 import { normalizeKurdish } from './kurdish-text.js';
 import { isAppLocale } from './locales.js';
+import { isHttpsUrl } from './sanitize.js';
 import {
   CEFR_LEVELS,
   GLOSSARY_MAX,
@@ -72,12 +64,10 @@ import {
   storySentences,
   type StoryDialect,
   type StoryGlossEntry,
-  type StoryLanguage,
   type StoryLength,
   type StoryMetaTranslation,
   type StoryNoteTranslation,
   type StoryQuestionTranslation,
-  type StoryTradition,
   type StoryTranslationReviewEntry,
 } from './stories.js';
 
@@ -85,10 +75,8 @@ import {
 export const STORY_SLUG_PATTERN = /^[a-z0-9-]{3,80}$/;
 
 /**
- * The chapter of the Kurmanji Road a story ends, when it is one: the story
- * Hamo tells at a chapter's end has a slug that starts with the chapter's
- * number (`road-01-li-ber-deriye-sor`). It is recorded in Hamo's voice and
- * goes online with its chapter. Null for any other story.
+ * The Kurmanji Road chapter a story ends, or null: the story Hamo tells at a chapter's end has a slug starting with the
+ * chapter number (`road-01-li-ber-deriye-sor`), is recorded in Hamo's voice and goes online with its chapter.
  */
 export function roadStoryChapter(slug: string): number | null {
   const m = /^road-(\d{2})-[a-z0-9-]+$/.exec(slug);
@@ -100,7 +88,7 @@ export function isStorySlug(v: unknown): v is string {
   return typeof v === 'string' && STORY_SLUG_PATTERN.test(v);
 }
 
-// Hawar letters with a mark, written as the plain letter in a web address
+// Hawar letters with a mark, written as the plain letter in a web address.
 const HAWAR_PLAIN: Record<string, string> = { ê: 'e', î: 'i', û: 'u', ç: 'c', ş: 's' };
 const SLUG_RANDOM = 'abcdefghijkmnpqrstuvwxyz23456789';
 
@@ -111,12 +99,9 @@ function randomSuffix(random: () => number): string {
 }
 
 /**
- * The slug a new story starts with. A Kurmancî title spells its own: "Qelema
- * Şîn" is qelema-sin. A Soranî title is in Arabic script, which a slug cannot
- * hold and nobody agrees how to transliterate, so it gets `sorani-` and six
- * random characters for the editor to replace with something readable. A
- * Kurmancî title with too few Latin letters to make a slug of falls back the
- * same way. Slugs are addresses, not secrets: Math.random is enough.
+ * The slug a new story starts with. A Kurmancî title spells its own ("Qelema Şîn" is qelema-sin). A Soranî title, or one
+ * with too few Latin letters, gets `sorani-` and six random characters for the editor to replace, since Arabic script has
+ * no agreed transliteration. Slugs are addresses, not secrets, so Math.random is enough.
  */
 export function storySlugFor(title: string, dialect: StoryDialect, random: () => number = Math.random): string {
   if (dialect === 'kurmanci') {
@@ -124,7 +109,7 @@ export function storySlugFor(title: string, dialect: StoryDialect, random: () =>
       .normalize('NFC')
       .toLowerCase()
       .replace(/[êîûçş]/g, (ch) => HAWAR_PLAIN[ch] ?? ch)
-      // any other accented Latin letter loses its accent the same way
+      // Any other accented Latin letter loses its accent the same way.
       .normalize('NFD')
       .replace(/\p{M}+/gu, '')
       .replace(/[^a-z0-9]+/g, '-')
@@ -148,12 +133,9 @@ export interface StoryQuestionInput {
   explanationEn: string | null;
   /** index into storyParagraphs(body) */
   evidenceParagraph: number | null;
-  /** index into storySentences(paragraph), within the evidence paragraph */
+  /** index into storySentences(paragraph) within the evidence paragraph */
   evidenceSentence: number | null;
-  /**
-   * The question in interface languages, by locale: the options in the same
-   * order as `options`, so the same index is right in each. Left out, none.
-   */
+  /** The question in interface languages by locale, with options in the order of `options` so the same index is right. */
   translations?: Record<string, StoryQuestionTranslation>;
 }
 
@@ -163,7 +145,7 @@ export interface StoryReflectionInput {
   translations?: Record<string, string>;
 }
 
-/** A note beside the story, as an editor writes it (`StoryNote`); the kind is checked, since stored or imported data may carry anything. */
+/** A note beside the story as an editor writes it (`StoryNote`); the kind is checked, since stored or imported data may carry anything. */
 export interface StoryNoteInput {
   kind: string;
   title: string;
@@ -182,10 +164,8 @@ export interface StorySourceInput {
 }
 
 /**
- * What places a story in the library and says where it comes from, apart
- * from its text and questions: the fields this wave added to StoryInput, as
- * one piece so an editor that does not show them yet can carry them through
- * a save unchanged (`emptyStoryLibraryInput` is a new story's).
+ * The fields that place a story in the library and say where it comes from, apart from text and questions: one piece so
+ * an editor that does not show them can carry them through a save unchanged (`emptyStoryLibraryInput` is a new story's).
  */
 export interface StoryLibraryInput {
   /** a StoryLanguage; 'ku' when left out */
@@ -204,22 +184,14 @@ export interface StoryLibraryInput {
   translations: Record<string, string>;
   /** the key of a shared background picture, drawn as the cover */
   cover: string | null;
-  /** the editor's reading time, standing in for the estimate */
+  /** the editor's reading time, which replaces the estimate */
   readingMinutes: number | null;
-  /**
-   * What a legend carries besides its text, all optional so a story written
-   * before them reads as having none: the title and summary per interface
-   * language, open questions to think about, notes, and its sources.
-   */
+  /** What a legend carries besides its text, optional so older stories read as having none: per-language title and summary, reflections, notes, sources. */
   metaTranslations?: Record<string, StoryMetaTranslation>;
   reflections?: StoryReflectionInput[];
   notes?: StoryNoteInput[];
   sources?: StorySourceInput[];
-  /**
-   * Which translations a native speaker has read, per interface language. A
-   * file may set it; the admin routes never take it from an editor's save
-   * (the per-language review route records it, with who and when).
-   */
+  /** Which translations a native speaker has read, per language. A file may set it; editor saves never do, only the review route. */
   translationReview?: Record<string, StoryTranslationReviewEntry>;
 }
 
@@ -254,16 +226,14 @@ export interface StoryInput extends StoryLibraryInput {
 }
 
 // ── tidying what a legend carries ─────────────────────────────────────────
-// One copy for the API's save and the admin editor's draft, so what the editor
-// checks as it is typed is what the API stores: each part trimmed, a line
-// ending of one kind, a part left wholly empty dropped. A part only half
-// written stays, for `validateStory` to point at.
+// One copy for the API's save and the editor's draft, so what the editor checks is what the API stores: parts trimmed,
+// line endings unified, wholly empty parts dropped. A half-written part stays for `validateStory` to point at.
 
 function trimmed(v: unknown): string {
   return typeof v === 'string' ? v.replace(/\r\n?/g, '\n').trim() : '';
 }
 
-/** Each entry of a map tidied, those that tidy to nothing dropped. */
+/** Each entry of a map tidied, dropping those that tidy to nothing. */
 function tidyEach<T, U>(map: Record<string, T> | null | undefined, tidy: (v: T) => U | null): Record<string, U> {
   const out: Record<string, U> = {};
   if (!map || typeof map !== 'object') return out;
@@ -328,18 +298,8 @@ export function tidyStoryCompanions(
   };
 }
 
-/** The language a story is in, read from its input: 'ku' unless it says otherwise. */
-export function storyLanguageOf(story: Pick<StoryLibraryInput, 'language'>): StoryLanguage {
-  return isStoryLanguage(story.language) ? story.language : 'ku';
-}
-
-/** The tradition a story claims, read from its input: 'original' unless it says a valid other. */
-export function storyTraditionOf(story: Pick<StoryLibraryInput, 'tradition'>): StoryTradition {
-  return isStoryTradition(story.tradition) ? story.tradition : 'original';
-}
-
 export interface StoryProblem {
-  /** stable, for a client that wants to react to one kind of problem */
+  /** stable, for a client that reacts to one kind of problem */
   code: string;
   /** where it is: 'body', 'glossary[2].term', 'questions[3].options[1]', … */
   path: string;
@@ -348,34 +308,27 @@ export interface StoryProblem {
 }
 
 export interface StoryValidation {
-  /** block saving at this stage (and always block publishing) */
+  /** block saving at this stage, and always block publishing */
   errors: StoryProblem[];
   /** shown, never blocking */
   warnings: StoryProblem[];
 }
 
-/**
- * 'draft' while an editor saves work in progress; 'publish' when the story is
- * submitted for review or published — what learners will read must be whole.
- */
+/** 'draft' while an editor saves work in progress; 'publish' on submission for review or publishing, when the story must be whole. */
 export type StoryValidationStage = 'draft' | 'publish';
 
 /** Problems a draft may have and a submitted or published story may not. */
 const UNFINISHED_IN_DRAFT = new Set(['BODY_EMPTY', 'WORD_COUNT_OUTSIDE_BANDS', 'BANK_TOO_SMALL', 'CATEGORY_MISSING', 'SAGA_SECTIONS']);
 
-/** A saga is told in sections: fewer headings than this and it is one long text, which the reader cannot navigate. */
+/** A saga is told in sections; with fewer headings than this it is one long text the reader cannot navigate. */
 export const SAGA_MIN_SECTIONS = 2;
 
-/**
- * Abbreviations that end in a full stop. The reader and the audio studio cut a
- * sentence after one (they cannot tell "Dr." from the end of a sentence), so a
- * story writes them out instead.
- */
+/** Abbreviations ending in a full stop. The reader and the studio would cut a sentence after one, so stories write them out. */
 const ABBREVIATIONS = ['dr.', 'prof.', 'hwd.', 'b.z.', 'p.z.'];
 
 /** An explanation longer than this no longer reads as one line beside the answer. */
 const EXPLANATION_SOFT_MAX = 120;
-/** A kind asked more than this share of the time makes every game on the story feel the same. */
+/** A kind asked more often than this share makes every game on the story feel the same. */
 const KIND_SHARE_MAX = 0.6;
 /** Below this many questions, shares and patterns say nothing yet. */
 const PATTERN_MIN_QUESTIONS = 3;
@@ -403,22 +356,12 @@ function size(v: unknown): number {
   return typeof v === 'string' ? v.trim().length : 0;
 }
 
-/** The entries of what should be a map, or none when it is not one (stored or imported data may carry anything). */
+/** The entries of what should be a map, or none, since stored or imported data may carry anything. */
 function entriesOf<T>(v: Record<string, T> | null | undefined): Array<[string, T]> {
   return v !== null && typeof v === 'object' && !Array.isArray(v) ? Object.entries(v) : [];
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-/** A web address a browser would open over https: parsed, not pattern-matched, so "https://" alone is refused too. */
-function isHttpsUrl(v: string): boolean {
-  try {
-    const url = new URL(v);
-    return url.protocol === 'https:' && url.hostname !== '';
-  } catch {
-    return false;
-  }
-}
 
 function sameOption(v: string): string {
   return v.normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
@@ -427,37 +370,21 @@ function sameOption(v: string): string {
 /**
  * Everything wrong with a story, as errors and warnings.
  *
- * Errors at any stage: limits (title, summary, body, options, prompts,
- * explanations, glossary), a question that cannot be answered as written
- * (2–4 distinct non-empty options, the right one among them, a valid kind),
- * evidence pointing past the end of the text, a glossary word the reader would
- * never find (it is matched the reader's way, with `glossSpans`), and a
- * sentence too long to ever be recorded (LESSON_AUDIO_TEXT_MAX).
+ * Errors at any stage: limits; a question that cannot be answered as written (2–4 distinct non-empty options, the right
+ * one among them, a valid kind); evidence past the end of the text; a glossary word the reader would never find (matched
+ * as the reader matches, with `glossSpans`); a sentence longer than LESSON_AUDIO_TEXT_MAX. Headings are one short line,
+ * never a question's evidence, and in the same place in every translation; question translations have as many options as
+ * the question; the companions are checked for shape and limits. Library fields must be of known shapes, the source URL
+ * https, the reading time between one minute and two hours, and each translation must have exactly the body's paragraphs,
+ * since the reader shows them side by side.
  *
- * Errors only from 'publish' (warnings in a draft): no text yet, a word count
- * between the length bands, fewer questions than MIN_QUESTION_BANK, no
- * category to file it under, a saga with fewer than SAGA_MIN_SECTIONS headings.
+ * Errors only on 'publish' (warnings in a draft): no text, a word count between bands, fewer than MIN_QUESTION_BANK
+ * questions, no category, a saga with fewer than SAGA_MIN_SECTIONS headings.
  *
- * Sections: a heading (`## Title`, a paragraph of its own) is one short line,
- * never the evidence of a question, and sits at the same place in every
- * translation. A question's translations are in interface languages, with as
- * many options as the question; the reflections, notes, sources and the
- * per-language review are checked for their shape and limits.
- *
- * The library fields: a language, a tradition and a category slug of the
- * known shapes, the attribution within its limits, a source address that is
- * https, a reading time between one minute and two hours, and a translation
- * in an interface language with exactly the body's paragraphs — the reader
- * shows them side by side, so a translation one paragraph short would sit
- * beside the wrong Kurdish.
- *
- * Warnings: a sentence that may not fit one 15-second recording, a sentence
- * ending in an abbreviation, a numbered list (both cut sentences in the wrong
- * place), an explanation past one line, no gist question, one kind asked too
- * often, the right answer always in the same place, an option much longer
- * than the others (a guessable tell), a question with no evidence to show at
- * the reveal or no English for the beginners who see it by default, and a
- * traditional or adapted story that names no source.
+ * Warnings: a sentence that may not fit a 15-second recording; a sentence ending in an abbreviation, or a numbered list,
+ * either of which cuts sentences wrongly; an explanation past one line; no gist question; one kind asked too often; the
+ * right answer always in the same place; an option much longer than the rest; a question without evidence to show or
+ * without the English beginners see; a traditional or adapted story that names no source.
  */
 export function validateStory(story: StoryInput, stage: StoryValidationStage = 'publish'): StoryValidation {
   const errors: StoryProblem[] = [];
@@ -584,7 +511,7 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
         `the translation has ${n} paragraph${n === 1 ? '' : 's'} and the text ${paragraphs.length}: they are shown side by side, so separate them the same way`,
       );
     } else {
-      // a heading sits beside a heading: the reader shows a section's title over the section in either language
+      // A heading sits beside a heading: the reader shows a section's title over the section in either language.
       const off = paragraphs.findIndex((para, i) => isStoryHeading(para) !== isStoryHeading(translated[i]!));
       if (off >= 0) {
         error(
@@ -599,7 +526,7 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
   }
 
   paragraphs.forEach((paragraph, p) => {
-    // a heading is checked as a heading (above), not as sentences of the story
+    // A heading is checked as a heading above, not as sentences of the story.
     if (isStoryHeading(paragraph)) return;
     const path = `body.paragraphs[${p}]`;
     let listed = /^\(?\p{Nd}{1,3}[.)]\s/u.test(paragraph);
@@ -799,7 +726,7 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
 
 type Report = (code: string, path: string, message: string) => void;
 
-/** A translation map's entries, each in an interface language: anything else is reported and left out. */
+/** A translation map's entries in interface languages; anything else is reported and left out. */
 function translatedEntries<T>(map: Record<string, T> | null | undefined, path: string, code: string, error: Report): Array<[string, T]> {
   return entriesOf(map).filter(([locale]) => {
     if (isAppLocale(locale)) return true;
@@ -809,10 +736,8 @@ function translatedEntries<T>(map: Record<string, T> | null | undefined, path: s
 }
 
 /**
- * What a story carries besides its text and questions: the title and summary
- * per language, the reflections, the notes, the sources and the record of
- * which translations were reviewed. Each within its limits and in an
- * interface language; a source's address on https, like the story's own.
+ * What a story carries besides its text and questions: per-language title and summary, reflections, notes, sources and
+ * the translation reviews, each within its limits and in an interface language, with sources on https.
  */
 function validateCompanions(story: StoryInput, error: Report): void {
   for (const [locale, meta] of translatedEntries(story.metaTranslations, 'metaTranslations', 'META_TRANSLATION_LOCALE', error)) {

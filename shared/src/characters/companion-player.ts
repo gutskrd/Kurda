@@ -17,20 +17,14 @@ import {
 import type { CharacterPoint, EyeState } from './types.js';
 
 /**
- * The companion in a browser page, for the website and the admin console
- * alike: it draws him into an element, watches the forms in another (which
- * box has the focus, the caret, a key, a password shown) and the pointer, and
- * plays `CompanionMotion` frame by frame.
+ * The companion in a browser page, for the website and the admin console: draws him into an element, watches the forms in
+ * another (focus, caret, keys, a shown password) and the pointer, and plays `CompanionMotion`. Frames are drawn only while
+ * something moves; otherwise it sleeps until the next blink or glance, and not at all while he is off screen or the tab is
+ * hidden. Each frame writes only what changed, and the breath is a stylesheet animation, so it needs no redraw. Under
+ * reduced motion every part goes straight to its target.
  *
- * Light by design. Frames are drawn only while something moves; between
- * times it sleeps until the next blink or glance is due, and not at all while
- * he is off screen or the tab is put away. Each frame writes only what
- * changed. The breath is the stylesheet's, on the element itself, so the
- * drawing is not redrawn for it. For whoever asks for less motion every part
- * goes straight to where it is going.
- *
- * Imported by path (`@kurda/shared/src/characters/companion-player`), not from
- * the package's index, which the server and the phone app read too.
+ * Import it by path (`@kurda/shared/src/characters/companion-player`), not from the package index, which the server and the
+ * phone read too.
  */
 
 const PARTS: Record<keyof CompanionTransforms, string> = {
@@ -66,7 +60,7 @@ const PARTS: Record<keyof CompanionTransforms, string> = {
   contactRight: 'contact-right',
 };
 
-/** The parts drawn anew as outlines (path data), the rest moved by a transform. */
+/** The parts redrawn as outlines (path data); the rest move by transform. */
 const OUTLINES: ReadonlySet<keyof CompanionTransforms> = new Set(COMPANION_OUTLINES);
 
 /** How long his eyes stay where a finger left the screen (ms). */
@@ -87,11 +81,11 @@ function inputOf(el: Element | null): HTMLInputElement | null {
   return null;
 }
 
-/** What kind of box an input is to him: a password (and whether it is shown), a code of digits, words, or nothing to watch. */
-export function companionField(input: HTMLInputElement | null): { field: CompanionField; shown: boolean } {
+/** What kind of box an input is to him: a password (and whether shown), a code of digits, text, or nothing to watch. */
+function companionField(input: HTMLInputElement | null): { field: CompanionField; shown: boolean } {
   if (!input) return { field: 'none', shown: false };
   const fill = (input.getAttribute('autocomplete') ?? '').toLowerCase();
-  // a shown password is a text box, but its autocomplete still says what it is
+  // A shown password is a text box, but its autocomplete still says what it is.
   if (input.type === 'password' || fill.includes('password')) return { field: 'secret', shown: input.type !== 'password' };
   if (fill === 'one-time-code' || input.inputMode === 'numeric') return { field: 'code', shown: false };
   if (['text', 'email', 'search', 'tel', 'url'].includes(input.type)) return { field: 'text', shown: false };
@@ -99,11 +93,10 @@ export function companionField(input: HTMLInputElement | null): { field: Compani
 }
 
 /**
- * Where the caret is in a box, on the screen: from the characters before it,
- * at about half the font's size each, so as not to measure the text on every
- * key. Near enough for his eyes, which look its way rather than at a letter.
+ * Where the caret is on screen, estimated from the characters before it at about half the font size each rather than
+ * measuring text every key; near enough for his eyes.
  */
-export function companionCaret(input: HTMLInputElement): CharacterPoint {
+function companionCaret(input: HTMLInputElement): CharacterPoint {
   const box = input.getBoundingClientRect();
   const style = window.getComputedStyle(input);
   const start = Number.parseFloat(style.paddingLeft) || 0;
@@ -120,7 +113,7 @@ export interface CompanionPlayerOptions {
   tone: CompanionTone;
   /** starts every id in the drawing; unique on the page */
   prefix: string;
-  /** he comes up only so far as his head and neck, his forelegs out of sight, until he is let out (`keepLow(false)`) */
+  /** he comes up only as far as his head and neck, forelegs out of sight, until let out (`keepLow(false)`) */
   low?: boolean;
 }
 
@@ -176,7 +169,7 @@ export class CompanionPlayer {
     const onPointer = (e: PointerEvent): void => {
       window.clearTimeout(this.linger);
       this.pointer = { x: e.clientX, y: e.clientY };
-      // a finger is only there while it touches: his eyes stay there a moment, then look about again
+      // A finger is there only while it touches: his eyes stay a moment, then look about again.
       if (e.type === 'pointerup' && e.pointerType === 'touch') this.linger = window.setTimeout(() => (this.pointer = null), LINGER_MS);
       this.wake();
     };
@@ -195,7 +188,7 @@ export class CompanionPlayer {
       window.clearTimeout(this.linger);
     });
 
-    // a tap on him is a hello
+    // A tap on him is a hello.
     const onTap = (): void => {
       this.motion.react('greet', now());
       this.wake();
@@ -221,13 +214,13 @@ export class CompanionPlayer {
     this.wake();
   }
 
-  /** Whether he keeps low behind the card, his head and neck over it, or climbs out and lays his forelegs over it. */
+  /** Whether he keeps low behind the card with his head and neck over it, or climbs out and lays his forelegs over it. */
   keepLow(low: boolean): void {
     this.motion.set({ low }, now());
     this.wake();
   }
 
-  /** Where the form is: being filled in, sent, refused, let in, or paused; with a word for getting in, on the website. */
+  /** Where the form is: being filled in, sent, refused, let in or paused, with a word for getting in on the website. */
   status(status: CompanionStatus, word?: CompanionWord): void {
     this.motion.set({ status }, now(), word);
     this.wake();
@@ -254,10 +247,10 @@ export class CompanionPlayer {
       if (e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete') this.motion.react('keystroke', now());
       this.wake();
     };
-    // a click may show or hide a password, which changes its box once the page has drawn it
+    // A click may show or hide a password, which changes its box once the page has drawn it.
     const onClick = (): void => void requestAnimationFrame(() => look(document.activeElement && area.contains(document.activeElement) ? document.activeElement : null));
     const onMove = (): void => this.wake();
-    // an address that comes to look whole as it is typed gets a grin and a nod, once
+    // An address that comes to look whole as it is typed gets a grin and a nod, once.
     const onInput = (): void => {
       const whole = wholeAddress(this.input);
       if (whole && !this.whole) this.motion.react('approve', now());
@@ -280,7 +273,7 @@ export class CompanionPlayer {
       area.removeEventListener('select', onMove);
       area.removeEventListener('keyup', onMove);
     };
-    // a box that already has the focus (one given it as the page opened)
+    // A box that already has the focus, given as the page opened.
     if (document.activeElement && area.contains(document.activeElement)) look(document.activeElement);
   }
 
@@ -293,7 +286,7 @@ export class CompanionPlayer {
     this.host.innerHTML = '';
   }
 
-  /** Draw again soon: on the next frame, unless one is already coming or he cannot be seen. */
+  /** Draws again soon: on the next frame, unless one is already coming or he cannot be seen. */
   private readonly wake = (): void => {
     if (this.dead || this.frame || !this.onScreen || document.visibilityState === 'hidden') return;
     window.clearTimeout(this.timer);
@@ -321,7 +314,7 @@ export class CompanionPlayer {
     };
   }
 
-  /** Write what changed since the last frame. */
+  /** Writes what changed since the last frame. */
   private draw(f: CompanionFrame): void {
     const t = companionTransforms(f);
     for (const key of Object.keys(PARTS) as (keyof CompanionTransforms)[]) {
@@ -345,7 +338,7 @@ export class CompanionPlayer {
     once('mouth', f.mouth, () => show(this.mouths, 'data-mouth', f.mouth));
     once('emote', f.emote ?? '', () => {
       show(this.emotes, 'data-emote', f.emote);
-      // the stylesheet moves only the sign that is shown
+      // The stylesheet moves only the sign that is shown.
       if (f.emote) this.host.dataset.emote = f.emote;
       else delete this.host.dataset.emote;
     });

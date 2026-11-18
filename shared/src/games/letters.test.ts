@@ -2,19 +2,25 @@ import { describe, expect, it } from 'vitest';
 import {
   CKB_LETTERS,
   KMR_LETTERS,
-  asLetterDialect,
   beginsWith,
   chainLetter,
   dictionaryDialect,
   firstLetter,
-  followsOn,
   lastLetter,
   lookupSpellings,
   nextLetter,
   startSpellings,
   wordKey,
   wordLetters,
+  type LetterDialect,
 } from './letters.js';
+
+/** Whether `next` may follow `previous` in a chain: it begins with the chain letter `previous` ends on. */
+function followsOn(dialect: LetterDialect, previous: string, next: string): boolean {
+  const want = nextLetter(dialect, previous);
+  const first = firstLetter(dialect, next);
+  return want !== null && first !== null && chainLetter(dialect, first) === want;
+}
 
 // explicit code points where two letters look alike
 const HEH = 'ه'; // ه arabic heh
@@ -37,12 +43,6 @@ describe('the alphabets', () => {
   });
 
   it('reads every older spelling of a dialect', () => {
-    expect(asLetterDialect('kurmanji')).toBe('kmr');
-    expect(asLetterDialect('kurmanci')).toBe('kmr');
-    expect(asLetterDialect('kmr')).toBe('kmr');
-    expect(asLetterDialect('sorani')).toBe('ckb');
-    expect(asLetterDialect('ckb')).toBe('ckb');
-    expect(asLetterDialect('zazaki')).toBeNull();
     expect(dictionaryDialect('kmr')).toBe('kurmanji');
     expect(dictionaryDialect('ckb')).toBe('sorani');
   });

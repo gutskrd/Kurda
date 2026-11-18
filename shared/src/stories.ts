@@ -1,19 +1,10 @@
 /**
- * Stories: Kurdish texts Hevalo writes, to read and then be quizzed on —
- * alone, with a friend, or with a group (it replaced the ranked quiz). Most
- * are short; a legend (a saga) runs to over a thousand words in sections,
- * each opened by a heading paragraph (`## Title`).
+ * Stories: Kurdish texts to read and then be quizzed on, alone, with a friend or with a group. Most are short; a legend
+ * runs to over a thousand words in sections, each opened by a `## Title` paragraph.
  *
- * Shared because four programs have to agree on every number here. The API
- * refuses a setting the clients offered, or accepts one they never offer; the
- * admin editor and the API disagree about which band a story falls in; the
- * reader and the audio studio split a story into different sentences and the
- * recordings stop lining up. One copy, so none of that can happen.
- *
- * The presets follow the research brief behind the feature: a short text a
- * beginner reads in a couple of minutes, three answer options rather than four,
- * questions in the order of the text with the overall one last, generous or no
- * timers, and accuracy rather than speed deciding the score.
+ * Shared because the API, the admin editor, the readers and the audio studio must agree on every number here: settings,
+ * length bands and where sentences split, or recordings stop lining up. The presets favour beginners: short texts, three
+ * options, questions in text order with the overall one last, generous or no timers, and accuracy over speed.
  */
 import { foldVariantChar, isInvisibleChar, lessonAudioKey } from './lesson-audio.js';
 import type { RecordingVoice } from './lipsync/speakers.js';
@@ -29,29 +20,19 @@ export function isStoryDialect(v: unknown): v is StoryDialect {
   return v === 'kurmanci' || v === 'sorani';
 }
 
-/**
- * Courses spell their variety 'kurmanji' (and the Soranî course one of the
- * spellings `isSoraniDialect` knows); stories spell it as the rhyme games do.
- */
+/** Courses spell their variety 'kurmanji' (or a Soranî spelling `isSoraniDialect` knows); stories spell it as the rhyme games do. */
 export function storyDialectForCourse(courseDialect: string | null | undefined): StoryDialect {
   return isSoraniDialect(courseDialect) ? 'sorani' : 'kurmanci';
 }
 
-/**
- * Soranî is written in Arabic script, right to left; Kurmancî in Latin. Every
- * string that comes from a story — title, summary, paragraph, gloss term,
- * question, option, explanation — carries these, inside any interface language.
- */
+/** Soranî is Arabic script, right to left; Kurmancî Latin. Every string from a story carries these, whatever the interface language. */
 export function storyTextDirection(dialect: StoryDialect): { lang: 'ku' | 'ckb'; dir: 'ltr' | 'rtl' } {
   return dialect === 'sorani' ? { lang: 'ckb', dir: 'rtl' } : { lang: 'ku', dir: 'ltr' };
 }
 
 /**
- * 1 = first steps (A1), 2 = elementary (A2), 3 = intermediate (B1), 4 = upper
- * intermediate (B2), 5 = advanced (C1). The number is what is stored and
- * filtered by. Readers are shown a plain name for it (`levelNameKey`), since
- * most people learning Kurdish never met the CEFR letters; the letters stay
- * for editors and the API.
+ * 1 first steps (A1) to 5 advanced (C1); the number is stored and filtered by. Readers see a plain name (`levelNameKey`)
+ * rather than CEFR letters, which most learners of Kurdish never met; editors and the API keep the letters.
  */
 export const STORY_LEVELS = [1, 2, 3, 4, 5] as const;
 export type StoryLevel = (typeof STORY_LEVELS)[number];
@@ -69,7 +50,7 @@ export function cefrOf(level: StoryLevel): CefrLevel {
   return CEFR_LEVELS[level - 1]!;
 }
 
-/** 'A1' → 1 … 'C1' → 5, however it was typed ('b1', ' B1 '); null for anything else. */
+/** 'A1' → 1 … 'C1' → 5, however typed ('b1', ' B1 '); null for anything else. */
 export function levelOfCefr(cefr: string): StoryLevel | null {
   const at = (CEFR_LEVELS as readonly string[]).indexOf(cefr.trim().toUpperCase());
   return at < 0 ? null : STORY_LEVELS[at]!;
@@ -77,15 +58,12 @@ export function levelOfCefr(cefr: string): StoryLevel | null {
 
 /** The catalogue key of a level's plain name ("Starter" … "Advanced"), the same on the website and the phone. */
 export type LevelNameKey = `level.name.${StoryLevel}`;
-/** The catalogue key of the line under a level's name that says what reading at it is like. */
+/** The catalogue key of the line under a level's name saying what reading at it is like. */
 export type LevelHintKey = `level.hint.${StoryLevel}`;
 
 /**
- * What a reader is shown for a level: a plain name and a line saying what it
- * means, never the bare CEFR letter, which says nothing to someone who never
- * studied a language in a classroom. Kept here, with the order, so the
- * stories, and later the lessons and the games, all call level 2 by the same
- * name in both apps; the words themselves are in each app's catalogues.
+ * The catalogue keys for a level's plain name, so every screen in both apps names a level the same way; the words live in
+ * each app's catalogues.
  */
 export function levelNameKey(level: StoryLevel): LevelNameKey {
   return LEVEL_NAME_KEYS[level];
@@ -95,7 +73,7 @@ export function levelHintKey(level: StoryLevel): LevelHintKey {
   return LEVEL_HINT_KEYS[level];
 }
 
-// spelled out rather than built, so a search for a key finds where it is read (scripts/check-i18n.mjs is one)
+// Spelled out rather than built, so a search for a key finds where it is read (scripts/check-i18n.mjs relies on it).
 const LEVEL_NAME_KEYS: Readonly<Record<StoryLevel, LevelNameKey>> = {
   1: 'level.name.1',
   2: 'level.name.2',
@@ -111,7 +89,7 @@ const LEVEL_HINT_KEYS: Readonly<Record<StoryLevel, LevelHintKey>> = {
   5: 'level.hint.5',
 };
 
-/** The orders GET /stories offers: easiest first (level, then length, then title — also its order when none is asked), newest first, and by title. */
+/** The orders GET /stories offers: easiest first (level, then length, then title; the default), newest first, and by title. */
 export const STORY_SORTS = ['level', 'newest', 'title'] as const;
 export type StorySort = (typeof STORY_SORTS)[number];
 /** The order a list is in when none is asked for. */
@@ -121,11 +99,7 @@ export function isStorySort(v: unknown): v is StorySort {
   return (STORY_SORTS as readonly unknown[]).includes(v);
 }
 
-/**
- * The languages stories are written in. Only Kurdish for now (its two
- * varieties are the dialects); stored on every story all the same, so another
- * language can arrive later without rewriting what is there.
- */
+/** The languages stories are written in: only Kurdish, whose varieties are the dialects. Stored on every story so another can be added. */
 export const STORY_LANGUAGES = ['ku'] as const;
 export type StoryLanguage = (typeof STORY_LANGUAGES)[number];
 
@@ -134,11 +108,9 @@ export function isStoryLanguage(v: unknown): v is StoryLanguage {
 }
 
 /**
- * Where a story comes from, which the reader is told: 'traditional' is
- * documented folklore retold close to a source, 'adapted' is traditional
- * material freely retold for learners, 'original' was written for learners.
- * An original story is never presented as folklore, which is why this is a
- * field and not a line in the summary.
+ * Where a story comes from, which the reader is told: 'traditional' is documented folklore retold close to a source,
+ * 'adapted' traditional material freely retold, 'original' written for learners. A field, so an original is never passed
+ * off as folklore.
  */
 export const STORY_TRADITIONS = ['traditional', 'adapted', 'original'] as const;
 export type StoryTradition = (typeof STORY_TRADITIONS)[number];
@@ -147,10 +119,10 @@ export function isStoryTradition(v: unknown): v is StoryTradition {
   return (STORY_TRADITIONS as readonly unknown[]).includes(v);
 }
 
-/** A category's address: lower-case letters, digits and dashes, as the table checks it. */
+/** A category slug: lower-case letters, digits and dashes, as the table checks it. */
 export const STORY_CATEGORY_SLUG_PATTERN = /^[a-z0-9-]{2,40}$/;
 
-/** A category as the library shows it: its slug, its name per interface language (English always), its place in the list. */
+/** A category as the library shows it: slug, name per interface language (English always) and position. */
 export interface StoryCategory {
   slug: string;
   name: { en: string } & Partial<Record<string, string>>;
@@ -164,11 +136,8 @@ export function categoryName(category: StoryCategory, locale: string): string {
 }
 
 /*
- * The categories the library was seeded with, which both apps name from their
- * own catalogues in all nine interface languages. The library's list carries
- * a name in English, Kurmancî and Soranî only, so a German reader met "Legends
- * and history" over the legends and on every chip. A category an editor adds
- * later has no key here and keeps its name from the list (`categoryName`).
+ * The seeded categories, which the apps name from their own catalogues in all nine languages; the library list carries
+ * only English, Kurmancî and Soranî names. A category added later has no key and keeps its name from the list.
  */
 const CATEGORY_NAME_KEYS = {
   folktale: 'stories.category.folktale',
@@ -188,10 +157,7 @@ export function categoryNameKey(slug: string): CategoryNameKey | null {
   return Object.hasOwn(CATEGORY_NAME_KEYS, slug) ? CATEGORY_NAME_KEYS[slug as keyof typeof CATEGORY_NAME_KEYS] : null;
 }
 
-/**
- * The text-length presets a host chooses from. A saga is a legend told in
- * sections (at least two headings), long enough to read over a sitting or two.
- */
+/** The text-length presets. A saga is a legend in sections (at least two headings), read over a sitting or two. */
 export const STORY_LENGTHS = ['short', 'medium', 'long', 'saga'] as const;
 export type StoryLength = (typeof STORY_LENGTHS)[number];
 
@@ -205,11 +171,8 @@ export interface WordBand {
 }
 
 /**
- * How many words a story of each length has, per variety. Soranî attaches its
- * clitics to the word they lean on, so the same text has fewer space-separated
- * words than in Kurmancî; its bands are lower for that reason (an estimate, not
- * a measured ratio — revisit once there are enough stories to measure). The
- * bands do not touch, so a word count names one length or none.
+ * Words per length and variety. Soranî attaches clitics to their word, so the same text has fewer words than in
+ * Kurmancî and its bands are lower; that ratio is an estimate. Bands never touch, so a count names one length or none.
  */
 export const STORY_WORD_BANDS: Readonly<Record<StoryDialect, Readonly<Record<StoryLength, WordBand>>>> = {
   kurmanci: {
@@ -236,17 +199,15 @@ export function storyLengthFor(dialect: StoryDialect, words: number): StoryLengt
 }
 
 /**
- * Words a minute for the estimates. Beginners read slowly — most second-language
- * readers start below 100 — and Soranî packs more into each written word (see
- * the bands), so its rate is lower for the same reading time. `slow` sizes the
- * reading phase for the slowest reader in a group.
+ * Words a minute for the estimates. Beginners read slowly, most second-language readers below 100, and Soranî packs more
+ * into each written word, so its rate is lower. `slow` sizes a group's reading phase for its slowest reader.
  */
 export const READING_WPM: Readonly<Record<StoryDialect, { typical: number; slow: number }>> = {
   kurmanci: { typical: 60, slow: 40 },
   sorani: { typical: 50, slow: 34 },
 };
 
-/** Estimated minutes to read, shown as "~N min". Never zero. */
+/** Estimated minutes to read, shown as "~N min"; never zero. */
 export function readingMinutes(dialect: StoryDialect, words: number): number {
   return Math.max(1, Math.ceil(words / READING_WPM[dialect].typical));
 }
@@ -257,18 +218,16 @@ export function lengthMinutes(dialect: StoryDialect, length: StoryLength): { min
   return { min: readingMinutes(dialect, band.min), max: readingMinutes(dialect, band.max) };
 }
 
-/** However long the text, a duo or group reads it for half an hour at most before the questions start on their own. */
+/** A duo or group reads for at most half an hour before the questions start on their own. */
 export const READING_HARD_CAP_MAX_SECONDS = 1800;
 
 /**
- * The reading phase of a duo or group. Questions start as soon as every active
- * player says they have finished. The host may start them earlier only after
- * the soft cap (time for a slow reader, at least a minute); after the hard cap
- * they start on their own, so one idle reader cannot stall a game. Nobody is
- * shown a countdown while reading.
+ * A duo or group's reading phase. Questions start once every active player has finished; the host may start them earlier
+ * only after this soft cap (time for a slow reader, at least a minute), and the hard cap starts them, so one idle reader
+ * cannot stall a game. No countdown is shown while reading.
  */
 export function readingSoftCapSeconds(dialect: StoryDialect, words: number): number {
-  // never past the hard cap's ceiling: a saga read by a slow reader would otherwise let the host cut in only after the questions began
+  // Never past the hard cap, or for a long saga the host could cut in only after the questions began.
   return Math.min(READING_HARD_CAP_MAX_SECONDS, Math.max(60, Math.ceil((words / READING_WPM[dialect].slow) * 60)));
 }
 
@@ -280,10 +239,7 @@ export function readingHardCapSeconds(dialect: StoryDialect, words: number): num
 export const QUESTION_COUNTS = [3, 5, 10] as const;
 export type QuestionCount = (typeof QUESTION_COUNTS)[number];
 
-/**
- * Which counts each length offers. Ten questions about a short text would ask
- * about nearly every sentence; three about a long one would skip most of it.
- */
+/** The counts each length offers: ten questions about a short text would cover nearly every sentence. */
 export const QUESTION_COUNTS_BY_LENGTH: Readonly<Record<StoryLength, readonly QuestionCount[]>> = {
   short: [3, 5],
   medium: [3, 5, 10],
@@ -303,11 +259,7 @@ export function isAllowedQuestionCount(length: StoryLength, count: unknown): cou
   return (QUESTION_COUNTS_BY_LENGTH[length] as readonly unknown[]).includes(count);
 }
 
-/**
- * The fewest questions a published story must carry. More than the largest
- * count it offers, so playing it twice does not ask the same questions in the
- * same way.
- */
+/** The fewest questions a published story carries: more than its largest count, so a replay is not the same quiz. */
 export const MIN_QUESTION_BANK: Readonly<Record<StoryLength, number>> = {
   short: 6,
   medium: 12,
@@ -318,7 +270,7 @@ export const MIN_QUESTION_BANK: Readonly<Record<StoryLength, number>> = {
 /** A story never needs more than this many questions. */
 export const MAX_QUESTION_BANK = 30;
 
-/** What a question asks about — the editor tags each one, and a game mixes them. */
+/** What a question asks about; the editor tags each one and a game mixes them. */
 export const QUESTION_KINDS = ['gist', 'detail', 'vocabulary', 'sequence', 'inference'] as const;
 export type QuestionKind = (typeof QUESTION_KINDS)[number];
 
@@ -337,33 +289,33 @@ export const STORY_SUMMARY_MAX = 300;
 export const STORY_BODY_MAX = 16_000;
 export const QUESTION_PROMPT_MAX = 300;
 export const QUESTION_OPTION_MAX = 160;
-/** One line: the reveal shows it beside the answer for a few seconds. */
+/** One line, shown beside the answer at the reveal. */
 export const QUESTION_EXPLANATION_MAX = 160;
 export const GLOSSARY_MAX = 20;
 export const GLOSS_TERM_MAX = 60;
 export const GLOSS_MEANING_MAX = 120;
-/** A sentence longer than this may not fit one 15-second studio recording. */
+/** A longer sentence may not fit one 15-second studio recording. */
 export const STORY_SENTENCE_SOFT_MAX = 180;
 /** The attribution block: who wrote or told it, where it comes from, and what to say about that. */
 export const STORY_AUTHOR_MAX = 120;
 export const STORY_SOURCE_MAX = 300;
 export const STORY_SOURCE_URL_MAX = 500;
 export const STORY_ATTRIBUTION_NOTE_MAX = 600;
-/** A full translation runs longer than the Kurdish it translates; English about half again. */
+/** A full translation runs longer than its Kurdish; English by about half again. */
 export const STORY_TRANSLATION_MAX = 24_000;
-/** The key of a shared background picture, which the apps draw as the cover. */
+/** The key of a shared background picture the apps draw as the cover. */
 export const STORY_COVER_MAX = 80;
-/** An editor's reading time stands in for the estimate; two hours is more than any story here. */
+/** An editor's reading time replaces the estimate; two hours is more than any story needs. */
 export const STORY_READING_MINUTES_MAX = 120;
 /** A reviewer's note: why approval was given or withdrawn. */
 export const STORY_REVIEW_NOTE_MAX = 600;
 export const STORY_CATEGORY_NAME_MAX = 60;
-/** A section heading is one short line (`## Title`), not a sentence of the story. */
+/** A section heading is one short `## Title` line, not a sentence of the story. */
 export const STORY_HEADING_MAX = 80;
 /** Open questions to think about after reading: a handful, each a sentence or two. */
 export const STORY_REFLECTIONS_MAX = 6;
 export const STORY_REFLECTION_MAX = 400;
-/** Notes beside a legend (what is history, what is legend, how the versions differ, what a custom means). */
+/** Notes beside a legend: what is history, what is legend, how versions differ, what a custom means. */
 export const STORY_NOTES_MAX = 4;
 export const STORY_NOTE_TITLE_MAX = 120;
 export const STORY_NOTE_BODY_MAX = 2400;
@@ -371,10 +323,7 @@ export const STORY_NOTE_BODY_MAX = 2400;
 export const STORY_SOURCES_MAX = 8;
 export const STORY_SOURCE_NOTE_MAX = 300;
 
-/**
- * Seconds per question. 0 means no timer: the question closes when everyone
- * has answered (or, in a group, when the host moves on).
- */
+/** Seconds per question. 0 is no timer: the question closes when everyone has answered, or in a group when the host moves on. */
 export const TIMER_PRESETS = [0, 60, 30] as const;
 export type TimerSeconds = (typeof TIMER_PRESETS)[number];
 
@@ -383,10 +332,8 @@ export function isTimerPreset(v: unknown): v is TimerSeconds {
 }
 
 /**
- * Whether the text stays on screen while the questions are asked. Visible is
- * the default and the kinder test; hidden is the host's "from memory" challenge
- * (honour-based: the story itself stays readable elsewhere in the app), and
- * everyone is told so before they start reading.
+ * Whether the text stays on screen during the questions. Visible is the default; hidden is the host's "from memory"
+ * challenge, honour-based since the story stays readable elsewhere, and everyone is told before reading.
  */
 export const TEXT_DURING_OPTIONS = ['visible', 'hidden'] as const;
 export type TextDuring = (typeof TEXT_DURING_OPTIONS)[number];
@@ -396,25 +343,15 @@ export function isTextDuring(v: unknown): v is TextDuring {
 }
 
 /**
- * Who may join a duo or group. 'friends' (the default): the host's friends.
- * 'open': any known adult with the code — offered only to a host who is a known
- * adult, and never joinable by a minor or an account of unknown age, so a child
- * is never in a game strangers could walk into (the open-groups rule).
+ * Who may join a duo or group: 'friends' (the default), the host's friends; 'open', any known adult with the code. Only a
+ * known-adult host may open a game, and a minor or an account of unknown age never joins one.
  */
 export const GAME_ACCESS = ['friends', 'open'] as const;
 export type GameAccess = (typeof GAME_ACCESS)[number];
 
-export function isGameAccess(v: unknown): v is GameAccess {
-  return v === 'friends' || v === 'open';
-}
-
 /** Alone, with one other person, or with a group. */
 export const STORY_GAME_MODES = ['solo', 'duo', 'group'] as const;
 export type StoryGameMode = (typeof STORY_GAME_MODES)[number];
-
-export function isStoryGameMode(v: unknown): v is StoryGameMode {
-  return v === 'solo' || v === 'duo' || v === 'group';
-}
 
 export const MAX_PLAYERS: Readonly<Record<StoryGameMode, number>> = { solo: 1, duo: 2, group: 8 };
 export const MIN_PLAYERS_TO_START: Readonly<Record<StoryGameMode, number>> = { solo: 1, duo: 2, group: 2 };
@@ -422,51 +359,37 @@ export const MIN_PLAYERS_TO_START: Readonly<Record<StoryGameMode, number>> = { s
 /** A solo reader is not raced against a clock unless they ask to be. */
 export const DEFAULT_TIMER: Readonly<Record<StoryGameMode, TimerSeconds>> = { solo: 0, duo: 60, group: 60 };
 
-/** Points for a right answer. Speed never adds points; it only breaks ties. */
+/** Points for a right answer; speed never adds points, it only breaks ties. */
 export const POINTS_PER_CORRECT = 100;
 
 /**
- * An answer sent just before the deadline still counts if it arrives within
- * this long after it. Scores are accuracy only, so a generous grace costs no
- * fairness and saves a beginner on a slow phone network their point. A timed
- * question closes at its deadline plus this grace — never earlier, or the grace
- * would never apply.
+ * An answer arriving this long after the deadline still counts, which saves a beginner on a slow network their point and
+ * costs no fairness, since scores are accuracy only. A timed question closes at its deadline plus this grace.
  */
 export const ANSWER_GRACE_MS = 1500;
 
-/**
- * After an answer is revealed, a duo or group moves on when every active player
- * has tapped Continue, or after this long at most. The reveal is where the
- * learning happens; nobody skips it for anyone else.
- */
+/** After a reveal, a duo or group moves on once every active player taps Continue, or after this long; nobody skips it for others. */
 export const REVEAL_MAX_SECONDS = 15;
 
-/**
- * An untimed question in a duo or group still closes after this long, so one
- * player who walked away cannot hold everyone else. Solo has no such cap.
- */
+/** An untimed duo or group question still closes after this long, so one player who walked away cannot hold the rest; solo has no cap. */
 export const UNTIMED_QUESTION_CAP_SECONDS = 180;
 
 /**
- * A member the server has not heard from for this long is away: not waited for
- * (reading, answering, continuing), not counted towards starting, and — when it
- * is the host — the earliest-joined active player holds the host controls until
- * they are back. Longer than a long-poll (20 s) plus the longest client backoff.
+ * A member silent this long is away: not waited for, not counted towards starting, and if the host, the earliest-joined
+ * active player holds the host controls until they return. Longer than a long-poll (20 s) plus the longest client backoff.
  */
 export const PRESENCE_TIMEOUT_SECONDS = 45;
 
 /** A lobby nobody starts is closed after this long. */
 export const LOBBY_IDLE_MINUTES = 30;
 
-/** Join codes: six characters from an alphabet without look-alikes (no 0/O, 1/I/L). */
+/** Join codes: six characters from an alphabet without lookalikes (no 0/O, 1/I/L). */
 export const JOIN_CODE_LENGTH = 6;
 export const JOIN_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 /**
- * Upper-case what someone typed, drop spaces and dashes, and read the digits
- * Arabic and Soranî keyboards type (٢, ۲) as the digits they are; null if it
- * cannot be a code. (A pasted invite link is the caller's to try first, with
- * `parseInvite`.)
+ * What someone typed as a code: upper-cased, spaces and dashes dropped, Arabic and Persian digits read as digits; null if
+ * it cannot be one. Try a pasted invite link with `parseInvite` first.
  */
 export function normalizeJoinCode(input: string): string | null {
   const code = input
@@ -479,7 +402,7 @@ export function normalizeJoinCode(input: string): string | null {
   return code;
 }
 
-/** "ABC234" → "ABC 234", which is easier to read out and type. */
+/** "ABC234" → "ABC 234", easier to read out and type. */
 export function formatJoinCode(code: string): string {
   return code.length === JOIN_CODE_LENGTH ? `${code.slice(0, 3)} ${code.slice(3)}` : code;
 }
@@ -494,12 +417,9 @@ export function storyParagraphs(body: string): string[] {
 }
 
 /**
- * A paragraph that heads a section: it starts with "## " and has a title
- * after it. Headings are paragraphs of their own, so a translation keeps the
- * same paragraphs (`## Translated title` in the same place) and every index
- * into the paragraphs — evidence, reading position, narration — stays one
- * list. A heading is not a sentence of the story: nobody records it, the
- * glossary does not mark it, and it is not counted as words.
+ * A section heading paragraph: "## " and a title. Headings are paragraphs of their own, so translations keep the same
+ * paragraphs and every paragraph index (evidence, reading position, narration) stays one list. A heading is never
+ * recorded, glossed or counted as words.
  */
 export function isStoryHeading(paragraph: string): boolean {
   return paragraph.startsWith('## ') && paragraph.slice(3).trim() !== '';
@@ -510,17 +430,13 @@ export function storyHeadingTitle(paragraph: string): string | null {
   return isStoryHeading(paragraph) ? paragraph.slice(3).trim() : null;
 }
 
-/** A section of a story: its heading's title, and the index of the heading paragraph in the story's paragraphs. */
+/** A section: its heading's title and the heading paragraph's index. */
 export interface StorySection {
   title: string;
   paragraph: number;
 }
 
-/**
- * The sections of a story, in order: one per heading paragraph. The
- * paragraphs before the first heading are the story's introduction, and
- * belong to no section; a story without headings has none.
- */
+/** One section per heading paragraph, in order. Paragraphs before the first heading are the introduction and belong to none. */
 export function storySections(body: string | readonly string[]): StorySection[] {
   const paragraphs = typeof body === 'string' ? storyParagraphs(body) : body;
   const out: StorySection[] = [];
@@ -531,16 +447,12 @@ export function storySections(body: string | readonly string[]): StorySection[] 
   return out;
 }
 
-// a sentence ends at . ! ? … the Arabic question mark or full stop, with any
-// closing quotes or brackets after it, followed by whitespace or the end
+// A sentence ends at . ! ? … or the Arabic question mark or full stop, with any closing quotes or brackets, then space or the end.
 const SENTENCE_END = /([.!?…؟۔]+["'”’»“)\]]*)(\s+|$)/g;
 
 /**
- * Split a paragraph into sentences, keeping each sentence's own punctuation.
- * The reader marks sentences up for audio and the studio lists them for
- * recording, so both must cut in exactly the same places — which is why this
- * is here and nowhere else. (Abbreviations such as "Dr." would split; the
- * editor warns about them, and stories are written without them.)
+ * A paragraph's sentences, each with its punctuation. The reader and the studio must cut in exactly the same places.
+ * Abbreviations such as "Dr." would split; the editor warns about them.
  */
 export function storySentences(paragraph: string): string[] {
   const out: string[] = [];
@@ -556,11 +468,10 @@ export function storySentences(paragraph: string): string[] {
   return out;
 }
 
-// a word is a run of non-space characters with at least one letter in it, so a
-// lone dash or a number does not count
+// A word is a run of non-space characters with a letter in it, so a lone dash or a number does not count.
 const HAS_LETTER = /\p{L}/u;
 
-/** The words of a text, its section headings left out: the length bands measure the story, not its headings. */
+/** The words of a text without its headings: the length bands measure the story. */
 export function countStoryWords(body: string): number {
   let n = 0;
   for (const paragraph of body.replace(/\r\n?/g, '\n').split(/\n\s*\n/)) {
@@ -571,11 +482,8 @@ export function countStoryWords(body: string): number {
 }
 
 /**
- * The sentences of a story that can be recorded, in reading order, per
- * paragraph: those with a letter in them and a non-empty recording key (a
- * "* * *" scene break or a lone "?!" is not something anyone says), and none
- * of a section heading's. The reader, the studio listing and "fully narrated"
- * all count from this.
+ * A paragraph's recordable sentences in reading order: with a letter and a non-empty recording key, so a "* * *" break or
+ * a lone "?!" is skipped, and none from a heading. The reader, the studio and "fully narrated" all count from this.
  */
 export function storyAudioSentences(paragraph: string): string[] {
   if (isStoryHeading(paragraph)) return [];
@@ -588,32 +496,23 @@ export interface StoryGlossEntry {
   term: string;
   /** meanings keyed by interface language; `en` is always present */
   meanings: { en: string } & Partial<Record<string, string>>;
-  /**
-   * The dictionary entry whose headword the term is, so the reader can save
-   * the word. The server fills it when the story is saved (the editor never
-   * sends it); null or absent when the term is not a headword.
-   */
+  /** The dictionary entry the term is a headword of, so the reader can save it; filled by the server on save, never by the editor. */
   entryId?: string | null;
-  /** that entry's part of speech (its first sense), looked up when the story is read */
+  /** that entry's part of speech (its first sense), looked up when read */
   pos?: string | null;
-  /** a pronunciation of that entry in the story's variety, when one is recorded; looked up when the story is read */
+  /** a pronunciation of that entry in the story's variety, when recorded; looked up when read */
   audioUrl?: string | null;
 }
 
-/**
- * The meaning for the reader's interface language, falling back to English —
- * with the language it is actually in, so a client can mark an English
- * fallback inside an Arabic interface as English (direction, screen-reader
- * voice).
- */
+/** The meaning in the reader's language, else English, with its language, so an English fallback is marked as English. */
 export function glossFor(entry: StoryGlossEntry, locale: string): { text: string; lang: string } {
   const own = Object.hasOwn(entry.meanings, locale) ? entry.meanings[locale] : undefined;
   if (typeof own === 'string' && own.trim() !== '') return { text: own, lang: locale };
   return { text: entry.meanings.en, lang: 'en' };
 }
 
-// folded for matching: variants folded, invisible characters blanked, lower
-// case — one output character per input UTF-16 unit, so indices carry over
+// Folded for matching: variants folded, invisible characters blanked, lower case, one output unit per input unit so
+// indices carry over.
 function foldForMatch(text: string): string {
   let out = '';
   for (const ch of text) {
@@ -623,7 +522,7 @@ function foldForMatch(text: string): string {
       continue;
     }
     const lower = foldVariantChar(ch).toLowerCase();
-    // keep one unit per unit; a lowercase that changes length is left as is
+    // One unit per unit; a lowercase that changes length is left as it was.
     out += lower.length === units ? lower : ch;
   }
   return out;
@@ -638,12 +537,9 @@ export interface GlossSpan {
 }
 
 /**
- * Where the glossary's words are in a paragraph: the first occurrence of each
- * term, as a whole word (not inside a longer one — دار is not marked inside
- * بەردار), longest terms first, never overlapping, letter variants and case
- * ignored. The editor's validation, the web reader and the phone reader all
- * mark from this, so a term the editor accepted is a term the reader shows.
- * A section heading is never marked: it is a title, not text to read closely.
+ * Where the glossary's terms are in a paragraph: each term's first whole-word occurrence (دار is not marked inside
+ * بەردار), longest first, never overlapping, variants and case ignored, never in a heading. The editor, the web reader and
+ * the phone reader all mark from this, so an accepted term is always shown.
  */
 export function glossSpans(paragraph: string, glossary: readonly StoryGlossEntry[]): GlossSpan[] {
   if (isStoryHeading(paragraph)) return [];
@@ -676,31 +572,23 @@ export function glossSpans(paragraph: string, glossary: readonly StoryGlossEntry
 }
 
 // ---------------------------------------------------------------------------
-// What a story carries besides its text: its title and summary in other
-// languages, questions to think about, notes, sources, and which of its
-// translations a native speaker has read. A legend uses all of them; a short
-// story may use none. Each Kurdish string (a reflection, a note) is written in
-// the story's own variety, with its translations per interface language.
+// What a story carries besides its text: translated title and summary, reflections, notes, sources and translation
+// reviews. Each Kurdish string is in the story's own variety, with translations per interface language.
 // ---------------------------------------------------------------------------
 
-/** A story's title and summary in an interface language; either may be left out (the reader then shows the Kurdish). */
+/** A story's title and summary in an interface language; either may be missing, and the reader then shows the Kurdish. */
 export interface StoryMetaTranslation {
   title?: string;
   summary?: string;
 }
 
-/** An open question to think about after reading — no right answer, nothing scored. */
+/** An open question to think about after reading: no right answer, nothing scored. */
 export interface StoryReflection {
   text: string;
   translations: Partial<Record<AppLocale, string>>;
 }
 
-/**
- * What a note beside a story is about: what is known as history, what is
- * legend, how the versions differ, or what a custom or object in it means.
- * A legend is presented as a legend, so this is said in its own place rather
- * than left to the summary.
- */
+/** What a note beside a story is about: history, legend, how versions differ, or what a custom or object means. */
 export const STORY_NOTE_KINDS = ['history', 'legend', 'versions', 'culture'] as const;
 export type StoryNoteKind = (typeof STORY_NOTE_KINDS)[number];
 
@@ -720,11 +608,7 @@ export interface StoryNote {
   translations: Partial<Record<AppLocale, StoryNoteTranslation>>;
 }
 
-/**
- * What a source is: a historical record, a legend as collected, an oral
- * telling, a literary work (an epic such as Ehmedê Xanî's Mem û Zîn), or an
- * adaptation someone made of one of those.
- */
+/** What a source is: a historical record, a collected legend, an oral telling, a literary work, or an adaptation of one. */
 export const STORY_SOURCE_TYPES = ['historical', 'legendary', 'oral', 'literary', 'adapted'] as const;
 export type StorySourceType = (typeof STORY_SOURCE_TYPES)[number];
 
@@ -741,11 +625,7 @@ export interface StorySourceEntry {
   note?: string;
 }
 
-/**
- * A question in an interface language: the prompt, the options in the same
- * order as the Kurdish ones (so the same index is right in every language),
- * and the explanation shown at the reveal.
- */
+/** A question in an interface language: prompt, options in the Kurdish order so the same index is right, and the reveal's explanation. */
 export interface StoryQuestionTranslation {
   prompt: string;
   options: string[];
@@ -760,7 +640,7 @@ export function isStoryTranslationReviewStatus(v: unknown): v is StoryTranslatio
   return v === 'unreviewed' || v === 'reviewed';
 }
 
-/** One language's review: its state, who set it and when, and why. A language with no entry is unreviewed. */
+/** One language's review: state, who set it, when and why. A language without an entry is unreviewed. */
 export interface StoryTranslationReviewEntry {
   status: StoryTranslationReviewStatus;
   /** the reviewer's user id */
@@ -770,23 +650,15 @@ export interface StoryTranslationReviewEntry {
   note?: string;
 }
 
-/** Per interface language. Kept for editors only: learners are never sent it. */
-export type StoryTranslationReview = Partial<Record<AppLocale, StoryTranslationReviewEntry>>;
-
 // ---------------------------------------------------------------------------
-// API shapes. The API returns these; the web and phone apps render them.
-// No shape below ever carries another player's user id: seats are the only
-// handle, so a stranger in a game never gets an id to open a profile with.
+// API shapes. None carries another player's user id: seats are the only handle, so a stranger never gets an id to open a
+// profile with.
 // ---------------------------------------------------------------------------
 
-/**
- * How much of a story is narrated: none of its sentences, some, or every one
- * the reader can play. Counted from the sentence recordings, so it is 'full'
- * exactly when `fullyNarrated` is true.
- */
+/** How much of a story is narrated, counted from sentence recordings; 'full' exactly when `fullyNarrated`. */
 export type StoryAudioCoverage = 'none' | 'partial' | 'full';
 
-/** The signed-in reader's own record on a story, beside the story in lists and the detail. */
+/** The signed-in reader's own record on a story. */
 export interface StoryMe {
   bookmarked: boolean;
   /** the last paragraph they were reading (0 before they started) */
@@ -795,10 +667,10 @@ export interface StoryMe {
   share: number;
   /** when they first finished reading it; null until then */
   finishedAt: string | null;
-  /** their best right answers out of `total` in a finished game on it; null before any */
+  /** their best right answers out of `total` in a finished game; null before any */
   bestCorrect: number | null;
   total: number | null;
-  /** games on it they finished today (their own day): from PAID_STORY_REPEATS_PER_DAY on, a game pays no XP */
+  /** games on it finished today (their own day); from PAID_STORY_REPEATS_PER_DAY on, a game pays no XP */
   attemptsToday: number;
 }
 
@@ -811,7 +683,7 @@ export interface StoryListItem {
   dialect: StoryDialect;
   language: StoryLanguage;
   level: StoryLevel;
-  /** `cefrOf(level)`, sent so a client never keeps its own table */
+  /** `cefrOf(level)`, so a client never keeps its own table */
   cefr: CefrLevel;
   length: StoryLength;
   wordCount: number;
@@ -819,7 +691,7 @@ export interface StoryListItem {
   readingMinutes: number;
   /** true when every recordable sentence has a studio recording */
   fullyNarrated: boolean;
-  /** none, some or all of its sentences recorded (the detail's `audio` is the recordings themselves) */
+  /** none, some or all sentences recorded; the detail's `audio` holds the recordings */
   audioCoverage: StoryAudioCoverage;
   /** a category slug (see StoryCategory), null for a story not filed yet */
   category: string | null;
@@ -827,10 +699,10 @@ export interface StoryListItem {
   author: string | null;
   /** an editor's pick for the library's Featured row */
   featured: boolean;
-  /** the key of a shared background picture to draw as the cover, or null for the plain card */
+  /** the key of a shared background picture for the cover, or null for the plain card */
   cover: string | null;
   publishedAt: string | null;
-  /** the title and summary in interface languages, where they have been translated ({} when none is) */
+  /** title and summary in the interface languages translated so far */
   metaTranslations: Partial<Record<AppLocale, StoryMetaTranslation>>;
   /** the caller's own record, only when they are signed in */
   me?: StoryMe;
@@ -840,20 +712,19 @@ export interface StoryListItem {
 export interface StoryNarrationSentence {
   /** index into `paragraphs` */
   paragraph: number;
-  /** index into `storySentences(paragraphs[paragraph])`, which is what the reader highlights */
+  /** index into `storySentences(paragraphs[paragraph])`, which the reader highlights */
   sentence: number;
-  /** its recording key, which is also its key in `audio` */
+  /** its recording key, also its key in `audio` */
   key: string;
   url: string;
   durationMs: number;
-  /** where it starts when every recorded sentence is played in reading order */
+  /** where it starts when every recorded sentence plays in reading order */
   startMs: number;
 }
 
 /**
- * A story's recorded sentences played back to back, as one track the player
- * can seek along. `complete` is false when a sentence has no recording yet —
- * the track then skips it, and the apps say "n of m sentences recorded".
+ * A story's recorded sentences back to back, as one seekable track. `complete` is false while a sentence has no recording:
+ * the track skips it and the apps say "n of m sentences recorded".
  */
 export interface StoryNarration {
   sentences: StoryNarrationSentence[];
@@ -862,10 +733,8 @@ export interface StoryNarration {
 }
 
 /**
- * Which sentence is playing at a position on the stitched timeline, and how
- * far into it. Before the start it is the first sentence from the beginning;
- * at or past the end it is the last sentence at its end, so a seek bar dragged
- * to either edge lands somewhere playable. An empty narration answers -1.
+ * The sentence playing at a position on the narration track, and how far into it. Positions before the start or past the
+ * end clamp to the first or last sentence, so a dragged seek bar always lands somewhere playable. Empty narration gives -1.
  */
 export function narrationAt(narration: StoryNarration, ms: number): { index: number; offsetMs: number } {
   const { sentences } = narration;
@@ -880,36 +749,35 @@ export function narrationAt(narration: StoryNarration, ms: number): { index: num
 }
 
 /**
- * A story to read: GET /stories/:idOrSlug (published only), or
- * GET /story-games/:id/story (the game's own copy, for its members, whatever
- * has happened to the story since). Never carries its questions.
+ * A story to read: GET /stories/:idOrSlug (published only), or GET /story-games/:id/story (the game's own copy for its
+ * members, whatever happened to the story since). Never carries its questions.
  */
 export interface StoryDetail extends StoryListItem {
   /** the text's paragraphs; a section heading is a paragraph of its own, starting with "## " */
   paragraphs: string[];
-  /** one per heading, in order (`storySections`); the paragraphs before the first are the introduction; [] without headings */
+  /** one per heading, in order (`storySections`); [] without headings */
   sections: StorySection[];
   glossary: StoryGlossEntry[];
   /** studio recordings by `lessonAudioKey(sentence)`, only for sentences that have one */
   audio: Record<string, string>;
-  /** who says each recording and how their mouth moves, by the same key; only those with a character, and absent when none has */
+  /** who says each recording and how their mouth moves, by the same key; absent when no recording has a character */
   voices?: Record<string, RecordingVoice>;
-  /** full translations by interface language, each cut into paragraphs that line up with `paragraphs` */
+  /** full translations by interface language, cut into paragraphs that line up with `paragraphs` */
   translations: Record<string, string[]>;
   /** the collection, teller, region or publication it comes from */
   source: string | null;
   sourceUrl: string | null;
-  /** variations between oral versions, licence remarks, "a legend, not verified history" */
+  /** differences between oral versions, licence remarks, "a legend, not verified history" */
   attributionNote: string | null;
-  /** the same story in another variety or language (published ones only), to switch to */
+  /** the same story in another variety or language (published only) */
   versions: Array<{ id: string; slug: string; dialect: StoryDialect; language: StoryLanguage }>;
   /** the recorded sentences as one track; null when none is recorded */
   narration: StoryNarration | null;
   /** questions to think about after reading, in the story's variety with their translations */
   reflections: StoryReflection[];
-  /** what is history and what is legend, how the versions differ, what a custom means */
+  /** what is history and what is legend, how versions differ, what a custom means */
   notes: StoryNote[];
-  /** where the telling comes from, beside the single `source` an older story names */
+  /** where the telling comes from, beside the single `source` older stories name */
   sources: StorySourceEntry[];
 }
 
@@ -919,14 +787,14 @@ export interface StoryLibrary {
   featured: StoryListItem[];
   /** latest published first */
   recent: StoryListItem[];
-  /** the variety's legends, easiest first: a shelf of their own, so no newer story crowds one off the front page; absent from an older server */
+  /** the variety's legends, easiest first, on a shelf of their own so newer stories cannot crowd them out; absent from older servers */
   legends?: StoryListItem[];
   /** started and not finished, latest read first */
   continue: StoryListItem[];
   bookmarks: StoryListItem[];
   /** every category, with how many published stories are filed under it */
   categories: Array<StoryCategory & { count: number }>;
-  /** how many published stories there are at each level, only for levels that have one; absent from an older server */
+  /** published stories per level, for levels that have one; absent from older servers */
   levels?: Array<{ level: StoryLevel; count: number }>;
   /** published stories in all */
   total: number;
@@ -956,10 +824,8 @@ export interface StoryQuery {
 }
 
 /**
- * The query string for a StoryQuery, ready to append to `/stories`: '' when
- * nothing is set, else '?…' with the keys in one fixed order (so two equal
- * queries make one cache entry and one URL). Blank and undefined values are
- * left out; `audio` travels as `audio=1`.
+ * The query string for `/stories`: '' when nothing is set, else '?…' with keys in one fixed order, so equal queries share
+ * a cache entry. Blank values are left out; `audio` is sent as `audio=1`.
  */
 export function storyQueryString(query: StoryQuery): string {
   const params = new URLSearchParams();
@@ -982,10 +848,8 @@ export function storyQueryString(query: StoryQuery): string {
 }
 
 /**
- * The quiz a reader takes at the end of a story: the existing solo game,
- * five untimed questions with the text still at hand, straight to the
- * questions since the story has just been read. Clients send this with the
- * story's id to POST /story-games; the game's results carry the XP.
+ * The quiz at the end of a story: a solo game of five untimed questions with the text at hand, straight to the questions.
+ * Clients send this with the story's id to POST /story-games; its results carry the XP.
  */
 export const STORY_ASSESSMENT = {
   mode: 'solo',
@@ -1010,7 +874,7 @@ export interface StoryGameSummary {
   id: string;
   mode: StoryGameMode;
   status: StoryGameStatus;
-  /** the story it is played on, so a reader can offer "Continue" on that story's own quiz */
+  /** the story it is played on, so a reader can offer "Continue" on its quiz */
   storyId: string;
   storyTitle: string;
   dialect: StoryDialect;
@@ -1035,13 +899,9 @@ export interface StoryGameSettings {
 export type StoryGameStatus = 'lobby' | 'reading' | 'question' | 'reveal' | 'finished' | 'cancelled';
 
 /**
- * Another player as one particular viewer sees them. `name` and `avatarUrl`
- * are filled only for the viewer themselves, for an accepted friend, or — in
- * an 'open' game, where every member is a known adult — for anyone they have
- * no block with. Everyone else is "Player {seat}" with the default picture: in
- * a friends game a missing name means "not my friend" and nothing about age.
- * What a player is doing (reading, answering) is only ever given as counts
- * (see StoryGameView), never per seat.
+ * Another player as one viewer sees them. `name` and `avatarUrl` are filled only for the viewer, an accepted friend, or
+ * in an 'open' game (all known adults) anyone without a block; everyone else is "Player {seat}" with the default picture,
+ * which says nothing about age. What players are doing is only ever sent as counts (StoryGameView), never per seat.
  */
 export interface StoryGamePlayer {
   seat: number;
@@ -1051,14 +911,14 @@ export interface StoryGamePlayer {
   isMe: boolean;
   /** not heard from for PRESENCE_TIMEOUT_SECONDS; not waited for */
   away: boolean;
-  /** left the game; stays listed so seats do not shift */
+  /** left the game; stays listed so seats keep their places */
   gone: boolean;
   /** as of the last reveal, never mid-question */
   score: number;
   correct: number;
 }
 
-/** The open question. The right option is not in here, by design. */
+/** The open question. The right option is deliberately not in it. */
 export interface StoryGameQuestion {
   index: number;
   total: number;
@@ -1066,9 +926,9 @@ export interface StoryGameQuestion {
   prompt: string;
   /** English translation of the prompt, shown on request (by default at level 1) */
   promptEn: string | null;
-  /** already shuffled for this game; answer with the index into this array */
+  /** already shuffled for this game; answer with an index into this array */
   options: string[];
-  /** the prompt and options in interface languages, the options shuffled as `options` are; never an explanation before the reveal */
+  /** prompt and options in interface languages, options in this game's order; never an explanation before the reveal */
   translations: Partial<Record<AppLocale, StoryQuestionTranslation>>;
   /** the option this viewer chose, once they have */
   myChoice: number | null;
@@ -1083,7 +943,7 @@ export interface StoryGameReveal {
   evidenceParagraph: number | null;
   /** sentence index within that paragraph (storySentences), when the editor set one */
   evidenceSentence: number | null;
-  /** the question in interface languages, its options in this game's order, with the explanation where there is one */
+  /** the question in interface languages, options in this game's order, with any explanation */
   translations: Partial<Record<AppLocale, StoryQuestionTranslation>>;
   answeredCount: number;
   correctCount: number;
@@ -1122,9 +982,8 @@ export interface StoryGameResults {
   /** the story's address, so the results can lead back to the reader */
   storySlug: string;
   /**
-   * Everyone who played, best first. Clients show a podium only with four or
-   * more players; a duo shows both scores without places, and a group of three
-   * lists scores in seat order with your own place shown to you.
+   * Everyone who played, best first. Clients show a podium only with four or more; a duo shows both scores without places,
+   * and a group of three lists scores in seat order with the viewer's own place.
    */
   standings: StoryGameStanding[];
   me: {
@@ -1144,21 +1003,18 @@ export interface StoryGameResults {
 /** One viewer's view of a game (GET /story-games/:id, and every action's reply). */
 export interface StoryGameView {
   id: string;
-  /** join code; shown to members while new players can join (lobby, reading), otherwise null */
+  /** join code, shown to members while new players can join (lobby, reading); otherwise null */
   code: string | null;
   mode: StoryGameMode;
   status: StoryGameStatus;
   /** bumped on every change; send it back as ?v= to wait for the next one */
   version: number;
-  /** server clock when this view was made, so clients can correct their own */
+  /** the server's clock when the view was made, so clients can correct theirs */
   serverNow: string;
   /**
-   * When the open question closes on its own for this viewer: a timed question's
-   * deadline (later for a player with extra time), shown as a countdown; or an
-   * untimed duo/group question's cap (`settings.timerSeconds` is 0), never shown
-   * as a clock — only as "This question closes soon" in its last 30 seconds.
-   * Null otherwise: while reading, for an untimed solo question, and outside
-   * questions — nobody is shown a clock there.
+   * When the open question closes by itself for this viewer: a timed question's deadline (later with extra time), shown as
+   * a countdown, or an untimed duo or group question's cap, never shown as a clock, only as "This question closes soon" in
+   * its last 30 seconds. Null while reading, for an untimed solo question and outside questions.
    */
   phaseEndsAt: string | null;
   /** reading phase: from when the host may start the questions early */
@@ -1171,12 +1027,12 @@ export interface StoryGameView {
   /** whether this viewer asked for double time on timed questions */
   extraTime: boolean;
   players: StoryGamePlayer[];
-  /** active (present, not away) players, and how many of them have finished reading / answered / continued */
+  /** active (present, not away) players, and how many of them have finished reading, answered or continued */
   activeCount: number;
   readingDoneCount: number;
   answeredCount: number;
   continuedCount: number;
-  /** this viewer: done reading / continued past the current reveal */
+  /** this viewer finished reading, or continued past the current reveal */
   meDoneReading: boolean;
   meContinued: boolean;
   question: StoryGameQuestion | null;
@@ -1184,10 +1040,6 @@ export interface StoryGameView {
   results: StoryGameResults | null;
   /** set when the host started another round from this one; join it like any game */
   nextGameId: string | null;
-  /**
-   * Rated or Friendly (Game Ranks), shown before anyone joins; a duo or group
-   * game is decided when its questions start. Always sent by the API (optional
-   * only so views recorded before it still type-check).
-   */
+  /** Rated or Friendly, shown before anyone joins; decided for a duo or group when its questions start. Optional only for older stored views. */
   rated?: RatedState;
 }

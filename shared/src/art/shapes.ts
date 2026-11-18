@@ -1,17 +1,8 @@
 /**
- * One silhouette per badge family, so a badge says what kind it is before its
- * colour does (research §5.2): learning a circle, habit a rounded square,
- * games a hexagon, ranked a shield, friends a leaf, events a rosette, secret
- * a gem. Every corner is soft — a badge is something to collect, not a
- * weapon — and each shape stays far enough from its neighbours to be told
- * apart at 24 pixels.
- *
- * Each is an outline on the 120-unit canvas centred a little above the middle;
- * a badge places it (`Placement`) where its own layout wants the plate.
- *
- * An outline is kept as its corners and how round each is, not as points:
- * written out it is a dozen exact curves (`roundPath`), and moved in for the
- * rim it stays exact (`insetRound`).
+ * One silhouette per badge family, so a badge shows its kind before its colour: learning a circle, habit a rounded
+ * square, games a hexagon, ranked a shield, friends a leaf, events a rosette, secret a gem. Shapes must stay distinct at
+ * 24 pixels. Each is kept as corners plus radii, so it is written as a few exact curves (`roundPath`) and its rim inset
+ * stays exact (`insetRound`).
  */
 import { insetRound, place, placeRound, regular, roundPath, star } from './geometry.js';
 import type { RoundShape } from './geometry.js';
@@ -43,9 +34,8 @@ function shield(): RoundShape {
 }
 
 /**
- * A leaf on the diagonal: a soft point at each end and full, curved sides —
- * each side one curve through its far corner, which is what a rounded corner
- * becomes when it is rounder than its sides are long.
+ * A leaf on the diagonal with a soft point at each end. Each long side is a single curve through its far corner, which
+ * is what a corner becomes when its radius exceeds the side length.
  */
 function leaf(): RoundShape {
   const L = 62;
@@ -64,7 +54,7 @@ function leaf(): RoundShape {
   };
 }
 
-/** A rosette: ten round lobes, the way a festival's paper rosette or a rug's medallion is cut. */
+/** Ten round lobes, cut like a paper festival rosette. */
 function rosette(): RoundShape {
   const vertices = star(CX, CY, 54, 45.5, 10, -90);
   return { vertices, radii: vertices.map((_, i) => (i % 2 === 0 ? 11 : 3)) };

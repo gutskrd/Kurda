@@ -1,26 +1,9 @@
 /**
- * A recording's lip-sync timeline, from its text and its sound.
- *
- * The text says which mouth shapes come in which order (letters.ts); the sound
- * says when (envelope.ts). The two are put together in three steps:
- *
- *   1. Pauses. The silences in the recording are matched to the places in the
- *      text a speaker can stop: punctuation first, then any gap between two
- *      words. Each run of words between matched pauses is said in the stretch
- *      of speech between them, so a sentence that pauses at its comma closes
- *      the mouth at the comma, wherever in the recording that falls.
- *   2. Syllables. Within a run, the sounds are spread over the speech by their
- *      weights, and then each vowel is pulled toward the loudness peak nearest
- *      it in order — a long vowel all the way, a short one part of it — with
- *      the consonants between stretched or squeezed to fit.
- *   3. Looks. A mouth that matches the sound frame for frame still looks wrong
- *      if it flickers. So: rest before the speech, at its pauses and after it;
- *      a closure for b, m and p held long enough to be seen; no shape shorter
- *      than a few frames; never more changes in a second than an eye can
- *      follow, however long the text and short the recording.
- *
- * `lipsyncFromText` does the third step alone, for a recording there is no
- * sound to analyse for: the sounds spread evenly by weight over its length.
+ * A recording's lip-sync timeline from its text (the shapes in order, letters.ts) and its sound (the timing,
+ * envelope.ts). Silences are matched to the text's pauses, punctuation first; within each run of words the sounds are
+ * spread by weight and each vowel is pulled toward its loudness peak; then the result is made to look right (rest at
+ * pauses, closures long enough to see, no flicker, a capped rate of change). `lipsyncFromText` does only the last step,
+ * for a recording with no sound to analyse.
  */
 import { analyzeEnvelope, ENVELOPE_FRAME_MS, type Envelope, type VoicedSegment } from './envelope.js';
 import { textToSounds, type LipsyncScript, type Sound } from './letters.js';
@@ -117,11 +100,9 @@ function babble(syllables: number): Sound[] {
 }
 
 /**
- * Which of the recording's pauses fall at which of the text's word boundaries,
- * as [gap, boundary] pairs in order. A monotonic alignment, scored so that a
- * pause near the place the text's proportions put a boundary matches it,
- * punctuation pulls hardest, a long silence left unmatched costs more than a
- * short one, and a comma read straight through costs a little.
+ * Which recording pauses fall at which word boundaries, as [gap, boundary] pairs in order. A monotonic alignment that
+ * favours a pause near where the text's proportions put a boundary, and punctuation most; an unmatched long silence costs
+ * more than a short one, and a comma read straight through costs a little.
  */
 function matchPauses(words: Word[], segments: VoicedSegment[]): Array<[number, number]> {
   const boundaries = words.length - 1;
@@ -188,12 +169,7 @@ function matchPauses(words: Word[], segments: VoicedSegment[]): Array<[number, n
   return pairs.reverse();
 }
 
-/**
- * Which vowel each loudness peak belongs to, as [vowel, peak] pairs in order:
- * the monotonic matching that keeps each vowel as close to its peak as it can,
- * leaving a vowel with no peak near it (a weak syllable) or a peak with no
- * vowel (a stressed consonant) unmatched.
- */
+/** Which vowel each loudness peak belongs to, as [vowel, peak] pairs in order; a vowel or peak with no near partner stays unmatched. */
 function matchVowels(centres: number[], peaks: number[], spacing: number): Array<[number, number]> {
   const reach = PEAK_REACH * Math.max(spacing, 1);
   const width = peaks.length + 1;
@@ -246,10 +222,7 @@ function warp(anchors: Array<[number, number]>, x: number): number {
   return anchors[anchors.length - 1]![1];
 }
 
-/**
- * One run of words over its stretch of speech: spread by weight over the
- * voiced time (the silences inside it left out), vowels pulled to peaks.
- */
+/** One run of words over its speech: spread by weight over the voiced time, vowels pulled to peaks. */
 function placeRun(words: Word[], segs: VoicedSegment[], allPeaks: number[]): Span[] {
   const F = ENVELOPE_FRAME_MS;
   // the run's speech end to end: `axis` time skips the silences between its segments
@@ -326,11 +299,7 @@ function repaint(spans: Span[], start: number, end: number, paint: (span: Span) 
   return out;
 }
 
-/**
- * Quiet stretches inside the speech: a long one (a hesitation, a breath the
- * text does not mark) rests the mouth; a shorter one inside a word narrows an
- * open vowel to the near-closed shape, since nothing loud is being said.
- */
+/** Quiet stretches inside the speech: a long one rests the mouth, a short one narrows an open vowel to near-closed. */
 function quiet(spans: Span[], env: Envelope): Span[] {
   const F = ENVELOPE_FRAME_MS;
   const below = env.thresholdDb - QUIET_BELOW_DB;
@@ -371,10 +340,7 @@ function tidy(spans: Span[], durationMs: number): Span[] {
   return out;
 }
 
-/**
- * `spans` with spans[at] folded into a neighbour: an open shape before a
- * closed one, and speech before a pause, so speech never shrinks into silence.
- */
+/** `spans` with spans[at] folded into a neighbour, preferring an open shape to a closed one and speech to a pause. */
 function absorb(spans: Span[], at: number): Span[] {
   const prev = spans[at - 1];
   const next = spans[at + 1];
@@ -417,12 +383,8 @@ function lengthen(spans: Span[], at: number, need: number, force: boolean): bool
 }
 
 /**
- * No shape too brief to see. The shortest first: a closure or a vowel is
- * lengthened from a neighbour that can spare the time; anything else, or a
- * vowel with no time to be had, is folded into a neighbour. A closure is
- * never folded away: with no time to spare around it, it takes the time it
- * needs from its neighbours anyway, and a neighbour left too short is folded
- * away in its turn.
+ * No shape too brief to see, shortest first: a closure or vowel is lengthened from a neighbour that can spare the time,
+ * anything else is folded into a neighbour. A closure is never folded away; it takes the time it needs regardless.
  */
 function holdLongEnough(input: Span[]): Span[] {
   let spans = input;
@@ -451,11 +413,8 @@ function holdLongEnough(input: Span[]): Span[] {
 }
 
 /**
- * At most MAX_CHANGES_PER_SECOND changes in any second. Where there are more,
- * the least telling change in the busiest second is folded into a neighbour
- * (the near-closed consonants first, closures and open vowels last) until
- * every second is within the limit. Pauses and the rests either side of the
- * speech are not changes to drop.
+ * At most MAX_CHANGES_PER_SECOND changes in any second: the least telling change in the busiest second is folded away
+ * until every second fits. Pauses and the rests around the speech are never dropped.
  */
 function capRate(input: Span[]): Span[] {
   let spans = input;
@@ -514,13 +473,9 @@ function durationOf(ms: number): number {
 }
 
 /**
- * The timeline for a recording of `text`, from its samples: mono PCM in
- * -1…1 at `sampleRate`, exactly as the file plays from its first sample (the
- * times are measured from there). The text can be either script; say which
- * with `options.script`, or let its letters decide.
- *
- * A recording with no speech in it is rest throughout. Store the result with
- * `encodeLipsync`.
+ * The timeline for a recording of `text` from its samples: mono PCM in -1…1 at `sampleRate`, timed from the first
+ * sample. `options.script` names the text's script, otherwise it is detected. A recording with no speech is rest
+ * throughout. Store the result with `encodeLipsync`.
  */
 export function lipsyncFromAudio(
   text: string,
@@ -555,11 +510,8 @@ export function lipsyncFromAudio(
 }
 
 /**
- * The timeline for a recording of `text` lasting `durationMs`, with no sound
- * to listen to: a short breath, then the sounds spread evenly by weight, with
- * rest at the punctuation and after the last word. However long the recording,
- * no sound is held longer than slow, careful speech would hold it; the mouth
- * rests for whatever time is left at the end.
+ * The timeline for a recording of `text` lasting `durationMs`, with no sound to analyse: a short breath, then the sounds
+ * spread evenly by weight with rest at punctuation. No sound is held longer than slow speech would; the rest is at the end.
  */
 export function lipsyncFromText(text: string, durationMs: number, options: LipsyncOptions = {}): LipsyncTimeline {
   const d = durationOf(durationMs);

@@ -5,7 +5,6 @@ import {
   BROW_STATES,
   CHARACTER_IDS,
   CHARACTER_NAMES,
-  CHARACTERS,
   DEFAULT_CHARACTER,
   EXPRESSION_MOUTHS,
   EYE_STATES,
@@ -24,7 +23,6 @@ import {
   faceLayers,
   headFor,
   headGroup,
-  isCharacterId,
   stageBackdrop,
   stageFigure,
   windowArt,
@@ -96,7 +94,7 @@ function walk(el: El, visit: (e: El) => void): void {
   for (const c of el.children) walk(c, visit);
 }
 
-/** Only what react-native-svg's SvgXml draws the same as a browser. */
+/** Only what the phone's SVG renderer draws the same as a browser. */
 const ALLOWED = new Set(['svg', 'title', 'defs', 'g', 'path', 'circle', 'ellipse', 'linearGradient', 'radialGradient', 'stop', 'clipPath']);
 
 /** The elements whose positions are written by the pen, a tenth at a time (a gradient's are fractions of a box). */
@@ -276,11 +274,7 @@ describe('the characters', () => {
   it('are Hevalo, Hamo and Xezo, by those names', () => {
     expect([...CHARACTER_IDS]).toEqual(['hevalo', 'hamo', 'xezo']);
     expect(CHARACTER_NAMES).toEqual({ hevalo: 'Hevalo', hamo: 'Hamo', xezo: 'Xezo' });
-    expect(CHARACTERS.map((c) => c.name)).toEqual(['Hevalo', 'Hamo', 'Xezo']);
     expect(DEFAULT_CHARACTER).toBe('hevalo');
-    expect(isCharacterId('hamo')).toBe(true);
-    expect(isCharacterId('Hamo')).toBe(false);
-    expect(isCharacterId(undefined)).toBe(false);
   });
 
   for (const id of CHARACTER_IDS) {

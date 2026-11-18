@@ -1,22 +1,13 @@
 /**
- * The few things every drawing in `art/` is written with: numbers as they go
- * into SVG, the document wrapper, gradients, and a hash that turns a drawing's
- * inputs into ids of its own.
- *
- * Same rules as `scripts/generate-cosmetic-art.mjs`, for the same reason: a
- * drawing is a string, and the string has to be identical on every machine.
- * So every coordinate is rounded before it is written (Math.sin may differ in
- * its last bit between engines; a tenth of a unit on a 120-unit canvas is far
- * coarser than that), and nothing is random unless it comes from a generator
- * seeded with the drawing's own name.
- *
- * Only the parts of SVG that `react-native-svg`'s `SvgXml` draws the same way a
- * browser does are used: paths, circles, ellipses, groups, linear and radial
- * gradients and clip paths. No filters, masks, patterns, CSS or `<text>` — a
- * blur or a font would be the one place the phone and the browser disagree.
+ * The primitives every drawing in `art/` is written with: number formatting, the document wrapper, gradients, colour
+ * blends and stable ids. A drawing is a string that must be identical on every machine, so every coordinate is rounded
+ * before it is written (Math.sin can differ in its last bit between engines) and randomness only comes from a generator
+ * seeded with the drawing's name, as in `scripts/generate-cosmetic-art.mjs`. Only SVG that react-native-svg's `SvgXml`
+ * draws like a browser is used: paths, circles, ellipses, groups, linear and radial gradients, and clip paths. No
+ * filters, masks, patterns, CSS or `<text>`.
  */
 
-/** Every drawing is made on a 120 × 120 canvas; `size` only sets how big it is shown. */
+/** Every drawing is made on a 120 × 120 canvas; `size` only sets the display size. */
 export const CANVAS = 120;
 
 /** A coordinate as written into SVG: one decimal (a tenth of a unit), never "-0". */
@@ -31,100 +22,17 @@ export function n2(v: number): string {
   return String(Object.is(x, -0) ? 0 : x);
 }
 
+/** Three decimals, for faint opacities and fine scales, where hundredths would be off by a noticeable share. */
+export const n3 = (v: number): string => String(Math.round(v * 1000) / 1000);
+
 export type Pt = readonly [number, number];
 
 export const pt = (p: Pt): string => `${n(p[0])},${n(p[1])}`;
 
-/** An open line through `points`. */
-export function linePath(points: readonly Pt[]): string {
-  if (points.length === 0) return '';
-  const [first, ...rest] = points as [Pt, ...Pt[]];
-  return `M${pt(first)}L${rest.map(pt).join(' ')}`;
-}
-
-/** How many numbers each path command takes. */
-const PATH_ARGS: Readonly<Record<string, number>> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 };
-
 /**
- * A path's points in whole units: for a drawing shown far smaller than it was
- * drawn (Hevalo on a badge is about an eighth of his own size), where a tenth
- * of a unit is much finer than a pixel and only costs characters. Each step
- * is measured from where the rounded path has actually got to, so rounding
- * never adds up along a long outline of small steps: every point lands within
- * half a unit of where it was drawn. An arc keeps its radii as they were. A
- * path it cannot read is given back as it came.
- */
-export function wholePath(d: string): string {
-  const tokens = d.match(/[A-Za-z]|-?(?:\d+\.?\d*|\.\d+)/g) ?? [];
-  let out = '';
-  // where the path truly is, where its rounded copy is, and where the current outline began
-  let [x, y, rx, ry] = [0, 0, 0, 0];
-  let [sx, sy] = [0, 0];
-  let cmd = '';
-  const put = (v: number | string): void => {
-    const s = typeof v === 'string' ? v : String(Object.is(v, -0) ? 0 : v);
-    out += /[\d.]$/.test(out) && !s.startsWith('-') ? ` ${s}` : s;
-  };
-  let i = 0;
-  while (i < tokens.length) {
-    const t = tokens[i] as string;
-    if (/[A-Za-z]/.test(t)) {
-      cmd = t;
-      i += 1;
-      out += t;
-      if (t === 'z' || t === 'Z') [x, y, rx, ry] = [sx, sy, Math.round(sx), Math.round(sy)];
-      continue;
-    }
-    const lower = cmd.toLowerCase();
-    const count = PATH_ARGS[lower];
-    if (count === undefined || count === 0 || i + count > tokens.length) return d;
-    const args = tokens.slice(i, i + count);
-    if (args.some((a) => /[A-Za-z]/.test(a))) return d;
-    i += count;
-    const rel = cmd === lower;
-    const [ox, oy, rox, roy] = rel ? [x, y, rx, ry] : [0, 0, 0, 0];
-    const ax = (v: string): number => ox + Number(v);
-    const ay = (v: string): number => oy + Number(v);
-    const px = (v: string): void => put(Math.round(ax(v)) - rox);
-    const py = (v: string): void => put(Math.round(ay(v)) - roy);
-    if (lower === 'h') {
-      px(args[0] as string);
-      x = ax(args[0] as string);
-    } else if (lower === 'v') {
-      py(args[0] as string);
-      y = ay(args[0] as string);
-    } else if (lower === 'a') {
-      for (const a of args.slice(0, 5)) put(a);
-      px(args[5] as string);
-      py(args[6] as string);
-      [x, y] = [ax(args[5] as string), ay(args[6] as string)];
-    } else {
-      for (let k = 0; k < count; k += 2) {
-        px(args[k] as string);
-        py(args[k + 1] as string);
-      }
-      [x, y] = [ax(args[count - 2] as string), ay(args[count - 1] as string)];
-      if (lower === 'm') {
-        [sx, sy] = [x, y];
-        // the pairs after a move are lines
-        cmd = rel ? 'l' : 'L';
-      }
-    }
-    [rx, ry] = [Math.round(x), Math.round(y)];
-  }
-  return out;
-}
-
-/** Every path in a piece of markup in whole units (`wholePath`). */
-export const wholeUnits = (markup: string): string => markup.replace(/ d="([^"]*)"/g, (_, d: string) => ` d="${wholePath(d)}"`);
-
-/**
- * Text that goes inside `<title>` or an attribute. A title is a caller's
- * string — often a translation, sometimes a person's own words — and the web
- * puts the drawing into the page as markup, so every character that could
- * open a tag, an entity or an attribute is escaped, and the control
- * characters XML cannot carry at all (they would stop the phone's parser
- * cold) are dropped.
+ * Escapes text for `<title>` or an attribute. Titles are caller strings (translations, sometimes user text) and the
+ * web inlines the markup, so every character that could open a tag, entity or attribute is escaped, and control
+ * characters XML cannot carry (they stop the phone's parser) are dropped.
  */
 export function escapeXml(text: string): string {
   return Array.from(text)
@@ -137,12 +45,12 @@ export function escapeXml(text: string): string {
     .replace(/'/g, '&apos;');
 }
 
-/** Whether XML 1.0 can carry a code point at all (a lone surrogate half cannot, nor most control characters). */
+/** Whether XML 1.0 can carry a code point (lone surrogates and most control characters cannot). */
 function isXmlChar(c: number): boolean {
   return c === 0x9 || c === 0xa || c === 0xd || (c >= 0x20 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfffd) || (c >= 0x10000 && c <= 0x10ffff);
 }
 
-/** FNV-1a, as base 36: a drawing's inputs become a short, stable id prefix. */
+/** FNV-1a in base 36: a drawing's inputs as a short, stable id prefix. */
 export function hashOf(text: string): string {
   let h = 0x811c9dc5;
   for (const ch of text) {
@@ -181,14 +89,8 @@ export function mix(a: string, b: string, t: number): string {
 }
 /** Toward white for t > 0, toward black for t < 0. */
 export const tint = (hex: string, t: number): string => (t >= 0 ? mix(hex, '#ffffff', t) : mix(hex, '#000000', -t));
-/** The same colour with its saturation taken out (Rec. 601 luma), for the not-yet-earned look. */
-export function grey(hex: string): string {
-  const [r, g, b] = rgbOf(hex);
-  const y = 0.299 * r + 0.587 * g + 0.114 * b;
-  return hexOf([y, y, y]);
-}
 
-/** How much of a drawing to keep at its size: 0 all of it, 1 the small drawing, 2 the tiny one. */
+/** How much detail to keep: 0 all of it, 1 the small drawing, 2 the tiny one. */
 export type Detail = 0 | 1 | 2;
 
 // ─────────────────────────────────────────────────────────────── gradients
@@ -205,11 +107,11 @@ const stopsOf = (stops: readonly Stop[]): string =>
 export const linearAt = (id: string, stops: readonly Stop[], x1: number, y1: number, x2: number, y2: number): string =>
   `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${n(x1)}" y1="${n(y1)}" x2="${n(x2)}" y2="${n(y2)}">${stopsOf(stops)}</linearGradient>`;
 
-/** A linear gradient over each shape's own box (top to bottom unless told otherwise). */
+/** A linear gradient over each shape's own box, top to bottom by default. */
 export const linearBox = (id: string, stops: readonly Stop[], x1 = 0, y1 = 0, x2 = 0, y2 = 1): string =>
   `<linearGradient id="${id}" x1="${n2(x1)}" y1="${n2(y1)}" x2="${n2(x2)}" y2="${n2(y2)}">${stopsOf(stops)}</linearGradient>`;
 
-/** A radial gradient over each shape's own box: centred in it and reaching its edge unless told otherwise. */
+/** A radial gradient over each shape's own box, centred and reaching its edge by default. */
 export const radialBox = (id: string, stops: readonly Stop[], cx = 0.5, cy = 0.5, r = 0.5): string =>
   `<radialGradient id="${id}" cx="${n2(cx)}" cy="${n2(cy)}" r="${n2(r)}">${stopsOf(stops)}</radialGradient>`;
 
@@ -220,15 +122,10 @@ export const radialAt = (id: string, stops: readonly Stop[], cx: number, cy: num
 // ────────────────────────────────────────────────────────────── the document
 
 /**
- * A drawing in progress: its `defs`, its shapes, and ids that cannot collide
- * with another drawing's on the same page.
- *
- * Ids matter because the web inlines these: two SVGs on one page share one id
- * space, and a gradient called "rim" in a hidden badge would paint every other
- * badge's rim too, or nothing at all. The prefix is a hash of what was asked
- * for, so it is stable (the same badge is the same string) and two different
- * drawings never share one. Callers drawing the same thing twice on a page can
- * pass their own `idPrefix`.
+ * A drawing in progress: its `defs`, its shapes, and ids that cannot collide with another drawing's. The web inlines
+ * these SVGs, so all drawings on a page share one id space; a gradient called "rim" in one badge would otherwise paint
+ * every other badge's rim. The prefix is a hash of the request, so it is stable and distinct per drawing; callers
+ * drawing the same thing twice on a page pass their own `idPrefix`.
  */
 export class Drawing {
   private readonly defs: string[] = [];
@@ -257,19 +154,12 @@ export class Drawing {
     return id;
   }
 
-  /**
-   * What has been drawn so far, for a picture that is not the square canvas
-   * (a card, a banner): the definitions and the drawing, for whoever asks to
-   * put their own frame round.
-   */
+  /** The defs and body drawn so far, for a caller that wraps them in a non-square frame (a card, a banner). */
   parts(): { defs: string; body: string } {
     return { defs: this.defs.length > 0 ? `<defs>${this.defs.join('')}</defs>` : '', body: this.body.join('') };
   }
 
-  /**
-   * The finished SVG. `title` is the drawing's text label: screen readers read
-   * it on the web, and it is the accessible name the apps also pass alongside.
-   */
+  /** The finished SVG. `title` is the drawing's accessible label, which the apps also pass alongside. */
   svg(size: number, title: string): string {
     const t = `${this.prefix}t`;
     const defs = this.defs.length > 0 ? `<defs>${this.defs.join('')}</defs>` : '';
@@ -280,7 +170,7 @@ export class Drawing {
   }
 }
 
-/** Checks a requested size: a positive, finite number of pixels. */
+/** Validates a requested size: a positive, finite number of pixels. */
 export function checkSize(size: number | undefined, fallback: number): number {
   const s = size ?? fallback;
   if (!Number.isFinite(s) || s <= 0) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);

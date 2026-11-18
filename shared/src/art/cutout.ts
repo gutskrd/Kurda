@@ -1,10 +1,7 @@
 /**
- * The cut-out: the one way the app's small object pictures are built, so that
- * the cards of Letters and words (word-sets.ts) and the pictures of Kurdish
- * Impostor's categories (impostor.ts) read as one family. A form is a flat
- * shape lit from the upper left: its thickness shows as a darker band below
- * it, as the coin stands forward on its edge, and a sliver of light runs along
- * its upper rim. A dab is a round blob of colour with one spot of light.
+ * The cut-out style shared by the small object pictures (word sets, Impostor, game covers, emails), so they read as one
+ * family: a flat form lit from the upper left, with a darker thickness band below and a sliver of light on its upper
+ * rim, and the few pen helpers those pictures share.
  */
 import type { Drawing } from './svg.js';
 import { n, tint } from './svg.js';
@@ -33,10 +30,8 @@ export function ring(cx: number, cy: number, r: number): string {
 export const at = (dx: number, dy: number): string => ` transform="translate(${n(dx)} ${n(dy)})"`;
 
 /**
- * One cut-out form: its thickness as a band of `shade` showing `drop` below
- * it, its face, and a lit rim along its upper left — the face in `light`,
- * then the face again in `base` moved down and right by `rim` and clipped to
- * the shape, so only a sliver of the light stays.
+ * One cut-out form: a `shade` band `drop` below it, the face in `light`, then the face in `base` shifted by `rim` and
+ * clipped to the shape, so only a lit sliver shows on the upper left.
  */
 export function form(dr: Drawing, d: string, tones: Tones, drop: number, rim: number, evenodd = false): void {
   const rule = evenodd ? ' fill-rule="evenodd"' : '';
@@ -50,4 +45,32 @@ export function dab(dr: Drawing, cx: number, cy: number, rx: number, ry: number,
   dr.add(`<ellipse cx="${n(cx)}" cy="${n(cy + drop)}" rx="${n(rx)}" ry="${n(ry)}" fill="${tint(hex, -0.28)}"/>`);
   dr.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx)}" ry="${n(ry)}" fill="${hex}"/>`);
   dr.add(`<ellipse cx="${n(cx - rx * 0.36)}" cy="${n(cy - ry * 0.38)}" rx="${n(rx * 0.3)}" ry="${n(ry * 0.24)}" fill="${tint(hex, 0.5)}"/>`);
+}
+
+/** A colour as a form's three tones. */
+export const tones = (hex: string): Tones => ({ light: tint(hex, 0.32), base: hex, shade: tint(hex, -0.32) });
+
+/** A filled path. */
+export const fill = (dr: Drawing, d: string, hex: string, more = ''): void => {
+  dr.add(`<path d="${d}" fill="${hex}"${more}/>`);
+};
+
+/** A stroked line with round ends and joins. */
+export const line = (dr: Drawing, d: string, hex: string, width: number, more = ''): void => {
+  dr.add(`<path d="${d}" fill="none" stroke="${hex}" stroke-width="${n(width)}" stroke-linecap="round" stroke-linejoin="round"${more}/>`);
+};
+
+/** A flat circle. */
+export const dot = (dr: Drawing, cx: number, cy: number, r: number, hex: string): void => {
+  dr.add(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="${hex}"/>`);
+};
+
+/** A round bead: a dab as wide as it is tall. */
+export const bead = (dr: Drawing, cx: number, cy: number, r: number, hex: string, drop = 2.4): void => dab(dr, cx, cy, r, r, hex, drop);
+
+/** Runs `draw` inside a group turned `angle` degrees about a point. */
+export function turned(dr: Drawing, angle: number, cx: number, cy: number, draw: () => void): void {
+  dr.add(`<g transform="rotate(${n(angle)} ${n(cx)} ${n(cy)})">`);
+  draw();
+  dr.add('</g>');
 }

@@ -1,29 +1,15 @@
 /**
- * Hevalo's two currencies, drawn in colour: Zêr, a chunky gold coin with a
- * deer's head raised on its face, and the gem, a faceted green stone. They
- * replace the line glyphs both apps used to tint, so wherever money is shown
- * — the purse, the shop's prices, a gift, the daily reward, a chest — it is
- * the same two objects.
- *
- * The coin stands a little forward in flat cartoon colours: its face over a
- * darker edge that shows its thickness below, a thick yellow ring with two
- * bands of shine, and in the orange field at its middle the deer, raised in
- * gold with its shadow falling beside it. The gem is an elongated
- * hexagon cut with six bevels round a flat table, lit from the upper left so
- * each bevel is its own shade, with two bands of light across the table.
- *
- * Both are drawn bolder as they get smaller (`detail`): their outlines
- * thicken, and the thin facet lines, the coin's shadowed field edge and lit
- * lip and the gem's sparkle go, so a 15-pixel coin in the purse is still a
- * coin and not a smudge.
+ * The two currencies, drawn in colour wherever money is shown: Zêr, a gold coin with a raised deer's head, and the
+ * gem, a faceted green stone. Both get bolder as they shrink (`detail`): outlines thicken and the fine facet lines,
+ * lips and sparkle are dropped, so a 15-pixel coin still reads as a coin.
  */
 import { curve, symmetric, type Knot } from '../characters/pen.js';
 import { CANVAS, Drawing, checkSize, linearAt, n, prefixFor, type Detail, type Pt } from './svg.js';
 
 export interface CurrencyOptions {
-  /** how big it is drawn, in pixels (it is square) */
+  /** Size in pixels; the drawing is square. */
   size?: number;
-  /** its text label; screens that say the amount beside it hide the picture from screen readers */
+  /** The accessible label; screens that print the amount beside it hide the picture from screen readers. */
   title?: string;
   idPrefix?: string;
 }
@@ -70,20 +56,18 @@ const GOLD = {
 const COIN = { cx: 60, cy: 56, r: 50, drop: 6, field: 31 };
 
 /**
- * The deer, front on: a broad round head narrowing to its muzzle, leaf-shaped
- * ears out to the sides and two chunky antlers, each with three rounded tines.
- * One half is set down from the chin up round the ear and the antler to the
- * middle of the crown (a 0 marks a sharp corner), and mirrored for the other.
+ * The deer, front on: round head, leaf-shaped ears and two three-tined antlers. One half runs from the chin round the
+ * ear and antler to the middle of the crown and is mirrored for the other; a 0 marks a sharp corner.
  */
 const DEER_HALF: readonly Knot[] = [
   [60, 80.1], [56.7, 80], [54.2, 79], [52.4, 76.9], [51.5, 74.7], [51.1, 72.6], [49.9, 70.1], [48.3, 67.6], [47.2, 64.7], [46.8, 61.2], [46.8, 58, 0],
-  // the ear, out along its underside to the tip and back along its top
+  // The ear: out along its underside to the tip and back along its top.
   [45.1, 57.6], [43.1, 56.8], [41.1, 55.4], [39.4, 53.7], [38.3, 52], [37.9, 50.3], [38.6, 49.1], [41.1, 48.8], [44.4, 49.7], [47.1, 51], [49, 52.1], [49.9, 52.5, 0],
-  // the antler: up its outer edge to the tallest tine, then the middle tine and the inner one
+  // The antler: up its outer edge to the tallest tine, then the middle and inner tines.
   [50, 51], [49.1, 49.8], [47.7, 48.5], [46.1, 47.5], [44.4, 46.7], [42.7, 45.7], [41.1, 43.9], [40.1, 41.8], [39.8, 39.7], [39.9, 36.7], [40.5, 34.8], [42.4, 33.9],
   [43.8, 34.5], [44.2, 35.9], [44.1, 37.7], [43.9, 39.3], [44.4, 40.2], [45.1, 39.7], [45.7, 38.3], [46.6, 37.4], [47.6, 37.1], [48.6, 37.4], [49.2, 38.3], [49.2, 39.7],
   [48.7, 41.3], [48.2, 43], [48.5, 44.4], [49.2, 44.6], [50.4, 43.7], [51.7, 42.3], [52.7, 41.7], [53.7, 42], [54.2, 43.2], [54, 45], [53.7, 47], [53.9, 48.7], [54.3, 49.5, 0],
-  // the crown between the antlers
+  // The crown between the antlers.
   [55.7, 48.5], [57.7, 47.7], [60, 47.4],
 ];
 const DEER = curve(symmetric(DEER_HALF, 60));
@@ -102,11 +86,7 @@ function ringBand(cx: number, cy: number, r0: number, r1: number, a0: number, a1
   return `M${n(ax)} ${n(ay)}A${n(r1)} ${n(r1)} 0 ${large} 1 ${n(bx)} ${n(by)}L${n(px)} ${n(py)}A${n(r0)} ${n(r0)} 0 ${large} 0 ${n(qx)} ${n(qy)}Z`;
 }
 
-/**
- * Zêr: a gold coin in flat cartoon colours, standing a little forward, its
- * thick yellow ring crossed by two bands of shine, and in its orange field
- * Hevalo's deer raised in gold, its shadow falling down and to the left.
- */
+/** Zêr: a gold coin with two shine bands across its ring and the deer raised in gold on its orange field. */
 export function coinSvg(opts: CurrencyOptions = {}): string {
   const size = checkSize(opts.size, 24);
   const detail = detailOf(size);
@@ -114,24 +94,24 @@ export function coinSvg(opts: CurrencyOptions = {}): string {
   const { cx, cy, r, drop, field } = COIN;
   const line = detail === 0 ? 6 : detail === 1 ? 4.2 : 3;
 
-  // the outline round the whole coin, its face and the edge below it
+  // The outline round the whole coin, face and edge.
   dr.add(`<circle cx="${cx}" cy="${cy + drop}" r="${n(r + line / 2)}" fill="${GOLD.outline}"/>`);
   dr.add(`<circle cx="${cx}" cy="${cy}" r="${n(r + line / 2)}" fill="${GOLD.outline}"/>`);
-  // the edge: the coin's thickness, showing below the face
+  // The edge: the coin's thickness, below the face.
   dr.add(`<circle cx="${cx}" cy="${cy + drop}" r="${r}" fill="${GOLD.edge}"/>`);
-  // the face, and two bands of shine across its ring
+  // The face, and two bands of shine across its ring.
   dr.add(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${GOLD.face}"/>`);
   dr.add(`<path d="${ringBand(cx, cy, field, r, 208, 252)}" fill="${GOLD.band}"/>`);
   dr.add(`<path d="${ringBand(cx, cy, field, r, 28, 62)}" fill="${GOLD.band}"/>`);
   if (detail === 2) {
-    // a lighter lip round the upper left of the ring
+    // A lighter lip round the upper left of the ring.
     dr.add(`<path d="${arc(cx, cy, r - 2.6, 165, 290)}" fill="none" stroke="${GOLD.rimLight}" stroke-width="2.6" stroke-linecap="round"/>`);
   }
-  // the orange field, sunk inside the ring: its top in the ring's shadow
+  // The orange field, sunk inside the ring, its top in the ring's shadow.
   dr.add(`<circle cx="${cx}" cy="${cy}" r="${field}" fill="${GOLD.field}"/>`);
   if (detail > 0) dr.add(`<path d="${arc(cx, cy, field - 1.4, 195, 345)}" fill="none" stroke="${GOLD.fieldShadow}" stroke-width="2.8" stroke-linecap="round"/>`);
 
-  // the deer, raised in gold, its shadow down and to the left; large, its upper edges catch the light
+  // The deer and its shadow down and to the left; at large sizes its upper edges catch the light.
   dr.add(deer(GOLD.raisedShadow, -0.9, 1.3));
   if (detail === 2) {
     dr.add(deer(GOLD.rimLight));
@@ -175,7 +155,7 @@ const GEM_TABLE: readonly Pt[] = [
   [39, 40],
 ];
 
-/** The gem: an elongated hexagon, six bevels round a flat table, green as the meadows. */
+/** The gem: an elongated hexagon with six bevels round a flat table. */
 export function gemSvg(opts: CurrencyOptions = {}): string {
   const size = checkSize(opts.size, 24);
   const detail = detailOf(size);
@@ -183,13 +163,13 @@ export function gemSvg(opts: CurrencyOptions = {}): string {
   const line = detail === 0 ? 8 : detail === 1 ? 6.5 : 5;
 
   dr.add(`<path d="${poly(GEM_OUTER)}" fill="${GREEN.outline}" stroke="${GREEN.outline}" stroke-width="${n(line)}" stroke-linejoin="round"/>`);
-  // the bevels, each from an outer edge in to the table's edge, lit from the upper left
+  // The bevels, each from an outer edge to the table, lit from the upper left.
   const shades = [GREEN.topRight, GREEN.right, GREEN.bottomRight, GREEN.bottomLeft, GREEN.left, GREEN.topLeft];
   for (let i = 0; i < 6; i++) {
     const j = (i + 1) % 6;
     dr.add(`<path d="${poly([GEM_OUTER[i]!, GEM_OUTER[j]!, GEM_TABLE[j]!, GEM_TABLE[i]!])}" fill="${shades[i]}"/>`);
   }
-  // the table, and two bands of light across it rising to the right
+  // The table, with two bands of light rising to the right.
   const table = dr.id('t');
   dr.def(linearAt(table, [[0, GREEN.tableLight], [1, GREEN.table]], 39, 28, 81, 92));
   const tableD = poly(GEM_TABLE);
@@ -200,7 +180,7 @@ export function gemSvg(opts: CurrencyOptions = {}): string {
   dr.add(band(66, 13, 0.32));
   dr.add(band(86, 6, 0.22));
   if (detail > 0) {
-    // the edges between the bevels, catching the light
+    // The lit edges between bevels.
     for (let i = 0; i < 6; i++) {
       const [x0, y0] = GEM_OUTER[i]!;
       const [x1, y1] = GEM_TABLE[i]!;
@@ -208,7 +188,7 @@ export function gemSvg(opts: CurrencyOptions = {}): string {
     }
     dr.add(`<path d="${poly(GEM_TABLE)}" fill="none" stroke="#ffffff" stroke-opacity="0.38" stroke-width="1.6" stroke-linejoin="round"/>`);
   }
-  // a glint along the upper-left bevel, and a sparkle when there is room
+  // A glint along the upper-left bevel, and a sparkle when there is room.
   dr.add(`<path d="M27 29.5L54 14.5" stroke="#ffffff" stroke-opacity="0.7" stroke-width="${detail === 0 ? 5 : 3.6}" stroke-linecap="round"/>`);
   if (detail === 2) dr.add(`<path d="${sparkle(99, 14, 10)}" fill="#ffffff"/>`);
   return dr.svg(size, opts.title ?? 'Gem');

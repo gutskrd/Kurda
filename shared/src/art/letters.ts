@@ -1,26 +1,8 @@
 /**
- * The pictures of letters by bird (shared/src/letters.ts): your window, the
- * pigeons that come and go from it, and a letter in its envelope.
- *
- * The window is one you look out of from inside a room, drawn for depth: the
- * wall of the room round it; the thickness of that wall, the soffit over the
- * window in shade and its two sides; the window's white frame set back in it;
- * a deep sill reaching out into the room, with a pot of flowers at one end
- * and a pigeon's place in the middle; and the two casements, as in the
- * owner's first window, swung open toward you, one each side, their glass
- * catching the light. Through it the country goes back in layers, paler the
- * further it is: the hour's sky with its sun or moon, clouds and two far
- * birds, blue mountains with snow on them, green hills with round trees, and
- * the meadow just outside with its flowers.
- *
- * Each layer is its own picture (`part`), the same square, so an app can set
- * them one over another and move them: the far ones least, so the country
- * has depth as the eye moves; the clouds drifting; the casements stirring in
- * the breeze; the light on the sill brightening and dimming. `whole` is all
- * of it, still. A pigeon (pigeon.ts) is drawn on its own (`letterBirdSvg`),
- * so it can stand on the sill in front of the room, or fly out through the
- * window and away into the country behind it; `LETTER_SILL` says where it
- * stands and how big, and `LETTER_FLIGHT` the way it flies.
+ * The pictures for letters by bird (shared/src/letters.ts): your window seen from inside a room, the pigeons, and a
+ * letter in its envelope. Each window layer is its own same-sized picture (`part`) so apps can stack and animate them;
+ * `whole` is all of it, still. The pigeon is drawn separately (`letterBirdSvg`) so it can stand on the sill in front of
+ * the room or fly out behind it; `LETTER_SILL` places it and `LETTER_FLIGHT` is its flight path.
  */
 import { LETTER_BIRDS } from '../letters.js';
 import { form, ring, rr, type Tones } from './cutout.js';
@@ -29,10 +11,10 @@ import { PIGEON_PECK, pigeon, pigeonHolds, pigeonShadow, type PigeonPose } from 
 import { Drawing, checkSize, linearAt, mix, n, prefixFor, radialAt, radialBox, seeded, tint, type Pt } from './svg.js';
 import type { TreeSky } from './tree-scene.js';
 
-/** What changes with the hour: the country outside, and the room's own colours in its light. */
+/** What changes with the hour: the country outside, and the room's colours in its light. */
 interface Hour {
   sky: readonly [top: string, horizon: string];
-  /** the sun or the moon: where, how big, its colour and its glow */
+  /** The sun or moon: position, radius, colour and glow. */
   orb: readonly [x: number, y: number, r: number, colour: string, glow: string];
   cloud: string;
   mountains: readonly [far: string, near: string];
@@ -49,7 +31,7 @@ interface Hour {
   frame: readonly [paint: string, shade: string];
   sill: readonly [top: string, front: string];
   glass: string;
-  /** the light coming in, and how strong it is on the sill */
+  /** The light coming in, and its strength on the sill. */
   light: readonly [string, number];
   night?: true;
 }
@@ -138,54 +120,43 @@ const HOURS: Record<TreeSky, Hour> = {
   },
 };
 
-/** The window in the room, on its 120-unit square: the edge of the wall's thickness, the frame set back in it, the opening, and the sill. */
+/** The window on its 120-unit square: the edge of the wall's thickness, the frame set back in it, the opening, and the sill. */
 const REVEAL = { x0: 16, y0: 12, x1: 104, y1: 92 } as const;
 const FRAME = { x0: 22, y0: 18, x1: 98, y1: 88 } as const;
 const OPENING = { x0: 25.4, y0: 21.4, x1: 94.6, y1: 85.4 } as const;
-/** Where the country is seen through the window, on its 120-unit square: a pigeon flying out is wholly inside it once it has gone behind the room. */
+/** Where the country shows through the window on its 120-unit square; a pigeon flying out is wholly inside it once behind the room. */
 export const LETTER_OPENING = OPENING;
 const SILL_FRONT = { x0: 10, x1: 110, y: 96, depth: 4.8 } as const;
 
 /**
- * The layers of the window, back to front. A pigeon on the sill stands over
- * all of them, the light on the sill included: it lies under its feet. The
- * plant in the pot is a layer of its own, so it can sway in the air coming in.
+ * The window's layers, back to front. A pigeon on the sill stands over all of them, the sill light included. The pot's
+ * plant is its own layer so it can sway.
  */
 export const LETTER_WINDOW_PARTS = ['sky', 'clouds', 'far', 'near', 'room', 'left', 'right', 'plant', 'light'] as const;
 export type LetterWindowPart = (typeof LETTER_WINDOW_PARTS)[number];
 
 /**
- * How far each layer moves as the eye moves, as a share of the window's
- * width at the eye's furthest: the country the more the nearer it is, the
- * room and its casements not at all, so the frame holds still and what is
- * outside turns behind it.
+ * How far each layer shifts with the eye, as a share of the window's width at the extreme: nearer country more, the
+ * room and casements not at all, so the frame holds still and the outside turns behind it.
  */
 export const LETTER_WINDOW_DEPTH: Readonly<Record<LetterWindowPart, number>> = { sky: 0.006, clouds: 0.012, far: 0.02, near: 0.04, room: 0, left: 0, right: 0, plant: 0, light: 0 };
 
-/** Where the plant in the pot bends from (the pot's rim, on the window's square), how far it leans each way in the breeze, in degrees, and how long one sway takes. */
+/** The plant's pivot (the pot's rim, on the window's square), its sway each way in degrees, and one sway's duration. */
 export const LETTER_PLANT_SWAY = { x: 90, y: 86, turn: 3.2, ms: 5600 } as const;
 
-/**
- * Where a pigeon stands on the sill, on the window's 120-unit square: under
- * its feet, and how wide its own square (`letterBirdSvg`) is drawn there, as a
- * share of the window's width, so it stands on the sill at a pigeon's size.
- */
+/** A pigeon's place on the sill, on the window's 120-unit square: its feet, and its own square's width (`letterBirdSvg`) as a share of the window's. */
 export const LETTER_SILL = { x: 50, y: 93.4, birdShare: 0.46 } as const;
 
-/** Where a pigeon's feet are on its own square, and how much bigger than its own drawing it is drawn there. */
+/** Where a pigeon's feet are on its own square, and its scale there relative to its own drawing. */
 export const LETTER_BIRD_FEET = { x: 60, y: 100, scale: 1.5 } as const;
 
-/** How far ahead of its feet a letter lies on the sill for a pigeon to peck it up or lay it down there: under its beak as it pecks, as shares of its square. */
+/** How far ahead of its feet a letter lies for pecking it up or laying it down: under the pecking beak, as shares of its square. */
 const PECK_LETTER = Math.round(((PIGEON_PECK.letter * LETTER_BIRD_FEET.scale) / 120) * 1000) / 1000;
 
 /**
- * The way a pigeon flies off with a letter, out through the window and away
- * over the country: at each moment of the flight (`at`, 0 to 1), how far its
- * square has gone from its place on the sill (as shares of the window), how
- * big it is, and how much of it is seen. From `behindAt` on it is outside,
- * so the apps draw it behind the room: it has gone through the window by then,
- * small enough to be wholly inside it. A pigeon coming in flies the same way
- * backwards, from the far end to its place.
+ * How a pigeon flies off with a letter, out through the window and away: per moment (`at`, 0 to 1) its square's offset
+ * from its sill place (shares of the window), its scale and opacity. From `behindAt` on it is outside and small enough
+ * to fit in the opening, so apps draw it behind the room. An incoming pigeon flies the same path backwards.
  */
 export const LETTER_FLIGHT = {
   keys: [
@@ -198,12 +169,12 @@ export const LETTER_FLIGHT = {
     { at: 1, x: 0.3, y: -0.3, scale: 0.1, seen: 0 },
   ],
   behindAt: 0.42,
-  /** how long it takes, and how long one beat of its wings is (wings up, then down) */
+  /** Its duration, and one wingbeat's (wings up, then down). */
   ms: 2600,
   beatMs: 240,
 } as const;
 
-/** Where a pigeon is at one moment of its play: how far forward and down (shares of its own square), how far it leans forward, and how it is stretched; `sx` -1 is turned round. */
+/** A pigeon's place at one moment of its play: forward and down offset (shares of its square), lean, and stretch; `sx` -1 is turned round. */
 export interface LetterPlayMove {
   at: number;
   x: number;
@@ -214,13 +185,9 @@ export interface LetterPlayMove {
 }
 
 /**
- * A pigeon's play on the sill, the same on the phone as on the website, after
- * the owner's playful birds: how long it lasts; where the pigeon is through
- * it (`moves`, about its feet, leaning and stepping toward where it faces);
- * which picture of it is seen from when (`poses`); and, when a letter lies
- * on the sill, how far in front of the pigeon's feet it lies and how it comes
- * down and goes (`letter`, its height over the sill in shares of the
- * pigeon's square, and how much of it is seen).
+ * A pigeon's play on the sill, alike on both apps: its duration; its movement (`moves`, about its feet, leaning and
+ * stepping where it faces); which picture shows when (`poses`); and, for a letter on the sill, its offset in front of
+ * the feet and how it comes down and goes (`letter`, its height in shares of the pigeon's square, and its opacity).
  */
 export interface LetterPlay {
   ms: number;
@@ -232,11 +199,8 @@ export interface LetterPlay {
 }
 
 /**
- * A play as it is timed, in milliseconds from its start: where the pigeon is
- * (`moves`, each key keeping whatever it does not say from the one before),
- * which picture of it is seen from when (`poses`), and the letter on the
- * sill (`letter`). It is turned into shares of its length, the clock an app
- * runs it on.
+ * A play timed in milliseconds from its start: `moves` (each key keeps what it omits from the previous one), `poses` and
+ * the sill `letter`. It is converted to shares of its length, the clock an app runs it on.
  */
 function timed(play: {
   ms: number;
@@ -260,25 +224,13 @@ function timed(play: {
 }
 
 /**
- * How a pigeon turns round, as a round bird does rather than a card: it is
- * seen three-quarters toward you for a moment, then facing you, then
- * three-quarters the other way, and then side on again. The side it faces
- * changes only in the middle of its facing you, where it looks the same
- * either way round. The time it shows each, in milliseconds.
- */
-export const LETTER_TURN = { quarter: 70, front: 90 } as const;
-
-/**
- * A pigeon's plays: before it goes, after it comes, at home on the sill while
- * nothing is happening, two for a bird at somebody's window (sent on, it
- * picks its own letter up again from where it laid it, `fetch`; answered,
- * the answer drops in front of it and it takes it home, `take`), and a turn
- * round on the spot (`turn`), for a bird that has to face the other way.
- * Neither of the window's plays steps toward the bird beside it.
+ * A pigeon's plays: before it leaves, after it lands, idle at home, two for a bird at someone else's window (`fetch`
+ * picks its own letter up again when sent on; `take` collects an answer that drops in front of it), and `turn` to face
+ * the other way. Neither window play steps toward a neighbouring bird.
  */
 export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' | 'take' | 'turn', LetterPlay>> = {
-  // your letter drops onto the sill; the pigeon looks up at it, hops for joy and chirps, hops over and picks it up,
-  // turns to show it to you, and beats its wings, ready
+  // Your letter drops onto the sill; the pigeon looks up, hops and chirps, hops over and picks it up, shows it to you,
+  // and beats its wings, ready.
   before: timed({
     ms: 4900,
     moves: [
@@ -291,14 +243,14 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 1680, x: 0.035, y: -0.045 },
       { at: 1880, x: 0.07, y: 0, sx: 1.06, sy: 0.92 },
       { at: 2000, sx: 1, sy: 1 },
-      // it draws itself up a little as it looks down at the letter, then its head goes down quickly, its body after,
-      // and it gives as its beak meets the sill
+      // It draws itself up looking down at the letter, then its head goes down quickly, the body after, giving as the beak
+      // meets the sill.
       { at: 2100, sx: 0.98, sy: 1.03 },
       { at: 2200, sx: 1, sy: 1 },
       { at: 2290 },
       { at: 2330, sx: 1.03, sy: 0.96 },
       { at: 2440, sx: 1, sy: 1 },
-      // a little hop as it turns to you with the letter, and another as it turns back
+      // A small hop as it turns to you with the letter, and another as it turns back.
       { at: 2640 },
       { at: 2690, y: -0.03 },
       { at: 2740, y: 0 },
@@ -321,7 +273,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [2200, 'peck-1', false],
       [2245, 'peck-2', false],
       [2290, 'peck', false],
-      // it takes the letter in its beak and lifts it off the sill as its head comes up, hanging under the beak the whole way
+      // It lifts the letter off the sill as its head comes up, the letter hanging under the beak throughout.
       [2500, 'peck-2', true],
       [2560, 'peck-1', true],
       [2620, 'perched', true],
@@ -349,8 +301,8 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 4900, y: 0, seen: 0 },
     ],
   }),
-  // landed with a letter: it lets the letter down onto the sill and taps it, shakes its feathers, chirps, turns round
-  // to look behind it, and turns back to face you and wave hello before it stands as it came
+  // Landed with a letter: it lays the letter on the sill and taps it, shakes its feathers, chirps, turns to look behind,
+  // turns back to wave hello, and stands as it came.
   after: timed({
     ms: 5300,
     moves: [
@@ -384,7 +336,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
     ],
     poses: [
       [0, 'perched', true],
-      // it brings the letter down in its beak, hanging under it, and lets it go as its beak reaches the sill
+      // It brings the letter down hanging from its beak and lets go as the beak reaches the sill.
       [300, 'peck-1', true],
       [345, 'peck-2', true],
       [390, 'peck', false],
@@ -416,8 +368,8 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 5300, y: 0, seen: 1 },
     ],
   }),
-  // sent on: it turns to look at you a while, then down at its letter, picks it up where it laid it, turns round
-  // the way it will fly, and beats its wings, ready
+  // Sent on: it looks at you a while, then down at its letter, picks it up, turns the way it will fly, and beats its
+  // wings, ready.
   fetch: timed({
     ms: 3900,
     moves: [
@@ -478,8 +430,8 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 3900, y: 0, seen: 0 },
     ],
   }),
-  // answered: it watches the answer drop in front of it, chirps, picks it up where it fell, turns round the way it
-  // will fly, and beats its wings, ready to take it home
+  // Answered: it watches the answer drop in front of it, chirps, picks it up, turns the way it will fly, and beats its
+  // wings, ready to take it home.
   take: timed({
     ms: 3800,
     moves: [
@@ -539,20 +491,20 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       { at: 3800, y: 0, seen: 0 },
     ],
   }),
-  // at home, over and over: a pigeon's bob of the head, a peck at the seeds, a look up at the sky, a chirp, a turn
-  // round to look the other way, and a turn back that stops a while to look at you
+  // At home, looping: a head bob, a peck at the seeds, a look at the sky, a chirp, a turn to look the other way, and a
+  // turn back that pauses to look at you.
   idle: timed({
     ms: 15000,
     loop: true,
     moves: [
       { at: 0 },
       { at: 1500 },
-      // a step on the spot with each bob of the head, its body catching up with its head
+      // A step on the spot with each bob, the body catching up with the head.
       { at: 1620, x: 0.006 },
       { at: 1900, x: 0.012 },
       { at: 2180, x: 0.006 },
       { at: 2460, x: 0 },
-      // two pecks at the seeds, the second without coming all the way up between
+      // Two pecks at the seeds, the second without coming all the way up between.
       { at: 4100, sx: 0.98, sy: 1.03 },
       { at: 4200, sx: 1, sy: 1 },
       { at: 4290 },
@@ -617,7 +569,7 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
       [14120, 'perched', false],
     ],
   }),
-  // turned round on the spot, for a bird that has to face the other way: a little hop as it goes round through facing you
+  // Turning round on the spot to face the other way, with a small hop as it passes through facing you.
   turn: timed({
     ms: 640,
     moves: [{ at: 0 }, { at: 40 }, { at: 174.5, y: -0.04 }, { at: 175, sx: -1 }, { at: 310, y: 0 }],
@@ -631,14 +583,12 @@ export const LETTER_PLAY: Readonly<Record<'before' | 'after' | 'idle' | 'fetch' 
   }),
 };
 
-/** How long a play takes to change from one picture of the pigeon to the next, as a share of it: the finest step its clock has. */
+/** How long a switch from one picture to the next takes, as a share of the play: its clock's finest step. */
 const SWITCH = 0.00001;
 
 /**
- * Each picture a play shows, with when it is seen: for every picture (named
- * `pose` or `pose+letter`), the moments its showing changes and to what, so
- * an app can lay all of them one on another and switch between them on the
- * play's own clock.
+ * Every picture a play shows (named `pose` or `pose+letter`), with the moments its visibility changes, so an app can
+ * stack them all and switch between them on the play's clock.
  */
 export function letterPlayShows(play: LetterPlay): Array<{ pose: PigeonPose; letter: boolean; steps: Array<readonly [at: number, seen: 0 | 1]> }> {
   const key = (pose: PigeonPose, letter: boolean): string => `${pose}${letter ? '+letter' : ''}`;
@@ -649,7 +599,7 @@ export function letterPlayShows(play: LetterPlay): Array<{ pose: PigeonPose; let
       const seen: 0 | 1 = k === key(pose, letter) ? 1 : 0;
       const before = i === 0 ? null : show.steps[show.steps.length - 1]![1];
       if (before === null) show.steps.push([0, seen]);
-      // the change is all but instant, a hundred-thousandth of the play: a picture fading into the next shows the two at once
+      // The switch is nearly instant (a hundred-thousandth of the play), since a cross-fade would show two pictures at once.
       else if (before !== seen) show.steps.push([Math.max(0, at - SWITCH), before], [at, seen]);
     }
   });
@@ -657,7 +607,7 @@ export function letterPlayShows(play: LetterPlay): Array<{ pose: PigeonPose; let
   return [...shows.values()];
 }
 
-/** Where a shadow on the sill is at one moment: how far along (shares of the pigeon's square), how it is turned and stretched, and how much of it is seen. */
+/** A sill shadow at one moment: offset (shares of the pigeon's square), rotation and stretch, and opacity. */
 export interface LetterShadowKey {
   at: number;
   x: number;
@@ -666,18 +616,14 @@ export interface LetterShadowKey {
   seen: number;
 }
 
-/** How a shadow is for a pigeon `lift` (shares of its square) over the sill: smaller and fainter the higher it is. */
+/** A shadow for a pigeon `lift` (shares of its square) above the sill: smaller and fainter the higher it is. */
 const lifted = (lift: number): { size: number; seen: number } => ({ size: Math.max(0.3, 1 - Math.max(0, lift) * 3), seen: Math.max(0, 1 - Math.max(0, lift) * 6) });
 
 /**
- * The shadows a play lays on the sill, on the play's own clock. The
- * pigeon's (`moves`) stays on the sill under it wherever it steps, turns
- * round with it, slides a little ahead as it leans down to peck, and is
- * smaller and fainter while it is up in a hop. Its shape is the pigeon's
- * as it is seen, side on, turned or facing you, with the letter's in it while
- * it holds one (`shapes`, each with its steps as `letterPlayShows` gives
- * them). A letter lying on the sill has its own (`letter`), there before it
- * lands and darker the nearer it comes down.
+ * The shadows a play lays on the sill, on the play's clock. The pigeon's (`moves`) stays under it as it steps, turns
+ * with it, slides ahead as it pecks, and shrinks and fades during a hop; its shape follows the pigeon's view, with the
+ * letter's when it holds one (`shapes`, stepped as `letterPlayShows` gives them). A letter on the sill has its own
+ * (`letter`), present before it lands and darker the lower it comes.
  */
 export function letterPlayShadow(play: LetterPlay): {
   moves: LetterShadowKey[];
@@ -688,23 +634,21 @@ export function letterPlayShadow(play: LetterPlay): {
     const { size, seen } = lifted(-m.y);
     return { at: m.at, x: m.x + Math.sin((m.tilt * Math.PI) / 180) * 0.05, sx: m.sx * size, sy: size, seen };
   });
-  // the shadow takes the shape of the pigeon as it is seen from above, side on, turned or facing you, with the letter's when it holds one
+  // The shadow takes the pigeon's shape as seen (side on, turned or facing you), with the letter's when it holds one.
   const shapes = letterPlayShows({ ...play, poses: play.poses.map(([at, pose, letter]) => [at, shadowShape(pose), pigeonHolds(pose, letter)] as const) });
-  // a letter falls further than a pigeon hops, so its shadow fades more gently with the height
+  // A letter falls further than a pigeon hops, so its shadow fades more gently with height.
   const letter = play.letter.map((k) => ({ at: k.at, size: Math.max(0.4, 1 + k.y * 0.9), seen: k.seen * Math.max(0, 1 + k.y * 1.3) }));
   return { moves, shapes, letter };
 }
 
-/** The shape of the shadow a pigeon casts in `pose`: side on, bowed far down to peck, turned three-quarters, or facing you (waving or not, it is the same round). */
+/** The shadow shape for `pose`: side on, bowed to peck, three-quarters, or facing you (waving or not, the same round). */
 function shadowShape(pose: PigeonPose): PigeonPose {
   return pose === 'turn' || pose === 'peck' || pose === 'peck-2' ? pose : pose === 'front' || pose === 'hello' ? 'front' : 'perched';
 }
 
 /**
- * The shadow of a pigeon flying off the sill, on the flight's clock
- * (LETTER_FLIGHT, a pigeon coming in has it backwards): it stays on the sill,
- * under the pigeon as it goes, and is gone as the pigeon rises from it.
- * Measured on the pigeon's own square, as the play's shadows are.
+ * The shadow of a pigeon flying off the sill, on `LETTER_FLIGHT`'s clock (backwards for an incoming bird): it stays on
+ * the sill under the bird and is gone as the bird rises. Measured on the pigeon's own square, like the play shadows.
  */
 export function letterFlightShadow(): LetterShadowKey[] {
   return LETTER_FLIGHT.keys.map((k) => {
@@ -714,10 +658,7 @@ export function letterFlightShadow(): LetterShadowKey[] {
   });
 }
 
-/**
- * A puffy cloud of a few round lobes on a flat foot. Each puff is its own
- * round, so where two overlap there is no seam.
- */
+/** A puffy cloud of a few round lobes on a flat foot; each puff is a separate circle, so overlaps leave no seam. */
 function cloud(dr: Drawing, x: number, y: number, s: number, hex: string): void {
   const lobes: ReadonlyArray<readonly [number, number, number]> = [
     [-9, 1, 5.2],
@@ -738,7 +679,7 @@ function flower(dr: Drawing, x: number, y: number, r: number, petal: string, hea
   dr.add(`<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 0.55)}" fill="${heart}"/>`);
 }
 
-/** The sky, its light toward the horizon, and the sun or the moon with the stars. */
+/** The sky with its light toward the horizon, and the sun or moon with the stars. */
 function skyPart(dr: Drawing, h: Hour): void {
   const air = dr.id('a');
   dr.def(linearAt(air, [[0, h.sky[0]], [1, h.sky[1]]], 0, 6, 0, 66));
@@ -749,7 +690,7 @@ function skyPart(dr: Drawing, h: Hour): void {
   dr.add(`<circle cx="${n(ox)}" cy="${n(oy)}" r="${n(or * 4)}" fill="url(#${halo})"/>`);
   if (!h.night) dr.add(`<circle cx="${n(ox)}" cy="${n(oy)}" r="${n(or)}" fill="${colour}"/>`);
   if (h.night) {
-    // a young moon's horn: the round of it on one side and a shallower round back, which is its shadow's edge
+    // A young moon's horn: an outer arc and a shallower arc back, the edge of its shadow.
     dr.add(`<path d="M${n(ox)} ${n(oy - or)}A${n(or)} ${n(or)} 0 1 0 ${n(ox)} ${n(oy + or)}A${n(or * 1.35)} ${n(or * 1.35)} 0 0 1 ${n(ox)} ${n(oy - or)}Z" fill="${colour}" transform="rotate(-24 ${n(ox)} ${n(oy)})"/>`);
     const rand = seeded('letter-stars');
     let stars = '';
@@ -758,7 +699,7 @@ function skyPart(dr: Drawing, h: Hour): void {
   }
 }
 
-/** The clouds, and two birds far off between them. */
+/** The clouds, and two far-off birds between them. */
 function cloudsPart(dr: Drawing, h: Hour): void {
   cloud(dr, 40, 30, 0.6, h.cloud);
   cloud(dr, 76, 40, 0.86, h.cloud);
@@ -767,15 +708,15 @@ function cloudsPart(dr: Drawing, h: Hour): void {
   dr.add(`<path d="M55 24.4Q56.4 23 57.6 24.2Q58.8 23 60.2 24.4M61.6 21.2Q62.7 20.2 63.6 21.1Q64.5 20.2 65.6 21.2" fill="none" stroke="${far}" stroke-width="0.7" stroke-linecap="round" stroke-linejoin="round"/>`);
 }
 
-/** The far country: mountains, blue with the distance and snow on their tops, and the green hills before them with their round trees. */
+/** The far country: distant blue mountains with snowy tops, and green hills before them with round trees. */
 function farPart(dr: Drawing, h: Hour): void {
   dr.add(`<path d="M-6 62L4 52L14 55L26 44L36 51L44 47L56 38L68 49L78 45L90 52L100 42L112 50L126 46V64H-6Z" fill="${h.mountains[0]}"/>`);
-  // the snow on the two highest
+  // Snow on the two highest.
   dr.add(`<path d="M51.2 42.4L56 38L60.6 42.6L58.2 41.6L56.2 43.2L54 41.4ZM96.4 45.2L100 42L103.6 44.6L101.6 44.2L100 45.6L98.2 44.4Z" fill="${h.snow}"/>`);
   dr.add(`<path d="M-6 64L8 56L20 59L30 53L44 58L58 52L70 57L84 51L98 57L112 53L126 57V68H-6Z" fill="${h.mountains[1]}"/>`);
   dr.add(`<path d="M-6 66C10 60 26 59 42 62C58 65 72 60 88 58C102 56.6 114 59 126 62V80H-6Z" fill="${h.hills[0]}"/>`);
   dr.add(`<path d="M-6 72C12 67 30 66 50 68.6C70 71 90 66 106 65C114 64.6 120 65.6 126 67V84H-6Z" fill="${h.hills[1]}"/>`);
-  // round trees along the hills, small with the distance
+  // Round trees along the hills, small with distance.
   const trees: ReadonlyArray<readonly [number, number, number]> = [[18, 61.4, 1.9], [23, 61.8, 1.5], [62, 63.8, 1.7], [84, 59.6, 2.1], [89, 59.4, 1.6], [104, 66.4, 2.2]];
   for (const [x, y, r] of trees) {
     dr.add(`<path d="M${n(x - 0.3)} ${n(y)}h0.6v${n(r * 1.2)}h-0.6Z" fill="${h.trees[1]}"/>`);
@@ -783,7 +724,7 @@ function farPart(dr: Drawing, h: Hour): void {
   }
 }
 
-/** The meadow just outside, its grass and its flowers. */
+/** The meadow just outside: grass and flowers. */
 function nearPart(dr: Drawing, h: Hour): void {
   dr.add(`<path d="M-6 76C16 72 36 71.4 56 73.4C76 75.4 96 71 126 70.6V126H-6Z" fill="${h.meadow[0]}"/>`);
   dr.add(`<path d="M-6 80C20 77 44 77.6 66 79.4C88 81 106 78 126 77V126H-6Z" fill="${h.meadow[1]}"/>`);
@@ -799,7 +740,7 @@ function nearPart(dr: Drawing, h: Hour): void {
   flower(dr, 52, 84.6, 1.3, blue, tint(blue, 0.35));
 }
 
-/** A clay pot on the sill, at `x`, `y`: the shade it stands in, its body and its rim. What grows in it is drawn by itself (`plant`). */
+/** A clay pot on the sill at `x`, `y`: its shade, body and rim. Its plant is drawn separately (`plant`). */
 function pot(dr: Drawing, x: number, y: number): void {
   const clay: Tones = { light: '#eea17a', base: '#d9825b', shade: '#b8663f' };
   dr.add(`<ellipse cx="${n(x)}" cy="${n(y + 0.4)}" rx="7.4" ry="1.4" fill="#1d1838" opacity="0.16"/>`);
@@ -807,11 +748,11 @@ function pot(dr: Drawing, x: number, y: number): void {
   dr.add(`<path d="${rr(x - 6.6, y - 8.6, 13.2, 2.6, 1)}" fill="${clay.light}"/>`);
 }
 
-/** What grows in the pot at `x`, `y`: a stem, four leaves and two flowers, rising from under the rim. */
+/** The pot's plant at `x`, `y`: a stem, four leaves and two flowers rising from under the rim. */
 function plant(dr: Drawing, h: Hour, x: number, y: number): void {
   const stem = h.night ? '#2f5a3f' : '#4f8f3e';
   const leafy = h.night ? '#3c6b4a' : '#6fb04f';
-  // the stem rises from the top of the rim, where the plant bends from (LETTER_PLANT_SWAY)
+  // The stem rises from the rim's top, the plant's sway pivot (`LETTER_PLANT_SWAY`).
   dr.add(`<path d="M${n(x)} ${n(y - 8.6)}Q${n(x - 0.6)} ${n(y - 13)} ${n(x + 0.4)} ${n(y - 17)}" fill="none" stroke="${stem}" stroke-width="0.8" stroke-linecap="round"/>`);
   const leaves: ReadonlyArray<readonly [Pt, Pt, number]> = [
     [[x, y - 9], [-0.86, -0.5], 5.2],
@@ -824,29 +765,29 @@ function plant(dr: Drawing, h: Hour, x: number, y: number): void {
   flower(dr, x - 3.6, y - 14.6, 1, h.flowers[0], h.heart);
 }
 
-/** The room round the window: its wall, the wall's thickness, the frame set back in it, the sill and its pot. */
+/** The room round the window: its wall, the wall's thickness, the set-back frame, the sill and its pot. */
 function roomPart(dr: Drawing, h: Hour): void {
   const { x0, y0, x1, y1 } = REVEAL;
-  // the wall, lighter by the window where the light from it falls; a hole where the window is
+  // The wall, lighter near the window, with a hole for the window.
   const wall = dr.id('w');
   dr.def(radialAt(wall, [[0, h.wall[0]], [1, h.wall[1]]], 60, 50, 80));
   dr.add(`<path d="M0 0H120V120H0ZM${x0} ${y0}V${y1}H${x1}V${y0}Z" fill="url(#${wall})" fill-rule="evenodd"/>`);
-  // the wall's thickness: the soffit over the window in shade, its two sides, one lit and one not
+  // The wall's thickness: the shaded soffit over the window and its two sides, one lit and one not.
   dr.add(`<path d="M${x0} ${y0}H${x1}L${FRAME.x1} ${FRAME.y0}H${FRAME.x0}Z" fill="${h.soffit}"/>`);
   dr.add(`<path d="M${x0} ${y0}L${FRAME.x0} ${FRAME.y0}V${FRAME.y1}L${x0} ${y1}Z" fill="${h.jamb[0]}"/>`);
   dr.add(`<path d="M${x1} ${y0}L${FRAME.x1} ${FRAME.y0}V${FRAME.y1}L${x1} ${y1}Z" fill="${h.jamb[1]}"/>`);
-  // the frame, white, with the inside of its own thickness at the top and the left
+  // The white frame, with its own inner thickness at the top and left.
   const o = OPENING;
   dr.add(`<path d="M${FRAME.x0} ${FRAME.y0}H${FRAME.x1}V${FRAME.y1}H${FRAME.x0}ZM${o.x0} ${o.y0}V${o.y1}H${o.x1}V${o.y0}Z" fill="${h.frame[0]}" fill-rule="evenodd"/>`);
   dr.add(`<path d="M${o.x0} ${o.y0}H${o.x1}L${n(o.x1 - 1.4)} ${n(o.y0 + 1.6)}H${n(o.x0 + 1.4)}V${o.y1}H${o.x0}Z" fill="${h.frame[1]}"/>`);
-  // the sill reaching out into the room: its top, lit, then the front of it, and the shade it throws on the wall below
+  // The sill reaching into the room: its lit top, its front, and the shade it throws on the wall below.
   const s = SILL_FRONT;
   dr.add(`<path d="M${FRAME.x0} ${FRAME.y1}H${FRAME.x1}L${s.x1} ${s.y}H${s.x0}Z" fill="${h.sill[0]}"/>`);
   const under = dr.id('u');
   dr.def(linearAt(under, [[0, '#1d1838', 0.16], [1, '#1d1838', 0]], 0, s.y + s.depth, 0, s.y + s.depth + 7));
   dr.add(`<path d="M${s.x0 + 1} ${n(s.y + s.depth)}H${s.x1 - 1}C${s.x1 - 4} ${n(s.y + s.depth + 4)} ${s.x1 - 8} ${n(s.y + s.depth + 7)} ${s.x1 - 14} ${n(s.y + s.depth + 7)}H${s.x0 + 14}C${s.x0 + 8} ${n(s.y + s.depth + 7)} ${s.x0 + 4} ${n(s.y + s.depth + 4)} ${s.x0 + 1} ${n(s.y + s.depth)}Z" fill="url(#${under})"/>`);
   dr.add(`<path d="${rr(s.x0, s.y, s.x1 - s.x0, s.depth, 1.6)}" fill="${h.sill[1]}"/>`);
-  // a few seeds on the sill either side of where the pigeon stands, for it to peck at
+  // A few seeds on the sill either side of the pigeon's place, for it to peck at.
   const seed = h.night ? '#b8b4c8' : '#f1dfbd';
   for (const [x, y, turn] of [[64.6, 94.6, 20], [67.4, 95.4, -30], [69.2, 94.2, 60], [35.4, 94.8, -20], [32.8, 95.6, 35], [31, 94.4, -60]] as const) {
     dr.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="0.95" ry="0.6" fill="${seed}" transform="rotate(${turn} ${n(x)} ${n(y)})"/>`);
@@ -855,15 +796,14 @@ function roomPart(dr: Drawing, h: Hour): void {
 }
 
 /**
- * One casement swung open into the room, on its hinge at the frame: the
- * nearer edge taller than the hinge, as it is nearer; its frame, its four
- * panes catching the light, and the thickness of its free edge.
+ * One casement swung open into the room on its hinge at the frame: the free edge taller than the hinge since it is
+ * nearer, with its frame, four panes catching the light, and its free edge's thickness.
  */
 function casementPart(dr: Drawing, h: Hour, side: 'left' | 'right'): void {
   const hinge = side === 'left' ? FRAME.x0 + 2 : FRAME.x1 - 2;
   const free = side === 'left' ? 9.6 : 110.4;
   const [ht, hb, ft, fb] = [FRAME.y0 + 1, FRAME.y1 - 0.4, 12, 94.6];
-  // a point on the casement: `u` across from the hinge to the free edge, `v` down from its top
+  // A point on the casement: `u` across from hinge to free edge, `v` down from its top.
   const at = (u: number, v: number): Pt => {
     const top = ht + (ft - ht) * u;
     const bottom = hb + (fb - hb) * u;
@@ -873,14 +813,14 @@ function casementPart(dr: Drawing, h: Hour, side: 'left' | 'right'): void {
     const [a, b, c, d] = [at(u0, v0), at(u1, v0), at(u1, v1), at(u0, v1)];
     return `M${n(a[0])} ${n(a[1])}L${n(b[0])} ${n(b[1])}L${n(c[0])} ${n(c[1])}L${n(d[0])} ${n(d[1])}Z`;
   };
-  // the edge of the open casement, seen as it stands out toward us
+  // The open casement's edge, standing out toward us.
   const edge = side === 'left' ? -1 : 1;
   dr.add(`<path d="M${n(free)} ${ft}L${n(free + edge * 1.2)} ${n(ft + 0.6)}L${n(free + edge * 1.2)} ${n(fb - 0.6)}L${n(free)} ${fb}Z" fill="${h.frame[1]}"/>`);
   dr.add(`<path d="${quad(0, 0, 1, 1)}" fill="${h.frame[0]}"/>`);
   const glass = mix(h.glass, h.wall[1], 0.25);
   const panes = [quad(0.12, 0.04, 0.48, 0.48), quad(0.56, 0.04, 0.9, 0.48), quad(0.12, 0.52, 0.48, 0.96), quad(0.56, 0.52, 0.9, 0.96)];
   for (const pane of panes) dr.add(`<path d="${pane}" fill="${glass}"/>`);
-  // the light caught in the glass: a pale band across each pane, kept to the panes
+  // The light in the glass: a pale band across each pane, clipped to the panes.
   dr.add(`<g clip-path="url(#${dr.clip(panes.join(''))})">`);
   const [g0, g1] = [at(0.1, 0.18), at(1, 0.02)];
   const [g2, g3] = [at(1, 0.16), at(0.1, 0.32)];
@@ -891,7 +831,7 @@ function casementPart(dr: Drawing, h: Hour, side: 'left' | 'right'): void {
   dr.add('</g>');
 }
 
-/** The light from the window lying on the sill, and its glow in the room. */
+/** The window's light lying on the sill, and its glow in the room. */
 function lightPart(dr: Drawing, h: Hour): void {
   const [colour, strength] = h.light;
   const glow = dr.id('g');
@@ -903,12 +843,12 @@ function lightPart(dr: Drawing, h: Hour): void {
 }
 
 export interface LetterWindowOptions {
-  /** the hour's sky through the window; the day's by default */
+  /** The hour's sky through the window; day by default. */
   sky?: TreeSky;
-  /** one layer of it, or the whole window still */
+  /** One layer, or the whole window still. */
   part?: LetterWindowPart | 'whole';
   size?: number;
-  /** its text label; the apps usually say what is happening beside it and hide the picture from screen readers */
+  /** The accessible label; the apps usually describe what is happening beside it and hide the picture from screen readers. */
   title?: string;
   idPrefix?: string;
 }
@@ -939,16 +879,16 @@ export function letterWindowSvg(opts: LetterWindowOptions = {}): string {
 }
 
 export interface LetterBirdOptions {
-  /** the pigeon's number (`letterBirdOf`): its colour */
+  /** The pigeon's number (`letterBirdOf`), which sets its colour. */
   bird: number;
   pose?: PigeonPose;
-  /** a letter in its beak */
+  /** A letter in its beak. */
   letter?: boolean;
-  /** facing left rather than right */
+  /** Facing left rather than right. */
   facingLeft?: boolean;
-  /** framed as a picture of the pigeon itself, facing you unless a pose is given, its head and body filling the square, rather than standing where the sill is */
+  /** Framed as a portrait, facing you unless a pose is given, head and body filling the square, instead of standing at the sill. */
   portrait?: boolean;
-  /** with its shadow under it (the default); the window lays the shadow on the sill itself (`letterShadowSvg`) */
+  /** With its shadow under it (the default); the window lays the shadow on the sill itself (`letterShadowSvg`). */
   shadow?: boolean;
   size?: number;
   title?: string;
@@ -956,19 +896,16 @@ export interface LetterBirdOptions {
 }
 
 /**
- * How a pigeon is framed for its portrait: where its feet go on the square,
- * and how big it is drawn. Its portrait is of it facing you, as somebody's
- * picture is, its head and body filling the round and its feet just showing;
- * a portrait in a pose seen side on shows the whole of it, its round body in
- * the middle.
+ * How a pigeon is framed for its portrait: its feet's place on the square and its scale. Facing you, head and body fill
+ * the round with the feet just showing; a side-on pose shows the whole bird, its body centred.
  */
 const PORTRAIT = { x: 60, y: 112, scale: 2.8 } as const;
 const PORTRAIT_SIDE = { x: 60, y: 104, scale: 2.4 } as const;
 
-/** A member's pigeon, on its own transparent square: standing, blinking, waving, asleep, or flying with its wings up or down. */
+/** A member's pigeon on its own transparent square: standing, blinking, waving, asleep, or flying wings up or down. */
 export function letterBirdSvg(opts: LetterBirdOptions): string {
   const size = checkSize(opts.size, 120);
-  // a kind of pigeon by name, or the grey's markings in a colour
+  // A pigeon kind by name, or the grey's markings in a colour.
   const kind = LETTER_BIRDS[opts.bird];
   if (!kind) throw new RangeError(`art: no bird ${String(opts.bird)}`);
   const pose = opts.pose ?? (opts.portrait ? 'front' : 'perched');
@@ -976,7 +913,7 @@ export function letterBirdSvg(opts: LetterBirdOptions): string {
   const shadow = opts.shadow !== false;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-bird', opts.bird, pose, opts.letter ? 'letter' : '', flip, opts.portrait ? 'portrait' : '', shadow ? '' : 'unshaded'));
   const { x, y, scale } = !opts.portrait ? LETTER_BIRD_FEET : pose === 'front' || pose === 'hello' ? PORTRAIT : PORTRAIT_SIDE;
-  // a pigeon facing left stands on the same feet, mirrored about them: its square fits it either way round
+  // A left-facing pigeon is mirrored about its feet, so its square fits either way round.
   dr.add(`<g transform="translate(${n(x)} ${n(y)}) scale(${n(scale * flip)} ${n(scale)})">`);
   pigeon(dr, kind, pose, opts.letter === true, shadow);
   dr.add('</g>');
@@ -984,9 +921,9 @@ export function letterBirdSvg(opts: LetterBirdOptions): string {
 }
 
 export interface LetterShadowOptions {
-  /** what the pigeon is doing: asleep, it casts a rounder shadow */
+  /** What the pigeon is doing; asleep, it casts a rounder shadow. */
   pose?: PigeonPose;
-  /** with the shadow of a letter in its beak */
+  /** Include the shadow of a letter in its beak. */
   letter?: boolean;
   facingLeft?: boolean;
   size?: number;
@@ -995,10 +932,8 @@ export interface LetterShadowOptions {
 }
 
 /**
- * The shadow a pigeon on the sill casts, alone on the pigeon's square
- * (`letterBirdSvg`), so that it lies on the sill where the pigeon's feet are:
- * an app lays it under a pigeon drawn without one, and leaves it on the sill
- * while the pigeon hops or takes off.
+ * A sill pigeon's shadow alone on the pigeon's square (`letterBirdSvg`), lying where its feet are, so an app can lay it
+ * under a pigeon drawn without one and leave it on the sill while the pigeon hops or takes off.
  */
 export function letterShadowSvg(opts: LetterShadowOptions = {}): string {
   const size = checkSize(opts.size, 120);
@@ -1013,7 +948,7 @@ export function letterShadowSvg(opts: LetterShadowOptions = {}): string {
 }
 
 export interface LetterEnvelopeOptions {
-  /** the shadow a letter lying flat casts, alone on the letter's square, in place of the letter */
+  /** The shadow a flat letter casts, alone on the letter's square, instead of the letter. */
   shadow?: boolean;
   size?: number;
   title?: string;
@@ -1023,19 +958,19 @@ export interface LetterEnvelopeOptions {
 const PAPER: Tones = { light: '#fffaf1', base: '#f6ead6', shade: '#cdb898' };
 const SEAL = '#d8493b';
 
-/** A letter in its envelope, sealed with red wax: what is written, or arrives. */
+/** A letter in its envelope, sealed with red wax, for a letter written or arriving. */
 export function letterEnvelopeSvg(opts: LetterEnvelopeOptions = {}): string {
   const size = checkSize(opts.size, 120);
   const dr = new Drawing(prefixFor(opts.idPrefix, 'letter-envelope', opts.shadow ? 'shadow' : ''));
   if (opts.shadow) {
-    // lying flat on the sill, the light from the window behind it: a close shade round the paper, deeper toward the room
+    // Lying flat on the sill with the window's light behind it: a close shade round the paper, deeper toward the room.
     const soft = dr.id('shadow');
     dr.def(radialBox(soft, [[0, '#1d1838', 1], [0.74, '#1d1838', 0.8], [1, '#1d1838', 0]]));
     dr.add(`<ellipse cx="61" cy="66" rx="56" ry="38" fill="url(#${soft})" opacity="0.3"/>`);
     return dr.svg(size, opts.title ?? 'A shadow');
   }
   form(dr, rr(14, 30, 92, 62, 8), PAPER, 4, 2);
-  // the flaps: the bottom two meeting under the top one
+  // The flaps: the bottom two meeting under the top one.
   dr.add(`<path d="M16 88L52 60M104 88L68 60" fill="none" stroke="${PAPER.shade}" stroke-width="1.6" stroke-linecap="round"/>`);
   form(dr, 'M16 34C16 31.8 17.6 30.6 19.6 31.6L60 63L100.4 31.6C102.4 30.6 104 31.8 104 34L66 66C62.6 68.8 57.4 68.8 54 66Z', PAPER, 1.6, 1);
   form(dr, ring(60, 64, 9), { light: tint(SEAL, 0.32), base: SEAL, shade: tint(SEAL, -0.32) }, 2, 1.4);

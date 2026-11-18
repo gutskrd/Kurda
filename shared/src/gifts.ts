@@ -1,16 +1,8 @@
 /**
- * Gifts: something from the shop, sent to a friend, that arrives as a wrapped
- * present in your chat together and is unwrapped with a moment of animation —
- * then shown on the profile, if it is something you wear.
- *
- * What this is careful about (see the research behind it): gifts are items,
- * never currency, and cannot be sold, converted or passed on; only between
- * friends; no "send one back" nudges, no gift leaderboards, no asking for
- * gifts; a cap per day; and between anyone who is not a known adult, only once
- * a friendship is a day old.
- *
- * Shared so the API, the browser and the phone agree on the tiers, the timings
- * and the shapes.
+ * Gifts: a shop item sent to a friend, arriving as a wrapped present in the chat and unwrapped with an animation, then
+ * shown on the profile if it is worn. Gifts are items, never currency, and cannot be sold, converted or passed on; only
+ * between friends; no "send one back" nudges, leaderboards or asking; a daily cap; and between anyone not a known adult,
+ * only once a friendship is a day old. Shared so the API and both apps agree on tiers, timings and shapes.
  */
 
 /** How big the unwrapping moment is. */
@@ -20,15 +12,11 @@ export type GiftTier = (typeof GIFT_TIERS)[number];
 export interface GiftTierInput {
   currency: 'zer' | 'gems';
   price: number;
-  /** a limited-time item (it has an end date), e.g. for Newroz */
+  /** a limited-time item with an end date, such as for Newroz */
   limited: boolean;
 }
 
-/**
- * Limited items are legendary; items bought with gems, or with 1,500 Zêr or
- * more, are rare; everything else is common. The API computes it and sends it;
- * clients only animate it.
- */
+/** Limited items are legendary, items bought with gems or for 1,500 Zêr or more rare, the rest common. The API decides; clients only animate it. */
 export function giftTierFor(item: GiftTierInput): GiftTier {
   if (item.limited) return 'legendary';
   if (item.currency === 'gems' || item.price >= 1500) return 'rare';
@@ -36,9 +24,8 @@ export function giftTierFor(item: GiftTierInput): GiftTier {
 }
 
 /**
- * How long each tier's unwrap plays: a burst in the bubble, a sheet with
- * confetti, a full-screen moment. Every one can be skipped with a tap, and with
- * reduced motion it is a short fade instead.
+ * How long each tier's unwrap plays: a burst in the bubble, a sheet with confetti, a full-screen moment. A tap skips any of
+ * them, and under reduced motion each is a short fade.
  */
 export const GIFT_UNWRAP_MS: Readonly<Record<GiftTier, number>> = {
   common: 700,
@@ -46,32 +33,23 @@ export const GIFT_UNWRAP_MS: Readonly<Record<GiftTier, number>> = {
   legendary: 2500,
 };
 
-/** The fade that replaces every animation when the device asks for reduced motion. */
+/** The fade that replaces every animation under reduced motion. */
 export const GIFT_REDUCED_MOTION_MS = 200;
 
-/** Friends one gift may go to at once (a group gift). */
+/** Friends one gift may go to at once, as a group gift. */
 export const MAX_GIFT_RECIPIENTS = 7;
 
-/** Gifts one person may send in a day (counting each recipient), and to any one friend. */
+/** Gifts one person may send a day, counting each recipient, and to any one friend. */
 export const GIFTS_PER_DAY = 10;
 export const GIFTS_PER_FRIEND_PER_DAY = 3;
 
 /**
- * Gifts one person may be given in a day, from everyone together.
- *
- * The caps above are the sender's, so they bound what one account can give,
- * not what one account can be given: ten fresh accounts sending three each is
- * thirty a day into the same inventory. A gift is an item, never currency, so
- * this is no way to mint Zêr — but a farm of throwaway accounts feeding one
- * main account is exactly the pattern a present should not become.
+ * Gifts one person may receive a day from everyone together. The sender caps alone would let ten throwaway accounts feed
+ * one main account thirty gifts a day, which is the pattern a present must not become.
  */
 export const GIFTS_RECEIVED_PER_DAY = 10;
 
-/**
- * Between two people who are not both known adults, a friendship must be this
- * old before a gift can pass between them — the "add, gift, groom" pattern is
- * the one this blocks.
- */
+/** Between two people not both known adults, a friendship must be this old before a gift passes, which blocks "add, gift, groom". */
 export const GIFT_MIN_FRIENDSHIP_HOURS = 24;
 
 /** Shop categories a recipient can put on straight from the unwrap. */
@@ -80,17 +58,14 @@ export type EquippableCategory = (typeof EQUIPPABLE_GIFT_CATEGORIES)[number];
 
 /** One recipient of a gift, as a viewer of the chat sees them. */
 export interface GiftRecipient {
-  /** null when this viewer may not see their name (then "a group member") */
+  /** null when this viewer may not see their name ("a group member") */
   name: string | null;
   avatarUrl: string | null;
   isMe: boolean;
   opened: boolean;
 }
 
-/**
- * A gift as it appears in a chat message (kind 'gift'). The price is never on
- * it: the recipient is given a present, not a receipt.
- */
+/** A gift as it appears in a chat message (kind 'gift'). The price is never on it: a present, not a receipt. */
 export interface GiftCard {
   batchId: string;
   sku: string;
@@ -115,16 +90,16 @@ export interface GiftCatalogItem {
   currency: 'zer' | 'gems';
   price: number;
   tier: GiftTier;
-  /** recipients (by user id, all your friends) who already own this unique item */
+  /** recipients, by user id, who already own this unique item */
   alreadyOwnedBy: string[];
 }
 
-/** POST /gifts — send one item to one or more friends. */
+/** POST /gifts: one item to one or more friends. */
 export interface SendGiftResult {
   batchId: string;
   /** recipients who received it */
   sent: string[];
-  /** recipients skipped, with why (only ever your friends, so this is safe to say) */
+  /** recipients skipped, with why; only ever your friends, so safe to say */
   skipped: Array<{ userId: string; reason: 'already_owned' | 'not_allowed' | 'daily_limit' }>;
   balance: { zer: number; gems: number };
 }

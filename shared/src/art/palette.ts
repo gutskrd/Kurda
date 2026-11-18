@@ -1,16 +1,8 @@
 /**
- * The colours the badges, emblems and frames are made of.
- *
- * Everything is painted like an enamel pin: a metal rim and coloured enamel
- * inside it. A metal is five steps — a near-white highlight, a light, the hue
- * itself, a deep shade and the darkest tone — and a rim is lit from those
- * alone, light at its upper left running to shade at its lower right. There is
- * no outline in a foreign ink: what separates a piece from the page is its own
- * darkest tone, which keeps a pale tier from vanishing on the light theme,
- * and its own light rim is what lifts it off the dark one.
- *
- * Shadows lean toward the hue rather than toward grey, so a piece stays warm
- * as it darkens.
+ * The colours of the badges, emblems and frames, painted like enamel pins: a metal rim round coloured enamel. A metal is
+ * five steps (highlight, light, hue, deep shade, darkest), and a rim is lit from those alone. There is no outline in a
+ * foreign ink: a piece's darkest tone keeps a pale tier visible on the light theme and its light rim lifts it off the
+ * dark one. Shadows lean toward the hue, not grey.
  */
 import type { BadgeTier, LeagueTier, RankTier } from './keys.js';
 
@@ -22,11 +14,7 @@ export interface Metal {
   deep: string;
 }
 
-/**
- * Badge tiers. Sifir is a rose copper, Zîv a cool blue silver, Zêr a rich warm
- * gold and Firûze an electric turquoise — the research's four (#B87333,
- * #C0C7CF, #E2B33C, #2BB3A8) brightened into light rather than polished metal.
- */
+/** Badge tiers: Sifir rose copper, Zîv blue silver, Zêr warm gold, Firûze turquoise, brightened from flat metal swatches. */
 export const COPPER: Metal = { hi: '#ffe6d6', light: '#ffb48e', mid: '#ee7b52', dark: '#b2472d', deep: '#5a1d16' };
 export const SILVER: Metal = { hi: '#ffffff', light: '#e4edf8', mid: '#b3c4dc', dark: '#6c80a6', deep: '#2a3456' };
 export const GOLD: Metal = { hi: '#fff8d1', light: '#ffe16a', mid: '#ffbd1f', dark: '#d9800b', deep: '#6b3500' };
@@ -36,7 +24,7 @@ export const STONE: Metal = { hi: '#d5d9e2', light: '#b1b7c4', mid: '#8a91a1', d
 
 export const TIER_METAL: Record<BadgeTier, Metal> = { 1: COPPER, 2: SILVER, 3: GOLD, 4: TURQUOISE };
 
-/** A field, the enamel ground a glyph glows on: `glow` at the heart, `mid` around it, `deep` at the rim. */
+/** The enamel ground a glyph glows on: `glow` at the heart, `mid` around it, `deep` at the rim. */
 export interface Field {
   glow: string;
   mid: string;
@@ -44,11 +32,9 @@ export interface Field {
 }
 
 /**
- * The colours a badge is made in: each badge its own, so a page of them is
- * as varied as a box of paints. A badge softens these into the steps of its
- * piece (badges.ts): `top` to `bottom` is the face lit from above, `rim` its
- * palest tint (the plate set into it), `deep` the darkest tone — the piece's
- * thickness and the foot of its symbol.
+ * A badge's own colours, varied across badges. The badge softens them into its steps (badges.ts): `top` to `bottom`
+ * is the face lit from above, `rim` the palest tint (the inset plate), `deep` the darkest tone (thickness and the
+ * symbol's foot).
  */
 export interface Plate {
   top: string;
@@ -72,7 +58,7 @@ export const PLATES = {
 } as const satisfies Record<string, Plate>;
 export type PlateName = keyof typeof PLATES;
 
-/** Named colours an icon may use besides its metal. Each is [top, bottom] of a lit fill. */
+/** Named colours an icon may use besides its metal, each the [top, bottom] of a lit fill. */
 export const ACCENT = {
   fire: ['#fff07a', '#ff7a1a'],
   flame: ['#ffffff', '#ffe36b'],
@@ -95,11 +81,8 @@ export type AccentName = keyof typeof ACCENT;
 // ───────────────────────────────────────────────────────────── game ranks
 
 /**
- * Rank tiers climb from the warm earth of the plain to the sky: the clay and
- * terracotta of Deşt, Gir's fresh spring green, the turquoise of a high
- * pasture's streams, Çiya's deep sapphire, Lûtke's amethyst at dusk, and
- * Stêrk's gold. Neighbours never share a hue, and the light steps of the
- * upper tiers are paler, so the ladder also reads as getting brighter.
+ * Rank tiers climb from earth to sky: Deşt clay, Gir spring green, Zozan turquoise, Çiya sapphire, Lûtke amethyst,
+ * Stêrk gold. Neighbours never share a hue, and the upper tiers' light steps are paler, so the ladder also brightens.
  */
 export const RANK_METAL: Record<RankTier, Metal> = {
   dest: { hi: '#ffe9dc', light: '#f6ad86', mid: '#dc7a52', dark: '#a94c30', deep: '#55220f' },
@@ -111,12 +94,8 @@ export const RANK_METAL: Record<RankTier, Metal> = {
 };
 
 /**
- * The stone set in each rank's crest: the tier's hue as a cut jewel, deeper
- * and more saturated than its metal so it stands out of its own setting —
- * carnelian for the plain, emerald for the hills, turquoise for the pasture,
- * sapphire for the mountain, amethyst for the summit, and for the star a
- * stone of starlight — ice-blue and white in its gold, the one crest whose
- * stone is not its metal's colour, so the top of the ladder is unmistakable.
+ * Each rank crest's stone: the tier's hue as a jewel, deeper and more saturated than its metal so it stands out of its
+ * setting. Stêrk's ice-blue stone is the one that does not match its metal, which marks the top of the ladder.
  */
 export const RANK_GEM: Record<RankTier, Metal> = {
   dest: { hi: '#fff0e2', light: '#ffb07c', mid: '#ef6a34', dark: '#a8341b', deep: '#4a1408' },
@@ -127,10 +106,7 @@ export const RANK_GEM: Record<RankTier, Metal> = {
   sterk: { hi: '#ffffff', light: '#e6f6ff', mid: '#9fd4ff', dark: '#4688e0', deep: '#13357a' },
 };
 
-/**
- * The enamel behind a rank tier's glyph where one is drawn on a badge, and
- * under its season plaque: the tier's hue gone deep, never toward brown.
- */
+/** The enamel behind a rank glyph on a badge and under its season plaque: the tier's hue gone deep, never brown. */
 export const RANK_FIELD: Record<RankTier, Field> = {
   dest: { glow: '#c2603a', mid: '#8a3820', deep: '#3e170b' },
   gir: { glow: '#3b9a4c', mid: '#1f6a34', deep: '#0b3119' },
@@ -143,17 +119,14 @@ export const RANK_FIELD: Record<RankTier, Field> = {
 /** The placement emblem's pearl, neutral until a tier is earned. */
 export const PEARL: Metal = { hi: '#ffffff', light: '#eef0f5', mid: '#c9cfda', dark: '#8d96a8', deep: '#434b5c' };
 
-/** The placement count's violet: Hevalo's own, the one colour the placing emblem counts in. */
+/** The placement count's violet, the only colour the placement emblem counts in. */
 export const PLACING: Metal = { hi: '#f6ecff', light: '#e3c4ff', mid: '#b874f0', dark: '#6b3fa0', deep: '#2a1250' };
 
 // ──────────────────────────────────────────────────────── learning leagues
 
 /**
- * Each league's own water, the colour of its picture and of everything an app
- * draws around its emblem: a pale dew-blue drop, a fresh mint spring, an
- * azure river, a still lake gone cobalt-lilac at dusk, a sea-teal under a
- * sunrise (its highlight is the rising sun's peach), and the ocean's
- * midnight, which glows with living light (`glint` is that bioluminescent edge).
+ * Each league's water colour, used for its picture and for whatever an app draws round its emblem. The ocean's `glint`
+ * is its glowing edge.
  */
 export const LEAGUE_METAL: Record<LeagueTier, Metal & { glint: string }> = {
   dilop: { hi: '#ffffff', light: '#d4f1ff', mid: '#8fd2f7', dark: '#3a8ed6', deep: '#0f3570', glint: '#ffffff' },
@@ -165,12 +138,8 @@ export const LEAGUE_METAL: Record<LeagueTier, Metal & { glint: string }> = {
 };
 
 /**
- * The rim each league's water is set in, rising in worth the way the water
- * deepens: pearl, silver, gold, rose gold, platinum, and for the ocean a
- * mother-of-pearl rim that runs through the colours of a shell's lining.
- * The pearl and the mother-of-pearl have a `sheen`: the colours their lustre
- * runs through, light to shade. The ladder reads at a glance even where the pictures are too
- * small to see.
+ * Each league's rim, rising in worth as the water deepens: pearl, silver, gold, rose gold, platinum, mother-of-pearl.
+ * Pearl and mother-of-pearl have a `sheen`, the colours their lustre runs through from light to shade.
  */
 export const LEAGUE_RIM: Record<LeagueTier, Metal & { sheen?: readonly string[] }> = {
   dilop: { hi: '#ffffff', light: '#f5eff6', mid: '#ddd2cc', dark: '#a8978f', deep: '#5d4f4c', sheen: ['#ffffff', '#f7f1fb', '#eae9f6', '#f3e7df', '#d9cbc4', '#a99a92'] },
