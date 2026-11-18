@@ -109,6 +109,22 @@ describe('opening a group one is banned from', () => {
     expect(await screen.findByRole('button', { name: 'Ask to come back' })).toBeTruthy();
   });
 
+  it('takes a request back at once, and puts it back with the reason when the server refuses', async () => {
+    let answer: (r: unknown) => void = () => undefined;
+    open({
+      'GET /groups/g1/chat': refused,
+      'GET /groups/g1': group(banned({ kind: 'pending', sentAt: new Date(Date.now() - 3 * 3_600_000).toISOString() })),
+      'DELETE /groups/g1/requests': () => new Promise((resolve) => (answer = resolve)),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Withdraw request' }));
+    // Before the server has answered.
+    expect(screen.getByRole('button', { name: 'Ask to come back' })).toBeTruthy();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByText('Request sent 3h ago — the admins will decide')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Withdraw request' })).toBeTruthy();
+    expect(screen.getByRole('alert')).toBeTruthy();
+  });
+
   it('says when asking is possible again, or that it is not, and a ban for good', async () => {
     open({ 'GET /groups/g1/chat': refused, 'GET /groups/g1': group(banned({ kind: 'wait', until: later(7) })) });
     expect(await screen.findByText(/^You can ask again on /)).toBeTruthy();

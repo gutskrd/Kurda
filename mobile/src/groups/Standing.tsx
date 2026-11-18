@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, TextInput, View } from 'react-native';
 import { GROUP_REQUEST_NOTE_MAX, type GroupRequestState, type GroupStanding } from '@kurda/shared';
+import { useIntents } from '../api/optimistic';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
@@ -49,7 +50,6 @@ export function StandingCard({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
 
@@ -60,20 +60,23 @@ export function StandingCard({
     : null;
   const heading = left || !bannedLine ? t('groups.standing.gone') : bannedLine;
 
-  const withdraw = async (): Promise<void> => {
-    if (!banned) return;
-    setBusy(true);
-    setError(null);
-    const res = await withdrawRejoin(client, group.id);
-    setBusy(false);
-    if (!res.ok) {
+  // Taken back at once; a refusal puts the waiting request back and says why.
+  const before = useRef<Banned | null>(null);
+  const withdrawing = useIntents<string, boolean>((id) => withdrawRejoin(client, id), {
+    failed: (failure) => {
       haptic('wrong');
-      setError(groupError(res.error, t));
-      return;
-    }
+      setError(groupError(failure, t));
+      if (before.current) onStanding(before.current);
+    },
+  });
+  const withdraw = (): void => {
+    if (!banned) return;
+    setError(null);
+    before.current = banned;
     haptic('correct');
     AccessibilityInfo.announceForAccessibility?.(t('groups.standing.withdrawn'));
     onStanding({ ...banned, request: { kind: 'can_ask' } });
+    withdrawing.want(group.id, true, false);
   };
 
   return (
@@ -85,7 +88,7 @@ export function StandingCard({
       {banned?.reason ? <Text style={[styles.line, { color: colors.textSecondary }]}>{t('groups.standing.reason', { reason: banned.reason })}</Text> : null}
 
       {banned ? (
-        <RequestPart request={banned.request} busy={busy} onAsk={() => setAsking(true)} onWithdraw={() => void withdraw()} when={(iso) => noticeTime(iso, t, locale)} day={(iso) => formatDay(iso, locale)} />
+        <RequestPart request={banned.request} onAsk={() => setAsking(true)} onWithdraw={withdraw} when={(iso) => noticeTime(iso, t, locale)} day={(iso) => formatDay(iso, locale)} />
       ) : (
         <Text style={[styles.line, { color: colors.textSecondary }]}>{t('groups.standing.canBeAdded')}</Text>
       )}
@@ -115,14 +118,12 @@ export function StandingCard({
 /** Where asking to come back stands, and what can be done about it now. */
 function RequestPart({
   request,
-  busy,
   onAsk,
   onWithdraw,
   when,
   day,
 }: {
   request: GroupRequestState;
-  busy: boolean;
   onAsk: () => void;
   onWithdraw: () => void;
   when: (iso: string) => string;
@@ -137,7 +138,7 @@ function RequestPart({
       return (
         <>
           <Text style={[styles.line, styles.state, { color: colors.textPrimary }]}>{t('groups.standing.pending', { when: when(request.sentAt) })}</Text>
-          <ClayButton label={t('groups.standing.withdraw')} variant="outline" busy={busy} onPress={onWithdraw} style={styles.action} />
+          <ClayButton label={t('groups.standing.withdraw')} variant="outline" onPress={onWithdraw} style={styles.action} />
         </>
       );
     case 'wait':
