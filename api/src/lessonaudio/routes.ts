@@ -37,7 +37,7 @@ import { registerAudioParser, storeAudioMedia } from '../media/audioMedia.js';
 import { audioLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { ALPHABET_AUDIO_ROLES } from '../alphabet/routes.js';
-import { readWav } from '../alphabet/wav.js';
+import { readWav } from '../media/wav.js';
 import { LessonAudioService } from './service.js';
 import { lessonsPlaying } from './publish-guard.js';
 import { bustStoryLists } from '../stories/service.js';

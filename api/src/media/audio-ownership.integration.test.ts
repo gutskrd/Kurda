@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { loadConfig } from '../config/env.js';
 import { FakeStorage } from '../test/fake-storage.js';
+import { mp3 as frames } from '../test/audio-files.js';
 import { AUDIO_DAILY_UPLOADS, storeAudioMedia, type AudioMediaDeps } from './audioMedia.js';
 import { audioLimits } from './mediaLimits.js';
 import { MediaUsageService } from './mediaUsage.js';
@@ -10,8 +11,8 @@ import { MediaService, ORPHAN_AGE_HOURS } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
-/** An ID3-tagged MP3, as long as asked, different for each `seed`. */
-const mp3 = (seed: number, pad = 512): Buffer => Buffer.concat([Buffer.from([0x49, 0x44, 0x33, 0x03, 0, 0, 0, 0]), Buffer.alloc(pad, seed % 251), Buffer.from(String(seed))]);
+/** A short MP3, different for each `seed`. */
+const mp3 = (seed: number): Buffer => frames(10, seed);
 
 describe.skipIf(!DATABASE_URL)('a member’s recordings (integration)', () => {
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });

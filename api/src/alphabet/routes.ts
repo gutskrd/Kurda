@@ -22,7 +22,7 @@ import { AppError } from '../plugins/errors.js';
 import { registerAudioParser, storeAudioMedia } from '../media/audioMedia.js';
 import { audioLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
-import { readWav } from './wav.js';
+import { readWav } from '../media/wav.js';
 import { RECORDING_ROLES, assertMayRecord } from '../recording/access.js';
 import {
   fitLipsync,
