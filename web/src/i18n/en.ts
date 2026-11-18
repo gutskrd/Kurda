@@ -888,8 +888,6 @@ export const en = {
   'report.aboutPlayer': 'More about {name}',
   'report.group': 'Report this group',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Safety',
-  'settings.safety.help': 'What happened to your reports, and any decisions about your account.',
   'standing.backToSettings': 'Settings',
   'reports.mine.title': 'My reports',
   'reports.mine.intro': 'What you reported, and what we decided. Only you can see this.',

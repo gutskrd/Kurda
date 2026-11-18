@@ -823,8 +823,6 @@ export const tr: Catalogue = {
   'report.aboutPlayer': '{name} hakkında daha fazla',
   'report.group': 'Bu grubu bildir',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Güvenlik',
-  'settings.safety.help': 'Şikâyetlerine ne olduğu ve hesabınla ilgili kararlar.',
   'standing.backToSettings': 'Ayarlar',
   'reports.mine.title': 'Şikâyetlerim',
   'reports.mine.intro': 'Neyi bildirdiğin ve neye karar verdiğimiz. Bunu sadece sen görebilirsin.',

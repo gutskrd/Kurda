@@ -13,13 +13,8 @@ const APPEAL_COPY: Readonly<Record<string, MessageKey>> = {
 };
 
 /**
- * Why "Ask for a review" did not go, in the reader's language.
- *
- * The API's own sentence for these is English; a child who asks twice, or
- * too late, should read the answer in the language they use the app in.
- * `ownToken` is the suspension screen, which asks with the short-lived
- * appeal token rather than a session: when that has run out, the way on is
- * to sign in again, not "authentication required".
+ * Why "Ask for a review" failed, in the reader's language rather than the API's English. `ownToken` marks the
+ * suspension screen, which uses the short-lived appeal token; when that expires the answer is to sign in again.
  */
 export function appealError(error: ApiError, t: Translate, opts: { ownToken?: boolean } = {}): string {
   const key = error.code ? APPEAL_COPY[error.code] : undefined;

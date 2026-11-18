@@ -274,37 +274,7 @@
   color: var(--ink-3);
 }
 
-/* ---- Settings → Safety, My reports, Account standing (reports/) ---------- */
-.safety-links {
-  display: grid;
-  gap: 8px;
-}
-.safety-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: 600;
-}
-.safety-link:hover {
-  background: var(--surface-2);
-  border-color: var(--border-strong);
-}
-.safety-link span {
-  flex: 1;
-}
-.safety-link-go {
-  color: var(--ink-4);
-}
-[dir='rtl'] .safety-link-go {
-  transform: scaleX(-1);
-}
-
+/* ---- My reports and Account standing (reports/) --------------------------- */
 /* back to Settings: a page reached from a page, on every width */
 .standing-back {
   display: inline-flex;

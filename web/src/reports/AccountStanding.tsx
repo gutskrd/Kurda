@@ -23,18 +23,13 @@ const STATUS_TITLE: Record<StandingStatus, MessageKey> = {
 const SCOPES: readonly RestrictionScope[] = ['chat', 'post', 'media', 'account'];
 
 /**
- * Account standing (/app/settings/standing): every decision about your
- * account, with the reasons (DSA Art. 17's statement of reasons — what, which
- * rule, until when, how it came about, whether a person looked), what is
- * paused right now and until when, and "Ask for a review" on each.
- *
- * Every refusal the app shows for a limit links here, so this page is where
- * "why can't I send this?" is answered in full.
+ * Account standing (/app/settings/standing): every decision about the account with its statement of reasons (DSA Art.
+ * 17), what is paused and until when, and "Ask for a review". Every limit refusal in the app links here.
  */
 export function AccountStanding(): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
-  // where the account stands is asked every time, never remembered: a limit lifted or added must show at once
+  // Fetched fresh every time, so a limit lifted or added shows at once.
   const { data, loading, error, reload } = useApiGet<Standing>('/me/standing', { fresh: true });
 
   const appeal = useCallback(
@@ -66,7 +61,7 @@ export function AccountStanding(): React.JSX.Element {
   );
 }
 
-export function StandingBody({
+function StandingBody({
   standing,
   appeal,
 }: {

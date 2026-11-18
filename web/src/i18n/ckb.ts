@@ -834,8 +834,6 @@ export const ckb: Catalogue = {
   'report.aboutPlayer': 'زیاتر دەربارەی {name}',
   'report.group': 'ڕاپۆرتی ئەم گرووپە بکە',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'پاراستن',
-  'settings.safety.help': 'چی بەسەر ڕاپۆرتەکانت هات، و هەر بڕیارێک دەربارەی هەژمارەکەت.',
   'standing.backToSettings': 'ڕێکخستنەکان',
   'reports.mine.title': 'ڕاپۆرتەکانم',
   'reports.mine.intro': 'چیت ڕاپۆرت کرد، و چیمان بڕیار دا. تەنها تۆ دەتوانیت ئەمە ببینیت.',

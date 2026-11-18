@@ -8,7 +8,7 @@ import { AccountStanding } from './AccountStanding';
 import { SuspensionGate, SuspensionScreen } from './SuspensionGate';
 import { Login } from '../pages/Login';
 import { StandingWarnings } from './StandingWarnings';
-import { SafetyCard } from './SafetyCard';
+
 
 afterEach(() => vi.restoreAllMocks());
 
@@ -291,10 +291,3 @@ describe('the warning, shown once', () => {
   });
 });
 
-describe('Settings → Safety', () => {
-  it('opens My reports and Account standing', () => {
-    renderApp(<SafetyCard />);
-    expect(screen.getByRole('link', { name: 'My reports' })).toHaveAttribute('href', '/app/settings/reports');
-    expect(screen.getByRole('link', { name: 'Account standing' })).toHaveAttribute('href', '/app/settings/standing');
-  });
-});

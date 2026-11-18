@@ -828,8 +828,6 @@ export const de: Catalogue = {
   'report.aboutPlayer': 'Mehr zu {name}',
   'report.group': 'Diese Gruppe melden',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Sicherheit',
-  'settings.safety.help': 'Was aus deinen Meldungen wurde, und Entscheidungen über dein Konto.',
   'standing.backToSettings': 'Einstellungen',
   'reports.mine.title': 'Meine Meldungen',
   'reports.mine.intro': 'Was du gemeldet hast und was wir entschieden haben. Nur du siehst das.',

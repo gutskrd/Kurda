@@ -4,13 +4,8 @@ import { MessageMenu } from './MessageMenu';
 import { ReportSheet, type ReportSheetProps, type ReportTarget } from './ReportSheet';
 
 /**
- * A ⋯ with Report in it, and the sheet it opens — for anything that is not a
- * chat message: a post on the wall or on its own page, a picture post, a
- * comment, a game player.
- *
- * It draws nothing for your own things (you do not report yourself; the
- * server refuses it anyway) or for a guest, who has no account to report
- * with.
+ * A ⋯ with Report and its sheet, for anything but a chat message: posts, picture posts, comments and game players. It
+ * draws nothing for the reader's own things or for a guest.
  */
 export function ReportAction({
   target,
@@ -22,9 +17,9 @@ export function ReportAction({
   className,
 }: {
   target: ReportTarget;
-  /** whose it is; nothing is drawn when it is yours */
+  /** Whose it is; nothing is drawn when it is the reader's. */
   authorId?: string | null;
-  /** the ⋯'s accessible name, saying what it is about ("More about this post") */
+  /** The ⋯'s accessible name, such as "More about this post". */
   label: string;
   name?: string;
   block?: ReportSheetProps['block'];

@@ -6,7 +6,7 @@ import { formatUntil, MY_REPORTS_PATH, STANDING_PATH } from './restriction';
 /** Just enough of the i18n contract to write a sentence; no React in here. */
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/** A notification as the rail holds it: the server's English, and the data it was made from. */
+/** A notification as the rail holds it: the server's English and the data it was made from. */
 export interface InboxNote {
   title: string;
   body: string | null;
@@ -17,25 +17,21 @@ export interface InboxNote {
 export interface NoteView {
   title: string;
   body: string | null;
-  /** a page in the app */
+  /** A page in the app. */
   to?: string;
-  /** somewhere outside it (a helpline) */
+  /** An address outside the app, such as a helpline. */
   href?: string;
 }
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
 
-/**
- * The chat a gift notification points at, opening that gift: `dm:<userId>` or
- * `group:<groupId>` (the API's `data.chat`), with `gift=<giftId>` so the
- * thread unwraps it on arrival.
- */
+/** The chat a gift notification opens (`dm:<userId>` or `group:<groupId>` from `data.chat`), with `gift=<giftId>` to unwrap it. */
 export function giftChatPath(chat: string | null, giftId: string | null, name?: string): string | null {
   if (!chat) return null;
   const [kind, id] = chat.split(':');
   if (!id) return null;
   const gift = giftId ? `&gift=${encodeURIComponent(giftId)}` : '';
-  // a direct thread titles itself with the name it was opened with
+  // A direct thread titles itself with the name it was opened with.
   const named = name ? `&name=${encodeURIComponent(name)}` : '';
   if (kind === 'dm') return `/app/messages?to=${encodeURIComponent(id)}${named}${gift}`;
   if (kind === 'group') return `/app/messages?group=${encodeURIComponent(id)}${gift}`;
@@ -43,15 +39,9 @@ export function giftChatPath(chat: string | null, giftId: string | null, name?: 
 }
 
 /**
- * The words and the way in for the notifications this part of the app sends
- * — a report's outcome, a decision about your account, a review answered, a
- * caring message, a gift. The server writes their title and body in English
- * for clients that cannot do better; these are said in the reader's own
- * language from `data`, which is what it is there for.
- *
- * Anything else (null) is shown as the server wrote it, and goes nowhere.
- * `locale` writes a decision's end in the reader's way; without one, the
- * page's language (which I18nProvider keeps in step with theirs).
+ * Wording and links for report outcomes, account decisions, answered reviews, caring messages, gifts and letters,
+ * from `data` in the reader's language rather than the server's English. Anything else is null and shown as the server
+ * wrote it. `locale` formats a decision's end date; without it, the page's language.
  */
 export function socialNotification(note: InboxNote, t: Translate, locale?: string): NoteView | null {
   const data = note.data;
@@ -65,7 +55,7 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
       };
     case 'sanction': {
       const kind = isSanctionKind(data.sanction) ? (data.sanction as SanctionKind) : null;
-      // what is limited and until when, as the server's English said it
+      // What is limited and until when.
       const until = str(data.until);
       const ends = until && !Number.isNaN(Date.parse(until)) ? until : null;
       const lang = locale || (typeof document !== 'undefined' ? document.documentElement.lang : '') || 'en';
@@ -81,20 +71,19 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
     case 'appeal_decided':
       return { title: t('notify.appealDecided.title'), body: null, to: STANDING_PATH };
     case 'caring_message': {
-      // the moderator's own words, when there are some, come first and as
-      // they wrote them; the rest is said in the reader's language
+      // The moderator's own words come first as written; the rest is in the reader's language.
       const personal = str(data.message);
       const helpline = str(data.helplineUrl);
       return {
         title: t('notify.caring.title'),
         body: personal ? `${personal} ${t('notify.caring.body')}` : t('notify.caring.body'),
-        // a link that leaves the app goes only to a real web address
+        // A link leaving the app goes only to an https address.
         href: helpline && /^https:\/\//.test(helpline) ? helpline : HELPLINE_URL,
       };
     }
     case 'letter': {
-      // a bird has come to the window, or your own bird home with an answer: to the window, naming the correspondence,
-      // so its bird lands there before the letter is read (and that correspondence opens when there is nothing to land)
+      // A letter arrived: open the window naming the correspondence, so its bird lands before the letter is read; the
+      // correspondence opens directly when there is nothing to land.
       const notice = letterNoticeOf(data);
       const to = notice?.threadId ? `/app/letters?bird=${notice.threadId}` : '/app/letters';
       return notice?.how === 'home'

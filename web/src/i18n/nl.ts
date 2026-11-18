@@ -828,8 +828,6 @@ export const nl: Catalogue = {
   'report.aboutPlayer': 'Meer over {name}',
   'report.group': 'Deze groep melden',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Veiligheid',
-  'settings.safety.help': 'Wat er met je meldingen is gebeurd, en besluiten over je account.',
   'standing.backToSettings': 'Instellingen',
   'reports.mine.title': 'Mijn meldingen',
   'reports.mine.intro': 'Wat je hebt gemeld en wat we hebben besloten. Alleen jij ziet dit.',

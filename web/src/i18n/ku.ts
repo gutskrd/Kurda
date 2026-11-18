@@ -830,8 +830,6 @@ export const ku: Catalogue = {
   'report.aboutPlayer': 'Zêdetir li ser {name}',
   'report.group': 'Vê komê ragihîne',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Ewlehî',
-  'settings.safety.help': 'Çi bi raporên te hat, û her biryarek li ser hesabê te.',
   'standing.backToSettings': 'Mîheng',
   'reports.mine.title': 'Raporên min',
   'reports.mine.intro': 'Te çi ragihand, û me çi biryar da. Tenê tu dikarî vê bibînî.',

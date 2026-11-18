@@ -49,7 +49,7 @@ describe('ReportAction', () => {
         <ReportAction target={{ targetType: 'library_post', targetId: 'p2' }} authorId="u2" label="More about their post" />
       </>,
     );
-    // theirs appearing says the sign-in has landed; mine still has nothing
+    // Theirs appearing means sign-in has landed; mine still has nothing.
     expect(await screen.findByRole('button', { name: 'More about their post' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'More about my post' })).not.toBeInTheDocument();
   });
@@ -63,7 +63,7 @@ describe('ReportAction', () => {
   it('keeps its open menu inside the window when the ⋯ sits at the edge', async () => {
     signIn();
     stub();
-    // a ⋯ near the right edge of a phone: the menu would run 110px off it
+    // A ⋯ near a phone's right edge, where the menu would run 110px off it.
     const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       return this.classList.contains('msg-menu-list')
         ? ({ left: 324, right: 500, top: 0, bottom: 60, width: 176, height: 60 } as DOMRect)
@@ -72,7 +72,7 @@ describe('ReportAction', () => {
     vi.stubGlobal('innerWidth', 390);
     renderApp(<ReportAction target={{ targetType: 'library_comment', targetId: 'c1' }} authorId="u2" label="More about this comment" />);
     await userEvent.click(await screen.findByRole('button', { name: 'More about this comment' }));
-    // 8px short of the edge: 390 - 8 - 500
+    // 8px short of the edge: 390 - 8 - 500.
     expect(screen.getByRole('menu').style.transform).toBe('translateX(-118px)');
     rect.mockRestore();
   });

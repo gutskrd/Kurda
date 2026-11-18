@@ -822,8 +822,6 @@ export const ar: Catalogue = {
   'report.aboutPlayer': 'المزيد عن {name}',
   'report.group': 'الإبلاغ عن هذه المجموعة',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'الأمان',
-  'settings.safety.help': 'ما الذي حدث لبلاغاتك، وأي قرارات بشأن حسابك.',
   'standing.backToSettings': 'الإعدادات',
   'reports.mine.title': 'بلاغاتي',
   'reports.mine.intro': 'ما أبلغت عنه، وما قررناه. أنت وحدك ترى هذا.',

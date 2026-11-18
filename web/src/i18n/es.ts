@@ -826,8 +826,6 @@ export const es: Catalogue = {
   'report.aboutPlayer': 'Más sobre {name}',
   'report.group': 'Denunciar este grupo',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Seguridad',
-  'settings.safety.help': 'Qué pasó con tus denuncias y las decisiones sobre tu cuenta.',
   'standing.backToSettings': 'Ajustes',
   'reports.mine.title': 'Mis denuncias',
   'reports.mine.intro': 'Lo que denunciaste y lo que decidimos. Solo tú puedes verlo.',
