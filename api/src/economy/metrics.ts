@@ -1,24 +1,15 @@
 /**
- * Economy metrics (KUR-074). Pure aggregation of currency created (faucets) vs
- * destroyed (sinks) from wallet-ledger rows, plus the drift check. Admin
- * adjustments / migrations / backfills are excluded so they never distort
- * inflation stats (ledger reason codes drive the exclusion).
+ * Economy metrics: the drift check on currency created (faucets) against destroyed (sinks). Admin adjustments,
+ * migrations and backfills are excluded by reason code so they never distort inflation figures.
  */
 
 /** Reason codes that move balances but aren't real faucets/sinks. */
 export const EXCLUDED_REASONS = new Set(['admin_adjustment', 'migration', 'backfill']);
 
 /**
- * Reason codes that gave spent currency back. A refund creates nothing — it
- * undoes a sink that was already counted — so it is counted as negative
- * spending, never as a faucet; otherwise the refunds would look like inflation
- * and could set off the drift alert, while the purchases they undid stayed
- * counted as sinks.
- *
- * Nothing writes these any more: purchases are final, and the one path that
- * gave currency back (returning a shop item whose art was replaced) is gone.
- * The code stays so the rows it wrote, which the append-only ledger keeps,
- * are still counted the way they always were when a day is re-aggregated.
+ * Reason codes that gave spent currency back. A refund undoes a counted sink, so it counts as negative spending,
+ * never as a faucet that could set off the drift alert. Nothing writes these now, but the ledger keeps the old
+ * rows and a re-aggregated day must count them the same way.
  */
 export const REFUND_REASONS = new Set(['shop_return']);
 
@@ -26,19 +17,15 @@ export const REFUND_REASONS = new Set(['shop_return']);
 export const DRIFT_THRESHOLD = 0.2;
 
 /**
- * Faucet/sink ratio (>1 = inflationary, <1 = deflationary). A period with no
- * sink — or one whose refunds outweighed its spending — returns Infinity when
- * anything was created, or 1 when nothing was.
+ * Faucet/sink ratio (>1 inflationary, <1 deflationary). With no sink, or refunds outweighing spending, it is
+ * Infinity when anything was created and 1 when nothing was.
  */
 export function driftRatio(faucet: number, sink: number): number {
   if (sink <= 0) return faucet <= 0 ? 1 : Infinity;
   return faucet / sink;
 }
 
-/**
- * Is the ratio more than `threshold` (default 20%) away from `target`? A target
- * of 1.0 means faucets and sinks should roughly balance.
- */
+/** Whether the ratio is more than `threshold` away from `target`; a target of 1 means faucets and sinks balance. */
 export function isDrifting(ratio: number, target = 1, threshold = DRIFT_THRESHOLD): boolean {
   if (!Number.isFinite(ratio)) return true;
   if (target <= 0) return ratio !== 0;

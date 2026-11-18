@@ -1,4 +1,4 @@
-/** Economy monitoring (KUR-074) against real Postgres. */
+/** Economy monitoring against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -9,8 +9,7 @@ import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
-// isolated past days: concurrent tests only ever write ledger rows dated now(),
-// so aggregating a past day gives us exact, pollution-free totals.
+// Concurrent tests only write ledger rows dated now(), so past days give exact totals.
 const dayISO = (agoDays: number): string => {
   const d = new Date(Date.now() - agoDays * 24 * 60 * 60 * 1000);
   return d.toISOString().slice(0, 10);
@@ -128,11 +127,8 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
   });
 
   it('reports an unspendable currency as a null ratio, not Infinity', async () => {
-    // gems were only ever earned here, never spent. faucet/sink is infinite, and
-    // JSON cannot carry that: serialising Infinity yields null anyway, which the
-    // dashboard then called .toFixed() on and crashed to a blank page. The API
-    // now says null deliberately — and still flags the currency as drifting.
-    // this table is shared, so make the window's gems rows only the ones above
+    // Gems were only earned here, so faucet/sink is infinite; JSON cannot carry that, so the API sends null and still
+    // flags the currency as drifting. The table is shared, so the window's gems rows are limited to the ones above.
     await pool.query(`DELETE FROM economy_daily WHERE currency = 'gems' AND day > (CURRENT_DATE - 7)`);
     await economy.aggregateDay(new Date(`${D3}T12:00:00Z`));
 
@@ -147,8 +143,7 @@ describe.skipIf(!DATABASE_URL)('economy monitoring (integration)', () => {
   });
 
   it('counts a refund as spending undone, not as currency created', async () => {
-    // a 500 purchase handed back the same day: nothing was created, and
-    // nothing is left spent
+    // A 500 purchase refunded the same day: nothing created and nothing left spent.
     await ledger(D10, -500, 'shop_purchase');
     await ledger(D10, 500, 'shop_return');
     await economy.aggregateDay(new Date(`${D10}T12:00:00Z`));

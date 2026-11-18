@@ -2,31 +2,18 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 
 /**
- * Who may be paid Zêr or Gewher, and who may move value to someone else.
+ * Who may be paid Zêr or Gewher, and who may move value to someone else: the one place the economy asks bans, the
+ * bot scorer, the anti-cheat shadow flag and the payment-fraud hold.
  *
- * The services that decide this already exist — bans (moderation), the bot
- * scorer (antibot), the anti-cheat shadow flag (game), and the payment-fraud
- * hold (fraud) — but each payout used to ask a different subset of them, or
- * none. This module is the one place the economy asks.
+ * - `economyBlockedSql`: may the system pay this account at all? Asked by unrequested payouts (league promotions,
+ *   achievements, season rewards, tournament prizes), which skip a blocked account silently, and by the Zêr and
+ *   Gewher boards. Closed or banned accounts, confirmed bots, shadow-flagged cheaters and fraud-held accounts are
+ *   blocked. Silence matters: a cheater must not learn of the shadow flag from a refusal.
+ * - `economyHeldSql`: is the account paused from moving value, where the person asked and must be told? A
+ *   confirmed bot or a fraud hold, both already known to the owner. Asked on reward claims and gifts, so a caught
+ *   farm of throwaway accounts stops feeding its target.
  *
- * Two questions, because they are answered to different people:
- *
- * - `economyBlockedSql`: may the system pay this account at all? Asked by the
- *   payouts nobody requests — league promotions, achievements, season
- *   rewards, tournament prizes — which skip a blocked account silently, and
- *   by the Zêr and Gewher boards, which leave one off. A closed or banned
- *   account, a confirmed bot, a shadow-flagged cheater and an account held
- *   for payment fraud are all blocked. Silence matters for the shadow flag:
- *   a cheater must not learn they were flagged from a refusal.
- *
- * - `economyHeldSql`: is this account paused from moving value, where the
- *   person asked and so must be told? A confirmed bot, or an account on a
- *   payment-fraud hold — both already known to their owner. Asked when a
- *   reward is claimed and when a gift is sent, so a farm of throwaway
- *   accounts, once caught, stops feeding the account it was feeding.
- *
- * Both are SQL fragments over a `users` alias, so a query can filter many
- * people at once; the helpers below ask about one.
+ * Both are SQL fragments over a `users` alias, so a query can filter many people at once.
  */
 
 /** A `users` row alias, always a literal from this codebase. */
@@ -63,10 +50,7 @@ export async function isEconomyHeld(db: Executor, userId: string): Promise<boole
   return res.rows[0]?.held ?? false;
 }
 
-/**
- * Refuse a claim or a gift from an account paused from moving value
- * (`economyHeldSql`), saying which: `REWARDS_PAUSED` or `GIFTS_PAUSED`, 403.
- */
+/** Refuses a claim or gift from an account paused from moving value, with 403 `REWARDS_PAUSED` or `GIFTS_PAUSED`. */
 export async function assertEconomyNotHeld(db: Executor, userId: string, what: 'rewards' | 'gifts'): Promise<void> {
   if (!(await isEconomyHeld(db, userId))) return;
   if (what === 'gifts') throw new AppError('GIFTS_PAUSED', 403, 'gifts are paused on this account while it is reviewed');

@@ -1,13 +1,7 @@
 /**
- * The economy's most valuable paths under a burst of identical requests,
- * against real Postgres: twenty at once, and exactly the right number of them
- * pay — the rest are refused or answered as the repeat they are — with every
- * balance equal to its ledger afterwards.
- *
- * The services are called directly rather than through their routes: what is
- * under test is the database's part (the row locks, unique constraints and
- * idempotency keys), and the routes' own rate limits would turn most of a
- * burst away before it reached any of that.
+ * The economy's most valuable paths under a burst of twenty identical requests, against real Postgres: exactly the
+ * right number pay and every balance equals its ledger. The services are called directly, because the database's
+ * locks, constraints and idempotency keys are under test and route rate limits would turn most of a burst away.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
