@@ -8,9 +8,8 @@ import { QuestList } from './QuestList';
 import type { QuestDay } from '@kurda/shared';
 
 /*
- * Daily quests: their bars as the list shows them (the rows themselves are the
- * shared rules, tested there), and a chest opened over the whole screen —
- * opened, already opened, not yet done, and a request that never arrived.
+ * Daily quests: the list's bars (the rows are shared rules, tested there), and the chest screen opened, already opened,
+ * not yet done, and failing.
  */
 
 const day: QuestDay = {
