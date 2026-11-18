@@ -1,10 +1,8 @@
 /**
- * Adaptive review difficulty v2 (KUR-121). A per-user heuristic that tunes SM-2
- * from historical accuracy: learners who consistently pass their due reviews
- * forget more slowly, so their intervals are stretched; those who lapse a lot get
- * them compressed. Cold-start users (too little history) fall back to stock SM-2
- * (the edge case). Everything here is pure, so the model can be evaluated offline
- * against historical data before it's shipped behind an A/B test (KUR-107).
+ * Adaptive review difficulty, not wired into the scheduler yet (see docs/review/adaptive-difficulty.md). A per-user
+ * heuristic tuning SM-2 from past accuracy: learners who pass their due reviews get longer intervals, those who lapse
+ * often shorter ones, and those with too little history stock SM-2. Pure, so it can be evaluated offline before
+ * rollout.
  */
 import { DEFAULT_EASINESS, MIN_EASINESS } from './sm2.js';
 
@@ -30,9 +28,8 @@ function clamp(v: number, lo: number, hi: number): number {
 }
 
 /**
- * A multiplier on SM-2 easiness derived from a user's historical accuracy.
- * 1.0 for cold-start (stock SM-2). Accuracy above the target stretches
- * intervals (>1), below it compresses (<1), bounded to ±20%.
+ * A multiplier on SM-2 easiness from a user's past accuracy: 1 without enough history, above 1 when accuracy beats
+ * the target, below 1 when it falls short, bounded to ±20%.
  */
 export function easeModifier(stats: UserRecallStats): number {
   if (stats.reviews < MIN_REVIEWS_FOR_ADAPTATION || stats.reviews <= 0) return 1;
@@ -76,10 +73,8 @@ export interface OfflineEvaluation {
 }
 
 /**
- * Offline evaluation (AC): mean absolute error between predicted recall at review
- * time and the target, for the stock vs. adapted schedules over historical
- * samples. `improved` is true when the adapted schedule is closer to the target
- * recall — the gate that must pass before rollout.
+ * Offline evaluation: mean absolute error between predicted recall at review time and the target, for stock and
+ * adapted schedules over past samples. `improved` means the adapted schedule is closer, the gate for rollout.
  */
 export function evaluateAdaptation(samples: readonly ScheduleSample[], target = TARGET_RECALL): OfflineEvaluation {
   if (samples.length === 0) return { stockError: 0, adaptedError: 0, improved: false };
