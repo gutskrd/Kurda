@@ -649,12 +649,9 @@ function SignedInRoot() {
       <RootStack.Screen name="WhoAmI" options={card}>
         {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} way={route.params?.way} onExit={backFrom(navigation)} />}
       </RootStack.Screen>
+      {/* A solo game, open to a guest as the others are; the server lets guests race. */}
       <RootStack.Screen name="Race" options={card}>
-        {({ navigation }) => (
-          <GuestWall reason="play" onBack={backFrom(navigation)}>
-            <RaceScreen onExit={backFrom(navigation)} />
-          </GuestWall>
-        )}
+        {({ navigation }) => <RaceScreen onExit={backFrom(navigation)} />}
       </RootStack.Screen>
       {/*
         The lessons' two exercises (practice/exercises.ts), opened from the practice hub or Lessons. Leaving goes back
