@@ -25,12 +25,16 @@ vi.mock('../realtime/RealtimeProvider', async () => {
 });
 
 /** The server: how often `/me/social` was read, and what it answers. */
-const server = vi.hoisted(() => ({ reads: 0, answer: {} as Record<string, unknown> }));
+const server = vi.hoisted(() => ({ reads: 0, answer: {} as Record<string, unknown>, writes: new Set<(path: string) => void>() }));
 vi.mock('../auth/AuthProvider', () => {
   const client = {
     get: async () => {
       server.reads += 1;
       return { ok: true, data: server.answer };
+    },
+    onWrite: (listener: (path: string) => void) => {
+      server.writes.add(listener);
+      return () => server.writes.delete(listener);
     },
   };
   return { useAuth: () => ({ client, status: 'signedIn', user: { id: 'me' } }) };
@@ -54,6 +58,13 @@ function showTab(visible: boolean): void {
 function emit(type: string, event: Record<string, unknown> = {}): void {
   act(() => {
     for (const handler of realtime.handlers.get(type) ?? []) handler({ room: 'user:me', event: { type, ...event } });
+  });
+}
+
+/** A write the server accepted, as the client reports it. */
+function wrote(path: string): void {
+  act(() => {
+    for (const listener of server.writes) listener(path);
   });
 }
 
@@ -191,5 +202,23 @@ describe('the rail’s reads with the realtime connection down', () => {
     expect(server.reads).toBe(3);
     await wait(20_000);
     expect(server.reads).toBe(4);
+  });
+});
+
+describe('the purse after the reader’s own writes', () => {
+  it('is read again at once after spending or earning, and not after other writes', async () => {
+    await mount();
+    await wait(0);
+    const before = server.reads;
+    wrote('/shop/purchase');
+    await wait(0);
+    expect(server.reads).toBe(before + 1);
+    wrote('/me/tree/water');
+    await wait(0);
+    expect(server.reads).toBe(before + 2);
+    wrote('/chat/abc/messages');
+    wrote('/me/heartbeat');
+    await wait(5_000);
+    expect(server.reads).toBe(before + 2);
   });
 });

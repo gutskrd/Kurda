@@ -104,10 +104,12 @@ const FALLBACK_MS = 2 * 60_000;
 const EVENT_DELAY_MS = 1_000;
 /** Reads for events are at least this far apart, so a busy group chat costs no more than the old poll. */
 const EVENT_GAP_MS = POLL_MS;
+/** Writes that spend or earn zêr or gems, after which the purse in the top bar is read again at once. */
+const PURSE_WRITES = ['/shop/', '/me/tree/', '/letters/bird', '/me/streak/', '/rewards/', '/me/quests/'];
 
 /**
  * The rail's data and what just arrived. With the realtime connection up it is read again when an event could change
- * it, and otherwise every FALLBACK_MS; while the connection is down it polls every POLL_MS. Nothing is read while the
+ * it, after a write that changes the purse, and otherwise every FALLBACK_MS; while the connection is down it polls every POLL_MS. Nothing is read while the
  * tab is hidden, and coming back reads at once. Arrivals come from diffing against the previous answer, since "new to
  * this tab" is a client question; the first load announces nothing.
  */
@@ -119,6 +121,7 @@ export function useSocialRail(): {
   arrivals: Arrival[];
   dismiss: (key: string) => void;
   refresh: () => void;
+  soon: () => void;
 } {
   const { client, status, user } = useAuth();
   const t = useT();
@@ -238,11 +241,13 @@ export function useSocialRail(): {
     wasLive.current = live;
   }, [live, onEvent]);
 
+  useEffect(() => client.onWrite((path) => PURSE_WRITES.some((p) => path.startsWith(p)) && refresh()), [client, refresh]);
+
   const dismiss = useCallback((key: string) => {
     setArrivals((prev) => prev.filter((a) => a.key !== key));
   }, []);
 
-  return { data, loading, failed, arrivals, dismiss, refresh };
+  return { data, loading, failed, arrivals, dismiss, refresh, soon: onEvent };
 }
 
 /** Everything in this answer that could be announced, with a stable key each. */

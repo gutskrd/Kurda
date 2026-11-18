@@ -1,11 +1,19 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
+import { useNavigate } from 'react-router-dom';
 import { renderApp, jsonResponse } from '../test/utils';
 import { Brand } from '../components/Brand';
 import { PlayProvider, usePlayInvites } from '../play/PlayProvider';
 import { RailProvider, useRail } from './RailProvider';
 
+// The connection is up, so the rail reads on events and page changes rather than polling.
+vi.mock('../realtime/RealtimeProvider', async (original) => ({
+  ...(await original<typeof import('../realtime/RealtimeProvider')>()),
+  useRealtime: () => ({ state: 'open' }),
+}));
+
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -70,6 +78,35 @@ describe('the rail and the invites, held once for the whole app', () => {
     );
     await waitFor(() => expect(screen.getByTestId('purse')).toHaveTextContent('120'));
     expect(asked.social).toBe(1);
+  });
+});
+
+describe('the rail after moving to another page', () => {
+  function Leave(): React.JSX.Element {
+    const navigate = useNavigate();
+    return <button onClick={() => navigate('/learn')}>Leave</button>;
+  }
+
+  it('reads again soon, so a lesson or game just finished shows in the bar', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    signIn();
+    const asked = serve();
+    renderApp(
+      <RailProvider>
+        <Purse />
+        <Leave />
+      </RailProvider>,
+    );
+    await waitFor(() => expect(asked.social).toBe(1));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+    expect(asked.social).toBe(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Leave' }));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000);
+    });
+    await waitFor(() => expect(asked.social).toBe(2));
   });
 });
 

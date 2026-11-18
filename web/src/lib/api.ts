@@ -42,6 +42,7 @@ interface RequestOptions {
 
 export class ApiClient {
   private refreshInFlight: Promise<boolean> | null = null;
+  private readonly writeListeners = new Set<(path: string) => void>();
 
   constructor(
     private readonly baseUrl: string,
@@ -143,7 +144,19 @@ export class ApiClient {
     }
   }
 
+  /** Calls `listener` with the path of every write the server accepted; returns the way to stop. */
+  onWrite(listener: (path: string) => void): () => void {
+    this.writeListeners.add(listener);
+    return () => this.writeListeners.delete(listener);
+  }
+
   async request<T>(method: string, path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
+    const result = await this.send<T>(method, path, options);
+    if (result.ok && MUTATING.has(method)) for (const listener of this.writeListeners) listener(path);
+    return result;
+  }
+
+  private async send<T>(method: string, path: string, options: RequestOptions): Promise<ApiResult<T>> {
     const headers: Record<string, string> = { ...options.headers, 'x-device-id': deviceId() };
     if (options.body !== undefined) headers['content-type'] = 'application/json';
     if (MUTATING.has(method)) headers['idempotency-key'] = requestId();

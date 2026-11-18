@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useSocialRail, type Arrival, type SocialRailData } from './useSocialRail';
 import { readRenamed } from '../lib/renamedKey';
 
@@ -80,7 +81,9 @@ export function RailProvider({ children }: { children: React.ReactNode }): React
 }
 
 function OwnRail({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const { data, loading, failed, arrivals, dismiss, refresh } = useSocialRail();
+  const { data, loading, failed, arrivals, dismiss, refresh, soon } = useSocialRail();
+  const { pathname } = useLocation();
+  const shownPath = useRef(pathname);
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
@@ -92,6 +95,13 @@ function OwnRail({ children }: { children: React.ReactNode }): React.JSX.Element
       // A browser with site data blocked still gets a working rail.
     }
   }, [collapsed]);
+
+  // A new page reads the rail again soon, so the level and purse in the bar include a lesson or game just finished.
+  useEffect(() => {
+    if (pathname === shownPath.current) return;
+    shownPath.current = pathname;
+    soon();
+  }, [pathname, soon]);
 
   // Escape closes the drawer.
   useEffect(() => {
