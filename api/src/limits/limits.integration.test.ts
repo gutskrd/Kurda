@@ -1,11 +1,7 @@
 /**
- * The limits on what one person may have (@kurda/shared limits), against real
- * Postgres: each one holds, one under it still works, what does not count
- * does not count, and many requests at once cannot squeeze past it.
- *
- * The people and rows a limit needs are written straight to the tables —
- * five thousand saved words go in one statement, not five thousand requests —
- * and only the step that should be refused goes through the service or route.
+ * The per-person limits (@kurda/shared limits) against real Postgres: each holds, one under still works, what does not
+ * count does not, and concurrent requests cannot squeeze past. Rows are written straight to the tables; only the
+ * refused step goes through the service or route.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
