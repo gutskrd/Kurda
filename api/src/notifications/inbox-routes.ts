@@ -5,7 +5,7 @@ import type { InboxService } from './inbox-service.js';
 
 const idParam = z.object({ id: z.uuid() });
 
-/** In-app notification inbox: list, unread badge, mark-read, and taking one away (KUR-097). */
+/** In-app notification inbox: list, unread badge, mark read, and removal. */
 export function registerInboxRoutes(app: FastifyInstance, inbox: InboxService): void {
   /** Last 50 notifications, newest first. */
   app.get('/me/notifications', { preHandler: requireAuth }, async (req) => ({
