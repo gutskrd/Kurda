@@ -16,7 +16,7 @@ const signIn = () =>
 
 type Note = Record<string, unknown>;
 
-/** Serve /me/social with these notifications (and these friends), and log what is written. */
+/** Serves /me/social with these notifications and friends, and logs what is written. */
 function serve(notifications: Note[], friends: Note[] = []) {
   const posts: string[] = [];
   vi.stubGlobal(
@@ -99,7 +99,7 @@ describe('NotificationsBell', () => {
     expect(close).toHaveFocus();
     await userEvent.tab();
     expect(next).toHaveFocus();
-    // past the last control, round to the first rather than out to the page
+    // Tab past the last control wraps to the first rather than leaving the panel.
     await userEvent.tab();
     expect(settings).toHaveFocus();
     expect(panel).toBeInTheDocument();
@@ -113,7 +113,7 @@ describe('NotificationsBell', () => {
     expect(await screen.findByText('Nothing new')).toBeInTheDocument();
     expect(screen.getByText('Likes, comments, gifts and game invites will show up here.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Find friends' })).toHaveAttribute('href', '/app/friends');
-    // nothing is new, so there is nothing to mark
+    // Nothing is new, so there is nothing to mark.
     expect(screen.queryByRole('button', { name: 'Mark all as read' })).not.toBeInTheDocument();
   });
 
@@ -128,7 +128,7 @@ describe('NotificationsBell', () => {
     expect(screen.getByText('2 unread')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Mark as read: One' }));
     await waitFor(() => expect(posts).toContain('POST /me/notifications/n1/read'));
-    // the dot goes at once, without waiting for the next answer
+    // The dot goes at once, without waiting for the next answer.
     expect(screen.queryByRole('button', { name: 'Mark as read: One' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Mark all as read' }));
     await waitFor(() => expect(posts).toContain('POST /me/notifications/read-all'));
@@ -147,7 +147,7 @@ describe('NotificationsBell', () => {
     await waitFor(() => expect(posts).toContain('DELETE /me/notifications/n1'));
     await waitFor(() => expect(screen.queryByText('One')).not.toBeInTheDocument());
     expect(screen.getByText('Two')).toBeInTheDocument();
-    // the count of new ones follows at once
+    // The unread count follows at once.
     expect(screen.getByText('1 unread')).toBeInTheDocument();
   });
 
@@ -232,7 +232,7 @@ describe('NotificationsBell', () => {
     const link = screen.getByRole('link', { name: 'A gift from Berfin' });
     expect(link).toHaveAttribute('href', '/app/messages?to=u-berfin&gift=g1');
     expect(within(link).getByText('Berfin').tagName).toBe('STRONG');
-    // the one thing to do about it, drawn as a button; the row's link is what does it
+    // The row's action is drawn as a button; the row's link does the work.
     expect(screen.getByText('Open')).toHaveAttribute('aria-hidden', 'true');
   });
 
@@ -251,7 +251,7 @@ describe('NotificationsBell', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
     const panel = screen.getByRole('dialog', { name: 'Notifications' });
     expect(within(panel).getByRole('status')).toHaveTextContent('Loading…');
-    // not "Nothing new" before anything has been asked
+    // Not "Nothing new" before anything has been asked.
     expect(within(panel).queryByText('Nothing new')).not.toBeInTheDocument();
     answer(jsonResponse(200, { you: null, friends: [], requests: [], challenges: [], groups: [], notifications: [], unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 } }));
     expect(await within(panel).findByText('Nothing new')).toBeInTheDocument();
@@ -297,15 +297,11 @@ describe('NotificationsBell', () => {
     show();
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
     expect(screen.getByRole('link', { name: 'Pêşbaziya Peyvan invite' })).toHaveAttribute('href', '/app/games/peyvok-battle?id=b1');
-    // not the server's English fallback
+    // Not the server's English fallback.
     expect(screen.queryByText('Rojda invited you to play Pêşbaziya Peyvan.')).not.toBeInTheDocument();
   });
 
-  /**
-   * A notification about a report or a decision used to be English text that
-   * went nowhere. Its data says what it is: it is said in the reader's words
-   * and opens the page that has the rest.
-   */
+  /** A notification about a report or decision is worded from its data and opens the page with the rest. */
   it('opens My reports or Account standing from their notifications', async () => {
     signIn();
     serve([
@@ -343,7 +339,7 @@ describe('NotificationsBell', () => {
     ]);
     show();
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
-    // removed, they are not shown the group any more: the line opens their conversations
+    // Removed members cannot see the group, so the line opens their conversations.
     expect(screen.getByRole('link', { name: 'You were removed from Amed' })).toHaveAttribute('href', '/app/messages');
     expect(screen.getByText('An admin can add you again.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'You were banned from Amed for a week' })).toHaveAttribute('href', '/app/messages?group=g1');
@@ -362,7 +358,7 @@ describe('NotificationsBell', () => {
     const link = screen.getByRole('link', { name: 'A message from Hevalo' });
     expect(link).toHaveAttribute('href', 'https://findahelpline.com');
     expect(link).toHaveAttribute('target', '_blank');
-    link.addEventListener('click', (e) => e.preventDefault()); // no navigation in a test
+    link.addEventListener('click', (e) => e.preventDefault()); // No navigation in a test.
     await userEvent.click(link);
     await waitFor(() => expect(posts).toContain('POST /me/notifications/n9/read'));
   });

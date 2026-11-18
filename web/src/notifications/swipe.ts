@@ -1,19 +1,14 @@
 import { useMemo, useRef, useState } from 'react';
 
-/**
- * A notification row pulled aside by a finger (NotificationList.tsx).
- */
+/** Swiping a notification row aside (NotificationList.tsx). */
 
-/** How far a row slides open to show what can be done with it, and how far across it has to be pulled to be taken away at once. */
-export const SWIPE = { open: 168, away: 0.62 } as const;
+/** How far a row slides open (px), and the share of its width a swipe must cross to remove it. */
+const SWIPE = { open: 168, away: 0.62 } as const;
 
 /**
- * A row pulled sideways by a finger: it follows the finger, opens on what is
- * under it when let go past halfway, closes when let go short of it, and is
- * taken away when pulled most of the way across. A pull that starts up or
- * down is the list scrolling, and is left to it; a row pulled open keeps a
- * tap from following its link, which closes it instead. Whichever way the
- * language runs, the row is pulled toward its start.
+ * A row swiped toward its start: it follows the finger, opens if released past halfway, closes if short, and is
+ * removed when swiped most of the way. A vertical start is left to scrolling, and a tap on an open row closes it
+ * instead of following its link.
  */
 export function useSwipe(
   open: boolean,
@@ -41,25 +36,25 @@ export function useSwipe(
         const across = Math.abs(dx);
         const down = Math.abs(e.clientY - s.y);
         if (s.decided === null) {
-          // the first few pixels say which it is: a pull aside, or the list scrolling
+          // The first few pixels decide between a swipe and scrolling.
           if (down > 10 && down > across) {
             s.decided = 'y';
             return;
           }
           if (across >= 8) s.decided = 'x';
           else return;
-          // held to the row from here, wherever the finger goes; a pointer the browser no longer tracks is simply not held
+          // Capture the pointer from here; one the browser no longer tracks is simply not captured.
           try {
             e.currentTarget.setPointerCapture(e.pointerId);
           } catch {
-            /* nothing to hold */
+            /* Nothing to capture. */
           }
         }
         if (s.decided !== 'x') return;
         moved.current = true;
         const width = row.current?.offsetWidth ?? 360;
         const raw = s.from + dx;
-        // past its stops it gives a little, as a thing held by a spring
+        // Past its stops it gives a little, like a spring.
         const next = raw > 0 ? raw * 0.2 : raw < -SWIPE.open ? -SWIPE.open + (raw + SWIPE.open) * 0.8 : raw;
         setDrag(Math.max(next, -width));
       },
@@ -81,7 +76,7 @@ export function useSwipe(
         setDrag(null);
       },
       onClickCapture: (e) => {
-        // a pull is not a tap, and a tap on a row pulled open closes it rather than following it
+        // A swipe is not a tap, and a tap on an open row closes it rather than following it.
         if (moved.current || open) {
           e.preventDefault();
           e.stopPropagation();

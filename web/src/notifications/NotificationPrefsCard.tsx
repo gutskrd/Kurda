@@ -16,17 +16,8 @@ import {
 } from './prefs';
 
 /**
- * Which notifications you get, and when you would rather not (KUR-095).
- *
- * The browser could not change any of this: `GET`/`PUT /me/notification-prefs`
- * went uncalled, so somebody who signed up in a browser had no way to turn a
- * category off or set quiet hours short of installing the app. Consent for the
- * news-and-offers category in particular is a setting people expect to be able
- * to withdraw wherever they made it.
- *
- * Each control saves on change, the way the profile's section toggles beside it
- * do — a settings pane with a Save button invites you to leave without pressing
- * it. A failure puts the switch back where it was and says why.
+ * Which notification categories the reader gets, and quiet hours (`GET`/`PUT /me/notification-prefs`). Each control
+ * saves on change; a failure puts the switch back and says why.
  */
 export function NotificationPrefsCard(): React.JSX.Element {
   const { client } = useAuth();
@@ -34,11 +25,8 @@ export function NotificationPrefsCard(): React.JSX.Element {
   const [prefs, setPrefs] = useState<NotificationPrefs | null>(null);
   const [busy, setBusy] = useState(false);
   /*
-   * The error itself, not a sentence about it. Keeping the `ApiError` means the
-   * effect below needs no translator — so it depends only on the client and does
-   * not refetch a language-free payload every time the reader switches language
-   * — and it means a message already on screen re-reads in the new language
-   * instead of staying in the old one.
+   * The error itself rather than its message, so the effect below needs no translator (and does not refetch on a
+   * language change), and a message on screen follows a language change.
    */
   const [failure, setFailure] = useState<ApiError | null>(null);
 
@@ -49,14 +37,7 @@ export function NotificationPrefsCard(): React.JSX.Element {
     });
   }, [client]);
 
-  /**
-   * Send a patch, having already moved the control.
-   *
-   * Optimistic because a toggle that waits for a round trip before moving reads
-   * as one that did not register, and people press it again. The previous value
-   * is kept so a rejection can put it back rather than leave the screen claiming
-   * a setting the server does not have.
-   */
+  /** Sends a patch after moving the control optimistically, keeping the previous value to restore on a rejection. */
   const save = useCallback(
     (patch: Partial<NotificationPrefs>) => {
       setPrefs((current) => (current ? { ...current, ...patch } : current));
@@ -67,7 +48,7 @@ export function NotificationPrefsCard(): React.JSX.Element {
         if (res.ok) setPrefs(res.data);
         else {
           setFailure(res.error);
-          // the server is the truth about what is stored; ask it again
+          // The server knows what is stored, so ask it again.
           void client
             .get<NotificationPrefs>('/me/notification-prefs')
             .then((again) => again.ok && setPrefs(again.data));
@@ -86,8 +67,7 @@ export function NotificationPrefsCard(): React.JSX.Element {
       {failure && <div className="msg msg-error" role="status">{describeError(failure, t)}</div>}
 
       {prefs === null ? (
-        // the card as it will be, its words already there and only the switches
-        // waiting, so nothing under it moves when the settings arrive
+        // The card with its words in place and only the switches waiting, so nothing below moves on arrival.
         <SkeletonRegion label={t('common.loading')}>
           <div aria-hidden="true">
             <ul className="section-toggles">
@@ -155,7 +135,7 @@ export function NotificationPrefsCard(): React.JSX.Element {
             </span>
           </label>
 
-          {/* the two ends only exist while the window does */}
+          {/* The two ends exist only while quiet hours are on. */}
           {quiet && (
             <div className="toolbar" style={{ gap: 16, flexWrap: 'wrap' }}>
               <QuietEnd
@@ -179,12 +159,8 @@ export function NotificationPrefsCard(): React.JSX.Element {
 }
 
 /**
- * One end of the window.
- *
- * A native time input rather than the phone's pair of half-hour steppers: the
- * browser has one, it is already localised to how the reader writes a time, and
- * it reaches the keyboard for free. A cleared or half-typed field parses to null
- * and sends nothing, so the window is never left half set.
+ * One end of quiet hours, as a native time input, which is localised and keyboard-friendly. A cleared or half-typed
+ * field parses to null and sends nothing, so the window is never half set.
  */
 function QuietEnd({
   label,
@@ -197,7 +173,7 @@ function QuietEnd({
   disabled: boolean;
   onPick: (min: number) => void;
 }): React.JSX.Element {
-  // the word over its field, so "From" and "To" line up whatever their length in a language
+  // The label sits over its field, so the two line up whatever their length.
   return (
     <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
       <span className="field-hint" style={{ margin: 0 }}>{label}</span>

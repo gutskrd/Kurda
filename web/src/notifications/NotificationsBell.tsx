@@ -15,28 +15,14 @@ import { NotificationList, useNotificationReads } from './NotificationList';
 /** Below this the panel is a sheet that fills the screen under the bar; above it, a panel hanging from the bell. */
 const PHONE = '(max-width: 560px)';
 
-/** Where the notification settings are: their own page in Settings (NotificationPrefsCard). */
-export const NOTIFICATION_SETTINGS_PATH = '/app/settings/notifications';
+/** The notification settings page in Settings (NotificationPrefsCard). */
+const NOTIFICATION_SETTINGS_PATH = '/app/settings/notifications';
 
 /**
- * The bell: what happened while you were elsewhere.
- *
- * Likes, comments, gifts, game invites and notices from Hevalo used to sit at
- * the bottom of the social column, folded shut under "Recent" — on a phone,
- * two taps and a scroll away, and easy never to find. They are one press away
- * from every page now, at the end of the top bar where a phone keeps them,
- * with a dot when something is new. Messages are not here: a conversation has
- * its own place, and a notice about one would only be a second badge for the
- * same thing.
- *
- * On a wide screen the list opens in a panel hanging from the bell, so reading
- * what is new does not cost you the page you were on. On a phone a panel that
- * size was a cramped box over the page; there it is a sheet filling the screen
- * under the bar, the way the search results are, and the page behind it holds
- * still. Escape, a click outside it, or following one of them closes it, and
- * the focus goes back to the bell. While it is open, Tab goes round inside it:
- * it is drawn at the end of the page, so Tab past its last button used to fall
- * out of the window and on through the page, with the panel still open over it.
+ * The bell at the end of the top bar, with a dot when something is new. Messages are not listed, since conversations
+ * have their own place. On a wide screen the list hangs from the bell in a panel; on a phone it is a sheet under the
+ * bar and the page behind holds still. Escape, a click outside or following a notification closes it and returns
+ * focus to the bell; while open, Tab cycles inside it, since it is drawn at the end of the page.
  */
 export function NotificationsBell(): React.JSX.Element | null {
   const { status } = useAuth();
@@ -51,12 +37,12 @@ export function NotificationsBell(): React.JSX.Element | null {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const { pathname } = useLocation();
-  /** how far the bell's end edge is from the window's, so the panel's end lines up with it */
+  /** The distance from the bell's end edge to the window's, so the panel's end lines up with it. */
   const [anchor, setAnchor] = useState<number | null>(null);
 
   const unread = reads.unread || (data.notifications.length === 0 ? data.unread.notifications : 0);
 
-  // moving to another page puts the panel away
+  // Moving to another page closes the panel.
   useEffect(() => setOpen(false), [pathname]);
 
   const close = (): void => {
@@ -66,8 +52,7 @@ export function NotificationsBell(): React.JSX.Element | null {
 
   useEffect(() => {
     if (!open) return;
-    // the panel takes the focus, so a keyboard is already inside what it opened; nothing scrolls
-    // for it — it floats over the page — and the bell it goes back to is always in sight in the bar
+    // The panel takes focus without scrolling, since it floats over the page and the bell stays in sight.
     panelRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
@@ -84,7 +69,7 @@ export function NotificationsBell(): React.JSX.Element | null {
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onDown);
-    // a sheet over the whole screen: the page under it should not scroll away behind it
+    // On a phone the sheet covers the screen, so the page below must not scroll.
     const sheet = typeof window.matchMedia === 'function' && window.matchMedia(PHONE).matches;
     const unlock = sheet ? lockPageScroll() : null;
     return () => {
@@ -94,7 +79,7 @@ export function NotificationsBell(): React.JSX.Element | null {
     };
   }, [open]);
 
-  // hang from the bell itself, wherever the bar has put it, in either direction
+  // Hang from the bell wherever the bar put it, in either direction.
   useLayoutEffect(() => {
     if (!open) return;
     const place = (): void => {
@@ -111,7 +96,7 @@ export function NotificationsBell(): React.JSX.Element | null {
   if (!present || status !== 'signedIn') return null;
 
   const label = unread > 0 ? t('notifications.bellUnread', { count: unread }) : t('notifications.title');
-  // one taken away is gone from the list at once, and the empty state shows when the last one goes
+  // A removed one leaves the list at once, and the empty state shows when the last goes.
   const items = data.notifications.filter((n) => !reads.isRemoved(n));
 
   let body: React.ReactNode;
@@ -154,7 +139,7 @@ export function NotificationsBell(): React.JSX.Element | null {
         aria-expanded={open}
         aria-controls={open ? panelId : undefined}
         onClick={() => {
-          // reading the list is the moment it should be current
+          // Refresh as the list is opened.
           if (!open) refresh();
           setOpen((v) => !v);
         }}
@@ -163,11 +148,7 @@ export function NotificationsBell(): React.JSX.Element | null {
         {unread > 0 && <span className="nav-bell-dot" aria-hidden="true" />}
       </button>
 
-      {/*
-        Drawn at the end of <body> rather than inside the bar, so it is above
-        everything the page and the social column draw, whatever layer the bar
-        itself is on.
-      */}
+      {/* Drawn at the end of <body> rather than in the bar, so it is above everything whatever the bar's layer. */}
       {open &&
         createPortal(
           <div
@@ -177,7 +158,7 @@ export function NotificationsBell(): React.JSX.Element | null {
             role="dialog"
             aria-labelledby={titleId}
             tabIndex={-1}
-            // hangs from the bell's end of the bar: the right, or in Arabic and Soranî the left
+            // Hangs from the bell's end of the bar: the right, or the left in right-to-left languages.
             dir={localeDir(locale)}
             style={anchor === null ? undefined : ({ '--bell-end': `${Math.round(anchor)}px` } as React.CSSProperties)}
           >
