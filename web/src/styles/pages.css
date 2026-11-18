@@ -3235,6 +3235,15 @@ a.mkp-activity-row:hover {
 .msg-toast-open:hover {
   background: var(--surface);
 }
+/* a notice leads nowhere, so it reads as text rather than as a button */
+.msg-toast-notice {
+  margin: 0;
+  cursor: default;
+  font-size: 0.9rem;
+}
+.msg-toast-notice:hover {
+  background: none;
+}
 .msg-toast-title {
   font-weight: 650;
   font-size: 0.9rem;

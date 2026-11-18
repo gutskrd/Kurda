@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../auth/AuthProvider';
@@ -8,6 +8,7 @@ import type { RealtimeClient } from '../realtime/RealtimeClient';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { MessagesProvider, useMessages } from './MessagesProvider';
 import { jsonResponse } from '../test/utils';
+import { showNotice } from '../lib/notice';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -250,5 +251,18 @@ describe('MessagesProvider', () => {
     expect(await screen.findByText('dismiss me')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /dismiss message from zana/i }));
     expect(screen.queryByText('dismiss me')).not.toBeInTheDocument();
+  });
+
+  it('shows a notice once, however often it is raised, and lets it be closed', async () => {
+    setup('/app/games');
+    await ready();
+    act(() => {
+      showNotice('That didn’t save.');
+      showNotice('That didn’t save.');
+    });
+    expect(screen.getAllByText('That didn’t save.')).toHaveLength(1);
+    expect(screen.getByText('That didn’t save.').closest('[role="status"]')).not.toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByText('That didn’t save.')).not.toBeInTheDocument();
   });
 });

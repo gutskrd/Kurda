@@ -18,20 +18,21 @@ import { messagePreview, truncate, type Previewable } from './messagePreview';
 import { useT } from '../i18n/I18nProvider';
 import type { Translate } from '../i18n/I18nProvider';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
+import { onNotice } from '../lib/notice';
 
 /**
  * App-wide unread counts and arrival banners. Direct messages arrive on the reader's `user:<id>` room; this also
  * joins every `group:<id>` room the reader belongs to while signed in. No banner is raised for the conversation being
- * read or for the reader's own messages.
+ * read or for the reader's own messages. The same stack shows the app's short notices (lib/notice.ts).
  */
 
-/** One arrival banner. */
+/** One arrival banner, or a notice when it leads nowhere. */
 interface MessageToast {
   id: string;
   title: string;
   body: string;
-  /** where clicking it takes you */
-  to: string;
+  /** where clicking it takes you; null for a notice */
+  to: string | null;
 }
 
 interface MessagesContextValue {
@@ -133,6 +134,9 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
     setTimeout(() => setToasts((list) => list.filter((t) => t.id !== toast.id)), TOAST_MS);
   }, []);
 
+  // A notice already showing is not stacked again, so a burst of failures while offline says it once.
+  useEffect(() => onNotice((text) => push({ id: `notice:${text}`, title: text, body: '', to: null })), [push]);
+
   const onDm = useCallback(
     (env: RealtimeEventEnvelope) => {
       const ev = env.event as { from?: string; fromUsername?: string; message?: DmMessage };
@@ -211,22 +215,33 @@ function MessageToasts(): React.JSX.Element | null {
   if (toasts.length === 0) return null;
   return (
     <div className="msg-toasts" role="region" aria-label={t('chat.newMessages')}>
-      {toasts.map((toast) => (
-        <div key={toast.id} className="msg-toast" role="status">
-          <button
-            type="button"
-            className="msg-toast-open"
-            onClick={() => {
-              dismissToast(toast.id);
-              navigate(toast.to);
-            }}
-          >
-            <span className="msg-toast-title">{toast.title}</span>
-            <span className="msg-toast-body">{toast.body}</span>
-          </button>
-          <CloseButton className="msg-toast-close" label={t('chat.dismissFrom', { name: toast.title })} onClick={() => dismissToast(toast.id)} />
-        </div>
-      ))}
+      {toasts.map((toast) => {
+        const to = toast.to;
+        return (
+          <div key={toast.id} className="msg-toast" role="status">
+            {to === null ? (
+              <p className="msg-toast-open msg-toast-notice">{toast.title}</p>
+            ) : (
+              <button
+                type="button"
+                className="msg-toast-open"
+                onClick={() => {
+                  dismissToast(toast.id);
+                  navigate(to);
+                }}
+              >
+                <span className="msg-toast-title">{toast.title}</span>
+                <span className="msg-toast-body">{toast.body}</span>
+              </button>
+            )}
+            <CloseButton
+              className="msg-toast-close"
+              label={to === null ? t('common.close') : t('chat.dismissFrom', { name: toast.title })}
+              onClick={() => dismissToast(toast.id)}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
