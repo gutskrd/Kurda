@@ -1,7 +1,6 @@
 /**
- * Reading the client's address past the proxies, and not being told it by the
- * client. `trusted` here is what the default `TRUST_PROXY`
- * (`loopback,linklocal,uniquelocal`) trusts: every private range and loopback.
+ * Reading the client's address past the proxies without believing the client. `trusted` here is what the default
+ * `TRUST_PROXY` (`loopback,linklocal,uniquelocal`) trusts: every private range and loopback.
  */
 import { describe, expect, it } from 'vitest';
 import { MAX_FORWARDED_HOPS, resolveClientIp, type ClientIpInput } from './client-ip.js';

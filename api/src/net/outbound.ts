@@ -2,21 +2,11 @@ import { lookup as dnsLookup } from 'node:dns/promises';
 import { inCidr, parseCidr, parseIp } from './ip.js';
 
 /**
- * Fetching a file from another site on someone's behalf, without letting the
- * address reach anything it should not.
- *
- * The address must be https on one of the hosts the caller names (a stored
- * `http:` address on one of them is fetched at its `https:` one), and every
- * address the host's name resolves to must be public: not loopback, not a
- * private, shared or link-local range, nothing reserved. Redirects are
- * followed here, not by fetch, at most `maxRedirects` of them, and each is
- * held to the same rules, so an allowed host cannot pass the request on to
- * one that is not.
- *
- * The name is resolved here and again when fetch connects, so a name that
- * changes its answer in between gets past the address check. The host list is
- * what keeps that safe (only names the operator trusts are ever looked up);
- * the address check is a second guard behind it.
+ * Fetching a file from another site on someone's behalf without reaching anything it should not. The address must be
+ * https on one of the caller's hosts (a stored `http:` address there is fetched over https), and every address the
+ * host resolves to must be public. Redirects are followed here, up to `maxRedirects`, each under the same rules. The
+ * name is resolved again when fetch connects, so a name changing its answer in between could pass the address check;
+ * the host allow-list is the main guard, and the address check a second one.
  */
 
 export type Lookup = (hostname: string) => Promise<Array<{ address: string; family: number }>>;
@@ -27,10 +17,9 @@ export const systemLookup: Lookup = (hostname) => dnsLookup(hostname, { all: tru
 export const MAX_REDIRECTS = 2;
 
 /**
- * Addresses no fetch on a visitor's behalf may reach: this network, the
- * private and shared ranges, loopback, link-local, documentation and
- * benchmarking ranges, multicast and everything reserved, and the IPv6 forms
- * that carry an IPv4 address inside them (NAT64, 6to4, IPv4-compatible).
+ * Addresses no fetch on a visitor's behalf may reach: this network, private and shared ranges, loopback, link-local,
+ * documentation and benchmarking ranges, multicast, everything reserved, and IPv6 forms carrying IPv4 (NAT64, 6to4,
+ * IPv4-compatible).
  */
 const NOT_PUBLIC = [
   '0.0.0.0/8',
@@ -68,10 +57,8 @@ export function isPublicAddress(address: string): boolean {
 }
 
 /**
- * Why a fetch did not happen or did not succeed. `refused`: the address, or
- * one a redirect led to, is not one this may fetch. Otherwise the other site
- * failed: it could not be found or reached, it did not answer in time, it
- * answered with an error, or it redirected too often.
+ * Why a fetch did not happen or failed: `refused` when the address, or one a redirect led to, may not be fetched;
+ * otherwise the other site could not be found or reached, timed out, returned an error, or redirected too often.
  */
 export class OutboundError extends Error {
   constructor(
@@ -130,10 +117,7 @@ async function discard(res: Response): Promise<void> {
   await res.body?.cancel().catch(() => undefined);
 }
 
-/**
- * GET `address` under the rules above. Resolves with a successful response,
- * its body unread; throws OutboundError for anything else.
- */
+/** GETs `address` under the rules above, resolving with a successful unread response or throwing OutboundError. */
 export async function fetchFromAllowedHost(address: string, options: AllowedFetchOptions): Promise<Response> {
   const fetchFn = options.fetch ?? fetch;
   const lookup = options.lookup ?? systemLookup;

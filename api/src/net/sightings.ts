@@ -13,10 +13,7 @@ export function utcDay(at: Date): string {
   return at.toISOString().slice(0, 10);
 }
 
-/**
- * Record that an account was on a network: a new row for the day, or the
- * day's first and last time widened.
- */
+/** Records an account on a network: a new row for the day, or the day's first and last times widened. */
 export async function writeSighting(db: Executor, userId: string, netHash: string, at: Date): Promise<void> {
   await db.query(
     `INSERT INTO network_sightings (user_id, net_hash, day, first_at, last_at)
@@ -29,14 +26,9 @@ export async function writeSighting(db: Executor, userId: string, netHash: strin
 }
 
 /**
- * Network sightings from signed-in requests.
- *
- * Every authenticated request says which network its account is on, but a
- * write per request would be a write per request. So each process writes a
- * given account and network once per UTC day, remembering what it has written
- * in memory; the memory is dropped when the day turns and is bounded, so at
- * worst a busy process writes a sighting twice. Recording never delays or fails
- * a request: the write is not awaited, and a failure is logged and forgotten.
+ * Network sightings from signed-in requests. Each process writes a given account and network once per UTC day,
+ * remembering writes in a bounded memory cleared when the day turns, so a busy process writes a sighting twice at
+ * worst. Recording never delays or fails a request: the write is not awaited and failures are logged.
  */
 export class NetworkSightings {
   private written = new Set<string>();
@@ -49,11 +41,7 @@ export class NetworkSightings {
     private readonly maxRemembered = MAX_REMEMBERED,
   ) {}
 
-  /**
-   * Note a request from this account at this address. Returns the write when
-   * one was started (so a test can wait for it), or null when there was
-   * nothing to write.
-   */
+  /** Notes a request from this account at this address; returns the started write (for tests) or null when nothing was written. */
   seen(userId: string, ip: string): Promise<void> | null {
     const netHash = networkHashOf(ip);
     if (!netHash) return null;
@@ -78,11 +66,8 @@ export class NetworkSightings {
 }
 
 /**
- * Sightings from every signed-in request, and the daily retention prune of
- * sightings and risk decisions.
- *
- * Install before any route is registered: a Fastify hook only applies to
- * routes added after it.
+ * Sightings from every signed-in request, and the daily retention prune of sightings and risk decisions. Install
+ * before any route is registered, since a fastify hook applies only to routes added after it.
  */
 export function setupNetworkSightings(app: FastifyInstance, opts: { pruneAtStart: boolean }): void {
   const sightings = new NetworkSightings(app.db, app.log);
@@ -90,8 +75,7 @@ export function setupNetworkSightings(app: FastifyInstance, opts: { pruneAtStart
     if (req.user?.id) void sightings.seen(req.user.id, req.ip);
   });
 
-  // Deleting by age is idempotent, so it is safe on every instance at once,
-  // and it runs in the API process so it needs no separate worker.
+  // Deleting by age is idempotent, so every instance may run it, and it needs no separate worker.
   const risk = new RiskService(app.db);
   const prune = () =>
     void risk
