@@ -24,29 +24,14 @@ import { useDirection } from '../../reports/direction';
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
 /**
- * Signing up, one question at a time, with Hevalo asking them.
+ * Signing up in six steps (auth/guide): name, age on the ruler, month, email, password with its strength, and a
+ * final review with the terms and Create. Each step is checked as answered, and server refusals go back to the step
+ * they concern. Age and month start unset, so nothing is answered for the learner.
  *
- * It was one form with every field on it. Now it is six steps (auth/guide):
- * a name, an age on the ruler, the month, an email, a password with its
- * strength under it, and a last look over the answers with the rules and the
- * Create button. Each is checked as it is answered, and the server's own
- * refusals go back to the step they are about — a leaked password to the
- * password, a taken name to the name — rather than landing under a form.
- * Nothing is answered for them: the age and the month both start unchosen,
- * and Continue waits until each is picked.
- *
- * The name is written in lowercase as it is typed, with the Kurdish letters as
- * keys under it, and a character that cannot be in a username is named there
- * as it is typed (username/UsernameStepField.tsx); what is sent is the name as
- * the rule writes it (shared/src/username.ts).
- *
- * What is sent is exactly what the form sent: the name, the address, the
- * password, the language chosen in the intro, and the birth month and year
- * the age and month come to (guide/age.ts). Under 13 no account was made and
- * the explanation takes the screen (AgeStopScreen, shown by the app root);
- * an address that may already have an account gets the calm notice with the
- * two ways on, said without saying so. On success the verify-email gate takes
- * over, as it always did.
+ * The name is lowercased as typed, with Kurdish letter keys and invalid characters named under it
+ * (username/UsernameStepField.tsx); it is sent normalised (shared/src/username.ts). The request also carries the
+ * intro's language and the birth month and year (guide/age.ts). Under 13 no account is made and AgeStopScreen takes
+ * over; an address that may have an account gets a neutral notice. On success the verify-email gate takes over.
  */
 export function RegisterScreen({ navigation }: Props) {
   const { register, stopForAge } = useAuth();
@@ -58,9 +43,9 @@ export function RegisterScreen({ navigation }: Props) {
   const [month, setMonth] = useState<number | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // the address may already have an account: said without saying so, with the two ways on
+  // The address may already have an account; the notice says so without confirming it.
   const [mayHaveAccount, setMayHaveAccount] = useState(false);
-  // the name as the rule writes it, for the last look and for the server: the step went on only once it passed
+  // The normalised name, for the review and the server; the step only continues once it passes.
   const named = checkUsername(username);
   const chosenName = named.ok ? named.value : username.trim();
 
@@ -165,10 +150,10 @@ export function RegisterScreen({ navigation }: Props) {
           ]}
         />
       ),
-      // the rules and the privacy policy, each a link, before an account exists
+      // Terms and privacy links, before the account exists.
       footer: <AgreeLine style={styles.terms} />,
       commit: async () => {
-        // the age and the month are answered on their own steps; this is only for the types
+        // Age and month have their own steps; this only narrows the types.
         if (age === null) return { ok: false, error: t('guide.register.age.required'), at: 'age' };
         if (month === null) return { ok: false, error: t('guide.register.month.required'), at: 'month' };
         setMayHaveAccount(false);
@@ -176,16 +161,13 @@ export function RegisterScreen({ navigation }: Props) {
           email: cleanEmail(email),
           username: chosenName,
           password,
-          // the language chosen in the intro is the account's from the first
-          // moment, so the confirmation email and a later sign-in on the web
-          // already speak it
+          // The intro's language belongs to the account from the start, so the confirmation email is in it.
           locale,
           birthYear: birthYearFrom(age, month),
           birthMonth: month,
         });
         if (!error) return { ok: true };
-        // under 13 no account was made: the explanation replaces the flow (the
-        // app root shows it), and stays for as long as the app is open
+        // Under 13 no account was made; the app root shows the explanation for as long as the app is open.
         if (error.code === 'UNDER_MINIMUM_AGE') {
           void stopForAge('refused');
           return { ok: false, error: null };
@@ -194,7 +176,7 @@ export function RegisterScreen({ navigation }: Props) {
           setMayHaveAccount(true);
           return { ok: false, error: null };
         }
-        // a password found in a data leak is about the password, so it is said on its step
+        // A leaked password belongs on the password step.
         if (error.code === 'PASSWORD_BREACHED') return { ok: false, error: error.message, at: 'password' };
         if (error.code === 'USERNAME_TAKEN' || error.code === 'INVALID_USERNAME') {
           return { ok: false, error: error.message, at: 'name', says: t('guide.register.name.taken') };
@@ -207,7 +189,7 @@ export function RegisterScreen({ navigation }: Props) {
   const notice = mayHaveAccount ? (
     <View style={[styles.notice, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite" testID="register-may-have-account">
       <Text style={[styles.noticeText, dir.text, { color: colors.textPrimary }]}>{t('error.code.registrationFailed')}</Text>
-      {/* the two ways on, the first of them on the side the language starts from */}
+      {/* The two ways on, the first on the side the language starts from. */}
       <View style={[styles.noticeActions, { flexDirection: dir.row }]}>
         <ClayButton label={t('auth.login.submit')} tone="primary" onPress={() => navigation.navigate('Login', { email: cleanEmail(email) })} style={styles.noticeAction} />
         <ClayButton
@@ -221,15 +203,12 @@ export function RegisterScreen({ navigation }: Props) {
     </View>
   ) : null;
 
-  // on success the app root replaces the sign-in screens with the verify-email gate: nothing to do here
+  // On success the app root replaces the sign-in screens with the verify-email gate.
   return <StepFlow steps={steps} onFinish={() => undefined} onExit={navigation.canGoBack() ? () => navigation.goBack() : undefined} notice={notice} testID="register-flow" />;
 }
 
 const styles = StyleSheet.create({
-  /*
-   * Not the red line a refused answer gets: nothing was done wrong, the address
-   * may simply have an account already, and the answer is a way forward.
-   */
+  // A calm panel rather than an error line: nothing was done wrong, and it offers a way forward.
   notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
   noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },
   noticeActions: { flexWrap: 'wrap', gap: spacing.sm },

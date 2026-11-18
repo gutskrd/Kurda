@@ -44,19 +44,12 @@ describe('palettes', () => {
     }
   });
 
-  /*
-   * Nothing blurs behind the island, so any alpha in its fill is content
-   * showing through between the tab labels — on the phone exactly as in a
-   * browser. It is a solid colour in both schemes.
-   */
+  // Nothing blurs behind the tab bar, so any alpha in its fill would show content through it.
   it('gives the tab bar a solid fill', () => {
     for (const p of [LIGHT, DARK]) expect(p.barFill, p.scheme).toMatch(HEX);
   });
 
-  /*
-   * One ink for the brand. A second, blacker one used to sit beside it, and
-   * nothing said which of the two a button should be filled with.
-   */
+  // One ink for the brand, so a button's fill is never ambiguous.
   it('keeps one brand ink, with no stronger twin beside it', () => {
     for (const p of [LIGHT, DARK]) expect(Object.keys(p), p.scheme).not.toContain('primaryStrong');
   });

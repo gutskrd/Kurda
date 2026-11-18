@@ -11,24 +11,13 @@ import { spacing, typography } from '../theme/tokens';
 import { Ticket, TicketBurst, ticketTone } from './Ticket';
 
 /**
- * The invite sheet's tickets (InviteSheet.tsx): each friend picked is a small
- * ticket written out for them — their face on the stub in the game's colour,
- * their name on the paper — and Send hands them over.
+ * The invite sheet's tickets (InviteSheet.tsx): each picked friend gets a ticket with their face on the stub in the
+ * game's colour, and Send hands them over. A ticket drops in with a turn when picked, lifts while sending, then
+ * each flies off towards its friend from a small burst; a refusal sets them down with a shake beside the reason.
+ * A game posted in a group is one more ticket, with the group's glyph. Under Reduce Motion none of this animates.
  *
- * Picking one writes its ticket out: it drops into the row with a little
- * turn and settles. While the invites are on their way the tickets lift a
- * little, held out; once the server has them each ticket flies off towards
- * its friend, one after another, from a small burst where it stood. A
- * refusal (a limit, no connection) sets them back down with a shake, beside
- * the reason. A game posted in a group is one more ticket, pinned to the
- * group, with the group's glyph on its stub.
- *
- * Under Reduce Motion nothing lifts, flies, bursts or shakes: the tickets
- * are there, and then the sent ones are.
- *
- * The row shows three tickets at most; more picked than that stack into the
- * third, which counts them. The friend rows above say who is picked to a
- * screen reader, so these are not read twice.
+ * At most three show; more stack into the third, which counts them. The friend rows above already tell screen
+ * readers who is picked, so these are hidden from them.
  */
 
 /** Whom a ticket is written out for: a friend, or the group a game is posted in. */
@@ -41,16 +30,16 @@ export interface TicketHolder {
 
 export type SendPhase = 'picking' | 'sending' | 'flying';
 
-/** How long one ticket's flight takes, and how far behind the one before it each sets off. */
+/** One ticket's flight time, and the delay between one ticket and the next. */
 const FLY_MS = 520;
 const FLY_STAGGER_MS = 90;
 /** The most tickets the row shows side by side. */
 const SHOWN = 3;
-/** The sent tickets fanned out: each one's width, and how far along from the one before it. */
+/** The sent fan: each ticket's width and its offset from the one before. */
 const FANNED = 112;
 const FAN_STEP = 96;
 
-/** How long the whole send takes to fly off, for the sheet to wait on before it says they were sent. */
+/** How long the whole send takes to fly off, so the sheet can wait before saying they were sent. */
 export function flightMs(count: number, reduce: boolean): number {
   if (reduce || count === 0) return 0;
   return FLY_MS + (Math.min(count, SHOWN) - 1) * FLY_STAGGER_MS;
@@ -65,7 +54,7 @@ export function PickedTickets({
   game: PlayGame;
   holders: readonly TicketHolder[];
   phase: SendPhase;
-  /** goes up each time a send is refused, to set the tickets back down with a shake */
+  /** Increments on each refused send, to set the tickets down with a shake. */
   refused: number;
 }): React.JSX.Element | null {
   const dir = useDirection();
@@ -76,7 +65,7 @@ export function PickedTickets({
     seen.current = refused;
     shake.run();
   }, [refused, shake]);
-  // the ones there as the sheet opened (a friend already picked from a profile or a DM) are simply there
+  // Tickets present when the sheet opened (a friend picked from a profile or DM) do not animate in.
   const first = useRef(new Set(holders.map((h) => h.id))).current;
   if (holders.length === 0) return null;
   const shown = holders.length > SHOWN ? holders.slice(0, SHOWN - 1) : holders;
@@ -106,7 +95,7 @@ function HolderTicket({
 }: {
   game: PlayGame;
   holder?: TicketHolder;
-  /** the stack at the end of the row: how many more tickets are in it */
+  /** The stack at the end of the row: how many more tickets it holds. */
   more?: number;
   index: number;
   phase: SendPhase;
@@ -117,7 +106,7 @@ function HolderTicket({
   const dir = useDirection();
   const [burst, setBurst] = useState(0);
 
-  // written out: dropped into the row with a turn, settling on the bouncy spring
+  // Written out: dropped into the row with a turn, settling on the bouncy spring.
   const writing = useRef(enter && !reduce).current;
   const arrive = useRef(new Animated.Value(writing ? 0 : 1)).current;
   useEffect(() => {
@@ -125,13 +114,13 @@ function HolderTicket({
     const run = springTo(arrive, 1, 'bouncy');
     run.start();
     return () => run.stop();
-    // once, as it is written out
+    // Only once, as it is written out.
   }, []);
 
-  // held out while the invites are on their way, and set down again if they are refused
+  // Lifted while the invites are sending, and set down again if refused.
   const lift = useRef(new Animated.Value(0)).current;
   const fly = useRef(new Animated.Value(0)).current;
-  // sideways on a curve of its own, ahead of the rise: the ticket leaves on an arc, as one flicked from a hand does
+  // Sideways on its own curve, ahead of the rise, so the ticket leaves on an arc like one flicked from a hand.
   const across = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (reduce) return;
@@ -162,7 +151,7 @@ function HolderTicket({
   const heldOut = {
     transform: [{ translateY: lift.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }) }, { scale: lift.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] }) }],
   };
-  // off towards the friend: out to the side a line ends on first, and up faster and faster, turning as it goes
+  // Off towards the friend: to the line-end side first, then up ever faster, turning as it goes.
   const handedOver = {
     opacity: fly.interpolate({ inputRange: [0, 0.45, 1], outputRange: [1, 1, 0] }),
     transform: [
@@ -208,10 +197,8 @@ function HolderTicket({
 }
 
 /**
- * The moment after Send: the tickets that went, fanned out like a hand of
- * them, and what happened in words — "Invite sent to Azad", "Invites sent:
- * 3", "Posted in the group" — which is also what a screen reader is told.
- * It settles in with a small pop; under Reduce Motion it is simply there.
+ * The moment after Send: the sent tickets fanned out, and what happened in words ("Invite sent to Azad"), which is
+ * also what screen readers hear. It pops in, or simply appears under Reduce Motion.
  */
 export function SentFan({ game, holders, text }: { game: PlayGame; holders: readonly TicketHolder[]; text: string }): React.JSX.Element {
   const { colors } = useTheme();
@@ -223,7 +210,7 @@ export function SentFan({ game, holders, text }: { game: PlayGame; holders: read
     const run = springTo(p, 1, 'bouncy');
     run.start();
     return () => run.stop();
-    // once, as the sent tickets are laid down
+    // Only once, as the sent tickets are laid down.
   }, []);
   const fan = holders.slice(0, SHOWN);
   const side = dir.row === 'row-reverse' ? -1 : 1;
@@ -241,7 +228,7 @@ export function SentFan({ game, holders, text }: { game: PlayGame; holders: read
                 styles.fanned,
                 {
                   left: i * FAN_STEP,
-                  // each lies over the next one's stub, so every name shows
+                  // Each overlaps the next one's stub, so every name shows.
                   zIndex: fan.length - i,
                   opacity: p.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }),
                   transform: [

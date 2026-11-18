@@ -5,21 +5,10 @@ import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
- * Hevalo beside the current stop on the path (`mascotSpot` places him): on
- * the side away from the stop's lean, level with it, so he never stands on
- * the line. He arrives as the path does (the character's own `arrive`), and
- * greets it once it is in view: a little hop and a rock on his feet, the way
- * a deer waves. After that he is left to his own habits — a blink, a glance
- * about, an ear — until he is tapped, which greets back and opens the stop he
- * stands by; and he cheers when coming back from a lesson finished a skill or
- * opened one.
- *
- * Whole, rather than a head in a tile: he is standing on the page beside the
- * stop, his feet level with its foot, not a picture of him. He is said by the
- * stop beside him already, so a screen reader passes him by; and on a screen
- * too narrow to leave him room beside the path, he stays away. The greeting
- * is two transforms on the native driver, played once, and not at all for a
- * phone that asks for less motion.
+ * Hevalo standing beside the current stop (`mascotSpot` places him), on the side away from the path's lean. He
+ * greets once when the path comes into view, cheers after a lesson that finished or opened a skill, and opens his
+ * stop when tapped. Screen readers skip him because the stop already speaks; he is hidden on narrow screens and
+ * does not greet under Reduce Motion.
  */
 export function PathMascot({
   x,
@@ -28,12 +17,12 @@ export function PathMascot({
   cheer,
   onPress,
 }: {
-  /** where his middle is across the unit's path, and the middle of the stop he stands by, in points */
+  /** Horizontal centre of him and of his stop across the unit's path, in points. */
   x: number;
   stopY: number;
-  /** turned to face the stop on his start side */
+  /** Turns him to face a stop on his start side. */
   flip: boolean;
-  /** what the path just did is worth a cheer */
+  /** The path just did something worth a cheer. */
   cheer: boolean;
   onPress: () => void;
 }): React.JSX.Element {
@@ -42,7 +31,7 @@ export function PathMascot({
   const hop = useRef(new Animated.Value(0)).current;
   const greeted = useRef(false);
   useEffect(() => {
-    // once, when the path is first in view; a return from a lesson has its own moment (the cheer), not a greeting on top of it
+    // A return from a lesson has its cheer, so it gets no greeting on top.
     if (!live || greeted.current || cheer) return;
     greeted.current = true;
     const sway = (to: number, ms: number) =>
@@ -76,20 +65,20 @@ export function PathMascot({
   );
 }
 
-/** Drawn whole, legs and all, at the scale of the lesson's head-to-waist figure (`PATH_MASCOT.size` to the tops of his legs). */
+/** His full height, at the scale of the lesson's figure (`PATH_MASCOT.size` reaches the tops of his legs). */
 const FULL = 132;
-/** How far below the stop's round his feet stand: on its lip, where the stop itself meets the page. */
+/** How far below the stop's centre his feet stand, on its lip. */
 const FEET = 12;
-/** The greeting: when it starts after he is in view (after his own arrival), how far he rocks each way, and how high he hops. */
+/** The greeting's delay after he is in view, its rock angle, and its hop height. */
 const WAVE_AT_MS = 700;
 const WAVE_DEG = 6;
 const HOP = 6;
 
-/** Narrower than this, the path's sway leaves no room beside it for him. */
+/** Below this width the path leaves no room beside it for him. */
 export const MASCOT_MIN_WIDTH = 340;
 
 const styles = StyleSheet.create({
   spot: { position: 'absolute', width: PATH_MASCOT.size, alignItems: 'center' },
-  // he rocks about his feet, which stay on the ground
+  // He rocks about his feet.
   greeting: { transformOrigin: '50% 100%' },
 });

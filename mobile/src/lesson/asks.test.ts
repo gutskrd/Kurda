@@ -7,7 +7,7 @@ import type { Exercise } from './types';
 const item = (ask: ExerciseAsk | undefined, more: Partial<Exercise> = {}): Exercise => ({ id: 'x', type: 'multiple_choice', ask, ...more });
 
 describe('the headline an ask gives an item', () => {
-  // every ask the server can send has words of its own in the phone's catalogue
+  // Every ask the server can send has its own words in the phone's catalogue.
   it('names every ask, in English as the table has it', () => {
     const en = TRANSLATIONS.en;
     const said = (ask: ExerciseAsk, more?: Partial<Exercise>, opts?: Parameters<typeof askHeadline>[1]) => {
@@ -22,7 +22,7 @@ describe('the headline an ask gives an item', () => {
     expect(said('to-english')).toBe('Translate this sentence');
     expect(said('to-kurdish', {}, { dialect: 'kurmanji' })).toBe('Write this in Kurmancî');
     expect(said('to-kurdish', {}, { dialect: 'sorani' })).toBe('Write this in Soranî');
-    // a review mixes courses: the item’s own variety wins over the session’s
+    // A review mixes courses, so the item's own variety wins over the session's.
     expect(said('to-kurdish', { dialect: 'sorani' }, { dialect: 'kurmanji' })).toBe('Write this in Soranî');
     expect(said('hear', {}, { tiles: true })).toBe('Tap what you hear');
     expect(said('hear')).toBe('Listen and type what you hear');
@@ -30,7 +30,6 @@ describe('the headline an ask gives an item', () => {
     for (const ask of EXERCISE_ASKS) expect(askHeadline(item(ask)), ask).not.toBeNull();
   });
 
-  // after somebody only when they are there to be heard
   it('says “Say it aloud” for a repeat with no recording, or nobody the app can draw saying it', () => {
     expect(askHeadline(item('repeat'))?.key).toBe('lesson.speak.prompt');
     expect(askHeadline(item('repeat', { modelAudioUrl: 'https://media.test/a.wav' }))?.key).toBe('lesson.speak.prompt');

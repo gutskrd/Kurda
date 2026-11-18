@@ -46,36 +46,21 @@ import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useTheme } from './ThemeProvider';
 
 /**
- * The streak's fire (shared `art/fire.ts`), the same drawing the website
- * shows, at its stage (`level`): cold logs with a curl of smoke, a spark
- * caught, on up to the Newroz fire with the sun behind it. Its flame is
- * painted (`assets/fire/`, made by `scripts/generate-fire-sprites.mjs`) and
- * plays frame by frame, breathing and swaying as a cartoon flame does; the
- * glow breathes round it and pools on the ground and sparks drift up.
+ * The streak's fire (shared `art/fire.ts`), the same drawing as the website, at its stage (`level`), from cold logs to
+ * the Newroz fire with the sun behind it. The flame is a painted sprite sheet (`assets/fire/`, made by
+ * `scripts/generate-fire-sprites.mjs`) played frame by frame, with a breathing glow and drifting sparks.
  *
- * Each moving part is its own layer, as big as the part, moved by
- * transforms and opacity read off one clock per fire that loops on the
- * native driver: nothing is drawn again while it burns and React is not
- * asked for a frame — the flame is its whole sheet behind a window the size
- * of one frame, stepped a frame at a time off the same clock. The clock stops
- * when the fire is gone, while the app is in the background, and when it
- * stands still: under Reduce Motion, when `still`, and for the grey flame
- * beside a number with no streak yet; the flame then shows one frame. Glow is
- * a soft gradient, never a blur.
+ * Each moving part is its own layer, moved by transforms and opacity off one looping native-driver clock per fire,
+ * so nothing redraws while it burns. The clock stops when the fire unmounts, in the background, under Reduce Motion,
+ * when `still`, and for the grey no-streak flame; the flame then shows one frame. Glow is a soft gradient, never a
+ * blur.
  *
- * Given `from`, a smaller fire, it is drawn as that first and grows into
- * `level` as it appears (shared `fireGrowth`): one more native-driven value
- * runs once, `FIRE_GROW.delayMs` after it mounts, for `FIRE_GROW.ms`, and
- * every growing part reads it; the old flame stretches up and fades into the
- * new one. Under Reduce Motion it is simply `level`.
+ * With `from`, it is drawn as that smaller fire first and grows into `level` (shared `fireGrowth`) on one more value
+ * that runs once, `FIRE_GROW.delayMs` after mounting, for `FIRE_GROW.ms`. Under Reduce Motion it is simply `level`.
  *
- * `size` is its height in points; at `FIRE_SMALL` and under it is the light
- * version for beside a number: a bold round flame alone, drawn, breathing
- * gently. `framed`, it takes up only its stage's part of the box (shared
- * `fireFrame`), still drawn as big as `size` makes the whole, for a screen
- * that shows it big without the empty air above a young fire. `accent` is an
- * event theme's colour for its light, and for the light version's flame; the
- * painted flame keeps its own. Decorative: the words beside it say the streak.
+ * `size` is its height in points; at `FIRE_SMALL` and below it is the light version for beside a number, a bold
+ * round flame alone. `framed` lays out only its stage's part of the box (shared `fireFrame`), avoiding empty air
+ * above a young fire. `accent` is an event theme's colour for its light. Decorative: nearby words say the streak.
  */
 export function Fire({
   size,
@@ -85,15 +70,15 @@ export function Fire({
   framed = false,
   accent,
 }: {
-  /** how tall the whole fire's box is drawn, framed or not */
+  /** The whole fire's box height, framed or not. */
   size: number;
-  /** how big it burns (shared `fireLevel`, `runFireLevel`); cold is the fire not burning */
+  /** How big it burns (shared `fireLevel`, `runFireLevel`); cold is not burning. */
   level: FireLevel;
-  /** grows from this level into `level` as it appears: the day the fire grew */
+  /** Grows from this level into `level` as it appears, on the day the fire grew. */
   from?: FireLevel | null;
-  /** drawn standing still, as under reduced motion */
+  /** Drawn still, as under Reduce Motion. */
   still?: boolean;
-  /** only its stage's frame laid out, the rest drawn over its edges */
+  /** Lays out only its stage's frame, drawing the rest over its edges. */
   framed?: boolean;
   accent?: string | null;
 }): React.JSX.Element {
@@ -106,7 +91,7 @@ export function Fire({
     () => (reduce || still || !from ? null : fireGrowth(from, level, size)),
     [reduce, still, from?.stage, from?.growth, level.stage, level.growth, size],
   );
-  // the growth seen through once, the old fire is let go
+  // Once the growth has played, the old fire is released.
   const [grownFrom, setGrownFrom] = useState<FireGrowth | null>(null);
   const growing = growth && grownFrom !== growth ? growth : null;
   const moving = !reduce && !still && drawing.moving;
@@ -130,7 +115,7 @@ export function Fire({
 
   const root = drawing.root;
   const view = framed && !drawing.small ? fireFrame(drawing.stage) : drawing.view;
-  /** points per unit of the drawing */
+  /** Points per drawing unit. */
   const unit = size / drawing.view.h;
   const at: Place = { view, unit };
   const now = { id: `${id}a`, colours: fireColours({ stage: drawing.stage, scheme, accent }), clock: moving ? clock : null };
@@ -149,7 +134,7 @@ export function Fire({
           <Burning paint={before} drawing={growing.from} driver={grow} at={at} />
         </Grow>
       ) : null}
-      {/* the flash behind the new flame, so the flame itself is never washed out */}
+      {/* The flash behind the new flame, so the flame itself is never washed out. */}
       {growing?.flash ? (
         <Grow motion={growing.flash.motion} origin={[growing.flash.cx, growing.flash.cy]} driver={grow} at={at}>
           <Glow id={`${id}f`} glow={growing.flash} tint={now.colours.glow} clock={null} at={at} />
@@ -174,32 +159,30 @@ export function Fire({
   );
 }
 
-/** Where the fire is laid out: its drawing's box, and points per unit of it. */
+/** Where the fire is laid out: its drawing's box, and points per unit. */
 interface Place {
   view: FireBox;
   unit: number;
 }
 
-/** One drawing's colours, the prefix its gradients are named by, and its clock (null when it stands still). */
+/** One drawing's colours, its gradient id prefix, and its clock (null when still). */
 interface Paint {
   id: string;
   colours: FireColours;
   clock: Animated.Value | null;
 }
 
-/** A spark's colour: the Newroz fire's gold for a gold one, the fire's own for the rest; null when nothing rises. */
+/** A spark's colour: the Newroz gold for a gold one, else the fire's own; null when nothing rises. */
 const sparkColour = (e: FireEmber, colours: FireColours): string | null => (e.gold ? colours.gold : null) ?? colours.ember;
 
-/** Awake while the app is in front and its screen is the one in view: a fire on a tab behind another has nobody to burn for. */
+/** Awake while the app is in front and its screen in view; a fire behind another tab has nobody to burn for. */
 function useAwake(): boolean {
   return useScreenAwake();
 }
 
 /**
- * What burns: the glow, the sun in front of it (opening as it grows, given
- * `halo`, off the growth's `driver`), the light pooled on the ground, smoke
- * rising, the sparks from behind the flame, and the flame: painted, or the
- * light version's tongues.
+ * What burns: the glow, the sun in front of it (opening as it grows, given `halo`, off the growth's `driver`), the
+ * light pooled on the ground, smoke, sparks from behind the flame, and the flame, painted or the light version's.
  */
 function Burning({
   paint: p,
@@ -236,7 +219,7 @@ function Burning({
           </Layer>
         );
       })}
-      {/* the sparks rise from behind the flame, so they are only seen once clear of it */}
+      {/* Sparks rise from behind the flame, so they show only once clear of it. */}
       {clock
         ? drawing.embers.map((e, i) => {
             const colour = sparkColour(e, colours);
@@ -267,19 +250,17 @@ const SHEETS: Readonly<Record<FireSprite['stage'], ImageSourcePropType>> = {
   newroz: NEWROZ,
 };
 
-/** A hair before the next frame, where a frame's step ends: an interpolation's input has to keep rising. */
+/** A hair before the next frame where a frame's step ends, since an interpolation's input must keep rising. */
 const HAIR = 1e-6;
 
 /**
- * The painted flame: its whole sheet in a window as big as one frame, moved
- * a frame at a time — along a row, then down to the next — off the fire's
- * clock, the loop played over and over in each turn of it. Standing still,
- * it shows the first frame.
+ * The painted flame: its sheet behind a one-frame window, stepped along a row then down to the next off the fire's
+ * clock, the loop repeating within each turn. Still, it shows the first frame.
  */
 function Painted({ flame, clock, at }: { flame: FireFlame; clock: Animated.Value | null; at: Place }): React.JSX.Element {
   const { sheet, box } = flame;
   const { view, unit } = at;
-  // points to a pixel of the sheet, across and down: the box is a stage's frame stretched to the fire's growth
+  // Points per sheet pixel across and down: the box is a stage's frame stretched to the fire's growth.
   const kx = (box.w * unit) / sheet.frame.w;
   const ky = (box.h * unit) / sheet.frame.h;
   const style = useMemo(() => (clock ? framesStyle(sheet, kx, ky, clock) : null), [clock, sheet, kx, ky]);
@@ -290,7 +271,7 @@ function Painted({ flame, clock, at }: { flame: FireFlame; clock: Animated.Value
         source={SHEETS[sheet.stage]}
         fadeDuration={0}
         resizeMode="stretch"
-        // a small fire's sheet decoded no bigger than it is shown, not at its full size (Android)
+        // Decode a small fire's sheet at its shown size, not full size (Android).
         resizeMethod="resize"
         style={[{ width: sheet.sheet.w * kx, height: sheet.sheet.h * ky }, style]}
       />
@@ -298,7 +279,7 @@ function Painted({ flame, clock, at }: { flame: FireFlame; clock: Animated.Value
   );
 }
 
-/** A sheet moved in steps off `clock`, each frame held until the next: where each frame's cell lies, at every frame of every loop in the clock's turn. */
+/** Steps a sheet off `clock`, holding each frame until the next: each frame's cell at every frame of every loop in the clock's turn. */
 function framesStyle(sheet: FireSprite, kx: number, ky: number, clock: Animated.Value) {
   const steps = (FIRE_CYCLE_MS / FIRE_SPRITE_MS) * FIRE_SPRITE_FRAMES;
   const input: number[] = [];
@@ -314,7 +295,7 @@ function framesStyle(sheet: FireSprite, kx: number, ky: number, clock: Animated.
   return { transform: [{ translateX: step(across) }, { translateY: step(down) }] };
 }
 
-/** The sun behind the Newroz fire: its disc, and its rays turning slowly. */
+/** The sun behind the Newroz fire: its disc, and its slowly turning rays. */
 function Halo({ paint: p, drawing, at }: { paint: Paint; drawing: FireDrawing; at: Place }): React.JSX.Element | null {
   const halo = drawing.halo;
   const tint = p.colours.halo;
@@ -357,7 +338,7 @@ function Cinder({ paint: p, drawing, at }: { paint: Paint; drawing: FireDrawing;
   );
 }
 
-/** Pieces of the hearth, still, one layer to a group; a group the fire did not have before it grew arrives as it grows. */
+/** The hearth's still pieces, one layer per group; a group new to the grown fire arrives as it grows. */
 function Hearth({
   paint: p,
   pieces,
@@ -371,7 +352,7 @@ function Hearth({
   driver: Animated.Value;
   at: Place;
 }): React.JSX.Element {
-  // consecutive pieces of one group, so an arriving group moves as one
+  // Consecutive pieces of one group, so an arriving group moves as one.
   const runs: { group: FireBaseGroup; pieces: FireBasePiece[] }[] = [];
   for (const piece of pieces) {
     const last = runs.at(-1);
@@ -405,7 +386,7 @@ function Hearth({
   );
 }
 
-/** Its children growing once by `motion` about `origin`, off the growth's own value; without a motion, just its children. */
+/** Its children growing once by `motion` about `origin`, off the growth's value; without a motion, just its children. */
 function Grow({
   motion,
   origin,
@@ -433,11 +414,7 @@ function Grow({
   );
 }
 
-/**
- * One part of the fire, drawn on its own in a box just big enough for it,
- * moved about `origin` by `motion` off the clock; standing still, it is
- * drawn at `rest` (where it has one) or as drawn.
- */
+/** One part of the fire in a box just big enough for it, moved about `origin` by `motion` off the clock; still, drawn at `rest` (if any) or as drawn. */
 function Layer({
   box,
   clock,
@@ -456,7 +433,7 @@ function Layer({
   children: ReactNode;
 }): React.JSX.Element {
   const { view, unit } = at;
-  // a hair of room round the part, so its soft edge is never cut
+  // A hair of room round the part, so its soft edge is never cut.
   const b = { x: box.x - 1, y: box.y - 1, w: box.w + 2, h: box.h + 2 };
   const style = useMemo(() => {
     if (!origin) return null;
@@ -473,7 +450,7 @@ function Layer({
   );
 }
 
-/** A spark: a round dot of colour, no drawing needed, rising off `driver` (the clock, or the growth for a burst). */
+/** A spark: a round dot of colour rising off `driver` (the clock, or the growth for a burst). */
 function Ember({ ember, colour, driver, at }: { ember: FireEmber; colour: string; driver: Animated.Value; at: Place }): React.JSX.Element {
   const { cx, cy, r } = ember;
   const { view, unit } = at;
@@ -488,7 +465,7 @@ function Ember({ ember, colour, driver, at }: { ember: FireEmber; colour: string
   );
 }
 
-/** A glow (round the fire, or pooled under it), in a box of its own as big as it is; it breathes about its middle. */
+/** A glow (round the fire, or pooled under it) in its own box, breathing about its centre. */
 function Glow({ id, glow, tint, clock, at }: { id: string; glow: FireGlow; tint: FireTint | null; clock: Animated.Value | null; at: Place }): React.JSX.Element | null {
   const { cx, cy, rx, ry } = glow;
   const { view, unit } = at;
@@ -508,7 +485,7 @@ function Glow({ id, glow, tint, clock, at }: { id: string; glow: FireGlow; tint:
   );
 }
 
-/** A colour at its strength, fading by `fade` (an offset, and the share of its strength there): out from the middle, or (`linear`) from the top down. */
+/** A colour at its strength, fading by `fade` (an offset and the strength there): out from the centre, or top down when `linear`. */
 function Fade({
   id,
   tint,
@@ -522,7 +499,7 @@ function Fade({
   fade: readonly (readonly [number, number])[];
   strength?: number;
   linear?: boolean;
-  /** a radial fade laid in the drawing's own units, rather than across the shape it fills */
+  /** A radial fade in the drawing's own units, rather than across the shape it fills. */
   space?: { cx: number; cy: number; r: number };
 }): React.JSX.Element {
   const stops = fade.map(([offset, share]) => <Stop key={offset} offset={offset} stopColor={tint.colour} stopOpacity={Math.min(1, tint.opacity * strength) * share} />);
@@ -543,7 +520,7 @@ function Fade({
   );
 }
 
-/** A tongue's (or a log's) colour from its tip to its root. */
+/** A tongue's (or log's) colour from tip to root. */
 function Gradient({ id, stops }: { id: string; stops: FireStops }): React.JSX.Element {
   return (
     <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
@@ -554,7 +531,7 @@ function Gradient({ id, stops }: { id: string; stops: FireStops }): React.JSX.El
   );
 }
 
-/** A pose held still, as transforms in points and an opacity. */
+/** A held pose as transforms in points and an opacity. */
 function poseStyle(p: FirePose, unit: number) {
   return {
     transform: [{ translateX: (p.x ?? 0) * unit }, { translateY: (p.y ?? 0) * unit }, { rotate: `${p.r ?? 0}deg` }, { scaleX: p.sx ?? 1 }, { scaleY: p.sy ?? 1 }, { skewX: `${p.skew ?? 0}deg` }],
@@ -563,11 +540,9 @@ function poseStyle(p: FirePose, unit: number) {
 }
 
 /**
- * A part's motion as transforms and opacity read off `driver` (the fire's
- * clock, or a growth's own value): each pose field that changes becomes an
- * interpolation through the part's samples (shared `fireSamples`); a field
- * that never changes is left out. The order is the website's: moved, turned,
- * stretched, leaning.
+ * A part's motion as transforms and opacity off `driver` (the fire's clock or a growth's value): each changing pose
+ * field interpolates through the part's samples (shared `fireSamples`), and constant fields are omitted. The order
+ * matches the website's: moved, turned, stretched, leaning.
  */
 function motionStyle(motion: FireMotion, driver: Animated.Value, unit: number) {
   const { input, poses } = fireSamples(motion);

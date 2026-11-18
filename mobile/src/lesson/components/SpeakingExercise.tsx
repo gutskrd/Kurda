@@ -23,9 +23,9 @@ import { heldDim } from '../../theme/MotionParts';
 
 interface Props {
   exercise: Exercise;
-  /** report whether there is a take to rate (it stays on the device) */
+  /** Reports whether there is a take to rate (it stays on the device). */
   onSetRecorded: (recorded: boolean) => void;
-  /** the learner's own rating of the recording, once they have given one */
+  /** The learner's own rating of the recording, once given. */
   selfRating: SelfRating | null;
   onRate: (rating: SelfRating | null) => void;
   disabled: boolean;
@@ -43,22 +43,13 @@ const FAILED: Record<'start' | 'save', TranslationKey> = {
 };
 
 /**
- * Speaking (KUR-036): record, hear your recording beside the native speaker,
- * and say how close it was — "Sounded right / Close / Try again". The server
- * cannot check a recording, so the learner's ear is the judge, and the rating
- * is what is submitted. The take itself never leaves the phone: nothing on the
- * server would listen to it, and a stored copy of every learner's voice was
- * data kept for no use. Comparing your own attempt with a model is the
- * practice.
+ * Speaking: record, hear it beside the native speaker, and rate how close it was ("Sounded right / Close / Try
+ * again"). The server cannot judge a recording, so the rating is what is submitted, and the take never leaves the
+ * phone, since storing learners' voices would serve no purpose.
  *
- * The microphone is asked for at the first press of record, not before. A
- * refused one used to switch speaking off for the whole course, with no way
- * to turn it back on; it now says so, offers the phone's settings where it
- * can be allowed again, and "Can't speak now", in the footer beside Check,
- * puts speaking off without a mistake.
- *
- * An item that asks for it to be repeated ('repeat') is headed "Repeat after
- * Hamo" — whoever says its recording — and "Say it aloud" where nobody does.
+ * The microphone is requested at the first press of record. If refused, the exercise says so and offers the
+ * phone's settings, and "Can't speak now" in the footer skips speaking without a mistake. A 'repeat' item is headed
+ * "Repeat after Hamo" (whoever says its recording), or "Say it aloud" when nobody does.
  */
 export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, disabled }: Props) {
   const { colors } = useTheme();
@@ -67,16 +58,16 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   const [status, setStatus] = useState<'idle' | 'ready' | 'rejected'>('idle');
   const [message, setMessage] = useState<string | null>(null);
   const processed = useRef<Take | null>(null);
-  // the learner's own press ended the take, rather than its time running out or the app leaving the front
+  // The learner's own press ended the take, rather than the time limit or the app leaving the front.
   const stoppedByHand = useRef(false);
   const ownAudio = useAudio(recorder.result?.uri || undefined);
   const model = useAudio(exercise.modelAudioUrl);
   const dir = useDirection();
-  // who says the native model, when an editor has chosen somebody
+  // Who says the native model, when an editor chose someone.
   const voice = knownVoice(exercise.modelAudioVoice);
   const headline = askHeadline(exercise);
 
-  // a fresh recording arrived → validate it, then it is ready to rate
+  // A fresh recording is validated, then ready to rate.
   const { result, reset } = recorder;
   useEffect(() => {
     if (!result || processed.current === result) return;
@@ -96,18 +87,17 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
     onSetRecorded(true);
     setStatus('ready');
     setMessage(null);
-    // a take kept is something taken, felt as the learner's Stop lands; one
-    // that stopped by itself is not a buzz anybody asked for
+    // A take kept by the learner's Stop gets a haptic; one that stopped by itself does not.
     if (byHand) haptic('tap');
   }, [result, reset, onSetRecorded, onRate, t]);
 
-  // a take that could not be started or kept is in the learner's way
+  // A take that could not be started or kept is reported.
   useEffect(() => {
     if (recorder.failed) haptic('error');
   }, [recorder.failed]);
 
   const record = (): void => {
-    // whatever was on screen was about the take this one replaces
+    // Whatever was shown concerned the take this one replaces.
     stoppedByHand.current = false;
     setStatus('idle');
     setMessage(null);
@@ -123,7 +113,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
 
   const micOff = recorder.permission === 'denied';
   const note = message ?? (recorder.failed ? t(FAILED[recorder.failed]) : null);
-  // how much of a take's time has gone; it stops by itself at the end
+  // How much of the take's time is used; it stops by itself at the end.
   const used = Math.min(1, recorder.durationMs / MAX_TAKE_MS);
 
   return (
@@ -132,7 +122,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
       {exercise.prompt ? <Text style={[saidStyle(exercise.prompt), dir.free, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {model.supported && voice ? (
-        // head to waist on its stage, saying the sentence; a tap on it says it again too
+        // Head to waist on its stage, saying the sentence; a tap on it replays it too.
         <CharacterStage
           key={exercise.id}
           speaker={voice.speaker}
@@ -142,7 +132,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
           playing={model.playing}
           source={exercise.modelAudioUrl}
           onPress={() => model.play(1)}
-          // pleased when the learner says they said it well; their own judgement of a near miss is theirs to make
+          // Pleased when the learner rates it good; a near miss is theirs to judge.
           reaction={selfRating === 'good' ? 'cheer' : null}
         >
           <ModelButton playing={model.playing} onPress={() => model.play(1)} />
@@ -177,7 +167,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
           </View>
           <Pressable
             onPress={finish}
-            // the one thing to press while a take records, with nothing near it: it answers 8 past every edge
+            // The only control while recording, with nothing near it, so it answers 8 past every edge.
             reach="open"
             style={({ pressed }) => [styles.stop, { backgroundColor: colors.textPrimary }, pressed && heldDim]}
             accessibilityRole="button"

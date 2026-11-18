@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { STORY_COVERS, STORY_RUGS, storyRugFor } from '@kurda/shared';
 import { StoryCover } from './covers';
 
-// a picture that loads or fails on request: jsdom fetches no images, so the test says which happened
+// A picture that loads or fails on request, since jsdom fetches no images.
 vi.mock('react-native', async () => {
   const rnw = await import('react-native-web');
   return {
@@ -17,7 +17,7 @@ vi.mock('react-native', async () => {
 
 const SITE = 'https://hevalo.app/cosmetics/backgrounds';
 const picture = (): string | null => screen.queryByTestId('story-cover-picture')?.getAttribute('src') ?? null;
-/** The ground under the picture, as the browser reports a colour. */
+/** The ground under the picture, as the browser reports its colour. */
 const ground = (): string => (screen.getByTestId('story-cover') as HTMLElement).style.backgroundColor;
 const rgb = (hex: string): string => `rgb(${[1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16)).join(', ')})`;
 
@@ -37,10 +37,10 @@ describe('StoryCover', () => {
     const view = render(<StoryCover slug="kmr-reya-gund" cover={null} />);
     expect(picture()).toBe(`${SITE}/${rug.file}`);
     expect(ground()).toBe(rgb(rug.ground));
-    // a key no list knows is no picture either
+    // An unknown key is no picture either.
     view.rerender(<StoryCover slug="kmr-reya-gund" cover="mountains" />);
     expect(picture()).toBe(`${SITE}/${rug.file}`);
-    // and a shelf of such stories is not one rug seven times
+    // A shelf of such stories is not one rug seven times.
     const seen = new Set<string>();
     for (const slug of ['kmr-qelema-sin', 'kmr-bacansor-penir-nan', 'kmr-nameya-dapire', 'kmr-top-u-ape-mehmud', 'kmr-barana-newroze', 'kmr-reya-gund', 'kmr-rovi-u-hirc']) {
       view.rerender(<StoryCover slug={slug} cover={null} />);
@@ -57,7 +57,7 @@ describe('StoryCover', () => {
     expect(screen.queryByTestId('story-cover-picture')).toBeNull();
     expect(ground()).toBe(rgb(rug.ground));
     cleanup();
-    // a chosen picture that fails leaves the same quiet card, in the colour of the rug the story would have had
+    // A chosen picture that fails leaves the same quiet card, in the colour of the story's rug.
     render(<StoryCover slug="kmr-reya-gund" cover="berbang" />);
     expect(picture()).toBe(`${SITE}/made-09-berbang.webp`);
     fireEvent.error(screen.getByTestId('story-cover-picture'));

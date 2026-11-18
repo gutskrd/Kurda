@@ -1,15 +1,15 @@
-/** Course-map contract — mirrors the server (KUR-040). */
+/** Course-map contract, mirroring the server. */
 
 export type SkillState = 'locked' | 'unlocked' | 'completed' | 'gold' | 'decayed';
 
 /** One lesson of a skill, as the map lists it. */
-export interface LessonNode {
+interface LessonNode {
   lessonId: string;
   position: number;
   title: string;
-  /** finished by this learner — this version of the lesson or an earlier one */
+  /** Finished by this learner, in this version of the lesson or an earlier one. */
   completed: boolean;
-  /** how many times they have finished it, replays included; absent on older responses */
+  /** Times finished, replays included; absent on older responses. */
   times?: number;
 }
 
@@ -21,27 +21,24 @@ export interface SkillNode {
   strength: number;
   hasGrammar: boolean;
   firstLessonId: string | null;
-  /**
-   * The skill's published lessons in order. The server always sends them;
-   * optional so a map kept from before they were sent still reads.
-   */
+  /** Published lessons in order. Optional so a map cached before the server sent them still reads. */
   lessons?: LessonNode[];
-  /** full rounds of its lessons played (its stars) and its ring's pieces filled (shared `topicRounds`); absent on older responses */
+  /** Full rounds played (its stars) and ring pieces filled (shared `topicRounds`); absent on older responses. */
   rounds?: number;
   pieces?: number;
 }
 
-export interface CourseUnit {
+interface CourseUnit {
   unitId: string;
   title: string;
   skills: SkillNode[];
-  /** the story that closes a chapter of the road, once learners can read it; absent on older responses */
+  /** The readable story that closes a chapter; absent on older responses. */
   story?: { slug: string; title: string } | null;
-  /** its level in the course plan ('A1'), which the path groups units into sections by; null or absent where there is none */
+  /** Its CEFR level in the course plan ('A1'), which groups units into sections; null or absent where there is none. */
   level?: string | null;
 }
 
-/** The unit after the last one out, while it is being made; `recordedBy` names who records it (the road's are Hamo's). */
+/** The next unit, still being made; `recordedBy` names its narrator. */
 export interface UpcomingUnit {
   number: number;
   title: string;
@@ -51,9 +48,9 @@ export interface UpcomingUnit {
 export interface CourseMap {
   course: { id: string; title: string };
   units: CourseUnit[];
-  /** skills up to this place in the course are open because a test let the learner through; absent on older responses */
+  /** Skills up to this point are open because the learner passed a jump test; absent on older responses. */
   unlockedThrough?: number;
-  /** the unit the course goes on to once it is made; absent on older responses */
+  /** The unit the course continues with once it is made; absent on older responses. */
   upcoming?: UpcomingUnit | null;
 }
 

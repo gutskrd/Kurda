@@ -1,24 +1,20 @@
 import { glossSpans, storySentences, type StoryGlossEntry } from '@kurda/shared';
 
 /**
- * A paragraph cut into the pieces the reader draws: every piece belongs to
- * one sentence (so the sentence being read aloud can be lit up) and is either
- * plain text or a glossary word (marked, and tappable for its meaning).
- *
- * The glossary words are the shared `glossSpans` — the first time each one
- * appears in the paragraph, as a whole word — so the phone marks exactly what
- * the editor accepted and what the browser marks.
+ * A paragraph cut into the pieces the reader draws. Each belongs to one sentence (so the sentence read aloud can be
+ * highlighted) and is plain text or a glossary word. Glossary words are shared `glossSpans` (each one's first whole
+ * word occurrence), so the phone marks exactly what the website does.
  */
-export interface Segment {
+interface Segment {
   text: string;
-  /** index into storySentences(paragraph); null for the space between two sentences */
+  /** Index into storySentences(paragraph); null for the space between two sentences. */
   sentence: number | null;
   gloss: StoryGlossEntry | null;
 }
 
 export function paragraphSegments(paragraph: string, glossary: readonly StoryGlossEntry[]): Segment[] {
   const text = paragraph.normalize('NFC');
-  // where each sentence starts and ends in the paragraph (the split trims, so search forward)
+  // Each sentence's start and end in the paragraph; the split trims, so search forward.
   const sentences: Array<{ start: number; end: number }> = [];
   let cursor = 0;
   for (const s of storySentences(text)) {
@@ -47,7 +43,7 @@ export function paragraphSegments(paragraph: string, glossary: readonly StoryGlo
     const gloss = spans.find((g) => start >= g.start && end <= g.end)?.entry ?? null;
     const piece: Segment = { text: text.slice(start, end), sentence: sentence >= 0 ? sentence : null, gloss };
     const prev = out[out.length - 1];
-    // neighbours that are the same kind of thing are one piece
+    // Adjacent plain pieces of the same sentence merge.
     if (prev && prev.sentence === piece.sentence && prev.gloss === null && piece.gloss === null) prev.text += piece.text;
     else out.push(piece);
   }

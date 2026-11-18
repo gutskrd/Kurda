@@ -14,12 +14,6 @@ import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { GuestStartFlow } from './GuestStartFlow';
 
-/*
- * Trying Hevalo first: he says who he is and what a guest can do, asks how
- * much to learn each day, and Start learning makes the session and sets the
- * goal on it; a refusal is said under the picker.
- */
-
 patchReactNativeWeb({ reduceMotion: true });
 const en = TRANSLATIONS.en;
 

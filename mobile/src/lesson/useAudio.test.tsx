@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-/** expo-audio's player, as the phone path makes it */
+/** expo-audio's player, as the phone path creates it. */
 const phone = vi.hoisted(() => ({
   made: [] as Array<{ uri: string; calls: string[]; status: ((s: { playing: boolean; error: string | null }) => void) | null; removed: boolean }>,
 }));
@@ -62,7 +62,7 @@ describe('useAudio in a browser', () => {
     el.load(2);
     el.currentTime = 0.5;
     expect(controls.clock).toMatchObject({ currentTime: 0.5, duration: 2, playing: false });
-    // which recording the clock is, for a screen with one player and many sounds
+    // Which recording the clock belongs to, for a screen with one player and many sounds.
     expect(controls.source).toBe('https://media.test/a.wav');
 
     act(() => controls.play(0.75));
@@ -100,7 +100,6 @@ describe('useAudio on a phone', () => {
     expect(made.removed).toBe(true);
   });
 
-  /** another recording asked for: the last one goes, and the clock and its source are the new one's */
   it('lets the last recording go when asked for another', async () => {
     const view = render(<Probe url="https://media.test/e.wav" />);
     await act(async () => undefined);

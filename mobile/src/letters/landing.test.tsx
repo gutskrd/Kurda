@@ -10,11 +10,7 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../widget/reload', () => ({ reloadLetterWidget: vi.fn() }));
-/*
- * The window as a phone with motion on plays it, without waiting for the
- * flights: a bird coming in touches down, then settles, each said back to the
- * screen at once, as the drawn window says them when its flights end.
- */
+// A stand-in window that reports touchdown and settling at once, as the real one does when its flights end.
 vi.mock('./LetterWindow', async () => {
   const { useEffect } = await import('react');
   type Spot = 'own' | 'sill';
@@ -50,7 +46,7 @@ import { memoryStore } from '../keyboard/deviceStore';
 import { setDraftStoreForTests } from './drafts';
 import { LettersScreen } from './LettersScreen';
 
-// a phone that has not asked for less motion: the birds fly, and a letter landing is felt
+// Motion on: the birds fly, and a landing letter gets a haptic.
 patchReactNativeWeb({ reduceMotion: false });
 
 const THREAD = '6f9b1c2e-1d2a-4b3c-8d4e-5f6a7b8c9d0e';
@@ -93,7 +89,7 @@ beforeEach(() => {
   felt = [];
   stopFeeling = onHaptic((event) => felt.push(event));
   dropDrafts = setDraftStoreForTests(memoryStore());
-  // a phone 390 wide, so the window is drawn
+  // A phone 390 wide, so the window is drawn.
   Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 390 });
   window.dispatchEvent(new Event('resize'));
 });

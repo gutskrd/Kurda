@@ -1,8 +1,4 @@
-/**
- * Story game views for component tests: one game, "Nanê Germ" in Kurmancî,
- * in whatever state a test says. Shaped as @kurda/shared's StoryGameView, the
- * same thing the API sends.
- */
+/** Story game views for component tests: one game, "Nanê Germ" in Kurmancî, in any state, shaped as shared StoryGameView. */
 import type { StoryDetail, StoryGamePlayer, StoryGameStanding, StoryGameView } from '@kurda/shared';
 
 export function player(over: Partial<StoryGamePlayer> = {}): StoryGamePlayer {

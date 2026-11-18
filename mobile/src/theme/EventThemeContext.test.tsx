@@ -14,7 +14,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-/** Hand over the app's state changes, so a test can send it to the back and bring it to the front. */
+/** Captures the app-state listener, so a test can send the app to the background and back. */
 function appState(): (state: string) => void {
   const listeners: Array<(state: string) => void> = [];
   vi.spyOn(AppState, 'addEventListener').mockImplementation(((_type: string, cb: (state: string) => void) => {
@@ -45,19 +45,19 @@ describe('the event theme', () => {
     await minutes(2);
     expect(asked()).toBe(3);
 
-    // a Control Centre swipe: the minute goes on, and nothing more is asked for the swipe itself
+    // A Control Centre swipe: the interval continues, and the swipe itself requests nothing.
     send('inactive');
     send('active');
     expect(asked()).toBe(3);
     await minutes(1);
     expect(asked()).toBe(4);
 
-    // ten minutes in a pocket ask nothing
+    // Ten minutes in a pocket request nothing.
     send('background');
     await minutes(10);
     expect(asked()).toBe(4);
 
-    // back in front: asked at once, then once a minute again
+    // Back in front: requested at once, then once a minute again.
     send('active');
     expect(asked()).toBe(5);
     await minutes(1);

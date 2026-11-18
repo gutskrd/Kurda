@@ -37,7 +37,7 @@ describe('asking for a reset link', () => {
     expect(screen.getByText('It happens to all of us. Where shall I send the link?')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'What’s your email?' })).toBeTruthy();
     expect((screen.getByTestId('email') as HTMLInputElement).value).toBe('r@example.com');
-    // one question, so nothing to count
+    // One question, so no step count.
     expect(screen.queryByTestId('step-progress')).toBeNull();
   });
 
@@ -46,10 +46,10 @@ describe('asking for a reset link', () => {
     await ask(' r@example.com ');
     expect(auth.requestPasswordReset).toHaveBeenCalledWith('r@example.com');
     expect(await screen.findByRole('heading', { name: 'Check your email' })).toBeTruthy();
-    // whether an account exists is not something to tell whoever asks
+    // Never reveals whether an account exists.
     expect(screen.getByText('If an account exists for this email, a reset link is on its way.')).toBeTruthy();
     expect(screen.getByTestId('reset-sent-to').textContent).toContain('r@example.com');
-    // and the way on is back to signing in, with the address
+    // The way on is back to sign-in, carrying the address.
     fireEvent.click(screen.getByRole('button', { name: 'Back to sign in' }));
     expect(onBackToLogin).toHaveBeenCalledWith('r@example.com');
   });
@@ -61,10 +61,6 @@ describe('asking for a reset link', () => {
     expect(screen.queryByRole('heading', { name: 'Check your email' })).toBeNull();
   });
 
-  /*
-   * Offline, nothing was sent: the question stays, with why, so the person
-   * tries again instead of waiting for an email that is not coming.
-   */
   it('stays on the question and says why when the request never got through', async () => {
     auth.requestPasswordReset.mockResolvedValue('Can’t reach Hevalo right now. Check your connection and try again.');
     await ask('r@example.com');

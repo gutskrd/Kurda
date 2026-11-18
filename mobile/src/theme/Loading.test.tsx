@@ -22,7 +22,7 @@ describe('Loading', () => {
   it('says what it is to a screen reader, and waits in the quiet grey', () => {
     const { container } = renderWithProviders(<Loading />);
     expect(screen.getByRole('progressbar', { name: 'Loading…' })).toBeTruthy();
-    // whichever scheme the test's device is in: the caption's grey, not the ink of something to press
+    // Whichever scheme the test device is in: the caption grey, not the ink of something pressable.
     const drawn = [...container.querySelectorAll('circle')].map((c) => c.style.stroke);
     expect(drawn.length).toBeGreaterThan(0);
     const grey = [LIGHT.textSecondary, DARK.textSecondary].flatMap((hex) => [hex, css(hex)]);

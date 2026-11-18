@@ -12,13 +12,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { forgetReach, reachOf } from '../testing/reach';
 import { Segmented } from './glass';
 
-/*
- * The segmented control (theme/glass.tsx): how far each segment answers a
- * finger. A segment is drawn inside a 3pt ring of track that used to answer
- * nothing, so a tap on the control's own edge was lost; every segment now
- * reaches over the ring and on to a fingertip's 48, and two segments that
- * touch take nothing from each other.
- */
+// How far each segment answers: over the track's 3-point ring to 48, while touching segments take nothing from each other.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -30,15 +24,11 @@ afterEach(() => {
 const THREE = ['lessons', 'games', 'stories'] as const;
 const label = (v: string) => v[0]!.toUpperCase() + v.slice(1);
 
-/**
- * The line height a label is drawn with. react-native-web sets it through a
- * class whose rule it adds to the page's styles, and the test page does not
- * work a line height out from a class, so the rule is read instead.
- */
+/** A label's line height. react-native-web sets it through a class rule the test page does not compute, so the rule is read instead. */
 function lineHeightOf(el: Element): string | undefined {
   const cls = [...el.classList].find((c) => c.startsWith('r-lineHeight-'));
   if (!cls) return undefined;
-  // the rules can sit inside grouping rules (a media block), so every level is looked through
+  // Rules can sit inside grouping rules (a media block), so every level is searched.
   const find = (rules: CSSRuleList): string | undefined => {
     for (const rule of rules) {
       if (rule.cssText.startsWith(`.${cls}`)) return /line-height:\s*([^;]+);/.exec(rule.cssText)?.[1]?.trim();

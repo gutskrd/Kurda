@@ -1,20 +1,19 @@
 /**
- * How a bottom sheet follows a finger and where it settles, as numbers with
- * no screen behind them (BottomSheet draws it). Positions are the sheet's
- * downward offset in points: 0 is fully up, bigger is lower.
+ * How a bottom sheet follows a finger and where it settles, as plain numbers (BottomSheet draws it). Positions are
+ * the sheet's downward offset in points: 0 is fully up.
  */
 import { rubberBand, shouldDismiss, snapTarget } from '@kurda/shared';
 
-/** A height a sheet can rest at: iOS's medium (about half the screen) and large, or a share of the screen. */
+/** A height a sheet can rest at: iOS's medium (about half the screen) and large, or a screen fraction. */
 export type SheetDetent = 'medium' | 'large' | number;
 
-/** The tallest a sheet may be, as a share of the screen: the page behind stays in sight above it. */
+/** The tallest a sheet may be, as a screen fraction, so the page behind stays in sight above it. */
 export const SHEET_MAX = 0.9;
 
 /** iOS's medium detent: about half the screen. */
-export const MEDIUM = 0.5;
+const MEDIUM = 0.5;
 
-/** The heights a sheet rests at, in points, shortest first; none for a sheet as tall as its content. */
+/** The heights a sheet rests at, in points, shortest first; none for a sheet that fits its content. */
 export function detentHeights(detents: readonly SheetDetent[] | undefined, screen: number): number[] {
   if (!detents?.length) return [];
   const max = Math.round(screen * SHEET_MAX);
@@ -22,27 +21,25 @@ export function detentHeights(detents: readonly SheetDetent[] | undefined, scree
   return [...new Set(heights)].sort((a, b) => a - b);
 }
 
-/** The offset a sheet rests at for each of its heights, from the tallest (offset 0) to the shortest; just 0 when it has none. */
+/** The resting offset for each height, from the tallest (offset 0) to the shortest; just 0 when there are none. */
 export function restingOffsets(heights: readonly number[]): number[] {
   if (heights.length === 0) return [0];
   const tallest = heights[heights.length - 1]!;
   return heights.map((h) => tallest - h).reverse();
 }
 
-export interface SheetLimits {
-  /** the offsets the sheet rests at */
+interface SheetLimits {
+  /** The offsets the sheet rests at. */
   stops: readonly number[];
-  /** the sheet's whole height */
+  /** The sheet's whole height. */
   height: number;
-  /** false while it may not be closed */
+  /** False while it may not be closed. */
   dismissible: boolean;
 }
 
 /**
- * Where the sheet is drawn with the finger `dy` points from where the drag
- * began at `from`: one to one between its highest and lowest resting places,
- * the rubber band above the highest, and below the lowest too when it may not
- * be closed — when it may, the finger takes it down one to one.
+ * Where the sheet is drawn with the finger `dy` points from the drag's start at `from`: one to one between its
+ * highest and lowest resting places, rubber-banded above the highest, and below the lowest only when it may not close.
  */
 export function dragOffset(from: number, dy: number, { stops, height, dismissible }: SheetLimits): number {
   const top = Math.min(...stops);
@@ -54,10 +51,8 @@ export function dragOffset(from: number, dy: number, { stops, height, dismissibl
 }
 
 /**
- * Where a sheet let go at `y`, moving at `velocity` (points per second, down
- * positive), goes: away, when the flick would carry it past half of what
- * shows at its lowest resting height; otherwise to the resting place nearest
- * where the flick would end.
+ * Where a sheet released at `y` with `velocity` (points per second, down positive) goes: closed when the flick would
+ * carry it past half of what shows at its lowest height, otherwise the resting place nearest the flick's end.
  */
 export function settleSheet(y: number, velocity: number, { stops, height, dismissible }: SheetLimits): number | 'close' {
   const lowest = Math.max(...stops);
@@ -66,15 +61,9 @@ export function settleSheet(y: number, velocity: number, { stops, height, dismis
 }
 
 /**
- * How long a sheet takes to leave, in milliseconds, over the `distance` it
- * still has to go: the time anything leaving takes (`base`), or less when the
- * finger let go of it already moving faster than that (`velocity`, points per
- * second, down positive) — it never slows to wait, and never takes longer.
- *
- * A time rather than the spring a sheet settles on. A spring that has no
- * bounce comes to rest for most of a second after it looks finished, and a
- * sheet is closed when its leaving has ended: for that long the page behind
- * was back in sight and could not be touched.
+ * How long a sheet takes to leave over its remaining `distance`, in ms: the standard exit time (`base`), or less when
+ * released moving faster (`velocity`, points per second, down positive). A timing rather than a spring, because a
+ * bounceless spring keeps settling for most of a second after it looks done, leaving the page behind untouchable.
  */
 export function leaveMs(distance: number, velocity: number, base: number, least: number): number {
   if (!(distance > 0)) return least;

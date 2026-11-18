@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { duration, pressedDim, spring } from './motion';
 
-/** How far a spring with no bounce has come after `seconds`, 0 to 1: 1 − (1 + ωt)·e^(−ωt). */
+/** How far a bounceless spring has come after `seconds`, 0 to 1: 1 − (1 + ωt)·e^(−ωt). */
 function settled(s: { stiffness: number; mass: number }, seconds: number): number {
   const w = Math.sqrt(s.stiffness / s.mass);
   return 1 - (1 + w * seconds) * Math.exp(-w * seconds);
@@ -22,7 +22,7 @@ describe('the motion tokens', () => {
   });
 
   it('keeps the half-second springs for moments and for what a finger throws', () => {
-    // Apple's smooth spring is still nine tenths of the way at 300 ms: right for a moment, late for a tab
+    // Apple's smooth spring is still under nine tenths at 300 ms: right for a moment, late for a tab.
     expect(settled(spring.standard, 0.3)).toBeLessThan(0.9);
     expect(bounceless(spring.standard)).toBe(true);
     expect(bounceless(spring.release)).toBe(false);
@@ -31,7 +31,7 @@ describe('the motion tokens', () => {
 
   it('gives a page growing out of its card a spring as long as the stack’s fade, with no bounce', () => {
     expect(bounceless(spring.arrive)).toBe(true);
-    // still on its way when the interface's own spring has arrived, and there by the end of the fade
+    // Still on its way when the interface spring has arrived, and there by the end of the fade.
     expect(settled(spring.arrive, 0.2)).toBeLessThan(settled(spring.chrome, 0.2));
     expect(settled(spring.arrive, 0.42)).toBeGreaterThan(0.99);
   });

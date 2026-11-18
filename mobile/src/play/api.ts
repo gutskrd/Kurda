@@ -3,9 +3,8 @@ import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
 /**
- * Playing with friends over the API (contract §B3): one set of routes for
- * every online game — making a lobby and inviting friends to it, answering an
- * invite, a game card's live state, and playing again.
+ * Playing with friends over the API (contract §B3): one set of routes for every online game, covering lobbies,
+ * invites, answers, a game card's live state, and rematches.
  */
 
 export interface FriendSummary {
@@ -20,12 +19,12 @@ export interface FriendSummary {
 export const listFriends = (client: ApiClient): Promise<ApiResult<{ total: number; friends: FriendSummary[] }>> =>
   client.get('/friends?limit=500');
 
-export interface CreateLobbyInput {
+interface CreateLobbyInput {
   game: PlayGame;
-  /** the game's own presets (each game checks them) */
+  /** The game's own presets, which each game validates. */
   settings: Record<string, unknown>;
   invite?: string[];
-  /** where it was started from: the DM with this friend, or this group's chat (a card is posted there) */
+  /** Where it was started from: a DM with this friend, or a group's chat, where a card is posted. */
   chat?: { userId: string } | { groupId: string };
 }
 
@@ -47,10 +46,8 @@ export const acceptInvite = (client: ApiClient, inviteId: string): Promise<ApiRe
   client.post(`/play/invites/${inviteId}/accept`);
 
 /**
- * Join any of the games by the code a friend gave you, however it was typed:
- * the game and the lobby joined, for the app to open. 404 GAME_NOT_FOUND for
- * a code with no open game behind it (or one this person may not join),
- * 409 GAME_FULL, 409 GAME_STARTED, and 429 after ten tries in a minute.
+ * Joins any game by a friend's code, however it was typed. Errors: 404 GAME_NOT_FOUND (no open game, or not
+ * joinable by this person), 409 GAME_FULL, 409 GAME_STARTED, and 429 after ten tries a minute.
  */
 export const joinByCode = (client: ApiClient, code: string): Promise<ApiResult<JoinedByCode>> => client.post('/play/join', { code });
 

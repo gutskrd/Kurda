@@ -145,7 +145,7 @@ describe('StoryGameLoop', () => {
 
   it('corrects a phone clock that is off from the server’s', () => {
     const h = harness();
-    h.tick(-5_000); // the phone runs five seconds slow
+    h.tick(-5_000); // The phone runs five seconds slow.
     h.loop.start(view({ mode: 'solo', status: 'reveal' }));
     expect(h.loop.serverNow()).toBe(T0);
   });
@@ -155,7 +155,7 @@ describe('StoryGameLoop', () => {
     h.loop.start(view());
     h.loop.pause();
     await h.reply(ok(view({ version: 2 })));
-    expect(h.views).toHaveLength(1); // dropped while paused
+    expect(h.views).toHaveLength(1); // Dropped while paused.
     h.loop.resume();
     expect(h.pending).toHaveLength(1);
   });

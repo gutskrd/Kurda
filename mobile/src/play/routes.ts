@@ -2,19 +2,11 @@ import type { PlayGame } from '@kurda/shared';
 import type { RootStackParamList } from '../navigation/rootStack';
 
 /**
- * Where a lobby of each online game lives in the app.
- *
- * Every surface that opens a game — an invite banner, a notification, a game
- * card in a chat, a pasted link, a rematch — goes through here, so a game's
- * screen is named in one place. Each of these screens joins the lobby itself
- * when the person is allowed in and is not yet (the join rule is the server's).
- *
- * A game's name can come from something written long ago: a code, a card in
- * an old chat, a notification. One that names a game Hevalo no longer has (or
- * does not have yet, in this version) opens Learn's games rather than
- * nothing, so the person lands among what can be played.
+ * Where each online game's lobby lives in the app. Every way into a game (invite banner, notification, chat card,
+ * link, rematch) goes through here, and each screen joins the lobby itself when allowed. A game name from old data
+ * that this version does not have opens Learn's games instead of nothing.
  */
-export type LobbyRoute =
+type LobbyRoute =
   | { name: 'WordleBattle'; params: RootStackParamList['WordleBattle'] }
   | { name: 'RhymeMatch'; params: RootStackParamList['RhymeMatch'] }
   | { name: 'StoryGame'; params: RootStackParamList['StoryGame'] }
@@ -23,7 +15,7 @@ export type LobbyRoute =
   | { name: 'WhoAmI'; params: RootStackParamList['WhoAmI'] }
   | { name: 'Tabs'; params: RootStackParamList['Tabs'] };
 
-/** Learn on its Games view: where a link to a game that is not here any more lands. */
+/** Learn's Games view, where a link to a game no longer here lands. */
 export const GAMES_LIST: LobbyRoute = { name: 'Tabs', params: { screen: 'Learn', params: { view: 'games' } } };
 
 export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
@@ -41,7 +33,7 @@ export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
     case 'who-am-i':
       return { name: 'WhoAmI', params: { id } };
     default:
-      // the types say every game is named above; what was stored before a game was retired says otherwise
+      // The types cover every game, but data stored before a game was retired may not.
       return GAMES_LIST;
   }
 }

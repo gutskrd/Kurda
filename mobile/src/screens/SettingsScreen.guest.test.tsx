@@ -22,7 +22,7 @@ patchReactNativeWeb({ reduceMotion: true });
 
 const FULL = { ...testAuth.user };
 const logout = vi.fn(async () => undefined);
-// what DELETE /me answers for a guest: closed at once, no grace period
+// DELETE /me for a guest: closed at once, with no grace period.
 const deleteAccount = vi.fn(async (): Promise<AccountDeletion> => ({ ok: true, graceDays: 0 }));
 
 describe('Settings for a guest', () => {
@@ -39,11 +39,6 @@ describe('Settings for a guest', () => {
     testAuth.user = FULL;
   });
 
-  /*
-   * The account section is the way to an account, in place of the rows an
-   * account changes; at the end, logging out and deleting stay, and the rest
-   * — other devices, a copy of the data — goes with the account it needs.
-   */
   it('offers to create the account in place of the account rows, and keeps Sign out and Delete account at the end', () => {
     const client = fakeClient();
     testAuth.client = client;
@@ -56,7 +51,7 @@ describe('Settings for a guest', () => {
     expect(screen.queryByRole('button', { name: 'Request data export' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Delete account' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy();
-    // a guest’s standing is not asked for: the route is refused to one
+    // A guest's standing is never requested; the route refuses guests.
     expect(client.calls.map((c) => c.path)).not.toContain('/me/standing');
   });
 
@@ -74,10 +69,6 @@ describe('Settings for a guest', () => {
     expect(alert).toHaveBeenLastCalledWith('Your guest account has been deleted.');
   });
 
-  /*
-   * Logging out is the end of a guest’s progress: it asks first, in a sheet
-   * whose first answer is the one that keeps it.
-   */
   it('asks before logging out, and offers to create the account instead', async () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
@@ -99,12 +90,7 @@ describe('Settings for a guest', () => {
     expect(logout).toHaveBeenCalledTimes(1);
   });
 
-  /*
-   * An account loses nothing by signing out, but the row sits between "Sign
-   * out everywhere" and "Delete account": a stray tap used to end the session
-   * before the thumb had lifted. It is asked once, in a sheet of its own that
-   * says nothing is lost — never the guest's warning.
-   */
+  // The row sits between "Sign out everywhere" and "Delete account", so a stray tap must not sign out at once.
   it('asks a full account before signing it out, saying nothing is lost', async () => {
     testAuth.user = FULL;
     testAuth.client = fakeClient();

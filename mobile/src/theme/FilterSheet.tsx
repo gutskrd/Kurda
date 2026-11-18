@@ -15,20 +15,11 @@ import { pressedDim } from './motion';
 import { heldDim } from './MotionParts';
 
 /**
- * Sort and filter, as one sheet: the pieces the community wall (feed/FeedFilter.tsx)
- * and the stories library (stories/LibraryFilter.tsx) are both built from, so
- * the two look and work the same.
- *
- * - `FilterSheet` is the sheet: the choices scroll under its title, and under
- *   them, always in reach, Reset and the button that shows what was chosen.
- *   What is in it is a draft its owner keeps: nothing behind the sheet moves
- *   until that button, and closing it any other way leaves things as they were.
- * - `FilterHeading`, `FilterOptions` and `FilterOption` are a titled list of
- *   choices, each a row with a tick and a line of hint; `FilterPills` and
- *   `FilterPill` are a row of chips, with a count where there is one;
- *   `FilterToggle` is an on-and-off switch with its words.
- * - `FilterChip` says what is on while something is, under the screen's
- *   header: it opens the sheet again, and its ✕ undoes just that part.
+ * The pieces of one sort-and-filter sheet, shared by the community wall (feed/FeedFilter.tsx) and the stories
+ * library (stories/LibraryFilter.tsx) so the two match. `FilterSheet` scrolls the choices under its title with Reset
+ * and the apply button always in reach; its content is a draft the owner keeps, applied only by that button.
+ * `FilterOptions`/`FilterOption` are a titled radio list, `FilterPills`/`FilterPill` a row of chips, `FilterToggle`
+ * a switch, and `FilterChip` shows what is on under the screen's header, reopening the sheet or removing that part.
  */
 export function FilterSheet({
   visible,
@@ -49,7 +40,7 @@ export function FilterSheet({
   resetDisabled: boolean;
   onReset: () => void;
   applyLabel: string;
-  /** hands the draft on; the sheet closes after */
+  /** Applies the draft; the sheet closes after. */
   onApply: () => void;
   testID?: string;
   children: React.ReactNode;
@@ -62,7 +53,7 @@ export function FilterSheet({
         {children}
       </SheetScrollView>
 
-      {/* the two ways to finish, always in reach under the choices */}
+      {/* The two ways to finish, always in reach under the choices. */}
       <View style={[styles.footer, { flexDirection: dir.row, borderTopColor: colors.separator }]}>
         <Pressable
           onPress={onReset}
@@ -70,7 +61,7 @@ export function FilterSheet({
           accessibilityRole="button"
           accessibilityLabel={resetLabel}
           accessibilityState={{ disabled: resetDisabled }}
-          // a word with room round it: it reaches past every edge, and stays clear of the button 16 away
+          // A word with room round it: it reaches past every edge and stays clear of the button 16 away.
           reach="open"
           style={({ pressed }) => [styles.reset, pressed && heldDim]}
         >
@@ -101,14 +92,14 @@ export function FilterHeading({ children }: { children: string }): React.JSX.Ele
   );
 }
 
-/** A smaller title inside a group, over the choices that belong together (the wall's Writing, Pictures). */
+/** A smaller title within a group, over related choices (the wall's Writing, Pictures). */
 export function FilterSubheading({ children }: { children: string }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   return <Text style={[styles.subheading, dir.text, { color: colors.textSecondary }]}>{children}</Text>;
 }
 
-/** A list of choices, one of which is chosen: what a screen reader hears as one radio group. */
+/** A list of choices with one chosen, heard by screen readers as one radio group. */
 export function FilterOptions({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label}>
@@ -117,7 +108,7 @@ export function FilterOptions({ label, children }: { label: string; children: Re
   );
 }
 
-/** One choice in a list: a glyph where it helps the eye, its name, a line saying what it means, and a tick when chosen. */
+/** One choice: an optional glyph, its name, a line of meaning, and a tick when chosen. */
 export function FilterOption({ label, hint, icon, on, onPress }: { label: string; hint?: string; icon?: IconName; on: boolean; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
@@ -137,18 +128,18 @@ export function FilterOption({ label, hint, icon, on, onPress }: { label: string
         <Text style={[styles.optionText, dir.text, { color: colors.textPrimary }, on && styles.optionOn]}>{label}</Text>
         {hint ? <Text style={[styles.optionHint, dir.text, { color: colors.textSecondary }]}>{hint}</Text> : null}
       </View>
-      {/* the chosen option's tick in the violet of what is chosen */}
+      {/* The chosen option's tick, in the chosen violet. */}
       {on ? <Icon name="check" size={20} color={colors.primary} /> : null}
     </Pressable>
   );
 }
 
-/** A row of chips, one of which is chosen, wrapping when they will not fit. */
+/** A row of chips with one chosen, wrapping when they do not fit. */
 export function FilterPills({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element {
   const dir = useDirection();
   return (
     <View style={[styles.pills, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={label}>
-      {/* drawn 36 tall, each pill reaches halfway into the gap round it, so the row and the rows under it answer with no seam */}
+      {/* Each 36-tall pill reaches halfway into the gap round it, so rows answer without a seam. */}
       <ReachGroup gap={spacing.sm} rowGap={spacing.sm}>
         {children}
       </ReachGroup>
@@ -156,7 +147,7 @@ export function FilterPills({ label, children }: { label: string; children: Reac
   );
 }
 
-/** One chip in a row, filled in ink when chosen; with how many there are after its word, where that is worth knowing. */
+/** One chip, filled in ink when chosen, with a count after its word where worth knowing. */
 export function FilterPill({ label, count, on, onPress }: { label: string; count?: number; on: boolean; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
@@ -184,7 +175,7 @@ export function FilterPill({ label, count, on, onPress }: { label: string; count
   );
 }
 
-/** A choice that is on or off: its words, and the system switch at the row's end; the whole row turns it, held as an option is. */
+/** An on-or-off choice: its words and the system switch at the row's end; the whole row toggles it and highlights when held. */
 export function FilterToggle({ label, hint, on, onChange }: { label: string; hint?: string; on: boolean; onChange: (on: boolean) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
@@ -204,21 +195,14 @@ export function FilterToggle({ label, hint, on, onChange }: { label: string; hin
   );
 }
 
-/** A filter chip's height, and its ✕'s: the ✕ sits inside the chip, 2 short of its top and bottom. */
+/** A filter chip's height, and its ✕'s, which sits inside the chip 2 short of its top and bottom. */
 const CHIP_H = 36;
 const CLEAR = 32;
 
 /**
- * One thing a screen is set to, while it is not as it opens: a chip that says
- * so, opens the sheet again when tapped, and has a ✕ that undoes just that
- * part.
- *
- * The chip is two controls that touch, so their reaches are set as a pair:
- * the words take the chip from its leading edge (its padding there is theirs,
- * so a tap on the chip's end before the words opens it too) up to the ✕, and
- * reach no further toward it; the ✕ reaches 8 past its circle on the other
- * three sides, kept inside the half of the gap round the chip that its
- * group allows, and nothing toward the words.
+ * One way the screen differs from how it opens: a chip that reopens the sheet on tap and has a ✕ undoing just that
+ * part. The chip is two touching controls with paired reaches: the words take the chip from its leading edge up to
+ * the ✕ and no further, and the ✕ reaches 8 past its circle on the other three sides within its group's half-gap.
  */
 export function FilterChip({
   icon,
@@ -237,10 +221,10 @@ export function FilterChip({
   const { t } = useI18n();
   const dir = useDirection();
   const limit = useReachLimit();
-  // the words come before the ✕: on its left, or on its right where the row is mirrored
+  // The words come before the ✕: on its left, or its right where the row is mirrored.
   const mirrored = dir.row === 'row-reverse';
   const toward = mirrored ? 'right' : 'left';
-  // the group caps the chip's edges; the ✕ is this far inside them, so it may reach that much further
+  // The group caps the chip's edges; the ✕ is this far inside them, so it may reach that much further.
   const past = (cap: number | undefined, inside: number): number | undefined => (cap === undefined ? undefined : cap + inside);
   const across = (side: 'left' | 'right'): number | undefined => (side === toward ? 0 : past(limit?.[side], spacing.xs));
   const inset = (CHIP_H - CLEAR) / 2;
@@ -254,7 +238,7 @@ export function FilterChip({
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityHint={t('feed.sortFilter.button')}
-        // drawn 36 points tall: it reaches up and down to a fingertip's 48, or to half the gap where its group says so
+        // Drawn 36 tall: it reaches up and down to 48, or to half the gap where its group says so.
         style={({ pressed }) => [styles.chipMain, { flexDirection: dir.row }, mirrored ? styles.chipLeadRight : styles.chipLeadLeft, pressed && heldDim]}
       >
         {icon ? <Icon name={icon} size={16} color={colors.textPrimary} /> : null}
@@ -275,12 +259,12 @@ export function FilterChip({
   );
 }
 
-/** The chips side by side, wrapping when they will not fit; `style` places the row on its screen. */
+/** The chips side by side, wrapping when they do not fit; `style` places the row on its screen. */
 export function FilterChips({ style, children }: { style?: StyleProp<ViewStyle>; children: React.ReactNode }): React.JSX.Element {
   const dir = useDirection();
   return (
     <View style={[styles.chipRow, { flexDirection: dir.row }, style]}>
-      {/* chips side by side and in rows share the gaps between them, half each */}
+      {/* Chips share the gaps between them, across and between rows, half each. */}
       <ReachGroup gap={spacing.sm} rowGap={spacing.sm}>
         {children}
       </ReachGroup>
@@ -310,7 +294,7 @@ const styles = StyleSheet.create({
   apply: { flexGrow: 1, maxWidth: 260 },
   chipRow: { flexWrap: 'wrap', gap: spacing.sm },
   chip: { alignItems: 'center', borderRadius: radii.pill, minHeight: CHIP_H, maxWidth: '100%' },
-  // the chip's padding by the side it is drawn on, since the row is mirrored by hand: the ✕'s end, and the words' lead
+  // The chip's padding by the side it is drawn on, since the row is mirrored by hand: the ✕'s end and the words' lead.
   chipEndRight: { paddingRight: spacing.xs },
   chipEndLeft: { paddingLeft: spacing.xs },
   chipMain: { alignItems: 'center', gap: 6, minHeight: CHIP_H, flexShrink: 1 },

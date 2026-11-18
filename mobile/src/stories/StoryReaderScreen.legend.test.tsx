@@ -39,7 +39,7 @@ vi.mock('expo-audio', () => ({
   }),
 }));
 
-/** A short legend in two chapters, with an introduction, the way the server sends one. */
+/** A short legend in two chapters with an introduction, as the server sends one. */
 const LEGEND: StoryDetail = {
   ...NANE_GERM,
   id: 's9',
@@ -58,7 +58,7 @@ const LEGEND: StoryDetail = {
     { title: 'Kela Dimdimê', paragraph: 1 },
     { title: 'Şer', paragraph: 3 },
   ],
-  // a glossary word that is also in a heading, which the heading must not mark
+  // A glossary word that also appears in a heading, which must not mark it.
   glossary: [{ term: 'Kela', meanings: { en: 'fortress' } }],
   translations: { en: ['This story is old.', '## The fortress', 'On the mountain stood a fortress.', '## The battle', 'The enemy came.'] },
   metaTranslations: { en: { title: 'The Fortress of Dimdim', summary: 'The story of a fortress.' } },
@@ -92,7 +92,7 @@ describe('a legend in the reader', () => {
     expect(screen.getByRole('heading', { name: 'Chapters' })).toBeTruthy();
     expect(within(screen.getByTestId('chapter-row-intro')).getByText('Introduction')).toBeTruthy();
     expect(within(screen.getByTestId('chapter-row-c1')).getByText('The fortress')).toBeTruthy();
-    // what is known about it, and where it comes from, by what kind of source each is
+    // The notes, and the sources by kind.
     expect(within(screen.getByTestId('story-notes')).getByText('Legend and history')).toBeTruthy();
     expect(within(screen.getByTestId('story-sources')).getByText('Literary work')).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Dimdim, Literary work' })).toBeTruthy();
@@ -103,7 +103,7 @@ describe('a legend in the reader', () => {
     testAuth.client = routes();
     renderWithProviders(<StoryReaderScreen slug="kela-dimdime" onExit={() => undefined} />);
     expect(await screen.findByTestId('chapter-row-c1')).toBeTruthy();
-    // a Kurmancî reader reads the Kurmancî chapter titles as they are: no English under them, as there is none under the title
+    // A Kurmancî reader sees the Kurmancî chapter titles with no English under them, as for the title.
     expect(within(screen.getByTestId('chapter-row-c1')).queryByText('The fortress')).toBeNull();
     expect(screen.queryByTestId('story-title-translation')).toBeNull();
   });
@@ -118,11 +118,11 @@ describe('a legend in the reader', () => {
     expect(within(first).getByRole('heading', { name: 'Kela Dimdimê' })).toBeTruthy();
     expect(first.textContent).toContain('Chapter 1');
     expect(within(text).getByTestId('story-chapter-2').textContent).toContain('Şer');
-    // the introduction is said to be one, before the first chapter
+    // The introduction is labelled, before the first chapter.
     expect(within(text).getByRole('heading', { name: 'Introduction' })).toBeTruthy();
-    // the glossary word is marked in the paragraph, not in the heading
+    // The glossary word is marked in the paragraph, not in the heading.
     expect(within(first).queryByText('Kela')).toBeNull();
-    // and a heading has no Translation toggle of its own: one per paragraph, three paragraphs
+    // A heading has no Translation toggle: one per paragraph, three paragraphs.
     expect(within(text).getAllByRole('button', { name: /^Translation of paragraph/ })).toHaveLength(3);
   });
 

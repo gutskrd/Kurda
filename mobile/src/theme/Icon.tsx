@@ -12,26 +12,8 @@ import { ICON_PATHS, ICON_VIEWBOX, type IconName } from './icon-paths';
 export type { IconName };
 
 /**
- * The app's icons, drawn from Phosphor — the same family, at the same weight,
- * as the browser.
- *
- * This was a hand-drawn set: ~35 filled silhouettes carrying a skeuomorphic
- * emboss — a dark edge offset down, a white highlight offset up, and a sheen
- * gradient over the face. The browser gave up its own hand-drawn set for
- * Phosphor because every new screen needed another glyph drawn and they drifted
- * in weight and optical size; the phone had the same problem and the added one
- * of not looking like the same product. A globe in the phone's tab bar and a
- * newspaper in the browser's nav are not two styles of one icon, they are two
- * different answers to "what is Civak".
- *
- * The emboss went with them. Phosphor at regular weight is a fine traced
- * outline, and offsetting a copy of one by a few per cent and painting it black
- * reads as a printing misregistration rather than as depth. The glass and clay
- * surfaces behind the icons still carry the app's dimensionality; the glyphs sit
- * on them flat, in one tint, which is also how the browser draws them.
- *
- * The path data is generated, not written — see `icon-paths.ts` and the script
- * named in its header.
+ * The app's icons, from the same family at the same weight as the website's, drawn flat in one tint. The path data
+ * is generated, not written: see `icon-paths.ts` and the script named in its header.
  */
 export function Icon({
   name,
@@ -47,7 +29,7 @@ export function Icon({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  // the two currencies are pictures in their own colours, not glyphs in a tint
+  // The two currencies are pictures in their own colours, not tinted glyphs.
   if (name === 'coin' || name === 'gem') return <CurrencyIcon name={name} size={size} style={style} />;
   const fill =
     color ??
@@ -70,10 +52,7 @@ export function Icon({
   );
 }
 
-/**
- * Zêr and gems, drawn in colour (shared `coinSvg`, `gemSvg`): the same
- * pictures as the browser's, whatever tint the screen asked for.
- */
+/** Zêr and gems in colour (shared `coinSvg`, `gemSvg`), the same pictures as the website's whatever tint is asked for. */
 function CurrencyIcon({ name, size, style }: { name: 'coin' | 'gem'; size: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const xml = useMemo(() => (name === 'coin' ? coinSvg : gemSvg)({ size }), [name, size]);
   return (
@@ -83,11 +62,7 @@ function CurrencyIcon({ name, size, style }: { name: 'coin' | 'gem'; size: numbe
   );
 }
 
-/**
- * An {@link Icon} that gently "breathes" — a slow opacity pulse that never fully
- * fades — for the hero glyphs on the onboarding / sign-in slides. Falls back to
- * a static icon when the user prefers reduced motion.
- */
+/** An {@link Icon} that gently breathes, a slow opacity pulse that never fully fades, for hero glyphs on onboarding and sign-in. Static under Reduce Motion. */
 export function BreathingIcon({
   breaths = 3,
   ...props
@@ -97,17 +72,17 @@ export function BreathingIcon({
   color?: string;
   tone?: 'primary' | 'secondary' | 'onPrimary';
   style?: StyleProp<ViewStyle>;
-  /** how many breaths it takes before it is still: three by default, one for a glyph beside words to be read */
+  /** How many breaths before it stills: three by default, one for a glyph beside text to be read. */
   breaths?: number;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
   const opacity = useRef(new Animated.Value(1)).current;
 
-  // only while its page is the one in front: left behind another screen, it has nobody to breathe for
+  // Only while its screen is in front.
   const alive = useMotionAlive();
   useEffect(() => {
     if (!alive) return;
-    // a few breaths and then still: a hero that pulses for ever pulls at the eye while the form under it is filled in
+    // A few breaths and then still, since a hero pulsing forever pulls the eye from the form below.
     const loop = Animated.loop(
       Animated.sequence([
         timing(opacity, 0.4, PULSE_MS.breath, { easing: Easing.inOut(Easing.sin) }),

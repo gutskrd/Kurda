@@ -16,7 +16,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { JumpResults } from './JumpResults';
 
-/** What starting a test answers (api/src/jump/service.ts `JumpTest`). */
+/** The start-test response (api/src/jump/service.ts `JumpTest`). */
 export interface JumpTestStart {
   sessionId: string;
   exercises: Exercise[];
@@ -25,13 +25,8 @@ export interface JumpTestStart {
 }
 
 /**
- * The short test that jumps ahead to a unit. It is started here (or the one
- * left unfinished today opened again), played in the player lessons and
- * reviews use — graded the same way, second tries counting for nothing — and
- * ends on its own results (JumpResults): the unit open, or not yet.
- *
- * A test that cannot start says why in words: the day's tries at this unit
- * used up, nothing to test, or a plain failure with a retry.
+ * A test that jumps ahead to a unit. It starts here (or resumes today's unfinished one), plays in the lesson
+ * player with the same grading, and ends on JumpResults. A test that cannot start says why.
  */
 export function JumpTestScreen({
   courseId,
@@ -43,9 +38,9 @@ export function JumpTestScreen({
   courseId: string;
   unitId: string;
   onExit: () => void;
-  /** back to the lesson path, which shows what the test opened */
+  /** Back to the lesson path, which shows what the test opened. */
   onPath: () => void;
-  /** start another test at the same unit, in this one's place */
+  /** Starts another test at the same unit in place of this one. */
   onAgain: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();

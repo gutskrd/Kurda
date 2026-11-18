@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
- * How this device answers a translation or a listening item that comes with
- * word tiles: by tapping the tiles (the default), or by typing. Kept on the
- * device, as the keyboard settings are: it is about the keyboard in front of
- * you — somebody with a Kurdish keyboard on this phone may well rather type.
+ * How this device answers a tile-based translation or listening item: tapping tiles (the default) or typing. Kept
+ * per device like keyboard settings, since it depends on the keyboard at hand.
  */
 export type AnswerMode = 'tiles' | 'keyboard';
 
@@ -30,7 +28,7 @@ async function setAnswerMode(next: AnswerMode, store: DeviceStore = deviceStore)
   else await store.set(KEY, next);
 }
 
-/** The way this device answers, and a way to change it that every open exercise follows. */
+/** The device's answer mode, and a setter every open exercise follows. */
 export function useAnswerMode(): [AnswerMode, (next: AnswerMode) => void] {
   const [value, setValue] = useState(mode);
   useEffect(() => {
@@ -44,7 +42,7 @@ export function useAnswerMode(): [AnswerMode, (next: AnswerMode) => void] {
   return [value, (next) => void setAnswerMode(next)];
 }
 
-/** Back to a phone that has never been told anything — for tests. */
+/** For tests: back to a device that was never set. */
 export function resetAnswerMode(): void {
   mode = 'tiles';
   loaded = null;

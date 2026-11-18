@@ -7,12 +7,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { StoriesView } from './StoriesView';
 
 /**
- * The Stories route: the same library Learn shows in its Stories view, as a
- * screen of its own with a way back — for the places that still open it by
- * name (a finished game's "Another story", an old link).
- *
- * `id` arrives when an invite link (`/app/games/stories?id=…`) opened the app:
- * the screen hands straight over to that game, which joins it if it may.
+ * The Stories route: Learn's Stories library as its own screen with a way back, for places that still open it by
+ * name (a finished game's "Another story", an old link). An invite link's `id` hands straight over to that game,
+ * which joins it if allowed.
  */
 export function StoriesScreen({ id, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();

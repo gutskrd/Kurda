@@ -83,7 +83,7 @@ describe('Results', () => {
     const onBack = vi.fn();
     renderResults(finished({ storySlug: 'bajar' }, { mode: 'solo' }), vi.fn(), onRead, onBack);
     const actions = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent);
-    // the story first, then another, then the same questions again
+    // The story first, then another, then the same questions again.
     expect(actions.indexOf('Back to the story')).toBeLessThan(actions.indexOf('Another story'));
     expect(actions.indexOf('Another story')).toBeLessThan(actions.indexOf('Quiz yourself again'));
     fireEvent.click(screen.getByRole('button', { name: 'Back to the story' }));
@@ -116,7 +116,7 @@ describe('Results', () => {
     renderResults(finished({}, { mode: 'solo' }));
     const missed = screen.getByText('Nan çawa bû?');
     const got = screen.getByText('Çîrok li ser çi ye?');
-    // document order: the missed one comes first
+    // In document order, the missed one comes first.
     expect(missed.compareDocumentPosition(got) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('“Nan germ e.”')).toBeTruthy();
   });
@@ -127,7 +127,7 @@ describe('Results', () => {
       { ...review[1]!, promptEn: 'How was the bread?', explanation: 'Nan germ bû.', explanationEn: 'The bread was warm.' },
     ];
     const view = renderResults(finished({ review: withEnglish }, { mode: 'solo' }));
-    // level 1: shown, in English's own voice
+    // At level 1 it shows, read in English.
     expect(screen.getByText('How was the bread?').getAttribute('lang')).toBe('en');
     expect(screen.getByText('The bread was warm.')).toBeTruthy();
     view.unmount();
@@ -203,7 +203,7 @@ describe('Results', () => {
       ),
     );
     expect(screen.getByText('In this game')).toBeTruthy();
-    // by seat: Player 2 before Rojda in seat 3; never a flag for yourself
+    // By seat: Player 2 before Rojda in seat 3, and never a flag for yourself.
     const flags = screen.getAllByRole('button', { name: /^Report / }).map((b) => b.getAttribute('aria-label'));
     expect(flags).toEqual(['Report Player 2', 'Report Rojda']);
     fireEvent.click(screen.getByRole('button', { name: 'Report Rojda' }));

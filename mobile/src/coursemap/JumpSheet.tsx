@@ -12,11 +12,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import type { ToneColors } from './path';
 import type { SkillNode } from './types';
 
-/**
- * The offer behind "Jump here?": what jumping does — a short test opens the
- * unit, and the lessons skipped stay open to come back to — how long the test
- * is and what passes it (shared `PATH_JUMP`), and one button to start it.
- */
+/** The "Jump here?" offer: what a jump does, the test's length and pass mark (shared `PATH_JUMP`), and a start button. */
 export function JumpSheet({
   unit,
   tone,

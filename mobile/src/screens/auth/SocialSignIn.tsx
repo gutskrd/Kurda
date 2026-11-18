@@ -14,14 +14,8 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useDirection } from '../../reports/direction';
 
 /**
- * The ways in through Apple and Google, for every screen that offers them:
- * the sign-in choice (WelcomeScreen) and a guest making the account their own
- * (ClaimAccountScreen). One set of buttons and one way of handling the native
- * sheet and the server's answer, so the two screens never drift apart.
- *
- * Signed in as a guest, the same sign-in claims the guest's account rather
- * than making another (api/src/auth/oauth.ts), so what was learned is kept —
- * AuthContext's `oauthSignIn` makes sure the guest's session goes with it.
+ * Apple and Google sign-in, shared by WelcomeScreen and ClaimAccountScreen so the two never drift apart. Signed in
+ * as a guest, the same sign-in claims the guest's account (api/src/auth/oauth.ts), keeping their progress.
  */
 
 /** The name shared with Apple as one line, given name then family name; null when none was shared. */
@@ -34,13 +28,9 @@ function appleFullName(name: AppleAuthentication.AppleAuthenticationFullName | n
 }
 
 /**
- * Whether Apple's button may be shown here (iOS 13 and later, per App Store
- * rules), and the two sign-ins.
- *
- * The Apple sheet and the backend exchange are separate failure domains, and
- * each alert's title says which one failed. What is under it is always in
- * the reader's own language: the SDK's message and code are English and
- * technical, and they told a learner nothing but that the app was broken.
+ * Whether Apple's button may show (iOS 13 and later, per App Store rules), and the two sign-ins. The native sheet
+ * and the server exchange fail separately, and each alert's title says which; the message is always in the
+ * reader's language, never the SDK's English.
  */
 export function useSocialSignIn(): { appleAvailable: boolean; onApple: () => Promise<void>; onGoogle: () => Promise<void> } {
   const { oauthSignIn } = useAuth();
@@ -65,7 +55,7 @@ export function useSocialSignIn(): { appleAvailable: boolean; onApple: () => Pro
         ],
       });
     } catch (e) {
-      if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return; // user tapped Cancel — not an error
+      if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return; // Cancelled by the user, not an error.
       Alert.alert(t('welcome.appleFailed'), t('common.tryAgain'));
       return;
     }
@@ -74,17 +64,16 @@ export function useSocialSignIn(): { appleAvailable: boolean; onApple: () => Pro
       return;
     }
     try {
-      // With the token: the one-time authorization code, which the server
-      // exchanges for the token it revokes at Apple if the account is ever
-      // deleted, and the name, which Apple shares on the first sign-in only.
+      // The one-time authorization code lets the server revoke the Apple token if the account is deleted; Apple shares
+      // the name on the first sign-in only.
       const err = await oauthSignIn('apple', cred.identityToken, {
         authorizationCode: cred.authorizationCode,
         fullName: appleFullName(cred.fullName),
       });
-      // Hevalo offline for a while is said by the screen over the app, not by an alert on top of it
+      // Maintenance is shown by the screen over the app, not by an alert.
       if (err && !currentMaintenance()) Alert.alert(t('welcome.couldNotSignIn'), err);
     } catch {
-      // never let a post-Apple failure die silently — surface it
+      // Never let a failure after the Apple sheet pass silently.
       Alert.alert(t('welcome.signInError'), t('common.tryAgain'));
     }
   };
@@ -92,11 +81,11 @@ export function useSocialSignIn(): { appleAvailable: boolean; onApple: () => Pro
   const onGoogle = async () => {
     // The native sheet and the backend exchange are separate failure domains.
     const res = await signInWithGoogle();
-    if (res.kind === 'cancelled') return; // user backed out — not an error
-    // the button is not shown in a build without Google's client ids; this is only belt and braces
+    if (res.kind === 'cancelled') return; // Cancelled by the user, not an error.
+    // The button is hidden in builds without Google client ids; this is a safeguard.
     if (res.kind === 'not-configured') return;
     if (res.kind === 'error') {
-      // our own sentence for what went wrong, under the title that says it was Google's sheet
+      // Our own message, under a title that says the Google sheet failed.
       Alert.alert(t('welcome.googleFailed'), res.messageKey === 'welcome.googleFailed' ? t('common.tryAgain') : t(res.messageKey));
       return;
     }
@@ -133,26 +122,13 @@ export function GoogleButton({ onPress }: { onPress: () => void }): React.JSX.El
   return <MethodButton mark={<GoogleMark size={18} />} label={t('welcome.google')} onPress={onPress} background={GOOGLE_SURFACE} foreground={GOOGLE_INK} />;
 }
 
-/*
- * Google’s own two, and the only colours in this file that are not the
- * theme’s. A sign-in button carrying somebody else’s mark is their surface,
- * not ours to tint, and it stays the same in the dark theme for the same
- * reason the G in the middle of it does.
- */
+// Google's own colours, the only untinted ones here: another company's mark is not ours to recolour, even in dark mode.
 const GOOGLE_SURFACE = '#FFFFFF';
 const GOOGLE_INK = '#1F1F1F';
 
 /**
- * One way in: a mark, a word, a tap.
- *
- * Either an `icon` — one of ours, drawn in the button's own foreground colour —
- * or a `mark`, which is somebody else's logo and brings its own colours. Never
- * both, and never neither: a company's mark is not ours to re-tint, and an icon
- * that ignored the theme would be the only one in the app that did.
- *
- * It gives a little under the finger and springs back, and the tap is felt:
- * the first thing a finger does in the app is choose its way in, and a way
- * in that starts with a light knock is one that answered.
+ * One sign-in method button, with either an `icon` (ours, in the theme's foreground) or a `mark` (another company's
+ * logo, in its own colours), never both or neither. It springs under the finger with a light haptic.
  */
 export function MethodButton({
   icon,
@@ -167,7 +143,7 @@ export function MethodButton({
   background: string;
   foreground: string;
 } & ({ icon: IconName; mark?: never } | { mark: React.JSX.Element; icon?: never })) {
-  // the mark leads the words on the side the language starts from, as a ClayButton's icon does
+  // The mark leads on the side the language starts from, like a ClayButton's icon.
   const dir = useDirection();
   return (
     <PressableScale
@@ -185,8 +161,7 @@ export function MethodButton({
 }
 
 const styles = StyleSheet.create({
-  // Apple's button is a native view with no intrinsic height — size it to
-  // match the custom method buttons beside it.
+  // Apple's native button has no intrinsic height; match the method buttons beside it.
   appleButton: { height: 50, width: '100%' },
   method: {
     alignItems: 'center',

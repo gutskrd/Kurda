@@ -15,12 +15,8 @@ import { forgetReach, reachLimitOf, reachOf } from '../../testing/reach';
 import { SlowButton } from './AskParts';
 import { PromptWords } from './PromptWords';
 
-/*
- * How far the lesson's small controls answer a finger past what they draw:
- * the words of a line that can be asked about, which touch each other and
- * the line under them, and the slow chip under a bubble that can be a
- * button of its own.
- */
+// How far the lesson's small controls answer past what they draw: prompt words, which touch each other and the line
+// under them, and the slow chip under a bubble that may be a button itself.
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -36,7 +32,7 @@ const tokens: PromptToken[] = [
 
 describe('the words of a prompt', () => {
   it('reach down only, half of what a fingertip is missing, and never sideways into the word beside them', () => {
-    // a line 24 tall and its dots under it is a word 28 tall, 20 short of 48
+    // A 24-tall line plus its dots makes a 28-tall word, 20 short of 48.
     renderWithProviders(<PromptWords prompt="Bibore, xatirê te" tokens={tokens} style={{ fontSize: 21, lineHeight: 24 }} />);
     expect(reachOf('Bibore')).toEqual({ top: 0, bottom: 10, left: 0, right: 0 });
     expect(reachOf('xatirê te')).toEqual({ top: 0, bottom: 10, left: 0, right: 0 });

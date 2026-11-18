@@ -5,9 +5,9 @@ vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
 vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
-// a badge earned meanwhile waits on the moment (badges/BadgeCelebrationHost.tsx)
+// A badge earned meanwhile waits on the moment (badges/BadgeCelebrationHost.tsx).
 vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'));
-// the fire as its props: how big it burns and what it grows from, whoever draws it
+// The fire as its props: how big it burns and what it grows from.
 vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo, Animated, Share } from 'react-native';
@@ -30,7 +30,7 @@ afterEach(() => {
   localStorage.removeItem('kurda_locale_v1');
 });
 
-// 2026-10-29 is a Thursday
+// 2026-10-29 is a Thursday.
 const streak: Streak = {
   current: 6,
   longest: 9,
@@ -49,10 +49,10 @@ const streak: Streak = {
 const show = (over: Partial<Streak> = {}, goalDone = false, onContinue = () => undefined) =>
   renderWithProviders(<StreakMoment streak={{ ...streak, ...over }} goalDone={goalDone} onContinue={onContinue} />);
 
-/** the week's circles in the order they are laid out, by what each day was */
+/** The week's circles in layout order, by what each day was. */
 const days = () => within(screen.getByTestId('streak-week')).getAllByTestId(/^day-/).map((d) => d.getAttribute('data-testid'));
 
-/** The streak's card, past the flame where the day has one (the day the fire grew). */
+/** The streak card, past the flame screen on a growth day. */
 async function card(): Promise<HTMLElement> {
   await waitFor(() => expect(screen.queryByTestId('lesson-streak-flame') ?? screen.queryByTestId('lesson-streak-day')).toBeTruthy());
   const flame = screen.queryByTestId('lesson-streak-flame');
@@ -74,7 +74,7 @@ describe('the kept streak', () => {
       expect(said).toEqual(['6 day streak']);
       await waitFor(() => expect(felt).toEqual(['celebrate']));
       expect(heard).toHaveLength(1);
-      // a tap on the card afterwards is not a second one
+      // A tap on the card afterwards does not celebrate again.
       fireEvent.click(screen.getByTestId('streak-card'));
       expect(felt).toEqual(['celebrate']);
       expect(heard).toHaveLength(1);
@@ -96,7 +96,7 @@ describe('the kept streak', () => {
       expect(flame.getAttribute('aria-label')).toBe('7 day streak');
       fireEvent.click(flame);
       expect(await screen.findByRole('heading', { name: '7 day streak' })).toBeTruthy();
-      // the flame was the moment: the card after it is not felt or heard again
+      // The flame was the moment, so the card after it plays no haptic or sound.
       await act(async () => new Promise((r) => setTimeout(r, streakReveal(true).overMs + 200)));
       expect(felt).toEqual(['celebrate']);
       expect(heard).toHaveLength(1);
@@ -109,7 +109,7 @@ describe('the kept streak', () => {
   it('lays out the week: learned, kept by a freeze, missed, today and the days ahead', async () => {
     show({ recent: [{ date: '2026-10-26', kind: 'learned' }, { date: '2026-10-27', kind: 'frozen' }] });
     await screen.findByTestId('streak-week');
-    // a Monday week in English; today not learned yet is a ring of its own
+    // A Monday week in English; today, not yet learned, has its own ring.
     expect(days()).toEqual(['day-learned', 'day-frozen', 'day-missed', 'day-today', 'day-ahead', 'day-ahead', 'day-ahead']);
     expect(screen.getByLabelText('This week: 1 of 7 days learned, 1 kept by a freeze')).toBeTruthy();
     expect(within(screen.getByTestId('week-2026-10-26')).getByText('Mo')).toBeTruthy();
@@ -167,7 +167,7 @@ describe('the kept streak', () => {
   });
 });
 
-/** What a screen reader is told, in order. */
+/** What screen readers are told, in order. */
 function listen(): string[] {
   const said: string[] = [];
   (AccessibilityInfo as unknown as { announceForAccessibility: (words: string) => void }).announceForAccessibility = (words) => said.push(words);
@@ -191,7 +191,7 @@ describe('the day the fire grew', () => {
       expect(fire.dataset.stage).toBe('campfire');
       expect(fire.dataset.from).toBe('kindling');
       expect(said).toEqual(['7 day streak']);
-      // its place is kept from the start, the words not said before the growth lands
+      // Its place is kept from the start, and the words are not announced before the growth lands.
       expect(screen.getByTestId('lesson-streak-grew').textContent).toBe('A week in, your fire is a campfire now.');
       await act(() => vi.advanceTimersByTimeAsync(lands - 50));
       expect(felt).toEqual([]);
@@ -200,7 +200,7 @@ describe('the day the fire grew', () => {
       expect(said).toEqual(['7 day streak', 'A week in, your fire is a campfire now.']);
       expect(felt).toEqual(['celebrate']);
       expect(heard).toHaveLength(1);
-      // still there when another day would have moved on, until the line has been read
+      // Still there when another day would have moved on, until the line has been read.
       await act(() => vi.advanceTimersByTimeAsync(FIRE_GREW_READ_MS - 100));
       expect(screen.getByTestId('lesson-streak-flame')).toBeTruthy();
       await act(() => vi.advanceTimersByTimeAsync(200));
@@ -263,14 +263,14 @@ describe('the streak’s card', () => {
     expect(await stage(5)).toBe('Little flame · a campfire at 7 days');
     expect(await stage(12)).toBe('Campfire · a big fire at 14 days');
     expect(await stage(45)).toBe('Bonfire · a blaze at 100 days');
-    // at the biggest there is, simply its name
+    // At the largest stage, simply its name.
     expect(await stage(400)).toBe('Newroz fire');
   });
 
   it('hands over the streak’s medal on the card, a picture beside the words that say it', async () => {
     show({ current: 12 });
     const shown = within(await card());
-    // drawn; the heading under it is the streak in words
+    // Drawn; the heading under it is the streak in words.
     expect(shown.getByTestId('streak-medal').querySelector('svg')).toBeTruthy();
     expect(shown.getByRole('heading', { name: '12 day streak' })).toBeTruthy();
     expect(shown.getByText('Streak')).toBeTruthy();
@@ -282,9 +282,9 @@ describe('the streak’s card', () => {
     const mark = (date: string): HTMLElement => within(week.getByTestId(`week-${date}`)).getByTestId(/^day-/);
     expect(mark('2026-10-26').querySelector('svg')).toBeTruthy();
     expect(mark('2026-10-27').querySelector('svg')).toBeTruthy();
-    // the two medals are told apart by their sign, not only their colour
+    // The two medals differ by their sign, not only their colour.
     expect(mark('2026-10-26').innerHTML).not.toBe(mark('2026-10-27').innerHTML);
-    // Wednesday went by, today is still to learn, and the rest are to come: each its date
+    // Wednesday passed, today is still to learn, and the rest are to come: each shows its date.
     expect(['2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01'].map((d) => mark(d).textContent)).toEqual(['28', '29', '30', '31', '1']);
     expect(mark('2026-10-28').querySelector('svg')).toBeNull();
   });
@@ -297,7 +297,7 @@ describe('the streak’s card', () => {
 });
 
 
-/** What the device asks for, read once before the screen under test opens (the setting is asked once, and kept). */
+/** Sets what the device reports before the screen opens (the setting is read once and kept). */
 async function device(reduceMotion: boolean): Promise<void> {
   patchReactNativeWeb({ reduceMotion });
   show().unmount();
@@ -311,7 +311,7 @@ describe('the card coming alive', () => {
     await device(true);
   });
 
-  /** The card as it opens, its clock held at the start (a test's animations otherwise run on by themselves). */
+  /** The card as it opens, its clock held at the start, since test animations otherwise run by themselves. */
   async function opened(over: Partial<Streak> = {}, onContinue = () => undefined): Promise<HTMLElement> {
     const real = Animated.timing;
     vi.spyOn(Animated, 'timing').mockImplementation((value, config) => {
@@ -326,25 +326,25 @@ describe('the card coming alive', () => {
   it('opens on yesterday: the medal grey and standing, the number as it was and quiet, and the rest still to come', async () => {
     await device(false);
     const shown = within(await opened());
-    // one medal changing colour: the gold one is over the grey one, not seen yet
+    // One medal changing colour: the gold one is over the grey one, not yet visible.
     expect(opacity(shown.getByTestId('streak-medal-lit'))).toBe(0);
     expect(shown.getByTestId('streak-medal').querySelectorAll('svg').length).toBeGreaterThanOrEqual(2);
     const turn = shown.getByTestId('streak-medal-turn');
     expect(turn.style.transform).toContain('translateY(0px)');
     expect(turn.style.transform).toContain('scaleX(1)');
     expect(turn.style.transform).toContain('scaleY(1)');
-    // yesterday's number is there to roll away, and today's to roll in
+    // Yesterday's number is there to roll away, and today's to roll in.
     const title = shown.getByRole('heading', { name: '6 day streak' });
     expect(within(title).getByText('5')).toBeTruthy();
     expect(within(title).getByText('6')).toBeTruthy();
     expect(opacity(title)).toBeLessThan(0.6);
-    // the word for the day, the week and the way on have not arrived
+    // The day's word, the week and the way on have not arrived.
     expect(opacity(shown.getByTestId('streak-cheer'))).toBe(0);
     expect(opacity(within(shown.getByTestId('streak-week')).getAllByTestId(/^day-/)[0]!)).toBe(0);
     expect(opacity(screen.getByTestId('streak-onward'))).toBe(0);
-    // though it answers from the first frame
+    // Though the way on works from the first frame.
     expect(within(screen.getByTestId('streak-onward')).getByRole('button', { name: 'Continue' })).toBeTruthy();
-    // the app's one celebration waits in the medal
+    // The app's one celebration waits in the medal.
     expect(shown.getByTestId('streak-medal-ring')).toBeTruthy();
     expect(shown.getByTestId('streak-medal-flecks')).toBeTruthy();
   });
@@ -375,10 +375,10 @@ describe('the card coming alive', () => {
     await device(false);
     const shown = within(await opened());
     const week = within(shown.getByTestId('streak-week'));
-    // a Thursday: the fourth place, and still the last to arrive
+    // A Thursday: the fourth place, but still the last to arrive.
     const marks = week.getAllByTestId(/^day-/);
     expect(marks[3]!.getAttribute('data-testid')).toBe('day-today');
-    // it pops from smaller than the others grow from
+    // It pops from smaller than the others grow from.
     const scale = (el: HTMLElement): number => Number(/scale\(([\d.]+)\)/.exec(el.style.transform)?.[1]);
     expect(scale(marks[3]!)).toBeLessThan(scale(marks[0]!));
   });
@@ -390,7 +390,7 @@ describe('the card coming alive', () => {
     const title = shown.getByRole('heading', { name: '7 day streak' });
     expect(within(title).getByText('7')).toBeTruthy();
     expect(within(title).queryByText('6')).toBeNull();
-    // and its medal still takes its turn, from grey
+    // And its medal still turns from grey.
     expect(opacity(shown.getByTestId('streak-medal-lit'))).toBe(0);
   });
 
@@ -400,7 +400,7 @@ describe('the card coming alive', () => {
     await opened({}, onContinue);
     vi.useFakeTimers({ shouldAdvanceTime: true });
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    // pressed again while it leaves: still one way on
+    // Pressed again while leaving: still one way on.
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     expect(onContinue).not.toHaveBeenCalled();
     await act(() => vi.advanceTimersByTimeAsync(STREAK_LEAVE_MS + 20));
@@ -427,11 +427,7 @@ describe('the flame lighting up', () => {
     await device(true);
   });
 
-  /**
-   * The flame's screen as it opens, its lighting held where it starts (a
-   * test's animations otherwise end as they begin), and what the lighting was
-   * asked to do.
-   */
+  /** The flame screen as it opens, its lighting held at the start, and what the lighting was asked to do. */
   async function opened(): Promise<{ flame: HTMLElement; lighting: Animated.TimingAnimationConfig[] }> {
     const lighting: Animated.TimingAnimationConfig[] = [];
     const real = Animated.timing;
@@ -448,20 +444,20 @@ describe('the flame lighting up', () => {
   it('opens dim on yesterday, then the fire squashes and pops, a ring bursts out of it, sparks fly and the warm light floods out from it', async () => {
     await device(false);
     const { flame, lighting } = await opened();
-    // it lights a moment after it opens: the pop, and the warm light flooding out
+    // It lights a moment after opening: the pop, and the warm light flooding out.
     expect(lighting.map((run) => run.duration)).toEqual(expect.arrayContaining([FLAME_IGNITE.popMs, FLAME_IGNITE.floodMs]));
-    // faint, and yesterday's number, until it lights
+    // Faint, with yesterday's number, until it lights.
     const fire = within(flame).getByTestId('lesson-streak-fire');
     expect(Number(fire.style.opacity)).toBeCloseTo(FLAME_IGNITE.dim, 6);
     expect(fire.style.transform).toContain('scaleY(1)');
     expect(within(flame).getByTestId('fire').dataset.framed).toBe('true');
-    // the warm light a speck at the fire, to flood out over the screen as it lights
+    // The warm light starts as a speck at the fire, to flood the screen as it lights.
     const flood = within(flame).getByTestId('lesson-streak-flood');
     expect(flood.style.transform).toContain('scale(0.04)');
     expect(Number(flood.style.opacity)).toBe(0);
     expect(within(flame).getByTestId('lesson-streak-ring')).toBeTruthy();
     expect(within(flame).getByTestId('lesson-streak-sparks')).toBeTruthy();
-    // and a tap still goes on at once
+    // And a tap still moves on at once.
     fireEvent.click(flame);
     expect(await screen.findByRole('heading', { name: '14 day streak' })).toBeTruthy();
   });
@@ -469,7 +465,7 @@ describe('the flame lighting up', () => {
   it('lights where it is under Reduce Motion: the dim screen cross-fades to the warm one, with no squash, ring or sparks', async () => {
     await device(true);
     const { flame, lighting } = await opened();
-    // it still lights a moment after it opens, only fading
+    // It still lights a moment after opening, only by fading.
     expect(lighting.map((run) => run.duration)).toEqual(expect.arrayContaining([FLAME_IGNITE.popMs, FLAME_IGNITE.floodMs]));
     const fire = within(flame).getByTestId('lesson-streak-fire');
     expect(Number(fire.style.opacity)).toBeCloseTo(FLAME_IGNITE.dim, 6);
@@ -498,10 +494,7 @@ describe('the flame lighting up', () => {
   });
 });
 
-/*
- * The quiet Share on the streak's card, on one of its big days only: the
- * days, a week of squares and the site's address, over the way on.
- */
+// The quiet Share on the streak card, on milestone days only: the days, a week of squares and the address.
 describe('sharing the streak', () => {
   const sheet = () => vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
   afterEach(() => vi.restoreAllMocks());
@@ -511,20 +504,20 @@ describe('sharing the streak', () => {
     const share = sheet();
     const onContinue = vi.fn();
     show({ current: 7 }, false, onContinue);
-    // not on the flame, which moves on by itself and has no bar
+    // Not on the flame screen, which moves on by itself and has no bar.
     expect(within(await screen.findByTestId('lesson-streak-flame')).queryByRole('button', { name: 'Share' })).toBeNull();
     const page = await card();
     const bar = within(page).getByTestId('streak-onward');
     const button = within(bar).getByRole('button', { name: 'Share' });
     const onward = within(bar).getByRole('button', { name: 'Continue' });
-    // the way on comes after it, and is the last thing on the screen
+    // The way on comes after it, last on the screen.
     expect(button.compareDocumentPosition(onward) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(bar.lastElementChild).toBe(onward);
 
     fireEvent.click(button);
     expect(share).toHaveBeenCalledTimes(1);
     expect(share.mock.calls[0]?.[0]).toEqual({ message: '7 days of Kurdish in a row. 🔥\nhttps://hevalo.app/win/streak/7' });
-    // sharing is not the way on
+    // Sharing is not the way on.
     expect(onContinue).not.toHaveBeenCalled();
   });
 

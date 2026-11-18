@@ -11,7 +11,6 @@ import {
   type StoryLibrary,
   type StoryListItem,
   type StoryMe,
-  type StoryProgress,
   type StoryCategory,
   type StoryQuery,
   type TextDuring,
@@ -22,20 +21,12 @@ import type { ApiResult } from '../api/types';
 import { joined } from '../play/joining';
 
 /**
- * Stories over the API (contract §A3/§A4, and the library of §C). The shapes
- * are @kurda/shared's, the same ones the API builds and the browser reads;
- * nothing is redefined here.
- *
- * Reading needs no account (`/stories`, `/stories/library`); a bookmark and
- * a reading position need a signed-in session (a guest's counts, as it does
- * for a saved word); every game route needs an account, and anyone who is
- * not a member of a game gets the same 404 as for a game that does not exist.
+ * Stories over the API (contract §A3/§A4, and the library of §C), using @kurda/shared's shapes. Reading needs no
+ * account; bookmarks and reading positions need a session (a guest's counts); every game route needs an account,
+ * and a non-member gets the same 404 as for a missing game.
  */
 
-/**
- * The library's front page in one variety: its editors' picks, its newest, its categories and counts, and the
- * caller's own rows (their shelves whatever the variety, their tally in it).
- */
+/** One variety's library front page: editors' picks, newest, categories and counts, and the caller's own shelves and tally. */
 export const getLibrary = (client: ApiClient, dialect: StoryDialect): Promise<ApiResult<StoryLibrary>> =>
   client.get(`/stories/library?dialect=${dialect}`);
 
@@ -43,12 +34,12 @@ export const getLibrary = (client: ApiClient, dialect: StoryDialect): Promise<Ap
 export const searchStories = (client: ApiClient, query: StoryQuery): Promise<ApiResult<{ stories: StoryListItem[]; total: number }>> =>
   client.get(`/stories${storyQueryString(query)}`);
 
-export interface StoryFilter {
+interface StoryFilter {
   dialect?: StoryDialect;
   level?: StoryLevel;
 }
 
-/** One variety's stories for a game's setup (the list is paged; a variety has far fewer than a page). */
+/** One variety's stories for a game's setup; a variety has far fewer than a page. */
 export function listStories(client: ApiClient, filter: StoryFilter = {}): Promise<ApiResult<{ stories: StoryListItem[]; total: number }>> {
   return searchStories(client, { dialect: filter.dialect, level: filter.level, limit: 50 });
 }
@@ -64,30 +55,27 @@ export const setBookmark = (client: ApiClient, id: string, on: boolean): Promise
   on ? client.put(`/stories/${encodeURIComponent(id)}/bookmark`) : client.delete(`/stories/${encodeURIComponent(id)}/bookmark`);
 
 export interface ProgressInput {
-  /** the paragraph being read, 0-based */
+  /** The paragraph being read, 0-based. */
   paragraph: number;
-  /** how far through the text, 0–1 */
+  /** How far through the text, 0–1. */
   share: number;
-  /** the last paragraph was reached; the server remembers the first time for good */
+  /** The last paragraph was reached; the server records the first time for good. */
   finished?: boolean;
 }
 
-/** Where the caller is in a story: the server keeps the latest, and says what it knows of them on it. */
+/** Saves the caller's place in a story; the server keeps the latest and returns what it knows of them on it. */
 export const saveProgress = (client: ApiClient, id: string, input: ProgressInput): Promise<ApiResult<{ me: StoryMe }>> =>
   client.put(`/stories/${encodeURIComponent(id)}/progress`, input);
 
-/** A glossary word that is a dictionary headword, saved to (or taken off) the caller's vocabulary. */
+/** Saves a glossary word that is a dictionary headword to the caller's vocabulary, or removes it. */
 export const saveWord = (client: ApiClient, entryId: string, on: boolean): Promise<ApiResult<unknown>> =>
   on ? client.put(`/dictionary/entries/${encodeURIComponent(entryId)}/save`) : client.delete(`/dictionary/entries/${encodeURIComponent(entryId)}/save`);
 
-/** The words already in the reader's vocabulary (the dictionary's list), so Save can say Saved where one already is. */
+/** The words already in the reader's vocabulary, so Save can show Saved. */
 export const savedWords = (client: ApiClient): Promise<ApiResult<{ words: { entryId: string }[] }>> => client.get('/me/saved-words');
 
 export const activeGames = (client: ApiClient): Promise<ApiResult<{ games: StoryGameSummary[] }>> =>
   client.get('/story-games/active');
-
-export const storyHistory = (client: ApiClient): Promise<ApiResult<{ progress: StoryProgress[] }>> =>
-  client.get('/story-games/history');
 
 /** Whether this account may open a game to adults who are not its friends ("Open"). */
 export const gameOptions = (client: ApiClient): Promise<ApiResult<{ canHostOpen: boolean }>> =>
@@ -103,10 +91,10 @@ export interface CreateGameInput {
   timerSeconds: TimerSeconds;
   textDuring: TextDuring;
   access: GameAccess;
-  /** solo: straight to the first question, the story having just been read */
+  /** Solo: straight to the first question, the story having just been read. */
   skipReading?: boolean;
   extraTime?: boolean;
-  /** duo and group: the host's Rated/Friendly choice (Game Ranks); left out, the host's last choice */
+  /** Duo and group: the host's Rated/Friendly choice (Game Ranks); omitted, the host's last choice. */
   rated?: boolean;
 }
 
@@ -120,18 +108,17 @@ export const joinGame = (
 ): Promise<ApiResult<StoryGameView>> => client.post('/story-games/join', { ...target, ...(extraTime ? { extraTime } : {}) });
 
 /**
- * The view; with `since`, a long-poll that answers when the game moves past
- * that version (or after about 20 s with the same one). An empty object comes
- * back when the server stopped waiting because it was shutting down.
+ * The view; with `since`, a long-poll answering when the game passes that version or after about 20 s. An empty
+ * object means the server stopped waiting because it was shutting down.
  */
 export const getGame = (client: ApiClient, id: string, since?: number): Promise<ApiResult<StoryGameView | Record<string, never>>> =>
-  // an invite to it accepted a moment ago is let land first: until it has, this is nobody's game (play/joining.ts)
+  // An invite accepted a moment ago must land first; until then this is nobody's game (play/joining.ts).
   joined(id).then(() => client.get(`/story-games/${encodeURIComponent(id)}${since !== undefined ? `?v=${since}` : ''}`));
 
 export const getGameStory = (client: ApiClient, id: string): Promise<ApiResult<StoryDetail>> =>
   client.get(`/story-games/${encodeURIComponent(id)}/story`);
 
-export interface SettingsPatch {
+interface SettingsPatch {
   storyId?: string;
   questionCount?: QuestionCount;
   timerSeconds?: TimerSeconds;
@@ -168,8 +155,3 @@ export const removePlayer = (client: ApiClient, id: string, seat: number): Promi
 
 export const setExtraTime = (client: ApiClient, id: string, on: boolean): Promise<ApiResult<StoryGameView>> =>
   client.post(`/story-games/${encodeURIComponent(id)}/extra-time`, { on });
-
-/** A view, as opposed to the empty answer a long-poll gives when the server stops waiting. */
-export function isView(v: StoryGameView | Record<string, never> | null | undefined): v is StoryGameView {
-  return !!v && typeof (v as StoryGameView).id === 'string' && typeof (v as StoryGameView).version === 'number';
-}

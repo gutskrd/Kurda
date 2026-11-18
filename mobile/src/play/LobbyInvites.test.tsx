@@ -28,7 +28,7 @@ const lists = (invitees: OutgoingInviteState[]): InviteLists => ({
   incoming: [],
   outgoing: [
     { game: 'stories', lobbyId: 'g1', invitees },
-    // another lobby's invites are not this lobby's business
+    // Another lobby's invites are not shown here.
     { game: 'stories', lobbyId: 'other', invitees: [invitee({ inviteId: 'x', name: 'Elsewhere' })] },
   ],
 });
@@ -43,7 +43,7 @@ describe('LobbyInvites', () => {
           invitee({ inviteId: 'i1', userId: 'u1', name: 'Rojda' }),
           invitee({ inviteId: 'i2', userId: 'u2', name: 'Azad', status: 'declined', declineReason: 'not_this_game' }),
           invitee({ inviteId: 'i3', userId: 'u3', name: 'Sipan', status: 'expired' }),
-          // joined: stamped on its ticket; taken back: nobody's business
+          // Joined: stamped on its ticket; cancelled: not shown.
           invitee({ inviteId: 'i4', userId: 'u4', name: 'Berfîn', status: 'accepted' }),
           invitee({ inviteId: 'i5', userId: 'u5', name: 'Dilan', status: 'cancelled' }),
         ]),
@@ -57,7 +57,7 @@ describe('LobbyInvites', () => {
     expect(screen.getByText('Joined')).toBeTruthy();
     expect(screen.queryByText('Dilan')).toBeNull();
     expect(screen.queryByText('Elsewhere')).toBeNull();
-    // "not now" is not asked again from here
+    // A "not now" is not re-asked from here.
     expect(screen.queryByRole('button', { name: 'Invite again: Azad' })).toBeNull();
   });
 

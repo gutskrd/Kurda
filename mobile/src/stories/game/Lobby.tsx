@@ -41,11 +41,9 @@ export function playerName(p: Pick<StoryGamePlayer, 'name' | 'seat' | 'isMe'>, t
 }
 
 /**
- * The lobby of a duo or group game (contract §A1 "Lobby"): the join code on
- * its ticket (play/CodeTicket, the same as every game's lobby) with friends to
- * invite beside it, where each invite stands, the players by seat, and the
- * settings. The host can change the settings, take a player out and start once
- * enough people are in; everyone else waits for the host, or leaves.
+ * A duo or group game's lobby (contract §A1 "Lobby"): the join code ticket (play/CodeTicket) with friends to invite,
+ * each invite's state, players by seat, and the settings. The host can change settings, remove a player, and start
+ * once enough are in; everyone else waits or leaves.
  */
 export function Lobby({
   view,
@@ -55,7 +53,7 @@ export function Lobby({
 }: {
   view: StoryGameView;
   apply: (res: ApiResult<StoryGameView>) => ApiError | null;
-  /** ask for the game again (after the host changes Rated/Friendly) */
+  /** Refetches the game, after the host changes Rated/Friendly. */
   refresh?: () => void;
   onLeft: () => void;
 }): React.JSX.Element {
@@ -126,7 +124,7 @@ export function Lobby({
         ) : null}
       </Card>
 
-      {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+      {/* Rated or Friendly, shown before anyone joins; only the host, and only here, may change it. */}
       <LobbyRated
         game="stories"
         lobbyId={view.id}
@@ -137,7 +135,7 @@ export function Lobby({
         onChanged={() => refresh?.()}
       />
 
-      {/* only the host may invite friends in (the server refuses anyone else); everyone may share the code */}
+      {/* Only the host may invite friends (the server refuses anyone else); everyone may share the code. */}
       <LobbyShare
         game="stories"
         lobbyId={view.id}
@@ -164,7 +162,7 @@ export function Lobby({
                   <View style={styles.playerFacts}>
                     {p.isHost ? (
                       <View style={styles.fact}>
-                        {/* who hosts is a fact about the game, not a prize: the crown in the line's own quiet ink */}
+                        {/* Hosting is a fact, not a prize: the crown in the line's quiet ink. */}
                         <Icon name="crown" size={12} color={colors.textSecondary} />
                         <Text style={[styles.factText, { color: colors.textSecondary }]}>{t('stories.lobby.host')}</Text>
                       </View>
@@ -172,7 +170,7 @@ export function Lobby({
                     {p.away ? <Text style={[styles.factText, { color: colors.textSecondary }]}>{t('stories.lobby.away')}</Text> : null}
                   </View>
                 </View>
-                {/* anyone else in the lobby can be reported, by seat */}
+                {/* Anyone else in the lobby can be reported, by seat. */}
                 {!p.isMe ? <PlayerReportButton game="stories" gameId={view.id} seat={p.seat} name={p.name} /> : null}
                 {view.isHost && !p.isMe && !p.isHost ? (
                   <Pressable
@@ -231,7 +229,7 @@ export function Lobby({
   );
 }
 
-/** The host changes the settings in the lobby — the same presets as setting up. */
+/** The host's settings sheet in the lobby, with the same presets as setup. */
 function SettingsSheet({
   view,
   apply,

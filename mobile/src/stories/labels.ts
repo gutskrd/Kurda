@@ -19,7 +19,6 @@ import type { Translate } from '../api/errors';
 import type { TranslationKey } from '../i18n/translations';
 
 /** The words the Stories screens put on the shared presets. */
-
 export const LENGTH_KEY: Record<StoryLength, TranslationKey> = {
   short: 'stories.length.short',
   medium: 'stories.length.medium',
@@ -44,10 +43,8 @@ export const ACCESS_KEY: Record<GameAccess, TranslationKey> = {
 };
 
 /**
- * A level by its plain name ("Beginner"), never the CEFR letter, which says
- * nothing to someone who never studied a language in a classroom; and the
- * line that says what reading at it is like. The keys and their order are
- * shared with the website (`levelNameKey`).
+ * A level by its plain name ("Beginner"), never the CEFR letter, and the line describing reading at it. Keys and
+ * order are shared with the website (`levelNameKey`).
  */
 export function levelName(level: StoryLevel, t: Translate): string {
   return t(levelNameKey(level));
@@ -57,7 +54,7 @@ export function levelHint(level: StoryLevel, t: Translate): string {
   return t(levelHintKey(level));
 }
 
-/** Where a story comes from, which the reader is told: never an original presented as folklore. */
+/** Where a story comes from, which the reader is told; an original is never presented as folklore. */
 export const TRADITION_KEY: Record<StoryTradition, TranslationKey> = {
   traditional: 'stories.overview.tradition.traditional',
   adapted: 'stories.overview.tradition.adapted',
@@ -72,18 +69,15 @@ export function narrationLabel(coverage: StoryAudioCoverage, t: Translate): stri
 }
 
 /**
- * A category's name in the reader's language. One the library was seeded
- * with is named from the catalogue (`categoryNameKey`), in all nine
- * languages, because the library's list names it in English, Kurmancî and
- * Soranî only; one an editor added since is named from the list, English
- * where it has no name in the reader's language.
+ * A category's name in the reader's language. Seeded categories use the catalogue (`categoryNameKey`), since the
+ * library lists them only in English, Kurmancî and Soranî; editor-added ones use the list, in English where needed.
  */
 export function categoryTitle(category: StoryCategory, locale: string, t: Translate): string {
   const key = categoryNameKey(category.slug);
   return key ? t(key) : categoryName(category, locale);
 }
 
-/** The same for a category known only by its slug: the slug itself for one neither the catalogue nor the list knows. */
+/** The same for a category known only by slug; the slug itself when neither source knows it. */
 export function categoryLabel(slug: string | null | undefined, categories: readonly StoryCategory[] | undefined, locale: string, t: Translate): string | null {
   if (!slug) return null;
   const key = categoryNameKey(slug);
@@ -96,7 +90,7 @@ export function timerLabel(seconds: TimerSeconds, t: Translate): string {
   return seconds === 0 ? t('stories.timer.off') : t('stories.timer.seconds', { seconds });
 }
 
-/** "Short · 1–2 min": a length with the minutes it takes to read in this variety. */
+/** "Short · 1–2 min": a length with its reading time in this variety. */
 export function lengthWithMinutes(dialect: StoryDialect, length: StoryLength, t: Translate): string {
   const { min, max } = lengthMinutes(dialect, length);
   const minutes = min === max ? t('stories.minutes', { count: min }) : t('stories.minutesRange', { min, max });

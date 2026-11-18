@@ -28,7 +28,7 @@ describe('ticketTone', () => {
       for (const game of ['wordle-battle', 'rhyme-match', 'impostor', 'who-am-i'] as const) {
         const { face } = ticketTone(colors, game);
         expect(face).toBe(gameColour(colors, game));
-        // the green says a right answer and the gold something earned: an invitation is neither
+        // Green means a right answer and gold something earned; an invitation is neither.
         expect([colors.success, colors.gold]).not.toContain(face);
       }
       expect(ticketTone(colors, 'stories').face).toBe(colors.primary);
@@ -62,7 +62,7 @@ describe('useChangedSinceMount', () => {
       initialProps: { value: null as string | null, ready: false },
     });
     rerender({ value: 'joined', ready: true });
-    // a card that arrives already stamped was stamped before anybody looked
+    // A card that arrives already stamped was stamped before anyone looked.
     expect(result.current).toBe(false);
     rerender({ value: 'finished', ready: true });
     expect(result.current).toBe(true);
@@ -77,7 +77,7 @@ describe('Ticket', () => {
       </Ticket>,
     );
     expect(screen.getByText('Nanê Germ')).toBeTruthy();
-    // the punched hole and the rule are pictures of the paper, hidden from a screen reader
+    // The punched hole and the rule are decorative, hidden from screen readers.
     expect(document.querySelectorAll('[aria-hidden="true"]').length).toBeGreaterThan(0);
   });
 

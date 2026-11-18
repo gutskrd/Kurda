@@ -8,30 +8,25 @@ import { getGame, joinGame } from './api';
 import { StoryGameLoop } from './gameLoop';
 import { useStoryPrefs } from './prefs';
 
-/** Why a game cannot be shown: never existed or not yours (the same to the player), already under way, full. */
-export type GameGone = 'not-found' | 'started' | 'full';
+/** Why a game cannot be shown: missing or not yours (the same to the player), already started, or full. */
+type GameGone = 'not-found' | 'started' | 'full';
 
-export interface StoryGameHandle {
+interface StoryGameHandle {
   view: StoryGameView | null;
   gone: GameGone | null;
-  /** a run of failed requests: the screen says it is reconnecting */
+  /** A run of failed requests, so the screen says it is reconnecting. */
   trouble: ApiError | null;
-  /** server time now, corrected for this phone's clock */
+  /** Server time now, corrected for this phone's clock. */
   serverNow: () => number;
-  /** take an action's answer (or ask again when it failed in a way that means the game moved) */
+  /** Takes an action's answer, or refetches when the failure means the game moved. */
   apply: (res: ApiResult<StoryGameView>) => ApiError | null;
   refresh: () => void;
 }
 
 /**
- * One story game on screen: the long-poll loop (gameLoop.ts), paused while
- * the app is in the background, and nudged by `play_changed` on your own
- * channel — which is how a finished game hears that the host opened another
- * round, without asking every few seconds.
- *
- * Opening a game you are not in yet (an invite link, a card in a chat) joins
- * it when the join rule allows; the API answers both "no such game" and "not
- * for you" with the same 404, and so does this screen.
+ * One story game on screen: the long-poll loop (gameLoop.ts), paused in the background and nudged by `play_changed`
+ * on your channel, which is how a finished game hears the host opened another round. Opening a game you are not in
+ * joins it when allowed; "no such game" and "not for you" are the same 404.
  */
 export function useStoryGame(id: string): StoryGameHandle {
   const { client } = useAuth();
@@ -60,7 +55,7 @@ export function useStoryGame(id: string): StoryGameHandle {
             setGone('not-found');
             return;
           }
-          // not a member (yet): join, if the rule lets this person in
+          // Not a member yet: join, if allowed.
           triedJoin.current = true;
           void joinGame(client, { id }, extraTime.current).then((res) => {
             if (res.ok) {
@@ -101,7 +96,7 @@ export function useStoryGame(id: string): StoryGameHandle {
         loop.accept(res.data);
         return null;
       }
-      // the game moved under the tap (a deadline, another player): show where it is now
+      // The game moved under the tap (a deadline, another player), so show where it is now.
       if (res.error.status === 409) loop.refresh();
       if (res.error.status === 404) setGone('not-found');
       return res.error;

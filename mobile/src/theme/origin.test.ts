@@ -16,10 +16,7 @@ describe('where a page grows from', () => {
     expect(originOf('page-1', 1000)).toBeNull();
   });
 
-  /*
-   * A page that arrives long after a press (after a request, a timer) was
-   * not opened by that press in any way the eye would follow.
-   */
+  // A page arriving long after a press (after a request, a timer) was not opened by it.
   it('is nothing once the press is no longer fresh', () => {
     notePress(card, 1000);
     expect(originOf('page-1', 1000 + FRESH_MS + 1)).toBeNull();
@@ -30,10 +27,7 @@ describe('where a page grows from', () => {
     expect(originOf('page-1', 1000 + FRESH_MS)).toEqual(card);
   });
 
-  /*
-   * The stack asks about a page every time it draws, and the page itself
-   * asks again: the answer is the one given first, however late it is asked.
-   */
+  // The stack and the page both ask on every draw; the answer is always the first one given.
   it('gives a page the same answer every time it asks', () => {
     notePress(card, 1000);
     expect(originOf('page-1', 1010)).toEqual(card);
@@ -90,11 +84,8 @@ describe('where a page starts', () => {
     expect(startPlace(card, 390)).toEqual({ x: 16, y: 324, scale: 175 / 390 });
   });
 
-  /*
-   * The magnifier is 44 points wide at the far edge of the bar. A page a
-   * third of the screen wide starting at its left edge would hang off the
-   * side of the screen, so it starts as far over as still fits.
-   */
+  // The magnifier is 44 points wide at the bar's far edge; a page a third of the screen wide from its left edge would
+  // hang off, so it starts as far over as fits.
   it('keeps a page growing from a button at the far edge on the screen', () => {
     const place = startPlace({ x: 330, y: 60, width: 44, height: 44 }, 390);
     expect(place.scale).toBeCloseTo(0.3);

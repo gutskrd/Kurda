@@ -32,12 +32,6 @@ afterEach(() => {
 });
 
 describe('the Profile tab for a guest', () => {
-  /*
-   * A guest has nothing of their own to show and most of what the profile
-   * loads is refused to them, so the tab is the offer of an account — with the
-   * given name at the top and the menu still at the end, where the badges, the
-   * library and settings are reached.
-   */
   it('shows the guest card with the four things an account keeps, and asks the server for nothing', () => {
     const client = fakeClient();
     testAuth.client = client;
@@ -53,7 +47,7 @@ describe('the Profile tab for a guest', () => {
     expect(screen.getByText('Your own profile and name')).toBeTruthy();
     expect(screen.getByTestId('profile-menu')).toBeTruthy();
     expect(client.calls).toHaveLength(0);
-    // nothing of the account's profile: no editing, no sharing, no numbers
+    // None of the account profile: no editing, sharing or numbers.
     expect(screen.queryByRole('button', { name: 'Edit profile' })).toBeNull();
   });
 

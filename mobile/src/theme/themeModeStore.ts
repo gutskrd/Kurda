@@ -4,11 +4,8 @@ import { DEFAULT_PREFERENCE, normalizePreference, type ThemePreference } from '.
 
 const KEY = 'kurda_theme_pref_v1';
 
-/**
- * Persists the light/dark/system preference (KUR-268). Mirrors the onboarding/
- * token storage pattern: keystore on device, localStorage on web.
- */
-export interface ThemeModeStore {
+/** Stores the light/dark/system preference: keystore on device, localStorage on web. */
+interface ThemeModeStore {
   get(): Promise<ThemePreference>;
   set(value: ThemePreference): Promise<void>;
 }
@@ -27,7 +24,7 @@ export function createThemeModeStore(): ThemeModeStore {
         try {
           globalThis.localStorage?.setItem(KEY, value);
         } catch {
-          /* preference is a nicety; ignore persistence failures */
+          /* A preference is a nicety; storage failures are ignored. */
         }
       },
     };

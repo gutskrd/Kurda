@@ -34,32 +34,16 @@ import { lobbyRoute } from './routes';
 import { TEAR_MS, Ticket, TicketBadge, ticketTone } from './Ticket';
 
 /**
- * "Rojda invited you to Peyvok Battle · Hard" — [Join] [Not now ▾] (contract
- * §B1), over whatever screen you are on.
+ * "Rojda invited you to Peyvok Battle · Hard" with Join and Not now (contract §B1), over whatever screen you are on.
+ * It neither takes screen-reader focus nor times out: it stays until answered anywhere, withdrawn, or expired, since
+ * a short toast would vanish before a screen-reader user reached it. Android gets a polite live region; iOS one
+ * announcement on arrival.
  *
- * It does not take the screen reader's focus and does not go away by itself
- * while the invite stands: it stays until it is answered (here, on another
- * device, or by the host taking it back) or runs out. A short-lived toast
- * would be gone before somebody using a screen reader, or simply busy, got
- * to it. On Android it is a polite live region; iOS is told once when an
- * invite arrives.
+ * It sits low (above any tab bar) and no wider than a phone, so the header stays free. "Hide" folds it into a pill
+ * without answering, and it hides itself during games. "Not now" offers only the two preset reasons the host hears.
  *
- * Standing that long, it must never be in the way. It sits low (above the
- * tab bar where there is one), no wider than a phone, so the header's Back,
- * title and buttons stay free; "Hide"
- * folds it into a small pill that opens it again (hiding is not an answer,
- * the host hears nothing); and while a game is being played it keeps out of
- * sight altogether and comes back when the game is over.
- *
- * "Not now" offers the two preset reasons and nothing typed: the host only
- * ever hears "can't play right now" or "would rather play something else".
- *
- * The invite is a ticket (Ticket.tsx) handed to you: the game's colour and
- * glyph on its stub, who it is from on the paper. It arrives from below with
- * a slight swing; Join tears the stub off along the perforation and then
- * opens the lobby; a "not now" folds it away. With more invites waiting, the
- * next ones peek out behind it as a small fan. Under Reduce Motion it is
- * simply there, and goes, with no travel.
+ * The invite is a ticket (Ticket.tsx) that swings in from below; Join tears the stub then opens the lobby, "not
+ * now" folds it away, and further invites peek out behind as a fan. Under Reduce Motion nothing travels.
  */
 export function InviteBanner(): React.JSX.Element | null {
   const { client, isGuest } = useAuth();
@@ -71,15 +55,13 @@ export function InviteBanner(): React.JSX.Element | null {
   const [, setTick] = useState(0);
   const announced = useRef<string | null>(null);
   /*
-   * Invites answered (or found dead) on this phone. A list fetched before the
-   * answer reached the server can still carry them — load runs again on every
-   * reconnect, which is just when somebody taps Join or Not now — and must
-   * not put them back.
+   * Invites answered (or found dead) on this phone. A list fetched before the answer reached the server can still
+   * hold them, and load runs on every reconnect, which is exactly when people tap Join or Not now.
    */
   const answered = useRef(new Set<string>());
 
   const load = useCallback(() => {
-    // nobody can invite a guest, and the server refuses the question: nothing to ask for
+    // Nobody can invite a guest, and the server refuses the request.
     if (isGuest) return;
     void listInvites(client).then((res) => {
       if (res.ok) setInvites(res.data.incoming.filter((i) => !answered.current.has(i.id)));
@@ -94,7 +76,7 @@ export function InviteBanner(): React.JSX.Element | null {
     }, []),
   );
 
-  // answered at once (a reload must not put it back), and gone once its ticket has torn or folded away
+  // Marked answered at once so a reload cannot restore it, and removed once its ticket has torn or folded away.
   const answer = useCallback((id: string) => {
     answered.current.add(id);
   }, []);
@@ -107,7 +89,7 @@ export function InviteBanner(): React.JSX.Element | null {
   const shown = liveInvites(invites, now);
   const invite = shown[0] ?? null;
 
-  // drop an invite when it runs out, without anybody asking the server
+  // Drop an invite when it expires, without asking the server.
   const wait = nextExpiry(shown, now);
   useEffect(() => {
     if (wait === null) return;
@@ -122,7 +104,7 @@ export function InviteBanner(): React.JSX.Element | null {
       : t('play.banner.invited', { name: invite.from.name, game })
     : '';
 
-  // told once, and not in the middle of somebody's game: then when it is over
+  // Announced once, and not mid-game: then after it.
   useEffect(() => {
     if (!invite || quiet || announced.current === invite.id) return;
     announced.current = invite.id;
@@ -130,12 +112,9 @@ export function InviteBanner(): React.JSX.Element | null {
   }, [invite, headline, quiet]);
 
   if (!invite || quiet) return null;
-  /*
-   * Low on the screen, so the header stays free: just above the tab bar on a
-   * tab, and just above the bottom edge on a pushed screen, which has none.
-   */
+  // Low on the screen so the header stays free: above the tab bar on a tab, above the bottom edge on a pushed screen.
   const bottom = onTabs ? tabBarLift(insets.bottom) + TAB_BAR_HEIGHT + spacing.sm : insets.bottom + spacing.md;
-  // keyed by the invite: a new invite at the front starts open, whatever was done with the last one
+  // Keyed by invite, so a new front invite starts open whatever was done with the last.
   return (
     <InviteCard
       key={invite.id}
@@ -156,9 +135,8 @@ interface RootStateSource {
 }
 
 /**
- * Whether the screen in front is one of the tabs, where the tab bar sits
- * under the banner. The banner is outside every navigator, so it reads the
- * root state from the navigation container rather than from a screen.
+ * Whether the screen in front is a tab, where the tab bar sits under the banner. The banner is outside every
+ * navigator, so it reads the root state from the navigation container.
  */
 function useOnTabs(): boolean {
   const navigation = useNavigation() as unknown as RootStateSource;
@@ -173,12 +151,12 @@ function useOnTabs(): boolean {
 
 export function rootIsTabs(navigation: RootStateSource): boolean {
   const state = navigation.getRootState?.();
-  // before the first screen is up, the first screen is the tabs
+  // Before the first screen is up, it will be the tabs.
   if (!state?.routes?.length) return true;
   return state.routes[state.index ?? 0]?.name === 'Tabs';
 }
 
-/** How long a "not now" takes to fold the ticket away. */
+/** How long "not now" takes to fold the ticket away. */
 const FOLD_MS = duration.base + 60;
 
 function InviteCard({
@@ -193,7 +171,7 @@ function InviteCard({
   invite: IncomingInvite;
   headline: string;
   count: number;
-  /** the next invites waiting, peeking out behind this one */
+  /** The next waiting invites, peeking out behind this one. */
   behind: IncomingInvite[];
   bottom: number;
   onAnswer: (id: string) => void;
@@ -205,24 +183,23 @@ function InviteCard({
   const { t, rtl } = useI18n();
   const reduce = useReducedMotion();
   const { announce, region } = useAnnouncer();
-  // rows start on the side a line starts from, as the ticket's stub does
+  // Rows start on the line-start side, as the ticket's stub does.
   const flow = useDirection();
   const row = { flexDirection: flow.row };
   /*
-   * The interface's direction, set rather than guessed: "Azad invited you to …"
-   * in Soranî starts with a Latin name, and a guess from its first letter
-   * would set the headline left-to-right under a right-to-left line of details.
+   * The interface's direction, set rather than guessed: in Soranî "Azad invited you to …" starts with a Latin name,
+   * and guessing from its first letter would set the headline left to right.
    */
   const dir = rtl ? styles.rtl : styles.ltr;
   const [reasons, setReasons] = useState(false);
   const [busy, setBusy] = useState(false);
-  /** why Join did not work: the game is gone (the invite goes too), or a passing failure to try again */
+  /** Why Join failed: the game is gone (the invite goes too), or a passing failure to retry. */
   const [failure, setFailure] = useState<{ dead: boolean; message: string } | null>(null);
   const [hidden, setHidden] = useState(false);
   const [torn, setTorn] = useState(false);
   const laterRef = useRef<View>(null);
 
-  // what is left to do once the ticket has torn or folded away; nothing is left waiting after it is gone
+  // Pending follow-ups once the ticket has torn or folded; none outlive it.
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
   const after = (ms: number, then: () => void): void => {
@@ -230,7 +207,7 @@ function InviteCard({
     else timers.current.push(setTimeout(then, ms));
   };
 
-  // it arrives from below the way a ticket is held out: a little turned, settling with a swing
+  // It arrives from below like a ticket held out: slightly turned, settling with a swing.
   const arrive = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   useEffect(() => {
     if (reduce) {
@@ -240,11 +217,11 @@ function InviteCard({
     const run = springTo(arrive, 1, 'bouncy');
     run.start();
     return () => run.stop();
-    // once, as it is handed over
+    // Only once, as it is handed over.
   }, []);
   const fold = useRef(new Animated.Value(0)).current;
 
-  // an invite whose game is gone stays long enough to be read, then goes
+  // An invite whose game is gone stays long enough to be read, then goes.
   const dead = failure?.dead ?? false;
   useEffect(() => {
     if (!dead) return;
@@ -252,7 +229,7 @@ function InviteCard({
     return () => clearTimeout(id);
   }, [dead, invite.id, onGone]);
 
-  // "Not now" opened the reasons: the screen reader goes to the first of them
+  // "Not now" opened the reasons, so move screen-reader focus to the first.
   useEffect(() => {
     if (!reasons || Platform.OS === 'web') return;
     const id = setTimeout(() => {
@@ -273,7 +250,7 @@ function InviteCard({
       setFailure(joinFailure(res.error, t));
       return;
     }
-    // in: the stub comes off in the hand, and then the lobby opens
+    // Joining: the stub comes off, then the lobby opens.
     onAnswer(invite.id);
     haptic('tap');
     announce(t('play.card.joined'));
@@ -292,7 +269,7 @@ function InviteCard({
     after(reduce ? 0 : FOLD_MS, () => onGone(invite.id));
   };
 
-  // a shadow does not show on a near-black screen: there the ticket is lifted by a lighter paper
+  // Shadows do not show on a near-black screen, so there a lighter paper lifts the ticket.
   const paper = scheme === 'dark' ? colors.surfaceRaised : colors.surface;
   const lifted = scheme === 'dark' ? { backgroundColor: colors.controlTrack } : null;
 
@@ -333,7 +310,7 @@ function InviteCard({
       { rotate: arrive.interpolate({ inputRange: [0, 1], outputRange: [`${5 * swing}deg`, '0deg'] }) },
     ],
   };
-  // folded down and away, like a ticket put back in a pocket
+  // Folded down and away, like a ticket put back in a pocket.
   const folding = {
     opacity: fold.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.6, 0] }),
     transform: [
@@ -347,9 +324,9 @@ function InviteCard({
     <View pointerEvents="box-none" style={[styles.wrap, { bottom }]}>
       <Animated.View style={[styles.column, arriving]}>
         <Animated.View style={folding}>
-          {/* the invites after this one, fanned out behind it: their own colours on their stubs */}
+          {/* The invites after this one, fanned out behind it with their own stub colours. */}
           {[...behind].reverse().map((b) => {
-            // the furthest back first, so the nearer one lies over it
+            // Furthest back first, so the nearer one lies over it.
             const i = behind.indexOf(b);
             return (
               <View
@@ -390,10 +367,10 @@ function InviteCard({
                     {details}
                   </Text>
                 ) : null}
-                {/* Rated or Friendly, before you say yes */}
+                {/* Rated or Friendly, before you say yes. */}
                 {invite.summary.rated !== undefined ? <RatedPill rated={invite.summary.rated} small style={flow.row === 'row-reverse' ? styles.endSelf : undefined} /> : null}
               </View>
-              {/* folds it away without answering: the host hears nothing */}
+              {/* Folds it away without answering; the host hears nothing. */}
               <Pressable
                 onPress={() => setHidden(true)}
                 accessibilityRole="button"
@@ -418,7 +395,7 @@ function InviteCard({
                   >
                     <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
                   </PressableScale>
-                  {/* opens the two reasons under it and closes them again; Join stays where it was */}
+                  {/* Toggles the two reasons below; Join stays in place. */}
                   <PressableScale
                     onPress={() => setReasons((open) => !open)}
                     disabled={torn}
@@ -466,22 +443,20 @@ function InviteCard({
 }
 
 /**
- * What a failed Join means. A game that has started, filled up or gone (404,
- * or 409 with the invite closed) cannot be joined from this invite any more,
- * so that is said and the invite goes. Anything else — no network, a
- * timeout, the server busy, a rate limit — passes: the invite still stands,
- * and Join is there to try again.
+ * What a failed Join means. A game started, full or gone (404, or 409 with the invite closed) can no longer be
+ * joined, so the invite goes with a message. Anything else (network, timeout, busy, rate limit) is passing: the
+ * invite stands and Join can be retried.
  */
-export function joinFailure(error: ApiError, t: Translate): { dead: boolean; message: string } {
+function joinFailure(error: ApiError, t: Translate): { dead: boolean; message: string } {
   if (error.status === 404 || error.status === 409) return { dead: true, message: t('play.banner.failed') };
   return { dead: false, message: describeError(error, t) };
 }
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: spacing.md, right: spacing.md, zIndex: 50, alignItems: 'center' },
-  // a phone's width at most: on a tablet or the web a full-width banner reads as broken
+  // At most a phone's width: a full-width banner reads as broken on a tablet or the web.
   column: { width: '100%', maxWidth: 520 },
-  // the pill keeps to the end of that column, clear of whatever is in the middle
+  // The pill keeps to the end of that column, clear of the middle.
   pillColumn: { alignItems: 'flex-end' },
   lift: {
     shadowOffset: { width: 0, height: 8 },
@@ -489,7 +464,7 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 8,
   },
-  // the next invites' tickets: only their top edge and stub show above this one
+  // The next invites' tickets: only their top edge and stub show above this one.
   behind: { position: 'absolute', height: 48, borderRadius: radii.lg, overflow: 'hidden' },
   behindStub: { position: 'absolute', top: 0, bottom: 0, width: 60 },
   endSelf: { alignSelf: 'flex-end' },

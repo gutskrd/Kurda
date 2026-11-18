@@ -18,10 +18,10 @@ import { pressedDim } from '../../theme/motion';
 import { useValley } from '../ValleyScope';
 import { CARD } from '../valley';
 
-/** A tile's height before one has been measured: a fingertip and its lip. */
+/** A tile's height before measurement: a fingertip and its lip. */
 const TILE_HEIGHT = MIN_TOUCH_TARGET + LIP;
 
-/** Between tiles, along a line and from one line to the next. */
+/** The gap between tiles, across and between lines. */
 const GAP = spacing.sm;
 
 interface Rect {
@@ -30,40 +30,33 @@ interface Rect {
   w: number;
 }
 
-/** A tile on its way: from the bank to the end of the line, or back to its place in the bank. */
+/** A tile in flight: from the bank to the end of the line, or back to its place in the bank. */
 interface Flight {
   id: number;
   index: number;
-  /** where it leaves from and where it lands, relative to the bank's own corner; null until both have been measured */
+  /** Its start and end relative to the bank's corner; null until both are measured. */
   from: Rect | null;
   to: Rect | null;
 }
 
 interface Props {
   bank: string[];
-  /** the bank's tiles on the line, by their places in the bank, in the order laid */
+  /** The bank's tiles on the line, by bank index, in the order laid. */
   placed: number[];
   onChange: (placed: number[]) => void;
   disabled: boolean;
-  /** how the answer was graded, once it has been: the tiles on the line turn its colour */
+  /** How the answer was graded, once it has been; the line's tiles turn its colour. */
   verdict?: 'right' | 'wrong' | null;
-  /** what the line is, for a screen reader: "Your translation", "What you heard" */
+  /** The line's screen-reader name: "Your translation", "What you heard". */
   lineLabel: string;
 }
 
 /**
- * An answer built from word tiles: two ruled lines, and the bank of tiles
- * under them, each a small cream card with its Kurdish in the display face.
- *
- * A tile tapped in the bank flies from its place there to the end of the line
- * — both measured, and a copy of it carried between them on a spring — and
- * leaves a grey ghost of its own size behind, so the bank never shuffles; a
- * tile tapped on the line flies back to its ghost. Under Reduce Motion it is
- * simply there. It lands with a light knock, and a screen reader hears the
- * answer as it now reads. Soranî tiles, on the line and in the bank, read from
- * the right.
- *
- * What the line says is sent as a typed answer is (shared `tileAnswer`).
+ * An answer built from word tiles: two ruled lines over a bank of small cream cards in the display face. A tapped
+ * bank tile flies on a spring to the end of the line, leaving a same-size ghost so the bank never shuffles; a line
+ * tile flies back to its ghost. Under Reduce Motion it moves instantly. It lands with a light haptic and screen
+ * readers hear the new answer. Soranî tiles read from the right. The line is sent as a typed answer (shared
+ * `tileAnswer`).
  */
 export function WordBank({ bank, placed, onChange, disabled, verdict = null, lineLabel }: Props): React.JSX.Element {
   const valley = useValley();
@@ -76,7 +69,7 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
   const nextId = useRef(0);
   const [tileHeight, setTileHeight] = useState(TILE_HEIGHT);
   const [lineHeight, setLineHeight] = useState(0);
-  // words in Arabic script (Soranî) read from the right: the line fills from there, and the bank starts there
+  // Arabic-script words (Soranî) read from the right: the line fills from there, and the bank starts there.
   const rtl = scriptDialect(bank.join(' ')) === 'sorani';
   const flow = rtl ? 'row-reverse' : 'row';
 
@@ -88,11 +81,11 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
     [bank, t],
   );
 
-  // what is on the line now, for a flight that lands after something else was laid or taken off
+  // What is on the line now, for a flight that lands after something else was laid or removed.
   const latest = useRef(placed);
   latest.current = placed;
 
-  /** Where a view is, relative to the bank's own corner; null when it is not on screen to be measured. */
+  /** A view's position relative to the bank's corner; null when it is not on screen to measure. */
   const where = useCallback((view: View | null | undefined, then: (rect: Rect | null) => void): void => {
     const box = root.current;
     if (!view || !box) {
@@ -107,8 +100,8 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
     haptic('tap');
   }, []);
 
-  // a tile laid on the line is measured there once it is on screen, and in its place in the bank, and its flight
-  // set off between the two; one that cannot be measured simply appears
+  // A tile laid on the line is measured there and in its bank place, then flies between them; one that cannot be
+  // measured simply appears.
   useEffect(() => {
     for (const f of flights) {
       if (f.from && f.to) continue;
@@ -135,7 +128,7 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
       haptic('tap');
       return;
     }
-    // measured on the line before it leaves it; where it lands is its ghost, which never moves
+    // Measured on the line before it leaves; it lands on its ghost, which never moves.
     where(onLine.current.get(index), (from) =>
       where(slots.current.get(index), (to) => {
         if (from && to) setFlights((all) => [...all, { id: nextId.current++, index, from, to }]);
@@ -213,7 +206,7 @@ export function WordBank({ bank, placed, onChange, disabled, verdict = null, lin
   );
 }
 
-/** A copy of a tile carried from where it was to where it goes, on a spring, over everything else. */
+/** A copy of a tile carried on a spring from where it was to where it goes, over everything. */
 function FlyingTile({ word, from, to, rtl, onLand }: { word: string; from: Rect; to: Rect; rtl: boolean; onLand: () => void }): React.JSX.Element {
   const x = useRef(new Animated.Value(from.x)).current;
   const y = useRef(new Animated.Value(from.y)).current;
@@ -233,7 +226,7 @@ function FlyingTile({ word, from, to, rtl, onLand }: { word: string; from: Rect;
   );
 }
 
-/** "Use keyboard" / "Use word tiles": a small round button that swaps the one for the other. */
+/** "Use keyboard" / "Use word tiles": a small round button swapping one for the other. */
 export function AnswerModeSwitch({ mode, onChange, end }: { mode: AnswerMode; onChange: (mode: AnswerMode) => void; end: 'left' | 'right' }): React.JSX.Element {
   const { colors } = useTheme();
   const valley = useValley();
@@ -260,9 +253,9 @@ const styles = StyleSheet.create({
   rule: { position: 'absolute', left: 0, right: 0, height: CARD.edge, borderRadius: radii.pill },
   flow: { flexWrap: 'wrap', gap: GAP },
   bank: { justifyContent: 'center' },
-  // a word tile: a smaller card than an answer, on the same hairline edge
+  // A word tile: a smaller card than an answer, on the same hairline edge.
   face: { borderRadius: radii.md + 2, borderWidth: CARD.edge },
-  // the Kurdish words in the display face the headings are in
+  // The Kurdish words in the headings' display face.
   word: { ...display(typography.sizes.md + 1) },
   ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.md + 2 },
   hidden: { opacity: 0 },

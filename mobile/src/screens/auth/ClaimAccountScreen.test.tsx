@@ -14,7 +14,7 @@ const auth = vi.hoisted(() => ({
   logout: vi.fn(),
 }));
 vi.mock('../../auth/AuthContext', () => ({ useAuth: () => auth }));
-// a build without Google's client ids, unless a test says it has them
+// A build without Google client ids, unless a test says otherwise.
 const google = vi.hoisted(() => ({ configured: false, signIn: vi.fn() }));
 vi.mock('../../auth/google', () => ({
   signInWithGoogle: google.signIn,
@@ -23,7 +23,7 @@ vi.mock('../../auth/google', () => ({
   },
 }));
 const apple = vi.hoisted(() => ({ available: false, signInAsync: vi.fn() }));
-// Apple's sheet is native: its button is a plain one here, and the sheet answers what each test says
+// Apple's sheet is native: the button is a plain one here, and the sheet answers as each test says.
 vi.mock('expo-apple-authentication', async () => {
   const { createElement } = await import('react');
   return {
@@ -42,13 +42,6 @@ import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { ageRange, birthYearFrom, offsetForAge } from '../../auth/guide/age';
 import { ClaimAccountScreen } from './ClaimAccountScreen';
-
-/*
- * A guest making the account their own, one question at a time: the name
- * they were given, kept or changed; the address and a password; the age and
- * the month; and the last look with the rules. The claim sends what the form
- * sent, the name only when it changed.
- */
 
 patchReactNativeWeb({ reduceMotion: true });
 const en = TRANSLATIONS.en;
@@ -89,7 +82,7 @@ function chooseAge(age: number): void {
   });
 }
 
-/** Up to the age: keeps the name (or types `name`), then gives the address and a password. */
+/** Up to the age step: keeps the name (or types `name`), then gives the address and a password. */
 async function toAge(email: string, name?: string) {
   if (name !== undefined) fireEvent.change(screen.getByTestId('username'), { target: { value: name } });
   await press(en['common.continue']);
@@ -100,10 +93,10 @@ async function toAge(email: string, name?: string) {
   await screen.findByRole('slider');
 }
 
-/** Keeps the name (or types `name`), then answers the rest as somebody `age` years old and makes the account. */
+/** Keeps the name (or types `name`), answers the rest as someone `age` years old, and claims the account. */
 async function claim(email: string, { name, age = 34 }: { name?: string; age?: number } = {}) {
   await toAge(email, name);
-  // the ruler starts with no age, so it is slid to one
+  // The ruler starts with no age, so slide to one.
   chooseAge(age);
   await press(en['common.continue']);
   fireEvent.click(await screen.findByRole('radio', { name: 'March' }));
@@ -180,12 +173,6 @@ describe('claiming the guest account', () => {
   });
 });
 
-/*
- * Where the phone offers Apple or Google, the claim opens on the same choice
- * the sign-in screen gives: either one makes this account the guest's (the
- * server claims the guest on a provider sign-in), and Continue with email
- * goes on to the questions.
- */
 describe('claiming the guest account with Apple or Google', () => {
   it('opens on the choice, and claims the account through Google', async () => {
     google.configured = true;

@@ -3,20 +3,17 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 import { useValley } from '../ValleyScope';
 
-/** How tall the hills are drawn, in points; they stretch to the screen's width. */
-export const HILLS_HEIGHT = 120;
+/** The hills' height in points; they stretch to the screen's width. */
+const HILLS_HEIGHT = 120;
 
 /**
- * The low line of pale hills behind the top of a lesson: the far mountains,
- * a field, and the nearest slope fading into the paper, flat, as a painted
- * backdrop rather than a picture to look at. Behind everything, untouchable,
- * and nothing to a screen reader. `top` is where they start, so the lesson's
- * bar sits on the ridge wherever the phone's own top edge is.
+ * The low pale hills behind the top of a lesson, a flat painted backdrop that fades into the paper. Untouchable and
+ * hidden from screen readers. `top` is where they start, so the lesson's bar sits on the ridge on every phone.
  */
 export function Hills({ top }: { top: number }): React.JSX.Element {
   const valley = useValley();
   const [far, mid, near] = valley.hills;
-  // a browser draws every picture into one page, where two gradients of one name would be one
+  // On the web every picture shares one page, where two gradients of one id would collide.
   const fade = `hills-${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   return (
     <View
@@ -29,7 +26,7 @@ export function Hills({ top }: { top: number }): React.JSX.Element {
     >
       <Svg width="100%" height={HILLS_HEIGHT} viewBox={`0 0 390 ${HILLS_HEIGHT}`} preserveAspectRatio="none">
         <Defs>
-          {/* the nearest slope runs on into the paper, so the hills have no line along their foot */}
+          {/* The nearest slope fades into the paper, so the hills have no edge along their foot. */}
           <LinearGradient id={fade} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={near} />
             <Stop offset="1" stopColor={valley.paper} />
