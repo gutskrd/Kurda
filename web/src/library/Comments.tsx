@@ -284,7 +284,12 @@ function CommentNode({
         </div>
       ) : (
         <>
-          {comment.body && <div className="comment-body">{comment.body}</div>}
+          {/* Isolated, so the comment's own language sets its direction while the row keeps the page's. */}
+          {comment.body && (
+            <div className="comment-body">
+              <bdi>{comment.body}</bdi>
+            </div>
+          )}
           {comment.audioUrl ? (
             <VoicePlayer src={comment.audioUrl} label={t('comments.voice')} />
           ) : (

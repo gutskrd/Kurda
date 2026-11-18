@@ -87,7 +87,8 @@ function JumpTestPage({ courseId, unitId }: { courseId: string; unitId: string }
       session={{ ...start, answered: start.answered ?? {} }}
       kind="practice"
       paths={PRACTICE_PATHS}
-      title={t('coursemap.jump.title', { n: start.jump.unitNumber.toLocaleString(locale) })}
+      // The chapter the test opens, over each question.
+      title={t('coursemap.unit', { n: start.jump.unitNumber.toLocaleString(locale) })}
       exitTo={from}
       exitLabel={t('coursemap.jump.keepLearning')}
       onPractise={(ids) => navigate('/app/learn/review', { state: { exerciseIds: ids } })}

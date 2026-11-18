@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { PracticeHub as Hub, PracticeHubUnit } from '@kurda/shared';
 import { Button } from '../components/Button';
@@ -11,6 +11,7 @@ import type { MessageKey } from '../i18n/en';
 import { ReviewEntry } from '../learn/ReviewEntry';
 import { useLessonExercises, type WebExercise } from '../learn/practiceTools';
 import type { PracticeDue } from '../learn/types';
+import { prefersReducedMotion } from '../lib/motion';
 import { useApiGet } from '../lib/useApi';
 import { KIND_HUES, KIND_MODE, kindRows, practiceHref, type KindKey, type KindRow, type Line } from './hub';
 import { askMicrophone, useMicBlocked, type MicAnswer } from './microphone';
@@ -50,6 +51,7 @@ export function PracticeHub(): React.JSX.Element {
   const blocked = useMicBlocked();
   const [mic, setMic] = useState<MicAnswer | 'asking' | null>(null);
   const [picking, setPicking] = useState(false);
+  const note = useRef<HTMLDivElement>(null);
 
   const speak = async (): Promise<void> => {
     setMic('asking');
@@ -60,6 +62,10 @@ export function PracticeHub(): React.JSX.Element {
 
   // A refusal the browser already holds is said before anything is pressed.
   const problem = mic && mic !== 'asking' && mic !== 'granted' ? mic : blocked ? 'denied' : null;
+  // Said after a press, the note under the list is brought into view, since on a phone it is below the fold.
+  useEffect(() => {
+    if (mic && mic !== 'asking' && mic !== 'granted') note.current?.scrollIntoView?.({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  }, [mic]);
   const exercise = (id: string): { id: string; web: WebExercise } | undefined => exercises.find((e) => e.id === id);
 
   return (
@@ -97,7 +103,7 @@ export function PracticeHub(): React.JSX.Element {
           </ul>
         )}
         {problem && hub.data && (
-          <div className="msg msg-error practice-mic" role="alert">
+          <div className="msg msg-error practice-mic" role="alert" ref={note}>
             <p>{t(MIC_PROBLEM[problem].key)}</p>
             {MIC_PROBLEM[problem].again && (
               <Button variant="secondary" size="sm" onClick={() => void speak()}>

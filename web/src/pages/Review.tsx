@@ -9,10 +9,20 @@ import { useT } from '../i18n/I18nProvider';
 import { LessonPlaceholder } from '../learn/LessonPlaceholder';
 import { PRACTICE_PATHS, SessionPlayer } from '../learn/SessionPlayer';
 import type { EmptyPractice, PracticeSessionView } from '../learn/types';
+import type { MessageKey } from '../i18n/en';
 import { practiceHref } from '../practice/hub';
 
 /** The practice page, where a session of another kind than review starts and ends. */
 const PRACTICE_PAGE = '/app/learn/practice';
+
+/** Each kind's name over its questions; review keeps the player's own. */
+const KIND_TITLE: Record<Exclude<PracticeMode, 'review'>, MessageKey> = {
+  mistakes: 'practice.hub.mistakes',
+  words: 'practice.hub.words',
+  listen: 'practice.hub.listen',
+  speak: 'practice.hub.speak',
+  unit: 'practice.hub.unit',
+};
 
 interface Passed {
   /** "Practise these now": the exercises to practise, from a results screen. */
@@ -165,6 +175,7 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
       session={view}
       kind="practice"
       paths={PRACTICE_PATHS}
+      title={kind && kind !== 'review' ? t(KIND_TITLE[kind]) : undefined}
       exitTo={exitTo}
       exitLabel={exitLabel}
       onPractise={(ids) => navigate('/app/learn/review', { state: { exerciseIds: ids, mode: kind ?? undefined } })}

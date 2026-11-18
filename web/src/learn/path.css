@@ -954,12 +954,15 @@ button.lp-scard:focus-visible {
 [dir='rtl'] .lp-scard-jump svg {
   transform: scaleX(-1);
 }
-/* a shut section's way in by a test, wrapping under its words on a narrow card */
+/* a shut section's way in by a test, under its words and lined up with them, as the phone has it */
 .lp-scard.is-locked {
   flex-wrap: wrap;
 }
+.lp-scard.is-locked .lp-scard-words {
+  flex-basis: calc(100% - 44px - var(--space-4));
+}
 .lp-scard-jump {
-  margin-inline-start: auto;
+  margin-inline-start: calc(44px + var(--space-4));
 }
 
 /*
