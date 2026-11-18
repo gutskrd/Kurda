@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   RANK_TIERS,
   RANK_TIER_KEYS,
-  SEASON_FRAME_SKUS,
   SEASON_REWARD_GEMS,
   divisionOf,
   isRankTier,
@@ -139,7 +138,6 @@ describe('seasons', () => {
     expect(SEASON_REWARD_GEMS).toEqual({ dest: 10, gir: 20, zozan: 35, ciya: 50, lutke: 75, sterk: 100 });
     expect(seasonFrameSku('gir')).toBe('frame_rank_gir');
     expect(seasonFrameSku('lutke')).toBe('frame_rank_lutke_animated');
-    expect(SEASON_FRAME_SKUS).toHaveLength(6);
   });
 });
 

@@ -75,6 +75,6 @@ describe('StoryGameScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back to the story' }));
     expect(navigation.popTo).toHaveBeenCalledWith('StoryReader', { slug: 'bajar' });
     fireEvent.click(screen.getByRole('button', { name: 'Another story' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Stories');
+    expect(navigation.popTo).toHaveBeenCalledWith('Stories');
   });
 });

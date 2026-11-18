@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useModalSlide } from '../a11y/useReducedMotion';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { MarkdownView } from '../grammar/MarkdownView';
@@ -23,6 +24,7 @@ export function UnitGuide({ guide, onClose }: { guide: { title: string; skills: 
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const slide = useModalSlide();
   const [notes, setNotes] = useState<Record<string, { md: string } | { error: string }>>({});
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function UnitGuide({ guide, onClose }: { guide: { title: string; skills: 
   }, [guide, client, t]);
 
   return (
-    <Modal visible={guide !== null} animationType="slide" onRequestClose={onClose}>
+    <Modal visible={guide !== null} animationType={slide} onRequestClose={onClose}>
       {/* A screen of its own, so the path below caps nothing on it. */}
       <ReachReset>
         <GradientBackground>

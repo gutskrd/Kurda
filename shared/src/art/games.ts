@@ -1,19 +1,9 @@
 /**
- * The games' pictures, as the apps ask for them: one cover for each game on
- * Learn's Games page (drawn in game-covers.ts), still or in its moving parts.
- *
- * A cover is a whole square of its own colour — an illustration, not an icon
- * on a tile — so the apps show it edge to edge and round its corners
- * themselves. Every game also has a colour (`gameEmblemTone`) for the page
- * the game is played on, taken from its cover, and a hue (`gameEmblemHue`)
- * for the stamp it is on the Games page.
- *
- * A cover also moves. It is drawn in parts (`gameEmblemLayers`), each with
- * its own acting (game-acting.ts): the apps lay the parts over one another
- * and play each with transforms and opacity only (the website with the
- * browser's animations, the phone on the native driver), so nothing is drawn
- * again while it moves. Where a reader has asked for less motion the still
- * cover is shown instead.
+ * Game covers as the apps request them (drawn in game-covers.ts): one per game on the Games page, still or in moving
+ * parts. A cover fills its square edge to edge; the apps round the corners. Each game also has a page tint
+ * (`gameEmblemTone`) and a stamp hue (`gameEmblemHue`). The moving version is split into parts (`gameEmblemLayers`)
+ * that the apps animate with transforms and opacity only, so nothing is redrawn; under reduced motion they show the
+ * still cover.
  */
 import { GAME_EMBLEM_SAMPLES, sample, type Cover, type GamePose } from './game-acting.js';
 import { COVERS } from './game-covers.js';
@@ -23,23 +13,19 @@ import type { PlayGame } from '../play.js';
 
 export { GAME_EMBLEM_SAMPLES, type GamePose };
 
-/** The games that have a cover, by the name each goes by on the Games page. */
+/** The games that have a cover, by their Games page names. */
 export const GAME_EMBLEMS = ['peyvok', 'rhyme', 'race', 'memory-thief', 'detective', 'last-letter', 'impostor', 'who-am-i'] as const;
 export type GameEmblem = (typeof GAME_EMBLEMS)[number];
 
 export interface GameArtOptions {
-  /** how big it is drawn, in pixels (it is square) */
+  /** Size in pixels; the drawing is square. */
   size?: number;
-  /** its text label; the apps say the game's name beside it and hide the picture from screen readers */
+  /** The accessible label; the apps print the game's name beside it and hide the picture from screen readers. */
   title?: string;
   idPrefix?: string;
 }
 
-/**
- * The colour of each game's own page: the one its cover is remembered by,
- * bright enough to tint a surface in the light theme and in the dark. No two
- * games share one, so two games' pages are never the same page to the eye.
- */
+/** Each game's page tint, taken from its cover, bright enough for light and dark themes. No two games share one. */
 const TONES: Readonly<Record<GameEmblem, string>> = {
   peyvok: '#3fa45b',
   rhyme: '#e96a9c',
@@ -52,12 +38,9 @@ const TONES: Readonly<Record<GameEmblem, string>> = {
 };
 
 /**
- * The hue each game's stamp is printed in (shared `hues.ts`): the one nearest
- * the colour its own page is tinted with (`TONES`, above), so a game is the
- * same colour on its stamp and at its table, and no two the same, so a page
- * of stamps is told apart by colour before a word is read. A cover has to
- * stand off its paper by night as well, when the paper is deep: the thief's
- * night sky is lost on an indigo paper and stands clear of a gold one.
+ * Each game's stamp hue (shared `hues.ts`): the one nearest its page tint, so a game has one colour on its stamp and its
+ * page, and no two games share one. The cover must also stand out on the deep night paper, which rules out some pairs
+ * (the thief's night sky is lost on indigo).
  */
 const HUE_OF: Readonly<Record<GameEmblem, HueName>> = {
   peyvok: 'green',
@@ -91,11 +74,7 @@ export function gameEmblemHue(game: GameEmblem): HueName {
   return HUE_OF[game];
 }
 
-/**
- * The stamp each game played with friends is on the games page, so whatever
- * stands for it elsewhere (an invite's ticket, a join link's page) wears its
- * picture and its colour. A story game has no stamp of its own.
- */
+/** The stamp each multiplayer game uses, so its invites and join pages wear the same picture and colour. Story games have none. */
 export const PLAY_GAME_EMBLEM: Readonly<Partial<Record<PlayGame, GameEmblem>>> = {
   'wordle-battle': 'peyvok',
   'rhyme-match': 'rhyme',
@@ -104,7 +83,7 @@ export const PLAY_GAME_EMBLEM: Readonly<Partial<Record<PlayGame, GameEmblem>>> =
   'who-am-i': 'who-am-i',
 };
 
-/** A game's own hue, its stamp's; null for a story game, which has none and takes the page's violet. */
+/** A game's stamp hue; null for a story game, which has none and uses the page's violet. */
 export function playGameHue(game: PlayGame): HueName | null {
   const emblem = PLAY_GAME_EMBLEM[game];
   return emblem ? HUE_OF[emblem] : null;
@@ -119,12 +98,12 @@ export function gameEmblemSvg(opts: GameArtOptions & { game: GameEmblem }): stri
   return dr.svg(size, opts.title ?? cover.title);
 }
 
-/** One part of a moving cover: its own picture, the point it turns about, and where it is at every sample of the loop. */
+/** One part of a moving cover: its picture, its pivot, and its pose at every sample of the loop. */
 export interface GameEmblemLayer {
   svg: string;
-  /** in the picture's units, 0 to 120 from its upper left */
+  /** In picture units, 0 to 120 from the upper left. */
   pivot: readonly [number, number];
-  /** GAME_EMBLEM_SAMPLES + 1 poses, evenly spaced over the loop; null for a part that never moves */
+  /** GAME_EMBLEM_SAMPLES + 1 poses, evenly spaced over the loop; null for a part that never moves. */
   poses: GamePose[] | null;
 }
 
@@ -133,11 +112,7 @@ export function gameEmblemLoopMs(game: GameEmblem): number {
   return coverOf(game).loopMs;
 }
 
-/**
- * A game's cover in its moving parts, back to front. Each is a whole picture
- * of the cover's size holding one part of it, so the apps lay them over one
- * another and move each by its poses.
- */
+/** A game's cover in moving parts, back to front; each part is a full-size picture, so the apps stack and move them. */
 export function gameEmblemLayers(opts: GameArtOptions & { game: GameEmblem }): GameEmblemLayer[] {
   const cover = coverOf(opts.game);
   const size = checkSize(opts.size, 120);

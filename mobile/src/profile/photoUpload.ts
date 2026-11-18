@@ -49,11 +49,12 @@ async function uploadPicture(
   t: Translate,
   locale?: string,
 ): Promise<UploadResult> {
-  try {
+  // the bytes go past the client, which renews a session that has run out (15 minutes): a refusal for that is
+  // answered by asking for the account through the client, which renews it, and sending once more
+  const attempt = async (): Promise<FileSystem.FileSystemUploadResult | null> => {
     const token = await client.getAccessToken();
-    if (!token) return { ok: false, error: t('upload.sessionExpired') };
-
-    const res = await FileSystem.uploadAsync(`${client.baseUrl}${path}`, photo.uri, {
+    if (!token) return null;
+    return FileSystem.uploadAsync(`${client.baseUrl}${path}`, photo.uri, {
       httpMethod: 'POST',
       headers: {
         authorization: `Bearer ${token}`,
@@ -61,6 +62,14 @@ async function uploadPicture(
       },
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
     });
+  };
+  try {
+    let res = await attempt();
+    if (res?.status === 401) {
+      await client.get('/me');
+      res = await attempt();
+    }
+    if (!res) return { ok: false, error: t('upload.sessionExpired') };
 
     if (res.status >= 200 && res.status < 300) {
       try {

@@ -4,6 +4,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { textIn } from '../lore/labels';
+import { openableSourceUrl } from '../lore/sourceLink';
 import { useDirection } from '../reports/direction';
 import { Icon } from '../theme/Icon';
 import { heldDim } from '../theme/MotionParts';
@@ -126,18 +127,20 @@ export function StorySources({ story }: { story: Story }): React.JSX.Element | n
       <Label>{t('lore.sources')}</Label>
       <View style={styles.sources}>
         {story.sources.map((s, i) => {
+          // Only an https address is a link (lore/sourceLink.ts); any other source reads as plain text.
+          const url = openableSourceUrl(s.url);
           const body = (
             <View style={styles.flex}>
               <Text style={[styles.sourceType, dir.text, { color: colors.textSecondary }]}>{t(SOURCE_TYPE_KEY[s.type])}</Text>
-              <Text style={[styles.sourceTitle, dir.free, { color: s.url ? colors.primary : colors.textPrimary }]}>{s.title}</Text>
+              <Text style={[styles.sourceTitle, dir.free, { color: url ? colors.primary : colors.textPrimary }]}>{s.title}</Text>
               {s.author ? <Text style={[styles.sourceMeta, dir.free, { color: colors.textSecondary }]}>{s.author}</Text> : null}
               {s.note ? <Text style={[styles.sourceMeta, dir.free, { color: colors.textSecondary }]}>{s.note}</Text> : null}
             </View>
           );
-          return s.url ? (
+          return url ? (
             <Pressable
               key={`${s.title}-${i}`}
-              onPress={() => void Linking.openURL(s.url!).catch(() => undefined)}
+              onPress={() => void Linking.openURL(url).catch(() => undefined)}
               accessibilityRole="link"
               accessibilityLabel={`${s.title}, ${t(SOURCE_TYPE_KEY[s.type])}`}
               accessibilityHint={t('lore.source.open')}

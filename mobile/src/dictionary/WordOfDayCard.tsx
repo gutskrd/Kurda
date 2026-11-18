@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
+import { useModalSlide } from '../a11y/useReducedMotion';
 import { PressableScale } from '../theme/MotionParts';
 import { ReachReset } from '../theme/Pressable';
 import { SkeletonText } from '../theme/Skeleton';
@@ -25,6 +26,7 @@ export function WordOfDayCard() {
   const { t } = useI18n();
   const [word, setWord] = useState<WordOfDay | null>(null);
   const [open, setOpen] = useState(false);
+  const slide = useModalSlide();
   // until the first answer, the card's place is held in grey; with no word (or no answer) it is given up
   const [settled, setSettled] = useState(false);
 
@@ -62,7 +64,7 @@ export function WordOfDayCard() {
           {word.definitionEn ?? word.definitionKu ?? ''}
         </Text>
       </PressableScale>
-      <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} animationType={slide} onRequestClose={() => setOpen(false)}>
         {/* the entry is a screen of its own, not beside the Learn page's controls: their groups do not cap it */}
         <ReachReset>
           <EntryDetail entryId={word.entryId} onBack={() => setOpen(false)} />

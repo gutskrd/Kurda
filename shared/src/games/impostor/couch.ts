@@ -1,33 +1,14 @@
 /**
- * Impostor on one phone, passed round a room.
+ * Impostor on one phone passed round a room: each player reads their card in private as the phone goes from hand to hand,
+ * clues are said aloud, the phone keeps the order and time, and at the end it takes the votes and turns the cards over.
+ * Three ways: `classic` (the impostor sees only the category), `blind` (the impostor sees nothing) and `odd` (nobody is
+ * told: the odd one out holds a different word of the same category and must work it out).
  *
- * The table's own game (rules.ts) is played apart, each on their own screen,
- * with typed clues the server judges. This one is for people sitting together:
- * the phone goes from hand to hand so each can read their card in private,
- * the clues are said out loud, the phone keeps the order and the time, and at
- * the end it takes the votes and turns the cards over.
- *
- * Three ways to play it:
- *   classic — everyone holds the word but the impostor, who is told only the category
- *   blind   — the impostor is told nothing at all
- *   odd     — nobody is told they are the impostor: the odd one out simply holds
- *             a different word of the same category, and has to work it out
- *
- * These are the rules alone, pure: the same state in, the same state out, and
- * every draw (who the impostor is, who speaks first, how the guess is laid
- * out) comes from the seed a round is started with. The cards are approved
- * word cards the server deals in a batch (api/src/games/couch.ts); the players'
- * names never leave the phone.
- *
- * Two impostors are hunted one at a time: once the room catches the first
- * (and the first has had their guess at the word), everyone else votes once
- * more for the second, against a short clock, and an impostor still hidden
- * after that is paid for it. Nobody speaks first holding no word: the order
- * goes round from the first seat after the drawn one that is not an impostor.
- *
- * Nothing is paid for a round played this way. The phone that holds every
- * card cannot be the judge of who won, so a round here earns no XP and moves
- * no rating: it is a game for the room, and that is all it is.
+ * Pure rules: every draw (impostors, first speaker, guess layout) comes from the round's seed. Cards are approved word
+ * cards dealt in batches by the server (api/src/games/couch.ts); players' names never leave the phone. Two impostors are
+ * hunted one at a time: once the first is caught and has guessed, the others vote again against a short clock, and an
+ * impostor still hidden is paid for it. Nobody without a word speaks first. Nothing here pays: the phone holds every card,
+ * so it cannot judge who won, and a round earns no XP and moves no rating.
  */
 import type { Meanings } from '../content.js';
 import type { GameDialect } from '../dialect.js';
@@ -53,10 +34,10 @@ export type CouchClueSeconds = (typeof COUCH_CLUE_SECONDS)[number];
 /** The time the room has to argue before it votes; 0 goes straight to the vote. */
 export const COUCH_TALK_SECONDS = [0, 60, 120, 180, 300] as const;
 export type CouchTalkSeconds = (typeof COUCH_TALK_SECONDS)[number];
-/** A vote each casts in private as the phone goes round, or one the room makes together by pointing. */
+/** A private vote each casts as the phone goes round, or one the room makes together by pointing. */
 export const COUCH_VOTES = ['secret', 'open'] as const;
 export type CouchVote = (typeof COUCH_VOTES)[number];
-/** The time the room has for its second vote, once one of two impostors is caught: short, since the arguing is done. */
+/** The time for the room's second vote once one of two impostors is caught: short, since the arguing is done. */
 export const COUCH_SECOND_VOTE_SECONDS = 30;
 
 export interface CouchSettings {
@@ -76,21 +57,21 @@ export interface CouchCard {
   meanings: Meanings;
   /** the category, in Kurdish, with its meaning */
   hint: { ku: string; meanings: Meanings };
-  /** the category's slug, which its picture is found by; absent from a server that does not say */
+  /** the category slug its picture is found by; absent from servers that do not send it */
   category?: string;
   /** other approved words the caught impostor's guess is chosen among */
   decoys: string[];
-  /** another approved word of the same category, for the odd one out; null where the category has no other */
+  /** another approved word of the same category for the odd one out; null when the category has no other */
   twin: { word: string; meanings: Meanings } | null;
 }
 
-/** How many cards one request for a deck may ask for, and how many it gets when it does not say. */
+/** How many cards one deck request may ask for, and how many it gets by default. */
 export const COUCH_DECK_MAX = 20;
 export const COUCH_DECK_DEFAULT = 10;
-/** How many words already played tonight a request for a deck may ask to be spared, so an evening does not repeat itself. */
+/** How many words already played tonight a deck request may exclude, so an evening does not repeat itself. */
 export const COUCH_DECK_EXCLUDE_MAX = 100;
 
-/** A category the game can be played in at one difficulty: its name as the cards give it, and how many cards it has. */
+/** A category playable at one difficulty: its name as the cards give it, and its card count. */
 export interface CouchCategory {
   slug: string;
   ku: string;
@@ -98,7 +79,7 @@ export interface CouchCategory {
   cards: number;
 }
 
-/** Where the game is offered in one variety: each difficulty that has enough approved cards, with its categories. */
+/** Where the game is offered in one variety: each difficulty with enough approved cards, and its categories. */
 export interface CouchOffer {
   dialect: GameDialect;
   difficulties: Array<{ difficulty: 'beginner' | 'intermediate' | 'advanced'; cards: number; categories: CouchCategory[] }>;
@@ -110,18 +91,18 @@ export interface CouchDeck {
   cards: CouchCard[];
 }
 
-/** `second` is the room's vote for the other impostor, once one of two has been caught. */
+/** `second` is the room's vote for the other impostor, once one of two is caught. */
 export type CouchPhase = 'deal' | 'clues' | 'talk' | 'vote' | 'guess' | 'second' | 'reveal';
 /** How a round ends: the impostor got away, was caught, or was caught and named the word. */
 export type CouchEnd = 'escaped' | 'caught' | 'guessed';
-/** Why the impostors got away: the top of the vote was shared, it landed on someone else, or nobody named anyone. */
+/** Why the impostors got away: a shared top of the vote, the vote landing on someone else, or nobody named. */
 export type CouchEscape = 'tie' | 'wrong-out' | 'no-votes';
 
 /** The room's second vote, for the impostor still hidden once the other is caught. */
 export interface CouchSecondVote {
   /** who votes, in seat order: everyone but the impostor already caught */
   voters: number[];
-  /** a private vote: each voter's choice in `voters` order as far as it has got; null for one who would not choose */
+  /** a private vote: each voter's choice in `voters` order so far; null for one who would not choose */
   votes: Array<number | null>;
   /** the seat this vote landed on, once counted; null when it could not agree */
   accused: number | null;
@@ -145,22 +126,21 @@ export interface CouchState {
   dealt: number;
   /** the clue being said: its place in the whole run of them, from 0 */
   turn: number;
-  /** a private vote: each seat's choice in seat order as far as it has got; null for a seat that would not choose */
+  /** a private vote: each seat's choice in seat order so far; null for a seat that would not choose */
   votes: Array<number | null>;
   /** the seat the room voted out, once counted; null when it could not agree */
   accused: number | null;
   /** the option the caught impostor chose */
   guessed: number | null;
-  /** how the hunt for the first impostor ended; set once it has, which is before the reveal when a second vote follows */
+  /** how the hunt for the first impostor ended; set when it did, before the reveal when a second vote follows */
   endedBy: CouchEnd | null;
-  /** the room asked for an odd word, and this card has none: the round is played the plain way (absent from a round started before this was kept) */
+  /** the room asked for an odd word and this card has none, so the round is played the plain way (absent on older rounds) */
   oddFallback?: boolean;
-  /** the second vote, in a round with two impostors once the first is caught; absent or null otherwise */
+  /** the second vote, in a round with two impostors once the first is caught; otherwise absent or null */
   second?: CouchSecondVote | null;
 }
 
-/** What a seat's card shows when it is turned up. */
-/** The category a card shows: its name, what that means, and the slug its picture is found by where the server said it. */
+/** The category a card shows: its name, its meaning, and the slug its picture is found by where the server sent one. */
 export interface CouchHint {
   ku: string;
   meanings: Meanings;
@@ -171,7 +151,7 @@ export type CouchHand = { role: 'player'; word: string; meanings: Meanings; hint
 
 export type CouchNameSlip = 'too-few' | 'too-many' | 'empty' | 'same';
 
-/** A name as it is kept: one line, no control characters, trimmed to what fits. */
+/** A name as kept: one line, no control characters, trimmed to fit. */
 export function couchName(raw: string): string {
   return [...raw.normalize('NFC').replace(/[\u0000-\u001f\u007f-\u009f‎‏‪-‮⁦-⁩]/g, ' ').replace(/\s+/g, ' ').trim()].slice(0, COUCH_NAME_MAX).join('').trim();
 }
@@ -187,18 +167,16 @@ export function couchNames(raw: readonly string[]): { ok: true; names: string[] 
   return { ok: true, names };
 }
 
-/** What a phone keeps from one evening to the next: who played, and how the game was set. Never a card, never a score. */
+/** What a phone keeps between evenings: who played and how the game was set, never a card or a score. */
 export interface CouchKept {
   names: string[];
   settings: CouchSettings;
 }
 
 /**
- * What a phone kept, read back: the names it finds, each as `couchName` would
- * keep it, and every setting that is still one of the game's own, the rest as
- * a new game has them. Anything that is not the shape it wrote is no memory at
- * all, so a value another version or another hand left there cannot set up a
- * game the rules do not have.
+ * What a phone kept, read back: names as `couchName` would keep them and every setting still valid, the rest at new-game
+ * defaults. Anything not in the written shape is ignored entirely, so a value from another version cannot set up a game the
+ * rules lack.
  */
 export function couchKept(raw: unknown): CouchKept | null {
   if (!raw || typeof raw !== 'object') return null;
@@ -219,7 +197,7 @@ export function couchKept(raw: unknown): CouchKept | null {
   };
 }
 
-/** The settings a room of this size and this card can be played with: what does not fit falls back to the plain game. */
+/** The settings a room of this size and this card can be played with; what does not fit falls back to the plain game. */
 export function couchSettingsFor(players: number, card: Pick<CouchCard, 'twin'> | null, wanted: CouchSettings): CouchSettings {
   const settings = { ...wanted };
   if (players < COUCH_TWO_IMPOSTORS_FROM) settings.impostors = 1;
@@ -228,10 +206,8 @@ export function couchSettingsFor(players: number, card: Pick<CouchCard, 'twin'> 
 }
 
 /**
- * A round, dealt: the impostors, the order and the guess's layout all drawn
- * from the seed. `wanted` is how the room set the game, passed afresh every
- * round, so one card without a second word plays the plain way for that round
- * alone (and says so in `oddFallback`) rather than for the rest of the evening.
+ * A round dealt from the seed: the impostors, the order and the guess layout. `wanted` is passed afresh each round, so a
+ * card without a second word plays the plain way for that round only (`oddFallback`), not for the rest of the evening.
  */
 export function couchStart(dialect: GameDialect, players: readonly string[], wanted: CouchSettings, card: CouchCard, seed: string): CouchState {
   const settings = couchSettingsFor(players.length, card, wanted);
@@ -246,7 +222,7 @@ export function couchStart(dialect: GameDialect, players: readonly string[], wan
     card: { ...card, decoys: [...card.decoys] },
     options: seededOrder(seed, 'options', [card.word, ...card.decoys].slice(0, IMPOSTOR_GUESS_OPTIONS)),
     impostors,
-    // the speaking order goes round the room as people sit, from a seat the seed draws, or the next one after it holding the word
+    // The speaking order goes round as people sit, from a seed-drawn seat or the next one after it holding the word.
     order: impostorFirstSpeaker(
       seats.map((_, i) => (i + Math.floor(seededUnit(seed, 'first') * seats.length)) % seats.length),
       impostors,
@@ -263,7 +239,7 @@ export function couchStart(dialect: GameDialect, players: readonly string[], wan
   };
 }
 
-/** A seat's card, as its holder alone should see it. In the odd-word game the odd one's card looks like anyone's. */
+/** A seat's card as only its holder should see it; in the odd-word game the odd one's card looks like anyone's. */
 export function couchHand(state: CouchState, seat: number): CouchHand {
   const hint: CouchHint = { ku: state.card.hint.ku, meanings: state.card.hint.meanings, category: state.card.category };
   if (!state.impostors.includes(seat)) return { role: 'player', word: state.card.word, meanings: state.card.meanings, hint };
@@ -271,12 +247,12 @@ export function couchHand(state: CouchState, seat: number): CouchHand {
   return { role: 'impostor', hint: state.settings.way === 'classic' ? hint : null };
 }
 
-/** The seat whose card is to be read now, while the phone goes round; null once everyone has. */
+/** The seat whose card is to be read now as the phone goes round; null once everyone has. */
 export function couchReader(state: CouchState): number | null {
   return state.phase === 'deal' && state.dealt < state.players.length ? state.dealt : null;
 }
 
-/** The reader has read their card and hidden it again: on to the next, or to the clues. */
+/** The reader has read and hidden their card: on to the next, or to the clues. */
 export function couchSeen(state: CouchState): CouchState {
   if (state.phase !== 'deal') return state;
   const dealt = state.dealt + 1;
@@ -290,7 +266,7 @@ export function couchSpeaker(state: CouchState): { seat: number; round: number }
   return { seat: state.order[state.turn % n]!, round: Math.floor(state.turn / n) + 1 };
 }
 
-/** The clue is said (or its time ran out): the next speaker, or the talk, or straight to the vote. */
+/** The clue is said or its time ran out: the next speaker, the talk, or straight to the vote. */
 export function couchNextClue(state: CouchState): CouchState {
   if (state.phase !== 'clues') return state;
   const turn = state.turn + 1;
@@ -317,13 +293,13 @@ export function couchStillHidden(state: CouchState): number | null {
   return state.impostors.find((seat) => seat !== state.accused) ?? null;
 }
 
-/** The seats the room may name now: anyone in the first vote, anyone but the impostor already caught in the second. */
+/** The seats the room may name now: anyone in the first vote, anyone but the caught impostor in the second. */
 export function couchSuspects(state: CouchState): number[] {
   const seats = state.players.map((_, seat) => seat);
   return state.phase === 'second' ? seats.filter((seat) => seat !== state.accused) : seats;
 }
 
-/** The hunt for the first impostor is over: the reveal, or the second vote when another impostor is still hidden. */
+/** The hunt for the first impostor is over: the reveal, or the second vote while another impostor hides. */
 function finish(state: CouchState, endedBy: CouchEnd): CouchState {
   const next = { ...state, endedBy };
   if (endedBy !== 'escaped' && couchStillHidden(next) !== null && !next.second) {
@@ -333,7 +309,7 @@ function finish(state: CouchState, endedBy: CouchEnd): CouchState {
   return { ...next, phase: 'reveal' };
 }
 
-/** The seat a set of private votes lands on: the most votes, alone at the top; null when nobody chose or two share the top. */
+/** The seat a set of private votes lands on: the most votes alone at the top; null when nobody chose or the top is shared. */
 function tallied(votes: ReadonlyArray<number | null>): number | null {
   const tally = new Map<number, number>();
   for (const v of votes) if (v !== null) tally.set(v, (tally.get(v) ?? 0) + 1);
@@ -342,28 +318,28 @@ function tallied(votes: ReadonlyArray<number | null>): number | null {
   return !top || (ranked[1] && ranked[1][1] === top[1]) ? null : top[0];
 }
 
-/** The room has chosen (or failed to): what follows. */
+/** The room has chosen, or failed to: what follows. */
 function accuse(state: CouchState, accused: number | null): CouchState {
   const next = { ...state, accused };
   if (accused === null || !state.impostors.includes(accused)) return finish(next, 'escaped');
-  // the odd one out never knew: there is no word for them to name
+  // The odd one out never knew, so there is no word for them to name.
   if (state.settings.way === 'odd') return finish(next, 'caught');
   return { ...next, phase: 'guess' };
 }
 
-/** The second vote has landed (or the clock ran out): the reveal. */
+/** The second vote has landed or its clock ran out: the reveal. */
 function settleSecond(state: CouchState, accused: number | null): CouchState {
   return { ...state, phase: 'reveal', second: { ...state.second!, accused, done: true } };
 }
 
-/** Whether a seat can be named now by this voter (null for the room as a whole), or nobody (null) at all. */
+/** Whether this voter (null for the whole room) may name a seat now, or nobody (null). */
 function nameable(state: CouchState, suspect: number | null, voter: number | null): boolean {
   if (suspect === null) return true;
   if (!Number.isInteger(suspect) || suspect === voter) return false;
   return couchSuspects(state).includes(suspect);
 }
 
-/** One private vote, for a seat other than the voter's own, or for nobody; in the second vote, never the impostor already caught. */
+/** One private vote, for a seat other than the voter's own or for nobody; in the second vote never the caught impostor. */
 export function couchCastVote(state: CouchState, suspect: number | null): CouchState {
   const voter = couchVoter(state);
   if (voter === null || !nameable(state, suspect, voter)) return state;
@@ -374,18 +350,18 @@ export function couchCastVote(state: CouchState, suspect: number | null): CouchS
   }
   const next = { ...state, votes: [...state.votes, suspect] };
   if (next.votes.length < next.players.length) return next;
-  // nobody chose, or two share the top: the room could not agree
+  // Nobody chose, or the top is shared: the room could not agree.
   return accuse(next, tallied(next.votes));
 }
 
-/** The room's own choice, made by pointing: one seat, or nobody when it cannot agree. */
+/** The room's own choice made by pointing: one seat, or nobody when it cannot agree. */
 export function couchPoint(state: CouchState, suspect: number | null): CouchState {
   if (state.settings.vote !== 'open' || (state.phase !== 'vote' && state.phase !== 'second')) return state;
   if (!nameable(state, suspect, null)) return state;
   return state.phase === 'second' ? settleSecond(state, suspect) : accuse(state, suspect);
 }
 
-/** The second vote's clock ran out: the votes cast so far decide, and an impostor nobody agreed on stays hidden. */
+/** The second vote's clock ran out: the votes so far decide, and an impostor nobody agreed on stays hidden. */
 export function couchSecondTimeUp(state: CouchState): CouchState {
   if (state.phase !== 'second' || !state.second) return state;
   return settleSecond(state, state.settings.vote === 'secret' ? tallied(state.second.votes) : null);
@@ -426,7 +402,7 @@ export function couchTotals(totals: readonly number[], state: CouchState): numbe
   return state.players.map((_, seat) => (totals[seat] ?? 0) + (round[seat] ?? 0));
 }
 
-/** Everything, once the round is over: who it was, the word, how it went. */
+/** Everything once the round is over: who it was, the word, how it went. */
 export function couchReveal(state: CouchState): {
   impostors: number[];
   word: string;
@@ -439,7 +415,7 @@ export function couchReveal(state: CouchState): {
   endedBy: CouchEnd;
   /** why the impostors got away; null when the first was caught */
   escape: CouchEscape | null;
-  /** the second vote, in a round with two impostors once the first was caught: whom it landed on, and each vote by seat */
+  /** the second vote in a round with two impostors once the first was caught: whom it landed on, and each vote by seat */
   second: { accused: number | null; caught: boolean; votes: Array<{ seat: number; for: number | null }> } | null;
   /** the impostor still hidden at the end, paid for it; null when there is none */
   stillHidden: number | null;
@@ -447,7 +423,7 @@ export function couchReveal(state: CouchState): {
   if (state.phase !== 'reveal' || !state.endedBy) return null;
   const other = couchStillHidden(state);
   const second = state.second?.done ? state.second : null;
-  // a room that points and names nobody could not agree, as a shared top of private votes is
+  // A room that points and names nobody could not agree, like a shared top of private votes.
   const named = state.settings.vote === 'open' || state.votes.some((v) => v !== null);
   const escape: CouchEscape | null = state.endedBy !== 'escaped' ? null : state.accused !== null ? 'wrong-out' : named ? 'tie' : 'no-votes';
   return {

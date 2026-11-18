@@ -20,9 +20,9 @@ describe('pushClient', () => {
     expect(post).toHaveBeenCalledWith('/me/devices/heartbeat', { token: 'tok' });
   });
 
-  it('removeDevice posts to the remove endpoint', async () => {
+  it('removeDevice posts to the remove endpoint, without renewing the session it is the last request of', async () => {
     const { client, post } = fakeClient();
     await removeDevice(client, 'tok');
-    expect(post).toHaveBeenCalledWith('/me/devices/remove', { token: 'tok' });
+    expect(post).toHaveBeenCalledWith('/me/devices/remove', { token: 'tok' }, { once: true });
   });
 });

@@ -1,3 +1,4 @@
+import { shuffle, type Random } from '../alphabet/practice.js';
 import { wordSetSounds, type WordSetSounds } from './sounds.js';
 import {
   CALENDAR_MONTHS,
@@ -14,18 +15,12 @@ import {
 } from './words.js';
 
 /**
- * "Check yourself" for a word set: a round of eight, made the way the
- * alphabet's is (alphabet/practice.ts says why each part is there) —
- * retrieval rather than rereading, the kinds of question mixed, the wrong
- * options the words people really mix up, a miss shown at once and asked
- * again later, and nothing scored or saved.
- *
+ * "Check yourself" for a word set: a round of eight built like the alphabet's (alphabet/practice.ts), with no score.
  * The kinds:
- *  - hear: a word is said; pick it — by its colour or its digits, for those
- *    sets, else by the word written down
+ *  - hear: a word is said; pick it by its colour or digits for those sets, else by the written word
  *  - see: a colour, a number or a meaning is shown; pick its word
  *  - read: a word is shown; pick its colour, its digits or what it means
- *  - after: the day after this one — the week goes round, Saturday first
+ *  - after: the day after this one, the week going round from Saturday
  *  - next: the month after this one, on its own calendar
  *  - newroz: the month Newroz falls in, or the Kurdish month it starts
  */
@@ -48,8 +43,6 @@ export interface WordQuestion {
   topic: SetWord;
 }
 
-export const WORD_ROUND = 8;
-
 const PATTERN: Record<WordSetId, readonly WordQuestionKind[]> = {
   colours: ['hear', 'see', 'read', 'hear', 'see', 'read', 'hear', 'see'],
   numbers: ['hear', 'see', 'read', 'hear', 'see', 'read', 'hear', 'read'],
@@ -64,24 +57,12 @@ const NEAR_COLOUR: Record<string, readonly string[]> = {
   purple: ['pink', 'blue'], pink: ['red', 'purple'], grey: ['white', 'black'],
 };
 
-type Random = () => number;
-
 /** The synthesised clips alone: what a round asks with before any recordings have arrived. */
 const SYNTHESISED = wordSetSounds();
 
-function shuffle<T>(xs: readonly T[], rand: Random): T[] {
-  const out = [...xs];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [out[i], out[j]] = [out[j]!, out[i]!];
-  }
-  return out;
-}
-
 /**
- * The words most easily mistaken for `word`, nearest first: the colours
- * beside it; the numbers built on the same digit (heft, hivdeh, heftê), then
- * the nearest in value; the days and months beside it.
+ * The words most easily mistaken for `word`, nearest first: neighbouring colours, days and months; numbers built on the
+ * same digit, then the nearest in value.
  */
 function nearOf(word: SetWord): SetWord[] {
   switch (word.set) {
@@ -146,10 +127,8 @@ function question(kind: WordQuestionKind, w: SetWord, dialect: Dialect, rand: Ra
 }
 
 /**
- * A round of eight for `set`, in `dialect`. `focus` narrows it to the words
- * missed last time (by id). `rand` is injectable so the tests can pin a round
- * down; `sounds` is where each word plays from now (`wordSetSounds`), and a
- * listening question with nothing to hear gives way to one to read.
+ * A round of eight for `set` in `dialect`. `focus` narrows it to the ids missed last time, `rand` is injectable for tests,
+ * and `sounds` is where each word plays from (`wordSetSounds`); a listening question with nothing to hear becomes a reading one.
  */
 export function makeWordRound(
   set: WordSetId,
@@ -175,7 +154,7 @@ export function makeWordRound(
     const month = shuffle(NEWROZ_MONTHS.filter((m) => !want || want.has(m.id)), rand)[0];
     return month ? question('newroz', month, dialect, rand, sounds) : null;
   };
-  // a kind with nothing to ask of these words gives way to one that has: every set can be seen, and every month followed
+  // A kind with nothing to ask of these words gives way to one that has: every set can be seen, and every month followed.
   return PATTERN[set]
     .map((kind) => (kind === 'newroz' ? newroz() : ask(kind)) ?? ask('see') ?? ask('next'))
     .filter((q): q is WordQuestion => q !== null);

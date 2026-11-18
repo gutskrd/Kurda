@@ -58,7 +58,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useCourseDialect } from '../learn/courseDialect';
 import { PartyTimer } from '../party/Composer';
-import { PARTY_DIALECT_NAME, PARTY_LEVEL_KEY } from '../party/PartyStart';
+import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { useDirection } from '../reports/direction';
 import { ChoiceChips, Note, SectionLabel } from '../stories/ui';
 import { ClayButton, GlassCard, Segmented } from '../theme/glass';
@@ -75,6 +75,7 @@ import { WAY_KEY, WAY_NOTE } from './ways';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 import { turnCard } from '../theme/animate';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
  * Impostor on one phone, passed round a room.
@@ -534,7 +535,7 @@ function Setup({
                 options={offers.map((o) => o.dialect)}
                 value={offer.dialect}
                 onChange={setDialect}
-                labelOf={(d) => PARTY_DIALECT_NAME[d]}
+                labelOf={(d) => t(dialectNameKey(d))}
               />
             </View>
           ) : null}

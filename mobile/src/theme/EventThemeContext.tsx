@@ -1,12 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { onBackFromBackground } from '../net/backFromBackground';
 import { resolveEventTheme, type ActiveEventLite, type EventThemePack } from './eventThemes.js';
 import { getThemeOptOut, setThemeOptOut } from './themePref.js';
 
 interface EventThemeValue {
   /** The pack to apply, or null (opted out, or nothing live). */
   pack: EventThemePack | null;
+  /** Whether any event is running now, theme or not: the menu offers the events page only then. */
+  live: boolean;
   optedOut: boolean;
   setOptedOut: (value: boolean) => void;
   /** Resolves again now (e.g. on a screen transition near the event boundary). */
@@ -15,6 +18,7 @@ interface EventThemeValue {
 
 const EventThemeContext = createContext<EventThemeValue>({
   pack: null,
+  live: false,
   optedOut: false,
   setOptedOut: () => {},
   refresh: () => {},
@@ -24,9 +28,9 @@ const EventThemeContext = createContext<EventThemeValue>({
 const POLL_MS = 60_000;
 
 /**
- * Tracks the active event theme app-wide. Live events are re-polled on mount, on return to the foreground and on a
- * slow interval, so the theme applies while an event runs and reverts when it ends, with no stored state to go
- * stale. Opting out gives null.
+ * Tracks the active event theme app-wide. Live events are re-polled on mount, on return from the background, and on
+ * a slow interval that stops in the background, so the theme applies while an event runs and reverts when it ends,
+ * with no stored state to go stale. Opting out gives null.
  */
 export function EventThemeProvider({ children }: { children: ReactNode }) {
   const { client, status } = useAuth();
@@ -54,14 +58,29 @@ export function EventThemeProvider({ children }: { children: ReactNode }) {
   }, [client, status]);
 
   useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const stop = (): void => {
+      if (interval) clearInterval(interval);
+      interval = null;
+    };
+    const start = (): void => {
+      stop();
+      interval = setInterval(refresh, POLL_MS);
+    };
     refresh();
-    const interval = setInterval(refresh, POLL_MS);
-    const sub = AppState.addEventListener('change', (s: AppStateStatus) => {
-      if (s === 'active') refresh();
+    if (AppState.currentState !== 'background') start();
+    const away = AppState.addEventListener('change', (s: AppStateStatus) => {
+      if (s === 'background') stop();
+    });
+    const stopListening = onBackFromBackground(AppState, () => {
+      refresh();
+      start();
     });
     return () => {
-      clearInterval(interval);
-      sub.remove();
+      stop();
+      // react-native-web returns nothing where the page cannot report its visibility.
+      away?.remove();
+      stopListening();
     };
   }, [refresh]);
 
@@ -73,7 +92,7 @@ export function EventThemeProvider({ children }: { children: ReactNode }) {
   const pack = resolveEventTheme(active, optedOut);
 
   return (
-    <EventThemeContext.Provider value={{ pack, optedOut, setOptedOut, refresh }}>
+    <EventThemeContext.Provider value={{ pack, live: active.length > 0, optedOut, setOptedOut, refresh }}>
       {children}
     </EventThemeContext.Provider>
   );

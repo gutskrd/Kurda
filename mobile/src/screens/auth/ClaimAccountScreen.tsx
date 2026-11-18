@@ -37,8 +37,11 @@ export function ClaimAccountScreen({
   onExit,
   onSignIn,
   onForgotPassword,
+  presented = false,
 }: {
   onExit: () => void;
+  /** Opened over the app (✕ on the first step) rather than pushed within a flow. */
+  presented?: boolean;
   /** "I already have an account": the sign-in flow, which replaces the guest session. */
   onSignIn: (email?: string) => void;
   onForgotPassword: (email: string) => void;
@@ -237,7 +240,7 @@ export function ClaimAccountScreen({
     </View>
   ) : null;
 
-  return <StepFlow steps={steps} onFinish={() => undefined} onExit={onExit} notice={notice} testID="claim-flow" />;
+  return <StepFlow steps={steps} onFinish={() => undefined} onExit={onExit} presented={presented} notice={notice} testID="claim-flow" />;
 }
 
 const styles = StyleSheet.create({

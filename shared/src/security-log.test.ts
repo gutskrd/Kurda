@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   SECURITY_CATEGORIES,
   SECURITY_EVENTS,
-  SECURITY_EVENT_KINDS,
-  SECURITY_RETENTION_DAYS,
   isSecurityEventKind,
   needsAttention,
   securityEventInfo,
@@ -12,8 +10,7 @@ import {
 
 describe('the security log’s kinds of event', () => {
   it('names every kind, in a category the panel knows, with what it means', () => {
-    for (const kind of SECURITY_EVENT_KINDS) {
-      const info = SECURITY_EVENTS[kind];
+    for (const [kind, info] of Object.entries(SECURITY_EVENTS)) {
       expect(SECURITY_CATEGORIES).toContain(info.category);
       expect(info.title.length).toBeGreaterThan(3);
       expect(info.meaning.length).toBeGreaterThan(10);
@@ -31,12 +28,10 @@ describe('the security log’s kinds of event', () => {
     expect(securitySeverity('signup.rejected', true)).toBe('notice');
   });
 
-  it('puts warnings and worse on the list, and keeps them a year', () => {
+  it('puts warnings and worse on the list', () => {
     expect(needsAttention('warning')).toBe(true);
     expect(needsAttention('critical')).toBe(true);
     expect(needsAttention('notice')).toBe(false);
-    expect(SECURITY_RETENTION_DAYS.critical).toBe(365);
-    expect(SECURITY_RETENTION_DAYS.info).toBe(90);
   });
 
   it('shows a kind it does not know rather than nothing', () => {

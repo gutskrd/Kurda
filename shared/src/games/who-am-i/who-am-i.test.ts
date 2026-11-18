@@ -9,7 +9,6 @@ import {
   WHO_AM_I_ROOM_GUESSES,
   WHO_AM_I_SAYS,
   WHO_AM_I_START_POINTS,
-  answerFor,
   asTwoAnswers,
   askedVerdict,
   dealWhoAmI,
@@ -73,8 +72,8 @@ describe('the facts and the points', () => {
     expect(WHO_AM_I_FACTS.length).toBeGreaterThanOrEqual(12);
     expect(isWhoAmIFact('can-fly')).toBe(true);
     expect(isWhoAmIFact('can-sing')).toBe(false);
-    expect(answerFor(POOL[0]!, 'four-legs')).toBe(true);
-    expect(answerFor(POOL[0]!, 'can-fly')).toBe(false);
+    expect(verdictFor(POOL[0]!, 'four-legs')).toBe('yes');
+    expect(verdictFor(POOL[0]!, 'can-fly')).toBe('no');
   });
 
   it('scores fewer questions higher, a solved identity at least one, an unsolved one nothing', () => {
@@ -138,7 +137,7 @@ function move(state: WhoAmITableState, seat: number, m: Parameters<typeof R.appl
 function firstQuestion(state: WhoAmITableState, seat: number): { id: string; truth: boolean } {
   const deal = state.seats.find((s) => s.seat === seat)!.deal!;
   const q = deal.questions[0]!;
-  return { id: q.id, truth: answerFor(deal.identity, q.fact) };
+  return { id: q.id, truth: verdictFor(deal.identity, q.fact) === 'yes' };
 }
 
 describe('the table: who may read which card', () => {
@@ -665,10 +664,9 @@ describe('four answers: what a friend says against what the card says', () => {
     });
   });
 
-  it('reads a card’s row as yes, no or sometimes, and keeps the yes-or-not reading for older callers', () => {
+  it('reads a card’s row as yes, no or sometimes, and an asked question from either of its forms', () => {
     const dog = animal('dog', 'kûçik', { 'at-home': 'sometimes', 'four-legs': true, 'can-fly': false });
     expect(['four-legs', 'can-fly', 'at-home', 'not-set'].map((fact) => verdictFor(dog, fact))).toEqual(['yes', 'no', 'sometimes', 'no']);
-    expect(answerFor(dog, 'at-home')).toBe(false);
     expect(askedVerdict({ question: 'q', answer: true })).toBe('yes');
     expect(askedVerdict({ question: 'q', answer: false, verdict: 'sometimes' })).toBe('sometimes');
   });

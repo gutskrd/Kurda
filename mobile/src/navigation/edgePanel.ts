@@ -126,3 +126,12 @@ export function useEdgePanel({
 
   return { away, panHandlers: pan.panHandlers };
 }
+
+/**
+ * Panels open over a screen close when a page is pushed over it (a banner's
+ * Join, a tapped notification): left open underneath, they took Android's
+ * back from the page in front.
+ */
+export function useCloseOnBlur(navigation: { addListener: (type: 'blur', listener: () => void) => () => void }, close: () => void): void {
+  useEffect(() => navigation.addListener('blur', close), [navigation, close]);
+}

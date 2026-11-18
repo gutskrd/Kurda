@@ -1,27 +1,12 @@
 /**
- * A lip-sync timeline: which mouth shape shows when, while a recording plays.
+ * A lip-sync timeline: cues, each the moment a mouth shape starts and holds until the next; the mouth rests before the
+ * first cue and from the end of the recording on. Stored (the `lipsync` jsonb column) and sent compactly:
  *
- * In memory it is a list of cues, each the moment a shape starts; the shape
- * holds until the next cue. Before the first cue, and from the end of the
- * recording on, the mouth is at rest.
+ *   { "v": 1, "d": 1840, "k": [[0, 0], [80, 3], [150, 5], …, [1690, 0]] }
  *
- * Stored (the `lipsync` jsonb column) and sent to the apps it is compact:
- *
- *   { "v": 1, "d": 1840, "k": [[0, 0], [80, 3], [150, 5], [330, 1], [400, 6], …, [1690, 0]] }
- *
- *   v  the format's version, 1
- *   d  the recording's length in milliseconds
- *   k  the cues as [start in ms, index into VISEMES], start times rising
- *
- * Indices rather than names keep a sentence's timeline to a few hundred bytes,
- * and VISEMES is append-only, so an index never changes its meaning.
- *
- * Every time is media time: milliseconds into the recording itself, counted
- * from the start of the file. A player reads the position from its own clock
- * (`currentTime` in a browser, the position a phone's audio player reports)
- * and asks `visemeAt`, so a recording played at 0.75× or 1.25× stays in step
- * without any scaling: the mouth follows where the sound is, not the wall
- * clock.
+ * v is the format version, d the recording's length in ms, k the cues as [start ms, index into VISEMES] in rising order.
+ * VISEMES is append-only, so an index never changes meaning. Times are media time (ms into the file), so a player asking
+ * `visemeAt` with its own playback position stays in step at any playback rate.
  */
 import { VISEMES, type Viseme } from './visemes.js';
 
@@ -68,12 +53,9 @@ export class LipsyncFormatError extends Error {
 }
 
 /**
- * The stored form of a timeline. Times are rounded to whole milliseconds, a
- * cue at or after the end is dropped (the mouth is at rest there anyway), two
- * cues at one moment keep the later, and a cue that repeats the shape before
- * it is left out. Throws on a timeline that cannot be stored: a duration that
- * is not a positive number of milliseconds, a cue before 0, cues out of order,
- * or a shape that is not one of VISEMES.
+ * The stored form of a timeline: times rounded to whole ms, cues at or after the end dropped, the later of two cues at
+ * one moment kept, and repeats of the previous shape left out. Throws on a duration that is not a positive number of ms,
+ * a cue before 0, cues out of order, or a shape not in VISEMES.
  */
 export function encodeLipsync(timeline: LipsyncTimeline): LipsyncData {
   const d = Math.round(timeline.durationMs);
@@ -137,14 +119,10 @@ function read(data: unknown, limits: LipsyncLimits): LipsyncTimeline | string {
 }
 
 /**
- * A stored timeline, checked strictly: exactly { v, d, k }, version 1, a whole
- * number of milliseconds within `limits`, at most `limits.maxCues` cues, each
- * a [ms, shape] pair inside the recording, times strictly rising, every shape
- * one of VISEMES and never the same as the one before it. Throws a
- * LipsyncFormatError saying what is wrong otherwise.
- *
- * The API checks every timeline with this before storing it, so a client can
- * decode what it is sent without guarding against anything else.
+ * A stored timeline, checked strictly: exactly { v, d, k }, version 1, a whole-ms duration and cue count within `limits`,
+ * each cue a [ms, shape] pair inside the recording, times strictly rising, and no shape repeating the one before. Throws a
+ * LipsyncFormatError otherwise. The API checks every timeline with this before storing it, so clients can trust what they
+ * are sent.
  */
 export function decodeLipsync(data: unknown, limits: LipsyncLimits = {}): LipsyncTimeline {
   const out = read(data, limits);
@@ -162,10 +140,8 @@ export function safeDecodeLipsync(
 }
 
 /**
- * The mouth shape at `ms` into the recording, in media time (see the top of
- * this file): rest before the first cue, from the end of the recording on, and
- * for a time that is not a number. A binary search, so it is cheap enough to
- * ask on every animation frame.
+ * The mouth shape at `ms` of media time: rest before the first cue, from the end on, and for a time that is not a number.
+ * A binary search, cheap enough for every animation frame.
  */
 export function visemeAt(timeline: LipsyncTimeline, ms: number): Viseme {
   const { cues } = timeline;

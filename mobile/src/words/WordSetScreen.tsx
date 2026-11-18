@@ -42,6 +42,7 @@ import { DayName, Digits, Progress, dateIn, meaningOf, useSwatchEdge } from './p
 import { useWordsSeen } from './seen';
 import { WordPractice } from './WordPractice';
 import { WordSheet } from './WordSheet';
+import { dialectNameKey } from '../i18n/dialectName';
 
 const DIALECTS: readonly AlphabetScript[] = ['kmr', 'ckb'];
 
@@ -136,7 +137,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
             options={DIALECTS}
             value={dialect}
             onChange={setChosen}
-            labelOf={(s) => t(s === 'kmr' ? 'games.race.kurmanci' : 'games.race.sorani')}
+            labelOf={(s) => t(dialectNameKey(s))}
             groupLabel={t('alphabet.script.label')}
           />
           <View style={styles.intro}>

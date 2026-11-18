@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
+import { navigation } from '../play/testing/navigation';
 import { LastLetterScreen } from './LastLetterScreen';
 import { forgetLastLetterAvailability } from './availability';
 
@@ -106,6 +107,7 @@ const quiet = { 'GET /play/invites': ok({ incoming: [], outgoing: [] }) };
 describe('LastLetterScreen', () => {
   afterEach(() => {
     cleanup();
+    navigation.setOptions.mockClear();
     userEvents.listeners.clear();
     userEvents.state = 'open';
     forgetLastLetterAvailability();
@@ -161,6 +163,18 @@ describe('LastLetterScreen', () => {
     fireEvent.change(input, { target: { value: 'vexwarin' } });
     fireEvent.click(screen.getByRole('button', { name: 'Play the word' }));
     await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path.endsWith('/moves'))?.body).toEqual({ word: 'vexwarin' }));
+  });
+
+  it('keeps a game under way from being swiped away, and lets the lobby be', async () => {
+    testAuth.client = fakeClient({ ...quiet, 'GET /mp/last-letter/g1': ok(room()) });
+    renderWithProviders(<LastLetterScreen id="g1" onExit={() => undefined} />);
+    await screen.findByRole('button', { name: 'Join code: L S T 2 3 4' });
+    expect(navigation.setOptions).not.toHaveBeenCalledWith({ gestureEnabled: false });
+    cleanup();
+    testAuth.client = fakeClient({ ...quiet, 'GET /mp/last-letter/g1': ok(active()) });
+    renderWithProviders(<LastLetterScreen id="g1" onExit={() => undefined} />);
+    await screen.findByText('Your turn');
+    expect(navigation.setOptions).toHaveBeenLastCalledWith({ gestureEnabled: false });
   });
 
   it('writes a Soranî word right to left', async () => {

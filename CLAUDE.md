@@ -20,6 +20,8 @@ react-router), `mobile` (Expo React Native).
 - No prettier. Hand-format: single quotes, lines up to ~160 columns, match
   the neighbouring code.
 - Comments say why, in full sentences; each module's header explains its job.
+  Keep them short and plain: usually one line, a short paragraph at most. No
+  narration of what the code visibly does, no storytelling, no change history.
 - Test names avoid raw apostrophes (write ’ in the name string).
 - This is a public repository: no third-party product or competitor names,
   no personal data or email addresses, and no tooling talk in code,

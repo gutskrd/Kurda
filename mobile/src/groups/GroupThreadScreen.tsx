@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { canModerateGroup, type GiftCard, type GiftTier, type GroupChatCleared } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -413,9 +413,11 @@ export function GroupThreadScreen({
       }
       void openGiftApi(client, giftId).then((res) => {
         if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: '' });
+        // a gift that cannot be opened now says so, rather than the tap doing nothing
+        else if (!isMaintenance(res.error)) Alert.alert(t('error.generic'), describeError(res.error, t));
       });
     },
-    [client, messages],
+    [client, messages, t],
   );
 
   useEffect(() => {

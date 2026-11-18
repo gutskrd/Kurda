@@ -27,12 +27,14 @@ vi.mock('react-native', () => ({
 }));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { cleanup, renderHook } from '@testing-library/react';
-import { useHardwareBack } from './hardwareBack';
+import { navigation } from '../play/testing/navigation';
+import { useGameBack, useHardwareBack } from './hardwareBack';
 
 afterEach(() => {
   cleanup();
   android.listeners.length = 0;
   android.platform.OS = 'android';
+  navigation.setOptions.mockClear();
 });
 
 describe('useHardwareBack', () => {
@@ -67,5 +69,30 @@ describe('useHardwareBack', () => {
     android.platform.OS = 'ios';
     renderHook(() => useHardwareBack(() => undefined));
     expect(android.listeners).toHaveLength(0);
+  });
+});
+
+describe('useGameBack', () => {
+  it('turns the iOS swipe off while a game asks, and back on when it stops', () => {
+    const onBack = vi.fn();
+    const view = renderHook(({ ask }: { ask: (() => void) | null }) => useGameBack(ask), { initialProps: { ask: onBack as (() => void) | null } });
+    expect(navigation.setOptions).toHaveBeenLastCalledWith({ gestureEnabled: false });
+    // Android's back asks the game as well
+    expect(android.press()).toBe(true);
+    expect(onBack).toHaveBeenCalledTimes(1);
+    view.rerender({ ask: null });
+    expect(navigation.setOptions).toHaveBeenLastCalledWith({ gestureEnabled: true });
+    expect(android.press()).toBe(false);
+  });
+
+  it('leaves the swipe alone on a screen that is not asking', () => {
+    renderHook(() => useGameBack(null));
+    expect(navigation.setOptions).not.toHaveBeenCalled();
+  });
+
+  it('gives the swipe back when the game’s screen goes', () => {
+    const view = renderHook(() => useGameBack(() => undefined));
+    view.unmount();
+    expect(navigation.setOptions).toHaveBeenLastCalledWith({ gestureEnabled: true });
   });
 });

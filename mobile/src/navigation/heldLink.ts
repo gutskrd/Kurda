@@ -11,6 +11,37 @@
  */
 let held: string | null = null;
 
+/**
+ * Which links wait now: `launch` while signed out, the one that started the
+ * app included; `later` while an email code or a birth month is still asked
+ * for, where the launch link is already in the navigation's own start; `none`
+ * once the signed-in screens are there.
+ */
+export type LinkHolding = 'launch' | 'later' | 'none';
+
+export function linkHolding(
+  status: 'restoring' | 'signedOut' | 'signedIn',
+  user: { emailVerified: boolean; birthDateRequired?: boolean } | null,
+): LinkHolding {
+  if (status === 'signedOut') return 'launch';
+  if (status === 'signedIn' && user && (!user.emailVerified || user.birthDateRequired === true)) return 'later';
+  return 'none';
+}
+
+/**
+ * Whether the link that started the app is to be kept: only by the first
+ * screens after the session is read, and only when those are signed out, so
+ * a later sign-out does not reopen it at the next sign-in.
+ */
+export function launchLinkKeeper(): (holding: LinkHolding) => boolean {
+  let first = true;
+  return (holding) => {
+    const keep = first && holding === 'launch';
+    first = false;
+    return keep;
+  };
+}
+
 /** Keep `url` to open later, when it is one of the app's own addresses. */
 export function holdLink(url: string | null | undefined, prefixes: readonly string[]): void {
   const path = url ? pathOf(url, prefixes) : null;

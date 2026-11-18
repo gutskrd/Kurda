@@ -4,8 +4,8 @@ import {
   BROW_STATES,
   CHARACTER_HABITS,
   CHARACTER_IDS,
-  CHARACTER_REACTIONS,
   EYE_STATES,
+  GLANCE_ASIDE,
   MOUTH_SHAPES,
   TAP_RUN_MS,
   actFor,
@@ -133,7 +133,6 @@ describe('the acts', () => {
   });
 
   it('plays a reaction as the character it is for: only Hamo chuckles, only Xezo pouts', () => {
-    for (const reaction of CHARACTER_REACTIONS) for (const id of CHARACTER_IDS) expect(ACTS[reactionAct(id, reaction)]).toBeDefined();
     expect(reactionAct('hamo', 'chuckle')).toBe('chuckle');
     expect(reactionAct('xezo', 'chuckle')).toBe('giggle');
     expect(reactionAct('hevalo', 'chuckle')).toBe('giggle');
@@ -278,6 +277,16 @@ describe('looking', () => {
     const random = (): number => values[i++ % values.length]!;
     expect(glanceTarget(random)).toEqual({ x: -1, y: 0.6 });
     expect(between([1000, 2000], () => 0.5)).toBe(1500);
+  });
+
+  it('never glances into the middle, where the pupils would stare out with white all round', () => {
+    for (let r = 0; r <= 1; r += 0.05) {
+      const { x } = glanceTarget(() => r);
+      expect(Math.abs(x)).toBeGreaterThanOrEqual(GLANCE_ASIDE);
+      expect(Math.abs(x)).toBeLessThanOrEqual(1);
+    }
+    expect(glanceTarget(() => 0.5).x).toBe(GLANCE_ASIDE);
+    expect(glanceTarget(() => 0.25).x).toBeCloseTo(-(GLANCE_ASIDE + (1 - GLANCE_ASIDE) * 0.5), 2);
   });
 });
 

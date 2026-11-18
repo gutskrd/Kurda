@@ -48,7 +48,7 @@ export function CommentList({
   const dir = useDirection();
   const { top, replies } = thread.state;
   if (top === null) return <CommentsSkeleton />;
-  if (top.length === 0) return <EmptyState title={t('comments.empty')} />;
+  if (top.length === 0) return <EmptyState title={t('comments.empty')} body={t('comments.emptyBody')} />;
 
   // a reply's own replies sit beside it, under the same comment, one step in
   const branch = (id: string): React.JSX.Element[] =>
@@ -114,7 +114,7 @@ function CommentRow({
 
   // your own name opens your own profile tab, not the page others see you on
   const openProfile = () =>
-    mine ? navigation.navigate('Tabs', { screen: 'Profile' }) : navigation.navigate('UserProfile', { userId: author.id });
+    mine ? navigation.popTo('Tabs', { screen: 'Profile' }) : navigation.navigate('UserProfile', { userId: author.id });
 
   const audio = !removed && c.audioUrl && renderAudio ? renderAudio(c.audioUrl) : null;
   const text = removed ? t('comments.removed') : (c.body ?? (c.audioMediaId || c.audioUrl ? t('comments.voice') : ''));

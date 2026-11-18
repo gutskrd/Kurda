@@ -27,7 +27,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { activeGames, getLibrary, listStories, searchStories, setBookmark } from './api';
 import { StoryCover } from './covers';
-import { DIALECT_NAME, MODE_KEY, categoryLabel, categoryTitle, levelName } from './labels';
+import { MODE_KEY, categoryLabel, categoryTitle, levelName } from './labels';
 import { LibraryFilterChips, LibraryFilterSheet, NO_FILTER, activeParts, filterButtonLabel, isFiltering, isPlainFilter, libraryQuery, type LibraryFilter } from './LibraryFilter';
 import { shownDialect, useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
@@ -38,6 +38,7 @@ import { pressedDim } from '../theme/motion';
 import { LoreEntry } from '../lore/LoreEntry';
 import { textIn } from '../lore/labels';
 import { metaFor } from './legend';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /** Applies a `me` change to a story in a list, so a bookmark flips everywhere at once. */
 function withMe(list: StoryListItem[], id: string, patch: (me: StoryListItem['me']) => StoryListItem['me']): StoryListItem[] {
@@ -397,7 +398,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
             options={STORY_DIALECTS}
             value={dialect}
             onChange={chooseDialect}
-            labelOf={(d) => DIALECT_NAME[d]}
+            labelOf={(d) => t(dialectNameKey(d))}
             groupLabel={t('stories.variety')}
           />
         ) : (
@@ -548,6 +549,7 @@ function ProgressCard({ me }: { me: NonNullable<StoryLibrary['me']> }): React.JS
 function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const where =
     game.status === 'lobby'
       ? t('stories.status.lobby')
@@ -563,18 +565,20 @@ function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => 
       {...storyTextProps(game.dialect)}
       accessibilityValue={{ text: `${t(MODE_KEY[game.mode])}, ${where}` }}
       accessibilityHint={t('stories.continue')}
-      style={[styles.continue, { backgroundColor: colors.surface }]}
+      style={[styles.continue, { flexDirection: dir.row, backgroundColor: colors.surface }]}
     >
       <View style={styles.rowMain}>
         <Text {...storyTextProps(game.dialect)} style={[styles.rowTitle, { color: colors.textPrimary }, storyTextStyle(game.dialect)]} numberOfLines={1}>
           {game.storyTitle}
         </Text>
-        <Text style={[styles.rowMeta, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.rowMeta, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
           {t(MODE_KEY[game.mode])} · {where}
         </Text>
       </View>
       <Text style={[styles.continueText, { color: colors.primary }]}>{t('stories.continueButton')}</Text>
-      <Icon name="chevron-right" size={16} color={colors.primary} />
+      <View style={dir.flip}>
+        <Icon name="chevron-right" size={16} color={colors.primary} />
+      </View>
     </PressableScale>
   );
 }

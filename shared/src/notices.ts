@@ -1,18 +1,8 @@
 /**
- * How the apps sort and picture a notification, the same on the phone as on
- * the website.
- *
- *   - Which filter it falls under (`noticeFilterOf`): something a person did
- *     (a gift, a letter, a friend request, a group), a game, your progress
- *     (badges, leagues, a streak), or news and care from Hevalo itself.
- *   - The picture of the thing it is about (`noticePicture`), shown at the end
- *     of its row: the badge, the league's emblem, the game, the letter, the
- *     gift, or the streak's fire. A notification about nothing that can be
- *     drawn has none, and its row is words alone.
- *
- * Both read only what the server already writes into a notification's
- * category and data (`data.kind` and its fields), so an older notification, or
- * one of a kind added later, still lands somewhere sensible.
+ * How the apps sort and picture a notification, alike on both: its filter (`noticeFilterOf`: people, games, progress, or
+ * news and care from Hevalo) and the picture at the end of its row (`noticePicture`: a badge, a league emblem, a game, a
+ * letter, a gift or the streak's fire; none when nothing can be drawn). Both read only the category and data the server
+ * writes, so older notifications and kinds added later still land somewhere sensible.
  */
 import { isBadgeKey } from './art/keys.js';
 import { isGameEmblem, type GameEmblem } from './art/games.js';
@@ -22,7 +12,7 @@ import { toLeagueTier, type LeagueTier } from './leagues.js';
 export const NOTICE_FILTERS = ['all', 'people', 'games', 'progress', 'hevalo'] as const;
 export type NoticeFilter = (typeof NOTICE_FILTERS)[number];
 
-/** A notification as the apps hold it: what it was filed under, and what it is about. */
+/** A notification as the apps hold it: what it was filed under and what it is about. */
 export interface NoticeLike {
   category: string;
   data?: Record<string, unknown> | null;
@@ -44,7 +34,7 @@ const BY_KIND: Readonly<Record<string, Exclude<NoticeFilter, 'all'>>> = {
   league_safe: 'progress',
   league_promotion: 'progress',
   league_trophy: 'progress',
-  // what Hevalo's moderators and its care say to you is from Hevalo, whoever it is about
+  // What Hevalo's moderators and care say to you is from Hevalo, whoever it is about.
   report_outcome: 'hevalo',
   sanction: 'hevalo',
   sanction_lifted: 'hevalo',
@@ -60,7 +50,7 @@ const BY_CATEGORY: Readonly<Record<string, Exclude<NoticeFilter, 'all'>>> = {
   streak: 'progress',
 };
 
-/** The filter a notification falls under: its kind says it most exactly, else the category it was filed under, else it is news from Hevalo. */
+/** The filter a notification falls under: by its kind, else its category, else news from Hevalo. */
 export function noticeFilterOf(n: NoticeLike): Exclude<NoticeFilter, 'all'> {
   const kind = kindOf(n);
   return (kind ? BY_KIND[kind] : undefined) ?? BY_CATEGORY[n.category] ?? 'hevalo';
@@ -71,7 +61,7 @@ export function noticeShows(n: NoticeLike, filter: NoticeFilter): boolean {
   return filter === 'all' || noticeFilterOf(n) === filter;
 }
 
-/** The filters worth offering for a list: `all`, and each of the others that has something under it. */
+/** The filters worth offering for a list: `all`, and each other one with something under it. */
 export function noticeFiltersFor(items: readonly NoticeLike[]): NoticeFilter[] {
   const present = new Set(items.map(noticeFilterOf));
   return NOTICE_FILTERS.filter((f) => f === 'all' || present.has(f));
@@ -88,7 +78,7 @@ export type NoticePicture =
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
 
-/** The picture for a notification, or null where there is nothing to draw (the day's badges in one, a group, a notice). */
+/** The picture for a notification, or null where nothing can be drawn (several badges in one, a group, a notice). */
 export function noticePicture(n: NoticeLike): NoticePicture | null {
   const data = n.data ?? {};
   switch (kindOf(n)) {

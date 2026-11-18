@@ -6,7 +6,6 @@ import {
   STORE_REVIEW_MIN_GAP_DAYS,
   STORE_REVIEW_SPACING_DAYS,
   feedbackFollowUp,
-  isAppFeedbackCategory,
   shouldAskStoreReview,
   shouldOfferFeedbackBox,
   type AppFeedbackState,
@@ -26,8 +25,6 @@ describe('the rating box', () => {
 
   it('offers the chips the owner asked for', () => {
     expect(APP_FEEDBACK_CATEGORIES).toEqual(['lessons', 'games', 'stories', 'bugs', 'too_hard', 'too_easy', 'other']);
-    expect(isAppFeedbackCategory('bugs')).toBe(true);
-    expect(isAppFeedbackCategory('ads')).toBe(false);
   });
 
   it('opens on a game just finished, when the account is due', () => {

@@ -16,8 +16,9 @@ import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { getProverb, proverbUrl } from './api';
-import { THEME_KEY, centred, kurdishIn, proverbTranslation, traditionLine, traditionMark, varietyName } from './labels';
+import { THEME_KEY, centred, kurdishIn, proverbTranslation, traditionLine, traditionMark } from './labels';
 import { EnglishNote, InLanguage, Section, SourcesList } from './parts';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
  * One proverb (its own address, `app/learn/proverbs/<slug>`), set like a
@@ -143,7 +144,7 @@ export function ProverbScreen({ slug, onExit }: { slug: string; onExit: () => vo
                     <Text {...vku.props} style={[styles.variantText, { color: colors.textPrimary }, vku.style]}>
                       {variant.text}
                     </Text>
-                    <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>{[varietyName(variant.dialect), variant.region].filter(Boolean).join(' · ')}</Text>
+                    <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>{[t(dialectNameKey(variant.dialect)), variant.region].filter(Boolean).join(' · ')}</Text>
                     {variant.note ? <Text style={[styles.meta, dir.free, { color: colors.textSecondary }]}>{variant.note}</Text> : null}
                   </View>
                 );

@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useAuth } from '../../auth/AuthContext';
 import type { AuthStackParamList } from '../../navigation/authStack';
+import { authRouter } from '../../navigation/returnTo';
+import { stackOptions } from '../../navigation/stackOptions';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ClaimAccountScreen } from './ClaimAccountScreen';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
@@ -17,6 +20,7 @@ const Stack = createNativeStackNavigator<AuthStackParamList>();
 export function SignInModal({ email, onExit }: { email?: string; onExit: () => void }): React.JSX.Element {
   const { user } = useAuth();
   const { colors } = useTheme();
+  const reduceMotion = useReducedMotion();
   const signedInToAccount = user !== null && user.guest !== true;
   // The route passes a new `onExit` on every render, and it must close only once.
   const closed = useRef(false);
@@ -29,10 +33,15 @@ export function SignInModal({ email, onExit }: { email?: string; onExit: () => v
   return (
     <Stack.Navigator
       initialRouteName="Login"
-      screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+      // Animates as every stack does, Reduce Motion included (navigation/stackOptions).
+      screenOptions={stackOptions(reduceMotion, colors.background)}
+      // The claim form's "Sign in" goes back to the sign-in form under it.
+      UNSTABLE_router={authRouter}
     >
       {/* The form's own back reaches the parent stack and closes the modal. */}
-      <Stack.Screen name="Login" component={LoginScreen} initialParams={email ? { email } : undefined} />
+      <Stack.Screen name="Login" initialParams={email ? { email } : undefined}>
+        {(props) => <LoginScreen {...props} presented />}
+      </Stack.Screen>
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
       <Stack.Screen name="Register">
         {({ navigation }) => (

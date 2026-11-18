@@ -1,22 +1,12 @@
 /**
- * Who may come back to a group, and what the group's chat shows each member,
- * read alike by the server, the website and the phone.
+ * Who may come back to a group, and what its chat shows each member, read alike by the server and both apps. Every group
+ * is private: only members see it, and the only way in is being added by its owner or an admin who is your friend.
  *
- * Every group is private: its members are the only people who see it, and the
- * only way in is to be added by its owner or an admin who is your friend.
- *
- * Removed and banned are different things. Someone removed is simply out:
- * they can be added again like anybody else, and until then the group is as
- * hidden from them as from a stranger. Someone banned cannot be added back,
- * for a day, a week or for good — but they still see the group's name and
- * where they stand, and they can ask to come back, with a short note; the
- * group's owner or admins decide. Asking can never be used to pester them: one
- * request waits at a time, each one turned down makes the next wait longer,
- * and the admins can stop the requests from one person altogether.
- *
- * Clearing a chat is either for oneself (any member: the messages so far are
- * gone from their own view only) or for everyone (the owner or an admin: gone
- * from every member's view, and the chat says who cleared it).
+ * Someone removed is simply out: they can be added again, and until then the group is hidden from them. Someone banned
+ * cannot be added back for a day, a week or for good, but still sees the group's name and their standing and may ask to
+ * return with a short note. Asking cannot pester: one request at a time, each decline lengthens the next wait, and admins
+ * can stop one person's requests. Clearing a chat is for oneself (any member) or for everyone (owner or admin, and the
+ * chat says who).
  */
 import type { Role } from './group-roles.js';
 
@@ -24,11 +14,11 @@ import type { Role } from './group-roles.js';
 export const GROUP_BAN_DURATIONS = ['1d', '7d', 'perm'] as const;
 export type GroupBanDuration = (typeof GROUP_BAN_DURATIONS)[number];
 
-/** The longest a ban's reason, or a request's note, may be, in characters once trimmed. */
+/** The longest a ban reason or a request note may be, in characters once trimmed. */
 export const GROUP_BAN_REASON_MAX = 200;
 export const GROUP_REQUEST_NOTE_MAX = 200;
 
-/** How many days a banned person waits after their first, second, third and later requests are turned down. */
+/** Days a banned person waits after their first, second, third and later declined requests. */
 export const GROUP_REQUEST_COOLDOWN_DAYS = [1, 7, 30] as const;
 
 /** The wait after `declines` requests have been turned down; the last step repeats. */
@@ -37,19 +27,13 @@ export function requestCooldownDays(declines: number): number {
   return declines <= 0 ? 0 : (steps[Math.min(declines, steps.length) - 1] as number);
 }
 
-/** When a ban of `duration` given at `from` ends: null for good. */
+/** When a ban of `duration` given at `from` ends; null for good. */
 export function banEndsAt(duration: GroupBanDuration, from: Date): Date | null {
   if (duration === 'perm') return null;
   return new Date(from.getTime() + (duration === '1d' ? 1 : 7) * 86_400_000);
 }
 
-/**
- * Where a banned person stands with asking to come back:
- * - `can_ask`: they may send a request now;
- * - `pending`: their request is waiting for the admins;
- * - `wait`: a request was turned down; they may ask again from `until`;
- * - `closed`: the admins stopped requests from them.
- */
+/** Where a banned person stands with asking to return: may ask now, a request is pending, must wait until `until`, or requests were stopped. */
 export type GroupRequestState =
   | { kind: 'can_ask' }
   | { kind: 'pending'; sentAt: string }
@@ -57,10 +41,8 @@ export type GroupRequestState =
   | { kind: 'closed' };
 
 /**
- * Where the viewer stands with a group (`GET /groups/:id`, `standing`): a
- * member with their role; or banned, until when (null for good), with their
- * reason if one was given, and where asking to come back stands. Nobody else
- * is answered at all: to them the group does not exist (404).
+ * The viewer's standing with a group (`GET /groups/:id`, `standing`): a member with their role, or banned until when (null
+ * for good) with any reason and their request state. Anyone else gets 404, as if the group did not exist.
  */
 export type GroupStanding =
   | { kind: 'member'; role: Role }
@@ -93,17 +75,15 @@ export interface GroupRejoinRequest {
 }
 
 /**
- * What a member's view of the chat has had cleared (`GET /groups/:id/chat`,
- * `cleared`): cleared for everyone, when and by whom (null when that account is
- * gone); and cleared by the member for themselves, when. Messages from before
- * the later of the two are not in the history.
+ * What a member's chat view has had cleared (`GET /groups/:id/chat`, `cleared`): for everyone, when and by whom (null when
+ * that account is gone), and for themselves, when. Messages before the later of the two are not in the history.
  */
 export interface GroupChatCleared {
   forEveryone: { at: string; by: string | null } | null;
   forMe: string | null;
 }
 
-/** Whether a member with `role` may clear the chat for everyone, ban, and answer requests: the owner and the admins. */
+/** Whether a member with `role` may clear the chat for everyone, ban and answer requests: the owner and admins. */
 export function canModerateGroup(role: Role | null): boolean {
   return role === 'owner' || role === 'moderator';
 }

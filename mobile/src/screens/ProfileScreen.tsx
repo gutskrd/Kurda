@@ -9,7 +9,7 @@ import { refreshFelt } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { ClayButton, ErrorRetry, GlassCard, GradientBackground } from '../theme/glass';
 import { display, statValue, statCaption } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -47,6 +47,7 @@ import { formatNumber } from '../i18n/format';
 import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /** The avatar's size: the largest thing on the screen. */
 const AVATAR = 96;
@@ -297,7 +298,7 @@ function AccountProfile() {
       {
         key: 'course',
         art: <CourseFlag />,
-        value: t(course === 'ckb' ? 'games.race.sorani' : 'games.race.kurmanci'),
+        value: t(dialectNameKey(course)),
         label: t('profile.stat.course'),
         onPress: () => navigation.navigate('Tabs', { screen: 'Learn' }),
       },
@@ -451,8 +452,11 @@ function AccountProfile() {
 
         <GiftedNote background={me?.background} icon={me?.icon} />
 
-        {/* The overview tiles once the first answers are in; the league tile fills in as the showcase arrives. */}
-        {settled && me ? <OverviewGrid tiles={tiles} /> : <OverviewSkeleton />}
+        {/*
+          The overview tiles once the first answers are in, the league tile filling in as the showcase arrives; if the
+          account could not be read, an error with a retry rather than an endless shimmer.
+        */}
+        {settled && me ? <OverviewGrid tiles={tiles} /> : settled ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : <OverviewSkeleton />}
 
         {/* The three showcased badges, each game's rank, and the league. */}
         {!progress && !progressSettled ? (

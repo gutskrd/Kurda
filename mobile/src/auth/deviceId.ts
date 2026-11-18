@@ -10,7 +10,9 @@
  *
  * The id is a random UUID made once and kept beside the tokens, so it says
  * nothing about the phone or the person. It is not cleared on sign-out: the
- * point is that the next sign-in from here is recognised. It is never logged.
+ * point is that the next sign-in from here is recognised. A new install of the
+ * app on a phone an earlier one was on forgets it with the session, and is a
+ * new device (install.ts). It is never logged.
  *
  * No React Native in here, so the tests can run it under Node; the stores are
  * in `storage.ts`.

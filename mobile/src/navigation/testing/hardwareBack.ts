@@ -5,9 +5,21 @@
  * Wired with `vi.mock('…/navigation/hardwareBack', () => import('…/navigation/testing/hardwareBack'))`.
  */
 let current: (() => void) | null = null;
+let swipeOff = false;
 
 export function useHardwareBack(onBack: (() => void) | null): void {
   current = onBack;
+}
+
+/** As `useHardwareBack`, and the iOS swipe is off while the screen asks. */
+export function useGameBack(onBack: (() => void) | null): void {
+  current = onBack;
+  swipeOff = onBack !== null;
+}
+
+/** Whether the screen has the iOS swipe from the edge turned off. */
+export function swipeHeld(): boolean {
+  return swipeOff;
 }
 
 export function pressBack(): boolean {
@@ -19,4 +31,5 @@ export function pressBack(): boolean {
 /** Forget the screen of the test before. */
 export function resetHardwareBack(): void {
   current = null;
+  swipeOff = false;
 }

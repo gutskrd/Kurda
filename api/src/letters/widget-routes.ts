@@ -26,7 +26,7 @@ const BY_ADDRESS = { rateLimit: { max: 600, windowMs: 60_000, per: 'ip' as const
 /**
  * The letter widget (letters/widget.ts).
  *
- *   POST   /letters/widget/tokens          (account) a token for this phone's widget, shown once: `{ token }`
+ *   POST   /letters/widget/tokens          (account) a token for this phone's widget, shown once, ending with this session: `{ token }`
  *   DELETE /letters/widget/tokens          (account) every widget of the account, on every phone
  *   DELETE /letters/widget/tokens/current  (widget)  this widget's own token: the app signing out
  *   GET    /letters/widget/prefs           (account) the widget page: what is pinned, the words, the letter shown, how many phones
@@ -68,7 +68,8 @@ export function registerLetterWidgetRoutes(app: FastifyInstance, widget: LetterW
   app.post(
     '/letters/widget/tokens',
     { schema: { body: tokenBody }, config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } }, preHandler: requireAccount },
-    async (req) => widget.createToken(req.user!.id, (req.body as { replaces?: string } | null | undefined)?.replaces),
+    // made in this request's session, and ended with it
+    async (req) => widget.createToken(req.user!.id, req.user!.familyId, (req.body as { replaces?: string } | null | undefined)?.replaces),
   );
 
   app.delete('/letters/widget/tokens', { preHandler: requireAccount }, async (req, reply) => {

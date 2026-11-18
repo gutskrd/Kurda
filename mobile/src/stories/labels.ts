@@ -18,12 +18,7 @@ import {
 import type { Translate } from '../api/errors';
 import type { TranslationKey } from '../i18n/translations';
 
-/**
- * The words the Stories screens put on the shared presets. A variety is called by its own name in every language,
- * as a language is, rather than translated nine ways.
- */
-export const DIALECT_NAME: Record<StoryDialect, string> = { kurmanci: 'Kurmancî', sorani: 'Soranî' };
-
+/** The words the Stories screens put on the shared presets. */
 export const LENGTH_KEY: Record<StoryLength, TranslationKey> = {
   short: 'stories.length.short',
   medium: 'stories.length.medium',

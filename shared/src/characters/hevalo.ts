@@ -1,27 +1,14 @@
 /**
- * Hevalo: the app's deer, standing on all four legs and facing forward —
- * the same deer as the app icon, from the antlers to the freckles on his
- * cheeks, now with a body.
+ * Hevalo: the app's deer standing on four legs facing forward, the same deer as the app icon from the antlers to the
+ * freckles, with a body. His head is drawn on the icon's own grid (512 across) so the two overlay exactly; the body is
+ * drawn on a smaller grid, where the head is 0.29 of that size, and `at` brings it onto the head's grid. Unlike the people
+ * he is lit like a soft toy, with round radial light on the head and eyes as the icon is painted. His mouth is a small
+ * line under the nose, which is the overlay, so every shape tucks under it.
  *
- * His head is drawn on the icon's own grid (512 across), so the two can be
- * laid one over the other and stay the same face. The body is drawn on a
- * smaller grid, where the head is 0.29 of that size, because its slim legs
- * are easier to place there; `at` brings it onto the head's grid.
- *
- * Unlike the people, the deer is lit like a soft toy: round radial light on
- * the head and the eyes, which is how the icon is painted. His mouth is a
- * deer's, a small line under the nose; it opens beneath the nose and the nose
- * is the overlay, so every shape tucks its top under it.
- *
- * Who he is. Hevalo is a young deer, curious about everything and quick on
- * his feet: he hops when he is pleased, tilts his head when something puzzles
- * him, and pricks up both ears at anything new. He is cheeky in a sweet way
- * — a tongue poked out, a wink — and kind when you get something wrong: a
- * miss gets a curious look and a sniff, never a sad face. He has no brows,
- * so his ears and his lids do their work: ears up and eyes wide when he is
- * startled, one eye narrowed when he is weighing something up; a miss gets
- * the curious tilt and a glance aside, nothing sterner. He flicks an ear now
- * and then, sniffs the air, and, rarely, lets his tongue show.
+ * Character: a young deer, curious and quick, who hops when pleased, tilts his head when puzzled and pricks his ears at
+ * anything new; cheeky in a sweet way, and kind at a miss. He has no brows, so his ears and lids do their work: ears up and
+ * eyes wide when startled, one eye narrowed when weighing something up. He flicks an ear, sniffs, and rarely shows his
+ * tongue.
  */
 import type { Viseme } from '../lipsync/visemes.js';
 import type { Pt } from '../art/svg.js';
@@ -71,7 +58,7 @@ const C = {
   rim: '#ffe7bd',
 } as const;
 
-/** His face is drawn about this upright line, in the icon's measure; his eyes sit a hair to one side of it, as in the icon. */
+/** His face is drawn about this upright line, in the icon's measure; his eyes sit a hair to one side, as in the icon. */
 const AXIS = 255;
 const EYE_AXIS = 253.5;
 
@@ -100,7 +87,7 @@ const FRONT: Knot[] = atK([
   [142.2, 382.6], [163.0, 331.9], [164.6, 326.5], [166, 300, 0.4], [220, 300, 0.4], [220.8, 312],
 ]);
 
-/** The hind legs, seen between the front legs, a shade darker; they run on under the front legs so no gap opens at their edges. */
+/** The hind legs between the front legs, a shade darker; they run on under the front legs so no gap opens at their edges. */
 const HIND_LEFT: Knot[] = atK([
   [180.3, 450, 0.4], [180.1, 460], [179.4, 464], [178.3, 480], [177.1, 504], [177.6, 508], [178.8, 512],
   [179.7, 520], [179.3, 524], [175.3, 536], [175.1, 540], [175.6, 548], [177.3, 552], [177.7, 556], [177.8, 572],
@@ -151,11 +138,7 @@ const HIND_HOOF_RIGHT: Knot[] = atK([
   [208.1, 606.4], [207.6, 608.8], [208.8, 610.6], [208.5, 612.8],
 ]);
 
-/**
- * The same outline cut off straight under his chest: for a portrait that
- * shows him from the antlers to the chest (a badge), with the legs it hides
- * left out rather than drawn and covered.
- */
+/** The same outline cut off straight under his chest, for a portrait from the antlers to the chest (a badge), the hidden legs left out rather than covered. */
 const CHEST: Knot[] = atK([
   [223.0, 331.6], [242.7, 376.7], [247.5, 393.1], [248.9, 402.5], [249.2, 409.1], [247.6, 425.8], [244.7, 436.6],
   [241.7, 444.5], [236.7, 468.8], [236.2, 476, 0.4], [149.8, 476, 0.4], [149.3, 462.3], [145.6, 444.5], [142.4, 436.0],
@@ -163,7 +146,7 @@ const CHEST: Knot[] = atK([
   [166, 300, 0.4], [220, 300, 0.4], [220.8, 312],
 ]);
 
-/** The body: neck, chest and legs — or, `legs` false, only as far as the chest. */
+/** The body: neck, chest and legs, or with `legs` false only as far as the chest. */
 function body(p: string, legs = true): string {
   const id = (name: string): string => `${p}${name}`;
   const [, neck] = at(0, 318);
@@ -176,7 +159,7 @@ function body(p: string, legs = true): string {
   const [, hoofEnd] = at(0, 626);
   return part(
     [
-      // the fur darkens from the chest to the hooves, as it does in the light from above
+      // The fur darkens from the chest to the hooves, as in light from above.
       linearAt(id('fur'), [
         [0, C.neck],
         [0.22, C.body],
@@ -201,7 +184,7 @@ function body(p: string, legs = true): string {
         [0, C.edge, 0.5],
         [1, C.edge, 0],
       ]),
-      // the cream fades in from the neck's own colour, so the bib has no hard top
+      // The cream fades in from the neck's colour, so the bib has no hard top.
       linearAt(id('bib'), [
         [0, C.neck],
         [0.45, C.bibTop],
@@ -220,11 +203,11 @@ function body(p: string, legs = true): string {
     [
       ...(legs ? [fill(curve(HIND_LEFT) + curve(HIND_RIGHT), C.hind), fill(curve(HIND_HOOF_LEFT) + curve(HIND_HOOF_RIGHT), C.hindHoof)] : []),
       fill(curve(legs ? FRONT : CHEST), `url(#${id('fur')})`),
-      // the sides of the body and neck turn from the light; the legs below are lit evenly
+      // The sides of the body and neck turn from the light; the legs below are lit evenly.
       clipped(id('torso'), fill(curve(legs ? FRONT : CHEST), `url(#${id('side')})`)),
-      // each side of the neck in shade, softly
+      // Each side of the neck softly in shade.
       clipped(id('figure'), ellipse(at(166.6, 0)[0], at(0, 332)[1], 34, 92, `url(#${id('neckside')})`) + ellipse(at(219.4, 0)[0], at(0, 332)[1], 34, 92, `url(#${id('neckside')})`)),
-      // the shadow the head throws on the neck
+      // The shadow the head throws on the neck.
       ellipse(at(192.6, 0)[0], at(0, 321)[1], 86, 44, `url(#${id('chin')})`),
       fill(curve(BIB), `url(#${id('bib')})`),
       ...(legs ? hooves(p) : []),
@@ -232,13 +215,13 @@ function body(p: string, legs = true): string {
   );
 }
 
-/** Head and neck, put in at a window: from over the antlers to well under the sill, so a hop never lifts a cut edge into view. */
+/** Head and neck put in at a window: from over the antlers to well under the sill, so a hop never lifts a cut edge into view. */
 export const NECK_BOX = { x: -15, y: -16, w: 540, h: 736 } as const;
 
-/** Where the window's sill crosses his neck, a little under his chin, before it widens into his chest. */
+/** Where the window's sill crosses his neck, a little under the chin before it widens into the chest. */
 export const NECK_SILL = 600;
 
-/** His body as far as the chest, the daylight outside the window behind him catching the edges of his neck as it comes in over the sill. */
+/** His body as far as the chest, with daylight behind him catching his neck's edges as it comes in over the sill. */
 function neck(p: string): string {
   const id = `${p}neckrim`;
   return (
@@ -250,7 +233,7 @@ function neck(p: string): string {
   );
 }
 
-/** The front hooves, and the split between the two toes of each. */
+/** The front hooves, with the split between each one's two toes. */
 function hooves(p: string): string[] {
   return [
     fill(curve(HOOF_LEFT) + curve(HOOF_RIGHT), `url(#${p}hoof)`),
@@ -426,7 +409,7 @@ const HEAD: Knot[] = symmetric(
     [AXIS, 461],
   ],
   AXIS,
-  // the icon's head is a touch fuller on its right side; the face inside it stays centred
+  // The icon's head is a touch fuller on its right; the face inside it stays centred.
 ).map(([x, y, r]) => [x > AXIS ? AXIS + (x - AXIS) * 1.016 : AXIS - (AXIS - x) * 1.005, y, r ?? 1] as const);
 
 const MUZZLE: Knot[] = symmetric(
@@ -461,7 +444,7 @@ function freckles(): string {
   return FRECKLES.map((f) => one(f, false) + one(f, true)).join('');
 }
 
-/** His two sides are not quite each other's mirror: the right antler sits a little further out and is a little smaller. */
+/** His sides are not quite mirrors: the right antler sits a little further out and is a little smaller. */
 const rightAntler = (x: number, y: number): Pt => [374.4 + (x - 372.9) * 0.99, 80.6 + (y - 80.6) * 0.99];
 
 /** The antlers, standing up behind the ears. */
@@ -487,9 +470,8 @@ const ANTLER_FOOT_LEFT = { x: 179.8, y: 160 } as const;
 const ANTLER_FOOT_RIGHT = (([x, y]) => ({ x, y }))(rightAntler(2 * AXIS - ANTLER_FOOT_LEFT.x, ANTLER_FOOT_LEFT.y));
 
 /**
- * One antler on its own: lit as the pair is, by the same light from the tips
- * of both to their feet, and with its foot run on down into the head, behind
- * it, so that a turning head never shows the antler ending there.
+ * One antler on its own, lit like the pair by the same light from both tips to their feet, its foot run on down into the
+ * head behind it, so a turning head never shows where the antler ends.
  */
 function antler(p: string, side: 'left' | 'right'): string {
   const id = `${p}antler-${side}`;
@@ -505,18 +487,17 @@ function antler(p: string, side: 'left' | 'right'): string {
   );
 }
 
-/** Where each ear meets the head, and turns about when it twitches: low on its inner side, as a deer's does. */
+/** Where each ear meets the head and turns to twitch: low on its inner side, as a deer's does. */
 const EAR_PIVOT_LEFT = { x: 120, y: 198 } as const;
 const EAR_PIVOT_RIGHT = { x: 2 * AXIS - EAR_PIVOT_LEFT.x, y: EAR_PIVOT_LEFT.y } as const;
 
 /**
- * The ears' light: the radial the pair was painted with over the box round
- * both (1.2 to 508.8 across, 106.6 to 240 down), centred at 0.6 across and
- * 0.5 down and reaching 0.62 of the box each way.
+ * The ears' light: the radial the pair was painted with over the box round both (1.2 to 508.8 across, 106.6 to 240 down),
+ * centred at 0.6 across and 0.5 down and reaching 0.62 of the box each way.
  */
 const EAR_LIGHT = { cx: 1.2 + 0.6 * 507.6, cy: 106.6 + 0.5 * 133.4, rx: 0.62 * 507.6, ry: 0.62 * 133.4 } as const;
 
-/** One ear, its light inside and the tuft of fur at its foot; the light lies a little lower and further out on the right. */
+/** One ear with its inner light and the tuft at its foot; the light lies a little lower and further out on the right. */
 function ear(p: string, side: 'left' | 'right'): string {
   const id = (name: string): string => `${p}${name}`;
   const moved = (k: readonly Knot[], dx: number, dy: number): Knot[] => k.map(([x, y, r]) => [x + dx, y + dy, r] as Knot);
@@ -524,9 +505,8 @@ function ear(p: string, side: 'left' | 'right'): string {
   const outline = left ? EAR : mirror(EAR, AXIS);
   const inside = left ? moved(EAR_IN, -3, 3) : moved(mirror(EAR_IN, AXIS), 5, 3);
   const tuft = left ? moved(EAR_TUFT, -3, 3) : moved(mirror(EAR_TUFT, AXIS), 5, 3);
-  // The light is the one the two ears were always painted with as a pair: centred a little right of
-  // the head's middle and spread wide and flat across both. Fixed in the drawing's own units, so each
-  // ear on its own is lit exactly as it was beside the other.
+  // The pair's light, centred a little right of the head's middle and spread wide and flat over both, fixed in drawing
+  // units so each ear alone is lit exactly as beside the other.
   const light = id(left ? 'earL' : 'earR');
   return part(
     [
@@ -538,8 +518,7 @@ function ear(p: string, side: 'left' | 'right'): string {
   );
 }
 
-/** The head itself: its fur, the light round the eyes and down the nose, the muzzle and the freckles. */
-/** The face's outline, filled with its fur: what a turning head turns least. */
+/** The face's outline filled with its fur: what a turning head turns least. */
 function faceOutline(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
@@ -555,12 +534,12 @@ function faceOutline(p: string): string {
   );
 }
 
-/** What lies on the face: the light round each eye and under it, the muzzle and the freckles, which a turning head carries furthest. */
+/** What lies on the face (the light round and under each eye, the muzzle, the freckles), which a turning head carries furthest. */
 function faceFeatures(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
     [
-      // the lighter fur round each eye, as the icon has it: a socket with a soft but clear edge, not a glow
+      // The lighter fur round each eye, as on the icon: a socket with a soft but clear edge, not a glow.
       radialBox(id('patch'), [
         [0, C.patch],
         [0.9, C.patch],
@@ -581,7 +560,7 @@ function faceFeatures(p: string): string {
     [
       ellipse(EYE_AXIS - 76, 284, 70, 84, `url(#${id('patch')})`),
       ellipse(EYE_AXIS + 76, 284, 70, 84, `url(#${id('patch')})`),
-      // the light of the face carries on under each eye
+      // The face's light carries on under each eye.
       ellipse(EYE_AXIS - 58, 352, 34, 27, `url(#${id('bridge')})`),
       ellipse(EYE_AXIS + 58, 352, 34, 27, `url(#${id('bridge')})`),
       ellipse(AXIS, 318, 60, 128, `url(#${id('bridge')})`),
@@ -601,12 +580,12 @@ function head(p: string): string {
 
 // ─────────────────────────────────────────────────────────────── the eyes
 
-/** Each eye's white: its middle, and how wide and tall it is (half-widths). */
+/** Each eye's white: its middle and its half-width and half-height. */
 const EYE_WHITE = { y: 281, rx: 53.4, ry: 60.6, apart: 76 } as const;
 
-/** Each pupil as drawn: turned in towards the other, as on the icon, with the light in it to the upper left. */
+/** Each pupil as drawn: turned in toward the other as on the icon, its light to the upper left. */
 const PUPIL = { y: 281.6, rx: 22, ry: 34, apart: 60 } as const;
-/** The light in each pupil, high on its left, reaching over its edge into the white as the icon's does. */
+/** The light in each pupil, high on its left, reaching over its edge into the white as on the icon. */
 const PUPIL_LIGHT = { dx: -12.6, dy: -17.6, r: 10.2 } as const;
 
 /** The lid's colour, warming to the fur round the eye at its edge. */
@@ -624,10 +603,8 @@ const SIDES: readonly Side[] = ['left', 'right'];
 const eyeX = (side: Side): number => (side === 'left' ? EYE_AXIS - EYE_WHITE.apart : EYE_AXIS + EYE_WHITE.apart);
 
 /**
- * The whites of the eyes, with nothing in them: both, or the one side asked
- * for (`tag` names the light they share, so a part drawn for one state never
- * defines another's); `wide` open they are a little taller and wider, as a
- * startled eye is.
+ * The whites of the eyes, empty: both, or the side asked for (`tag` names their shared light so one state's parts never
+ * define another's); `wide` makes them a little taller and wider, as a startled eye is.
  */
 function whites(p: string, tag = 'white', sides: readonly Side[] = SIDES, wide = false): string {
   const id = `${p}${tag}`;
@@ -635,7 +612,7 @@ function whites(p: string, tag = 'white', sides: readonly Side[] = SIDES, wide =
   const ry = EYE_WHITE.ry + (wide ? 7 : 0);
   return part(
     [
-      // each eye is white in the middle, warming to a light cream at its edge, which meets the fur round it cleanly, as on the icon
+      // Each eye is white in the middle, warming to light cream at its edge, which meets the fur cleanly, as on the icon.
       radialBox(id, [
         [0, C.white],
         [0.6, C.white],
@@ -648,7 +625,7 @@ function whites(p: string, tag = 'white', sides: readonly Side[] = SIDES, wide =
   );
 }
 
-/** One pupil and the light in it; the light is on the same side in both, as one light falls on them. Smaller by `scale` when he is startled. */
+/** One pupil and its light, on the same side in both as one light falls on them; smaller by `scale` when startled. */
 function pupil(side: Side, scale = 1): string {
   const x = side === 'left' ? EYE_AXIS - PUPIL.apart : EYE_AXIS + PUPIL.apart;
   const dx = PUPIL_LIGHT.dx * scale;
@@ -661,12 +638,12 @@ function eyesOpen(p: string): string {
   return whites(p) + pupil('left') + pupil('right');
 }
 
-/** Startled: the whites a little bigger and the pupils small in them, so more white shows all round. */
+/** Startled: the whites a little bigger and the pupils small, so more white shows all round. */
 function eyesWide(p: string): string {
   return whites(p, 'whiteWide', SIDES, true) + pupil('left', 0.8) + pupil('right', 0.8);
 }
 
-/** The lids half down, from the brow to about the middle of each eye, closing along a soft dark edge. */
+/** The lids half down, from the brow to about each eye's middle, closing along a soft dark edge. */
 function lidsHalf(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   const edge = (cx: number): string =>
@@ -680,7 +657,7 @@ function lidsHalf(p: string): string {
       ],
       [1.4, 5, 6, 5, 1.4],
     );
-  // the lid comes down to a soft curve, lowest in the middle, as a sleepy eye's does
+  // The lid comes down to a soft curve, lowest in the middle, as a sleepy eye's does.
   const cover = (cx: number): string =>
     `M${n(cx - 60)},${n(200)}H${n(cx + 60)}V${n(264)}C${n(cx + 40)},${n(275)} ${n(cx + 20)},${n(278)} ${n(cx)},${n(278)}C${n(cx - 20)},${n(278)} ${n(cx - 40)},${n(275)} ${n(cx - 60)},${n(264)}z`;
   return part(
@@ -693,7 +670,7 @@ function lidsHalf(p: string): string {
   );
 }
 
-/** A blink: the lids down over each eye, in the fur's own light colour, closed along a soft dark line. */
+/** A blink: the lids down over each eye in the fur's light colour, closed along a soft dark line. */
 function eyesClosed(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   const lid = (cx: number): string =>
@@ -717,7 +694,7 @@ function eyesClosed(p: string): string {
   );
 }
 
-/** A smiling lid over each eye asked for: shut, the line where the lids meet curved up instead of down, as a face is when it beams. */
+/** A smiling lid over each eye asked for: shut, the meeting line curved up instead of down, as when a face beams. */
 function happyLids(p: string, tag: string, sides: readonly Side[]): string {
   const id = `${p}${tag}`;
   const arc = (cx: number): string =>
@@ -747,11 +724,9 @@ function eyesWink(p: string): string {
 }
 
 /**
- * A lid lowered partway over one eye, its edge on a slant: `outer` and
- * `inner` are how far down the eye (0 to 1) it comes at the outer corner and
- * the inner one. The deer has no brows, so a narrowed eye says what a brow
- * would: one eye narrowed is him weighing you up, both narrowed a little,
- * lower toward the nose, a small frown.
+ * A lid lowered partway over one eye on a slant: `outer` and `inner` say how far down the eye (0 to 1) it comes at each
+ * corner. With no brows, a narrowed eye says what a brow would: one narrowed is him weighing you up, both narrowed a
+ * little and lower toward the nose a small frown.
  */
 function lidSlant(p: string, tag: string, side: Side, outer: number, inner: number): string {
   const id = `${p}${tag}`;
@@ -761,7 +736,7 @@ function lidSlant(p: string, tag: string, side: Side, outer: number, inner: numb
   const [atLeft, atRight] = side === 'left' ? [outer, inner] : [inner, outer];
   const yl = top + tall * atLeft;
   const yr = top + tall * atRight;
-  // the lid closes along a soft curve, sagging a little below the line between its corners
+  // The lid closes along a soft curve, sagging a little below the line between its corners.
   const mid = (yl + yr) / 2 + 8;
   const cover =
     `M${n(cx - 60)},${n(200)}H${n(cx + 60)}V${n(yr)}C${n(cx + 40)},${n(yr + (mid - yr) * 0.75)} ${n(cx + 20)},${n(mid)} ${n(cx)},${n(mid)}` +
@@ -776,14 +751,14 @@ function lidSlant(p: string, tag: string, side: Side, outer: number, inner: numb
     ],
     [1, 3.8, 4.6, 3.8, 1],
   );
-  // a lighter line than a blink's, so the look stays thoughtful rather than stern
+  // A lighter line than a blink's, so the look stays thoughtful rather than stern.
   return part(
     [lidLight(id), clipDef(`${id}C`, cover)],
     [clipped(`${id}C`, ellipse(cx, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id})`)), fill(edge, C.pupil, alpha(0.7))],
   );
 }
 
-/** What he has for brows: nothing to raise, one eye narrowed for `one`, both drawn down a little toward the nose for `knit`. */
+/** His stand-in for brows: nothing for raised, one eye narrowed for `one`, both drawn down toward the nose for `knit`. */
 function deerBrows(p: string): Record<BrowState, string> {
   return {
     neutral: '',
@@ -795,7 +770,7 @@ function deerBrows(p: string): Record<BrowState, string> {
 
 // ─────────────────────────────────────────────────────────────── the mouth
 
-/** The nose: drawn over the mouth, so every mouth begins under it. */
+/** The nose, drawn over the mouth so every mouth starts under it. */
 function nose(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   const shape: Knot[] = symmetric(
@@ -828,12 +803,11 @@ function nose(p: string): string {
 }
 
 /**
- * The deer's mouth at rest, and pressed shut: down from the nose, then out to
- * either side and a little down, full along its length and thinning at the
- * corners. `sag` is how far below `y` it runs at its lowest; `w` its fullest.
+ * The mouth at rest and pressed shut: down from the nose, then out and a little down, full along its length and thin at
+ * the corners. `sag` is its depth below `y`; `w` its fullest.
  */
 function mouthTaper(y: number, hw: number, sag: number, w: number): string {
-  // along each side: how far out, how far down (in parts of `sag`), and how thick (in parts of `w`)
+  // Along each side: how far out, how far down (in parts of `sag`) and how thick (in parts of `w`).
   const at: readonly (readonly [number, number, number])[] = [
     [1, 0.85, 0.3],
     [0.82, 1, 0.8],
@@ -846,10 +820,8 @@ function mouthTaper(y: number, hw: number, sag: number, w: number): string {
 }
 
 /**
- * The deer's mouth line: down from the nose, then a soft curve out to either
- * side, as one round-ended stroke. `y` is where the line leaves the middle,
- * `hw` how far out it reaches, `dip` how far its middle sags below the
- * middle, and `lift` how far the corners turn back up.
+ * The mouth line: down from the nose, then a soft curve out to either side as one round-ended stroke. `y` is where it
+ * leaves the middle, `hw` how far out it reaches, `dip` how far the middle sags and `lift` how far the corners turn up.
  */
 function mouthLine(y: number, hw: number, dip: number, lift: number, width = 5.2): string {
   const side = (k: number): Knot[] => [
@@ -867,7 +839,7 @@ interface DeerOpening {
   hw: number;
   corner: number;
   bottom: number;
-  /** a round mouth (o, u) instead of one that opens beneath the mouth line */
+  /** a round mouth (o, u) instead of one opening beneath the mouth line */
   round?: boolean;
   /** how high the tongue comes; `tip` lifts it to the teeth */
   tongue: number;
@@ -878,9 +850,8 @@ interface DeerOpening {
 }
 
 /**
- * Measured as the people's are, against each other: `a` the widest and
- * deepest, `o` round, `u` small and pushed forward, `i` spread with the
- * teeth showing, `etc` the teeth nearly together, `l` the tongue lifted.
+ * Openings sized against each other as the people's are: `a` widest and deepest, `o` round, `u` small and pushed forward,
+ * `i` spread with teeth showing, `etc` teeth nearly together, `l` the tongue lifted.
  */
 const DEER_OPEN: Record<Exclude<Viseme, 'rest' | 'mbp' | 'fv'>, DeerOpening> = {
   a: { hw: 46, corner: 437, bottom: 486, tongue: 16 },
@@ -928,11 +899,11 @@ function deerOpen(o: DeerOpening, clipId: string): string {
     inner.push(fill(t, C.tongue));
   }
   if (o.teeth) {
-    // two small front teeth under the nose, parted down the middle
+    // Two small front teeth under the nose, parted down the middle.
     inner.push(fill(`M${AXIS - 19},${TOP - 10}h38v${10 + o.teeth}h-38z`, C.teeth), line(`M${AXIS},${TOP}v${o.teeth}`, C.whiteEdge, 2));
   }
   if (o.lower) inner.push(fill(`M${AXIS - 17},${bottom + 10}v${-10 - o.lower}h34v${10 + o.lower}z`, C.teeth));
-  // the lip round the opening, in the muzzle's shaded tone
+  // The lip round the opening, in the muzzle's shaded tone.
   const lip = o.round ? oval(AXIS, (TOP + bottom) / 2 + 1, hw + 5.5, (bottom - TOP) / 2 + 5.5) : curve([[AXIS - hw - 3, corner - 1], [AXIS, bottom + 6], [AXIS + hw + 3, corner - 1]]);
   return part(
     [clipDef(clipId, d)],
@@ -940,13 +911,12 @@ function deerOpen(o: DeerOpening, clipId: string): string {
   );
 }
 
-/** The grin: the mouth pulled wide and shallow, both rows of teeth showing, its corners up by the line it hangs from. */
+/** The grin: the mouth pulled wide and shallow, both rows of teeth showing, corners up by the line it hangs from. */
 const DEER_GRIN: DeerOpening = { hw: 52, corner: 428, bottom: 462, tongue: 0, teeth: 13, lower: 11 };
 
 /**
- * The tongue poked out: the mouth line as at rest, drawn over the root of
- * the tongue so it comes out from under the lip, the tongue hanging down over
- * the chin of the muzzle, round at its tip, with the furrow along its middle.
+ * The tongue poked out: the rest line drawn over its root so it comes from under the lip, hanging over the muzzle's chin,
+ * round at the tip with a furrow down the middle.
  */
 function tongueOut(): string {
   const tongue = curve([
@@ -969,9 +939,9 @@ function deerMouths(p: string): Record<MouthShape, string> {
   const id = (v: MouthShape): string => `${p}mouth-${v}`;
   return {
     rest: mouthTaper(428.5, 43, 10, 6.6),
-    // pressed: the same line drawn flatter and firmer
+    // Pressed: the same line drawn flatter and firmer.
     mbp: mouthTaper(429, 40, 5, 8.4),
-    // the lower lip drawn up under the front teeth
+    // The lower lip drawn up under the front teeth.
     fv: part(
       [],
       [
@@ -1003,7 +973,7 @@ export function drawHevalo(p: string): CharacterArt {
     name: 'Hevalo',
     viewBox: { x: -14, y: -14, w: 540, h: 1556 },
     bust: { x: -15, y: -16, w: 540, h: 540 },
-    // antlers to the tops of his legs: the chest and the cream of it, standing
+    // Antlers to the tops of his legs: the chest and its cream, standing.
     half: { x: -14, y: -14, w: 540, h: 1034 },
     headPivot: { x: AXIS, y: 446 },
     body: body(p),
@@ -1013,7 +983,7 @@ export function drawHevalo(p: string): CharacterArt {
     eyes: { open: eyesOpen(p), half: whites(p) + pupil('left') + pupil('right') + lidsHalf(p), closed: eyesClosed(p), happy: eyesHappy(p), wink: eyesWink(p), wide: eyesWide(p) },
     mouths: deerMouths(p),
     overlay: nose(p),
-    // his brows are his lids: the head has none to leave out
+    // His brows are his lids, so the head has none to leave out.
     brows: { bare: crownAndEars, states: deerBrows(p) },
     rig: {
       face: outline + features,
@@ -1039,7 +1009,7 @@ export function drawHevalo(p: string): CharacterArt {
           rest: { x: EYE_AXIS + PUPIL.apart, y: PUPIL.y },
           centre: { x: EYE_AXIS + EYE_WHITE.apart, y: EYE_WHITE.y },
         },
-        // as far as a pupil goes and stays inside its white, with a little white left round it
+        // As far as a pupil goes and stays inside its white, with a little white left round it.
         reach: { x: EYE_WHITE.rx - PUPIL.rx - 8, y: EYE_WHITE.ry - PUPIL.ry - 9 },
         half: lidsHalf(p),
       },

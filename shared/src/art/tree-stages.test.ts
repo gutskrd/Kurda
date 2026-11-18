@@ -1,9 +1,7 @@
 /**
- * The learner's tree as it grows and moves: every stage, state and season
- * drawn as a valid picture in every layer; the swing on the great tree only;
- * each stage standing taller than the last; and nothing the apps do with the
- * plant — its breeze, a touch, a drink, a stage grown — taking any of it out
- * of its own picture. The pictures' own house rules are `art.test.ts`'s.
+ * The learner's tree as it grows and moves: every stage, state and season is a valid picture in every layer, only great
+ * trees have the swing, each stage is taller than the last, and no app motion (breeze, touch, drink, growth) takes any
+ * of it outside its picture. The general art rules are in `art.test.ts`.
  */
 import { describe, expect, it } from 'vitest';
 import { TREE_HEALTHS, TREE_SEASONS, TREE_SPECIES, TREE_STAGES, type TreeHealth, type TreeSeason, type TreeSpecies, type TreeStage } from '../tree.js';
@@ -16,7 +14,7 @@ const PARTS = ['whole', 'ground', 'plant', 'swing', 'front'] as const;
 const SWINGERS: readonly TreeSpecies[] = ['beru', 'behiv', 'tu', 'payiz', 'miraz', 'sev'];
 const DRAWN = new Set(['svg', 'title', 'defs', 'g', 'path', 'circle', 'ellipse', 'rect', 'linearGradient', 'radialGradient', 'stop', 'clipPath']);
 
-/** The problems with a drawing as an SVG the phone and the browser draw alike; none, for a good one. */
+/** The problems with a drawing as an SVG both phone and browser draw alike; none for a good one. */
 function problems(svg: string): string[] {
   const found: string[] = [];
   if (!svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg"')) found.push('not an svg');
@@ -38,10 +36,9 @@ const count = (svg: string, tag: string): number => svg.split(`<${tag}`).length 
 const drawn = (svg: string): boolean => /<(path|ellipse|circle|rect)\s/.test(svg);
 
 /**
- * What a drawing covers, in canvas units: every point its outlines are drawn
- * through (with their curves' handles, which lie a little outside them), and
- * every ellipse's box. A soft glow (a gradient's fill) is no edge of it, and
- * what a shape is cut out of (filled evenodd) is not drawn outside its clip.
+ * What a drawing covers in canvas units: every point its outlines pass through (curve handles included, which lie a
+ * little outside them) and every ellipse's box. A soft gradient glow is not an edge, and an evenodd cut-out is not drawn
+ * outside its clip.
  */
 function extent(svg: string): { top: number; bottom: number; left: number; right: number } {
   const xs: number[] = [];
@@ -80,7 +77,7 @@ function extent(svg: string): { top: number; bottom: number; left: number; right
         [x, y, i] = [v(2), v(3), i + 4];
       } else if (cmd === 'A') [x, y, i] = [v(5), v(6), i + 7];
       else if (cmd === 'a') {
-        // a petal: a whole round, there and back, as wide as its radius each way
+        // A petal: a whole round, there and back, its radius wide each way.
         take(x + v(5) / 2, y - v(0));
         take(x + v(5) / 2, y + v(0));
         [x, y, i] = [x + v(5), y + v(6), i + 7];
@@ -149,7 +146,7 @@ describe('the swing', () => {
         }
       }
     }
-    // the pine, the poplar, the willow and the pomegranate are their own kinds of tree, with nothing to hang one from
+    // The pine, poplar, willow and pomegranate have nothing to hang a swing from.
     for (const species of TREE_SPECIES.filter((s) => !SWINGERS.includes(s))) expect(treeRig({ species, stage: 6 }).swing).toBeNull();
   });
 
@@ -157,17 +154,17 @@ describe('the swing', () => {
     for (const species of SWINGERS) {
       const hang = treeRig({ species, stage: 6 }).swing!;
       const [x, y] = [hang.x * 120, hang.y * 120];
-      // out past the trunk, under the crown, well inside the picture
+      // Out past the trunk, under the crown, well inside the picture.
       expect(x, species).toBeGreaterThan(75);
       expect(x, species).toBeLessThan(110);
       expect(y, species).toBeGreaterThan(55);
       expect(y, species).toBeLessThan(85);
       const seat = extent(treeSvg({ species, stage: 6, part: 'swing', title: 'x' }));
-      // the ropes start at the line it leans about, and the seat is the lowest of it, above the grass
+      // The ropes start at the line it leans about, and the seat is its lowest point, above the grass.
       expect(Math.abs(seat.top - y), species).toBeLessThan(2.5);
       expect(seat.bottom, species).toBeLessThan(TREE_FOOT.y * 120 - 4);
       expect(Math.abs((seat.left + seat.right) / 2 - x), species).toBeLessThan(1.5);
-      // and as it leans its furthest, the seat stays in the picture
+      // And at its furthest lean the seat stays in the picture.
       const reach = (seat.bottom - y) * Math.tan((TREE_SWING.deg * Math.PI) / 180);
       expect(seat.right + reach, species).toBeLessThan(118);
     }
@@ -202,7 +199,7 @@ describe('the stages, one after another', () => {
   it('knows where each stage’s top is, to within a little, for every kind', () => {
     for (const stage of STAGES) {
       for (const species of TREE_SPECIES) expect(Math.abs(extent(plantOf(species, stage)).top / 120 - TREE_TOP[stage]), `${species} ${stage}`).toBeLessThan(0.07);
-      // the water lands on the plant: under its top, and above its foot
+      // The water lands on the plant: below its top and above its foot.
       expect(TREE_WATER_LANDS[stage]).toBeGreaterThan(TREE_TOP[stage]);
       expect(TREE_WATER_LANDS[stage]).toBeLessThan(TREE_FOOT.y);
     }
@@ -210,7 +207,7 @@ describe('the stages, one after another', () => {
 
   it('comes up out of the seed where it lay: the sprout’s seed is the seed’s own, in the same place', () => {
     for (const species of TREE_SPECIES) {
-      // a seed's outline is the first thing drawn of its plant
+      // A seed's outline is the first thing drawn of its plant.
       const outline = (stage: TreeStage): string => /<path d="([^"]+)"/.exec(plantOf(species, stage))![1]!;
       expect(outline(1), species).toBe(outline(0));
     }
@@ -222,7 +219,7 @@ describe('the stages, one after another', () => {
       const from = treeGrowFrom((stage - 1) as TreeStage, stage as TreeStage);
       expect(from).toBeGreaterThan(0.6);
       expect(from).toBeLessThan(1);
-      // scaled about the foot, the new one's top is where the last one's was
+      // Scaled about the foot, the new top is where the old one was.
       expect(TREE_FOOT.y - (TREE_FOOT.y - TREE_TOP[stage as TreeStage]) * from).toBeCloseTo(TREE_TOP[(stage - 1) as TreeStage], 2);
     }
   });
@@ -234,7 +231,7 @@ describe('the tree as it moves', () => {
       for (const stage of STAGES) {
         const plant = extent(plantOf(species, stage, 'fresh', 'summer'));
         const ground = extent(treeSvg({ species, stage, season: 'summer', part: 'ground', title: 'x' }));
-        // what grows reaches down to the ground line, where its foot is, and no further than its own earth
+        // What grows reaches down to the ground line at its foot, and no further than its own earth.
         expect(plant.bottom, `${species} ${stage}`).toBeGreaterThan(TREE_FOOT.y * 120 - 1.5);
         expect(plant.bottom, `${species} ${stage}`).toBeLessThan(TREE_FOOT.y * 120 + 6);
         expect(Math.abs((ground.left + ground.right) / 2 - TREE_FOOT.x * 120), `${species} ${stage}`).toBeLessThan(18);
@@ -251,7 +248,7 @@ describe('the tree as it moves', () => {
           const e = extent(plantOf(species, stage, health, 'summer'));
           const heft = treeHeft(stage);
           const sway = treeSwayDeg(stage);
-          // a touch comes only while it is still, and a drink or a stage grown only while it is not touched: the breeze is under all of them
+          // A touch comes only while still, and a drink or growth only while untouched; the breeze runs under all of them.
           const moves: readonly (readonly [turn: number, sx: number, sy: number])[] = [
             [sway + Math.max(...TREE_SHAKE.turns.map(Math.abs)) * heft, 1, 1],
             [sway, 1 + (Math.max(...TREE_DRINK.sx) - 1) * heft, 1 + (Math.max(...TREE_DRINK.sy) - 1) * heft],
@@ -290,16 +287,16 @@ describe('the tree as it moves', () => {
   });
 
   it('keeps every tree on one breeze, and the swing a little behind it', () => {
-    // the same moment is the same place in the breeze, whenever it is asked, and it goes round
+    // The same moment is the same point in the breeze whenever asked, and it wraps round.
     expect(treePhase(0)).toBe(0);
     expect(treePhase(TREE_SWAY.ms * 3 + TREE_SWAY.ms / 4)).toBeCloseTo(0.25);
     expect(treePhase(-TREE_SWAY.ms / 4)).toBeCloseTo(0.75);
-    // the wave leans furthest one way at its start and the other half way, and ends where it began, so its loop has no seam
+    // The wave is furthest one way at its start and the other halfway, and ends where it began, so the loop has no seam.
     expect(TREE_WAVE[0]).toBe(-1);
     expect(TREE_WAVE[8]).toBe(1);
     expect(TREE_WAVE[16]).toBe(-1);
     expect(TREE_WAVE_AT).toHaveLength(TREE_WAVE.length);
-    // the swing's is the same wave, later: its furthest comes after the crown's
+    // The swing's is the same wave later: its peak comes after the crown's.
     const swing = treeWave(TREE_SWING.lag);
     expect(swing[0]).toBe(swing[16]);
     expect(swing.indexOf(Math.max(...swing))).toBeGreaterThan(8);
@@ -311,7 +308,7 @@ describe('the tree as it moves', () => {
     expect(TREE_DRINK.sx[TREE_DRINK.sx.length - 1]).toBe(1);
     expect(TREE_DRINK.sy[TREE_DRINK.sy.length - 1]).toBe(1);
     expect(TREE_DRINK.stops).toHaveLength(TREE_DRINK.sx.length);
-    // the apps pour for a second and a half
+    // The apps pour for a second and a half.
     expect(TREE_DRINK.delayMs + TREE_DRINK.ms).toBeLessThanOrEqual(1500);
     expect(TREE_SHAKE.turns[0]).toBe(0);
     expect(TREE_SHAKE.turns[TREE_SHAKE.turns.length - 1]).toBe(0);

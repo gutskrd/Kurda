@@ -9,6 +9,7 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }) }));
 import { act, cleanup, fireEvent, renderHook, screen, waitFor } from '@testing-library/react';
+import { AppState } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -20,6 +21,7 @@ patchReactNativeWeb();
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 const item = { sku: 'bg_mountain', name: 'Mountain dawn', price: 500, currency: 'Zêr' };
@@ -118,10 +120,10 @@ describe('GiftSentNote', () => {
 });
 
 describe('useUnseenGifts', () => {
-  it('reads the count from /me/social, again when a gift arrives, and never on a timer', async () => {
+  it('reads the count alone, again when a gift arrives, and never on a timer', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     let unseen = 1;
-    const client = fakeClient({ 'GET /me/social': () => ok({ unread: { gifts: unseen } }) });
+    const client = fakeClient({ 'GET /me/gifts/unseen': () => ok({ unseen }) });
     testAuth.client = client;
     const { result } = renderHook(() => useUnseenGifts());
     await waitFor(() => expect(result.current).toBe(1));
@@ -132,11 +134,36 @@ describe('useUnseenGifts', () => {
       vi.advanceTimersByTime(120_000);
     });
     expect(client.calls.length).toBe(asked);
-    expect(client.calls.some((c) => c.path === '/me/gifts/unseen')).toBe(false);
+    // the social summary reads the friend list, the groups and the notifications as well, for one number
+    expect(client.calls.some((c) => c.path === '/me/social')).toBe(false);
 
     // a gift arrives (GiftArrivals calls this): counted again
     unseen = 2;
     act(() => refreshGiftBadge());
     await waitFor(() => expect(result.current).toBe(2));
+  });
+
+  it('counts again back from the background, and not after a glance at Control Centre', async () => {
+    const listeners: Array<(state: string) => void> = [];
+    vi.spyOn(AppState, 'addEventListener').mockImplementation(((_type: string, cb: (state: string) => void) => {
+      listeners.push(cb);
+      return { remove: () => undefined };
+    }) as unknown as typeof AppState.addEventListener);
+    const send = (state: string) => act(() => listeners.forEach((cb) => cb(state)));
+    const client = fakeClient({ 'GET /me/gifts/unseen': ok({ unseen: 0 }) });
+    testAuth.client = client;
+    renderHook(() => useUnseenGifts());
+    const counts = () => client.calls.filter((c) => c.path === '/me/gifts/unseen').length;
+    await waitFor(() => expect(counts()).toBe(1));
+
+    // iOS: inactive and active again, with the app running all along and its connection open
+    send('inactive');
+    send('active');
+    expect(counts()).toBe(1);
+
+    send('inactive');
+    send('background');
+    send('active');
+    await waitFor(() => expect(counts()).toBe(2));
   });
 });

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { STORY_CATEGORY_SLUG_PATTERN, STORY_COVER_MAX } from './stories.js';
-import { STORY_COVERS, STORY_COVER_DIR, STORY_RUGS, isStoryCover, storyCover, storyCoverFor, storyCoverPath, storyRugFor } from './story-covers.js';
+import { STORY_COVERS, STORY_COVER_DIR, STORY_RUGS, storyCover, storyCoverFor, storyCoverPath, storyRugFor } from './story-covers.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const onDisk = (file: string): string => join(ROOT, 'web/public', STORY_COVER_DIR, file);
@@ -42,12 +42,9 @@ describe('the story covers', () => {
     expect(storyCoverPath('gola-sin')).toBe('/cosmetics/backgrounds/made-06-gola-sin.webp');
     expect(storyCover('mem-u-zin')).toMatchObject({ ku: 'Mem û Zîn', kind: 'scene' });
     expect(storyCoverPath('kawa')).toBe('/cosmetics/backgrounds/story-kawa.webp');
-    expect(isStoryCover('kilima-sor')).toBe(true);
-    expect(isStoryCover('dimdim')).toBe(true);
     for (const missing of [null, undefined, '', 'made-06-gola-sin', 'story-kawa', 'nowhere']) {
       expect(storyCover(missing)).toBeNull();
       expect(storyCoverPath(missing)).toBeNull();
-      expect(isStoryCover(missing)).toBe(false);
     }
   });
 

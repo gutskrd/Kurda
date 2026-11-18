@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeHtml, hasHtmlSpecialChars, stripControlChars } from './sanitize.js';
+import { escapeHtml, stripControlChars } from './sanitize.js';
 import { XSS_PAYLOADS } from './xss-corpus.js';
 
 describe('escapeHtml vs the XSS corpus', () => {
@@ -39,12 +39,5 @@ describe('Kurdish text survives sanitization intact (edge case)', () => {
     const withControls = 'a' + String.fromCharCode(0) + 'b' + String.fromCharCode(7) + 'c' + String.fromCharCode(127);
     expect(stripControlChars(withControls)).toBe('abc');
     expect(stripControlChars('line1\nline2\tx')).toBe('line1\nline2\tx'); // tab + newline kept
-  });
-});
-
-describe('hasHtmlSpecialChars', () => {
-  it('detects HTML-significant characters', () => {
-    expect(hasHtmlSpecialChars('plain kurdî ê')).toBe(false);
-    expect(hasHtmlSpecialChars('<b>')).toBe(true);
   });
 });

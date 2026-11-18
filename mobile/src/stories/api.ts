@@ -52,7 +52,7 @@ export const getCategories = (client: ApiClient): Promise<ApiResult<{ categories
 
 /** On or off the caller's shelf. */
 export const setBookmark = (client: ApiClient, id: string, on: boolean): Promise<ApiResult<{ bookmarked: boolean }>> =>
-  on ? client.put(`/stories/${id}/bookmark`) : client.delete(`/stories/${id}/bookmark`);
+  on ? client.put(`/stories/${encodeURIComponent(id)}/bookmark`) : client.delete(`/stories/${encodeURIComponent(id)}/bookmark`);
 
 export interface ProgressInput {
   /** The paragraph being read, 0-based. */
@@ -65,11 +65,11 @@ export interface ProgressInput {
 
 /** Saves the caller's place in a story; the server keeps the latest and returns what it knows of them on it. */
 export const saveProgress = (client: ApiClient, id: string, input: ProgressInput): Promise<ApiResult<{ me: StoryMe }>> =>
-  client.put(`/stories/${id}/progress`, input);
+  client.put(`/stories/${encodeURIComponent(id)}/progress`, input);
 
 /** Saves a glossary word that is a dictionary headword to the caller's vocabulary, or removes it. */
 export const saveWord = (client: ApiClient, entryId: string, on: boolean): Promise<ApiResult<unknown>> =>
-  on ? client.put(`/dictionary/entries/${entryId}/save`) : client.delete(`/dictionary/entries/${entryId}/save`);
+  on ? client.put(`/dictionary/entries/${encodeURIComponent(entryId)}/save`) : client.delete(`/dictionary/entries/${encodeURIComponent(entryId)}/save`);
 
 /** The words already in the reader's vocabulary, so Save can show Saved. */
 export const savedWords = (client: ApiClient): Promise<ApiResult<{ words: { entryId: string }[] }>> => client.get('/me/saved-words');
@@ -113,10 +113,10 @@ export const joinGame = (
  */
 export const getGame = (client: ApiClient, id: string, since?: number): Promise<ApiResult<StoryGameView | Record<string, never>>> =>
   // An invite accepted a moment ago must land first; until then this is nobody's game (play/joining.ts).
-  joined(id).then(() => client.get(`/story-games/${id}${since !== undefined ? `?v=${since}` : ''}`));
+  joined(id).then(() => client.get(`/story-games/${encodeURIComponent(id)}${since !== undefined ? `?v=${since}` : ''}`));
 
 export const getGameStory = (client: ApiClient, id: string): Promise<ApiResult<StoryDetail>> =>
-  client.get(`/story-games/${id}/story`);
+  client.get(`/story-games/${encodeURIComponent(id)}/story`);
 
 interface SettingsPatch {
   storyId?: string;
@@ -127,31 +127,31 @@ interface SettingsPatch {
 }
 
 export const updateSettings = (client: ApiClient, id: string, patch: SettingsPatch): Promise<ApiResult<StoryGameView>> =>
-  client.patch(`/story-games/${id}/settings`, patch);
+  client.patch(`/story-games/${encodeURIComponent(id)}/settings`, patch);
 
 export const startGame = (client: ApiClient, id: string): Promise<ApiResult<StoryGameView>> =>
-  client.post(`/story-games/${id}/start`);
+  client.post(`/story-games/${encodeURIComponent(id)}/start`);
 
 export const doneReading = (client: ApiClient, id: string): Promise<ApiResult<StoryGameView>> =>
-  client.post(`/story-games/${id}/done-reading`);
+  client.post(`/story-games/${encodeURIComponent(id)}/done-reading`);
 
 export const answerQuestion = (client: ApiClient, id: string, index: number, choice: number): Promise<ApiResult<StoryGameView>> =>
-  client.post(`/story-games/${id}/answers`, { index, choice });
+  client.post(`/story-games/${encodeURIComponent(id)}/answers`, { index, choice });
 
 export const continueAfter = (client: ApiClient, id: string, index: number): Promise<ApiResult<StoryGameView>> =>
-  client.post(`/story-games/${id}/continue`, { index });
+  client.post(`/story-games/${encodeURIComponent(id)}/continue`, { index });
 
 export const advanceGame = (
   client: ApiClient,
   id: string,
   from: { status: StoryGameView['status']; index: number },
-): Promise<ApiResult<StoryGameView>> => client.post(`/story-games/${id}/advance`, { from });
+): Promise<ApiResult<StoryGameView>> => client.post(`/story-games/${encodeURIComponent(id)}/advance`, { from });
 
 export const leaveGame = (client: ApiClient, id: string): Promise<ApiResult<{ ok: true }>> =>
-  client.post(`/story-games/${id}/leave`);
+  client.post(`/story-games/${encodeURIComponent(id)}/leave`);
 
 export const removePlayer = (client: ApiClient, id: string, seat: number): Promise<ApiResult<StoryGameView>> =>
-  client.post(`/story-games/${id}/remove`, { seat });
+  client.post(`/story-games/${encodeURIComponent(id)}/remove`, { seat });
 
 export const setExtraTime = (client: ApiClient, id: string, on: boolean): Promise<ApiResult<StoryGameView>> =>
-  client.post(`/story-games/${id}/extra-time`, { on });
+  client.post(`/story-games/${encodeURIComponent(id)}/extra-time`, { on });

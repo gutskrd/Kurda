@@ -258,7 +258,7 @@ settings make that complete:
 
 | Variable | Value |
 |---|---|
-| `S3_EVIDENCE_BUCKET` | a second R2 bucket with **no** public access, e.g. `hevalo-evidence` (same token and endpoint; give the token access to it). Without it, evidence goes to unguessable `quarantine/…` keys in the main bucket, written `private, no-store`. |
+| `S3_EVIDENCE_BUCKET` | a second R2 bucket with **no** public access, e.g. `hevalo-evidence` (same token and endpoint; give the token access to it). Without it, evidence goes to unguessable `quarantine/…` keys in the main bucket, written `private, no-store`, and data exports are refused (`EXPORT_NOT_AVAILABLE`): they are never written to the public bucket. |
 | `CDN_PURGE_ZONE_ID` / `CDN_PURGE_API_TOKEN` | the Cloudflare zone serving `CDN_BASE_URL` (a custom domain) and an API token with only **Zone → Cache Purge**. Media is cached for a year at the edge; with these set the CDN is told to forget a taken-down URL at once. Without them, the CSAM filing task in the admin lists the URLs to purge by hand (Caching → Configuration → Custom Purge). |
 
 ### Cost-safety (stay inside R2's free tier)

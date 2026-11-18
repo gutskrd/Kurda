@@ -5,6 +5,7 @@ import type { MyReport } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { EmptyState } from '../theme/EmptyState';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
@@ -60,7 +61,7 @@ export function MyReportsScreen({ onExit }: { onExit: () => void }): React.JSX.E
         loading={loading && reports.length === 0}
         error={reports.length === 0 ? error : null}
         isEmpty={reports.length === 0}
-        emptyText={t('reports.empty')}
+        empty={<EmptyState title={t('reports.empty')} body={t('reports.emptyBody')} />}
         onRetry={load}
       >
         <FlatList

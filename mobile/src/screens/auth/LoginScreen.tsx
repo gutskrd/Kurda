@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { radii, spacing, typography } from '../../theme/tokens';
@@ -12,7 +12,8 @@ import type { AuthStackParamList } from '../../navigation/authStack';
 import { LinkText } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 
-type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
+/** `presented`: the first screen of the sign-in a guest opens over the app, whose way out is ✕. */
+type Props = NativeStackScreenProps<AuthStackParamList, 'Login'> & { presented?: boolean };
 
 /** Sign-in held back after several failed attempts: nothing was mistyped, so they get the notice with a reset link. */
 const HELD_BACK = new Set(['CAPTCHA_REQUIRED', 'LOCKED']);
@@ -22,13 +23,18 @@ const HELD_BACK = new Set(['CAPTCHA_REQUIRED', 'LOCKED']);
  * server's message under the field; a held-back sign-in shows the notice with Reset password. An address passed in
  * is prefilled.
  */
-export function LoginScreen({ navigation, route }: Props) {
+export function LoginScreen({ navigation, route, presented = false }: Props) {
   const { login } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const [email, setEmail] = useState(route.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [heldBack, setHeldBack] = useState<string | null>(null);
+  // Returned to with another address (sign-up's "you have an account", the reset's "back to sign in"), the field takes it.
+  const sentEmail = route.params?.email;
+  useEffect(() => {
+    if (sentEmail) setEmail(sentEmail);
+  }, [sentEmail]);
 
   const steps: FlowStep[] = [
     {
@@ -85,7 +91,7 @@ export function LoginScreen({ navigation, route }: Props) {
   ) : null;
 
   // On success the app root shows the signed-in screens.
-  return <StepFlow steps={steps} onFinish={() => undefined} onExit={navigation.canGoBack() ? () => navigation.goBack() : undefined} notice={notice} testID="login-flow" />;
+  return <StepFlow steps={steps} onFinish={() => undefined} onExit={navigation.canGoBack() ? () => navigation.goBack() : undefined} presented={presented} notice={notice} testID="login-flow" />;
 }
 
 const styles = StyleSheet.create({

@@ -4,7 +4,6 @@ import {
   USERNAME_MAX,
   USERNAME_MIN,
   checkUsername,
-  findMentions,
   foldForReserved,
   handleName,
   isReservedUsername,
@@ -222,40 +221,6 @@ describe('handleName', () => {
   it('keeps a dot inside the name', () => {
     expect(handleName('@hamo.k')).toBe('hamo.k');
     expect(handleName('@hamo.k.')).toBe('hamo.k');
-  });
-});
-
-describe('findMentions', () => {
-  it('finds a mention, and leaves the sentence its full stop', () => {
-    const text = 'Thanks @hamo.';
-    expect(findMentions(text)).toEqual([{ username: 'hamo', start: 7, end: 12 }]);
-    expect(text.slice(7, 12)).toBe('@hamo');
-  });
-
-  it('keeps a dot that is part of the name', () => {
-    expect(findMentions('@hamo.k is here').map((m) => m.username)).toEqual(['hamo.k']);
-    expect(findMentions('ask @hamo.k.').map((m) => m.username)).toEqual(['hamo.k']);
-    expect(findMentions('ask @hamo...').map((m) => m.username)).toEqual(['hamo']);
-  });
-
-  it('reads capitals and Kurdish letters as the name they spell', () => {
-    expect(findMentions('Silav @ŞêrÎn û @Rojda_99!').map((m) => m.username)).toEqual(['şêrîn', 'rojda_99']);
-  });
-
-  it('finds none in an email address or in a word', () => {
-    expect(findMentions('write to hamo@example.com')).toEqual([]);
-    expect(findMentions('x@hamo')).toEqual([]);
-  });
-
-  it('finds none where what follows the @ cannot be a username', () => {
-    expect(findMentions('@ab is short')).toEqual([]);
-    expect(findMentions('@12345')).toEqual([]);
-    expect(findMentions('@admin')).toEqual([]);
-    expect(findMentions('@hamoö')).toEqual([]);
-  });
-
-  it('finds a mention inside brackets, and several in a row', () => {
-    expect(findMentions('(@hamo) and @rojda, @dilan.').map((m) => m.username)).toEqual(['hamo', 'rojda', 'dilan']);
   });
 });
 

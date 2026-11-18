@@ -15,7 +15,6 @@ import {
   nextLaunch,
   pathChanges,
   pathSnapshot,
-  stopKeys,
   type PathSkill,
   type PathSkillState,
   type PathUnitInput,
@@ -164,7 +163,7 @@ describe('lessonPath — the stops of a unit', () => {
 
   it('puts review after the last skill done when nothing open is left to do', () => {
     const path = lessonPath(map([skill('a', 'completed', 2)], [skill('b', 'decayed', 2), skill('c', 'locked')]), { due: 3 });
-    expect(stopKeys(path)).toEqual(['s:a', 't:u1', 's:b', 'review', 's:c', 't:u2']);
+    expect(path.units.flatMap((u) => u.stops.map((p) => p.stop.key))).toEqual(['s:a', 't:u1', 's:b', 'review', 's:c', 't:u2']);
   });
 
   it('keeps a unit’s grammar notes off the road, for the guide its heading opens', () => {

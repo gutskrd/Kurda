@@ -1,15 +1,8 @@
 /**
- * Which part of a search result is what was typed, so the apps can draw it in
- * bold.
- *
- * The searches match wherever the query sits in a name and without its
- * diacritics ("serk" finds "Berserker", "sev" finds "şev"), so the part to mark
- * is found the same way: both sides folded and lowercased, one character at a
- * time, and the match mapped back onto the text as written. Only the first
- * place it appears is marked, which is the one the ranking cared about.
- *
- * A result that matched only loosely (a near spelling) holds no exact piece of
- * the query, and comes back as one unmarked part.
+ * Which part of a search result is what was typed, for the apps to draw in bold. Searches match anywhere and without
+ * diacritics ("sev" finds "şev"), so the part is found the same way, both sides folded one character at a time and mapped
+ * back onto the written text. Only the first match is marked. A loose match (a near spelling) comes back as one unmarked
+ * part.
  */
 import { foldDiacritics, normalizeKurdish } from './kurdish-text.js';
 
@@ -29,7 +22,7 @@ export function matchedParts(text: string, query: string): TextPart[] {
   const wanted = foldDiacritics(normalizeKurdish(query)).toLowerCase();
   if (!text || !wanted) return whole;
 
-  // the folded text, and for each of its code units the index in `text` it came from
+  // The folded text, and for each of its code units the index in `text` it came from.
   const written = text.normalize('NFC');
   let folded = '';
   const from: number[] = [];
@@ -45,7 +38,7 @@ export function matchedParts(text: string, query: string): TextPart[] {
   const start = folded.indexOf(wanted);
   if (start < 0) return whole;
   const begin = from[start]!;
-  // the end is where the character holding the last matched unit ends
+  // The end is where the character holding the last matched unit ends.
   const lastFrom = from[start + wanted.length - 1]!;
   const end = lastFrom + [...written.slice(lastFrom)][0]!.length;
 

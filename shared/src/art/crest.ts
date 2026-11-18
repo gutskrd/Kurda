@@ -1,30 +1,13 @@
 /**
- * Crests: what a rank or a league is drawn as.
- *
- * A cut stone in a rounded metal bezel, and around it a setting that grows
- * with the tier: soft feathers of metal that sweep out and up like a pair of
- * wings, more of them and longer at each step; a laurel under the stone; a
- * crown on it, with pearls and then a star; and at the very top a stone
- * hanging from the laurel, the twenty-one rays of the sun behind and a glow.
- * So the ladder reads by its outline first — a lone stone at the foot, a
- * winged crest at the top — then by its colour, then by the cut of the stone,
- * which is each tier's own.
- *
- * It is drawn in Hevalo's own hand, the badges' family: every corner rounded,
- * the bezel smooth metal with a ring of beads set into it like the badges'
- * rims, the laurel and the crown theirs, and the glyph in the stone a bold
- * white cut-out like theirs. And it is mirror-symmetric: the light falls from
- * straight above, so the left half of every crest is the right half's mirror,
- * the stone's facets and the feathers included, and every glyph is drawn about
- * the middle.
- *
- * Everything is worked out in the crest's own units — the stone about one
- * unit across its middle — and placed on the 120 square at the end, so a tier
- * can grow outward without anything being redrawn by hand. Nothing is blurred
- * and nothing is a bitmap, so the phone draws exactly what the browser does.
+ * Crests, the drawing behind rank and league emblems: a cut stone in a rounded metal bezel with a setting that grows by
+ * tier (wings of metal feathers, a laurel, a crown with pearls or a star, a hanging stone, sun rays, a glow). The ladder
+ * reads by outline first, then colour, then the stone's cut, which is each tier's own. The style matches the badges.
+ * Light falls from straight above, so every crest is mirror-symmetric, glyphs included. Geometry is worked out in crest
+ * units (the stone about one unit across) and placed on the 120 square at the end, so a tier can grow outward without
+ * redrawing anything.
  */
 import { roundPath } from './geometry.js';
-import { laurel, softStar } from './paint.js';
+import { capsule, laurel, softStar } from './paint.js';
 import type { Metal } from './palette.js';
 import type { Detail, Drawing, Pt } from './svg.js';
 import { linearAt, linearBox, mix, n, n2, radialAt } from './svg.js';
@@ -33,28 +16,27 @@ import { linearAt, linearBox, mix, n, n2, radialAt } from './svg.js';
 export type Cut = 'drop' | 'shield' | 'kite' | 'hexagon' | 'peak' | 'octagon' | 'brilliant' | 'pentagon';
 
 /**
- * What is cut into the stone, in the glyph's own −1…1 square, drawn about its
- * middle line: path data through `p`. `fill` is solid (holes by even-odd),
- * `faint` half seen, `stroke` lines of `width`.
+ * The glyph cut into the stone, in its −1…1 square and symmetric about the middle line, as path data through `p`.
+ * `fill` is solid (holes by even-odd), `faint` half visible, `stroke` lines of `width`.
  */
 export type Glyph = (p: (x: number, y: number) => string) => { fill?: string; faint?: string; stroke?: string; width?: number };
 
 export interface Crest {
   cut: Cut;
-  /** the stone's colours */
+  /** The stone's colours. */
   gem: Metal;
-  /** the setting's metal: the bezel, the feathers, the laurel, the crown */
+  /** The setting's metal: bezel, feathers, laurel and crown. */
   metal: Metal;
-  /** how grand the wings are: 0 none … 5 the full pair */
+  /** How grand the wings are: 0 none to 5 the full pair. */
   wings: 0 | 1 | 2 | 3 | 4 | 5;
-  /** under the stone: nothing, a laurel, or a laurel with a stone hanging from it */
+  /** Under the stone: nothing, a laurel, or a laurel with a hanging stone. */
   base: 0 | 1 | 2;
   crown: 'none' | 'pearls' | 'star';
-  /** beads set round the bezel, as the badges' rims have */
+  /** Beads set round the bezel, as on the badges' rims. */
   beads: boolean;
-  /** the light behind it, 0–1 */
+  /** The glow behind it, 0–1. */
   glow: number;
-  /** the sun's twenty-one rays behind it */
+  /** The sun's twenty-one rays behind it. */
   rays: boolean;
   glyph?: Glyph;
 }
@@ -68,7 +50,7 @@ function regular(k: number, rotDeg: number, sy = 1): Pt[] {
   });
 }
 
-/** A drop: its point straight up, its round body under, the sides running into the circle where they meet it. */
+/** A drop: point straight up, round body below, the sides meeting the circle tangentially. */
 function dropCut(): Pt[] {
   const tip: Pt = [0, -1.3];
   const c: Pt = [0, 0.16];
@@ -83,7 +65,7 @@ function dropCut(): Pt[] {
   return [tip, ...arc];
 }
 
-/** Each cut's outline, clockwise on the screen from the top, about one unit across, and its own mirror image. */
+/** Each cut's outline, clockwise from the top, about one unit across and mirror-symmetric. */
 const CUTS: Record<Cut, () => Pt[]> = {
   drop: dropCut,
   shield: () => [
@@ -125,12 +107,12 @@ const scale = (pts: readonly Pt[], k: number, dy = 0): Pt[] => pts.map(([x, y]) 
 
 /** How far the bezel stands out from the stone, as a share of the stone. */
 const BEZEL = 1.24;
-/** The table: the stone's flat top, a little smaller and a little up. */
+/** The table: the stone's flat top, a little smaller and higher. */
 const TABLE = 0.56;
 const TABLE_UP = -0.06;
 /** Where the table's facets meet: on the middle line, a little up. */
 const APEX: Pt = [0, -0.14];
-/** How round a corner is, in the crest's units: the badges' soft corners, scaled to a stone. */
+/** Corner radius in crest units: the badges' soft corners, scaled to a stone. */
 const CORNER = 0.16;
 
 const bezelOf = (cut: Cut): Pt[] => scale(cutPoints(cut), BEZEL);
@@ -139,7 +121,7 @@ const footOf = (pts: readonly Pt[]): number => Math.max(...pts.map((p) => p[1]))
 
 // ──────────────────────────────────────────────────────────────── the light
 
-/** How a face pointing along `normal` is lit, by a light from straight above: −1 turned away … 1 full on. */
+/** How a face with this normal is lit from straight above: −1 turned away to 1 full on. */
 const litBy = (normal: Pt): number => -normal[1];
 
 /** A face's colour, from its metal or stone, by how it is lit. */
@@ -167,21 +149,19 @@ function outward(a: Pt, b: Pt, centre: Pt): Pt {
 // ──────────────────────────────────────────────────────────────── the wings
 
 interface Feather {
-  /** where it starts, as an angle round the stone (0 = right, 90 = down) */
+  /** Where it starts, as an angle round the stone (0 right, 90 down). */
   a: number;
-  /** which way it points */
+  /** Which way it points. */
   d: number;
-  /** length, width at its foot, and how far its tip sweeps up */
+  /** Length, width at its foot, and how far its tip sweeps up. */
   L: number;
   W: number;
   s: number;
 }
 
 /**
- * The feathers on the right; the left are their mirror. They leave the stone's
- * sides and sweep out and up, each a little lower and shorter than the one
- * behind it, their rounded tips curling upward. Back ones first, so each lies
- * over the one above it.
+ * The right-hand feathers (the left mirror them). They sweep out and up from the stone's sides, each a little lower
+ * and shorter than the one behind, tips curling up. Listed back to front so each overlaps the one above.
  */
 const WINGS: Record<0 | 1 | 2 | 3 | 4 | 5, readonly Feather[]> = {
   0: [],
@@ -260,7 +240,7 @@ function mirrored(s: FeatherShape): FeatherShape {
   return out;
 }
 
-/** The feathers a crest shows at a size: the small drawings keep the long ones, which make the outline. */
+/** The feathers kept at a size: the small drawings keep the long ones, which make the outline. */
 function feathersFor(c: Crest, detail: Detail): readonly Feather[] {
   const all = WINGS[c.wings];
   if (detail === 0) return all;
@@ -278,7 +258,7 @@ function wingsOf(c: Crest, detail: Detail): [FeatherShape, FeatherShape][] {
 
 // ──────────────────────────────────────────────────────────────── the crown
 
-/** The crown's outline: three rounded points, the middle one tallest, its foot tucked behind the bezel. */
+/** The crown's outline: three rounded points, the middle tallest, its foot tucked behind the bezel. */
 function crownPoints(c: Crest): { v: Pt[]; radii: number[]; pearls: Pt[] } {
   const w = 1.32;
   const h = 0.88;
@@ -340,18 +320,14 @@ function extent(c: Crest, detail: Detail): { minX: number; maxX: number; minY: n
 }
 
 export interface CrestBox {
-  /** the square's room for it: top and bottom on the canvas */
+  /** The square's room for it: top and bottom on the canvas. */
   top: number;
   bottom: number;
-  /** the most a unit of the stone may be, in canvas pixels: the lone stones stop growing here */
+  /** The most one stone unit may be, in canvas pixels; lone stones stop growing here. */
   cap: number;
 }
 
-/**
- * Where a crest sits: as large as its box allows, never larger than the cap,
- * centred — and always on the square's middle line, so the crest's own mirror
- * line is the drawing's.
- */
+/** Where a crest sits: as large as its box allows up to the cap, and always centred on the square's middle line. */
 export function placeCrest(c: Crest, detail: Detail, box: CrestBox): Place {
   const e = extent(c, detail);
   const half = Math.max(-e.minX, e.maxX);
@@ -374,10 +350,10 @@ function dot(x: number, y: number, r: number): string {
   return `M${n(x - r)},${n(y)}a${n(r)},${n(r)} 0 1 0 ${d},0a${n(r)},${n(r)} 0 1 0 -${d},0Z`;
 }
 
-/** Each drawing's metals, so the bezel, the crown and the plaque share one. */
+/** Each drawing's metal gradients, so bezel, crown and plaque share one. */
 const METALS = new WeakMap<Drawing, Map<Metal, string>>();
 
-/** A metal lit from straight above, across whatever shape it fills: what the bezel, the crown and the plaque are made of. */
+/** A metal gradient lit from straight above, across whatever shape it fills: bezel, crown and plaque. */
 function metalDown(dr: Drawing, m: Metal): string {
   const mine = METALS.get(dr) ?? new Map<Metal, string>();
   METALS.set(dr, mine);
@@ -397,18 +373,16 @@ function metalDown(dr: Drawing, m: Metal): string {
 }
 
 /**
- * The stone: its ring of facets and its table split into small facets, all
- * lit from above and clipped to its rounded outline; a soft gloss over its
- * top. `table` colours the table's facets one by one when given (the
- * placement count), the stone's own light otherwise.
+ * The stone: a ring of facets and a table split into small facets, lit from above and clipped to the rounded outline,
+ * with a soft gloss over the top. `table` colours the table facets one by one (the placement count) when given.
  */
 function stone(dr: Drawing, pl: Place, cut: Cut, gem: Metal, detail: Detail, table?: (i: number) => Metal): string {
   const outer = cutPoints(cut);
-  // the ring runs a little past the outline, so the rounded clip trims it cleanly
+  // The ring runs a little past the outline, so the rounded clip trims it cleanly.
   const ring = scale(outer, 1.08);
   const inner = scale(outer, TABLE, TABLE_UP);
   const k = outer.length;
-  // facets lit alike — a facet and its mirror — share an element
+  // Facets lit alike (a facet and its mirror) share an element.
   const byColour = new Map<string, string>();
   const face = (pts: readonly Pt[], colour: string): void => {
     byColour.set(colour, (byColour.get(colour) ?? '') + poly(pl, pts));
@@ -443,10 +417,7 @@ function stone(dr: Drawing, pl: Place, cut: Cut, gem: Metal, detail: Detail, tab
   );
 }
 
-/**
- * Points spaced evenly along an outline, the first where it crosses the
- * middle line at the top — so they fall the same either side of the middle.
- */
+/** Points spaced evenly along an outline from where it crosses the middle line at the top, so they fall symmetrically. */
 function alongOutline(pts: readonly Pt[], count: number): Pt[] {
   const k = pts.length;
   const edges = pts.map((a, i) => {
@@ -454,7 +425,7 @@ function alongOutline(pts: readonly Pt[], count: number): Pt[] {
     return { a, b, len: Math.hypot(b[0] - a[0], b[1] - a[1]) };
   });
   const total = edges.reduce((sum, e) => sum + e.len, 0);
-  // where the outline crosses the middle line going right across its top
+  // Where the outline crosses the middle line going right across its top.
   let start = 0;
   let startY = Infinity;
   let run = 0;
@@ -483,10 +454,8 @@ function alongOutline(pts: readonly Pt[], count: number): Pt[] {
 }
 
 /**
- * The bezel: the stone's outline grown out and rounded, smooth metal lit from
- * above, edged in its darkest tone, with a bright inner line where the light
- * catches it — or, from the middle of the ladder, a ring of beads set into it,
- * the badges' own.
+ * The bezel: the stone's outline grown out and rounded, smooth metal lit from above and edged in its darkest tone, with
+ * a bright inner line, or from the middle of the ladder a ring of beads like the badges'.
  */
 function bezel(dr: Drawing, pl: Place, c: Crest, detail: Detail): string {
   const rim = bezelOf(c.cut);
@@ -494,7 +463,7 @@ function bezel(dr: Drawing, pl: Place, c: Crest, detail: Detail): string {
   const outline = rounded(pl, rim, CORNER * BEZEL);
   const id = metalDown(dr, m);
   const out = [`<path d="${outline}" fill="url(#${id})" stroke="${m.deep}" stroke-width="${n2(detail === 2 ? 2.4 : detail === 1 ? 1.8 : 1.4)}" stroke-linejoin="round"/>`];
-  // a bright line where the light catches the rim — or, from the middle of the ladder, beads set into it
+  // A bright line where the light catches the rim, or beads from the middle of the ladder.
   if (detail === 0 && !c.beads) out.push(`<path d="${rounded(pl, scale(cutPoints(c.cut), BEZEL - 0.05), CORNER * (BEZEL - 0.05))}" fill="none" stroke="${m.hi}" stroke-opacity="0.6" stroke-width="0.9" stroke-linejoin="round"/>`);
   if (c.beads && detail < 2) {
     const mid = scale(cutPoints(c.cut), (1 + BEZEL) / 2 + 0.01);
@@ -519,7 +488,7 @@ function featherLit(pl: Place, f: FeatherShape): string {
 
 function wings(pl: Place, pairs: readonly [FeatherShape, FeatherShape][], m: Metal, detail: Detail): string {
   if (pairs.length === 0) return '';
-  // a pair never overlaps itself, so its two feathers share their elements; where the lit half meets the shaded one is the spine
+  // A pair never overlaps itself, so its two feathers share elements; the lit and shaded halves meet at the spine.
   const out = pairs.map(
     (pair) =>
       `<path d="${pair.map((f) => featherPath(pl, f)).join('')}"/>` +
@@ -529,7 +498,7 @@ function wings(pl: Place, pairs: readonly [FeatherShape, FeatherShape][], m: Met
   return `<g fill="${m.mid}"${edge}>${out.join('')}</g>`;
 }
 
-/** The crown: the badges' three rounded points, lit from above, with a pearl on each — or a star on the middle one. */
+/** The crown: three rounded points lit from above, with a pearl on each or a star on the middle one. */
 function crownOf(dr: Drawing, pl: Place, c: Crest, detail: Detail): string {
   const m = c.metal;
   const cr = crownPoints(c);
@@ -550,7 +519,7 @@ function crownOf(dr: Drawing, pl: Place, c: Crest, detail: Detail): string {
   return out.join('');
 }
 
-/** A small stone, cut in faces lit from above, hung from the laurel. */
+/** A small faceted stone, lit from above, hung from the laurel. */
 function smallStone(pl: Place, at: Pt, r: number, gem: Metal, m: Metal): string {
   const [x, y] = at;
   const top: Pt = [x, y - r * 1.3];
@@ -581,7 +550,7 @@ function rays(dr: Drawing, centre: Pt, colour: string): string {
   return `<path d="${d.join('')}" fill="url(#${id})"/>`;
 }
 
-/** The light behind a crest: a soft round glow, inside the square. */
+/** A soft round glow behind a crest, inside the square. */
 function glowOf(dr: Drawing, centre: Pt, colour: string, opacity: number): string {
   const [cx, cy] = centre;
   const reach = Math.min(cx, cy, 120 - cx, 120 - cy) - 1;
@@ -590,10 +559,7 @@ function glowOf(dr: Drawing, centre: Pt, colour: string, opacity: number): strin
   return `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(reach)}" fill="url(#${id})"/>`;
 }
 
-/**
- * What is cut into the stone: a bold white cut-out like the badges' glyphs,
- * lit from above and lifted off the stone by a shadow in its own deep tone.
- */
+/** The glyph cut into the stone: a bold white cut-out lit from above, lifted by a shadow in the stone's deep tone. */
 function glyphOn(dr: Drawing, pl: Place, glyph: Glyph, gem: Metal, detail: Detail): string {
   const size = 0.54;
   const g = glyph((x, y) => ps(pl, [x * size, y * size + 0.02]));
@@ -604,7 +570,7 @@ function glyphOn(dr: Drawing, pl: Place, glyph: Glyph, gem: Metal, detail: Detai
   const width = n2((g.width ?? 0.16) * size * pl.s);
   const out: string[] = [];
   const shadow = `transform="translate(0 ${drop})"`;
-  // the shadow that lifts it is under a pixel in the small drawings, so it goes there
+  // The lifting shadow is under a pixel in the small drawings, so it is skipped there.
   const lifted = detail === 0;
   if (g.faint) out.push(`<path d="${g.faint}" fill="#ffffff" fill-opacity="0.5" fill-rule="evenodd"/>`);
   if (g.fill && lifted) out.push(`<path d="${g.fill}" ${shadow} fill="${gem.deep}" fill-opacity="0.5" fill-rule="evenodd" stroke="${gem.deep}" stroke-opacity="0.5" stroke-width="${rim}" stroke-linejoin="round"/>`);
@@ -617,7 +583,7 @@ function glyphOn(dr: Drawing, pl: Place, glyph: Glyph, gem: Metal, detail: Detai
 export interface CrestOptions {
   detail: Detail;
   box: CrestBox;
-  /** the table's facets coloured one by one (the placement count) */
+  /** The table's facets coloured one by one (the placement count). */
   table?: (i: number) => Metal;
 }
 
@@ -631,16 +597,16 @@ export function crestMarkup(dr: Drawing, c: Crest, o: CrestOptions): { markup: s
   if (c.glow > 0) out.push(glowOf(dr, centre, c.gem.light, c.glow));
   if (c.rays && o.detail < 2) out.push(rays(dr, centre, c.metal.light));
 
-  // the crest's own thickness under it, and its shadow on the page
+  // The crest's thickness under it, and its shadow on the page.
   const pool = dr.id('w');
   const [, py] = P(pl, [0, footOf(rim)]);
-  // never past the foot of the canvas; a crest that stands on the very edge leaves no room, and a radius below nought is not a gradient at all
+  // Never past the canvas foot; a crest on the very edge leaves no room, and a negative radius is not a gradient.
   dr.def(radialAt(pool, [[0, '#000000', 0.22], [1, '#000000', 0]], centre[0], py + 2, Math.max(0.5, Math.min(pl.s * 1.1, 117 - py))));
   out.push(`<ellipse cx="${n(centre[0])}" cy="${n(py + 2)}" rx="${n(pl.s * 1.1)}" ry="${n(Math.max(2, pl.s * 0.18))}" fill="url(#${pool})"/>`);
   out.push(`<path d="${rounded(pl, rim, CORNER * BEZEL)}" transform="translate(0 ${n2(o.detail === 0 ? 2.4 : 1.8)})" fill="${c.metal.deep}" fill-opacity="0.55"/>`);
 
   out.push(wings(pl, wingsOf(c, o.detail), c.metal, o.detail));
-  // the laurel round the stone's foot, over the lowest feathers, its stem behind the bezel
+  // The laurel round the stone's foot, over the lowest feathers, its stem behind the bezel.
   if (c.base > 0 && o.detail < 2) {
     out.push(
       laurel({
@@ -664,7 +630,7 @@ export function crestMarkup(dr: Drawing, c: Crest, o: CrestOptions): { markup: s
   out.push(stone(dr, pl, c.cut, c.gem, o.detail, o.table));
   if (c.glyph && o.detail < 2) out.push(glyphOn(dr, pl, c.glyph, c.gem, o.detail));
 
-  // glints, in pairs either side of the middle, from the fourth step on
+  // Glints in symmetric pairs, from wing step 3 on.
   if (o.detail === 0 && c.wings >= 3) {
     const at: Pt[] = c.wings >= 5 ? [[1.42, -1.1]] : [[1.3, -0.98]];
     const marks = at.flatMap((p) => [p, mirror(p)]).map((p) => {
@@ -677,17 +643,15 @@ export function crestMarkup(dr: Drawing, c: Crest, o: CrestOptions): { markup: s
 }
 
 /**
- * A crest's outline alone, flat: a tier not reached yet. Its shape is still
- * its own — the cut, the wings, the crown — so the ladder reads, and the
- * keyhole in the middle says it waits. Drawn in two groups, the body in
- * `body` and the marks in `mark`, so a page can recolour each with one rule.
+ * A crest's flat outline, for a tier not reached yet: still its own cut, wings and crown, with a keyhole in the middle.
+ * The body and marks are separate groups (`body`, `mark`) so a page can recolour each with one rule.
  */
 export function crestSilhouette(c: Crest, detail: Detail, box: CrestBox, body: string, mark: string): string {
   const pl = placeCrest(c, detail, box);
-  // small, a waiting crest keeps only its longest feathers: its outline, without the bustle
+  // Small, a waiting crest keeps only its longest feathers, which make its outline.
   const feathers = wingsOf(c, detail === 0 ? 0 : 2).flatMap((pair) => pair.map((f) => featherPath(pl, f)));
   const shape: string[] = [];
-  // the wings quieter than the bezel, so the stone's own outline leads
+  // The wings quieter than the bezel, so the stone's outline leads.
   if (feathers.length > 0) shape.push(`<path d="${feathers.join('')}" fill-opacity="0.6"/>`);
   if (c.crown !== 'none') {
     const cr = crownPoints(c);
@@ -722,17 +686,9 @@ function keyhole([cx, cy]: Pt, s: number): string {
   );
 }
 
-/** A capsule centred on cx,cy. */
-function plate(cx: number, cy: number, w: number, h: number): string {
-  const r = h / 2;
-  return `M${n(cx - w / 2 + r)},${n(cy - r)}H${n(cx + w / 2 - r)}A${n(r)},${n(r)} 0 0 1 ${n(cx + w / 2 - r)},${n(cy + r)}H${n(cx - w / 2 + r)}A${n(r)},${n(r)} 0 0 1 ${n(cx - w / 2 + r)},${n(cy - r)}Z`;
-}
-
 /**
- * The division under a crest, the way a badge carries its tier: a small
- * plaque of the crest's metal with stones set in it, as many lit as the
- * player has climbed — one for III, two for II, three for I — and the rest
- * empty settings, told apart by shape and fill as well as by colour.
+ * The division under a crest: a small plaque of the crest's metal with stones set in it, one lit for III, two for II,
+ * three for I, the rest empty settings, distinct by shape and fill as well as colour.
  */
 export function divisionStones(dr: Drawing, gem: Metal, m: Metal, count: number, lit: number, cx: number, cy: number, w: number, h: number, gap: number): string {
   const id = dr.id('pip');
@@ -742,8 +698,8 @@ export function divisionStones(dr: Drawing, gem: Metal, m: Metal, count: number,
   const metal = metalDown(dr, m);
   const x0 = cx - ((count - 1) * (w + gap)) / 2;
   const out = [
-    `<path d="${plate(cx, cy + 1.4, plateW, plateH)}" fill="${m.deep}" fill-opacity="0.5"/>`,
-    `<path d="${plate(cx, cy, plateW, plateH)}" fill="url(#${metal})" stroke="${m.deep}" stroke-width="1.2"/>`,
+    `<path d="${capsule(cx, cy + 1.4, plateW, plateH)}" fill="${m.deep}" fill-opacity="0.5"/>`,
+    `<path d="${capsule(cx, cy, plateW, plateH)}" fill="url(#${metal})" stroke="${m.deep}" stroke-width="1.2"/>`,
   ];
   for (let i = 0; i < count; i++) {
     const x = x0 + i * (w + gap);

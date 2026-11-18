@@ -8,7 +8,11 @@ const CLUB = '3c8d5b20-0000-4000-8000-000000000003';
 
 function fakes(routes: Record<string, unknown> = {}) {
   const went: Array<[string, unknown]> = [];
-  const navigation = { navigate: (name: string, params?: unknown) => went.push([name, params]) } as unknown as RootNavigation;
+  // a tap on a streak reminder goes back down to the tabs (a dispatched pop), anything else is navigated to: both are where it landed
+  const navigation = {
+    navigate: (name: string, params?: unknown) => went.push([name, params]),
+    dispatch: (action: { type: string; payload: { name: string; params?: unknown } }) => went.push([`${action.type}:${action.payload.name}`, action.payload.params]),
+  } as unknown as RootNavigation;
   const answer = async (path: string) =>
     path in routes ? { ok: true, data: routes[path] } : { ok: false, error: { kind: 'client', status: 404, message: 'no' } };
   const client = { get: answer, post: answer } as unknown as ApiClient;
@@ -27,7 +31,7 @@ async function landing(data: Record<string, unknown> | null, routes: Record<stri
 describe('pushTarget: each push the API sends opens somewhere sensible', () => {
   it('a streak reminder (no kind, category streak) opens the lessons', async () => {
     expect(pushTarget({ category: 'streak' })).toEqual({ kind: 'learn' });
-    expect(await landing({ category: 'streak' })).toEqual([['Tabs', { screen: 'Learn' }]]);
+    expect(await landing({ category: 'streak' })).toEqual([['POP_TO:Tabs', { screen: 'Learn' }]]);
   });
 
   it('the day’s badges open Badges', async () => {

@@ -64,6 +64,14 @@ describe('signing in', () => {
     expect(await screen.findByText(en['guide.password.question'])).toBeTruthy();
   });
 
+  it('takes the address it is gone back to with, from the sign-up or the reset', async () => {
+    const navigation = { navigate: vi.fn(), goBack: vi.fn(), canGoBack: () => false };
+    const props = (email: string) => ({ navigation, route: { key: 'l', name: 'Login', params: { email } } }) as unknown as Parameters<typeof LoginScreen>[0];
+    const view = renderWithProviders(<LoginScreen {...props('rojda@example.com')} />);
+    view.rerender(<LoginScreen {...props('azad@example.com')} />);
+    await waitFor(() => expect((screen.getByTestId('email') as HTMLInputElement).value).toBe('azad@example.com'));
+  });
+
   it('does not go on from an address that is not one', async () => {
     renderLogin();
     fireEvent.change(screen.getByTestId('email'), { target: { value: 'rojda' } });
