@@ -170,12 +170,15 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
     key && app.storage ? app.storage.publicUrl(key) : null;
 
   return async (userId) => {
-    const result = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]);
-    const row = result.rows[0] as MeRow;
+    // Reuse the enriched profile query and resolver for cosmetics, level and favourites (self view: details always
+    // visible); ranks and badges are not part of the account.
+    const [row, profile] = await Promise.all([
+      app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]).then((r) => r.rows[0] as MeRow),
+      social.profile(userId, userId, { ranksAndBadges: false }),
+    ]);
     // Settle the streak on read so a lapsed day shows as broken.
     const streak = await streaks.get(row.id, row.timezone);
-    // Reuse the enriched profile query and resolver for cosmetics, level and favourites (self view: details always visible).
-    const publicDto = toPublicProfileDto(await social.profile(row.id, row.id), app.storage);
+    const publicDto = toPublicProfileDto(profile, app.storage);
     return {
       ...toMe(row),
       streak,

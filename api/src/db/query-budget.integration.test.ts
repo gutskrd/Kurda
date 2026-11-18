@@ -183,6 +183,13 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       for (const tab of [five, friends]) expect(shown(tab)).not.toMatch(/FROM game_ratings|badge_showcase/);
     });
 
+    it('the account read is the session, the row, its profile and the streak, without ranks or badges', async () => {
+      const me = await steady('GET', '/me', 'me');
+      expect(me.body.user.id).toBe(ids.me);
+      expect(me.count, me.statements.join('\n')).toBeLessThanOrEqual(4);
+      expect(me.statements.join('\n')).not.toMatch(/FROM game_ratings|badge_showcase/);
+    });
+
     it('the heartbeat is the session read and one statement', async () => {
       const beat = await steady('POST', '/me/heartbeat', 'me');
       expect(beat.count, beat.statements.join('\n')).toBeLessThanOrEqual(2);

@@ -201,9 +201,10 @@ export class SocialService {
 
   /**
    * Someone's public profile, gated by privacy and blocks. `viewerId` is null for a signed-out reader, the least
-   * privileged case: no blocks, no friends, so friends-only and nobody profiles show what any stranger sees.
+   * privileged case: no blocks, no friends, so friends-only and nobody profiles show what any stranger sees. Without
+   * `ranksAndBadges` the ranks and showcase are left unread, for callers that show neither.
    */
-  async profile(viewerId: string | null, targetId: string): Promise<PublicProfile> {
+  async profile(viewerId: string | null, targetId: string, opts: { ranksAndBadges?: boolean } = {}): Promise<PublicProfile> {
     const row = await this.pool.query<{
       username: string;
       display_name: string | null;
@@ -359,11 +360,14 @@ export class SocialService {
       u.favorite_story_id && u.fs_title != null
         ? { id: u.favorite_story_id, title: u.fs_title, type: u.fs_type ?? '', status: u.fs_status ?? '' }
         : null;
-    const [ranks, badges] = await Promise.all([
-      this.ranks.profileRanks(targetId, isSelf),
-      // a minor's showcase only to themselves and their friends
-      profileShowcase(this.pool, targetId, viewerId),
-    ]);
+    const [ranks, badges] =
+      opts.ranksAndBadges === false
+        ? [undefined, undefined]
+        : await Promise.all([
+            this.ranks.profileRanks(targetId, isSelf),
+            // a minor's showcase only to themselves and their friends
+            profileShowcase(this.pool, targetId, viewerId),
+          ]);
     return {
       ...base,
       bio: u.bio,
