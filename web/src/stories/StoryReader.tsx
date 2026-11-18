@@ -29,7 +29,7 @@ import { dialectName } from '../learn/map';
 import { STORIES_LIBRARY, createGame, gamePath, readerPath, setBookmark, storyError } from './api';
 import { useStoryCategories } from './catalogue';
 import { StoryCover } from './Cover';
-import { categoryLabel, levelHint, levelName, minutesLeft, narratedKey } from './labels';
+import { GAME_SPELLING, categoryLabel, levelHint, levelName, minutesLeft, narratedKey } from './labels';
 import { rememberTextSize, rememberVariety, rememberedExtraTime, rememberedTextSize } from './prefs';
 import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
 import { SetupSheet } from './SetupSheet';
@@ -120,9 +120,6 @@ const TRADITION_KEY: Record<StoryTradition, MessageKey> = {
   adapted: 'stories.overview.tradition.adapted',
   original: 'stories.overview.tradition.original',
 };
-
-/** The stories' variety spelling in the games' terms, which the shared switch speaks. */
-const GAME_SPELLING: Record<StoryDialect, GameDialect> = { kurmanci: 'kmr', sorani: 'ckb' };
 
 function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTMLSpanElement> }): React.JSX.Element {
   const t = useT();

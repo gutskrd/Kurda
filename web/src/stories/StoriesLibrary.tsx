@@ -29,7 +29,7 @@ import { LearnHeader } from '../learn/LearnHeader';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import { STORIES_LIBRARY, gamePath, storyError } from './api';
 import { useStoryList } from './catalogue';
-import { categoryLabel, categoryNames, categoryTitle } from './labels';
+import { GAME_SPELLING, categoryLabel, categoryNames, categoryTitle } from './labels';
 import { LibraryFilterBar, NO_FILTERS, isPlain, queryOf, readFilters, writeFilters, type LibraryFilters } from './LibraryFilter';
 import { rememberVariety, rememberedExtraTime, shownVariety } from './prefs';
 import { MODE_KEY, SetupSheet } from './SetupSheet';
@@ -42,9 +42,6 @@ export const PAGE = 24;
 
 /** The category the server sends as its own shelf (`legends`), which also names that shelf. */
 const LEGEND_CATEGORY = 'legend';
-
-/** The stories' variety spelling in the games' terms, which the shared switch speaks. */
-const GAME_SPELLING: Record<StoryDialect, GameDialect> = { kurmanci: 'kmr', sorani: 'ckb' };
 
 /**
  * The library (/app/learn/stories): one variety at a time, chosen by the same switch as the riddles and proverbs, and

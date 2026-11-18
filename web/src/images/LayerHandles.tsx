@@ -1,11 +1,10 @@
 import { useRef } from 'react';
+import { clamp } from './frame';
 import { SIZE_RANGE, captureIfPossible, layerBox, type PlacedLayer } from './layers';
 
 /** Pullable corners, named by position so the cursor can match. */
 const CORNERS = ['nw', 'ne', 'se', 'sw'] as const;
 type Corner = (typeof CORNERS)[number];
-
-const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 
 /**
  * The selected layer's outline and its resize and turn handles, laid over the canvas as elements so they stay crisp and

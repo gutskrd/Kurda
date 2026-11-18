@@ -1,8 +1,21 @@
 /** The words for a story's facts (level, minutes left, category), shared by cards, the filter and the story page. */
-import { categoryName, categoryNameKey, levelHintKey, levelNameKey, type StoryCategory, type StoryLevel, type StoryListItem } from '@kurda/shared';
+import {
+  categoryName,
+  categoryNameKey,
+  levelHintKey,
+  levelNameKey,
+  type GameDialect,
+  type StoryCategory,
+  type StoryDialect,
+  type StoryLevel,
+  type StoryListItem,
+} from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+
+/** The stories' variety spelling in the games' terms, which the shared Kurmancî | Soranî switch speaks. */
+export const GAME_SPELLING: Record<StoryDialect, GameDialect> = { kurmanci: 'kmr', sorani: 'ckb' };
 
 /** "Beginner": a level's name for readers, never the CEFR letter (see `levelNameKey`). */
 export function levelName(level: StoryLevel, t: Translate): string {

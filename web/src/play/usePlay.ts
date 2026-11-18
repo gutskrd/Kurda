@@ -3,13 +3,10 @@ import { isPlayGame, type InviteLists, type PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
+import { pageVisible } from '../lib/pollWhileVisible';
 
 /** How often a lobby or game is read when no `play_changed` has come, as a safety net. */
 export const FALLBACK_POLL_MS = 10_000;
-
-function visible(): boolean {
-  return typeof document === 'undefined' || document.visibilityState !== 'hidden';
-}
 
 /**
  * Keeps a Peyvok Battle or Rhyme Match screen current: reads on the server's `play_changed`, plus a safety read every
@@ -31,10 +28,10 @@ export function useLobbyUpdates(game: PlayGame, lobbyId: string, read: () => voi
   useEffect(() => {
     if (!live) return;
     const timer = setInterval(() => {
-      if (visible()) latest.current();
+      if (pageVisible()) latest.current();
     }, FALLBACK_POLL_MS);
     const onVisible = (): void => {
-      if (visible()) latest.current();
+      if (pageVisible()) latest.current();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
@@ -79,7 +76,7 @@ export function useInvites(enabled = true): { lists: InviteLists | null; refresh
   useEffect(() => {
     if (!on) return;
     const onVisible = (): void => {
-      if (visible()) refresh();
+      if (pageVisible()) refresh();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);

@@ -1,5 +1,5 @@
 /** Whether the page is in view; true without a document (tests, workers). */
-function visible(): boolean {
+export function pageVisible(): boolean {
   return typeof document === 'undefined' || document.visibilityState !== 'hidden';
 }
 
@@ -10,11 +10,11 @@ function visible(): boolean {
 export function pollWhileVisible(tick: () => void, everyMs: number): () => void {
   let missed = false;
   const timer = setInterval(() => {
-    if (visible()) tick();
+    if (pageVisible()) tick();
     else missed = true;
   }, everyMs);
   const onVisibility = (): void => {
-    if (!missed || !visible()) return;
+    if (!missed || !pageVisible()) return;
     missed = false;
     tick();
   };

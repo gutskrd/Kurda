@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import type { ApiResult } from '../lib/types';
+import { pageVisible } from '../lib/pollWhileVisible';
 
 /** Waits between failed long-polls: quick at first, never hammering. */
 export const VIEW_BACKOFF_MS = [1_000, 2_000, 5_000] as const;
@@ -50,10 +51,6 @@ const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
       resolve();
     });
   });
-
-function visible(): boolean {
-  return typeof document === 'undefined' || document.visibilityState !== 'hidden';
-}
 
 /**
  * One multiplayer learning game kept current (api/src/mp), the same for every game the engine runs.
@@ -166,10 +163,10 @@ export function useGameView<Board, Outcome = unknown>(
   useEffect(() => {
     if (!following || !connected) return;
     const timer = setInterval(() => {
-      if (visible()) refresh();
+      if (pageVisible()) refresh();
     }, VIEW_SAFETY_MS);
     const onVisible = (): void => {
-      if (visible()) refresh();
+      if (pageVisible()) refresh();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {

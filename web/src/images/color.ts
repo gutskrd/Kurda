@@ -1,4 +1,5 @@
 /** Colour conversions for the picker's hex, RGB and HSL fields; each round-trips, so typing in one never shifts the others. */
+import { clamp } from './frame';
 
 export interface Rgb {
   r: number;
@@ -15,7 +16,6 @@ export interface Hsl {
   l: number;
 }
 
-const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 const round = (n: number): number => Math.round(n * 1000) / 1000;
 
 /** `#abc`, `#aabbcc` or `aabbcc`; anything else is not a colour. */

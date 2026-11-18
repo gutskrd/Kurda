@@ -1,6 +1,6 @@
 import { stickerImage } from './stickers';
 import { fontStack, layoutLines, type FontKey } from './photoText';
-import type { CropRect } from './frame';
+import { clamp, type CropRect } from './frame';
 
 /**
  * What sits on top of a picture: words, stickers and strokes in one list, since they share position, size and turn and
@@ -93,8 +93,6 @@ export function newId(): string {
   counter += 1;
   return `l${counter}`;
 }
-
-const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 
 /** Holds a layer inside what the controls can express. */
 export function clampLayer(layer: Layer): Layer {

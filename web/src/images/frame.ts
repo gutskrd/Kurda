@@ -44,7 +44,8 @@ export function isWholePicture(frame: Frame): boolean {
   return frame.zoom === 1 && frame.cx === 0.5 && frame.cy === 0.5;
 }
 
-const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
+/** `n` held between `lo` and `hi`. */
+export const clamp = (n: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, n));
 
 /** The largest rectangle of the shape inside the picture: the zoom-1 crop, which every other crop divides. */
 export function widestCrop(iw: number, ih: number, aspect: number): { w: number; h: number } {
