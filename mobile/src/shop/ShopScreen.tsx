@@ -671,9 +671,10 @@ const styles = StyleSheet.create({
   card: { width: '48.5%', gap: 4, borderRadius: radii.md, padding: spacing.sm },
   cardArt: { height: ART_HEIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
   itemName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  itemDesc: { fontSize: typography.sizes.sm, minHeight: 2 * 18 },
+  itemDesc: { fontSize: typography.sizes.sm, lineHeight: 18 },
   stretch: { alignSelf: 'stretch' },
-  priceRow: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  // At the card's foot, so the prices of a row line up whatever their meanings' length.
+  priceRow: { alignItems: 'center', gap: spacing.xs, marginTop: 'auto', paddingTop: spacing.xs },
   price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   detail: { alignItems: 'center', gap: spacing.sm, paddingBottom: spacing.sm },
   preview: { marginBottom: spacing.sm },

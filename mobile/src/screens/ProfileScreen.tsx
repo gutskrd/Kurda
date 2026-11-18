@@ -446,7 +446,11 @@ function AccountProfile() {
           </ReachGroup>
         </View>
 
-        {me?.level ? <LevelBar level={me.level} /> : null}
+        {me?.level ? (
+          <View style={styles.level}>
+            <LevelBar level={me.level} />
+          </View>
+        ) : null}
         <ProfileFacts facts={facts} testID="profile-facts" />
         {settled && !me ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : null}
 
@@ -533,6 +537,7 @@ const styles = StyleSheet.create({
   flag: { width: 22, height: 16 },
   countryName: { fontSize: typography.sizes.sm },
   bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
+  level: { alignSelf: 'stretch', marginTop: spacing.sm },
   seen: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
   seenText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
   addBio: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.xs },

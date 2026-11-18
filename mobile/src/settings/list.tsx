@@ -90,6 +90,9 @@ export function titleRoom(title: string, fontScale: number, rowWidth: number): n
   return Math.min(Math.ceil(longest * typography.sizes.md * LETTER * fontScale), Math.floor(rowWidth * 0.6));
 }
 
+/** A row's inset inside its card, and the room between its icon, words and end: a little under the page's gutter, so names keep their line. */
+const ROW_INSET = spacing.sm + 4;
+
 /** The inside of a row: icon, name and what is under it, then whatever ends the row. */
 function RowBody({ icon, title, subtitle, value, destructive, attention, end }: RowLook & { end?: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
@@ -101,7 +104,7 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
   return (
     <View style={[styles.row, { flexDirection: dir.row }]}>
       {icon ? <Icon name={icon} size={24} color={attention ? colors.primary : ink} /> : null}
-      <View style={[styles.words, value ? { minWidth: titleRoom(title, fontScale, Math.min(width, layout.column) - layout.gutter * 4) } : null]}>
+      <View style={[styles.words, value ? { minWidth: titleRoom(title, fontScale, Math.min(width, layout.column) - layout.gutter * 2 - ROW_INSET * 2) } : null]}>
         <Text style={[styles.title, dir.text, { color: ink }]}>{title}</Text>
         {subtitle ? <Text style={[styles.subtitle, dir.text, { color: note }]}>{subtitle}</Text> : null}
       </View>
@@ -294,9 +297,9 @@ const styles = StyleSheet.create({
   headless: { height: spacing.sm },
   row: {
     alignItems: 'center',
-    gap: spacing.md,
+    gap: ROW_INSET,
     minHeight: Math.max(MIN_TOUCH_TARGET, 56),
-    paddingHorizontal: layout.gutter,
+    paddingHorizontal: ROW_INSET,
     paddingVertical: spacing.sm + 2,
   },
   words: { flex: 1, gap: 2 },

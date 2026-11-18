@@ -103,8 +103,8 @@ export function LevelBar({ level }: { level: Pick<LevelInfo, 'level' | 'xp' | 'n
       accessibilityValue={{ min: 0, max: 100, now: Math.round(share * 100) }}
     >
       <View style={[styles.levelHead, { flexDirection: dir.row }]}>
-        <Text style={[styles.levelName, { color: colors.goldText }]}>{t('profile.levelN', { level: formatNumber(level.level, locale) })}</Text>
-        <Text style={[styles.levelNext, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.levelName, dir.text, { color: colors.goldText }]}>{t('profile.levelN', { level: formatNumber(level.level, locale) })}</Text>
+        <Text style={[styles.levelNext, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
           {next}
         </Text>
       </View>
