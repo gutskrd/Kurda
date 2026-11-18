@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-vi.mock('react-native', () => ({ Alert: { alert: vi.fn() } }));
 // The hooks are not used here; their language comes from the app, which this test does not start.
 vi.mock('../i18n/I18nContext', () => ({ useI18n: () => ({ t: (key: string) => key }) }));
-import { Alert } from 'react-native';
+import { onNotice } from '../theme/notice';
 import { createIntents, sayNotSaved } from './optimistic';
 import type { ApiError, ApiResult } from './types';
 
@@ -33,7 +32,11 @@ function track(s: ReturnType<typeof server>) {
   return { tracked, failed, changed };
 }
 
-afterEach(() => vi.mocked(Alert.alert).mockClear());
+const notices: string[] = [];
+onNotice((text) => notices.push(text));
+afterEach(() => {
+  notices.length = 0;
+});
 
 describe('a change shown before the server has it', () => {
   it('shows the wanted value at once and asks the server for it', () => {
@@ -180,18 +183,18 @@ function createIntentsOver<S>(extra: { answered?: (data: { goal: S }, sent: S) =
 describe('saying a change did not save', () => {
   const t = (key: string) => (key === 'error.offline' ? 'Can’t reach Hevalo right now.' : key);
 
-  it('says why in the app’s words', () => {
+  it('says why in the app’s words, as a notice', () => {
     sayNotSaved({ kind: 'client', status: 404, message: 'no such post' }, t as never);
-    expect(Alert.alert).toHaveBeenCalledWith('no such post');
+    expect(notices).toEqual(['no such post']);
   });
 
   it('says a lost connection plainly, without blaming anybody', () => {
     sayNotSaved(refused, t as never);
-    expect(Alert.alert).toHaveBeenCalledWith('Can’t reach Hevalo right now.');
+    expect(notices).toEqual(['Can’t reach Hevalo right now.']);
   });
 
   it('leaves maintenance to its own screen', () => {
     sayNotSaved({ kind: 'server', status: 503, code: 'MAINTENANCE', message: 'down' }, t as never);
-    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(notices).toEqual([]);
   });
 });

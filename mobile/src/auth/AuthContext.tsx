@@ -27,6 +27,8 @@ export interface SessionUser {
   displayName: string | null;
   /** Their own picture, for the profile tab. `/me` returns it, so the session already holds it. */
   profilePhotoUrl: string | null;
+  /** The avatar everyone sees: their photo, their chosen avatar or the default deer (/me only). */
+  avatarUrl?: string | null;
   /** Whether the user has confirmed their email address. */
   emailVerified: boolean;
   /**
@@ -345,6 +347,10 @@ export function AuthProvider({
     });
     setUser(payload.user);
     setStatus('signedIn');
+    // Signing in answers with the account's identity only; the rest of it (the avatar, leagues, age) follows from /me.
+    void client.get<{ user: SessionUser }>('/me').then((me) => {
+      if (me.ok) setUser(me.data.user);
+    });
   };
 
   const value: AuthContextValue = {

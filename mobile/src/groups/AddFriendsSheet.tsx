@@ -3,7 +3,7 @@ import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
@@ -96,7 +96,7 @@ export function AddFriendsSheet({
             const done = added.has(f.userId);
             return (
               <View key={f.userId} style={[styles.row, { flexDirection: dir.row }]}>
-                <InitialsAvatar name={f.username} id={f.userId} size={40} photoUrl={f.avatarUrl ?? null} />
+                <Avatar name={f.username} size={40} photoUrl={f.avatarUrl ?? null} />
                 <View style={styles.words}>
                   <Text style={[styles.name, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
                     {f.displayName || f.username}

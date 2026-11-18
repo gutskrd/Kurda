@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { Alert } from 'react-native';
 import { useI18n } from '../i18n/I18nContext';
+import { showNotice } from '../theme/notice';
 import { describeError, isMaintenance, type Translate } from './errors';
 import type { ApiError, ApiResult } from './types';
 
@@ -88,9 +88,12 @@ export function createIntents<K, S, T = unknown>({ send, answered, failed, chang
   };
 }
 
-/** Say that a change did not save, in the app's words; maintenance has its own screen, so it is not said twice. */
+/**
+ * Say that a change did not save, in the app's words, as a short notice rather than a dialog to dismiss; maintenance has
+ * its own screen, so it is not said twice.
+ */
 export function sayNotSaved(error: ApiError, t: Translate): void {
-  if (!isMaintenance(error)) Alert.alert(describeError(error, t));
+  if (!isMaintenance(error)) showNotice(describeError(error, t));
 }
 
 /** `sayNotSaved` for a screen, in its reader's language. */
@@ -101,7 +104,7 @@ export function useSayNotSaved(): (error: ApiError) => void {
 
 /**
  * `createIntents` for a screen. `send` and `failed` are read when used, so they may close over the latest render.
- * Without `failed` a refusal is said in an alert; a screen with its own place for errors passes one. A refusal is said
+ * Without `failed` a refusal is said in a notice; a screen with its own place for errors passes one. A refusal is said
  * even after the screen has gone, since the change it made did not happen.
  */
 export function useIntents<K, S, T = unknown>(

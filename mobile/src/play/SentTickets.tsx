@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import type { PlayGame } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { springTo, timing, useShake } from '../theme/animate';
 import { Icon } from '../theme/Icon';
@@ -177,7 +177,7 @@ function HolderTicket({
                 ) : holder?.group ? (
                   <Icon name="people" size={20} color={tone.ink} />
                 ) : (
-                  <InitialsAvatar name={holder?.name ?? ''} id={holder?.id ?? ''} size={26} photoUrl={holder?.photoUrl ?? null} />
+                  <Avatar name={holder?.name ?? ''} size={26} photoUrl={holder?.photoUrl ?? null} />
                 )
               }
               bodyStyle={styles.body}
@@ -241,7 +241,7 @@ export function SentFan({ game, holders, text }: { game: PlayGame; holders: read
               <Ticket
                 tone={game}
                 size="mini"
-                stub={h.group ? <Icon name="people" size={20} color={tone.ink} /> : <InitialsAvatar name={h.name} id={h.id} size={26} photoUrl={h.photoUrl} />}
+                stub={h.group ? <Icon name="people" size={20} color={tone.ink} /> : <Avatar name={h.name} size={26} photoUrl={h.photoUrl} />}
                 bodyStyle={styles.body}
                 style={styles.fanTicket}
               >

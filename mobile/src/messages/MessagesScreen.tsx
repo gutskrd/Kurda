@@ -25,7 +25,7 @@ import { useTabBarInset } from '../navigation/tabBarLayout';
 import { TabHeader } from '../navigation/TopBar';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useOpenSlide } from '../social/SocialSlide';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { TicketBadge } from '../play/Ticket';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { NewGroupSheet } from '../groups/NewGroupSheet';
@@ -245,7 +245,7 @@ export function MessagesScreen(): React.JSX.Element {
           <View style={styles.faces}>
             {requests.slice(0, 2).map((r, i) => (
               <View key={r.userId} style={[styles.face, i > 0 && styles.faceBehind, { borderColor: colors.surface }]}>
-                <InitialsAvatar name={r.username} id={r.userId} size={32} photoUrl={r.avatarUrl ?? undefined} />
+                <Avatar name={r.username} size={32} photoUrl={r.avatarUrl ?? undefined} />
               </View>
             ))}
             {/* Friend requests are tickets, as invites to play are: the glyph on the faces' corner. */}
@@ -428,7 +428,7 @@ function ConversationRow({
       style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
     >
       {row.kind === 'direct' ? (
-        <InitialsAvatar name={row.name} id={row.chat.userId} size={52} photoUrl={row.chat.avatarUrl ?? undefined} />
+        <Avatar name={row.name} size={52} photoUrl={row.chat.avatarUrl ?? undefined} />
       ) : (
         // A group in its rounded square, so it is never mistaken for a person with that name.
         <GroupAvatar name={row.name} id={row.group.id} size={52} photoUrl={row.group.photoUrl} />

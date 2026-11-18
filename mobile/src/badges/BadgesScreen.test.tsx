@@ -13,12 +13,12 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
-import { Alert } from 'react-native';
 import type { BadgeView, BadgesResponse } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { BadgesScreen } from './BadgesScreen';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -54,7 +54,7 @@ const BADGES: BadgesResponse = {
 
 describe('the badges on show', () => {
   it('puts a badge on show before the server answers, and takes it off again with the reason when refused', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     let answer: (r: unknown) => void = () => undefined;
     const client = fakeClient({ 'GET /me/badges': ok(BADGES), 'PUT /me/badges/showcase': () => new Promise((resolve) => (answer = resolve)) } as never);
     testAuth.client = client;

@@ -1,12 +1,48 @@
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { useState } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { assetUrl } from '../api/env';
+import { AAA_NORMAL } from '../a11y/contrast';
+import { scaledFontSize } from '../a11y/dynamicType';
+import { ensureContrast } from '../a11y/ensureContrast';
+import { useFontScale } from '../a11y/useFontScale';
+import { useI18n } from '../i18n/I18nContext';
+import { initialsAvatar } from '../profile/initials';
+import { typography } from '../theme/tokens';
 
 /**
- * A group's picture, or its initials on its own colour, in a rounded square: people are circles everywhere in the app,
- * so the shape alone says which.
+ * A group's picture, or its initials on its own colour, in a rounded square, as on the website: people are circles
+ * everywhere in the app, so the shape alone says which. A picture that will not load falls back to the initials.
  */
 export function GroupAvatar({ name, id, size, photoUrl }: { name: string; id: string; size: number; photoUrl?: string | null }): React.JSX.Element {
-  return <InitialsAvatar name={name} id={id} size={size} photoUrl={photoUrl} style={{ borderRadius: groupRadius(size) }} />;
+  const { t } = useI18n();
+  const [broken, setBroken] = useState(false);
+  // Honours Dynamic Type, but tightly, so the letters stay inside the square. Above the early return, since a failing
+  // picture swaps the branch and the hook count must not change.
+  const fontScale = useFontScale({ max: 1.15 });
+  const box = { width: size, height: size, borderRadius: groupRadius(size) };
+  const uri = assetUrl(photoUrl);
+  if (uri && !broken) {
+    return <Image source={{ uri }} onError={() => setBroken(true)} accessibilityRole="image" accessibilityLabel={t('profile.avatarOf', { name })} style={box} />;
+  }
+  const { initials, backgroundColor, textColor } = initialsAvatar(name, id);
+  return (
+    <View
+      accessibilityRole="image"
+      accessibilityLabel={t('profile.avatarOf', { name })}
+      // The palette is already AA against white; this nudges it to AAA (7:1) for low-vision users, deterministically.
+      style={[styles.box, box, { backgroundColor: ensureContrast(backgroundColor, textColor, AAA_NORMAL) }]}
+    >
+      <Text allowFontScaling={false} style={[styles.text, { color: textColor, fontSize: scaledFontSize(Math.round(size * 0.4), fontScale) }]}>
+        {initials}
+      </Text>
+    </View>
+  );
 }
 
 /** The corner of a group's square: about a fifth of its side, as an app icon's. */
 const groupRadius = (size: number): number => Math.round(size * 0.22);
+
+const styles = StyleSheet.create({
+  box: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
+  text: { fontFamily: typography.fontFamily, fontWeight: typography.weights.bold, includeFontPadding: false },
+});

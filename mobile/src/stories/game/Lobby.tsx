@@ -13,7 +13,7 @@ import { haptic } from '../../feedback/haptics';
 import { describeError } from '../../api/errors';
 import type { ApiError, ApiResult } from '../../api/types';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
-import { InitialsAvatar } from '../../profile/InitialsAvatar';
+import { Avatar } from '../../profile/Avatar';
 import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -154,7 +154,7 @@ export function Lobby({
             const name = playerName(p, t);
             return (
               <View key={p.seat} style={styles.player}>
-                <InitialsAvatar name={p.name ?? String(p.seat)} id={`seat-${p.seat}`} size={36} photoUrl={p.avatarUrl} />
+                <Avatar name={p.name ?? String(p.seat)} size={36} photoUrl={p.avatarUrl} />
                 <View style={styles.playerMain}>
                   <Text style={[styles.playerName, { color: colors.textPrimary }]} numberOfLines={1}>
                     {name}

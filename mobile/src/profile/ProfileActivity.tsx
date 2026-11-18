@@ -1,12 +1,12 @@
-import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { FeedCard, FeedCardSkeleton } from '../feed/FeedCard';
 import { SkeletonText } from '../theme/Skeleton';
 import type { FeedItem } from '../feed/types';
 import { onPostDeleted, samePost, useDeleting } from '../composer/postDeleted';
-import { radii, spacing, typography, wash } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -17,10 +17,11 @@ import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './s
 import { EmptyState } from '../theme/EmptyState';
 import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
+import { reachRoom } from '../a11y/a11y';
 
-/** A tab's height, and a strip taller than one row by half: it has taken a second row, even at the largest text. */
+/** A tab's height, and the track's inset round the tabs. */
 const TAB_HEIGHT = 50;
-const TWO_ROWS_AT_LEAST = (TAB_HEIGHT + 3 * 2) * 1.5;
+const TRACK_PAD = 3;
 
 const LABEL: Record<ProfileSection, TranslationKey> = {
   posts: 'profile.tab.posts',
@@ -81,11 +82,8 @@ export function ProfileActivity({
   // Recomputed rather than stored, so a tab that disappears is replaced instead of leaving an empty panel.
   const active = shown.includes(section) ? section : (shown[0] ?? null);
   const [page, setPage] = useState<ActivityPage | null>(null);
-  /*
-   * The strip's width once it has taken a second row, which sets the tabs three to a row; left alone they would put
-   * four on the first row and one on the second. A new width (a rotated tablet) lets them find their rows again.
-   */
-  const [thirds, setThirds] = useState<number | null>(null);
+  const strip = useRef<ScrollView>(null);
+  const rr = reachRoom(TRACK_PAD);
 
   const load = useCallback(
     (kind: ProfileSection) => {
@@ -123,48 +121,48 @@ export function ProfileActivity({
         {t('profile.activity')}
       </Text>
 
-      {/* The tabs share the width rather than scroll, so none is hidden off the edge, with the glyph above the word.
-         Each starts as wide as its word and grows to fill its row; where five do not fit, the strip takes a second
-         row rather than cutting them. The chosen tab is a violet wash with violet ink, and right to left the first
-         tab is on the right.
-         
+      {/* One row, the glyph above the word: each tab is as wide as its word and they share what is left, and where
+         five whole words do not fit (Soranî, German) the row scrolls rather than wrapping or cutting them. The chosen
+         tab is solid violet, and right to left the first tab is on the right.
+
          On your own profile a section hidden from others is still here, marked with the closed eye and named
          "Hidden" to a screen reader. */}
-      <View
-        style={[styles.tabs, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
-        accessibilityRole="tablist"
-        onLayout={(e) => {
-          const { width, height } = e.nativeEvent.layout;
-          if (thirds !== null && thirds !== width) setThirds(null);
-          else if (thirds === null && height > TWO_ROWS_AT_LEAST) setThirds(width);
-        }}
-      >
-        {shown.map((s) => {
-          const on = s === active;
-          const ink = on ? colors.primary : colors.textSecondary;
-          const hidden = own && sections?.[s] === false;
-          return (
-            <Pressable
-              key={s}
-              onPress={() => setSection(s)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: on }}
-              accessibilityLabel={hidden ? `${t(LABEL[s])}, ${t('profile.hidden')}` : t(LABEL[s])}
-              style={({ pressed }) => [
-                styles.tab,
-                thirds !== null ? styles.tabThird : null,
-                on ? { backgroundColor: wash(colors.primary) } : null,
-                pressed && heldDim,
-              ]}
-            >
-              <Icon name={GLYPH[s]} size={18} color={ink} />
-              <View style={[styles.tabLabel, { flexDirection: dir.row }]}>
-                <Text style={[styles.tabText, { color: ink }]}>{t(LABEL[s])}</Text>
-                {hidden ? <Icon name="eye-off" size={12} color={ink} /> : null}
-              </View>
-            </Pressable>
-          );
-        })}
+      <View style={[styles.tabs, { backgroundColor: colors.controlTrack }]}>
+        <ScrollView
+          ref={strip}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          onContentSizeChange={() => {
+            if (dir.row === 'row-reverse') strip.current?.scrollToEnd({ animated: false });
+          }}
+          accessibilityRole="tablist"
+          style={rr.scroller}
+          contentContainerStyle={[rr.content, styles.tabRow, { flexDirection: dir.row }]}
+        >
+          {shown.map((s) => {
+            const on = s === active;
+            const ink = on ? colors.textOnPrimary : colors.textSecondary;
+            const hidden = own && sections?.[s] === false;
+            return (
+              <Pressable
+                key={s}
+                onPress={() => setSection(s)}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={hidden ? `${t(LABEL[s])}, ${t('profile.hidden')}` : t(LABEL[s])}
+                style={({ pressed }) => [styles.tab, on ? { backgroundColor: colors.primary } : null, pressed && heldDim]}
+              >
+                <Icon name={GLYPH[s]} size={18} color={ink} />
+                <View style={[styles.tabLabel, { flexDirection: dir.row }]}>
+                  <Text style={[styles.tabText, { color: ink }]} numberOfLines={1}>
+                    {t(LABEL[s])}
+                  </Text>
+                  {hidden ? <Icon name="eye-off" size={12} color={ink} /> : null}
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       </View>
 
       {page === null ? (
@@ -230,16 +228,12 @@ function ActivitySkeleton({ games }: { games: boolean }): React.JSX.Element {
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
   heading: { ...sectionLabel },
-  tabs: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    borderRadius: radii.lg,
-    padding: 3,
-    gap: 2,
-  },
-  // The strip's own height: a tab is 50pt, inside 3pt of padding.
-  tabsSkeleton: { height: TAB_HEIGHT + 3 * 2 },
-  // As wide as its word to begin with, then a share of what is left in its row.
+  tabs: { borderRadius: radii.lg, overflow: 'hidden', paddingVertical: TRACK_PAD },
+  // The row fills the track when the tabs fit, so they share what is left.
+  tabRow: { flexGrow: 1, paddingHorizontal: TRACK_PAD, gap: 2 },
+  // The strip's own height: a tab is 50pt, inside the track's inset.
+  tabsSkeleton: { height: TAB_HEIGHT + TRACK_PAD * 2 },
+  // As wide as its word to begin with, then a share of what is left in the row.
   tab: {
     flexGrow: 1,
     alignItems: 'center',
@@ -250,8 +244,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: radii.md,
   },
-  // At most three to a row once the strip has two rows, so the rows come out three and two.
-  tabThird: { minWidth: '30%' },
   tabLabel: { alignItems: 'center', gap: 3 },
   tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
   list: { gap: spacing.md },

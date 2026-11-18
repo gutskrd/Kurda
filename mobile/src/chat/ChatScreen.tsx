@@ -21,7 +21,7 @@ import { useBlock } from '../social/blocks';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { MessageField } from './SendButton';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -346,7 +346,7 @@ export function ChatScreen({
           title={name}
           titleAvatar={
             <View>
-              <InitialsAvatar name={name} id={userId} size={HEADER_FACE} photoUrl={face} />
+              <Avatar name={name} size={HEADER_FACE} photoUrl={face} />
               {/* Online now: a green dot on the face, ringed in the page colour so it reads on any picture. */}
               {other?.online ? <View style={[styles.online, { backgroundColor: colors.success, borderColor: colors.background }]} testID="header-online" /> : null}
             </View>
@@ -369,7 +369,7 @@ export function ChatScreen({
         ) : thread.length === 0 ? (
           // Nothing said yet: who it is with, and a first hello to send.
           <ScrollView contentContainerStyle={styles.welcome} keyboardShouldPersistTaps="handled">
-            <DmWelcome userId={userId} name={name} photoUrl={face} onGreet={(greeting) => void greet(greeting)} />
+            <DmWelcome name={name} photoUrl={face} onGreet={(greeting) => void greet(greeting)} />
             <TypingBubble names={typing} face={{ id: userId, name, photoUrl: face }} />
           </ScrollView>
         ) : (

@@ -34,6 +34,7 @@ import type { ApiResult } from '../api/types';
 import { onPostDeleted, type DeletedPost } from '../composer/postDeleted';
 import type { LibraryComment, LibraryPost } from './types';
 import { LibraryPostScreen } from './LibraryPostScreen';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -431,7 +432,7 @@ describe('deleting your own post', () => {
   });
 
   it('goes at once, once confirmed, and says why when the server refused, the lists keeping it', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     const heard: DeletedPost[] = [];
     const stop = onPostDeleted((p) => heard.push(p));
     let answer: (r: unknown) => void = () => undefined;
@@ -446,7 +447,6 @@ describe('deleting your own post', () => {
     // The lists were never told it was gone.
     expect(heard).toEqual([]);
     stop();
-    said.mockRestore();
   });
 
   it('offers no menu on somebody else’s post', async () => {

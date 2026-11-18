@@ -11,10 +11,11 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useGameBack } from '../navigation/hardwareBack';
-import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
+import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
+import { FriendPicker, togglePick, useFriendsToAsk } from '../play/FriendPicker';
+import { inviteFriends } from '../play/api';
+import { showNotice } from '../theme/notice';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
-import { LobbyRated, RatedChoice, RatedPill } from '../ranks/Rated';
-import { useRatedChoice } from '../ranks/ratedPrefs';
 import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
@@ -44,6 +45,7 @@ import {
 import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { useDirection } from '../reports/direction';
+import { MAX_INVITEES_PER_REQUEST } from '@kurda/shared';
 
 
 /**
@@ -75,20 +77,31 @@ export function WordleBattleScreen({ id: initialId, onExit }: { id?: string; onE
   );
 }
 
-/** Pick a difficulty and open a room — or join one with the code a friend gave you. */
+/**
+ * Pick a difficulty and friends to ask, and open a room — or join one with the code a friend gave you. As on the
+ * website, asking nobody is fine: the room has a code to hand out. Games are played for fun, so every battle is
+ * friendly.
+ */
 function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
-  const [rated, setRated] = useRatedChoice('wordle-battle');
+  const { friends, recentIds } = useFriendsToAsk();
+  const [asked, setAsked] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const create = async (): Promise<void> => {
     setBusy(true);
     setError(null);
-    const res = await createBattle(client, difficulty, rated);
+    const res = await createBattle(client, difficulty, false);
+    if (res.ok && asked.length > 0) {
+      // The room exists whatever happens to the invites; one that did not go is said, and the room can ask again.
+      const sent = await inviteFriends(client, 'wordle-battle', res.data.id, asked);
+      if (!sent.ok) showNotice(describeError(sent.error, t));
+    }
     setBusy(false);
     if (res.ok) onEnter(res.data.id);
     else setError(res.error.code === 'EMPTY_POOL' ? t('games.emptyPool') : describeError(res.error, t));
@@ -109,9 +122,18 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
               labelOf={(d) => t(DIFFICULTY_KEY[d])}
             />
           </View>
-          {/* Rated or Friendly, before the room exists: the host can still change it in the lobby. */}
-          <View style={styles.stretch}>
-            <RatedChoice value={rated} onChange={setRated} />
+          {/* Who to ask, in the same step, as the website's page has it. */}
+          <View style={[styles.stretch, styles.who]}>
+            <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+              {t('play.invite.friends')}
+            </Text>
+            <FriendPicker
+              friends={friends}
+              recentIds={recentIds}
+              picked={asked}
+              onToggle={(friend) => setAsked((list) => togglePick(list, friend, false, MAX_INVITEES_PER_REQUEST))}
+              limit={MAX_INVITEES_PER_REQUEST}
+            />
           </View>
           <ClayButton
             label={t('games.battle.create')}
@@ -320,20 +342,6 @@ function BattleRoom({
                 onRemove={isHost ? (seat) => void act(() => removeFromBattle(client, id, seat)) : undefined}
               />
             ) : null}
-            {/* Rated or Friendly, said before anyone joins; the host may change it here and only here. */}
-            {battle.me != null ? (
-              <LobbyRated
-                game="wordle-battle"
-                lobbyId={id}
-                rated={battle.rated}
-                isHost={isHost}
-                players={playerCount}
-                seatName={seatNamer(battle.players ?? [], t)}
-                onChanged={() => void load()}
-              />
-            ) : battle.rated ? (
-              <RatedPill rated={battle.rated.rated} />
-            ) : null}
             {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
             {battle.me == null ? (
               <ClayButton
@@ -440,8 +448,6 @@ function BattleRoom({
   // ---- play ------------------------------------------------------------------
   return (
     <>
-      {/* The game's header says what it is playing for, decided at the start. */}
-      {battle.rated ? <RatedPill rated={battle.rated.counts ?? battle.rated.rated} small /> : null}
       {battle.opponents.length > 0 ? (
         <View style={styles.opponents}>
           {battle.opponents.map((o, i) => (
@@ -539,6 +545,8 @@ const styles = StyleSheet.create({
   // Lay out a card's contents on an inner View: a GlassCard's own style only dresses its outside.
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
+  who: { gap: spacing.xs },
+  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },

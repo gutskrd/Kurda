@@ -19,8 +19,8 @@ import { storyTextProps, storyTextStyle, type StoryTextProps } from '../stories/
 
 /**
  * The words the riddle and proverb screens use, and their two rules: which translation a reader is shown, and how text
- * in a language other than the interface's is set. Both collections keep their Kurmancî names in every language, as the
- * games do, with the reader's own word beside the name.
+ * in a language other than the interface's is set. Both collections keep their Kurmancî names in every language but
+ * Soranî, as the games do, with the reader's own word beside the name.
  */
 export const RIDDLES_NAME = 'Metelok';
 export const PROVERBS_NAME = 'Gotinên pêşiyan';
@@ -66,6 +66,16 @@ export const STATE_KEY: Record<RiddleState, TranslationKey> = {
 /** The localized name beside the Kurmancî one, or nothing where the two are the same word (a Kurmancî interface). */
 export function besideName(kurmanci: string, localized: string): string | null {
   return localized.trim().toLocaleLowerCase() === kurmanci.toLocaleLowerCase() ? null : localized;
+}
+
+/**
+ * A collection's name as its reader sees it, as the website names it: Soranî readers get the Soranî name their
+ * catalogue holds, everyone else the Kurmancî one with their own word beside it where it differs. `lang` is the name's
+ * language, for screen readers.
+ */
+export function collectionName(kurmanci: string, localized: string, locale: string): { name: string; beside: string | null; lang: 'ku' | 'ckb' } {
+  if (locale === 'ckb') return { name: localized, beside: null, lang: 'ckb' };
+  return { name: kurmanci, beside: besideName(kurmanci, localized), lang: 'ku' };
 }
 
 /**

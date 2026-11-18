@@ -18,6 +18,7 @@ import type { HapticEvent } from '../feedback/hapticPacing';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { PublicProfileScreen } from './PublicProfileScreen';
+import { watchNotices } from '../testing/notices';
 
 /*
  * Another learner's profile: their streak's fire as big as their streak, so a friend a year in shows the Newroz fire.
@@ -198,7 +199,8 @@ describe('asking to be friends', () => {
   });
 
   it('says Requested before the server answers, sends the withdrawal after it, and goes back with the reason when refused', async () => {
-    const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
+    const said = watchNotices();
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
     const answers: ((r: unknown) => void)[] = [];
     let status = 'none';
     const client = fakeClient({
@@ -227,13 +229,14 @@ describe('asking to be friends', () => {
     await act(async () => answers[1]!({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
     // The withdrawal did not go: the request stands, as the server has it.
     expect(screen.getByRole('button', { name: 'Requested' })).toBeTruthy();
-    expect(alert).toHaveBeenLastCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
   });
 });
 
 describe('blocking somebody', () => {
   it('leaves their profile at once, once confirmed, and says why when the block was refused', async () => {
-    const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.text === 'Block')?.onPress?.());
+    const said = watchNotices();
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.text === 'Block')?.onPress?.());
     let answer: (r: unknown) => void = () => undefined;
     testAuth.client = fakeClient({
       'GET /users/u2': ok({ ...BARAN, friendStatus: 'friends' }),
@@ -245,7 +248,6 @@ describe('blocking somebody', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'More about Baran' }));
     expect(onExit).toHaveBeenCalledTimes(1);
     await act(async () => answer({ ok: false, error: { kind: 'client', status: 409, code: 'LIMIT_REACHED', message: 'too many' } }));
-    expect(alert).toHaveBeenLastCalledWith(expect.any(String));
-    expect(alert.mock.calls.at(-1)?.length).toBe(1);
+    expect(said).toHaveBeenCalledWith(expect.any(String));
   });
 });

@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import type { ChatMessage } from '../gifts/api';
 import { useI18n } from '../i18n/I18nContext';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -100,7 +100,7 @@ export function MessageRow({
         {mine ? null : place.last ? (
           // The name is over the run, or in the header: the face alone would be read out as a second name.
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="run-face">
-            <InitialsAvatar name={senderName} id={message.senderId} size={RUN_FACE} photoUrl={message.avatarUrl} />
+            <Avatar name={senderName} size={RUN_FACE} photoUrl={message.avatarUrl} />
           </View>
         ) : (
           <View style={styles.noFace} />

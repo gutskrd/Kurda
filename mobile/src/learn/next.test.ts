@@ -25,6 +25,8 @@ describe('the next step on Learn', () => {
   it('is the very first lesson for somebody who has finished nothing', () => {
     const step = nextStep([course('a', [[skill('1', 'unlocked'), skill('2', 'locked')]])]);
     expect(step).toMatchObject({ kind: 'start', lessonId: 'l-1', unitTitle: 'Unit 1', done: 0, total: 2 });
+    // Its chapter, headed as the path heads it: a course of one section names no section.
+    expect(step).toMatchObject({ unit: { number: 1, section: null } });
   });
 
   /* A skill is several lessons long: with one of them done, "Start your first lesson" would not be true. */

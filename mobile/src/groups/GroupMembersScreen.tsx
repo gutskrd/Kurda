@@ -15,7 +15,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { EmptyState } from '../theme/EmptyState';
 import { showActions } from '../theme/actionSheet';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -352,7 +352,7 @@ function MemberRow({
       accessibilityLabel={[name, role].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.member, { flexDirection: dir.row }, pressed && !self && { backgroundColor: colors.controlTrack }]}
     >
-      <InitialsAvatar name={member.username} id={member.userId} size={MEMBER_AVATAR} photoUrl={member.avatarUrl} />
+      <Avatar name={member.username} size={MEMBER_AVATAR} photoUrl={member.avatarUrl} />
       <View style={styles.memberWords}>
         <Text style={[styles.memberName, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
           {name}

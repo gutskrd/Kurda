@@ -246,11 +246,11 @@ describe('RaceScreen', () => {
     expect(client.calls.filter((c) => c.path === '/race')).toHaveLength(2);
   });
 
-  it('says so when there is no text to race yet', async () => {
+  it('says when the chosen length and variety have no text yet, and what to try instead', async () => {
     testAuth.client = fakeClient({ 'POST /race': fail({ status: 503, code: 'EMPTY_RACE_POOL', kind: 'server' }) });
     renderWithProviders(<RaceScreen onExit={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Start race' }));
-    expect(await screen.findByText(/no race texts|not.*yet/i)).toBeTruthy();
+    expect(await screen.findByText('There are no texts of this length in this variety yet. Try another length, or the other variety.')).toBeTruthy();
   });
 
   it('opens the keyboard guide before the first Kurmancî race, and starts the race when it closes', async () => {

@@ -14,6 +14,7 @@ import type { ClearedView } from './clearing';
 import { GroupAvatar } from './GroupAvatar';
 import { GREETINGS } from './greetings';
 import { pressedDim } from '../theme/motion';
+import { useDirection } from '../reports/direction';
 
 /**
  * A calm card in the middle of an empty group chat: the group's picture large, its name, and a line about the chat.
@@ -105,10 +106,12 @@ export function Greetings({ hint, onGreet }: { hint: string; onGreet: (greeting:
   const { colors } = useTheme();
   const { t } = useI18n();
   const script = useCourseDialect();
+  // Right to left, the first greeting is on the right, as reading starts there.
+  const dir = useDirection();
   return (
     <View style={styles.greet}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.welcome.sayHello')}</Text>
-      <View style={styles.chips}>
+      <View style={[styles.chips, { flexDirection: dir.row }]}>
         {GREETINGS[script].map((greeting) => (
           <Pressable
             key={greeting}
@@ -162,8 +165,9 @@ const styles = StyleSheet.create({
   line: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
   greet: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
-  chip: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill },
+  // Snug enough that the three greetings share one line on a phone.
+  chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
+  chip: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill },
   chipText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   pressed: { opacity: pressedDim },
   add: { marginTop: spacing.md, alignSelf: 'stretch' },

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { PROVERB_THEMES, RIDDLE_CATEGORIES, RIDDLE_DIFFICULTIES, type RiddleCard } from '@kurda/shared';
 import { TRANSLATIONS } from '../i18n/translations';
-import { CATEGORY_KEY, DIFFICULTY_KEY, THEME_KEY, besideName, defaultLoreDialect, dialectOfSlug, inReaderLanguage, textIn, traditionMark } from './labels';
+import { CATEGORY_KEY, DIFFICULTY_KEY, THEME_KEY, besideName, collectionName, defaultLoreDialect, dialectOfSlug, inReaderLanguage, textIn, traditionMark } from './labels';
 import { mergeHints, nextRiddle, rememberAnswer, rememberedAnswer, resetLoreStore } from './store';
 
 const t = (key: keyof typeof TRANSLATIONS.en, vars?: Record<string, string | number>): string =>
@@ -38,6 +38,13 @@ describe('the collections’ words', () => {
     expect(besideName('Metelok', TRANSLATIONS.ku['lore.riddles.name'])).toBeNull();
     expect(besideName('Gotinên pêşiyan', TRANSLATIONS.ku['lore.proverbs.name'])).toBeNull();
     expect(besideName('Metelok', TRANSLATIONS.ckb['lore.riddles.name'])).toBe('مەتەڵ');
+  });
+
+  it('names a collection in Soranî for a Soranî reader, as the website does, and in Kurmancî for everyone else', () => {
+    expect(collectionName('Metelok', TRANSLATIONS.ckb['lore.riddles.name'], 'ckb')).toEqual({ name: 'مەتەڵ', beside: null, lang: 'ckb' });
+    expect(collectionName('Gotinên pêşiyan', TRANSLATIONS.ckb['lore.proverbs.name'], 'ckb').name).toBe(TRANSLATIONS.ckb['lore.proverbs.name']);
+    expect(collectionName('Metelok', TRANSLATIONS.en['lore.riddles.name'], 'en')).toEqual({ name: 'Metelok', beside: 'Riddles', lang: 'ku' });
+    expect(collectionName('Metelok', TRANSLATIONS.ar['lore.riddles.name'], 'ar').name).toBe('Metelok');
   });
 
   it('never calls a newly written one old, and names a regional one’s region', () => {

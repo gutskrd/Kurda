@@ -10,7 +10,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { noticeTime } from '../notifications/inbox';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { EmptyState } from '../theme/EmptyState';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -124,7 +124,7 @@ function CommentRow({
         testID={`comment-face-${c.id}`}
         style={({ pressed }) => pressed && heldDim}
       >
-        <InitialsAvatar name={author.username} id={author.id} size={size} photoUrl={author.avatarUrl} />
+        <Avatar name={author.username} size={size} photoUrl={author.avatarUrl} />
       </Pressable>
       <View style={styles.main}>
         <View style={[styles.byline, { flexDirection: dir.row }]}>

@@ -47,7 +47,7 @@ afterEach(() => {
 
 describe('RatingBox, as a choice is marked', () => {
   // A rating given is a choice, so violet; gold is kept for what is earned.
-  it('fills the chosen stars in violet, not gold, and marks a chosen topic with the violet wash', () => {
+  it('fills the chosen stars in violet, not gold, and marks a chosen topic in solid violet', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<RatingBox source="settings" onClose={() => undefined} />);
     fireEvent.click(screen.getByRole('radio', { name: '4 stars' }));
@@ -57,8 +57,8 @@ describe('RatingBox, as a choice is marked', () => {
     const bugs = screen.getByRole('checkbox', { name: 'Bugs' });
     fireEvent.click(bugs);
     expect(bugs.getAttribute('aria-checked')).toBe('true');
-    // A wash is the violet with a little of it showing, not the solid.
-    expect(getComputedStyle(bugs).backgroundColor).not.toBe(getComputedStyle(screen.getByRole('button', { name: 'Send' }).firstElementChild as HTMLElement).backgroundColor);
+    // The same violet as the main button, as every chosen chip is and as the website marks one.
+    expect(getComputedStyle(bugs).backgroundColor).toBe(getComputedStyle(screen.getByRole('button', { name: 'Send' }).firstElementChild as HTMLElement).backgroundColor);
   });
 });
 

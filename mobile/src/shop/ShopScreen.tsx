@@ -82,6 +82,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const dir = useDirection();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
   // Whether the purse has been read: until it has, the bird and the tree go by the Zêr their own reads report.
@@ -237,22 +238,25 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           leading="close"
           style={stuck ? { backgroundColor: colors.background } : null}
           right={
+            // Each balance names its currency, so the second is not a number nobody can place.
             <View style={styles.balances}>
-              <View style={styles.balanceChip}>
+              <View style={styles.balanceChip} accessible accessibilityLabel={`${formatNumber(balances.zer, locale)} Zêr`}>
                 <Icon name="coin" size={18} color={colors.gold} />
                 {loading ? (
                   <SkeletonText size={typography.sizes.md} width={40} />
                 ) : (
                   <Counted value={balances.zer} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
+                <Text style={[styles.balanceUnit, { color: colors.textSecondary }]}>Zêr</Text>
               </View>
-              <View style={styles.balanceChip}>
+              <View style={styles.balanceChip} accessible accessibilityLabel={`${formatNumber(balances.gems, locale)} ${t('gift.picker.gems')}`}>
                 <Icon name="gem" size={18} color={colors.primary} />
                 {loading ? (
                   <SkeletonText size={typography.sizes.md} width={20} />
                 ) : (
                   <Counted value={balances.gems} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
+                <Text style={[styles.balanceUnit, { color: colors.textSecondary }]}>{t('gift.picker.gems')}</Text>
               </View>
             </View>
           }
@@ -331,9 +335,9 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                   groups.map((group) => (
                     <View key={group.category} style={[styles.section, styles.gutter]}>
                       <KindHeading kind={group.category} count={group.items.length} />
-                      <View style={styles.rows}>
+                      <View style={[styles.grid, { flexDirection: dir.row }]}>
                         {group.items.map((item) => (
-                          <ShopRow key={item.sku} item={item} balances={balances} onPress={() => setSelected(item)} />
+                          <ShopCard key={item.sku} item={item} balances={balances} onPress={() => setSelected(item)} />
                         ))}
                       </View>
                     </View>
@@ -402,14 +406,14 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   );
 }
 
-/** The shop while it loads, laid out by its own styles, with both a background's wide row and an icon's square one. */
+/** The shop while it loads, laid out by its own styles: the search, the kinds and a grid of cards. */
 function ShopSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const { height } = useWindowDimensions();
-  // Rows enough to reach the foot of the screen, shared between the two kinds shown.
-  const perKind = Math.max(3, Math.ceil((height - 300) / (64 + spacing.sm) / 2));
+  // Cards enough to reach the foot of the screen, two to a row.
+  const cards = Math.max(4, Math.ceil((height - 300) / CARD_HEIGHT) * 2);
   const chips = (widths: number[]) => (
     <View style={[styles.skeletonChips, { flexDirection: dir.row }]}>
       {widths.map((w, i) => (
@@ -433,25 +437,19 @@ function ShopSkeleton(): React.JSX.Element {
         <View style={[styles.gutter, styles.skeletonResults, start]}>
           <SkeletonText size={typography.sizes.sm} width={64} />
         </View>
-        {[THUMB, ICON_THUMB].map((thumb) => (
-          <View key={thumb} style={[styles.section, styles.gutter]}>
-            <SkeletonText size={typography.sizes.xs} width={96} style={start} />
-            <View style={styles.rows}>
-              {Array.from({ length: perKind }, (_, i) => (
-                <View key={i} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
-                  <View style={styles.thumb}>
-                    <Skeleton width={thumb} height={thumb === THUMB ? Math.round((THUMB * 9) / 16) : ICON_THUMB} radius={radii.sm} />
-                  </View>
-                  <View style={styles.rowMain}>
-                    <SkeletonText size={typography.sizes.md} width={i % 2 ? '44%' : '58%'} style={start} />
-                    <SkeletonText size={typography.sizes.sm} width="72%" style={start} />
-                  </View>
-                  <SkeletonText size={typography.sizes.md} width={48} style={styles.skeletonPrice} />
-                </View>
-              ))}
-            </View>
+        <View style={[styles.section, styles.gutter]}>
+          <SkeletonText size={typography.sizes.xs} width={96} style={start} />
+          <View style={[styles.grid, { flexDirection: dir.row }]}>
+            {Array.from({ length: cards }, (_, i) => (
+              <View key={i} style={[styles.card, { backgroundColor: colors.glassFill }]}>
+                <Skeleton height={ART_HEIGHT} radius={radii.sm} />
+                <SkeletonText size={typography.sizes.md} width={i % 2 ? '54%' : '68%'} style={start} />
+                <SkeletonText size={typography.sizes.sm} width="80%" style={start} />
+                <SkeletonText size={typography.sizes.md} width={48} style={start} />
+              </View>
+            ))}
           </View>
-        ))}
+        </View>
       </View>
     </View>
   );
@@ -479,51 +477,49 @@ function Counted({ value, style }: { value: number; style: StyleProp<TextStyle> 
   );
 }
 
-/** One item in the list: its picture, name, meaning and price. */
-function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balances; onPress: () => void }): React.JSX.Element {
+/** One item as a card in the grid: its picture, name, meaning and price, as the website's shop shows it. */
+function ShopCard({ item, balances, onPress }: { item: ShopItem; balances: Balances; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const wide = itemCategory(item.category) === 'background';
+  const kind = itemCategory(item.category);
   const affordable = canAfford(item, balances);
   return (
     <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={[item.name, item.description, priceWords(item, t, locale)].filter(Boolean).join(', ')}
-      style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
+      style={[styles.card, { backgroundColor: colors.glassFill }]}
     >
-      {/* One column wide enough for a background, so every name starts at the same place. */}
-      <View style={styles.thumb}>
-        {itemCategory(item.category) === 'frame' && item.assetUrl ? (
-          <FrameArt path={item.assetUrl} width={FRAME_THUMB} />
+      {/* Every card's picture takes the same height, so names and prices line up across a row. */}
+      <View style={styles.cardArt}>
+        {kind === 'frame' && item.assetUrl ? (
+          <FrameArt path={item.assetUrl} width={FRAME_ART} />
+        ) : kind === 'background' ? (
+          <ItemArt category={item.category} path={item.assetUrl} style={styles.stretch} />
         ) : (
-          <ItemArt category={item.category} path={item.assetUrl} width={wide ? THUMB : ICON_THUMB} />
+          <ItemArt category={item.category} path={item.assetUrl} width={ICON_ART} />
         )}
       </View>
-      <View style={styles.rowMain}>
-        {/* The names are Kurmancî and the meanings English whatever the app language, so they read in their own
-           direction (`free`). No Premium crown, since Premium cannot be had in the app. A long name or meaning takes
-           a second line rather than being cut. */}
-        <View style={[styles.nameRow, { flexDirection: dir.row }]}>
-          <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
-            {item.name}
-          </Text>
-        </View>
-        {item.description ? (
-          <Text style={[styles.itemDesc, dir.free, { color: colors.textSecondary }]} numberOfLines={2}>
-            {item.description}
-          </Text>
-        ) : null}
-      </View>
+      {/* The names are Kurmancî and the meanings English whatever the app language, so they read in their own
+         direction (`free`). No Premium crown, since Premium cannot be had in the app. A long name or meaning takes a
+         second line rather than being cut. */}
+      <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
+        {item.name}
+      </Text>
+      {item.description ? (
+        <Text style={[styles.itemDesc, dir.free, { color: colors.textSecondary }]} numberOfLines={2}>
+          {item.description}
+        </Text>
+      ) : null}
       <View style={[styles.priceRow, { flexDirection: dir.row }]}>
         {item.price === 0 ? (
           // A price like any other: green is for a right answer.
           <Text style={[styles.price, { color: colors.textPrimary }]}>{t('shop.free')}</Text>
         ) : (
           <>
-            <Text style={[styles.price, { color: affordable ? colors.textPrimary : colors.textSecondary }]}>{formatNumber(item.price, locale)}</Text>
             <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={16} color={item.currency === 'zer' ? colors.gold : colors.primary} />
+            <Text style={[styles.price, { color: affordable ? colors.textPrimary : colors.textSecondary }]}>{formatNumber(item.price, locale)}</Text>
           </>
         )}
       </View>
@@ -638,11 +634,12 @@ function ItemDetail({
   );
 }
 
-/** A background's thumbnail (16:9) and an icon's (square); the column is the wider of the two. */
-const THUMB = 72;
-const ICON_THUMB = 52;
-/** A frame is shown round a face, which needs more room than an icon: as wide as its column allows. */
-const FRAME_THUMB = 68;
+/** A card's picture: a background fills it at 16:9; an icon sits square in it, and a frame round your face. */
+const ART_HEIGHT = 92;
+const ICON_ART = 64;
+const FRAME_ART = 84;
+/** A card's height with two lines of meaning, for the placeholder's count. */
+const CARD_HEIGHT = ART_HEIGHT + 96;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
@@ -654,6 +651,7 @@ const styles = StyleSheet.create({
   balances: { flexDirection: 'row', gap: spacing.md },
   balanceChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  balanceUnit: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   content: { paddingBottom: spacing.xxl },
   // On a tablet the list is a centred column, as the Season screen's is.
   column: { width: '100%', maxWidth: 680, alignSelf: 'center' },
@@ -668,15 +666,15 @@ const styles = StyleSheet.create({
   skeletonChips: { gap: spacing.sm, paddingHorizontal: GUTTER, overflow: 'hidden' },
   skeletonResults: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   skeletonPrice: { paddingHorizontal: spacing.xs },
-  rows: { gap: spacing.sm },
-  row: { alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.sm, minHeight: 64 },
-  thumb: { width: THUMB, alignItems: 'center', justifyContent: 'center' },
-  rowMain: { flex: 1, gap: 2 },
-  nameRow: { alignItems: 'center', gap: 6 },
-  itemName: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  itemDesc: { fontSize: typography.sizes.sm },
+  // Two cards to a row, the gap between them what the two leave.
+  grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm },
+  card: { width: '48.5%', gap: 4, borderRadius: radii.md, padding: spacing.sm },
+  cardArt: { height: ART_HEIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
+  itemName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  itemDesc: { fontSize: typography.sizes.sm, lineHeight: 18 },
   stretch: { alignSelf: 'stretch' },
-  priceRow: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
+  // At the card's foot, so the prices of a row line up whatever their meanings' length.
+  priceRow: { alignItems: 'center', gap: spacing.xs, marginTop: 'auto', paddingTop: spacing.xs },
   price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   detail: { alignItems: 'center', gap: spacing.sm, paddingBottom: spacing.sm },
   preview: { marginBottom: spacing.sm },

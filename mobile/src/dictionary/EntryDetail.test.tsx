@@ -10,7 +10,6 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 // Android's back, pressed by the test (`pressBack`).
 vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { Alert } from 'react-native';
 import { encodeLipsync, type DictionaryAudio } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -21,6 +20,7 @@ import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack
 import { PALETTES } from '../theme/palette';
 import { EntryDetail } from './EntryDetail';
 import type { Entry } from './types';
+import { watchNotices } from '../testing/notices';
 
 function entry(audio: DictionaryAudio[]): Entry {
   return {
@@ -144,7 +144,7 @@ describe('saving a word', () => {
   });
 
   it('puts the bookmark back when the server refuses, and says why', async () => {
-    const said = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    const said = watchNotices();
     let answer: (r: unknown) => void = () => undefined;
     testAuth.client = fakeClient({
       'GET /dictionary/entries/e1': ok(entry([])),
@@ -156,7 +156,6 @@ describe('saving a word', () => {
     await act(async () => answer({ ok: false, error: { kind: 'client', status: 403, code: 'LIMIT', message: 'Your vocabulary is full.' } }));
     expect(screen.getByRole('button', { name: 'Bookmark word' })).toBeTruthy();
     expect(said).toHaveBeenCalledWith('Your vocabulary is full.');
-    said.mockRestore();
   });
 });
 
