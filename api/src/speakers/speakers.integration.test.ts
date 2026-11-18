@@ -1,12 +1,7 @@
 /**
- * Speaking characters, against real Postgres: saving a recording with who
- * says it and its mouth's timeline, changing either later, and every payload
- * that sends a recording to the apps carrying them — only for recordings with
- * a speaker.
- *
- * Runs on DATABASE_URL alone. With S3_ENDPOINT set it stores into that bucket;
- * without it the storage PUT is stubbed, since what is under test is the
- * routes and the payloads, not the bucket.
+ * Speaking characters against real Postgres: saving a recording with its speaker and timeline, changing either later,
+ * and every payload that sends recordings carrying them only for recordings with a speaker. Runs on DATABASE_URL alone,
+ * with the storage PUT stubbed unless S3_ENDPOINT is set.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -35,7 +30,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const realS3 = Boolean(process.env.S3_ENDPOINT);
 const RATE = 22050;
 
-/** Syllables of a buzz (each number a syllable that long, in ms), after 80 ms of silence and before 150. */
+/** Buzz syllables (each number a syllable's length in ms), after 80 ms of silence and before 150. */
 function speech(syllables: number[], loudness = 0.3): Float32Array {
   const total = 80 + 150 + syllables.reduce((a, b) => a + b, 0);
   const pcm = new Float32Array(Math.round((total / 1000) * RATE));
@@ -109,7 +104,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
     story2: `Diya min li bajêr e ${s}.`,
   };
   const ourKeys = (): string[] => Object.values(T).map(lessonAudioKey);
-  /** sounds on the alphabet page, and a word from the word sets, this run records, put back as they were afterwards */
+  /** Alphabet sounds and a word-set word this run records, restored afterwards. */
   const LETTERS = ['kmr:sound:b', 'kmr:word:m', 'words:days:ckb:mon'];
 
   /** Each recording's sound and the timeline the admin panel would make for it. */
@@ -401,7 +396,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
 
     it('takes a speaker or a timeline away with null, leaving the other', async () => {
       const key = lessonAudioKey(T.other);
-      // the take recorded last, with its timeline made now
+      // The latest take, with its timeline made now.
       const current = speech([210, 260], 0.22);
       const lipsync = encodeLipsync(lipsyncFromAudio(T.other, current, RATE));
       expect((await patch('lesson', key, { speaker: 'xezo', lipsync })).json()).toMatchObject({ speaker: 'xezo', lipsync });
@@ -519,7 +514,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       const retried = await authed('POST', `/sessions/${sessionId}/retry`, { exerciseId: ex.sp, answer: { selfRating: 'good' } });
       expect(retried.statusCode, retried.body).toBe(200);
       expect(retried.json().modelAudioVoice).toMatchObject({ speaker: 'hamo' });
-      // a recording with no speaker is sent as it always was
+      // A recording with no speaker is sent without a voice.
       const translated = await authed('POST', `/sessions/${sessionId}/answers`, { exerciseId: ex.tr, answer: { text: T.translate } });
       expect(translated.json()).toMatchObject({ modelAudioUrl: expect.any(String) });
       expect(translated.json()).not.toHaveProperty('modelAudioVoice');
@@ -606,7 +601,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       const fromText = encodeLipsync(lipsyncFromText(recorded.rows[0]!.text, recorded.rows[0]!.duration_ms));
       const made = { speaker: 'xezo', lipsync: fromText, lipsyncSource: 'text' };
       try {
-        // the listening clip: the learner is not sent its words, so this is the only way its mouth moves with them
+        // The listening clip: the learner is not sent its words, so this is the only way its mouth moves with them.
         const res = await authed('GET', `/lessons/${live}/session`);
         expect(res.statusCode, res.body).toBe(200);
         const listening = (res.json().exercises as Array<Record<string, unknown>>).find((e) => e.id === ex.li)!;
@@ -629,7 +624,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
         expect((await patch('lesson', key, { lipsync: stored })).statusCode).toBe(200);
       }
 
-      // a stored timeline goes out as it was stored, with nothing to say it is approximate
+      // A stored timeline goes out as stored, not marked approximate.
       const res = await authed('GET', `/lessons/${live}/session`);
       const listening = (res.json().exercises as Array<Record<string, unknown>>).find((e) => e.id === ex.li)!;
       expect(listening.audioVoice).toEqual({ speaker: 'xezo', lipsync: stored });
@@ -646,7 +641,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
         lipsync: encodeLipsync(lipsyncFromText(recorded.rows[0]!.text, recorded.rows[0]!.duration_ms)),
         lipsyncSource: 'text',
       });
-      // the first sentence's timeline was made from its sound, and is sent as it is
+      // The first sentence's timeline was made from its sound and is sent as is.
       expect(story.voices[lessonAudioKey(T.story1)]).toEqual({ speaker: 'xezo', lipsync: takes.get(T.story1)!.lipsync });
 
       expect((await patch('dictionary', dictAudio.plain, { speaker: 'xezo' })).statusCode).toBe(200);
