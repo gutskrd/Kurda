@@ -42,8 +42,6 @@ import { DIFFICULTY_KEY, type Difficulty } from '../wordle/board';
 import { lobbyRoute } from './routes';
 import { PickedTickets, SentFan, flightMs, type SendPhase, type TicketHolder } from './SentTickets';
 import { SendErrorNotice } from '../reports/SendError';
-import { RatedChoice } from '../ranks/Rated';
-import { useRatedChoice } from '../ranks/ratedPrefs';
 import { restrictionOf } from '../reports/sendErrors';
 import { SearchField } from '../theme/SearchField';
 import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
@@ -200,8 +198,6 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   // choice that would not be honoured.
   const lockedId = target.kind === 'dm' ? target.friendId : null;
   const [picked, setPicked] = useState<string[]>(preselected ? [preselected] : []);
-  // Rated or Friendly for this game, as the host last left it.
-  const [rated, setRated] = useRatedChoice(game);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** An account limit (a chat mute blocks game cards too), shown as every send path shows it, with Account standing. */
@@ -295,19 +291,19 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const impostorCategories = categoriesAt(useImpostorCategories(impostorParty && impostorOffer.length > 0 ? impostorParty.dialect : null), impostorParty?.level);
   const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
   const settings = (): Record<string, unknown> => {
-    if (game === 'wordle-battle') return { difficulty, rated };
-    if (game === 'rhyme-match') return { dialect: rhymeDialect, rated };
+    if (game === 'wordle-battle') return { difficulty };
+    if (game === 'rhyme-match') return { dialect: rhymeDialect };
     if (game === 'impostor') {
       const party = partyChoice();
-      return { dialect: party.dialect, difficulty: party.level, clueSeconds: Number(clueSeconds), category: categoryNow || null, rated };
+      return { dialect: party.dialect, difficulty: party.level, clueSeconds: Number(clueSeconds), category: categoryNow || null };
     }
     if (game === 'last-letter') {
       // A Last Letter lobby uses one dialect the dictionary can check: the chosen one if offered.
       const wanted = dialect === 'sorani' ? 'ckb' : 'kmr';
-      return { dialect: letterDialects.includes(wanted) || letterDialects.length === 0 ? wanted : letterDialects[0], rated };
+      return { dialect: letterDialects.includes(wanted) || letterDialects.length === 0 ? wanted : letterDialects[0] };
     }
-    if (game === 'who-am-i') return { ...(partySettings ?? {}), rated };
-    return { ...inviteSettings({ ...story, dialect }), rated };
+    if (game === 'who-am-i') return { ...partySettings };
+    return inviteSettings({ ...story, dialect });
   };
 
   // Who the tickets are for: the group a game is posted in, and each picked friend.
@@ -559,11 +555,6 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
             </View>
           ) : null}
           {game === 'who-am-i' ? <TableChoices offers={tableOffers ?? []} dialect={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} /> : null}
-
-          <View style={styles.field}>
-            <SectionLabel>{t('ranks.gameType')}</SectionLabel>
-            <RatedChoice value={rated} onChange={setRated} />
-          </View>
 
           {game === 'stories' ? (
             <>

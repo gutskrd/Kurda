@@ -6,8 +6,6 @@ import { describeError, type Translate } from '../api/errors';
 import { haptic } from '../feedback/haptics';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import { useI18n } from '../i18n/I18nContext';
-import { LobbyRated, RatedPill } from '../ranks/Rated';
-import { RankResultPanel } from '../ranks/RankResultPanel';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { ClayButton, GlassCard } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
@@ -52,8 +50,8 @@ interface GameRoomProps<Board> {
 
 /**
  * The room around any multiplayer learning game, matching web/src/play/MultiRoom.tsx: the code ticket with Invite
- * friends, players by seat with report buttons, Rated or Friendly, Join, Start, and afterwards the places, the
- * rank change and Play again. The game draws only its own staging.
+ * friends, players by seat with report buttons, Join, Start, and afterwards the places and Play again. The game
+ * draws only its own staging.
  *
  * Places show XP only beside players who earned some, never a zero. A game against Hevalo alone earns none, and
  * its results say so.
@@ -169,11 +167,6 @@ export function GameRoom<Board>({
             ) : view.me !== null ? (
               <LobbyPeople game={game} lobbyId={id} players={view.players.map((p) => ({ ...p, name: p.isMe ? p.name : p.bot ? t('play.room.hevalo') : p.name }))} isHost={view.isHost} />
             ) : null}
-            {view.me !== null ? (
-              <LobbyRated game={game} lobbyId={id} rated={view.rated} isHost={view.isHost} players={present.length} seatName={name} onChanged={room.refresh} />
-            ) : (
-              <RatedPill rated={view.rated.rated} />
-            )}
             {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
             {view.me === null ? (
               <ClayButton label={busy ? t('games.joining') : t('play.room.join')} tone="primary" busy={busy} onPress={() => void control('join')} style={styles.stretch} />
@@ -201,7 +194,6 @@ export function GameRoom<Board>({
   if (view.status === 'active') {
     return (
       <>
-        {view.mode === 'group' ? <RatedPill rated={view.rated.counts ?? view.rated.rated} small /> : null}
         {view.canControl && !view.isHost && view.mode === 'group' ? (
           <Text style={[styles.note, { color: colors.textSecondary }]}>{t('play.room.standIn')}</Text>
         ) : null}
@@ -226,7 +218,6 @@ export function GameRoom<Board>({
     <GlassCard>
       <View style={styles.card}>
         <Verdict won={mine?.place === 1}>{mine?.place === 1 ? t('games.youWon') : t('play.room.over')}</Verdict>
-        {view.mode === 'group' && view.rated.rated ? <RankResultPanel game={game} gameRef={id} /> : null}
         {ending?.(view)}
         <View style={styles.stretch} accessibilityLabel={t('play.room.results')}>
           {(view.results ?? []).map((r) => {

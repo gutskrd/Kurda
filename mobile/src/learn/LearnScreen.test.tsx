@@ -108,7 +108,6 @@ function client(
     // The library asks for one variety; with nothing chosen and an English interface that is Kurmancî.
     'GET /stories/library?dialect=kurmanci': ok(LIBRARY),
     'GET /story-games/active': ok({ games: [] }),
-    'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
     'GET /play/invites': ok({ incoming: [], outgoing: [] }),
     ...more,
   });
@@ -315,11 +314,9 @@ describe('Learn', () => {
     expect(battle.getAttribute('aria-label')).toBe('Peyvok, With friends');
     fireEvent.click(battle);
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
-    // The rankings and the league, small, at the top.
-    fireEvent.click(screen.getByRole('button', { name: /^Ranks/ }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Ranks');
-    fireEvent.click(screen.getByRole('button', { name: 'Leagues' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('League');
+    // The rankings, with the league in them, small, at the top.
+    fireEvent.click(screen.getByRole('button', { name: /^Rankings, Your league/ }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Rankings');
   });
 
   it('offers Join with a code above the games, which opens the six boxes', async () => {

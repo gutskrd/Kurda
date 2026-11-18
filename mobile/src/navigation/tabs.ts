@@ -63,6 +63,8 @@ export function legacyTabPath(path: string): string {
   if (story) return `${lead}app/games/stories/${story[1]}${query ? `?${query}` : ''}`;
   // A game's invite link (shared join-link.ts) lands on Games, where Join with a code takes the code.
   if (/^join\/[a-z-]+\/[A-Za-z0-9]+$/.test(bare)) return `${lead}learn?view=games`;
+  // A game's rank page on the website, gone with game ranks.
+  if (/^app\/ranks\/[a-z-]+$/.test(bare)) return `${lead}app/rankings`;
   switch (bare) {
     case 'app/learn':
       return `${lead}learn${query ? `?${query}` : ''}`;
@@ -88,6 +90,11 @@ export function legacyTabPath(path: string): string {
     // The word game's lobby under its old name.
     case 'app/games/wordle-battle':
       return `${lead}app/games/peyvok-battle${query ? `?${query}` : ''}`;
+    // The website's league, ranks and season pages, gone into its rankings.
+    case 'app/leagues':
+    case 'app/season':
+    case 'app/ranks':
+      return `${lead}app/rankings`;
     case 'inbox':
     case 'app/inbox':
     case 'chats':

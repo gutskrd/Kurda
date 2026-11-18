@@ -33,8 +33,8 @@ export async function followDeepLink(link: DeepLink, navigation: RootNavigation,
     case 'Badges':
       navigation.navigate('Badges');
       return;
-    case 'League':
-      navigation.navigate('League');
+    case 'Rankings':
+      navigation.navigate('Rankings', { board: 'xp', span: 'week' });
       return;
     case 'PlayInvite': {
       const res = await acceptInvite(client, link.params.inviteId);

@@ -14,8 +14,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display, sectionLabel } from '../theme/fonts';
-import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
-import { SwipePager } from '../theme/SwipePager';
+import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -28,27 +27,21 @@ import { getLeague } from '../ranks/api';
 import { leagueTint } from '../ranks/tint';
 import { GoalRing } from './GoalRing';
 import { LeagueMoment } from './LeagueMoment';
-import { Leaderboard, type BoardType, type Scope } from './Leaderboard';
 import { springTo, timing, useListEntrance } from '../theme/animate';
 import { duration } from '../theme/motion';
 import { Rise, heldDim } from '../theme/MotionParts';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloPeek } from '../characters/HevaloPeek';
 import { useDirection } from '../reports/direction';
 import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, weekLeftText, zoneRules, type TableItem } from './format';
 
-type Tab = 'league' | 'board';
-
-/** The league's two pages, in the order the switch shows them. */
-const TABS: readonly Tab[] = ['league', 'board'];
-
 /**
- * Learning Leagues.
+ * The whole league this week, opened from the card at the top of Rankings.
  *
  * The league's name and the days left, then the whole ladder from a drop to the ocean (past leagues in colour,
  * yours large, those ahead as outlines with a keyhole), so your place reads as a journey, not only a rank. Below,
  * the week's group of about twenty with the zones as headings in the table ("Moving up", "Moving down", with
  * icons, not colour alone), the weekly goal ring, and "Safe this week" once met. Before the week's first lesson
- * Hevalo rests, and that lesson starts the week. Last week's result is one kind sentence.
+ * Hevalo dozes through the page, and that lesson starts the week. Last week's result is one kind sentence.
  *
  * Leaving is a quiet control at the end of the page, confirmed once in plain words with no pressure to stay.
  * Someone out of the leagues (by choice, or a teen by default) gets a personal week: the same ring compared with
@@ -57,10 +50,6 @@ const TABS: readonly Tab[] = ['league', 'board'];
 export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { t } = useI18n();
-  const [tab, setTab] = useState<Tab>('league');
-  // What the leaderboard ranks and who it compares you with, kept here so leaving the tab and returning keeps them.
-  const [boardType, setBoardType] = useState<BoardType>('weekly_xp');
-  const [scope, setScope] = useState<Scope>('global');
   const [league, setLeague] = useState<LeagueView | null>(null);
   const [leagueError, setLeagueError] = useState<ApiError | null>(null);
 
@@ -100,42 +89,14 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <ScreenHeader title={t('leagues.screenTitle')} onBack={onExit} leading="close" />
-        <View style={styles.tabs}>
-          <Segmented<Tab>
-            options={TABS}
-            value={tab}
-            onChange={setTab}
-            labelOf={(k) => (k === 'league' ? t('profile.league') : t('rankings.leaderboard'))}
-            wrap
-          />
-        </View>
+        <ScreenHeader title={t('leagues.screenTitle')} onBack={onExit} />
         {/* The week that closed: its ceremony, once, the first time the league is opened after. */}
         <LeagueMoment league={league} />
-        {/* Side by side, so a swipe turns between league and leaderboard as well as a tap. */}
-        <SwipePager<Tab>
-          pages={TABS}
-          value={tab}
-          onChange={setTab}
-          testID="league-pages"
-          renderPage={(page) =>
-            page === 'league' ? (
-              <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={() => void loadLeague()} skeleton={<LeagueSkeleton />}>
-                {league ? (
-                  <LeagueTab
-                    league={league}
-                    joining={joining}
-                    onJoin={() => void setTakingPart(true)}
-                    onLeave={() => void setTakingPart(false)}
-                    refreshControl={pull}
-                  />
-                ) : null}
-              </AsyncBoundary>
-            ) : (
-              <Leaderboard type={boardType} scope={scope} onType={setBoardType} onScope={setScope} />
-            )
-          }
-        />
+        <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={() => void loadLeague()} skeleton={<LeagueSkeleton />}>
+          {league ? (
+            <LeagueTab league={league} joining={joining} onJoin={() => void setTakingPart(true)} onLeave={() => void setTakingPart(false)} refreshControl={pull} />
+          ) : null}
+        </AsyncBoundary>
       </View>
     </GradientBackground>
   );
@@ -351,8 +312,8 @@ function Bobbing({ children }: { children: ReactNode }): React.JSX.Element {
 }
 
 /**
- * Before the week's first lesson: Hevalo asleep, a line in his words about the lesson that wakes him and puts you
- * both on the table, and the lesson itself. Nothing about falling behind.
+ * Before the week's first lesson: Hevalo's head through the page, dozing, a line in his words about the lesson that
+ * wakes him and puts you both on the table, and the lesson itself. Nothing about falling behind.
  */
 function Resting(): React.JSX.Element {
   const { colors } = useTheme();
@@ -361,7 +322,7 @@ function Resting(): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   return (
     <View style={styles.resting}>
-      <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={RESTING_HEIGHT} resting />
+      <HevaloPeek size={RESTING_HEIGHT} resting pop={false} flip={dir.rtl} />
       {/* What he would say if awake: his words in a bubble, read as his. */}
       <View style={[styles.bubble, { backgroundColor: colors.glassFill }]} accessibilityRole="text">
         <Text style={[styles.bubbleText, dir.text, { color: colors.textPrimary }]}>{t('leagues.resting.hevalo')}</Text>
@@ -379,7 +340,7 @@ function Resting(): React.JSX.Element {
   );
 }
 
-/** How tall Hevalo is drawn while resting. */
+/** How tall the page Hevalo dozes through is drawn. */
 const RESTING_HEIGHT = 170;
 
 /**
@@ -665,7 +626,6 @@ function WeekBars({ weeks, goal, tint }: { weeks: LeagueWeekXp[]; goal: number; 
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  tabs: { paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
   list: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingTop: spacing.sm, gap: spacing.xs, paddingBottom: spacing.xxl },
   head: { gap: spacing.md, marginBottom: spacing.sm },
   titleBlock: { gap: 2, paddingTop: spacing.xs },

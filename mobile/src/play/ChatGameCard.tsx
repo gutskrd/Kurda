@@ -14,7 +14,6 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { lobbyCard } from './api';
 import { GAME_ICON, GAME_NAME_KEY, summaryParts } from './labels';
-import { RatedPill } from '../ranks/Rated';
 import { lobbyRoute } from './routes';
 import { useReportAction } from '../reports/reportAction';
 import { useDirection } from '../reports/direction';
@@ -171,7 +170,6 @@ export function ChatGameCard({
   // The state in words, unless the stamp already says it.
   const stateLine = card && !(stamp && stamp.tone === 'muted') ? state : null;
 
-  const mirror = dir.row === 'row-reverse';
   // The card's words and Join, the same whether or not it can be reported.
   const content = (
     <>
@@ -189,8 +187,6 @@ export function ChatGameCard({
             {details}
           </Text>
         ) : null}
-        {/* Rated or Friendly, before anyone joins. */}
-        {card?.summary.rated !== undefined ? <RatedPill rated={card.summary.rated} small style={[styles.rated, mirror && styles.endSelf]} /> : null}
       </View>
       {card ? (
         stateLine || stamp ? (
@@ -258,8 +254,6 @@ const styles = StyleSheet.create({
   body: { gap: spacing.sm },
   text: { gap: 1 },
   stateRow: { alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
-  endSelf: { alignSelf: 'flex-end' },
-  rated: { marginTop: 4 },
   name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   details: { fontSize: typography.sizes.xs },
   state: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },

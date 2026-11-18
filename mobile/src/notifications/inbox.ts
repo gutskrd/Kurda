@@ -24,8 +24,8 @@ export type DeepLink =
   | { screen: 'PlayInvite'; params: { inviteId: string; game: PlayGame; lobbyId: string } }
   /** A badge earned (one, or the day's bundle): the badges page. */
   | { screen: 'Badges' }
-  /** Safe this week, moved up a league, a Pêla week: the league. */
-  | { screen: 'League' }
+  /** Safe this week, moved up a league, a Pêla week: the league on Rankings. */
+  | { screen: 'Rankings' }
   /** Someone asked to come back to a group you run: the requests themselves, waiting on an answer. */
   | { screen: 'GroupRequests'; params: { groupId: string } }
   /**
@@ -81,7 +81,7 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   if (letter) return letter.threadId ? { screen: 'Letters', params: { bird: letter.threadId } } : { screen: 'Letters' };
   // Progress: badges and the weekly league.
   if (data.kind === 'badge') return { screen: 'Badges' };
-  if (data.kind === 'league_safe' || data.kind === 'league_promotion' || data.kind === 'league_trophy') return { screen: 'League' };
+  if (data.kind === 'league_safe' || data.kind === 'league_promotion' || data.kind === 'league_trophy') return { screen: 'Rankings' };
   switch (data.screen) {
     case 'EventQuests':
       return { screen: 'EventQuests' };

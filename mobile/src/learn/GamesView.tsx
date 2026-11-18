@@ -3,7 +3,7 @@ import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/n
 import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
-import { gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
+import { gameOfTheDay, type IncomingInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -11,7 +11,6 @@ import { useTabBarInset } from '../navigation/tabBarLayout';
 import { BottomSheet } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -19,8 +18,6 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { getMyRanks } from '../ranks/api';
-import { daysLeftText, seasonTitle } from '../ranks/format';
 import { acceptInvite, listInvites } from '../play/api';
 import { applyInviteEvent, liveInvites } from '../play/invites';
 import { joining } from '../play/joining';
@@ -53,7 +50,7 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
 /**
  * Learn's third group: the games.
  *
- * At the top, small, the way to the rankings and league, out of the way of people who only came to play. Then any
+ * At the top, small, the way to the rankings, out of the way of people who only came to play. Then any
  * game a friend invited you to (invites expire), then today's featured game and joining by code.
  *
  * Every game is a stamp (games/GameStamp.tsx): its drawn cover on paper of its own hue, its Kurdish name and its
@@ -67,7 +64,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const navigation = useNavigation<RootNavigation>();
   const { client, isGuest } = useAuth();
   const { colors } = useTheme();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
   const { width: windowWidth } = useWindowDimensions();
@@ -81,9 +78,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const [choosing, setChoosing] = useState<GameCard | null>(null);
   // The stamps are laid down one after another on arrival, and stand still on later visits.
   const enter = useListEntrance(true);
-  const [ranks, setRanks] = useState<MyRanks | null>(null);
-  // The season line under Ranks is grey until loaded, so the word above it does not jump.
-  const [ranksSettled, setRanksSettled] = useState(false);
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
   // The learning games (games/learnGames.ts): all of them, those without enough approved content as coming soon.
   const learnGames = useListedLearnGames();
@@ -106,26 +100,15 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const upcoming = cards.filter((c) => c.soon);
 
   /**
-   * Load the rank and invites, on focus and on pull. `live` says whether the answer is still wanted; a screen
-   * left meanwhile ignores it.
+   * Load the invites, on focus and on pull. `live` says whether the answer is still wanted; a screen left meanwhile
+   * ignores it.
    */
   const read = useCallback(
     async (live: () => boolean): Promise<void> => {
-      // A guest holds no rank and is sent no invites, and the server refuses both questions.
-      if (isGuest) {
-        setRanksSettled(true);
-        return;
-      }
-      await Promise.all([
-        getMyRanks(client).then((res) => {
-          if (!live()) return;
-          if (res.ok) setRanks(res.data);
-          setRanksSettled(true);
-        }),
-        listInvites(client).then((res) => {
-          if (live() && res.ok) setInvites(res.data.incoming);
-        }),
-      ]);
+      // A guest is sent no invites, and the server refuses the question.
+      if (isGuest) return;
+      const res = await listInvites(client);
+      if (live() && res.ok) setInvites(res.data.incoming);
     },
     [client, isGuest],
   );
@@ -140,7 +123,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
     }, [read]),
   );
 
-  // Pull to refresh reloads, as Lessons and Stories do, so invites and rank changes need not wait for a tab change.
+  // Pull to refresh reloads, as Lessons and Stories do, so invites need not wait for a tab change.
   const pull = usePullRefresh(() => read(() => true));
 
   // An invite that arrives, or is answered somewhere else, while this is open.
@@ -175,11 +158,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   );
 
   const shown = liveInvites(invites, Date.now());
-  // The season's name on the chip; its time left is announced and shown on the Ranks screen.
-  const season = ranks ? seasonTitle(t, ranks.season) : null;
-  const seasonSpoken = ranks ? `${seasonTitle(t, ranks.season)}, ${daysLeftText(t, ranks.season.daysLeft)}` : null;
-  const cooldown = ranks?.cooldownUntil ? new Date(ranks.cooldownUntil) : null;
-  const cooling = cooldown !== null && cooldown.getTime() > Date.now();
 
   const page = (
     <ScrollView
@@ -188,50 +166,24 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       showsVerticalScrollIndicator={false}
       refreshControl={pull}
     >
-      {/* Rankings and the league: small, at the top, for whoever looks for them. */}
-      <View style={[styles.entries, { flexDirection: dir.row }]}>
-        <PressableScale
-          onPress={() => navigation.navigate('Ranks')}
-          accessibilityRole="button"
-          accessibilityLabel={seasonSpoken ? `${t('ranks.title')}, ${seasonSpoken}` : t('ranks.title')}
-          style={[styles.entry, { backgroundColor: colors.surface }]}
-        >
-          <Icon name="mountains" size={20} color={colors.textPrimary} />
-          <View style={styles.entryText}>
-            <Text style={[styles.entryTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
-              {t('ranks.title')}
-            </Text>
-            {season ? (
-              <Text style={[styles.entryDetail, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
-                {season}
-              </Text>
-            ) : !ranksSettled ? (
-              <SkeletonText size={typography.sizes.xs} width={72} style={{ alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }} />
-            ) : null}
-          </View>
-        </PressableScale>
-        <PressableScale
-          onPress={() => navigation.navigate('League')}
-          accessibilityRole="button"
-          accessibilityLabel={t('leagues.screenTitle')}
-          style={[styles.entry, { backgroundColor: colors.surface }]}
-        >
-          <Icon name="trophy" size={20} color={colors.textPrimary} />
-          <View style={styles.entryText}>
-            <Text style={[styles.entryTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
-              {t('leagues.screenTitle')}
-            </Text>
-            <Text style={[styles.entryDetail, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
-              {t('learn.games.leagueHint')}
-            </Text>
-          </View>
-        </PressableScale>
-      </View>
-      {cooling && cooldown ? (
-        <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>
-          {t('ranks.cooldown', { time: cooldown.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })}
-        </Text>
-      ) : null}
+      {/* The rankings: small, at the top, for whoever looks for them. */}
+      <PressableScale
+        onPress={() => navigation.navigate('Rankings')}
+        accessibilityRole="button"
+        accessibilityLabel={`${t('rankings.title')}, ${t('learn.rankingsSub')}`}
+        style={[styles.entry, { backgroundColor: colors.surface, flexDirection: dir.row }]}
+      >
+        <Icon name="trophy" size={20} color={colors.textPrimary} />
+        <View style={styles.entryText}>
+          <Text style={[styles.entryTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+            {t('rankings.title')}
+          </Text>
+          <Text style={[styles.entryDetail, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>
+            {t('learn.rankingsSub')}
+          </Text>
+        </View>
+        <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip} />
+      </PressableScale>
 
       {shown.length > 0 ? (
         <View style={styles.section}>
@@ -416,9 +368,7 @@ const NARROWEST = 320;
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, gap: spacing.lg },
-  entries: { gap: layout.rowGap },
   entry: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
@@ -430,7 +380,6 @@ const styles = StyleSheet.create({
   entryText: { flex: 1, gap: 1 },
   entryTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   entryDetail: { fontSize: typography.sizes.xs },
-  note: { fontSize: typography.sizes.xs, marginTop: -spacing.sm },
 
   section: { gap: spacing.sm },
   heading: { ...sectionLabel },

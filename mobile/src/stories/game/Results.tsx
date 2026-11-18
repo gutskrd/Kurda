@@ -22,7 +22,6 @@ import { questionIn } from '../legend';
 import { translatedText } from './translated';
 import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
 import { PlayerReportButton } from '../../reports/PlayerReportButton';
-import { RankResultPanel } from '../../ranks/RankResultPanel';
 
 /** The mark of a game that counted as a day of learning: a campfire, a kept week's fire, not anybody's count. */
 const COUNTED_FIRE = fireLevel(FIRE_STAGE_DAYS.campfire);
@@ -113,9 +112,6 @@ export function Results({
       <Text ref={headRef} style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
         {t('stories.results.title')}
       </Text>
-
-      {/* Duo and group: this game's effect on your rank, with its one plain reason. */}
-      {view.mode !== 'solo' && view.rated?.rated ? <RankResultPanel game="stories" gameRef={view.id} /> : null}
 
       {me ? (
         <Card style={styles.meCard}>

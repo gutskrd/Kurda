@@ -108,9 +108,9 @@ describe('progress notifications', () => {
     expect(resolveDeepLink({ kind: 'badge', day: '2026-10-14' })).toEqual({ screen: 'Badges' });
   });
 
-  it('opens the league for safe, a promotion and a Pêla week', () => {
+  it('opens the league on Rankings for safe, a promotion and a Pêla week', () => {
     for (const kind of ['league_safe', 'league_promotion', 'league_trophy']) {
-      expect(resolveDeepLink({ kind, weekKey: '2026-10-05', tier: 'cem' })).toEqual({ screen: 'League' });
+      expect(resolveDeepLink({ kind, weekKey: '2026-10-05', tier: 'cem' })).toEqual({ screen: 'Rankings' });
     }
   });
 });
