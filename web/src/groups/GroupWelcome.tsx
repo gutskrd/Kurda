@@ -4,7 +4,7 @@ import { Button } from '../components/Button';
 import { InviteIcon } from '../components/icons';
 import { formatUntil } from '../reports/restriction';
 import { courseDialect } from '../stories/prefs';
-import { useLocale, useT } from '../i18n/I18nProvider';
+import { useLocale, useT, type Translate } from '../i18n/I18nProvider';
 import { GroupAvatar } from './GroupAvatar';
 import { GREETINGS } from './standing';
 
@@ -78,7 +78,7 @@ export function GroupWelcome({
 }
 
 /** Who cleared a chat for everyone and when: you, an admin by name, or a deleted account. */
-export function clearedWords(t: ReturnType<typeof useT>, locale: string, by: string | null, at: string, mine: boolean): string {
+export function clearedWords(t: Translate, locale: string, by: string | null, at: string, mine: boolean): string {
   const when = formatUntil(at, locale);
   return mine ? t('groups.cleared.byYou', { when }) : by ? t('groups.cleared.by', { name: by, when }) : t('groups.cleared.byAdmin', { when });
 }

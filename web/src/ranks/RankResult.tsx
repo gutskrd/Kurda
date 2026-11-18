@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { BURST, isRankedGame, partWeightReason, progressToNext, type PartWeightReason, type PlayGame, type RankResult as RankResultData, type RankTier } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { ShieldIcon } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import { prefersReducedMotion } from '../lib/motion';
 import { PlacementEmblem, RankEmblem } from './art';
 import { Celebration, useCelebrationHold } from './Celebration';
@@ -225,7 +225,7 @@ function CountedResult({
 }
 
 /** "Welcome to Çiya — Mountain." */
-function welcomeLine(t: ReturnType<typeof useT>, tier: RankTier): string {
+function welcomeLine(t: Translate, tier: RankTier): string {
   const named = rankTierNamed(t, tier);
   return named.meaning ? t('rankResult.welcomeMeaning', { tier: named.name, meaning: named.meaning }) : t('rankResult.welcome', { tier: named.name });
 }

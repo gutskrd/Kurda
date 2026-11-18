@@ -12,14 +12,12 @@ import {
   type SetWord,
   type WordDay,
 } from '@kurda/shared';
-import type { useT } from '../i18n/I18nProvider';
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * The small parts the word sets are drawn with on tiles, cards and practice, matching mobile/src/words/parts.tsx:
  * swatches, digits, day names with their number marked in gold, and Soranî words with their Latin spelling below.
  */
-
-type T = ReturnType<typeof useT>;
 
 /** The language tag and the direction a dialect's words are read in, whatever language the page is in. */
 export const scriptLang = (dialect: AlphabetScript): string => (dialect === 'ckb' ? 'ckb' : 'ku');
@@ -102,7 +100,7 @@ export function WordText({
 }
 
 /** A day of the year in the reader's words: "21 March", "21. März", "٢١ی ئازار". */
-export function dateIn(at: DayOfYear, locale: AppLocale, t: T): string {
+export function dateIn(at: DayOfYear, locale: AppLocale, t: Translate): string {
   const month = CALENDAR_MONTHS[at.month - 1]!;
   const name = locale === 'ku' ? month.kmr : locale === 'ckb' ? month.ckb : month.meaning[locale];
   return t('words.months.date', { day: formatNumber(at.day, locale), month: name });
@@ -118,7 +116,7 @@ export interface Meaning {
  * What a word means for this reader: a number's digits, a Kurdish month's dates, else its meaning, or for a Kurdish
  * reader the same word in the other dialect.
  */
-export function meaningOf(word: SetWord, dialect: AlphabetScript, locale: AppLocale, t: T): Meaning {
+export function meaningOf(word: SetWord, dialect: AlphabetScript, locale: AppLocale, t: Translate): Meaning {
   if (word.set === 'numbers') return { text: formatNumber(word.value, locale), script: null };
   if (word.set === 'months' && word.calendar === 'kurdish') {
     return { text: t('words.months.dates', { from: dateIn(word.from, locale, t), to: dateIn(word.to, locale, t) }), script: null };

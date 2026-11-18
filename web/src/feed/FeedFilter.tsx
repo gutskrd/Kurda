@@ -9,7 +9,7 @@ import {
 } from '@kurda/shared';
 import { FilterChip, FilterOption, FilterPill, FilterRadios, FilterSection, FilterSheet, useFilterSheet } from '../components/FilterSheet';
 import { FunnelIcon, SortIcon } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { SECTIONS, type FeedSection } from './postKinds';
 
@@ -23,8 +23,6 @@ export interface FeedFilterValue {
 
 /** The wall as it opens: everything, newest first. */
 export const DEFAULT_FILTER: FeedFilterValue = { section: 'all', kind: null, sort: DEFAULT_FEED_SORT, period: DEFAULT_FEED_PERIOD };
-
-type T = ReturnType<typeof useT>;
 
 /** "All writing" or "All pictures": a whole section chosen. */
 const ALL_OF: Partial<Record<FeedSection, MessageKey>> = { gotin: 'civak.filter.allWriting', dimen: 'civak.filter.allPictures' };
@@ -61,7 +59,7 @@ const same = (a: FeedFilterValue, b: FeedFilterValue): boolean => {
 };
 
 /** What the wall is narrowed to, such as "Pictures · Meme", or null while it shows everything. */
-function filterLabel(t: T, value: Pick<FeedFilterValue, 'section' | 'kind'>): string | null {
+function filterLabel(t: Translate, value: Pick<FeedFilterValue, 'section' | 'kind'>): string | null {
   if (value.section === 'all') return null;
   const section = SECTIONS.find((s) => s.key === value.section);
   if (!section) return null;
@@ -70,14 +68,14 @@ function filterLabel(t: T, value: Pick<FeedFilterValue, 'section' | 'kind'>): st
 }
 
 /** The order and its range, such as "Most popular · This week", or null for newest first. */
-function sortLabel(t: T, value: Pick<FeedFilterValue, 'sort' | 'period'>): string | null {
+function sortLabel(t: Translate, value: Pick<FeedFilterValue, 'sort' | 'period'>): string | null {
   if (value.sort === DEFAULT_FEED_SORT) return null;
   const ranged = sortRanks(value.sort) && value.period !== DEFAULT_FEED_PERIOD;
   return ranged ? `${t(SORT_LABEL[value.sort])} · ${t(PERIOD_LABEL[value.period])}` : t(SORT_LABEL[value.sort]);
 }
 
 /** Everything that differs from the plain wall, for the button's name, such as "Most popular, This week, Pictures · Meme". */
-function activeParts(t: T, value: FeedFilterValue): string[] {
+function activeParts(t: Translate, value: FeedFilterValue): string[] {
   const v = normalised(value);
   const parts: string[] = [];
   if (v.sort !== DEFAULT_FEED_SORT) parts.push(t(SORT_LABEL[v.sort]));

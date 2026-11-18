@@ -18,7 +18,7 @@ import { Button } from '../components/Button';
 import { BlockIcon, DrawIcon, FlagIcon, HostIcon, InviteIcon, RemovePersonIcon, SafetyIcon, SignOutIcon, TrashIcon, UserIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
 import { ReportSheet } from '../reports/ReportSheet';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import { GroupAvatar } from './GroupAvatar';
 import { GroupEdit } from './GroupEdit';
 import { GroupAsk } from './GroupAsk';
@@ -415,7 +415,7 @@ export function GroupInfo({
 function askWords(
   ask: Ask,
   detail: GroupDetail,
-  t: ReturnType<typeof useT>,
+  t: Translate,
 ): { title: string; body: React.ReactNode; action: string; danger: boolean } {
   switch (ask.kind) {
     case 'remove': {
