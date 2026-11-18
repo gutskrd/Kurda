@@ -1,19 +1,11 @@
 import { dayDiff } from '../streaks/streak-logic.js';
 
 /**
- * Daily Zêr reward cycle (KUR-067). Pure: given the last claim date and today
- * (both tz-local 'YYYY-MM-DD' from KUR-031's shared day logic), decide whether a
- * claim is available and which cycle day it lands on. Day 7 pays the bonus.
- * Server time only — device clocks never enter here.
- *
- * The reward is paid for learning, not for opening the app: a claim needs a
- * lesson or practice session finished that same day. Rewards expected merely
- * for showing up are the kind the motivation research is most wary of (Deci,
- * Koestner & Ryan 1999; the roadmap in docs/research reads it as: paying for
- * participation is risky, recognising learning is not). And a missed day no
- * longer sends the cycle back to day 1: the next claim is simply the next day
- * of the cycle. A reset punished exactly the lapse a learner most needs to come
- * back from.
+ * The pure daily Zêr reward cycle: from the last claim date and today (local 'YYYY-MM-DD' dates), whether a claim is
+ * available and which cycle day it lands on; day 7 pays the bonus. Server time only. A claim needs a lesson or practice
+ * session finished that day, since paying for showing up is risky while recognising learning is not (the roadmap in
+ * docs/research). A missed day never resets the cycle, which would punish exactly the lapse a learner needs to recover
+ * from.
  */
 
 /** Zêr paid on each day of the cycle (index 0 = day 1 … index 6 = day 7 bonus). */
@@ -28,18 +20,15 @@ export interface DailyRewardState {
 }
 
 export interface DailyRewardStatus {
-  /** a claim right now would succeed: not claimed yet today, and learned today */
+  /** A claim now would succeed: not claimed today, and learned today. */
   canClaim: boolean;
-  /** the cycle day a claim right now would land on (1..7). */
+  /** The cycle day a claim now would land on (1..7). */
   claimableDay: number;
   reward: number;
   /** the whole cycle's rewards, for the calendar UI. */
   schedule: readonly number[];
   alreadyClaimedToday: boolean;
-  /**
-   * A lesson or practice session has been finished today. While false and the
-   * day is unclaimed, the client says what to do instead of offering a claim.
-   */
+  /** A lesson or practice session was finished today; while false and unclaimed, the client says what to do instead. */
   learnedToday: boolean;
 }
 
@@ -49,10 +38,7 @@ export function rewardForDay(cycleDay: number): number {
   return CYCLE_REWARDS[idx]!;
 }
 
-/**
- * The cycle day a claim on `today` would land on: the day after the last claim
- * (wrapping 7→1), however long ago that was. Day 1 for a first claim.
- */
+/** The cycle day a claim on `today` lands on: the day after the last claim (wrapping 7 to 1), however long ago. Day 1 for a first claim. */
 export function nextCycleDay(state: DailyRewardState, today: string): number {
   if (state.lastClaimOn === null) return 1;
   const gap = dayDiff(state.lastClaimOn, today);
