@@ -1,10 +1,8 @@
 import type { PushMessage, PushPlatform } from './provider.js';
 
 /**
- * Pure batching for the push pipeline (KUR-094). Messages are grouped by
- * platform (each maps to its own provider — FCM/APNs) and chunked to that
- * provider's per-request limit, so one `notifyUser` fan-out becomes a small
- * number of provider calls rather than one call per device.
+ * Pure push batching: messages are grouped by platform and chunked to the provider's per-request limit, so one
+ * fan-out is a few provider calls rather than one per device.
  */
 
 /** Max messages per provider request. FCM multicast = 500; APNs is per-token. */
@@ -20,10 +18,7 @@ function chunk<T>(items: T[], size: number): T[][] {
   return out;
 }
 
-/**
- * Group messages by platform and split each group into provider-sized batches.
- * Order is stable (android then ios) so tests and logs are deterministic.
- */
+/** Groups messages by platform and splits each group into provider-sized batches, in a stable order (android, then ios). */
 export function batchMessages(messages: readonly PushMessage[]): PushMessage[][] {
   const byPlatform: Record<PushPlatform, PushMessage[]> = { android: [], ios: [] };
   for (const m of messages) byPlatform[m.platform].push(m);
