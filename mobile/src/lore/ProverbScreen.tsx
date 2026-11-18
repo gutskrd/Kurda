@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COLUMN, Note, Pill } from '../stories/ui';
@@ -28,6 +29,7 @@ import { dialectNameKey } from '../i18n/dialectName';
  * out. Sharing sends the saying, its translation and its address.
  */
 export function ProverbScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
+  useHardwareBack(onExit);
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();

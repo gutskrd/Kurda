@@ -15,6 +15,7 @@ afterEach(() => {
 
 /** A stand-in for RealtimeClient that lets a test drive its emitter. */
 interface FakeClient {
+  state: RealtimeState;
   connected: boolean;
   destroyed: boolean;
   joined: string[];
@@ -31,6 +32,7 @@ interface FakeClient {
 function makeFakeClient(): FakeClient {
   const listeners: Record<string, Set<(arg: unknown) => void>> = {};
   return {
+    state: 'idle',
     connected: false,
     destroyed: false,
     joined: [],
@@ -55,6 +57,7 @@ function makeFakeClient(): FakeClient {
       listeners['event']?.forEach((h) => h(env));
     },
     emitState(s) {
+      this.state = s;
       listeners['state']?.forEach((h) => h(s));
     },
   };
@@ -109,6 +112,29 @@ describe('RealtimeProvider', () => {
 
     fake.emitEvent({ room: 'dm:u1:u2', event: { type: 'dm', text: 'hello there' } });
     await waitFor(() => expect(screen.getByTestId('dm')).toHaveTextContent('hello there'));
+  });
+
+  it('tells a tab opened later how the connection is, rather than leaving it idle until the state next changes', async () => {
+    signIn();
+    const fake = makeFakeClient();
+    render(
+      <AuthProvider>
+        <RealtimeProvider client={asClient(fake)}>
+          <Probe />
+        </RealtimeProvider>
+      </AuthProvider>,
+    );
+    await waitFor(() => expect(fake.connected).toBe(true));
+    fake.emitState('open');
+    await waitFor(() => expect(screen.getByTestId('state')).toHaveTextContent('open'));
+
+    // Another tab of the app says hello on the shared channel and hears the leader's state back.
+    const tab = new BroadcastChannel('hevalo-realtime');
+    const heard: unknown[] = [];
+    tab.onmessage = (m: MessageEvent) => heard.push(m.data);
+    tab.postMessage({ k: 'hello' });
+    await waitFor(() => expect(heard).toContainEqual({ k: 'state', s: 'open' }));
+    tab.close();
   });
 
   it('does not connect while signed out', () => {

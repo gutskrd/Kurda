@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { GamesAvailability } from '@kurda/shared';
-import { exercisesOf, leaveExercise } from './exercises';
+import { exercisesOf } from './exercises';
 
 const answer = (games: Array<[string, boolean]>): GamesAvailability =>
   ({ dialect: 'kmr', games: games.map(([id, available]) => ({ id, available, difficulties: available ? ['beginner'] : [] })) }) as unknown as GamesAvailability;
@@ -22,23 +22,5 @@ describe('the lessons’ exercises on the phone', () => {
     expect(sentence).toMatchObject({ title: 'games.sentence.name', detail: 'learn.tools.sentenceHint' });
     expect(hear).toMatchObject({ title: 'games.hear.name', detail: 'learn.tools.hearHint' });
     expect(sentence!.tone).not.toBe(hear!.tone);
-  });
-});
-
-describe('leaving an exercise', () => {
-  const nav = (back: boolean) => ({ canGoBack: () => back, goBack: vi.fn(), replace: vi.fn() });
-
-  it('goes back to where it was opened from', () => {
-    const n = nav(true);
-    leaveExercise(n);
-    expect(n.goBack).toHaveBeenCalledTimes(1);
-    expect(n.replace).not.toHaveBeenCalled();
-  });
-
-  it('leaves to the practice hub when a link opened it and there is nothing behind it', () => {
-    const n = nav(false);
-    leaveExercise(n);
-    expect(n.replace).toHaveBeenCalledWith('PracticeHub');
-    expect(n.goBack).not.toHaveBeenCalled();
   });
 });

@@ -10,10 +10,11 @@ import { useI18n } from '../i18n/I18nContext';
 import { assetUrl } from '../api/env';
 import { useArtOverrides } from '../art/overrides';
 import { profilePictureUrl } from './cosmetics';
+import { Icon } from '../theme/Icon';
 
 /**
- * Monogram avatar for a user without a profile photo: a stable colour per `id` and 1–2 initials from `name`. The logic
- * and its contrast are tested in initials.ts.
+ * Monogram avatar for a user without a profile photo: a stable colour per `id` and 1–2 initials from `name`, or a
+ * person glyph when there is no name. The logic and its contrast are tested in initials.ts.
  */
 export function InitialsAvatar({
   name,
@@ -62,12 +63,16 @@ export function InitialsAvatar({
       accessibilityLabel={name ? t('profile.avatarOf', { name }) : t('profile.avatar')}
       style={[styles.base, { width: size, height: size, borderRadius: size / 2, backgroundColor }, style]}
     >
-      <Text
-        allowFontScaling={false}
-        style={[styles.text, { color: textColor, fontSize: scaledFontSize(Math.round(size * 0.4), fontScale) }, textStyle]}
-      >
-        {initials}
-      </Text>
+      {name.trim() ? (
+        <Text
+          allowFontScaling={false}
+          style={[styles.text, { color: textColor, fontSize: scaledFontSize(Math.round(size * 0.4), fontScale) }, textStyle]}
+        >
+          {initials}
+        </Text>
+      ) : (
+        <Icon name="person" size={Math.round(size * 0.5)} color={textColor} />
+      )}
     </View>
   );
 }

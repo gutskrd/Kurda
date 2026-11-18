@@ -2,7 +2,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { Translate } from '../i18n/I18nProvider';
-import { letterNoticeOf } from '@kurda/shared';
+import { LETTERS_CHANGED, letterNoticeOf } from '@kurda/shared';
+import { pageVisible } from '../lib/pollWhileVisible';
+import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
+import type { RealtimeEventEnvelope } from '../realtime/events';
 import { socialNotification } from '../reports/notifications';
 
 export interface LiveActivity {
@@ -89,12 +92,24 @@ const EMPTY: SocialRailData = {
   unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 },
 };
 
-/** How often the rail polls `/me/social`. A game invite expires in two minutes, so slower would show dead invites. */
+/** How often the rail polls `/me/social` while the realtime connection is down. */
 const POLL_MS = 20_000;
+/**
+ * With the connection up, the longest the rail goes without a read, for what no event reports: friends coming online
+ * (their heartbeat comes every two minutes) or starting a game, and purse or level changes from actions that do not
+ * call `refresh`.
+ */
+const FALLBACK_MS = 2 * 60_000;
+/** An event's read waits this long, so a burst is read once and the notification written just after its event is in it. */
+const EVENT_DELAY_MS = 1_000;
+/** Reads for events are at least this far apart, so a busy group chat costs no more than the old poll. */
+const EVENT_GAP_MS = POLL_MS;
 
 /**
- * The rail's data, polled while the tab is visible, and what just arrived. Arrivals come from diffing against the
- * previous answer, since "new to this tab" is a client question; the first load announces nothing.
+ * The rail's data and what just arrived. With the realtime connection up it is read again when an event could change
+ * it, and otherwise every FALLBACK_MS; while the connection is down it polls every POLL_MS. Nothing is read while the
+ * tab is hidden, and coming back reads at once. Arrivals come from diffing against the previous answer, since "new to
+ * this tab" is a client question; the first load announces nothing.
  */
 export function useSocialRail(): {
   data: SocialRailData;
@@ -105,19 +120,27 @@ export function useSocialRail(): {
   dismiss: (key: string) => void;
   refresh: () => void;
 } {
-  const { client, status } = useAuth();
+  const { client, status, user } = useAuth();
   const t = useT();
   const locale = useLocale();
   const signedIn = status === 'signedIn';
+  const live = useRealtime().state === 'open';
   const [data, setData] = useState<SocialRailData>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [arrivals, setArrivals] = useState<Arrival[]>([]);
   /** Ids already seen, so a toast fires once per thing rather than once per poll. */
   const seen = useRef<Set<string> | null>(null);
+  /** When the last read began, which spaces event reads and holds off the fallback. */
+  const lastRead = useRef(0);
+  /** A read an event asked for, waiting its turn. */
+  const eventRead = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Whether the connection was up when last looked at, to notice it coming back. */
+  const wasLive = useRef(live);
 
   const refresh = useCallback(() => {
     if (!signedIn) return;
+    lastRead.current = Date.now();
     void (async () => {
       // Retrying after a first answer that never came is loading, not failing.
       if (seen.current === null) {
@@ -148,6 +171,37 @@ export function useSocialRail(): {
     })();
   }, [client, signedIn, t, locale]);
 
+  /** Asks for a read soon: one per burst, a moment after its first event, and never within EVENT_GAP_MS of the last. */
+  const onEvent = useCallback(() => {
+    if (eventRead.current !== null) return;
+    const wait = Math.max(EVENT_DELAY_MS, lastRead.current + EVENT_GAP_MS - Date.now());
+    eventRead.current = setTimeout(() => {
+      eventRead.current = null;
+      // A hidden tab reads when it is shown again instead.
+      if (pageVisible()) refresh();
+    }, wait);
+  }, [refresh]);
+
+  const me = user?.id;
+  const onGroupMsg = useCallback(
+    (env: RealtimeEventEnvelope) => {
+      // Your own message, echoed back, changes none of your counts.
+      if ((env.event as { message?: { senderId?: string } }).message?.senderId !== me) onEvent();
+    },
+    [onEvent, me],
+  );
+
+  // What can change the rail: requests and friends, gifts, game invites, badges, letters, and the groups' unread counts.
+  useRealtimeEvent('friends_changed', onEvent);
+  useRealtimeEvent('gift_received', onEvent);
+  useRealtimeEvent('play_invite', onEvent);
+  useRealtimeEvent('badge_unlocked', onEvent);
+  useRealtimeEvent(LETTERS_CHANGED, onEvent);
+  useRealtimeEvent('group_msg', onGroupMsg);
+  useRealtimeEvent('group_msg_deleted', onEvent);
+  useRealtimeEvent('group_msgs_deleted', onEvent);
+  useRealtimeEvent('group_chat_cleared', onEvent);
+
   useEffect(() => {
     if (!signedIn) {
       setData(EMPTY);
@@ -155,19 +209,34 @@ export function useSocialRail(): {
       return;
     }
     refresh();
-    const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') refresh();
-    }, POLL_MS);
-    // Returning to the tab refetches at once rather than waiting for the next poll.
+    // Returning to the tab refetches at once, since events that came while it was hidden were not read.
     const onVisible = (): void => {
-      if (document.visibilityState === 'visible') refresh();
+      if (pageVisible()) refresh();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
-      clearInterval(timer);
       document.removeEventListener('visibilitychange', onVisible);
+      if (eventRead.current !== null) clearTimeout(eventRead.current);
+      eventRead.current = null;
     };
   }, [signedIn, refresh]);
+
+  useEffect(() => {
+    if (!signedIn) return;
+    const timer = setInterval(() => {
+      if (!pageVisible()) return;
+      // With the connection up this is only the fallback, so any read in the meantime puts it off.
+      if (live && Date.now() - lastRead.current < FALLBACK_MS) return;
+      refresh();
+    }, POLL_MS);
+    return () => clearInterval(timer);
+  }, [signedIn, live, refresh]);
+
+  // Events sent while the connection was down are lost, so its return is read like an event.
+  useEffect(() => {
+    if (live && !wasLive.current) onEvent();
+    wasLive.current = live;
+  }, [live, onEvent]);
 
   const dismiss = useCallback((key: string) => {
     setArrivals((prev) => prev.filter((a) => a.key !== key));
