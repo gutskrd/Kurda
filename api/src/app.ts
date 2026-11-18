@@ -453,7 +453,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // friend system (KUR-081) + activity feed (KUR-087): needed by producers below
     const friends = new FriendService(app.db);
-    const activity = new ActivityService(app.db, friends, app.redis);
+    const activity = new ActivityService(app.db, friends);
 
     // push infrastructure (KUR-094): device token lifecycle + queued delivery,
     // gated by per-category preferences + quiet hours at delivery time (KUR-095);

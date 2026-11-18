@@ -88,7 +88,7 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
     const bus = redis ? new RedisRoomPublisher(redis) : null;
     const { leagues, badges } = createProgression(pool, {
       gems: new GemService(pool, new WalletService(pool)),
-      activity: new ActivityService(pool, new FriendService(pool), redis),
+      activity: new ActivityService(pool, new FriendService(pool)),
       notices: progressNotices({ inbox, push, jobs: queue }),
       badgeNotices: (badgeService) =>
         badgeNotices({
