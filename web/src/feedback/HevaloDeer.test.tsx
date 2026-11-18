@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
-import { HevaloDeer, tiltFor } from './HevaloDeer';
+import { deerTiltFor as tiltFor } from '@kurda/shared';
+import { HevaloDeer } from './HevaloDeer';
 
 describe('Hevalo the deer', () => {
   it('is decoration: hidden from screen readers, never in the tab order', () => {

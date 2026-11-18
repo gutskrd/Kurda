@@ -34,25 +34,13 @@ const STAR_LABEL: MessageKey[] = [
 ];
 
 /**
- * "How are you enjoying Hevalo?" — Hevalo the deer holds up a board of five
- * stars (contract §F).
+ * "How are you enjoying Hevalo?", with Hevalo holding up five stars. After a first finished game (`first_game`) it
+ * asks for stars first, then "what could be better?" under three or an optional "what do you love?" from three up.
+ * From Settings (`settings`) the whole form shows at once with the stars optional.
  *
- * After a first finished game (source `first_game`) it asks for the stars
- * first, then: under three, "what could be better?" with a few chips and a
- * box; three and up, a thank-you and an optional "what do you love?". From
- * Settings (source `settings`) it is the same form with everything at once
- * and the stars optional — somebody who opened it has something to say.
- *
- * Every answer goes to the admin's feedback inbox and ends with a thank-you
- * from a deer that is happy whatever the stars were. Nothing here links to a
- * store: sending only the happy ones on to rate the app is review gating,
- * which Apple, Google and the FTC all forbid (shared/src/feedback.ts).
- *
- * "Not now" only closes it: the box that shows it (FeedbackHost) has already
- * counted it as shown. Once stars are chosen there is no way out that loses
- * them — "Close", Escape, leaving the page all send the stars, because five
- * stars with nothing more to say is a whole answer, and dropping it would
- * leave the inbox with only the unhappy ones (they come with words).
+ * Every answer goes to the admin's inbox and ends with a happy thank-you. Nothing links to a store, since prompting
+ * only happy users to rate the app is review gating, which store and consumer rules forbid (shared/src/feedback.ts).
+ * "Not now" only closes it; once stars are chosen, every way out sends them, so happy answers reach the inbox too.
  */
 export function RatingBox({
   source,
@@ -61,14 +49,11 @@ export function RatingBox({
   leaveRef,
 }: {
   source: AppFeedbackSource;
-  /** `answered`: something was sent (or is on its way); `dismissed`: closed with nothing chosen */
+  /** `answered`: something was sent or is on its way; `dismissed`: closed with nothing chosen. */
   onClose: (how: 'answered' | 'dismissed') => void;
-  /** the id the question (or the thank-you) heading takes, for the dialog around it to name itself by */
+  /** The id of the question or thank-you heading, which names the surrounding dialog. */
   titleId?: string;
-  /**
-   * Filled with "leave without pressing anything", for whatever holds the box
-   * to call on Escape or when the player moves on: it keeps chosen stars.
-   */
+  /** Filled with a leave function for the holder to call on Escape or when the player moves on; it keeps chosen stars. */
   leaveRef?: React.MutableRefObject<(() => void) | null>;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -84,7 +69,7 @@ export function RatingBox({
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const thanksRef = useRef<HTMLHeadingElement>(null);
-  // an answer has gone (or is going) to the server: leaving must not send a second
+  // An answer has gone or is going to the server, so leaving must not send a second.
   const delivered = useRef(false);
   const settings = source === 'settings';
   const followUp = stars > 0 ? feedbackFollowUp(stars) : null;
@@ -97,8 +82,7 @@ export function RatingBox({
   const trimmed = comment.trim();
   const canSend = settings ? stars > 0 || categories.length > 0 || trimmed.length > 0 : stars > 0;
 
-  // with stars and nothing written, "Done" is the whole answer: it closes
-  // rather than thanking for a message that was never written
+  // With stars and nothing written, "Done" is the whole answer and just closes.
   const doneOnly = loving && !trimmed;
 
   async function send(): Promise<void> {
@@ -108,7 +92,7 @@ export function RatingBox({
     setError(null);
     const res = await sendFeedback(client, {
       ...(stars > 0 ? { stars } : {}),
-      // the chips belong to "what could be better?", so a happy answer sends none
+      // The chips belong to "what could be better?", so a happy answer sends none.
       ...(categories.length > 0 && asksImprove ? { categories } : {}),
       ...(trimmed ? { comment: trimmed } : {}),
       source,
@@ -122,12 +106,7 @@ export function RatingBox({
     else setSent(true);
   }
 
-  /**
-   * Out without pressing Send: "Not now", "Close", Escape, moving on. Stars
-   * already chosen go with it, and nothing else — words in the box were not
-   * sent, so they are not. Should that fail, it is one rating lost, which is
-   * not worth stopping somebody on their way out for.
-   */
+  /** Leaving without Send sends any chosen stars and nothing else; a failure is not worth stopping the player for. */
   function leave(): void {
     if (!settings && stars > 0 && !delivered.current) {
       delivered.current = true;
@@ -141,7 +120,7 @@ export function RatingBox({
     if (leaveRef) leaveRef.current = leave;
   });
 
-  // the form the focus was in is gone; the thank-you takes it, and is read out
+  // The form that had focus is gone, so the thank-you takes it and is announced.
   useEffect(() => {
     if (sent) thanksRef.current?.focus();
   }, [sent]);
@@ -199,14 +178,14 @@ export function RatingBox({
         ))}
       </div>
 
-      {/* the follow-up appears as the stars are chosen; a screen reader hears it */}
+      {/* The follow-up appears as stars are chosen and is announced. */}
       <p className="rb-follow" aria-live="polite">
         {!settings && followUp === 'improve' ? (
           t('appFeedback.improve')
         ) : loving ? (
           <>
             {t('appFeedback.thanksLove')}
-            {/* the heart is drawn, in the app's own gold, where one used to be typed after the words */}
+            {/* The heart is drawn in the app's gold. */}
             <HeartIcon size={18} weight="fill" className="rb-heart" />
           </>
         ) : (
@@ -228,7 +207,7 @@ export function RatingBox({
 
       {(settings || followUp) && (
         <div className="rb-comment">
-          {/* after "what could be better?" just above it, the box is only "tell us more" */}
+          {/* Below "what could be better?", the box is only "tell us more". */}
           <label className="field-label" htmlFor={`${ids}-comment`}>
             {loving
               ? t('appFeedback.loveLabel')
@@ -260,7 +239,7 @@ export function RatingBox({
             {sending ? t('appFeedback.sending') : doneOnly ? t('appFeedback.done') : t('appFeedback.send')}
           </Button>
         )}
-        {/* "Done" alone says it all; beside "Send", the way out keeps the stars */}
+        {/* "Done" stands alone; beside "Send", the way out keeps the stars. */}
         {!settings && !doneOnly && (
           <button type="button" className="btn btn-ghost rb-leave" onClick={leave} disabled={sending}>
             {stars > 0 ? t('common.close') : t('appFeedback.notNow')}

@@ -36,7 +36,7 @@ describe('the rating box', () => {
     const group = screen.getByRole('radiogroup', { name: 'How are you enjoying Hevalo?' });
     expect(group).toBeInTheDocument();
     expect(screen.getAllByRole('radio')).toHaveLength(5);
-    // nothing to send before a star is chosen
+    // Nothing to send before a star is chosen.
     expect(screen.queryByRole('button', { name: 'Send' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('radio', { name: '4 stars' }));
@@ -52,7 +52,7 @@ describe('the rating box', () => {
 
     await user.click(screen.getByRole('radio', { name: '2 stars' }));
     expect(screen.getByText('Thanks for telling us — what could be better?')).toBeInTheDocument();
-    // the question is asked once: the box under it is only "tell us more"
+    // The question is asked once; the box under it is only "tell us more".
     expect(screen.queryByLabelText('What could be better?')).not.toBeInTheDocument();
     await user.click(screen.getByRole('checkbox', { name: 'Games' }));
     await user.click(screen.getByRole('checkbox', { name: 'Too hard' }));
@@ -71,7 +71,7 @@ describe('the rating box', () => {
         appVersion: 'web',
       },
     ]);
-    // the thank-you is a happy deer, whatever the stars were
+    // The thank-you is a happy deer, whatever the stars were.
     expect(Number(document.querySelector('.deer')!.getAttribute('data-stars'))).toBeGreaterThanOrEqual(4);
     await user.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledWith('answered');
@@ -84,13 +84,12 @@ describe('the rating box', () => {
     renderApp(<RatingBox source="first_game" onClose={onClose} />);
 
     await user.click(screen.getByRole('radio', { name: '5 stars' }));
-    // in words, with the heart drawn beside them rather than typed into them
+    // In words, with the heart drawn beside them rather than typed.
     expect(screen.getByText('Thank you!')).toBeInTheDocument();
     expect(document.querySelector('.rb-follow .rb-heart')).not.toBeNull();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    // with nothing typed, "Done" is the only button: it sends the stars and
-    // closes, with no "we read every message" for a message never written
+    // With nothing typed, "Done" is the only button: it sends the stars and closes.
     expect(screen.queryByRole('button', { name: 'Not now' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Done' }));
@@ -117,7 +116,7 @@ describe('the rating box', () => {
     ]);
   });
 
-  /** shown is already counted by the box that shows it (FeedbackHost) */
+  /** FeedbackHost has already counted the box as shown. */
   it('“Not now”, before any star, only closes it', async () => {
     const calls = stub();
     const onClose = vi.fn();
