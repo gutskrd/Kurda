@@ -84,10 +84,6 @@ export function answerWord(dialect: GameDialect, answer: WhoAmIAnswer | 'unsure'
   return t(WORD_KEY[dialect][answer]);
 }
 
-/** The dialect's own yes or no, for a line that has only those two. */
-export function yesNo(dialect: GameDialect, answer: boolean, t: Translate): string {
-  return answerWord(dialect, answer ? 'yes' : 'no', t);
-}
 
 /** An answer in the reader's language, for under the Kurdish; none when the reader's language is that Kurdish. */
 function gloss(dialect: GameDialect, answer: WhoAmISays, t: Translate): string | null {
@@ -721,7 +717,7 @@ export function VerdictCard({
 }
 
 /** A card and a question as the server knows them: by their ids on one phone, by the game and the seat at a table it runs. */
-export type ReportBody = { identity: string; question: string } | { game: string; seat: number; question: string };
+type ReportBody = { identity: string; question: string } | { game: string; seat: number; question: string };
 
 /**
  * One tap to report a card's answer as wrong, replaced by a thank-you that takes focus and is announced. The server only
