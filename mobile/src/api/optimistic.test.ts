@@ -41,7 +41,6 @@ describe('a change shown before the server has it', () => {
     const { tracked: like } = track(s);
     like.want('p1', true, false);
     expect(like.shown('p1', false)).toBe(true);
-    expect(like.busy('p1')).toBe(true);
     expect(s.asked).toEqual([{ key: 'p1', wanted: true, confirmed: false }]);
   });
 
@@ -50,9 +49,9 @@ describe('a change shown before the server has it', () => {
     const { tracked: like, failed } = track(s);
     like.want('p1', true, false);
     await s.answer({ ok: true, data: { ok: true } });
-    expect(like.busy('p1')).toBe(false);
-    // The screen's data now holds the answer, and that is what is drawn.
+    // The screen's data now holds the answer, and that is what is drawn, whatever it says.
     expect(like.shown('p1', true)).toBe(true);
+    expect(like.shown('p1', false)).toBe(false);
     expect(failed).not.toHaveBeenCalled();
   });
 
@@ -62,7 +61,7 @@ describe('a change shown before the server has it', () => {
     like.want('p1', true, false);
     await s.answer({ ok: false, error: refused });
     expect(like.shown('p1', false)).toBe(false);
-    expect(like.busy('p1')).toBe(false);
+    expect(like.shown('p1', true)).toBe(true);
     expect(failed).toHaveBeenCalledTimes(1);
     expect(failed).toHaveBeenCalledWith(refused, 'p1', false);
   });
@@ -104,7 +103,7 @@ describe('rapid taps', () => {
       { key: 'p1', wanted: false, confirmed: true },
     ]);
     await s.answer({ ok: true, data: { ok: true } });
-    expect(like.busy('p1')).toBe(false);
+    expect(like.shown('p1', true)).toBe(true);
   });
 
   it('sends nothing more when the taps came back round to what the server now holds', async () => {
@@ -115,7 +114,7 @@ describe('rapid taps', () => {
     like.want('p1', true, false);
     await s.answer({ ok: true, data: { ok: true } });
     expect(s.asked).toHaveLength(1);
-    expect(like.busy('p1')).toBe(false);
+    expect(like.shown('p1', false)).toBe(false);
   });
 
   it('never undoes a newer tap when an older request is refused', async () => {
@@ -126,7 +125,7 @@ describe('rapid taps', () => {
     await s.answer({ ok: false, error: refused });
     // The refused "on" is moot: the last tap wanted "off", which is what the server still holds.
     expect(goal.shown('p1', false)).toBe(false);
-    expect(goal.busy('p1')).toBe(false);
+    expect(goal.shown('p1', true)).toBe(true);
     expect(s.asked).toHaveLength(1);
     expect(failed).not.toHaveBeenCalled();
   });
@@ -153,7 +152,7 @@ describe('rapid taps', () => {
     // Its answer is the truth now: a later wish for 30 is already held, so nothing is sent.
     s.tracked.want('goal', 30, 30);
     expect(s.asked).toHaveLength(1);
-    expect(s.tracked.busy('goal')).toBe(false);
+    expect(s.tracked.shown('goal', 99)).toBe(99);
   });
 });
 

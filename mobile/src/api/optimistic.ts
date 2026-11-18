@@ -26,7 +26,7 @@ export interface IntentsOptions<K, S, T> {
    * into its own data rather than drawing `shown` puts `confirmed` back there.
    */
   failed: (error: ApiError, key: K, confirmed: S) => void;
-  /** What `shown` or `busy` answers has changed. */
+  /** What `shown` answers has changed. */
   changed: () => void;
   same?: (a: S, b: S) => boolean;
 }
@@ -36,8 +36,6 @@ export interface Intents<K, S> {
   want: (key: K, next: S, current: S) => void;
   /** What to draw for `key`: the value wanted while one is on its way, else the screen's own `fromServer`. */
   shown: (key: K, fromServer: S) => S;
-  /** Whether anything for `key` is still on its way to the server. */
-  busy: (key: K) => boolean;
 }
 
 interface Entry<S> {
@@ -87,7 +85,6 @@ export function createIntents<K, S, T = unknown>({ send, answered, failed, chang
       const entry = entries.get(key);
       return entry ? entry.wanted : fromServer;
     },
-    busy: (key) => entries.has(key),
   };
 }
 
