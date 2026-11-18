@@ -92,7 +92,7 @@ describe('RankResultPanel', () => {
     const cases: Array<[Partial<Extract<RankResult, { counted: true }>>, string | null]> = [
       [{ weight: 1, damping: 1, newAccountLimit: 1 }, null],
       [{ weight: 0.5, damping: 0.5, newAccountLimit: 1 }, 'Counted with less weight: you’ve played a lot of rated games together today.'],
-      // a first game against a new player is not "a lot of rated games together today"
+      // A first game against a new player is not "a lot of rated games together today"
       [{ weight: 0.5, damping: 1, newAccountLimit: 0.5 }, 'Counted with less weight: someone here is new to Hevalo.'],
       [
         { weight: 0.125, damping: 0.25, newAccountLimit: 0.5 },

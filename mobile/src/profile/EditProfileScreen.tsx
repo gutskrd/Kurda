@@ -42,7 +42,7 @@ interface Me {
   equippedBackgroundSku?: string | null;
   equippedIconSku?: string | null;
   premiumIconEnabled?: boolean;
-  /* `/me` has always sent these two; nothing on the phone had asked for them */
+  /* `/me` sends these two. */
   favoritePoem?: FavoriteRef | null;
   favoriteStory?: FavoriteRef | null;
 }
@@ -58,16 +58,9 @@ const MAX_BIO = 1000;
 const CHOSEN_WASH = '1F';
 
 /**
- * Everything about you that you can change, on the phone.
- *
- * The browser has had this since the profile work; the phone could change a
- * username and a photo and nothing else — no display name, no bio, and no
- * country, which mattered more than it looks: the country leaderboard shipped
- * in #722 is unusable to somebody who has no way to say where they are.
- *
- * What a save or a choice did is said where it was done — under Save, or
- * under the avatars — and read out, rather than at the top of a page that
- * has been scrolled away from it.
+ * Everything about you that you can change: display name, bio, country, username, photo and avatar. What a save or a
+ * choice did is said where it was done (under Save, or under the avatars) and read out, not at the top of a page
+ * scrolled away from.
  */
 export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -84,13 +77,13 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
   const [bio, setBio] = useState('');
   const [country, setCountry] = useState('');
   const [busy, setBusy] = useState(false);
-  /** what the last save or choice did, and which part of the page it belongs under */
+  /** What the last save or choice did, and which part of the page it belongs under. */
   const [notice, setNotice] = useState<{ ok: boolean; text: string; at: 'details' | 'avatar' } | null>(null);
   useEffect(() => {
-    // a phone that reads its screen aloud hears it at once (Android reads it from the live region below)
+    // A screen reader hears it at once (Android reads it from the live region below).
     if (notice && Platform.OS !== 'android') AccessibilityInfo.announceForAccessibility?.(notice.text);
   }, [notice]);
-  // a limit on the account (a name and a bio are shown to others) — said with a way to Account standing
+  // A limit on the account (a name and a bio are shown to others): said with a way to Account standing.
   const [limit, setLimit] = useState<ApiError | null>(null);
   const [avatars, setAvatars] = useState<AvatarOption[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -119,10 +112,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
   const countries = useMemo(() => countriesIn(locale), [locale]);
   /*
-   * The country is found by typing, not by scrolling. All of them at once was
-   * two hundred chips — a wall several screens tall between the bio and the
-   * save button — so the field shows the one chosen, and the ones a few
-   * letters match.
+   * The country is found by typing rather than scrolling two hundred chips: the field shows the chosen one and those a
+   * few letters match.
    */
   const [countryQuery, setCountryQuery] = useState('');
   const countryMatches = useMemo(() => {
@@ -133,9 +124,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
   const chosenCountry = countries.find((c) => c.code === country) ?? null;
 
   /*
-   * The matches open under the field, which is where the keyboard is. Once
-   * something is typed, the page brings the field up near the top, so the
-   * countries it found are above the keys rather than behind them.
+   * The matches open under the field, near the keyboard; once something is typed the page scrolls the field near the
+   * top, so the matches sit above the keys.
    */
   const scroller = useRef<ScrollView>(null);
   const countryY = useRef(0);
@@ -150,10 +140,9 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
     (displayName !== (me.displayName ?? '') || bio !== (me.bio ?? '') || country !== (me.country ?? ''));
 
   /*
-   * A name, a bio or a country typed and not yet saved: leaving asks first,
-   * whichever way it is left — the header's back, the swipe, Android's back —
-   * and keeping on editing is the first answer, as in the composer. The
-   * avatar and the rest below save as they are chosen, so they never ask.
+   * A name, bio or country typed and not saved: leaving asks first, whichever way (header back, swipe, Android's back),
+   * with keeping on editing the first answer, as in the composer. The avatar and what is below save as chosen, so they
+   * never ask.
    */
   const navigation = useNavigation<RootNavigation>();
   const [leaving, setLeaving] = useState<NavigationAction | null>(null);
@@ -169,7 +158,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
     setBusy(true);
     setNotice(null);
     setLimit(null);
-    // empty means "unset", which the API takes as null rather than as ''
+    // Empty means unset, which the API takes as null rather than ''.
     const res = await client.patch<{ user: Me }>('/me', {
       displayName: displayName.trim() || null,
       bio: bio.trim() || null,
@@ -187,11 +176,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
   }, [me, busy, dirty, client, displayName, bio, country, t]);
 
   /**
-   * Choose one of the built-in avatars.
-   *
-   * An uploaded photo always wins over a chosen avatar, so picking one while a
-   * photo is set would appear to do nothing at all. The photo goes first — and
-   * if that fails, the choice is put back rather than left looking applied.
+   * Choose a built-in avatar. An uploaded photo always wins over an avatar, so the photo is removed first; if that
+   * fails, the choice is put back.
    */
   const pick = useCallback(
     async (key: string | null) => {
@@ -245,7 +231,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
         <AsyncBoundary loading={me === null && error === null} error={me === null ? error : null} onRetry={() => void load()}>
           <ScrollView ref={scroller} contentContainerStyle={[styles.body, { paddingBottom: bottom }]} keyboardShouldPersistTaps="handled">
-            {/* the page's sections share one kind of heading, the small one the rest of the profile uses */}
+            {/* The page's sections share one heading style, the small one the rest of the profile uses. */}
             <Text style={[sectionLabel, styles.firstSection, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
               {t('edit.details')}
             </Text>
@@ -273,9 +259,9 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
             <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{t('edit.country')}</Text>
             <View style={[styles.countries, { flexDirection: dir.row }]}>
-              {/* what it is set to now: a value, not a button, since tapping it had nothing to do */}
+              {/* What it is set to now: a value, not a button, since tapping it has nothing to do. */}
               <CountryChip label={chosenCountry ? chosenCountry.name : t('edit.noCountry')} on />
-              {/* taking it off is one tap, and says so, rather than another "— None —" beside the country */}
+              {/* Taking it off is one tap, and says so. */}
               {chosenCountry ? (
                 <CountryChip
                   label={t('common.remove')}
@@ -290,7 +276,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
             </View>
             {countryMatches.length > 0 ? (
               <View style={[styles.countries, { flexDirection: dir.row }]}>
-                {/* the matches wrap onto rows a gap apart, so each reaches half of it toward the row above and below */}
+                {/* The matches wrap onto rows a gap apart, so each reaches half of it toward the rows above and
+                   below. */}
                 <ReachGroup gap={spacing.sm} rowGap={spacing.sm}>
                   {countryMatches.map((c) => (
                     <CountryChip
@@ -307,15 +294,12 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               </View>
             ) : null}
 
-            {/*
-              Offered once there is something to save: the avatar and
-              everything under it save as they are chosen, and a Save that
-              stood there greyed out would ask whether they need it too.
-            */}
+            {/* Shown once there is something to save: the avatar and everything under it save as chosen, and a greyed
+               Save would suggest they need it too. */}
             {dirty || busy ? (
               <ClayButton
                 label={t('edit.saveChanges')}
-                // saving: the button turns and takes no second press, and a screen reader is told what it is doing
+                // Saving: the button spins and takes no second press, and a screen reader is told what it is doing.
                 accessibilityLabel={busy ? t('edit.saving') : undefined}
                 busy={busy}
                 tone="primary"
@@ -330,7 +314,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               {t('edit.avatar')}
             </Text>
             {said('avatar')}
-            {/* the one chosen is ringed in the violet everything chosen wears, the empty choice and a face alike */}
+            {/* The chosen one is ringed in the violet every choice wears, the empty choice and a face alike. */}
             <View style={[styles.avatars, { flexDirection: dir.row }]} accessibilityLabel={t('edit.chooseAvatar')}>
               <PressableScale
                 onPress={() => void pick(null)}
@@ -345,15 +329,9 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               >
                 <Icon name="close" size={22} color={colors.textSecondary} />
               </PressableScale>
-              {/*
-                Only the avatars this account can wear. Hevalo+ cannot be had in
-                the app, so an avatar kept for members is not shown to anybody
-                else: a locked tile with no way to unlock it from here is a door
-                painted on a wall, and an offer of something the app does not sell.
-
-                Each is named by its place, "Avatar 3": its key ("default-03")
-                is not a word anybody should hear read out.
-              */}
+              {/* Only avatars this account can wear: Hevalo+ cannot be had in the app, so a members-only avatar is
+                 not shown to anybody else. Each is named by its place ("Avatar 3"), since its key is not a word to
+                 read out. */}
               {shownAvatars.map((a, i) => {
                 return (
                   <PressableScale
@@ -404,15 +382,9 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 }
 
 /**
- * A country, as a choice to tap, or (without `onPress`) as the one chosen.
- *
- * The one chosen is a wash of violet with violet ink, as an option that is on
- * is marked everywhere; solid violet said "press me" of a chip that does
- * nothing when pressed.
- *
- * It is drawn 36 tall and answers a finger over 48, from the height its
- * style states; where the matches wrap onto rows, their group holds each to
- * half the gap between the rows.
+ * A country as a choice to tap, or (without `onPress`) as the one chosen, marked with a violet wash and ink as every
+ * chosen option is. Drawn 36pt tall and answering over 48pt; where the matches wrap, their group holds each to half the
+ * gap between rows.
  */
 function CountryChip({
   label,
@@ -458,7 +430,7 @@ const styles = StyleSheet.create({
   section: { marginTop: spacing.lg },
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
   input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
-  // right to left, what is typed starts at the right
+  // Right to left, what is typed starts at the right.
   inputMirrored: { textAlign: 'right' },
   bio: { minHeight: 96, textAlignVertical: 'top' },
   countries: { flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },

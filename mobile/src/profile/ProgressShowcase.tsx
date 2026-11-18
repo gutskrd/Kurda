@@ -17,14 +17,10 @@ import { knownTier, leagueLabel, leagueName } from '../leagues/format';
 import { Icon } from '../theme/Icon';
 
 /**
- * What a profile shows of the climb (contract 4 §U): the three badges chosen
- * for it, each game's rank now with the best this season and ever, and the
- * league — every name translated, nothing invented for somebody who has not
- * played (no "bronze" for an empty league, no tier while placing). A rank
- * four weeks without a rated game reads "Resting" to everyone else.
- *
- * `own` is your own profile: the empty showcase then offers to choose, and
- * each part opens its page.
+ * What a profile shows of the climb: the three badges chosen for it, each game's rank with its best this season and
+ * ever, and the league, every name translated and nothing invented for somebody who has not played (no "bronze" for an
+ * empty league, no tier while placing). A rank four weeks without a rated game reads "Resting" to everyone else. `own`
+ * is your own profile: the empty showcase then offers to choose, and each part opens its page.
  */
 export function ProgressShowcase({
   ranks,
@@ -39,7 +35,7 @@ export function ProgressShowcase({
   ranks: ProfileRank[];
   league: ProfileLeague | null | undefined;
   badges: ShowcaseBadge[];
-  /** badges earned since the app opened (`useFreshBadges`), which wear a "New" chip */
+  /** Badges earned since the app opened (`useFreshBadges`), which wear a "New" chip. */
   fresh?: ReadonlySet<string>;
   own: boolean;
   onBadges?: () => void;
@@ -49,15 +45,14 @@ export function ProgressShowcase({
   const { colors } = useTheme();
   const { t } = useI18n();
   /*
-   * Right to left, everything here starts on the right: the badges in the
-   * order chosen, the row that offers to choose them (its chevron pointing
-   * on), and the strip of ranks, which opens at its first.
+   * Right to left, everything starts on the right: the badges in the chosen order, the row offering to choose them, and
+   * the strip of ranks, which opens at its first.
    */
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   const strip = useRef<ScrollView>(null);
   const leagueTier = knownTier(league?.tier);
-  // a rank in a game Hevalo no longer has is not shown: there is nowhere left to play for it
+  // A rank in a game Hevalo no longer has is not shown: there is nowhere left to play for it.
   const shown = ranks.filter((r) => isRankedGame(r.game) && (r.tier || r.placing || r.resting || r.bestTier));
   if (badges.length === 0 && shown.length === 0 && !leagueTier && !own) return null;
 
@@ -113,7 +108,7 @@ export function ProgressShowcase({
             ref={strip}
             horizontal
             showsHorizontalScrollIndicator={false}
-            // right to left, the first chip is on the right: start the strip there
+            // Right to left, the first chip is on the right: start the strip there.
             onContentSizeChange={() => {
               if (mirrored) strip.current?.scrollToEnd({ animated: false });
             }}
@@ -130,7 +125,7 @@ export function ProgressShowcase({
             ) : null}
             {shown.map((r) => {
               const game = t(GAME_NAME_KEY[r.game]);
-              // how far through placement, where the API says ("Placing 2/5")
+              // How far through placement, where the API says ("Placing 2/5").
               const placing = r.placement ? t('ranks.placing', { played: r.placement.played, of: r.placement.of }) : t('ranks.placingShort');
               const now = r.resting ? t('ranks.resting') : r.placing || !r.tier ? placing : rankName(t, r.tier, r.division);
               const best = r.bestTier ? t('profile.rankBest', { rank: t(TIER_NAME_KEY[r.bestTier]) }) : null;
@@ -144,7 +139,7 @@ export function ProgressShowcase({
                     r.tier && !r.resting && !r.placing ? (
                       <RankEmblem tier={r.tier} division={r.division} size={44} label={rankLabel(t, r.tier, r.division)} />
                     ) : r.resting && r.bestTier ? (
-                      // resting: the best tier it reached, quietly
+                      // Resting: the best tier it reached, quietly.
                       <RankEmblem tier={r.bestTier} size={44} label={now} style={styles.resting} />
                     ) : (
                       <PlacementEmblem done={r.placement?.played ?? 0} size={44} label={now} />
@@ -220,10 +215,10 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   emptyText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   chips: { flexDirection: 'row', gap: spacing.sm, paddingRight: spacing.lg },
-  // the strip at least as wide as the screen, so a short one still starts on the right
+  // The strip at least as wide as the screen, so a short one still starts on the right.
   chipsMirrored: { flexDirection: 'row-reverse', flexGrow: 1, paddingRight: 0, paddingLeft: spacing.lg },
   chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingVertical: spacing.sm, paddingLeft: spacing.sm, paddingRight: spacing.md, minWidth: 150 },
-  // the emblem on the right, with the narrow side of the padding beside it
+  // The emblem on the right, with the narrow side of the padding beside it.
   chipMirrored: { flexDirection: 'row-reverse', paddingLeft: spacing.md, paddingRight: spacing.sm },
   chipText: { gap: 1, maxWidth: 140 },
   kicker: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.4, textTransform: 'uppercase' },

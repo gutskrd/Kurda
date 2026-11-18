@@ -18,7 +18,7 @@ import { usePullRefresh } from '../net/usePullRefresh';
 import { Loading } from '../theme/Loading';
 import { heldDim } from '../theme/MotionParts';
 
-/** "3 Sep" / "3 Sep 2024" — the year only when it is not this one — in the app's language, not the phone's. */
+/** "3 Sep" or "3 Sep 2024" (the year only when it is not this one), in the app's language, not the phone's. */
 function when(iso: string, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
@@ -32,21 +32,10 @@ function when(iso: string, locale: string): string {
 }
 
 /**
- * The people you have blocked, and the only way back (KUR-083).
- *
- * A block is deliberately total: the other person leaves search, your friends
- * list and every board, and their profile answers "no such user" to you. Which
- * means that the moment it lands there is no longer any screen that could offer
- * to undo it — the phone could block, and then nothing. Without this list a
- * block placed by accident, or in a moment, was permanent in practice unless
- * you went and found a browser.
- *
- * It lives in Settings rather than among the social screens because it is
- * account state, like your privacy setting, not a place you visit.
- *
- * Names are deliberately not tappable. Everywhere else a name opens that
- * person's profile; a blocked person's profile is a 404 to you by design, so a
- * link would be a promise the app cannot keep.
+ * The people you have blocked, and the only way back. A block is total (the other person leaves search, your friends
+ * list and every board, and their profile answers "no such user" to you), so no other screen could offer to undo it. It
+ * lives in Settings because it is account state. Names are not tappable, since a blocked person's profile is a 404 to
+ * you.
  */
 export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -55,7 +44,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
   const dir = useDirection();
 
   const [list, setList] = useState<BlockedUser[] | null>(null);
-  // the list could not be read at all: said, with the way to ask again, rather than "you haven't blocked anyone"
+  // The list could not be read at all: said, with the way to ask again, rather than "you haven't blocked anyone".
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -65,7 +54,8 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
     (offset = 0) =>
       blockedUsers(client, offset).then((res) => {
         if (!res.ok) {
-          // a first page that did not come is not an empty list; a later page that did not come is said over the rows already there
+          // A first page that did not come is not an empty list; a later page that did not come is said over the rows
+          // already there.
           if (offset === 0) setLoadError(res.error);
           else setError(describeError(res.error, t));
           return;
@@ -84,14 +74,12 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
       void load(0);
     }, [load]),
   );
-  // pulled down, the list is read again from its first page
+  // Pulled down, the list is read again from its first page.
   const pull = usePullRefresh(() => load(0));
 
   /**
-   * Unblock, then take the row out — rather than reloading from the server,
-   * which would shuffle everything below the row you just touched. Only on
-   * success: a row that vanished after a failed unblock would leave you
-   * believing you had let someone back in, with no way to tell.
+   * Unblock, then remove the row rather than reload, which would shuffle the rows below. Only on success: a row that
+   * vanished after a failed unblock would suggest you had let someone back in.
    */
   const unblock = (user: BlockedUser): void => {
     const name = user.displayName || user.username;
@@ -158,7 +146,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                       <Pressable
                         onPress={() => unblock(u)}
                         accessibilityRole="button"
-                        // one 18-point line of words, caught at a fingertip, alone at the end of its row past words that are not a control
+                        // One 18pt line of words, reaching a fingertip, alone at the end of its row.
                         reach="open"
                         reachSize={{ height: 18 }}
                         style={({ pressed }) => pressed && heldDim}
@@ -177,12 +165,8 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                   </Pressable>
                 ) : null}
 
-                {/*
-                  Said here rather than only inside the confirm, because it is
-                  the part people get wrong: unblocking does not restore a
-                  friendship, and it does put you back within reach of someone
-                  you chose to get away from.
-                */}
+                {/* Said here, not only in the confirm, because it is what people get wrong: unblocking does not
+                   restore a friendship, and it puts you back within reach of someone you chose to avoid. */}
                 <Text style={[styles.help, dir.text, { color: colors.textSecondary, marginTop: spacing.lg }]}>
                   {t('settings.blocked.unblockHint')}
                 </Text>

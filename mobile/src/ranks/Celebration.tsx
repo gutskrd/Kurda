@@ -11,23 +11,13 @@ import { useI18n } from '../i18n/I18nContext';
 const STAGE = '#07080c';
 
 /**
- * A moment on its own stage: a new division, a new tier, a first placement,
- * a new league, a badge. Night-dark whatever the scheme (the art is light on
- * dark), and the same short sequence every time (theme/celebration.ts): the
- * thing earned springs in, a ring of its colour widens once behind it, a
- * light handful of flecks in its colours is thrown out and falls away, it is
- * felt once as it lands, and then the words fade in. All of it is over in
- * about a second and a half and a tap on the art skips to the end; after
- * that nothing moves while the words are read. Under Reduce Motion it is a
- * fade.
+ * A moment on its own night-dark stage (a new division or tier, a first placement, a new league, a badge), in the app's
+ * one sequence (theme/celebration.ts): the thing earned springs in, a ring widens, flecks fly, a haptic as it lands,
+ * then the words. It is over in about a second and a half, and a tap on the art skips to the end; under Reduce Motion
+ * it is a fade. One button continues, and system back closes it too.
  *
- * Nothing here asks for anything back. One button continues, and the
- * backdrop does not trap anybody: the system back closes it too.
- *
- * It is felt only when the person just did the thing it celebrates. One that
- * is shown rather than caused — a badge earned before the app was opened, a
- * league moved up while nobody was watching — plays the same and stays still
- * in the hand: a buzz on opening the app is a buzz nobody asked for.
+ * The haptic plays only when the person just did the thing: a moment shown rather than caused (a badge earned before
+ * the app opened) stays still in the hand.
  */
 export function Celebration({
   art,
@@ -45,14 +35,14 @@ export function Celebration({
   onClose,
   felt = true,
 }: {
-  /** the emblem or medallion, drawn at ~168pt */
+  /** The emblem or medallion, drawn at ~168pt. */
   art: ReactNode;
-  /** the glow behind it, and the ring */
+  /** The glow behind it, and the ring. */
   glow: string;
-  /** how many flecks are thrown (0 for none) */
+  /** How many flecks are thrown (0 for none). */
   flecks: number;
   fleckColours: string[];
-  /** keeps the same moment looking the same */
+  /** Keeps the same moment looking the same. */
   seed: number;
   /** "NEW TIER" */
   kicker: string;
@@ -60,16 +50,16 @@ export function Celebration({
   title: string;
   /** "Hill" */
   subtitle?: string | null;
-  /** what earned it: "+26 · you beat a higher-ranked player" */
+  /** What earned it: "+26 · you beat a higher-ranked player" */
   detail?: string | null;
-  /** a line under it: the shield, a badge's tier */
+  /** A line under it: the shield, a badge's tier. */
   note?: string | null;
-  /** buttons; a Continue is the caller's to give */
+  /** Buttons; a Continue is the caller's to give. */
   actions: ReactNode;
-  /** what a screen reader hears as it opens */
+  /** What a screen reader hears as it opens. */
   announce: string;
   onClose: () => void;
-  /** false for a moment the person did not just cause (see above) */
+  /** False for a moment the person did not just cause (see above). */
   felt?: boolean;
 }): React.JSX.Element {
   const { t } = useI18n();
@@ -80,7 +70,7 @@ export function Celebration({
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(announce);
-    // said once, as it opens
+    // Said once, as it opens.
   }, []);
 
   const scale = moment.plan.travel ? moment.art.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) : 1;
@@ -88,9 +78,9 @@ export function Celebration({
   const lift = moment.plan.travel ? moment.details.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) : 0;
 
   return (
-    // the scrim fades either way; under Reduce Motion the moment is that fade and nothing else
+    // The scrim fades either way; under Reduce Motion the moment is that fade and nothing else.
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
-      {/* drawn over the page, not beside its controls: their groups' caps stop here */}
+      {/* Drawn over the page, not beside its controls: their groups' caps stop here. */}
       <ReachReset>
         <DarkScheme>
           <View style={[styles.backdrop, { backgroundColor: STAGE }]} accessibilityViewIsModal>
@@ -98,7 +88,7 @@ export function Celebration({
               <Pressable
                 onPress={moment.playing ? moment.skip : undefined}
                 disabled={!moment.playing}
-                // a skip while it plays; afterwards only the picture, not a nameless button
+                // A skip while it plays; afterwards only the picture, not a nameless button.
                 accessible={moment.playing}
                 accessibilityRole={moment.playing ? 'button' : undefined}
                 accessibilityLabel={moment.playing ? t('common.skip') : undefined}

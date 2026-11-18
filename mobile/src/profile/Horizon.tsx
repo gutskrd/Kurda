@@ -4,15 +4,9 @@ import { SvgXml } from 'react-native-svg';
 import { horizonSvg } from '@kurda/shared';
 
 /**
- * The horizon behind somebody who wears no background: their own sky and
- * mountains (shared `art/horizon.ts`), the same picture the website draws in
- * their banner. No profile opens on an empty band, and no two people share a
- * horizon.
- *
- * The picture is square and composed about its middle line, so it is laid
- * across the band's width and the band shows it through its middle: the sun
- * and the first ridge are inside it whatever shape the band is. It is
- * decoration, and a screen reader is never told about it.
+ * The horizon behind somebody who wears no background: their own sky and mountains (shared `art/horizon.ts`), as the
+ * website draws their banner, so no two people share one. The square picture is laid across the band's width and shows
+ * through its middle, where the sun and first ridge sit whatever the band's shape. Decorative.
  */
 
 let horizons = 0;
@@ -28,7 +22,7 @@ function useHorizonId(): string {
 
 export function Horizon({ seed, width, height, style }: { seed: string; width: number; height: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const id = useHorizonId();
-  // a band not laid out yet has no width: it is drawn once it has one
+  // A band not laid out yet has no width: it is drawn once it has one.
   const xml = useMemo(() => (width > 0 ? horizonSvg({ seed, size: width, idPrefix: id }) : null), [seed, width, id]);
   return (
     <View

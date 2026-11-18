@@ -9,23 +9,13 @@ import { useDirection } from '../reports/direction';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * A post's pictures, one to four.
- *
- * One picture keeps its own shape, within limits — a tall phone photo is cut
- * to 4:5 and a panorama to 1.91:1, so one post cannot fill a whole screen or
- * become a ribbon. Two to four share a 16:9 box: side by side, one tall and
- * two stacked, or a square of four.
- *
- * Every picture is its own element for a screen reader, named by its alt
- * text, or "Picture 2 of 3" when the poster wrote none — never by the post's
- * text, which a screen reader reads anyway, right before.
- *
- * On the wall (`wall`) the corners are rounder, and two or more are not cut
- * into a box: they come one at a time, each whole and the width of the post,
- * swiped through sideways.
+ * A post's pictures, one to four. One picture keeps its own shape within limits (a tall photo cut to 4:5, a panorama to
+ * 1.91:1); two to four share a 16:9 box. Each is its own element for a screen reader, named by its alt text or "Picture
+ * 2 of 3", never by the post's text, which is read just before. On the wall (`wall`) corners are rounder and several
+ * pictures are swiped through one at a time, each whole.
  */
-export const SINGLE_MIN_RATIO = 0.8;
-export const SINGLE_MAX_RATIO = 1.91;
+const SINGLE_MIN_RATIO = 0.8;
+const SINGLE_MAX_RATIO = 1.91;
 
 /** The shape one picture is shown in: its own, kept within the limits; 4:3 when its size is unknown. */
 export function singleRatio(image: Pick<FeedImage, 'width' | 'height'>): number {
@@ -40,11 +30,11 @@ export function PostPictures({
   wall = false,
 }: {
   images: readonly FeedImage[];
-  /** opening the post (on the wall); left out where the post is already open */
+  /** Opening the post (on the wall); left out where the post is already open. */
   onPress?: () => void;
-  /** the post's menu, held down on a picture as on the words */
+  /** The post's menu, on a long press on a picture as on the words. */
   onLongPress?: () => void;
-  /** as the wall shows a post's pictures: inside the page's margins, rounder, several swiped through */
+  /** As the wall shows a post's pictures: inside the page's margins, rounder, several swiped through. */
   wall?: boolean;
 }): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -60,7 +50,7 @@ export function PostPictures({
         source={{ uri: image.url }}
         style={styles.fill}
         resizeMode="cover"
-        // on the wall the picture is a way into the post, and that is what is named
+        // On the wall the picture is a way into the post, and is named as such.
         accessible={!onPress}
         accessibilityRole="image"
         accessibilityLabel={onPress ? undefined : label}
@@ -70,11 +60,11 @@ export function PostPictures({
     return (
       <View key={`${i}-${image.url}`} style={[style, { backgroundColor: colors.controlTrack }]}>
         {onPress ? (
-          // a picture that opens the post: named by what it shows, and said to open the post
+          // A picture that opens the post: named by what it shows, and said to open the post.
           <Pressable
             onPress={onPress}
             onLongPress={onLongPress}
-            // a picture cannot take a fill, so it fades under the finger: the tap is answered before the post opens
+            // A picture cannot take a fill, so it fades under the finger: the tap is answered before the post opens.
             style={({ pressed }) => [styles.fill, pressed && heldDim]}
             accessibilityRole="button"
             accessibilityLabel={label}
@@ -110,7 +100,7 @@ export function PostPictures({
           </View>
         </>
       ) : (
-        // in rows, so a screen reader meets them in the order they were posted
+        // In rows, so a screen reader meets them in posting order.
         <View style={styles.column}>
           <View style={styles.row}>
             {tile(shown[0]!, 0, styles.cell)}
@@ -127,14 +117,9 @@ export function PostPictures({
 }
 
 /**
- * A wall post's pictures, one at a time. All of them take the first one's
- * shape, so the post does not change height under the thumb as it is swiped.
- * Where you are is said twice, small: "2/3" in the top corner and a dot for
- * each along the bottom, the one shown filled. Neither is read out — each
- * picture already says "Picture 2 of 3", or what it shows.
- *
- * In Soranî the first picture is on the right and the next one comes in from
- * the left, as a page is turned.
+ * A wall post's pictures one at a time, all in the first one's shape so the post does not change height while swiped.
+ * "2/3" in the corner and a dot each along the bottom show where you are; neither is read out, since each picture says
+ * it. In right-to-left languages the first picture is on the right.
  */
 function Swiped({
   images,
@@ -145,7 +130,7 @@ function Swiped({
   tile: (image: FeedImage, i: number, style: object) => React.JSX.Element;
   mirror: boolean;
 }): React.JSX.Element {
-  // inside the page's margins, so the phone's width less those until the post has been measured
+  // Inside the page's margins: the phone's width less those until the post has been measured.
   const screen = useWindowDimensions().width;
   const [measured, setMeasured] = useState(0);
   const width = measured || Math.min(MAX_WIDTH, screen - 2 * layout.gutter);
@@ -182,15 +167,15 @@ function Swiped({
 }
 
 const GAP = 2;
-/** on a tablet or a wide window the pictures stop growing where a phone's would */
+/** On a tablet or a wide window the pictures stop growing where a phone's would. */
 const MAX_WIDTH = 560;
-// on a picture, whatever its colours and whatever the theme: white on a dimmed pill
+// On a picture, whatever its colours or the theme: white on a dimmed pill.
 const ON_PICTURE = '#FFFFFF';
 const UNDER = 'rgba(0,0,0,0.45)';
 
 const styles = StyleSheet.create({
-  // on a tablet or a wide window the pictures stop growing where a phone's would: a
-  // post is read, not a poster — and the shape, not the height, is what is kept
+  // On a tablet or a wide window the pictures stop growing where a phone's would, keeping the shape rather than the
+  // height.
   box: { width: '100%', maxWidth: MAX_WIDTH, borderRadius: radii.md, overflow: 'hidden' },
   wall: { borderRadius: radii.lg },
   wide: { aspectRatio: 16 / 9, flexDirection: 'row', gap: GAP },

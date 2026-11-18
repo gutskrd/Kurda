@@ -40,24 +40,13 @@ export interface UnwrapTarget {
 }
 
 /**
- * Unwrapping a present.
+ * Unwrapping a present, sized by the gift's tier (shared `GIFT_UNWRAP_MS`): a common gift bursts in a small card, a
+ * rare one rises in a sheet throwing pomegranate seeds, a legendary one takes the whole screen with the Newroz flame. A
+ * tap skips it; under Reduce Motion it is a short fade to the item. A haptic plays once as the lid comes off (or at the
+ * skip). It runs on the native driver with one progress value, so a busy JS thread cannot make it stutter.
  *
- * Sized by the gift's tier (shared `GIFT_UNWRAP_MS`): a common gift bursts in
- * a small card at the bubble's scale, a rare one rises in a sheet with
- * pomegranate seeds thrown out of it, a legendary one takes the whole screen
- * with the Newroz flame behind it. Every one can be skipped with a tap; with
- * Reduce Motion it is a short fade to the item and nothing moves. It is felt
- * once (`haptic('celebrate')`) as the lid comes off and the item is seen — or
- * at the tap that skips to it.
- *
- * It runs on the native driver — one progress value, transforms and opacity
- * only — so a busy JS thread cannot make it stutter.
- *
- * Then the item, who it is from, and what you can do: **Wear it** (a
- * background or an icon, put on at once), **Say thanks** (the parent sends it
- * into the chat), **Close**. The gift is opened on the server as the animation
- * starts (`POST /gifts/:id/open`); `onOpened` hands back the fresh card so the
- * bubble shows it opened, and the sender's bubble learns it from the server.
+ * Then the item, who it is from, and Wear it, Say thanks (sent by the parent) or Close. The gift is opened on the
+ * server as the animation starts (`POST /gifts/:id/open`); `onOpened` hands back the fresh card for the bubble.
  */
 export function GiftUnwrap({
   target,
@@ -69,8 +58,8 @@ export function GiftUnwrap({
   onClose: () => void;
   onOpened: (card: GiftCard) => void;
   /**
-   * send the thank-you into the chat; resolves to null when it went, or the
-   * server's refusal — said here, since the chat's own notice is behind this
+   * Send the thank-you into the chat; resolves to null when it went, or to the server's refusal, said here since the
+   * chat's own notice is behind this.
    */
   onThanks: () => Promise<ApiError | null>;
 }): React.JSX.Element {
@@ -81,7 +70,7 @@ export function GiftUnwrap({
   const reduce = useReducedMotion();
   const card = target.card;
   const plan = useMemo(() => unwrapPlan(card.tier, reduce), [card.tier, reduce]);
-  // the full-screen moment is staged on night-dark in either scheme
+  // The full-screen moment is staged on night-dark in either scheme.
   const full = plan.stage === 'full';
   const colors = full ? PALETTES.dark : theme.colors;
   const progress = useRef(new Animated.Value(0)).current;
@@ -100,11 +89,11 @@ export function GiftUnwrap({
     felt.current = true;
     haptic('celebrate');
   };
-  // held in a ref: a parent passing a fresh one on every render must not reopen the gift
+  // Held in a ref: a parent passing a fresh one on every render must not reopen the gift.
   const opened = useRef(onOpened);
   opened.current = onOpened;
 
-  // open it on the server as the moment starts, so "Opened ✓" reaches the sender
+  // Open it on the server as the moment starts, so "Opened ✓" reaches the sender.
   useEffect(() => {
     let alive = true;
     void openGift(client, target.giftId).then((res) => {
@@ -197,7 +186,7 @@ export function GiftUnwrap({
         <Pressable
           onPress={revealed ? undefined : reveal}
           disabled={revealed}
-          // Skip while it plays; afterwards only a picture, not a nameless button
+          // Skip while it plays; afterwards only a picture, not a nameless button.
           accessible={!revealed}
           accessibilityRole={revealed ? undefined : 'button'}
           accessibilityLabel={revealed ? undefined : t('common.skip')}
@@ -211,17 +200,17 @@ export function GiftUnwrap({
           <ItemArt card={card} size={art * 0.62} progress={progress} reduce={reduce} gold={colors.gold} />
         </Pressable>
 
-        {/* unseen until the reveal, so out of a screen reader's reach until then too */}
+        {/* Unseen until the reveal, so out of a screen reader's reach until then too. */}
         <Animated.View
           style={[styles.details, { opacity: details }]}
           pointerEvents={revealed ? 'auto' : 'none'}
-          // both platforms: VoiceOver's elements-hidden and TalkBack's no-hide-descendants
+          // Both platforms: VoiceOver's elements-hidden and TalkBack's no-hide-descendants.
           aria-hidden={!revealed}
         >
           <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header">
             {card.name}
           </Text>
-          {/* unnamed only when the gift is older than the messages loaded, and its sender unknown here */}
+          {/* Unnamed only when the gift is older than the loaded messages and its sender unknown here. */}
           {target.fromName ? (
             <Text style={[styles.from, { color: colors.textSecondary }]}>{t('gift.unwrap.from', { name: target.fromName })}</Text>
           ) : null}
@@ -261,7 +250,8 @@ export function GiftUnwrap({
               {actionError}
             </Text>
           ) : null}
-          {/* a refused thank-you (a chat mute, the automatic pause) says why here, and the way to Account standing closes this first */}
+          {/* A refused thank-you (a chat mute, the automatic pause) says why here; the way to Account standing closes
+             this first. */}
           <SendErrorNotice error={thanksError} onDismiss={() => setThanksError(null)} onNavigate={onClose} style={styles.notice} />
           <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => [styles.close, pressed && heldDim]}>
             <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
@@ -357,9 +347,8 @@ function Burst({
 }
 
 /**
- * The Newroz fire, rising behind the item: its base sits level with the
- * item's, so the item stands in front of the fire rather than inside it, and
- * it settles to a glow once the item is out.
+ * The Newroz fire rising behind the item, its base level with the item's so the item stands in front of it, settling to
+ * a glow once the item is out.
  */
 function Flame({
   progress,
@@ -446,7 +435,7 @@ const styles = StyleSheet.create({
   name: { ...display(typography.sizes.xl), textAlign: 'center' },
   from: { fontSize: typography.sizes.md, textAlign: 'center' },
   actions: { width: '100%', gap: spacing.sm, marginTop: spacing.sm },
-  // as wide as the buttons above it, in their column
+  // As wide as the buttons above it, in their column.
   notice: { alignSelf: 'stretch', marginHorizontal: 0, marginBottom: 0 },
   stretch: { alignSelf: 'stretch' },
   error: { fontSize: typography.sizes.sm, textAlign: 'center' },

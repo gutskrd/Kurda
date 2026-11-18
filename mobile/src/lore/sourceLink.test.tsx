@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 /**
- * A source's address is text an editor typed, and what the app opens is
- * handed to the phone, which opens any kind of address it has an app for:
- * only an https one is a link, and any other source reads as plain text.
+ * A source's address is text an editor typed, and the phone opens any address it has an app for, so only an https one
+ * is a link and any other source reads as plain text.
  */
 import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { Linking } from 'react-native';
@@ -61,7 +60,7 @@ describe('sources as the reader sees them', () => {
     const links = screen.getAllByRole('link');
     expect(links).toHaveLength(1);
     expect(within(links[0]!).getByText('Dimdim')).toBeTruthy();
-    // the others are there, as text
+    // The others are there, as text.
     expect(screen.getByText('Kitêba kevn')).toBeTruthy();
     expect(screen.getByText('Nameyek')).toBeTruthy();
     fireEvent.click(links[0]!);

@@ -6,21 +6,15 @@ import { springTo } from '../../theme/animate';
 import type { SlideDirection } from '../../theme/SlideSwap';
 
 /** How far the art floats up and down, in points, and how long one float there and back takes. */
-export const DRIFT = { rise: 4, ms: 5200 } as const;
+const DRIFT = { rise: 4, ms: 5200 } as const;
 
 /** How far the art arrives from, beyond where the slide itself comes from, so it seems a layer nearer than the words. */
-export const PARALLAX = 22;
+const PARALLAX = 22;
 
 /**
- * A landing screen's art, alive: it floats slowly up and down, the way a
- * thing does that is not pinned to the page, and arrives a little further
- * than the words around it when its slide turns in (`direction`), so the
- * slide reads as having depth rather than as one flat card. One loop and one
- * spring, both transforms on the native driver.
- *
- * The float is a loop, so it stops the moment the screen is behind another
- * and never runs at all for somebody who has asked for less motion; the
- * arrival is then simply the place it ends up.
+ * A landing screen's art floating slowly up and down, and arriving from a little further than the words when its slide
+ * turns in (`direction`), so the slide reads as having depth. One loop and one spring on the native driver. The float
+ * stops behind another screen and never runs under Reduce Motion.
  */
 export function Drift({
   direction,
@@ -28,15 +22,15 @@ export function Drift({
   children,
   style,
 }: {
-  /** which way the slide this stands on turned in; none for art that was there from the start */
+  /** Which way the slide this stands on turned in; none for art that was there from the start. */
   direction?: SlideDirection | null;
-  /** read from the right: forward comes in from the left */
+  /** Read from the right: forward comes in from the left. */
   mirrored?: boolean;
   children: ReactNode;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
-  // in front, and the app not in the background: the float has nobody to move for otherwise
+  // In front, and the app not in the background: otherwise the float has nobody to move for.
   const focused = useScreenAwake();
   const float = useRef(new Animated.Value(0)).current;
   const across = useRef(new Animated.Value(direction && !reduce ? (direction === 'forward' ? 1 : -1) * (mirrored ? -1 : 1) * PARALLAX : 0)).current;
@@ -49,7 +43,7 @@ export function Drift({
     const settle = springTo(across, 0, 'standard');
     settle.start();
     return () => settle.stop();
-    // once, as the art arrives
+    // Once, as the art arrives.
   }, [reduce, across]);
 
   useEffect(() => {

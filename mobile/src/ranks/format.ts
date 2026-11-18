@@ -1,11 +1,7 @@
 /**
- * Pure Game Ranks view helpers (contract 4 §R, §U) — no React Native.
- *
- * Every word a rank is shown with comes from the catalogue: the tier's name
- * (Kurmancî everywhere, Soranî script in ckb) and what it means in the
- * reader's language, the one plain reason a result is explained with, and why
- * a Rated game plays as friendly. Numbers are signed with a true minus, so a
- * loss reads as −6 rather than a hyphen.
+ * Pure Game Ranks view helpers. Every word comes from the catalogue: the tier's name (Kurmancî everywhere, Soranî
+ * script in ckb) and its meaning, the one plain reason for a result, and why a Rated game plays as friendly. Numbers
+ * are signed with a true minus.
  */
 import type {
   Division,
@@ -40,7 +36,7 @@ export const TIER_MEANING_KEY: Record<RankTier, TranslationKey> = {
 };
 
 /** Divisions are written the way the emblem's chevrons count them: III lowest, I highest. */
-export const ROMAN: Record<Division, string> = { 3: 'III', 2: 'II', 1: 'I' };
+const ROMAN: Record<Division, string> = { 3: 'III', 2: 'II', 1: 'I' };
 
 /** "Gir II", or "Stêrk" (the apex has no divisions). */
 export function rankName(t: Translate, tier: RankTier, division: Division | null): string {
@@ -49,8 +45,8 @@ export function rankName(t: Translate, tier: RankTier, division: Division | null
 }
 
 /**
- * What the tier's name means, or null where the name already says it — in
- * Kurmancî "Gir" means hill, and "Gir · Gir" says nothing twice.
+ * What the tier's name means, or null where the name already says it: in Kurmancî "Gir" means hill, and "Gir · Gir"
+ * would say it twice.
  */
 export function tierMeaning(t: Translate, tier: RankTier): string | null {
   const meaning = t(TIER_MEANING_KEY[tier]);
@@ -72,8 +68,8 @@ export function signed(n: number): string {
 }
 
 /**
- * The one plain reason, never a sad one. A loss to a stronger player is a
- * close game; a loss to a weaker one is an off day; leaving says only that.
+ * The one plain reason, never a sad one: a loss to a stronger player is a close game, to a weaker one an off day, and
+ * leaving says only that.
  */
 export const REASON_KEY: Record<RankReason, TranslationKey> = {
   placement: 'ranks.reason.placement',
@@ -112,7 +108,7 @@ export function friendlyReasonKey(reason: FriendlyReason, self = false): Transla
   return (self ? SELF_REASON_KEY[reason] : undefined) ?? FRIENDLY_REASON_KEY[reason];
 }
 
-export const SEASON_NAME_KEY: Record<SeasonName, TranslationKey> = {
+const SEASON_NAME_KEY: Record<SeasonName, TranslationKey> = {
   zivistan: 'season.name.zivistan',
   bihar: 'season.name.bihar',
   havin: 'season.name.havin',
@@ -158,10 +154,7 @@ export function nextStepText(t: Translate, card: Pick<RankCard, 'progress' | 'pl
   return t('ranks.toNext', { count: pointsToGo, rank: rankName(t, next.tier, next.division) });
 }
 
-/**
- * The moment after a game: a tier reached, a division reached, the first
- * placement finished — or nothing to celebrate (a points change alone).
- */
+/** The moment after a game: a tier, a division or the first placement reached, or nothing to celebrate. */
 export type Celebration = 'placed' | 'tier' | 'division' | null;
 
 export function celebrationOf(result: RankResult): Celebration {

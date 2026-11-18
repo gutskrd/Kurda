@@ -21,19 +21,11 @@ import { ART, YoursRow, YoursRowSkeleton } from './YoursRow';
 import { LETTERS_HOME_PATH } from '../letters/homePath';
 
 /**
- * Your pen pal bird, in the Shop, as the website has it (web/src/shop/YourBird.tsx).
- *
- * A row at the top of the Shop says which bird is yours; a tap opens the same
- * choice the letters screen offers under its window (letters/BirdPicker), with
- * the same words: the eight birds as a group of radio buttons, the one that is
- * yours ticked, what a new one costs against the Zêr there are, and how many
- * are missing when they do not reach it, which keeps the button from being
- * pressed. A new bird is asked about first the way the Shop asks before a
- * purchase, saying the price, the balance and that it is final; the first bird
- * is free and simply taken.
- *
- * Nothing is shown to somebody letters are not for (a guest, no birth month,
- * a limit on writing), nor on a server without letters.
+ * Your pen pal bird in the Shop, as on the website (web/src/shop/YourBird.tsx): a row saying which bird is yours,
+ * opening the same choice as the letters screen (letters/BirdPicker): the eight birds as radio buttons, what a new one
+ * costs against your Zêr, and how many are missing when short. A new bird is confirmed as a purchase is; the first is
+ * free and simply taken. Hidden for anyone letters are not for (a guest, no birth month, a writing limit), and on a
+ * server without letters.
  */
 
 /** What `GET /letters` holds, and the way to read it again or put a newer answer in its place. */
@@ -52,11 +44,9 @@ function isLettersHome(value: unknown): value is LettersHome {
 }
 
 /**
- * The letters page as the Shop needs it. It is read when the Shop reads its
- * catalogue (on focus, and when pulled down), not on its own; a guest is never
- * asked about, and a server that has no letters (404), or an account that may
- * not have them (403), leaves nothing to show and nothing wrong. A second
- * read that fails keeps what the first one showed.
+ * The letters page as the Shop needs it, read with the Shop's catalogue (on focus and on pull), not on its own. A guest
+ * is never asked about; a 404 or 403 means nothing to show and nothing wrong. A later failed read keeps what the first
+ * one showed.
  */
 export function useLettersHome(): LettersHomeState {
   const { client, isGuest } = useAuth();
@@ -82,11 +72,11 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
 
   if (!data) {
     if (home.loading) return <YoursRowSkeleton />;
-    // the read failed: the row stays, quietly offering to read it again
+    // The read failed: the row stays, quietly offering to read it again.
     if (home.error) return <YoursRow art={<BirdBadge bird={0} size={ART} />} label={t('shop.bird.title')} value={t('common.retry')} onPress={() => void home.reload()} testID="shop-your-bird" />;
     return null;
   }
-  // somebody who cannot write letters yet is told why on the letters screen, where it can be put right
+  // Somebody who cannot write letters yet is told why on the letters screen, where it can be put right.
   if (data.refusal !== null) return null;
 
   return (
@@ -124,7 +114,7 @@ function BirdSheet({
   const [picked, setPicked] = useState(data.bird);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-  // made yours from this sheet: the bird takes a bow and the sheet says so, with one button to close it
+  // Made yours from this sheet: the bird takes a bow and the sheet says so, with one button to close it.
   const [done, setDone] = useState(false);
   const number = (n: number): string => formatNumber(n, locale);
   const first = !data.birdChosen;
@@ -145,8 +135,8 @@ function BirdSheet({
       setDone(true);
       return;
     }
-    // spent meanwhile, somewhere else: the Zêr there are now say how many are missing; the same bird again
-    // is no change, and there is nothing to pay or to say
+    // Spent elsewhere meanwhile: the Zêr there are now say how many are missing. The same bird again is no change, with
+    // nothing to pay or say.
     if (res.error.code === 'INSUFFICIENT_FUNDS' || res.error.code === 'LETTER_BIRD_SAME') {
       const again = await client.get<LettersHome>(LETTERS_HOME_PATH);
       setBusy(false);
@@ -158,7 +148,7 @@ function BirdSheet({
       return;
     }
     setBusy(false);
-    // Hevalo away for a while is said by the screen over the app instead
+    // Hevalo being offline is shown by the screen over the app instead.
     if (isMaintenance(res.error)) return;
     haptic('error');
     setFailed(describeError(res.error, t));
@@ -235,7 +225,7 @@ function BirdSheet({
           );
         })}
       </View>
-      {/* the bird picked, by its colour; the one that is yours says so, and says it again once a new one is */}
+      {/* The bird picked, by its colour; the one that is yours says so, and again once a new one is. */}
       <View style={[styles.picked, { flexDirection: dir.row }]} accessibilityLiveRegion="polite">
         {same ? <Icon name="check" size={18} color={colors.primary} /> : null}
         <Text style={[styles.pickedText, { color: colors.textPrimary }]}>{same ? t('letters.bird.yours', { name: name(picked) }) : name(picked)}</Text>
@@ -250,16 +240,16 @@ function BirdSheet({
   );
 }
 
-/** A bird's portrait in the sheet: four to a row, each a finger and more wide. */
+/** A bird's portrait in the sheet: four to a row, each more than a fingertip wide. */
 const BIRD = 56;
 
 const styles = StyleSheet.create({
   lead: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
-  // two even rows of four
+  // Two even rows of four.
   birds: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.md, alignSelf: 'center', maxWidth: 4 * (BIRD + 10) + 3 * spacing.md + 2 },
-  // each bird a round button; the one picked ringed in the violet every choice that is on wears
+  // Each bird a round button; the one picked ringed in the violet every chosen option wears.
   bird: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', padding: 3, borderWidth: 2, borderRadius: radii.pill },
-  // the bird that is yours, ticked, whichever is picked
+  // The bird that is yours, ticked, whichever is picked.
   mine: { position: 'absolute', right: 0, bottom: 0, width: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderRadius: radii.pill },
   picked: { alignItems: 'center', justifyContent: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
   pickedText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },

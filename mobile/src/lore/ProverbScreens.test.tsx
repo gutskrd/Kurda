@@ -45,7 +45,7 @@ describe('the proverbs’ list', () => {
     expect(today.textContent).toContain('Drop by drop, water becomes a lake.');
     expect(screen.getByRole('heading', { name: 'Gotinên pêşiyan, Proverbs' })).toBeTruthy();
     expect(screen.getByText('Traditional')).toBeTruthy();
-    // a new one is never shown as old
+    // A new one is never shown as old.
     expect(screen.getByText('Newly written')).toBeTruthy();
   });
 
@@ -59,7 +59,7 @@ describe('the proverbs’ list', () => {
   });
 
   it('opens a proverb, and the round in the variety on show once there are proverbs enough for one', async () => {
-    // a round asks about five different proverbs, so the list needs five before it offers one
+    // A round asks about five different proverbs, so the list needs five before it offers one.
     const five = { ...PROVERBS, proverbs: [...PROVERBS.proverbs, proverb({ slug: 'kmr-a1' }), proverb({ slug: 'kmr-a2' }), proverb({ slug: 'kmr-a3' })] };
     testAuth.client = fakeClient({ 'GET /proverbs?dialect=kmr': ok(five) });
     renderWithProviders(<ProverbsScreen dialect="kmr" onExit={() => undefined} />);
@@ -150,7 +150,7 @@ describe('the proverbs’ round', () => {
     expect((await screen.findByTestId('proverb-round-prompt')).textContent).toBe('Gotin 0');
     expect(client.calls.find((c) => c.method === 'POST')?.body).toEqual({ dialect: 'kmr', mode: 'meaning' });
 
-    // a wrong first try is crossed out, and a second one is offered
+    // A wrong first try is crossed out, and a second one is offered.
     fireEvent.click(screen.getByRole('button', { name: 'Meaning A0' }));
     expect(await screen.findByText('Not that one. It’s crossed out; choose another.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Meaning B0' }));
@@ -195,7 +195,7 @@ describe('the proverbs’ round', () => {
     renderWithProviders(<ProverbRoundScreen dialect="kmr" mode="complete" onExit={() => undefined} />);
     fireEvent.click(await screen.findByTestId('proverb-round-start'));
     expect(client.calls.find((c) => c.method === 'POST')?.body).toEqual({ dialect: 'kmr', mode: 'complete' });
-    // the gap gives nothing away before the answer
+    // The gap gives nothing away before the answer.
     expect((await screen.findByTestId('proverb-round-prompt')).textContent).toBe('Av dilop dilop dibe ….');
     expect(screen.getByText('Which word finishes this proverb?')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'gol' }));

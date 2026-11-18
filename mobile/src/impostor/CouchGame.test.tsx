@@ -11,13 +11,9 @@ import { CouchGame } from './CouchGame';
 import { ImpostorScreen } from './ImpostorScreen';
 
 /**
- * Xapînok on one phone, in the phone app, from the way in to the
- * score: the setup and what it asks the server for (never a name), the phone
- * going round with each card shown only while it is pressed, the clues in turn
- * with their clock, the two kinds of vote, the caught impostor's guess, the
- * reveal, and the next game from the same cards. Then the taps that can be
- * taken back for a moment, the second vote of a round with two impostors, the
- * evening keeping the way the room chose, and the learner's own Kurdish first.
+ * Xapînok on one phone from the way in to the score: the setup and what it asks the server for (never a name), each
+ * card shown only while pressed, the clues, both kinds of vote, the caught impostor's guess, the reveal and the next
+ * game, then taps that can be taken back, the second vote with two impostors, and the learner's own Kurdish first.
  */
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -35,11 +31,11 @@ vi.mock('../realtime/RealtimeProvider', () => ({
   useRealtimeListener: () => undefined,
 }));
 
-// Several tests here play a whole game through, screen by screen; on a busy machine that can take longer than the default five seconds.
+// Several tests play a whole game through, which can take longer than the default five seconds on a busy machine.
 vi.setConfig({ testTimeout: 20_000 });
 
 beforeEach(() => {
-  // the renderer these tests run in answers that a screen reader is always on; on a phone it usually is not
+  // The test renderer reports a screen reader as always on; on a phone it usually is not.
   vi.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(false);
 });
 
@@ -53,7 +49,7 @@ afterEach(() => {
   resetCourseDialect();
 });
 
-// stand-in Kurdish for the fixtures, never shown to a learner
+// Stand-in Kurdish for the fixtures, never shown to a learner.
 const card = (word: string, twin: string | null = 'kûçik') => ({
   word,
   meanings: { en: `the ${word}` },
@@ -139,9 +135,8 @@ const NO_CLOCKS: Array<[string, string]> = [
 ];
 
 /**
- * Clocks a test can move on, that still run by themselves a millisecond at a
- * time (so the taps between are as quick as on real clocks): the moment to
- * take a tap back, or a vote's clock, can be let pass at once.
+ * Clocks a test can move on that still run by themselves a millisecond at a time, so the moment to take a tap back, or
+ * a vote's clock, can be let pass at once.
  */
 function quickClock(): void {
   vi.useFakeTimers({ shouldAdvanceTime: true, advanceTimeDelta: 1, toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
@@ -177,7 +172,7 @@ describe('the way in', () => {
     });
     renderWithProviders(<ImpostorScreen onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'One word. One impostor. Who’s bluffing?' })).toBeTruthy();
-    // the game with friends is on the table too, but it is not the first thing asked
+    // The game with friends is on the table too, but it is not the first thing asked.
     expect(screen.getByRole('button', { name: 'With friends' })).toBeTruthy();
     press('Play on this phone');
     expect(await screen.findByRole('button', { name: 'Deal the cards' })).toBeTruthy();
@@ -195,12 +190,12 @@ describe('the way in', () => {
       'GET /games/availability?dialect=ckb': ok({ dialect: 'ckb', games: [] }),
     });
     renderWithProviders(<ImpostorScreen onExit={() => undefined} />);
-    // each way to play is a card that says what the impostor is told
+    // Each way to play is a card that says what the impostor is told.
     press(await screen.findByText('Odd word out').then(() => /^Odd word out\. Nobody is told who the impostor is/));
     await screen.findByRole('button', { name: 'Deal the cards' });
     expect(screen.getByRole('radio', { name: /^Odd word out/ }).getAttribute('aria-checked')).toBe('true');
     press('Back');
-    // and each category a picture with its Kurdish name and what it means
+    // And each category a picture with its Kurdish name and what it means.
     press(await screen.findByRole('button', { name: 'xwarin · food' }).then(() => 'xwarin · food'));
     await screen.findByRole('button', { name: 'Deal the cards' });
     expect(within(screen.getByRole('radiogroup', { name: 'Category' })).getByRole('radio', { name: 'xwarin · food' }).getAttribute('aria-checked')).toBe('true');
@@ -242,7 +237,7 @@ describe('the setup', () => {
     cleanup();
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
     await waitFor(() => expect((screen.getByLabelText('Player 1') as HTMLInputElement).value).toBe('Azad'));
-    // the kind of game chosen last time is chosen again
+    // The kind of game chosen last time is chosen again.
     await waitFor(() => expect(screen.getByRole('radio', { name: /^In the dark/ }).getAttribute('aria-checked')).toBe('true'));
   });
 
@@ -278,16 +273,16 @@ describe('the phone going round', () => {
     testAuth.client = fakeClient(offered());
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
     await start(NO_CLOCKS);
-    // between two players the screen says only whose turn it is
+    // Between two players the screen says only whose turn it is.
     expect(await screen.findByText('Pass the phone to Azad')).toBeTruthy();
     expect(document.body.textContent).not.toContain('pisîk');
     press('I’m Azad');
-    // taken, the card is still face down, and cannot be passed on unread
+    // Taken, the card is still face down, and cannot be passed on unread.
     expect(cardOf('Azad').textContent).toBe('');
     expect(screen.getByRole('button', { name: 'Hide it and pass on' })).toHaveProperty('disabled', true);
     fingerDown();
     await waitFor(() => expect(cardOf('Azad').textContent).not.toBe(''));
-    // while it is up, the phone cannot be passed on with the card showing
+    // While it is up, the phone cannot be passed on with the card showing.
     expect(screen.getByRole('button', { name: 'Hide it and pass on' })).toHaveProperty('disabled', true);
     fingerUp();
     await waitFor(() => expect(cardOf('Azad').textContent).toBe(''));
@@ -336,17 +331,17 @@ describe('a round', () => {
     const impostor = NAMES[cards.findIndex((c) => c.includes('impostor'))]!;
     expect(cards.filter((c) => c.includes('impostor'))).toHaveLength(1);
     expect(cards.filter((c) => c.includes('pisîk'))).toHaveLength(3);
-    // the impostor is told the category, never the word
+    // The impostor is told the category, never the word.
     expect(cards.find((c) => c.includes('impostor'))).toContain('heywan');
 
-    // two rounds of clues, said out loud: the phone only says whose turn it is
+    // Two rounds of clues, said out loud: the phone only says whose turn it is.
     expect(await screen.findByText('Round 1 of 2')).toBeTruthy();
     expect(screen.queryByRole('timer')).toBeNull();
     for (let i = 0; i < NAMES.length; i++) press('Next');
     expect(screen.getByText('Round 2 of 2')).toBeTruthy();
     for (let i = 0; i < NAMES.length; i++) press('Next');
 
-    // no time to talk was chosen: straight to the vote, each in private
+    // No time to talk was chosen: straight to the vote, each in private.
     for (const name of NAMES) {
       press(await screen.findByText(`I’m ${name}`).then(() => `I’m ${name}`));
       expect(screen.getByText(`${name}, who is it?`)).toBeTruthy();
@@ -354,23 +349,23 @@ describe('a round', () => {
       press(`Vote for ${name === impostor ? NAMES.find((n) => n !== impostor)! : impostor}`);
     }
 
-    // the last vote is counted once its moment is over, and nothing is shown before then
+    // The last vote is counted once its moment is over, and nothing is shown before then.
     expect(screen.getByText(`You voted for ${NAMES.at(-1) === impostor ? NAMES.find((n) => n !== impostor) : impostor}`)).toBeTruthy();
     expect(screen.queryByText(/was caught/)).toBeNull();
     momentPasses();
 
-    // caught: the phone goes to the impostor for one guess among four words
+    // Caught: the phone goes to the impostor for one guess among four words.
     expect(await screen.findByText(`${impostor} was caught! Hand them the phone for one guess at the word.`)).toBeTruthy();
     press(`I’m ${impostor}`);
     for (const word of ['pisîk', 'hesp', 'mişk', 'ker']) expect(screen.getByRole('button', { name: word })).toBeTruthy();
-    // a word tapped is asked about once more, and can be chosen again
+    // A word tapped is asked about once more, and can be chosen again.
     press('mişk');
     expect(screen.getByRole('heading', { name: 'Your answer: mişk?' })).toBeTruthy();
     press('Choose again');
     press('hesp');
     press('Yes, that’s my answer');
 
-    // every card turned over, the word, who it was, the votes and the score
+    // Every card turned over, the word, who it was, the votes and the score.
     expect(await screen.findByText(`The impostor was ${impostor}`)).toBeTruthy();
     expect(screen.getByText('the pisîk')).toBeTruthy();
     expect(screen.getByText('Caught, and the guess was wrong: the table wins.')).toBeTruthy();
@@ -379,7 +374,7 @@ describe('a round', () => {
     expect(screen.getByLabelText(new RegExp(`^${winner}: This game [1-9]`))).toBeTruthy();
     expect(screen.getByLabelText(`${impostor}: This game 0, Total 0`)).toBeTruthy();
 
-    // the next game is the next card of the same batch: nothing more is fetched
+    // The next game is the next card of the same batch: nothing more is fetched.
     press('Next game');
     expect(await screen.findByText('Game 2')).toBeTruthy();
     expect(client.calls.filter((c) => c.method === 'POST')).toHaveLength(1);
@@ -403,7 +398,7 @@ describe('a round', () => {
     const clock = vi.spyOn(Date, 'now').mockReturnValue(now + 16_000);
     await waitFor(() => expect(screen.getByRole('heading', { name: /, your clue$/ }).textContent).not.toBe(first));
     clock.mockRestore();
-    // once everyone has spoken twice, the room talks it over against a clock of its own
+    // Once everyone has spoken twice, the room talks it over against a clock of its own.
     for (let said = 0; said < NAMES.length * 2 && !screen.queryByText('Talk it over'); said++) press('Next');
     expect(await screen.findByText('Talk it over')).toBeTruthy();
     expect(screen.getByText('1:00')).toBeTruthy();
@@ -458,7 +453,7 @@ describe('a round', () => {
     press('Go to the vote');
     press(odd);
     momentPasses();
-    // caught, the odd one out has no word to name: the cards turn at once
+    // Caught, the odd one out has no word to name: the cards turn at once.
     expect(await screen.findByText('The odd one out was found: the table wins.')).toBeTruthy();
     expect(screen.getByText(/The other word was/).textContent).toContain('kûçik');
   });
@@ -540,7 +535,7 @@ describe('taking a tap back', () => {
     expect(await screen.findByText('Pass the phone to Berfîn')).toBeTruthy();
     expect(screen.queryByText(/can’t decide|voted for/)).toBeNull();
     press('Undo');
-    // Azad still has the phone: their own vote, not the screen that asks for it
+    // Azad still has the phone: their own vote, not the screen that asks for it.
     expect(screen.getByRole('heading', { name: 'Azad, who is it?' })).toBeTruthy();
     press('Vote for Ciwan');
     expect(await screen.findByText('Pass the phone to Berfîn')).toBeTruthy();
@@ -562,7 +557,7 @@ describe('taking a tap back', () => {
     press('Undo');
     expect(screen.getByRole('heading', { name: 'Dîlan, who is it?' })).toBeTruthy();
     momentPasses();
-    // nothing was counted: the vote is still Dîlan's to make
+    // Nothing was counted: the vote is still Dîlan's to make.
     expect(screen.queryByText(/was caught|slipped away/)).toBeNull();
     expect(screen.getByRole('heading', { name: 'Dîlan, who is it?' })).toBeTruthy();
   });
@@ -596,12 +591,12 @@ describe('two impostors', () => {
     press(await screen.findByText(first!).then(() => first!));
     momentPasses();
     await guess(first!, 'hesp');
-    // what the second vote is for, and its clock, before anyone is named
+    // What the second vote is for, and its clock, before anyone is named.
     expect(await screen.findByRole('heading', { name: 'One impostor is caught. Who is the other one?' })).toBeTruthy();
     expect(screen.getByText('Everyone else votes once more: 30 seconds.')).toBeTruthy();
     press('Go to the vote');
     expect(screen.getByRole('timer')).toBeTruthy();
-    // the impostor already caught is not among those the room can name
+    // The impostor already caught is not among those the room can name.
     expect(screen.queryByRole('button', { name: first! })).toBeNull();
     press(other!);
     momentPasses();
@@ -616,19 +611,19 @@ describe('two impostors', () => {
     testAuth.client = fakeClient(offered());
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
     const [first, other] = await twoImpostors([]);
-    // everyone names the first impostor, who names someone else
+    // Everyone names the first impostor, who names someone else.
     for (const name of SIX) await castVote(name, name === first ? SIX.find((n) => n !== first && n !== other)! : first!);
     momentPasses();
     await guess(first!, 'hesp');
     press(await screen.findByText('Go to the vote').then(() => 'Go to the vote'));
-    // one vote is cast, for someone who is not the other impostor, and then the time is up
+    // One vote is cast, for someone who is not the other impostor, and then the time is up.
     const voter = SIX.find((n) => n !== first)!;
     const wrong = SIX.find((n) => n !== first && n !== other && n !== voter)!;
     await castVote(voter, wrong);
     momentPasses(31_000);
     expect(await screen.findByText(`${other} stayed hidden to the end: +3.`)).toBeTruthy();
     expect(screen.getByText(`${voter} voted for ${wrong}`)).toBeTruthy();
-    // who had not voted when the clock ran out did not vote at all
+    // Whoever had not voted when the clock ran out did not vote at all.
     for (const name of SIX.filter((n) => n !== first && n !== voter)) expect(screen.getByText(`${name} didn’t vote`)).toBeTruthy();
     expect(screen.getByLabelText(new RegExp(`^${other}: This game 3,`))).toBeTruthy();
   });
@@ -667,12 +662,12 @@ describe('the evening', () => {
     testAuth.client = client;
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
     await screen.findByRole('button', { name: 'Deal the cards' });
-    // both varieties are offered, and the categories shown are the Soranî ones
+    // Both varieties are offered, and the categories shown are the Soranî ones.
     expect(within(screen.getByRole('radiogroup', { name: 'Variety' })).getAllByRole('radio')).toHaveLength(2);
     const categories = within(screen.getByRole('radiogroup', { name: 'Category' }));
     expect(categories.getByRole('radio', { name: /ئاژەڵ/ })).toBeTruthy();
     expect(categories.queryByRole('radio', { name: /heywan/ })).toBeNull();
-    // and the cards are asked for in it
+    // And the cards are asked for in it.
     press('Deal the cards');
     await waitFor(() => expect(client.calls.find((c) => c.method === 'POST')?.body).toMatchObject({ dialect: 'ckb' }));
   });

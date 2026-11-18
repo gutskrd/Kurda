@@ -17,7 +17,7 @@ describe('restrictionOf', () => {
       scope: 'post',
       until: '2026-10-20T10:00:00.000Z',
     });
-    // a feature limit is a mute on media
+    // A feature limit is a mute on media.
     expect(restrictionOf(refusal('MUTED', { scope: 'media', until: null }))).toEqual({ kind: 'muted', scope: 'media', until: null });
   });
 
@@ -77,7 +77,7 @@ describe('suspendedDetails / mutedDetails', () => {
       appealToken: 'tok',
     });
     expect(suspendedDetails({ statement: 'x' })).toBeNull();
-    // a rule newer than this build: the reasons still show, without a rule name
+    // A rule newer than this build: the reasons still show, without a rule name.
     expect(suspendedDetails({ until: null, policy: 'brand_new_rule', statement: 'S.', appealable: false, appealToken: 'tok' })?.policy).toBeNull();
     expect(suspendedDetails(null)).toBeNull();
     expect(mutedDetails({ scope: 'chat' })).toEqual({ scope: 'chat', until: null });
@@ -90,7 +90,7 @@ describe('uploads refused by a limit', () => {
     const muted = JSON.stringify({ code: 'MUTED', message: "you can't upload pictures or voice right now", details: { scope: 'media', until: null } });
     expect(describeUploadFailure(403, muted, t)).toBe('You can’t add pictures or voice right now.');
     expect(uploadWasLimited(403, muted)).toBe(true);
-    // the automatic pause is said, but its reasons are not on the standing page
+    // The automatic pause is said, but its reasons are not on the standing page.
     const paused = JSON.stringify({ code: 'CHAT_MUTED', message: 'x' });
     expect(uploadWasLimited(403, paused)).toBe(false);
     expect(uploadWasLimited(500, 'not json')).toBe(false);

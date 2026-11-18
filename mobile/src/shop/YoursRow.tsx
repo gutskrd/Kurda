@@ -9,13 +9,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 
 /**
- * One of yours at the top of the Shop: your bird, or your tree.
- *
- * Drawn as a row of the catalogue is (ShopScreen `ShopRow`), on the same
- * glass, its picture in the same column, so the two read as part of the Shop
- * rather than as a banner over it: what it is in small capitals, which one is
- * yours now under it, and the chevron that says a tap opens more. The tap
- * opens a sheet with every choice there is, as an item's row opens its sheet.
+ * One of yours at the top of the Shop (your bird or your tree), drawn like a catalogue row (ShopScreen `ShopRow`) so it
+ * reads as part of the Shop: what it is in small capitals, which one is yours under it, and a chevron. The tap opens a
+ * sheet with every choice.
  */
 export function YoursRow({
   art,
@@ -25,9 +21,9 @@ export function YoursRow({
   testID,
 }: {
   art: ReactNode;
-  /** what this is: "Your pen pal bird", "Your tree" */
+  /** What this is: "Your pen pal bird", "Your tree" */
   label: string;
-  /** which one is yours now, or what there is to do */
+  /** Which one is yours now, or what there is to do. */
   value: string;
   onPress: () => void;
   testID?: string;
@@ -40,11 +36,11 @@ export function YoursRow({
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${value}`}
       testID={testID}
-      // the wider padding on the chevron's side, which right to left is the left
+      // The wider padding on the chevron's side, which in right-to-left is the left.
       style={[styles.row, dir.row === 'row-reverse' ? styles.rowMirrored : null, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
     >
       <View style={styles.art}>{art}</View>
-      {/* both may take a second line: German's "Wähl deinen Brieffreund-Vogel" ended at "Wähl deinen …" at 320 */}
+      {/* Both may take a second line rather than be cut short at 320pt. */}
       <View style={styles.main}>
         <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>
           {label}

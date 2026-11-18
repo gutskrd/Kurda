@@ -33,35 +33,20 @@ import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability, useOpenRound } from './learnGames';
 
 /**
- * Hear It, Find It on the phone.
+ * Hear It, Find It on the phone: a small radio (grille, play key, and wave bars that move while a voice plays), with a
+ * dot for each replay left. The clip plays from its handle for this round (`hearItClipPath`), so its address never says
+ * what is said; the first play starts once it loads, and a play that fails gives its count back.
  *
- * The stage is a small radio: a speaker grille, one big play key, and a row
- * of sound-wave bars that rise and fall while a person's voice plays and lie
- * still when it stops. Under it a gentle counter of the replays left — a dot
- * for each, emptied as it is used. When the same words come back in another
- * voice, a tag on the radio says so, and the character a recording is shown
- * with is named on it.
- *
- * The clip plays from its handle for this round (`hearItClipPath`): its
- * address never says what is said. The first play starts once the clip has
- * loaded; a play that fails gives its count back.
- *
- * Then the rung's question: four tiles that light up when one is taken —
- * how a word or a sentence is written, or what a phrase means — or, on the
- * last rung, a field with the key bar. A wrong first pick is greyed out; a
- * wrong typed try marks the words right where they stand. Once an item is
- * done the radio plays freely and what was said is shown with its meaning.
- *
- * Soranî tiles and fields read right to left. Under Reduce Motion the bars
- * stand still and the colours alone say what is playing. The website's
- * games/HearIt.tsx stages the same round.
+ * Then the rung's question: four tiles, or on the last rung a field with the key bar. A wrong first pick is greyed out;
+ * a wrong typed try marks the words where they stand. Soranî reads right to left; under Reduce Motion the bars stand
+ * still. The website's games/HearIt.tsx stages the same round.
  */
 
 type Round = SoloRound<HearItItemView, HearItHint, HearItCorrection>;
 
 const GAME = learnGame('hear-it');
 
-export const STAGE_KEY: Record<HearStage, TranslationKey> = {
+const STAGE_KEY: Record<HearStage, TranslationKey> = {
   word: 'games.hear.stage.word',
   phrase: 'games.hear.stage.phrase',
   sentence: 'games.hear.stage.sentence',
@@ -79,8 +64,7 @@ const WHY_KEY: Record<HearStage, TranslationKey> = {
 const BARS = [0.5, 0.8, 0.6, 1, 0.7, 0.9, 0.55, 0.75, 0.45];
 
 /**
- * One bar of the wave: still at rest, rising and falling while a voice plays
- * (still under Reduce Motion, and while the game is not the screen in front:
+ * One bar of the wave, moving while a voice plays (still under Reduce Motion, and while the game is not in front:
  * `awake`).
  */
 function Bar({ peak, i, playing, awake, color }: { peak: number; i: number; playing: boolean; awake: boolean; color: string }): React.JSX.Element {
@@ -104,7 +88,7 @@ function Radio({ item, url, done }: { item: HearItItemView; url: string; done: b
   const dir = useDirection();
   const tone = TONES[scheme][GAME.tone];
   const audio = useAudio(url);
-  // the wave moves only while the game is the screen in front
+  // The wave moves only while the game is the screen in front.
   const awake = useScreenAwake();
   const [plays, setPlays] = useState(0);
   const started = useRef<string | null>(null);
@@ -112,14 +96,14 @@ function Radio({ item, url, done }: { item: HearItItemView; url: string; done: b
   const left = Math.max(0, allowed - plays);
   const can = done || plays < allowed;
 
-  // the clip plays once it has loaded, the first time only
+  // The clip plays once it has loaded, the first time only.
   useEffect(() => {
     if (audio.source !== url || started.current === url) return;
     started.current = url;
     setPlays(1);
     audio.play();
   }, [audio, url]);
-  // a play that never sounded is not one of the player's plays
+  // A play that never sounded is not counted as one of the player's plays.
   useEffect(() => {
     if (audio.error) setPlays((n) => Math.max(0, n - 1));
   }, [audio.error]);
@@ -265,7 +249,7 @@ function HearBoard({ round, dialect }: { round: Round; dialect: GameDialect }): 
             style={[styles.input, { color: colors.textPrimary, borderColor: colors.controlTrack }]}
           />
           {marks && marks.length > 0 ? (
-            // one mark per typed word, running the way the words run
+            // One mark per typed word, running the way the words run.
             <View style={[styles.marks, { flexDirection: rtl ? 'row-reverse' : 'row' }]} accessibilityLabel={t('games.hear.hintTyped')}>
               {marks.map((ok, i) => (
                 <View
@@ -387,7 +371,7 @@ const styles = StyleSheet.create({
   mark: { width: 28, height: 28, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   hint: { fontSize: typography.sizes.sm },
   said: { borderRadius: radii.lg, borderWidth: 1, padding: spacing.md, gap: spacing.xs },
-  // the coloured edge on the side the reader's language starts from
+  // The coloured edge on the side the reader's language starts from.
   edgeLeft: { borderLeftWidth: 4 },
   edgeRight: { borderRightWidth: 4 },
   saidLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },

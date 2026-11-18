@@ -19,12 +19,12 @@ import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialec
 import { GamesView } from '../learn/GamesView';
 import { MemoryThiefScreen, memoryTokens } from './MemoryThiefScreen';
 
-// the thief's ink lifts at once under Reduce Motion, so the gaps are there without waiting
+// Under Reduce Motion the thief's ink lifts at once, so the gaps are there without waiting.
 patchReactNativeWeb({ reduceMotion: true });
 
 const ID = '00000000-0000-4000-8000-0000000000ee';
 
-// stand-in passages for the stage, never shown to a learner
+// stand-in passages for the stage, never shown to a learner.
 type Passage = Omit<MemoryThiefItemView, 'phase' | 'text' | 'parts' | 'tiles'> & {
   text: string;
   parts: NonNullable<MemoryThiefItemView['parts']>;
@@ -103,7 +103,7 @@ const correction = (verdicts: Array<'right' | 'typo' | 'wrong'>, given: string[]
   ],
 });
 
-// what the server sends for a passage given back: a game played alone is scored, and every `xp` is 0
+// What the server sends for a passage given back: a game played alone is scored, and every `xp` is 0.
 const givenBack = {
   index: 0,
   attempt: 1,
@@ -150,7 +150,7 @@ describe('MemoryThiefScreen', () => {
     expect(screen.getByText('1 of 1 right')).toBeTruthy();
     expect(screen.getByText('Today counts for your streak.')).toBeTruthy();
     expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
-    // nothing earned is shown, not even a zero, and nothing explains XP that was never on offer
+    // Nothing earned is shown, not even a zero, and nothing explains XP that was never on offer.
     expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
     expect(screen.queryByText('Answered right lately, so no XP this time')).toBeNull();
   });
@@ -177,7 +177,7 @@ describe('MemoryThiefScreen', () => {
     testAuth.client = routes(session([item()]), []);
     const { container } = renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
     await waitFor(() => expect(container.querySelectorAll('svg[data-xml="drawn"]').length).toBeGreaterThan(0));
-    // the screen's header is the heading; the name under the emblem is its caption, not a second heading
+    // The screen's header is the heading; the name under the emblem is a caption, not a second heading.
     expect(await screen.findByRole('heading', { name: 'Dizê Bîrê' })).toBeTruthy();
     expect(screen.getAllByText('Dizê Bîrê')).toHaveLength(2);
     expect(screen.getByText('In Kurmancî')).toBeTruthy();
@@ -194,13 +194,13 @@ describe('MemoryThiefScreen', () => {
     await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
 
-    // the whole passage is there to study, with the time running
+    // The whole passage is there to study, with the time running.
     const page = await screen.findByTestId('memory-page');
     expect(page.textContent).toContain('Gund');
     expect(page.textContent).toContain('çiya');
     expect(screen.getByLabelText('20 s to study')).toBeTruthy();
 
-    // ready: the gaps are asked for once the study is over, never sent with the passage
+    // The gaps are asked for once the study is over, never sent with the passage.
     expect(client.calls.some((c) => c.path.endsWith('/begin'))).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'I’m ready' }));
     expect(await screen.findByRole('button', { name: 'Missing word 1, empty' })).toBeTruthy();
@@ -216,7 +216,7 @@ describe('MemoryThiefScreen', () => {
     await waitFor(() => expect(client.calls.filter((c) => c.path.endsWith('/answers'))).toHaveLength(1));
     expect(client.calls.find((c) => c.path.endsWith('/answers'))!.body).toEqual({ index: 0, answer: { gaps: ['gund', 'mal'] }, attempt: 1 });
 
-    // the wrong gap glows again, emptied; the right one is kept
+    // The wrong gap glows again, emptied; the right one is kept.
     expect(await screen.findByText('The glowing gaps are still wrong; the others are right.')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Missing word 2, empty' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Missing word 1: gund' })).toBeTruthy();
@@ -322,7 +322,7 @@ describe('the games list', () => {
     testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr') });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-memory-thief');
-    // the game is on the shelf, or, on a day it is the one put forward, the featured game's Play: named either way
+    // The game is on the shelf or, on the day it is featured, the featured game's Play: named either way.
     expect(card.getAttribute('aria-label')).toMatch(/^Dizê Bîrê, (Play|Solo\. Study a real passage, then give back the words the thief took\.)$/);
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('MemoryThief');

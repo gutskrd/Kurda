@@ -3,14 +3,9 @@ import type { CouchCategory, CouchOffer, GameDialect, GameDifficulty } from '@ku
 import { useAuth } from '../auth/AuthContext';
 
 /**
- * The categories a game of Impostor can draw its word from, on the
- * phone: per variety and difficulty, those with enough approved cards for a
- * word and the guess’s other options (`GET /games/impostor/couch`, the list
- * the game on one phone chooses from too). A host picks one of these or none;
- * the server checks the choice again when the lobby is made.
- *
- * Read once per variety while the app runs: it changes when an editor
- * publishes cards, not while somebody is choosing a game.
+ * The categories a game of Impostor can draw its word from, per variety and difficulty: those with enough approved
+ * cards (`GET /games/impostor/couch`, also used by the game on one phone). The server checks the host's choice again
+ * when the lobby is made. Read once per variety while the app runs, since it changes only when cards are published.
  */
 const cached = new Map<GameDialect, Promise<CouchOffer | null>>();
 
@@ -30,7 +25,7 @@ export function useImpostorCategories(dialect: GameDialect | null): CouchOffer |
     if (!asked) {
       asked = client.get<CouchOffer>(`/games/impostor/couch?dialect=${dialect}`).then((r) => {
         const ok = r.ok && r.data && Array.isArray(r.data.difficulties) ? r.data : null;
-        // a failed read is not an answer: asked again next time
+        // A failed read is not an answer: asked again next time.
         if (!ok) cached.delete(dialect);
         return ok;
       });

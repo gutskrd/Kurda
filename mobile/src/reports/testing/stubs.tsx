@@ -1,32 +1,26 @@
 /**
- * Stand-ins for the native modules a component test cannot load.
- *
- * The phone's components are rendered in tests through react-native-web, in
- * jsdom. Packages that reach into native code (the secure store, the gradient
- * view, the safe-area context) are replaced with the smallest thing that keeps
- * the component's own behaviour intact: storage that remembers nothing, a
- * gradient that is a plain view, insets of zero.
- *
- * Each test file wires these with `vi.mock(…, () => import('…/testing/stubs'))`
- * (see `harness.tsx` for the list), because a mock has to be declared in the
- * test file itself to be hoisted above the imports it replaces.
+ * Stand-ins for the native modules a component test cannot load: tests render through react-native-web in jsdom, and
+ * packages that reach into native code (secure store, gradient view, safe-area context) get the smallest replacement
+ * that keeps the component's behaviour: storage that remembers nothing, a plain view, zero insets. Each test file wires
+ * these with `vi.mock(…, () => import('…/testing/stubs'))` (see `harness.tsx`), since a mock must be declared in the
+ * test file to be hoisted.
  */
 import type { ReactNode } from 'react';
 import { View } from 'react-native';
 
-// expo-secure-store
+// expo-secure-store.
 export async function getItemAsync(): Promise<string | null> {
   return null;
 }
 export async function setItemAsync(): Promise<void> {}
 export async function deleteItemAsync(): Promise<void> {}
 
-// expo-linear-gradient
+// expo-linear-gradient.
 export function LinearGradient({ children, style }: { children?: ReactNode; style?: unknown }): React.JSX.Element {
   return <View style={style as never}>{children}</View>;
 }
 
-// react-native-safe-area-context
+// react-native-safe-area-context.
 export function useSafeAreaInsets(): { top: number; bottom: number; left: number; right: number } {
   return { top: 0, bottom: 0, left: 0, right: 0 };
 }
@@ -37,12 +31,9 @@ export function SafeAreaView({ children, style }: { children?: ReactNode; style?
   return <View style={style as never}>{children}</View>;
 }
 
-// expo-notifications: the phone's answer is whatever a test puts in
-// `notificationsStub`, and asking turns it into `afterRequest`, as the system
-// prompt would. A test can also have the asking fail (`failRequest`), or hold
-// the prompt up until it says so (`prompt`, a promise the answer waits for:
-// one that never settles is a phone that never answers). Everything else
-// listens to nothing and clears nothing.
+// expo-notifications: the permission is whatever a test puts in `notificationsStub`, and asking turns it into
+// `afterRequest`, as the system prompt would. A test can make the request fail (`failRequest`) or hold the prompt until
+// it says so (`prompt`; one that never settles is a phone that never answers). Everything else is a no-op.
 interface PermissionAnswerStub {
   status: 'granted' | 'denied' | 'undetermined';
   granted: boolean;

@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the fire as its props: how big it burns, whoever draws it
+// The fire as its props: how big it burns, whoever draws it.
 vi.mock('../theme/Fire', () => import('../theme/testing/fireProbe'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { Alert } from 'react-native';
@@ -20,8 +20,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { PublicProfileScreen } from './PublicProfileScreen';
 
 /*
- * Another learner's profile: their streak's fire as big as their streak has
- * grown it, so a friend a year in shows the Newroz fire.
+ * Another learner's profile: their streak's fire as big as their streak, so a friend a year in shows the Newroz fire.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -57,9 +56,8 @@ describe('the streak of another learner', () => {
 });
 
 /**
- * A profile is somebody, before it is their numbers: the name they chose,
- * their handle, where they are from and what they say about themselves, and
- * what you can do — and only then the streak and the XP.
+ * A profile is somebody before it is their numbers: the name they chose, their handle, where they are from, their bio,
+ * and what you can do, and only then the streak and XP.
  */
 describe('who somebody is', () => {
   const show = (extra: Record<string, unknown>): void => {
@@ -74,7 +72,7 @@ describe('who somebody is', () => {
     show({ bio: 'Ez ji çîrokan hez dikim.', country: 'NL' });
     const name = await screen.findByRole('heading', { name: 'Baran Şêx' });
     const handle = screen.getByText('@baran');
-    // the chosen name first, the handle after it
+    // The chosen name first, the handle after it.
     expect(name.compareDocumentPosition(handle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByText('Netherlands')).toBeTruthy();
     expect(screen.getByText('Ez ji çîrokan hez dikim.')).toBeTruthy();
@@ -86,14 +84,11 @@ describe('who somebody is', () => {
     const message = screen.getByRole('button', { name: 'Message' });
     const xp = screen.getByText('410');
     expect(message.compareDocumentPosition(xp) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // nothing is said about a bio that is not there
+    // Nothing is said about a bio that is not there.
     expect(screen.queryByText(/bio/i)).toBeNull();
   });
 
-  /**
-   * The server sends somebody's XP inside their level. The screen read a field
-   * of its own that is not sent any more, so everybody else had 0 XP.
-   */
+  /** The server sends somebody's XP inside their level. */
   it('reads their XP from their level, where the server sends it', async () => {
     testAuth.client = fakeClient({
       'GET /users/u2': ok({ userId: 'u2', username: 'baran', displayName: 'Baran', friendStatus: 'friends', private: false, streak: 2, achievements: 1, level: { xp: 1385, level: 4 } }),
@@ -112,10 +107,8 @@ describe('who somebody is', () => {
 });
 
 /**
- * What can be done about somebody, as against with them, is behind the ⋯ at
- * the end of the bar at the top: send their profile on, stop being friends,
- * report them, block them. Report and Block are two separate items, each one
- * tap from the menu, wherever a person is shown.
+ * What can be done about somebody, as against with them, is behind the ⋯ at the end of the top bar: share their
+ * profile, unfriend, report, block. Report and Block are separate items, each one tap from the menu.
  */
 describe('the menu about somebody', () => {
   const visitBaran = (friendStatus: string, routes: Record<string, unknown> = {}): ReturnType<typeof fakeClient> => {
@@ -138,7 +131,7 @@ describe('the menu about somebody', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'More about Baran Şêx' }));
     expect(alert.mock.calls[0]?.[0]).toBe('Baran Şêx');
     expect(choices(alert)).toEqual(['Share profile', 'Report', 'Block', 'Cancel']);
-    // none of it is on the card itself any more
+    // None of it is on the card itself.
     expect(screen.queryByRole('button', { name: 'Block' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Report' })).toBeNull();
   });
@@ -147,14 +140,14 @@ describe('the menu about somebody', () => {
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     const client = visitBaran('friends', { 'DELETE /friends/u2': ok({ ok: true }) });
     expect(await screen.findByRole('button', { name: 'Message' })).toBeTruthy();
-    // the card no longer carries a button that only says they are a friend
+    // The card has no button that only says they are a friend.
     expect(screen.queryByRole('button', { name: /Friends/ })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'More about Baran Şêx' }));
     expect(choices(alert)).toEqual(['Share profile', 'Report', 'Remove friend', 'Block', 'Cancel']);
     const remove = (alert.mock.calls[0]?.[2] as { text?: string; onPress?: () => void }[]).find((button) => button.text === 'Remove friend');
     remove?.onPress?.();
-    // asked first, by name, before anything is sent
+    // Asked first, by name, before anything is sent.
     expect(client.calls.some((c) => c.method === 'DELETE')).toBe(false);
     const confirm = (alert.mock.calls[1]?.[2] as { style?: string; onPress?: () => void }[]).find((button) => button.style === 'destructive');
     confirm?.onPress?.();
@@ -172,7 +165,7 @@ describe('asking to be friends', () => {
     resetHaptics();
     const felt: HapticEvent[] = [];
     const stop = onHaptic((event) => felt.push(event));
-    // a confirmation answered yes, as a person tapping its destructive choice would
+    // A confirmation answered yes, as a person tapping its destructive choice would.
     vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
     let status = 'none';
     const client = fakeClient({
@@ -193,7 +186,7 @@ describe('asking to be friends', () => {
     expect(await screen.findByRole('button', { name: 'Requested' })).toBeTruthy();
     expect(client.calls.find((c) => c.method === 'POST' && c.path === '/friends/requests')?.body).toEqual({ userId: 'u2' });
     expect(felt).toEqual(['tap']);
-    // said aloud as it goes
+    // Said aloud as it goes.
     expect(await screen.findByText('Request sent')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Requested' }));
     expect(await screen.findByRole('button', { name: 'Add friend' })).toBeTruthy();

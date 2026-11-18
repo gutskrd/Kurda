@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -22,7 +22,7 @@ afterEach(cleanup);
 const rojda = { userId: 'u2', username: 'rojda', displayName: null, avatarUrl: null, blockedAt: '2026-03-03T10:00:00.000Z' };
 
 describe('the people you have blocked', () => {
-  // a list that could not be read is not a list of nobody: saying "you haven't blocked anyone" would be untrue
+  // A list that could not be read is not a list of nobody: "you haven't blocked anyone" would be untrue.
   it('says it could not load, with the way to ask again, rather than that nobody is blocked', async () => {
     let reads = 0;
     testAuth.client = fakeClient({

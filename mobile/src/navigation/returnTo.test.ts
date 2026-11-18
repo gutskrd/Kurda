@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-// the router itself, as the app's native stacks run it (pure: no React Native in it)
+// The router itself, as the app's native stacks run it.
 import { CommonActions, StackActions, StackRouter, type NavigationAction, type ParamListBase, type StackNavigationState } from '@react-navigation/routers';
 import { chatRouteId, userProfileRouteId } from './rootStack';
 import { authRouter, rootRouter, returningTo, ROOT_PLACES } from './returnTo';
@@ -119,7 +119,7 @@ describe('opening a screen that is not open yet', () => {
     go(CommonActions.navigate('Chat', { userId: 'u1', username: 'Rojda' }));
     go(CommonActions.navigate('UserProfile', { userId: 'u1' }));
     go(CommonActions.navigate('Chat', { userId: 'u1', username: 'Rojda' }));
-    // brought forward, as the thread routes do (chat/threadRoutes.test.tsx), and never a second one
+    // Brought forward, as the thread routes are (chat/threadRoutes.test.tsx), never stacked twice.
     expect(names()).toEqual(['Tabs', 'UserProfile', 'Chat']);
   });
 

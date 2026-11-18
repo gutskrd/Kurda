@@ -44,30 +44,12 @@ import { Loading } from '../theme/Loading';
 import { heldDim } from '../theme/MotionParts';
 
 /**
- * A group's own page (KUR-084): what it is, who is in it, and what you may do.
- * A member's page only: nobody else is shown a group at all, so anyone else
- * who lands here is told there is no such group.
+ * A group's own page, for members only (anyone else is told there is no such group): the group as it presents itself,
+ * then always in this order its members (with "Add friends" first for the owner and admins), the requests to come back
+ * and bans for the owner and admins, clearing the chat, and last report, leave or delete.
  *
- * At the top the group as it presents itself — its picture in its rounded
- * square, its name, what it is about and how many are in it. Then, always in
- * the same order, so the page reads the same for everyone and only grows with
- * what the reader may do:
- *
- * - the members, one quiet row each: the face, the name, and Owner or Admin
- *   under it where that is so. For the owner and admins "Add friends" leads
- *   them, since adding a friend is the only way anyone comes in. Nothing to
- *   tap on a row but the row itself and, where you may do something about
- *   that person, a ⋯ at its end that lists only what you may — so no row
- *   carries three buttons that crowd its name, and no button says "Admin"
- *   when it means "make admin" — Remove and Ban among them for anyone the
- *   reader outranks;
- * - for the owner and admins: the requests to come back, only while somebody
- *   asks (with how many wait); who is banned; and "Edit group";
- * - clearing the chat (for oneself, or as its owner or an admin for everyone);
- * - last, apart: report the group, leave it, or, for its owner, delete it.
- *
- * Who may do what comes from `@kurda/shared`, which is what the server decides
- * with: this screen only chooses what to show.
+ * A member row has one ⋯ listing only what the reader may do about that person. Who may do what comes from
+ * `@kurda/shared`, as on the server; this screen only chooses what to show.
  */
 export function GroupMembersScreen({
   groupId,
@@ -77,7 +59,7 @@ export function GroupMembersScreen({
 }: {
   groupId: string;
   onExit: () => void;
-  /** left or deleted: the group is gone from under the thread too */
+  /** Left or deleted: the group is gone from under the thread too. */
   onLeft: () => void;
   onEdit: () => void;
 }): React.JSX.Element {
@@ -91,12 +73,12 @@ export function GroupMembersScreen({
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // the page could not be read at all: said, with the way to ask again
+  // The page could not be read at all: said, with the way to ask again.
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [reporting, setReporting] = useState(false);
   const [banning, setBanning] = useState<GroupMember | null>(null);
   const [adding, setAdding] = useState(false);
-  // the server answered that there is no such group for this reader (deleted, or they are not in it)
+  // The server answered that there is no such group for this reader (deleted, or they are not in it).
   const [missing, setMissing] = useState(false);
 
   const load = useCallback(
@@ -105,7 +87,7 @@ export function GroupMembersScreen({
         if (res.ok) {
           setDetail(res.data);
           setLoadError(null);
-          // someone banned is told a group's name and nothing of its people: this page is not theirs either
+          // Someone banned is told a group's name and nothing of its people: this page is not theirs either.
           setMissing(res.data.myRole === null);
         } else if (res.error.code === 'GROUP_NOT_FOUND' || res.error.status === 404) setMissing(true);
         else setLoadError(res.error);
@@ -118,7 +100,7 @@ export function GroupMembersScreen({
       void load();
     }, [load]),
   );
-  // pulled down, the group and its members are read again
+  // Pulled down, the group and its members are read again.
   const pull = usePullRefresh(load);
 
   const act = async (key: string, run: () => Promise<{ ok: boolean; error?: ApiError }>): Promise<boolean> => {
@@ -152,7 +134,7 @@ export function GroupMembersScreen({
       );
     }
     if (myRole === 'owner' && m.userId !== me) {
-      // the one handover nobody can undo for themselves, so it asks first and says what it costs
+      // The one handover nobody can undo for themselves, so it asks first and says what it costs.
       actions.push({
         label: t('groups.makeOwner'),
         onPress: () =>
@@ -174,7 +156,7 @@ export function GroupMembersScreen({
                 label: t('groups.removeMember'),
                 destructive: true,
                 onPress: () =>
-                  // removed, they can be added again; banned, they come back only by asking
+                  // Removed, they can be added again; banned, they come back only by asking.
                   Alert.alert(t('groups.removeMember'), t('groups.removeConfirm', { name: m.username, group: groupName }), [
                     { text: t('common.cancel'), style: 'cancel' },
                     { text: t('groups.remove'), style: 'destructive', onPress: () => void act(m.userId, () => removeMember(client, groupId, m.userId)) },
@@ -250,7 +232,7 @@ export function GroupMembersScreen({
             ) : null}
 
             <SettingsSection title={t('groups.members')} footer={editable ? t('groups.adminHint') : undefined}>
-              {/* the one way anyone comes into a group, so it leads the people who are in it */}
+              {/* The one way anyone comes into a group, so it leads the people in it. */}
               {moderator ? <SettingsRow icon="user-plus" title={t('groups.addFriends.title')} onPress={() => setAdding(true)} opens={false} /> : null}
               {members.map((m) => (
                 <MemberRow
@@ -267,7 +249,7 @@ export function GroupMembersScreen({
 
             {moderator ? (
               <SettingsSection>
-                {/* only while somebody asks: an empty list is nothing to open */}
+                {/* Only while somebody asks: an empty list is nothing to open. */}
                 {waiting > 0 ? (
                   <SettingsRow
                     icon="mail"
@@ -296,7 +278,7 @@ export function GroupMembersScreen({
                   <SettingsRow icon="sign-out" title={t('groups.leave', { group: detail.name })} destructive onPress={confirmLeave} opens={false} />
                 ) : (
                   <>
-                    {/* the server refuses an owner who leaves, so they are told what to do first instead */}
+                    {/* The server refuses an owner who leaves, so they are told what to do first instead. */}
                     {members.length > 1 ? <SettingsNote>{t('groups.ownerLeaveHint')}</SettingsNote> : null}
                     <SettingsRow icon="trash" title={t('groups.delete')} destructive onPress={confirmDelete} opens={false} />
                   </>
@@ -378,7 +360,8 @@ function MemberRow({
       ) : onMore ? (
         <Pressable
           onPress={onMore}
-          // a fingertip past its edges, still inside the row: a near miss opens the menu rather than the profile behind it
+          // A fingertip past its edges, still inside the row: a near miss opens the menu rather than the profile behind
+          // it.
           reach="open"
           accessibilityRole="button"
           accessibilityLabel={t('post.menu')}
@@ -391,7 +374,7 @@ function MemberRow({
   );
 }
 
-/** The page while it loads, in its own shape: the picture, the name, a few members. */
+/** The page while it loads, in its own shape. */
 function InfoSkeleton(): React.JSX.Element {
   return (
     <View style={styles.page}>
@@ -422,7 +405,7 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xl), textAlign: 'center', marginTop: spacing.sm },
   about: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   meta: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  // under the picture everything is centred, whichever way it reads
+  // Under the picture everything is centred, whichever way it reads.
   centred: { textAlign: 'center' },
   member: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: layout.gutter, minHeight: 60, paddingVertical: spacing.sm },
   memberWords: { flex: 1, minWidth: 0, gap: 1 },

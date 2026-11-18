@@ -9,25 +9,11 @@ import { useDirection } from '../reports/direction';
 import { floating } from '../theme/floating';
 
 /**
- * The way out of a page: a disc at the top, on the side reading starts from.
+ * The way out of a page: a disc at the top, on the side reading starts from. A chevron on a pushed page, an ✕ on one
+ * presented over the app; the chevron points the other way in right-to-left languages.
  *
- * It is the same shape wherever there is a way out — the bar over a pushed
- * page (`ScreenHeader`), a page whose big title is part of it (Friends), the
- * sign-in forms — and it is where a thumb expects it without looking: the
- * first thing at the top, a whole fingertip across, floating a little off
- * the page like the actions opposite it.
- *
- * A chevron on a page that was pushed, an ✕ on one presented over what you
- * were doing. iOS makes the same distinction and so should we: the chevron
- * says "what is behind this is where you came from", the ✕ "this is on top
- * of what you were doing". In Soranî and Arabic the chevron points the other
- * way, which is the direction "back" is for a reader of those languages.
- *
- * It stands alone in its corner, so it answers a fingertip past its edge on
- * every side (`reach="open"`): leaving a page is the one thing that should
- * never take a second try. Where something pressable stands close beside it
- * (a conversation's name in its bar), the group they share stops each at the
- * middle of the gap between them.
+ * It reaches a fingertip past its edge on every side (`reach="open"`), since leaving a page should never take a second
+ * try. A pressable neighbour (a conversation's name) shares the gap through their group.
  */
 export function BackButton({
   onPress,
@@ -46,7 +32,7 @@ export function BackButton({
     <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      // a × closes the page, it cancels nothing: "Close", as the Quests page already said by hand
+      // An ✕ closes the page and cancels nothing, so it says "Close".
       accessibilityLabel={label ?? (kind === 'close' ? t('common.close') : t('common.back'))}
       testID="header-back"
       reach="open"
@@ -62,6 +48,5 @@ export function BackButton({
 }
 
 const styles = StyleSheet.create({
-  // a whole fingertip, and a circle
   button: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 });

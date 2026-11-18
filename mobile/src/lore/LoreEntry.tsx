@@ -11,11 +11,8 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { PROVERBS_NAME, RIDDLES_NAME, besideName } from './labels';
 
 /**
- * The library's two companions, at the top of the Stories shelves: Metelok,
- * the riddles, and Gotinên pêşiyan, the proverbs — each by its Kurmancî name
- * with the reader's own word for it under it. One calm row, two halves, and
- * not a new place in the tab bar: the riddles and the proverbs are part of
- * the same home as the stories.
+ * The library's two companions at the top of the Stories shelves: the riddles (Metelok) and the proverbs (Gotinên
+ * pêşiyan), each by its Kurmancî name with the reader's word under it, in one calm row rather than a new tab.
  */
 export function LoreEntry(): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();

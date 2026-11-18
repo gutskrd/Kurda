@@ -11,9 +11,8 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { OverviewGrid, overviewColumns } from './OverviewGrid';
 
 /*
- * The four tiles under the face (profile/OverviewGrid): two to a row only
- * where a course's or a league's name fits beside its picture, and laid out
- * from the right in a language read from the right.
+ * The four tiles under the face: two to a row only where a course's or a league's name fits beside its picture, laid
+ * out from the right in right-to-left languages.
  */
 
 patchReactNativeWeb({ reduceMotion: true });

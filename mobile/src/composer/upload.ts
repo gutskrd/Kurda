@@ -7,23 +7,14 @@ import { normalizeContentType } from '../profile/photoUploadResult';
 import { describePictureFailure } from './errors';
 
 /**
- * Upload one picture for a post, reporting how far it has got.
+ * Upload one picture for a post, reporting progress. Pictures go up as soon as they are attached, so Post is instant;
+ * the server keeps an upload unconfirmed until a post uses it and clears unused ones after a day.
  *
- * Pictures go up as soon as they are attached, X-style, so by the time the
- * words are written they are there and Post is instant. That is safe now:
- * the server keeps an upload unconfirmed until a post uses it and clears the
- * unused ones away after a day (contract §P), so a picture attached and then
- * removed costs nothing for long.
- *
- * "I made this" decides the address (`pictureUploadPath`): on, the picture
- * gets the small Hevalo signature with the poster's handle; off, it goes up
- * without one, since a signature would claim somebody else's picture.
- *
- * The bytes go straight from the file — `ApiClient.request()` JSON-encodes its
- * body — with expo-file-system's upload task on a phone, which reports
- * progress, and XMLHttpRequest in the web build, which does too. A token that
- * expired since the screen opened is refreshed once (any API call does that)
- * and the upload tried again.
+ * "I made this" decides the address (`pictureUploadPath`): on, the picture gets the small Hevalo signature with the
+ * poster's handle; off, none, since a signature would claim somebody else's picture. The bytes go straight from the
+ * file (`ApiClient.request()` would JSON-encode them), via expo-file-system's upload task on a phone and XMLHttpRequest
+ * on the web, both with progress. A token that expired since the screen opened is refreshed once and the upload
+ * retried.
  */
 export type PictureUpload =
   | { ok: true; mediaKey: string; url: string | null; width: number | null; height: number | null }
@@ -63,7 +54,7 @@ const webSend: UploadDeps['send'] = async (url, uri, headers, onProgress) => {
   });
 };
 
-export const defaultUploadDeps: UploadDeps = { send: Platform.OS === 'web' ? webSend : nativeSend };
+const defaultUploadDeps: UploadDeps = { send: Platform.OS === 'web' ? webSend : nativeSend };
 
 export async function uploadPicture(
   client: ApiClient,
@@ -71,7 +62,7 @@ export async function uploadPicture(
   t: Translate,
   onProgress: (fraction: number) => void,
   deps: UploadDeps = defaultUploadDeps,
-  /** the app's language, for the date a limit on the account ends */
+  /** The app's language, for the date a limit on the account ends. */
   locale?: string,
 ): Promise<PictureUpload> {
   const attempt = async (): Promise<Raw | null> => {
@@ -87,7 +78,7 @@ export async function uploadPicture(
   try {
     let res = await attempt();
     if (res?.status === 401) {
-      // any call through the client refreshes an expired token; then once more
+      // Any call through the client refreshes an expired token; then once more.
       await client.get('/me');
       res = await attempt();
     }
@@ -99,7 +90,7 @@ export async function uploadPicture(
           return { ok: true, mediaKey: body.imageMediaId, url: body.url ?? null, width: body.width ?? null, height: body.height ?? null };
         }
       } catch {
-        // not JSON: the generic failure below
+        // Not JSON: the generic failure below.
       }
       return { ok: false, error: t('picture.noIdReturned') };
     }

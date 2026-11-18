@@ -1,18 +1,9 @@
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * Short durations for the social slide.
- *
- * Everything here is compact on purpose: the panel is a narrow column over the
- * screen, and "in a game for 1 hour and 4 minutes" would wrap onto three lines
- * to say what "1h 4m" says in one.
- *
- * The abbreviations themselves are language-specific — `m` is a minute in
- * English and Dutch, `d` (deqe) in Kurmancî, `dk` in Turkish — so the words come
- * from the catalogue and each function is handed a `t`. This module has no React
- * in it, which is why it is passed one rather than reading it from context.
- *
- * The browser's copy is `web/src/social/time.ts`; same shapes, same keys.
+ * Short durations for the social slide, compact because the panel is a narrow column ("1h 4m" rather than three wrapped
+ * lines). The abbreviations are language-specific, so the words come from the catalogue through a `t` passed in (this
+ * module has no React). The browser's copy is `web/src/social/time.ts`, with the same shapes and keys.
  */
 type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
@@ -40,6 +31,6 @@ export function lastSeen(iso: string | null, t: Translate, now = Date.now()): st
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return t('time.hoursAgo', { count: hours });
   const days = Math.floor(hours / 24);
-  // past a month the exact number stops meaning anything on a friends list
+  // Past a month the exact number stops meaning anything on a friends list.
   return days > 30 ? t('time.aWhileAgo') : t('time.daysAgo', { count: days });
 }

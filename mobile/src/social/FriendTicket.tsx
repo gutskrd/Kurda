@@ -16,17 +16,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 
 /**
- * A friend request as a ticket, the other half of inviting somebody: the
- * same paper and stub as an invite to play (play/Ticket.tsx), in the brand's
- * ink rather than a game's colour.
- *
- * Received, it is a friendship ticket — their face and name, and that they
- * want to be friends. Accept tears its stub off with a small burst and
- * stamps it "Friends"; Decline folds it away. Sent, the Add button hands a
- * small ticket over (TicketSlip): it slips away from the button, which says
- * "Requested" with the ticket glyph; taking the request back slips it home
- * again. Under Reduce Motion nothing tears, bursts, folds or slips: the
- * stamp and the words change, and that is all.
+ * A friend request as a ticket: the same paper and stub as an invite to play (play/Ticket.tsx), in the brand's ink.
+ * Received, Accept tears its stub off with a small burst and stamps it "Friends"; Decline folds it away. Sent, the Add
+ * button hands a small ticket over (TicketSlip) and says "Requested"; taking it back slips it home. Under Reduce Motion
+ * only the stamp and words change.
  */
 
 export type RequestAnswer = 'accepted' | 'declined';
@@ -39,7 +32,7 @@ export interface RequestPerson {
   userId: string;
   username: string;
   displayName?: string | null;
-  /** their picture, as the server resolves it (an uploaded photo, else the avatar they chose) */
+  /** Their picture as the server resolves it (an uploaded photo, else the avatar they chose). */
   avatarUrl?: string | null;
 }
 
@@ -54,9 +47,9 @@ export function FriendRequestTicket({
   declineLabel,
 }: {
   person: RequestPerson;
-  /** answered on this phone a moment ago: stamped or folding, until the list lets it go */
+  /** Answered on this phone a moment ago: stamped or folding, until the list lets it go. */
   answer: RequestAnswer | null;
-  /** a row in a longer list (Friends), rather than a card of its own (Friend requests) */
+  /** A row in a longer list (Friends), rather than a card of its own (Friend requests). */
   compact?: boolean;
   onOpen: () => void;
   onAccept: () => void;
@@ -69,10 +62,10 @@ export function FriendRequestTicket({
   const dir = useDirection();
   const reduce = useReducedMotion();
   const accepted = answer === 'accepted';
-  // the line under their handle: the name they chose, where it says something the handle does not; their handle is not said twice
+  // The line under their handle: the name they chose, where it differs from the handle.
   const wants = person.displayName ? t('rail.wantsToBeFriendsWith', { name: person.displayName }) : t('rail.wantsToBeFriends');
 
-  // folded down and away, like a ticket put back in a pocket — and open again if the answer did not get through
+  // Folded down and away, like a ticket put back in a pocket, and opened again if the answer did not get through.
   const fold = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (answer !== 'declined') {
@@ -84,7 +77,7 @@ export function FriendRequestTicket({
     run.start();
     return () => run.stop();
   }, [answer, reduce, fold]);
-  // the burst goes off as the stub comes away
+  // The burst goes off as the stub comes away.
   const [burst, setBurst] = useState(0);
   useEffect(() => {
     if (!accepted) return;
@@ -106,7 +99,7 @@ export function FriendRequestTicket({
       onPress={onOpen}
       accessibilityRole="button"
       accessibilityLabel={person.displayName ? `${person.username}, ${person.displayName}` : person.username}
-      // held, the row fills as a list row does: who they are opens their profile
+      // Held, the row fills as a list row does; it opens their profile.
       style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
     >
       <InitialsAvatar name={person.username} id={person.userId} size={compact ? 36 : 44} photoUrl={person.avatarUrl ?? undefined} />
@@ -141,7 +134,8 @@ export function FriendRequestTicket({
           stamp
         ) : compact ? (
           <View style={[styles.compactActions, { flexDirection: dir.row }]}>
-            {/* Accept and Decline stand 4 apart: each reaches up and down to a fingertip, and toward the other only half of that */}
+            {/* Accept and Decline stand 4pt apart: each reaches a fingertip up and down, and toward the other only
+               half of that. */}
             <ReachGroup gap={spacing.xs}>
               <PressableScale
                 onPress={onAccept}
@@ -174,18 +168,16 @@ export function FriendRequestTicket({
   );
 }
 
-/** A row's Accept, a little under a fingertip's 44 and made up to it by its reach, so the row stays one line tall. */
+/** A row's Accept, a little under a fingertip's 44pt and made up to it by its reach, so the row stays one line tall. */
 const ACCEPT_HEIGHT = 36;
 
 /** How long a slip takes to leave the button, or to come home to it. */
 const SLIP_MS = 560;
 
 /**
- * A button that hands a small ticket over. When `sent` turns true the ticket
- * pops out of the middle of the button and slips away, up and towards the
- * side a line ends on; when it turns false again (the request taken back) it
- * slips home into the button. Nothing on the first render, and nothing under
- * Reduce Motion, where the button's own words are the answer.
+ * A button that hands a small ticket over: when `sent` turns true the ticket pops out and slips away towards the side a
+ * line ends on; when it turns false (the request taken back) it slips home. Nothing on the first render, or under
+ * Reduce Motion, where the button's words are the answer.
  */
 export function TicketSlip({ sent, children }: { sent: boolean; children: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
@@ -207,7 +199,7 @@ export function TicketSlip({ sent, children }: { sent: boolean; children: ReactN
     return () => run.stop();
   }, [sent, reduce, p]);
   const side = dir.row === 'row-reverse' ? -1 : 1;
-  // the same path both ways: out of the button and off, or in from off and into it
+  // The same path both ways: out of the button and off, or in from off and into it.
   const along = going === 'home' ? p.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) : p;
   const tone = ticketTone(colors, 'friend');
   return (
@@ -256,7 +248,7 @@ const styles = StyleSheet.create({
   decline: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   stampSpot: { alignItems: 'center', justifyContent: 'center', minHeight: 44, alignSelf: 'flex-start', paddingHorizontal: spacing.xs },
   slipSpot: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, alignItems: 'center', justifyContent: 'center' },
-  // a ticket in small: the paper edged in the stub's colour, the stub on the side a line starts from
+  // A ticket in small: the paper edged in the stub's colour, the stub on the side a line starts from.
   slip: { width: 64, height: 30, borderRadius: radii.xs, borderWidth: 2, overflow: 'hidden' },
   slipStub: { position: 'absolute', top: 0, bottom: 0, width: 22, alignItems: 'center', justifyContent: 'center' },
   slipStubLeft: { left: 0 },

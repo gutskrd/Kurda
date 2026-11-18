@@ -61,7 +61,7 @@ describe('signing in from this device', () => {
     });
     const id = localStorage.getItem('kurda_device_id_v1');
     expect(id).toMatch(/^[0-9a-f-]{36}$/);
-    // the sign-in, the account read after it, and whatever else the signed-in app sent
+    // The sign-in, the account read after it, and whatever else the signed-in app sent.
     expect(calls.map((c) => c.url)).toEqual(expect.arrayContaining(['https://api.test/auth/login', 'https://api.test/me']));
     for (const call of calls) expect(call.headers['x-device-id'], call.url).toBe(id);
     expect(calls.find((c) => c.url.endsWith('/auth/login'))!.body).toEqual({ email: 'r@example.com', password: 'berbang2026', deviceName: 'iPhone' });
@@ -101,7 +101,7 @@ describe('signing in from this device', () => {
       await result.current.oauthSignIn('apple', 'id-token-from-apple-0123456789', { authorizationCode: 'c1.0.first', fullName: 'Rojda Amed' });
     });
     await act(async () => {
-      // Apple shares the name on the first sign-in only
+      // Apple shares the name on the first sign-in only.
       await result.current.oauthSignIn('apple', 'id-token-from-apple-0123456789', { authorizationCode: 'c2.0.later', fullName: null });
     });
     await act(async () => {

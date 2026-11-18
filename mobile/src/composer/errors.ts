@@ -4,12 +4,9 @@ import type { ApiError } from '../api/types';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * What to say when a post or one of its pictures is refused.
- *
- * The API answers with codes (`@kurda/shared` POST_ERROR_CODES, and the
- * upload pipeline's own), and its messages are English. Each code the
- * composer can meet gets a sentence in the reader's language that says what
- * to do next; anything else falls back to the app's general wording.
+ * What to say when a post or one of its pictures is refused: each code the composer can meet (`@kurda/shared`
+ * POST_ERROR_CODES and the upload pipeline's) gets a sentence in the reader's language saying what to do next; anything
+ * else falls back to the app's general wording.
  */
 
 const POST_COPY: Record<string, TranslationKey> = {
@@ -48,9 +45,8 @@ const PICTURE_COPY: Record<string, TranslationKey> = {
 };
 
 /**
- * A limit on the account behind a refused post or picture (reports/sendErrors.ts).
- * A bare MUTED is a group's own mute there, which a post or a picture never
- * meets; it keeps the composer's own words.
+ * A limit on the account behind a refused post or picture (reports/sendErrors.ts). A bare MUTED is a group's own mute,
+ * which a post never meets, so it keeps the composer's own words.
  */
 export function accountLimitOf(error: ApiError): Restriction | null {
   const restriction = restrictionOf(error);
@@ -58,9 +54,8 @@ export function accountLimitOf(error: ApiError): Restriction | null {
 }
 
 /**
- * A failed upload, from its status and the body the server sent. A limit on
- * the account says what it stops and until when, in the app's language
- * (reports/sendErrors.ts), as every other send path does.
+ * A failed upload, from its status and body. A limit on the account says what it stops and until when, as every send
+ * path does (reports/sendErrors.ts).
  */
 export function describePictureFailure(status: number, body: string, t: Translate, locale?: string): string {
   let code: string | undefined;
@@ -68,7 +63,7 @@ export function describePictureFailure(status: number, body: string, t: Translat
   try {
     ({ code, details } = JSON.parse(body) as { code?: string; details?: unknown });
   } catch {
-    // not JSON (a proxy's error page): the status decides
+    // Not JSON (a proxy's error page): the status decides.
   }
   const restriction = accountLimitOf({ kind: 'client', status, code, message: '', details });
   if (restriction) return restrictionText(restriction, t, locale);

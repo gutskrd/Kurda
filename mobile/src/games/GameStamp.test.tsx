@@ -32,7 +32,7 @@ describe('a stamp’s sizes', () => {
   it('grows with the reader’s text size, and never shrinks under the usual one', () => {
     expect(stampSize(170, false, 1.3).height).toBeGreaterThan(stampSize(170).height);
     expect(stampSize(170, false, 0.8).height).toBe(stampSize(170).height);
-    // the cover keeps its size: it is the words that need the room
+    // The cover keeps its size: it is the words that need the room.
     expect(stampSize(170, false, 1.3).art).toBe(stampSize(170).art);
   });
 
@@ -47,7 +47,7 @@ describe('a game’s stamp', () => {
     renderWithProviders(<GameStamp game="race" name="Pêşbaziya Nivîsandinê" meaning="Typing race" width={170} />);
     expect(screen.getByText('Pêşbaziya Nivîsandinê')).toBeTruthy();
     expect(screen.getByText('Typing race')).toBeTruthy();
-    // a picture, not a control: whoever shows it is the thing that is pressed
+    // A picture, not a control: whoever shows it is the thing that is pressed.
     expect(screen.queryByRole('button')).toBeNull();
   });
 
@@ -75,7 +75,7 @@ const paperOf = (container: HTMLElement, fill: string): string | undefined =>
 describe('a stamp by day and by night', () => {
   it('is printed by day in the hue’s palest step and deep shade, with its long light', async () => {
     const day = stampLook('light', gameEmblemHue('detective'), true);
-    // the app read by day: the reader's own choice, kept where the app keeps it
+    // The app read by day: the reader's own choice, kept where the app keeps it.
     localStorage.setItem('kurda_theme_pref_v1', 'light');
     try {
       const { container } = renderWithProviders(<GameStamp game="detective" name="Detektîf" meaning="Detective" width={228} large />);
@@ -89,7 +89,7 @@ describe('a stamp by day and by night', () => {
     }
   });
 
-  // paper on a dark table stays light: the night's own dark ground made a muddy fill the perforations were lost against
+  // Paper on a dark table stays light; a dark fill would lose the perforations.
   it('stays light paper by night, in the day’s deep ink, with a short halo', () => {
     const night = stampLook('dark', gameEmblemHue('rhyme'));
     const { container } = renderWithProviders(

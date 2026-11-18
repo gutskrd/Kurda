@@ -29,7 +29,7 @@ import {
 
 const DEFAULT_QUIET = { start: 22 * 60, end: 7 * 60 };
 
-/** This phone's permission (KUR-094), per-category notification toggles + quiet hours (KUR-095). */
+/** This phone's notification permission, the per-category switches, and quiet hours. */
 export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { t } = useI18n();
@@ -50,14 +50,9 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   useFocusEffect(useCallback(() => load(), [load]));
 
   /**
-   * Send a change, having already moved the control.
-   *
-   * Optimistic because a switch that waits for a round trip before moving
-   * reads as one that did not register. What the changed settings were is
-   * kept, so a refusal puts them back — only those, so a second switch moved
-   * meanwhile keeps its own answer — rather than leave the screen claiming a
-   * setting the server does not have; and the reason is said above the list,
-   * as the website says it.
+   * Send a change after already moving the control, since a switch that waits for a round trip reads as one that did
+   * not register. The changed settings are kept so a refusal puts back only those (a second switch moved meanwhile
+   * keeps its own answer), and the reason is said above the list, as on the website.
    */
   const [saveError, setSaveError] = useState<ApiError | null>(null);
   const save = useCallback(
@@ -69,7 +64,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
       void client.put<NotificationPrefs>('/me/notification-prefs', patch).then((res) => {
         if (res.ok) return;
         setPrefs((p) => (p ? { ...p, ...before } : p));
-        // Hevalo offline for a while is said by the screen over the app; the switch still goes back
+        // Hevalo being offline is shown by the screen over the app; the switch still goes back.
         if (isMaintenance(res.error)) return;
         haptic('error');
         setSaveError(res.error);
@@ -81,7 +76,8 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        {/* named as the gear that opens it and the row in Settings name it: the list it came from is "Notifications" */}
+        {/* Named as the gear that opens it and the Settings row name it, since the list it came from is
+           "Notifications". */}
         <ScreenHeader title={t('settings.notifications')} onBack={onExit} />
         <AsyncBoundary loading={!prefs} error={!prefs ? error : null} onRetry={load} skeleton={<PrefsSkeleton />}>
           {() => {
@@ -90,7 +86,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
             return (
         <ScrollView contentContainerStyle={styles.content}>
           <SendErrorNotice error={saveError} onDismiss={() => setSaveError(null)} style={styles.notice} />
-          {/* whether the phone lets anything through at all, before what to send */}
+          {/* Whether the phone lets anything through at all, before what to send. */}
           <DevicePushControl />
           <SettingsSection title={t('notifications.categories')} first>
             {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
@@ -159,9 +155,8 @@ function PrefsSkeleton(): React.JSX.Element {
 }
 
 /**
- * A switch's place in grey, exactly the platform's own switch's size: one is
- * drawn unseen underneath to take the room, since iOS, Android and a browser
- * each make it a different size.
+ * A switch's place in grey at exactly the platform switch's size: one is drawn unseen underneath to take the room,
+ * since each platform sizes it differently.
  */
 function SwitchSkeleton(): React.JSX.Element {
   return (
@@ -175,9 +170,8 @@ function SwitchSkeleton(): React.JSX.Element {
 }
 
 /**
- * A time in quiet hours, with a step either side. The steps are named for
- * what they do ("start half an hour earlier"), since "−" and "+" read aloud
- * say nothing; `stepMinute` moves by the half hour they name.
+ * A time in quiet hours with a step either side, each named for what it does ("start half an hour earlier"), since "−"
+ * and "+" read aloud say nothing; `stepMinute` moves by that half hour.
  */
 function TimeRow({ label, earlier, later, minute, onStep }: { label: string; earlier: string; later: string; minute: number; onStep: (dir: 1 | -1) => void }) {
   const { colors } = useTheme();
@@ -187,7 +181,8 @@ function TimeRow({ label, earlier, later, minute, onStep }: { label: string; ear
       title={label}
       trailing={
         <View style={styles.stepper}>
-          {/* each step stands alone, the time between them, so it reaches a fingertip past every edge, inside its row */}
+          {/* Each step stands alone with the time between them, so it reaches a fingertip past every edge, inside its
+             row. */}
           <PressableScale
             onPress={() => onStep(-1)}
             style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]}
@@ -224,6 +219,6 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   stepBtn: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   stepText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  // wide enough for "10:00 PM", so the steps of the two rows stand in line whatever the times are
+  // Wide enough for "10:00 PM", so the two rows' steps line up whatever the times.
   time: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, minWidth: 80, textAlign: 'center', fontVariant: ['tabular-nums'] },
 });

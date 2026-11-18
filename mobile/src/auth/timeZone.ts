@@ -1,18 +1,9 @@
 /**
- * The learner's own time zone, told to the server.
- *
- * Every day Hevalo counts is the learner's own day: the streak, the daily
- * quests, the word of the day, a reminder's hour and the quiet hours are all
- * worked out by the server in the time zone it has for the account, which is
- * UTC until it is told otherwise. Without this a lesson done at one in the
- * morning in Hewlêr counted for the day before, and quiet hours set for the
- * night fell three hours late.
- *
- * So the device's zone goes with a sign-up and with "Try Hevalo first", and
- * an account whose zone differs from the device's is brought up to it when
- * the app opens or comes back to the front (someone who has travelled). The
- * server allows one change a week, so a streak cannot be farmed by hopping
- * zones; that refusal is kept until the app next starts, and never shown.
+ * The learner's time zone, told to the server, which counts every day (streaks, daily quests, the word of the day,
+ * reminders, quiet hours) in the account's zone, UTC until told otherwise. The device's zone goes with a sign-up and
+ * with "Try Hevalo first", and an account whose zone differs is updated when the app opens or returns to the front. The
+ * server allows one change a week, so streaks cannot be farmed by hopping zones; that refusal is kept quietly until the
+ * next start.
  */
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
@@ -32,10 +23,8 @@ export function deviceTimeZone(): string | null {
 }
 
 /**
- * The zone to send, or null when there is nothing to send: the device cannot
- * say, or the server's is already the device's. A server that does not say
- * which zone it has (an older one) is left alone rather than written to on
- * every start.
+ * The zone to send, or null when the device cannot say or the server already has it. A server that does not report its
+ * zone (an older one) is left alone rather than written to on every start.
  */
 export function zoneToSend(server: string | null | undefined, device: string | null): string | null {
   if (!device || typeof server !== 'string') return null;
@@ -43,14 +32,13 @@ export function zoneToSend(server: string | null | undefined, device: string | n
 }
 
 /**
- * Keeps the account's zone the device's while signed in: once on the way in
- * and each time the app comes back to the front. `onChanged` is told the zone
- * the server took, so the session holds it too.
+ * Keeps the account's zone the device's while signed in: once on the way in and each time the app returns to the front.
+ * `onChanged` gets the zone the server took, so the session holds it too.
  */
 export function useTimeZoneSync(client: ApiClient, serverZone: string | null | undefined, active: boolean, onChanged: (zone: string) => void): void {
   useEffect(() => {
     if (!active) return;
-    // asking, or told no for this week: not asked again until the app starts afresh
+    // Asking, or told no for this week: not asked again until the app starts afresh.
     let held = false;
     const sync = (): void => {
       const zone = zoneToSend(serverZone, deviceTimeZone());
@@ -61,7 +49,7 @@ export function useTimeZoneSync(client: ApiClient, serverZone: string | null | u
           if (res.data.user?.timezone === zone) onChanged(zone);
           return;
         }
-        // changed once this week already: the server's limit, kept quietly; anything else (offline) is asked again
+        // Changed once this week already: the server's limit, kept quietly; anything else (offline) is asked again.
         if (res.error.code !== 'TIMEZONE_CHANGE_COOLDOWN') held = false;
       });
     };

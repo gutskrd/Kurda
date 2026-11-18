@@ -4,11 +4,8 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 
 /**
- * A small button at the end of a row in a group's lists — Add beside a friend:
- * filled in violet for the one thing to do, as every button that does it is,
- * outlined for the quieter one (Added). The pill stays slim and its reach
- * makes up the rest of a fingertip: it stands alone at the row's end, past
- * words that are not a control, so it answers a fingertip past every edge.
+ * A small button at the end of a row in a group's lists: filled in violet for the one thing to do (Add), outlined for
+ * the quieter state (Added). It stands alone at the row's end, so it reaches a fingertip past every edge.
  */
 export function Pill({
   label,

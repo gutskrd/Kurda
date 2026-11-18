@@ -31,31 +31,20 @@ import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability } from './learnGames';
 
 /**
- * Build a Sentence on the phone.
+ * Build a Sentence on the phone: the meaning on a card, a ruled line to lay the sentence on, and a tray of word tiles
+ * (the sentence's words and a few decoys). A tile tapped in the tray snaps onto the line and leaves a ghost behind so
+ * nothing shuffles; one tapped on the line goes home. A wrong first try marks the first word out of place; a finished
+ * item shows the sentence with each word's meaning where approved sources give one.
  *
- * The stage: the meaning on a card, a ruled line the sentence is laid on, and
- * a tray of word tiles under it — the sentence's own words and a few that are
- * not. A tile tapped in the tray arrives on the line lifted and snaps down
- * onto it with a light knock, leaving a ghost in the tray so nothing
- * shuffles; one tapped on the line goes home. When the line is right it
- * settles: the tiles dip onto it one after another and the rule fills with
- * the game's colour.
- *
- * A wrong first try marks the first word out of place on the player's own
- * line; once an item is done the sentence is laid out the right way round,
- * every word with what it means where the approved lessons and stories say
- * so. Before a round, the ladder: six rungs from short sentences to two
- * clauses, from the bottom up, the ones opened in colour.
- *
- * Soranî lines fill from the right. Under Reduce Motion nothing travels or
- * bounces. The website's games/BuildSentence.tsx stages the same round.
+ * Before a round, the ladder of six rungs. Soranî lines fill from the right; under Reduce Motion nothing travels. The
+ * website's games/BuildSentence.tsx stages the same round.
  */
 
 type Round = SoloRound<SentenceItemView, SentenceHint, SentenceCorrection>;
 
 const GAME = learnGame('build-sentence');
 
-export const RUNG_KEY: Record<SentenceRung, TranslationKey> = {
+const RUNG_KEY: Record<SentenceRung, TranslationKey> = {
   short: 'games.sentence.rung.short',
   question: 'games.sentence.rung.question',
   negation: 'games.sentence.rung.negation',
@@ -115,7 +104,7 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
   const flow = rtl ? 'row-reverse' : 'row';
   const [placed, setPlaced] = useState<number[]>([]);
   const [marked, setMarked] = useState<number | null>(null);
-  // the line last sent: the same line again would spend the second try on what was already wrong
+  // The line last sent: sending it again would spend the second try on what was already wrong.
   const [tried, setTried] = useState<string | null>(null);
   const done = result?.done === true;
   const locked = done || busy;
@@ -208,10 +197,10 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
           {correction.words.map((w, i) => {
             const m = meaningIn(w.meanings, locale);
             return (
-              // one thing to a screen reader: the word and what it means, or that no meaning is listed
+              // One thing to a screen reader: the word and its meaning, or that none is listed.
               <View key={i} style={styles.gloss} accessible accessibilityLabel={`${w.word}, ${m ?? t('games.sentence.noGloss')}`}>
                 <Text style={[styles.glossWord, { color: tone.text }, rtl ? styles.rtl : null]}>{w.word}</Text>
-                {/* a word no approved source gives a meaning for has nothing under it: a dash under every such word read as a row of blanks */}
+                {/* A word with no approved meaning has nothing under it: a dash under each read as a row of blanks. */}
                 {m ? <Text style={[styles.glossMeaning, { color: colors.textSecondary }]}>{m}</Text> : null}
               </View>
             );
@@ -347,7 +336,7 @@ export function BuildSentenceScreen({ onExit }: { onExit: () => void }): React.J
 const styles = StyleSheet.create({
   board: { gap: spacing.lg },
   meaning: { borderRadius: radii.lg, borderWidth: 1, padding: spacing.md, gap: spacing.xs },
-  // the coloured edge on the side the reader's language starts from
+  // The coloured edge on the side the reader's language starts from.
   edgeLeft: { borderLeftWidth: 4 },
   edgeRight: { borderRightWidth: 4 },
   kicker: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
@@ -355,7 +344,7 @@ const styles = StyleSheet.create({
   lineBox: { minHeight: 76, justifyContent: 'flex-end', paddingBottom: spacing.sm },
   line: { flexWrap: 'wrap', alignItems: 'flex-end', gap: spacing.sm, minHeight: 56 },
   rule: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 3, borderRadius: radii.pill },
-  // the fill grows from where the line starts reading
+  // The fill grows from where the line starts reading.
   fromLeft: { transformOrigin: 'left center' },
   fromRight: { transformOrigin: 'right center' },
   gapMark: { width: 3, height: 40, borderRadius: radii.pill, marginBottom: 6 },

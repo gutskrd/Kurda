@@ -10,12 +10,8 @@ import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
 /**
- * Reports and account standing, the calls (shared `reports.ts` lists the routes).
- *
- * One `POST /reports` for everything that can be reported — a person, a
- * message, a group, a post, a comment, a player by seat — where the phone used
- * to have three routes with three shapes, one of which demanded ten characters
- * before a child could say what was wrong.
+ * Reports and account standing (shared `reports.ts` lists the routes): one `POST /reports` for everything that can be
+ * reported (a person, a message, a group, a post, a comment, a player by seat).
  */
 export function fileReport(client: ApiClient, request: FileReportRequest): Promise<ApiResult<ReportReceipt>> {
   return client.post<ReportReceipt>('/reports', request);
@@ -25,10 +21,7 @@ export function myReports(client: ApiClient): Promise<ApiResult<MyReportsPage>> 
   return client.get<MyReportsPage>('/me/reports');
 }
 
-/**
- * Works with a session or with the appeal token a suspended account is given
- * at sign-in — the suspension screen passes a client that sends that token.
- */
+/** Works with a session or with the appeal token a suspended account gets at sign-in. */
 export function accountStanding(client: ApiClient): Promise<ApiResult<AccountStanding>> {
   return client.get<AccountStanding>('/me/standing');
 }
