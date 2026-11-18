@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { streakWeek, weekStartsOn } from './streak-week.js';
+import { addDays, firstDayOfWeek, streakWeek, weekStartsOn, weekdayName } from './streak-week.js';
 
 describe('streakWeek', () => {
   // 2026-10-29 is a Thursday
@@ -52,5 +52,36 @@ describe('weekStartsOn', () => {
   it('is Saturday in Kurdish, Arabic and Persian, Monday elsewhere', () => {
     expect(['ku', 'ckb', 'ar', 'fa', 'ar-IQ'].map(weekStartsOn)).toEqual([6, 6, 6, 6, 6]);
     expect(['en', 'de', 'tr', 'fr', 'es', 'nl', 'en-GB'].map(weekStartsOn)).toEqual([1, 1, 1, 1, 1, 1, 1]);
+  });
+});
+
+describe('firstDayOfWeek and addDays', () => {
+  it('finds the first day of the week, today included when it is that day', () => {
+    // 2026-11-16 is a Monday
+    expect(firstDayOfWeek('2026-11-16', 1)).toBe('2026-11-16');
+    expect(firstDayOfWeek('2026-11-15', 1)).toBe('2026-11-09');
+    expect(firstDayOfWeek('2026-11-15', 6)).toBe('2026-11-14');
+    expect(firstDayOfWeek('2026-11-14', 0)).toBe('2026-11-08');
+  });
+
+  it('steps across months, years and a leap day', () => {
+    expect(addDays('2026-12-31', 1)).toBe('2027-01-01');
+    expect(addDays('2028-03-01', -1)).toBe('2028-02-29');
+    expect(addDays('2026-11-16', -7)).toBe('2026-11-09');
+  });
+});
+
+describe('weekdayName', () => {
+  it('names a day whole or by its initial in the reader’s language', () => {
+    expect(weekdayName(1, 'en')).toBe('Monday');
+    expect(weekdayName(1, 'en', 'narrow')).toBe('M');
+    expect(weekdayName(0, 'de', 'narrow')).toBe('S');
+  });
+
+  it('uses the course’s own day names in Kurdish, Saturday first in its set', () => {
+    expect(weekdayName(6, 'ku')).toBe('Şemî');
+    expect(weekdayName(0, 'ku', 'narrow')).toBe('Y');
+    expect(weekdayName(5, 'ku', 'narrow')).toBe('Î');
+    expect(weekdayName(6, 'ckb', 'narrow')).toBe('ش');
   });
 });

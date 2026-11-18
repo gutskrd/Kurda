@@ -77,7 +77,23 @@ export {
   type Verdict,
 } from './lesson-player.js';
 /** The week a kept streak is shown in, laid out the same on the phone and the website. */
-export { streakWeek, weekStartsOn, type RecentDay, type WeekDay, type WeekDayState } from './streak-week.js';
+export { addDays, firstDayOfWeek, streakWeek, weekStartsOn, weekdayName, type RecentDay, type WeekDay, type WeekDayState } from './streak-week.js';
+/** The daily view's two weeks, its stats and what its insights say, read alike by both apps. */
+export {
+  TODAY_DAYS,
+  insightTrend,
+  recentDays,
+  splitWeeks,
+  weekInsights,
+  weekStats,
+  xpAxis,
+  type Insight,
+  type TodayBadge,
+  type TodayDay,
+  type TodayWeek,
+  type TodayWeeks,
+  type WeekStats,
+} from './daily-view.js';
 /** Restoring a streak that ended: what it costs, how long it is offered, and what a Hevalo+ member is given. */
 export * from './streak-repair.js';
 export * from './plus.js';
