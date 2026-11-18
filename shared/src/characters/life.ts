@@ -529,10 +529,11 @@ export const SWAY = { ms: 6200, degrees: 1.1 } as const;
 
 /**
  * Resting, asleep while there is nothing to do: eyes shut, head dipped `dip` degrees, a slower deeper breath, and a "z"
- * rising `zRise` of the figure's height every `zMs` before it fades. No blinks, glances or twitches. A tap still wakes it
- * for its greeting, and it settles back.
+ * rising `zRise` of the head's height every `zMs` before it fades. The "z"s start `zAt` of the head's size from the
+ * middle of the eyes, out past the antler or hair, so they read the same whether the whole figure or only the head is
+ * drawn. No blinks, glances or twitches. A tap still wakes it for its greeting, and it settles back.
  */
-export const RESTING = { breathMs: 5600, depth: 0.022, dip: 5, zMs: 2400, zRise: 0.22 } as const;
+export const RESTING = { breathMs: 5600, depth: 0.022, dip: 5, zMs: 2400, zRise: 0.22, zAt: { x: 0.46, y: 0.38 } } as const;
 
 /** The pieces of a blink, in milliseconds: half shut, shut, half shut. */
 export const BLINK_STEPS = { half: 50, shut: 90 } as const;

@@ -738,12 +738,20 @@ export function SpeakingCharacter({
   );
 
   const label = t(resting ? 'characters.resting' : 'characters.saidBy', { name: CHARACTER_NAMES[speaker] });
-  // Where the "z"s start: just above and beside the head, on the side it faces away from.
+  // Where the "z"s start: above and beside the head, on the side it faces away from, measured on the head (the bust).
   const inner = 1 - room;
   const eyeX = boxWidth * (room / 2 + (flip ? 1 - layers.eyesAt.x : layers.eyesAt.x) * inner);
   const eyeY = boxHeight * (room + layers.eyesAt.y * inner);
+  const head = { w: art.bust.w * unit, h: art.bust.h * unit };
   const snooze = resting ? (
-    <Snooze x={eyeX + (flip ? -1 : 1) * width * 0.24} y={eyeY - height * 0.1} rise={height * RESTING.zRise} side={flip ? -1 : 1} reduce={reduce} awake={awake} />
+    <Snooze
+      x={eyeX + (flip ? -1 : 1) * head.w * RESTING.zAt.x}
+      y={eyeY - head.h * RESTING.zAt.y}
+      rise={head.h * RESTING.zRise}
+      side={flip ? -1 : 1}
+      reduce={reduce}
+      awake={awake}
+    />
   ) : null;
   return (
     <Rise delay={reduce ? null : 0} style={[{ width: boxWidth, height: boxHeight }, style]}>
