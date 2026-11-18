@@ -25,36 +25,6 @@ export const REFUND_REASONS = new Set(['shop_return']);
 /** Weekly faucet/sink ratio may drift this far from target before alerting. */
 export const DRIFT_THRESHOLD = 0.2;
 
-export interface LedgerEntry {
-  /** signed: positive = created (faucet), negative = destroyed (sink). */
-  amount: number;
-  reason: string;
-}
-
-export interface FaucetSink {
-  faucet: number;
-  sink: number;
-  /** faucet − sink: net currency added to (or removed from) supply. */
-  net: number;
-}
-
-/**
- * Total created vs destroyed over a set of ledger rows, excluding non-economy
- * reasons. Refunds come off the sink, so `sink` is spending net of what was
- * given back — below zero in a period that gave back more than it took.
- */
-export function faucetSink(entries: LedgerEntry[]): FaucetSink {
-  let faucet = 0;
-  let sink = 0;
-  for (const e of entries) {
-    if (EXCLUDED_REASONS.has(e.reason)) continue;
-    if (REFUND_REASONS.has(e.reason)) sink -= e.amount;
-    else if (e.amount > 0) faucet += e.amount;
-    else sink += -e.amount;
-  }
-  return { faucet, sink, net: faucet - sink };
-}
-
 /**
  * Faucet/sink ratio (>1 = inflationary, <1 = deflationary). A period with no
  * sink — or one whose refunds outweighed its spending — returns Infinity when

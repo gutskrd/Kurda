@@ -226,7 +226,7 @@ export interface GroupDetail extends Group {
  * One person owns at most MAX_GROUPS_OWNED groups and is in at most
  * MAX_GROUP_MEMBERSHIPS (`assertGroupRoom`), whether they start a group, are
  * added to one or are handed one. A group passed on by the server itself
- * (`handOnGroup`) is not held to it: nobody asked for that.
+ * (`handOnGroups`) is not held to it: nobody asked for that.
  *
  * Removed and banned differ (@kurda/shared group-membership.ts): someone
  * removed may be added again like anybody; someone banned may not until the
@@ -974,18 +974,8 @@ export class GroupService {
 }
 
 /**
- * Give a group with no owner a new one: the oldest moderator, else the oldest
- * member, else the group is archived. Runs in the caller's transaction when
- * given one. For a group whose owner's account was deleted.
- */
-export async function handOnGroup(executor: Pick<pg.Pool, 'query'>, groupId: string): Promise<void> {
-  await handOnGroups(executor, [groupId]);
-}
-
-/**
- * `handOnGroup` for every one of these groups, in one statement: each
- * group's successor is picked as there, promoted and named owner, and a group
- * with nobody left is archived. Each group is decided on its own rows only.
+ * Gives each ownerless group a new owner in one statement: its oldest moderator, else its oldest member, else the
+ * group is archived. Runs in the caller's transaction when given one.
  */
 export async function handOnGroups(executor: Pick<pg.Pool, 'query'>, groupIds: readonly string[]): Promise<void> {
   if (groupIds.length === 0) return;

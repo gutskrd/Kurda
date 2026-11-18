@@ -8,10 +8,6 @@ export type GoalOption = (typeof GOAL_OPTIONS)[number];
 
 export const DEFAULT_DAILY_GOAL: GoalOption = 20;
 
-/** Zêr granted when a daily goal is met. Flagged off until KUR-067. */
-export const DAILY_GOAL_ZER_REWARD = 5;
-export const GOAL_REWARDS_ENABLED = false;
-
 /** Executor: a pool or a client, so evaluation can join a transaction. */
 type Executor = Pick<pg.Pool, 'query'>;
 
@@ -117,17 +113,8 @@ export class DailyGoalService {
         [userId, day],
       );
       if ((done.rowCount ?? 0) > 0) {
+        // Meeting the goal pays nothing, so reward_granted stays false.
         completedAt = done.rows[0]!.completed_at;
-        // Reward hook: grant DAILY_GOAL_ZER_REWARD Zêr once. Deferred to
-        // KUR-067 — until then reward_granted stays false and no wallet
-        // write happens. Streak credit already occurs on lesson completion
-        // (KUR-031), which is the only way XP is earned today.
-        if (GOAL_REWARDS_ENABLED) {
-          await executor.query(
-            `UPDATE daily_goals SET reward_granted = true WHERE user_id = $1 AND goal_date = $2`,
-            [userId, day],
-          );
-        }
       }
     }
 

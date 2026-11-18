@@ -22,9 +22,6 @@ export interface EventDef {
   enabled: boolean;
 }
 
-/** Clients render at most this many concurrent events (highest priority first). */
-export const MAX_CONCURRENT_RENDER = 2;
-
 /** [startsAt, endsAt): live at the start instant, over the moment it ends. */
 export function isActive(e: Pick<EventDef, 'startsAt' | 'endsAt' | 'enabled'>, now: number): boolean {
   if (!e.enabled) return false;
