@@ -96,17 +96,15 @@ describe.skipIf(!DATABASE_URL)('auth middleware (integration)', () => {
   });
 
   it('role guard: a route that is not there without the role, 200 with it', async () => {
-    // asking for a role makes it staff surface, which answers anyone who is not staff as if it were not there
+    // Asking for a role makes a route staff surface, which answers non-staff as if it did not exist.
     const denied = await call('/admin-only', accessToken);
     expect(denied.statusCode).toBe(404);
     expect(denied.json().code).toBe('NOT_FOUND');
 
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [userId]);
 
-    // /admin-only is registered right here in the test, at a URL that has
-    // nothing to do with the panel — and asking for a role is now enough on its
-    // own to make a route staff surface, so the 2FA gate covers it too. That is
-    // the property being relied on: the gate follows the guard, not the prefix.
+    // /admin-only lives outside the panel's URLs, yet asking for a role puts it behind the 2FA gate: the gate follows the
+    // guard, not the prefix.
     const beforeCode = await call('/admin-only', accessToken);
     expect(beforeCode.statusCode).toBe(403);
     expect(beforeCode.json().code).toBe('TOTP_ENROLLMENT_REQUIRED');
