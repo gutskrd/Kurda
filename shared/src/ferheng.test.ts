@@ -14,11 +14,7 @@ describe('toLexicon', () => {
     });
   });
 
-  /**
-   * The glosses are Kurdish, so they go to `definitionKu` and nothing goes to
-   * `definitionEn`. Writing them into the English field would read as English in
-   * both apps and be wrong in all nine languages at once.
-   */
+  /** The glosses are Kurdish, so they go to `definitionKu`; in `definitionEn` they would read as English in every language. */
   it('never claims a Kurdish gloss is English', () => {
     const [entry] = toLexicon([row({ glosses: ['Tiştek e.'] })]);
     expect(entry!.senses[0]).not.toHaveProperty('definitionEn');
@@ -26,11 +22,8 @@ describe('toLexicon', () => {
   });
 
   /**
-   * The case that produces a conflict of a word with itself. The source lists a
-   * word once per part of speech and sometimes twice for the same one — 53 such
-   * pairs in a single chunk of 9,767 — and the importer reconciles by headword
-   * *and* POS, so ungrouped they arrive as a disagreement between two rows that
-   * are both right.
+   * The source lists a word once per part of speech, sometimes twice for the same one, and the importer reconciles by
+   * headword and part of speech, so ungrouped they would arrive as a conflict between two rows that are both right.
    */
   it('merges rows that share a headword and a part of speech', () => {
     const entries = toLexicon([
@@ -66,10 +59,7 @@ describe('toLexicon', () => {
       expect(posOf('name')).toBe('noun'); // a proper noun is still a noun
     });
 
-    /*
-     * Not dropped. A headword with a label we do not recognise is still a word
-     * the games should accept, and 'other' is what the schema has for it.
-     */
+    // A headword with an unknown label is still a word the games should accept, and 'other' is the schema's place for it.
     it('keeps the ones that do not, as other', () => {
       for (const pos of ['character', 'abbrev', 'unknown', 'nonsense', undefined, 42]) {
         expect(posOf(pos), String(pos)).toBe('other');
@@ -119,10 +109,8 @@ describe('plan', () => {
   });
 
   /**
-   * The contract the runbook depends on: the progress line prints `[41/105]`
-   * while it is working on the 41st file, so `--from 41` has to redo that file
-   * rather than the one after it. Off by one here is a gap in the dictionary
-   * that nothing would surface until a player's word came back rejected.
+   * The progress line prints `[41/105]` while working on the 41st file, so `--from 41` must redo that file; off by one
+   * would leave a gap in the dictionary that nothing would show.
    */
   it('resumes at the file the progress line named, not the one after it', () => {
     const { skipped, chunks } = plan(files, { from: 41 });

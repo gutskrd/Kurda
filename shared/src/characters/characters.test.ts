@@ -90,7 +90,7 @@ function walk(el: El, visit: (e: El) => void): void {
   for (const c of el.children) walk(c, visit);
 }
 
-/** Only what react-native-svg's SvgXml draws the same as a browser. */
+/** Only what the phone's SVG renderer draws the same as a browser. */
 const ALLOWED = new Set(['svg', 'title', 'defs', 'g', 'path', 'circle', 'ellipse', 'linearGradient', 'radialGradient', 'stop', 'clipPath']);
 
 /** The elements whose positions are written by the pen, a tenth at a time (a gradient's are fractions of a box). */

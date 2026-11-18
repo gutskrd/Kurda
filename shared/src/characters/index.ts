@@ -1,7 +1,7 @@
 /**
  * The speaking characters, Hevalo the deer, Hamo and Xezo, drawn as layered SVG so only the mouth (and now and then the
  * eyes) is redrawn while a recording plays. `characterSvg` gives a whole standalone drawing; `characterArt` gives the parts
- * for a player that keeps the body and swaps small layers (groups in one inline <svg> on the web, react-native-svg on the
+ * for a player that keeps the body and swaps small layers (groups in one inline <svg> on the web, SVG elements on the
  * phone), all in the same units. Drawings are strings, identical on every machine, with no images, fonts, filters or
  * links; gradient and clip ids carry a prefix so several characters can share a page.
  */
