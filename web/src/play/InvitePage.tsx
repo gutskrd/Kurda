@@ -7,6 +7,7 @@ import { GameArt } from '../games/GameArt';
 import { stageTone } from '../games/GameHead';
 import { useT } from '../i18n/I18nProvider';
 import { haptic } from '../lib/haptics';
+import { useOptimisticSend } from '../lib/optimistic';
 import type { PublicProfile } from '../lib/types';
 import { TicketArt } from './JoinCode';
 import { joinCodeError } from './joinCode';
@@ -30,11 +31,12 @@ export function InvitePage(): React.JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
   const { status, client, refreshUser } = useAuth();
+  const sendShown = useOptimisticSend();
   const link = parseJoinLink(location.pathname, location.search);
   const [host, setHost] = useState<PublicProfile | null>(null);
   const [phase, setPhase] = useState<Phase>('ready');
   const [message, setMessage] = useState<string | null>(null);
-  const [asked, setAsked] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [asked, setAsked] = useState<'idle' | 'failed'>('idle');
   const mounted = useRef(true);
   // Set on every mount, or a page mounted twice in a row would stay marked gone and drop the join's answer.
   useEffect(() => {
@@ -94,13 +96,16 @@ export function InvitePage(): React.JSX.Element {
     haptic('wrong');
   }
 
+  /** Asked at once; a refused request brings the button back with the reason beside it. */
   async function befriend(): Promise<void> {
-    if (!host || asked === 'sending') return;
-    setAsked('sending');
-    const res = await client.post('/friends/requests', { userId: host.userId });
-    if (!mounted.current) return;
-    setAsked(res.ok ? 'sent' : 'failed');
-    if (res.ok) setHost({ ...host, friendStatus: 'pending_out' });
+    if (!host) return;
+    setAsked('idle');
+    setHost({ ...host, friendStatus: 'pending_out' });
+    await sendShown(
+      () => client.post('/friends/requests', { userId: host.userId }),
+      { undo: () => mounted.current && setHost(host) },
+      { onFailed: () => mounted.current && setAsked('failed') },
+    );
   }
 
   // A friends game takes the host's friends; someone who is not one is shown how to become one.
@@ -145,7 +150,7 @@ export function InvitePage(): React.JSX.Element {
             {befriending && stranger && (
               <div className="invite-friend" role="status">
                 <p className="invite-note">{t('invite.friends.needed', { name })}</p>
-                <Button variant="secondary" onClick={() => void befriend()} disabled={asked === 'sending'}>
+                <Button variant="secondary" onClick={() => void befriend()}>
                   {t('invite.friends.ask', { name })}
                 </Button>
                 {asked === 'failed' && <p className="invite-note is-refused">{t('invite.friends.failed')}</p>}

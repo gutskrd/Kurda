@@ -6,6 +6,9 @@ import { describeError } from '../lib/api';
 import type { ApiError, GroupDetail, GroupMessage } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useMessages } from './MessagesProvider';
+import { useRail } from '../social/RailProvider';
+import { railEdits } from '../social/useSocialRail';
+import { useOptimisticSend } from '../lib/optimistic';
 import { MessageList } from './MessageList';
 import { Composer } from './Composer';
 import { ChatGameButton } from '../play/PlayButtons';
@@ -98,7 +101,9 @@ export function GroupThread({
   /** what just happened here, for a screen reader */
   const [said, setSaid] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
-  const { refreshUnread } = useMessages();
+  const { refreshUnread, markSeen } = useMessages();
+  const { adjust } = useRail();
+  const sendShown = useOptimisticSend();
   const { openProfile } = useProfileModal();
   /*
    * Sent messages show at once (chat/useOutbox.ts). A refusal removes the message with the reason shown and its words
@@ -218,11 +223,16 @@ export function GroupThread({
     onSentScroll: () => scrollToBottom('smooth'),
   });
 
-  /** Clear this group's unread badge; on open and on each arrival while open. */
+  /**
+   * Clears this group's unread badge at once, here and on the rail, and sends the read receipt; on open and on each
+   * arrival while open. A receipt that did not go brings the badge back without a notice, since it is sent for
+   * arrivals the reader did nothing about.
+   */
   const markRead = useCallback(async () => {
-    await client.post(`/groups/${groupId}/chat/read`).catch(() => undefined);
+    markSeen('group', groupId);
+    await sendShown(() => client.post(`/groups/${groupId}/chat/read`), adjust(railEdits.groupRead(groupId)), { onFailed: () => undefined });
     refreshUnread();
-  }, [client, groupId, refreshUnread]);
+  }, [client, groupId, markSeen, adjust, sendShown, refreshUnread]);
 
   // fetching history also refreshes the server-side grant that authorizes the WS join
   const load = useCallback(async () => {

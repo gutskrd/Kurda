@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { useOptimisticSend } from '../lib/optimistic';
 import type { ApiError, WordleGame } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
@@ -97,9 +98,9 @@ export function Wordle(): React.JSX.Element {
   const [refusals, setRefusals] = useState(0);
   // The last guess's row is still turning over; the result waits for the tiles.
   const { revealing, hold } = useReveal();
-  // Save to vocabulary on the finished word: in flight, and why it failed.
-  const [saving, setSaving] = useState(false);
+  // Save to vocabulary on the finished word: why it failed.
   const [saveError, setSaveError] = useState<string | null>(null);
+  const sendShown = useOptimisticSend();
   // Each difficulty has its own daily, so only the game asked for last may land; a slow answer for an earlier chip would
   // otherwise show its word under the later one.
   const asked = useRef(0);
@@ -118,7 +119,6 @@ export function Wordle(): React.JSX.Element {
     setCurrent('');
     setNotice(null);
     setRefusals(0);
-    setSaving(false);
     setSaveError(null);
     const res = await client.post<PeyvokGame>(`/wordle/${mode}`, { difficulty });
     if (ask !== asked.current) return;
@@ -160,18 +160,18 @@ export function Wordle(): React.JSX.Element {
     }
   }, [client, game, playing, submitting, current, t, refuse, hold]);
 
-  /** Saves the finished game's word by game, so the server saves exactly that word and counts it once however often pressed. */
+  /**
+   * Saves the finished game's word by game, so the server saves exactly that word and counts it once however often
+   * pressed. Saved at once; a refusal (a full vocabulary, the network) unsaves it and says why under the button.
+   */
   const saveWord = useCallback(async () => {
     const id = game?.id;
-    if (!id || !game.word?.entryId || game.word.saved || saving) return;
-    setSaving(true);
+    if (!id || !game.word?.entryId || game.word.saved) return;
+    const marked = (saved: boolean): void => setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved } } : g));
     setSaveError(null);
-    const res = await client.post<{ saved: boolean }>(`/wordle/games/${id}/save`);
-    setSaving(false);
-    if (res.ok) setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved: true } } : g));
-    // A full vocabulary or the network, said as the dictionary says it, under the button.
-    else setSaveError(describeError(res.error, t));
-  }, [client, game, saving, t]);
+    marked(true);
+    await sendShown(() => client.post<{ saved: boolean }>(`/wordle/games/${id}/save`), { undo: () => marked(false) }, { onFailed: (e) => setSaveError(describeError(e, t)) });
+  }, [client, game, sendShown, t]);
 
   const press = useCallback(
     (key: string) => {
@@ -240,7 +240,7 @@ export function Wordle(): React.JSX.Element {
                   meanings={game.word?.meanings}
                   save={
                     game.word?.entryId
-                      ? { saved: game.word.saved, busy: saving, onSave: () => void saveWord(), error: saveError }
+                      ? { saved: game.word.saved, onSave: () => void saveWord(), error: saveError }
                       : undefined
                   }
                 />

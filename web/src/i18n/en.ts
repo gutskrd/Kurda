@@ -794,10 +794,8 @@ export const en = {
   'profile.favoriteStory': 'Favourite story',
   'profile.message': 'Message',
   'profile.addFriend': 'Add friend',
-  'profile.sending': 'Sending…',
   'profile.requestSent': 'Request sent',
   'profile.acceptRequest': 'Accept request',
-  'profile.accepting': 'Accepting…',
   'profile.blockedNote': 'Blocked. They can no longer find you, message you or add you — and they are not told.',
   'profile.undoInSettings': 'Undo this in Settings',
 
@@ -807,7 +805,6 @@ export const en = {
   'moderation.report': 'Report',
   'moderation.blockWhoTitle': 'Block {name}?',
   'moderation.blockNote': 'They will not be able to find you, message you or add you, and you will not see them anywhere. They are not told. You can undo this in Settings.',
-  'moderation.blocking': 'Blocking…',
   // ---- web-social: gifts in chat, reports and account standing ----
   // what a limit on the account stops, and until when (reports/restriction.ts)
   'restriction.chat': 'You can’t send messages right now.',
@@ -948,7 +945,7 @@ export const en = {
   'letters.error.today': 'That’s enough letters for today. Your bird can fly again tomorrow.',
   'letters.error.bands': 'You can’t write to each other any more: letters only go between people of a similar age.',
   'letters.thread.closed': 'These letters have ended. Neither of you can write here again.',
-  'letters.thread.waiting': 'Your bird is with {name}. Their letter will come to your window.',
+  'letters.thread.waiting': 'Your letter is with {name}. When they write back, their bird will bring it to your window.',
   'letters.goodbye': 'Say goodbye',
   'letters.goodbye.title': 'Say goodbye to {name}? Neither of you can write here again, and your birds won’t meet again.',
   'letters.you': 'You',
@@ -2166,7 +2163,6 @@ export const en = {
   'comments.deleteThis': 'Delete this comment',
   'comments.showOneReply': 'Show 1 reply',
   'comments.showReplies': 'Show {count} replies',
-  'comments.posting': 'Posting…',
   'comments.submit': 'Comment',
   'daily.claimed': '+{amount} Zêr claimed!',
   'daily.plusGems': '+{count} gems with Hevalo+',

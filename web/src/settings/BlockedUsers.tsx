@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { failureText, useOptimisticSend } from '../lib/optimistic';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
@@ -30,6 +31,7 @@ interface Page {
  */
 export function BlockedUsers(): React.JSX.Element {
   const { client } = useAuth();
+  const sendShown = useOptimisticSend();
   const t = useT();
   const [list, setList] = useState<BlockedUser[]>([]);
   const [total, setTotal] = useState(0);
@@ -72,18 +74,24 @@ export function BlockedUsers(): React.JSX.Element {
   }, [load]);
 
   /**
-   * Unblocks, then removes the row without reloading, which would shuffle the rows below. The row goes only on success,
-   * so a failed unblock never looks done.
+   * Unblocks: the row goes at once, without a reload that would shuffle the rows below, and comes back in its place
+   * with the reason if the server refuses (lib/optimistic.ts).
    */
   async function unblock(user: BlockedUser): Promise<void> {
-    const res = await client.delete(`/friends/${user.userId}/block`);
-    if (!res.ok) {
-      setError(describeError(res.error, t));
-      return;
-    }
+    const at = list.findIndex((b) => b.userId === user.userId);
     setError(null);
     setList((prev) => prev.filter((b) => b.userId !== user.userId));
     setTotal((n) => Math.max(0, n - 1));
+    await sendShown(
+      () => client.delete(`/friends/${user.userId}/block`),
+      {
+        undo: () => {
+          setList((prev) => (prev.some((b) => b.userId === user.userId) ? prev : [...prev.slice(0, at), user, ...prev.slice(at)]));
+          setTotal((n) => n + 1);
+        },
+      },
+      { onFailed: (refusal) => setError(failureText(refusal, t)) },
+    );
   }
 
   async function more(): Promise<void> {
@@ -101,7 +109,7 @@ export function BlockedUsers(): React.JSX.Element {
         {t('settings.blocked.help')}
       </p>
 
-      {error && <div className="msg msg-error" style={{ marginBottom: 12 }}>{error}</div>}
+      {error && <div className="msg msg-error" role="status" style={{ marginBottom: 12 }}>{error}</div>}
 
       {state === 'loading' ? (
         <BlocklistSkeleton label="settings.blocked.loading" />

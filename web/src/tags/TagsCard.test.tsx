@@ -96,6 +96,38 @@ describe('TagsCard', () => {
     expect(s.posts[0]!.body).toEqual({ key: 'age', displayed: false });
   });
 
+  it('hides a tag at once, ends quick presses in the last one, and puts the box back when refused', async () => {
+    const s = tagServer({ claimed: [claimedTag({ displayed: true })] });
+    const answers: Array<(res: Response) => void> = [];
+    const sent: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'POST') {
+          sent.push(JSON.parse(String(init.body)));
+          return new Promise<Response>((r) => answers.push(r));
+        }
+        return s.fetch(url, init);
+      }),
+    );
+    renderApp(<TagsCard />);
+
+    const box = await screen.findByRole('checkbox', { name: /Show Age on profile/i });
+    await userEvent.click(box);
+    await userEvent.click(box);
+    await userEvent.click(box);
+    expect(box).not.toBeChecked();
+    expect(screen.getByText('hidden')).toBeInTheDocument();
+    expect(sent).toEqual([{ key: 'age', displayed: false }]);
+    answers[0]!(jsonResponse(503, {}));
+    // The newest press still asks for "hidden", so that goes next; only its refusal puts the box back.
+    await waitFor(() => expect(sent).toHaveLength(2));
+    expect(box).not.toBeChecked();
+    answers[1]!(jsonResponse(503, {}));
+    await waitFor(() => expect(box).toBeChecked());
+    expect(await screen.findByRole('status')).toHaveTextContent('Something went wrong on our end. Please try again shortly.');
+  });
+
   /** Giving up a tag cannot be undone, so the first press arms `ConfirmButton` and only a second goes through. */
   it('arms rather than deleting on the first press', async () => {
     const s = tagServer({ claimed: [claimedTag({ value: '25–34' })] });

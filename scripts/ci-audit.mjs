@@ -77,6 +77,21 @@ const ALLOWLIST = {
     why: 'zod memory exhaustion — only the copy inside @expo/cli (build-only, zod 3, no fixed 3.x); the API runs the fixed 4.6.7',
     only: ['node_modules/@expo/cli/', 'node_modules/expo/node_modules/'],
   },
+  // picomatch can be made to backtrack for a long time on a glob with repeated
+  // single-branch extglobs. It is reached only by build and test tools: vite
+  // (the website and admin builds), vitest, and the Expo bundler. They match
+  // this repository's own globs against its own files on a developer's machine
+  // or in CI. Nothing in api/ uses it, and no bundle ships it, so no stranger's
+  // pattern ever reaches it.
+  //
+  // Unfixable rather than unfixed: the advisory covers every release up to
+  // 4.0.7, the latest one published, and npm's suggested remedy is a vite
+  // downgrade across a major. Accepted by the owner as build-only.
+  //
+  // REMOVE once picomatch publishes a patched release and vite, vitest and
+  // Expo pick it up.
+  'GHSA-fc5q-39xc-vjpf':
+    'picomatch extglob ReDoS — build and test tools only (vite, vitest, Expo bundler); not bundled; no patched version exists',
   // fastify's seven advisories, one of them an authentication bypass, were here
   // for about a minute. `^5.11.0` already allowed the fix, so `npm update
   // fastify` took the tree to 5.12.5 and they are gone. Check the declared

@@ -170,6 +170,24 @@ describe('Settings: the pages', () => {
     expect(within(row(en['settings.privacy.title'])).getByText('Friends only')).toBeInTheDocument();
   });
 
+  it('moves the visibility at once, and puts it back with the reason when the server refuses', async () => {
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'PUT') return new Promise<Response>((r) => (answer = r));
+        return jsonResponse(200, url.endsWith('/me') ? me({ profileVisibility: 'members' }) : {});
+      }),
+    );
+    renderApp(<Settings />, ['/app/settings/visibility']);
+
+    await userEvent.click(await screen.findByRole('radio', { name: 'Friends only' }));
+    expect(screen.getByRole('radio', { name: 'Friends only' })).toBeChecked();
+    answer(jsonResponse(503, {}));
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Friends only' })).not.toBeChecked());
+    expect(screen.getByRole('status')).toHaveTextContent('Something went wrong on our end. Please try again shortly.');
+  });
+
   // Leaving is a PATCH /me, and the server takes them off this week's table at once.
   it('takes you out of the weekly leagues in one tap', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {

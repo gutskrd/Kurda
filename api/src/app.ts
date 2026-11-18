@@ -201,12 +201,7 @@ import pino from 'pino';
 import { LOG_REDACT } from './observability/redact.js';
 import { registerClientErrorRoutes } from './observability/client-errors.js';
 import { createWorker } from './jobs/worker.js';
-import {
-  ROLLUP_INTERVAL_MS,
-  ROLLUP_WINDOW_DAYS,
-  makeAnalyticsRollupJob,
-  makeEconomyRollupJob,
-} from './jobs/rollup-jobs.js';
+import { makeAnalyticsRollupJob, makeEconomyRollupJob } from './jobs/rollup-jobs.js';
 import { DashboardService as RollupDashboards } from './analytics/dashboard-service.js';
 import { EconomyService as RollupEconomy } from './economy/service.js';
 import { grantBootstrapAdmins } from './admin/bootstrap-admins.js';
@@ -310,16 +305,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       // Its own pino instance, since fastify's logger type is not pino's, and a distinct name keeps job logs separate.
       const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'hevalo-api-worker', redact: LOG_REDACT }));
       app.log.info('processing background jobs in-process (set RUN_WORKER_IN_API=false if a dedicated worker runs)');
-      // The dashboards read pre-aggregated tables, so schedule the rollups here (there may be no dedicated worker) and run
-      // a one-time catch-up: sign-ups and the economy aggregate from existing rows, so history fills at once.
+      // The housekeeping and the dashboards' rollups are scheduled here (there may be no dedicated worker), with a one-time
+      // catch-up: sign-ups and the economy aggregate from existing rows, so history fills at once.
       if (config.DATABASE_URL) {
         const analyticsJob = makeAnalyticsRollupJob(new RollupDashboards(app.db));
         const economyJob = makeEconomyRollupJob(new RollupEconomy(app.db));
         void (async () => {
           try {
-            await jobs.scheduleEvery(analyticsJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
-            await jobs.scheduleEvery(economyJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
-            // And the housekeeping: deletions past their grace period, unclaimed uploads.
             await scheduleMaintenance(jobs, app.db, createStorage(config));
             // Backfill once, not on every boot, since an idle host restarts often; each dashboard is checked against its own table.
             const backfills: Array<[string, typeof analyticsJob | typeof economyJob]> = [
@@ -595,8 +587,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       void economy.aggregateDay(yesterday).catch((err) => app.log.warn({ err }, 'economy rollup failed'));
       void economy.aggregateDay(now).catch((err) => app.log.warn({ err }, 'economy rollup failed'));
     };
-    const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
-    app.addHook('onClose', async () => clearInterval(economyRollup));
+    // With a queue the rollup job does this (jobs/maintenance.ts); the timer is for a process without one.
+    if (!app.jobs) {
+      const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
+      app.addHook('onClose', async () => clearInterval(economyRollup));
+    }
     registerLessonRoutes(app, gemService, xpService, badges);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
@@ -706,12 +701,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // Personalized streak reminders, hourly, by local time.
     const streakReminders = new StreakReminderService(app.db, {
-      enqueue: async (userId, notification) => {
+      enqueue: async (reminders) => {
         // job path records to the inbox in the worker; inline path records here
-        if (app.jobs) await app.jobs.enqueue(makePushSendJob(pushService), { userId, notification });
+        if (app.jobs) await app.jobs.enqueueMany(makePushSendJob(pushService), reminders);
         else {
-          await inbox.record(userId, notification);
-          await pushService.deliver(userId, notification);
+          for (const { userId, notification } of reminders) {
+            await inbox.record(userId, notification);
+            await pushService.deliver(userId, notification);
+          }
         }
       },
     });
@@ -773,11 +770,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // Core dashboards: daily-refreshed DAU, retention and funnel rollups.
     const dashboards = new DashboardService(app.db);
     registerDashboardRoutes(app, dashboards);
-    const dashboardRefresh = setInterval(
-      () => void dashboards.refreshDay().catch((err) => app.log.warn({ err }, 'dashboard refresh failed')),
-      24 * 60 * 60 * 1000,
-    );
-    app.addHook('onClose', async () => clearInterval(dashboardRefresh));
+    // as the economy's above: the queue's rollup job, or this timer without a queue
+    if (!app.jobs) {
+      const dashboardRefresh = setInterval(
+        () => void dashboards.refreshDay().catch((err) => app.log.warn({ err }, 'dashboard refresh failed')),
+        24 * 60 * 60 * 1000,
+      );
+      app.addHook('onClose', async () => clearInterval(dashboardRefresh));
+    }
 
     // A/B experiments: deterministic bucketing and exposure logging.
     registerExperimentRoutes(app, new ExperimentService(app.db, analytics));

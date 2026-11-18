@@ -4,6 +4,7 @@ import { describeError } from '../lib/api';
 import type { MeProfile, ProfileSection, ProfileSections } from '../lib/types';
 import { PROFILE_SECTIONS } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
+import { failureText, useOptimistic } from '../lib/optimistic';
 import type { MessageKey } from '../i18n/en';
 
 const COPY: Record<ProfileSection, { labelKey: MessageKey; hintKey: MessageKey }> = {
@@ -17,21 +18,30 @@ const COPY: Record<ProfileSection, { labelKey: MessageKey; hintKey: MessageKey }
 
 /**
  * Which activity sections the profile shows others, read from the public profile visitors see rather than /me. Each
- * toggle saves by itself, and the API merges one key at a time so quick toggles do not overwrite each other.
+ * toggle moves at once and saves by itself (lib/optimistic.ts); the API merges the keys it is sent, so only what differs
+ * from what the server has is sent, and its answer replaces the shown choice.
  */
 export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
-  const [sections, setSections] = useState<ProfileSections | null>(null);
-  const [busy, setBusy] = useState<ProfileSection | null>(null);
+  const [loaded, setLoaded] = useState<ProfileSections | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [sections, want] = useOptimistic<ProfileSections | null, { sections: ProfileSections }>(
+    loaded,
+    (wanted, held) =>
+      client.patch<{ sections: ProfileSections }>(
+        '/me/profile/sections',
+        Object.fromEntries(PROFILE_SECTIONS.filter((key) => wanted![key] !== held![key]).map((key) => [key, wanted![key]])),
+      ),
+    { fromAnswer: (data) => data.sections, onFailed: (refusal) => setError(failureText(refusal, t)) },
+  );
 
   useEffect(() => {
     let cancelled = false;
     void (async () => {
       const res = await client.get<{ sections?: ProfileSections | null }>(`/users/${me.id}`);
       if (cancelled) return;
-      if (res.ok && res.data.sections) setSections(res.data.sections);
+      if (res.ok && res.data.sections) setLoaded(res.data.sections);
       else setError(res.ok ? t('edit.sections.failed') : describeError(res.error, t));
     })();
     return () => {
@@ -39,15 +49,9 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
     };
   }, [client, me.id, t]);
 
-  async function toggle(key: ProfileSection, next: boolean): Promise<void> {
-    if (!sections) return;
-    setBusy(key);
+  function toggle(key: ProfileSection, next: boolean): void {
     setError(null);
-    const res = await client.patch<{ sections: ProfileSections }>('/me/profile/sections', { [key]: next });
-    setBusy(null);
-    // The server’s answer replaces the optimistic value, since the profile renders from it.
-    if (res.ok) setSections(res.data.sections);
-    else setError(describeError(res.error, t));
+    want((shown) => (shown ? { ...shown, [key]: next } : shown));
   }
 
   return (
@@ -69,8 +73,7 @@ export function SectionToggles({ me }: { me: MeProfile }): React.JSX.Element {
                 <input
                   type="checkbox"
                   checked={sections[key]}
-                  disabled={busy !== null}
-                  onChange={(e) => void toggle(key, e.target.checked)}
+                  onChange={(e) => toggle(key, e.target.checked)}
                 />
                 <span className="section-toggle-text">
                   <span className="section-toggle-label">{t(COPY[key].labelKey)}</span>

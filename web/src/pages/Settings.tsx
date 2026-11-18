@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { failureText, useOptimistic } from '../lib/optimistic';
 import { useApiGet } from '../lib/useApi';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import type { MeProfile } from '../lib/types';
@@ -543,26 +544,23 @@ function Language({ current }: { current?: string | null }): React.JSX.Element {
   const { client, refreshUser } = useAuth();
   const { locale, setLocale } = useI18n();
   const t = useT();
-  const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
-  const chosen = isAppLocale(current) && !busy && !failed ? current : locale;
-
-  async function change(next: AppLocale): Promise<void> {
-    const previous = locale;
-    setLocale(next);
-    setBusy(true);
-    setFailed(false);
-    const res = await client.request('PATCH', '/me', { body: { locale: next } });
-    setBusy(false);
-    if (res.ok) {
-      // So /me carries the new value if this page is revisited.
-      await refreshUser();
-      return;
-    }
+  // Quick changes end in the last one (lib/optimistic.ts).
+  const [chosen, want] = useOptimistic<AppLocale>(isAppLocale(current) ? current : locale, (next) => client.request('PATCH', '/me', { body: { locale: next } }), {
+    // So /me carries the new value if this page is revisited.
+    onSaved: () => void refreshUser(),
     // Revert rather than leave the interface in a language the account does not have.
-    setLocale(previous);
-    setFailed(true);
+    onFailed: (_, saved) => {
+      setLocale(saved);
+      setFailed(true);
+    },
+  });
+
+  function change(next: AppLocale): void {
+    setLocale(next);
+    setFailed(false);
+    want(next);
   }
 
   const name = APP_LOCALES.find((l) => l.code === locale)?.nativeName ?? locale;
@@ -583,9 +581,9 @@ function Language({ current }: { current?: string | null }): React.JSX.Element {
   return (
     <>
       <p className="settings-page-intro">{t('language.settingsHelp')}</p>
-      <SettingsChoices name="language" label={t('language.settingsTitle')} value={chosen} options={options} onChange={(next) => void change(next)} disabled={busy} />
+      <SettingsChoices name="language" label={t('language.settingsTitle')} value={chosen} options={options} onChange={change} />
       <p className="settings-page-note" role="status">
-        {failed ? <span className="settings-page-error">{t('language.failed')}</span> : busy ? null : t('language.savedTo', { language: name })}
+        {failed ? <span className="settings-page-error">{t('language.failed')}</span> : t('language.savedTo', { language: name })}
       </p>
       {/* Emails still go out in English whatever the setting, so that is said plainly. */}
       {locale !== 'en' && <p className="settings-page-note">{t('language.partial')}</p>}
@@ -629,30 +627,25 @@ function Appearance(): React.JSX.Element {
 function Leagues({ enabled, minor, onChanged }: { enabled: boolean; minor: boolean; onChanged: (on: boolean) => void }): React.JSX.Element {
   const { client, refreshUser } = useAuth();
   const t = useT();
-  const [on, setOn] = useState(enabled);
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-
-  async function change(next: boolean): Promise<void> {
-    setOn(next);
-    setBusy(true);
-    setMsg(null);
-    const res = await client.request('PATCH', '/me', { body: { leaguesEnabled: next } });
-    setBusy(false);
-    if (res.ok) {
+  const [on, want] = useOptimistic(enabled, (next) => client.request('PATCH', '/me', { body: { leaguesEnabled: next } }), {
+    onSaved: (_, sent) => {
       setMsg(t('common.saved'));
-      onChanged(next);
-      await refreshUser();
-    } else {
-      setOn(!next);
-      setMsg(describeError(res.error, t));
-    }
+      onChanged(sent);
+      void refreshUser();
+    },
+    onFailed: (error) => setMsg(failureText(error, t)),
+  });
+
+  function change(next: boolean): void {
+    setMsg(null);
+    want(next);
   }
 
   return (
     <>
       <p className="settings-page-intro">{t('settings.leagues.help')}</p>
-      <SettingsSwitch title={t('settings.leagues.toggle')} checked={on} disabled={busy} onChange={(next) => void change(next)} />
+      <SettingsSwitch title={t('settings.leagues.toggle')} checked={on} onChange={change} />
       {minor && <p className="settings-page-note">{t('settings.leagues.minorHint')}</p>}
       {msg && (
         <p className="settings-page-note" role="status">
@@ -667,24 +660,18 @@ function Leagues({ enabled, minor, onChanged }: { enabled: boolean; minor: boole
 function Privacy({ current, minor, onChanged }: { current: Visibility; minor: boolean; onChanged: (v: Visibility) => void }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  const [vis, setVis] = useState<Visibility>(current);
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-
-  async function change(next: Visibility): Promise<void> {
-    const before = vis;
-    setVis(next);
-    setBusy(true);
-    setMsg(null);
-    const res = await client.request('PUT', '/me/privacy', { body: { visibility: next } });
-    setBusy(false);
-    if (res.ok) {
+  const [vis, want] = useOptimistic<Visibility>(current, (next) => client.request('PUT', '/me/privacy', { body: { visibility: next } }), {
+    onSaved: (_, sent) => {
       setMsg(t('common.saved'));
-      onChanged(next);
-    } else {
-      setVis(before);
-      setMsg(describeError(res.error, t));
-    }
+      onChanged(sent);
+    },
+    onFailed: (error) => setMsg(failureText(error, t)),
+  });
+
+  function change(next: Visibility): void {
+    setMsg(null);
+    want(next);
   }
 
   return (
@@ -694,7 +681,6 @@ function Privacy({ current, minor, onChanged }: { current: Visibility; minor: bo
         name="visibility"
         label={t('settings.privacy.title')}
         value={vis}
-        disabled={busy}
         options={VISIBILITIES.map((v) => ({
           value: v,
           title: t(VIS_LABEL_KEY[v]),
@@ -702,7 +688,7 @@ function Privacy({ current, minor, onChanged }: { current: Visibility; minor: bo
           // Under 18 a profile is never public; the server refuses it too.
           disabled: minor && v === 'everyone',
         }))}
-        onChange={(v) => void change(v)}
+        onChange={change}
       />
       {minor && <p className="settings-page-note">{t('settings.visibility.minorHint')}</p>}
       {msg && (

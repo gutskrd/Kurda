@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FavoriteRef, LibraryPost, MeProfile } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
+import { failureText, useOptimistic } from '../lib/optimistic';
 
 /**
  * Picks a favourite poem and story from the published library to pin on the profile, through PUT and DELETE
@@ -32,12 +33,16 @@ function FavoriteKind({
 }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
-  const [current, setCurrent] = useState<FavoriteRef | null>(initial);
   const [open, setOpen] = useState(false);
   const [list, setList] = useState<LibraryPost[] | null>(null);
   const [loading, setLoading] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  // Pinned or taken off at once; quick changes end in the last one, and a refusal puts back the server's (lib/optimistic.ts).
+  const [current, want] = useOptimistic<FavoriteRef | null>(
+    initial,
+    (next) => (next ? client.put(`/me/favorites/${kind}`, { postId: next.id }) : client.delete(`/me/favorites/${kind}`)),
+    { onSaved: onChanged, onFailed: (error) => setMsg({ kind: 'err', text: failureText(error, t) }) },
+  );
 
   async function toggleBrowse(): Promise<void> {
     const next = !open;
@@ -52,33 +57,15 @@ function FavoriteKind({
     }
   }
 
-  async function choose(post: LibraryPost): Promise<void> {
-    if (busy) return;
-    setBusy(true);
+  function choose(post: LibraryPost): void {
     setMsg(null);
-    const res = await client.put(`/me/favorites/${kind}`, { postId: post.id });
-    setBusy(false);
-    if (res.ok) {
-      setCurrent({ id: post.id, title: post.title });
-      setOpen(false);
-      onChanged();
-    } else {
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
-    }
+    setOpen(false);
+    want({ id: post.id, title: post.title });
   }
 
-  async function remove(): Promise<void> {
-    if (busy) return;
-    setBusy(true);
+  function remove(): void {
     setMsg(null);
-    const res = await client.delete(`/me/favorites/${kind}`);
-    setBusy(false);
-    if (res.ok) {
-      setCurrent(null);
-      onChanged();
-    } else {
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
-    }
+    want(null);
   }
 
   return (
@@ -90,17 +77,17 @@ function FavoriteKind({
         </div>
         <div className="fav-actions">
           {current && (
-            <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void remove()}>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={remove}>
               {t('groups.remove')}
             </button>
           )}
-          <button type="button" className="btn btn-sm" disabled={busy} onClick={() => void toggleBrowse()}>
+          <button type="button" className="btn btn-sm" onClick={() => void toggleBrowse()}>
             {open ? t('common.cancel') : t('favorites.change')}
           </button>
         </div>
       </div>
 
-      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
+      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`} role="status">{msg.text}</div>}
 
       {open && (
         <div className="fav-browse">
@@ -115,8 +102,7 @@ function FavoriteKind({
                   <button
                     type="button"
                     className={`fav-option${current?.id === p.id ? ' is-current' : ''}`}
-                    disabled={busy}
-                    onClick={() => void choose(p)}
+                    onClick={() => choose(p)}
                   >
                     {p.title}
                   </button>

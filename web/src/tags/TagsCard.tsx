@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { useOptimistic } from '../lib/optimistic';
 import type { ApiError } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 import { Button } from '../components/Button';
@@ -82,19 +83,6 @@ export function TagsCard(): React.JSX.Element {
     await load();
   }, [claiming, busy, client, value, load]);
 
-  /** Shows or hides a tag optimistically; a rejection reloads everything from the server rather than guessing. */
-  const toggleDisplay = useCallback(
-    async (tag: ClaimedTag, displayed: boolean) => {
-      setClaimed((prev) => prev.map((c) => (c.key === tag.key ? { ...c, displayed } : c)));
-      const res = await setTagDisplayed(client, tag.key, displayed);
-      if (!res.ok) {
-        setFailure(res.error);
-        await load();
-      }
-    },
-    [client, load],
-  );
-
   /* Confirmation goes through `ConfirmButton`, like every destructive control, never the browser's `confirm()`. */
   const revoke = useCallback(
     async (tag: ClaimedTag) => {
@@ -132,35 +120,7 @@ export function TagsCard(): React.JSX.Element {
           ) : (
             <ul className="section-toggles">
               {claimed.map((tag) => (
-                <li key={tag.key}>
-                  <div className="section-toggle" style={{ cursor: 'default' }}>
-                    <span className="section-toggle-text">
-                      <span className="section-toggle-label">{tagLabel(tag)}</span>
-                      <span className="section-toggle-hint">
-                        {tag.sensitive ? `${t('tags.sensitive')} · ` : ''}
-                        {tag.displayed ? t('tags.shownOnProfile') : t('tags.hiddenStatus')}
-                      </span>
-                    </span>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <input
-                        type="checkbox"
-                        checked={tag.displayed}
-                        disabled={busy}
-                        onChange={(e) => void toggleDisplay(tag, e.target.checked)}
-                      />
-                      <span className="field-hint" style={{ margin: 0 }}>
-                        {t('tags.showOnProfile', { tag: tag.label })}
-                      </span>
-                    </label>
-                    <ConfirmButton
-                      className="btn btn-ghost btn-sm"
-                      label={t('tags.remove')}
-                      title={t('tags.removeTag', { tag: tag.label })}
-                      disabled={busy}
-                      onConfirm={() => revoke(tag)}
-                    />
-                  </div>
-                </li>
+                <ClaimedTagRow key={tag.key} tag={tag} busy={busy} onFailed={setFailure} onRevoke={() => revoke(tag)} />
               ))}
             </ul>
           )}
@@ -245,5 +205,52 @@ export function TagsCard(): React.JSX.Element {
         </>
       )}
     </section>
+  );
+}
+
+/**
+ * One claimed tag: shown or hidden on the profile at once (lib/optimistic.ts), quick presses ending in the last and a
+ * refusal putting the box back with the reason; and the way to give it up.
+ */
+function ClaimedTagRow({
+  tag,
+  busy,
+  onFailed,
+  onRevoke,
+}: {
+  tag: ClaimedTag;
+  /** A claim is being sent, which holds giving any tag up. */
+  busy: boolean;
+  onFailed: (error: ApiError) => void;
+  onRevoke: () => Promise<void>;
+}): React.JSX.Element {
+  const { client } = useAuth();
+  const t = useT();
+  const [displayed, want] = useOptimistic(tag.displayed, (on) => setTagDisplayed(client, tag.key, on), { onFailed });
+  return (
+    <li>
+      <div className="section-toggle" style={{ cursor: 'default' }}>
+        <span className="section-toggle-text">
+          <span className="section-toggle-label">{tagLabel(tag)}</span>
+          <span className="section-toggle-hint">
+            {tag.sensitive ? `${t('tags.sensitive')} · ` : ''}
+            {displayed ? t('tags.shownOnProfile') : t('tags.hiddenStatus')}
+          </span>
+        </span>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input type="checkbox" checked={displayed} onChange={(e) => want(e.target.checked)} />
+          <span className="field-hint" style={{ margin: 0 }}>
+            {t('tags.showOnProfile', { tag: tag.label })}
+          </span>
+        </label>
+        <ConfirmButton
+          className="btn btn-ghost btn-sm"
+          label={t('tags.remove')}
+          title={t('tags.removeTag', { tag: tag.label })}
+          disabled={busy}
+          onConfirm={onRevoke}
+        />
+      </div>
+    </li>
   );
 }

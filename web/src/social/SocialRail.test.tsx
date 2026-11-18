@@ -5,6 +5,7 @@ import { SocialRail } from './SocialRail';
 import { RailProvider } from './RailProvider';
 import { RailToggle } from './RailToggle';
 import { renderApp, jsonResponse } from '../test/utils';
+import { onNotice } from '../lib/notice';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -122,6 +123,35 @@ describe('SocialRail', () => {
     await userEvent.click(within(request).getByRole('button', { name: 'Decline' }));
 
     await waitFor(() => expect(posts).toContain('POST /friends/requests/8/decline'));
+  });
+
+  it('stamps an accepted request and drops the count before the server answers, and opens it again if refused', async () => {
+    signIn();
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/me/social')) return jsonResponse(200, rail({ requests: [person('8', 'berfin')], unread: { notifications: 0, groups: 0, requests: 1, challenges: 0 } }));
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
+        if (init?.method === 'POST') return new Promise<Response>((r) => (answer = r));
+        return jsonResponse(200, {});
+      }),
+    );
+    show();
+
+    const request = await screen.findByRole('group', { name: 'berfin wants to be friends' });
+    await screen.findByRole('button', { name: 'Social — 1 waiting' });
+    await userEvent.click(within(request).getByRole('button', { name: 'Accept' }));
+    expect(within(request).getByText('Friends')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Social' })).toBeInTheDocument();
+
+    answer(jsonResponse(409, { code: 'FRIENDS_FULL', message: 'friend list is full', details: { limit: 'friends', max: 500 } }));
+    expect(await within(request).findByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Social — 1 waiting' })).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
   });
 
   /** Game invites have their own banner, so the rail draws no challenge even if an answer carries one. */

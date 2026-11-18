@@ -345,6 +345,25 @@ describe('Peyvok’s word, once the game is over', () => {
     expect(done).toBeDisabled();
   });
 
+  it('shows the word saved at once, and unsaved with the reason when the vocabulary is full', async () => {
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/wordle/games/w1/save') && init?.method === 'POST') return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/wordle/daily')) return jsonResponse(200, { ...wonGame, word: card });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Save to vocabulary' }));
+    expect(screen.getByRole('button', { name: 'Saved to vocabulary' })).toHaveAttribute('aria-pressed', 'true');
+    answer(jsonResponse(409, { code: 'LIMIT_REACHED', message: 'full', details: { limit: 'saved_words', max: 2000 } }));
+    expect(await screen.findByRole('button', { name: 'Save to vocabulary' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText(/Your vocabulary is full/)).toBeInTheDocument();
+  });
+
   it('opens a word saved before as saved, and falls back to English where the reader’s language has no meaning', async () => {
     localStorage.setItem('hevalo_locale', 'nl');
     vi.stubGlobal(
