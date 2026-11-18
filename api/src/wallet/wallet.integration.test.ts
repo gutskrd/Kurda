@@ -1,4 +1,4 @@
-/** Wallet + ledger invariants (KUR-066) against real Postgres. */
+/** Wallet and ledger invariants against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -40,8 +40,7 @@ describe.skipIf(!DATABASE_URL)('wallet (integration)', () => {
   });
 
   afterAll(async () => {
-    // user hard-delete cascades into the ledger, which requires the
-    // explicit transaction-scoped admin flag (see wallet migration)
+    // A user hard delete cascades into the ledger, which needs the transaction-scoped admin flag (see the wallet migration).
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
