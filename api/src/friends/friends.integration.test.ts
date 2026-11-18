@@ -1,9 +1,10 @@
 /** Friend system against real Postgres. */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
 import { FriendService } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -16,8 +17,8 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
   const suffix = Date.now().toString(36);
   const id: Record<string, string> = {};
 
-  const register = async (tag: string, ip: string): Promise<string> => {
-    const res = await app.inject({
+  const signUp = (tag: string, ip: string) =>
+    app.inject({
       method: 'POST',
       url: '/auth/register',
       payload: {
@@ -30,8 +31,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
       },
       remoteAddress: ip,
     });
-    return res.json().user.id as string;
-  };
+  const register = async (tag: string, ip: string): Promise<string> => (await signUp(tag, ip)).json().user.id as string;
   const has = (list: Array<{ userId: string }>, userId: string): boolean => list.some((x) => x.userId === userId);
 
   beforeAll(async () => {
@@ -97,7 +97,7 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
   });
 
   it('cancelling something that is not there is not an error', async () => {
-    await expect(friends.cancelRequest(id.d!, id.e!)).resolves.toBeUndefined();
+    await expect(friends.cancelRequest(id.d!, id.e!)).resolves.toBe(false);
   });
 
   it('a mutual request auto-accepts', async () => {
@@ -252,6 +252,42 @@ describe.skipIf(!DATABASE_URL)('friend system (integration)', () => {
       });
       expect(res.statusCode).toBe(400);
     });
+  });
+
+  it('tells the other person’s apps when a request reaches them, is accepted or is withdrawn, and never for a block', async () => {
+    // Over HTTP, so with confirmed accounts (plugins/activation.ts).
+    const account = async (tag: string, ip: string): Promise<{ id: string; token: string }> => {
+      const res = await signUp(tag, ip);
+      await activate(app, pool, res);
+      return { id: res.json().user.id as string, token: res.json().tokens.accessToken as string };
+    };
+    const asker = await account('ping_a', '10.81.40.1');
+    const asked = await account('ping_b', '10.81.40.2');
+    const told = vi.spyOn(app.realtime, 'notifyUser');
+    const pings = (): unknown[] => told.mock.calls.filter(([, event]) => event.type === 'friends_changed');
+    const ping = (userId: string): unknown => [userId, { type: 'friends_changed' }];
+    const as = (who: { token: string }, method: 'POST' | 'DELETE', url: string, payload?: Record<string, string>) =>
+      app.inject({ method, url, payload, headers: { authorization: `Bearer ${who.token}` }, remoteAddress: '10.81.40.9' });
+
+    expect((await as(asker, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('requested');
+    expect(pings()).toEqual([ping(asked.id)]);
+
+    // Withdrawn, the request leaves their list; withdrawing nothing tells nobody.
+    await as(asker, 'DELETE', `/friends/requests/${asked.id}`);
+    await as(asker, 'DELETE', `/friends/requests/${asked.id}`);
+    expect(pings()).toEqual([ping(asked.id), ping(asked.id)]);
+
+    // Accepted, the one who asked has a new friend.
+    await as(asker, 'POST', '/friends/requests', { userId: asked.id });
+    expect((await as(asked, 'POST', `/friends/requests/${asker.id}/accept`)).json().result).toBe('accepted');
+    expect(pings().slice(2)).toEqual([ping(asked.id), ping(asker.id)]);
+
+    // A block is silent, and so is the request it swallows.
+    told.mockClear();
+    await as(asked, 'POST', `/friends/${asker.id}/block`);
+    expect((await as(asker, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('silent');
+    expect(pings()).toEqual([]);
+    told.mockRestore();
   });
 
   it('rejects friending or blocking yourself', async () => {

@@ -479,13 +479,17 @@ export class FriendService {
     return rows.rows.map((r) => toFriendSummary(r, publicUrl, now));
   }
 
-  /** Withdraws a request you sent; scoped to `requested_by = user`, so it can never delete one sent to you. */
-  async cancelRequest(user: string, other: string): Promise<void> {
+  /**
+   * Withdraws a request you sent; scoped to `requested_by = user`, so it can never delete one sent to you. False when
+   * there was none.
+   */
+  async cancelRequest(user: string, other: string): Promise<boolean> {
     const { lo, hi } = canonicalPair(user, other);
-    await this.pool.query(
+    const r = await this.pool.query(
       `DELETE FROM friendships WHERE user_lo = $1 AND user_hi = $2 AND status = 'pending' AND requested_by = $3`,
       [lo, hi, user],
     );
+    return (r.rowCount ?? 0) > 0;
   }
 
   /**
