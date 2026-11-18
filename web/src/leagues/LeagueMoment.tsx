@@ -9,8 +9,8 @@ import { leagueShare } from '../share/winText';
 
 const KEY = 'hevalo_league_celebrated';
 
-/** Whether last week moved this learner up (or won the trophy): a moment worth its own stage. */
-export function isPromotion(week: LeagueWeekResult | null | undefined): week is LeagueWeekResult {
+/** Whether last week moved this learner up or won the trophy. */
+function isPromotion(week: LeagueWeekResult | null | undefined): week is LeagueWeekResult {
   return !!week && week.mode === 'league' && (week.outcome === 'promoted' || week.trophy) && isLeagueTier(week.tierAfter ?? week.tier);
 }
 
@@ -23,17 +23,9 @@ function seenWeek(): string | null {
 }
 
 /**
- * Moving up a league, celebrated once.
- *
- * The week closes while nobody is watching (Monday 00:00 UTC), so the moment
- * is the first time the league is opened afterwards: the new league's emblem
- * on the app's one celebration, and last week's line under it. Once per week
- * in this browser — the week is remembered when the celebration is closed —
- * and never for staying or going down, which the card says plainly by itself.
- *
- * Under the way on there is a quiet Share for a week that is good news to
- * tell (shared `leagueWin`): the league moved up to, or a place in the first
- * three. It says the league and the place and nothing of who else was in it.
+ * Moving up a league, celebrated once per week in this browser the first time the league is opened after the week
+ * closes (Monday 00:00 UTC). Staying or going down gets no celebration. The Share button (shared `leagueWin`) names
+ * the league and place and nothing of the others in the group.
  */
 export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefined }): React.JSX.Element | null {
   const t = useT();
@@ -48,7 +40,7 @@ export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefin
     try {
       localStorage.setItem(KEY, week.weekKey);
     } catch {
-      // without storage it may be celebrated again next time, which is no harm
+      // Without storage it may be celebrated again next time, which is harmless.
     }
   };
   const named = leagueNamed(t, tier);

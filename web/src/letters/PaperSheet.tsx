@@ -21,32 +21,20 @@ import { PAGE_FOOT } from './paper';
 import './paper.css';
 
 /**
- * A sheet of letter paper on the screen, as it is read and as it is written
- * on: the paper and its drawing (the shared letterPaperSvg) at the back, the
- * body set on its ruled lines in the ink, and the notes where they were
- * placed.
- *
- * The sheet is measured in the page's own units. Its frame is a size
- * container, so one unit is a thousandth of the sheet's width (`--u`), and
- * every length on it — the lines, the type, the margins, a note's place — is
- * so many units: the letter is the same letter at 340 pixels and at 640.
- * Only the type has a floor, so a long letter stays readable on a phone; it
- * still keeps to one line of writing per ruled line.
- *
- * The body sits on the lines whatever font the browser has for its script.
- * Where a font puts its baseline in a line is measured once the sheet is on
- * the page (`useBaseline`), and the first line is moved so that baseline
- * falls just above the first rule, as handwriting does.
+ * A sheet of letter paper, read or written: the paper and drawing (shared letterPaperSvg), the body on its ruled lines,
+ * and the notes. Every length is in units of a thousandth of the sheet's width (`--u`, from a size container), so a
+ * letter looks the same at any size; only the type has a floor, for phones. The font's baseline is measured
+ * (`useBaseline`) so the first line sits just above the first rule whatever the font.
  */
 
 /** Half a page: the shortest sheet a letter is read on, and the step a longer one grows by, as paper folds. */
-export const HALF_PAGE = PAPER_H / 2;
+const HALF_PAGE = PAPER_H / 2;
 
 /** How far above its rule a line of writing sits, in page units: a hair, so the letters stand on the line and their tails cross it. */
 const LIFT = 5;
 
 /** Where the writing begins on 'margin' paper: a little after its red line. */
-export const MARGIN_WRITING = PAPER_MARGIN_X + 30;
+const MARGIN_WRITING = PAPER_MARGIN_X + 30;
 
 /** Whether the page is drawn dark (theme/theme.ts puts the scheme on the root element), followed as it changes. */
 export function useScheme(): 'light' | 'dark' {
@@ -61,11 +49,7 @@ export function useScheme(): 'light' | 'dark' {
   return scheme;
 }
 
-/**
- * The sheet's own custom properties: its colours from the shared
- * paperColors, the page's measures in units for the stylesheet to multiply
- * by `--u`, and how far the writing is inset.
- */
+/** The sheet's custom properties: colours from the shared paperColors, measures in units of `--u`, and the writing inset. */
 export function sheetStyle(paper: LetterPaper, scheme: 'light' | 'dark'): React.CSSProperties {
   const c = paperColors(paper, scheme);
   return {
@@ -94,7 +78,7 @@ export function noteStyle(note: PaperNote, tone: LetterPaper['tone']): React.CSS
 }
 
 /** How far down the page the drawing and the notes reach, in page units, with the page's foot margin under them. */
-export function reachOf(strokes: readonly PaperStroke[], notes: readonly PaperNote[]): number {
+function reachOf(strokes: readonly PaperStroke[], notes: readonly PaperNote[]): number {
   let reach = 0;
   for (const s of strokes) {
     for (let i = 1; i < s.points.length; i += 2) reach = Math.max(reach, (s.points[i] as number) + s.width / 2);
@@ -105,11 +89,8 @@ export function reachOf(strokes: readonly PaperStroke[], notes: readonly PaperNo
 }
 
 /**
- * Keeps the first line of writing on the first rule: measures, in the
- * sheet's own type, where a line's baseline falls, and gives it to the
- * stylesheet as `--baseline`. Measured again whenever the sheet changes
- * width, since the type is sized by it. Until it is measured (and where
- * nothing is laid out at all) the stylesheet's own estimate stands.
+ * Measures where the sheet's type puts its baseline and sets `--baseline`, so the first line sits on the first rule;
+ * remeasured on width changes, with the stylesheet's estimate until then.
  */
 export function useBaseline(sheet: React.RefObject<HTMLElement | null>, probe: React.RefObject<HTMLElement | null>): void {
   useLayoutEffect(() => {
@@ -138,10 +119,8 @@ export function BaselineProbe({ probeRef }: { probeRef: React.RefObject<HTMLSpan
 }
 
 /**
- * The paper and its drawing, behind everything on the sheet. Decoration
- * when nothing is drawn; when something is, the picture is named by
- * `label` (its own title), so a screen reader hears that the letter has a
- * drawing. It never takes the pointer, so its title is never a tooltip.
+ * The paper and its drawing behind the sheet: decorative when empty, otherwise titled `label` so screen readers hear
+ * there is a drawing. It ignores the pointer, so the title is never a tooltip.
  */
 export function PaperArt({ paper, strokes, length, label }: { paper: LetterPaper; strokes: readonly PaperStroke[]; length: number; label?: string }): React.JSX.Element {
   const id = `lp${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
@@ -155,12 +134,7 @@ export function PaperArt({ paper, strokes, length, label }: { paper: LetterPaper
   return <div className="paper-art" aria-hidden={named ? undefined : true} dangerouslySetInnerHTML={svg} />;
 }
 
-/**
- * A letter as it is read: on its own paper, its drawing and its notes where
- * the writer put them. The sheet is half a page at the least, and grows by
- * half pages with what is on it — the words, and anything drawn or placed
- * further down — so a short letter is a short sheet and a long one runs on.
- */
+/** A letter as read on its paper, with drawing and notes; at least half a page, growing by half pages with its content. */
 export function LetterOnPaper({
   body,
   decor,

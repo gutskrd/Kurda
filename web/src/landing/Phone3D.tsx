@@ -4,51 +4,35 @@ import type { PhoneGl, PhoneStage } from './phoneGl';
 import './phone3d.css';
 
 /**
- * The phone on the front page, as an object rather than an outline.
+ * The front page's phone in CSS 3D, so its screen stays live markup in the reader's language (`mocks.tsx`): a stack
+ * of thin rounded slabs makes the metal band, with side buttons, a camera pill, glare and a shadow. It stands turned
+ * toward the copy, turns a little toward a mouse pointer, and floats slowly while on screen in a visible tab; under
+ * Reduce Motion it stands still.
  *
- * The flat rounded rectangle it replaced read as "a picture of a phone"; this
- * one is a phone standing in the page: a metal band with real thickness, its
- * buttons on the sides, a camera pill in the glass, the glass catching the
- * light, and a shadow on the ground under it. It is built in CSS 3D rather
- * than drawn, so the screen inside stays live markup in the reader's language
- * (see `mocks.tsx`): the band is a stack of thin rounded slabs, one behind the
- * other, which the eye reads as the phone's edge once the phone turns.
- *
- * It stands turned a little toward the copy, and on a desk with a mouse it
- * turns a few degrees more toward the pointer, the way a real thing held up to
- * the light would; it floats very slowly while it is on the screen and its
- * tab is in front, and it rests otherwise. Reduce Motion keeps it standing
- * still, turned, with nothing following the pointer.
- *
- * Once the page has settled, a browser that can draw WebGL swaps that CSS
- * body for a modelled one (`phoneGl.ts`): rounded metal that catches the
- * light as it turns, drawn on a canvas behind the same live screen. From
- * then on one loop poses both, the HTML and the model, in the same frame, so
- * the screen never slides on its glass. Without WebGL, on a connection that
- * asks to save data, or in a test, the CSS phone simply stays.
+ * Once the page settles, a browser with WebGL swaps the CSS body for a modelled one (`phoneGl.ts`) on a canvas behind
+ * the same screen, and one loop poses both in the same frame so the screen never slides on its glass. Without WebGL,
+ * when saving data, or in a test, the CSS phone stays.
  */
 
-/** How many slabs make the edge: enough that it reads as solid at the steepest turn, few enough to cost nothing. */
+/** How many slabs make the edge: enough to look solid at the steepest turn, few enough to be cheap. */
 const SLABS = 12;
 
 /** How far, in degrees, the pointer may turn the phone from its resting pose. */
 const REACH = { x: 7, y: 10 };
 
-export type PhonePose = 'left' | 'right';
+type PhonePose = 'left' | 'right';
 
 /**
- * The phone's tilt toward the pointer, written into two CSS custom properties
- * on the element so the stylesheet composes it with the resting pose; one
- * write per animation frame at most, and none on a touch screen or under
- * Reduce Motion.
+ * The phone's tilt toward the pointer, written into two custom properties the stylesheet composes with the resting
+ * pose: at most once per frame, and never on a touch screen or under Reduce Motion.
  */
 function usePointerTilt(ref: RefObject<HTMLElement | null>, enabled: boolean): void {
   useEffect(() => {
     const el = ref.current;
     if (!el || !enabled || typeof window === 'undefined' || !window.matchMedia) return;
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    // the area that steers it is the phone's own section, so the pointer anywhere near it counts
+    if (prefersReducedMotion()) return;
+    // The phone's whole section steers it, so the pointer anywhere near it counts.
     const area = el.closest('section') ?? el;
     let frame = 0;
     let next: { x: number; y: number } | null = null;
@@ -81,7 +65,7 @@ function usePointerTilt(ref: RefObject<HTMLElement | null>, enabled: boolean): v
   }, [ref, enabled]);
 }
 
-/** The status bar the phone itself draws: the time, and signal, network and battery as plain shapes. */
+/** The phone's status bar: the time, and signal, network and battery as plain shapes. */
 function StatusBar(): React.JSX.Element {
   return (
     <span className="p3d-status" aria-hidden="true">
@@ -102,19 +86,15 @@ function StatusBar(): React.JSX.Element {
   );
 }
 
-/** How long the float takes to rise, and to settle again: the CSS float's 7 seconds, alternate. */
+/** How long the float takes to rise and to settle again, matching the CSS float's alternating 7 seconds. */
 const FLOAT_MS = 7000;
-/** How far the float lifts the phone and turns it, at the top of its rise (the CSS keyframes' values). */
+/** How far the float lifts and turns the phone at the top of its rise, matching the CSS keyframes. */
 const FLOAT_LIFT = 12;
 const FLOAT_SWAY = 0.6;
-/** How quickly the turn catches up with the pointer, as a time constant in seconds (the CSS transition's feel). */
+/** How quickly the turn catches up with the pointer, as a time constant in seconds, matching the CSS transition. */
 const TILT_EASE_S = 0.16;
 
-/**
- * Whether this browser should be offered the modelled phone at all: it needs
- * WebGL, and a reader who asked to save data, or is on a slow connection,
- * keeps the CSS phone rather than wait for a picture of one.
- */
+/** Whether to offer the modelled phone: it needs WebGL, and is skipped when saving data or on a slow connection. */
 export function wantsModelledPhone(): boolean {
   if (typeof window === 'undefined' || !('WebGL2RenderingContext' in window)) return false;
   const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
@@ -128,7 +108,7 @@ function cssNumber(style: CSSStyleDeclaration, name: string): number {
   return Number.isFinite(value) ? value : 0;
 }
 
-/** Where the phone stands, as the stylesheet lays it out: its box, its perspective and its metal. */
+/** Where the phone stands as the stylesheet lays it out: its box, perspective and metal colour. */
 function stageOf(host: HTMLElement): PhoneStage {
   const style = getComputedStyle(host);
   const [originX, originY] = style.perspectiveOrigin.split(' ').map((v) => parseFloat(v));
@@ -142,7 +122,7 @@ function stageOf(host: HTMLElement): PhoneStage {
   };
 }
 
-/** Runs `run` once the page is idle, so the model never competes with the page's first paint; returns how to cancel it. */
+/** Runs `run` once the page is idle, so the model never competes with the first paint; returns a cancel function. */
 function whenIdle(run: () => void): () => void {
   if ('requestIdleCallback' in window) {
     const id = window.requestIdleCallback(run, { timeout: 2000 });
@@ -153,10 +133,8 @@ function whenIdle(run: () => void): () => void {
 }
 
 /**
- * The modelled body: loaded the first time the phone is on the screen, once
- * the page is idle, and posed from then on by one loop that writes the same
- * pose to the HTML (the float and the rig) and to the model. Returns whether
- * the model is showing, so the CSS body can step aside.
+ * The modelled body, loaded once the phone is first on screen and the page is idle, then posed by one loop that writes
+ * the same pose to the HTML and the model. Returns whether the model shows, so the CSS body can step aside.
  */
 function useModelledBody(
   hostRef: RefObject<HTMLElement | null>,
@@ -168,7 +146,7 @@ function useModelledBody(
   const [body, setBody] = useState<PhoneGl | null>(null);
   const [wanted] = useState(wantsModelledPhone);
 
-  // load it the first time the phone is in front
+  // Load it the first time the phone is in front.
   useEffect(() => {
     if (!wanted || body || !inFront) return;
     let cancelled = false;
@@ -182,7 +160,7 @@ function useModelledBody(
           if (made) setBody(made);
         })
         .catch(() => {
-          // the chunk did not arrive: the CSS phone is a phone too
+          // The chunk did not arrive, so the CSS phone stays.
         });
     });
     return () => {
@@ -191,7 +169,7 @@ function useModelledBody(
     };
   }, [wanted, body, inFront, hostRef, canvasRef]);
 
-  // let it go with the page, and give the HTML its stylesheet pose back
+  // Dispose of it on unmount and return the HTML to its stylesheet pose.
   useEffect(() => {
     if (!body) return;
     const canvas = canvasRef.current;
@@ -205,7 +183,7 @@ function useModelledBody(
     };
   }, [body, canvasRef, floatRef, rigRef]);
 
-  // a new size or a new theme: fit and paint it again
+  // On a new size or theme, fit and repaint it.
   useEffect(() => {
     const host = hostRef.current;
     if (!body || !host) return;
@@ -227,7 +205,7 @@ function useModelledBody(
     };
   }, [body, hostRef]);
 
-  // the loop: while the phone is in front, every frame; otherwise, one frame where it stopped
+  // The loop runs every frame while the phone is in front; otherwise one frame where it stopped.
   useEffect(() => {
     const host = hostRef.current;
     const float = floatRef.current;
@@ -259,10 +237,7 @@ function useModelledBody(
   return body !== null;
 }
 
-/**
- * A phone in three dimensions, with `children` on its screen. `pose` is which
- * way it turns: toward the copy on the other side of it.
- */
+/** A phone in three dimensions with `children` on its screen; `pose` turns it toward the copy beside it. */
 export function Phone3D({
   children,
   pose = 'left',
@@ -310,7 +285,7 @@ export function Phone3D({
   );
 }
 
-/** One screen the hero phone can show: its picture and the name of its tab under the phone. */
+/** One screen the hero phone can show: its picture and its tab's name under the phone. */
 export interface PhoneScreen {
   id: string;
   label: string;
@@ -321,11 +296,9 @@ export interface PhoneScreen {
 const DWELL_MS = 5200;
 
 /**
- * The hero phone: a few of the app's screens in turn, with a row of tabs under
- * it to pick one. The screens change on their own only while the phone is on
- * the screen, its tab is in front, nobody is pointing at or focused on it, and
- * the reader has not asked for less motion; once someone picks a screen it
- * stays on it. Only the screen being shown is there for a screen reader.
+ * The hero phone cycling through a few app screens, with tabs below to pick one. It advances only while in view, not
+ * hovered or focused, and without Reduce Motion; once a screen is picked it stays. Only the shown screen is exposed to
+ * screen readers.
  */
 export function PhoneShowcase({ screens, pose = 'left', label }: { screens: readonly PhoneScreen[]; pose?: PhonePose; label: string }): React.JSX.Element {
   const ref = useRef<HTMLDivElement>(null);
@@ -365,7 +338,7 @@ export function PhoneShowcase({ screens, pose = 'left', label }: { screens: read
             <div
               key={s.id}
               className={`p3d-card${i === shown ? ' is-shown' : i === (shown - 1 + screens.length) % screens.length ? ' is-leaving' : ''}`}
-              // a screen not shown is not there for the keyboard or a reader either
+              // A hidden screen is hidden from the keyboard and screen readers too.
               aria-hidden={i === shown ? undefined : true}
               inert={i !== shown}
             >

@@ -16,27 +16,16 @@ import { BuyConfirm } from './BuyConfirm';
 import './yours.css';
 
 /**
- * Your tree, in the Shop: every kind there is, which of them are yours to
- * plant, which are free to everybody, what the others cost, and the one that
- * stands.
- *
- * It does what the tree page's nursery does (tree/TreePage.tsx), with the same
- * words and the same two questions, asked in the Shop's own dialog: buying a
- * kind says what it costs against the Zêr there are and plants nothing; one
- * that is yours, or free, is planted only after being told that the tree that
- * stands will be gone, with all it has grown, while the water held stays.
- * Each kind is drawn as the nursery draws it, full-grown in summer, in its
- * own leaves, so a choice between them is a choice between things seen.
- *
- * On a wide screen the kinds are two rows of tiles; on a phone they are one
- * row that is swiped through, as a shelf is, so the catalogue under them is
- * not pushed a whole screen down. A server with no trees yet shows nothing.
+ * The tree in the Shop: every kind, which can be planted, which are free, and what the others cost. It works like the
+ * nursery (tree/TreePage.tsx) with the same words, confirming in BuyConfirm: buying plants nothing, and planting warns
+ * that the current tree goes while the water stays. On a phone the kinds are one swiped row. A server without trees
+ * shows nothing.
  */
 
-/** What a kind's tile and its question need: whether it stands, can be planted, or is bought first. */
+/** The kind a confirmation is about, and whether it buys or plants. */
 type Ask = { kind: TreeKindOffer; what: 'buy' | 'plant' };
 
-/** The section's heading, with the way to the tree itself at its end. */
+/** The section's heading, with a link to the tree at its end. */
 function Heading({ id }: { id: string }): React.JSX.Element {
   const t = useT();
   return (
@@ -60,7 +49,7 @@ export function YourTree({ tree, zer, onZer }: { tree: TreeState; zer: number | 
   const [asking, setAsking] = useState<Ask | null>(null);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState<string | null>(null);
-  // the kind just bought or planted here, which takes a small bow, and what is said of it
+  // The kind just bought or planted here, which takes a small bow.
   const [won, setWon] = useState<TreeSpecies | null>(null);
   const [said, setSaid] = useState('');
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
@@ -97,14 +86,14 @@ export function YourTree({ tree, zer, onZer }: { tree: TreeState; zer: number | 
       );
     return null;
   }
-  // an answer that is not the tree (an older server): nothing to offer
+  // An answer without the kinds offers nothing.
   if (!Array.isArray(data.kinds)) return null;
 
-  // the Shop's own balance when it has one: it has seen whatever was bought here since the tree was read
+  // The Shop's own balance when it has one, since it reflects purchases made after the tree was read.
   const purse = zer ?? data.zer;
   const standing = data.tree?.species ?? null;
 
-  /** A newer tree, as an action or a second look answered it: the tiles and the Shop's balance follow it. */
+  /** Takes a newer tree from an action or a reload; the tiles and the Shop's balance follow it. */
   const learn = (next: MyTree): void => {
     tree.set(next);
     onZer(next.zer);
@@ -125,8 +114,8 @@ export function YourTree({ tree, zer, onZer }: { tree: TreeState; zer: number | 
       setSaid(`${named}: ${what === 'buy' ? t('tree.nursery.yours') : t('tree.nursery.standing')}`);
       return;
     }
-    // spent meanwhile, or already bought somewhere else: the tree is read again, and what it says now is shown
-    // (the dialog stays for a shortfall, which it now says, and goes for a kind that turned out to be yours)
+    // Spent or bought elsewhere meanwhile: reload the tree. The dialog stays to show a shortfall, and closes for a kind
+    // that turned out to be owned.
     if (res.error.code === 'INSUFFICIENT_FUNDS' || res.error.code === 'TREE_OWNED') {
       const again = await client.get<MyTree>('/me/tree');
       setBusy(false);
@@ -148,7 +137,7 @@ export function YourTree({ tree, zer, onZer }: { tree: TreeState; zer: number | 
     setFailed(null);
   };
 
-  // the question, as the nursery asks it: buying says what it costs, planting what it replaces
+  // The question as the nursery asks it: buying says the cost, planting what it replaces.
   const asked = asking ? treeNamed(t, asking.kind.species) : null;
   const buying = asking?.what === 'buy';
   const askedShort = asking && buying ? Math.max(0, asking.kind.price - purse) : 0;
@@ -171,7 +160,7 @@ export function YourTree({ tree, zer, onZer }: { tree: TreeState; zer: number | 
                 aria-label={withMeaning(t, named)}
               >
                 <span className="yours-tree-art">
-                  {/* full-grown in summer, in its own leaves: in spring every one that flowers is pink */}
+                  {/* Full-grown in summer leaves, since in spring every flowering kind is pink. */}
                   <TreePicture species={kind.species} stage={TREE_FULL} season="summer" size={128} />
                 </span>
                 <span className="yours-tree-name">{named.name}</span>

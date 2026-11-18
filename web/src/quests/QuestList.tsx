@@ -15,8 +15,8 @@ const ASKS: Record<QuestKind, MessageKey> = {
   perfect: 'quests.kind.perfect',
 };
 
-/** One quest's words: "Finish 2 lessons". */
-export function useQuestWords(): (kind: QuestKind, target: number) => string {
+/** One quest's words, such as "Finish 2 lessons". */
+function useQuestWords(): (kind: QuestKind, target: number) => string {
   const t = useT();
   const locale = useLocale();
   return (kind, target) => t(ASKS[kind], { target: new Intl.NumberFormat(locale).format(target) });
@@ -27,14 +27,9 @@ const FILL_MS = 600;
 const ROW_STAGGER_MS = 220;
 
 /**
- * Today's quests, one row each: what it asks, a thick bar of how far it has
- * got with "x / y" on it, and its chest at the bar's end.
- *
- * `moving` (the end of a lesson): each bar fills from where the quest stood
- * before the session to where it is now, a row after the one above, the
- * number counting with it; a quest finished just now lifts and glows once its
- * bar is full. Elsewhere the bars simply stand where they are. A chest to open
- * is said in words as well as drawn; one opened stands open.
+ * Today's quests, one row each: what it asks, a bar with "x / y" on it, and its chest at the bar's end. With `moving`
+ * (the end of a lesson) each bar fills in turn from where it stood before the session, and a quest just finished lifts
+ * and glows. A chest to open is said in words as well as drawn.
  */
 export function QuestList({ rows, moving = false, startMs = 0 }: { rows: QuestRow[]; moving?: boolean; startMs?: number }): React.JSX.Element {
   return (
@@ -70,7 +65,7 @@ function QuestItem({ row, moving, delayMs }: { row: QuestRow; moving: boolean; d
           aria-valuenow={row.to}
           aria-valuetext={t('quests.barText', { progress: number(row.to), target: number(row.target) })}
         >
-          {/* the count twice: light over the track, dark over the gold, each clipped to its own part */}
+          {/* The count twice, light over the track and dark over the gold, each clipped to its part. */}
           <span className="quest-count" aria-hidden="true" dir="ltr">
             {number(shown)} / {number(row.target)}
           </span>

@@ -17,7 +17,7 @@ describe('elapsed', () => {
   });
 
   it('never counts backwards when a clock is a little ahead', () => {
-    // the server's now and the browser's now are not the same clock
+    // The server's clock and the browser's differ.
     expect(elapsed(new Date(NOW + 5_000).toISOString(), t, NOW)).toBe('just now');
   });
 
@@ -32,7 +32,7 @@ describe('lastSeen', () => {
     expect(lastSeen(ago(5 * MIN), t, NOW)).toBe('5m ago');
     expect(lastSeen(ago(3 * HOUR), t, NOW)).toBe('3h ago');
     expect(lastSeen(ago(2 * 24 * HOUR), t, NOW)).toBe('2d ago');
-    // past a month the exact number stops meaning anything
+    // Past a month the exact number is not shown.
     expect(lastSeen(ago(90 * 24 * HOUR), t, NOW)).toBe('a while ago');
   });
 
@@ -41,11 +41,7 @@ describe('lastSeen', () => {
   });
 });
 
-/**
- * `m` is not a minute everywhere. The abbreviation is the whole string here, so
- * a hardcoded one would leave the rail's only numbers in English on a screen
- * that is otherwise not.
- */
+/** The unit abbreviations come from the catalogues, since `m` is not a minute in every language. */
 describe('the abbreviations themselves', () => {
   const turkish = translator(tr);
 

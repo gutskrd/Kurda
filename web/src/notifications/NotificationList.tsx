@@ -52,14 +52,8 @@ import { ticketToneClass, type TicketTone } from '../ui/Ticket';
 import { useSwipe } from './swipe';
 
 /**
- * Which notifications are still new, which have been taken away, and the
- * ways to be done with them.
- *
- * Marking one read, or all of them, and taking one away are said to the
- * server and shown at once: the list does not wait for the next poll to stop
- * calling something new that you have just seen, or to stop showing one you
- * have just taken away. Read is kept on the server, so a phone and a browser
- * agree on it; one taken away is gone from both.
+ * Which notifications are new and which were removed, with ways to mark them read or remove them. Changes go to the
+ * server and show at once rather than after the next poll; the server keeps them, so the phone agrees.
  */
 export function useNotificationReads(
   items: readonly RailNotification[],
@@ -97,7 +91,7 @@ export function useNotificationReads(
     async (id: string) => {
       setRemoved((prev) => new Set(prev).add(id));
       const res = await client.delete(`/me/notifications/${id}`);
-      // one that did not go (and was not already gone) comes back, rather than seeming gone until the next look
+      // A removal that failed (and was not already gone) brings the row back.
       if (!res.ok && res.error.status !== 404) {
         setRemoved((prev) => {
           const next = new Set(prev);
@@ -153,23 +147,13 @@ interface Actor {
 }
 
 /**
- * The notifications, under Today, This week and Earlier, with a row of
- * filters over them when there is more than one kind to choose between.
+ * The notifications under Today, This week and Earlier, with filters when there is more than one kind. Each row shows
+ * who it is from with a glyph for the kind, what happened and when, and a picture of what it is about. New rows are
+ * lighter with a dot. The wording comes from the reports, play, ranks and groups notification modules; opening a row
+ * marks it read, and invites and gifts show their one action.
  *
- * Each row says who it is from on the one side — their face, or Hevalo's own
- * mark for news from Hevalo, with a small glyph on its corner for the kind —
- * what happened in the reader's own words with the time after it, and on the
- * other side a picture of what it is about where there is one: the badge, the
- * league, the game, the letter, the gift, the streak's fire. A new one is
- * washed a little lighter and has a dot at its start. The kinds are said in
- * reports/notifications.ts, play/notifications.ts, ranks/notifications.ts and
- * groups/notifications.ts; one that has a page opens it, and opening it
- * counts as reading it. A game invite and a gift show the one thing to do
- * about them.
- *
- * Pulled sideways by a finger, a row slides open on the notification
- * settings and the way to take it away, and pulled far enough it goes at
- * once; with a mouse or a keyboard the same two are buttons at its end.
+ * Swiping a row reveals the notification settings and a remove button, and a long swipe removes it at once; with a
+ * mouse or keyboard the same two are buttons at the row's end.
  */
 export function NotificationList({
   items,
@@ -179,28 +163,28 @@ export function NotificationList({
 }: {
   items: RailNotification[];
   reads: Pick<ReturnType<typeof useNotificationReads>, 'isUnread' | 'isRemoved' | 'markRead' | 'remove'>;
-  /** called when one is followed to its page, so whatever holds the list can close */
+  /** Called when one is followed to its page, so the holder can close. */
   onFollow?: () => void;
-  /** where the notification settings are, for a row's own way there */
+  /** The notification settings page, for each row's link there. */
   settingsTo: string;
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const base = useId();
-  // who sent a game invite, in the reader's words, while the app still has it
+  // Who sent each game invite, while the app still has it.
   const incoming = usePlayInvites().lists?.incoming;
-  // who sent a gift or a letter: the server names them by id, and they are almost always a friend
+  // Who sent a gift or a letter: the server gives an id, and the sender is almost always a friend.
   const { data } = useRail();
   const people = [...data.friends, ...data.requests];
   const [filter, setFilter] = useState<NoticeFilter>('all');
-  // one row open at a time, as a finger leaves it
+  // One row open at a time.
   const [open, setOpen] = useState<string | null>(null);
-  // the rows on their way out, drawn going before they are gone from the list
+  // Rows being removed, animated out before they leave the list.
   const [leaving, setLeaving] = useState<Set<string>>(() => new Set());
 
   const live = items.filter((n) => !reads.isRemoved(n));
   const filters = noticeFiltersFor(live);
-  // a filter whose last notification was taken away falls back to everything
+  // A filter whose last notification was removed falls back to all.
   const current = filters.includes(filter) ? filter : 'all';
   const shown = live.filter((n) => noticeShows(n, current));
 
@@ -220,7 +204,7 @@ export function NotificationList({
   const takeAway = (id: string): void => {
     setOpen(null);
     setLeaving((prev) => new Set(prev).add(id));
-    // the row slides out and closes up first, unless motion is to be kept still
+    // The row slides out and closes up first, unless Reduce Motion is on.
     window.setTimeout(() => void reads.remove(id), prefersReducedMotion() ? 0 : 280);
   };
 
@@ -249,7 +233,7 @@ export function NotificationList({
               const actor = actorOf(n);
               const view: NoteView | null =
                 socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t) ?? groupNotification(n, t, locale);
-              // a gift from somebody the app can name says who it is from
+              // A gift from somebody the app can name says who it is from.
               const title = n.data?.kind === 'gift' && actor ? t('gift.fromLabel', { name: actor.name }) : (view?.title ?? n.title);
               const when = noteWhen(n.createdAt, group.key, t, shortDate);
               return (
@@ -336,13 +320,13 @@ function NoteRow({
   ) : (
     title
   );
-  // the one thing to do about it, where there is one; the whole row goes there
+  // The row's one action, where there is one; the whole row links there.
   const act = to && (kind === 'invite' || kind === 'game') ? t('play.banner.join') : to && kind === 'gift' ? t('gift.open') : null;
   const linked = Boolean(to || href);
   const row = useRef<HTMLLIElement>(null);
   const { slide, handlers, dragging } = useSwipe(open, onOpen, onRemove, row);
 
-  // a row on its way out holds its height for a moment and then closes up, so the rows under it rise into its place
+  // A row being removed holds its height briefly, then closes up so the rows below rise into place.
   useEffect(() => {
     const el = row.current;
     if (!leaving || !el) return;
@@ -369,7 +353,7 @@ function NoteRow({
       className={`note-row${unread ? ' is-unread' : ''}${linked ? ' is-linked' : ''}${open ? ' is-open' : ''}${leaving ? ' is-leaving' : ''}`}
       style={{ '--i': Math.min(order, 10) } as React.CSSProperties}
     >
-      {/* what a finger finds under the row as it is pulled aside: the settings, and taking it away */}
+      {/* What a swipe reveals under the row: the settings and the remove button. */}
       <div className="note-under" aria-hidden={!open}>
         <Link to={settingsTo} className="note-under-btn note-under-settings" tabIndex={open ? 0 : -1} onClick={onFollow}>
           <GearIcon size={18} />
@@ -391,7 +375,7 @@ function NoteRow({
             </time>
           </p>
           {body && <p className="note-body">{body}</p>}
-          {/* drawn as a button, and the row's own link is what it does: one stop for a keyboard, not two */}
+          {/* Drawn as a button, but the row's link does the work, so the keyboard has one stop. */}
           {act && (
             <span className="note-act" aria-hidden="true">
               {act}
@@ -399,7 +383,7 @@ function NoteRow({
           )}
         </div>
         {picture && <NotePicture picture={picture} />}
-        {/* with a mouse or a keyboard, the same things a finger finds by pulling the row aside */}
+        {/* For mouse and keyboard, the same actions a swipe reveals. */}
         <div className="note-tools">
           {unread && (
             <button type="button" className="note-tool" aria-label={t('notifications.markReadWhat', { what: title })} title={t('notifications.markRead')} onClick={onRead}>
@@ -415,14 +399,14 @@ function NoteRow({
   );
 }
 
-/** An invitation's colour, as its ticket wears it: the game's for a game invite, a heart's for a friend request. */
+/** An invitation's ticket colour: the game's for a game invite, the heart's for a friend request. */
 function noteTone(note: RailNotification, kind: NoteKind): TicketTone | null {
   if (kind === 'friendRequest') return 'friend';
   if (kind === 'invite' && isPlayGame(note.data?.game)) return note.data.game;
   return null;
 }
 
-/** The face of whoever it is from, or Hevalo's own mark for news from Hevalo, with the kind on its corner. */
+/** The sender's face, or Hevalo's mark for news from Hevalo, with the kind on its corner. */
 function NoteFace({ kind, actor, tone }: { kind: NoteKind; actor: Actor | null; tone: TicketTone | null }): React.JSX.Element {
   const Glyph = KIND_ICON[kind];
   const face = useAvatarSrc(actor?.avatarUrl);

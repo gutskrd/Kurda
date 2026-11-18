@@ -1,21 +1,13 @@
 /*
- * The stage every game is played on (the solo round's shell, and the games
- * with pages of their own): how a game's start, its round and its result
- * look, in one place, so that all of them are plainly the same house.
+ * The stage every game is played on (the solo shell and the games with their own pages):
  *
- *   the start   — the game's emblem, playing, on a night of the stage's
- *                 own; its name and a line under it; the choices as cards
- *                 that stand off the page; one gold button that begins
- *   the round   — a bar that says where you are, a stone for every item;
- *                 the verdict on each answer as a card of its own colour
- *   the result  — the score large, the round's stones under it, what was
- *                 earned as a short list, and the way on in gold
+ *   the start   — the emblem playing on the stage's night, the name, choice cards and one gold button
+ *   the round   — a progress bar of stones, and each answer's verdict as a coloured card
+ *   the result  — the score, the round's stones, what was earned, and the way on in gold
  *
- * The night is the same in the light theme and the dark, as the party
- * games' table is: a place, not a surface of the app. Everything round it
- * wears the theme. Gold is for the one thing to press. Only transform,
- * opacity and colour move; base.css stills every animation under
- * prefers-reduced-motion.
+ * The night looks the same in both themes, as the party games' table does; everything around it follows the theme.
+ * Gold is only for the one thing to press. Only transform, opacity and colour animate, stilled by base.css under
+ * Reduce Motion.
  */
 .gs {
   --gs-tone: #8a5bd6;
@@ -26,7 +18,7 @@
   --gs-gold: var(--stage-gold);
   --gs-gold-lip: var(--stage-gold-lip);
   --gs-gold-ink: var(--stage-gold-ink);
-  /* a letter in its place, and one not in the word: each with the edge it stands on, said here once for the board and the keys */
+  /* A letter in place and a letter not in the word, each with its edge, defined once for the board and keys. */
   --gs-right: #3fa45b;
   --gs-right-lip: #2b703e;
   --gs-absent: #6f7a8a;
@@ -315,10 +307,7 @@
   height: 52px;
 }
 
-/*
- * Where a game played alone would have said what it paid: one quiet line, that such a game earns no XP and where XP
- * is earned. It takes its place and its alignment from the result it stands in.
- */
+/* For a solo game, one quiet line saying it earns no XP and where XP is earned, aligned with its result. */
 .gs-alone {
   max-width: 44ch;
   margin: 0;
@@ -675,7 +664,7 @@ button.gs-back {
 .gs .wa-guess-actions .btn {
   min-height: 52px;
 }
-/* the one who wears the card stands in the game's own light, small as they are beside their turn's headline */
+/* The card's wearer stands in the game's light, small beside the turn's headline. */
 .gs .wa-turn .wa-stage {
   background: radial-gradient(closest-side, color-mix(in srgb, var(--gs-tone) 26%, transparent) 0%, transparent 100%);
 }
@@ -684,7 +673,7 @@ button.gs-back {
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--gs-gold) 16%, transparent);
 }
-/* on the night the silhouette is the green of the game's own picture, in either theme: the same deer wherever it stands */
+/* On the stage's night the silhouette is the green of the game's picture, in either theme. */
 .gs .gs-hero .wa-stage,
 .gs .wa-night .wa-stage {
   color: #45a26a;

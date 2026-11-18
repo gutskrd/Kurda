@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { localeDir, type FeedImage } from '@kurda/shared';
 import { ChevronIcon, CloseIcon } from '../components/icons';
 import { useI18n, useT } from '../i18n/I18nProvider';
+import { prefersReducedMotion } from '../lib/motion';
 import { lockPageScroll } from '../lib/scrollLock';
 import './pictures.css';
 
@@ -9,17 +10,9 @@ import './pictures.css';
 const DOUBLE_MS = 260;
 
 /**
- * A post's pictures, one to four: one picture at its own shape (within
- * limits), two side by side, three as one tall and two stacked, four in a
- * square. Each opens full size in the lightbox.
- *
- * On the wall (`strip`) two or more come one at a time instead, each whole and
- * the full width of the post, swiped or scrolled sideways (see `Strip` below).
- *
- * What a screen reader hears is the author's description of the picture —
- * never the post's text, which the old card used as every picture's alt, so a
- * caption was read out twice and the picture not at all. A picture nobody
- * described is "Picture 2 of 3", which is at least true.
+ * A post's one to four pictures: one at its own shape (within limits), two side by side, three as one tall and two
+ * stacked, four in a square, each opening in the lightbox. On the wall (`strip`) two or more show one at a time. Alt
+ * text is the author's description, never the post's text; an undescribed picture is "Picture 2 of 3".
  */
 export function PostPictures({
   images,
@@ -29,12 +22,11 @@ export function PostPictures({
 }: {
   images: FeedImage[];
   className?: string;
-  /** one at a time, side by side in a row that is swiped, rather than in a grid (the wall) */
+  /** One at a time in a swiped row rather than a grid, as on the wall. */
   strip?: boolean;
   /**
-   * Two quick clicks or taps on a picture (the wall likes the post with it).
-   * When it is given, one click waits a moment to be sure it is not the first
-   * of two before opening the picture; Enter or Space opens it at once.
+   * A double click or tap on a picture, which likes the post on the wall. When given, a single click waits briefly
+   * before opening the picture; Enter or Space opens it at once.
    */
   onDoubleActivate?: () => void;
 }): React.JSX.Element | null {
@@ -60,7 +52,7 @@ export function PostPictures({
       onClick={(e) => {
         if (pending.current !== null) window.clearTimeout(pending.current);
         pending.current = null;
-        // detail is how many clicks in a row this one is; a key press is 0
+        // `detail` counts clicks in a row; a key press is 0.
         if (!onDoubleActivate || e.detail === 0) setOpen(i);
         else if (e.detail === 2) onDoubleActivate();
         else if (e.detail === 1) {
@@ -110,17 +102,10 @@ function singleRatio(img: FeedImage): number {
 }
 
 /**
- * A wall post's pictures, one at a time, each whole and the full width of the
- * post, in a row that snaps from one to the next as it is swiped. All of them
- * take the first one's shape, so the post does not change height while it is
- * swiped. Where you are is said twice, small: "2/3" in the top corner and a dot
- * for each along the bottom, the one shown filled. Neither is read out — each
- * picture already says "Picture 2 of 3", or what it shows.
- *
- * With a mouse there is nothing to swipe, so a round button at each side
- * moves one picture (shown on hover or focus, and not at the ends). In Soranî
- * the first picture is on the right and the next comes in from the left, as a
- * page is turned.
+ * A wall post's pictures one at a time, full width, in a row that snaps as it is swiped. All take the first one's
+ * shape, so the post's height stays put. A "2/3" counter and dots show the position, hidden from screen readers since
+ * each picture names itself. With a mouse, side buttons step through (on hover or focus, not at the ends). In a
+ * right-to-left language the row runs from the right.
  */
 function Strip({
   images,
@@ -134,7 +119,7 @@ function Strip({
   const track = useRef<HTMLDivElement>(null);
   const last = images.length - 1;
 
-  // a right-to-left row scrolls into negative numbers, so it is measured by its size
+  // A right-to-left row scrolls into negative numbers, so the position uses the absolute value.
   const onScroll = (): void => {
     const el = track.current;
     if (!el || el.clientWidth === 0) return;
@@ -145,8 +130,7 @@ function Strip({
     const el = track.current;
     if (!el) return;
     const rtl = getComputedStyle(el).direction === 'rtl';
-    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    el.scrollTo?.({ left: (rtl ? -1 : 1) * to * el.clientWidth, behavior: still ? 'auto' : 'smooth' });
+    el.scrollTo?.({ left: (rtl ? -1 : 1) * to * el.clientWidth, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     setIndex(to);
   };
 
@@ -183,13 +167,11 @@ function Strip({
 }
 
 /**
- * One picture at a time, as large as the screen allows, with its description
- * under it. Arrow keys and the side buttons move between pictures (mirrored
- * for a right-to-left language, so "next" points the way the reader reads);
- * Escape, the × or a click outside the picture closes it, and focus goes back
- * to the picture that was opened.
+ * One picture at a time, as large as the screen allows, with its description below. Arrow keys and side buttons
+ * move between pictures (mirrored right to left); Escape, × or a click outside closes it and focus returns to the
+ * picture opened.
  */
-export function Lightbox({ images, start, onClose }: { images: FeedImage[]; start: number; onClose: () => void }): React.JSX.Element {
+function Lightbox({ images, start, onClose }: { images: FeedImage[]; start: number; onClose: () => void }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
   const rtl = localeDir(locale) === 'rtl';
@@ -220,7 +202,7 @@ export function Lightbox({ images, start, onClose }: { images: FeedImage[]; star
       const forward = e.key === 'ArrowRight' ? !rtl : rtl;
       go(forward ? 1 : -1);
     } else if (e.key === 'Tab') {
-      // the three buttons are all there is to reach; keep focus among them
+      // Keep focus among the three buttons.
       const items = [...(e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('button')];
       const first = items[0];
       const last = items[items.length - 1];

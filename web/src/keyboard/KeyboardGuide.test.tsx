@@ -91,7 +91,7 @@ describe('Get the Kurmancî keyboard', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  /** with the defaults (key bar on, forgiving), a way out that changed nothing was no way out */
+  /** With the defaults (key bar on, forgiving), only options that change something are offered. */
   it('with the defaults, points at the keys already there and offers no accents at all', async () => {
     const onClose = vi.fn();
     const user = userEvent.setup();

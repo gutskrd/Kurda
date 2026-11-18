@@ -1,16 +1,7 @@
 /*
- * The start of Impostor (impostor/Start.tsx) and the choices drawn as
- * pictures (impostor/PictureRadio.tsx).
- *
- * The game has a look of its own: a night-blue table with gold on it, the
- * colours of the masked card in its emblem. The hero is that table, in both
- * themes, because it is a place rather than a panel of the page; everything
- * under it is the page's own surfaces, each tinted with the colour of the
- * picture it holds (`--tone`, set where the picture is drawn).
- *
- * The one thing to press is gold and stands a little off the page on its own
- * edge; nothing else on the page is that colour and that weight. Under Reduce
- * Motion the hand of cards is still and nothing lifts.
+ * Impostor's start page (impostor/Start.tsx) and picture choices (impostor/PictureRadio.tsx). The hero is the game's
+ * night-blue and gold table in both themes; the rest uses page surfaces tinted by each picture's `--tone`. The main
+ * button is the only gold one. Under Reduce Motion nothing moves.
  */
 .imp-start {
   display: grid;
@@ -209,7 +200,7 @@
 .imp-cat-strip {
   display: flex;
   gap: var(--space-2);
-  /* 8px more room above the row, taken back in its margin, so a finger just over a picture still lands on it and nothing moves */
+  /* 8px of padding above the row, taken back by the margin, so a tap just above a picture still lands on it. */
   margin: -8px calc(var(--space-4) * -1) 0;
   padding: 10px var(--space-4) var(--space-2);
   list-style: none;
@@ -280,7 +271,7 @@
 }
 .pic-radio.is-strip .pic-radio-options {
   display: flex;
-  /* 8px more room above the row, taken back in its margin, so a finger just over a picture still lands on it and nothing moves */
+  /* 8px of padding above the row, taken back by the margin, so a tap just above a picture still lands on it. */
   margin: -8px calc(var(--space-4) * -1) 0;
   padding: 10px var(--space-4) var(--space-2);
   overflow-x: auto;

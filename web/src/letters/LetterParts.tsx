@@ -4,11 +4,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { FlagIcon } from '../components/icons';
 import { LetterOnPaper } from './PaperSheet';
 
-/**
- * The small pieces the letters pages share: a pen pal's bird as their
- * picture, and a letter as it is read. The paper a letter is written on is
- * the composer's own (LetterComposer.tsx).
- */
+/** Parts the letters pages share: a pen pal's bird as their picture, and a letter as it is read. */
 
 /** Somebody's pigeon, its portrait in a round of its own as their picture. Decoration: their name is always beside it. */
 export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }): React.JSX.Element {
@@ -18,10 +14,8 @@ export function BirdBadge({ bird, size = 44 }: { bird: number; size?: number }):
 }
 
 /**
- * A letter as it is read: who wrote it and when, over the letter on its own
- * paper with its drawing and notes, and for one written to you, the way to
- * report it. A letter Hevalo took down says so on a plain sheet, and shows
- * nothing of what was on it.
+ * A letter as read: who wrote it and when, the letter on its paper, and a report button for one written to the
+ * reader. A letter taken down by moderation shows only that, on a plain sheet.
  */
 export function LetterSheet({ letter, from, onReport }: { letter: LetterItem; from: string; onReport?: () => void }): React.JSX.Element {
   const t = useT();

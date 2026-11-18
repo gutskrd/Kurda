@@ -3,17 +3,15 @@ import type { ApiClient } from '../lib/api';
 import type { ApiResult } from '../lib/types';
 
 /**
- * The rating box's three calls (contract §F; shapes in @kurda/shared
- * `feedback`). The web never asks for a store review, so it only ever reads
- * `shouldPrompt` from the state.
+ * The rating box's API calls (shapes in @kurda/shared `feedback`). The web never asks for a store review, so it only
+ * reads `shouldPrompt` from the state.
  */
 
 /**
- * What the web build calls its version in an answer: "web", or "web-<build>"
- * when the build says which (VITE_APP_VERSION). The API takes letters,
- * digits, dots, dashes and the like, up to 40.
+ * The web build's version in an answer: "web", or "web-<build>" from VITE_APP_VERSION. The API accepts letters,
+ * digits, dots and dashes, up to 40 characters.
  */
-export const WEB_APP_VERSION = webVersion(import.meta.env.VITE_APP_VERSION);
+const WEB_APP_VERSION = webVersion(import.meta.env.VITE_APP_VERSION);
 
 export function webVersion(build: string | undefined): string {
   const b = (build ?? '').trim().replace(/[^\w.+-]/g, '').slice(0, 30);
@@ -31,7 +29,7 @@ export function sendFeedback(
   return client.post<{ id: string }>('/me/app-feedback', { ...body, platform: 'web', appVersion: WEB_APP_VERSION });
 }
 
-/** "Not now": the box counts as shown, on every device. */
+/** "Not now": the box counts as shown on every device. */
 export function dismissFeedback(client: ApiClient): Promise<ApiResult<{ ok: true }>> {
   return client.post<{ ok: true }>('/me/app-feedback/dismiss');
 }

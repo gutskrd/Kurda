@@ -5,45 +5,13 @@ import { countLabel, type NavItem } from '../components/TopNav';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * The bar of places, on a phone: the same list the top bar has on a wide
- * screen (`useNavLinks`), in one rounded bar that floats over the bottom of
- * the window, each place an icon with its word under it. It is the phone
- * app's own bar (mobile/src/navigation/TabBar.tsx), for the same reasons.
+ * The phone's bar of places (`useNavLinks`), floating and solid over the bottom of the window like the phone app's
+ * (mobile/src/navigation/TabBar.tsx), each place an icon with its label; the page leaves room for it (shell.css).
  *
- * It floats, clear of the window's edges, so the page is seen to carry on
- * under and round it and the bar reads as something to hold, not as the end
- * of the screen. It is solid: nothing shows through between the icons. The
- * page leaves room for it under its last row (shell.css).
- *
- * Every place says what it is. An open book and a paper plane mean Learn and
- * Messages only to somebody who already knows; a word under each is read at
- * once, in the reader's own language.
- *
- * The place you are on is told three ways, none of them colour alone: its
- * glyph is drawn solid where the others are in outline, its word is in the
- * page's ink and a step heavier, and a soft capsule sits behind it. The
- * capsule slides along the bar to the place chosen, so the change is seen
- * moving and not only found. That is all that moves, and for a reader who
- * asked for less motion nothing does: the capsule is simply behind the place
- * they are on.
- *
- * Two things badge, and nothing else does: Messages, with how many are unread
- * (1–9, then "9+"), and Profile, with a dot when something of yours is
- * waiting. Both are said in words in the link's name — "Messages, 3 unread" —
- * because a number in a coloured circle is nothing a screen reader can see.
- *
- * Pressing the place you are already on takes its page back to the top.
- *
- * A visitor has the two places a visitor can use and, beside them, the way
- * in: without an account there are no messages and no profile, and Sign in
- * is what stands where they would be.
- *
- * In Arabic and Soranî the bar runs with the page, Home on the right.
- *
- * Only the root of a place draws it (`isPlaceRoot`, roots.ts, which the app's
- * shell asks). It is after the page in the document, so a keyboard and a
- * screen reader reach the page first, and it is a `nav` with the name the
- * list of places has on a wide screen: on a phone it is that list.
+ * The current place shows a solid glyph, a heavier label and a capsule that slides to it (still under Reduce Motion).
+ * Messages shows an unread count (1–9, then "9+") and Profile a dot, both also in the link's name. Pressing the
+ * current place scrolls to the top. Visitors see their two places and Sign in. It is mirrored in Arabic and Soranî,
+ * drawn only on place roots (`isPlaceRoot`), and comes after the page in the document as the `nav` of places.
  */
 export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.Element {
   const t = useT();

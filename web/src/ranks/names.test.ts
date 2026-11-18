@@ -25,7 +25,7 @@ const t = translator(en);
 describe('names', () => {
   it('has words for every badge in the shared catalogue, and nothing else', () => {
     expect(Object.keys(BADGE_TEXT).sort()).toEqual(BADGES.map((b) => b.key).sort());
-    // every secret, and only secrets, has a hint
+    // Every secret, and only secrets, has a hint.
     for (const b of BADGES) expect(Boolean(BADGE_TEXT[b.key]!.hint), b.key).toBe(b.secret);
   });
 
@@ -70,7 +70,7 @@ describe('names', () => {
     for (const r of FRIENDLY_REASONS) expect(friendlyReason(t, r), r).toBeTruthy();
     expect(friendlyReason(t, 'unverified')).toBe('not everyone has confirmed their email yet.');
     expect(friendlyReason(t, 'unverified', true)).toBe('confirm your email to play rated games.');
-    // no personal version: the shared sentence
+    // No personal version, so the shared sentence.
     expect(friendlyReason(t, 'need-two', true)).toBe('it needs at least two players.');
     expect(friendlyReason(t, null)).toBeNull();
   });

@@ -27,29 +27,14 @@ import { useAvailability, useGameDialect, useOpenRound } from './soloRounds';
 import './memory-thief.css';
 
 /**
- * The Memory Thief (/app/games/memory-thief).
+ * The Memory Thief (/app/games/memory-thief). A passage on a page is studied while a ribbon counts down the time; then
+ * the chosen words lift off and leave glowing gaps. The player fills them from a tray of tiles (pick a gap, then a
+ * word) or, at advanced difficulty, by typing with the key bar. A wrong first try dims the right gaps and empties the
+ * wrong ones; once done, the words settle back with their meanings and any wrong answers beside them. Soranî reads
+ * right to left; under Reduce Motion the words simply vanish and the gaps are plain.
  *
- * The stage is a page on a desk. While the passage is studied a thin ribbon
- * along the page's top edge runs down with the time; then the thief comes:
- * the words that will vanish lift off the paper like wet ink, one after
- * another, and where they stood soft glowing gaps are left. The player gives
- * the words back — from tiles in a tray below the page (a gap is chosen, then
- * a word; a filled gap empties when tapped) or, at the advanced difficulty,
- * typed into numbered fields with the key bar — and the words appear in the
- * gaps as they are given.
- *
- * A wrong first try dims the gaps that are right and lets the wrong ones
- * glow again, emptied. Once a passage is done the words settle back into the
- * page in the reveal, each with what it means, and anything given wrongly
- * beside it.
- *
- * Soranî pages read right to left. Under reduced motion nothing lifts or
- * glows: the words are simply gone, and the gaps are plain.
- *
- * The server sends a passage whole while it is studied and with its gaps only
- * once the study is over (`begin`), never both at once, and a round come back
- * to after that opens on the gaps: the page keeps the studied text only long
- * enough for the ink to lift off it.
+ * The server sends the whole passage for study and the gapped one only after `begin`, never both, so a resumed round
+ * opens on the gaps; the studied text is kept only long enough to animate.
  */
 
 type Round = SoloRound<MemoryThiefItemView, MemoryThiefHint, MemoryThiefCorrection>;

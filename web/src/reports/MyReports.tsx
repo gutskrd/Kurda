@@ -26,17 +26,13 @@ const STATUS: Record<ReportStatus, MessageKey> = {
 };
 
 /**
- * My reports (/app/settings/reports): what you reported, and what became of it.
- *
- * A report used to vanish the moment it was sent — no receipt, no outcome —
- * which teaches people that reporting does nothing. Each one now has its
- * state in plain words. "We took action" never says what the action was: the
- * other person's sanction is theirs to know, not the reporter's. A "doesn't
- * break our rules" answer can be questioned once, for six months.
+ * My reports (/app/settings/reports): each report and its state in plain words. "We took action" never says what
+ * action, since the other person's sanction is theirs to know. A "doesn't break our rules" answer can be questioned
+ * once, within six months.
  */
 export function MyReports(): React.JSX.Element {
   const t = useT();
-  // what became of a report is asked every time: an answer shown a moment old could be the wrong one
+  // Fetched fresh every time, since a cached outcome could be stale.
   const { data, loading, error, reload } = useApiGet<MyReportsPage>('/me/reports', { fresh: true });
 
   return (
@@ -101,7 +97,7 @@ function ReportRow({ report }: { report: MyReport }): React.JSX.Element {
         <span className="myreport-title">
           <strong>{t(CATEGORY_LABEL[report.category])}</strong>
           <span className="myreport-what">
-            {/* a name or a title as the reporter could already see it, written in its own direction */}
+            {/* A name or title the reporter could already see, in its own direction. */}
             {report.targetLabel ? (
               <>
                 {what} · <bdi>{report.targetLabel}</bdi>

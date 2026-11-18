@@ -5,29 +5,12 @@ import { DEER_BOARD_TEXT, DEER_INK, DEER_PICTURE, DEER_VIEW, deerBoard, deerCard
 const MASCOT = '/mascot-deer.png';
 
 /**
- * Hevalo the deer — the mascot from the app icon — holding up a wooden board.
- *
- * The deer is the icon's own picture, so it is exactly the mascot; the board
- * and the forelegs that hold it are drawn over it (`@kurda/shared` deer.ts),
- * the same as on the phone. It holds the rating board with its five stars, or
- * a sign with the letters it wants you to be able to type.
- *
- * Alive but calm: it bobs a little (CSS keyframes in feedback.css), and as
- * stars are chosen the board tips up — down a little with few, held up high
- * with five, never a frown. With reduced motion it stands still, and the
- * board simply changes.
- *
- * Decorative: the words around it say everything it does, so it is hidden from
- * assistive technology.
+ * Hevalo the deer from the app icon, holding up a board drawn over the picture (`@kurda/shared` deer.ts), as on the
+ * phone: the five rating stars, or a sign with letters. It bobs gently (feedback.css) and the board tips up as stars
+ * are chosen; under Reduce Motion it stands still. Decorative, so hidden from assistive technology.
  */
 
-export type DeerBoard = { kind: 'stars'; stars: number } | { kind: 'letters'; letters: string; lang?: string; dir?: 'ltr' | 'rtl' };
-
-/**
- * The board's angle for a number of stars: tipped down and to one side with
- * none chosen, level at three, held up at a jaunty angle at five.
- */
-export const tiltFor = deerTiltFor;
+type DeerBoard = { kind: 'stars'; stars: number } | { kind: 'letters'; letters: string; lang?: string; dir?: 'ltr' | 'rtl' };
 
 /** A group drawn from the shared deer's markup. */
 function Layer({ markup, className, style }: { markup: string; className?: string; style?: React.CSSProperties }): React.JSX.Element {
@@ -40,10 +23,10 @@ export function HevaloDeer({
   cheer = false,
   className,
 }: {
-  /** width in CSS pixels; the drawing is a little taller than it is wide */
+  /** Width in CSS pixels; the drawing is a little taller than it is wide. */
   size?: number;
   board: DeerBoard;
-  /** a little hop of joy (the keyboard "try it" box, when every letter is in) */
+  /** A small hop, as when every letter is in the keyboard guide's "try it" box. */
   cheer?: boolean;
   className?: string;
 }): React.JSX.Element {
@@ -59,12 +42,12 @@ export function HevaloDeer({
       focusable="false"
       data-stars={board.kind === 'stars' ? stars : undefined}
     >
-      {/* the lilac card the logo's deer sits on, as a soft disc that stays put */}
+      {/* The lilac card the logo's deer sits on, as a soft disc that stays put. */}
       <Layer markup={deerCard()} />
       <g className="deer-body">
         <image className="deer-mascot" href={MASCOT} x={DEER_PICTURE.x} y={DEER_PICTURE.y} width={DEER_PICTURE.w} height={DEER_PICTURE.h} />
-        {/* the board, held up by both forelegs; it tips with the stars */}
-        <g className="deer-board" style={{ ['--deer-tilt' as string]: `${tiltFor(stars)}deg` }}>
+        {/* The board, held up by both forelegs, tips with the stars. */}
+        <g className="deer-board" style={{ ['--deer-tilt' as string]: `${deerTiltFor(stars)}deg` }}>
           <Layer markup={deerBoard(id, board.kind === 'stars' ? { kind: 'stars', stars } : { kind: 'letters' })} />
           {board.kind === 'letters' && (
             <text

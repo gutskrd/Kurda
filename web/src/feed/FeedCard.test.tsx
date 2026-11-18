@@ -56,7 +56,7 @@ const picture = (over: Partial<FeedItem> = {}): FeedItem =>
     ...over,
   });
 
-/** Answer /me, log every write to a post, and toggle a like the way the server does. */
+/** Answers /me, logs every write to a post, and toggles a like as the server does. */
 function serve(): { calls: string[] } {
   const calls: string[] = [];
   let liked = false;
@@ -66,7 +66,7 @@ function serve(): { calls: string[] } {
       const method = init?.method ?? 'GET';
       if (url.endsWith('/me')) return jsonResponse(200, { user: ME });
       const path = url.slice(url.indexOf('/', 8));
-      // only what is done to posts; the app's own heartbeat is not this card's
+      // Only writes to posts; the app's presence heartbeat is not this card's.
       if (method !== 'GET' && !path.startsWith('/me')) calls.push(`${method} ${path}`);
       if (url.includes('/like')) {
         liked = !liked;
@@ -78,7 +78,7 @@ function serve(): { calls: string[] } {
   return { calls };
 }
 
-/** A card that keeps what the server answers, the way the wall does. */
+/** A card that keeps what the server answers, as the wall does. */
 function Live({ start, onRemoved }: { start: FeedItem; onRemoved?: () => void }): React.JSX.Element {
   const [it, setIt] = useState(start);
   return <FeedCard item={it} onChanged={setIt} onRemoved={onRemoved} />;
@@ -90,13 +90,13 @@ describe('FeedCard', () => {
     const post = screen.getByRole('article');
     const order = [...post.querySelectorAll('.fcard-head, .fcard-body, .fcard-media, .fcard-actions')].map((el) => el.className.split(' ')[0]);
     expect(order).toEqual(['fcard-head', 'fcard-body', 'fcard-media', 'fcard-actions']);
-    // the kind and how long ago share the name's line, in the header
+    // The kind and age share the name's line in the header.
     const head = post.querySelector('.fcard-head')!;
     expect(within(head as HTMLElement).getByText('Photo')).toHaveClass('fcard-kind');
     const when = within(head as HTMLElement).getByText('2d ago');
     expect(when.tagName).toBe('TIME');
     expect(when).toHaveAttribute('dateTime');
-    // a picture's words are above it as its title and text — not a caption under it after the name
+    // A picture's words are above it as title and text, not a caption below.
     expect(within(post).getByRole('heading', { name: 'Zozan' })).toBeInTheDocument();
     expect(post.querySelector('.fcard-body')).toHaveAttribute('href', '/app/dimen/i1');
     expect(post.querySelector('.fcard-caption, .fcard-comments')).toBeNull();
@@ -116,10 +116,10 @@ describe('FeedCard', () => {
     const row = document.querySelector('.fcard-actions')!;
     const names = [...row.querySelectorAll('.fcard-act')].map((el) => el.getAttribute('aria-label'));
     expect(names).toEqual(['Sign in to like', '4 comments', 'Sign in to repost', 'Share this post', 'Sign in to save']);
-    // a repost nobody has made has no count beside it; share and save never have one
+    // An unreposted post shows no repost count; share and save never have one.
     expect(screen.getByRole('button', { name: 'Sign in to repost' }).querySelector('.fcard-count')).toBeNull();
     expect(screen.getByRole('button', { name: 'Share this post' }).querySelector('.fcard-count')).toBeNull();
-    // and the comment pill is the way to the comments: there is no separate line for them
+    // The comment pill links to the comments; there is no separate line for them.
     expect(screen.getByRole('link', { name: '4 comments' })).toHaveAttribute('href', '/app/library/s1');
     expect(screen.queryByText(/View/)).not.toBeInTheDocument();
   });
@@ -144,7 +144,7 @@ describe('FeedCard', () => {
     renderApp(<FeedCard item={item()} onPage={{ onComment: () => {} }} />);
     const post = screen.getByRole('article');
     expect(post).toHaveClass('is-page');
-    // the words do not link to the page the reader is already on
+    // The words do not link to the page the reader is already on.
     expect(post.querySelector('a.fcard-body')).toBeNull();
     expect(post.querySelector('.fcard-body')).not.toBeNull();
   });
@@ -185,7 +185,7 @@ describe('FeedCard', () => {
     await userEvent.dblClick(open);
     expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeInTheDocument();
     expect(document.querySelector('.fcard-heart-pop')).not.toBeNull();
-    // two clicks are a like, not a request to open the picture
+    // A double click likes rather than opening the picture.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
     await userEvent.dblClick(open);

@@ -7,26 +7,13 @@ import { endsAMoment, groupMessages, isEmojiOnly, timeLabel, type Groupable } fr
 import { useLocale, useT } from '../i18n/I18nProvider';
 
 /**
- * A chat thread rendered the way one should read: a pill for each day,
- * consecutive messages from one sender folded into a single run of bubbles
- * that sit close together, and each run with its author ONCE — a face at its
- * foot, by the last thing they said, the way a speech bubble points at who
- * is speaking.
- *
- * Whose words they are is said by side and colour: yours at the end of the
- * line in the app's gold, theirs at its start. So the names are for those who
- * cannot see that — a screen reader hears "You" and the other person's name
- * on every run — and are printed only where the side does not settle it: in
- * a group (`named`), over each run that is somebody else's.
- *
- * The time is printed where a moment of the conversation ends
- * (`endsAMoment`), not under every run; a run without it still has its time
- * for a screen reader, and a bubble shows its own to a pointer resting on it.
- *
- * Shared by the direct and group threads so the two cannot drift apart.
+ * A chat thread shared by direct and group threads: a pill per day, runs of bubbles per sender with one face at the
+ * foot of each run, and the reader's own messages on the end side in gold. Names are always read to screen readers
+ * but printed only in groups (`named`) over other people's runs. The time is printed where a moment ends
+ * (`endsAMoment`); other runs keep it for screen readers and on hover.
  */
 
-export interface ChatMessage extends Groupable {
+interface ChatMessage extends Groupable {
   /** null for a gift or a game card, which `renderBody` draws */
   body: string | null;
   kind?: ChatMessageKind;
@@ -37,10 +24,8 @@ export interface ChatMessage extends Groupable {
   /** group messages only: removed by a moderator or its author */
   deleted?: boolean;
   /**
-   * Your own message that the server has not answered for (chat/useOutbox.ts):
-   * `sending` is on its way and drawn a little dimmed; `failed` never got
-   * there, says so under itself and offers to try again. Neither is ever
-   * given a sent mark or a read receipt.
+   * The reader's unconfirmed message (chat/useOutbox.ts): `sending` is dimmed, `failed` says so with a retry; neither
+   * gets a sent mark or read receipt.
    */
   pending?: 'sending' | 'failed';
 }
@@ -65,11 +50,7 @@ export function MessageList<T extends ChatMessage>({
   renderStatus?: (last: T) => ReactNode;
   /** open a sender's profile — makes the avatar and name the way in */
   onOpenProfile?: (userId: string, username: string) => void;
-  /**
-   * Draw a message that is more than text — a gift, a game card. Return
-   * undefined to let it render as text. The thread supplies it, since what a
-   * card can do (unwrap, join) belongs to the thread.
-   */
+  /** Renders a gift or game card, or returns undefined for plain text; supplied by the thread, which owns card actions. */
   renderBody?: (m: T) => ReactNode | undefined;
   /** report someone else's message, from its options (held, right-clicked, or by keyboard) */
   onReport?: (m: T) => void;
@@ -80,9 +61,7 @@ export function MessageList<T extends ChatMessage>({
 }): React.JSX.Element {
   const locale = useLocale();
   const t = useT();
-  // the day separators are the only words this component owns; `locale` is what
-  // names the weekday and the month, which `toLocaleDateString` otherwise takes
-  // from the browser rather than from the language the reader chose
+  // The locale names weekdays and months, which `toLocaleDateString` would otherwise take from the browser.
   const sections = groupMessages(messages, new Date(), {
     locale,
     today: t('chat.day.today'),

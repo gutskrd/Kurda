@@ -1,12 +1,11 @@
 /**
- * Sending somebody a profile: the device's own share sheet where there is
- * one, and the link copied where there is not (a desktop). The caller says
- * which of the two happened, in its own words.
+ * Sharing a profile link through the device's share sheet, or copying it where there is none; the caller words the
+ * outcome.
  */
-export type ShareOutcome = 'shared' | 'copied' | 'failed';
+type ShareOutcome = 'shared' | 'copied' | 'failed';
 
 /** The address of a profile, as anybody can open it. */
-export function profileUrl(userId: string): string {
+function profileUrl(userId: string): string {
   return new URL(`/app/users/${userId}`, window.location.origin).toString();
 }
 
@@ -17,7 +16,7 @@ export async function shareProfileLink(userId: string, name: string): Promise<Sh
       await navigator.share({ title: name, url });
       return 'shared';
     } catch {
-      // dismissed, or refused: copying is still a working answer
+      // Dismissed or refused, so copying is still a useful fallback.
     }
   }
   try {

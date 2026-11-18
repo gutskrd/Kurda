@@ -92,11 +92,11 @@ describe('RanksPage', () => {
     expect(rows[0]).toHaveTextContent('baran');
     expect(rows[0]).toHaveTextContent('610 points');
     expect(rows[0]).toHaveTextContent('Zozan III');
-    // your own row is "You", and someone still placing says so rather than a tier
+    // The reader's row is "You", and someone still placing says so rather than a tier.
     expect(rows[1]).toHaveTextContent(en['games.you']);
     expect(rows[1]).toHaveClass('rank-me');
     expect(rows[2]).toHaveTextContent(en['ranks.placingShort']);
-    // nobody on a board is a link to find them by
+    // No board row links to a person.
     expect(within(list).queryAllByRole('link')).toHaveLength(0);
     expect(boardUrls(fetchMock)).toEqual([expect.stringContaining('/ranks/boards/wordle-battle?scope=friends')]);
   });
@@ -159,7 +159,7 @@ describe('RanksPage', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Pêşbaziya Serwayan' })).toBeInTheDocument();
     expect(screen.getByRole('article', { name: 'Pêşbaziya Serwayan' })).toHaveTextContent('Placing 2/5');
     await waitFor(() => expect(boardUrls(fetchMock).at(-1)).toContain('/ranks/boards/rhyme-match?scope=friends'));
-    // still placing: no rung says you are on it
+    // Still placing, so no rung is marked as the reader's.
     const ladder = screen.getByRole('heading', { name: en['ranks.ladder'] }).closest('section')!;
     expect(within(ladder).queryByText(en['ranks.youAreHere'])).not.toBeInTheDocument();
   });

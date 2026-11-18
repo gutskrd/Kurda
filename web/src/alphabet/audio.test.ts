@@ -20,7 +20,7 @@ describe('recordings from the admin panel', () => {
     expect(audio.isSynthesised(audio.latinSound('ç'))).toBe(true);
   });
 
-  /** a Soranî letter shares its Kurmancî partner's sound, recording included */
+  /** A Soranî letter shares its Kurmancî partner's sound, recording included. */
   it('carry over to the Soranî partner letter', async () => {
     const audio = await fresh({ clips: { 'kmr:sound:c': 'https://cdn.example/c.wav' } });
     await audio.loadRecordings();
@@ -41,10 +41,7 @@ describe('recordings from the admin panel', () => {
   });
 });
 
-/*
- * The word sets' recordings come in the same answer as the letters', under
- * the words' keys: one request serves the alphabet and the words to know.
- */
+/* The word sets' recordings come in the same answer as the letters', under the words' keys. */
 describe('recordings of the words to know', () => {
   it('play instead of a word’s synthesised clip, and say who says it', async () => {
     const audio = await fresh({
@@ -59,12 +56,12 @@ describe('recordings of the words to know', () => {
     expect(audio.wordSound(red, 'kmr')).toBe('https://cdn.example/sor.wav');
     expect(audio.isSynthesised(audio.wordSound(red, 'kmr'))).toBe(false);
     expect(audio.spokenAlphabet(audio.wordSound(red, 'kmr'))).toEqual([{ src: 'https://cdn.example/sor.wav', voice: { speaker: 'hamo' }, text: 'sor' }]);
-    // the letters' recordings in the same answer arrive with them
+    // The letters' recordings in the same answer arrive with them.
     expect(audio.latinSound('b')).toBe('https://cdn.example/b.wav');
     expect(audio.currentWordSounds().of(red, 'ckb')).toMatch(/^\/audio\/words\//);
   });
 
-  /** grey's dark ł has no synthesised voice: nothing to play until it is recorded */
+  /** Grey's dark ł has no synthesised clip, so there is nothing to play until it is recorded. */
   it('leave a word with no clip and no recording without a sound', async () => {
     const audio = await fresh({ clips: { 'words:colours:ckb:grey': 'http://insecure.example/grey.wav' } });
     const { WORD_COLOURS } = await import('@kurda/shared');

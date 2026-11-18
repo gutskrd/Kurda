@@ -21,12 +21,8 @@ import './letters.css';
 const VISIBLE_GAP_MS = 5000;
 
 /**
- * The correspondence as last read, and the way to read it again. It is read
- * fresh each time, never from memory, since whose turn it is must be what the
- * server says now; but a read that fails because the network or the server
- * did leaves the letters on the page (and the paper with what is on it),
- * rather than putting an error in their place. A refusal (the letters ended
- * by a block, an account held back) is said, since there is nothing to show.
+ * The correspondence, always fetched fresh since whose turn it is must be current. A network or server failure keeps
+ * the letters and the paper on the page; a refusal, such as after a block, is shown since there is nothing to show.
  */
 function useCorrespondence(threadId: string): { data: LetterThread | null; error: string | null; reload: () => void } {
   const t = useT();
@@ -53,18 +49,10 @@ function useCorrespondence(threadId: string): { data: LetterThread | null; error
 }
 
 /**
- * One correspondence (/app/letters/:threadId): every letter, oldest first,
- * each on its own sheet, and at the foot either the paper to write back on —
- * when their letter is the last — or a line saying your bird is with them.
- *
- * The pen pal's ⋯ holds what ends things, plainly named: report them, block
- * them, and say goodbye (asked twice), which closes the letters for both. A
- * letter written to you can be reported on its own, from under it.
- *
- * It is read again when the server says something changed in your letters
- * and when the tab is shown again, so their next letter appears here while
- * it is open (it still lands at your window once, as every letter does). A
- * letter being written back is kept as it is written (letters/drafts.ts).
+ * One correspondence (/app/letters/:threadId): every letter oldest first, then the paper to reply on when theirs is
+ * last, or a line saying the reader's bird is with them. The pen pal's ⋯ offers report, block and goodbye (confirmed
+ * twice), which ends the letters for both; a single letter can be reported from under it. It refetches when the server
+ * reports a change and when the tab is shown again. A reply in progress is kept as a draft (letters/drafts.ts).
  */
 export function LetterThreadPage(): React.JSX.Element {
   const { threadId = '' } = useParams();

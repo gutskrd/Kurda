@@ -1,14 +1,6 @@
 /*
- * Civak — the community wall.
- *
- * One column of posts, all in the same order whatever the post is, read as one
- * list: no box round a post, and a hairline across the column between one post
- * and the next. A reading width rather than the full page: a wall of text
- * stretched across a desktop is a wall nobody reads.
- *
- * Colour is kept for what it means. Icons, counts and controls are in ink on a
- * soft grey; the heart turns red when you have liked a post, a repost you made
- * turns green, and a saved post's bookmark fills in.
+ * Civak, the community wall: one reading-width column of posts with hairlines between them and no boxes. Icons and
+ * controls are ink on soft grey; colour marks state (a red heart for a like, green for your repost, a filled bookmark).
  */
 .container-feed {
   max-width: 640px;
@@ -330,11 +322,7 @@
   max-width: 34ch;
 }
 
-/*
- * The row over the posts: what the wall is narrowed to, if it is, at the start;
- * the filter and the + at the end. It reads as "what you are looking at … and
- * how to change it or add to it".
- */
+/* The row above the posts: the current narrowing at the start, the filter and + at the end. */
 .feed-filters {
   display: flex;
   align-items: center;
@@ -343,10 +331,7 @@
   margin-bottom: 18px;
 }
 
-/*
- * One button for posting anything, making no claim about what. It used to hang
- * below the page heading, attached to nothing.
- */
+/* One + button for posting anything. */
 .post-plus {
   display: inline-flex;
   align-items: center;
@@ -365,11 +350,7 @@
 .post-plus:hover {
   background: var(--primary-hover);
 }
-/*
- * While today's reward waits to be claimed, Claim is the page's one filled
- * button and the + is drawn as a secondary one (feed/PostButton.tsx): the same
- * place, the same size, the page's quiet ground with an edge.
- */
+/* While today's reward is unclaimed, Claim is the filled button and the + becomes secondary (feed/PostButton.tsx). */
 .post-plus.is-secondary {
   background: var(--surface-2);
   box-shadow: inset 0 0 0 1px var(--border-strong);

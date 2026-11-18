@@ -18,27 +18,14 @@ import { useTreeSeason } from './season';
 import './tree.css';
 
 /**
- * A tree, drawn (shared `art/trees.ts`), the same picture the phone shows.
+ * A tree drawn from shared `art/trees.ts`, as on the phone, in the given season or today's. With `alive` it is drawn
+ * in layers: the still ground, the plant (with `.tree-art-plant` and `.tree-art-start` wrappers for the page's own
+ * animations, so they never cut each other short) swaying in the shared `TREE_SWAY` breeze from the shared clock, a
+ * great tree's swing hanging from it, and the still front. Otherwise it is one still picture. A kind this build has no
+ * drawing for is not drawn.
  *
- * `alive`, it is drawn in its layers — the ground, which stands still; the
- * plant over it, which the page can bring in (`.tree-art-plant`: dropped in
- * as a seed, grown) and start (`.tree-art-start`: watered, shaken), each on
- * an element of its own so that one never cuts another short, and which
- * sways inside those in the breeze; the
- * swing a great tree has, which hangs from the plant and swings a little
- * after it; and the front, which stands still over the plant's foot. The
- * breeze is the shared one (`TREE_SWAY`), started where the shared clock
- * has it, so a tree drawn again carries on swaying where it was. Otherwise
- * it is one still picture, which is what a profile and a list want. A kind
- * this build has no drawing for (the server knows one newer than the page)
- * is not drawn at all.
- *
- * It is drawn in a season, standing on its round of grass with its long
- * shadow (shared `art/trees.ts`): the one given, or the learner's own today.
- *
- * `title` names it for a screen reader; leave it empty where the words beside
- * it already say what it is. `fluid`, it fills whatever holds it (which gives
- * it its size, and keeps it square) and `size` is only how finely it is drawn.
+ * `title` names it for screen readers; leave it empty when nearby text does. With `fluid` it fills its square holder
+ * and `size` only sets the drawing's resolution.
  */
 export function TreeArt({
   species,
@@ -73,15 +60,15 @@ export function TreeArt({
     const part = (p: 'ground' | 'plant' | 'swing' | 'front', key: string) => ({ __html: treeSvg({ ...base, part: p, idPrefix: `${id}${key}` }) });
     return { ground: part('ground', 'g'), plant: part('plant', 'p'), swing: rig.swing ? part('swing', 's') : null, front: rig.front ? part('front', 'f') : null, hang: rig.swing };
   }, [species, stage, health, size, alive, id, drawnIn]);
-  // where the breeze is now, read once as the tree is laid: every tree on the page, and the one drawn after this, sways in step with it
+  // The breeze's phase, read once, so every tree on the page sways in step.
   const phase = useMemo(() => treePhase(Date.now()), []);
   if (!known || !layers) return null;
   const named = title ? { role: 'img', 'aria-label': title } : { 'aria-hidden': true };
-  // a withered tree does not sway, nor a seed: there is nothing on them for the air to move
+  // A withered tree or a seed does not sway.
   const still = health === 'withered' || treeSwayDeg(stage) === 0;
   const foot = `${TREE_FOOT.x * 100}% ${TREE_FOOT.y * 100}%`;
   const breeze = { transformOrigin: foot, animationDuration: `${TREE_SWAY.ms}ms`, animationDelay: `${Math.round(-phase * TREE_SWAY.ms)}ms`, '--sway': `${treeSwayDeg(stage)}deg` } as React.CSSProperties;
-  // the swing leans about the line its ropes are tied on, the same breeze a little later
+  // The swing leans about the line its ropes are tied to, in the same breeze a little later.
   const swinging = (hang: { x: number; y: number }): React.CSSProperties =>
     ({
       transformOrigin: `${hang.x * 100}% ${hang.y * 100}%`,
@@ -111,14 +98,14 @@ export function TreeArt({
   );
 }
 
-/** A drop of water, drawn: beside a count of water, and falling from the can. `fluid`, it fills what holds it. */
+/** A drop of water, beside a water count or falling from the can. With `fluid` it fills its holder. */
 export function WaterDrop({ size, fluid = false }: { size: number; fluid?: boolean }): React.JSX.Element {
   const id = `w${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
   const markup = useMemo(() => ({ __html: waterDropSvg({ size, idPrefix: id }) }), [size, id]);
   return <span className={`water-drop${fluid ? ' is-fluid' : ''}`} style={fluid ? undefined : { width: size, height: size }} aria-hidden="true" dangerouslySetInnerHTML={markup} />;
 }
 
-/** The watering can, drawn. `fluid`, it fills what holds it. */
+/** The watering can. With `fluid` it fills its holder. */
 export function WateringCan({ size, fluid = false }: { size: number; fluid?: boolean }): React.JSX.Element {
   const id = `c${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
   const markup = useMemo(() => ({ __html: wateringCanSvg({ size, idPrefix: id }) }), [size, id]);

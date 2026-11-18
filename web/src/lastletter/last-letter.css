@@ -1,9 +1,6 @@
 /*
- * The Last Letter's staging (lastletter/Board.tsx): a ring around the next
- * letter, the chain of word cards with each link lit, the players' strike
- * marks, and the word box. Flat planes from the palette, no shadows or
- * gradients. Under Reduce Motion nothing slides or shakes; colour alone says
- * what happened.
+ * The Last Letter's board (lastletter/Board.tsx): the letter ring, the chain of word cards, the strike marks and the
+ * word box. Flat palette colours with no shadows or gradients; under Reduce Motion nothing slides or shakes.
  */
 .ll-page {
   --ll-link: var(--gold-ink);
@@ -38,7 +35,7 @@
 
 .ll-board {
   display: grid;
-  /* a track that never grows to fit the chain: the chain scrolls inside it instead */
+  /* A track that never grows to fit the chain, which scrolls inside it instead. */
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4, 16px);
   min-width: 0;
@@ -50,7 +47,7 @@
   min-width: 0;
 }
 
-/* the turn: the ring with the letter in it, and whose turn it is */
+/* The turn: the ring with the letter in it, and whose turn it is. */
 .ll-turn {
   display: flex;
   align-items: center;
@@ -116,7 +113,7 @@
   color: var(--ink-3, var(--ink));
 }
 
-/* the chain: cards in a row, the link letters lit */
+/* The chain: cards in a row, with the link letters lit. */
 .ll-chain.is-empty {
   padding: var(--space-4, 16px);
   border: 1px dashed var(--border-strong);
@@ -127,9 +124,8 @@
   margin: 0;
 }
 /*
- * A scrolling row cuts off whatever reaches past it (reach.css), so the chain
- * keeps 8px more above and below its cards than it shows, and the negative
- * margin gives the 8px back: the cards sit where they always did.
+ * A scrolling row clips anything reaching past it (reach.css), so the chain pads 8px above and below its cards and a
+ * negative margin takes it back.
  */
 .ll-cards {
   display: flex;
@@ -162,7 +158,7 @@
   animation: ll-arrive var(--dur-slow) var(--ease-emphasis) both;
 }
 .ll-card + .ll-card::before {
-  /* the link between two cards: the last letter of one holding the first of the next */
+  /* The link between two cards: one's last letter joined to the next one's first. */
   content: '';
   position: absolute;
   inset-inline-start: -11px;
@@ -196,7 +192,7 @@
   color: var(--ink-3, var(--ink));
 }
 
-/* the players: three strike marks each */
+/* The players, with three strike marks each. */
 .ll-seats {
   display: flex;
   flex-wrap: wrap;
@@ -255,7 +251,7 @@
   font-weight: 600;
 }
 
-/* the word box */
+/* The word box. */
 .ll-compose {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -276,7 +272,7 @@
   margin: 0;
   color: var(--ink-3, var(--ink));
 }
-/* the results' heading takes the focus for screen readers (it is not a stop for the keyboard): no ring for that */
+/* The results heading takes focus for screen readers but is not a keyboard stop, so it has no ring. */
 .mp-room .match-verdict[tabindex='-1']:focus {
   outline: none;
 }
@@ -337,7 +333,7 @@
   }
 }
 
-/* the note under the letter: why it is this letter (a soft ending), or why any letter will do now */
+/* The note under the letter: why it is this letter (a soft ending), or why any letter will do. */
 .ll-note {
   margin: 0.15rem 0 0;
   font-size: 0.85rem;
@@ -349,7 +345,7 @@
   font-size: 0.9rem;
 }
 
-/* the finished game's words, read again */
+/* The finished game's words. */
 .ll-review {
   margin-top: 1rem;
   text-align: start;

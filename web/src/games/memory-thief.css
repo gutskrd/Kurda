@@ -1,13 +1,7 @@
 /*
- * The Memory Thief (games/MemoryThief.tsx): its stage
- * — a page on a desk, the ribbon of study time along the page's top edge,
- * words that lift off the paper like ink, soft glowing gaps, the tray of
- * tiles or the typed fields, and the calm reveal.
- *
- * The game wears its tone (`lp-tone-saffron`, learn/path.css). Only transform
- * and opacity move. Under prefers-reduced-motion base.css lands every
- * movement at once; here the ribbon and the glow also stay still, so the
- * page shows its state by colour alone.
+ * The Memory Thief (games/MemoryThief.tsx): the page, study ribbon, lifting words, glowing gaps, tile tray or typed
+ * fields, and the reveal, in `lp-tone-saffron`. Only transform and opacity animate; under Reduce Motion the ribbon and
+ * glow also stay still.
  */
 
 /* ---- the intro: three steps ------------------------------------------------------- */

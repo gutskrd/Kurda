@@ -3,42 +3,27 @@ import { playGameHue, type PlayGame } from '@kurda/shared';
 import { BookIcon, ChainIcon, HelpIcon, ImpostorIcon, TicketIcon, TilesIcon, WaveformIcon } from '../components/icons';
 
 /**
- * A ticket: the one shape every invitation on the website takes, so asking
- * somebody in feels like handing them something rather than sending a form.
- *
- * Two halves torn along a dashed perforation, with a notch bitten out of each
- * end of the tear: a stub, on the side a line of text starts from (the left
- * in English, the right in Soranî and Arabic), and the body with the words.
- * A lobby's join code is the same ticket stood on end, the stub on top
- * (play/CodeTicket.tsx); a game invite, a friend picked to be asked, someone
- * asked into a lobby and a friend request lie on their side. Being one
- * component, they cannot drift apart.
- *
- * The colour says what it is for: each game its own, the hue of its stamp on
- * the games page (a story game, which has none, the page's violet), a
- * friendship the colour of a heart given, and a ticket that can no longer be
- * used a quiet grey. The shape is drawn on a layer of its own under
- * the content (`ticket-paper`), so a menu opened from inside a ticket is not
- * cut off by its notches. How it looks is in styles/ticket.css, and how it
- * moves (arriving, tearing, folding away, a stamp landing) in motion.css.
+ * The ticket every invitation on the website is drawn as: a stub on the starting side and a body, torn along a
+ * perforation with notches at each end. A lobby's join code stands it on end (play/CodeTicket.tsx). Its tone gives
+ * the colour: each game its stamp's hue, a friendship the heart colour, a spent ticket grey. The shape is a separate
+ * layer under the content (`ticket-paper`), so a menu opened inside is not clipped by the notches. Styles are in
+ * styles/ticket.css and motion in motion.css.
  */
 
-/** What a ticket is for, which is its colour. */
+/** What a ticket is for, which sets its colour. */
 export type TicketTone = PlayGame | 'friend' | 'muted';
 
-/** A ticket lies on its side (stub at the start), or stands on end (stub on top). */
-export type TicketLayout = 'row' | 'column';
+/** A ticket lies on its side (stub at the start) or stands on end (stub on top). */
+type TicketLayout = 'row' | 'column';
 
-/** The classes that make an element a ticket, for a root that is not a plain div (a link, a list item). */
+/** The classes that make an element a ticket, for a root that is not a plain div, such as a link or list item. */
 export function ticketClass(tone: TicketTone, layout: TicketLayout = 'row', extra?: string | false | null): string {
   return `ticket ticket--${layout} ${ticketToneClass(tone)}${extra ? ` ${extra}` : ''}`;
 }
 
 /**
- * The classes that give an element a ticket's colour, for what is coloured
- * like one without being one (a notification's badge, the fan of tickets just
- * sent): its tone's, and for a game with a stamp, that stamp's hue, whose
- * steps tokens.css sets for the theme and `.ticket-hued` (ticket.css) reads.
+ * The classes that give an element a ticket's colour without its shape, such as a notification's badge: the tone's,
+ * and for a game its stamp's hue, read by `.ticket-hued` (ticket.css).
  */
 export function ticketToneClass(tone: TicketTone): string {
   const hue = tone === 'friend' || tone === 'muted' ? null : playGameHue(tone);
@@ -46,9 +31,9 @@ export function ticketToneClass(tone: TicketTone): string {
 }
 
 type HalfProps = HTMLAttributes<HTMLElement> & {
-  /** a span inside a link or a button, where a div may not go */
+  /** A span, for use inside a link or button where a div may not go. */
   as?: 'div' | 'span';
-  /** a ticket waiting on somebody: a faint light crosses its paper now and then, while the ticket is `is-awake` */
+  /** A ticket waiting on somebody: a faint light crosses its paper now and then while it is `is-awake`. */
   shine?: boolean;
   children?: ReactNode;
 };
@@ -56,7 +41,7 @@ type HalfProps = HTMLAttributes<HTMLElement> & {
 function Half({ kind, as: Tag = 'div', shine = false, className, children, ...rest }: HalfProps & { kind: 'stub' | 'body' }): React.JSX.Element {
   return (
     <Tag className={`ticket-${kind}${className ? ` ${className}` : ''}`} {...rest}>
-      {/* the light runs inside the paper, so the paper's own shape is all it can cross */}
+      {/* The light runs inside the paper, so it is clipped to the paper's shape. */}
       <span className="ticket-paper" aria-hidden="true">
         {shine && <span className="ticket-shine" />}
       </span>
@@ -65,7 +50,7 @@ function Half({ kind, as: Tag = 'div', shine = false, className, children, ...re
   );
 }
 
-/** The stub: the small half, on the start side, that tears off. */
+/** The stub: the small half on the start side that tears off. */
 export function TicketStub(props: HalfProps): React.JSX.Element {
   return <Half kind="stub" {...props} />;
 }
@@ -75,7 +60,7 @@ export function TicketBody(props: HalfProps): React.JSX.Element {
   return <Half kind="body" {...props} />;
 }
 
-/** A ticket in a div, for the common case: its stub, then its body. */
+/** A ticket in a div, for the common case: its stub then its body. */
 export function Ticket({
   tone,
   layout = 'row',
@@ -101,7 +86,7 @@ export function Ticket({
   );
 }
 
-/** Each game's mark, for the stub of its ticket: Peyvok Battle's tiles, Rhyme Match's sound, a story's book. */
+/** Each game's mark for the stub of its ticket. */
 const GAME_GLYPH: Record<PlayGame, (p: { size?: number }) => React.JSX.Element> = {
   'wordle-battle': TilesIcon,
   'rhyme-match': WaveformIcon,
@@ -121,11 +106,7 @@ export function TicketGlyph({ game, size = 22 }: { game?: PlayGame | null; size?
   );
 }
 
-/**
- * A stamp across a ticket: "Joined", "Finished", "Friends". It is words, and
- * read as words; `fresh` lets it land with a small thump, for a stamp that has
- * just been put on (not one that was already there when the ticket was drawn).
- */
+/** A stamp across a ticket, such as "Joined" or "Friends", read as text. `fresh` makes a newly added stamp land. */
 export function TicketStamp({
   tone = 'ink',
   fresh = false,
@@ -141,11 +122,8 @@ export function TicketStamp({
 }
 
 /**
- * Whether a stamp has just been put on in front of the reader: true once
- * `stamp` is something other than what the ticket wore when it was first
- * drawn with its data (`ready`). A game that had already finished when a
- * conversation was opened is simply stamped; one that is joined while the
- * reader watches has its stamp land.
+ * Whether a stamp was added while the reader watched: true once `stamp` differs from what the ticket wore when first
+ * drawn with its data (`ready`).
  */
 export function useFreshStamp(stamp: string | null, ready = true): boolean {
   const [first, setFirst] = useState<string | null | undefined>(() => (ready ? stamp : undefined));

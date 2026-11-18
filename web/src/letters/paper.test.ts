@@ -2,10 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { DECOR_POINTS_MAX, DECOR_STROKES_MAX, DEFAULT_PAPER, PAPER_W, decorBytes, type LetterDecor, type PaperStroke } from '@kurda/shared';
 import { PAGE_FOOT, onPage, pagePoint, pointsLeft, pointsUsed, widthFor } from './paper';
 
-/*
- * The sums under the letter's paper: where a pointer is on the page, and how
- * much more drawing a letter can still carry before the page is full.
- */
+/* The paper's arithmetic: pointer positions on the page, and how much more drawing a letter can carry. */
 
 const line = (points: number): PaperStroke => ({ tool: 'pen', color: 'navy', width: 4, points: Array.from({ length: points * 2 }, (_, i) => (i % 2 ? 100 : i % 1000)) });
 const decor = (strokes: PaperStroke[]): LetterDecor => ({ paper: DEFAULT_PAPER, strokes, notes: [] });

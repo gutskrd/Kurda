@@ -3,13 +3,8 @@ import type { LetterDialect, MultiGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 
 /**
- * Where a multiplayer learning game is offered now (`GET /mp/:game/availability`),
- * for the games that answer more than "with friends or not" — Who Am I?
- * names the difficulties its identities fill. Per dialect; a game is
- * only offered where it says so, and nothing says "coming soon".
- *
- * Read once per page load per game and shared, as The Last Letter's is: the
- * answer moves when content is published, not while somebody is choosing.
+ * Where a multiplayer game is offered per dialect (`GET /mp/:game/availability`), for games such as Who Am I? that also
+ * name their difficulties. Fetched once per page load per game, since it changes only when content is published.
  */
 export interface MpDialectOffer {
   dialect: LetterDialect;

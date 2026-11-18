@@ -11,7 +11,7 @@ describe('news about a group', () => {
   it('tells someone removed that an admin can add them again, and opens their conversations, not the group', () => {
     const removed = { title: 'You were removed from Hevalên Amedê', body: 'An admin can add you again.', to: '/app/messages' };
     expect(say({ kind: 'group_removed' })).toEqual(removed);
-    // a line written while groups could still be open reads the same now that none is
+    // A notification sent while groups could be open reads the same now.
     expect(say({ kind: 'group_removed', privacy: 'open' })).toEqual(removed);
   });
 
@@ -31,14 +31,14 @@ describe('news about a group', () => {
 
   it('tells the admins how many ask to come back, and opens the group on its requests', () => {
     expect(say({ kind: 'group_request' })).toEqual({ title: 'Someone asked to rejoin Hevalên Amedê', body: null, to: '/app/messages?group=g1&info=requests' });
-    // a push carries strings only, as the server writes them
+    // A push carries only strings, as the server writes them.
     expect(say({ kind: 'group_request', count: '3' })?.title).toBe('3 people asked to rejoin Hevalên Amedê');
     expect(say({ kind: 'group_request', count: '1' })?.title).toBe('Someone asked to rejoin Hevalên Amedê');
   });
 
   it('tells a requester they are back in, or that an admin can add them again', () => {
     expect(say({ kind: 'group_request_approved', rejoined: 'true' })).toMatchObject({ title: 'You’re back in Hevalên Amedê', to: '/app/messages?group=g1' });
-    // let back but not put back: they are not in it, so the line opens their conversations
+    // Let back but not re-added, so the line opens their conversations.
     expect(say({ kind: 'group_request_approved', rejoined: 'false' })).toEqual({ title: 'An admin can add you to Hevalên Amedê again', body: null, to: '/app/messages' });
     expect(say({ kind: 'group_request_approved', rejoined: false, privacy: 'open' })?.title).toBe('An admin can add you to Hevalên Amedê again');
   });
@@ -52,7 +52,7 @@ describe('news about a group', () => {
 
   it('shows the server words, still opening the group, when the group is not named', () => {
     expect(groupNotification(note({ kind: 'group_banned', groupId: 'g1' }), t, 'en')).toEqual({ title: 'Server title', body: 'Server body', to: '/app/messages?group=g1' });
-    // but never the group itself for someone it has left out
+    // Never the group itself for someone outside it.
     expect(groupNotification(note({ kind: 'group_removed', groupId: 'g1' }), t, 'en')?.to).toBe('/app/messages');
   });
 

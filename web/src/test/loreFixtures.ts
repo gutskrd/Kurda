@@ -1,10 +1,6 @@
 /**
- * Fixtures for the riddles' and proverbs' tests. Not shipped: only test files
- * import it.
- *
- * The riddle's hint, answer and explanation are marked words that appear
- * nowhere else, so a test can look for them in the whole page and know that
- * finding one means something leaked.
+ * Fixtures for the riddle and proverb tests. The hint, answer and explanation are marked words found nowhere else,
+ * so finding one anywhere on the page means it leaked.
  */
 import type { ProverbView, RiddleAnswer, RiddleCard, RiddleDetail, RiddleHint, RiddleList } from '@kurda/shared';
 

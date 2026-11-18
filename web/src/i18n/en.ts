@@ -888,8 +888,6 @@ export const en = {
   'report.aboutPlayer': 'More about {name}',
   'report.group': 'Report this group',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Safety',
-  'settings.safety.help': 'What happened to your reports, and any decisions about your account.',
   'standing.backToSettings': 'Settings',
   'reports.mine.title': 'My reports',
   'reports.mine.intro': 'What you reported, and what we decided. Only you can see this.',
@@ -3285,10 +3283,10 @@ export const en = {
   'games.whoAmI.notOffered': 'Ez kî me? needs more reviewed words and questions before it can be played in this Kurdish.',
   'games.whoAmI.share': 'Play Ez kî me? with me on Hevalo! Open Games → Join with a code and type {code}.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} {tier} League',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'Notifications',
   'notifications.pref.streak': 'Streak reminders',
   'notifications.pref.friends': 'Friend activity',
@@ -3302,7 +3300,7 @@ export const en = {
   'notifications.quietFrom': 'From',
   'notifications.quietTo': 'To',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'Tags',
   'tags.main': 'Main tag',
   'tags.noMain': 'No main tag yet.',

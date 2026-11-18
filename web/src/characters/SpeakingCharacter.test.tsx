@@ -4,15 +4,11 @@ import { ACTS, encodeLipsync, visemeAt, voiceTimeline, type LipsyncTimeline, typ
 import { I18nProvider } from '../i18n/I18nProvider';
 import { SpeakingCharacter, type SpeakingCharacterProps } from './SpeakingCharacter';
 
-/*
- * The speaking face against a fake <audio> and a frame loop the test turns by
- * hand: what it shows is read straight off the drawing's groups, which is
- * all a viewer sees.
- */
+/* The speaking face against a fake <audio> and a hand-turned frame loop, read straight off the drawing's groups. */
 
 const CLIP = 'https://cdn.test/silav.m4a';
 
-/** An <audio> that does only what the face reads: where it is, whether it plays, how long it is, and its events. */
+/** An <audio> with only what the face reads: position, playing state, duration and events. */
 class FakeMedia extends EventTarget {
   src = '';
   currentTime = 0;
@@ -20,7 +16,7 @@ class FakeMedia extends EventTarget {
   ended = false;
   duration = Number.NaN;
   readyState = 0;
-  /** start playing `src` at `seconds` */
+  /** Starts playing `src` at `seconds`. */
   start(src = CLIP, seconds = 0): void {
     this.src = src;
     this.currentTime = seconds;
@@ -45,7 +41,7 @@ const TIMELINE: LipsyncTimeline = {
 };
 const SAVED: RecordingVoice = { speaker: 'hamo', lipsync: encodeLipsync(TIMELINE) };
 
-// a frame loop turned by hand
+// A frame loop turned by hand.
 let frames = new Map<number, FrameRequestCallback>();
 let nextFrame = 1;
 let clock = 1000;
@@ -98,7 +94,7 @@ describe('SpeakingCharacter', () => {
   it('draws every mouth and both eyes once, showing the resting mouth and open eyes', () => {
     const { root } = face(new FakeMedia());
     expect(root.querySelectorAll('svg')).toHaveLength(1);
-    // the ten visemes and the two expressions, the grin and the tongue
+    // The ten visemes and the two expressions, the grin and the tongue.
     expect(root.querySelectorAll('[data-mouth]')).toHaveLength(12);
     expect(mouth(root)).toBe('rest');
     expect(root.querySelector('[data-eyes="open"]')).not.toHaveAttribute('visibility');
@@ -209,7 +205,7 @@ describe('SpeakingCharacter', () => {
     unmount();
     expect(frames.size).toBe(0);
     expect(cleared).toHaveBeenCalled();
-    // and no longer listens
+    // It no longer listens.
     act(() => media.start());
     expect(frames.size).toBe(0);
   });
@@ -311,7 +307,7 @@ describe('SpeakingCharacter', () => {
     for (const part of ['ear-left', 'ear-right', 'nose', 'hop', 'tilt', 'shadow']) expect(root.querySelector(`[data-sc="${part}"]`), part).not.toBeNull();
     expect(root.querySelector('[data-pupil="left"]')).not.toBeNull();
     expect(root.querySelector('[data-pupil="right"]')).not.toBeNull();
-    // every way the eyes can be, one shown at a time
+    // Every eye state, one shown at a time.
     for (const state of ['open', 'half', 'closed', 'happy']) expect(root.querySelector(`[data-eyes="${state}"]`), state).not.toBeNull();
     expect([...root.querySelectorAll('[data-eyes]')].filter((g) => !g.hasAttribute('visibility'))).toHaveLength(1);
   });
@@ -325,7 +321,7 @@ describe('SpeakingCharacter', () => {
     const left = root.querySelector<SVGGElement>('[data-pupil="left"]')!;
     const moved = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(left.style.transform);
     expect(moved).not.toBeNull();
-    // far off to the right: the pupil goes right
+    // Far off to the right, so the pupil moves right.
     expect(Number(moved![1])).toBeGreaterThan(0);
   });
 
@@ -343,18 +339,18 @@ describe('SpeakingCharacter', () => {
     expect(root).toHaveClass('is-resting');
     expect(root.querySelector('[data-eyes="closed"]')).not.toHaveAttribute('visibility');
     expect(root.querySelector('[data-sc="head"]')?.getAttribute('transform')).toMatch(/^rotate\(5 /);
-    // three z's for the stylesheet to float up, inside the drawing a screen reader already skips
+    // Three z's for the stylesheet to float up, inside the hidden drawing.
     expect(root.querySelectorAll('.sc-z')).toHaveLength(3);
     expect(root.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
-    // a slower, deeper breath than awake
+    // A slower, deeper breath than when awake.
     expect(root.style.getPropertyValue('--sc-breath-ms')).toBe('5600ms');
-    // the eyes do not follow the pointer while it sleeps
+    // The eyes do not follow the pointer while it sleeps.
     root.getBoundingClientRect = () => ({ left: 100, top: 100, width: 100, height: 100, right: 200, bottom: 200, x: 100, y: 100, toJSON: () => ({}) });
     act(() => {
       window.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 900, clientY: 150, pointerType: 'mouse' }));
     });
     expect(root.querySelector<SVGGElement>('[data-pupil="left"]')!.style.transform).toBe('');
-    // awake, none of it
+    // Awake, none of it.
     const awake = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' } }).root;
     expect(awake.querySelectorAll('.sc-z')).toHaveLength(0);
     expect(awake.querySelector('[data-eyes="open"]')).not.toHaveAttribute('visibility');
@@ -384,7 +380,7 @@ describe('SpeakingCharacter', () => {
     expect(root.querySelector('[data-brows="raised"]')).not.toHaveAttribute('visibility');
     expect(mouth(root)).toBe('o');
     await act(() => new Promise((r) => setTimeout(r, ACTS.surprised.ms + 100)));
-    // Hamo's chuckle
+    // Hamo's chuckle.
     expect(root.querySelector('[data-eyes="happy"]')).not.toHaveAttribute('visibility');
     expect(again).toHaveBeenCalledTimes(3);
   });

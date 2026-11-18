@@ -32,9 +32,8 @@ const pages = (entry: string) =>
   );
 
 /**
- * The server as it is: the list and a riddle's page carry questions alone,
- * and the marked hint, answer and explanation come only from the hint, guess
- * and reveal calls — so if any of them is on the page, the page asked.
+ * The server as it is: list and riddle pages carry only questions, and the marked hint, answer and explanation come
+ * only from the hint, guess and reveal calls, so any of them on the page means it was asked for.
  */
 function server(opts: { signedIn?: boolean; detail?: Parameters<typeof riddleDetail>[0]; guessRight?: string } = {}) {
   const detail = riddleDetail(opts.detail);
@@ -55,7 +54,7 @@ function server(opts: { signedIn?: boolean; detail?: Parameters<typeof riddleDet
   );
 }
 
-/** Everything the page holds: its markup, every attribute (titles, labels) included. */
+/** Everything the page holds, including every attribute such as titles and labels. */
 const markup = (): string => document.body.innerHTML;
 const leaks = (): string[] => Object.values(SECRET).filter((s) => markup().includes(s.split(' ')[0]!));
 const asked = (calls: Call[], pattern: RegExp): Call[] => calls.filter((c) => c.method === 'POST' && pattern.test(c.path));
@@ -66,12 +65,12 @@ describe('the riddles: nothing spoils a riddle before it is asked for', () => {
     pages('/app/learn/riddles');
     await screen.findByRole('region', { name: 'Riddle of the day' });
     expect(screen.getAllByText('Bi te re tê, lê qet nayê girtin. Ew çi ye?').length).toBeGreaterThan(0);
-    // the translations, too, once they are asked for
+    // The translations too, once asked for.
     await userEvent.click(screen.getByRole('button', { name: 'Show translations' }));
     expect(screen.getByText('It comes with you, but can never be caught. What is it?')).toBeInTheDocument();
     expect(leaks()).toEqual([]);
     expect(asked(calls, /\/(hint|guess|reveal)$/)).toEqual([]);
-    // and nothing fetched any riddle's page ahead of time
+    // Nothing fetched any riddle's page ahead of time.
     expect(calls.filter((c) => c.path.startsWith('/riddles/'))).toEqual([]);
   });
 
@@ -82,7 +81,7 @@ describe('the riddles: nothing spoils a riddle before it is asked for', () => {
     expect(leaks()).toEqual([]);
     expect(asked(calls, /\/(hint|guess|reveal)$/)).toEqual([]);
 
-    // one hint, from the hint call, and still no answer
+    // One hint, from the hint call, and still no answer.
     await userEvent.click(screen.getByRole('button', { name: 'Show a hint' }));
     expect(await screen.findByText(`${SECRET.hint} 1`)).toBeInTheDocument();
     expect(screen.getByText(`${SECRET.hintEn} 1`)).toBeInTheDocument();
@@ -90,7 +89,7 @@ describe('the riddles: nothing spoils a riddle before it is asked for', () => {
     expect(asked(calls, /\/hint$/).map((c) => c.body)).toEqual([{ index: 0 }]);
     expect(markup()).not.toContain('ANSWERWORD');
     expect(markup()).not.toContain('EXPLAINWORD');
-    // the next one is the next one, never two at once
+    // One more at a time, never two.
     await userEvent.click(screen.getByRole('button', { name: 'Show another hint' }));
     expect(await screen.findByText(`${SECRET.hint} 2`)).toBeInTheDocument();
     expect(asked(calls, /\/hint$/).map((c) => c.body)).toEqual([{ index: 0 }, { index: 1 }]);
@@ -174,7 +173,7 @@ describe('a riddle', () => {
     await userEvent.type(field, 'av');
     await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
     expect(await screen.findByText('Not quite. Have another think.')).toBeInTheDocument();
-    // the same guess twice is not sent twice
+    // The same guess is not sent twice.
     expect(screen.getByRole('button', { name: 'Guess' })).toBeDisabled();
     await userEvent.clear(field);
     await userEvent.type(field, 'ba');
@@ -205,9 +204,9 @@ describe('a riddle', () => {
     expect(screen.getByText(SECRET.explanation)).toBeInTheDocument();
     expect(screen.getByText('A traditional riddle, as it is told in Botan.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Metelokên Kurdî' })).toHaveAttribute('href', 'https://example.org/metelok');
-    // the answer came with the guess: nothing was revealed
+    // The answer came with the guess, so nothing was revealed.
     expect(asked(calls, /\/reveal$/)).toEqual([]);
-    // and the way on is the next riddle not yet done: here the other two are solved and seen
+    // The way on is the next unfinished riddle; here the other two are solved and seen.
     expect(await screen.findByText(/every riddle here done/)).toBeInTheDocument();
   });
 
@@ -278,13 +277,13 @@ describe('a riddle', () => {
     const first = pages('/app/learn/riddles/kmr-sih');
     await userEvent.click(await screen.findByRole('button', { name: 'Show a hint' }));
     expect(await screen.findByText(`${SECRET.hint} 1`)).toBeInTheDocument();
-    // come straight here, they are told once what an account would keep
+    // Arriving directly, they see the guest note once.
     expect(screen.getByText(/Playing is free/)).toBeInTheDocument();
     first.unmount();
     pages('/app/learn/riddles/kmr-sih');
     expect(await screen.findByText(`${SECRET.hint} 1`)).toBeInTheDocument();
     expect(asked(calls, /\/hint$/).map((c) => c.body)).toEqual([{ index: 0 }, { index: 0 }]);
-    // a visitor is not told what a solve would pay
+    // A visitor is not told what a solve would pay.
     expect(screen.queryByText(/pays up to/)).toBeNull();
   });
 });

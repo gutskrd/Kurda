@@ -2,10 +2,8 @@ import { useSearchParams } from 'react-router-dom';
 import type { AlphabetScript, AppLocale } from '@kurda/shared';
 
 /**
- * Which dialect a page teaches in: Kurmancî in Latin letters, or Soranî in
- * its own script. The alphabet and the word sets share the choice's shape so
- * a link can carry it (`?script=ckb`), and a reader whose interface is Soranî
- * starts on Soranî without asking. Anything else the link says is ignored.
+ * Which dialect a page teaches: Kurmancî in Latin letters or Soranî in its own script. The choice travels in the link
+ * (`?script=ckb`), and a reader whose interface is Soranî starts on Soranî.
  */
 export function useScript(locale: AppLocale): [AlphabetScript, (s: AlphabetScript) => void] {
   const [params, setParams] = useSearchParams();

@@ -19,7 +19,7 @@ describe('socialNotification', () => {
   it('sends a decision, a lifted limit and an answered review to Account standing', () => {
     const sanction = socialNotification(note({ kind: 'sanction', sanctionId: 's1', sanction: 'chat_mute', policy: 'spam', until: null }), t);
     expect(sanction).toMatchObject({ title: 'A decision about your account', body: 'Messages paused', to: '/app/settings/standing' });
-    // and until when, when it ends, in the reader's way of writing a date
+    // Until when, in the reader's date format.
     const until = socialNotification(
       note({ kind: 'sanction', sanctionId: 's1', sanction: 'chat_mute', policy: 'spam', until: '2031-03-05T10:00:00.000Z' }),
       t,
@@ -32,7 +32,7 @@ describe('socialNotification', () => {
       'ku',
     );
     expect(kuUntil?.body).toMatch(/ heta .*2031/);
-    // a date it cannot read is left out rather than shown as "Invalid Date"
+    // An unreadable date is left out rather than shown as "Invalid Date".
     expect(socialNotification(note({ kind: 'sanction', sanction: 'chat_mute', until: 'soon' }), t)?.body).toBe('Messages paused');
     expect(socialNotification(note({ kind: 'sanction_lifted', sanctionId: 's1' }), t)?.to).toBe('/app/settings/standing');
     expect(socialNotification(note({ kind: 'appeal_decided', appealId: 'a1', outcome: 'overturned' }), t)?.to).toBe('/app/settings/standing');
@@ -42,7 +42,7 @@ describe('socialNotification', () => {
     expect(socialNotification(note({ kind: 'caring_message', helplineUrl: 'https://findahelpline.com' }), t)?.href).toBe(
       'https://findahelpline.com',
     );
-    // never anywhere but a web address
+    // Never anything but a web address.
     expect(socialNotification(note({ kind: 'caring_message', helplineUrl: 'javascript:alert(1)' }), t)?.href).toBe(
       'https://findahelpline.com',
     );
@@ -73,7 +73,7 @@ describe('socialNotification', () => {
       body: 'There’s a letter for you.',
       to: `/app/letters?bird=${thread}`,
     });
-    // a correspondence that is not one is never followed: the window opens as it is
+    // An invalid correspondence id is never followed; the window opens as it is.
     expect(socialNotification(note({ kind: 'letter', threadId: '../../me' }), t)?.to).toBe('/app/letters');
   });
 

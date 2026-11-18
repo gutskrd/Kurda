@@ -7,14 +7,9 @@ import { healthName, stageName, treeNamed, treeTitle } from './names';
 import './tree.css';
 
 /**
- * Somebody's tree on their profile: the tree as it stands today, its kind,
- * how far it has grown, how long it has stood and what it has borne. How it
- * fares is said only when that is not well, and then plainly. On one's own
- * profile it leads to the tree, and before one is planted invites planting;
- * on anybody else's, nothing is shown until they have a tree.
- *
- * `tree` is undefined on a server that has no trees yet: then there is no
- * such part of a profile.
+ * A tree on a profile: the tree today, its kind, growth, age and harvest, with its health only when unwell. On one's
+ * own profile it links to the tree or invites planting one; on others it shows only once they have a tree.
+ * `tree` is undefined on a server without trees, and then nothing shows.
  */
 export function ProfileTree({ tree, own = false }: { tree: TreeGlimpse | null | undefined; own?: boolean }): React.JSX.Element | null {
   const t = useT();

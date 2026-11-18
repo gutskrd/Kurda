@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { keepInView } from './keepInView';
 
-/** A menu inside a card; each box is where the test says it was drawn. */
+/** A menu inside a card, each box placed where the test says. */
 function drawn(menu: Partial<DOMRect>, card: Partial<DOMRect> | null): HTMLElement {
   const outer = document.createElement('div');
   if (card) outer.style.overflowX = 'hidden';
@@ -22,7 +22,7 @@ afterEach(() => {
 describe('keepInView', () => {
   it('opens a menu downward when opening upward would put it under the bar at the top', () => {
     vi.stubGlobal('innerWidth', 390);
-    // the ⋯ is just under the bar: its menu, opening upward, would start at -60
+    // The ⋯ is just under the bar, so its menu opening upward would start at -60.
     const el = drawn({ left: 100, right: 276, top: -60, height: 120 }, null);
     keepInView(el);
     expect(el.style.top).toBe('calc(100% + 8px)');
@@ -44,7 +44,7 @@ describe('keepInView', () => {
   });
 
   it('moves it inside a card that clips it, before the window would', () => {
-    // the profile card at 16–374 hides anything past its edge; the menu starts at 4
+    // The profile card at 16–374 clips anything past its edge; the menu starts at 4.
     vi.stubGlobal('innerWidth', 390);
     const el = drawn({ left: 4, right: 180 }, { left: 16, right: 374 });
     keepInView(el);

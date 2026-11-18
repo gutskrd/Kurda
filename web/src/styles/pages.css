@@ -96,14 +96,10 @@
   margin-bottom: 18px;
 }
 /*
- * Hevalo leans in over the card (auth/AuthCard) as over a windowsill, seen
- * from the chest up: the stage keeps room above the card for him, and his box
- * (shared COMPANION_VIEW, 660 by 1103, 540 of it as wide as --cp-w, with room
- * either side for a hoof he lifts out to his cheeks) has its sill, 818 down
- * it, on the card's top edge. He is drawn in front of the card, cut at the
- * edge himself, so his forelegs hang down over its top padding (shared
- * COMPANION_OVERHANG, 285, inside his box, which the card's padding keeps
- * clear) while the rest of him is behind it.
+ * Hevalo leans over the card (auth/AuthCard) as over a sill. The stage keeps room above the card for his box (shared
+ * COMPANION_VIEW, 660 by 1103, 540 of it as wide as --cp-w, with room either side for a lifted hoof), whose sill line
+ * at 818 sits on the card's top edge. He is drawn in front, cut at the edge, so his forelegs hang over the card's top
+ * padding (shared COMPANION_OVERHANG, 285) while the rest is behind.
  */
 .auth-stage {
   --cp-w: 178px;
@@ -137,11 +133,7 @@
 .auth-row > * {
   white-space: nowrap;
 }
-/*
- * On a phone the card gives its width back: 54px of padding on each side left
- * "Remember me" and "Forgotten your password?" two lines each in a 280px
- * column. The page's own 16px gutter, and a card padding to match the others.
- */
+/* On a phone the card uses the page's 16px gutter and normal padding, so its links fit on one line each. */
 @media (max-width: 480px) {
   .auth-wrap {
     padding: var(--space-6) var(--space-4) var(--space-8);
@@ -299,13 +291,7 @@
   overflow: hidden;
 }
 
-/*
- * A row of controls that wraps rather than running off the screen.
- *
- * Without the wrap, four visibility chips on a 375px phone pushed the last one
- * past the edge and made the whole page scroll sideways — the chip was outside
- * the panel that was supposed to hold it.
- */
+/* A row of controls that wraps rather than running past a phone's edge. */
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -391,23 +377,9 @@
   }
 }
 /*
- * The box the photo editor is posted from, among other things.
- *
- * It scrolls down and, in practice, only down — but deliberately not because
- * anything here forbids sideways. `overflow-x: hidden` was tried and taken back
- * out: it stops the swipe by cutting the content off, so a control that does
- * not fit becomes a control you cannot see or reach, silently. The two things
- * that actually did not fit are fixed at their source instead — `.seg` could
- * not shrink, and the side padding was a third of a phone — and if something
- * ever overflows again a scrollbar will say so out loud.
- *
- * `100vh` on a phone is the *large* viewport, measured as though the address
- * bar were hidden. The panel was therefore allowed to be taller than the screen
- * actually is, which put the Post button underneath the browser's own chrome.
- * `dvh` is the height that is really there.
- *
- * And without `overscroll-behavior`, scrolling to the end of the panel carried
- * on into the page behind it — the dialog moves, then the page moves under it.
+ * The dialog panel, which hosts the photo editor among other things. It does not hide horizontal overflow, which would
+ * make controls silently unreachable. `dvh` is the height really available on a phone (`vh` includes the hidden
+ * address bar), and `overscroll-behavior` keeps scrolling from passing to the page behind.
  */
 .modal-panel {
   position: relative;
@@ -425,35 +397,15 @@
   box-shadow: var(--glass-rim), var(--shadow-lg);
   outline: none;
 }
-/*
- * 60px of side padding is a comfortable margin on a desktop and a third of a
- * phone. The photo editor is posted from inside this panel, so what the padding
- * takes comes straight out of the picture and the controls under it.
- */
+/* Less side padding on a phone, since it comes straight out of the photo editor's picture and controls. */
 @media (max-width: 640px) {
   .modal-panel {
     padding: 26px 14px 20px;
   }
 }
 /*
- * The close button, on top of whatever the dialog holds. Where it goes is
- * said here; how it looks is the one close button's own (ui.css `.close-btn`),
- * a finger's width across.
- *
- * Two things were wrong with it once on a profile that has a background
- * equipped, and both still decide how it is made.
- *
- * It could not be clicked. The panel drops its padding when there is a
- * background, so the card fills the panel corner to corner — and the card comes
- * after this button in the DOM with nothing to say otherwise, so it painted
- * over it. `document.elementFromPoint` at the middle of the X returned
- * `.pc-modal`, not the button. A z-index puts it back on top; it is the one
- * control that has to work whatever else is in the dialog.
- *
- * And it was pale-on-pale: white ink on a 11%-white fill, which on a bright
- * photograph is a smudge. So the close button's ground is opaque — the
- * scheme's solid surface, which reads on light artwork and on the panel alike,
- * in the light scheme as in the dark.
+ * The dialog's close button, placed here and styled by ui.css `.close-btn`. A z-index keeps it above a profile card
+ * that fills the panel when it has a background, and its ground is the opaque surface so it reads over bright artwork.
  */
 .modal-close {
   position: absolute;
@@ -475,13 +427,7 @@
 
 /* ---- what you can do about another person -------------------------------- */
 
-/*
- * Block and Report, behind a ⋯.
- *
- * Block used to be a button sitting in the open on the profile card, one
- * thumb-width from "Message", and it is the only action there that cannot be
- * walked back from that screen. A menu costs a deliberate second press.
- */
+/* Block and Report behind a ⋯, since Block cannot be undone from the card. */
 .user-actions {
   position: relative;
   display: inline-flex;
@@ -503,23 +449,8 @@
   border-color: var(--border-strong);
 }
 /*
- * Anchored to the right edge of the button and opening upward: this sits in a
- * card's footer, so a menu dropping downward would open past the bottom of the
- * card — and inside a modal, past the modal.
- */
-/*
- * A menu has to be opaque.
- *
- * This used `var(--surface-2)`, which is `rgba(255,255,255,0.11)` — eleven per
- * cent white. That is a *tint*, and it is the right thing for a card sitting in
- * the page flow, where whatever shows through is the page's own background. A
- * menu floats over content: at eleven per cent, the profile and the buttons
- * underneath read straight through the options, and you cannot tell the words
- * you can click from the words you cannot.
- *
- * It is the panel's own solid colour now (`--panel-bg`, tokens.css). The blur
- * that was kept behind it when it was near-solid had nothing left to do once
- * it was opaque, and is gone.
+ * Anchored to the button's right edge and opening upward, since it sits in a card footer, possibly inside a dialog.
+ * Opaque (`--panel-bg`, tokens.css), since a translucent menu lets the content below read through its options.
  */
 .user-menu {
   position: absolute;
@@ -1021,22 +952,14 @@ button.feature {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
 }
-/*
- * The price takes its own line over the buttons, which share the one below —
- * at every width: five to a row, a tile is too narrow for a price, Buy and the
- * gift button side by side, and the gift button fell to a line of its own.
- */
+/* The price takes its own line above the buttons at every width, since a tile is too narrow for both. */
 .shop-grid .shop-price {
   flex-basis: 100%;
 }
 .shop-grid .shop-actions .btn {
   flex: 1 1 auto;
 }
-/*
- * Two to a row on a phone. One tile the width of the screen made the Shop
- * twenty-five screens of backgrounds before the first icon; at two a row the
- * kinds are a short scroll apart.
- */
+/* Two to a row on a phone, so the item kinds are a short scroll apart. */
 @media (max-width: 640px) {
   .shop-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1254,11 +1177,7 @@ button.feature {
   color: var(--ink-3);
   margin-bottom: 2px;
 }
-/*
- * A conversation in the list: a face, a name, the last thing said. No box
- * round each — a list of boxes is a list of buttons, and these are people —
- * only a soft fill under the one that is open or under the pointer.
- */
+/* A conversation row: face, name and last message, without a box, with a soft fill when open or hovered. */
 .chat-convo {
   display: flex;
   align-items: center;
@@ -1317,11 +1236,7 @@ button.feature {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-/*
- * A hairline and the surface, without frosting: there is only the flat page
- * behind a conversation, and a blur of a flat colour adds nothing but a dark
- * ring round the inside of the panel where it runs out of page to sample.
- */
+/* A hairline and the surface, without a blur, since there is only the flat page behind. */
 .chat-thread-pane,
 .chat-empty {
   min-width: 0;
@@ -1547,10 +1462,8 @@ button.chat-run-avatar:hover {
 }
 
 /*
- * A bubble: round, in the colour of whose words it holds. Within a run the
- * corners on the speaker's side are tightened where one bubble meets the next,
- * so the run reads as one shape, and the last bubble has the tail that points
- * at the speaker.
+ * A bubble in the colour of whose words it holds. Within a run the speaker-side corners tighten where bubbles meet,
+ * and the last one has the tail.
  */
 .bubble {
   position: relative;
@@ -1628,10 +1541,8 @@ button.chat-run-avatar:hover {
   white-space: normal;
 }
 /*
- * Your own message that the server has not answered for yet (chat/useOutbox.ts):
- * in the thread at once, a step back until it is really sent. One that did not
- * go is said by its edge and the line under it, never by colour alone, and is
- * not dimmed: it is waiting on the reader, not on the network.
+ * The reader's unconfirmed message (chat/useOutbox.ts) is dimmed while sending. A failed one is marked by its edge and
+ * the line below, not by colour alone, and is not dimmed, since it waits on the reader.
  */
 .bubble.is-sending {
   opacity: 0.6;
@@ -1714,11 +1625,7 @@ button.chat-run-avatar:hover {
   color: var(--primary);
 }
 
-/*
- * Somebody is writing (chat/TypingBubble.tsx): a bubble on their side with
- * three dots that drop into it one after another, land with a small bounce,
- * and are taken away again — and the bubble gives a little under each.
- */
+/* The typing bubble (chat/TypingBubble.tsx): three dots drop in and bounce, and the bubble gives a little under each. */
 .chat-typing-bubble {
   padding: 13px 15px;
   transform-origin: 20% 100%;
@@ -1767,11 +1674,7 @@ button.chat-run-avatar:hover {
 .chat-senderr {
   margin: 0 16px;
 }
-/*
- * The box (chat/Composer.tsx): the tools, then one rounded field with the
- * words in it and a round Send at the end of them. As the field grows, the
- * tools and Send stay down by its last line, where the thumb is.
- */
+/* The composer (chat/Composer.tsx): tools, then a rounded field with a round Send, both kept by its last line as it grows. */
 .chat-compose {
   display: flex;
   align-items: flex-end;
@@ -1943,11 +1846,7 @@ button.chat-run-avatar:hover {
   padding: 0 16px 80px;
 }
 
-/*
- * What there is to know about them besides their name, on one line that
- * wraps: where they are from, when they joined, and — on your own profile —
- * who can open the page, which is a link to where that is changed.
- */
+/* The profile's about line, wrapping: origin, join date, and on one's own profile who can open it, linking to that setting. */
 .mkp-about {
   display: flex;
   flex-wrap: wrap;
@@ -2019,12 +1918,7 @@ button.chat-run-avatar:hover {
   min-width: 0;
 }
 
-/*
- * The numbers about somebody: a figure with its word under it, side by side
- * under a hairline, the way a profile shows them everywhere. The word is
- * first in the markup, for whoever has it read to them, and the figure first
- * on the screen.
- */
+/* Profile figures side by side under a hairline; the label comes first in the markup and the figure first on screen. */
 .mkp-facts {
   display: grid;
   /* however many numbers there are to show — three for somebody with no friends list to show, four for most — they share the width */
@@ -2284,14 +2178,8 @@ button.chat-run-avatar:hover {
 }
 
 /*
- * Thumbnail stack + "+N" chip.
- *
- * Faces overlap, things do not. Three friends leaning on each other and a
- * "+12" reads as a group of people — which is what it is, and the rings are
- * cut for it: each one has a 2px border in the card's own colour so the one in
- * front carves a clean edge out of the one behind. The icons you own are not a
- * group, they are separate things standing side by side, so those get a small
- * gap instead (see `.avatar-stack-square` below).
+ * An overlapping face stack with a "+N" chip, each ring bordered in the card's colour so the front one cuts a clean
+ * edge. Owned icons sit apart instead (`.avatar-stack-square`).
  */
 .avatar-stack {
   display: flex;
@@ -2481,11 +2369,7 @@ button.chat-run-avatar:hover {
   overscroll-behavior-x: contain;
   scrollbar-width: none;
   border-bottom: 1px solid var(--separator);
-  /*
-   * A scrolling row cuts off whatever reaches past it, so the tabs keep room
-   * inside it above them, taken back by the margin so nothing moves. The 8px
-   * under them, over the line, was already there and is room enough below.
-   */
+  /* A scrolling row clips what reaches past it, so the tabs get room above, taken back by the margin; 8px below suffices. */
   margin-block: -8px 10px;
   padding-block: 8px;
 }
@@ -2521,13 +2405,7 @@ button.chat-run-avatar:hover {
   border-radius: 3px;
   padding: 1px 5px;
 }
-/*
- * Five tabs with their words are wider than a phone, and the last one used to
- * be cut off at the panel's edge with nothing to say it was there. Where the
- * panel is narrow the open tab keeps its word and the others are their
- * pictures, each still a full target and still named for whoever has the page
- * read to them, so every tab is on the screen at once.
- */
+/* On a narrow panel the open tab keeps its label and the others show only their icons, still named and full-size targets. */
 @container (max-width: 430px) {
   .mkp-tabs {
     justify-content: space-between;
@@ -2555,15 +2433,7 @@ button.chat-run-avatar:hover {
   margin: 10px 2px 4px;
 }
 
-/*
- * Whole posts inside the profile panel: the same list as the wall, a hairline
- * between one post and the next.
- *
- * `min-width: 0` on the posts is load-bearing: a flex/grid child defaults to
- * min-content, so one long unbroken word in a post — a URL, a hashtag — would
- * push it wider than the panel and take the page's horizontal scrollbar with
- * it.
- */
+/* Whole posts in the profile panel, as on the wall; `min-width: 0` stops a long unbroken word widening the page. */
 .mkp-activity-feed {
   display: grid;
   padding-top: 6px;
@@ -2732,14 +2602,7 @@ a.mkp-activity-row:hover {
 
 
 /* ---- Kurdish Wordle ---------------------------------------------------- */
-/*
- * The frame every game sits in.
- *
- * Each of these pages used to carry `style={{ paddingTop: 40, paddingBottom: 72 }}`
- * inline — which no media query can reach, so a phone spent 112px of a 660px
- * screen on whitespace. That is most of the reason the Wordle keyboard sat
- * below the fold: you had to scroll away from the board to type.
- */
+/* The frame every game sits in, with phone-sized padding so the keyboard stays on screen. */
 .game-page {
   padding-top: 40px;
   padding-bottom: 72px;
@@ -2783,10 +2646,7 @@ a.mkp-activity-row:hover {
 .wordle-row {
   display: grid;
   gap: var(--wordle-gap);
-  /* fill what is available, then cap at the cells' natural size. Fixed-width
-     cells made an 8-letter row 402px wide, which hung off BOTH sides of a
-     375px phone. The column count comes from the component; the size a cell is
-     allowed to reach is set here, so it can shrink on a small screen. */
+  /* Fills what is available, capped at the cells' natural size, so a long row shrinks to fit a phone; the component sets the column count. */
   width: 100%;
   max-width: calc(
     var(--wordle-cols, 5) * var(--wordle-cell-max) + (var(--wordle-cols, 5) - 1) * var(--wordle-gap)
@@ -2808,11 +2668,9 @@ a.mkp-activity-row:hover {
   border-color: var(--border-strong);
 }
 /*
- * The keyboard fills the width it has, row by row, in units of one key: ten
- * across the top of QWERTY, nine (and a half-key's space at each end) on the
- * second row, Enter and Delete a key and a half each around the seven letters
- * of the third, and ç ê î ş û as five double keys of their own — the largest
- * on the board. In alphabet order every row is nine.
+ * The keyboard fills its width in key units: ten across QWERTY's top row, nine plus half-key spaces on the second,
+ * Enter and Delete a key and a half around the third row's seven, and ç ê î ş û as five double keys. In alphabet order
+ * every row is nine.
  */
 .wordle-keys {
   max-width: 600px;
@@ -2823,12 +2681,7 @@ a.mkp-activity-row:hover {
   flex-direction: column;
   gap: 8px;
   align-items: center;
-  /*
-   * A key reaches half the gap to the next one and no further, so the areas
-   * that answer tile the board and no key takes a press meant for its
-   * neighbour (reach.css). The room follows each gap wherever it is set: the
-   * rows' here, the keys' on the row.
-   */
+  /* Each key reaches half the gap to its neighbours, so the reach areas tile the board (reach.css). */
   --reach-room-y: 8px;
 }
 .wordle-krow {
@@ -2906,16 +2759,7 @@ a.mkp-activity-row:hover {
 }
 /* the layout in use is drawn as every chosen one is: the shared rule in shell.css */
 
-/*
- * Wordle on a phone, where the game only works if the board and the keyboard
- * are on screen together.
- *
- * At the desktop sizes it came to 802px of content — inside a 812px browser
- * window, and well outside the ~660px a phone actually leaves you once its
- * chrome is counted. You had to scroll away from the board to reach the letters
- * and back again to read the result. Everything below is height being bought
- * back: smaller cells, shorter keys, a tighter toolbar.
- */
+/* Wordle on a phone: smaller cells, shorter keys and a tighter toolbar keep the board and keyboard on screen together. */
 @media (max-width: 640px) {
   .wordle-board {
     --wordle-cell-max: 46px;
@@ -2944,11 +2788,8 @@ a.mkp-activity-row:hover {
   }
 }
 /*
- * Beside a real keyboard (keyboard/device.ts): a desk keyboard's keys rather
- * than a phone's. One size of key, a little wider than tall, in rows no wider
- * than the game column needs — ten keys across at about the board's cell
- * size — and ç ê î ş û as five ordinary keys centred under the rest, not a
- * row of double keys. The line under it says the real keyboard works.
+ * Beside a real keyboard (keyboard/device.ts): one size of key, slightly wider than tall, rows no wider than the game
+ * column, and ç ê î ş û as five ordinary keys centred below. The line under it says the real keyboard works.
  */
 .wordle-keys.is-desktop {
   max-width: 520px;
@@ -3211,12 +3052,7 @@ a.mkp-activity-row:hover {
   opacity: 0.75;
 }
 
-/*
- * A bubble shrink-wraps its text, so an invite card had no definite width to
- * fill and collapsed to its own content — 185px on a phone, with the blurb
- * spilling past its clamp. An embed is not a sentence: give the run a real
- * width and let the card cap itself.
- */
+/* A bubble shrink-wraps its text, so a run with an invite card gets a real width for the card to cap itself in. */
 .chat-run:has(.invite-card) {
   width: 100%;
   max-width: min(100%, 348px);
@@ -3265,9 +3101,8 @@ a.mkp-activity-row:hover {
 
 /* ---- email verification code ------------------------------------------- */
 /*
- * Confirming an address (pages/VerifyEmail.tsx): the address as a chip that
- * is also the way to change it, the code in its boxes (auth/code-boxes.css),
- * and under them, quietly, the way to another code and the way out.
+ * Confirming an address (pages/VerifyEmail.tsx): the address as a chip that changes it, the code boxes
+ * (auth/code-boxes.css), and quiet links to a new code and the way out.
  */
 .verify-address {
   display: inline-flex;
@@ -3298,11 +3133,7 @@ a.mkp-activity-row:hover {
   flex: none;
   color: var(--ink-3);
 }
-/*
- * The code's boxes are a game code's boxes (styles/play.css), here as wide as
- * the card's column: each takes an equal share of it, and the form's own
- * parts follow at their usual width.
- */
+/* The game code boxes (styles/play.css) sharing the card's column width equally. */
 .code-entry.verify-code {
   justify-items: stretch;
   gap: 0;
@@ -3668,11 +3499,7 @@ a.mkp-activity-row:hover {
   cursor: not-allowed;
 }
 
-/*
- * The moment a purchase lands. One short, self-cancelling flourish: the tile
- * lifts and a band of light crosses the artwork. Anything longer gets in the
- * way of buying a second thing.
- */
+/* A short flourish when a purchase lands: the tile lifts and light crosses the artwork. */
 .shop-tile-won {
   animation: shop-pop 0.5s cubic-bezier(0.22, 1.2, 0.36, 1);
 }
@@ -3883,11 +3710,7 @@ a.mkp-activity-row:hover {
   /* a second row stands 2px under the first, so the segments reach no further up or down than they do sideways */
   --reach-room-y: 2px;
 }
-/*
- * A range plus its label and value. `min-width: 0` because a flex child will not
- * shrink below its content otherwise, and a slider's default intrinsic width is
- * wide enough to push the row past the panel on a phone.
- */
+/* A slider row; `min-width: 0` lets it shrink below the slider's intrinsic width on a phone. */
 .tool-row {
   display: flex;
   align-items: center;
@@ -3950,12 +3773,7 @@ a.mkp-activity-row:hover {
 .editor-canvas.is-drawing {
   cursor: crosshair;
 }
-/*
- * The corner the mark will take. Shaded rather than blocked: nothing can end up
- * over the signature because the server draws it last, so this is a courtesy —
- * it stops someone arranging something important there and wondering where it
- * went.
- */
+/* The corner the signature mark takes, shaded as a courtesy, since the server draws the mark last over anything. */
 .editor-sig-zone {
   position: absolute;
   display: grid;
@@ -4087,15 +3905,7 @@ a.mkp-activity-row:hover {
   grid-template-columns: repeat(5, 1fr);
   gap: 6px;
 }
-/*
- * `min-width: 0` is load-bearing.
- *
- * A grid track of `1fr` is `minmax(auto, 1fr)`, and that `auto` floors at the
- * item's min-content width — which for a tile holding an image is the image's
- * intrinsic width, `max-width: 100%` notwithstanding. So the tracks refused to
- * shrink, the row overflowed its grid, and on a 375px phone the last Kurdish
- * mark sat off the edge of the screen where nobody could reach it.
- */
+/* `min-width: 0` lets the `1fr` tracks shrink below an image's intrinsic width, so the last mark stays on a phone screen. */
 .sticker,
 .sticker-pic {
   min-width: 0;
@@ -4241,12 +4051,7 @@ a.mkp-activity-row:hover {
 
 /* ---- the blocklist ------------------------------------------------------- */
 
-/*
- * Close to .friend-row, deliberately different from it. A friend row is a
- * button that opens somebody's card; these rows open nothing, because a
- * blocked person's profile is a 404 to you — so no hover state, no pointer,
- * nothing that offers a click the app cannot honour.
- */
+/* Like .friend-row but with no hover or pointer, since a blocked person's profile cannot be opened. */
 .blocklist {
   list-style: none;
   margin: 0;
@@ -4254,13 +4059,7 @@ a.mkp-activity-row:hover {
   display: grid;
   gap: 8px;
 }
-/*
- * min-width: 0 is load-bearing. A grid track is `auto`, which floors at the
- * item's min-content — and this row's min-content is a `white-space: nowrap`
- * handle that never wraps, so without this the row grows past the card and
- * pushes Unblock off the side of a phone. `text-overflow: ellipsis` does not
- * lower min-content; only this does.
- */
+/* `min-width: 0` stops the unwrapping handle from growing the row and pushing Unblock off a phone. */
 .blocklist-row {
   min-width: 0;
   display: flex;
@@ -4296,11 +4095,7 @@ a.mkp-activity-row:hover {
   flex: none;
 }
 
-/*
- * On a phone the handle and the date stop fitting beside a button, so the row
- * becomes two lines rather than an ellipsis that hides the date entirely —
- * which is the part that tells an old block from one placed by accident today.
- */
+/* On a phone the row becomes two lines rather than an ellipsis hiding the date. */
 @media (max-width: 420px) {
   .blocklist-row {
     flex-wrap: wrap;
@@ -4315,11 +4110,7 @@ a.mkp-activity-row:hover {
 
 /* ---- signed-in devices ---------------------------------------------------- */
 
-/*
- * The blocklist's rows, with a picture of the device where a face would be.
- * `min-width: 0` for the same reason as there: a long device name gives way,
- * never the Sign out button.
- */
+/* Signed-in devices, styled like the blocklist with a device picture for a face; a long name gives way, never Sign out. */
 .device-list {
   list-style: none;
   margin: 0;
@@ -4385,10 +4176,7 @@ a.mkp-activity-row:hover {
   border-top: 1px solid var(--border);
 }
 
-/*
- * On a phone a name and its last-used line stop fitting beside Sign out, so
- * the button takes the line under them, at its end, as a friend row's do.
- */
+/* On a phone Sign out moves to the line below, at its end, as on a friend row. */
 @media (max-width: 560px) {
   .device-row.has-action {
     flex-wrap: wrap;
@@ -4446,11 +4234,7 @@ a.mkp-activity-row:hover {
 
 /* ---- who gave them what they are wearing --------------------------------- */
 
-/*
- * A gift stops looking like a gift the moment it is equipped — it becomes
- * indistinguishable from something bought. This is the card that came with it.
- * Quiet on purpose: it is an attribution, not a badge to be won.
- */
+/* A quiet attribution for gifted cosmetics. */
 .gifted-notes {
   list-style: none;
   margin: 8px 0 0;
@@ -4478,12 +4262,7 @@ a.mkp-activity-row:hover {
 
 /* ---- the community, on the home page ------------------------------------- */
 
-/*
- * Home was a page of doors. A door tells you a room exists; it cannot tell you
- * anything happened in it today, which is the whole point of a community. These
- * are the wall's own cards, in a column narrow enough that home still reads as
- * a home page rather than as the wall with a header on it.
- */
+/* Home shows the wall's own cards, in a narrow column so it still reads as a home page. */
 .home-civak {
   margin-top: 40px;
 }
@@ -4511,12 +4290,7 @@ a.mkp-activity-row:hover {
 
 /* ---- who someone knows --------------------------------------------------- */
 
-/*
- * A profile that shows a level and a country but not who someone knows is a
- * profile of an account rather than of a person. Faces rather than a list:
- * recognising someone is the point, and a name alone is not recognisable.
- */
-/* one of the profile's sections, headed as the others are: the column spaces it, and its heading is their label */
+/* The friends section is headed like the profile's other sections. */
 .mkp-friends .friend-heading {
   margin: 0 0 8px 2px;
   font-size: 0.72rem;
@@ -4577,13 +4351,7 @@ a.mkp-activity-row:hover {
 }
 
 /* ---- passing a post on ------------------------------------------------- */
-/*
- * The share sheet.
- *
- * Reuses the gift picker's friend list rather than growing a second one: both
- * are "choose a friend and send them a thing", and two lists that looked nearly
- * the same would drift.
- */
+/* The share sheet reuses the gift picker's friend list. */
 .share-sheet {
   display: grid;
   gap: 14px;
@@ -4591,14 +4359,7 @@ a.mkp-activity-row:hover {
 .share-primary {
   gap: 9px;
 }
-/*
- * The link and the button that copies it.
- *
- * `minmax(0, 1fr)` rather than `1fr`: a grid column is min-content by default,
- * and a long post URL in a readonly input would push the button off the edge on
- * a phone. Below 420px they stack, because a URL and a button side by side in
- * 320px leaves no room for either.
- */
+/* The link and its copy button: `minmax(0, 1fr)` so a long URL cannot push the button off; stacked below 420px. */
 .share-link {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -4655,11 +4416,7 @@ a.mkp-activity-row:hover {
   gap: 12px;
 }
 
-/* ── dictionary (KUR-045) ───────────────────────────────────────────────────
-   The browser had no dictionary at all while the phone had a whole tab of it.
-   Laid out as a reading column rather than a grid: looking a word up is one
-   thing at a time, and a second column only gives the eye somewhere else to be.
-*/
+/* Dictionary: a single reading column, since a lookup is one thing at a time. */
 .dict {
   display: grid;
   gap: 18px;

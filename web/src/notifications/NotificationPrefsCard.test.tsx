@@ -25,9 +25,8 @@ const stored = (over: Partial<NotificationPrefs> = {}): NotificationPrefs => ({
 });
 
 /**
- * A server that remembers. The card patches and then trusts the response, so a
- * stub that echoes a merge is the only way to see whether the control ends up
- * where the server put it rather than where the click left it.
+ * A server that remembers. The card trusts the response to its patch, so echoing a merge shows whether the control
+ * ends where the server put it rather than where the click left it.
  */
 function server(initial: NotificationPrefs, opts: { rejectPut?: boolean } = {}) {
   let state = initial;
@@ -55,9 +54,9 @@ describe('NotificationPrefsCard', () => {
     expect(screen.getByRole('checkbox', { name: 'Friend activity' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Game invites & results' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Events & quests' })).toBeChecked();
-    // league and badge news (contract 4), its own switch
+    // League and badge news has its own switch.
     expect(screen.getByRole('checkbox', { name: 'Leagues and badges' })).toBeChecked();
-    // the opt-in one, off until somebody says otherwise
+    // The opt-in category is off until chosen.
     expect(screen.getByRole('checkbox', { name: 'News & offers' })).not.toBeChecked();
   });
 
@@ -84,10 +83,7 @@ describe('NotificationPrefsCard', () => {
     expect(s.puts[0]).toEqual({ streak: false });
   });
 
-  /**
-   * Consent for news and offers is the one people go looking for a way to
-   * withdraw, and until now the browser had none.
-   */
+  /** Consent for news and offers must be withdrawable here. */
   it('can turn news and offers on and off again', async () => {
     const s = server(stored());
     vi.stubGlobal('fetch', s.fetch);
@@ -110,10 +106,7 @@ describe('NotificationPrefsCard', () => {
       expect(screen.queryByLabelText('To')).not.toBeInTheDocument();
     });
 
-    /**
-     * The server refuses a half-set pair, so switching this on with nothing
-     * chosen has to send both ends. A 422 here would read as a broken switch.
-     */
+    /** The server refuses a half-set pair, so switching this on with nothing chosen must send both ends. */
     it('sends both ends when switched on with nothing chosen', async () => {
       const s = server(stored());
       vi.stubGlobal('fetch', s.fetch);
@@ -143,11 +136,7 @@ describe('NotificationPrefsCard', () => {
     });
   });
 
-  /**
-   * The point of keeping the previous value. A control that stays where the
-   * click left it claims a setting the server does not have, and the reader
-   * leaves the page believing something untrue about who can interrupt them.
-   */
+  /** A refused change must not leave the control claiming a setting the server does not have. */
   it('puts the switch back when the server refuses', async () => {
     const s = server(stored(), { rejectPut: true });
     vi.stubGlobal('fetch', s.fetch);
@@ -168,7 +157,7 @@ describe('NotificationPrefsCard', () => {
     expect(await screen.findByRole('heading', { name: 'Bildirimler' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Seri hatırlatmaları' })).toBeInTheDocument();
     expect(screen.getByRole('checkbox', { name: 'Sessiz saatleri aç' })).toBeInTheDocument();
-    // the two ends are labelled start and finish rather than from and to
+    // The two ends are labelled start and finish rather than from and to.
     expect(screen.getByLabelText('Başlangıç')).toHaveValue('22:00');
     expect(screen.getByLabelText('Bitiş')).toHaveValue('07:00');
   });

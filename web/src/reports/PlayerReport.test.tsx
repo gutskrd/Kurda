@@ -12,7 +12,7 @@ afterEach(() => {
 
 const me = { user: { id: 'me', username: 'ada', email: 'a@b.com', emailVerified: true } };
 
-/** Answer the game's own reads with `state`, and keep every POST /reports body. */
+/** Answers the game's own reads with `state` and records every POST /reports body. */
 function stub(gameUrl: string, state: unknown): unknown[] {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   const reports: unknown[] = [];
@@ -84,7 +84,7 @@ describe('reporting a player while the game is played', () => {
       ],
     });
     renderApp(<RhymeMatch />, ['/app/games/rhyme-match?id=rm1']);
-    // a name the viewer may not see is "Opponent"
+    // A name the viewer may not see is "Opponent".
     await report('More about Opponent');
     await waitFor(() => expect(reports).toHaveLength(1));
     expect(reports[0]).toMatchObject({ targetType: 'game_player', targetId: 'rm1', game: 'rhyme-match', seat: 3 });
@@ -111,7 +111,7 @@ describe('reporting a player in the lobby', () => {
       target: null,
     });
     renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b2']);
-    // the lobby names a hidden player by seat, and its ⋯ says the same name
+    // The lobby names a hidden player by seat, and its ⋯ uses the same name.
     await report('More about Player 1');
     await waitFor(() => expect(reports).toHaveLength(1));
     expect(reports[0]).toMatchObject({ targetType: 'game_player', targetId: 'b2', game: 'wordle-battle', seat: 1 });

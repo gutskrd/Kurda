@@ -5,19 +5,9 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * The composer's window: a centred panel on a wide screen, the whole screen on
- * a phone.
- *
- * Not the shared Modal, for two reasons. Closing has to ask first when there
- * is something written (the Modal closed on Escape or a stray click on the
- * backdrop and threw the words away), so every way out goes through
- * `onRequestClose`. And the Post button lives in the header, at the top, where
- * a phone's keyboard can never cover it — so the panel has a header of its own
- * instead of the Modal's corner ×.
- *
- * Focus moves in when it opens (to `initialFocus`, the text box), stays inside
- * while it is open (Tab and Shift+Tab wrap), and goes back to whatever opened
- * it when it closes. The page behind does not scroll.
+ * The composer's window: a centred panel on a wide screen, full screen on a phone. Not the shared Modal, since every
+ * way out must go through `onRequestClose` to ask about unsaved words, and Post sits in a header above the phone
+ * keyboard. Focus moves to `initialFocus` on open, wraps inside, and returns on close; the page behind does not scroll.
  */
 export function ComposerDialog({
   labelledBy,
@@ -26,7 +16,7 @@ export function ComposerDialog({
   children,
 }: {
   labelledBy: string;
-  /** Escape, or a click on the backdrop: the composer decides whether to ask */
+  /** Escape or a backdrop click; the composer decides whether to ask. */
   onRequestClose: () => void;
   initialFocus?: React.RefObject<HTMLElement | null>;
   children: React.ReactNode;
@@ -43,8 +33,7 @@ export function ComposerDialog({
       unlock();
       restore?.focus?.({ preventScroll: true });
     };
-    // once per opening: the composer is mounted fresh each time
-    // (initialFocus is a ref, read when it opens)
+    // Once per opening, since the composer mounts fresh each time and `initialFocus` is a ref read on open.
   }, [initialFocus]);
 
   function onKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void {

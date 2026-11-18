@@ -1,25 +1,16 @@
 import type { MessageKey } from '../i18n/en';
 
 /**
- * What people ask before they start, and the honest answer to each.
- *
- * Every answer here is something the product does today, checked against the
- * code rather than written from hope: nothing in the browser costs money (the
- * shop spends Zêr and gems, never cash — api/src/shop); Rhyming Words really can
- * be played in Soranî (pages/Rhyme.tsx); the bottom of a league only moves down
- * in a group big enough to be fair (leagues/format.ts, MIN_FOR_DEMOTION). The
- * answer about research says only what "How Hevalo teaches" says, which is
- * held to the same rule (teaching/principles.ts). When one of those changes,
- * the answer about it changes with it.
- *
- * The front page shows the first six; /faq shows them all.
+ * The FAQ. Each answer matches what the code does: nothing costs money (api/src/shop), Rhyming Words works in Soranî
+ * (pages/Rhyme.tsx), demotion needs a large enough group (MIN_FOR_DEMOTION), and the research answer matches
+ * teaching/principles.ts. When one of those changes, change its answer. The front page shows the first six.
  */
 export interface FaqEntry {
-  /** stable, for the anchor a link can point at: /faq#faq-free */
+  /** Stable, for anchors such as /faq#faq-free. */
   id: string;
   q: MessageKey;
   a: MessageKey;
-  /** somewhere to read more, when the short answer is not the whole story */
+  /** Where to read more, when the short answer is not the whole story. */
   link?: { to: string; label: MessageKey; external?: boolean };
 }
 
@@ -30,7 +21,7 @@ export const FAQ: ReadonlyArray<FaqEntry> = [
   { id: 'account', q: 'faq.account.q', a: 'faq.account.a' },
   { id: 'friends', q: 'faq.friends.q', a: 'faq.friends.a' },
   { id: 'app', q: 'faq.app.q', a: 'faq.app.a' },
-  // what research the lessons follow, and what we do not claim for it
+  // What research the lessons follow, and what is not claimed for it.
   { id: 'research', q: 'faq.research.q', a: 'faq.research.a', link: { to: '/how-hevalo-teaches', label: 'footer.teach' } },
   { id: 'progress', q: 'faq.progress.q', a: 'faq.progress.a' },
   { id: 'heritage', q: 'faq.heritage.q', a: 'faq.heritage.a' },

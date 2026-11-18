@@ -3,19 +3,14 @@ import { SHIELD_GAMES, type RankCard as RankCardData } from '@kurda/shared';
 import { ChevronIcon, ShieldIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { PlacementEmblem, RankEmblem } from './art';
-import { gameName, rankLabel, rankTierNamed, withMeaning, type Translate } from './names';
+import type { Translate } from '../i18n/I18nProvider';
+import { gameName, rankLabel, rankTierNamed, withMeaning } from './names';
 
 /**
- * One game's rank, as the Games page shows it (contract 4 §U): the emblem,
- * the tier and division with its meaning, the points, how far to the next
- * division, and the small marks that explain the rest — "Placing 2/5" before
- * there is a tier, a "?" while the rank is still settling, the shield's games
- * after a new tier, and "Resting" after four weeks without a rated game.
- *
- * Nothing here counts down or warns. The bar shows how far you have come in
- * this division, not how far you could fall.
- *
- * `href` adds the way to the game's Ranks page (its boards and the climb).
+ * One game's rank on the Games page: the emblem, tier and division with meaning, points, progress to the next
+ * division, and marks such as "Placing 2/5", a "?" while settling, the shield's games after a new tier, and "Resting"
+ * after four weeks without a rated game. The bar shows progress, never how far one could fall. `href` links to the
+ * game's Ranks page.
  */
 export function RankCard({ rank, compact = false, href }: { rank: RankCardData; compact?: boolean; href?: string }): React.JSX.Element {
   const t = useT();
@@ -94,7 +89,7 @@ function RankedBody({ rank }: { rank: RankCardData }): React.JSX.Element {
             aria-valuenow={Math.round(progress.fraction * 100)}
             aria-label={next ? t('ranks.toNext', { points: progress.pointsToGo ?? 0, next }) : t('ranks.topOfClimb')}
           >
-            {/* a sliver at the least, so a climb just begun is seen to have begun; moved along its track by `--p` (styles/motion.css) */}
+            {/* At least a sliver, so a new climb shows; moved along its track by `--p` (styles/motion.css). */}
             <span className="rank-progress-fill" style={{ '--p': Math.min(1, Math.max(0.03, progress.fraction)) } as React.CSSProperties} />
           </div>
           <span className="rank-progress-label">
@@ -108,8 +103,8 @@ function RankedBody({ rank }: { rank: RankCardData }): React.JSX.Element {
   );
 }
 
-/** The shield's games left, as pips and in words: it is never only the icons. */
-export function ShieldPips({ games, tierName }: { games: number; tierName: string }): React.JSX.Element {
+/** The shield's games left, as pips and in words. */
+function ShieldPips({ games, tierName }: { games: number; tierName: string }): React.JSX.Element {
   const t = useT();
   return (
     <p className="rank-shield" title={t('ranks.shieldHint', { count: games, tier: tierName })}>

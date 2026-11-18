@@ -12,23 +12,13 @@ import type { ApiError } from '../lib/types';
 import { ReportAction } from '../reports/ReportAction';
 
 /**
- * Threaded comments on a post.
- *
- * The server has supported replies since the table was created — `parent_comment_id`,
- * `depth`, `reply_count`, and an endpoint per branch — but nothing on the web
- * ever rendered any of it. This is that missing half.
- *
- * Replies load per branch on demand rather than the whole tree at once: a
- * popular thread is mostly collapsed, and fetching every descendant to show
- * three of them wastes the reader's time and the server's.
- *
- * Two surfaces use it — library posts and Dîmen pictures. The APIs are the same
- * shape at different paths, so the difference is a table of URLs rather than a
- * second copy of the tree, the reply boxes and the tombstones to keep in step.
+ * Threaded comments on a library post or a Dîmen picture. Both APIs have the same shape at different paths, so the
+ * surfaces differ only by a table of URLs. Replies load per branch on demand, since a popular thread is mostly
+ * collapsed.
  */
 
 /** Which set of endpoints a thread talks to. */
-export type CommentSurface = 'library' | 'images';
+type CommentSurface = 'library' | 'images';
 
 const ROUTES: Record<CommentSurface, { thread: (postId: string) => string; replies: (id: string) => string; one: (id: string) => string }> = {
   library: {
@@ -73,11 +63,8 @@ export function Comments({
   const [comments, setComments] = useState<Comment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   /**
-   * The heading counts every comment in the thread, replies included, so it
-   * cannot be read off the loaded page — that is only the top level, and only
-   * the first page of it. The server's number is the truth on arrival; after
-   * that we move it by hand, because "0 comments" above the comment you just
-   * wrote reads as a bug.
+   * The heading counts every comment including replies, which the loaded page cannot tell, so it starts from the
+   * server's number and is adjusted by hand as comments are added or removed.
    */
   const [count, setCount] = useState(commentCount);
   useEffect(() => setCount(commentCount), [commentCount]);
@@ -150,7 +137,7 @@ function CommentNode({
   postId: string;
   surface: CommentSurface;
   onChanged: () => Promise<void>;
-  /** +1 for a comment added anywhere in this branch, -1 for one removed */
+  /** +1 for a comment added anywhere in this branch, -1 for one removed. */
   onCountChange: (delta: number) => void;
 }): React.JSX.Element {
   const t = useT();
@@ -206,7 +193,7 @@ function CommentNode({
             onConfirm={async () => {
               const res = await client.delete(ROUTES[surface].one(comment.id));
               if (res.ok) onCountChange(-1);
-              // refetch either way: if it failed, the thread should show why
+              // Refetch either way, so a failure shows in the thread.
               await onChanged();
             }}
           />
@@ -231,8 +218,7 @@ function CommentNode({
           placeholder={t('comments.replyTo', { name: comment.author.username })}
           onDone={async () => {
             setReplying(false);
-            // show the branch this reply just joined, rather than leaving the
-            // reader to guess where it went
+            // Open the branch the reply just joined.
             await loadReplies();
             await onChanged();
           }}
@@ -271,7 +257,7 @@ function CommentForm({
   parentId?: string;
   placeholder: string;
   onDone: () => Promise<void>;
-  /** fired once the server has actually taken it */
+  /** Fired once the server has taken it. */
   onAdded: () => void;
 }): React.JSX.Element {
   const t = useT();

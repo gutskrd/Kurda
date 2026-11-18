@@ -2,14 +2,8 @@ import { useId, useMemo } from 'react';
 import { impostorCategorySvg, impostorEmblemSvg, impostorWaySvg, type ImpostorEmblem, type ImpostorWay } from '@kurda/shared';
 
 /**
- * Impostor's pictures on the website: a category's, a way to play's
- * and the game's own emblem, drawn from the shared art
- * (shared/src/art/impostor.ts) so the phone shows the same ones.
- *
- * Each is decoration beside its name, so it is hidden from a screen reader.
- * A page can show the same picture twice (a category on its tile and again on
- * a card), and a drawing's clip paths are found by id, so every one drawn here
- * gets ids of its own.
+ * Impostor's pictures (categories, ways to play and the emblem) from shared/src/art/impostor.ts, decorative and hidden
+ * from screen readers. Each drawing gets its own ids, since a page can show one twice and clip paths are found by id.
  */
 function useArtId(): string {
   return `ia${useId().replace(/[^A-Za-z0-9]/g, '')}`;

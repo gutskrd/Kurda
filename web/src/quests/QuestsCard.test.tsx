@@ -5,10 +5,7 @@ import { jsonResponse, renderApp } from '../test/utils';
 import { QuestsCard } from './QuestsCard';
 import type { QuestDay } from '@kurda/shared';
 
-/*
- * Today's quests on Learn: the slim card while the day is read, once it is,
- * when it cannot be, and the sheet it opens, with a chest opened from there.
- */
+/* Today's quests on Learn: the card loading, loaded and failed, and the sheet it opens with a chest opened from it. */
 
 const day: QuestDay = {
   date: '2026-10-29',
@@ -85,7 +82,7 @@ describe('the quests card on Learn', () => {
     expect(await within(chest).findByText('+10 Zêr')).toBeInTheDocument();
     await userEvent.click(within(chest).getByRole('button', { name: 'Done' }));
 
-    // back in the sheet, nothing waiting any more
+    // Back in the sheet, nothing is waiting any more.
     const again = screen.getByRole('dialog', { name: 'Daily quests' });
     expect(within(again).getByText('Its chest is open')).toBeInTheDocument();
     expect(within(again).queryByRole('button', { name: 'Open chest' })).not.toBeInTheDocument();

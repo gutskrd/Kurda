@@ -28,14 +28,8 @@ import { useT } from '../i18n/I18nProvider';
 import { BrushIcon, FeatherIcon, LockIcon, MarkerIcon, PaintIcon, PaperIcon, PenIcon, RedoIcon, TextIcon, TrashIcon, UndoIcon } from '../components/icons';
 
 /**
- * The tools that sit under a letter while it is written (LetterComposer):
- * the choice between writing, drawing, notes and the paper itself, and what
- * each of them offers.
- *
- * Every choice is a real radio button drawn as a swatch or a segment, so the
- * arrow keys move through it and a screen reader hears each by its name; the
- * colours and papers are drawn live in the paper the letter is on, so a
- * swatch shows what choosing it would look like on this sheet.
+ * The tools under a letter being written (LetterComposer): the Write, Draw, Text and Paper switch and each tool's
+ * options. Every choice is a real radio drawn as a swatch or segment, and swatches render on the letter's own paper.
  */
 
 export type Tool = 'write' | 'draw' | 'text' | 'paper';
@@ -51,7 +45,7 @@ const PEN_NAMES: Readonly<Record<DrawTool, MessageKey>> = { pen: 'letters.paper.
 const PEN_ICONS: Readonly<Record<DrawTool, React.ReactNode>> = { pen: <PenIcon size={17} />, brush: <BrushIcon size={17} />, marker: <MarkerIcon size={17} /> };
 
 /** Each colour by its name, for whoever cannot see the swatch: the inks first, as they are among the paints. */
-export const PAINT_NAMES: Readonly<Record<Paint, MessageKey>> = {
+const PAINT_NAMES: Readonly<Record<Paint, MessageKey>> = {
   navy: 'letters.paint.navy',
   charcoal: 'letters.paint.charcoal',
   sepia: 'letters.paint.sepia',
@@ -89,11 +83,7 @@ const TONE_NAMES: Readonly<Record<PaperTone, MessageKey>> = {
 
 const NOTE_SIZE_NAMES: Readonly<Record<NoteSize, MessageKey>> = { s: 'letters.paper.note.small', m: 'letters.paper.note.medium', l: 'letters.paper.note.large' };
 
-/**
- * Write · Draw · Text · Paper, as one segmented choice. Drawing on a first
- * letter to a stranger is there but closed, with a lock on it: choosing it
- * says why (DrawPanel), rather than the tool silently missing.
- */
+/** Write, Draw, Text and Paper as one segmented control; Draw shows a lock on a first letter, and choosing it says why. */
 export function ToolSwitch({ tool, onChange, canDraw, reasonId }: { tool: Tool; onChange: (next: Tool) => void; canDraw: boolean; reasonId: string }): React.JSX.Element {
   const t = useT();
   const name = `paper-tool${useId()}`;
@@ -135,12 +125,8 @@ export function PaintChoice({ value, onChange, tone, legend, only }: { value: Pa
   );
 }
 
-/**
- * A sheet in small, for a swatch: its tone, its lines in their own colours
- * and a stroke of its ink, drawn at the swatch's own scale so the lines,
- * squares and dots can still be told apart there.
- */
-export function MiniSheet({ paper }: { paper: LetterPaper }): React.JSX.Element {
+/** A small sheet for a paper swatch: its tone, lines and a stroke of ink, drawn at the swatch's scale. */
+function MiniSheet({ paper }: { paper: LetterPaper }): React.JSX.Element {
   const c = paperColors(paper);
   const rows = [15, 22, 29, 36, 43];
   return (
@@ -204,7 +190,7 @@ export function PaperPanel({ paper, onChange }: { paper: LetterPaper; onChange: 
 }
 
 /** Undo and redo, as two quiet square buttons that say what they do to whoever cannot see the arrows. */
-export function UndoRedo({ canUndo, canRedo, onUndo, onRedo }: { canUndo: boolean; canRedo: boolean; onUndo: () => void; onRedo: () => void }): React.JSX.Element {
+function UndoRedo({ canUndo, canRedo, onUndo, onRedo }: { canUndo: boolean; canRedo: boolean; onUndo: () => void; onRedo: () => void }): React.JSX.Element {
   const t = useT();
   return (
     <div className="paper-history">
@@ -219,9 +205,8 @@ export function UndoRedo({ canUndo, canRedo, onUndo, onRedo }: { canUndo: boolea
 }
 
 /**
- * Drawing: what to draw with, in which colour and how wide, and undo, redo
- * and clear. Clearing asks once, in place. On a first letter to a stranger
- * there is only the one line saying why there is nothing to draw with yet.
+ * The Draw tool: paint, colour and width, with undo, redo and a clear that confirms in place. On a first letter there
+ * is only the line saying why drawing is not available yet.
  */
 export function DrawPanel({
   canDraw,
@@ -335,10 +320,8 @@ export function DrawPanel({
 }
 
 /**
- * Notes: writing a new one and putting it on the paper, and for the one
- * chosen on the sheet, its words, size, colour and turn, and taking it off.
- * What a note may not say is said under it as it is typed, as with the
- * letter itself.
+ * The Text tool: adding a note, and editing the selected note's words, size, colour and rotation or removing it.
+ * Problems with a note show as it is typed, as for the letter.
  */
 export function TextPanel({
   notes,

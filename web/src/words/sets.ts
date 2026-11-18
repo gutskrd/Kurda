@@ -1,12 +1,7 @@
 import type { KurdishWord, WordGroupId, WordSetId } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 
-/**
- * What the pages call each set: the title and the line under it, and the
- * set's own Kurdish name (each card's picture is drawn in the shared art,
- * `wordSetSvg`). Kept apart from the two pages (Words.tsx, WordSet.tsx) so
- * both read the same names.
- */
+/** Each word set's title, subtitle and Kurdish name, shared by the Words and WordSet pages. */
 
 export const SET_TITLE: Record<WordSetId, MessageKey> = {
   colours: 'words.set.colours',
@@ -22,12 +17,7 @@ export const SET_BODY: Record<WordSetId, MessageKey> = {
   months: 'words.set.monthsBody',
 };
 
-/**
- * Each set's name in Kurdish, as its card says it: the Kurmancî and Soranî
- * titles the phone's catalogues give the sets, with the Soranî in Latin
- * letters beside them for a reader of the other script. Listed for a native
- * speaker to check, like every Kurdish word here.
- */
+/** Each set's Kurdish name on its card, as in the phone's catalogues, with the Soranî also in Latin letters. */
 export const SET_NAME: Record<WordSetId, KurdishWord> = {
   colours: { kmr: 'Reng', ckb: 'ڕەنگەکان', ckbLatin: 'řengekan' },
   numbers: { kmr: 'Hejmar', ckb: 'ژمارەکان', ckbLatin: 'jimarekan' },
@@ -48,5 +38,5 @@ export const GROUP_TITLE: Partial<Record<WordGroupId, MessageKey>> = {
   kurdish: 'words.group.kurdish',
 };
 
-/** A season's tint over a month's tile or a legend's pill: faint enough that the words keep their contrast in either theme. */
+/** A season's tint over a month's tile or a legend pill, faint enough to keep the text's contrast in either theme. */
 export const tinted = (hex: string): string => `${hex}2E`;

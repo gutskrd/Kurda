@@ -8,24 +8,10 @@ import { useT } from '../i18n/I18nProvider';
 import { useTrail } from './trail';
 
 /**
- * The shell for a lesson and a review: the lesson alone, with its own ✕, its
- * progress and nothing else — no navigation, no social column, no invite
- * banner and no rating box. A question is answered better with nothing
- * tugging at the eye, and a game invite landing over a question made the
- * learner choose between the two.
- *
- * Nothing is lost by it. The rail's and the invites' providers are still here,
- * so an invite sent mid-lesson is received as it would be anywhere; it waits,
- * and its banner shows as soon as the learner leaves for any other page
- * (`isFocusedPath` is how the banner and the rating box know to hold). The
- * skip link and the error boundary are the app shell's own. What it shows
- * while a page's code is still arriving is not: every page here is a lesson
- * or leads to one, so it is the lesson's own frame (learn/LessonPlaceholder),
- * the same picture the page then keeps while its session is asked for.
- *
- * A lesson is noted as it is drawn (`useTrail`), so that the way back in a
- * phone's top bar, on the page a lesson returns to, can pass over it: a
- * lesson that has ended is no place to go back to.
+ * The shell for lessons and reviews: only the lesson, with its own ✕ and progress, and no navigation, social column,
+ * invite banner or rating box. The rail and invite providers stay, so invites wait and show on the next page
+ * (`isFocusedPath`). The skip link and error boundary are the app shell's; the loading fallback is the lesson frame
+ * (learn/LessonPlaceholder). Lessons are noted with `useTrail` so the back button can skip them.
  */
 export function FocusLayout(): React.JSX.Element {
   const t = useT();

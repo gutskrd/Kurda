@@ -1,11 +1,8 @@
-/** Recent-search list management (KUR-045). Pure, unit-tested. */
+/** The dictionary's list of recent searches. */
 
-export const MAX_RECENTS = 10;
+const MAX_RECENTS = 10;
 
-/**
- * Add a term to the front of the recents list: trimmed, de-duplicated
- * (case-insensitively), most-recent-first, capped. Blank terms are ignored.
- */
+/** Adds a trimmed term to the front of the list, without case-insensitive duplicates, capped; blank terms are ignored. */
 export function pushRecent(list: string[], term: string, max = MAX_RECENTS): string[] {
   const trimmed = term.trim();
   if (trimmed.length === 0) return list;

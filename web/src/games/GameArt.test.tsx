@@ -46,11 +46,7 @@ describe('a game’s emblem', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  /**
-   * One emblem with the screen to itself acts for as long as it is seen; a
-   * shelf of them would be eight things acting for ever, so there each plays
-   * through once and rests, and once more when its card is touched.
-   */
+  /** A featured emblem loops; on a shelf each plays once, then again when its card is touched. */
   it('loops when it is the one put forward, and plays through once on a shelf, and again when asked', () => {
     lessMotion(false);
     const asked: Array<{ iterations?: number; delay?: number }> = [];

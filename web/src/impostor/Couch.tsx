@@ -65,43 +65,18 @@ import { WAY_KEY, WAY_NOTE } from './ways';
 import './couch.css';
 
 /**
- * Impostor on one phone, passed round a room (/app/games/impostor?couch=1).
+ * Impostor on one phone passed round a room (/app/games/impostor?couch=1), playing the rules in
+ * shared/src/games/impostor/couch.ts with an evening of server-dealt word cards: reading cards, clues, the vote, the
+ * caught impostor's guess and the reveal with scores.
  *
- * The rules are shared/src/games/impostor/couch.ts; this is the phone's part
- * in them. It asks who is playing and how, fetches an evening's cards (approved
- * word cards, dealt by the server), and then walks the room through each round:
- * the phone handed to each player to read their card, the clues said out loud
- * in turn, the talk, the vote, the caught impostor's guess, and the cards
- * turned over, with the evening's score.
+ * Privacy on a shared screen: a card shows only while pressed and hides on release, page switch or lock; a blank
+ * screen with the next name sits between players; cards live in memory only and names stay on this phone; draws use
+ * the browser's crypto random numbers.
  *
- * What it is careful about, because one screen is shared by people who must
- * not see each other's cards:
- * - a card is on the screen only while its holder is pressing it; letting go,
- *   switching away from the page or the screen locking hides it;
- * - between two players there is always a screen that shows nothing, with the
- *   next player's name on it;
- * - the cards stay in memory for the evening and are never stored; the
- *   players' names are kept on this phone only, so the next evening starts
- *   with them, and are never sent anywhere;
- * - every draw comes from the browser's own random numbers, not a clock.
- *
- * A tap that is easy to make by mistake can be taken back for a moment
- * (UNDO_MS): going to the vote, and each vote. Taking one back must never
- * show what it took back, so a tap that would show something new (who was
- * caught, the cards turned over) waits out that moment before it is played,
- * and one that shows nothing new is played at once with the way back beside
- * it. The caught impostor's guess is asked once more instead, since it ends
- * the round.
- *
- * With two impostors, catching one is not the end: the rest of the room
- * votes once more for the other, against a short clock, and an impostor
- * still hidden after that is paid for it. The game is set once for the
- * evening, so a card with no second word plays one round the plain way and
- * says so, and the next card is dealt the way the room chose again. A fresh
- * batch of cards is asked for without the words already played tonight.
- *
- * A round played here earns nothing: the phone holds every card, so nothing it
- * could report about who won would be worth believing.
+ * Going to the vote and each vote can be undone for UNDO_MS; a tap that would reveal something waits out that window
+ * first, and the impostor's guess is confirmed instead. With two impostors, catching one starts a timed second vote.
+ * The way to play is set for the evening, so a card without a second word plays one plain round. New batches exclude
+ * tonight's words. Rounds here earn nothing, since the phone holds every card.
  */
 
 const KEPT = 'hevalo.couch';
@@ -134,11 +109,7 @@ interface Evening {
   dialect: GameDialect;
   difficulty: GameDifficulty;
   category: string | null;
-  /**
-   * How the room set the game. Every round is dealt from this, not from the
-   * round before: a card with no second word plays one round the plain way,
-   * and the next card is played the way the room chose again.
-   */
+  /** The room's settings, which every round is dealt from, so a plain fallback round does not carry over. */
   wanted: CouchSettings;
   deck: CouchCard[];
   /** the card being played, by its place in the deck */
@@ -181,7 +152,7 @@ export function Couch(): React.JSX.Element {
   const [take, setTake] = useState<Take | null>(null);
   // a vote taken back opens again on the voter's own screen, not on the one that asks for the phone
   const [resumed, setResumed] = useState(false);
-  // the words played on this page tonight, however often the game was changed: the next batch is dealt without them
+  // Words played on this page tonight, across game changes, so the next batch excludes them.
   const tonight = useRef<string[]>([]);
 
   // the moment to take a tap back: once it is over, a held tap is played and any other simply stands
@@ -654,7 +625,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
   const script = dialectDirection(game.dialect);
   const hand = couchHand(game, seat);
 
-  // the card goes face down the moment the page is not the one in front: another app, the lock screen, another tab
+  // The card turns face down as soon as the page is hidden by another app, the lock screen or another tab.
   useEffect(() => {
     const hide = (): void => setShown(false);
     document.addEventListener('visibilitychange', hide);
@@ -836,9 +807,8 @@ function Talk({ game, onVote, onTimeUp }: { game: CouchState; onVote: () => void
 }
 
 /**
- * One private vote, with the phone passed to the voter first: a button for
- * each seat they may name (never their own, nor in the second vote the
- * impostor already caught), and one for not choosing anyone.
+ * One private vote after the phone is passed: a button per eligible seat (not the voter's, nor a caught impostor in
+ * the second vote) and one for nobody.
  */
 function SecretVote({
   names,
@@ -916,10 +886,8 @@ function OpenVote({ names, suspects, onPoint }: { names: readonly string[]; susp
 }
 
 /**
- * The room's second vote, once one of two impostors is caught: first what it
- * is for, then the vote against COUCH_SECOND_VOTE_SECONDS. The clock starts
- * when the room is ready, not while the caught impostor still holds the
- * phone, and runs on through every voter's turn with it.
+ * The second vote after one of two impostors is caught: an explanation, then the vote against
+ * COUCH_SECOND_VOTE_SECONDS, timed from when the room is ready and across every voter's turn.
  */
 function SecondVote({ onTimeUp, children }: { onTimeUp: () => void; children: React.ReactNode }): React.JSX.Element {
   const t = useT();
@@ -1056,7 +1024,7 @@ function Reveal({
     else if (reveal.second.accused !== null) afterSecond.push(t('games.impostor.end.wrongOut', { name: game.players[reveal.second.accused]! }));
   }
   if (reveal.stillHidden !== null) afterSecond.push(t('games.couch.end.stillHidden', { name: game.players[reveal.stillHidden]!, count: IMPOSTOR_POINTS.escaped }));
-  // who chose nobody said so; in a private second vote, who had not voted when the clock ran out did not vote at all
+  // Choosing nobody is a vote; in the timed second vote, anyone who had not voted when time ran out did not vote.
   const voteLine = (voter: number, suspect: number | null): string =>
     suspect === null
       ? t('games.impostor.votedUnsure', { name: game.players[voter]! })

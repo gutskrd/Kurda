@@ -19,6 +19,6 @@ describe('pushRecent', () => {
     const out = pushRecent(list, 'new', 10);
     expect(out).toHaveLength(10);
     expect(out[0]).toBe('new');
-    expect(out).not.toContain('w9'); // oldest dropped
+    expect(out).not.toContain('w9'); // The oldest is dropped.
   });
 });

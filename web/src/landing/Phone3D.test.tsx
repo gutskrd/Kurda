@@ -2,11 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { Phone3D, wantsModelledPhone } from './Phone3D';
 
-/**
- * Which phone the front page draws. The modelled one needs WebGL and is not
- * worth its download on a connection that asked to save data or is slow; in
- * every other case, and in a test, the CSS phone stands as it always has.
- */
+/** Which phone the front page draws: the modelled one needs WebGL and a connection that is not slow or saving data. */
 describe('the front page phone', () => {
   afterEach(() => {
     vi.unstubAllGlobals();

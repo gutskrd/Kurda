@@ -1,23 +1,9 @@
 /*
- * The 3D phone on the front page (Phone3D.tsx) and the app's screens on it
- * (screens.tsx).
- *
- * The phone is a stack: twelve thin rounded slabs one behind the other make
- * its metal band, the face in front carries the rim, the black glass and the
- * screen, and two pairs of buttons sit on its sides at half its depth. The
- * whole stack turns as one (`--pose-*`, plus `--tilt-*` from the pointer), so
- * the band shows on the side turned away and the glass catches the light on
- * the side turned toward it.
- *
- * Where the browser can draw it, a modelled body (phoneGl.ts) replaces the
- * slabs: a canvas behind the stack, posed by script in step with the screen.
- * `.is-modelled` hands the body over to it: the slabs, the buttons and the
- * CSS rim step aside, the CSS float and the turn's transition stop (the
- * script poses both now), and only the screen is left in the HTML.
- *
- * The screens use the app's own tokens, so the phone shows the app in the
- * theme the page is in, and the path's unit colours are the ones both apps
- * give saffron (mobile/src/coursemap/path.ts, learn/path.css).
+ * The front page's 3D phone (Phone3D.tsx) and its screens (screens.tsx). Twelve rounded slabs make the metal band, the
+ * face carries the rim, glass and screen, and buttons sit at half depth; the stack turns as one (`--pose-*` plus the
+ * pointer's `--tilt-*`). With `.is-modelled` a WebGL body (phoneGl.ts) replaces the slabs, buttons and rim, and the
+ * script takes over the float and turn. The screens use the app's tokens, and the path's unit colours match both apps
+ * (mobile/src/coursemap/path.ts, learn/path.css).
  */
 
 .p3d {
@@ -30,9 +16,9 @@
   --pose-x: 5deg;
   --pose-y: -20deg;
   --pose-z: 1.2deg;
-  /* the titanium: a band that is darker at its ends and catches the light along its middle */
+  /* The metal band, darker at its ends and catching the light along its middle. */
   --metal: linear-gradient(90deg, #2a2c30, #6b6f76 18%, #9a9ea6 30%, #4a4d53 50%, #8e9299 72%, #5b5f66 86%, #26282c);
-  /* the modelled body's metal: a warm natural aluminium that sits with the app's sun gold */
+  /* The modelled body's metal: a warm natural aluminium that suits the app's gold. */
   --p3d-tone: #c8c2b8;
   --rim: linear-gradient(140deg, #b9bdc4 0%, #6d7178 18%, #2b2d31 42%, #4d5056 62%, #a7abb2 84%, #5e6168 100%);
   position: relative;
@@ -60,7 +46,7 @@
   transform-style: preserve-3d;
   animation: p3d-float 7s ease-in-out infinite alternate;
 }
-/* off the screen, or in a tab nobody is looking at: the float waits where it is */
+/* Off screen or in a hidden tab, the float pauses. */
 .p3d.is-resting .p3d-float {
   animation-play-state: paused;
 }
@@ -82,7 +68,7 @@
   transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 
-/* the band: each slab a little further back, the last one the back plate */
+/* The band: each slab a little further back, the last one the back plate. */
 .p3d-slab {
   position: absolute;
   inset: 0;
@@ -122,7 +108,7 @@
   height: 13%;
 }
 
-/* the face: the rim, then the black glass, then the screen inside it */
+/* The face: the rim, then the black glass, then the screen inside it. */
 .p3d-face {
   position: absolute;
   inset: 0;
@@ -248,7 +234,7 @@
   opacity: 0.55;
   transform: translateX(-50%);
 }
-/* the glass catching the light: brightest at the corner turned toward the room */
+/* Glare on the glass, brightest at the corner turned toward the viewer. */
 .p3d-glare {
   position: absolute;
   inset: 0;
@@ -265,7 +251,7 @@
   transform: none;
 }
 
-/* ---- the modelled body ------------------------------------------------------ */
+/* ---- The modelled body ------------------------------------------------------ */
 .p3d-model {
   position: absolute;
   left: 0;
@@ -287,7 +273,7 @@
 .p3d.is-modelled .p3d-btn {
   opacity: 0;
 }
-/* the model draws the rim and the black glass; the screen stays where it was, inside them */
+/* The model draws the rim and black glass; the screen stays inside them. */
 .p3d.is-modelled .p3d-face {
   background: none;
   box-shadow: none;
@@ -295,7 +281,7 @@
 .p3d.is-modelled .p3d-face::before {
   opacity: 0;
 }
-/* the modelled glass has a current phone's thin border: the screen reaches nearer its edge */
+/* The modelled glass has a thin border, so the screen reaches nearer its edge. */
 .p3d.is-modelled .p3d-screen {
   inset: 9px;
   border-radius: calc(var(--r) - 9px);
@@ -307,7 +293,7 @@
   transition: none;
 }
 
-/* the shadow on the ground, under where the phone stands */
+/* The shadow on the ground under the phone. */
 .p3d-shadow {
   position: absolute;
   left: 8%;
@@ -323,7 +309,7 @@
   background: radial-gradient(closest-side, rgba(40, 30, 10, 0.28), rgba(40, 30, 10, 0));
 }
 
-/* ---- the hero: several screens, and the tabs that pick one ---------------- */
+/* ---- The hero: several screens, and the tabs that pick one ---------------- */
 .p3d-showcase {
   position: relative;
   display: grid;
@@ -361,10 +347,8 @@
 }
 
 /*
- * A tab reaches half the gap to the next one and no further (reach.css), so
- * the areas that answer meet in the middle of it. Should the words of a
- * language not fit on one line, the second row stands 12px under the first,
- * room for both rows to reach the full 48px a finger is given.
+ * Each tab's touch area reaches half the gap to the next (reach.css). If the tabs wrap, the second row sits 12px below
+ * so both rows keep a full 48px touch area.
  */
 .p3d-tabs {
   display: inline-flex;
@@ -391,7 +375,7 @@
   font-size: 0.84rem;
   font-weight: 650;
   cursor: pointer;
-  /* nothing clipped: a tab holds one short word, and the area that answers reaches past its edges */
+  /* Nothing is clipped: a tab holds one short word, and its touch area reaches past its edges. */
   transition:
     background var(--dur-fast) ease,
     color var(--dur-fast) ease;
@@ -408,7 +392,7 @@
   outline-offset: 2px;
 }
 
-/* ---- the app's screens ------------------------------------------------------- */
+/* ---- The app's screens ------------------------------------------------------- */
 .ps {
   --u-fill: #eeb154;
   --u-lip: #b07a20;
@@ -506,7 +490,7 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
-/* the path */
+/* The path. */
 .ps-unit {
   display: flex;
   align-items: center;
@@ -565,7 +549,7 @@
   left: calc(50% + var(--x));
   transform: translate(-50%, -50%);
 }
-/* a right-to-left reader's path winds the other way, as the app's does */
+/* A right-to-left path winds the other way, as in the app. */
 [dir='rtl'] .ps-stop {
   left: calc(50% - var(--x));
 }
@@ -654,7 +638,7 @@
   pointer-events: none;
 }
 
-/* the tab bar along the bottom */
+/* The tab bar along the bottom. */
 .ps-tabbar {
   position: absolute;
   inset: auto 0 0;
@@ -680,7 +664,7 @@
   border-radius: 50%;
 }
 
-/* the battle */
+/* The battle. */
 .ps-battle {
   gap: 12px;
 }
@@ -703,7 +687,7 @@
   margin-bottom: 26px;
 }
 
-/* the stories */
+/* The stories. */
 .ps-search {
   display: flex;
   align-items: center;
@@ -826,7 +810,7 @@
   font-weight: 750;
 }
 
-/* the lesson */
+/* The lesson. */
 .ps-lesson {
   gap: 14px;
 }
@@ -908,14 +892,14 @@
   padding: 11px;
   border-radius: 14px;
   background: var(--success);
-  /* the page's own ground colour: dark on the light green of the dark theme, light on the deep green of the light one */
+  /* The page's background colour: dark on the dark theme's light green, light on the light theme's deep green. */
   color: var(--app-bg);
   font-weight: 750;
   text-align: center;
   box-shadow: 0 3px 0 color-mix(in srgb, var(--success) 65%, #000000);
 }
 
-/* on a phone's own screen the phone in the page is a little smaller */
+/* On a phone screen the phone in the page is a little smaller. */
 @media (max-width: 560px) {
   .p3d {
     --w: min(272px, 74vw);
@@ -925,7 +909,7 @@
   }
 }
 
-/* Reduce Motion: the phone stands still, turned; screens change at once */
+/* Reduce Motion: the phone stands still, turned, and screens change at once. */
 @media (prefers-reduced-motion: reduce) {
   .p3d-float,
   .ps-bubble {

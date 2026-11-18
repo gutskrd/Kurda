@@ -1,13 +1,7 @@
-/**
- * The words the riddles' and proverbs' codes are shown with — a difficulty,
- * a category, where one comes from, a theme, a riddle's state — so the lists,
- * the pages and the round all say each thing the same way. Every code has
- * its own key in all nine catalogues; a code is never shown as it is stored.
- */
+/** Labels for the riddle and proverb codes (difficulty, category, tradition, theme, state), shared by every screen. */
 import type { LoreTradition, ProverbTheme, RiddleCategory, RiddleDifficulty, RiddleState } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 export const DIFFICULTY_KEY: Record<RiddleDifficulty, MessageKey> = {
   easy: 'lore.difficulty.easy',
@@ -40,18 +34,14 @@ export const THEME_KEY: Record<ProverbTheme, MessageKey> = {
   mistakes: 'lore.theme.mistakes',
 };
 
-/** A riddle's state as its list marks it; a riddle not yet touched is not marked at all. */
+/** A riddle's state as the list marks it; an untouched riddle is not marked. */
 export const STATE_KEY: Record<Exclude<RiddleState, 'new'>, MessageKey> = {
   trying: 'lore.state.trying',
   solved: 'lore.state.solved',
   revealed: 'lore.state.revealed',
 };
 
-/**
- * Where a riddle or a proverb comes from, in one short line: traditional,
- * a region's own form (and which region), or newly written. A new one is
- * never presented as old.
- */
+/** Where a riddle or proverb comes from in one line: traditional, a region's own form, or newly written. */
 export function traditionLine(kind: 'riddle' | 'proverb', tradition: LoreTradition, region: string | null, t: Translate): string {
   if (tradition === 'regional' && region) return t(kind === 'riddle' ? 'lore.tradition.riddle.regionalIn' : 'lore.tradition.proverb.regionalIn', { region });
   if (tradition === 'traditional' && region) return t(kind === 'riddle' ? 'lore.tradition.riddle.traditionalIn' : 'lore.tradition.proverb.traditionalIn', { region });
@@ -62,7 +52,7 @@ export function traditionLine(kind: 'riddle' | 'proverb', tradition: LoreTraditi
   return t(key[tradition]);
 }
 
-/** The short tag a list row wears for where it comes from. */
+/** The short origin tag on a list row. */
 export const TRADITION_TAG_KEY: Record<LoreTradition, MessageKey> = {
   traditional: 'lore.tradition.tag.traditional',
   regional: 'lore.tradition.tag.regional',

@@ -3,10 +3,7 @@ import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ShareWin, shareOut } from './ShareWin';
 
-/*
- * The quiet Share on a win: the device's own sheet where it has one, the
- * message copied where it has not, and nothing else done either way.
- */
+/* Sharing a win: the device's share sheet where it has one, the clipboard where it has not. */
 
 const TEXT = 'I finished a Kurdish lesson on Hevalo. 🍎\nhttps://hevalo.test/win/lesson';
 
@@ -66,7 +63,7 @@ describe('handing a message out', () => {
       throw new Error('NotAllowedError');
     });
     expect(await shareOut(TEXT)).toBe('failed');
-    // and where the browser has no clipboard at all
+    // And where the browser has no clipboard at all.
     vi.stubGlobal('navigator', { ...navigator });
     expect(await shareOut(TEXT)).toBe('failed');
   });
@@ -90,7 +87,7 @@ describe('the Share button', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
     expect(share).toHaveBeenCalledTimes(1);
     expect(share).toHaveBeenCalledWith({ title: 'Hevalo', text: TEXT });
-    // nothing is said after the sheet, and nothing is asked again
+    // Nothing is shown after the sheet, and nothing is asked again.
     expect(screen.getByRole('button', { name: 'Share' })).toBeInTheDocument();
     expect(screen.queryByText('Copied')).not.toBeInTheDocument();
     expect(screen.getAllByRole('button')).toHaveLength(1);

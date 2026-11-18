@@ -9,9 +9,8 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { formatBackBy } from './notice';
 
 /**
- * Pages that stay up while Hevalo is offline: the ones about Hevalo, which ask
- * the API for nothing, and signing in, which the API keeps open so that staff
- * can check the app before it opens again.
+ * Pages that stay up while Hevalo is offline: the public pages, which need no API, and sign-in, which the API keeps
+ * open so staff can check the app before it reopens.
  */
 const OPEN_PATHS: ReadonlySet<string> = new Set(['/', '/about', '/privacy', '/terms', '/faq', '/how-hevalo-teaches', '/login']);
 
@@ -19,12 +18,8 @@ const OPEN_PATHS: ReadonlySet<string> = new Set(['/', '/about', '/privacy', '/te
 const OWN_PICTURE = '/mascot-deer.png';
 
 /**
- * In place of the app while Hevalo is offline.
- *
- * Any request that finds it so (503 MAINTENANCE, lib/api.ts) puts this up,
- * with what an admin wrote to show meanwhile. What was open underneath goes;
- * when Hevalo is back it is drawn again from the start, so the page asks the
- * API for its data afresh, without the site being reloaded.
+ * Replaces the app while Hevalo is offline, as reported by any 503 MAINTENANCE answer (lib/api.ts). When Hevalo is
+ * back the app mounts again from scratch, so pages refetch their data without a reload.
  */
 export function MaintenanceGate({ children }: { children: ReactNode }): React.JSX.Element {
   const { maintenance, setMaintenance } = useAuth();
@@ -34,13 +29,9 @@ export function MaintenanceGate({ children }: { children: ReactNode }): React.JS
 }
 
 /**
- * The offline screen: a picture, what is happening, when Hevalo expects to be
- * back, and a way to ask now. It asks `GET /status` by itself every
- * half minute while it can be seen, and hands on what it hears: a newer
- * notice, or null once Hevalo is open again.
- *
- * A title or message the admin left empty is the app's own, in the reader's
- * language; one written is shown as written.
+ * The offline screen: a picture, the admin's notice, when Hevalo expects to be back and a way to check now. It polls
+ * `GET /status` while visible and reports a newer notice, or null once Hevalo is open. An empty title or message
+ * falls back to the app's own words.
  */
 export function MaintenanceScreen({
   notice,
@@ -54,10 +45,10 @@ export function MaintenanceScreen({
   const { client } = useAuth();
   const titleRef = useRef<HTMLHeadingElement>(null);
   const asking = useRef(false);
-  // an uploaded picture that will not load gives way to the app's own
+  // An uploaded picture that fails to load gives way to the app's own.
   const [failed, setFailed] = useState<string | null>(null);
 
-  // the reader is taken to what has happened, once, as it appears
+  // Focus the heading once, as the screen appears.
   useEffect(() => {
     titleRef.current?.focus();
   }, []);
@@ -67,7 +58,7 @@ export function MaintenanceScreen({
     asking.current = true;
     const res = await client.get<StatusResponse>('/status');
     asking.current = false;
-    // no answer, or not one this can read: the screen stays and asks again
+    // No usable answer: the screen stays and asks again.
     if (!res.ok) return;
     if (res.data?.maintenance === null) onChange(null);
     else {
@@ -76,8 +67,7 @@ export function MaintenanceScreen({
     }
   }, [client, onChange]);
 
-  // every half minute while the screen can be seen; a tab put away stops
-  // asking, and asks at once when it is looked at again
+  // Poll while the tab is visible, and ask at once when it becomes visible again.
   useEffect(() => {
     let timer: ReturnType<typeof setInterval> | undefined;
     const stop = (): void => {

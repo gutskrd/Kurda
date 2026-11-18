@@ -26,10 +26,10 @@ import { describeError } from '../lib/api';
 import { useServerClock } from '../stories/useStoryGame';
 import { multiSeatName } from '../play/MultiRoom';
 
-export type LastLetterView = MultiView<LastLetterBoard | null>;
+type LastLetterView = MultiView<LastLetterBoard | null>;
 
 /** Why a word was struck, in the reader's words. */
-export const REASON_KEY: Record<LastLetterStrikeReason, MessageKey> = {
+const REASON_KEY: Record<LastLetterStrikeReason, MessageKey> = {
   'not-a-word': 'games.lastLetter.reason.notAWord',
   'wrong-letter': 'games.lastLetter.reason.wrongLetter',
   used: 'games.lastLetter.reason.used',
@@ -44,19 +44,15 @@ export function langOf(dialect: LetterDialect): string {
   return dialect === 'ckb' ? 'ckb' : 'ku';
 }
 
-/**
- * What a chain word means in the reader's language: the lesson or the
- * dictionary may give it in several, and English stands in for the rest. A
- * board from before meanings were kept in every language has only `meaning`.
- */
-export function meaningIn(word: Pick<LastLetterChainWord, 'meaning' | 'meanings'>, locale: AppLocale): { text: string; lang: string } | null {
+/** What a chain word means in the reader's language, falling back to English or to the older single `meaning`. */
+function meaningIn(word: Pick<LastLetterChainWord, 'meaning' | 'meanings'>, locale: AppLocale): { text: string; lang: string } | null {
   const own = word.meanings?.[locale];
   if (own) return { text: own, lang: locale };
   const en = word.meanings?.en ?? word.meaning;
   return en ? { text: en, lang: 'en' } : null;
 }
 
-/** What the word box says about a slip it can see before a word is sent (shared `lastLetterSlip`). */
+/** The problem the word box can see before a word is sent (shared `lastLetterSlip`). */
 export function precheck(board: LastLetterBoard, typed: string): { key: MessageKey; letter?: string } | null {
   const slip = lastLetterSlip(board, typed);
   if (!slip) return null;
@@ -66,19 +62,10 @@ export function precheck(board: LastLetterBoard, typed: string): { key: MessageK
 }
 
 /**
- * The Last Letter's own staging, inside the room (play/MultiRoom.tsx):
- *
- * - the chain, a row of word cards that reads in the dialect's own direction,
- *   each card's last letter and the next card's first lit in the same colour,
- *   so the link between two words is the thing you see; the newest card slides
- *   in, and the row keeps it in view;
- * - a ring around the letter the next word must begin with, emptying as the
- *   turn's time runs out (drawn from the server's clock), with how a word
- *   beginning with it is written (Soranî writes a first vowel with ئ);
- * - the players, each with three strike marks, out or away;
- * - and, on your turn, the word box, which says a slip it can see before the
- *   word is sent. A strike buzzes (and shakes the seat that took it); under
- *   Reduce Motion nothing moves, the colour alone says it.
+ * The Last Letter's board inside the room (play/MultiRoom.tsx): the chain of word cards in the dialect's direction,
+ * each link's letters lit in the same colour; a ring around the next required letter that empties on the server's
+ * clock; the players with their three strike marks; and on your turn the word box. A strike buzzes and shakes the
+ * seat; under Reduce Motion nothing moves.
  */
 export function LastLetterBoardView({
   view,
@@ -99,7 +86,7 @@ export function LastLetterBoardView({
   };
   const lastStrike = board?.strikes.at(-1) ?? null;
   const strikeKey = lastStrike ? `${lastStrike.seat}:${lastStrike.turn}:${lastStrike.reason}` : null;
-  // a new strike buzzes once, for whoever sees it; the chain growing ticks
+  // A new strike buzzes once; the chain growing ticks.
   const seenStrike = useRef(strikeKey);
   const seenLength = useRef(board?.chain.length ?? 0);
   const [shaking, setShaking] = useState<number | null>(null);
@@ -163,7 +150,7 @@ export function LastLetterBoardView({
           ) : (
             <p className="ll-starts muted">{t('games.lastLetter.firstWord')}</p>
           )}
-          {/* a soft ending passes on the letter before it: said once under the letter, so the ring never looks wrong */}
+          {/* A soft ending passes on the letter before it, explained under the ring. */}
           {board.required && board.requiredFrom ? (
             <p className="ll-note muted">
               {t('games.lastLetter.softEnding', { word: board.requiredFrom.word, vowel: board.requiredFrom.vowel, letter: board.required })}
@@ -206,8 +193,8 @@ export function LastLetterBoardView({
   );
 }
 
-/** The ring around the next letter: a full circle at the start of a turn, empty when its time is up. */
-export function TurnRing({ share, low, label, children }: { share: number; low: boolean; label: string; children: React.ReactNode }): React.JSX.Element {
+/** The ring around the next letter: full at the start of a turn, empty when its time is up. */
+function TurnRing({ share, low, label, children }: { share: number; low: boolean; label: string; children: React.ReactNode }): React.JSX.Element {
   const r = 34;
   const length = 2 * Math.PI * r;
   return (
@@ -230,7 +217,7 @@ export function TurnRing({ share, low, label, children }: { share: number; low: 
 }
 
 /** The chain so far: each word a card, its first and last letters lit so the links show. */
-export function WordChain({ board, name, mySeat }: { board: LastLetterBoard; name: (seat: number) => string; mySeat: number | null }): React.JSX.Element {
+function WordChain({ board, name, mySeat }: { board: LastLetterBoard; name: (seat: number) => string; mySeat: number | null }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const list = useRef<HTMLOListElement>(null);
@@ -239,7 +226,7 @@ export function WordChain({ board, name, mySeat }: { board: LastLetterBoard; nam
   useEffect(() => {
     const el = list.current;
     const last = el?.lastElementChild as HTMLElement | null;
-    // keep the newest word in view, without moving the page
+    // Keep the newest word in view without scrolling the page.
     if (el && last && typeof el.scrollTo === 'function') {
       el.scrollTo({ left: dir === 'rtl' ? -el.scrollWidth : el.scrollWidth, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     }
@@ -278,11 +265,7 @@ export function WordChain({ board, name, mySeat }: { board: LastLetterBoard; nam
   );
 }
 
-/**
- * Every word of a finished game, in the order it was played, with who played
- * it and what it means: the game was a list of words, and its end is the
- * moment to read them again.
- */
+/** Every word of a finished game in order, with who played it and what it means. */
 export function ChainReview({ board, name }: { board: LastLetterBoard; name: (seat: number) => string }): React.JSX.Element | null {
   const t = useT();
   const locale = useLocale();
@@ -319,7 +302,7 @@ export function ChainReview({ board, name }: { board: LastLetterBoard; name: (se
 /** A word with its first and last letters marked, keeping a Soranî word's letters joined. */
 function WordLetters({ word, first, last, dialect }: { word: string; first: string | null; last: string | null; dialect: LetterDialect }): React.JSX.Element {
   const chars = Array.from(word);
-  // Arabic letters join: splitting a word into spans would break its shapes, so only Kurmancî letters are lit one by one
+  // Spans would break joined Arabic script, so only Kurmancî letters are lit one by one.
   if (dialect === 'ckb' || chars.length < 2) return <>{word}</>;
   const head = chars[0] === first ? chars[0] : '';
   const tail = chars.length > 1 && chars[chars.length - 1] === last ? chars[chars.length - 1] : '';
@@ -333,7 +316,7 @@ function WordLetters({ word, first, last, dialect }: { word: string; first: stri
   );
 }
 
-/** The word box on your turn: typed, never pasted, with the slips it can see said before a strike. */
+/** The word box on your turn: no pasting, and problems it can see are shown before a strike. */
 function WordComposer({
   board,
   move,
@@ -345,7 +328,7 @@ function WordComposer({
   const [word, setWord] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // a word the server took for a slip of a mark: no strike, and the word it most likely was offered in its place
+  // A word the server took for a missing mark: no strike, and the likely word is offered instead.
   const [didYouMean, setDidYouMean] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly(t('games.rhyme.noPasting'));
@@ -370,7 +353,7 @@ function WordComposer({
     if (spelling) input.current?.focus();
   }
 
-  /** A letter from the key bar, typed where the cursor is. */
+  /** Types a letter from the key bar at the cursor. */
   function insert(letter: string): void {
     const el = input.current;
     const at = el?.selectionStart ?? word.length;
@@ -383,7 +366,7 @@ function WordComposer({
     });
   }
 
-  // in a right-to-left box a sentence in the reader's language is clipped and reads backwards: the letter alone says it
+  // In a right-to-left box a sentence in the reader's language would clip and read backwards, so only the letter shows.
   const placeholder = !board.required
     ? t('games.lastLetter.placeholderAny')
     : dir === 'rtl'
@@ -411,7 +394,7 @@ function WordComposer({
         aria-describedby={hint || error || pasteNotice || didYouMean ? 'll-word-hint' : undefined}
         {...typeOnly}
       />
-      {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+      {/* While busy the button keeps its label so its width does not change. */}
       <Button type="submit" disabled={busy || !word.trim() || hint !== null} aria-busy={busy || undefined}>
         {t('games.lastLetter.send')}
       </Button>

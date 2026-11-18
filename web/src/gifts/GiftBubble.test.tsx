@@ -55,7 +55,7 @@ describe('GiftBubble, to its recipient', () => {
     renderApp(<GiftBubble card={card()} mine={false} senderName="rojda" actions={a} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
     expect(a.calls).toEqual(['open:g1']);
-    // the burst is playing; a tap skips it
+    // The burst is playing; a tap skips it.
     await userEvent.click(screen.getByRole('button', { name: 'Skip' }));
 
     expect(await screen.findByRole('heading', { name: 'Sunset over Amed' })).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe('GiftBubble, to its recipient', () => {
     expect(a.calls).toEqual(['open:g1', 'wear:bg-sunset', 'thank']);
 
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
-    // and the keyboard is back on the gift, not lost at the top of the page
+    // Focus is back on the gift, not lost at the top of the page.
     expect(screen.getByRole('button', { name: 'See Sunset over Amed again' })).toHaveFocus();
   });
 
@@ -85,11 +85,11 @@ describe('GiftBubble, to its recipient', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
     const stage = screen.getByRole('dialog', { name: 'A gift from rojda' });
     expect(within(stage).getByRole('button', { name: 'Skip' })).toHaveFocus();
-    // Tab stays on the stage
+    // Tab stays on the stage.
     await userEvent.tab();
     expect(stage.contains(document.activeElement)).toBe(true);
 
-    // while it plays, Escape is a skip — not a close the timer would undo
+    // While it plays, Escape skips rather than closing.
     await userEvent.keyboard('{Escape}');
     expect(await within(stage).findByRole('heading', { name: 'Sunset over Amed' })).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
@@ -111,7 +111,7 @@ describe('GiftBubble, to its recipient', () => {
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} }));
     renderApp(<GiftBubble card={card()} mine={false} senderName="rojda" actions={actions()} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
-    // no skip needed: the fade is a fifth of a second
+    // No skip needed: the fade is a fifth of a second.
     expect(await screen.findByRole('heading', { name: 'Sunset over Amed' })).toBeInTheDocument();
   });
 
@@ -138,7 +138,7 @@ describe('GiftBubble, to its recipient', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Say thanks' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/You can’t send messages until .*2030/);
     expect(screen.getByRole('link', { name: 'See your account standing' })).toBeInTheDocument();
-    // and Say thanks is still there to try once the limit ends
+    // Say thanks is still there to try once the limit ends.
     expect(screen.getByRole('button', { name: 'Say thanks' })).toBeInTheDocument();
   });
 
@@ -194,8 +194,7 @@ describe('GiftBubble, to everyone else', () => {
   });
 
   it('names the one person a group gift was for', () => {
-    // in a group "Opened ✓" alone would not say whose — the sender may have
-    // picked one friend, or the others may have been skipped
+    // In a group "Opened ✓" alone would not say whose.
     renderApp(
       <GiftBubble
         card={card({ myGiftId: null, recipients: [{ name: 'dilan', avatarUrl: null, isMe: false, opened: true }] })}

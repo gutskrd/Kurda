@@ -3,17 +3,8 @@ import { useT } from '../i18n/I18nProvider';
 import { typingLabel } from './useTyping';
 
 /**
- * Somebody is writing: a bubble on their side of the thread, where their
- * words are about to be, with three dots dropping into it one after another.
- *
- * It was a line of small grey text between the thread and the box, which is
- * read only by someone looking for it. A bubble is where the eye already is —
- * at the foot of the conversation — and says the same thing without a word:
- * the next message is on its way.
- *
- * The words are still there for a screen reader, announced politely, and in
- * a group (`named`) they are printed over the bubble, since there the bubble
- * alone does not say who.
+ * A typing indicator: a bubble with three bouncing dots on the typist's side at the foot of the thread. The words are
+ * announced politely to screen readers, and printed over the bubble in groups (`named`) to say who.
  */
 export function TypingBubble({
   names,

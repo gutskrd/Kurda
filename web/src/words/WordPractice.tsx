@@ -1,33 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { askWordAgain, makeWordRound, wordIn, type AlphabetScript, type AppLocale, type SetWord, type WordQuestion, type WordSetId } from '@kurda/shared';
 import { currentWordSounds, play, spokenAlphabet, useRecordings, wordSound } from '../alphabet/audio';
+import { Asked, COMEBACK } from '../alphabet/Practice';
 import { Sound } from '../alphabet/Sound';
 import { Button } from '../components/Button';
-import { CharacterStage, STAGE } from '../characters/CharacterStage';
-import type { SpokenClip } from '../characters/clips';
 import type { CharacterReaction } from '../characters/SpeakingCharacter';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { DayName, Digits, MeaningText, Swatch, WordText, meaningOf } from './parts';
 
 /**
- * "Check yourself" for a word set: a round of eight short questions made in
- * @kurda/shared (`makeWordRound` says how and why), drawn the way the
- * alphabet's round is (alphabet/Practice.tsx) — a miss shows the right answer
- * with its sound at once and comes back later in the round; nothing is scored,
- * saved or ranked, and the end names the words to look at again, with a round
- * of just those. Keys 1–3 answer and Enter goes on, so a reader at a keyboard
- * never has to reach for the mouse.
+ * "Check yourself" for a word set: a round of short questions from `makeWordRound` in @kurda/shared, played like the
+ * alphabet's round. A miss shows the answer with its sound and comes back later; nothing is saved or ranked, and the
+ * end offers a round of just the missed words. Keys 1–3 answer and Enter goes on.
  */
 
 interface Item {
   q: WordQuestion;
-  /** a miss coming back later in the round; it does not count toward the score */
+  /** A missed question asked again later in the round; it does not count toward the score. */
   retry: boolean;
 }
-
-/** How far back a missed question comes: far enough to be recalled, not just remembered. */
-const COMEBACK = 3;
 
 /** What each kind asks, by set where the set changes the question. */
 function askKey(q: WordQuestion): MessageKey {
@@ -48,15 +40,6 @@ function askKey(q: WordQuestion): MessageKey {
   }
 }
 
-/** A question asked out loud by a character: that character standing on a stage beside its button, pleased with a right answer. */
-function Asked({ clips, reaction, children }: { clips: SpokenClip[]; reaction: CharacterReaction | null; children: React.ReactNode }): React.JSX.Element {
-  if (clips.length === 0) return <>{children}</>;
-  return (
-    <CharacterStage clips={clips} height={STAGE.card} reaction={reaction} className="ab-q-stage">
-      {children}
-    </CharacterStage>
-  );
-}
 
 export function WordPractice({
   set,
@@ -67,11 +50,11 @@ export function WordPractice({
   set: WordSetId;
   dialect: AlphabetScript;
   locale: AppLocale;
-  /** open a word missed in the round */
+  /** Opens a word missed in the round. */
   onOpen: (id: string) => void;
 }): React.JSX.Element {
   const t = useT();
-  // a round started after the recordings arrive asks with them
+  // A round started after the recordings arrive uses them.
   useRecordings();
   const [queue, setQueue] = useState<Item[] | null>(null);
   const [at, setAt] = useState(0);
@@ -93,7 +76,7 @@ export function WordPractice({
   const q = item?.q;
   const done = queue !== null && at >= queue.length;
 
-  // a listening question speaks as it appears: Start, or Next, was the tap that lets it
+  // A listening question plays as it appears; pressing Start or Next is the gesture that allows autoplay.
   useEffect(() => {
     if (q?.clip) play(q.clip);
   }, [q]);
@@ -265,9 +248,8 @@ export function WordPractice({
 }
 
 /**
- * A word as a question or an option shows it: the Kurdish word (a day with its
- * number marked) — or what it means: a colour's swatch, a number's digits, the
- * reader's own word for a day or a month.
+ * A word as a question or option shows it: the Kurdish word, or its meaning as a colour's swatch, a number's digits
+ * or the reader's own word for a day or month.
  */
 function Face({
   word,
@@ -292,7 +274,7 @@ function Face({
   return <MeaningText meaning={meaningOf(word, dialect, locale, t)} className={`wd-face-meaning wd-face--${size}`} />;
 }
 
-/** One answer: a tile that says, once chosen, whether it was the one — in colour and with a mark. */
+/** One answer tile; once chosen it shows whether it was right, in colour and with a mark. */
 function Choice({
   index,
   word,
@@ -312,7 +294,7 @@ function Choice({
 }): React.JSX.Element {
   const t = useT();
   const cls = state === 'right' ? ' is-right' : state === 'wrong' ? ' is-wrong' : state === 'dim' ? ' is-dim' : '';
-  // a swatch or a pair of digits is read out as what it is; a word reads itself
+  // A swatch or digits need a spoken label; a word reads itself.
   const label = shows === 'meaning' && (word.set === 'colours' || word.set === 'numbers') ? meaningOf(word, dialect, locale, t).text : undefined;
   return (
     <button type="button" className={`ab-tile ab-option wd-option${cls}`} disabled={state !== 'open'} aria-label={label} onClick={onPress}>
@@ -324,7 +306,7 @@ function Choice({
   );
 }
 
-/** Why the answer is what it is: the word, what it means, and its sound. */
+/** Why the answer is right: the word, what it means and its sound. */
 function Explain({ word, dialect, locale }: { word: SetWord; dialect: AlphabetScript; locale: AppLocale }): React.JSX.Element {
   const t = useT();
   return (

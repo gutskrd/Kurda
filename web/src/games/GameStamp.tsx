@@ -4,37 +4,15 @@ import { GameArt } from './GameArt';
 import './game-stamp.css';
 
 /**
- * A game as a stamp: Hevalo's letters travel by bird, so the thing a game is
- * handed over as is a postage stamp. The phone app draws the same one
- * (mobile/src/games/GameStamp.tsx), from the same outline and the same sizes.
+ * A game as a postage stamp, as on the phone (mobile/src/games/GameStamp.tsx), from the shared outline (`stamp.ts`):
+ * pale perforated paper in the game's hue with a soft glow (full when featured), the cover, the Kurdish name in the
+ * hue's deep shade and its meaning where it differs. Colours come from the shared `stampLook`.
  *
- * The stamp is the shared outline (shared art `stamp.ts`): pale paper in the
- * game's own hue, perforated on all four sides, giving off a soft light in
- * that hue — full for the stamp put forward today, quieter for a stamp among
- * others. By night it is still light paper, a step quieter, with a short
- * faint halo where the day's long glow would be a fog on the dark page. On
- * it, the game's cover with its corners rounded, its Kurdish name as a
- * heading in the hue's deep shade, and under the name what it means in the
- * reader's language, where the two differ. What it is printed in, by day and
- * by night, is the shared stamp's (`stampLook`), which the phone app reads
- * too.
- *
- * Its paper is drawn twice, once with the day's long light and once with the
- * night's short one, and the stylesheet shows the one for the scheme that is
- * on; both are filled and stroked with variables (game-stamp.css), so a
- * change of scheme repaints the stamp without anything being drawn again. By
- * day the variables are the hue's own steps (the `.hue-*` classes of
- * styles/tokens.css). By night the paper and its ink are the day's, which no
- * night step holds, so they are handed to the stylesheet here. The light
- * reaches past the stamp's own box on every side, so each paper is laid
- * outside it by its own reach and takes no room: whoever lays stamps out
- * leaves the air between them.
- *
- * It is a picture with a heading, not a control: whoever shows it lays over
- * it the thing that is pressed, and says to a screen reader what pressing
- * does. Every stamp of one width is the same height, whatever its name's
- * length, so a row of them stands level: its sizes are the shared stamp's
- * (`stampSize`).
+ * The paper is drawn twice, with the day's long glow and the night's short halo, and the stylesheet shows one; both use
+ * variables (game-stamp.css), so a scheme change repaints without redrawing. By day the variables are the hue's steps
+ * (`.hue-*`, styles/tokens.css); by night the paper and ink are the day's, passed in here. The glow extends past the
+ * box and takes no room, so callers leave space between stamps. It is a picture, not a control: the caller overlays the
+ * pressable element and its label. Every stamp of one width has the same height (`stampSize`), so rows stay level.
  */
 export function GameStamp({
   game,
@@ -74,7 +52,7 @@ export function GameStamp({
     };
     return { day: draw('light'), night: draw('dark') };
   }, [width, height, hue, large]);
-  // its sizes, for the stylesheet to lay it out by: how wide and how tall, and the margin inside the perforations; and what it is printed in by night
+  // The sizes for the stylesheet (width, height and the margin inside the perforations), and the night colours.
   const style = {
     '--game-stamp-width': `${width}px`,
     '--game-stamp-height': `${height}px`,
@@ -86,7 +64,7 @@ export function GameStamp({
   const reach = (look: StampLook): React.CSSProperties => ({ '--game-stamp-reach': `${stampBox(width, height, look.strength, look.reach).inset}px` }) as React.CSSProperties;
   return (
     <div className={`game-stamp hue-${hue}${large ? ' game-stamp--large' : ''}`} style={style}>
-      {/* decoration, drawn from the shared outline and two colour names and nothing anybody typed; the name on it says which game this is */}
+      {/* Decorative, drawn from the shared outline and colour variables; the name printed on it identifies the game. */}
       <span className="game-stamp-paper game-stamp-paper--day" aria-hidden="true" style={reach(day)} dangerouslySetInnerHTML={papers.day} />
       <span className="game-stamp-paper game-stamp-paper--night" aria-hidden="true" style={reach(night)} dangerouslySetInnerHTML={papers.night} />
       <div className="game-stamp-face">

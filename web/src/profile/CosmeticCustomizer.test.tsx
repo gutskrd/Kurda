@@ -62,9 +62,8 @@ function makeFetch(calls: Array<{ url: string; body: unknown }>) {
 }
 
 /**
- * A fuller inventory: two backgrounds owned (one worn), two on sale, a free
- * one; two icons on sale (one Kurdish, with a description); a season frame;
- * and, when asked, the Kurdish tag.
+ * A fuller inventory: two backgrounds owned (one worn), two on sale and a free one; two icons on sale (one Kurdish,
+ * with a description); a season frame; and optionally the Kurdish tag.
  */
 function inventoryFetch(
   calls: Array<{ url: string; method: string; body: unknown }>,

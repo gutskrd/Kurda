@@ -4,10 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { jsonResponse, renderApp } from '../test/utils';
 import { EntryView } from './EntryView';
 
-/*
- * A dictionary entry's pronunciations: one an editor gave a character has the
- * character beside its button; the rest are the plain button they always were.
- */
+/* A pronunciation an editor gave a character shows that character beside its button; the rest are plain buttons. */
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -67,7 +64,7 @@ describe('a saved word', () => {
       }),
     );
     renderApp(<EntryView entryId="d1" onOpenEntry={vi.fn()} />);
-    // on: pressed, and drawn as everything that is on (the violet, styles/pages.css)
+    // Saved: pressed, and drawn in the "on" violet (styles/pages.css).
     const on = await screen.findByRole('button', { name: 'Remove bookmark' });
     expect(on).toHaveAttribute('aria-pressed', 'true');
     expect(on).toHaveClass('dict-save', 'is-on');

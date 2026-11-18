@@ -5,22 +5,12 @@ import { Button } from '../components/Button';
 import { useCelebrationMoment } from '../lib/motion';
 
 /**
- * The moment something is earned: a new division or tier, a placement
- * finished, a new league, a badge (contract 4 §U) — and, inline, a lesson
- * finished.
+ * The celebration for something earned (a division, tier, placement, league or badge, and inline a finished lesson).
+ * One short sequence everywhere (shared celebration.ts, styles/motion.css): the art springs in, a ring widens, flecks
+ * burst and fall, one haptic as it lands (lib/haptics.ts), then the words fade in. A click skips to the end; under
+ * Reduce Motion it simply appears. As a dialog it takes focus, Escape closes it and its text is announced.
  *
- * The same short sequence everywhere (shared celebration.ts, drawn by
- * styles/motion.css): the art springs in, a ring of its colour widens once
- * behind it, a light handful of flecks in its colours is thrown out and falls
- * away, it is felt once as it lands (lib/haptics.ts, on a touch screen that
- * can), and then the words fade in. It is over in about a second and a half;
- * a click or a tap on it skips to the end, and after that nothing moves while
- * it is read. Under reduced motion it simply appears. A dialog, so focus goes
- * to it and Escape closes it, and what it says is read out.
- *
- * Celebrations queue rather than stack: a game's result holds the badge
- * celebrations back (`useCelebrationHold`) until its own moment is over, so a
- * division-up is never covered by the badge it also earned.
+ * Celebrations queue: a game's result holds badge celebrations back (`useCelebrationHold`) until its own moment ends.
  */
 export function Celebration({
   open,
@@ -39,25 +29,25 @@ export function Celebration({
   colours,
 }: {
   open: boolean;
-  /** the dialog's accessible name */
+  /** The dialog's accessible name. */
   label: string;
   art: React.ReactNode;
   kicker?: string;
   title: string;
   body?: string | null;
-  /** the colour family the light and the flecks take: a rank tier, a badge tier, a league */
+  /** The colour family of the light and flecks: a rank tier, a badge tier or a league. */
   tone: string;
-  /** the button's words */
+  /** The button's label. */
   action: string;
   onClose: () => void;
   extra?: React.ReactNode;
-  /** something quieter under the button, which stays the one way on: a win's Share */
+  /** Something quieter under the main button, such as a win's Share. */
   below?: React.ReactNode;
-  /** how many flecks are thrown */
+  /** How many flecks are thrown. */
   flecks?: number;
-  /** keeps the same moment looking the same */
+  /** Keeps the same moment looking the same. */
   seed?: number;
-  /** the light and strong colour, for a moment whose tone has no class of its own (a league) */
+  /** The light and strong colours, for a tone without its own class, such as a league. */
   colours?: readonly [string, string];
 }): React.JSX.Element | null {
   if (!open) return null;
@@ -111,7 +101,7 @@ function CelebrationBody({
   const moment = useCelebrationMoment();
   const style = colours ? ({ '--t-hi': colours[0], '--t-mid': colours[1] } as CSSProperties) : undefined;
   return (
-    // a click anywhere on it while it plays skips to the end; the button is always there for a keyboard
+    // A click anywhere while it plays skips to the end; the button is always there for the keyboard.
     <div
       className={`celebrate tone-${tone} ${moment.playing ? 'is-playing' : 'is-done'}`}
       style={style}
@@ -135,11 +125,8 @@ function CelebrationBody({
 }
 
 /**
- * The art on its stage: the glow behind it, the ring, the flecks — each fleck
- * told where it flies by custom properties, so the whole burst is one
- * stylesheet animation per fleck and costs the page nothing once it is over.
- * Inside an element with `.celebrate` and a `tone-*` (the colours) and
- * `is-playing` / `is-done` (whether it still moves).
+ * The art on its stage with the glow, ring and flecks; each fleck's path is set by custom properties, so the burst is
+ * one CSS animation per fleck. Placed inside `.celebrate` with a `tone-*` class and `is-playing` or `is-done`.
  */
 const FULL = celebrationPlan(false);
 
@@ -155,13 +142,13 @@ export function CelebrationArt({
   flecks: number;
   seed: number;
   reach: number;
-  /** how long after it appears the flecks are thrown, for a moment that opens on something else first */
+  /** How long after it appears the flecks are thrown, for a moment that opens on something else first. */
   delayMs?: number;
-  /** no ring and no flecks, for a reader who asked for less motion (the stylesheet hides them for one who asks later) */
+  /** No ring or flecks under Reduce Motion; the stylesheet hides them if it is turned on later. */
   still?: boolean;
 }): React.JSX.Element {
   const plan = useMemo(() => (still ? [] : burstPlan(flecks, seed, 3, reach)), [still, flecks, seed, reach]);
-  // each fleck's slice of the burst, in the burst's own time (shared celebration.ts)
+  // Each fleck's slice of the burst, in the burst's own time (shared celebration.ts).
   const { burstMs, burstDelayMs } = FULL;
   return (
     <div className="celebrate-art">
@@ -192,7 +179,7 @@ export function CelebrationArt({
   );
 }
 
-// ---- the queue ----------------------------------------------------------------------
+// ---- The queue ----------------------------------------------------------------------
 
 const holds = new Set<symbol>();
 const listeners = new Set<() => void>();

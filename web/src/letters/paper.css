@@ -1,20 +1,8 @@
 /*
- * A letter's own paper (PaperSheet.tsx, LetterComposer.tsx, PaperTools.tsx).
- *
- * The sheet is laid out in the page's own units. Its frame is a size
- * container and `--u` is a thousandth of the sheet's width; the measures
- * themselves come from the shared page (sheetStyle sets `--rule-u`,
- * `--top-u` and the rest), so the ruled lines drawn by the shared art and
- * the words typed on them are the same distance apart at any size. The type
- * has a floor of 16px: a phone never zooms into a letter being written, and a
- * letter reads the same on the phone it was written on.
- *
- * The paper is an object on the page, in its own colours whatever the theme
- * — a hairline round it where it meets the screen, a soft shadow under it,
- * and no glow. The tools under it are the app's own: a segmented choice, and
- * swatches drawn in the paper they would give. Only colour, border and the
- * transform of a press change, and nothing moves for a reader who asked for
- * less motion.
+ * A letter's paper (PaperSheet.tsx, LetterComposer.tsx, PaperTools.tsx). `--u` is a thousandth of the sheet's width
+ * from a size container, and the shared measures (`--rule-u`, `--top-u`, set by sheetStyle) keep the drawn rules and
+ * typed lines aligned at any size. The type has a 16px floor so phones do not zoom on focus. The paper keeps its own
+ * colours in any theme, with a hairline and soft shadow; nothing moves under Reduce Motion.
  */
 .paper-frame {
   container-type: inline-size;
@@ -216,11 +204,8 @@
   background: var(--surface-solid);
 }
 /*
- * While drawing, placing notes or choosing paper on a sheet taller than the
- * screen, the tools stay at the foot of the screen and the sheet passes over
- * them; they settle back under it once its end is reached. Not on a phone,
- * where the whole sheet and its tools fit on the screen together, and the
- * tools would only hide the paper.
+ * On a sheet taller than the screen the tools stick to the screen's foot until the sheet's end; not on a phone, where
+ * they would hide the paper.
  */
 @media (min-width: 600px) and (min-height: 600px) {
   .paper-dock.is-floating {

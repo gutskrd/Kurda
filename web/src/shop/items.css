@@ -1,34 +1,25 @@
 /*
- * Browsing items by kind — the Shop, the inventory in Edit Profile and the
- * chat's gift picker (shop/ItemBrowser.tsx). One look on all three, drawn
- * from what the app already has: the chip tabs of Messages and Rankings, the
- * segmented control, the shop's quiet checkbox, the friend-heading over a
- * section. Every target is at least 44px, and the colours are the app's tokens.
+ * Browsing items by kind in the Shop, the inventory and the gift picker (shop/ItemBrowser.tsx), built from the app's
+ * existing chip tabs, segmented control and checkbox. Every target is at least 44px.
  */
 
-/* ---- the kinds, as tabs, each with its count ----------------------------- */
+/* ---- The kinds as tabs, each with its count ------------------------------ */
 .item-tabs {
   display: flex;
   gap: 8px;
-  /* a phone scrolls the row rather than squeezing a label to "Backgr…" */
+  /* A phone scrolls the row rather than truncating a label. */
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  /* room for the focus ring (2px, 2px out), which a scrolling row would
-     otherwise clip; and at the end, room to scroll the last tab clear of the fade */
+  /* Room for the focus ring, which a scrolling row would clip, and at the end room to scroll the last tab clear of the fade. */
   padding-block: 4px;
   padding-inline: 4px 36px;
   margin: -4px -4px 12px;
   /*
-   * The 4px above and below is also more than a tab needs for a press that
-   * lands just off it: drawn 44px tall, it would reach 2px each way where a
-   * finger is about. It is kept to that, because the fade's mask lifts the row
-   * over what is beside it, and room past the tabs takes the presses of
-   * whatever reaches down into it from above, such as the gift picker's "for".
+   * The 4px padding is kept small because the fade's mask lifts the row over its neighbours, and extra room would take
+   * presses meant for controls above, such as the gift picker's "for".
    */
-  /* the row fades out at its end, so a tab cut off by a phone's edge reads as
-     "there is more this way" rather than as the last one. Where every tab fits
-     (a wide screen) the fade falls on empty space. */
+  /* The row fades at its end, so a tab cut off by a phone's edge reads as "more this way". */
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
   mask-image: linear-gradient(to right, #000 calc(100% - 32px), transparent);
 }
@@ -69,12 +60,11 @@
   border-color: var(--primary);
   color: var(--primary-ink);
 }
-/* the app's focus ring is drawn with a small radius; a pill keeps its shape */
+/* The app's focus ring has a small radius; a pill keeps its own shape. */
 .item-tab:focus-visible {
   border-radius: var(--r-pill);
 }
-/* the count: fixed figures and a floor on its width, so a tab does not
-   twitch as the number under a search changes */
+/* The count has tabular figures and a minimum width, so a tab does not twitch as it changes. */
 .item-tab-count {
   min-width: 26px;
   padding: 2px 7px;
@@ -92,7 +82,7 @@
   color: var(--primary-ink);
 }
 
-/* ---- search, order, and the narrowings ------------------------------------ */
+/* ---- Search, sort and filters ---------------------------------------------- */
 .item-toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -122,7 +112,7 @@
   color: var(--ink-3);
   white-space: nowrap;
 }
-/* a wide screen says "Sort"; a phone shows the arrows (see the media query below) */
+/* A wide screen says "Sort"; a phone shows the arrows (see the media query below). */
 .item-sort-glyph {
   display: none;
 }
@@ -135,7 +125,7 @@
   font-size: 0.9rem;
   cursor: pointer;
 }
-/* the shop's quiet checkbox, given a target a thumb can find */
+/* The shop's quiet checkbox, with a thumb-sized target. */
 .item-toggle {
   display: inline-flex;
   align-items: center;
@@ -154,14 +144,12 @@
   accent-color: var(--gold);
   cursor: pointer;
 }
-/* the toggles flow with the rest of the toolbar, one by one: on a phone the
-   first sits beside the order and only the next wraps, rather than the pair
-   taking a row of their own */
+/* The toggles flow one by one with the toolbar, so on a phone the first sits beside the sort and only the next wraps. */
 .item-toggles {
   display: contents;
 }
 
-/* one choice of a few (Owned / Not owned / All): the segmented control, over radios */
+/* One choice of a few (Owned / Not owned / All): the segmented control over radios. */
 .seg.item-seg {
   margin: 0;
   min-width: 0;
@@ -172,8 +160,7 @@
   display: inline-flex;
   align-items: center;
   min-height: 38px;
-  /* the radio reaches past the segment's edge (below), so the segment may not clip it;
-     a label too long for a phone is cut by its own text instead */
+  /* The radio reaches past the segment's edge, so the segment must not clip; a long label truncates its own text. */
   overflow: visible;
   user-select: none;
 }
@@ -184,8 +171,7 @@
   white-space: nowrap;
 }
 .item-seg .seg-btn input {
-  /* the radio is the control a keyboard and a screen reader use; stretched
-     over the segment and the track's padding round it, so the target is 44px */
+  /* The radio is stretched over the segment and the track's padding, so the target is 44px. */
   position: absolute;
   inset: -3px 0;
   width: 100%;
@@ -199,13 +185,13 @@
   outline-offset: 2px;
 }
 
-/* ---- how many, and the way back ------------------------------------------- */
+/* ---- Result count and clearing filters -------------------------------------- */
 .item-results {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  /* the same height with or without "Clear filters", so the grid stays put */
+  /* The same height with or without "Clear filters", so the grid stays put. */
   min-height: 44px;
   margin: 4px 0 8px;
 }
@@ -230,7 +216,7 @@
   margin-bottom: 14px;
 }
 
-/* ---- a kind's section, when all of them are shown at once ----------------- */
+/* ---- A kind's section, when all kinds are shown at once --------------------- */
 .item-section {
   margin-bottom: 28px;
 }
@@ -260,7 +246,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* ---- an item without a picture: its kind's glyph, centred on the card ------ */
+/* ---- An item without a picture: its kind's glyph, centred on the card ------ */
 .item-glyph {
   display: grid;
   place-items: center;
@@ -270,7 +256,7 @@
   background: var(--surface);
 }
 
-/* where an owned thing is used (the inventory's Tags tab → Tags & badges) */
+/* Where an owned item is used, such as the inventory's Tags tab linking to Tags & badges. */
 .item-note {
   margin: 12px 0 0;
   font-size: 0.86rem;
@@ -289,7 +275,7 @@
     display: block;
   }
   .item-sort-word {
-    /* still the select's name, read out; only the arrows are drawn */
+    /* Still the select's accessible name; only the arrows are drawn. */
     position: absolute;
     width: 1px;
     height: 1px;

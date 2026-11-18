@@ -6,12 +6,8 @@ import { useT } from '../i18n/I18nProvider';
 import type { ApiError, ApiResult } from '../lib/types';
 
 /**
- * The box a clue or a guess is typed into, in a party game: in the game's
- * Kurdish (its language and direction), typed rather than pasted, with the
- * slip the box can see said before it is sent (the wrong letters, too long,
- * the word itself), and the server's refusal said after (the chat
- * pipeline's, or the game's). Sent with Enter or the button; cleared once
- * the move is taken.
+ * The box a party game's clue or guess is typed into, in the game's Kurdish and direction, with pasting blocked.
+ * Problems the box can see are shown before sending, and the server's refusal after. It clears once the move is taken.
  */
 export function PartyComposer({
   id,
@@ -32,7 +28,7 @@ export function PartyComposer({
   sendLabel: string;
   dialect: GameDialect;
   maxLength: number;
-  /** what the box can see is wrong with the text, in the reader's words; null when nothing */
+  /** What is wrong with the text, in the reader's words, or null. */
   slip: (text: string) => string | null;
   onSend: (text: string) => Promise<ApiResult<unknown>>;
   errorOf: (error: ApiError) => string;
@@ -88,7 +84,7 @@ export function PartyComposer({
         aria-describedby={note ? `${id}-hint` : undefined}
         {...typeOnly}
       />
-      {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+      {/* While busy the button keeps its label so its width does not change. */}
       <Button type="submit" disabled={busy || disabled || !text.trim() || hint !== null} aria-busy={busy || undefined}>
         {sendLabel}
       </Button>

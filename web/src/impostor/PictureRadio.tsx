@@ -6,7 +6,7 @@ export interface PictureOption<T extends string> {
   label: string;
   /** a second, quieter line: what a way to play does, what a category's name means */
   hint?: string;
-  /** the language of the label, when it is not the page's (a Kurdish name among choices in the reader's language) */
+  /** The label's language when it differs from the page's, such as a Kurdish name among translated choices. */
   lang?: string;
   /** the picture, already drawn */
   art: ReactNode;
@@ -18,18 +18,9 @@ export interface PictureOption<T extends string> {
 const LONG = 9;
 
 /**
- * A choice among pictures: real radio buttons, each drawn as a card with its
- * picture, its name and a line under it.
- *
- * Three shapes for three places. `cards` are wide, one under another, for a
- * few choices that each need a sentence (the ways to play). `tiles` are a
- * grid of small squares for many choices known at a glance (the categories).
- * `strip` is one row of tiles that scrolls sideways, where a sheet has no
- * room for a grid.
- *
- * It is a fieldset of native radios, as the chips are (play/ChipRadio.tsx):
- * the group has its name, the arrow keys move the choice, and the chosen one
- * is told by a tick as well as by its colour.
+ * A choice among pictures as a fieldset of native radios (like play/ChipRadio.tsx), each with picture, name and a line,
+ * and a tick as well as colour on the chosen one. `cards` stack wide choices that need a sentence, `tiles` grid many
+ * small ones, and `strip` scrolls a row of tiles where there is no room for a grid.
  */
 export function PictureRadio<T extends string>({
   label,

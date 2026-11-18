@@ -24,11 +24,11 @@ import { PartyComposer } from '../party/Composer';
 import { PartyTimer, secondsLeft } from '../party/PartyPage';
 import { SLIP_KEY, partyTextError } from '../party/text';
 
-export type ImpostorView = MultiView<ImpostorBoard | null>;
+type ImpostorView = MultiView<ImpostorBoard | null>;
 type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<ImpostorBoard | null, ImpostorOutcome>>>;
 
 /** How each way the game can end reads, above the places. */
-export const IMPOSTOR_END_KEY: Record<NonNullable<ImpostorBoard['endedBy']>, MessageKey> = {
+const IMPOSTOR_END_KEY: Record<NonNullable<ImpostorBoard['endedBy']>, MessageKey> = {
   escaped: 'games.impostor.end.escaped',
   caught: 'games.impostor.end.caught',
   guessed: 'games.impostor.end.guessed',
@@ -44,20 +44,10 @@ function rows<T>(items: readonly T[]): [T[], T[]] {
 }
 
 /**
- * Impostor's own staging, inside the room (play/MultiRoom.tsx):
- *
- * - a table with the players seated around it, the one giving a clue in a
- *   pool of light, and on the table your card — the word and its meaning, or
- *   that you are the impostor, with the category everyone is shown;
- * - the clues so far, round by round, each in the game's Kurdish;
- * - on your turn the clue box, which says a slip it can see before the clue
- *   is sent; in the vote, a button for each other player and one for not
- *   being sure, which names nobody and still counts as a vote, so the table
- *   is not kept waiting; once the impostor is caught, the four words they
- *   guess from.
- *
- * The countdown is drawn from the server's clock. Under Reduce Motion the
- * light does not move and the cards do not turn; the colours say it.
+ * Impostor's staging inside the room (play/MultiRoom.tsx): the table with the clue giver lit and the viewer's card
+ * (word and meaning, or the impostor's card with the category), the clues by round, the clue box on the viewer's turn
+ * with its slip checks, the vote (each other player, or not sure, which still counts), and the caught impostor's four
+ * guesses. The countdown follows the server's clock; under Reduce Motion nothing moves or turns.
  */
 export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; skew: number; move: Move }): React.JSX.Element | null {
   const t = useT();
@@ -323,10 +313,8 @@ function GuessPanel({ board, move }: { board: ImpostorBoard; move: Move }): Reac
 }
 
 /**
- * The reveal, once the game is over: every seat's card turns over — the
- * impostor's shows who they were, the rest the word — then the word with its
- * meaning, how it ended (and, when the impostor got away, why: a tied vote,
- * or the table voting out someone else), every clue and who voted for whom.
+ * The reveal at the end: every card turns over, then the word and meaning, how it ended (and why the impostor
+ * escaped, if they did), every clue and every vote.
  */
 export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Element | null {
   const t = useT();
@@ -344,9 +332,8 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
   const reveal = board.reveal;
   const name = seatNamer(view, t);
   const script = dialectDirection(board.dialect);
-  // these lines are about someone, so they read with names, the viewer's own included (the server leaves it out of the
-  // seats, so it comes from the account): "You" in their place reads wrongly in Kurdish, where the one who voted takes
-  // another form (te, not tu), and in English after "wasn't"
+  // These lines use names, the viewer's from the account since the server leaves it out of the seats, because "You"
+  // would need a different form in Kurdish (te, not tu) and reads wrongly in English after "wasn't".
   const mine = user ? user.displayName || user.username : null;
   const named = (seat: number): string => (view.players.find((p) => p.seat === seat)?.isMe && mine ? mine : name(seat));
   // a server from before the reasons were kept sends none, and the reveal simply says the impostor got away

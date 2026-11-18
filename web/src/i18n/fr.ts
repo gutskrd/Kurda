@@ -827,8 +827,6 @@ export const fr: Catalogue = {
   'report.aboutPlayer': 'Plus sur {name}',
   'report.group': 'Signaler ce groupe',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Sécurité',
-  'settings.safety.help': 'Ce que sont devenus tes signalements, et les décisions sur ton compte.',
   'standing.backToSettings': 'Réglages',
   'reports.mine.title': 'Mes signalements',
   'reports.mine.intro': 'Ce que tu as signalé, et ce que nous avons décidé. Toi seul peux voir ceci.',
@@ -3183,10 +3181,10 @@ export const fr: Catalogue = {
   'games.whoAmI.notOffered': 'Ez kî me? a besoin de plus de mots et de questions relus avant de pouvoir se jouer dans cette variante du kurde.',
   'games.whoAmI.share': 'Joue à Ez kî me? avec moi sur Hevalo ! Ouvre Jeux → Rejoindre avec un code et tape {code}.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} Ligue {tier}',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'Notifications',
   'notifications.pref.streak': 'Rappels de série',
   'notifications.pref.friends': 'Activité des amis',
@@ -3200,7 +3198,7 @@ export const fr: Catalogue = {
   'notifications.quietFrom': 'De',
   'notifications.quietTo': 'À',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'Étiquettes',
   'tags.main': 'Étiquette principale',
   'tags.noMain': 'Pas encore d’étiquette principale.',

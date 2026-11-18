@@ -4,30 +4,10 @@ import { isFocusedPath } from './focus';
 import { under } from './roots';
 
 /**
- * The pages gone through in this tab, so the way back (BackButton.tsx) can
- * tell what is behind the page on screen.
- *
- * The browser keeps the history and shows nobody what is in it. The router
- * numbers its entries as it makes them and keeps the number in each entry's
- * own state (`idx`): the page a visit began on is 0, and every page gone to
- * from there is one more. So a page above 0 was reached from inside the
- * site, and one step back is still Hevalo; a page at 0 was opened cold (a
- * link in a message, a bookmark, a new tab), and whatever is behind it is
- * somewhere else or nothing at all.
- *
- * The number alone would send the way back into a trap. A lesson opened from
- * a course's page comes back to that page when it ends, so the lesson is the
- * entry behind it: one step back would start the lesson again, whose only
- * way out leads to the course's page, whose way back leads to the lesson. So
- * each shell notes the address of every page it draws under its number
- * (`useTrail`), and the way back passes over what is no place to go back to:
- * a lesson or a review, which is played alone with no bar to leave it by, and
- * the very page it is leaving, which would look like a press that did
- * nothing, or that left a game by halves (`pageOf`).
- *
- * Kept in memory for as long as the tab is open. A page loaded again starts
- * with nothing noted, and what is behind it then is the browser's to show:
- * one step back, as its own Back would take.
+ * The pages visited in this tab, keyed by the router's history index (`idx`), so the back button (BackButton.tsx) knows
+ * what is behind the current page. Index 0 means the page was opened cold. Each shell notes its address (`useTrail`)
+ * so back can skip lessons, reviews and the same page (`pageOf`), avoiding a loop back into a finished lesson. Kept in
+ * memory only; after a reload nothing is noted and back takes one step.
  */
 const trail = new Map<number, string>();
 
@@ -57,17 +37,8 @@ export function forgetTrail(): void {
 }
 
 /**
- * The page an address is of. Nearly always the address itself: a page here
- * is narrowed (a filter, a tab) by replacing its address, and where one adds
- * an entry instead it is a step meant to be undone, as a word opened in
- * Search is. Two kinds of page are one page however their address moves, and
- * the way back leaves them whole, in one press, as their own arrow did
- * before a phone's top bar took its place (shell.css):
- *
- * - a game, whose start, lobby and game under way are one address with a
- *   different `?`, each added to the history as the game goes on;
- * - a game's ranks, where the switch at the top moves between the games by
- *   address, one entry a press.
+ * The page an address belongs to, usually the address itself. A game (its start, lobby and play differ only by query)
+ * and the ranks pages (switched by address) each count as one page, so back leaves them in one press.
  */
 function pageOf(address: string): string {
   const pathname = address.split('?')[0]!.replace(/\/+$/, '');
@@ -77,11 +48,8 @@ function pageOf(address: string): string {
 }
 
 /**
- * How far back the way back should step from `here` (a path with what
- * follows its `?`): a negative count of entries, or null when nothing behind
- * is worth going back to and the page's root is where to go instead. That is
- * so for a page opened cold, and for one with nothing behind it but lessons
- * and itself.
+ * How many entries back to step from `here` (path and query), as a negative count, or null when only lessons or the
+ * same page lie behind, or the page was opened cold, so its root is the destination instead.
  */
 export function stepsBack(here: string): number | null {
   const at = pageNumber();

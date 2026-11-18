@@ -3,14 +3,12 @@ import { ShareIcon } from '../components/icons';
 import { APP_NAME, useT } from '../i18n/I18nProvider';
 import './share.css';
 
-/** What became of a share: handed to the device's sheet, copied instead, put away by the person, or neither could be done. */
-export type ShareOutcome = 'shared' | 'copied' | 'dismissed' | 'failed';
+/** What became of a share: sent to the device's sheet, copied instead, dismissed, or neither was possible. */
+type ShareOutcome = 'shared' | 'copied' | 'dismissed' | 'failed';
 
 /**
- * Hand a message to whatever the device shares with: its own sheet where it
- * has one, and the clipboard where it has not (a desktop). The whole message
- * goes as the text, its address last: handed over beside the words, a link is
- * put wherever the receiving app likes, and dropped by some.
+ * Shares a message through the device's share sheet, or copies it where there is none. The link stays inside the
+ * text, since some apps drop or move a separate link.
  */
 export async function shareOut(text: string): Promise<ShareOutcome> {
   if (typeof navigator.share === 'function') {
@@ -18,7 +16,7 @@ export async function shareOut(text: string): Promise<ShareOutcome> {
       await navigator.share({ title: APP_NAME, text });
       return 'shared';
     } catch (e) {
-      // closing the sheet is a choice, and nothing more is done; a sheet that would not open leaves copying
+      // Closing the sheet is a choice, so nothing more is done; a sheet that would not open falls back to copying.
       if (e instanceof DOMException && e.name === 'AbortError') return 'dismissed';
     }
   }
@@ -34,14 +32,8 @@ export async function shareOut(text: string): Promise<ShareOutcome> {
 const COPIED_MS = 2000;
 
 /**
- * "Share", on a moment worth showing somebody: a lesson finished, a streak's
- * big day, a badge, a league week that went well, the word game's result.
- *
- * It is offered and never pushed. One quiet button beside the way on, which
- * stays the main thing on the screen; it holds nothing back, earns nothing,
- * counts nothing, and is not asked a second time. Where the device has no
- * sheet to hand the message to, the message is copied, and the button says
- * so for a moment.
+ * A quiet Share button for a win, such as a finished lesson, a streak milestone, a badge, a good league week or the
+ * word game's result. It never prompts or rewards; where it copies instead of sharing, it says "Copied" for a moment.
  */
 export function ShareWin({ text, className }: { text: string; className?: string }): React.JSX.Element {
   const t = useT();

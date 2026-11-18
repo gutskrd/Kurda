@@ -53,11 +53,8 @@ const EMPTY: Readonly<Record<Wearable, MessageKey>> = {
 };
 
 /**
- * Owned and buyable, merged: what `/me/inventory` holds and what `/shop` sells,
- * owned first (a unique item the caller owns is not in `/shop` at all). A
- * season frame is never on sale (the season hands it out), so it is here only
- * once owned; the shop's own frames are sold like a background or an icon.
- * The one tag on sale is bought in the Shop, so tags are what is owned.
+ * Owned items (`/me/inventory`) then items for sale (`/shop`), since an owned unique item is not in the shop. Season
+ * frames appear only once owned, and tags only as owned, since the tag on sale is bought in the Shop.
  */
 function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>): Tile[] {
   const map = new Map<string, Tile>();
@@ -95,13 +92,9 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
 }
 
 /**
- * Your cosmetics, by kind: backgrounds, icons and season frames — and tags,
- * once you own one — each on a tab with its count. Within a tab: what you
- * own first, badged Owned or Equipped; a filter for owned / not owned / all;
- * a search; an order. Equip, take off, buy and get-it-free work as before.
- *
- * All authorization is server-side — the client only sends a SKU to equip
- * and an expected price to buy (rejected if the catalog changed).
+ * The reader's cosmetics in tabs by kind (backgrounds, icons, season frames, and tags once owned), owned first, with
+ * a filter, search and sort. The server authorizes everything: the client sends a SKU to equip and the expected price
+ * to buy, which is refused if the catalogue changed.
  */
 export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -351,8 +344,7 @@ function CosmeticTile({
   const t = useT();
   const locale = useLocale();
   const equippable = tile.category !== 'tag' && (tile.owned || (tile.premiumOnly && premium));
-  // a free item is taken the way one is bought — the server grants it
-  // without touching the wallet — so it needs no balance to take
+  // A free item goes through the buy path, which the server grants without charging, so no balance is needed.
   const buyable = !tile.owned && tile.price != null && tile.price >= 0;
   const free = tile.price === 0;
   const canAfford = free || (balance != null && tile.price != null && balance >= tile.price);

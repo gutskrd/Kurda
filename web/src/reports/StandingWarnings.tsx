@@ -9,15 +9,8 @@ import { CATEGORY_LABEL } from './labels';
 import { formatDay, STANDING_PATH } from './restriction';
 
 /**
- * A warning, shown once.
- *
- * A warning stops nothing by itself, which made it invisible: the person
- * warned never heard of it, and the next decision about them arrived out of
- * nowhere. Now the first time the app opens after one, it is shown as a
- * dialog with its reasons; closing it, by any route, marks it seen
- * (`POST /me/standing/ack`), and Account standing keeps it from then on.
- *
- * One read of the standing per sign-in, and only for that account.
+ * A new warning shown once as a dialog with its reasons; closing it by any route marks it seen
+ * (`POST /me/standing/ack`), and Account standing keeps it. The standing is read once per sign-in.
  */
 export function StandingWarnings(): React.JSX.Element | null {
   const { client, status, user } = useAuth();

@@ -9,30 +9,12 @@ import { useAvatarSrc } from '../art/overrides';
 import { Horizon } from './Horizon';
 
 /**
- * A person, as Hevalo shows one: their background as a banner, their face
- * overlapping it, their name, and how far they are into their level.
- *
- * This is the card from the front page's picture of progress, and it is the
- * same component there and in the app — the profile popup, the full profile —
- * so the picture and the product cannot drift apart. It used to be a 200px
- * photograph with a frosted plate over it and a logo pill in the corner; the
- * front page drew something simpler, and the app now draws that.
- *
- * The background lives in the banner rather than behind the whole card. That
- * is where it reads as *theirs* — like a header image — and it leaves the text
- * on the app's own black, where it is always legible, instead of on somebody's
- * artwork, where it measured as low as 3.3:1.
- *
- * Somebody who wears no background has a horizon of their own there (`seed`),
- * so no profile opens on an empty band. The corner of the banner is where the
- * menu about this person is — the place such a menu is looked for — and what
- * can be done with them (`aside`) sits in a row of its own under their words,
- * or beside their face where the card is wide.
- *
- * Presentation only. Ownership and premium are settled by the server before a
- * background or an icon ever arrives here.
+ * A person as Hevalo shows one: their background as a banner, their face overlapping it, their name and level
+ * progress. The front page, the profile popup and the full profile all use it. The background stays in the banner so
+ * the text sits on the app's own surface and stays legible; with none, a seeded horizon fills it. Presentation only:
+ * the server settles ownership before a background or icon arrives.
  */
-export interface ProfileCardProps {
+interface ProfileCardProps {
   name: string;
   username?: string;
   avatarUrl?: string | null;
@@ -41,21 +23,21 @@ export interface ProfileCardProps {
   premium?: boolean;
   online?: boolean;
   level?: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'>;
-  /** the frame worn round the face: a season frame (contract 4 §R5) or one from the shop; none without */
+  /** The frame worn round the face: a season frame or one from the shop. */
   frameSku?: string | null;
-  /** the picture of a frame from the shop, which is laid on rather than drawn */
+  /** The picture of a shop frame, which is laid on rather than drawn. */
   frameUrl?: string | null;
-  /** who this is, for the horizon drawn where no background is worn: their id; without it the banner is plain */
+  /** The person's id, seeding the horizon drawn when no background is worn; without it the banner is plain. */
   seed?: string;
-  /** on the banner's far corner: the menu about this person, and whatever closes the card */
+  /** On the banner's far corner: the menu about this person, and whatever closes the card. */
   corner?: ReactNode;
-  /** under the handle: where they are from, what they were given */
+  /** Under the handle, such as where they are from. */
   meta?: ReactNode;
-  /** what can be done: the edit and share buttons, the friend actions */
+  /** Actions such as edit, share and the friend buttons, in a row under the name or beside the face when wide. */
   aside?: ReactNode;
-  /** name and level beside the face rather than under it — the full profile */
+  /** Name and level beside the face rather than under it, as on the full profile. */
   wide?: boolean;
-  /** only for pictures of the product, which are below the fold */
+  /** Only for the front page's pictures, which are below the fold. */
   lazy?: boolean;
   children?: ReactNode;
 }
@@ -81,7 +63,7 @@ export function ProfileCard({
 }: ProfileCardProps): React.JSX.Element {
   const t = useT();
   const face = useAvatarSrc(avatarUrl);
-  // on a full profile the page is about this person, and their name is its heading; on a card among others it is a name
+  // On a full profile the name is the page heading; elsewhere it is plain text.
   const Name = wide ? 'h1' : 'span';
   return (
     <div className={`pc${wide ? ' pc--wide' : ''}${background ? ' pc--has-bg' : ''}`}>
@@ -107,7 +89,7 @@ export function ProfileCard({
             )}
             <FrameOverlay sku={frameSku} url={frameUrl} face={wide ? 120 : 84} title={(tier) => t('seasons.frameTitle', { tier: rankTierNamed(t, tier).name })} />
             {icon && <IconOverlay icon={icon} />}
-            {/* here now: a dot on the face, as everywhere a person is listed, and said in words beside the handle */}
+            {/* Online: a dot on the face, and words beside the handle. */}
             {online && <span className="pc-presence" aria-hidden="true" />}
           </span>
           <div className="pc-names">

@@ -12,51 +12,17 @@ import type { AppLocale } from '@kurda/shared';
 import type { NavItem } from '../components/TopNav';
 
 /**
- * The dictionary everyone gets — but not the same dictionary.
- *
- * A reader with an account gets the one inside the app, which searches and
- * is backed by the API. A reader without one gets /ferheng/, the published
- * static pages: every word, no account, and no request that reaches a
- * server anybody pays for. Pointing a guest at /app/dictionary would put
- * them straight into a sign-in wall, which teaches them the app is closed
- * when almost all of it is open.
- *
- * `external` matters here. /ferheng/ is a real file on the edge and not a
- * route in this app, so a client-side navigation to it would hand the SPA
- * a path it has no route for and render a 404 over a page that exists.
- *
- * The published pages exist in two languages, at sibling paths, so a
- * reader is sent to their own rather than into an all-Kurmancî page.
- * Kurmancî for somebody who chose Kurmancî, English for everyone
- * else — the same rule `emailLocaleFor` uses on the API, and for the
- * same reason: English is what every other locale falls back to.
+ * The published static dictionary, in Kurmancî for Kurmancî readers and English for everyone else. These are real
+ * files outside the app's routes, so link to them with a plain anchor.
  */
-export function dictionaryLink(signedIn: boolean, locale: AppLocale, label: string, icon?: React.ReactNode): NavItem {
-  return signedIn
-    ? { key: 'dictionary', label, to: '/app/dictionary', icon }
-    : { key: 'dictionary', label, to: publishedDictionary(locale), icon, external: true };
-}
-
-/** Where the published dictionary is, in this reader's language. */
 export function publishedDictionary(locale: AppLocale): string {
   return locale === 'ku' ? '/ferheng/' : '/dictionary/';
 }
 
 /**
- * Which place a page belongs to, so the place stays lit on the pages inside
- * it.
- *
- * Written out rather than derived from the links: the Games view is part of
- * Learn although its address is /app/games, Rankings is reached from it, and
- * Settings and the Shop live behind your profile. None of that is visible in
- * a URL prefix. Letters by bird are the first row of Messages, and your tree
- * is opened from your profile, so each is lit with the place that leads to
- * it. The owner is also where the way back leads from a page opened cold
- * (BackButton.tsx).
- *
- * Search has no entry: it is the field in the bar, which is there on every
- * page, so there is nothing to light. Somebody else's profile has none
- * either: it is reached from every place and belongs to none.
+ * Which place owns a page, so it stays lit inside it and a cold back press leads to its root (BackButton.tsx).
+ * Written out because addresses do not say it: Games and Rankings belong to Learn, Settings, the Shop and the tree to
+ * Profile, and letters to Messages. Search and other people's profiles belong to no place.
  */
 export const OWNS: Record<'home' | 'learn' | 'messages' | 'profile', (pathname: string) => boolean> = {
   home: (p) => p === '/app' || p === '/app/' || under(p, '/app/library') || under(p, '/app/dimen') || under(p, '/app/civak'),
@@ -70,34 +36,16 @@ export const OWNS: Record<'home' | 'learn' | 'messages' | 'profile', (pathname: 
 };
 
 /**
- * The places, in a fixed order: Home, Learn, Messages, Profile. The fifth,
- * Search, is the field in the bar beside them (search/NavSearch.tsx), so it is
- * not a link here.
- *
- * One list for every bar — the app's and the front page's, and on a phone the
- * bar of places along the bottom of the app (PlacesBar.tsx) and the menu the
- * public pages' bar folds into — so a place is in the same position wherever
- * you meet it, and nothing moves under the cursor between pages. Dictionary,
- * Rankings, the Shop and Settings are not lost by leaving the bar: they are
- * inside the place they belong to (the tools in Learn, Rankings at the top of
- * its Games view, the rest in your profile's menu).
- *
- * A guest gets the two places a guest can use. Messages are people you know
- * and a profile is you; without an account there is neither, and a link that
- * only leads to "make an account" teaches a visitor the app is closed when
- * almost all of it is open. The bar offers Log in and Get started instead.
- *
- * Built inside a hook rather than at module scope because every label is a
- * word: a list made once at import time keeps whatever language the app
- * happened to start in, and cannot follow the reader when they change it.
+ * The places in a fixed order (Home, Learn, Messages, Profile), with Search as the bar's field (search/NavSearch.tsx).
+ * One list for every bar and the phone's PlacesBar, so places never move between pages. Guests get only Home and
+ * Learn. Built in a hook so the labels follow a language change.
  */
 export function useNavLinks(): NavItem[] {
   const { status, user } = useAuth();
   const t = useT();
   const { unreadTotal } = useMessages();
   const { data } = useRail();
-  // read on every render: the nav re-renders on each navigation, which is
-  // exactly when the remembered Learn view may have changed
+  // Read on every render, since the nav re-renders on each navigation, when the remembered Learn view may change.
   useLocation();
   const signedIn = status === 'signedIn';
 

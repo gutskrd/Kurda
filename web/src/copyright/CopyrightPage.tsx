@@ -7,7 +7,7 @@ import { CounterNotices } from './CounterNotices';
 import { ContactPoints, DmcaAgent, dmcaAgentRegistered } from './ProviderDetails';
 import './copyright.css';
 
-/** What happens to a notice, step by step — the same steps the API takes (api/src/copyright). */
+/** What happens to a notice, step by step, matching the API (api/src/copyright). */
 const STEPS: MessageKey[] = [
   'copyright.how.step1',
   'copyright.how.step2',
@@ -16,15 +16,9 @@ const STEPS: MessageKey[] = [
 ];
 
 /**
- * /copyright — for somebody whose work was posted on Hevalo without their
- * permission, and for the person whose post was taken down because of it.
- *
- * Open to everyone, signed in or not: a rights holder is usually not a member,
- * and hosting law (the EU's Digital Services Act, Art. 16; the US DMCA,
- * §512(c)) expects anyone to be able to send a notice. The notice form comes
- * first because that is why most people are here; how it is handled, the
- * counter-notice and the designated agent follow, in the plain words of the
- * other pages about Hevalo.
+ * /copyright, for rights holders whose work was posted without permission and for people whose post was taken down.
+ * Open to everyone, since hosting law (DSA Art. 16, DMCA §512(c)) expects anyone to be able to send a notice. The
+ * notice form comes first, then how it is handled, the counter-notice and the designated agent.
  */
 export function CopyrightPage(): React.JSX.Element {
   const t = useT();
@@ -73,7 +67,7 @@ export function CopyrightPage(): React.JSX.Element {
           title: 'copyright.repeat.title',
           body: 'copyright.repeat.body',
         },
-        // the US designated agent, once one is registered with the Copyright Office: never a section of placeholders
+        // The US designated agent, only once registered, so the page never shows placeholders.
         ...(dmcaAgentRegistered()
           ? [
               {

@@ -7,11 +7,9 @@ import { VarietySwitch } from '../lore/LoreParts';
 import { SegmentedChoice } from '../shop/ItemBrowser';
 import { BoardSwitch } from './BoardSwitch';
 
-/**
- * The segmented controls drawn over real radios. A segment no longer clips
- * itself, because the area that answers a finger reaches past its edges
- * (styles/reach.css); so the words that may have to give up their end to an
- * ellipsis sit in a label of their own, which does the clipping instead.
+/*
+ * Segmented controls over real radios. A segment cannot clip itself, since its touch area reaches past its edges
+ * (styles/reach.css), so its text sits in a label of its own that does the ellipsis.
  */
 
 /** Each segment of a control, with the words its label holds. */

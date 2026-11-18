@@ -29,7 +29,7 @@ describe('the colour scheme', () => {
   it('follows the device only when asked to', () => {
     expect(resolveScheme('system', true)).toBe('light');
     expect(resolveScheme('system', false)).toBe('dark');
-    // a device that will not say is treated as dark, the app's own look
+    // A device that does not say is treated as dark.
     expect(resolveScheme('system', null)).toBe('dark');
     expect(resolveScheme('light', false)).toBe('light');
   });

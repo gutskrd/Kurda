@@ -4,11 +4,7 @@ import { Modal } from '../components/Modal';
 import { useT } from '../i18n/I18nProvider';
 import { RatingBox } from './RatingBox';
 
-/**
- * Settings → Send feedback: the rating box's form, any time, without its
- * once-only rule (source `settings`). It reaches the same inbox the admin
- * reads. There is no store link on the web, here or anywhere.
- */
+/** Settings → Send feedback: the rating box's form at any time (source `settings`), to the same admin inbox. */
 export function SendFeedbackCard(): React.JSX.Element {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -25,11 +21,7 @@ export function SendFeedbackCard(): React.JSX.Element {
           {t('appFeedback.sendRow')}
         </Button>
       </section>
-      {/*
-        Beside the card, not inside it: a card is frosted glass, and an element
-        with a backdrop filter holds a fixed dialog inside itself — the dialog
-        would be laid out over the card and see through to the page.
-      */}
+      {/* Beside the card, not inside it, since the card's backdrop filter would trap the fixed dialog. */}
       <Modal open={open} onClose={() => setOpen(false)} label={t('appFeedback.settingsTitle')}>
         <RatingBox source="settings" onClose={() => setOpen(false)} />
       </Modal>

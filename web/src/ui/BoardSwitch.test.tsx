@@ -7,11 +7,7 @@ import { en } from '../i18n/en';
 import { BoardAmount, BoardSwitch, isBoardType } from './BoardSwitch';
 import { RankList, RankRow } from './RankRow';
 
-/**
- * The switch between the three leaderboards and the amounts their rows show:
- * one choice of three that a keyboard and a screen reader can use, and each
- * currency drawn as the app draws it everywhere else.
- */
+/* The leaderboard switch, usable by keyboard and screen reader, and the amounts its rows show. */
 
 /** What a row reads as, leaving out the words inside a picture that is hidden from a screen reader. */
 function readable(el: Element): string {
@@ -32,12 +28,12 @@ describe('BoardSwitch', () => {
     const radios = within(group).getAllByRole('radio');
     expect(radios.map((r) => readable(r.closest('label')!))).toEqual([en['rankings.board.weeklyXp'], 'Zêr', en['rankings.board.gewher']]);
     expect(within(group).getByRole('radio', { name: 'Zêr' })).toBeChecked();
-    // the coin and the gem are the app’s own pictures, beside their names
+    // The coin and the gem are drawn beside their names.
     expect(group.querySelectorAll('svg').length).toBeGreaterThanOrEqual(3);
 
     await userEvent.click(within(group).getByRole('radio', { name: en['rankings.board.gewher'] }));
     expect(onChange).toHaveBeenCalledWith('gewher');
-    // choosing the one already chosen changes nothing
+    // Choosing the current board changes nothing.
     onChange.mockClear();
     await userEvent.click(within(group).getByRole('radio', { name: 'Zêr' }));
     expect(onChange).not.toHaveBeenCalled();
@@ -68,9 +64,9 @@ describe('a leaderboard row', () => {
     const rows = screen.getAllByRole('listitem');
     expect(rows.map(readable)).toEqual(['1dilan12,400Zêr', `2azad75${en['rankings.board.gewher']}`, '3rojin420 XP']);
     expect(screen.getByRole('link', { name: 'dilan' })).toHaveAttribute('href', '/app/users/p1');
-    // a face for every row, the silhouette where there is no picture
+    // A face for every row, the silhouette where there is no picture.
     expect(container.querySelectorAll('.rank-face')).toHaveLength(3);
-    // the currencies carry their pictures, XP its unit only
+    // The currencies carry their pictures, XP only its unit.
     expect(rows[0]!.querySelector('.rank-amount svg')).not.toBeNull();
     expect(rows[1]!.querySelector('.rank-amount svg')).not.toBeNull();
     expect(rows[2]!.querySelector('.rank-amount')).toBeNull();

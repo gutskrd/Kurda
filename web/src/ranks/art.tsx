@@ -24,39 +24,22 @@ import {
 import { useArtOverride } from '../art/overrides';
 
 /**
- * The art from @kurda/shared, drawn in the page (contract 4 §B3).
+ * The @kurda/shared art inlined as SVG, so the phone and browser match and CSS can animate the shine. Each drawing's
+ * `<title>` is the translated name the caller passes. Every drawing gets its own id prefix, since copies sharing
+ * gradient ids can paint without gradients when the first copy is hidden. Shine layers are decorative, animated by
+ * styles/ranks.css and still under Reduce Motion.
  *
- * The builders return SVG strings so the phone and the browser draw the same
- * pixels; here they are inlined, which keeps them sharp at any size and lets
- * the page's own CSS move their shine. Each drawing carries its own `<title>`
- * as its accessible name — the caller passes the translated one, because the
- * builders only know Kurmancî and English.
- *
- * Every drawing gets an id prefix of its own. Two copies of the same emblem on
- * one page would otherwise share their gradient ids, and if the first copy sits
- * in something hidden (a closed sheet, a collapsed row) Chrome paints the
- * second one without its gradients.
- *
- * The shine layers are decoration: hidden from screen readers, moved by CSS
- * (styles/ranks.css), and still under `prefers-reduced-motion`.
- *
- * A drawing an admin has replaced with an uploaded picture (art/overrides.ts)
- * is that picture instead, in the same wrapper at the same size, named by the
- * same title. An upload has no shine of its own to move, so it is drawn
- * without one; a secret badge not found yet is always the secret's own art, so
- * that its picture is never given away.
+ * An admin-uploaded replacement (art/overrides.ts) draws in the same wrapper, size and title, without shine; an unfound
+ * secret badge always shows the secret art, so its picture is never given away.
  */
 function useArtId(): string {
-  // useId gives «r1»-style ids; the builders accept a plain identifier
+  // useId gives «r1»-style ids, but the builders need a plain identifier.
   return `a${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
 }
 
 /**
- * The markup as React is handed it: the same object for as long as the
- * drawing is the same. React compares what it is handed, not the markup in
- * it, so a fresh object on every render had every emblem on the page torn out
- * and parsed again whenever anything around it changed, its shine starting
- * over each time.
+ * The markup object, kept stable while the drawing is unchanged, since React compares the object rather than its
+ * markup and a new one would reparse the emblem and restart its shine.
  */
 function useMarkup(svg: string): { __html: string } {
   return useMemo(() => ({ __html: svg }), [svg]);
@@ -103,7 +86,7 @@ export function RankEmblem({
   className?: string;
 }): React.JSX.Element {
   const id = useArtId();
-  // one picture for the tier, whatever the division or season it is drawn for
+  // One picture for the tier, whatever the division or season.
   const picture = useArtOverride('rank', tier);
   const svg = useMemo(
     () => (picture ? null : rankEmblemSvg({ tier, division: division ?? undefined, season, size, title, idPrefix: id })),
@@ -121,9 +104,8 @@ export function RankEmblem({
 }
 
 /**
- * The medal a kept streak is handed: the gold pentagon with its laurel (shared
- * art/medals.ts). `unlit` is the same medal in greys, as it was before
- * today's lesson lit it: the streak's card opens on it, under the gold one.
+ * A kept streak's medal, the gold pentagon with its laurel (shared art/medals.ts). `unlit` is the grey version shown
+ * before today's lesson, which the streak card opens on under the gold one.
  */
 export function StreakMedal({ size = 96, title, unlit = false }: { size?: number; title: string; unlit?: boolean }): React.JSX.Element {
   const id = useArtId();
@@ -131,7 +113,7 @@ export function StreakMedal({ size = 96, title, unlit = false }: { size?: number
   return <Svg svg={svg} className={`art art-medal${unlit ? ' is-unlit' : ''}`} />;
 }
 
-/** A day's medal in the streak's week: gold with the laurel for a day learned, ice with a snowflake for one a freeze kept. */
+/** A day's medal in the streak week: gold with a laurel for a day learned, ice with a snowflake for a frozen day. */
 export function DayMedalArt({ kind, size = 36, title }: { kind: DayMedal; size?: number; title: string }): React.JSX.Element {
   const id = useArtId();
   const svg = useMemo(() => dayMedalSvg({ kind, size, title, idPrefix: id }), [kind, size, title, id]);
@@ -146,10 +128,8 @@ export function PlacementEmblem({ done, size = 96, title }: { done: number; size
 }
 
 /**
- * A league's emblem. `locked` is a league not reached yet: the tier's own
- * outline, flat, with a keyhole. Its two colours are the stylesheet's
- * (`--locked`, `--locked-mark`, which change with the scheme), laid over the
- * light ones it is drawn with, so it follows the theme without being drawn again.
+ * A league's emblem. `locked` draws an unreached league as its flat outline with a keyhole, coloured by the
+ * stylesheet's `--locked` and `--locked-mark`, so it follows the theme without redrawing.
  */
 export function LeagueEmblem({
   tier,
@@ -172,7 +152,7 @@ export function LeagueEmblem({
   );
   const cls = `art art-league is-${tier}${locked ? ' is-locked' : ''}${className ? ` ${className}` : ''}`;
   if (picture) {
-    // a league not reached yet is its picture greyed (styles/ranks.css), as the drawn one is flat grey
+    // An unreached league's picture is greyed (styles/ranks.css), like the drawn one.
     return (
       <span className={cls}>
         <Picture src={picture} size={size} title={title} />
@@ -183,12 +163,11 @@ export function LeagueEmblem({
 }
 const LOCKED_DRAWN = { body: '#e2e4e8', mark: '#a5a9b0' } as const;
 
-export type MedalState = 'earned' | 'locked' | 'secret';
+type MedalState = 'earned' | 'locked' | 'secret';
 
 /**
- * A badge medallion. `shine` lays the glint over an earned Zêr or Firûze
- * badge (and the single badges that wear those looks); it plays on hover and
- * focus of the surrounding `.badge-medal`, and once in a celebration.
+ * A badge medallion. `shine` adds the glint to an earned Zêr or Firûze look, played on hover or focus of the
+ * surrounding `.badge-medal` and once in a celebration.
  */
 export function BadgeMedal({
   badgeKey,
@@ -200,20 +179,20 @@ export function BadgeMedal({
   playing = false,
 }: {
   badgeKey: string;
-  /** 1–4 (0 draws the locked medallion) */
+  /** 1–4; 0 draws the locked medallion. */
   tier: number;
   state?: MedalState;
   size?: number;
   title: string;
   shine?: boolean;
-  /** play the glint now (the celebration) */
+  /** Plays the glint now, as in a celebration. */
   playing?: boolean;
 }): React.JSX.Element | null {
   const id = useArtId();
   const known = hasBadgeArt(badgeKey);
   const shown: MedalState = state === 'earned' && tier <= 0 ? 'locked' : state;
   const artTier = Math.max(1, Math.min(4, Math.floor(tier) || 1)) as ArtBadgeTier;
-  // the level's own picture, then the badge's; a secret not found yet never shows one
+  // The level's own picture, then the badge's; an unfound secret never shows one.
   const uploaded = useArtOverride('badge', badgeKey, badgeLevelName(artTier));
   const picture = shown === 'secret' ? null : uploaded;
   const svg = useMemo(
@@ -229,7 +208,7 @@ export function BadgeMedal({
   );
   const cls = `art art-badge is-${shown}${playing ? ' is-playing' : ''}`;
   if (picture) {
-    // not earned yet: the picture greyed (styles/ranks.css), as the drawn medal is in pewter
+    // Not earned yet: the picture is greyed (styles/ranks.css), like the pewter drawn medal.
     return (
       <span className={cls} style={{ width: size, height: size }}>
         <Picture src={picture} size={size} title={title} />
@@ -245,11 +224,7 @@ export function BadgeMedal({
   );
 }
 
-/**
- * The season frame round an avatar: the avatar sits in the ring's empty
- * middle (`SEASON_FRAME_INNER` of its width), and Lûtke and Stêrk frames carry
- * a glint that travels round the ring.
- */
+/** The season frame round an avatar, which fills the ring's middle (`SEASON_FRAME_INNER`); Lûtke and Stêrk frames glint. */
 export function SeasonFrame({
   tier,
   size,
@@ -259,11 +234,11 @@ export function SeasonFrame({
   tier: RankTier;
   size: number;
   title: string;
-  /** the avatar, drawn inside the ring */
+  /** The avatar, drawn inside the ring. */
   children: React.ReactNode;
 }): React.JSX.Element {
   const id = useArtId();
-  // an uploaded ring is laid over the avatar at the drawn ring's size, with no glint to travel round it
+  // An uploaded ring is laid over the avatar at the drawn ring's size, without the glint.
   const picture = useArtOverride('frame', tier);
   const frame = useMemo(() => (picture ? null : seasonFrameSvg({ tier, size, title, idPrefix: id })), [picture, tier, size, title, id]);
   const shine = useMemo(
@@ -283,10 +258,8 @@ export function SeasonFrame({
 }
 
 /**
- * A frame from the shop round a face: its picture (a ring painted with
- * nothing in its middle, scripts/cosmetic-art/frames.mjs) laid over the
- * avatar at the size a season frame is, the face filling the same two thirds
- * of it. Decorative here: the tile or the card it is on names it.
+ * A shop frame round a face: its ring picture (scripts/cosmetic-art/frames.mjs) laid over the avatar at a season
+ * frame's size. Decorative, since its tile or card names it.
  */
 export function PictureFrame({ src, size, children }: { src: string; size: number; children: React.ReactNode }): React.JSX.Element {
   const inner = Math.round(size * SEASON_FRAME_INNER);
@@ -308,15 +281,9 @@ export function frameTier(sku: string | null | undefined): RankTier | null {
 }
 
 /**
- * A frame laid round an avatar that is already drawn (the profile card's
- * face): absolutely placed and centred on it, so the card's layout does not
- * move whether or not a frame is worn. Its size follows the face's in CSS
- * (the face is the ring's empty middle); `face` only picks the drawing's
- * detail, large or small.
- *
- * A season frame is drawn from its SKU. A frame bought in the shop is a
- * picture, which the profile sends with the SKU (`url`); it is laid on the
- * same way, and has no gleam of its own to turn.
+ * A frame centred over an already drawn avatar, such as the profile card's, so the layout does not move with or
+ * without one. CSS sizes it from the face; `face` only picks the drawing's detail. A season frame is drawn from its
+ * SKU, a shop frame from its picture (`url`), without a gleam.
  */
 export function FrameOverlay({
   sku,
@@ -325,7 +292,7 @@ export function FrameOverlay({
   title,
 }: {
   sku: string | null | undefined;
-  /** the picture of a frame from the shop; a season frame has none */
+  /** The picture of a shop frame; a season frame has none. */
   url?: string | null;
   face: number;
   title: (tier: RankTier) => string;

@@ -11,16 +11,8 @@ import { Ku, Mock, TileRow } from './mocks';
 import { BATTLE_GUESSES, HEVAL, LESSON, PATH_UNIT, PEOPLE, STORIES } from './samples';
 
 /**
- * The phone app's own screens, for the 3D phone on the front page.
- *
- * Each is the screen as the app draws it — the Learn header with its streak,
- * daily goal and Zêr, the Lessons · Stories · Games switch, the path with
- * Hevalo beside it, the tab bar — set in the app's own words (its catalogue
- * keys) and colours, so the picture is the product a visitor will open and not
- * an idea of it. They are markup for the reasons `mocks.tsx` gives: small,
- * sharp at any size, and in the reader's language. Like every picture on the
- * page, each is one image to a screen reader, with a sentence saying what it
- * shows, and nothing in it can be focused or pressed.
+ * The phone app's screens for the front page's 3D phone, drawn with the app's catalogue keys and colours. Markup for
+ * the reasons `mocks.tsx` gives; each is one image to screen readers, and nothing in it is focusable.
  */
 
 /** The streak, the day's goal and the purse, as the Learn header shows them. */
@@ -31,7 +23,7 @@ function LearnStats(): React.JSX.Element {
         <Fire size={18} level={fireLevel(3)} still />
         3
       </span>
-      {/* the day's goal: a ring part full */}
+      {/* The day's goal: a partly filled ring. */}
       <svg className="ps-goal" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
         <circle cx="9" cy="9" r="6.5" className="ps-goal-track" />
         <circle cx="9" cy="9" r="6.5" className="ps-goal-fill" strokeDasharray={`${2 * Math.PI * 6.5 * 0.55} 100`} />
@@ -91,7 +83,7 @@ function TabBar(): React.JSX.Element {
   );
 }
 
-/** Where each stop on the path stands, across from the middle, as the app winds it. */
+/** Each path stop's offset from the middle, as the app winds it. */
 const STOPS: ReadonlyArray<{ x: number; kind: 'done' | 'current' | 'locked' | 'trophy' }> = [
   { x: 38, kind: 'done' },
   { x: -42, kind: 'current' },
@@ -101,11 +93,7 @@ const STOPS: ReadonlyArray<{ x: number; kind: 'done' | 'current' | 'locked' | 't
 ];
 const STEP = 80;
 
-/**
- * The learning path: the unit's band, its lessons as round stops down a
- * winding trail — one done, the next ready with its ring and a Start bubble,
- * the rest still shut, the unit's trophy at the end — and Hevalo standing by.
- */
+/** The learning path: the unit's band, lesson stops down a winding trail (done, current, locked), the trophy, and Hevalo. */
 export function PathScreen(): React.JSX.Element {
   const t = useT();
   const height = STEP * (STOPS.length - 1) + 60;
@@ -168,10 +156,7 @@ export function PathScreen(): React.JSX.Element {
 
 const EMPTY_ROW = ['empty', 'empty', 'empty', 'empty', 'empty'] as const;
 
-/**
- * A Peyvok Battle against a friend, solved on `heval`: the two players, the
- * board in the game's colours, and what the win paid.
- */
+/** A Peyvok Battle against a friend, solved on `heval`: the players, the board and the reward. */
 export function BattleScreen(): React.JSX.Element {
   const t = useT();
   return (
@@ -208,10 +193,7 @@ export function BattleScreen(): React.JSX.Element {
   );
 }
 
-/**
- * The story library: search, how far you are, the story you are reading with
- * how much of it is behind you, and the stories the editors feature.
- */
+/** The story library: search, progress, the story being read, and featured stories. */
 export function StoriesScreen(): React.JSX.Element {
   const t = useT();
   const [reading, ...featured] = STORIES;
@@ -275,11 +257,7 @@ const LESSON_OPTIONS: ReadonlyArray<{ key: MessageKey; right?: boolean }> = [
   { key: 'landing.gloss.whereYesterday' },
 ];
 
-/**
- * One exercise from the lesson player: a sentence, a hint on the new word in
- * it, three meanings to choose from, and the answer marked right with the
- * panel that rises under it.
- */
+/** One lesson exercise: a sentence with a hint on the new word, three choices, and the right answer marked. */
 export function LessonScreen(): React.JSX.Element {
   const t = useT();
   return (

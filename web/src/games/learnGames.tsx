@@ -5,21 +5,10 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
 import { useAvailability, useGameDialect } from './soloRounds';
 
 /**
- * The learning games on the website: which of the shared registry's games
- * this app has a page for, what Learn's Games page says of each, and the
- * variety they are played in.
- *
- * Learn's Games page (pages/Games.tsx) lists every game in the registry this
- * app can open (here). Those with enough approved content in the learner's
- * variety right now (GET /games/availability) are stamps on its shelf; the
- * rest are named under it as coming soon, seen but not opened, until their
- * content is published. Each wears the emblem drawn for it
- * (shared/src/art/games.ts).
- *
- * Build a Sentence and Hear It, Find It are rounds of the same kit
- * and are not here: they are exercises of the lessons' practice
- * (learn/practiceTools.tsx). What the two lists share, the learner's variety and
- * what can be done in it, is games/soloRounds.ts.
+ * The learning games the website has pages for, from the shared registry, and what Learn's Games page (pages/Games.tsx)
+ * says of each. Games with enough approved content in the learner's variety (GET /games/availability) are stamps; the
+ * rest are listed as coming soon. Build a Sentence and Hear It, Find It are lesson practice exercises instead
+ * (learn/practiceTools.tsx); what both lists share is in games/soloRounds.ts.
  */
 
 interface WebGame {
@@ -27,7 +16,7 @@ interface WebGame {
   nameKey: MessageKey;
   /** one line about it: said with its stamp to a screen reader, which sees no cover */
   lineKey: MessageKey;
-  /** what it is, said in full where there is room: under the stamp put forward, and where a game's ways in are offered */
+  /** The full description, shown under the featured stamp and where a game's ways in are offered. */
   bodyKey: MessageKey;
   /** how it is played: alone, with friends, or either on the one page */
   modes: ReadonlyArray<'solo' | 'online'>;
@@ -37,7 +26,7 @@ export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
   'memory-thief': { href: '/app/games/memory-thief', nameKey: 'games.memory.name', lineKey: 'games.card.memory', bodyKey: 'games.memory.body', modes: ['solo'] },
   detective: { href: '/app/games/detective', nameKey: 'games.detective.name', lineKey: 'games.card.detective', bodyKey: 'games.detective.body', modes: ['solo'] },
   'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, lineKey: LAST_LETTER_CARD.blurbKey, bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['solo', 'online'] },
-  // the games with friends are listed where /games/availability finds enough approved cards for the learner's variety
+  // Games with friends are listed where /games/availability finds enough approved cards in the learner's variety.
   impostor: { href: '/app/games/impostor', nameKey: 'games.impostor.name', lineKey: 'games.invite.blurb.impostor', bodyKey: 'games.invite.blurb.impostor', modes: ['online'] },
   // never played alone: on one phone passed round a room, or with friends online, and its own page asks which
   'who-am-i': { href: '/app/games/who-am-i', nameKey: 'games.whoAmI.name', lineKey: 'games.card.whoAmI', bodyKey: 'games.whoAmI.blurb', modes: ['online'] },
@@ -50,11 +39,11 @@ export function useListedLearnGames(): ListedLearnGame[] {
   const dialect = useGameDialect();
   const { status } = useAuth();
   const availability = useAvailability(dialect);
-  // The Last Letter is offered where its dictionary can check words (its own answer, from the multiplayer games' API)
+  // The Last Letter is offered where its dictionary can check words, from its own multiplayer availability.
   const chain = useLastLetterAvailability();
   const offered = [...offeredDialects(chain, 'group'), ...offeredDialects(chain, 'solo')].includes(dialect);
-  // both answers before anything is listed, so its card does not start as coming soon and then move; a visitor
-  // without an account is never asked that one, and for them it is not open yet
+  // Wait for both answers before listing, so its card does not start as coming soon and move; visitors skip that
+  // request and see it as not open yet.
   const chainKnown = chain !== null || status === 'signedOut';
   const merged =
     availability && chainKnown

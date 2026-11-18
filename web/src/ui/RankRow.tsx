@@ -4,16 +4,8 @@ import { PersonGlyph } from '../components/icons';
 import { useAvatarSrc } from '../art/overrides';
 
 /**
- * A leaderboard: one card, quiet rows, and your own row picked out.
- *
- * Every board in the app — the weekly league, the global and country boards,
- * the end of a battle — and the front page's picture of one are built from
- * these, so they all read the same way: place, who, score.
- *
- * Each row used to be its own bordered glass box with a medal emoji for the top
- * three. A stack of thirty boxes is thirty things competing for attention; rows
- * inside one card let the eye run down the numbers, which is what a table of
- * standings is for.
+ * A leaderboard: one card of quiet rows reading place, person, score, with the reader's own row picked out. Every
+ * board in the app and the front page's picture of one are built from these.
  */
 export function RankList({ children, label }: { children: ReactNode; label?: string }): React.JSX.Element {
   return (
@@ -24,10 +16,8 @@ export function RankList({ children, label }: { children: ReactNode; label?: str
 }
 
 /**
- * One row of a board. With `href` the name is a link, and the whole row
- * answers as that link (product.css stretches it over the row): a finger that
- * lands on the place, the face or the score still opens the profile. A
- * control in `trailing` keeps its own presses.
+ * One row of a board. With `href` the name is a link stretched over the whole row (product.css), while a control in
+ * `trailing` keeps its own presses.
  */
 export function RankRow({
   rank,
@@ -42,23 +32,23 @@ export function RankRow({
   zone,
   lazy = false,
 }: {
-  /** null for your own row on a board that stops before it reaches you: a dash, and no made-up place */
+  /** Null for the reader's own row on a board that stops before it; shown as a dash. */
   rank: number | null;
   name: string;
-  /** already formatted, unit and all */
+  /** Already formatted, with its unit. */
   score: ReactNode;
-  /** where the name goes, when there is a profile to go to */
+  /** Where the name links to, when there is a profile. */
   href?: string;
-  /** leave out for a board that has no faces; `null` draws the silhouette */
+  /** Omitted for a board with no faces; `null` draws the silhouette. */
   avatarUrl?: string | null;
-  /** a face drawn by the board itself (initials), in place of a picture */
+  /** A face drawn by the board itself, such as initials, in place of a picture. */
   face?: ReactNode;
   me?: boolean;
-  /** a word after the name, such as "you" */
+  /** A word after the name, such as "you". */
   marker?: ReactNode;
-  /** after the score: where a league row is heading */
+  /** After the score, such as where a league row is heading. */
   trailing?: ReactNode;
-  /** a league row about to move: a thin edge, named in `trailing` for anyone who cannot see it */
+  /** A league row about to move gets a thin edge; `trailing` names it for screen readers. */
   zone?: 'promotion' | 'demotion';
   lazy?: boolean;
 }): React.JSX.Element {

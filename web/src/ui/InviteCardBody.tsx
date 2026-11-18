@@ -3,16 +3,9 @@ import { useT } from '../i18n/I18nProvider';
 import { TicketBody, TicketGlyph, TicketStub } from './Ticket';
 
 /**
- * What a game invite says, in the order the front page shows it: that it is an
- * invite, which game, what it is, and the way in.
- *
- * Only the inside: the two halves of the invite's ticket (ui/Ticket.tsx), the
- * game's mark on the stub and the words on the body. Whatever holds it is the
- * ticket itself, in the game's colour (`ticketClass(type, 'row', 'invite-card')`).
- * In a chat the whole card is one link (`GameInviteCard`), so the "button"
- * here is a span that looks like one — a real button inside a link would be
- * two controls fighting over one tap. On the front page the same body sits in
- * a picture, where nothing may be pressable at all.
+ * The inside of a game invite's ticket (ui/Ticket.tsx): the game's mark on the stub and the words on the body. The
+ * holder supplies the ticket itself (`ticketClass(type, 'row', 'invite-card')`). The "button" is a span, since in a
+ * chat the whole card is one link and on the front page it sits in a picture.
  */
 export function InviteCardBody({
   type,
@@ -20,9 +13,9 @@ export function InviteCardBody({
   blurb,
   action,
 }: {
-  /** which game, for the mark on the stub */
+  /** Which game, for the mark on the stub. */
   type: PlayGame;
-  /** its name, as the reader's language says it */
+  /** The game's name in the reader's language. */
   game: string;
   blurb: string;
   action: string;

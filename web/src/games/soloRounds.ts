@@ -5,14 +5,9 @@ import { useI18n } from '../i18n/I18nProvider';
 import { defaultVariety } from '../stories/prefs';
 
 /**
- * What every round of the solo kit asks before it starts, whichever list it
- * is found in: the learner's variety, what can be done in that variety now
- * (GET /games/availability), and a round left open.
- *
- * On its own, apart from Learn's games (games/learnGames.tsx), because the
- * lessons' practice asks the same questions for its two exercises
- * (learn/practiceTools.tsx) and should not carry the games' cards and their
- * stylesheets to do it.
+ * What every solo round checks before starting: the learner's variety, what is available in it (GET
+ * /games/availability), and any unfinished round. Separate from games/learnGames.tsx so lesson practice
+ * (learn/practiceTools.tsx) can use it without the games' cards and stylesheets.
  */
 
 /** The learner's variety for the games: their course's, else the interface's, else the one chosen last, else Kurmancî. */
@@ -37,7 +32,7 @@ export function useAvailability(dialect: GameDialect): GamesAvailability | null 
   return availability;
 }
 
-/** A round of a game this learner left unfinished in a variety, to offer first; null when there is none (or until it answers). */
+/** The learner's unfinished round of a game in a variety, offered first; null when none or not yet known. */
 export function useOpenRound(game: LearnGameId, dialect: GameDialect): string | null {
   const { client } = useAuth();
   const [open, setOpen] = useState<string | null>(null);

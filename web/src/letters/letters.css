@@ -1,14 +1,7 @@
 /*
- * Letters by bird (letters/LettersPage.tsx, LetterThreadPage.tsx).
- *
- * One narrow column, as a letter is read: the window at the top, the paper
- * under it, the pen pals below. A letter is a sheet of paper in its own
- * colours in either theme — it is an object on the page, like the pictures,
- * not a surface of the page; each letter's own paper, and the tools for
- * making it, are paper.css. The warm sheet here is the plain one a letter
- * taken down is left on, a little dimmer in the dark so it does not glare.
- * Only transform and opacity move, and a reader who asked for less motion
- * sees the window still and each pigeon where it ends up.
+ * Letters by bird (letters/LettersPage.tsx, LetterThreadPage.tsx): one narrow column with the window, the paper and the
+ * pen pals. Letter paper keeps its own colours in either theme (paper.css); the warm sheet here is for a letter taken
+ * down, dimmer in the dark theme. Only transform and opacity animate; under Reduce Motion the window is still.
  */
 .letters-page {
   --paper: #fbf3e4;
@@ -84,10 +77,8 @@
   outline-offset: 2px;
 }
 /*
- * The window in its layers (LetterWindow.tsx). Each layer is the same square;
- * the country behind the frame is moved by the pointer (`--px`, `--py`, -1 to
- * 1) and drifts a little of itself, each as far as its `--depth`, so the
- * near meadow moves more than the far mountains and the frame holds still.
+ * The window's layers (LetterWindow.tsx), each the same square. The landscape follows the pointer (`--px`, `--py`, -1
+ * to 1) and drifts by its `--depth`, so near layers move more; the frame holds still.
  */
 .lw {
   --px: 0;
@@ -176,12 +167,7 @@
   animation: lw-glow 9s ease-in-out infinite alternate;
 }
 
-/*
- * The life round the window (LetterWindow.tsx, from the shared
- * letter-sky.ts): the birds out there and what the air carries past, each a
- * small square moved over the window by its own path, its wings or a
- * butterfly's beating on the spot.
- */
+/* Birds and drifting things around the window (shared letter-sky.ts), each a small square on its own path. */
 .lw-drift {
   position: absolute;
   left: 0;
@@ -237,10 +223,8 @@
   display: block;
 }
 /*
- * A pigeon at play (LetterWindow.tsx, from the shared LETTER_PLAY): the whole
- * of it moved about its feet, and its pictures laid one on another, the play
- * switching between them; a letter lying on the sill, a little flattened as
- * something lying down is seen from above.
+ * A pigeon's play (shared LETTER_PLAY): the bird moved about its feet with stacked frames switched by the play, and a
+ * letter lying slightly flattened on the sill.
  */
 .lw-play,
 .lw-play-pose {
@@ -292,12 +276,7 @@
     transform: scale(1.025, 1.035);
   }
 }
-/*
- * A flight is moved as a whole about the pigeon's middle (LetterWindow.tsx,
- * from the shared LETTER_FLIGHT), and when it stands and when it beats its
- * wings is switched on the flight's own clock there; here its wings beat, up
- * and down by turns.
- */
+/* A flight (shared LETTER_FLIGHT) moves the pigeon about its middle; here its wings beat up and down. */
 .lw-flight {
   transform-origin: var(--middle);
 }

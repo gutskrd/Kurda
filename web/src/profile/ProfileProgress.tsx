@@ -6,15 +6,9 @@ import { LeagueEmblem, PlacementEmblem, RankEmblem } from '../ranks/art';
 import { badgeNamed, gameName, leagueName, leagueNamed, rankLabel, rankTierNamed, withMeaning } from '../ranks/names';
 
 /**
- * What a profile shows of someone's play (contract 4 §U): the three badges
- * they chose, their rank in each game this season with the best they have
- * ever reached, and their league — every name translated, every emblem
- * labelled.
- *
- * A rank with no tier is handled, not printed as nothing: placing, resting
- * ("Resting" to others after four weeks without a rated game), or simply not
- * played. A league tier the server does not send is someone not taking part,
- * and shows nothing rather than a default.
+ * A profile's play: the three chosen badges, the season rank in each game with the best ever reached, and the league,
+ * all translated and labelled. A rank without a tier shows placing, resting (after four weeks without a rated game)
+ * or not played; a missing league tier means not taking part, and shows nothing.
  */
 export function ProfileProgress({
   ranks,

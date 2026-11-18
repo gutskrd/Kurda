@@ -10,26 +10,17 @@ import { lockPageScroll } from '../lib/scrollLock';
 import { SendError } from '../reports/SendError';
 import { Confetti, GiftBox, GiftItemArt, NewrozFlame } from './GiftArt';
 
-/** What a thread lets a gift do: open it, say thanks in the chat, put it on. */
+/** What a thread lets a gift do: open it, say thanks in the chat, or wear it. */
 export interface GiftActions {
-  /** unwrap your gift on the server; the opened card, or null when it failed */
+  /** Opens the gift on the server, returning the opened card or null on failure. */
   open(giftId: string): Promise<GiftCard | null>;
-  /**
-   * send the thanks message into this chat; null when it went, else the
-   * refusal (a chat mute says why and until when, here where you pressed)
-   */
+  /** Sends the thanks message into this chat; null when sent, else the refusal, such as a chat mute. */
   thank(): Promise<ApiError | null>;
-  /** put on what was given (a background or an icon); null when it is on */
+  /** Wears the gift (a background or icon); null when done. */
   wear(card: GiftCard): Promise<ApiError | null>;
 }
 
-/**
- * The gift, opened: the item, who it is from, and what you can do with it —
- * Wear it (when it is something you wear), Say thanks (a short message in
- * the chat, in your language), Close.
- *
- * Never "send one back": a present is not a debt.
- */
+/** The opened gift: the item, who it is from, and Wear it (when wearable), Say thanks and Close. No "send one back". */
 export function GiftReveal({
   card,
   from,
@@ -41,7 +32,7 @@ export function GiftReveal({
   from: string;
   actions: GiftActions;
   onClose: () => void;
-  /** inside a chat bubble rather than a sheet */
+  /** Inside a chat bubble rather than a sheet. */
   compact?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -51,7 +42,7 @@ export function GiftReveal({
   const [thanked, setThanked] = useState(false);
   const [failed, setFailed] = useState<ApiError | null>(null);
 
-  // the moment is over and the item is here: say so, and put the reader on it
+  // The moment is over: announce the item and move focus to it.
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
@@ -101,18 +92,15 @@ export function GiftReveal({
           {t('gift.close')}
         </Button>
       </div>
-      {/* a limit on the account says what and until when; anything else is a plain "try again" */}
+      {/* An account limit says what and until when; anything else is a plain "try again". */}
       <SendError error={failed} describe={() => t('gift.actionFailed')} className="gift-reveal-error" />
     </div>
   );
 }
 
 /**
- * The stage a rare or legendary gift opens on: a sheet with a burst of
- * pomegranate seeds and sparks for a rare one, the whole screen with a Newroz
- * fire for a legendary one. It plays for its tier's time (or fades, with
- * reduced motion), then the reveal takes its place. A tap anywhere, or the
- * Skip button, goes straight to the reveal.
+ * The stage a rare or legendary gift opens on: a confetti sheet for rare, a full-screen Newroz fire for legendary. It
+ * plays for its tier's time (or fades under Reduce Motion), then gives way to the reveal; a tap or Skip jumps ahead.
  */
 export function GiftStage({
   tier,
@@ -135,18 +123,17 @@ export function GiftStage({
   const restore = useRef<HTMLElement | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const skipRef = useRef<HTMLButtonElement>(null);
-  // Escape skips while it plays and closes once the item is shown; read
-  // through a ref so the keyboard listener is set up once, not per phase
+  // Escape skips while playing and closes once the item shows, read through a ref so the listener is set up once.
   const escape = useRef(onSkip);
   escape.current = revealed ? onClose : onSkip;
 
   useEffect(() => {
     restore.current = document.activeElement as HTMLElement | null;
     const unlock = lockPageScroll();
-    // on the stage at once, on Skip: Enter or Space ends the moment early
+    // Focus Skip at once, so Enter or Space ends the moment early.
     skipRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent): void => {
-      // focus stays on the stage while it is up, as in any dialog
+      // Focus stays on the stage while it is up, as in any dialog.
       if (stageRef.current) wrapTab(e, stageRef.current);
       if (e.key !== 'Escape') return;
       e.stopPropagation();

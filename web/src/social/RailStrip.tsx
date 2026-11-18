@@ -4,23 +4,18 @@ import type { SocialRailData } from './useSocialRail';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
-/** One rung of the strip: what it stands for, and how many of it there are. */
-export interface Rung {
+/** One rung of the strip: what it stands for, and how many. */
+interface Rung {
   key: string;
-  /** a catalogue key: this is a pure function, with nowhere to read a language from */
+  /** A catalogue key, since this is built by a pure function with no language to hand. */
   labelKey: MessageKey;
   count: number;
   icon: React.JSX.Element;
-  /** a count worth noticing gets the gold treatment; the rest stay quiet */
+  /** A count worth noticing is gold; the rest stay quiet. */
   urgent?: boolean;
 }
 
-/**
- * What the strip shows, derived from the same answer the open rail renders.
- *
- * Kept out of the component so the mapping — which number goes on which icon —
- * can be asserted without rendering anything.
- */
+/** What the strip shows, from the same answer the open rail renders; separate so the mapping can be tested directly. */
 export function rungs(data: SocialRailData): Rung[] {
   const playing = data.friends.filter((f) => f.activity).length;
   const online = data.friends.filter((f) => f.online && !f.activity).length;
@@ -29,7 +24,7 @@ export function rungs(data: SocialRailData): Rung[] {
       key: 'waiting',
       labelKey: 'rail.waitingOnYou',
       count: data.challenges.length + data.requests.length,
-      // a person asking, not a bell: the bell in the top bar is notifications
+      // A person asking, not a bell, since the top bar's bell is notifications.
       icon: <InviteIcon size={20} />,
       urgent: true,
     },
@@ -39,14 +34,7 @@ export function rungs(data: SocialRailData): Rung[] {
   ];
 }
 
-/**
- * The rail, collapsed to a column of icons.
- *
- * Collapsing to nothing would mean checking on your friends costs a click every
- * time; collapsing to a strip keeps the counts in the corner of your eye and
- * gives the page its width back. Each rung opens the rail again — a number you
- * cannot act on is only half useful.
- */
+/** The rail collapsed to a column of icons with counts; each rung opens the rail again. */
 export function RailStrip({
   data,
   onExpand,

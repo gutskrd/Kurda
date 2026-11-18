@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-// Soranî proverbs in a face made for Arabic script
+// Soranî proverbs in a typeface made for Arabic script.
 import '@fontsource-variable/vazirmatn';
 import { Link, useParams } from 'react-router-dom';
 import { dialectDirection, type ProverbView } from '@kurda/shared';
@@ -17,12 +17,9 @@ import './lore.css';
 type Load = { state: 'loading' } | { state: 'ready'; proverb: ProverbView } | { state: 'gone' } | { state: 'error'; message: string };
 
 /**
- * A proverb (/app/learn/proverbs/:slug), open to everyone and paying
- * nothing: the proverb set like a line of verse, its translation and its
- * word-for-word sense, what it means and why, a little scene where somebody
- * would say it, its background, the other ways it is said, a saying with the
- * same sense in the reader's own language where there truly is one, and
- * where it was found. One column, each part only where it has something.
+ * A proverb (/app/learn/proverbs/:slug), open to everyone and paying nothing: the proverb as verse, its translation and
+ * literal sense, its meaning, a scene of use, its background, variants, an equivalent in the reader's language where
+ * one truly exists, and its sources. One column, each part only where it has content.
  */
 export function ProverbPage(): React.JSX.Element {
   const { slug = '' } = useParams();
@@ -71,7 +68,7 @@ function Proverb({ proverb }: { proverb: ProverbView }): React.JSX.Element {
   usePageMeta(t('meta.proverb.title'), t('meta.proverbs.description'));
   const tr = useReaderLanguage(proverb.translations, locale, proverb.dialect);
   const said = tr?.value;
-  // the language what is said about it is in: the reader's, or the English it fell back to
+  // The language of the explanations: the reader's, or the English fallback.
   const sl = tr?.locale ?? 'en';
 
   return (

@@ -8,15 +8,9 @@ import { RankCard } from './RankCard';
 import { gameName, seasonDaysLeft, seasonNamed } from './names';
 
 /**
- * "Your ranks" on the Games page: a card for each game with opponents that
- * the player has begun to be ranked in, the season they are in, and the way
- * to the season's rewards and the badges. The games not begun share one quiet
- * line, each name a way to its boards: six cards that all said "Not placed
- * yet" told a newcomer the same thing six times.
- *
- * Signed-in only, and quiet when it cannot load: the games below work without
- * it, so a failure here hides the section rather than putting an error above
- * the games.
+ * "Your ranks" on the Games page: a card per ranked game the player has begun, the current season, and links to the
+ * season's rewards and the badges; games not begun share one quiet line of links. Signed-in only, and a load failure
+ * hides the section rather than showing an error above the games.
  */
 export function RanksSection(): React.JSX.Element | null {
   const { client, status } = useAuth();
@@ -28,8 +22,7 @@ export function RanksSection(): React.JSX.Element | null {
     if (status !== 'signedIn') return;
     let cancelled = false;
     void client.get<MyRanks>('/ranks/me').then((res) => {
-      // an answer without the shape (an API from before Game Ranks) shows nothing
-      // a rank in a game that is no longer part of Hevalo has no page to open and nothing left to play for
+      // An answer without the expected shape shows nothing, and ranks in retired games are dropped.
       if (!cancelled && res.ok && Array.isArray(res.data?.ranks) && res.data.season) setRanks({ ...res.data, ranks: res.data.ranks.filter((r) => isRankedGame(r.game)) });
     });
     return () => {
@@ -39,7 +32,7 @@ export function RanksSection(): React.JSX.Element | null {
 
   if (status !== 'signedIn' || !ranks) return null;
   const season = seasonNamed(t, ranks.season);
-  // a game is begun once one rated game has been played in it, or a rank has been found
+  // A game is begun once one rated game has been played or a rank found.
   const begun = ranks.ranks.filter((r) => r.tier !== null || (r.placement?.played ?? 0) > 0);
   const untouched = ranks.ranks.filter((r) => !begun.includes(r));
   const cooldown = ranks.cooldownUntil ? new Date(ranks.cooldownUntil) : null;

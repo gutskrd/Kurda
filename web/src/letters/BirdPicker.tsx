@@ -17,14 +17,8 @@ export const BIRD_NAMES: readonly MessageKey[] = [
 ];
 
 /**
- * Choosing your bird, under your window, where the bird on the sill takes
- * the colour of whichever is picked (LettersPage shows it there).
- *
- * The first bird is chosen for free and is yours from then on; another after
- * it costs Zêr (shared LETTER_BIRD_PRICE), and the picker says so, and how
- * much there is, before anything is paid. The birds are a row of radio
- * buttons, so a keyboard moves through them with the arrow keys and a screen
- * reader says each by its colour.
+ * Choosing a bird under the window, where the sill's bird takes the picked colour. The first is free; another costs
+ * Zêr (shared LETTER_BIRD_PRICE), shown with the balance before paying. The birds are radio buttons named by colour.
  */
 export function BirdPicker({
   first,

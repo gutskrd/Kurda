@@ -2,13 +2,7 @@ import type { ApiClient } from '../lib/api';
 import type { ApiResult } from '../lib/types';
 import type { ClaimedTag, ProfileTags, TagRow } from '@kurda/shared';
 
-/**
- * Tags & badges requests (KUR-286/287).
- *
- * The shapes and the view helpers live in `@kurda/shared` — both apps have to
- * offer the same tags, and none of that logic touches a UI. These six calls are
- * all that is app-specific.
- */
+/** The tag requests; the shapes and view helpers live in `@kurda/shared`, shared with the phone app. */
 
 export const myTags = (client: ApiClient): Promise<ApiResult<ProfileTags>> => client.get('/me/tags');
 
@@ -28,6 +22,6 @@ export const setTagDisplayed = (
   displayed: boolean,
 ): Promise<ApiResult<{ updated: true }>> => client.post('/me/tags/display', { key, displayed });
 
-/** The key travels in the path, so it is encoded — catalogue keys are ours, but this is still a URL. */
+/** The key travels in the path, so it is encoded. */
 export const unclaimTag = (client: ApiClient, key: string): Promise<ApiResult<{ removed: true }>> =>
   client.delete(`/me/tags/${encodeURIComponent(key)}`);

@@ -95,11 +95,7 @@ describe('typingLabel', () => {
     expect(typingLabel(['zana', 'rojîn', 'şevîn'], t)).toBe('3 people are typing…');
   });
 
-  /**
-   * Each shape is a whole sentence in the catalogue rather than a name with
-   * " is typing…" stuck on the end, because where "and" goes and how the verb
-   * agrees are not the same question in every language.
-   */
+  /** Each shape is a whole catalogue sentence, since word order and agreement differ between languages. */
   it('reads naturally in another language too', () => {
     const german = translator(de);
     expect(typingLabel(['zana'], german)).toBe('zana schreibt…');

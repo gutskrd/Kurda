@@ -29,8 +29,7 @@ describe('SectionToggles', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { sections: { ...ALL, likes: false } })));
     renderApp(<SectionToggles me={me} />);
 
-    // liking something in public and having it listed on your profile are two
-    // different choices, so each gets its own switch
+    // Liking in public and listing likes on the profile are separate choices with separate switches.
     expect(await screen.findByRole('checkbox', { name: /^Likes/ })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: /^Saved/ })).toBeChecked();
   });
@@ -52,8 +51,7 @@ describe('SectionToggles', () => {
 
     await userEvent.click(await screen.findByRole('checkbox', { name: /^Likes/ }));
 
-    // only the one that changed is sent — a full object would let two quick
-    // toggles overwrite each other
+    // Only the changed key is sent, so two quick toggles cannot overwrite each other.
     await waitFor(() => expect(sent).toEqual([{ likes: false }]));
     await waitFor(() => expect(screen.getByRole('checkbox', { name: /^Likes/ })).not.toBeChecked());
     expect(screen.getByRole('checkbox', { name: /^Posts/ })).toBeChecked();

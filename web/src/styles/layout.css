@@ -1,15 +1,8 @@
 /* ---- top navigation --------------------------------------------------- */
 
 /*
- * The bar is allowed wider than the page it sits over.
- *
- * The content column is capped at 1120px so long lines stay readable, but the
- * navigation is not a column of text — pinning it to the same cap left a wide
- * screen with the brand and everything you own huddled in the middle and empty
- * space either side. It gets a wider cap of its own — the container already
- * carries its own side padding, so no viewport arithmetic is needed (and none
- * is wanted: `100vw` counts the scrollbar, which is what made the page draggable
- * sideways in the first place).
+ * The bar gets a wider cap than the 1120px content column, so a wide screen does not huddle it in the middle. The
+ * container has its own padding, so no `100vw` arithmetic is needed (it counts the scrollbar).
  */
 @media (min-width: 1180px) {
   .nav .container.nav-inner {
@@ -17,16 +10,9 @@
   }
 }
 /*
- * Fixed to the top of the window on every screen, the page scrolling under it.
- *
- * Solid, not frosted: words in the bar are read over whatever is passing
- * beneath, and a translucent bar let a line of the page show through them. A
- * hairline is all that separates the two. On a phone with a notch or an
- * island the bar grows by the safe area and keeps its contents below it;
- * what hangs from the bar is placed at `--nav-bottom`, which counts it.
- *
- * Above the social column (z 40) and the page, so what hangs from the bar —
- * the search results, the phone's menu — is never drawn under either.
+ * Fixed to the top on every screen. Solid rather than translucent so the page never shows through its words, with a
+ * hairline below. It grows by the safe area on phones with a notch; what hangs from it uses `--nav-bottom`. It sits
+ * above the social column (z 40) so its dropdowns are never under it.
  */
 .nav {
   position: sticky;
@@ -76,12 +62,7 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-/*
- * The page you are on: brighter, on a pill, with its glyph filled in — but the
- * same weight as the others. Bold is wider, so a bold active link pushed every
- * link after it along by a few pixels, and the bar shifted under the cursor
- * each time you moved to another page.
- */
+/* The current page: brighter, on a pill, glyph filled, but not bold, which would shift the links after it. */
 .nav-link.active {
   color: var(--ink);
   background: var(--surface-2);
@@ -89,12 +70,7 @@
 .nav-spacer {
   flex: 1;
 }
-/*
- * What you have, at the end.
- *
- * Given room to breathe: the purse and the bell shoulder to shoulder at the
- * gap between the links read as one crowded clump rather than as two things.
- */
+/* The purse and bell at the end, with room between them so they read as two things. */
 .nav-actions {
   display: flex;
   align-items: center;
@@ -106,13 +82,8 @@
 }
 
 /*
- * A glyph before each label; the nav reads faster as icon + word than as words.
- * The place you are on is full strength on a soft pill with its glyph filled
- * in; the rest step back to the secondary colour, glyph and word together.
- *
- * The glyph sits in a box of its own fixed size, so swapping the outline for
- * your face (when your profile arrives) or a count landing on Messages moves
- * nothing beside it.
+ * A glyph before each label: full strength on a soft pill for the current place, secondary colour for the rest. The
+ * glyph box has a fixed size, so the profile face or an unread count arriving moves nothing.
  */
 .nav-link-icon {
   position: relative;
@@ -126,14 +97,7 @@
   color: inherit;
 }
 
-/* what you have to spend, stacked: read as a pair, in the width of one line */
-/*
- * A rule before it, not a box around it.
- *
- * A bordered box reads as a control you press; these are two numbers you glance
- * at. A single rule separates them from what comes before without drawing a
- * frame round them.
- */
+/* The balances stacked as a pair in the width of one, after a rule rather than in a box, since they are not a control. */
 .purse {
   display: flex;
   flex-direction: column;
@@ -176,11 +140,7 @@ button.nav-link {
   text-align: start;
   cursor: pointer;
 }
-/*
- * The unread count rides on the glyph's corner rather than after the word, so
- * a count arriving a moment after the page does not push the rest of the bar
- * along. (In the phone's menu it sits at the end of the row instead.)
- */
+/* The unread count sits on the glyph's corner, so it does not push the bar when it arrives; at the row's end in the phone menu. */
 @media (min-width: 769px) {
   .nav-link .nav-badge {
     position: absolute;
@@ -278,11 +238,7 @@ button.nav-link {
   }
 }
 
-/*
- * Motion is decoration here, so it goes entirely rather than being shortened.
- * The logo must still be visible — `both` on the animation would otherwise
- * leave it holding the transparent first frame.
- */
+/* Decorative motion goes entirely; the logo must still show, since `both` would hold its transparent first frame. */
 @media (prefers-reduced-motion: reduce) {
   .brand-mark,
   .brand.is-arriving .brand-mark {
@@ -295,13 +251,8 @@ button.nav-link {
 }
 
 /*
- * The squeeze between the phone and the full bar.
- *
- * Between 769px and 1099px the places, the search field, the purse, the bell
- * and the social toggle all have to share one line. The words go and the
- * glyphs stay: every place is still there and still one click away, which is
- * the point of having given each one an icon — and the word is still its
- * accessible name, because it is hidden by clipping, never by display:none.
+ * Between 769px and 1099px everything shares one line, so the labels are hidden and the glyphs stay. Labels are
+ * clipped rather than `display: none`, so they remain the accessible names.
  */
 @media (min-width: 769px) and (max-width: 1099px) {
   .nav-link-label {
@@ -352,11 +303,7 @@ button.nav-link {
   }
 }
 
-/*
- * Words back, and the social column not yet beside the page: its toggle is
- * still in the bar, so the gaps give a little for the longest languages'
- * labels (French) to fit.
- */
+/* Labels return while the social toggle is still in the bar, so the gaps shrink a little for the longest languages. */
 @media (min-width: 1100px) and (max-width: 1179px) {
   .nav-inner {
     gap: 20px;
@@ -367,15 +314,8 @@ button.nav-link {
 }
 
 /*
- * A phone.
- *
- * The same bar, compact: the brand, then search, the bell and the menu button
- * at the end. The places fold into the menu, which drops from the bar as a
- * list across the screen — each a full-width row of glyph and word, 48px
- * tall, the page you are on lit — over a scrim that a press closes.
- *
- * This is the public pages' bar. Inside the app a phone has the phone app's
- * chrome in its place, with the places along the bottom (shell.css).
+ * The public pages' bar on a phone: brand, search, bell and a menu button. The places fold into a full-width menu of
+ * 48px rows over a scrim that closes on a press. Inside the app the phone chrome replaces it (shell.css).
  */
 @media (max-width: 768px) {
   .nav-inner {
@@ -539,10 +479,7 @@ button.nav-link {
   display: block;
   margin-bottom: 12px;
 }
-/*
- * The front page's section heads, a size down: the app is read, not toured.
- * The scale's large title: 28 on a phone, growing to 34 on a wide screen.
- */
+/* The front page's section heads, a size down: 28px on a phone up to 34px on a wide screen. */
 .page-title {
   font-size: clamp(1.75rem, 1.35rem + 1.2vw, 2.125rem);
   line-height: 1.08;
@@ -645,15 +582,8 @@ button.nav-link {
 }
 
 /*
- * Who made this — an imprint, not an advertisement.
- *
- * It sits at the weight of the copyright line it shares the bar with, and only
- * lifts when somebody reaches for it. The mark is drawn in `currentColor`, so
- * it brightens with the words instead of staying lit while they move: one
- * thing responding, not two.
- *
- * The mark is taller than it is wide (1326 × 1368), so it is sized by height
- * and left to find its own width.
+ * The maker's imprint, at the weight of the copyright line beside it, brightening on hover. The mark uses
+ * `currentColor` so it changes with the words, and is sized by height since it is taller than wide.
  */
 .by-zagrosian {
   display: inline-flex;
@@ -667,11 +597,8 @@ button.nav-link {
   color: var(--ink);
 }
 /*
- * Where a finger is about, a finger's height, as the imprint beside it is. On
- * a phone the bar wraps and this lands 10px under the imprint; at the height
- * of its words alone, its reach (reach.css) would cross that gap and take the
- * presses meant for the imprint's lower edge. At 44px it needs only 2px more
- * each way.
+ * A finger's height on touch screens, as the imprint is. When the bar wraps this sits 10px below the imprint, and at
+ * 44px its reach (reach.css) needs only 2px each way, so it never takes the imprint's presses.
  */
 @media (any-pointer: coarse) {
   .by-zagrosian {
@@ -704,13 +631,7 @@ button.nav-link {
   line-height: 1;
 }
 
-/*
- * You, at the end of the bar.
- *
- * Last in the row puts it in the same column as the social panel below and on
- * the same line as everything else on the bar — the arrangement a game client
- * uses, and where the level ring finally has room to be seen.
- */
+/* The profile at the end of the bar, above the social panel's column, with room for the level ring. */
 .nav-profile {
   position: relative;
   display: grid;
@@ -737,11 +658,7 @@ button.nav-link {
   min-width: 18px;
   padding: 0 4px;
   border-radius: var(--r-pill);
-  /*
-   * Near-black rather than the surface tint: this badge sits on top of the
-   * avatar, so whatever is behind it is a photograph. A translucent panel colour
-   * let the picture through and the small gold number all but disappeared.
-   */
+  /* Near-black rather than translucent, since this badge sits over a photograph and the gold number must stay legible. */
   background: #0b0d11;
   border: 1px solid var(--border-strong);
   color: var(--gold-ink);
@@ -761,11 +678,7 @@ button.nav-link {
   fill: none;
   pointer-events: none;
 }
-/*
- * The unfilled part has to be visible, or the ring reads as a stray gold arc
- * rather than as progress round a circle. A dark, slightly blue-cast track sits
- * against both the bar and the avatar without competing with the gold.
- */
+/* A visible dark track, so the ring reads as progress round a circle rather than a stray arc. */
 .level-ring-track {
   stroke: #2b3038;
 }

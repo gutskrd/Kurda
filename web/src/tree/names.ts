@@ -1,11 +1,11 @@
 import type { TreeHealth, TreeSpecies, TreeStage } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
-import type { Named, Translate } from '../ranks/names';
+import type { Translate } from '../i18n/I18nProvider';
+import type { Named } from '../ranks/names';
 
 /**
- * The words for a tree: each kind's Kurdish name with what it means, a line
- * about it, the names of its seven stages, and how it is faring. Written out
- * key by key so that every one of them is seen to be used.
+ * The words for a tree: each kind's Kurdish name, meaning and description, its stages and its health. Written out key
+ * by key so every one is seen to be used.
  */
 const KIND: Record<TreeSpecies, { name: MessageKey; meaning: MessageKey; about: MessageKey }> = {
   beru: { name: 'tree.kind.beru.name', meaning: 'tree.kind.beru.meaning', about: 'tree.kind.beru.about' },
@@ -37,7 +37,7 @@ const HEALTH: Record<TreeHealth, MessageKey> = {
   withered: 'tree.health.withered',
 };
 
-/** A kind's name and what it means; the meaning is left out where it is the name (a reader of Kurdish). */
+/** A kind's name and meaning; the meaning is left out for Kurdish readers, where it is the name. */
 export function treeNamed(t: Translate, species: TreeSpecies): Named {
   const name = t(KIND[species].name);
   const meaning = t(KIND[species].meaning);
@@ -51,7 +51,7 @@ export const stageName = (t: Translate, stage: TreeStage): string => t(STAGE[sta
 
 export const healthName = (t: Translate, health: TreeHealth): string => t(HEALTH[health]);
 
-/** What a picture of a tree is called: its kind, how far it has grown, and how it fares when that is not well. */
+/** A tree picture's name: its kind, its stage, and its health when unwell. */
 export function treeTitle(t: Translate, tree: { species: TreeSpecies; stage: TreeStage; health: TreeHealth }): string {
   const parts = [treeNamed(t, tree.species).name, stageName(t, tree.stage)];
   if (tree.health !== 'fresh') parts.push(healthName(t, tree.health));

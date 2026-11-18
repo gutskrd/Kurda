@@ -23,12 +23,8 @@ import { currentSounds, latinSound, latinWord, pairWord, play, soraniSound, spok
 import { Meaning } from './Meaning';
 import { Sound } from './Sound';
 
-/**
- * A question's prompt, and when it is asked out loud by a character, that
- * character standing whole on a stage beside it: pleased with a right answer,
- * curious about one that was not yet.
- */
-function Asked({ clips, reaction, children }: { clips: SpokenClip[]; reaction: CharacterReaction | null; children: React.ReactNode }): React.JSX.Element {
+/** A question's prompt, with the character who asks it out loud on a stage beside it, reacting to the answer. */
+export function Asked({ clips, reaction, children }: { clips: SpokenClip[]; reaction: CharacterReaction | null; children: React.ReactNode }): React.JSX.Element {
   if (clips.length === 0) return <>{children}</>;
   return (
     <CharacterStage clips={clips} height={STAGE.card} reaction={reaction} className="ab-q-stage">
@@ -39,7 +35,7 @@ function Asked({ clips, reaction, children }: { clips: SpokenClip[]; reaction: C
 
 interface Item {
   q: AlphabetQuestion;
-  /** a miss coming back later in the round; it does not count toward the score */
+  /** A missed question asked again later in the round; it does not count toward the score. */
   retry: boolean;
 }
 
@@ -49,8 +45,8 @@ const POSITION: Record<'start' | 'middle' | 'end', MessageKey> = {
   end: 'alphabet.form.end',
 };
 
-/** How far back a missed question comes: far enough to be recalled, not just remembered. */
-const COMEBACK = 3;
+/** How many questions later a missed one comes back, so it is recalled rather than still in mind. */
+export const COMEBACK = 3;
 
 function Like({ like }: { like: SoundLikeness }): React.JSX.Element {
   return (
@@ -76,7 +72,7 @@ function clipOf(q: AlphabetQuestion): string | null {
 
 export function Practice({ script, locale, onOpen }: { script: AlphabetScript; locale: AppLocale; onOpen: (id: string) => void }): React.JSX.Element {
   const t = useT();
-  // a round started after the recordings arrive asks with them
+  // A round started after the recordings arrive uses them.
   useRecordings();
   const [queue, setQueue] = useState<Item[] | null>(null);
   const [at, setAt] = useState(0);
@@ -99,7 +95,7 @@ export function Practice({ script, locale, onOpen }: { script: AlphabetScript; l
   const done = queue !== null && at >= queue.length;
   const firstTries = results.length;
 
-  // a listening question speaks as it appears; Start was the tap that lets it
+  // A listening question plays as it appears; pressing Start is the gesture that allows autoplay.
   useEffect(() => {
     const clip = q ? clipOf(q) : null;
     if (clip) play(clip);
@@ -137,7 +133,7 @@ export function Practice({ script, locale, onOpen }: { script: AlphabetScript; l
     if (chosen !== null) nextRef.current?.focus();
   }, [chosen]);
 
-  // 1–3 answer, Enter goes on — so a reader on a keyboard never has to reach for the mouse
+  // Keys 1–3 answer and Enter goes on, so the round works from the keyboard alone.
   useEffect(() => {
     if (!q) return;
     const onKey = (e: KeyboardEvent): void => {
@@ -204,7 +200,7 @@ export function Practice({ script, locale, onOpen }: { script: AlphabetScript; l
             <div className="ab-q-prompt">
               {(q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair') && <Sound src={q.clip} label={t('alphabet.practice.replay')} size="lg" />}
               {q.kind === 'spell' && (
-                // for a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead
+                // For a Kurmancî reader the meaning would give the answer away, so they get the Soranî word instead.
                 <span className="ab-q-meaning">
                   <Meaning meaning={q.meaning} script="kmr" locale={locale} />
                 </span>
@@ -256,7 +252,7 @@ export function Practice({ script, locale, onOpen }: { script: AlphabetScript; l
 
       {done && (
         <div className={`ab-q-done${missed.length === 0 ? ' is-perfect' : ''}`} role="status">
-          {/* a small burst for a clean round: effort noticed, not a slot machine */}
+          {/* A small burst for a round with no misses. */}
           {missed.length === 0 && (
             <span className="ab-burst" aria-hidden="true">
               {Array.from({ length: 10 }, (_, i) => (
@@ -301,7 +297,7 @@ export function Practice({ script, locale, onOpen }: { script: AlphabetScript; l
   );
 }
 
-/** Why the answer is what it is: the letter, its sound, a word with it in. */
+/** Why the answer is right: the letter, its sound and a word that has it. */
 function Explain({ q, locale }: { q: AlphabetQuestion; locale: AppLocale }): React.JSX.Element | null {
   const t = useT();
   if (q.kind === 'pair') {

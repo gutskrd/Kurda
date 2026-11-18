@@ -11,7 +11,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
-/** A signed-in learner, and what the server says can be played in Kurmancî: `games` by id, and Tîpa Dawî's own answer. */
+/** A signed-in learner and what can be played in Kurmancî: `games` by id, and Tîpa Dawî's own availability. */
 function server(games: Record<string, boolean>, chain = false): void {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
@@ -35,7 +35,7 @@ describe('Learn’s games list', () => {
     renderApp(<Games />, ['/app/games']);
     const stamp = (await screen.findByRole('heading', { name: 'Dizê Bîrê' })).closest('article')!;
     expect(stamp).toHaveClass('gp-stamp');
-    // one way in, so the stamp is the way: it says the game, who it is played with and what you do in it, and opens it
+    // One way in, so the stamp itself names the game, who it is played with and what you do, and opens it.
     const way = await within(stamp).findByRole('link', { name: 'Dizê Bîrê, On your own. Study a real passage, then give back the words the thief took.' });
     expect(way).toHaveAttribute('href', '/app/games/memory-thief');
     // the games that were there are all still there
@@ -74,11 +74,7 @@ describe('Learn’s games list', () => {
     expect(within(soon).queryByRole('link')).toBeNull();
   });
 
-  /*
-   * Build a Sentence and Hear It, Find It are exercises of the
-   * lessons' practice now. The server still says whether they can be done
-   * (they are rounds of the same kit), and the games list ignores it.
-   */
+  /* Build a Sentence and Hear It, Find It are lesson practice exercises, so the games list ignores their availability. */
   it('never lists the lessons’ two exercises among the games, even when they can be done', async () => {
     server({ 'memory-thief': true, 'build-sentence': true, 'hear-it': true });
     renderApp(<Games />, ['/app/games']);
@@ -88,11 +84,8 @@ describe('Learn’s games list', () => {
   });
 
   /*
-   * Ez kî me? is never played alone: on one phone passed round a room, or
-   * with friends online. Its own page asks which, so its stamp is its one way
-   * in, as Xapînok's is, and it is a game for friends. A stamp has no room to
-   * say who a game is played with, so it is said with the stamp to a screen
-   * reader, which cannot tell from the cover.
+   * Ez kî me? is never played alone, so like Xapînok its stamp is the one way in and it is a game for friends, which
+   * screen readers are told with the stamp.
    */
   it('lists Ez kî me? as a game for friends with one way in, as Xapînok is', async () => {
     server({ 'memory-thief': true, impostor: true, 'who-am-i': true });

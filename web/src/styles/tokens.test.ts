@@ -2,18 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { HUES, HUE_NAMES, type HueScheme, type HueSteps } from '@kurda/shared';
 
 /*
- * The shared hues are written twice: in shared/src/hues.ts, which the phone
- * app reads, and in tokens.css as the `.hue-*` classes, which a stylesheet
- * can read. Two copies of eighteen colours in four steps drift the first time
- * one of them is tuned, and nothing would say so: a stamp would simply be a
- * slightly different green on the website. So the stylesheet is read here as
- * it is written, and every class is held to the module, in both schemes.
- *
- * It is read from the disk. The suite draws no styles, and a stylesheet a
- * test imports arrives empty, its text included. A test runs on a machine
- * with files, though, while this workspace's types are the browser's: the one
- * thing asked of that machine is described here in full, so nothing else of
- * it becomes something the app could reach for by accident.
+ * The shared hues exist in shared/src/hues.ts and as tokens.css `.hue-*` classes, so every class is checked against
+ * the module in both schemes. The stylesheet is read from disk, since an imported stylesheet arrives empty in tests;
+ * the one file-system call is typed here so the browser-typed app cannot reach for it.
  */
 interface FileSystem {
   readFileSync(file: URL, encoding: 'utf8'): string;
@@ -38,12 +29,7 @@ function declared(block: string): Record<string, string> {
   return Object.fromEntries([...block.matchAll(/(--[\w-]+)\s*:\s*([^;}]+);/g)].map((m) => [m[1]!, m[2]!.trim().toLowerCase()]));
 }
 
-/**
- * Every `.hue-<name>` rule in a stylesheet, with the scheme its selector is
- * for: the bare class is the dark scheme's, as everything in tokens.css is
- * dark until it says otherwise, and the one under the root's `data-theme` is
- * the light scheme's.
- */
+/** Every `.hue-<name>` rule with its scheme: bare classes are dark, those under the root's `data-theme` light. */
 function hueRules(css: string): HueRule[] {
   const bare = css.replace(/\/\*[\s\S]*?\*\//g, '');
   return [...bare.matchAll(/([^{}]*\.hue-([a-z]+))\s*\{([^{}]*)\}/g)].map((m) => ({

@@ -23,14 +23,9 @@ import { useT } from '../i18n/I18nProvider';
 import { DayName, Digits, MeaningText, Swatch, WordText, dateIn, formatNumber, meaningOf, scriptDir, scriptLang } from './parts';
 
 /**
- * One word, open, as a letter opens on the alphabet page (its card): the
- * word large — a colour's swatch or a number's digits above it — its sound,
- * and the character who says it when a recording has one; what it means in
- * the reader's language; the same word in the other dialect; and one small
- * thing to do with it: a colour in a phrase, any number spelled out as it is
- * typed, a day between yesterday and tomorrow, a month's season. The words
- * before and after are at the foot, so a set can be walked through without
- * closing. Beside the grid on a wide screen, in a sheet on a phone.
+ * One word opened, like a letter's card on the alphabet page: the word large with its sound and speaker, its meaning,
+ * the same word in the other dialect, and one small thing to do with it. Steppers at the foot walk through the set.
+ * It sits beside the grid on a wide screen and in a sheet on a phone.
  */
 export function WordCard({
   word,
@@ -50,7 +45,7 @@ export function WordCard({
   const meaning = meaningOf(word, dialect, locale, t);
   const glossLocale = exampleMeaningLocale(dialect, locale);
   const kurdishMonth = word.set === 'months' && word.calendar === 'kurdish';
-  // a Kurdish reader's meaning is the other dialect's word, which the row after it already gives
+  // A Kurdish reader's meaning is the other dialect's word, which the next row already gives.
   const showMeaning = locale !== 'ku' && locale !== 'ckb' && word.set !== 'numbers' && !kurdishMonth;
   const clips = spokenAlphabet(sound);
 
@@ -158,7 +153,7 @@ export function WordCard({
   );
 }
 
-/** A word as the page writes it: a day with the number inside it marked, Soranî with its Latin letters under it. */
+/** A word as the page writes it: a day with its number marked, Soranî with its Latin letters under it. */
 function Said({ word, dialect, size }: { word: SetWord; dialect: AlphabetScript; size: 'head' | 'partner' }): React.JSX.Element {
   const cls = `wd-said wd-said--${size}`;
   if (word.set !== 'days') return <WordText word={word} dialect={dialect} className={cls} />;
@@ -174,7 +169,7 @@ function Said({ word, dialect, size }: { word: SetWord; dialect: AlphabetScript;
   );
 }
 
-/** A gloss in the reader's language — or, for a reader of one dialect, the word in the other, in that script. */
+/** A gloss in the reader's language, or for a Kurdish reader the word in the other dialect and script. */
 function Gloss({ word, locale, shown, className }: { word: KurdishWord & { meaning: WordGloss }; locale: AppLocale; shown: AppLocale; className?: string }): React.JSX.Element {
   const other = shown !== locale;
   const cls = [className ?? 'wd-gloss', other && shown === 'ckb' ? 'ab-ar' : ''].filter(Boolean).join(' ');
@@ -185,11 +180,7 @@ function Gloss({ word, locale, shown, className }: { word: KurdishWord & { meani
   );
 }
 
-/**
- * Any number typed, spelled out at once in the dialect on the page — the
- * thirty words of the set put to work. Digits from any keyboard are read:
- * Western, Arabic or Persian.
- */
+/** Spells out any number as it is typed, in the page's dialect; Western, Arabic and Persian digits are all read. */
 function MakeNumber({ dialect, locale }: { dialect: AlphabetScript; locale: AppLocale }): React.JSX.Element {
   const t = useT();
   const [text, setText] = useState('');
@@ -220,7 +211,7 @@ function MakeNumber({ dialect, locale }: { dialect: AlphabetScript; locale: AppL
   );
 }
 
-/** A part of the card under its little grey word, with a line above it. */
+/** A section of the card under its small grey label, with a rule above it. */
 function Row({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <div className="ab-card-row">

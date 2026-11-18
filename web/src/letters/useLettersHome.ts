@@ -15,28 +15,17 @@ const VISIBLE_GAP_MS = 5000;
 const UNHEARD_EVERY_MS = 60_000;
 
 /** One answer to GET /letters: what it said, which request it answered, and when it came (for timing by the server's clock). */
-export interface LettersRead {
+interface LettersRead {
   data: LettersHome;
   seq: number;
   at: number;
 }
 
 /**
- * The letters page read from the server, and read again whenever it may
- * have changed: when the server says something changed in this person's
- * letters (`letters_changed`, sent for every bird that comes, goes or lands),
- * when the connection that says so comes back after a gap in which a change
- * could have been missed, and when the tab is shown again. While that
- * connection is open there is no timer: a read of the page settles the birds
- * on the server, so it is not asked for without a reason. While it is not (a
- * network that blocks it, a connection that keeps failing), the page is read
- * once a minute while it is in view, so a bird still comes.
- *
- * Only the answer to the latest request is taken, and `drop` makes any
- * answer still on its way out of date: the window calls it before doing
- * anything, so a read the server made before that is never shown after it.
- * `asked` is the number of the latest request, so the page can wait for a
- * read asked after something it must act on (a notification's bird).
+ * The letters page state, refetched on `letters_changed`, when the realtime connection returns after a gap, and when
+ * the tab is shown. While connected there is no timer, since each read settles birds on the server; otherwise it polls
+ * once a minute while visible. Only the latest answer is taken, and `drop` invalidates answers in flight before the
+ * window acts. `asked` numbers the latest request, so the page can wait for a read made after an event.
  */
 export function useLettersHome(): {
   read: LettersRead | null;

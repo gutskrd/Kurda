@@ -3,18 +3,13 @@ import { useT } from '../i18n/I18nProvider';
 import './copyright.css';
 
 /*
- * Who provides Hevalo and how to reach them, read from the one file the owner
- * fills in (shared/src/provider.ts). The Terms, About and /copyright show the
- * same block, so a changed address is changed everywhere at once.
- *
- * A detail still in [square brackets] is shown exactly as it is, marked: a
- * missing KvK number should be obvious on the page, not quietly left out.
+ * Who provides Hevalo and how to reach them, from shared/src/provider.ts, shown on the Terms, About and /copyright. A
+ * detail still in [square brackets] is shown marked, so a missing one is obvious rather than left out.
  */
 
 /**
- * One detail; a placeholder keeps its brackets and is marked as one. Its
- * direction is its own (a Dutch address under a Soranî label still reads left
- * to right), and numbers are always left to right.
+ * One detail; a placeholder keeps its brackets and is marked. Its direction is its own (an address under a Soranî
+ * label still reads left to right), and numbers are always left to right.
  */
 function Value({ value, ltr = false }: { value: string; ltr?: boolean }): React.JSX.Element {
   const placeholder = isProviderPlaceholder(value);
@@ -25,7 +20,7 @@ function Value({ value, ltr = false }: { value: string; ltr?: boolean }): React.
   );
 }
 
-/** An email address, as a link once it is a real one. */
+/** An email address, linked once it is real. */
 export function Email({ address }: { address: string }): React.JSX.Element {
   if (isProviderPlaceholder(address)) return <Value value={address} ltr />;
   return (
@@ -35,7 +30,7 @@ export function Email({ address }: { address: string }): React.JSX.Element {
   );
 }
 
-/** A telephone number, as a link that dials it. */
+/** A telephone number, linked to dial it. */
 function Phone({ number }: { number: string }): React.JSX.Element {
   if (isProviderPlaceholder(number)) return <Value value={number} ltr />;
   return (
@@ -45,11 +40,7 @@ function Phone({ number }: { number: string }): React.JSX.Element {
   );
 }
 
-/**
- * Name, trade name, address, KvK, VAT, email and telephone (Art. 3:15d BW). The
- * VAT line waits for the btw-id the Belastingdienst issues, rather than standing
- * there empty.
- */
+/** Name, trade name, address, KvK, VAT, email and telephone (Art. 3:15d BW); the VAT line shows only once issued. */
 export function ProviderIdentityBlock(): React.JSX.Element {
   const t = useT();
   return (

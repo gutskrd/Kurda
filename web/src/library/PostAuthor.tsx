@@ -9,29 +9,23 @@ export interface Author {
   avatarUrl: string | null;
 }
 
-/**
- * The byline on a post or comment.
- *
- * Posts carried an authorId and nothing else, so the library was a wall of
- * anonymous text. A face and a name make it a community; clicking either opens
- * that person, which is the point of showing them at all.
- */
+/** The byline on a post or comment; the face and the name open that person's profile. */
 export function PostAuthor({
   author,
   at,
   size = 'md',
   trailing,
 }: {
-  /** the server always sends one; undefined only if a response is truncated */
+  /** The server always sends one; undefined only if a response is truncated. */
   author: Author | undefined;
-  /** ISO timestamp shown beside the name */
+  /** ISO timestamp shown beside the name. */
   at?: string;
   size?: 'sm' | 'md';
-  /** anything that belongs on the right of the byline (a menu, a badge) */
+  /** Anything on the right of the byline, such as a menu or a badge. */
   trailing?: React.ReactNode;
 }): React.JSX.Element {
   const { openProfile } = useProfileModal();
-  // a byline is decoration; it must never be the reason a post fails to render
+  // A missing author must never stop a post from rendering.
   if (!author) return <div className={`byline byline-${size}`} />;
   return (
     <div className={`byline byline-${size}`}>

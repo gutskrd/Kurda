@@ -4,27 +4,18 @@ import { useT } from '../i18n/I18nProvider';
 import { keepInView } from './keepInView';
 
 /**
- * The ⋯ beside someone else's chat message, with Report in it.
- *
- * On a computer it shows when the message is hovered or focused, so a thread
- * is not a column of dots; on a touch screen, where there is no hover, it is
- * always there but faint — and a long press on the message opens it too,
- * which is where a phone user's thumb goes first (`onLongPress` below, wired
- * by the bubble).
- *
- * A menu of one for now, because one thing is offered: a menu rather than a
- * bare flag because more belongs here later, and so a flag sitting next to
- * every message does not read as an accusation.
+ * The ⋯ with Report beside someone else's chat message: shown on hover or focus on a computer, always faint on a
+ * touch screen, where a long press opens it too. A menu rather than a bare flag, so it does not read as an accusation.
  */
 export function MessageMenu({
   label,
   onReport,
   openSignal = 0,
 }: {
-  /** names the message for a screen reader ("More about Rojda's message") */
+  /** Names the message for screen readers, such as "More about Rojda's message". */
   label: string;
   onReport: () => void;
-  /** bumped by a long press on the message: opens the menu */
+  /** Bumped by a long press on the message to open the menu. */
   openSignal?: number;
 }): React.JSX.Element {
   const t = useT();
@@ -38,8 +29,7 @@ export function MessageMenu({
     if (openSignal > 0) setOpen(true);
   }, [openSignal]);
 
-  // the ⋯ can sit at the far edge of a phone screen beside a long message:
-  // the open menu is nudged back inside rather than drawn half off it
+  // The ⋯ can sit at a phone screen's edge, so the open menu is nudged back inside.
   useLayoutEffect(() => {
     if (open && listRef.current) keepInView(listRef.current);
   }, [open]);
@@ -85,9 +75,7 @@ export function MessageMenu({
             role="menuitem"
             className="user-menu-item"
             onClick={() => {
-              // the ⋯ is where the keyboard goes back to when the report
-              // sheet closes: the sheet remembers what had focus as it opens,
-              // and by then this item is gone
+              // Focus the ⋯ first, so the report sheet returns focus there; this menu item will be gone.
               buttonRef.current?.focus();
               setOpen(false);
               onReport();
@@ -101,26 +89,13 @@ export function MessageMenu({
   );
 }
 
-/** Hold a message for under half a second on a touch screen: the phone's way to its options. */
-export const LONG_PRESS_MS = 450;
+/** How long a touch hold on a message takes to open its options. */
+const LONG_PRESS_MS = 450;
 
 /**
- * A chat message, and what can be done with it.
- *
- * Nothing sits beside the message: a column of ⋯ down one side of a thread
- * is clutter that pushes every bubble in, and it is not where anybody looks.
- * The options are where messaging apps keep them —
- *
- *   held on a touch screen (the bubble sinks a little under the finger, so
- *   the hold is felt to be doing something, and the options open under it);
- *   right-clicked with a mouse (unless some of its text is selected, when the
- *   browser's own menu is the one wanted, to copy just that);
- *   from the keyboard or a screen reader, by a button that is there but out
- *   of sight until it has focus.
- *
- * The options are Copy, for a message with words in it, and Report, for
- * somebody else's. With neither there is nothing to open and the message is
- * drawn as it is.
+ * A chat message with its options (Copy for text, Report for someone else's), opened by a touch hold (the bubble sinks
+ * slightly), a right click (unless text is selected, leaving the browser's menu), or a visually hidden button for the
+ * keyboard and screen readers. With neither option the message is drawn as it is.
  */
 export function MessageLine({
   children,
@@ -130,13 +105,13 @@ export function MessageLine({
   mine = false,
 }: {
   children: ReactNode;
-  /** names the message's options for a screen reader ("More about Rojda's message") */
+  /** Names the message's options for screen readers, such as "More about Rojda's message". */
   label: string;
-  /** someone else's message can be reported */
+  /** Reports someone else's message. */
   onReport?: () => void;
-  /** the words to copy; null or absent for a card with none */
+  /** The text to copy; null or absent for a card without text. */
   copyText?: string | null;
-  /** your own message, at the far side: the options open from that side */
+  /** The reader's own message, on the far side, so the options open from there. */
   mine?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -148,9 +123,9 @@ export function MessageLine({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const firstRef = useRef<HTMLButtonElement>(null);
-  /** the press under way is a finger, not a mouse */
+  /** The current press is a finger, not a mouse. */
   const touching = useRef(false);
-  /** a hold just opened the options: the click that ends it is not a tap on the message */
+  /** A hold just opened the options, so the click that ends it is not a tap on the message. */
   const justHeld = useRef(false);
 
   const cancel = (): void => {
@@ -186,7 +161,7 @@ export function MessageLine({
     };
   }, [open]);
 
-  // "Copied" says so for a moment, where the message is, then goes
+  // "Copied" shows briefly at the message, then goes.
   useEffect(() => {
     if (!copied) return;
     const id = window.setTimeout(() => setCopied(false), 1600);
@@ -204,7 +179,7 @@ export function MessageLine({
     );
   };
   const report = (): void => {
-    // the hidden button is where the keyboard goes back to when the report sheet closes
+    // Focus the hidden button, so the report sheet returns focus there.
     buttonRef.current?.focus();
     setOpen(false);
     onReport?.();
@@ -219,7 +194,7 @@ export function MessageLine({
       ref={wrapRef}
       className={`bubble-line${mine ? ' mine' : ''}${pressing ? ' is-pressing' : ''}${open ? ' is-open' : ''}`}
       onPointerDown={(e) => {
-        // a new press: whatever the last hold left behind is over
+        // A new press clears whatever the last hold left behind.
         justHeld.current = false;
         touching.current = e.pointerType === 'touch';
         if (!touching.current) return;
@@ -235,7 +210,7 @@ export function MessageLine({
       onPointerUp={cancel}
       onPointerCancel={cancel}
       onPointerMove={(e) => {
-        // a finger that moves is scrolling the thread, not holding a message
+        // A moving finger is scrolling the thread, not holding a message.
         if (touching.current && (Math.abs(e.movementX) > 4 || Math.abs(e.movementY) > 4)) cancel();
       }}
       onClickCapture={(e) => {
@@ -245,7 +220,7 @@ export function MessageLine({
         e.stopPropagation();
       }}
       onContextMenu={(e) => {
-        // Android's long press arrives as a context menu; a mouse's right click is one
+        // Android's long press arrives as a context menu, as does a mouse's right click.
         if (!touching.current && hasSelection()) return;
         e.preventDefault();
         cancel();

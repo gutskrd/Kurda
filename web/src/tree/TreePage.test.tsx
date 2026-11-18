@@ -18,7 +18,7 @@ const TODAY = '2026-11-13';
 const view = (over: Partial<TreeRecord> = {}, today = TODAY): TreeView =>
   treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: TODAY, waterings: 5, water: 2, harvests: 0, ...over }, today);
 
-/** GET /me/tree: this tree (or none), every kind, these bought, this much Zêr. */
+/** GET /me/tree: this tree or none, every kind, these bought, and this much Zêr. */
 const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = {}): MyTree => ({
   tree,
   planted: tree ? 1 : 0,
@@ -26,7 +26,7 @@ const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = 
   zer: over.zer ?? 0,
 });
 
-/** A server that answers each path with what it is given; a function is called with the request's body. */
+/** A server answering each path with what it is given; a function is called with the request body. */
 function server(routes: Record<string, unknown | ((body: unknown) => unknown)>, status: Record<string, number> = {}) {
   const calls: Array<{ method: string; path: string; body: unknown }> = [];
   const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -44,7 +44,7 @@ function server(routes: Record<string, unknown | ((body: unknown) => unknown)>, 
   return calls;
 }
 
-/** Somebody is signed in: the tree is asked for only then. */
+/** Somebody is signed in, since the tree is fetched only then. */
 beforeEach(() => {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
 });
@@ -55,23 +55,23 @@ describe('TreePage', () => {
     const calls = server({ 'GET /me/tree': mine(null), 'POST /me/tree/plant': planted });
     renderApp(<TreePage />);
     expect(await screen.findByRole('heading', { name: 'Plant your tree' })).toBeInTheDocument();
-    // the four starters, each a seed to pick with its Kurdish name and what it means; nothing that has to be bought
+    // The four free starters, each a seed with its Kurdish name and meaning.
     const seeds = screen.getAllByRole('radio');
     expect(seeds).toHaveLength(4);
     for (const name of ['Berû', 'Hinar', 'Behîv', 'Bî']) expect(screen.getByText(name)).toBeInTheDocument();
     expect(screen.getByText('Pomegranate')).toBeInTheDocument();
     expect(screen.queryByText('Dara Şevê')).toBeNull();
-    // the first is picked to begin with, and what stands in the scene is the tree it will be
+    // The first is picked to begin with, and the scene shows the tree it will become.
     expect(screen.getByRole('radio', { name: /Berû/ })).toBeChecked();
     expect(screen.getByRole('region', { name: 'Berû (Oak)' })).toBeInTheDocument();
     expect(screen.getByText('The oak of the Zagros: slow to grow, and it outlasts everything.')).toBeInTheDocument();
-    // picking another changes the tree shown, and plants nothing
+    // Picking another changes the tree shown and plants nothing.
     await userEvent.click(screen.getByRole('radio', { name: /Hinar/ }));
     expect(screen.getByRole('region', { name: 'Hinar (Pomegranate)' })).toBeInTheDocument();
     expect(calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
     await userEvent.click(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' }));
     expect(calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'hinar' });
-    // the seed, with the water to bring it up
+    // The seed, with the water to grow it.
     expect(await screen.findByRole('heading', { name: 'Hinar' })).toBeInTheDocument();
     expect(screen.getByText('Pomegranate · Seed · Day 1')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Give it its first water' })).toBeEnabled();
@@ -88,9 +88,9 @@ describe('TreePage', () => {
     expect(screen.getByText('Water: 3')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Water the tree' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Pour all 3' })).toBeInTheDocument();
-    // it is well: nothing is said about how it fares
+    // It is well, so nothing is said about its health.
     expect(screen.queryByText('Thirsty')).toBeNull();
-    // its seven stages, the one it is at marked
+    // Its seven stages, with the current one marked.
     const steps = within(screen.getByRole('list', { name: 'Stages' })).getAllByRole('listitem');
     expect(steps).toHaveLength(7);
     expect(steps[3]).toHaveAttribute('aria-current', 'step');
@@ -101,7 +101,7 @@ describe('TreePage', () => {
     const after = view({ waterings: 7, water: 1 });
     const watered: Watered = { tree: after, poured: 1, grew: 3, harvests: 0, zer: 0, revived: false };
     const calls = server({ 'GET /me/tree': mine(before), 'POST /me/tree/water': watered });
-    // straight to how it stands after, as for a reader who asked for less motion
+    // Straight to the result, as under Reduce Motion.
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: /reduce/.test(q), media: q, addEventListener: () => undefined, removeEventListener: () => undefined, addListener: () => undefined, removeListener: () => undefined }));
     renderApp(<TreePage />);
     await userEvent.click(await screen.findByRole('button', { name: 'Water the tree' }));
@@ -121,14 +121,14 @@ describe('TreePage', () => {
     const { container } = renderApp(<TreePage />);
     const water = await screen.findByRole('button', { name: 'Water the tree' });
     await userEvent.click(water);
-    // the can is over the tree, and there is no pouring twice
+    // The can is over the tree, and there is no pouring twice.
     await waitFor(() => expect(container.querySelector('.tree-pour-can')).not.toBeNull());
     expect(container.querySelectorAll('.tree-pour-drop').length).toBeGreaterThan(8);
     expect(water).toBeDisabled();
     expect(screen.queryByRole('dialog', { name: 'It grew!' })).toBeNull();
-    // it still shows the tree as it was: what the water did comes once it has landed
+    // It still shows the tree as it was until the water lands.
     expect(screen.getByText('Oak · Seedling · Day 13')).toBeInTheDocument();
-    // then it grows in the scene itself, out of a burst of light and out of the tree it was, before anything is said
+    // Then it grows in the scene out of a burst of light, before anything is said.
     await waitFor(() => expect(container.querySelector('.tree-burst')).not.toBeNull(), { timeout: 3000 });
     expect(container.querySelector('.tree-stage-art.is-grown')).not.toBeNull();
     expect(container.querySelector('.tree-stage-art.is-leaving.is-grow')).not.toBeNull();
@@ -144,7 +144,7 @@ describe('TreePage', () => {
     const { container, unmount } = renderApp(<TreePage />);
     await screen.findByRole('heading', { name: 'Berû' });
     const plant = container.querySelector('.tree-stage-art .tree-art-plant');
-    // the swing hangs from the plant, inside its breeze; the front over its foot stands still with the ground
+    // The swing hangs from the swaying plant; the front stays still with the ground.
     expect(plant?.querySelector('.tree-art-sway.is-swaying > .tree-art-swing')).not.toBeNull();
     expect(container.querySelector('.tree-stage-art .tree-art > .tree-art-front')).not.toBeNull();
     unmount();
@@ -159,15 +159,15 @@ describe('TreePage', () => {
     server({ 'GET /me/tree': mine(view({ species: 'behiv', waterings: 30 })) });
     const { container, unmount } = renderApp(<TreePage />);
     await screen.findByRole('heading', { name: 'Behîv' });
-    // April: spring, and an almond in blossom lets its petals go on the wind
+    // April is spring, and an almond in blossom sheds petals on the wind.
     expect(container.querySelector('.tree-stage')).toHaveClass('is-spring');
     expect(container.querySelector('.tree-ambient')).toHaveClass('is-petals');
     expect(container.querySelectorAll('.tree-ambient i').length).toBeGreaterThan(8);
-    // all of it is decoration: none of it is read out
+    // It is all decoration, hidden from screen readers.
     expect(container.querySelector('.tree-scene')).toHaveAttribute('aria-hidden', 'true');
     expect(container.querySelector('.tree-ambient')).toHaveAttribute('aria-hidden', 'true');
     unmount();
-    // January: the same page under snow
+    // January: the same page under snow.
     month.mockReturnValue(0);
     server({ 'GET /me/tree': mine(view({ waterings: 1 })) });
     const winter = renderApp(<TreePage />);
@@ -182,7 +182,7 @@ describe('TreePage', () => {
     const { container, unmount } = renderApp(<TreePage />);
     expect(await screen.findByText('Wilting')).toBeInTheDocument();
     expect(container.querySelector('.tree-thought')).not.toBeNull();
-    // in November the wind brings no leaf past a tree left to wilt
+    // In November a wilting tree sheds no leaves.
     expect(container.querySelector('.tree-ambient')).toBeNull();
     unmount();
     server({ 'GET /me/tree': mine(view()) });
@@ -195,11 +195,11 @@ describe('TreePage', () => {
     server({ 'GET /me/tree': mine(view({ waterings: 9, water: 3 })) });
     const { container, unmount } = renderApp(<TreePage />);
     const ring = await screen.findByRole('progressbar', { name: 'Next: Young tree' });
-    // two of the seven waterings to the next stage: the ring is closed by that share
+    // Two of the seven waterings to the next stage close that share of the ring.
     const fill = ring.querySelector<SVGCircleElement>('.tree-goal-fill');
     const round = Number(fill?.style.strokeDasharray);
     expect(Number(fill?.style.strokeDashoffset) / round).toBeCloseTo(1 - 2 / 7, 4);
-    // the picture in it is the stage after this one, not this one again
+    // The picture in it is the next stage, not this one.
     expect(ring.querySelector('.tree-goal-art .tree-art')).not.toBeNull();
     expect(container.querySelectorAll('.tree-art')).toHaveLength(2);
     unmount();
@@ -259,7 +259,7 @@ describe('TreePage', () => {
       const sheet = await screen.findByRole('dialog', { name: 'The nursery' });
       expect(within(sheet).getAllByRole('listitem')).toHaveLength(TREE_SPECIES.length);
       expect(within(sheet).getByText('Growing now')).toBeInTheDocument();
-      // the oak stands: it cannot be planted over itself
+      // The oak is planted, so it cannot be planted over itself.
       expect(within(sheet).queryByRole('button', { name: 'Plant: Berû (Oak)' })).toBeNull();
       expect(within(sheet).getByRole('button', { name: 'Plant: Hinar (Pomegranate)' })).toBeInTheDocument();
       expect(within(sheet).getByRole('button', { name: 'Buy: Tû (Mulberry)' })).toBeInTheDocument();
@@ -275,7 +275,7 @@ describe('TreePage', () => {
       expect(within(ask).getByText('Your Berû will be gone, with everything it has grown. The water you hold stays with you.')).toBeInTheDocument();
       await userEvent.click(within(ask).getByRole('button', { name: 'Keep my tree' }));
       expect(calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
-      // back at the kinds; this time it is planted
+      // Back at the kinds; this time it is planted.
       await userEvent.click(await screen.findByRole('button', { name: 'Plant: Bî (Willow)' }));
       await userEvent.click(await screen.findByRole('button', { name: 'Plant it' }));
       expect(calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'bi' });
@@ -287,19 +287,19 @@ describe('TreePage', () => {
       const calls = server({ 'GET /me/tree': mine(view(), { zer: 900 }), 'POST /me/tree/kinds/tu/buy': mine(view(), { zer: 100, owned: ['tu'] }) });
       renderApp(<TreePage />);
       await userEvent.click(await screen.findByRole('button', { name: 'Other trees' }));
-      // too dear: the button is not offered a press that would be refused
+      // Too expensive: the purchase is refused before it is sent.
       await userEvent.click(await screen.findByRole('button', { name: 'Buy: Dara Şevê (Night tree)' }));
       const dear = await screen.findByRole('dialog', { name: 'Buy Dara Şevê?' });
       expect(within(dear).getByText('You need 1,300 more Zêr.')).toBeInTheDocument();
       expect(within(dear).getByRole('button', { name: 'Buy' })).toBeDisabled();
       await userEvent.click(within(dear).getByRole('button', { name: 'Cancel' }));
-      // within reach
+      // Affordable.
       await userEvent.click(await screen.findByRole('button', { name: 'Buy: Tû (Mulberry)' }));
       const ask = await screen.findByRole('dialog', { name: 'Buy Tû?' });
       expect(within(ask).getByText('It costs 800 Zêr, once. After that you can plant it whenever you like.')).toBeInTheDocument();
       await userEvent.click(within(ask).getByRole('button', { name: 'Buy' }));
       expect(calls.some((c) => c.method === 'POST' && c.path === '/me/tree/kinds/tu/buy')).toBe(true);
-      // theirs to plant now; the oak still stands
+      // Theirs to plant now; the oak is still planted.
       const sheet = await screen.findByRole('dialog', { name: 'The nursery' });
       expect(await within(sheet).findByRole('button', { name: 'Plant: Tû (Mulberry)' })).toBeInTheDocument();
       expect(within(sheet).getByText('Yours')).toBeInTheDocument();
@@ -349,7 +349,7 @@ describe('ProfileTree', () => {
     expect(screen.getByRole('img', { name: 'Hinar, Great tree' })).toBeInTheDocument();
     expect(screen.getByText('Pomegranate')).toBeInTheDocument();
     expect(screen.getByText('Great tree · Day 61 · Harvests: 2')).toBeInTheDocument();
-    // somebody else's: no way to a tree that is not theirs
+    // Somebody else's tree has no link.
     expect(screen.queryByRole('link')).toBeNull();
   });
 

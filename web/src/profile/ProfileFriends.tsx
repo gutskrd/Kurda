@@ -10,45 +10,19 @@ import type { UserSummary } from '../lib/types';
 export const FRIENDS_SHOWN = 12;
 const SHOW = FRIENDS_SHOWN;
 
-/**
- * A friend, as `GET /users/:id/friends` actually returns one.
- *
- * This said `id`, and the endpoint has always said `userId`. So every face in
- * this list opened `/users/undefined` and the card came back "Couldn't load this
- * profile — request validation failed": the one thing the list is for did not
- * work, and nothing in the types noticed, because the shape was declared here
- * by hand instead of being the one the client already has.
- *
- * `UserSummary` is that shape. Using it means the next change to the endpoint
- * is a type error here rather than a dead link.
- */
+/** A friend as `GET /users/:id/friends` returns one, in the client’s shared shape. */
 type FriendOf = UserSummary;
 
 /**
- * Who this person knows.
- *
- * A profile that shows a level, a country and what someone is wearing but not
- * who they know is a profile of an account rather than of a person — and on a
- * community app, who someone knows is most of what makes anyone else findable.
- *
- * The privacy rules are the profile's own and live on the server: a profile
- * whose detail you may not see returns no friends at all, so there is nothing
- * to gate here. Nothing is rendered when the list is empty, because "0 friends"
- * on someone's profile is a worse thing to publish than silence.
- *
- * Each face opens that person's own card, which is how you get from one person
- * to the next without going back to search.
+ * Who this person knows, each face opening their card. The server applies the profile's privacy and returns no
+ * friends when the detail is hidden; nothing renders for an empty list.
  */
 export function ProfileFriends({
   userId,
   initial,
 }: {
   userId: string;
-  /**
-   * The list, when the page asked for it alongside the profile (UserProfile):
-   * then the block is there when the page is, instead of opening up under the
-   * bio a moment later and pushing the activity down.
-   */
+  /** The list when the page fetched it with the profile, so the block does not appear late and push content down. */
   initial?: { friends: FriendOf[]; total: number } | null;
 }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -63,9 +37,7 @@ export function ProfileFriends({
     let cancelled = false;
     setFriends(null);
     void (async () => {
-      // ask for the twelve this draws, not all five hundred somebody may
-      // have; `total` is what the line underneath needs, and it comes back
-      // with the page
+      // Only the twelve shown; `total` for the line below comes with the page.
       const res = await client.get<{ friends: FriendOf[]; total: number }>(
         `/users/${userId}/friends?limit=${SHOW}`,
       );

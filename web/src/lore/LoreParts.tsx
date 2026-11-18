@@ -1,9 +1,6 @@
 /**
- * What the riddles' and proverbs' screens share: the row that moves between
- * the Stories section's three shelves, the choice of variety, a passage in
- * the reader's language under its Kurdish, the list of sources, the way to
- * challenge a friend with a riddle, and the one line that tells a visitor
- * what an account would keep.
+ * Parts shared by the riddle and proverb screens: the shelf switch, the variety choice, translated text under the
+ * Kurdish, the source list, the challenge button and the guest note.
  */
 import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
@@ -16,7 +13,7 @@ import { STORIES_LIBRARY } from '../stories/api';
 import { PROVERBS, RIDDLES } from './api';
 import './lore.css';
 
-export type Shelf = 'stories' | 'riddles' | 'proverbs';
+type Shelf = 'stories' | 'riddles' | 'proverbs';
 
 const SHELVES: ReadonlyArray<{ shelf: Shelf; to: string; name: MessageKey; meaning: MessageKey }> = [
   { shelf: 'stories', to: STORIES_LIBRARY, name: 'lore.shelf.stories.name', meaning: 'lore.shelf.stories.meaning' },
@@ -25,13 +22,8 @@ const SHELVES: ReadonlyArray<{ shelf: Shelf; to: string; name: MessageKey; meani
 ];
 
 /**
- * The Stories section's three shelves — the stories, the riddles, the
- * proverbs — under Learn's own switch, so the two new ones are found where
- * the stories already are rather than as another place in the bar. Each
- * shelf is named in Kurdish, with what that means in the reader's language
- * beside it where the two differ. Links, as Learn's switch is: each shelf
- * has its own address, and moving between them replaces the address so Back
- * leaves the section.
+ * The Stories section's three shelves (stories, riddles, proverbs) under Learn's switch, each named in Kurdish with
+ * its meaning where it differs. They are links that replace the address, so Back leaves the section.
  */
 export function ShelfSwitch({ here }: { here: Shelf }): React.JSX.Element {
   const t = useT();
@@ -56,10 +48,10 @@ export function ShelfSwitch({ here }: { here: Shelf }): React.JSX.Element {
   );
 }
 
-/** Kurmancî or Soranî: two radios drawn as the app's segmented choice, the chosen one in the page's ink. */
+/** Kurmancî or Soranî as two radios in the app's segmented control. */
 export function VarietySwitch({ value, onChange }: { value: GameDialect; onChange: (next: GameDialect) => void }): React.JSX.Element {
   const t = useT();
-  // one radio group per switch, whatever else is on the page
+  // One radio group per switch on the page.
   const name = `lore-variety${useId()}`;
   return (
     <fieldset className="seg lore-variety">
@@ -74,12 +66,7 @@ export function VarietySwitch({ value, onChange }: { value: GameDialect; onChang
   );
 }
 
-/**
- * Text in the reader's language (or the English it fell back to): marked
- * with its own language so it is read and spoken as that, and left to find
- * its own direction, since an Arabic reader's line sits on a page that may
- * be either way.
- */
+/** Text in the reader's language (or its English fallback), marked with its language and finding its own direction. */
 export function Translated({ locale, className, children }: { locale: AppLocale; className?: string; children: React.ReactNode }): React.JSX.Element {
   return (
     <p className={className ? `lore-translated ${className}` : 'lore-translated'} lang={locale} dir="auto">
@@ -88,7 +75,7 @@ export function Translated({ locale, className, children }: { locale: AppLocale;
   );
 }
 
-/** Where a riddle or a proverb was found: each book or collection, its author, a link where there is one, and what it gives. */
+/** Where a riddle or proverb was found: each source, its author, a link where there is one, and what it contributes. */
 export function SourceList({ sources }: { sources: readonly LoreSource[] }): React.JSX.Element | null {
   const t = useT();
   if (sources.length === 0) return null;
@@ -125,17 +112,15 @@ export function SourceList({ sources }: { sources: readonly LoreSource[] }): Rea
 }
 
 /**
- * Challenge a friend: the riddle's own address, with its question and
- * nothing else — never a hint or the answer. The device's share sheet where
- * it has one, and the link copied where it has not; the line beside the
- * button says which happened.
+ * Challenges a friend with the riddle's address and question, never a hint or answer, through the share sheet or by
+ * copying the link; the line beside the button says which happened.
  */
 export function ChallengeButton({ question, path }: { question: string; path: string }): React.JSX.Element {
   const t = useT();
   const [said, setSaid] = useState<string>('');
   const [canShare, setCanShare] = useState(false);
   const clear = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // some desktop browsers have `share` and refuse what is handed to it, so it is looked for once, on the page
+  // Some desktop browsers have `share` but refuse this data, so support is checked once on mount.
   useEffect(() => {
     setCanShare(typeof navigator !== 'undefined' && typeof navigator.share === 'function');
     return () => {
@@ -151,7 +136,7 @@ export function ChallengeButton({ question, path }: { question: string; path: st
         await navigator.share({ title: t('lore.challenge.title'), text, url });
         return;
       } catch {
-        // dismissed, or refused: the link copied is still a way to send it
+        // Dismissed or refused: copying the link still works.
       }
     }
     try {
@@ -178,7 +163,7 @@ export function ChallengeButton({ question, path }: { question: string; path: st
   );
 }
 
-/** What an account would keep, said once, quietly, with the way to one. */
+/** What an account would keep, said once and quietly, with a sign-up link. */
 export function GuestNote({ message }: { message: MessageKey }): React.JSX.Element {
   const t = useT();
   const location = useLocation();

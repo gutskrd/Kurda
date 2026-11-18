@@ -11,15 +11,9 @@ import type { Entry } from './types';
 import { EntrySkeleton } from '../components/skeletons';
 
 /**
- * One dictionary entry: its senses, their examples, a pronunciation if the
- * entry has one, and the words it points at. A pronunciation an editor gave a
- * character has that character beside its button, saying the word as it
- * plays; it plays through the app's one player, so it never talks over a
- * lesson or a letter.
- *
- * Bookmarking is optimistic. The star is the whole interaction, so waiting a
- * round trip to fill it in makes the button feel broken; if the write fails the
- * star goes back and says why, which is rarer and cheaper than the delay.
+ * One dictionary entry: its senses and examples, pronunciations and cross-references. A pronunciation an editor gave a
+ * character shows that character speaking as it plays, through the app's single player. Bookmarking is optimistic:
+ * if the write fails the star goes back and says why.
  */
 export function EntryView({
   entryId,
@@ -35,7 +29,7 @@ export function EntryView({
   const [entry, setEntry] = useState<Entry | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  // who says each pronunciation that has a character, by its URL; kept while only the bookmark changes
+  // The character of each pronunciation that has one, by URL; kept while only the bookmark changes.
   const audio = entry?.audio;
   const headword = entry?.headword;
   const spoken = useMemo(() => {
@@ -61,7 +55,7 @@ export function EntryView({
     const next = !entry.saved;
     setSaving(true);
     setEntry({ ...entry, saved: next });
-    // PUT, not POST: bookmarking is idempotent and the server says so
+    // PUT, not POST: bookmarking is idempotent.
     const res = next
       ? await client.put(`/dictionary/entries/${entry.id}/save`)
       : await client.delete(`/dictionary/entries/${entry.id}/save`);
@@ -107,7 +101,7 @@ export function EntryView({
             aria-pressed={entry.saved === true}
             aria-label={entry.saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
           >
-            {/* a saved word is on: filled, in the violet of everything chosen, as a bookmarked story is */}
+            {/* A saved word is filled, in the violet used for everything chosen. */}
             <BookmarkIcon size={16} weight={entry.saved ? 'fill' : 'regular'} />
             <span>{entry.saved ? t('dictionary.savedWord') : t('dictionary.saveWord')}</span>
           </button>
@@ -120,12 +114,7 @@ export function EntryView({
         {entry.senses.map((s) => (
           <li key={s.id} className="dict-sense">
             <span className="dict-pos">{s.pos}</span>
-            {/*
-              English on top when there is one, and the Kurdish under it. A word
-              that is only defined in Kurdish — which is most of Wîkîferheng —
-              puts that definition here rather than leaving an empty line above
-              it, so the sense reads as a definition rather than as a gap.
-            */}
+            {/* English first when there is one; a word defined only in Kurdish shows that definition here instead. */}
             <p className="dict-def" dir="auto">{s.definitionEn ?? s.definitionKu}</p>
             {s.definitionEn && s.definitionKu ? <p className="dict-def-ku" dir="auto">{s.definitionKu}</p> : null}
             {s.examples.length > 0 ? (

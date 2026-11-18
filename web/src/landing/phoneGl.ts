@@ -20,41 +20,25 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 /**
- * The front page's phone as a solid thing, drawn with WebGL behind the live
- * screen (Phone3D.tsx loads this module only when the page can use it).
- *
- * The CSS phone builds its edge out of flat slabs, which reads as a picture
- * of a phone. This one is modelled: a body with rounded aluminium sides
- * that curve into the front glass, the buttons and antenna lines on its
- * edges, a camera control set into the right side, and all of it lit by a
- * soft studio environment so the metal catches real highlights as it turns.
- *
- * Only the body is drawn here. The screen stays HTML on top of it, in the
- * reader's language, so this module draws the phone with exactly the
- * projection the page uses for that HTML: the camera stands where the CSS
- * perspective puts the eye, and each frame takes the same pose in the
- * page's own terms (pixels and degrees, y pointing down) that the HTML is
- * given in the same frame. The two meet at the front glass, where the black
- * the body draws runs a few pixels under the edge of the screen.
+ * The front page's phone body modelled in WebGL behind the live HTML screen (loaded by Phone3D.tsx only when usable):
+ * rounded aluminium sides, buttons and antenna lines, lit by a soft environment. The camera matches the CSS
+ * perspective exactly and each frame takes the same pose as the HTML, in the page's terms (pixels and degrees, y down),
+ * so the two meet at the front glass, where the body's black runs a few pixels under the screen's edge.
  */
 
-/** The model's own size: the phone at 300 pixels wide, scaled to whatever width the page gives it. */
+/** The model's own size, 300 pixels wide, scaled to the width the page gives it. */
 const MODEL = { width: 300, height: 618, radius: 52.5, depth: 30 } as const;
 /** How far the rounded side reaches in from the outline, and how deep it runs toward the glass and the back. */
 const SIDE = { inset: 3.5, round: 5 } as const;
-/**
- * Room around the phone on the canvas, so a turned edge, a button or the
- * float never runs off it: a fifth of the phone's width, which on a narrow
- * phone screen still leaves the canvas inside the page.
- */
+/** Room around the phone on the canvas, a fifth of its width, so a turned edge or the float never runs off it. */
 function marginFor(width: number): number {
   return Math.round(Math.min(64, width * 0.2));
 }
 
 const DEG = Math.PI / 180;
 
-/** One frame of the phone's pose, as the page writes it: a lift and sway from the float, and the turn. */
-export interface PhoneFrame {
+/** One frame of the phone's pose as the page writes it: the float's lift and sway, and the turn. */
+interface PhoneFrame {
   /** translateY of the float, in pixels (negative is up). */
   lift: number;
   /** rotateZ of the float, in degrees. */
@@ -104,25 +88,19 @@ function roundedRect(width: number, height: number, radius: number): Shape {
   return shape;
 }
 
-/**
- * Where a button sits along a side, as the CSS phone places it: its top and
- * length as shares of the phone's height, measured from the top.
- */
+/** Where each button sits along a side, as on the CSS phone: its top and length as shares of the height. */
 const BUTTONS: readonly { side: -1 | 1; top: number; length: number; proud: number; kind: 'metal' | 'sapphire' }[] = [
-  { side: -1, top: 0.16, length: 0.045, proud: 1.6, kind: 'metal' }, // the action button
-  { side: -1, top: 0.24, length: 0.085, proud: 1.6, kind: 'metal' }, // volume up
-  { side: -1, top: 0.345, length: 0.085, proud: 1.6, kind: 'metal' }, // volume down
-  { side: 1, top: 0.27, length: 0.13, proud: 1.6, kind: 'metal' }, // the side button
-  { side: 1, top: 0.6, length: 0.075, proud: 0.35, kind: 'sapphire' }, // the camera control, nearly flush
+  { side: -1, top: 0.16, length: 0.045, proud: 1.6, kind: 'metal' }, // The action button.
+  { side: -1, top: 0.24, length: 0.085, proud: 1.6, kind: 'metal' }, // Volume up.
+  { side: -1, top: 0.345, length: 0.085, proud: 1.6, kind: 'metal' }, // Volume down.
+  { side: 1, top: 0.27, length: 0.13, proud: 1.6, kind: 'metal' }, // The side button.
+  { side: 1, top: 0.6, length: 0.075, proud: 0.35, kind: 'sapphire' }, // The camera control, nearly flush.
 ];
 
-/** The thin lines across the band where the antennas break the metal, as shares of the height from the top. */
+/** The antenna lines across the band, as shares of the height from the top. */
 const ANTENNA_LINES = [0.085, 0.915] as const;
 
-/**
- * Builds the phone on `canvas`, or returns null when the browser will not
- * give it a WebGL context; the CSS phone then stays as it is.
- */
+/** Builds the phone on `canvas`, or returns null without a WebGL context, leaving the CSS phone. */
 export function mountPhoneGl(canvas: HTMLCanvasElement, stage: PhoneStage): PhoneGl | null {
   let renderer: WebGLRenderer;
   try {
@@ -141,7 +119,7 @@ export function mountPhoneGl(canvas: HTMLCanvasElement, stage: PhoneStage): Phon
   const room = new RoomEnvironment();
   const environment = pmrem.fromScene(room, 0.03).texture;
   scene.environment = environment;
-  // one key light high on the reader's left, so a turned edge has a bright line along it
+  // One key light high on the left, so a turned edge has a bright line along it.
   const key = new DirectionalLight(0xffffff, 1.4);
   key.position.set(-420, 620, 900);
   scene.add(key);
@@ -166,8 +144,8 @@ export function mountPhoneGl(canvas: HTMLCanvasElement, stage: PhoneStage): Phon
   const band = new MeshPhysicalMaterial({ color: 0x8c8f95, metalness: 0, roughness: 0.55 });
   materials.push(metal, glass, sapphire, band);
 
-  // the body: the outline less its rounded side, pushed out to depth with the side's curve as the bevel;
-  // the caps (front glass and back) take the glass, the sides the metal
+  // The body: the outline less its rounded side, extruded with the side's curve as the bevel; the caps take the
+  // glass material and the sides the metal.
   const { width, height, radius, depth } = MODEL;
   const bodyShape = roundedRect(width - SIDE.inset * 2, height - SIDE.inset * 2, radius - SIDE.inset);
   const body = keep(
@@ -180,7 +158,7 @@ export function mountPhoneGl(canvas: HTMLCanvasElement, stage: PhoneStage): Phon
       curveSegments: 48,
     }),
   );
-  // the front glass at z = 0, where the page's screen is; the back at -depth
+  // The front glass at z = 0, where the page's screen is; the back at -depth.
   body.translate(0, 0, -(depth - SIDE.round));
 
   const model = new Group();
@@ -202,7 +180,7 @@ export function mountPhoneGl(canvas: HTMLCanvasElement, stage: PhoneStage): Phon
     }
   }
 
-  // the float wraps the turn, as .p3d-float wraps .p3d-rig on the page
+  // The float wraps the turn, as .p3d-float wraps .p3d-rig on the page.
   const float = new Group();
   const rig = new Group();
   rig.rotation.order = 'XYZ';
@@ -224,12 +202,12 @@ export function mountPhoneGl(canvas: HTMLCanvasElement, stage: PhoneStage): Phon
     canvas.style.left = `${-margin}px`;
     canvas.style.top = `${-margin}px`;
     model.scale.setScalar(next.width / MODEL.width);
-    // the eye: where the CSS perspective puts it, in a world whose origin is the phone box's centre and whose y points up
+    // The eye where the CSS perspective puts it, in a world centred on the phone box with y pointing up.
     const eyeX = next.originX - next.width / 2;
     const eyeY = next.height / 2 - next.originY;
     camera.position.set(eyeX, eyeY, next.perspective);
     camera.updateMatrixWorld();
-    // an off-centre frustum that maps the plane z = 0 onto the canvas exactly, as the page's own perspective does
+    // An off-centre frustum mapping the plane z = 0 onto the canvas exactly, as the page's perspective does.
     const s = near / next.perspective;
     camera.projectionMatrix.makePerspective(
       (-canvasWidth / 2 - eyeX) * s,
@@ -245,7 +223,7 @@ export function mountPhoneGl(canvas: HTMLCanvasElement, stage: PhoneStage): Phon
 
   return {
     draw(frame) {
-      // the page's y points down: a lift up is a positive y here, and a turn about x or z goes the other way
+      // The page's y points down, so a lift is positive y here and turns about x or z are reversed.
       float.position.y = -frame.lift;
       float.rotation.z = -frame.sway * DEG;
       rig.rotation.set(-frame.x * DEG, frame.y * DEG, -frame.z * DEG);

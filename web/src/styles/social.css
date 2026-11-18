@@ -1,14 +1,6 @@
 /*
- * Gifts in the chat, reporting, and account standing.
- *
- * One file for the three because they meet in the same places — a chat
- * bubble can be a present, and the menu beside it reports it — and because
- * they arrived together: kept apart from pages.css, the merge with the work
- * on games in the same chat stays a matter of two files side by side.
- *
- * Colours are the app's tokens. Gold is meaning, and a gift is the one place
- * in the chat where it is meant: it is what the Zêr it was bought with looks
- * like.
+ * Gifts in the chat, reporting and account standing, which meet in the same places (a bubble can be a present, and
+ * its menu reports it). Gold is the one meaningful colour here, since a gift is bought with Zêr.
  */
 
 /* ---- a limit on the account, said calmly -------------------------------- */
@@ -30,10 +22,7 @@
 }
 
 /* ---- the sheet (components/Sheet.tsx) ------------------------------------ */
-/*
- * Above a modal (100): a report can be opened from a profile that is itself
- * a modal, and the sheet must be the thing on top.
- */
+/* Above a modal (100), since a report can open from a profile dialog. */
 .sheet-overlay {
   position: fixed;
   inset: 0;
@@ -274,37 +263,7 @@
   color: var(--ink-3);
 }
 
-/* ---- Settings → Safety, My reports, Account standing (reports/) ---------- */
-.safety-links {
-  display: grid;
-  gap: 8px;
-}
-.safety-link {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  color: var(--ink);
-  font-weight: 600;
-}
-.safety-link:hover {
-  background: var(--surface-2);
-  border-color: var(--border-strong);
-}
-.safety-link span {
-  flex: 1;
-}
-.safety-link-go {
-  color: var(--ink-4);
-}
-[dir='rtl'] .safety-link-go {
-  transform: scaleX(-1);
-}
-
+/* ---- My reports and Account standing (reports/) --------------------------- */
 /* back to Settings: a page reached from a page, on every width */
 .standing-back {
   display: inline-flex;
@@ -603,12 +562,7 @@
   background: transparent;
   color: var(--ink-3);
   cursor: pointer;
-  /*
-   * The visible dot stays small and the place to press is larger (reach.css):
-   * 4px past every edge, as far as it always reached. With a mouse that makes
-   * the 36px dot a 44px target; where a finger is about the dot itself grows
-   * to 44px (shell.css), and the area to 52px.
-   */
+  /* The dot stays small while its reach is 4px past every edge (reach.css); on touch the dot grows to 44px (shell.css). */
   --reach-open: 4px;
 }
 .msg-menu-btn:hover,
@@ -764,13 +718,10 @@
   bottom: calc(100% + 4px);
 }
 
-/* ===========================================================================
- * Gifts in the chat (gifts/)
- *
- * Every moment is CSS keyframes over the hand-drawn SVG in GiftArt.tsx. The
- * global reduced-motion rule (base.css) stops all of it; the few fades that
- * must still happen under it say so at the bottom of this section.
- * ======================================================================== */
+/*
+ * Gifts in the chat (gifts/): CSS keyframes over the drawn SVG in GiftArt.tsx. The global Reduce Motion rule stops
+ * them; the fades that still run are noted at the end of this section.
+ */
 
 /* ---- the composer's gift button ------------------------------------------ */
 .chat-compose-tools {
@@ -810,11 +761,7 @@
   border: 0;
   white-space: normal;
 }
-/*
- * A gift is a card, not a sentence: like an invite card it gets a real width
- * rather than shrink-wrapping (and the phone rule that caps a text bubble at
- * 85% would cut its edge off).
- */
+/* A gift card gets a real width like an invite card, rather than the phone's 85% text-bubble cap. */
 .chat-run:has(.gift-bubble) {
   width: 100%;
   max-width: min(100%, 340px);

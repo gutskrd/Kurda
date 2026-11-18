@@ -1,16 +1,12 @@
 /* ---- The Stories section's riddles and proverbs (lore/*.tsx) ------------------- */
 /*
- * The two companion shelves read the way the stories do: the Kurdish is the
- * large, calm thing on the page, in the display face (or Vazirmatn for
- * Soranî), the reader's language sits quietly under it, and everything else
- * is small and grey around it. One column with room to breathe, rows rather
- * than cards, hairlines rather than shadows. Gold means something earned — a
- * riddle solved, the XP it paid — and nothing else. Logical properties
- * throughout, so a Soranî or Arabic page mirrors by itself; only opacity and
- * transform move, and base.css stills them under reduced motion.
+ * Like the stories: the Kurdish large in the display face (Vazirmatn for Soranî), the translation quietly below, the
+ * rest small and grey. Rows on hairlines rather than cards; gold only for what was earned. Logical properties
+ * throughout, so right-to-left pages mirror; only opacity and transform animate, stilled under Reduce Motion by
+ * base.css.
  */
 
-/* Soranî in a face made for Arabic script, wherever a riddle's or a proverb's words appear */
+/* Soranî in a typeface made for Arabic script, wherever riddle or proverb text appears. */
 .lore-page [lang='ckb'],
 .lore-shelves [lang='ckb'],
 .lore-round [lang='ckb'] {
@@ -18,25 +14,18 @@
 }
 
 /*
- * Kurdish in the other script from the page — a Kurmancî riddle on a Soranî
- * page, a Soranî one on an English page — keeps its own direction inside the
- * line but lines up with the page, so a list does not zigzag from one edge to
- * the other. A field to type in keeps its own side.
+ * Kurdish in the other script keeps its own direction within the line but aligns with the page, so a list does not
+ * zigzag between edges. Text fields keep their own alignment.
  */
 .lore-page :is(p, span, h1, h2, h3, li)[dir],
 .lore-round :is(p, span, h1, h2, h3, li, button)[dir] {
-  /* Chromium knows the value only by its prefixed name */
+  /* Some engines know the value only by its prefixed name. */
   text-align: -webkit-match-parent;
   text-align: match-parent;
 }
 
-/* ---- the three shelves, under Learn's own switch ------------------------------- */
-/*
- * A segmented choice a size down from Learn's switch: three equal parts, the
- * shelf you are on in the page's ink as every chosen one is. Each part names
- * its shelf in Kurdish, with what that means in the reader's language under
- * it, in smaller type.
- */
+/* ---- The three shelves, under Learn's own switch ------------------------------- */
+/* A segmented control a size down from Learn's switch, each part naming its shelf in Kurdish with a smaller meaning. */
 .lore-shelves {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -96,7 +85,7 @@
   opacity: 0.8;
 }
 
-/* ---- a list page: the line under the shelves, its tools, the day's pick, the rows -- */
+/* ---- A list page: the line under the shelves, its tools, the day's pick, the rows -- */
 .lore-head,
 .lore-daily,
 .lore-section,
@@ -149,7 +138,7 @@
   min-height: 34px;
 }
 
-/* the eyebrow over a block: what it is, small and quiet */
+/* The small, quiet eyebrow over a block. */
 .lore-eyebrow {
   margin: 0;
   font-family: var(--font-sans);
@@ -161,7 +150,7 @@
 .lore-eyebrow:focus {
   outline: none;
 }
-/* the Kurdish words themselves */
+/* The Kurdish text itself. */
 .lore-display {
   font-family: var(--font-display);
   font-weight: 500;
@@ -169,7 +158,7 @@
 .lore-display[lang='ckb'] {
   font-weight: 500;
 }
-/* the reader's language under the Kurdish */
+/* The translation under the Kurdish. */
 .lore-translated {
   margin: 0;
   max-width: 62ch;
@@ -178,7 +167,7 @@
   line-height: 1.55;
 }
 .lore-meta {
-  /* only the block margins: the inline start is the dots' own offset (stories.css) */
+  /* Only the block margins; the inline start is the dots' own offset (stories.css). */
   margin-block: 0;
 }
 .lore-kind {
@@ -186,7 +175,7 @@
   color: var(--ink-2);
 }
 
-/* the riddle and the proverb of the day: the one thing on the page set larger */
+/* The riddle or proverb of the day, set larger than the rest. */
 .lore-daily {
   display: grid;
   gap: var(--space-3);
@@ -227,7 +216,7 @@
   }
 }
 
-/* "Solved: 3 of 12", and a hairline that fills */
+/* "Solved: 3 of 12", with a filling hairline. */
 .lore-solved-count {
   display: grid;
   gap: 6px;
@@ -248,7 +237,7 @@
 .lore-solved-bar > span {
   display: block;
   height: 100%;
-  /* how far through the riddles: the violet of progress along a road, as the phone's line is */
+  /* The progress violet, as on the phone. */
   background: var(--primary);
   border-radius: inherit;
   transition: width var(--dur-progress) var(--ease-out);
@@ -272,7 +261,7 @@
   position: relative;
 }
 
-/* the rows: a list, not a wall of cards — a hairline between each */
+/* The rows, separated by hairlines rather than drawn as cards. */
 .lore-list {
   margin: 0;
   padding: 0;
@@ -341,7 +330,7 @@
   color: var(--ink-3);
 }
 
-/* ---- a riddle, its answer, a proverb: one column at a reading width ------------- */
+/* ---- A riddle, its answer, a proverb: one column at a reading width ------------- */
 .lore-riddle-page,
 .lore-answer-page,
 .lore-proverb-page {
@@ -370,7 +359,7 @@
   gap: var(--space-4);
 }
 
-/* the question, large and set like a line from a book */
+/* The question, large and set like a line from a book. */
 .lore-question {
   margin: 0 0 var(--space-2);
   max-width: 30ch;
@@ -384,7 +373,7 @@
   letter-spacing: normal;
   line-height: 1.75;
 }
-/* the question again above its answer, smaller, as a quotation */
+/* The question again above its answer, smaller, as a quotation. */
 .lore-question.is-quoted {
   margin: 0;
   max-width: 40ch;
@@ -404,7 +393,7 @@
   animation: lore-unfold var(--dur-slow) var(--ease-out);
 }
 
-/* the guess */
+/* The guess. */
 .lore-guess {
   display: grid;
   gap: var(--space-3);
@@ -446,7 +435,7 @@
   font-size: var(--text-caption);
 }
 
-/* the hints, each unfolding where it is asked for */
+/* The hints, each unfolding in place. */
 .lore-hints {
   display: grid;
   gap: var(--space-3);
@@ -501,7 +490,7 @@
   font-size: var(--text-caption);
 }
 
-/* Show the answer, and the one question before it */
+/* Show the answer, and its confirmation. */
 .lore-reveal {
   margin: var(--space-2) 0 0;
 }
@@ -530,7 +519,7 @@
   gap: var(--space-2);
 }
 
-/* a riddle already solved, or its answer already seen */
+/* A riddle already solved, or its answer already seen. */
 .lore-done {
   display: grid;
   gap: var(--space-3);
@@ -558,7 +547,7 @@
   border-top: 1px solid var(--border);
 }
 
-/* challenge a friend, and the word on what happened */
+/* Challenge a friend, and the result line. */
 .lore-challenge {
   display: inline-flex;
   flex-wrap: wrap;
@@ -573,7 +562,7 @@
   font-size: var(--text-caption);
 }
 
-/* ---- the answer: the moment, then the card arriving ---------------------------- */
+/* ---- The answer: the moment, then the card arriving ---------------------------- */
 .lore-moment {
   display: flex;
   align-items: center;
@@ -657,14 +646,14 @@
 .lore-riddle > .lore-section,
 .lore-answer-article > .lore-section,
 .lore-proverb > .lore-section {
-  /* the column's own gap already stands between them */
+  /* The column's own gap already separates them. */
   margin-bottom: var(--space-2);
 }
 .lore-section > .story-section-title {
   margin-bottom: var(--space-3);
 }
 
-/* where it was found */
+/* Where it was found. */
 .lore-sources {
   display: grid;
   gap: var(--space-2);
@@ -704,7 +693,7 @@
   font-size: var(--text-caption);
 }
 
-/* the way on */
+/* The way on. */
 .lore-next {
   display: flex;
   flex-wrap: wrap;
@@ -725,8 +714,8 @@
   }
 }
 
-/* ---- a proverb ---------------------------------------------------------------- */
-/* set like a line of verse: the display face, generous leading, a measure of its own */
+/* ---- A proverb ---------------------------------------------------------------- */
+/* Set like a line of verse: the display face, generous leading and its own measure. */
 .lore-verse {
   text-wrap: balance;
 }
@@ -821,7 +810,7 @@
   text-decoration: none;
 }
 
-/* the round, offered at the foot of the proverbs */
+/* The round, offered at the foot of the proverbs. */
 .lore-round-invite {
   display: grid;
   gap: var(--space-3);
@@ -830,7 +819,7 @@
   border-top: 1px solid var(--border);
 }
 
-/* ---- the round on the proverbs -------------------------------------------------- */
+/* ---- The proverb round ---------------------------------------------------------- */
 .lore-modes {
   display: grid;
   gap: var(--space-2);
@@ -957,7 +946,7 @@
   max-width: 640px;
 }
 
-/* ---- movement: small, and only where something arrives -------------------------- */
+/* ---- Motion: small, and only where something arrives ---------------------------- */
 @keyframes lore-unfold {
   from {
     opacity: 0;
@@ -989,7 +978,7 @@
   }
 }
 
-/* the proverb’s missing word: a blank to fill, then the word once it is found */
+/* The proverb’s missing word: a blank to fill, then the word once found. */
 .lore-gap {
   display: inline-block;
   min-width: 3.5em;

@@ -3,7 +3,7 @@ import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { HearItItemView, SoloSessionView } from '@kurda/shared';
 
-/** The one player every sound goes through, as the page sees it: what was played, and a way to say it failed. */
+/** The app's single sound player as the page sees it: what was played, and a way to make it fail. */
 const sound = vi.hoisted(() => ({
   played: [] as string[],
   errors: new Set<(src: string) => void>(),

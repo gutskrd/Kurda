@@ -7,17 +7,10 @@ import { renderPlay, where } from '../play/testing';
 import { forgetMpAvailability } from '../games/mpAvailability';
 import { WhoAmI } from './WhoAmI';
 
-/**
- * Ez kî me? on the website: the start and its two ways in, one phone first,
- * and the table with friends online from both sides of a question, the
- * asker's (their list with the questions worth asking first) and an
- * answerer's, through the card's verdict to a guess and the end. The words
- * to guess from are listed only once a player says they know who they are.
- *
- * The room's server here is the game's own rules: a table is begun from three
- * dealt cards, every move the page sends is judged by `whoAmITableRules`, and
- * the page is answered with the rules' own view for the reader's seat. So what
- * these tests show a reader is what a real table would send them, and no more.
+/*
+ * Ez kî me? on the website: the start's two ways in, and an online table from both the asker's and an answerer's side
+ * through verdict, guess and end. The fake room runs `whoAmITableRules` and answers with the rules' view for the
+ * reader's seat, so the tests show exactly what a real table would.
  */
 
 afterEach(() => {
@@ -194,11 +187,8 @@ function deal(who: 'cat' | 'bird' | 'dog', dialect: 'kmr' | 'ckb' = 'kmr', quest
 const seat = (n: number, extra: Record<string, unknown> = {}) => ({ seat: n, userId: `seat:${n}`, name: null, avatarUrl: null, isMe: false, isHost: false, gone: false, away: false, team: null, bot: null, ...extra });
 
 /**
- * A table of three under way, the reader in seat 1 wearing the cat, Rojda the
- * bird and Baran the dog. `play` is a move by anyone at the table, as the
- * server would take it; the page's own moves arrive through the route. The
- * friends are offered all four answers, as at a table this app makes, unless
- * `answers` says two, as at one an older app made.
+ * A table of three under way: the reader in seat 1 wearing the cat, Rojda the bird and Baran the dog. `play` makes a
+ * move for anyone; the page's own moves arrive through the route. Four answers are offered unless `answers` says two.
  */
 function table(
   opts: { dialect?: 'kmr' | 'ckb'; difficulty?: 'beginner' | 'intermediate'; answers?: 2 | 4; questions?: WhoAmIDeal['questions']; refuse?: { status: number; body: unknown } } = {},

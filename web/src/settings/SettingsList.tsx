@@ -4,14 +4,8 @@ import { CheckIcon, ChevronIcon, CloseIcon, SearchIcon } from '../components/ico
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * The pieces Settings is made of: a list of rows in named groups, as a phone's
- * own settings are, rather than a stack of boxes each with its controls open.
- *
- * A row says what is behind it in a word and an icon, and what it is set to
- * now at its end, so most of the page can be read without opening anything;
- * one tap opens its page. The groups are few and named for what they are
- * about, a band between them, so the eye finds the group first and then the
- * row. What cannot be undone is last, and red.
+ * The parts Settings is built from: rows in named groups, each with an icon, a title and its current value at the
+ * end, opening its page on a tap. What cannot be undone comes last, in red.
  */
 
 /** A group of rows under a short heading; the last group has none. */
@@ -29,21 +23,21 @@ export function SettingsSection({ title, children }: { title?: string; children:
   );
 }
 
-export interface SettingsRowProps {
+interface SettingsRowProps {
   icon: React.ReactNode;
   title: string;
-  /** a line under the title: what the row does, when its name alone does not say */
+  /** A line under the title saying what the row does, when its name does not. */
   subtitle?: React.ReactNode;
-  /** what it is set to now, at the row's end */
+  /** Its current value, at the row's end. */
   value?: React.ReactNode;
-  /** a page in the app */
+  /** A page in the app. */
   to?: string;
-  /** somewhere outside it (an email address) */
+  /** An address outside the app, such as an email address. */
   href?: string;
   onClick?: () => void;
-  /** red, for what cannot be undone */
+  /** Red, for what cannot be undone. */
   destructive?: boolean;
-  /** the page open beside the list on a wide screen */
+  /** The page open beside the list on a wide screen. */
   current?: boolean;
 }
 
@@ -80,21 +74,19 @@ export function SettingsRow({ icon, title, subtitle, value, to, href, onClick, d
   );
 }
 
-export interface SettingsChoice<T extends string> {
+interface SettingsChoice<T extends string> {
   value: T;
   title: string;
-  /** what choosing it means, read before it is chosen */
+  /** What choosing it means, shown before it is chosen. */
   subtitle?: string;
   disabled?: boolean;
-  /** the language the title is written in, when it is not the page's */
+  /** The title's language, when it is not the page's. */
   lang?: string;
 }
 
 /**
- * One of a few, as a list of rows with a tick on the chosen one. Each is a
- * real radio button, so the arrow keys move between them and a screen reader
- * says "1 of 4, selected"; the line under each title says what choosing it
- * means, so the consequence is in view before the choice is made.
+ * One of a few choices as rows with a tick on the chosen one. Each is a real radio button, so arrow keys and screen
+ * readers work, and the line under each title says what choosing it means.
  */
 export function SettingsChoices<T extends string>({
   label,
@@ -215,10 +207,7 @@ export function SettingsSearch({ value, onChange }: { value: string; onChange: (
   );
 }
 
-/**
- * Text as a search compares it: lower case and without accents, so "e"
- * finds "ê" and "Ç" finds "c" — what someone types quickly on any keyboard.
- */
+/** Text as the search compares it: lower case without accents, so "e" finds "ê" and "Ç" finds "c". */
 export function searchable(text: string): string {
   return text.toLocaleLowerCase().normalize('NFD').replace(/\p{M}/gu, '').trim();
 }

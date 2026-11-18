@@ -34,18 +34,14 @@ export interface TreeState {
   data: MyTree | null;
   loading: boolean;
   error: string | null;
-  /** the server has no trees yet (it is older than this page): the tree is simply not shown anywhere */
+  /** The server has no trees yet, so the tree is not shown anywhere. */
   unavailable: boolean;
   reload: () => void;
-  /** put a newer answer in place, as an action's own answer is */
+  /** Replaces the state with a newer answer, such as an action's response. */
   set: (next: MyTree) => void;
 }
 
-/**
- * The learner's tree, asked for when the page opens. A server that does not
- * know about trees answers 404, and then there is nothing to show and nothing
- * wrong: the feature is not there yet, and no part of the page mentions it.
- */
+/** The learner's tree, fetched when the page opens. A 404 means the server has no trees yet, which is not an error. */
 export function useTree(enabled = true): TreeState {
   const { client, status } = useAuth();
   const t = useT();

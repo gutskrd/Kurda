@@ -14,7 +14,7 @@ describe('progressNotification', () => {
       body: 'You earned Agir.',
       to: '/app/badges',
     });
-    // the day's bundle names no badge
+    // The day's bundle names no badge.
     expect(progressNotification(note({ kind: 'badge', day: '2026-10-14' }), t)?.body).toBe(en['notify.badge.day']);
   });
 

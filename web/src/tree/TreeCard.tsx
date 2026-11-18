@@ -9,13 +9,9 @@ import { useTree } from './useTree';
 import './tree.css';
 
 /**
- * The learner's tree on Learn, in one slim card that leads to it: the tree
- * as it stands, its name and stage, and the one thing worth knowing now —
- * that there is water to pour, that it is thirsty, or that it is doing well.
- * Before a tree is planted it is the invitation to plant one.
- *
- * It takes no room until it knows what to say, and on a server that has no
- * trees yet it is never there at all.
+ * The learner's tree on Learn as a slim card linking to it: the tree, its name and stage, and whether there is water
+ * to pour, it is thirsty or it is well; before planting, an invitation to plant. It takes no space until loaded, and
+ * never shows on a server without trees.
  */
 export function TreeCard(): React.JSX.Element | null {
   const t = useT();
@@ -39,7 +35,7 @@ export function TreeCard(): React.JSX.Element | null {
   }
   const named = treeNamed(t, tree.species);
   const count = new Intl.NumberFormat(locale).format(tree.water);
-  // water to pour comes first: it is what there is to do; then how it fares; then that all is well
+  // Water to pour comes first, then the tree's health, then that all is well.
   const sub =
     tree.water > 0
       ? tree.health === 'fresh'

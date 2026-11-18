@@ -2,22 +2,20 @@ import type { GroupChatCleared, GroupStanding, StoryDialect } from '@kurda/share
 import type { ApiError, GroupDetail } from '../lib/types';
 
 /**
- * Where the reader stands with a group the server answered for: a member, or
- * banned. The server says; an older one that does not is read from the
- * reader's role. An answer that says neither is no answer, and leaves the
- * thread as it is. (Anyone else is not answered at all: `isGroupMissing`.)
+ * Where the reader stands with a group: a member or banned, from the server's `standing` or else the reader's role.
+ * An answer with neither leaves the thread as it is; non-members get `isGroupMissing` instead.
  */
 export function standingOf(detail: Pick<GroupDetail, 'standing' | 'myRole'>): GroupStanding | null {
   if (detail.standing) return detail.standing;
   return detail.myRole ? { kind: 'member', role: detail.myRole } : null;
 }
 
-/** A read or a send refused because the reader is not in the group any more: removed, or banned. */
+/** A read or send refused because the reader is no longer in the group, removed or banned. */
 export function isOutOfGroup(error: ApiError): boolean {
   return error.code === 'NOT_A_MEMBER' || error.code === 'GROUP_BANNED';
 }
 
-/** The group's own page refused as not found: deleted, or private and the reader is neither in it nor banned from it. */
+/** The group's page refused as not found: deleted, or the reader is neither a member nor banned. */
 export function isGroupMissing(error: ApiError): boolean {
   return error.code === 'GROUP_NOT_FOUND' || error.status === 404;
 }
@@ -27,15 +25,15 @@ const time = (iso: string | null | undefined): number | null => {
   return Number.isNaN(at) ? null : at;
 };
 
-/** The moment up to which a member's chat shows nothing: the later of the two clears, or null when neither. */
-export function clearedUntil(cleared: GroupChatCleared | null): number | null {
+/** The moment up to which a member's chat shows nothing: the later of the two clears, or null. */
+function clearedUntil(cleared: GroupChatCleared | null): number | null {
   const mine = time(cleared?.forMe);
   const everyone = time(cleared?.forEveryone?.at);
   if (mine === null) return everyone;
   return everyone === null ? mine : Math.max(mine, everyone);
 }
 
-/** Only what was said after the chat was last cleared, as the server reads it. */
+/** Only the messages after the chat was last cleared, as the server reads it. */
 export function sinceCleared<T extends { createdAt: string }>(messages: readonly T[], cleared: GroupChatCleared | null): T[] {
   const until = clearedUntil(cleared);
   if (until === null) return [...messages];
@@ -43,9 +41,8 @@ export function sinceCleared<T extends { createdAt: string }>(messages: readonly
 }
 
 /**
- * Which clear the chat shows, if any: everyone's, as a line at the top of the
- * history with who did it; or the reader's own, in the empty chat's card. The
- * later one wins, since what came before it is gone from view either way.
+ * Which clear the chat shows: everyone's as a line atop the history, or the reader's own in the empty chat's card. The
+ * later one wins.
  */
 export function shownClear(cleared: GroupChatCleared | null): { kind: 'everyone'; at: string; by: string | null } | { kind: 'me'; at: string } | null {
   if (!cleared) return null;
@@ -55,11 +52,7 @@ export function shownClear(cleared: GroupChatCleared | null): { kind: 'everyone'
   return cleared.forMe && mine !== null ? { kind: 'me', at: cleared.forMe } : null;
 }
 
-/**
- * Three ways to say hello in each variety a course teaches: what a learner
- * taps to say the first words in a quiet group. Kurdish whatever the page's
- * language, because saying it in Kurdish is the point.
- */
+/** Three greetings per course variety for a quiet group, always in Kurdish since that is the point. */
 export const GREETINGS: Record<StoryDialect, readonly string[]> = {
   kurmanci: ['Silav! 👋', 'Rojbaş!', 'Çawa yî?'],
   sorani: ['سڵاو! 👋', 'بەیانیت باش!', 'چۆنی؟'],

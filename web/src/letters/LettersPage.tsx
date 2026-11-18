@@ -64,37 +64,15 @@ const RETURNED: Record<LetterReturnReason, MessageKey> = {
 type Kept = { name: string; threadId: string } | { name: null; threadId: null };
 
 /**
- * Letters by bird (/app/letters): writing to somebody new in Kurdish, and
- * the pen pals you write to.
+ * Letters by bird (/app/letters). The window shows the birds out with letters from people the reader's age; the first
+ * visit picks a bird. To meet someone, send a letter with your own bird to wait, or call a bird to the window, read
+ * its letter, and either answer (becoming pen pals) or send it on.
  *
- * At the top, your window, and over the country the birds out there, each
- * carrying a letter from somebody your age; how many is said under it. The
- * first time, you choose your bird there. Then there are two ways to meet
- * somebody: write a letter, even a word, and send your own bird out with it
- * to wait until somebody calls it; or call one of the birds out there to
- * your window. It comes down with its letter and waits on the sill beside
- * your bird while you read it. Answer it, and that same bird carries your
- * letter home and the two of you are pen pals; or send it on its way, for
- * somebody else. While it is there your own bird stays home.
- *
- * Every letter lands at the window once, however it was heard of: your own
- * bird home with an answer, or a pen pal's bird with their next letter,
- * flies in and lays it on the sill, and after that waits there, without a
- * flight, until the letter is read. What the window acts out is worked out
- * by the shared window logic (shared/src/letter-window.ts) from the page as
- * the server last said it and from what is done here, and the page is read
- * again whenever the server says something changed, so a bird that comes
- * while the window is open lands then. One letter is acted out at a time; a
- * quiet line says when another is waiting its turn. A notification names its
- * correspondence (`?bird=`): that bird lands first, or, when there is nothing
- * of it to land or the window is busy, the correspondence opens instead.
- *
- * While your bird is out a line says where it is: out over the country
- * waiting to be called, or at somebody's window while they read your letter;
- * and when it came home by itself with your letter, why.
- *
- * Under it, your pen pals, the one most recently written to first, each with
- * whose turn it is, and how it all works in a few lines at the foot.
+ * Every letter lands at the window once, then waits on the sill until read. The shared window logic
+ * (shared/src/letter-window.ts) decides what to act out from the server's state and local actions; the page refetches
+ * whenever the server reports a change. One letter plays at a time, with a note when another waits. A notification's
+ * `?bird=` lands that bird first, or opens its correspondence when nothing can land. A line says where the reader's
+ * bird is, and why if it came home unanswered. Below are the pen pals, most recent first, and a short how-to.
  */
 export function LettersPage(): React.JSX.Element {
   const t = useT();
@@ -204,11 +182,8 @@ export function LettersPage(): React.JSX.Element {
   }, [data, visitorLeaves, ownLeaves, readAt, home.reload]);
 
   /**
-   * The answer begun to a bird that has left the window without it, kept to
-   * send another way: to a correspondence with that person if you write to
-   * each other already, or else with your own bird to somebody new. Says
-   * where it went, or null when nothing was written (an answer sent, or one
-   * sent on or blocked, has been let go already).
+   * Keeps an unsent answer to a bird that has left: as a reply in an existing correspondence with that person, or as a
+   * new letter for the reader's own bird. Returns where it went, or null when nothing was written.
    */
   const keepAnswer = useCallback(
     (came: LetterVisitor, penPals: LettersHome['penPals']): Kept | null => {
@@ -370,10 +345,8 @@ export function LettersPage(): React.JSX.Element {
   }
 
   /**
-   * A bird flying in has come down on the sill: its letter has landed, and
-   * the server is told at once rather than when the bird has finished laying
-   * it down and looking about, so a page closed meanwhile does not land it
-   * again next time. The look itself moves on when the bird has settled.
+   * A bird has touched down, so the server is told the letter landed at once, before the bird settles, so a page
+   * closed meanwhile does not land it again next time.
    */
   function touchdown(spot: WindowSpot): void {
     const l = current.current;
@@ -382,11 +355,7 @@ export function LettersPage(): React.JSX.Element {
     else if (spot === 'own' && !l.landing && l.returned && !l.returned.landed) tellLanded([l.returned.letterId]);
   }
 
-  /**
-   * The window says it showed these letters land, each once however many
-   * moments say so; asked again once if the network failed, and otherwise
-   * they land again on the next visit.
-   */
+  /** Tells the server these letters landed, once each; retried once on a network failure, else they land again next visit. */
   function tellLanded(letterIds: readonly string[], again = true): void {
     const fresh = letterIds.filter((id) => !told.current.has(id));
     if (fresh.length === 0) return;

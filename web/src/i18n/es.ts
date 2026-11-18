@@ -826,8 +826,6 @@ export const es: Catalogue = {
   'report.aboutPlayer': 'Más sobre {name}',
   'report.group': 'Denunciar este grupo',
   // My reports, Account standing, the warning and the suspension screen (reports/)
-  'settings.safety.title': 'Seguridad',
-  'settings.safety.help': 'Qué pasó con tus denuncias y las decisiones sobre tu cuenta.',
   'standing.backToSettings': 'Ajustes',
   'reports.mine.title': 'Mis denuncias',
   'reports.mine.intro': 'Lo que denunciaste y lo que decidimos. Solo tú puedes verlo.',
@@ -3181,10 +3179,10 @@ export const es: Catalogue = {
   'games.whoAmI.notOffered': 'Ez kî me? necesita más palabras y preguntas revisadas antes de poder jugarse en este kurdo.',
   'games.whoAmI.share': '¡Juega a Ez kî me? conmigo en Hevalo! Abre Juegos → Unirse con un código y escribe {code}.',
 
-  // ---- the weekly league (KUR-062) ----------------------------------------
+  // ---- the weekly league --------------------------------------------------
   'leagues.tierName': '{emoji} Liga {tier}',
 
-  // ---- notification preferences (KUR-095) ---------------------------------
+  // ---- notification preferences -------------------------------------------
   'notifications.title': 'Notificaciones',
   'notifications.pref.streak': 'Recordatorios de racha',
   'notifications.pref.friends': 'Actividad de amigos',
@@ -3198,7 +3196,7 @@ export const es: Catalogue = {
   'notifications.quietFrom': 'Desde',
   'notifications.quietTo': 'Hasta',
 
-  // ---- tags & badges (KUR-286/287) ----------------------------------------
+  // ---- tags & badges ------------------------------------------------------
   'tags.title': 'Etiquetas',
   'tags.main': 'Etiqueta principal',
   'tags.noMain': 'Todavía no hay etiqueta principal.',

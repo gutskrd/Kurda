@@ -1,21 +1,11 @@
 /*
- * A ticket (ui/Ticket.tsx): the shape every invitation takes — a lobby's join
- * code, a game invite in a chat or a banner, a friend picked to be asked,
- * someone asked into a lobby, a friend request.
+ * A ticket (ui/Ticket.tsx), the shape of every invitation: join codes, game invites, picked friends, lobby invitees
+ * and friend requests. Two halves meet at a perforation with a notch at each end; each half's shape is its own layer
+ * (`.ticket-paper`), masked to the notches, so content such as a dropdown menu is never clipped, and the edge rings
+ * each notch.
  *
- * Two halves torn along a perforation, with a notch bitten out at each end of
- * it. Each half's shape is drawn on its own layer under the content
- * (`.ticket-paper`), masked to the notches, so what is inside a ticket — a
- * menu that drops out of it — is never cut off by them. The edge runs on
- * round each notch: a ring the size of the bite, of which the mask keeps the
- * quarter inside the half.
- *
- * The colour is what the ticket is for, the same as on the phone
- * (mobile/src/play/joinCode.ts): a game in the hue of its stamp on the games
- * page, a story game in the page's violet, a friendship in the colour of a
- * heart given, and a ticket that is spent in a quiet grey. A game was in the
- * green of a right letter or the sun's gold, the colours that say a right
- * answer and something earned. How tickets move is in motion.css.
+ * The colour says what it is for, as on the phone (mobile/src/play/joinCode.ts): a game in its stamp's hue, a story
+ * game in the page's violet, a friendship in the heart's colour, and a spent ticket in grey. Motion is in motion.css.
  */
 .ticket {
   --t-accent: var(--primary);
@@ -191,11 +181,7 @@
 .ticket.is-afloat {
   filter: drop-shadow(var(--shadow-sm));
 }
-/*
- * Spent (a game finished or called off): a hole punched through the stub, as
- * a conductor's clipper leaves one. The hole is one more mask layer, laid
- * over the notches so that only what both keep is drawn.
- */
+/* A spent ticket gets a hole punched through the stub, as one more mask layer over the notches. */
 .ticket--row.is-punched > .ticket-stub > .ticket-paper {
   -webkit-mask:
     radial-gradient(circle 5px at 50% 16px, transparent 96%, #000) 0 0 / 100% 100% no-repeat,
@@ -235,11 +221,7 @@
   color: var(--t-ink);
 }
 
-/*
- * A stamp: a word in a box, inked at a slant across the ticket. Latin words
- * in capitals and spaced; Arabic script is joined, and neither capitals nor
- * spacing are its way.
- */
+/* A stamp: a boxed word inked at a slant; Latin in spaced capitals, Arabic script joined without either. */
 .ticket-stamp {
   --stamp-tilt: -8deg;
   display: inline-block;
@@ -287,11 +269,7 @@
 }
 
 /* ---- a friendship, asked and answered (social/FriendTickets.tsx) ------------------ */
-/*
- * Add, with the small ticket that slips away from it to the person asked
- * (and comes back if the request is taken back); Requested, with the ticket
- * left on it. How the ticket moves is in motion.css.
- */
+/* Add, with a small ticket that slips away to the person asked and returns if withdrawn; Requested keeps its ticket. */
 .friend-ask {
   position: relative;
   display: inline-flex;
@@ -325,11 +303,7 @@
   min-width: 18px;
   padding: 0;
 }
-/*
- * A request waiting on you: their face on the stub, their name and what they
- * want on the body, and the two answers. In the social rail's narrow column
- * the answers go under the name.
- */
+/* A request for the reader: their face on the stub, name and request on the body, and two answers, below the name in the rail. */
 .request-ticket {
   --stub-w: 64px;
 }
@@ -377,14 +351,8 @@ button.request-name:focus-visible {
   border-radius: var(--r-xs);
 }
 /*
- * Their name opens their profile, and so does a press anywhere else on the
- * ticket, the face on the stub among them: the name's area is stretched over
- * the whole ticket, and only the two answers sit above it. The name is left
- * unplaced, so the area is measured from the ticket's body rather than from
- * the name, and the name's own `overflow: hidden`, which cuts a long name
- * short, does not cut the area short with it. Its reach (reach.css) is then
- * measured from the body as well, which is larger than any reach, so it comes
- * to the body's own edges and no further.
+ * The name's link area stretches over the whole ticket, with only the answers above it. The name is unpositioned so
+ * the area and its reach (reach.css) are measured from the body, and its ellipsis `overflow: hidden` does not clip it.
  */
 button.request-name {
   position: static;

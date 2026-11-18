@@ -1,34 +1,17 @@
 /**
- * What a win says when it is sent to somebody outside Hevalo.
- *
- * One modest line in the sharer's language, ended on a small mark of what it
- * was, and under it the win's own address: a finished lesson, a streak on one
- * of its big days, a badge, a league week that went well, the word game's
- * result. Wherever the address is pasted it is drawn as the postcard of that
- * win (shared: art/share-card.ts), and whoever taps it lands on the page of
- * it (WinPage.tsx). The line is this catalogue's; the mark, the address and
- * the layout are the shared builders' (`win-share.ts`, `win-link.ts`), so the
- * phone sends the same message.
- *
- * Nothing here is given the account, and nothing here could say whose win it
- * is: no name, no profile, no place, nobody else. Some of the people sharing
- * are children, and a message passed on is out of anybody's hands. The
- * address says what kind of win it was and at most how many days or which
- * league, never a page about a person.
+ * The message a win is shared with: one line in the sharer's language ending on a small mark, then the win's address,
+ * which previews as its postcard and opens WinPage.tsx. The mark, address and layout come from the shared builders, so
+ * the phone sends the same message. Nothing here knows the account: the message never says whose win it is, since some
+ * sharers are children.
  */
 import { shareMessage, winLine, winLinkUrl, wordGameShareText, type LeagueWin, type WinLink } from '@kurda/shared';
-import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 import type { WordleGame } from '../lib/types';
 
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+/** The word game's name over its grid; a name, so the same in every language. */
+const WORD_GAME_NAME = 'Hevalo Peyvok';
 
-/**
- * The word game's name over its grid. It is a name, not a sentence, and the
- * same in every language: a grid pasted into a chat is known by it.
- */
-export const WORD_GAME_NAME = 'Hevalo Peyvok';
-
-/** The site a shared win's address is on: the one the sharer is reading, as anybody can open it. */
+/** The site a shared win's address points at: the one the sharer is using. */
 export function siteUrl(): string {
   return window.location.origin;
 }
@@ -44,7 +27,7 @@ export function lessonShare(t: Translate, title?: string | null): string {
   return shareMessage({ line: winLine(name ? t('share.win.lesson', { title: name }) : t('share.win.lessonPlain'), 'lesson'), link: linkTo({ kind: 'lesson' }) });
 }
 
-/** A streak on one of its big days: the count in the reader's own figures, and the address of the card with those days on its stamp. */
+/** A streak milestone, with the count in the reader's own digits. */
 export function streakShare(t: Translate, locale: string, days: number): string {
   const count = new Intl.NumberFormat(locale).format(days);
   return shareMessage({ line: winLine(t('share.win.streak', { count }), 'streak'), link: linkTo({ kind: 'streak', days }) });
@@ -55,17 +38,13 @@ export function badgeShare(t: Translate, badge: string): string {
   return shareMessage({ line: winLine(t('share.win.badge', { badge }), 'badge'), link: linkTo({ kind: 'badge' }) });
 }
 
-/** A league week that went well: the league moved up to, or the place taken in one. `tier` is the league's own name. */
+/** A good league week: the league moved up to, or the place taken. `tier` is the league's name. */
 export function leagueShare(t: Translate, win: LeagueWin, tier: string): string {
   const line = win.kind === 'promoted' ? t('share.win.leagueUp', { tier }) : t('share.win.leaguePlace', { rank: win.rank, tier });
   return shareMessage({ line: winLine(line, 'league'), link: linkTo({ kind: 'league', tier: win.tier }) });
 }
 
-/**
- * The word game's result: the game's name with how it went, and the guesses
- * as rows of fruit. `words` are the catalogue's for a practice game and for
- * how hard it was.
- */
+/** The word game's result: its name and outcome, and the guesses as rows of fruit. `words` come from the catalogue. */
 export function wordGameShare(
   game: Pick<WordleGame, 'guesses' | 'status' | 'remainingAttempts' | 'mode'>,
   words: { practice: string; difficulty: string },
@@ -74,7 +53,7 @@ export function wordGameShare(
     {
       rows: game.guesses.map((g) => g.feedback),
       solved: game.status === 'won',
-      // as many rows as the board draws: the guesses made and the ones left
+      // As many rows as the board draws: the guesses made and the ones left.
       maxAttempts: game.guesses.length + game.remainingAttempts,
       name: WORD_GAME_NAME,
       practice: game.mode === 'practice' ? words.practice : undefined,

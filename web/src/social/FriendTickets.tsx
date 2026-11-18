@@ -10,33 +10,19 @@ import { prefersReducedMotion } from '../lib/motion';
 import { Ticket, TicketBody, TicketStamp, TicketStub, ticketClass } from '../ui/Ticket';
 
 /**
- * Asking someone to be friends, and being asked, as a ticket handed over
- * (ui/Ticket.tsx), in the colour of a heart given.
- *
- * Sending: Add turns into a small ticket that slips away to them, and what is
- * left is "Requested" with a ticket on it; a screen reader hears "Request
- * sent". Pressing Requested twice takes the request back, and the ticket
- * comes back into the button, which is Add again.
- *
- * Receiving: each request is a friendship ticket — their face on the stub,
- * their name and "Wants to be friends" on the body. Accept tears the stub
- * off, with a burst, and stamps the ticket "Friends"; Decline folds it away.
- *
- * Under Reduce Motion nothing slips, tears, bursts or folds: the button and
- * the stamp change, and that is all.
+ * Friend requests as tickets (ui/Ticket.tsx) in the heart colour. Sending: Add sends a small ticket away and becomes
+ * "Requested"; pressing that twice takes the request back. Receiving: each request is a ticket with the sender's face
+ * on the stub; Accept tears the stub off and stamps it "Friends", Decline folds it away. Under Reduce Motion only the
+ * button and stamp change.
  */
 
 /** How long a new friendship's stamp stays before the lists move on, and how long a decline takes to fold. */
-export const FRIENDS_MS = 1200;
-export const FOLD_MS = 300;
+const FRIENDS_MS = 1200;
+const FOLD_MS = 300;
 
 const wait = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-/**
- * "Add friend", which hands over a ticket: for a person you are not friends
- * with and have not asked (`none`), or have asked (`pending_out`). It sends
- * and takes back the request itself, and tells its holder what changed.
- */
+/** "Add friend" for someone not yet asked (`none`) or already asked (`pending_out`); it sends or withdraws the request. */
 export function AddFriendButton({
   userId,
   name,
@@ -48,13 +34,13 @@ export function AddFriendButton({
   block = false,
 }: {
   userId: string;
-  /** who, for "Cancel your request to …" */
+  /** Who, for "Cancel your request to …". */
   name: string;
   status: 'none' | 'pending_out';
   onStatus?: (next: 'none' | 'pending_out') => void;
-  /** why a request did not go — a full friend list, too many out (lib/limits.ts) — or null once one does */
+  /** Why a request failed, such as a full friend list (lib/limits.ts), or null once one goes. */
   onError?: (message: string | null) => void;
-  /** the button's word, where "Add friend" is too long (a row of a list says "Add") */
+  /** The button's label where "Add friend" is too long, such as "Add" in a list row. */
   label?: string;
   variant?: 'primary' | 'secondary';
   block?: boolean;
@@ -63,7 +49,7 @@ export function AddFriendButton({
   const t = useT();
   const [state, setState] = useState(status);
   const [busy, setBusy] = useState(false);
-  // the ticket that slips away to them, or comes back; counted, so each one moves again
+  // The ticket sent away or brought back, counted so each one animates again.
   const [moment, setMoment] = useState<{ way: 'away' | 'back'; n: number } | null>(null);
   const [said, setSaid] = useState('');
   const [still] = useState(prefersReducedMotion);
@@ -120,7 +106,7 @@ export function AddFriendButton({
 }
 
 /** Whoever is asking, as the lists hold them. */
-export interface Asker {
+interface Asker {
   userId: string;
   username: string;
   displayName?: string | null;
@@ -128,9 +114,8 @@ export interface Asker {
 }
 
 /**
- * A friend request waiting on you, as a friendship ticket. `onAnswer` sends
- * the answer and says whether it went through; once the ticket has been
- * stamped (or folded away), `onSettled` lets the lists move on.
+ * A friend request waiting on you. `onAnswer` sends the answer and reports whether it went through; once stamped or
+ * folded, `onSettled` lets the lists move on.
  */
 export function RequestTicket({
   person,
@@ -142,9 +127,9 @@ export function RequestTicket({
   person: Asker;
   onAnswer: (accept: boolean) => Promise<boolean>;
   onSettled: () => void;
-  /** their profile, from their name */
+  /** Opens their profile from their name. */
   onOpen?: () => void;
-  /** the social rail's narrow column: the answers under the name */
+  /** The social rail's narrow column, with the answers under the name. */
   compact?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -153,7 +138,7 @@ export function RequestTicket({
   const name = person.displayName || person.username;
 
   async function answer(accept: boolean): Promise<void> {
-    // a no folds away while it is sent; a yes waits to be sure before it is stamped
+    // A decline folds away while it is sent; an accept waits for the server before it is stamped.
     setPhase(accept ? 'busy' : 'declined');
     const [ok] = await Promise.all([onAnswer(accept), accept || still ? null : wait(FOLD_MS)]);
     if (!ok) {
@@ -198,7 +183,7 @@ export function RequestTicket({
               {t('friends.accept')}
             </Button>
             <Button size="sm" variant="ghost" disabled={phase !== 'open'} onClick={() => void answer(false)}>
-              {/* each place keeps the word it has always had */}
+              {/* Each place keeps its own label. */}
               {compact ? t('rail.decline') : t('friends.decline')}
             </Button>
           </span>

@@ -34,44 +34,23 @@ import './games.css';
 import './game-stage.css';
 
 /**
- * What every learning game played alone has around its own staging: the
- * intro (what the game is, the game's own picture of it, the difficulty), the
- * round (where you are in it, the feedback after each answer with its
- * explanation), and results that say exactly what happened — how many right,
- * how many on the first try, and whether the day counts.
+ * The frame around every solo round: the intro (the game, its picture, the difficulty), the round (progress and
+ * feedback with explanations), and results (right answers, first-try answers, whether the day counts).
  *
- * What a round pays depends on what it is (the registry's `paysAlone`). An
- * exercise of the lessons pays XP as a lesson does, so its screens say what
- * it can pay, what it paid, and when it paid nothing, why. A game played
- * alone pays none: XP is for lessons, stories and games played online with
- * other people. Its screens never show a figure of XP, not even a zero; they
- * say once, on the results, that a game alone earns none and where it is
- * earned. A round played well enough still counts as a day learned, and that
- * is said either way.
+ * Pay depends on the registry's `paysAlone`. Lesson practice exercises pay XP like a lesson and say what they paid or
+ * why not. Solo games pay none and never show an XP figure; the results say once that solo games earn none and where
+ * XP is earned. A good enough round still counts as a day learned.
  *
- * The round is the server's (api/src/games/solo.ts): it is made there, every
- * try is checked there, and the finish settles it there, once. This shell
- * only carries the tries and shows what comes back. A round left open is
- * offered again ("Continue your round") until it expires.
- *
- * The game draws the item itself (`renderRound`): its board, its Check
- * button, its nudge after a wrong try and its correction once an item is
- * done. The shell draws the verdict, the explanation and the way on.
- *
- * Two of the rounds it carries are not games: Build a Sentence and
- * Hear It, Find It are exercises of the lessons' practice (the registry's
- * `place`). For them the way out leads back to Learn and is worded as a
- * lesson's is, and another go is another round, not another game.
- *
- * A game is played on the games' stage (game-stage.css): it opens on its
- * emblem acting out the game, and its result is given on the same night, so
- * the start and the end of a round are plainly one place. An exercise of the
- * lessons has no emblem and keeps the lessons' plain page.
+ * The server (api/src/games/solo.ts) builds the round, checks every try and settles the finish; this shell carries tries
+ * and shows answers, and offers an unfinished round again until it expires. The game draws its item (`renderRound`);
+ * the shell draws the verdict, explanation and way on. For lesson practice exercises (the registry's `place`) the way
+ * out leads to Learn. Games play on the games' stage (game-stage.css), opening on their emblem; exercises keep the
+ * lessons' plain page.
  */
 
 /** What a game's board is handed for the item in front of the player. */
 export interface SoloRound<Item, H, C, B = unknown> {
-  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Detective's hints, Who Am I?'s questions) */
+  /** The round's id, for clip paths (`hearItClipPath`) and requests beyond answers, such as Detective's hints. */
   sessionId: string;
   /** what the whole round shares, as the round was sent (Detective's case board); null for a game without */
   board: B | null;
@@ -79,11 +58,7 @@ export interface SoloRound<Item, H, C, B = unknown> {
   index: number;
   total: number;
   state: SoloItemState;
-  /**
-   * The verdict, the explanation and the way on, for a game that places them
-   * itself (`feedbackInRound`): beside its question rather than under a tall
-   * board. Null for every other game, whose round has them underneath.
-   */
+  /** The verdict, explanation and way on, for a game that places them itself (`feedbackInRound`); otherwise null. */
   feedback: React.ReactNode;
   /** the last answer to this item, while it is on screen */
   result: SoloAnswerResult<H, C> | null;
@@ -91,9 +66,8 @@ export interface SoloRound<Item, H, C, B = unknown> {
   /** send one try; the result comes back through `result` */
   submit: (answer: unknown) => Promise<void>;
   /**
-   * For an item studied before it is answered (The Memory Thief): ask for
-   * what it is answered with. The item comes back changed for good, through
-   * `item`; false when the server could not be reached (the error is shown).
+   * For an item studied before answering (The Memory Thief): fetches the answerable form, which replaces `item`; false
+   * when the server could not be reached, with the error shown.
    */
   begin: () => Promise<boolean>;
 }
@@ -119,9 +93,9 @@ interface Props<Item, H, C, B> {
   onFinished?: (results: SoloResults) => void;
   /** more for the results screen: a rung opened */
   resultsExtra?: React.ReactNode;
-  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts, for a round that pays */
+  /** Items per round when not SOLO_ROUND_ITEMS, which "up to N XP" counts for a paying round. */
   roundItems?: number;
-  /** the game puts the verdict and the way on in its own round (`SoloRound.feedback`), next to what was answered */
+  /** The game places the verdict and way on in its own round (`SoloRound.feedback`), beside the answer. */
   feedbackInRound?: boolean;
 }
 
@@ -131,7 +105,7 @@ const DIFFICULTY_KEY: Record<GameDifficulty, MessageKey> = {
   advanced: 'games.solo.difficulty.advanced',
 };
 
-/** Where a round leaves to and how its results word the way back and another go, by where the registry puts it. */
+/** Where a round leaves to and how its results word the way back and another go, by the registry's `place`. */
 const HOME: Record<LearnGamePlace, { to: string; back: MessageKey; again: MessageKey }> = {
   games: { to: '/app/games', back: 'games.solo.backToGames', again: 'games.solo.playAgain' },
   lessons: { to: '/app/learn', back: 'lesson.backToLearn', again: 'learn.exercise.again' },
@@ -173,7 +147,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   // the game's own picture (shared/src/art/games.ts), for its start and its result
   const emblem = staged && isGameEmblem(game) ? game : null;
   const tone = emblem ? ({ '--gs-tone': gameEmblemTone(emblem) } as React.CSSProperties) : undefined;
-  // where the game's card lands when it is pressed on the Games page: its cover on the start, which acts the game out
+  // The cover on the start page is where the Games page card lands when pressed.
   const cover = useGrowsInto(emblem ? `game:${game}` : null);
   const [phase, setPhase] = useState<Phase>('intro');
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
@@ -184,7 +158,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
-  // an exercise has no cover: its card among Learn's tools lands on its name, which is also the heading that takes the focus
+  // An exercise has no cover, so its card lands on its name, which is also the focused heading.
   const exercise = useGrowsInto(staged ? null : `learn:${game}`, { shape: 'card' });
   const exerciseName = useCallback(
     (el: HTMLHeadingElement | null) => {

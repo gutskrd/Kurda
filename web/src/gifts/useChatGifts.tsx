@@ -16,27 +16,14 @@ import type { GiftActions } from './GiftReveal';
 type ChatMessage = DmMessage | GroupMessage;
 
 /**
- * Everything a chat thread needs for gifts, so the direct and group threads
- * stay two short insertions apart from each other's code:
+ * Everything a chat thread needs for gifts: `button` for the composer, `overlays` (picker, flight, announcements),
+ * `renderBody` to draw gift messages, and `notice` for who was skipped in a group gift.
  *
- * - `button`: the gift button for the composer's tools;
- * - `overlays`: the picker, the send's flight, and what is announced;
- * - `renderBody`: draws a gift message as a GiftBubble (MessageList's hook);
- * - `notice`: after a group gift some friends could not be given, who got it
- *   and why the others did not — for the thread to show above its composer.
- *
- * It keeps the thread's gift cards true without a reload: your own unwrap
- * updates the card at once; the sender hears `gift_opened` on their own
- * channel and a group hears `group_msg_gift_opened` in its room, on which the
- * card is fetched again (`GET /gifts/batches/:id`), since a card is drawn per
- * viewer. A `?gift=<id>` in the address (from the banner or a notification)
- * opens that gift as soon as its bubble is on screen.
- *
- * In a group the card the room hears with `group_msg` is nobody's in
- * particular (no one is "me" on it); a recipient's own card, theirs to open,
- * comes on their own channel with `gift_received`. The two can arrive in
- * either order, so the own card is kept by batch and `adopt` puts it on the
- * room's message when that arrives later.
+ * Cards stay current without a reload: the reader's own unwrap updates at once, and `gift_opened` (sender's channel)
+ * or `group_msg_gift_opened` (group room) refetch the card (`GET /gifts/batches/:id`), since cards are per viewer. A
+ * `?gift=<id>` opens that gift once its bubble shows. In a group the room's card names nobody as "me", while the
+ * recipient's own card comes with `gift_received`; either may arrive first, so own cards are kept by batch and
+ * `adopt` applies them to the room's message.
  */
 export function useChatGifts<M extends ChatMessage>({
   chat,
@@ -47,20 +34,20 @@ export function useChatGifts<M extends ChatMessage>({
   onSentScroll,
 }: {
   chat: GiftChatRef;
-  /** who may be given a gift here: the friend in a DM, your friends among a group's members */
+  /** Who may be given a gift here: the friend in a DM, or the reader's friends among a group's members. */
   loadPeople: () => Promise<GiftPerson[]>;
   setMessages: Dispatch<SetStateAction<M[] | null>>;
-  /** send a text message in this thread (the thanks); null when it went, else the refusal */
+  /** Sends a text message in this thread (the thanks); null when sent, else the refusal. */
   sendText: (body: string) => Promise<ApiError | null>;
-  /** the scrolling list of messages, which the sent gift flies into */
+  /** The scrolling message list, which the sent gift flies into. */
   threadRef: RefObject<HTMLElement | null>;
-  /** bring the thread to its end once your gift is in it */
+  /** Scrolls the thread to its end once the sent gift is in it. */
   onSentScroll: () => void;
 }): {
   button: ReactNode;
   overlays: ReactNode;
   renderBody: (m: M) => ReactNode | undefined;
-  /** a message arriving live: given your own card for its gift, if one came first */
+  /** Applies the reader's own card to a live message's gift, if it came first. */
   adopt: (m: M) => M;
   notice: ReactNode;
 } {
@@ -70,17 +57,17 @@ export function useChatGifts<M extends ChatMessage>({
   const [people, setPeople] = useState<GiftPerson[] | null>(null);
   const [flight, setFlight] = useState<{ sent: GiftSent; target: DOMRect | null } | null>(null);
   const [announce, setAnnounce] = useState('');
-  /** who got the last gift and why the others did not, when some were skipped */
+  /** Who got the last gift and why the others did not, when some were skipped. */
   const [partial, setPartial] = useState<string | null>(null);
   const [params, setParams] = useSearchParams();
-  /** the gift the address asks to open (`?gift=`), until its bubble has opened it */
+  /** The gift the address asks to open (`?gift=`), until its bubble has opened it. */
   const [autoGift, setAutoGift] = useState<string | null>(() => params.get('gift'));
   const wanted = params.get('gift');
   useEffect(() => {
     if (wanted) setAutoGift(wanted);
   }, [wanted]);
 
-  // once it has opened, the address has done its job: a reload should not open it again
+  // Once opened, clear the address so a reload does not open it again.
   const autoOpened = useCallback(() => {
     setAutoGift(null);
     setParams(
@@ -93,10 +80,10 @@ export function useChatGifts<M extends ChatMessage>({
     );
   }, [setParams]);
 
-  /** your own cards for gifts in this chat, by batch, as `gift_received` brought them */
+  /** The reader's own cards for gifts in this chat, by batch, from `gift_received`. */
   const ownCards = useRef(new Map<string, GiftCard>());
 
-  /** Put a fresh card on every message of its batch. */
+  /** Puts a fresh card on every message of its batch. */
   const setCard = useCallback(
     (batchId: string, card: GiftCard) => {
       if (ownCards.current.has(batchId)) ownCards.current.set(batchId, card);
@@ -110,7 +97,7 @@ export function useChatGifts<M extends ChatMessage>({
     return own ? { ...m, gift: own } : m;
   }, []);
 
-  // your own channel: a gift for you, with the card that is yours to open
+  // The reader's own channel: a gift for them, with their card to open.
   const onReceived = useCallback(
     (env: RealtimeEventEnvelope) => {
       const ev = env.event as Partial<Extract<GiftUserEvent, { type: 'gift_received' }>>;
@@ -135,7 +122,7 @@ export function useChatGifts<M extends ChatMessage>({
     [client, setCard],
   );
 
-  // the sender's own channel: one of their gifts was opened
+  // The sender's own channel: one of their gifts was opened.
   const onOpened = useCallback(
     (env: RealtimeEventEnvelope) => {
       const ev = env.event as { batchId?: unknown };
@@ -145,7 +132,7 @@ export function useChatGifts<M extends ChatMessage>({
   );
   useRealtimeEvent('gift_opened', onOpened);
 
-  // a group's room: a gift in it was opened, by someone
+  // A group's room: someone opened a gift in it.
   const onGroupOpened = useCallback(
     (env: RealtimeEventEnvelope) => {
       const ev = env.event as { groupId?: unknown; batchId?: unknown };
@@ -175,9 +162,7 @@ export function useChatGifts<M extends ChatMessage>({
     [client, sendText, setCard, t],
   );
 
-  // who may be given one is asked each time the picker opens: a group's
-  // members (and which of them are your friends) change while a thread is
-  // open, and a first ask can come before the thread knew its own roster
+  // Recipients are fetched each time the picker opens, since a group's members change while the thread is open.
   const openPicker = useCallback(() => {
     setPicking(true);
     setPartial(null);
@@ -190,14 +175,14 @@ export function useChatGifts<M extends ChatMessage>({
       setPicking(false);
       if (sent.message) {
         const message = sent.message as M;
-        // the room's copy may have come first; the sender's own card is the one to keep
+        // The room's copy may have come first; the sender's own card is the one to keep.
         setMessages((list) => {
           const now = list ?? [];
           return now.some((m) => m.id === message.id) ? now.map((m) => (m.id === message.id ? message : m)) : [...now, message];
         });
       }
       setFlight({ sent, target: threadRef.current?.getBoundingClientRect() ?? null });
-      // the note is said once, by the announcer; on screen it stays until put away
+      // The note is announced once and stays on screen until dismissed.
       setPartial(sent.partialNote);
       setAnnounce(sent.partialNote ?? t('gift.sentAnnounce', { item: sent.item.name }));
     },

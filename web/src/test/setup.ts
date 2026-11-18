@@ -5,59 +5,34 @@ import { forgetAnswers } from '../lib/apiMemory';
 import { forgetArrivals } from '../lib/motion';
 
 /*
- * Tests never reach the network. The app's address is the live API, so a
- * request a test has not stubbed (or one still in flight when a test ends and
- * its stub is taken away) would otherwise go to the real server with a test
- * token, and its refusal would set off a token refresh inside the next test.
- * Every test that talks to the API stubs fetch itself; anything else fails
- * here, offline, as a network error.
+ * Tests never reach the network: an unstubbed request would hit the live API with a test token, and its refusal
+ * would set off a token refresh in the next test. Tests stub fetch themselves; anything else fails here.
  */
 globalThis.fetch = (() => Promise.reject(new TypeError('tests do not reach the network'))) as typeof fetch;
 
-/*
- * How long a findBy… or waitFor waits for the page to catch up. Testing
- * Library's own second is often not enough when the whole suite runs at once
- * on a busy machine, and a test that fails only then is a test nobody can
- * trust. A passing test is no slower for it: the wait ends as soon as the
- * page is there.
- */
+/* The default one-second wait for findBy and waitFor is too short when the whole suite runs on a busy machine. */
 configure({ asyncUtilTimeout: 4000 });
 
-/*
- * jsdom has no layout, so it ships no scrollIntoView at all — calling it throws
- * rather than doing nothing. Every real browser has had it for two decades, so
- * this is jsdom's gap to fill, not something the components should guard.
- */
+/* jsdom has no scrollIntoView, and calling it throws; every real browser has it, so the gap is filled here. */
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = function scrollIntoView(): void {};
 }
 
-/*
- * jsdom has <audio> but cannot play it: play() only logs "not implemented".
- * A play that resolves silently is what a browser with sound off does.
- */
+/* jsdom cannot play audio, so play() resolves silently as in a browser with sound off. */
 HTMLMediaElement.prototype.play = function play(): Promise<void> {
   return Promise.resolve();
 };
 HTMLMediaElement.prototype.pause = function pause(): void {};
 
 /*
- * jsdom has no user-agent stylesheet, so every element computes as display ''
- * and Testing Library reads a name with a marked piece, `<mark>Ro</mark>jda`,
- * as two words ("Ro jda") where a browser reads it as one. <mark> is inline in
- * every browser; say so here. Only <mark>: the spans the app lays out as rows
- * are blocks in a real page, and are best left read as separate words.
+ * jsdom has no user-agent stylesheet, so `<mark>Ro</mark>jda` reads as two words ("Ro jda"). Marking <mark> inline
+ * makes it read as one, as in a browser.
  */
 const userAgentStyles = document.createElement('style');
 userAgentStyles.textContent = 'mark { display: inline }';
 document.head.appendChild(userAgentStyles);
 
-/*
- * What the app keeps for as long as a tab is open — the last answer to each
- * question (lib/apiMemory.ts), and which lists have risen in already
- * (lib/motion.ts) — is kept in the module, and a file of tests is one tab to
- * the module. Each test is a new visit: it starts with nothing remembered.
- */
+/* Per-tab memory (lib/apiMemory.ts, lib/motion.ts) lives in modules a test file shares, so each test starts afresh. */
 afterEach(() => {
   cleanup();
   localStorage.clear();

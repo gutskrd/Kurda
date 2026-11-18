@@ -1,12 +1,8 @@
 import { pushRecent } from '../dictionary/recents';
 
 /**
- * What was searched for on this visit, newest first.
- *
- * Kept for the tab's lifetime and no longer, like the dictionary's recents: a
- * search history that outlives the visit is a record of who somebody looked
- * for and which words they did not know, on a device that may be shared with
- * a family, and nobody asked us to keep one.
+ * What was searched for on this visit, newest first. Kept only for the tab's lifetime, since a lasting history on a
+ * shared device would reveal who somebody looked for.
  */
 const KEY = 'hevalo_recent_searches';
 const MAX = 8;
@@ -26,7 +22,7 @@ export function addRecentSearch(term: string): string[] {
   try {
     sessionStorage.setItem(KEY, JSON.stringify(next));
   } catch {
-    // storage blocked: the search still works, it is only not remembered
+    // Storage is blocked; the search still works but is not remembered.
   }
   return next;
 }
@@ -35,6 +31,6 @@ export function clearRecentSearches(): void {
   try {
     sessionStorage.removeItem(KEY);
   } catch {
-    // nothing to clear
+    // Nothing to clear.
   }
 }

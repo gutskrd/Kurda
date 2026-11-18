@@ -3,18 +3,13 @@ import { GAME_DIALECTS, type GameDialect, type GameDifficulty, type GamesAvailab
 import { useAuth } from '../auth/AuthProvider';
 
 /**
- * Where Impostor is offered now: per variety, the difficulties whose
- * approved cards reach the game's minimum (`GET /games/availability`, the same answer Learn's list reads). A
- * game is made only where it is offered, so the start page and the invite
- * sheet choose among these, and a game offered nowhere says so rather than
- * "coming soon".
- *
- * Read once per page load for both varieties and shared: it changes when an
- * editor publishes cards, not while somebody is choosing a game.
+ * Where Impostor is offered: per variety, the difficulties with enough approved cards (`GET /games/availability`).
+ * The start page and the invite sheet choose among these. Read once per page load, since it changes only when an
+ * editor publishes cards.
  */
 export type PartyGame = Extract<LearnGameId, 'impostor'>;
 
-export interface PartyOffer {
+interface PartyOffer {
   dialect: GameDialect;
   difficulties: GameDifficulty[];
 }
@@ -35,7 +30,7 @@ export function usePartyOffer(game: PartyGame, enabled = true): PartyOffer[] | n
     let alive = true;
     cached ??= Promise.all(GAME_DIALECTS.map((d) => client.get<GamesAvailability>(`/games/availability?dialect=${d}`))).then((all) => {
       const ok = all.flatMap((r) => (r.ok && r.data && Array.isArray(r.data.games) ? [r.data] : []));
-      // a failed read is not an answer: asked again next time
+      // A failed read is not cached, so the next caller asks again.
       if (ok.length < all.length) cached = null;
       return ok;
     });
@@ -51,7 +46,7 @@ export function usePartyOffer(game: PartyGame, enabled = true): PartyOffer[] | n
 }
 
 /** The offers in an availability answer, varieties with no difficulty left out. */
-export function offersOf(answer: readonly GamesAvailability[], game: PartyGame): PartyOffer[] {
+function offersOf(answer: readonly GamesAvailability[], game: PartyGame): PartyOffer[] {
   return answer.flatMap((a) => {
     const g = a.games.find((x) => x.id === game);
     return g && g.available && g.difficulties.length > 0 ? [{ dialect: a.dialect, difficulties: [...g.difficulties] }] : [];

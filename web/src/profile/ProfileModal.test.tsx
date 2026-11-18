@@ -36,8 +36,7 @@ describe('ProfileModal', () => {
             emailVerified: true,
             bio: null,
             xp: 1234,
-            // /me returns the streak as an OBJECT, not a number (regression for
-            // React error #31 — rendering the object directly used to crash).
+            // /me returns the streak as an object, which must not be rendered directly.
             streak: { current: 7, longest: 12, freezes: 1, lastActiveOn: '2026-08-20', daysLearned: 30 },
             profileVisibility: 'everyone',
             profilePhotoUrl: null,
@@ -64,10 +63,9 @@ describe('ProfileModal', () => {
     expect(within(dialog).getByRole('link', { name: /edit profile/i })).toHaveAttribute('href', '/app/profile/edit');
     expect(within(dialog).getByRole('button', { name: /share profile/i })).toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'View full profile' })).toBeInTheDocument();
-    // nothing to report or block about yourself, so no menu about you in the corner
+    // There is nothing to report or block about yourself, so there is no corner menu.
     expect(dialog.querySelector('.pc-corner')).toBeNull();
-    // Saved is a section of the full profile, not a button on the card — this
-    // is a glance at who you are, not a place to keep every link
+    // Saved is a section of the full profile, not a button on the card.
     expect(screen.queryByRole('button', { name: 'Saved' })).not.toBeInTheDocument();
   });
 
@@ -186,12 +184,7 @@ describe('ProfileModal', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  /**
-   * Blocking from the card is what makes a blocklist reachable at all. Before
-   * it, the only Block button in the app was on your own friends list — so a
-   * stranger in your replies could not be blocked, only someone you had already
-   * chosen to add.
-   */
+  /** The card is where anyone, not only a friend, can be blocked. */
   describe('blocking someone from their card', () => {
     const stub = (): ReturnType<typeof vi.fn> => {
       const fetchMock = vi.fn(async (url: string) => {
@@ -208,11 +201,7 @@ describe('ProfileModal', () => {
       return fetchMock;
     };
 
-    /**
-     * Block is no longer a button in the open. It was one thumb-width from
-     * "Message" and it is the only action on this card that cannot be walked
-     * back from it, so it sits behind a ⋯ with Report.
-     */
+    /** Block cannot be undone from the card, so it sits behind the ⋯ with Report, away from Message. */
     it('has its menu in the banner’s corner, beside the close button: share, then report and block apart', async () => {
       stub();
       renderApp(<OpenUser />);
@@ -239,11 +228,7 @@ describe('ProfileModal', () => {
       expect(screen.getByRole('menuitem', { name: /report/i })).toBeInTheDocument();
     });
 
-    /**
-     * The ⋯ menu is where a person reports harassment. It is the last place in
-     * the app that should still be in English for someone who chose Kurmancî —
-     * they have to understand what they are about to do, and to whom.
-     */
+    /** The ⋯ menu is where harassment is reported, so it must be in the reader’s language. */
     it('speaks the language the reader chose', async () => {
       localStorage.setItem('hevalo_locale', 'ku');
       stub();
@@ -276,13 +261,7 @@ describe('ProfileModal', () => {
       expect(screen.queryByRole('button', { name: /^add friend$/i })).not.toBeInTheDocument();
     });
 
-    /**
-     * The report used to demand ten characters of explanation before it would
-     * send — a wall for a child who has just been hurt and has no words for it.
-     * It now opens the one report sheet: pick what is wrong, a note if you
-     * want one, send. The server keeps the snapshot that a note used to have
-     * to describe.
-     */
+    /** Reporting opens the shared sheet with an optional note; the server keeps a snapshot of the content. */
     it('reports through the shared sheet, with no reason required', async () => {
       const fetchMock = stub();
       renderApp(<OpenUser />);

@@ -92,7 +92,7 @@ describe('a gift arriving', () => {
         chat: { kind: 'dm', userId: 'u-rojda' },
       },
     };
-    // the provider subscribes once the session has settled; the same gift twice is one banner
+    // The provider subscribes once the session settles; the same gift twice is one banner.
     await waitFor(() => {
       rt.emit(arrival);
       expect(screen.getByText('rojda sent you a gift')).toBeInTheDocument();
@@ -130,10 +130,10 @@ describe('gifts in a direct thread', () => {
 
     expect(await screen.findByText('You sent Sunset over Amed')).toBeInTheDocument();
     expect(screen.getByText('Not opened yet')).toBeInTheDocument();
-    // the composer has a gift button
+    // The composer has a gift button.
     expect(screen.getByRole('button', { name: 'Send a gift' })).toBeInTheDocument();
 
-    // the realtime subscription is live once the session has settled; until then an event has no listener
+    // The realtime subscription is live once the session settles; before that an event has no listener.
     await waitFor(() => {
       rt.emit({ room: 'user:me', event: { type: 'gift_opened', batchId: 'b1', giftId: 'g1' } });
       expect(screen.getByText('Opened')).toBeInTheDocument();
@@ -171,14 +171,14 @@ describe('gifts in a direct thread', () => {
     });
 
     await waitFor(() => expect(calls.some((u) => u.includes('/gifts/g1/open'))).toBe(true));
-    // the address has done its job, so a reload does not open it again
+    // The address has done its job, so a reload does not open it again.
     await waitFor(() => expect(screen.getByTestId('where')).not.toHaveTextContent('gift=g1'));
   });
 });
 
 describe('gifts in a group thread', () => {
   it('asks who your friends among the members are each time the picker opens', async () => {
-    // the roster changes while the thread is open: dilan joins between the two looks
+    // The roster changes while the thread is open: dilan joins in between.
     let members = [
       { userId: 'me', username: 'baran', avatarUrl: null, role: 'member' },
       { userId: 'u-rojda', username: 'rojda', avatarUrl: null, role: 'owner' },
@@ -200,7 +200,7 @@ describe('gifts in a group thread', () => {
     await userEvent.keyboard('{Escape}');
 
     members = [...members, { userId: 'u-dilan', username: 'dilan', avatarUrl: null, role: 'member' }];
-    // the thread has not reloaded its own roster; the picker asks again anyway
+    // The thread has not reloaded its roster; the picker asks again anyway.
     await userEvent.click(screen.getByRole('button', { name: 'Send a gift' }));
     expect(await screen.findByLabelText('dilan')).toBeInTheDocument();
   });
@@ -243,11 +243,11 @@ describe('gifts in a group thread', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
 
     const note = 'Sent to rojda. You’ve reached today’s gift limit for dilan.';
-    // on screen above the composer (and said once by the thread's announcer)
+    // Above the composer, and announced once by the thread's announcer.
     expect(await screen.findByText(note, { selector: '.gift-partial span' })).toBeInTheDocument();
     expect(screen.getAllByText(note)).toHaveLength(2);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    // it stays until put away
+    // It stays until dismissed.
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(screen.queryByText(note, { selector: '.gift-partial span' })).not.toBeInTheDocument();
   });
@@ -259,7 +259,7 @@ describe('gifts in a group thread', () => {
     avatarUrl: null,
     body: null,
     kind: 'gift',
-    // the room's copy: nobody is "me" on it
+    // The room's copy, where nobody is "me".
     gift: card({ recipients: [{ name: 'baran', avatarUrl: null, isMe: false, opened: false }] }),
     createdAt: new Date().toISOString(),
   };
@@ -301,9 +301,9 @@ describe('gifts in a group thread', () => {
     await waitFor(() => expect(opens).toHaveLength(1));
   });
 
-  it('keeps the recipient\'s own card when it comes before the room\'s', async () => {
+  it('keeps the recipient’s own card when it comes before the room’s', async () => {
     const rt = mount(<GroupThread groupId="g1" />, '/app/messages?group=g1', groupFetch);
-    // wait until the thread is listening (its history has loaded)
+    // Wait until the thread is listening, once its history has loaded.
     await waitFor(() => {
       rt.emit(received);
       rt.emit({ room: 'group:g1', event: { type: 'group_msg', groupId: 'g1', message: roomMessage } });

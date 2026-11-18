@@ -3,12 +3,8 @@ import type { CompanionStatus, CompanionWord } from '@kurda/shared';
 import { Companion } from '../characters/Companion';
 
 /**
- * The sign-in pages' card, with Hevalo leaning in over it as over a
- * windowsill, taking part in what is typed in it (characters/Companion).
- *
- * `compact` is for a page with more to show under its form than a sign-in
- * has (confirming an address): he is smaller there, so what the page asks
- * for is not pushed below the fold by who asks it.
+ * The sign-in pages' card, with Hevalo leaning over its top edge and reacting to what is typed (characters/Companion).
+ * `compact` draws him smaller for pages with more under the form, such as confirming an address.
  */
 export function AuthCard({
   status = 'idle',

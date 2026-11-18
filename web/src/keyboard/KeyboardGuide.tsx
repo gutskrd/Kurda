@@ -6,19 +6,10 @@ import { useKeyboardPrefs } from './prefs';
 import { GUIDE_STEP_KEYS, PLATFORM_NAME, browserPlatform, guideSteps, lettersTyped, stepParts, tryLetters } from './guide';
 
 /**
- * "Get the Kurmancî keyboard" — Hevalo the deer shows the way (contract §K3).
- *
- * Shown before the first Kurmancî race on this device, on a race's result
- * after three or more accented letters went in without their accent, and any
- * time from "Keyboard help" in the race's settings and in Settings.
- *
- * Only this device's steps: the platform is read from the browser, and
- * "another device?" lists the rest for somebody setting up a phone from a
- * laptop. The device's own menu names stay in English, set apart, because
- * that is what the screen they are looking for will say. Then a box to try
- * the new keyboard in, where each letter lights up as it arrives and the deer
- * hops when all five are in — and two ways out for anyone without the minute
- * to spare: the on-screen keys, or gentler accents.
+ * "Get the Kurmancî keyboard", guided by Hevalo. Shown before the first Kurmancî race on this device, after a race
+ * with three or more missed accents, and from "Keyboard help". It shows this device's steps (others on request), with
+ * the system's menu names left in English as they appear on screen, then a box to try the five letters in. The
+ * on-screen keys or gentler accents are offered as alternatives.
  */
 export function KeyboardGuide({
   dialect,
@@ -27,11 +18,11 @@ export function KeyboardGuide({
   headingLevel = 2,
   quietClose = false,
 }: {
-  /** the closing button as a quiet one, where another action on the page is the main one */
+  /** Draws the close button as a quiet one, where another action on the page is the main one. */
   quietClose?: boolean;
   dialect: TypingDialect;
   onClose: () => void;
-  /** what the button that closes it says: "Start the race" when it stands before one */
+  /** The close button's label, such as "Start the race" before a race. */
   closeLabel?: string;
   headingLevel?: 2 | 3;
 }): React.JSX.Element {
@@ -49,9 +40,9 @@ export function KeyboardGuide({
   const allIn = typed.size === letters.length;
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
   const SubHeading = headingLevel === 2 ? 'h3' : 'h4';
-  // the gentler accent mode one step on from this device's, if there is one
+  // The next gentler accent mode after this device's, if any.
   const nextMode = prefs.accentMode === 'strict' ? 'forgiving' : prefs.accentMode === 'forgiving' ? 'hidden' : null;
-  // the key bar is on, and the race shows it (a Kurmancî race without accents has none)
+  // The key bar is on and the race shows it; a Kurmancî race without accents has none.
   const keysAbove = prefs.keyBar && (sorani || prefs.accentMode !== 'hidden');
 
   return (
@@ -145,11 +136,7 @@ export function KeyboardGuide({
         )}
       </div>
 
-      {/*
-        Each way out changes something: with the key bar already on, it is
-        pointed at rather than offered; with accents already forgiving, the
-        next step is none at all. With nothing left to change, nothing is shown.
-      */}
+      {/* Only alternatives that change something: an existing key bar is pointed at, and nothing shows if none is left. */}
       {(keysAbove || !prefs.keyBar || nextMode) && (
         <div className="kb-guide-outs">
           <p className="kb-guide-outs-lead">{t('keyboard.guide.noTime')}</p>

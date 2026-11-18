@@ -13,7 +13,7 @@ describe('Settings → Send feedback', () => {
 
     const dialog = screen.getByRole('dialog', { name: 'Send feedback' });
     expect(within(dialog).getByRole('radiogroup', { name: 'How are you enjoying Hevalo?' })).toBeInTheDocument();
-    // not inside the frosted card, whose backdrop filter would trap the fixed dialog over it
+    // Not inside the frosted card, whose backdrop filter would trap the fixed dialog.
     expect(dialog.closest('.card')).toBeNull();
 
     await user.click(within(dialog).getByRole('button', { name: 'Close' }));
