@@ -10,7 +10,7 @@ import type { AiModerationService } from '../moderation/ai-service.js';
 
 const userParam = z.object({ userId: z.uuid() });
 
-/** 1:1 direct messages (KUR-083). Send over HTTP; receive/receipts over WS. */
+/** Direct messages: sent over HTTP, received and acknowledged over the WebSocket. */
 export function registerChatRoutes(
   app: FastifyInstance,
   chat: ChatService,
@@ -22,7 +22,7 @@ export function registerChatRoutes(
     conversations: await chat.conversations(req.user!.id, (k) => (app.storage ? app.storage.publicUrl(k) : null)),
   }));
 
-  /** Paginated history with a user (marks their messages delivered). */
+  /** Paginated history with a user; marks their messages delivered. */
   app.get(
     '/chat/:userId/messages',
     {
@@ -52,7 +52,7 @@ export function registerChatRoutes(
       const { userId } = req.params as { userId: string };
       const body = (req.body as { body: string }).body;
       if (trust) {
-        // per-level velocity cap (KUR-295): new accounts throttled tighter
+        // Per-trust-level velocity cap: new accounts are throttled tighter.
         const gate = await trust.checkAction(req.user!.id, 'message');
         if (!gate.allowed) {
           return reply
@@ -68,8 +68,7 @@ export function registerChatRoutes(
         }
       }
       if (aiMod) {
-        // AI-assisted moderation (KUR-293), layered after the #086 wordlist:
-        // a high-confidence hit blocks the send; lower hits are flagged (#102).
+        // Automated moderation after the word list: a high-confidence hit blocks the send, lower ones are flagged.
         const verdict = await aiMod.moderate({ surface: 'chat', text: body, authorId: req.user!.id, contentType: 'dm' });
         if (verdict.blocked) {
           return reply.code(422).send({ code: 'CONTENT_BLOCKED', message: 'this message was blocked by moderation' });
@@ -98,11 +97,7 @@ export function registerChatRoutes(
     async (req) => ({ read: await chat.markRead(req.user!.id, (req.params as { userId: string }).userId) }),
   );
 
-  /**
-   * Typing indicator (ephemeral). Rate limited because it fires while someone is
-   * composing: unthrottled it is a free way to spam events at another user, and
-   * it was the one write path here with no limit at all.
-   */
+  /** Typing indicator. Rate limited, because otherwise it is a free way to spam events at another user. */
   app.post(
     '/chat/:userId/typing',
     {
