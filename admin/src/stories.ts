@@ -80,6 +80,7 @@ import {
   type StoryTranslationReviewStatus,
   type StoryValidation,
 } from '@kurda/shared';
+import { localeName } from './format';
 
 // ---------------------------------------------------------------------------
 // What the admin API speaks (GET/POST/PUT /admin/stories…)
@@ -1211,9 +1212,6 @@ export function glossLocalesLeft(row: GlossRow): Array<{ code: string; name: str
   }));
 }
 
-export function localeName(code: string): string {
-  return APP_LOCALES.find((l) => l.code === code)?.englishName ?? code;
-}
 
 /** "gist 1 · detail 7 · vocabulary 2", in the order kinds are listed. */
 export function kindTally(questions: ReadonlyArray<{ kind: string }>): Array<{ kind: string; count: number }> {

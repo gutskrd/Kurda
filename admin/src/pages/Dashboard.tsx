@@ -1,11 +1,9 @@
 import {
   LETTER_CLIPS,
-  PRIORITY_SLA_HOURS,
   WORD_SET_CLIPS,
   type AdminFeedbackSummary,
   type AlphabetClip,
   type ModerationSummary,
-  type ReportPriority,
   type SuspiciousPair,
 } from '@kurda/shared';
 import { api } from '../api';
@@ -14,6 +12,7 @@ import { canOpen, NAV, type SessionAccess } from '../navigation';
 import { useSession } from '../session';
 import { describeAction } from './Audit';
 import { isStoryUsage, type Listing } from '../lessonAudio';
+import { PRIORITY_NAME, slaTarget } from '../moderation';
 import type { AdminStorySummary } from '../stories';
 import { Badge, Button, ErrorState, Icon, Loading, PageHeader, Section, Stat, Time, UserLink, duration, relativeTime, useLoad } from '../ui';
 import { runState, type LeagueOverview } from '../progress';
@@ -25,13 +24,6 @@ function allowed(page: string, session: SessionAccess): boolean {
   return entry ? canOpen(entry.access, session) : false;
 }
 
-const PRIORITY_NAME: Record<ReportPriority, string> = { 0: 'Urgent', 1: 'High', 2: 'Normal', 3: 'Low' };
-
-/** "within 1 h", "within 3 days" — how soon each priority should be decided. */
-function slaLabel(p: ReportPriority): string {
-  const h = PRIORITY_SLA_HOURS[p];
-  return h < 48 ? `within ${h} h` : `within ${Math.round(h / 24)} days`;
-}
 
 /**
  * The start page: what is waiting for a person, for this person's role.
@@ -225,7 +217,7 @@ function ModerationPanel(): React.JSX.Element {
                 label={PRIORITY_NAME[p]}
                 value={s.byPriority[p]}
                 tone={p === 0 && s.byPriority[0] > 0 ? 'bad' : 'neutral'}
-                hint={`Decide ${slaLabel(p)} · ${s.slaBreachesByPriority[p] > 0 ? `${s.slaBreachesByPriority[p]} overdue` : 'none overdue'}`}
+                hint={`Decide ${slaTarget(p)} · ${s.slaBreachesByPriority[p] > 0 ? `${s.slaBreachesByPriority[p]} overdue` : 'none overdue'}`}
                 href={`#/moderation?priority=${p}`}
               />
             ))}

@@ -47,7 +47,6 @@ import {
   kurdishChanged,
   levelOptions,
   liveChecks,
-  localeName,
   localeTranslationPayload,
   looksRandomSlug,
   needsNativeReview,
@@ -77,7 +76,8 @@ import {
   storyFailure,
   type StoryFailure,
 } from '../storiesApi';
-import { Badge, Banner, Icon, Loading, PageHeader, Time, useDialogs, useLoad, type ConfirmOptions } from '../ui';
+import { localeName } from '../format';
+import { Badge, Banner, Icon, Loading, PageHeader, Time, reducedMotion, useDialogs, useLoad, type ConfirmOptions } from '../ui';
 import { AudioSection } from './StoryAudioSection';
 import { Field, ProblemList, ReadOnly, described, type FieldProblems, type ProblemTone } from './StoryEditorFields';
 import { AfterReadingSection, AttributionSection, LibraryFields, TranslationsSection } from './StoryLibraryFields';
@@ -115,9 +115,6 @@ const LEAVE: ConfirmOptions = {
 
 const BACK = { href: '#/stories', label: 'All stories' };
 
-function reducedMotion(): boolean {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
 
 /** Questions open at first: all of a short bank, else the ones a save would be refused for. */
 function initiallyOpen(form: StoryForm): Set<string> {

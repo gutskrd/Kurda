@@ -29,7 +29,6 @@
  * language never unpublishes the row nor takes its approval away.
  */
 import {
-  APP_LOCALES,
   GAME_NAMES,
   GAME_CONTENT_KINDS,
   type AdminGameContent,
@@ -124,10 +123,6 @@ export const THEME_LABEL: Record<ProverbTheme, string> = {
 };
 export const TRANSLATION_REVIEW_LABEL: Record<TranslationReview, string> = { unreviewed: 'Needs review', reviewed: 'Reviewed' };
 
-/** A language by its English name, as the panel's own language names it. */
-export function localeName(code: AppLocale): string {
-  return APP_LOCALES.find((l) => l.code === code)?.englishName ?? code;
-}
 
 export const GAME_DIALECT_NAME: Record<GameDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
 

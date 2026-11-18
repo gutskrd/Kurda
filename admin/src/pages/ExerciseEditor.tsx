@@ -3,13 +3,10 @@ import { ASKS_BY_TYPE, CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS, c
 
 /** The value the part picker gives the learner's own part. */
 const LEARNER = 'learner';
-import { ASK_NAME, EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
+import { ASK_NAME, EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, str, strings, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
 import { toPreview } from '../preview';
 import { Checkbox, Field, Icon } from '../ui';
 import { VOICE_ORDER, voiceName } from '../voicePlan';
-
-const str = (v: unknown): string => (typeof v === 'string' ? v : '');
-const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
 
 /** The problem at one path, for a field's error line. */
 function problem(issues: readonly Issue[], path: string): string | undefined {

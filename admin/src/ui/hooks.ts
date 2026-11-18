@@ -72,6 +72,11 @@ export function useMediaQuery(query: string, fallback = true): boolean {
   return matches;
 }
 
+/** Whether the system asks for less motion right now; false where there is no matchMedia. */
+export function reducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 /**
  * Whole seconds left until `until` (a Date.now() time), counting down once a
  * second, and 0 once it has passed or with nothing to wait for — for a

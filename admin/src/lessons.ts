@@ -170,8 +170,10 @@ export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
   }
 }
 
-const str = (v: unknown): string => (typeof v === 'string' ? v : '');
-const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
+/** A payload value as text, or '' when it is not a string. */
+export const str = (v: unknown): string => (typeof v === 'string' ? v : '');
+/** A payload value as a list of texts, or [] when it is not a list. */
+export const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
 
 /** What each ask is called in the editor, with what its question box then holds. */
 export const ASK_NAME: Record<ExerciseAsk, string> = {

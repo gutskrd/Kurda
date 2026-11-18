@@ -1,4 +1,10 @@
-/** Small display helpers shared by the dashboards. */
+/** Small display helpers shared across pages. */
+import { APP_LOCALES } from '@kurda/shared';
+
+/** A language by its English name, as the console names languages; an unknown code as itself. */
+export function localeName(code: string): string {
+  return APP_LOCALES.find((l) => l.code === code)?.englishName ?? code;
+}
 
 /** The shape the ratio tile needs; matches the drift endpoint's response. */
 export interface RatioLike {

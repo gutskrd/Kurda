@@ -38,7 +38,6 @@ import {
   TRANSLATION_REVIEW_NAME,
   fieldId,
   localeCoverage,
-  localeName,
   localeProblems,
   localeReview,
   translationChecks,
@@ -48,6 +47,7 @@ import {
   type StoryForm,
   type TextFacts,
 } from '../stories';
+import { localeName } from '../format';
 import { Badge, Button, Checkbox, Icon, Note, Time, type Loaded } from '../ui';
 import { CATEGORIES_HREF } from './StoryList';
 import { EditorSection, Field, ProblemList, ReadOnly, described, type ProblemsAt } from './StoryEditorFields';

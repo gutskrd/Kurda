@@ -10,6 +10,8 @@
  * each eye's white is 58 by 68, and a pupil's middle may move this far from
  * the middle of its white.
  */
+import { reducedMotion } from '../ui/hooks';
+
 const EYE = { width: 58, height: 68 } as const;
 const REACH = { x: 13, y: 10 } as const;
 /** Where each pupil's middle is drawn in the icon, in its eye's white: the left eye's, then the right's. */
@@ -96,14 +98,13 @@ function leave(): void {
   wake();
 }
 
-const stillWanted = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * Lets one icon's pupils (`left`, `right`) follow the pointer; returns what
  * stops them. The page listens for the pointer only while an icon is there.
  */
 export function followPointer(left: HTMLElement, right: HTMLElement): () => void {
-  if (typeof window === 'undefined' || stillWanted()) return () => undefined;
+  if (typeof window === 'undefined' || reducedMotion()) return () => undefined;
   const mine = [left, right].map((element, i) => {
     const rest = REST[i]!;
     return { element, eye: element.parentElement ?? element, rest, x: rest.x, y: rest.y };

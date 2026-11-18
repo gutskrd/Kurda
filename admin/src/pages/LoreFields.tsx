@@ -28,10 +28,10 @@ import {
   TRADITION_LABEL,
   TRANSLATION_REVIEW_LABEL,
   blankTranslation,
-  localeName,
   reviewTranslation,
   saveTranslation,
 } from '../gameContent';
+import { localeName } from '../format';
 import { Badge, Banner, Button, Field, FormActions, Note, Section, Tabs, Time, UserLink, errorLine, useToast, type Tone } from '../ui';
 
 /**

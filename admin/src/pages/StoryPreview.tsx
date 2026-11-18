@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { glossSpans, localeDir, storyCoverFor, storyParagraphs, storyTextDirection, type AppLocale, type StoryCategory } from '@kurda/shared';
 import { artSrc } from '../shop/art';
-import { categoryLabel, cefrLabel, draftFromForm, localeName, traditionLine, translationChecks, type AdminStory, type StoryForm, type TextFacts } from '../stories';
+import { localeName } from '../format';
+import { categoryLabel, cefrLabel, draftFromForm, traditionLine, translationChecks, type AdminStory, type StoryForm, type TextFacts } from '../stories';
 import { Badge, Icon } from '../ui';
 import { EditorSection } from './StoryEditorFields';
 

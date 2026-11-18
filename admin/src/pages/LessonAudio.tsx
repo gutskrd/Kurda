@@ -38,7 +38,7 @@ import {
   type Scope,
   type VoiceFilter,
 } from '../lessonAudio';
-import { Banner, Button, EmptyState, ErrorState, Icon, Loading, Tabs, useDialogs } from '../ui';
+import { Banner, Button, EmptyState, ErrorState, Icon, Loading, Tabs, reducedMotion, useDialogs } from '../ui';
 import { bustUrl, speakerName, useSpeakerChange } from '../ui/SpeakerPicker';
 import { rememberSpeaker, rememberedSpeaker, type Speaker } from '../voice';
 import { VOICE_ORDER, voiceName } from '../voicePlan';
@@ -220,8 +220,7 @@ export function LessonAudio({
 
   // Bring the selected row into view, for the keyboard and for the walk.
   useEffect(() => {
-    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (selected) rows.current.get(selected)?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+    if (selected) rows.current.get(selected)?.scrollIntoView({ block: 'nearest', behavior: reducedMotion() ? 'auto' : 'smooth' });
   }, [selected]);
 
   const startWalk = (): void => {

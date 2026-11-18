@@ -12,7 +12,7 @@ import {
 } from '@kurda/shared';
 import { api } from '../api';
 import { ClipRecorder, ShortcutHint } from '../recorder';
-import { EmptyState, ErrorState, Tabs } from '../ui';
+import { EmptyState, ErrorState, Tabs, reducedMotion } from '../ui';
 import { SpeakerPicker, useSpeakerChange } from '../ui/SpeakerPicker';
 import { SpeakingPreview } from '../ui/SpeakingPreview';
 import { rememberSpeaker, rememberedSpeaker, scriptOfClip, uploadWithVoice, type Speaker } from '../voice';
@@ -69,8 +69,7 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
   const setSelected = (key: string, reveal = false): void => {
     setSelectedKey(key);
     if (!reveal || typeof matchMedia !== 'function' || !matchMedia('(max-width: 899px)').matches) return;
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    requestAnimationFrame(() => studio.current?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' }));
+    requestAnimationFrame(() => studio.current?.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' }));
   };
 
   const load = useCallback(async () => {

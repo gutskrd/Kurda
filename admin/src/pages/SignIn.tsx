@@ -4,8 +4,8 @@ import type { CompanionStatus } from '@kurda/shared';
 import { api, ApiError } from '../api';
 import { hasSession, useAuth } from '../auth';
 import { SessionProvider, sessionFrom, type AdminSession } from '../session';
-import { Banner, Button, Icon, clockTime, describeError, errorLine, useCountdown } from '../ui';
-import { Companion, HAPPY_MS, stillWanted } from '../brand/Companion';
+import { Banner, Button, Icon, clockTime, describeError, errorLine, reducedMotion, useCountdown } from '../ui';
+import { Companion, HAPPY_MS } from '../brand/Companion';
 
 /**
  * Signing in to the console, one step at a time on one card, the steps
@@ -110,7 +110,7 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
         // The console's code is nearly always here already; a moment to be pleased about it, if this was a sign-in.
         if (fresh.current) {
           go('opening');
-          await Promise.all([warm().catch(() => undefined), stillWanted() ? null : wait(HAPPY_MS)]);
+          await Promise.all([warm().catch(() => undefined), reducedMotion() ? null : wait(HAPPY_MS)]);
         } else await warm().catch(() => undefined);
         setStep('in');
       }
@@ -294,7 +294,7 @@ function useInSight(stage: RefObject<HTMLDivElement | null>): void {
         // Already there: his head just under the top of what is seen.
         if (Math.abs(head - seen.offsetTop - 8) <= 4 || performance.now() - inSightAt < 400) return;
         inSightAt = performance.now();
-        at.scrollIntoView({ block: 'start', behavior: stillWanted() ? 'auto' : 'smooth' });
+        at.scrollIntoView({ block: 'start', behavior: reducedMotion() ? 'auto' : 'smooth' });
       }, 150);
     };
     seen.addEventListener('resize', place);
@@ -321,7 +321,7 @@ function Wheel({ face, back, children }: { face: string; back: boolean; children
   if (shown !== face) {
     // The face that was on show turns away, as it last was.
     setShown(face);
-    setGone(stillWanted() ? null : { key: latest.current.key, node: latest.current.node, back });
+    setGone(reducedMotion() ? null : { key: latest.current.key, node: latest.current.node, back });
   }
   latest.current = { key: face, node: children };
 

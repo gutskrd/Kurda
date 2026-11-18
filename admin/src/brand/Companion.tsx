@@ -6,7 +6,6 @@ import '@kurda/shared/src/characters/companion.css';
 /** How long Hevalo is pleased before the next step opens, unless motion is turned down. */
 export const HAPPY_MS = 650;
 
-export const stillWanted = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * Hevalo leaning in over the console's sign-in card (@kurda/shared
