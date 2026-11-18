@@ -34,11 +34,8 @@ const NEW_PATH = '/app/games/last-letter';
 const VARIETY: Record<LetterDialect, 'kurmanci' | 'sorani'> = { kmr: 'kurmanci', ckb: 'sorani' };
 
 /**
- * The Last Letter (/app/games/last-letter): a word chain in one Kurdish, with
- * friends or against Hevalo. Without an id it is the start: how to play, a
- * game with friends (the invite sheet's form, in place) and a game against
- * Hevalo, each offered only in the dialects that have what it needs. With
- * one, it is the room (play/MultiRoom.tsx) with the chain inside.
+ * The Last Letter (/app/games/last-letter), a word chain with friends or against Hevalo. Without an id it is the
+ * start page, offering each mode only in dialects that support it; with one it is the room (play/MultiRoom.tsx).
  */
 export function LastLetter(): React.JSX.Element {
   const [params] = useSearchParams();
@@ -54,7 +51,7 @@ export function LastLetter(): React.JSX.Element {
 
 function Start(): React.JSX.Element {
   const t = useT();
-  // where the game's card lands when it is pressed on the Games page: its cover, large, on the game's start
+  // The cover the Games page card grows into when pressed.
   const cover = useGrowsInto('game:last-letter');
   const locale = useLocale();
   const { client } = useAuth();
