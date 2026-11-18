@@ -42,7 +42,10 @@ export type LineStore = 'lesson' | 'alphabet';
 export type SourceStatus = 'draft' | 'in_review' | 'published';
 export type LineStatusFilter = 'todo' | 'done' | 'all';
 
-/** A voice as the page and links name it: a character (`hamo`, `xezo`, `hevalo`), an uncast part (`cast-<name>`), or a variety's narrator (`narrator-kmr`, `narrator-ckb`). */
+/**
+ * A voice as the page and links name it: a character (`hamo`, `xezo`, `hevalo`), an uncast part (`cast-<name>`), or
+ * a variety's narrator (`narrator-kmr`, `narrator-ckb`).
+ */
 export type VoiceId = string;
 
 export const NARRATOR: Readonly<Record<ScriptDialect, VoiceId>> = { kmr: 'narrator-kmr', ckb: 'narrator-ckb' };
