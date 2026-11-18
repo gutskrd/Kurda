@@ -1,15 +1,7 @@
 /*
- * Detective (games/Detective.tsx): its card's picture, and the case
- * board — the case file, the suspects' portraits, the evidence pinned up in
- * rows, the question in hand, the hints and the notebook — with the
- * accusation and the solution at the end.
- *
- * On a wide screen the board takes the larger column and the question, the
- * hints and the notebook stand beside it; on a phone the question comes
- * first, then the board, then the hints and the notebook. The
- * cards are set at a slight slant, as pinned paper is, but nothing moves:
- * a card to read again is marked by its border and a ring, not by motion.
- * Logical properties throughout, so a right-to-left page turns round whole.
+ * Detective (games/Detective.tsx): the case board, question, hints, notebook, accusation and solution. On a wide
+ * screen the board takes the larger column; on a phone the question comes first. Cards sit at a slight slant but
+ * never move; a card to reread is marked by border and ring. Logical properties throughout, so right-to-left mirrors.
  */
 
 /* ---- the page ------------------------------------------------------------------- */
@@ -41,7 +33,7 @@
   gap: var(--space-4);
   align-items: start;
 }
-/* on a wide screen the board takes the left column, the question, the hints and the notebook stand beside it */
+/* On a wide screen the board takes the left column, with the question, hints and notebook beside it. */
 @media (min-width: 960px) {
   .dt-layout {
     grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);

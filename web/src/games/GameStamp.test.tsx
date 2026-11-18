@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { GAME_EMBLEMS, STAMP_GLOW, STAMP_GLOW_REACH, STAMP_MEANING_INK, STAMP_NIGHT_REACH, gameEmblemHue, stampLook, stampSize } from '@kurda/shared';
 import { GameStamp } from './GameStamp';
 
-/** The stamp's own box, and the paper laid outside it: the day's, with its long light, unless the night's is asked for. */
+/** The stamp's box and the paper laid outside it, the day's unless the night's is asked for. */
 function drawn(container: HTMLElement, scheme: 'day' | 'night' = 'day'): { stamp: HTMLElement; paper: HTMLElement; svg: SVGSVGElement } {
   const stamp = container.querySelector<HTMLElement>('.game-stamp')!;
   const paper = stamp.querySelector<HTMLElement>(`.game-stamp-paper--${scheme}`)!;
@@ -41,12 +41,7 @@ describe('a game’s stamp', () => {
     expect(new Set(worn).size).toBe(GAME_EMBLEMS.length);
   });
 
-  /*
-   * The paper and its light are filled and stroked by name, with the two
-   * variables the stylesheet sets from the hue for whichever scheme is on. So
-   * a change of scheme repaints a stamp that is already drawn, and no colour
-   * is ever written into the picture to be wrong in the other scheme.
-   */
+  /* The paper and light use the stylesheet's variables, so a scheme change repaints a drawn stamp. */
   it('draws its paper in the stylesheet’s variables, for each scheme, and hides it from a screen reader', () => {
     const { container } = render(<GameStamp game="detective" name="Detektîf" meaning="Detective" width={228} large />);
     for (const scheme of ['day', 'night'] as const) {
@@ -60,11 +55,7 @@ describe('a game’s stamp', () => {
     }
   });
 
-  /*
-   * By night a stamp is still light paper: the day's, a step quieter, with
-   * the day's deep ink. No night step of the hue holds those, so the
-   * component hands them to the stylesheet, from the shared stamp.
-   */
+  /* At night a stamp keeps light paper and the day's deep ink, which the component passes to the stylesheet. */
   it('hands the stylesheet the paper and the ink it is printed in by night', () => {
     const { container } = render(<GameStamp game="memory-thief" name="Dizê Bîrê" meaning="The memory thief" width={169} />);
     const night = stampLook('dark', gameEmblemHue('memory-thief'));
@@ -115,7 +106,7 @@ describe('a game’s stamp', () => {
     expect(tall('Peyvok')).toBe(tall('Pêşbaziya Nivîsandinê', 'Carrera de escritura'));
   });
 
-  // a Kurmancî name on an Arabic page keeps its question mark at its end, and an Arabic meaning under a Latin name reads its own way
+  // A Kurmancî name on an Arabic page keeps its question mark at its end, and an Arabic meaning reads its own way.
   it('writes the name and its meaning each in its own direction', () => {
     render(<GameStamp game="who-am-i" name="Ez kî me?" meaning="من أنا؟" width={165} />);
     expect(screen.getByRole('heading', { name: 'Ez kî me?' })).toHaveAttribute('dir', 'auto');
@@ -130,12 +121,8 @@ describe('a game’s stamp', () => {
 });
 
 /*
- * Which paper and which ink a stamp is printed in, by day and by night, is
- * said in the stylesheet, because a change of scheme repaints a stamp
- * without drawing it again; the phone app takes the same from the shared
- * stamp, so the stylesheet is read here as it is written and held to it. It
- * is read from the disk: the suite draws no styles, and a stylesheet a test
- * imports arrives empty.
+ * The stamp's day and night colours live in the stylesheet, so they are checked against the shared stamp here. The
+ * stylesheet is read from disk, since an imported stylesheet arrives empty in tests.
  */
 describe('what a stamp is printed in, as the stylesheet says it', () => {
   /** each rule's selector and what it sets a variable to, comments taken out */
@@ -145,7 +132,7 @@ describe('what a stamp is printed in, as the stylesheet says it', () => {
     }
     const fileSystem = 'node:fs';
     const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
-    // beside this file, wherever the suite is run from; the address is taken first, or the bundler reads the pair as an asset to serve
+    // Beside this file wherever the suite runs; the URL is held in a variable so the bundler does not treat it as an asset.
     const here = import.meta.url;
     const sheet = readFileSync(new URL('game-stamp.css', here), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
     return [...sheet.matchAll(new RegExp(`([^{}]*)\\{[^{}]*${variable}:\\s*([^;]+);`, 'g'))].map((m) => ({ light: /data-theme=['"]light['"]/.test(m[1]!), value: m[2]!.trim() }));
@@ -160,7 +147,7 @@ describe('what a stamp is printed in, as the stylesheet says it', () => {
     expect(inks.find((rule) => !rule.light)?.value).toBe('var(--game-stamp-night-ink)');
   });
 
-  // the light's strength by night is in the night's own drawing, so the stylesheet takes the hue's lifted colour whole
+  // The night glow's strength is in the night drawing, so the stylesheet uses the hue's lifted colour as is.
   it('lights a stamp in the hue itself, its strength drawn into each scheme’s paper', async () => {
     expect((await rules('--game-stamp-glow')).map((rule) => rule.value)).toEqual(['var(--hue-base)']);
   });

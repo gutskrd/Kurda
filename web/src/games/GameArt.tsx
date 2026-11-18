@@ -4,36 +4,14 @@ import { prefersReducedMotion } from '../lib/motion';
 import './game-art.css';
 
 /**
- * A game's cover on the website, drawn from the shared art
- * (shared/src/art/games.ts) so the phone shows the same picture.
+ * A game's cover from the shared art (shared/src/art/games.ts), as on the phone, filling its square with rounded
+ * corners that also clip moving parts (game-art.css). Decorative, and every copy gets its own clip-path ids, since a
+ * page can show one cover twice.
  *
- * A cover is an illustration that fills its square, so it is shown edge to
- * edge with its corners rounded here (game-art.css): the rounding also keeps
- * a part that moves past the cover's edge from showing outside it.
- *
- * It is decoration beside the game's name, so it is hidden from a screen
- * reader. A page can show the same cover twice (the featured game, and its
- * card under a filter), and a drawing's clip paths are found by id, so every
- * one drawn here gets ids of its own.
- *
- * `moving` plays the cover's own acting: its parts are laid over one another
- * and each is given its part as one animation of the browser's, transforms
- * and opacity only, so nothing is drawn again while it plays. A reader who
- * asked for less motion is shown the still cover, and so is a browser that
- * cannot play it.
- *
- * How much it plays is the caller's to say, by how many covers it shows. One
- * cover with the screen to itself — the game put forward on the Games page,
- * a game's own start — loops (`moving`), and `after` starts the loop that far
- * in. A shelf of them does not: eight drawings all acting for ever is eight
- * things asking to be looked at. There each plays through once as it comes
- * into view (`moving="once"`, `after` a moment later than the card before
- * it) and then rests, and plays once more each time `again` changes — the
- * card under it hovered, focused or pressed.
- *
- * `ref` reaches the cover's own box, still or moving: it is what a game's
- * card hands to its page when the card is pressed, and the page back to the
- * card (lib/viewTransition.tsx).
+ * `moving` animates its layered parts with transform and opacity only; under Reduce Motion, or without animation
+ * support, it stays still. A featured cover loops (`moving`, offset by `after`); a shelf cover plays once as it
+ * appears (`moving="once"`, staggered by `after`) and again whenever `again` changes. `ref` is the cover's box, used
+ * for the card-to-page transition (lib/viewTransition.tsx).
  */
 export function GameArt({
   game,
@@ -118,7 +96,7 @@ function MovingArt({
       playing.push(part);
     });
     acting.current = playing;
-    // a loop scrolled out of sight stops acting, and takes up where it left off; one played once begins as it is first seen
+    // A loop pauses off screen and resumes where it left off; a play-once cover starts when first seen.
     let begun = false;
     const seen =
       typeof IntersectionObserver === 'function'
@@ -145,7 +123,7 @@ function MovingArt({
     };
   }, [layers, game, size, after, once]);
 
-  // asked to play once more (its card hovered, focused or pressed): from the start, unless it is in the middle of it
+  // Asked to play again (its card hovered, focused or pressed): restart unless already playing.
   useEffect(() => {
     if (!once || again === 0) return;
     const parts = acting.current;

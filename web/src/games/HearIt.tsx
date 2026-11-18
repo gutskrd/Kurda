@@ -24,38 +24,22 @@ import { useAvailability, useGameDialect, useOpenRound } from './soloRounds';
 import './hear-it.css';
 
 /**
- * Hear It, Find It (/app/learn/practice/hear-it), an exercise of the lessons'
- * practice. It is a round of the solo kit like the games played alone, which
- * is why it lives beside them; Learn's Lessons half is where a learner finds
- * it (learn/practiceTools.tsx).
+ * Hear It, Find It (/app/learn/practice/hear-it), a lesson practice exercise run on the solo kit, hence its place
+ * beside the games; learners find it in learn/practiceTools.tsx.
  *
- * The stage is a small radio: a speaker grille, one big play key, and a row
- * of sound-wave bars that move while a person's voice plays and lie still
- * when it stops. Under it a gentle counter of the replays left — a dot for
- * each, emptied as it is used. When the same words come back in another
- * voice, a tag on the radio says so, and the character a recording is shown
- * with is named on it.
- *
- * The clip plays from its handle for this round (`hearItClipPath`): its
- * address never says what is said. The first play starts as the item opens;
- * a play that fails gives its count back.
- *
- * Then the rung's question: four choices that light up when one is taken —
- * how a word or a sentence is written, or what a phrase means — or, on the
- * last rung, a field with the key bar to type what was heard. A wrong first
- * pick is struck out; a wrong typed try marks the words right where they
- * stand. Once an item is done the radio plays freely, and what was said is
- * shown with its meaning.
- *
- * Soranî choices and fields read right to left. Under reduced motion the
- * bars stay still and nothing lights up by moving; the colours say it.
+ * A small radio plays the clip, with wave bars that move while a voice plays, dots for the replays left, a tag when
+ * the same words return in another voice, and the speaking character's name. Clips play from a per-round handle
+ * (`hearItClipPath`) that never reveals the words; the first play starts with the item, and a failed play is refunded.
+ * The rung's question offers four choices or, on the last rung, a typed answer with the key bar. Once done, the radio
+ * plays freely and the words show with their meaning. Soranî reads right to left; under Reduce Motion the bars stay
+ * still.
  */
 
 type Round = SoloRound<HearItItemView, HearItHint, HearItCorrection>;
 
 const TONE = learnGame('hear-it').tone;
 
-export const STAGE_KEY: Record<HearStage, MessageKey> = {
+const STAGE_KEY: Record<HearStage, MessageKey> = {
   word: 'games.hear.stage.word',
   phrase: 'games.hear.stage.phrase',
   sentence: 'games.hear.stage.sentence',

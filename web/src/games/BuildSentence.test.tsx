@@ -195,11 +195,7 @@ describe('Build a Sentence', () => {
     expect(screen.queryByText(/Played alone, a game earns no XP/)).toBeNull();
   });
 
-  /*
-   * It is an exercise of the lessons' practice, not a game: the way out of a
-   * round and the way back from its results both lead to Learn, worded as a
-   * lesson's are, and another go is another round.
-   */
+  /* It is a lesson practice exercise, not a game, so the ways out lead to Learn and another go is another round. */
   it('leaves to the lessons, and offers another round rather than another game', async () => {
     server(session('kmr', [['a', 'b']]), () => done(0, true, true, 1), {
       correct: 1,

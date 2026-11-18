@@ -1,21 +1,8 @@
 /*
- * Learn's Games page (pages/Games.tsx): a page of stamps.
- *
- * Every game is a stamp (games/GameStamp.tsx, game-stamp.css): paper of the
- * game's own hue with its light round it, the cover, the name. This sheet is
- * the page around them: the stamp put forward today alone in the middle,
- * with what it is and its ways in under it; the shelf the others stand on,
- * as many to a row as the page counted out; and what is laid over a stamp to
- * be pressed. The page's own words are ink on the page; the colour is all in
- * the stamps (`--hue-*`, styles/tokens.css), and a way in is the app's one
- * button.
- *
- * A stamp's light reaches past its box, so nothing here cuts a stamp off, and
- * the room between two stamps is theirs to glow into. The cover put forward
- * acts for as long as it is in view; a shelf stamp's plays through once as it
- * arrives and again under a hand, then rests (games/GameArt.tsx). On this
- * page only transform and opacity move, and nothing moves for a reader who
- * asked for less motion.
+ * Learn's Games page (pages/Games.tsx), a page of stamps (games/GameStamp.tsx): the featured stamp in the middle with
+ * its description and buttons, the shelf of the rest (as many per row as the page computes), and the pressable
+ * overlays. All colour is in the stamps (`--hue-*`); their glow reaches past their boxes, so nothing here clips them.
+ * Only transform and opacity animate, and nothing moves under Reduce Motion.
  */
 .gp {
   --gp-gap: var(--space-3);
@@ -59,7 +46,7 @@
 }
 
 /* ---- a game's ways in --------------------------------------------------------------- */
-/* side by side where their words fit, one under the other where they do not; never wider than a button reads well */
+/* Side by side where their labels fit, stacked otherwise, and never too wide to read well. */
 .gp-ways {
   display: flex;
   flex-wrap: wrap;
@@ -93,12 +80,7 @@
   background: none;
   cursor: pointer;
 }
-/*
- * The keyboard's place, in the stamp's own ink: the app's violet ring would
- * be lost in the light of a violet stamp, and the hue's deep shade is as
- * strong against the page as it is against the paper. It stands off the
- * perforations, in the stamp's light.
- */
+/* The focus ring uses the stamp's deep ink, since the app's violet would vanish on a violet stamp's glow. */
 .gp-stamp-press:focus-visible {
   outline: 2px solid var(--hue-deep);
   outline-offset: 4px;
@@ -125,14 +107,10 @@
   margin-bottom: 0;
 }
 
-/* ---- the shelf ---------------------------------------------------------------------- */
+/* ---- The shelf ---------------------------------------------------------------------- */
 /*
- * A page of a collection: the stamps stand in rows, each row level, with air
- * between for their light. How many to a row, how wide each is and how far
- * apart they stand are counted out by the page, which draws each stamp for
- * its width (`--gp-columns`, `--gp-stamp`, `--gp-stamp-gap`); a row that does
- * not fill the page stands in the middle of it, and the shelf's own word
- * stands over the first stamp of the row, wherever that is.
+ * Level rows of stamps with room for their glow. The page computes columns, width and gap (`--gp-columns`,
+ * `--gp-stamp`, `--gp-stamp-gap`); a short row is centred, with the shelf's heading over its first stamp.
  */
 .gp-games-head {
   display: flex;
@@ -142,11 +120,7 @@
   max-width: calc(var(--gp-columns) * var(--gp-stamp) + (var(--gp-columns) - 1) * var(--gp-stamp-gap));
   margin-inline: auto;
 }
-/*
- * What a visitor is told, once, where the stamps begin: a press on any of
- * them leads to signing in. A finger's height to press, without making the
- * line it shares with the shelf's word any taller for it.
- */
+/* The visitor's note that pressing a stamp leads to sign-in: a full touch height without growing its line. */
 .gp-signin {
   display: inline-flex;
   align-items: center;
@@ -259,7 +233,7 @@
     overflow-x: auto;
     scroll-snap-type: x proximity;
     margin-inline: calc(var(--space-4) * -1);
-    /* a scrolling row cuts off whatever reaches past it (reach.css): 8px more room above and below, given back by the margin */
+    /* A scrolling row clips anything reaching past it (reach.css), so 8px padding above and below is taken back by the margin. */
     margin-block: -8px;
     padding-block: calc(2px + 8px) calc(var(--space-3) + 8px);
     padding-inline: var(--space-4);
