@@ -233,7 +233,7 @@ describe('countsAsLearning', () => {
   it('never counts a session with nothing answered', () => {
     expect(countsAsLearning(0, 10)).toBe(false);
     expect(countsAsLearning(0, 1)).toBe(false);
-    // not even an empty one: there was nothing to learn from
+    // Not even an empty session: there was nothing to learn from.
     expect(countsAsLearning(0, 0)).toBe(false);
   });
 
