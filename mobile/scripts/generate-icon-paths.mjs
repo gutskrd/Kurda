@@ -27,7 +27,7 @@ const OUT = path.join(ROOT, 'mobile/src/theme/icon-paths.ts');
  * regular, as `ICON_WEIGHT` in the web façade does.
  */
 const MAP = {
-  // --- the shell, matched to the browser's nav one destination at a time ---
+  // --- The shell, matched to the web nav one destination at a time ---
   wall: { glyph: 'Newspaper', note: "web WallIcon — Civak, a page of what everyone wrote" },
   book: { glyph: 'BookOpen', note: 'web BookIcon — Learn' },
   play: { glyph: 'PuzzlePiece', note: 'web GameIcon — word games, not a console' },
@@ -41,7 +41,7 @@ const MAP = {
   'book-fill': { glyph: 'BookOpen', weight: 'fill', note: 'the Learn tab, while you are on it' },
   'send-fill': { glyph: 'PaperPlaneTilt', weight: 'fill', note: 'the Messages tab, while you are on it' },
 
-  // --- the rest of the browser's façade, same glyph, same job ---
+  // --- The rest of the web façade: same glyph, same job ---
   chat: { glyph: 'ChatCircle', note: 'web ChatsIcon' },
   bell: { glyph: 'Bell', note: 'web BellIcon' },
   gear: { glyph: 'Gear', note: 'web GearIcon' },
@@ -70,14 +70,14 @@ const MAP = {
   bookmark: { glyph: 'BookmarkSimple', note: 'web BookmarkIcon — Saved, and a word you keep' },
   'bookmark-fill': { glyph: 'BookmarkSimple', weight: 'fill', note: 'the same bookmark, already kept' },
 
-  // --- gifts in the chat, and keeping people safe (reports, account standing) ---
+  // --- Gifts in chat, and safety (reports, account standing) ---
   gift: { glyph: 'Gift', note: 'web GiftIcon — a present, in the chat and in the shop; the gem stood in for it' },
   more: { glyph: 'DotsThree', weight: 'bold', note: 'more things you can do with this — report, block — behind one quiet button' },
   shield: { glyph: 'ShieldCheck', note: 'your account standing: what is limited, why, and asking for a review' },
   lifebuoy: { glyph: 'Lifebuoy', note: 'help, shown first when someone may hurt themselves' },
   block: { glyph: 'Prohibit', note: 'block someone — ends it for you, tells nobody' },
 
-  // --- named here, because the browser has no counterpart yet ---
+  // --- Named here, since the web has no counterpart yet ---
   'chevron-left': { glyph: 'CaretLeft', note: 'back, the mirror of ChevronIcon' },
   'chevron-down': { glyph: 'CaretDown', note: 'a section that opens' },
   check: { glyph: 'Check', note: 'done, chosen, claimed' },
@@ -92,11 +92,11 @@ const MAP = {
   alert: { glyph: 'Warning', note: 'something went wrong' },
   apple: { glyph: 'AppleLogo', note: 'sign in with Apple' },
 
-  // --- so that four games do not all look like the same game ---
+  // --- Distinct glyphs so the games do not look alike ---
   grid: { glyph: 'GridFour', note: 'Peyvok — a board of letter squares, which is what the game is' },
   lightbulb: { glyph: 'Lightbulb', note: 'a grammar tip; a sparkle said something nice was coming and not what' },
 
-  // --- typing, rating Hevalo, and writing a post ---
+  // --- Typing, rating Hevalo and writing a post ---
   keyboard: { glyph: 'Keyboard', note: 'keyboard settings and the guide to adding a Kurdish keyboard' },
   backspace: { glyph: 'Backspace', note: 'delete a letter — the Peyvok key drew an ✕, which reads as "close"' },
   'key-return': { glyph: 'KeyReturn', note: 'Enter on the Peyvok keyboard: send this guess' },
@@ -105,10 +105,10 @@ const MAP = {
   'text-t': { glyph: 'TextT', note: 'give a post a title' },
   quotes: { glyph: 'Quotes', note: 'source / credit — where a quote or a picture came from' },
 
-  // --- the way in to everywhere the tab bar has no room for ---
+  // --- The way into everything the tab bar has no room for ---
   menu: { glyph: 'List', note: 'the profile menu; three lines, which is what a menu is understood to look like' },
 
-  // --- the typographic glyphs that four screens drew instead of icons ---
+  // --- Replacements for typographic characters used as icons ---
   stop: { glyph: 'Stop', weight: 'fill', note: 'stop recording — the square the speaking exercise typed as U+25A0' },
   record: { glyph: 'Record', weight: 'fill', note: 'start recording — the dot it typed as U+25CF, which is not even round in every font' },
   flag: { glyph: 'Flag', note: 'report this to a moderator; the screens used U+2690, a flag outline most fonts do not have' },
@@ -128,7 +128,7 @@ const MAP = {
   ticket: { glyph: 'Ticket', note: 'a game’s join code, and the way in with one' },
   copy: { glyph: 'Copy', note: 'copy a join code' },
 
-  // --- Game Ranks, leagues and badges (contract 4) ---
+  // --- Game Ranks, leagues and badges ---
   mountains: { glyph: 'Mountains', note: 'Game Ranks: the climb from Deşt to Lûtke' },
   medal: { glyph: 'Medal', note: 'badges' },
   handshake: { glyph: 'Handshake', note: 'a Friendly game: played for fun, ranks stay as they are' },
@@ -141,13 +141,13 @@ const MAP = {
   calendar: { glyph: 'CalendarBlank', note: 'when a week or a season ends, in local time' },
   'shield-fill': { glyph: 'ShieldCheck', weight: 'fill', note: 'a rank shield still covering a game' },
 
-  // --- the shop, the inventory and the gift picker, sorted by kind ---
+  // --- The shop, inventory and gift picker, by kind ---
   tag: { glyph: 'Tag', note: 'a tag for the profile, such as the Kurdish tag: an item with no picture of its own' },
   sort: { glyph: 'ArrowsDownUp', note: 'the order a list is in — featured, by price, by name' },
   filter: { glyph: 'Funnel', note: 'web FunnelIcon — narrow a list to one kind: the wall to its pictures' },
   'filter-fill': { glyph: 'Funnel', weight: 'fill', note: 'the same, while a filter is on' },
 
-  // --- the five tabs and what moved into them ---
+  // --- The five tabs and their contents ---
   compose: { glyph: 'NotePencil', note: 'start a new conversation — a page and a pencil, not the paper plane the tab is' },
   history: { glyph: 'ClockCounterClockwise', note: 'a search you made before' },
   clock: { glyph: 'Clock', note: 'the wall newest first; history is the oldest first' },
@@ -155,16 +155,16 @@ const MAP = {
   review: { glyph: 'Cards', note: 'Review: the words due again, as a stack of cards' },
   target: { glyph: 'Target', note: 'Practice → Mistakes: what was missed, to aim at again' },
 
-  // --- how the app feels ---
+  // --- Haptics ---
   vibrate: { glyph: 'Vibrate', note: 'Settings → Vibration: whether this phone buzzes' },
 
-  // --- the devices signed in to your account ---
+  // --- Signed-in devices ---
   devices: { glyph: 'Devices', note: 'Settings → Signed-in devices, and a device that never said what it is' },
   'device-phone': { glyph: 'DeviceMobile', note: 'a phone signed in to your account' },
   'device-tablet': { glyph: 'DeviceTablet', note: 'a tablet signed in to your account' },
   'device-computer': { glyph: 'Laptop', note: 'a computer signed in to your account, through a browser' },
 
-  // --- who runs the app ---
+  // --- Who runs the app ---
   'place-work': { glyph: 'Briefcase', note: 'Settings → the company’s registration number: a place of work' },
 
   // --- Kurdish Detective's board ---
@@ -175,11 +175,11 @@ const MAP = {
   statement: { glyph: 'ChatText', note: 'web StatementIcon — what someone said' },
   gavel: { glyph: 'Gavel', note: 'web AccuseIcon — the accusation' },
 
-  // --- answering a lesson ---
+  // --- Answering a lesson ---
   'speaker-high': { glyph: 'SpeakerHigh', weight: 'fill', note: 'the clip in a listening bubble: tap to hear it again' },
   tiles: { glyph: 'SquaresFour', note: 'answer with word tiles rather than the keyboard' },
 
-  // --- the letter widget ---
+  // --- The letter widget ---
   widget: { glyph: 'SquaresFour', note: 'the letter widget on the home screen: the squares a phone shows for its widgets' },
 };
 
