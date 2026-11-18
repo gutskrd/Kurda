@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Settings } from './Settings';
+import { AppGate } from '../components/AppGate';
 import { renderApp, routedFetch, jsonResponse } from '../test/utils';
 import { en } from '../i18n/en';
 
@@ -170,6 +171,24 @@ describe('Settings: the pages', () => {
     expect(within(row(en['settings.privacy.title'])).getByText('Friends only')).toBeInTheDocument();
   });
 
+  it('moves the visibility at once, and puts it back with the reason when the server refuses', async () => {
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'PUT') return new Promise<Response>((r) => (answer = r));
+        return jsonResponse(200, url.endsWith('/me') ? me({ profileVisibility: 'members' }) : {});
+      }),
+    );
+    renderApp(<Settings />, ['/app/settings/visibility']);
+
+    await userEvent.click(await screen.findByRole('radio', { name: 'Friends only' }));
+    expect(screen.getByRole('radio', { name: 'Friends only' })).toBeChecked();
+    answer(jsonResponse(503, {}));
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Friends only' })).not.toBeChecked());
+    expect(screen.getByRole('status')).toHaveTextContent('Something went wrong on our end. Please try again shortly.');
+  });
+
   // Leaving is a PATCH /me, and the server takes them off this week's table at once.
   it('takes you out of the weekly leagues in one tap', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
@@ -300,6 +319,40 @@ describe('Settings: the pages', () => {
     expect(fetchMock.mock.calls.some(([, i]) => (i as RequestInit | undefined)?.method === 'DELETE')).toBe(false);
     await userEvent.click(screen.getByRole('button', { name: en['settings.delete.confirm'] }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([, i]) => (i as RequestInit | undefined)?.method === 'DELETE')).toBe(true));
+  });
+
+  it('shows the birth month on record, given once, and whom to write to if it is wrong', async () => {
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me({ birthYear: 2001, birthMonth: 3 }) })));
+    renderApp(<Settings />, ['/app/settings']);
+    expect(await within(row(en['age.label'])).findByText('March 2001')).toBeInTheDocument();
+    await userEvent.click(row(en['age.label']));
+
+    expect(await screen.findByRole('heading', { name: en['age.label'], level: 1 })).toBeInTheDocument();
+    expect(screen.getByText('March 2001')).toBeInTheDocument();
+    expect(screen.getByText(en['settings.birthMonth.help'].replace('{email}', 'support@hevalo.app'))).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: en['letters.refusal.birthMonthAction'] })).toBeNull();
+  });
+
+  it('with no birth month on record, opens the one-time question from its page', async () => {
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
+    // The account the app holds says nothing is missing until it is read again, as after the answer was lost.
+    let asked = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        jsonResponse(200, url.endsWith('/me') ? me({ birthYear: null, birthMonth: null, birthDateRequired: asked }) : {}),
+      ),
+    );
+    renderApp(
+      <AppGate>
+        <Settings />
+      </AppGate>,
+      ['/app/settings/birth-month'],
+    );
+    expect(await screen.findByText(en['age.prompt.body'])).toBeInTheDocument();
+    asked = true;
+    await userEvent.click(screen.getByRole('button', { name: en['letters.refusal.birthMonthAction'] }));
+    expect(await screen.findByRole('heading', { name: en['age.prompt.title'] })).toBeInTheDocument();
   });
 
   it('keeps blocked people on a page of their own', async () => {

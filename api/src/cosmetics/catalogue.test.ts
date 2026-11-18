@@ -1,12 +1,14 @@
 /**
  * The cosmetic catalogue against the shipped files. Every asset key in api/content/cosmetics.json must name a file
  * the web app serves, every file in the shop's folders must belong to a row, the made pieces must be the ones
- * scripts/generate-cosmetic-art.mjs draws, and every withdrawn item must point at one of them.
+ * scripts/generate-cosmetic-art.mjs draws, every withdrawn item must point at one of them, and every description must
+ * have its words in each interface language (shared shop-descriptions.ts).
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
+import { hasShopDescription } from '@kurda/shared';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 const COSMETICS = join(ROOT, 'web', 'public', 'cosmetics');
@@ -190,6 +192,11 @@ describe('the cosmetic catalogue', () => {
     // everything else is left alone
     expect(migration.replacementFor('bg-made-zozan', 'backgrounds/made-16-zozan.webp')).toBeNull();
     expect(migration.replacementFor('streak-freeze', null)).toBeNull();
+  });
+
+  it('describes every item it ships in every interface language', () => {
+    const items = [...manifest.backgrounds, ...manifest.icons, ...manifest.frames];
+    expect(items.filter((r) => r.description && !hasShopDescription(r.description)).map((r) => `${r.sku}: ${r.description}`)).toEqual([]);
   });
 
   it('ships only the stickers the generator draws', () => {

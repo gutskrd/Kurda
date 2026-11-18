@@ -39,8 +39,9 @@ const said = (id: string, senderId: string, username: string, body: string, ago:
   ...more,
 });
 
-function open(messages: unknown[], history?: () => unknown) {
+function open(messages: unknown[], history?: () => unknown, send?: () => unknown) {
   testAuth.client = fakeClient({
+    ...(send ? { 'POST /groups/g1/chat': send } : {}),
     'POST /groups/g1/chat/read': ok({ ok: true }),
     'GET /groups/g1': ok({
       id: 'g1',
@@ -96,6 +97,21 @@ describe('a group’s thread as it is read', () => {
     // Your own typing pings come back from the room and are not shown to you.
     act(() => room.emit({ type: 'group_typing', groupId: 'g1', userId: 'me', username: 'rojda' }));
     expect(screen.queryByText(/rojda/)).toBeNull();
+  });
+});
+
+describe('a message to the group that did not go', () => {
+  it('stays in the thread as not sent, and leaves on Cancel with its words back in the field', async () => {
+    open([said('m1', 'u2', 'azad', 'Silav', 2)], undefined, () => fail({ kind: 'network', status: 0, message: 'offline' }));
+    await screen.findByText('Silav');
+    const field = screen.getByPlaceholderText(/message/i) as HTMLTextAreaElement;
+    fireEvent.change(field, { target: { value: 'Ez têm' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send' }));
+    expect(await screen.findByText('Not sent')).toBeTruthy();
+    expect(field.value).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByText('Not sent')).toBeNull();
+    expect(field.value).toBe('Ez têm');
   });
 });
 

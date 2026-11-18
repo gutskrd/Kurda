@@ -14,12 +14,13 @@ import { ToggleRow } from '../theme/Toggle';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 
 /**
- * Settings as a plain list, like the phone's own settings. Full-width rows each show an icon, a name, the current
- * value and a chevron when a page is behind them. Sections have a plain name and a band between them instead of a
- * box each, so the list scans down its left edge. Sections stay short, and values are shown on the row.
+ * Settings and the app's other lists of rows. Each row shows an icon, a name, the current value and a chevron when a
+ * page is behind it. A section is a rounded card on the page under a plain name, as the app's other pages lay out
+ * their cards, so a list page and a card page look like one app. Sections stay short, and values are shown on the
+ * row.
  */
 
-/** A group of rows under a plain name; every section after the first has a band above it. */
+/** A group of rows on a card under a plain name. */
 export function SettingsSection({
   title,
   footer,
@@ -35,8 +36,7 @@ export function SettingsSection({
   const { colors } = useTheme();
   const dir = useDirection();
   return (
-    <View>
-      {first ? null : <View style={[styles.band, { backgroundColor: colors.separator }]} />}
+    <View style={first ? null : styles.apart}>
       {title ? (
         <Text style={[styles.header, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
           {title}
@@ -44,16 +44,15 @@ export function SettingsSection({
       ) : (
         <View style={styles.headless} />
       )}
-      {children}
+      <View style={[styles.group, { backgroundColor: colors.glassFill, shadowColor: colors.softShadow }]}>{children}</View>
       {footer ? <SettingsNote>{footer}</SettingsNote> : null}
     </View>
   );
 }
 
-/** The band between two sections, on its own, for a section that may or may not be there above the next. */
+/** The room between two sections, on its own, for a section that may or may not be there above the next. */
 export function SettingsBand(): React.JSX.Element {
-  const { colors } = useTheme();
-  return <View style={[styles.band, { backgroundColor: colors.separator }]} />;
+  return <View style={styles.apart} />;
 }
 
 /** A sentence of explanation under a list, in the list's own gutter. */
@@ -91,6 +90,9 @@ export function titleRoom(title: string, fontScale: number, rowWidth: number): n
   return Math.min(Math.ceil(longest * typography.sizes.md * LETTER * fontScale), Math.floor(rowWidth * 0.6));
 }
 
+/** A row's inset inside its card, and the room between its icon, words and end: a little under the page's gutter, so names keep their line. */
+const ROW_INSET = spacing.sm + 4;
+
 /** The inside of a row: icon, name and what is under it, then whatever ends the row. */
 function RowBody({ icon, title, subtitle, value, destructive, attention, end }: RowLook & { end?: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
@@ -102,7 +104,7 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
   return (
     <View style={[styles.row, { flexDirection: dir.row }]}>
       {icon ? <Icon name={icon} size={24} color={attention ? colors.primary : ink} /> : null}
-      <View style={[styles.words, value ? { minWidth: titleRoom(title, fontScale, Math.min(width, layout.column) - layout.gutter * 2) } : null]}>
+      <View style={[styles.words, value ? { minWidth: titleRoom(title, fontScale, Math.min(width, layout.column) - layout.gutter * 2 - ROW_INSET * 2) } : null]}>
         <Text style={[styles.title, dir.text, { color: ink }]}>{title}</Text>
         {subtitle ? <Text style={[styles.subtitle, dir.text, { color: note }]}>{subtitle}</Text> : null}
       </View>
@@ -274,7 +276,17 @@ export function useOnOff(): (on: boolean) => string {
 
 const styles = StyleSheet.create({
   page: { paddingBottom: spacing.xxl },
-  band: { height: 8, marginTop: spacing.md },
+  apart: { marginTop: spacing.md },
+  // A card as the app's others are: a little lift off the page, clipped so a pressed row stays inside its corners.
+  group: {
+    marginHorizontal: layout.gutter,
+    borderRadius: radii.lg,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 1,
+  },
   header: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.semibold,
@@ -285,9 +297,9 @@ const styles = StyleSheet.create({
   headless: { height: spacing.sm },
   row: {
     alignItems: 'center',
-    gap: spacing.md,
+    gap: ROW_INSET,
     minHeight: Math.max(MIN_TOUCH_TARGET, 56),
-    paddingHorizontal: layout.gutter,
+    paddingHorizontal: ROW_INSET,
     paddingVertical: spacing.sm + 2,
   },
   words: { flex: 1, gap: 2 },

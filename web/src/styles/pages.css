@@ -2873,6 +2873,51 @@ a.mkp-activity-row:hover {
   color: var(--ink-2);
   padding: 48px 0;
 }
+/* Peyvok's figures at the foot of its result: side by side under a hairline as a profile's are, each figure over its label. */
+.wordle-stats {
+  justify-self: stretch;
+  width: 100%;
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--separator);
+}
+.wordle-stats-title {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+.wordle-stats-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+}
+.wordle-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  padding: 2px 4px;
+}
+.wordle-stat + .wordle-stat {
+  border-inline-start: 1px solid var(--separator);
+}
+.wordle-stat dt {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.wordle-stat dd {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
 
 @media (max-width: 560px) {
   /* claw back the page gutter: the keyboard is the widest thing on the screen
@@ -3185,12 +3230,13 @@ a.mkp-activity-row:hover {
   color: var(--ink-3);
 }
 
-/* ---- new-message banners (app-wide) ------------------------------------ */
+/* ---- new-message banners and notices (app-wide) ------------------------ */
+/* Above modals and sheets, since a notice often answers something done inside one. */
 .msg-toasts {
   position: fixed;
   right: 16px;
   bottom: 16px;
-  z-index: 80;
+  z-index: 112;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -3234,6 +3280,15 @@ a.mkp-activity-row:hover {
 }
 .msg-toast-open:hover {
   background: var(--surface);
+}
+/* a notice leads nowhere, so it reads as text rather than as a button */
+.msg-toast-notice {
+  margin: 0;
+  cursor: default;
+  font-size: 0.9rem;
+}
+.msg-toast-notice:hover {
+  background: none;
 }
 .msg-toast-title {
   font-weight: 650;
@@ -3396,13 +3451,51 @@ a.mkp-activity-row:hover {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   line-height: 1.55;
-  padding-left: 38px;
+  padding-inline-start: 38px;
 }
 .comment-actions {
   display: flex;
   gap: 14px;
-  padding-left: 38px;
+  padding-inline-start: 38px;
   margin-top: 6px;
+}
+/*
+ * A voice note under a comment (components/VoicePlayer.tsx): the story player's button, seek line and clock (stories.css)
+ * on a row of their own, lined up with the comment's words.
+ */
+.voice {
+  --player-ink: var(--ink);
+  --player-ink-2: var(--ink-3);
+  --player-line: var(--border-strong);
+  --player-heard: var(--primary);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  max-width: 420px;
+  margin-top: 4px;
+  padding-inline-start: 38px;
+}
+.voice .story-player-seek {
+  flex: 1 1 120px;
+}
+.voice-failed {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-caption);
+}
+/* a comment still on its way is faint until the server has it; one that did not go says so in the danger colour */
+.comment.is-pending > .comment-body {
+  opacity: 0.6;
+}
+.comment-pending {
+  margin-bottom: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.comment-pending.is-failed {
+  color: var(--danger);
 }
 .link-button {
   padding: 0;

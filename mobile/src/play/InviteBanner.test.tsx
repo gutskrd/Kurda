@@ -12,6 +12,7 @@ import { useQuietInvites } from './quietInvites';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
+import { watchNotices } from '../testing/notices';
 
 vi.mock('react-native', () => import('./testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -70,6 +71,23 @@ describe('InviteBanner', () => {
     await act(async () => undefined);
     expect(client.calls.find((c) => c.path === '/play/invites/inv-1/decline')?.body).toEqual({ reason: 'not_this_game' });
     expect(screen.queryByText('Rojda invited you to Pêşbaziya Peyvan')).toBeNull();
+  });
+
+  it('folds the invite away before the server answers, and brings it back with the reason when that did not get through', async () => {
+    const said = watchNotices();
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'GET /play/invites': ok({ incoming: [invite], outgoing: [] }),
+      'POST /play/invites/inv-1/decline': () => new Promise((resolve) => (answer = resolve)),
+    } as never);
+    renderWithProviders(<InviteBanner />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Not this game' }));
+    await waitFor(() => expect(screen.queryByText('Rojda invited you to Pêşbaziya Peyvan')).toBeNull());
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(await screen.findByText('Rojda invited you to Pêşbaziya Peyvan')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Not now' })).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
   });
 
   it('opens the reasons under Not now, keeps Join beside them, and closes them again', async () => {

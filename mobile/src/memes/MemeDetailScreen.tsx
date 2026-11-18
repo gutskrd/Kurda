@@ -39,7 +39,7 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
     (delta: number) => setPost((prev) => (prev ? { ...prev, commentCount: Math.max(0, prev.commentCount + delta) } : prev)),
     [],
   );
-  const thread = useCommentThread('images', postId, countBy);
+  const thread = useCommentThread('images', postId, countBy, (back) => setDraft((now) => now || back.body || ''));
   const loadComments = thread.load;
 
   const loadAll = useCallback(async () => {

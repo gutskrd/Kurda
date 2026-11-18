@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { GroupStanding } from '@kurda/shared';
@@ -18,7 +18,7 @@ afterEach(() => {
 });
 
 type Call = { url: string; method: string; body: unknown };
-type Route = [method: string, path: RegExp, answer: (call: Call) => Response];
+type Route = [method: string, path: RegExp, answer: (call: Call) => Response | Promise<Response>];
 
 /** The API as a table of answers, the first match winning; every call is kept. */
 function stubApi(routes: Route[]): Call[] {
@@ -160,6 +160,21 @@ describe('an empty group chat', () => {
     expect(chip).toHaveAttribute('lang', 'ckb');
     expect(chip).toHaveAttribute('dir', 'rtl');
     expect(screen.getByRole('button', { name: 'Send “چۆنی؟”' })).toBeInTheDocument();
+  });
+
+  it('greets in Sorani for a reader of the Sorani interface, whatever their course, and in Kurmanci for a Kurmanci one', async () => {
+    localStorage.setItem('hevalo.learn.courseDialect', 'kurmanci');
+    localStorage.setItem('hevalo_locale', 'ckb');
+    stubApi([history([]), group()]);
+    mount();
+    expect(await screen.findByText('سڵاو! 👋')).toHaveAttribute('dir', 'rtl');
+    cleanup();
+
+    localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
+    localStorage.setItem('hevalo_locale', 'ku');
+    stubApi([history([]), group()]);
+    mount();
+    expect(await screen.findByText('Silav! 👋')).toHaveAttribute('lang', 'ku');
   });
 
   it('says when you cleared it for yourself instead of the start', async () => {
@@ -435,6 +450,35 @@ describe('a group from outside', () => {
     await userEvent.click(within(await screen.findByRole('dialog', { name: 'Ask to come back' })).getByRole('button', { name: 'Send request' }));
     expect(await screen.findByText(/^You can ask again on .+\.$/)).toBeInTheDocument();
     expect(screen.queryByRole('dialog', { name: 'Ask to come back' })).not.toBeInTheDocument();
+  });
+
+  it('shows the request as sent at once, and opens the sheet again with the note and why when the note is refused', async () => {
+    let answer!: (res: Response) => void;
+    stubApi([refused, banned({ kind: 'can_ask' }), ['POST', /\/groups\/g1\/requests$/, () => new Promise<Response>((r) => (answer = r))]]);
+    mount();
+    await userEvent.click(await screen.findByRole('button', { name: 'Ask to come back' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Ask to come back' });
+    await userEvent.type(within(sheet).getByLabelText(/A note to the admins/), 'Bibore');
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Send request' }));
+    expect(screen.getByText(/^Request sent on .+ — the admins will decide\.$/)).toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Ask to come back' })).not.toBeInTheDocument();
+
+    answer(jsonResponse(422, { code: 'GROUP_TEXT_REJECTED', message: 'no' }));
+    const again = within(await screen.findByRole('dialog', { name: 'Ask to come back' }));
+    expect(again.getByLabelText(/A note to the admins/)).toHaveValue('Bibore');
+    expect(again.getByRole('alert')).toHaveTextContent('Some of those words aren’t allowed here. Try different ones.');
+    expect(screen.getByRole('button', { name: 'Ask to come back' })).toBeInTheDocument();
+  });
+
+  it('withdraws at once, and shows the request waiting again if the server keeps it', async () => {
+    let answer!: (res: Response) => void;
+    stubApi([refused, banned({ kind: 'pending', sentAt: '2026-10-29T08:00:00.000Z' }), ['DELETE', /\/groups\/g1\/requests$/, () => new Promise<Response>((r) => (answer = r))]]);
+    mount();
+    await userEvent.click(await screen.findByRole('button', { name: 'Withdraw request' }));
+    expect(screen.getByRole('button', { name: 'Ask to come back' })).toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Withdraw request' })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong on our end. Please try again shortly.');
   });
 });
 

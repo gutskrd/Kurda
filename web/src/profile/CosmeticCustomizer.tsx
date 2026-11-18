@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { applyItemFilter, countByCategory, DEFAULT_ITEM_FILTER, isFiltered, itemCategory, type ItemFilter } from '@kurda/shared';
+import { applyItemFilter, countByCategory, DEFAULT_ITEM_FILTER, isFiltered, itemCategory, shopItemDescription, type ItemFilter } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError, requestId } from '../lib/api';
-import type { InventoryItem, MeProfile, PurchaseResult, ShopItem } from '../lib/types';
+import type { ApiError, InventoryItem, MeProfile, PurchaseResult, ShopItem } from '../lib/types';
+import { failureText, useOptimistic } from '../lib/optimistic';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { StarIcon } from '../components/icons';
@@ -56,7 +57,7 @@ const EMPTY: Readonly<Record<Wearable, MessageKey>> = {
  * Owned items (`/me/inventory`) then items for sale (`/shop`), since an owned unique item is not in the shop. Season
  * frames appear only once owned, and tags only as owned, since the tag on sale is bought in the Shop.
  */
-function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>): Tile[] {
+function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>, locale: string): Tile[] {
   const map = new Map<string, Tile>();
   for (const inv of inventory) {
     const kind = itemCategory(inv.category);
@@ -65,7 +66,7 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
       sku: inv.sku,
       name: inv.name,
       // not sent by /me/inventory today; read when it is
-      description: inv.description ?? null,
+      description: shopItemDescription(inv, locale),
       category: kind,
       assetUrl: inv.assetUrl,
       premiumOnly: inv.premiumOnly,
@@ -79,7 +80,7 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
     map.set(it.sku, {
       sku: it.sku,
       name: it.name,
-      description: it.description ?? null,
+      description: shopItemDescription(it, locale),
       category: kind,
       assetUrl: it.assetUrl,
       premiumOnly: it.premiumOnly,
@@ -110,7 +111,6 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     // read from your own public profile once you are known to own a frame
     frame: null,
   });
-  const [iconEnabled, setIconEnabled] = useState<boolean>(me.premiumIconEnabled ?? true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -150,21 +150,37 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     // load once on mount; equip/buy refresh explicitly
   }, [client]);
 
-  async function equip(kind: Wearable, sku: string | null): Promise<void> {
-    if (busy) return;
-    setBusy(sku ?? `__clear_${kind}`);
+  /*
+   * What is worn, one line per kind (lib/optimistic.ts): on at once, quick choices ending in the last one, and back to
+   * what the server has with the reason if refused.
+   */
+  const wearing = (kind: Wearable) => ({
+    send: (sku: string | null) => client.put(`/me/cosmetics/${kind}`, { sku }),
+    options: {
+      onSaved: (_: unknown, sku: string | null) => {
+        setMsg({ kind: 'ok', text: sku ? t('edit.equippedMsg') : t('edit.removedMsg') });
+        onChanged();
+      },
+      onFailed: (error: ApiError) => setMsg({ kind: 'err', text: failureText(error, t) }),
+    },
+  });
+  const background = wearing('background');
+  const icon = wearing('icon');
+  const frame = wearing('frame');
+  const lines = {
+    background: useOptimistic(equipped.background, background.send, background.options),
+    icon: useOptimistic(equipped.icon, icon.send, icon.options),
+    frame: useOptimistic(equipped.frame, frame.send, frame.options),
+  };
+  const worn: Record<Wearable, string | null> = { background: lines.background[0], icon: lines.icon[0], frame: lines.frame[0] };
+  const [iconEnabled, wantIconEnabled] = useOptimistic(me.premiumIconEnabled ?? true, (enabled) => client.put('/me/cosmetics/icon/visibility', { enabled }), {
+    onSaved: onChanged,
+    onFailed: (error) => setMsg({ kind: 'err', text: failureText(error, t) }),
+  });
+
+  function equip(kind: Wearable, sku: string | null): void {
     setMsg(null);
-    const prev = equipped[kind];
-    setEquipped((e) => ({ ...e, [kind]: sku }));
-    const res = await client.put<{ backgroundSku?: string | null; iconSku?: string | null; frameSku?: string | null }>(`/me/cosmetics/${kind}`, { sku });
-    setBusy(null);
-    if (res.ok) {
-      setMsg({ kind: 'ok', text: sku ? t('edit.equippedMsg') : t('edit.removedMsg') });
-      onChanged();
-    } else {
-      setEquipped((e) => ({ ...e, [kind]: prev }));
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
-    }
+    lines[kind][1](sku);
   }
 
   async function buy(tile: Tile): Promise<void> {
@@ -188,23 +204,15 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     setBusy(null);
   }
 
-  async function toggleIconVisibility(enabled: boolean): Promise<void> {
-    const prev = iconEnabled;
-    setIconEnabled(enabled); // optimistic
+  function toggleIconVisibility(enabled: boolean): void {
     setMsg(null);
-    const res = await client.put('/me/cosmetics/icon/visibility', { enabled });
-    if (res.ok) {
-      onChanged();
-    } else {
-      setIconEnabled(prev);
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
-    }
+    wantIconEnabled(enabled);
   }
 
   if (loading) return <section className="card" style={{ marginTop: 24 }}><p className="muted">{t('edit.loadingCosmetics')}</p></section>;
   if (error) return <section className="card" style={{ marginTop: 24 }}><div className="msg msg-error">{error}</div></section>;
 
-  const tiles = mergeTiles(shop, inventory);
+  const tiles = mergeTiles(shop, inventory, locale);
   // a frame goes by its tier's name in the reader's language ("Gir season frame"), not its catalogue label
   const named = tiles.map((tile) => {
     const tier = tile.category === 'frame' ? frameTier(tile.sku) : null;
@@ -216,10 +224,10 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
   // every kind, searched and narrowed and sorted: what the tabs count
   const matching = applyItemFilter(named, { ...filter, category: 'all' }, keep, locale);
   const counts = countByCategory(matching);
-  const worn = (tile: Tile): boolean => tile.category !== 'tag' && equipped[tile.category] === tile.sku;
+  const isWorn = (tile: Tile): boolean => tile.category !== 'tag' && worn[tile.category] === tile.sku;
   const inTab = matching.filter((tile) => tile.category === active);
   // what you own (or wear: a Premium item can be worn unbought) comes first, in the chosen order within each
-  const yours = (tile: Tile): boolean => tile.owned || worn(tile);
+  const yours = (tile: Tile): boolean => tile.owned || isWorn(tile);
   const shown = [...inTab.filter(yours), ...inTab.filter((tile) => !yours(tile))];
   const anyInTab = named.some((tile) => tile.category === active);
   // the tab is where you are, not a narrowing: clearing keeps you on it
@@ -237,7 +245,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
         </h2>
         <span className="field-hint">{balances.zer === undefined ? '' : t('edit.zerAmount', { amount: balances.zer.toLocaleString(locale) })}</span>
       </div>
-      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
+      {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`} role="status">{msg.text}</div>}
 
       <KindTabs kinds={kinds} value={active} counts={counts} idPrefix={ids} onChange={(kind) => setTab(kind as Kind)} />
       <ItemToolbar>
@@ -274,11 +282,11 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
                 tile={tile}
                 avatarUrl={me.avatarUrl ?? null}
                 premium={me.premium ?? false}
-                equipped={worn(tile)}
+                equipped={isWorn(tile)}
                 balance={balances[tile.currency]}
                 busy={busy}
                 onEquip={(sku) => {
-                  if (tile.category !== 'tag') void equip(tile.category, sku);
+                  if (tile.category !== 'tag') equip(tile.category, sku);
                 }}
                 onBuy={() => void buy(tile)}
               />
@@ -287,13 +295,12 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
         )}
         {active === 'tag' && <p className="item-note">{t('edit.tagsNote')}</p>}
         {/* whether the icon shows is a thing about icons, so it lives on their tab */}
-        {active === 'icon' && equipped.icon && (
+        {active === 'icon' && worn.icon && (
           <label className="icon-visibility">
             <input
               type="checkbox"
               checked={iconEnabled}
-              disabled={busy !== null}
-              onChange={(e) => void toggleIconVisibility(e.target.checked)}
+              onChange={(e) => toggleIconVisibility(e.target.checked)}
             />
             <span>{t('edit.showPremiumIcon')}</span>
           </label>

@@ -15,7 +15,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { EmptyState } from '../theme/EmptyState';
 import { showActions } from '../theme/actionSheet';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -33,7 +33,7 @@ import { usePullRefresh } from '../net/usePullRefresh';
 import {
   deleteGroup,
   groupDetail,
-  leaveGroup,
+  useLeaveGroup,
   removeMember,
   setMemberRole,
   transferOwnership,
@@ -121,6 +121,7 @@ export function GroupMembersScreen({
   const myRole = detail?.myRole ?? null;
   const groupName = detail?.name ?? '';
   const clearChat = useClearChat(groupId, detail?.memberCount ?? 0, setError);
+  const leaveNow = useLeaveGroup();
   const roleName = (role: Role): string | null => (role === 'owner' ? t('groups.role.owner') : role === 'moderator' ? t('groups.role.admin') : null);
 
   /** Only what you may do about this person, the one that cannot be undone last and in red. */
@@ -175,7 +176,10 @@ export function GroupMembersScreen({
       {
         text: t('groups.leave', { group: groupName }),
         style: 'destructive',
-        onPress: () => void act('leave', () => leaveGroup(client, groupId)).then((ok) => ok && onLeft()),
+        onPress: () => {
+          leaveNow(groupId);
+          onLeft();
+        },
       },
     ]);
   };
@@ -348,7 +352,7 @@ function MemberRow({
       accessibilityLabel={[name, role].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.member, { flexDirection: dir.row }, pressed && !self && { backgroundColor: colors.controlTrack }]}
     >
-      <InitialsAvatar name={member.username} id={member.userId} size={MEMBER_AVATAR} photoUrl={member.avatarUrl} />
+      <Avatar name={member.username} size={MEMBER_AVATAR} photoUrl={member.avatarUrl} />
       <View style={styles.memberWords}>
         <Text style={[styles.memberName, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
           {name}

@@ -9,6 +9,7 @@ import {
   type StoryGlossEntry,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import { useOptimistic } from '../lib/optimistic';
 import { saveWord, saveWordError, unsaveWord } from '../dictionary/save';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { BookmarkIcon, PlayIcon, SpeakerIcon, StopIcon, WaveformIcon } from '../components/icons';
@@ -299,25 +300,18 @@ function GlossWord({
 export function SaveWordButton({ entryId, className }: { entryId: string; className?: string }): React.JSX.Element | null {
   const t = useT();
   const { client, status } = useAuth();
-  const [saved, setSaved] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [saved, want] = useOptimistic(false, (on) => (on ? saveWord(client, entryId) : unsaveWord(client, entryId)), {
+    onFailed: (error) => setProblem(saveWordError(error, t)),
+  });
   if (status !== 'signedIn') return null;
-  const toggle = async (): Promise<void> => {
-    if (busy) return;
-    const next = !saved;
-    setSaved(next);
+  const toggle = (): void => {
     setProblem(null);
-    setBusy(true);
-    const res = next ? await saveWord(client, entryId) : await unsaveWord(client, entryId);
-    setBusy(false);
-    if (res.ok) return;
-    setSaved(!next);
-    setProblem(saveWordError(res.error, t));
+    want((on) => !on);
   };
   return (
     <>
-      <button type="button" className={`story-save${saved ? ' is-on' : ''}${className ? ` ${className}` : ''}`} aria-pressed={saved} onClick={() => void toggle()}>
+      <button type="button" className={`story-save${saved ? ' is-on' : ''}${className ? ` ${className}` : ''}`} aria-pressed={saved} onClick={toggle}>
         <BookmarkIcon size={14} weight={saved ? 'fill' : 'regular'} />
         {saved ? t('stories.reader.savedWord') : t('stories.reader.saveWord')}
       </button>

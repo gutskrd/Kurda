@@ -6,6 +6,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { STORY_DIALECTS, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
@@ -179,50 +180,59 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
     update({ dialect: next });
   };
 
-  /** Flips the bookmark at once and asks the server after; a refusal flips it back and says why. */
+  /** Puts a story on or off the shelves it shows on, everywhere it is listed. */
+  const markBookmark = (story: StoryListItem, value: boolean): void => {
+    const patch = (me: StoryListItem['me']) => ({
+      bookmarked: value,
+      paragraph: me?.paragraph ?? 0,
+      share: me?.share ?? 0,
+      finishedAt: me?.finishedAt ?? null,
+      bestCorrect: me?.bestCorrect ?? null,
+      total: me?.total ?? null,
+      attemptsToday: me?.attemptsToday ?? 0,
+    });
+    setFound((r) => (r ? { ...r, stories: withMe(r.stories, story.id, patch) } : r));
+    // On both varieties' pages, since the Bookmarks shelf holds the story whichever is on show.
+    setLibraries((was) => {
+      const next: Partial<Record<StoryDialect, StoryLibrary>> = {};
+      for (const d of STORY_DIALECTS) {
+        const lib = was[d];
+        if (!lib) continue;
+        const marked = { ...story, me: patch(story.me) };
+        const bookmarks = value
+          ? [marked, ...lib.bookmarks.filter((s) => s.id !== story.id)]
+          : lib.bookmarks.filter((s) => s.id !== story.id);
+        next[d] = {
+          ...lib,
+          featured: withMe(lib.featured, story.id, patch),
+          legends: lib.legends ? withMe(lib.legends, story.id, patch) : lib.legends,
+          recent: withMe(lib.recent, story.id, patch),
+          continue: withMe(lib.continue, story.id, patch),
+          bookmarks,
+        };
+      }
+      return next;
+    });
+  };
+
+  // The stories bookmarked here, so a refusal can put one back on the shelves it left.
+  const tapped = useRef(new Map<string, StoryListItem>());
+  const bookmarking = useIntents<string, boolean>((id, on) => setBookmark(client, id, on), {
+    failed: (error, id, confirmed) => {
+      const story = tapped.current.get(id);
+      if (story) markBookmark(story, confirmed);
+      setNotice(describeError(error, t));
+    },
+  });
+
+  /** Moves the bookmark at once and tells the server after; a refusal puts it back and says why. */
   const toggleBookmark = (story: StoryListItem): void => {
-    const on = !(story.me?.bookmarked ?? false);
+    const was = story.me?.bookmarked ?? false;
     haptic('tap');
     setNotice(null);
-    const apply = (value: boolean) => {
-      const patch = (me: StoryListItem['me']) => ({
-        bookmarked: value,
-        paragraph: me?.paragraph ?? 0,
-        share: me?.share ?? 0,
-        finishedAt: me?.finishedAt ?? null,
-        bestCorrect: me?.bestCorrect ?? null,
-        total: me?.total ?? null,
-        attemptsToday: me?.attemptsToday ?? 0,
-      });
-      setFound((r) => (r ? { ...r, stories: withMe(r.stories, story.id, patch) } : r));
-      // On both varieties' pages, since the Bookmarks shelf holds the story whichever is on show.
-      setLibraries((was) => {
-        const next: Partial<Record<StoryDialect, StoryLibrary>> = {};
-        for (const d of STORY_DIALECTS) {
-          const lib = was[d];
-          if (!lib) continue;
-          const marked = { ...story, me: patch(story.me) };
-          const bookmarks = value
-            ? [marked, ...lib.bookmarks.filter((s) => s.id !== story.id)]
-            : lib.bookmarks.filter((s) => s.id !== story.id);
-          next[d] = {
-            ...lib,
-            featured: withMe(lib.featured, story.id, patch),
-            legends: lib.legends ? withMe(lib.legends, story.id, patch) : lib.legends,
-            recent: withMe(lib.recent, story.id, patch),
-            continue: withMe(lib.continue, story.id, patch),
-            bookmarks,
-          };
-        }
-        return next;
-      });
-    };
-    apply(on);
-    void setBookmark(client, story.id, on).then((res) => {
-      if (res.ok) return;
-      apply(!on);
-      setNotice(describeError(res.error, t));
-    });
+    tapped.current.set(story.id, story);
+    markBookmark(story, !was);
+    bookmarking.want(story.id, !was, was);
   };
 
   const open = (story: StoryListItem): void => navigation.navigate('StoryReader', { slug: story.slug });
@@ -290,7 +300,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         ) : resultsError ? (
           <ErrorRetry message={describeError(resultsError, t)} onRetry={() => setFilter({ ...filter })} />
         ) : results && results.stories.length === 0 ? (
-          <Note icon="story">{t('stories.library.empty')}</Note>
+          <Note icon="story">{t('stories.library.noMatch')}</Note>
         ) : results ? (
           <>
             {grid(results.stories)}
@@ -327,7 +337,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
             ))}
           </View>
         ) : null}
-        {library.total === 0 ? <Note icon="story">{t('stories.library.emptyAll')}</Note> : null}
+        {library.total === 0 ? <Note icon="story">{t('stories.library.empty')}</Note> : null}
         {shelves.map((shelf) => {
           if (shelf.stories.length === 0) return null;
           const from = shown;
@@ -424,7 +434,11 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           onUndo={(undo) => setFilter({ ...filter, ...undo })}
           onClearAll={() => setFilter({ ...NO_FILTER })}
         />
-        {notice ? <Note tone="danger" icon="alert">{notice}</Note> : null}
+        {notice ? (
+          <Note tone="danger" icon="alert" live>
+            {notice}
+          </Note>
+        ) : null}
         {body}
       </ScrollView>
 

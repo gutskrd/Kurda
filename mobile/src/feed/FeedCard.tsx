@@ -1,15 +1,16 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Animated, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
+import { useIntents } from '../api/optimistic';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
 import { HeartBurst, heldDim } from '../theme/MotionParts';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -19,8 +20,9 @@ import { formatCompact, formatNumber } from '../i18n/format';
 import type { Locale } from '../i18n/translations';
 import { springTo, timing } from '../theme/animate';
 import { useDirection } from '../reports/direction';
-import { postUrl, toggleEngagement } from './api';
-import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem } from './types';
+import { setEngagement } from './api';
+import { SharePostSheet } from './SharePostSheet';
+import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem, type PostEngagement } from './types';
 import { PostPictures } from '../composer/PostPictures';
 import { usePostMenu } from '../composer/PostExtras';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -35,12 +37,141 @@ const AUTHOR = 32;
  */
 export const DOUBLE_TAP_MS = 220;
 
+const FLAG = { like: 'liked', repost: 'reposted', bookmark: 'bookmarked' } as const;
+const COUNT = { like: 'likes', repost: 'reposts', bookmark: 'bookmarks' } as const;
+
+/** The server's engagement with each wanted flag laid over it, its count moved by one where the two differ. */
+function withWishes(told: PostEngagement, wanted: (kind: EngagementKind) => boolean): PostEngagement {
+  const shown = { ...told };
+  for (const kind of ['like', 'repost', 'bookmark'] as const) {
+    const on = wanted(kind);
+    if (on === told[FLAG[kind]]) continue;
+    shown[FLAG[kind]] = on;
+    shown[COUNT[kind]] = Math.max(0, told[COUNT[kind]] + (on ? 1 : -1));
+  }
+  return shown;
+}
+
+/** A post's like, repost and save as drawn, and the taps that change them; shared by its card and its own page. */
+export interface PostEngagementState {
+  shown: PostEngagement;
+  /** Goes up with each like made here, for the heart's burst. */
+  likes: number;
+  like: () => void;
+  act: (kind: EngagementKind) => void;
+}
+
+/**
+ * Like, repost and save, each shown at once and sent on its own (api/optimistic.ts); the server's answer brings the
+ * true totals, and a refusal goes back with a short message. Guests are offered an account first (auth/AccountGate).
+ * `onChanged` is told the fresh totals.
+ */
+export function usePostEngagement(item: FeedItem, onChanged?: (next: FeedItem) => void): PostEngagementState {
+  const { client } = useAuth();
+  const { require } = useAccountGate();
+  const [likes, setLikes] = useState(0);
+  // The engagement as the server last told it: the item's, or a fresher answer to a tap here.
+  const [told, setTold] = useState(item.engagement);
+  useEffect(() => setTold(item.engagement), [item.engagement]);
+
+  const wishes = useIntents<EngagementKind, boolean, { on: boolean; engagement: PostEngagement }>(
+    async (kind, on) => {
+      const res = await setEngagement(client, item, kind, on);
+      if (res.ok) {
+        setTold(res.data.engagement);
+        onChanged?.({ ...item, engagement: res.data.engagement });
+      }
+      return res;
+    },
+    { answered: (data) => data.on },
+  );
+  const shown = withWishes(told, (kind) => wishes.shown(kind, told[FLAG[kind]]));
+  const now = useRef(shown);
+  now.current = shown;
+
+  /** Whether a tap on one of the three may go ahead: a guest is offered an account first, before any feedback. */
+  const may = useCallback((kind: EngagementKind): boolean => require(kind === 'bookmark' ? 'save' : 'react'), [require]);
+
+  const act = useCallback(
+    (kind: EngagementKind) => {
+      if (may(kind)) wishes.want(kind, !now.current[FLAG[kind]], told[FLAG[kind]]);
+    },
+    [may, wishes, told],
+  );
+
+  const like = useCallback(() => {
+    if (!may('like')) return;
+    // A like is felt and pops; taking one back is quiet.
+    if (!now.current.liked) {
+      haptic('tap');
+      setLikes((n) => n + 1);
+    }
+    wishes.want('like', !now.current.liked, told.liked);
+  }, [may, wishes, told]);
+
+  return { shown, likes, like, act };
+}
+
+/**
+ * The row of pills under a post: like, comments, repost, then share and save at the far end. Share opens a sheet that
+ * passes the post on, out of the app or to a friend in chat (SharePostSheet), as the website's does.
+ */
+export function PostActions({
+  item,
+  engage,
+  onComment,
+}: {
+  item: FeedItem;
+  engage: PostEngagementState;
+  onComment: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const [sharing, setSharing] = useState(false);
+  const e = engage.shown;
+  const count = (n: number): number | undefined => (n > 0 ? n : undefined);
+  return (
+    <View style={[styles.actions, { flexDirection: dir.row }]}>
+      {/* The pills share the row's gap between them, and the 12 above them with what they are under. */}
+      <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
+        <Action
+          icon={e.liked ? 'heart-fill' : 'heart'}
+          tint={e.liked ? colors.danger : undefined}
+          on={e.liked}
+          label={e.liked ? t('feed.unlike') : t('feed.like')}
+          count={count(e.likes)}
+          burst={engage.likes}
+          onPress={engage.like}
+        />
+        <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={count(item.commentCount)} onPress={onComment} />
+        <Action
+          icon="repost"
+          on={e.reposted}
+          tint={e.reposted ? colors.success : undefined}
+          label={e.reposted ? t('repost.undo') : t('repost.do')}
+          count={count(e.reposts)}
+          onPress={() => engage.act('repost')}
+        />
+        <View style={styles.spacer} />
+        {/* Sharing has its own glyph: the paper plane means Messages and Send. */}
+        <Action icon="share" label={t('share.post')} onPress={() => setSharing(true)} />
+        <Action
+          icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
+          on={e.bookmarked}
+          label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
+          onPress={() => engage.act('bookmark')}
+        />
+      </ReachGroup>
+      {sharing ? <SharePostSheet item={item} onClose={() => setSharing(false)} /> : null}
+    </View>
+  );
+}
+
 /**
  * One post on the wall, written or a picture, in one shape: a header line (author, kind, age, "⋯"), the text, the
- * pictures, and a row of pills (like, comments, repost, share, save). A double tap likes with a blooming heart; a
- * single tap opens the post. Like, repost and save are optimistic, each waiting only on itself, and roll back on
- * refusal; guests are offered an account first (auth/AccountGate). `standalone` is the post on its own page.
- * Memoised, since liking one post re-renders the wall.
+ * pictures, and a row of pills (`PostActions`). A double tap likes with a blooming heart; a single tap opens the post.
+ * `standalone` is the post on its own page. Memoised, since liking one post re-renders the wall.
  */
 export const FeedCard = memo(function FeedCard({
   item,
@@ -57,25 +188,17 @@ export const FeedCard = memo(function FeedCard({
   onDeleted?: () => void;
 }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
-  const { client } = useAuth();
   // A guest reads the wall; liking, reposting and saving are the account's (auth/AccountGate).
   const { require } = useAccountGate();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  // Each like made here, so the heart answers the press before the server does.
-  const [likes, setLikes] = useState(0);
   // Each like made by a double tap, for the heart in the middle of the post.
   const [blooms, setBlooms] = useState(0);
-  // The engagement shown: the server's, or the change just made while it answers.
-  const [shown, setShown] = useState(item.engagement);
   const [reporting, setReporting] = useState(false);
-  // Which of the three is on its way to the server: each locks itself and nothing else.
-  const pending = useRef(new Set<EngagementKind>());
-  // What is shown now, for a change made while another kind's answer is pending.
-  const now = useRef(shown);
-  now.current = shown;
-  useEffect(() => setShown(item.engagement), [item.engagement]);
+  const engage = usePostEngagement(item, onChanged);
+  const { like } = engage;
+  const liked = engage.shown.liked;
 
   const open = useCallback(() => {
     if (standalone) return;
@@ -83,67 +206,8 @@ export const FeedCard = memo(function FeedCard({
     else navigation.navigate('MemeDetail', { postId: item.id });
   }, [navigation, item.targetType, item.id, standalone]);
   // Your own post's Edit and Delete, on a long press, the "⋯" (and as an action for a screen reader).
-  const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onActivate: open, onDeleted });
+  const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onDeleted, onActivate: open });
   const openAuthor = useCallback(() => navigation.navigate('UserProfile', { userId: item.author.id }), [navigation, item.author.id]);
-  /**
-   * Like, repost or save optimistically, then tell the server; its answer brings the true totals, and a refusal
-   * restores what was there.
-   */
-  const toggle = useCallback(
-    async (kind: EngagementKind) => {
-      const flag = kind === 'like' ? 'liked' : kind === 'repost' ? 'reposted' : 'bookmarked';
-      const count = kind === 'like' ? 'likes' : kind === 'repost' ? 'reposts' : 'bookmarks';
-      const before = { on: now.current[flag], count: now.current[count] };
-      const on = !before.on;
-      pending.current.add(kind);
-      // Only this kind's flag and count: another kind's change, made meanwhile, is left as it stands.
-      setShown((s) => ({ ...s, [flag]: on, [count]: Math.max(0, s[count] + (on ? 1 : -1)) }));
-      const res = await toggleEngagement(client, item, kind);
-      pending.current.delete(kind);
-      if (!res.ok) {
-        setShown((s) => ({ ...s, [flag]: before.on, [count]: before.count }));
-        return;
-      }
-      // The server's totals, except for a kind whose own answer is still on its way.
-      const answered = res.data.engagement;
-      const waiting = pending.current;
-      setShown((s) => ({
-        ...answered,
-        ...(waiting.has('like') ? { liked: s.liked, likes: s.likes } : null),
-        ...(waiting.has('repost') ? { reposted: s.reposted, reposts: s.reposts } : null),
-        ...(waiting.has('bookmark') ? { bookmarked: s.bookmarked, bookmarks: s.bookmarks } : null),
-      }));
-      onChanged?.({ ...item, engagement: answered });
-    },
-    [client, item, onChanged],
-  );
-
-  /**
-   * Whether a tap on one of the three may proceed: an account, and nothing of the same kind pending. Checked
-   * before any feedback, so a tap that will do nothing shows nothing.
-   */
-  const may = useCallback(
-    (kind: EngagementKind): boolean => require(kind === 'bookmark' ? 'save' : 'react') && !pending.current.has(kind),
-    [require],
-  );
-
-  const act = useCallback(
-    (kind: EngagementKind) => {
-      if (may(kind)) void toggle(kind);
-    },
-    [may, toggle],
-  );
-
-  const like = useCallback(() => {
-    // The guard comes first: neither a guest's heart nor a pending one pops before refusing.
-    if (!may('like')) return;
-    // A like is felt and pops; taking one back is quiet.
-    if (!now.current.liked) {
-      haptic('tap');
-      setLikes((n) => n + 1);
-    }
-    void toggle('like');
-  }, [may, toggle]);
 
   /*
    * One tap opens the post; two quick taps like it, so the first tap waits briefly for a second. A double tap on
@@ -161,7 +225,7 @@ export const FeedCard = memo(function FeedCard({
       // A guest's double tap asks for the account before any heart blooms.
       if (!require('react')) return;
       setBlooms((n) => n + 1);
-      if (!shown.liked) like();
+      if (!liked) like();
       return;
     }
     lastTap.current = now;
@@ -169,27 +233,14 @@ export const FeedCard = memo(function FeedCard({
       single.current = null;
       open();
     }, DOUBLE_TAP_MS);
-  }, [like, open, shown.liked, require]);
-
-  /** Hand the post to the system share sheet. */
-  const share = useCallback(async () => {
-    const url = postUrl(item);
-    const message = item.title ? `${item.title}\n${url}` : url;
-    try {
-      await Share.share({ message, url });
-    } catch {
-      // The sheet was dismissed or the platform refused it; nothing was shared.
-    }
-  }, [item]);
+  }, [like, open, liked, require]);
 
   // An unfamiliar kind prints itself rather than an empty word.
   const badgeKey = CARD_LABEL_KEY[item.kind];
   const badge = badgeKey ? t(badgeKey) : item.kind;
   const who = item.author.displayName || item.author.username;
-  const e = shown;
   const pictures = feedImages(item);
   const when = noticeTime(item.at, t, locale);
-  const count = (n: number): number | undefined => (n > 0 ? n : undefined);
   // A picture's words are its caption, under it; a written post's words are the post.
   const words = item.title || item.excerpt;
 
@@ -208,7 +259,7 @@ export const FeedCard = memo(function FeedCard({
             reachSize={{ width: AUTHOR, height: AUTHOR }}
             style={({ pressed }) => pressed && heldDim}
           >
-            <InitialsAvatar name={who} id={item.author.id} size={AUTHOR} photoUrl={item.author.avatarUrl} />
+            <Avatar name={who} size={AUTHOR} photoUrl={item.author.avatarUrl} />
           </Pressable>
           <View style={[styles.byline, { flexDirection: dir.row }]}>
             {/* A control of its own, since a pressable run of text cannot reach past its letters. */}
@@ -272,39 +323,7 @@ export const FeedCard = memo(function FeedCard({
         ) : null}
       </Bloom>
 
-      <View style={[styles.actions, { flexDirection: dir.row }]}>
-        {/* The pills share the row's gap between them, and the 12 above them with what they are under. */}
-        <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
-          <Action
-            icon={e.liked ? 'heart-fill' : 'heart'}
-            tint={e.liked ? colors.danger : undefined}
-            on={e.liked}
-            label={e.liked ? t('feed.unlike') : t('feed.like')}
-            count={count(e.likes)}
-            burst={likes}
-            onPress={like}
-          />
-          <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={count(item.commentCount)} onPress={open} />
-          <Action
-            icon="repost"
-            on={e.reposted}
-            tint={e.reposted ? colors.success : undefined}
-            label={e.reposted ? t('repost.undo') : t('repost.do')}
-            count={count(e.reposts)}
-            onPress={() => act('repost')}
-          />
-          <View style={styles.spacer} />
-          {/* Sharing has its own glyph: the paper plane means Messages and Send, and a post is not sent to anyone here. */}
-          <Action icon="share" label={t('share.post')} onPress={() => void share()} />
-          <Action
-            icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
-            on={e.bookmarked}
-            label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
-            onPress={() => act('bookmark')}
-          />
-        </ReachGroup>
-      </View>
-
+      <PostActions item={item} engage={engage} onComment={open} />
 
       {menu.sheet}
       {reporting ? (

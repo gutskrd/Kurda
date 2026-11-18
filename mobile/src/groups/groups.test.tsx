@@ -11,6 +11,7 @@ import { AddFriendsSheet } from './AddFriendsSheet';
 import { NewGroupSheet } from './NewGroupSheet';
 import { GroupMembersScreen } from './GroupMembersScreen';
 import { GroupEditScreen } from './GroupEditScreen';
+import { watchNotices } from '../testing/notices';
 
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -252,6 +253,24 @@ describe('a group’s own page', () => {
     alert.mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'Delete group' }));
     expect(alert.mock.calls[0]![1]).toMatch(/can’t be undone/);
+  });
+});
+
+describe('leaving a group', () => {
+  it('goes at once, once confirmed, and says why when the server refused', async () => {
+    testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
+    const said = watchNotices();
+    const confirm = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({ 'GET /groups/g1': detail('member'), 'POST /groups/g1/leave': () => new Promise((resolve) => (answer = resolve)) } as never);
+    const onLeft = vi.fn();
+    renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={onLeft} onEdit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave Hevalên Kurmancî' }));
+    // Gone before the server has answered.
+    expect(onLeft).toHaveBeenCalledTimes(1);
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    confirm.mockRestore();
   });
 });
 

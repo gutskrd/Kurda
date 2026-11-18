@@ -8,6 +8,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
+import { useIntents } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { Icon } from '../theme/Icon';
@@ -81,14 +82,16 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     await load();
   }, [claiming, consent, value, busy, client, load]);
 
-  const toggleDisplay = useCallback(
-    async (tag: ClaimedTag, displayed: boolean) => {
-      setClaimed((prev) => prev.map((t) => (t.key === tag.key ? { ...t, displayed } : t))); // optimistic
-      const res = await setTagDisplayed(client, tag.key, displayed);
-      if (!res.ok) await load();
-    },
-    [client, load],
-  );
+  // Shown or hidden at once; a refusal puts the switch back and says why.
+  const showing = useIntents<string, boolean>(async (key, displayed) => {
+    const res = await setTagDisplayed(client, key, displayed);
+    if (res.ok) setClaimed((prev) => prev.map((tag) => (tag.key === key ? { ...tag, displayed } : tag)));
+    return res;
+  });
+  const toggleDisplay = (key: string, displayed: boolean): void => {
+    const stored = claimed.find((tag) => tag.key === key);
+    if (stored) showing.want(key, displayed, stored.displayed);
+  };
 
   const revoke = useCallback(
     (tag: ClaimedTag) => {
@@ -150,14 +153,14 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             {claimed.length === 0 ? (
               <EmptyState title={t('tags.none')} />
             ) : (
-              claimed.map((tag) => (
+              claimed.map((stored) => ({ ...stored, displayed: showing.shown(stored.key, stored.displayed) })).map((tag) => (
                 <View key={tag.key} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
                   {/* The tag's name and text also toggle the switch: they are the bigger target. */}
                   <ToggleRow
                     label={t('tags.showOnProfile', { tag: tagName(tag, t) })}
                     hint={tag.sensitive ? t('tags.sensitive') : undefined}
                     value={tag.displayed}
-                    onValueChange={(v) => void toggleDisplay(tag, v)}
+                    onValueChange={(v) => toggleDisplay(tag.key, v)}
                     style={[styles.rowSwitch, { flexDirection: dir.row }]}
                   >
                     {(toggle) => (

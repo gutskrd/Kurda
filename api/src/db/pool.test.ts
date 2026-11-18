@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { dbHealthCheck } from './pool.js';
+import { loadConfig } from '../config/env.js';
+import { dbHealthCheck, poolOptions } from './pool.js';
 
 describe('dbHealthCheck', () => {
   it('reports ok with latency when the query succeeds', async () => {
@@ -16,5 +17,14 @@ describe('dbHealthCheck', () => {
       },
     });
     await expect(check()).rejects.toThrow('connection refused');
+  });
+});
+
+describe('poolOptions', () => {
+  it('starts every connection with JIT off and both timeouts set', () => {
+    const opts = poolOptions(loadConfig({ DATABASE_URL: 'postgres://u:p@localhost:5432/db', NODE_ENV: 'test' }));
+    expect(opts.options).toBe('-c jit=off');
+    expect(opts.statement_timeout).toBe(30_000);
+    expect(opts.idle_in_transaction_session_timeout).toBe(60_000);
   });
 });

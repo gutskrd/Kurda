@@ -19,6 +19,7 @@ import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { onSound, resetSounds } from '../feedback/sounds';
 import type { EventQuestsView } from './quests';
+import { navigation } from '../play/testing/navigation';
 import { EventQuestsScreen } from './EventQuestsScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -145,5 +146,16 @@ describe('event quests', () => {
     const before = count();
     fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect(count()).toBe(before + 1));
+  });
+});
+
+describe('between events', () => {
+  it('says what an event is and where it will show, and offers today’s quests meanwhile', async () => {
+    testAuth.client = fakeClient({ 'GET /events/active': ok({ events: [] }) });
+    renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
+    expect(await screen.findByText('No events are running right now.')).toBeTruthy();
+    expect(screen.getByText(/Events run for a few days at a time/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Daily quests' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Quests');
   });
 });

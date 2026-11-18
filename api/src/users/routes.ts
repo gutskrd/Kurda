@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { APP_LOCALE_CODES, normalizeKurdish, stripControlChars } from '@kurda/shared';
+import { APP_LOCALE_CODES, normalizeKurdish } from '@kurda/shared';
 import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { appleTokens } from '../auth/apple-tokens.js';
@@ -8,6 +8,7 @@ import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
 import { guestAccountError, requireAccount, requireAuth, requireRoles } from '../plugins/auth.js';
 import { USERNAME_CHANGE_COOLDOWN_DAYS, UsernameChangeService } from './username-change.js';
+import { cleanDisplayName, DISPLAY_NAME_MAX } from './display-name.js';
 import { StreakService } from '../streaks/service.js';
 import { SocialService } from '../social/service.js';
 import { FriendService } from '../friends/service.js';
@@ -63,7 +64,7 @@ export const consentBodySchema = z
 
 export const patchMeBodySchema = z
   .object({
-    displayName: z.string().min(1).max(60).optional(),
+    displayName: z.string().min(1).max(DISPLAY_NAME_MAX).optional(),
     bio: z.string().max(1_000).optional(),
     /* Every interface language, from one list, so the picker cannot offer something the server would refuse. */
     locale: z.enum(APP_LOCALE_CODES).optional(),
@@ -136,6 +137,9 @@ function toMe(row: MeRow) {
     analyticsConsent: row.analytics_consent,
     /** No birth month on record yet, so the clients ask once first; never for a guest, whom the claim form asks. */
     birthDateRequired: row.birth_year == null && !row.guest,
+    /** The birth month on record, for the account's own Settings; null until answered. */
+    birthYear: row.birth_year,
+    birthMonth: row.birth_month,
     guest: row.guest,
     /** 13–17 today, worked out now rather than stored (users/age.ts). */
     minor: isMinorRow(row),
@@ -170,12 +174,15 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
     key && app.storage ? app.storage.publicUrl(key) : null;
 
   return async (userId) => {
-    const result = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]);
-    const row = result.rows[0] as MeRow;
+    // Reuse the enriched profile query and resolver for cosmetics, level and favourites (self view: details always
+    // visible); ranks and badges are not part of the account.
+    const [row, profile] = await Promise.all([
+      app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]).then((r) => r.rows[0] as MeRow),
+      social.profile(userId, userId, { ranksAndBadges: false }),
+    ]);
     // Settle the streak on read so a lapsed day shows as broken.
     const streak = await streaks.get(row.id, row.timezone);
-    // Reuse the enriched profile query and resolver for cosmetics, level and favourites (self view: details always visible).
-    const publicDto = toPublicProfileDto(await social.profile(row.id, row.id), app.storage);
+    const publicDto = toPublicProfileDto(profile, app.storage);
     return {
       ...toMe(row),
       streak,
@@ -227,6 +234,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     '/me/profile-picture',
     {
       config: {
+        rawBody: true,
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
@@ -505,7 +513,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         sets.push(`${column} = $${values.length}`);
       };
 
-      if (body.displayName !== undefined) add('display_name', stripControlChars(normalizeKurdish(body.displayName)));
+      if (body.displayName !== undefined) add('display_name', cleanDisplayName(body.displayName));
       if (body.bio !== undefined) add('bio', sanitizeBio(body.bio));
       if (body.locale !== undefined) add('locale', body.locale);
       if (body.skipSpeaking !== undefined) add('skip_speaking', body.skipSpeaking);

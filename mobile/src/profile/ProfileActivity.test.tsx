@@ -62,16 +62,13 @@ describe('the activity strip', () => {
     expect(screen.queryByRole('tab', { name: /Saved/ })).toBeNull();
   });
 
-  it('keeps every word whole, letting the strip take a second row, and starts it on the right in Soranî', async () => {
+  it('keeps the tabs on one row that scrolls, each word whole, and starts it on the right in Soranî', async () => {
     localStorage.setItem('kurda_locale_v1', 'ckb');
     open({ own: true });
     await act(async () => undefined);
-    const strip = screen.getByRole('tablist');
-    expect(getComputedStyle(strip).flexWrap).toBe('wrap');
-    expect(getComputedStyle(strip).flexDirection).toBe('row-reverse');
-    for (const tab of screen.getAllByRole('tab')) {
-      const label = tab.querySelector('div[dir]') as HTMLElement;
-      expect(getComputedStyle(label).whiteSpace).not.toBe('nowrap');
-    }
+    const row = screen.getAllByRole('tab')[0]!.parentElement!;
+    expect(getComputedStyle(row).flexWrap).not.toBe('wrap');
+    expect(getComputedStyle(row).flexDirection).toBe('row-reverse');
+    expect(screen.getAllByRole('tab')).toHaveLength(5);
   });
 });

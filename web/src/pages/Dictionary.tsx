@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useT } from '../i18n/I18nProvider';
 import { useGrowsInto } from '../lib/viewTransition';
 import { EmptyState, ErrorState } from '../components/states';
@@ -9,6 +9,8 @@ import { DictRowsSkeleton } from '../components/skeletons';
 import { BookmarkIcon, CloseIcon } from '../components/icons';
 import { SearchField } from '../components/SearchField';
 import { EntryView } from '../dictionary/EntryView';
+import { unsaveWord } from '../dictionary/save';
+import { useOptimisticSend } from '../lib/optimistic';
 import { SourceLine } from '../dictionary/SourceLine';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
@@ -20,6 +22,7 @@ import type { SavedWord, SearchResult } from '../dictionary/types';
  */
 export function Dictionary(): React.JSX.Element {
   const { client } = useAuth();
+  const sendShown = useOptimisticSend();
   const t = useT();
 
   const [query, setQuery] = useState('');
@@ -28,7 +31,9 @@ export function Dictionary(): React.JSX.Element {
   const [failed, setFailed] = useState<string | null>(null);
   const [recents, setRecents] = useState<string[]>([]);
   const [saved, setSaved] = useState<SavedWord[]>([]);
-  const [openEntry, setOpenEntry] = useState<string | null>(null);
+  // `?entry=` opens one entry straight away (Learn's word of the day); back to search drops it from the address.
+  const [params, setParams] = useSearchParams();
+  const [openEntry, setOpenEntry] = useState<string | null>(() => params.get('entry'));
   const debounced = useDebouncedValue(query, 250);
   // Where the tool's card on Learn lands, and what goes back to it.
   const head = useGrowsInto('learn:dictionary', { shape: 'card' });
@@ -67,15 +72,28 @@ export function Dictionary(): React.JSX.Element {
     setOpenEntry(entryId);
   };
 
+  /** Off the list at once; a refusal puts the word back where it was, with a notice. */
   const removeSaved = async (entryId: string): Promise<void> => {
+    const at = saved.findIndex((w) => w.entryId === entryId);
+    const word = saved[at];
+    if (!word) return;
     setSaved((s) => s.filter((w) => w.entryId !== entryId));
-    await client.delete(`/dictionary/entries/${entryId}/save`);
+    await sendShown(() => unsaveWord(client, entryId), {
+      undo: () => setSaved((s) => (s.some((w) => w.entryId === entryId) ? s : [...s.slice(0, at), word, ...s.slice(at)])),
+    });
   };
 
   if (openEntry) {
     return (
       <div className="container dict">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpenEntry(null)}>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => {
+            setOpenEntry(null);
+            if (params.has('entry')) setParams({}, { replace: true });
+          }}
+        >
           {t('dictionary.backToSearch')}
         </button>
         <EntryView

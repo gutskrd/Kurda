@@ -3,6 +3,7 @@ import { CHARACTER_NAMES } from '@kurda/shared';
 import { ClipSpeaker, useSpokenClip } from '../characters/ClipSpeaker';
 import { spokenClips } from '../characters/clips';
 import { useT } from '../i18n/I18nProvider';
+import { clockText } from '../lib/clock';
 import { HeadphonesIcon, NextIcon, PauseIcon, PlayIcon, PreviousIcon } from '../components/icons';
 import { TEXT_SIZES } from './prefs';
 import { nextRate, useNarrationClock, type StoryAudio } from './useStoryAudio';
@@ -46,14 +47,6 @@ export function TextSizeControl({ step, onChange }: { step: number; onChange: (n
       </button>
     </div>
   );
-}
-
-/** "1:05": a timeline point as minutes and seconds, for the bar's clock and the seek line's spoken value. */
-export function clockText(ms: number): string {
-  const whole = Math.max(0, Math.round(ms / 1000));
-  const m = Math.floor(whole / 60);
-  const s = whole % 60;
-  return `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
 /** The speed chip's word: "1×", "0.75×", "1.25×", the same in every language. */

@@ -48,8 +48,11 @@ import { lobbyRoute } from './routes';
  * While asking, a wave runs along the boxes; success turns them green one by one with a burst and haptic, then
  * opens the lobby; a refusal shakes them red and says why until typing resumes. Under Reduce Motion nothing moves,
  * and the lobby opens a beat after the green.
+ *
+ * `code` comes from an invite link: it is filled in and waits for Join, as the website's invite page does, since a
+ * link alone should not put anyone in a game.
  */
-export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.Element {
+export function JoinCodeSheet({ code: linked, onClose }: { code?: string; onClose: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
@@ -57,7 +60,7 @@ export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.E
   const reduce = useReducedMotion();
   const { announce, region } = useAnnouncer();
   const shake = useShake();
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(() => typedCode(linked ?? ''));
   const [phase, setPhase] = useState<Phase>('typing');
   const [message, setMessage] = useState<string | null>(null);
   const [focused, setFocused] = useState(false);
@@ -156,7 +159,8 @@ export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.E
           onBlur={() => setFocused(false)}
           onSubmitEditing={() => void submit(code)}
           editable={phase !== 'joining' && !done}
-          autoFocus
+          // With the code filled in, the keyboard would only cover Join.
+          autoFocus={!linked}
           autoCapitalize="characters"
           autoCorrect={false}
           autoComplete="off"
@@ -328,14 +332,32 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
 /**
  * The entry to the sheet from the Games hub and game setup: a card with two tickets (gold in front, green behind),
  * a line saying what it is for, and the sheet on a tap. A guest is offered an account first, as for every way into
- * a game with people.
+ * a game with people. An invite link's `code` opens the sheet with it filled in; `onCodeShown` clears it.
  */
-export function JoinCodeCard({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
+export function JoinCodeCard({
+  code,
+  onCodeShown,
+  style,
+}: {
+  code?: string;
+  onCodeShown?: () => void;
+  style?: StyleProp<ViewStyle>;
+}): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const gate = useAccountGate();
   const [open, setOpen] = useState(false);
+  const [linked, setLinked] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    if (!code) return;
+    if (gate.require('play')) {
+      setLinked(code);
+      setOpen(true);
+    }
+    onCodeShown?.();
+    // Once per link: the caller clears the code it came with.
+  }, [code]);
   const title = t('stories.join.open');
   const line = t('play.join.line');
   return (
@@ -359,7 +381,15 @@ export function JoinCodeCard({ style }: { style?: StyleProp<ViewStyle> }): React
         </View>
         <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip} />
       </PressableScale>
-      {open ? <JoinCodeSheet onClose={() => setOpen(false)} /> : null}
+      {open ? (
+        <JoinCodeSheet
+          code={linked}
+          onClose={() => {
+            setOpen(false);
+            setLinked(undefined);
+          }}
+        />
+      ) : null}
     </>
   );
 }

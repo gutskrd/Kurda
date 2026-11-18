@@ -36,7 +36,7 @@ async function main(): Promise<void> {
     const pool = createPool(config);
     const queue = JobQueue.create(config);
     const scheduled = await scheduleMaintenance(queue, pool, storage);
-    log.info({ scheduled }, 'scheduled maintenance: GDPR anonymization (every 12h), orphan upload cleanup (every 6h, with storage)');
+    log.info({ scheduled }, 'scheduled the recurring housekeeping and rollups');
   }
 
   const shutdown = async (signal: string): Promise<void> => {

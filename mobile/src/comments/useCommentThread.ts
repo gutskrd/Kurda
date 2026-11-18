@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Alert, type TextInput } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { notReached } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
@@ -45,23 +46,32 @@ export interface CommentThread {
   /**
    * Add a comment to the thread at once and send it. `request` sends it (the page knows whether a voice note
    * uploads first) and is given the parent comment, if any. Returns false when refused, by which time the comment
-   * is removed and the reason shown.
+   * is removed and the reason shown; one the server was not reached for stays as not sent, and counts as kept.
    */
-  send: (
-    draft: { body: string | null; audioUrl?: string | null },
-    request: (parentId: string | undefined) => Promise<SendOutcome>,
-  ) => Promise<boolean>;
+  send: (draft: CommentDraft, request: (parentId: string | undefined) => Promise<SendOutcome>) => Promise<boolean>;
+  /** A not-sent comment, sent again. */
+  retry: (c: ThreadComment) => void;
+  /** A not-sent comment, taken back out; its words go back to the composer. */
+  discard: (c: ThreadComment) => void;
+}
+
+/** What a comment says: its words, a voice note, or both. */
+export interface CommentDraft {
+  body: string | null;
+  audioUrl?: string | null;
 }
 
 /**
  * A post's comment thread: loading, opening reply branches, replying and deleting your own. Both writes are
- * optimistic and rolled back with the reason when the server refuses. `onCountChange` keeps the page's "N
- * comments" in step.
+ * optimistic and rolled back with the reason when the server refuses; a comment the server was not reached for stays
+ * as "Not sent" with Try again and Cancel, as on the website. `onCountChange` keeps the page's "N comments" in step;
+ * `onWordsBack` puts a comment's words back in the composer when it is cancelled or refused on a retry.
  */
 export function useCommentThread(
   surface: CommentSurface,
   postId: string,
   onCountChange: (delta: number) => void,
+  onWordsBack?: (draft: CommentDraft) => void,
 ): CommentThread {
   const { client, user } = useAuth();
   const { t } = useI18n();
@@ -77,13 +87,21 @@ export function useCommentThread(
   stateRef.current = state;
   const countRef = useRef(onCountChange);
   countRef.current = onCountChange;
+  const wordsBack = useRef(onWordsBack);
+  wordsBack.current = onWordsBack;
   const sent = useRef(0);
+  // What each not-sent comment needs to go again: its request, and the comment it answers.
+  const unsent = useRef(new Map<string, { request: (parentId: string | undefined) => Promise<SendOutcome>; parent: ReplyTarget | null }>());
 
   const load = useCallback(async () => {
     const res = await calls.list(client, postId);
     if (!res.ok) return;
-    // Anything still on its way stays on top of what the server knows so far.
-    setState((prev) => ({ top: [...(prev.top ?? []).filter((c) => c.pending), ...res.data.comments], replies: {} }));
+    // Anything still on its way stays on top of what the server knows so far; one sent from here keeps its row.
+    setState((prev) => {
+      const local = new Map((prev.top ?? []).filter((c) => c.localId).map((c) => [c.id, c.localId]));
+      const fresh = res.data.comments.map((c) => (local.has(c.id) ? { ...c, localId: local.get(c.id) } : c));
+      return { top: [...(prev.top ?? []).filter((c) => c.pending), ...fresh], replies: {} };
+    });
   }, [calls, client, postId]);
 
   const showReplies = useCallback(
@@ -107,6 +125,34 @@ export function useCommentThread(
   );
 
   const cancelReply = useCallback(() => setReplyingTo(null), []);
+
+  /** Send a comment already in the thread: true once the server has it or it waits as not sent, false when refused. */
+  const deliver = useCallback(
+    async (pending: ThreadComment, parent: ReplyTarget | null, request: (parentId: string | undefined) => Promise<SendOutcome>): Promise<boolean> => {
+      const res = await request(parent?.id);
+      if (!res.ok && 'kind' in res.error && notReached(res.error)) {
+        unsent.current.set(pending.id, { request, parent });
+        setState((prev) => updateComment(prev, pending.id, (c) => ({ ...c, failed: true })));
+        haptic('error');
+        return true;
+      }
+      unsent.current.delete(pending.id);
+      if (!res.ok) {
+        setState((prev) => withdrawFromThread(prev, pending));
+        countRef.current(-1);
+        // Back to replying to the same person, unless another reply was started meanwhile.
+        if (parent) setReplyingTo((current) => current ?? parent);
+        haptic('error');
+        showSendError(res.title, res.error);
+        return false;
+      }
+      // The library's answer has no author on it; it is you.
+      const taken = { ...res.comment, author: res.comment.author ?? pending.author, localId: pending.id };
+      setState((prev) => updateComment(prev, pending.id, () => taken));
+      return true;
+    },
+    [showSendError],
+  );
 
   const send = useCallback<CommentThread['send']>(
     async (draft, request) => {
@@ -137,23 +183,29 @@ export function useCommentThread(
         void showReplies(parent.id);
       }
 
-      const res = await request(parent?.id);
-      if (!res.ok) {
-        setState((prev) => withdrawFromThread(prev, pending));
-        countRef.current(-1);
-        // Back to replying to the same person, unless another reply was started meanwhile.
-        if (parent) setReplyingTo((current) => current ?? parent);
-        haptic('error');
-        showSendError(res.title, res.error);
-        return false;
-      }
-      // The library's answer has no author on it; it is you.
-      const taken = { ...res.comment, author: res.comment.author ?? pending.author };
-      setState((prev) => updateComment(prev, pending.id, () => taken));
-      return true;
+      return deliver(pending, parent, request);
     },
-    [user, replyingTo, postId, showReplies, showSendError],
+    [user, replyingTo, postId, showReplies, deliver],
   );
+
+  const retry = useCallback(
+    (c: ThreadComment) => {
+      const held = unsent.current.get(c.id);
+      if (!held) return;
+      setState((prev) => updateComment(prev, c.id, (x) => ({ ...x, failed: false })));
+      void deliver({ ...c, failed: false }, held.parent, held.request).then((kept) => {
+        if (!kept) wordsBack.current?.({ body: c.body, audioUrl: c.audioUrl });
+      });
+    },
+    [deliver],
+  );
+
+  const discard = useCallback((c: ThreadComment) => {
+    if (!unsent.current.delete(c.id)) return;
+    setState((prev) => withdrawFromThread(prev, c));
+    countRef.current(-1);
+    wordsBack.current?.({ body: c.body, audioUrl: c.audioUrl });
+  }, []);
 
   const remove = useCallback(
     async (c: ThreadComment) => {
@@ -182,7 +234,7 @@ export function useCommentThread(
     [remove, t],
   );
 
-  return { state, loadingReplies, replyingTo, inputRef, load, showReplies, reply, cancelReply, confirmDelete, send };
+  return { state, loadingReplies, replyingTo, inputRef, load, showReplies, reply, cancelReply, confirmDelete, send, retry, discard };
 }
 
 function findComment(state: ThreadState, id: string): ThreadComment | null {

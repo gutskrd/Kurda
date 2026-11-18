@@ -20,6 +20,9 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { CATEGORY_HINT, CATEGORY_LABEL } from './labels';
 import { MY_REPORTS_PATH } from './restriction';
+import { useBlock } from './block';
+import { useLeaveGroup } from '../groups/leave';
+import { failureText } from '../lib/optimistic';
 
 /**
  * What is being reported. For a game player the id is the game's, and `game` with `seat` names the player; the server
@@ -44,7 +47,10 @@ export interface ReportSheetProps {
   /** Offered on the done screen: leave this group. */
   leaveGroup?: { groupId: string; name: string } | null;
   /** The block has landed, so the page may close a thread or leave a profile. */
+  /** Called as a block from the done screen is pressed, before the server answers (reports/block.ts). */
   onBlocked?: () => void;
+  /** The server refused that block: put back what `onBlocked` took away. */
+  onBlockRefused?: () => void;
   /** The reader has left the group. */
   onLeftGroup?: () => void;
 }
@@ -89,9 +95,11 @@ export function ReportSheet(props: ReportSheetProps): React.JSX.Element | null {
   return <ReportFlow {...props} />;
 }
 
-function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onLeftGroup }: ReportSheetProps): React.JSX.Element {
+function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onBlockRefused, onLeftGroup }: ReportSheetProps): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
+  const sendBlock = useBlock();
+  const leave = useLeaveGroup();
   const [step, setStep] = useState<Step>('pick');
   const [category, setCategory] = useState<ReportCategory | null>(null);
   const [note, setNote] = useState('');
@@ -142,32 +150,32 @@ function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onLef
     setStep('done');
   }
 
-  async function doBlock(): Promise<void> {
-    if (!block || busy) return;
-    setBusy(true);
+  /** Blocked and said so at once; a refusal takes it back and says why here. */
+  function doBlock(): void {
+    if (!block || blocked) return;
     setError(null);
-    const res = await client.post(`/friends/${block.userId}/block`);
-    setBusy(false);
-    if (!res.ok) {
-      setError(describeError(res.error, t));
-      return;
-    }
     setBlocked(true);
     onBlocked?.();
+    void sendBlock(
+      block.userId,
+      () => {
+        setBlocked(false);
+        onBlockRefused?.();
+      },
+      (refusal) => setError(failureText(refusal, t)),
+    );
   }
 
-  async function doLeave(): Promise<void> {
-    if (!leaveGroup || busy) return;
-    setBusy(true);
+  /** Left and said so at once, the group gone from the rail; a refusal takes it back and says why here. */
+  function doLeave(): void {
+    if (!leaveGroup || left) return;
     setError(null);
-    const res = await client.post(`/groups/${leaveGroup.groupId}/leave`);
-    setBusy(false);
-    if (!res.ok) {
-      setError(describeError(res.error, t));
-      return;
-    }
     setLeft(true);
     onLeftGroup?.();
+    void leave(leaveGroup.groupId, (refusal) => {
+      setLeft(false);
+      setError(failureText(refusal, t));
+    });
   }
 
   return (
@@ -304,7 +312,7 @@ function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onLef
                   </p>
                 ) : (
                   <div className="report-also-row">
-                    <button type="button" className="btn btn-secondary report-also-btn" onClick={() => void doBlock()} disabled={busy}>
+                    <button type="button" className="btn btn-secondary report-also-btn" onClick={doBlock}>
                       {t('report.done.block', { name: block.name })}
                     </button>
                     <span className="report-also-note">{t('report.done.blockNote')}</span>
@@ -317,7 +325,7 @@ function ReportFlow({ onClose, target, name, block, leaveGroup, onBlocked, onLef
                   </p>
                 ) : (
                   <div className="report-also-row">
-                    <button type="button" className="btn btn-secondary report-also-btn" onClick={() => void doLeave()} disabled={busy}>
+                    <button type="button" className="btn btn-secondary report-also-btn" onClick={doLeave}>
                       {t('report.done.leave', { group: leaveGroup.name })}
                     </button>
                   </div>

@@ -306,4 +306,31 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     await expect(social.profile(id.viewer!, id.blocked!)).rejects.toThrow(/no such user/i);
     await expect(social.profile(id.blocked!, id.viewer!)).rejects.toThrow(/no such user/i);
   });
+
+  it('gates the lists a profile leads to exactly as the profile itself, for every viewer', async () => {
+    const add = async (tag: string, extra: string, values: unknown[] = []): Promise<string> =>
+      (
+        await pool.query<{ id: string }>(
+          `INSERT INTO users (email, username, email_verified_at, ${extra}) VALUES ($1, $2, now(), ${values.map((_, i) => `$${i + 3}`).join(', ')}) RETURNING id`,
+          [`soc_${tag}_${suffix}@it.kurda.app`, `${tag}${suffix}`, ...values],
+        )
+      ).rows[0]!.id;
+    // a minor whose 'everyone' was stored before their age was known, a guest, and a closed account
+    const minor = await add('minor', 'birth_year, birth_month, profile_visibility', [new Date().getUTCFullYear() - 15, 1, 'everyone']);
+    const guest = await add('guestacct', 'guest, profile_visibility', [true, 'everyone']);
+    const closed = await add('closed', 'deleted_at, profile_visibility', [new Date(), 'everyone']);
+    await pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [id.viewer, id.blocked]);
+    const targets = [id.viewer!, id.friendly!, id.hidden!, id.blocked!, id.named!, minor, guest, closed, '00000000-0000-4000-8000-000000000000'];
+    const viewers = [null, id.viewer!, id.friendly!, id.hidden!, id.blocked!, minor, guest];
+    const outcome = (p: Promise<{ private: boolean }>) => p.then((r) => (r.private ? 'private' : 'shown'), (err: Error) => err.message);
+    const seen = new Set<string>();
+    for (const viewer of viewers) {
+      for (const target of targets) {
+        const full = await outcome(social.profile(viewer, target));
+        expect(await outcome(social.access(viewer, target)), `${viewer} looking at ${target}`).toBe(full);
+        seen.add(full);
+      }
+    }
+    expect([...seen].sort()).toEqual(['no such user', 'private', 'shown']);
+  });
 });

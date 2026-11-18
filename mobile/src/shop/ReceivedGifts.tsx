@@ -8,7 +8,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { markGiftsSeen, receivedGifts, type ReceivedGift } from './gifts';
-import { giftsWereOpened } from './useUnseenGifts';
+import { giftsSeen, giftsWereOpened } from './useUnseenGifts';
 import { useDirection } from '../reports/direction';
 
 /**
@@ -30,6 +30,8 @@ export function ReceivedGifts(): React.JSX.Element | null {
       if (cancelled || !res.ok) return;
       setGifts(res.data.gifts);
       if (res.data.unseen > 0) {
+        // The badge clears as the list shows; the count read after the mark is the truth, whether it took or not.
+        giftsSeen('all');
         await markGiftsSeen(client);
         giftsWereOpened();
       }

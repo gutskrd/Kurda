@@ -1,9 +1,7 @@
 import { useId } from 'react';
-import { storyTextDirection } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
-import { GREETINGS } from '../groups/standing';
-import { courseDialect } from '../stories/prefs';
 import { useT } from '../i18n/I18nProvider';
+import { useGreetings } from '../groups/greetings';
 
 /**
  * An empty conversation: who it is with and three Kurdish openers one tap away, as groups/GroupWelcome.tsx offers,
@@ -21,9 +19,7 @@ export function DmWelcome({
 }): React.JSX.Element {
   const t = useT();
   const id = useId();
-  // the learner's own course, as this device knows it; Kurmancî before their first lesson
-  const dialect = courseDialect() ?? 'kurmanci';
-  const { lang, dir } = storyTextDirection(dialect);
+  const { greetings, lang, dir } = useGreetings();
   return (
     <div className="gwelcome dm-welcome">
       <span className="dm-welcome-face">
@@ -38,7 +34,7 @@ export function DmWelcome({
           {t('groups.welcome.sayHello')}
         </p>
         <div className="gwelcome-chips">
-          {GREETINGS[dialect].map((text) => (
+          {greetings.map((text) => (
             <button key={text} type="button" className="gwelcome-chip" lang={lang} dir={dir} aria-label={t('groups.welcome.send', { text })} onClick={() => onGreet(text)}>
               {text}
             </button>

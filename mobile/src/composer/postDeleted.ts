@@ -1,9 +1,12 @@
+import { useCallback } from 'react';
+import { createHiddenSet } from '../api/optimistic';
 import type { FeedItem } from '../feed/types';
 
 /**
  * "This post is gone", from wherever it was deleted to every list showing it. A post's page sits over the list it was
  * opened from, and some lists only reload on focus or not at all, so each list drops the card as soon as it hears (as
- * postSaved.ts tells a post's page about an edit).
+ * postSaved.ts tells a post's page about an edit). While the delete is on its way the lists leave it out as they draw
+ * (`useDeleting`), so a refused one returns in its place.
  */
 export type DeletedPost = Pick<FeedItem, 'targetType' | 'id'>;
 
@@ -29,4 +32,22 @@ export function onPostDeleted(l: Listener): () => void {
   return () => {
     listeners.delete(l);
   };
+}
+
+// Posts being deleted from this phone: every list leaves them out at once and shows them again if the delete is refused.
+const deleting = createHiddenSet();
+const keyOf = (post: DeletedPost): string => `${post.targetType}:${post.id}`;
+
+export function hideDeleting(post: DeletedPost): void {
+  deleting.hide(keyOf(post));
+}
+
+export function unhideDeleting(post: DeletedPost): void {
+  deleting.unhide(keyOf(post));
+}
+
+/** Whether a list should leave a post out as it draws, its delete being on its way. */
+export function useDeleting(): (post: DeletedPost) => boolean {
+  const hidden = deleting.useHidden();
+  return useCallback((post: DeletedPost) => hidden.has(keyOf(post)), [hidden]);
 }

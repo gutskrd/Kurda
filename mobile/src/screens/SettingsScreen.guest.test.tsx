@@ -45,7 +45,7 @@ describe('Settings for a guest', () => {
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
     fireEvent.click(screen.getByTestId('settings-claim'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('ClaimAccount');
-    expect(screen.queryByRole('button', { name: 'Change password' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Password' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Signed-in devices' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Sign out everywhere' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Request data export' })).toBeNull();

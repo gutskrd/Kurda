@@ -236,8 +236,8 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
       ids.push(limited.id);
       const key = `voice-note/limited_${kit.suffix}.webm`;
       await pool.query(
-        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at) VALUES ($1, 'audio/webm', 10, now())`,
-        [key],
+        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, uploader_id, kind) VALUES ($1, 'audio/webm', 10, now(), $2, 'voice-note')`,
+        [key, limited.id],
       );
       // fine before the limit
       const before = await call('POST', `/library/posts/${postId}/comments`, limited.token, { audioMediaId: key });
@@ -256,8 +256,8 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
       // a different one is
       const another = `voice-note/limited2_${kit.suffix}.webm`;
       await pool.query(
-        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at) VALUES ($1, 'audio/webm', 10, now())`,
-        [another],
+        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, uploader_id, kind) VALUES ($1, 'audio/webm', 10, now(), $2, 'voice-note')`,
+        [another, limited.id],
       );
       const edited = await call('PATCH', `/library/comments/${commentId}`, limited.token, { audioMediaId: another });
       expect(edited.json()).toMatchObject({ code: 'MUTED', details: { scope: 'media' } });
@@ -318,8 +318,9 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
     it('cannot attach a voice file moderation took down', async () => {
       const key = `voice-note/blocked_${kit.suffix}.webm`;
       await pool.query(
-        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status) VALUES ($1, 'audio/webm', 10, now(), 'blocked')`,
-        [key],
+        `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status, uploader_id, kind)
+         VALUES ($1, 'audio/webm', 10, now(), 'blocked', $2, 'voice-note')`,
+        [key, friend.id],
       );
       const res = await call('POST', `/library/posts/${postId}/comments`, friend.token, { audioMediaId: key });
       expect(res.statusCode).toBe(422);

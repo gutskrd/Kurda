@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { storyTextDirection, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import { useOptimistic } from '../lib/optimistic';
 import { BookmarkIcon, HeadphonesIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { useGrowsFrom } from '../lib/viewTransition';
@@ -29,11 +30,13 @@ export function StoryCard({
   const { client, status } = useAuth();
   const { lang, dir } = storyTextDirection(story.dialect);
   const signedIn = status === 'signedIn';
-  const [bookmarked, setBookmarked] = useState(story.me?.bookmarked === true);
   const [problem, setProblem] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  // The same story may arrive again from another shelf; the server's word wins.
-  useEffect(() => setBookmarked(story.me?.bookmarked === true), [story.me?.bookmarked]);
+  // Shown at once, quick presses ending in the last; the same story arriving again from another shelf is adopted.
+  const [bookmarked, want] = useOptimistic(story.me?.bookmarked === true, (on) => setBookmark(client, story.id, on), {
+    fromAnswer: (data) => data.bookmarked,
+    onSaved: (data) => onBookmarked?.(story, data.bookmarked),
+    onFailed: () => setProblem(t('stories.library.bookmarkFailed')),
+  });
 
   const left = minutesLeft(story);
   const share = story.me ? (story.me.finishedAt ? 1 : Math.max(0, Math.min(1, story.me.share))) : 0;
@@ -41,20 +44,9 @@ export function StoryCard({
   // The cover travels into the story and back to this card, whichever shelf it was on.
   const cover = useGrowsFrom(`story:${story.slug}`, { within: '.story-card' });
 
-  async function toggle(): Promise<void> {
-    if (busy) return;
-    const next = !bookmarked;
-    setBookmarked(next);
+  function toggle(): void {
     setProblem(null);
-    setBusy(true);
-    const res = await setBookmark(client, story.id, next);
-    setBusy(false);
-    if (res.ok) {
-      onBookmarked?.(story, res.data.bookmarked);
-      return;
-    }
-    setBookmarked(!next);
-    setProblem(t('stories.library.bookmarkFailed'));
+    want((on) => !on);
   }
 
   return (
@@ -96,7 +88,7 @@ export function StoryCard({
           className={`story-card-bookmark${bookmarked ? ' is-on' : ''}`}
           aria-pressed={bookmarked}
           aria-label={bookmarked ? t('stories.library.unbookmark', { title: story.title }) : t('stories.library.bookmark', { title: story.title })}
-          onClick={() => void toggle()}
+          onClick={toggle}
         >
           <BookmarkIcon size={18} weight={bookmarked ? 'fill' : 'regular'} />
         </button>

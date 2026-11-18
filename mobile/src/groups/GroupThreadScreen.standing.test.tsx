@@ -77,7 +77,7 @@ describe('opening a group one is banned from', () => {
     expect(screen.queryByRole('button', { name: 'Chat options' })).toBeNull();
     expect(screen.queryByText(/members/)).toBeNull();
     // Nothing to send from outside the group.
-    expect(screen.queryByLabelText('Message…')).toBeNull();
+    expect(screen.queryByLabelText('Write a message…')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Ask to come back' }));
     const note = await screen.findByLabelText('A note (optional)');
     expect(screen.getByText('The admins will see this')).toBeTruthy();
@@ -107,6 +107,22 @@ describe('opening a group one is banned from', () => {
     });
     expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/groups/g1/requests')).toBe(true);
     expect(await screen.findByRole('button', { name: 'Ask to come back' })).toBeTruthy();
+  });
+
+  it('takes a request back at once, and puts it back with the reason when the server refuses', async () => {
+    let answer: (r: unknown) => void = () => undefined;
+    open({
+      'GET /groups/g1/chat': refused,
+      'GET /groups/g1': group(banned({ kind: 'pending', sentAt: new Date(Date.now() - 3 * 3_600_000).toISOString() })),
+      'DELETE /groups/g1/requests': () => new Promise((resolve) => (answer = resolve)),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Withdraw request' }));
+    // Before the server has answered.
+    expect(screen.getByRole('button', { name: 'Ask to come back' })).toBeTruthy();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByText('Request sent 3h ago — the admins will decide')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Withdraw request' })).toBeTruthy();
+    expect(screen.getByRole('alert')).toBeTruthy();
   });
 
   it('says when asking is possible again, or that it is not, and a ban for good', async () => {
@@ -159,7 +175,7 @@ describe('opening a group one is not in', () => {
     expect(screen.getAllByText('Group not found').length).toBeGreaterThan(0);
     // No way in, no chat, and no page of the group to open.
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
-    expect(screen.queryByLabelText('Message…')).toBeNull();
+    expect(screen.queryByLabelText('Write a message…')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Group info' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Chat options' })).toBeNull();
     expect(client.calls.some((c) => c.path === '/groups/g1/join')).toBe(false);
@@ -184,7 +200,7 @@ describe('opening a group one is not in', () => {
       fireEvent.click(send);
     });
     expect(await screen.findByText('This is the start of Newroz club')).toBeTruthy();
-    expect(screen.getByLabelText('Message…')).toBeTruthy();
+    expect(screen.getByLabelText('Write a message…')).toBeTruthy();
   });
 });
 
@@ -202,7 +218,7 @@ describe('being removed or banned while the chat is open', () => {
       },
     });
     await screen.findByText('Silav');
-    fireEvent.change(screen.getByLabelText('Message…'), { target: { value: 'Ez jî' } });
+    fireEvent.change(screen.getByLabelText('Write a message…'), { target: { value: 'Ez jî' } });
     const send = screen.getByRole('button', { name: 'Send' });
     await act(async () => {
       fireEvent.click(send);
@@ -212,7 +228,7 @@ describe('being removed or banned while the chat is open', () => {
     expect(await screen.findByText('An admin of the group can add you again.')).toBeTruthy();
     expect(screen.getAllByText('Newroz club').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
-    expect(screen.queryByLabelText('Message…')).toBeNull();
+    expect(screen.queryByLabelText('Write a message…')).toBeNull();
     expect(screen.queryByText('Silav')).toBeNull();
   });
 
@@ -227,7 +243,7 @@ describe('being removed or banned while the chat is open', () => {
       },
     });
     await screen.findByText('Silav');
-    fireEvent.change(screen.getByLabelText('Message…'), { target: { value: 'Çima?' } });
+    fireEvent.change(screen.getByLabelText('Write a message…'), { target: { value: 'Çima?' } });
     const send = screen.getByRole('button', { name: 'Send' });
     await act(async () => {
       fireEvent.click(send);

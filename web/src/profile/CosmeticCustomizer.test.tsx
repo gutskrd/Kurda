@@ -239,6 +239,25 @@ describe('CosmeticCustomizer', () => {
     expect(within(worn).queryByText('Equipped')).not.toBeInTheDocument();
   });
 
+  it('wears a background at once, and takes it off again with the reason when the server refuses', async () => {
+    const calls: Array<{ url: string; method: string; body: unknown }> = [];
+    const serve = inventoryFetch(calls);
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) =>
+        url.includes('/me/cosmetics/background') ? new Promise<Response>((r) => (answer = r)) : serve(url, init),
+      ),
+    );
+    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+    const tile = (await screen.findByText('Hevalo')).closest('figure')!;
+    await userEvent.click(within(tile).getByRole('button', { name: 'Equip' }));
+    expect(within(tile).getByText('Equipped')).toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await within(tile).findByRole('button', { name: 'Equip' })).toBeInTheDocument();
+    expect(screen.getByText('Something went wrong on our end. Please try again shortly.')).toBeInTheDocument();
+  });
+
   it('wears and takes off a season frame from the Frames tab', async () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
     vi.stubGlobal('fetch', inventoryFetch(calls));

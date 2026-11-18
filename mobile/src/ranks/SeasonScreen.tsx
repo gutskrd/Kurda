@@ -16,11 +16,12 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -61,7 +62,6 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [wearing, setWearing] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [frameError, setFrameError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(() => {
     void Promise.all([
@@ -82,13 +82,19 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   }, [client, user]);
   useFocusEffect(useCallback(() => load(), [load]));
 
-  const wear = async (sku: string | null): Promise<void> => {
-    setBusy(sku ?? 'none');
+  // Worn at once and saved in the background; a refusal puts the frame back and says why.
+  const framing = useIntents<'frame', string | null, { frameSku: string | null }>(
+    async (_key, sku) => {
+      const res = await wearFrame(client, sku);
+      if (res.ok) setWearing(res.data.frameSku);
+      return res;
+    },
+    { answered: (data) => data.frameSku, failed: (error) => setFrameError(describeError(error, t)) },
+  );
+  const shownFrame = framing.shown('frame', wearing);
+  const wear = (sku: string | null): void => {
     setFrameError(null);
-    const res = await wearFrame(client, sku);
-    setBusy(null);
-    if (res.ok) setWearing(res.data.frameSku);
-    else setFrameError(describeError(res.error, t));
+    framing.want('frame', sku, wearing);
   };
 
   const best = bestPeak(ranks);
@@ -232,19 +238,18 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                   <GlassCard padding="tight">
                     {frames.map((sku) => {
                       const tier = frameTierOf(sku)!;
-                      const on = wearing === sku;
+                      const on = shownFrame === sku;
                       return (
                         <Pressable
                           key={sku}
-                          onPress={() => void wear(on ? null : sku)}
-                          disabled={busy !== null}
+                          onPress={() => wear(on ? null : sku)}
                           accessibilityRole="button"
                           accessibilityState={{ selected: on }}
                           accessibilityLabel={`${t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}. ${on ? t('season.takeOff') : t('season.wear')}`}
                           style={({ pressed }) => [styles.frameRow, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
                         >
                           <SeasonFramed tier={tier} size={64} label={t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
-                            <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={framedAvatarSize(64)} />
+                            <Avatar name={user?.displayName ?? user?.username ?? ''} size={framedAvatarSize(64)} />
                           </SeasonFramed>
                           <Text style={[styles.flex, styles.rewardName, { color: colors.textPrimary }]}>{t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}</Text>
                           <Text style={[styles.wearText, { color: on ? colors.success : colors.primary }]}>{on ? t('season.wearing') : t('season.wear')}</Text>
@@ -252,7 +257,11 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                       );
                     })}
                   </GlassCard>
-                  {frameError ? <Note tone="danger" icon="alert">{frameError}</Note> : null}
+                  {frameError ? (
+                    <Note tone="danger" icon="alert" live>
+                      {frameError}
+                    </Note>
+                  ) : null}
                 </View>
               ) : null}
             </ScrollView>

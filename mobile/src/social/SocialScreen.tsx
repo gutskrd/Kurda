@@ -15,20 +15,23 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
-import { describeError, isMaintenance } from '../api/errors';
+import { useIntents, useSayNotSaved } from '../api/optimistic';
+import type { ApiError } from '../api/types';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
-import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
-import { LargeTitle } from '../navigation/LargeTitle';
-import { BackButton } from '../navigation/BackButton';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { useTabBarInset } from '../navigation/tabBarLayout';
+import { ScreenHeader } from '../navigation/ScreenHeader';
+import { HeaderButton } from '../navigation/HeaderButton';
+import { Avatar } from '../profile/Avatar';
 import { EmptyState } from '../theme/EmptyState';
 import { mutualText, undoAction } from './format';
 import { SearchField } from '../theme/SearchField';
 import { useAnnouncer } from '../stories/ui';
 import { ACCEPTED_HOLD_MS, DECLINE_FOLD_MS, FriendRequestTicket, TicketSlip, type RequestAnswer } from './FriendTicket';
 import { usePullRefresh } from '../net/usePullRefresh';
+import { useUnread } from '../messages/unread';
+import { useHiddenByBlock } from './blocks';
 
 interface UserRow {
   userId: string;
@@ -54,6 +57,7 @@ interface Suggestion extends UserRow {
  */
 export function SocialScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
+  const { report } = useUnread();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
 
@@ -61,7 +65,6 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   // In right-to-left languages the rows start on the right, as the request tickets above do.
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
-  const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserRow[] | null>(null);
   const [friends, setFriends] = useState<UserRow[]>([]);
@@ -89,13 +92,18 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
         setFailed(true);
       }
     });
-    const incoming = client.get<{ requests: UserRow[] }>('/friends/requests').then((r) => r.ok && setRequests(r.data.requests));
+    const incoming = client.get<{ requests: UserRow[] }>('/friends/requests').then((r) => {
+      if (!r.ok) return;
+      setRequests(r.data.requests);
+      // The badge counts the same list, so it is told rather than asked again.
+      report({ requests: r.data.requests.length });
+    });
     /* Requests you sent, so you can see and withdraw them. */
     const outgoing = client
       .get<{ requests: UserRow[] }>('/friends/requests/outgoing')
       .then((r) => r.ok && setSent(r.data.requests));
     return Promise.all([lists, incoming, outgoing]);
-  }, [client]);
+  }, [client, report]);
 
   useFocusEffect(
     useCallback(() => {
@@ -131,27 +139,53 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     [client],
   );
 
-  /**
-   * Answer a request on its ticket (stamped "Friends" for a moment, or folded away), then read the lists again, which
-   * also brings back one whose answer did not get through.
+  /*
+   * Answering and withdrawing show at once, and the request count with them; the server is told after. A refusal says
+   * why and reads the lists again, which brings back what did not get through.
    */
+  const say = useSayNotSaved();
+  const refused = (error: ApiError): void => {
+    haptic('error');
+    say(error);
+    report((now) => ({ requests: now.requests + 1 }));
+    void loadLists();
+  };
+  const answering = useIntents<string, RequestAnswer | null>(
+    async (userId, answer) => {
+      const res = await client.post(`/friends/requests/${userId}/${answer === 'accepted' ? 'accept' : 'decline'}`);
+      // A new friend joins the list as the server has it.
+      if (res.ok && answer === 'accepted') void loadLists();
+      return res;
+    },
+    { failed: refused },
+  );
+  const withdrawing = useIntents<string, boolean>((userId) => client.delete(`/friends/requests/${userId}`), {
+    failed: (error) => {
+      haptic('error');
+      say(error);
+      void loadLists();
+    },
+  });
+
+  /** Answer a request on its ticket: stamped "Friends" for a moment, or folded away, then gone. */
   const respond = useCallback(
     (u: UserRow, accept: boolean) => {
       if (accept) haptic('tap');
       if (accept) announce(t('friends.nowFriends', { name: u.displayName ?? u.username }));
       setAnswers((a) => ({ ...a, [u.userId]: accept ? 'accepted' : 'declined' }));
+      report((now) => ({ requests: Math.max(0, now.requests - 1) }));
+      answering.want(u.userId, accept ? 'accepted' : 'declined', null);
       const hold = accept ? ACCEPTED_HOLD_MS : reduce ? 0 : DECLINE_FOLD_MS;
-      void Promise.all([client.post(`/friends/requests/${u.userId}/${accept ? 'accept' : 'decline'}`), wait(hold)]).then(() => {
+      void wait(hold).then(() => {
         setRequests((list) => list.filter((r) => r.userId !== u.userId));
         setAnswers((a) => {
           const rest = { ...a };
           delete rest[u.userId];
           return rest;
         });
-        loadLists();
       });
     },
-    [client, loadLists, reduce, announce, t],
+    [reduce, announce, t, report, answering],
   );
 
   /* The same words the profile uses to withdraw the same request. */
@@ -164,12 +198,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           text: t(undo.label),
           style: 'destructive',
           onPress: () => {
-            void client.delete(`/friends/requests/${u.userId}`).then(loadLists);
+            setSent((list) => list.filter((r) => r.userId !== u.userId));
+            withdrawing.want(u.userId, true, false);
           },
         },
       ]);
     },
-    [client, loadLists, t],
+    [t, withdrawing],
   );
 
   /**
@@ -184,11 +219,11 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
       void Promise.all([client.post('/friends/requests', { userId }), wait(reduce ? 0 : ASKED_HOLD_MS)]).then(([res]) => {
         setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
         // A request that did not go (a full friend list, too many outgoing) says why (limits/limitCopy.ts).
-        if (!res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
+        if (!res.ok) say(res.error);
         loadLists();
       });
     },
-    [client, loadLists, t, reduce, announce],
+    [client, loadLists, t, reduce, announce, say],
   );
 
   const openProfile = (userId: string) => navigation.navigate('UserProfile', { userId });
@@ -202,7 +237,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     // The person and the row's button side by side, never nested: a screen reader reaches only the outer of two nested
     // buttons.
     return (
-      <View key={u.userId} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
+      <View key={u.userId} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
         <PressableScale
           style={[styles.rowOpen, { flexDirection: dir.row }]}
           onPress={() => openProfile(u.userId)}
@@ -213,7 +248,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
               : t('friends.openProfile', { username: u.username })
           }
         >
-          <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
+          <Avatar name={u.username} size={36} photoUrl={u.avatarUrl ?? undefined} />
           <View style={styles.rowMain}>
             <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
             {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}
@@ -229,33 +264,26 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     <Text style={[styles.section, dir.text, { color: colors.textSecondary }]}>{t(key)}</Text>
   );
 
+  // Somebody just blocked from another screen leaves these lists at once (social/blocks.ts).
+  const gone = useHiddenByBlock();
+  const without = <T extends { userId: string }>(list: T[]): T[] => (gone.size === 0 ? list : list.filter((u) => !gone.has(u.userId)));
   const showingSearch = results !== null;
 
   return (
     <GradientBackground>
-      <View style={[styles.screen, { paddingTop: topInset }]}>
-        <LargeTitle
-          left={<BackButton onPress={onExit} />}
-          title={t('nav.friends')}
-          style={styles.head}
-          right={
-            <Pressable
-              onPress={() => navigation.popTo('Tabs', { screen: 'Messages' })}
-              reachSize={{ height: LINK_LINE }}
-              style={({ pressed }) => [styles.messagesLink, { flexDirection: dir.row }, pressed && heldDim]}
-              accessibilityRole="button"
-              accessibilityLabel={t('nav.messages')}
-            >
-              <Icon name="chat" size={18} tone="primary" />
-              <Text style={[styles.messages, { color: colors.primary }]}>{t('nav.messages')}</Text>
-            </Pressable>
-          }
-        />
+      {/* The bar every pushed page has, with Messages at its end, and what the page is for under it, as on the website. */}
+      <ScreenHeader
+        title={t('nav.friends')}
+        onBack={onExit}
+        right={<HeaderButton icon="chat" label={t('nav.messages')} onPress={() => navigation.popTo('Tabs', { screen: 'Messages' })} testID="friends-messages" />}
+      />
+      <View style={styles.screen}>
+        <Text style={[styles.intro, dir.text, { color: colors.textSecondary }]}>{t('friends.subtitle')}</Text>
         <SearchField value={query} onChangeText={search} label={t('friends.searchPlaceholder')} returnKeyType="done" />
 
         {showingSearch ? (
           <FlatList
-            data={results}
+            data={without(results ?? [])}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             // The keyboard is up while results come in: a tap on one opens it, rather than only dismissing the
@@ -274,17 +302,17 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           <ErrorRetry onRetry={() => void loadLists()} />
         ) : (
           <FlatList
-            data={friends}
+            data={without(friends)}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
             keyboardShouldPersistTaps="handled"
             refreshControl={pull}
             ListHeaderComponent={
               <View>
-                {requests.length > 0 ? (
+                {without(requests).length > 0 ? (
                   <View style={styles.tickets}>
                     {section('friends.requests')}
-                    {requests.map((u) => (
+                    {without(requests).map((u) => (
                       <FriendRequestTicket
                         key={u.userId}
                         compact
@@ -299,10 +327,10 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                     ))}
                   </View>
                 ) : null}
-                {sent.length > 0 ? (
+                {without(sent).length > 0 ? (
                   <View>
                     {section('friends.sent')}
-                    {sent.map((u) =>
+                    {without(sent).map((u) =>
                       row(
                         u,
                         <Pressable
@@ -327,10 +355,10 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
               settled ? <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text> : <PeopleSkeleton />
             }
             ListFooterComponent={
-              suggestions.length > 0 ? (
+              without(suggestions).length > 0 ? (
                 <View>
                   {section('friends.suggestions')}
-                  {suggestions.map((s) => {
+                  {without(suggestions).map((s) => {
                     const requested = asked.has(s.userId);
                     return row(
                       s,
@@ -364,25 +392,24 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
 }
 
 /**
- * A line of words beside an 18pt glyph, as the Messages link and a request's Cancel are drawn; the Pressable reaches it
- * to a fingertip.
+ * A line of words beside an 18pt glyph, as a request's Cancel is drawn; the Pressable reaches it to a fingertip.
  */
 const LINK_LINE = 22;
 
-/** People in grey, row for row: the face, the name and its line, the button at the end. */
+/** People row for row, as their cards will stand: the face, the name and its line, the button at the end. */
 function PeopleSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
       {[0, 1, 2, 3, 4].map((i) => (
-        <View key={i} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
-          <Skeleton width={36} height={36} radius={radii.pill} raised />
+        <View key={i} style={[styles.row, { backgroundColor: colors.glassFill }]}>
+          <Skeleton width={36} height={36} radius={radii.pill} />
           <View style={styles.rowMain}>
-            <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '50%'} raised />
-            <SkeletonText size={typography.sizes.sm} width="28%" raised />
+            <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '50%'} />
+            <SkeletonText size={typography.sizes.sm} width="28%" />
           </View>
-          <Skeleton width={64} height={MIN_TOUCH_TARGET - 12} radius={radii.pill} raised />
+          <Skeleton width={64} height={MIN_TOUCH_TARGET - 12} radius={radii.pill} />
         </View>
       ))}
     </View>
@@ -391,10 +418,8 @@ function PeopleSkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   skeleton: { gap: spacing.xs },
-  screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg },
-  head: { marginBottom: spacing.md },
-  messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  screen: { flex: 1, paddingHorizontal: layout.gutter, paddingTop: spacing.xs },
+  intro: { fontSize: typography.sizes.md, lineHeight: 22, marginBottom: spacing.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },

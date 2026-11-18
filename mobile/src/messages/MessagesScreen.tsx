@@ -25,14 +25,14 @@ import { useTabBarInset } from '../navigation/tabBarLayout';
 import { TabHeader } from '../navigation/TopBar';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useOpenSlide } from '../social/SocialSlide';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { TicketBadge } from '../play/Ticket';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { NewGroupSheet } from '../groups/NewGroupSheet';
 import { resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { messagePreview, previewIcon } from '../chat/preview';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
-import type { Group } from '../groups/api';
+import { useLeftGroups, type Group } from '../groups/api';
 import { membersLine } from '../groups/memberCount';
 import {
   FILTER_LABEL,
@@ -45,6 +45,7 @@ import {
   type MessageRow,
 } from './list';
 import { useUnread } from './unread';
+import { useHiddenByBlock } from '../social/blocks';
 import { BirdBadge } from '../letters/LetterParts';
 import { LETTERS_HOME_PATH } from '../letters/homePath';
 
@@ -163,28 +164,53 @@ export function MessagesScreen(): React.JSX.Element {
     [t],
   );
 
+  /*
+   * Somebody just blocked, or a group just left, leaves the list at once (social/blocks.ts, groups/api.ts); the last
+   * one gone leaves the list empty, with its empty state.
+   */
+  const blocked = useHiddenByBlock();
+  const left = useLeftGroups();
+  const shownChats = useMemo(() => chats && chats.filter((c) => !blocked.has(c.userId)), [chats, blocked]);
+  const shownGroups = useMemo(() => groups.filter((g) => !left.has(g.id)), [groups, left]);
   const rows = useMemo(
-    () => messageRows({ chats: chats ?? [], groups, filter, query, preview }),
-    [chats, groups, filter, query, preview],
+    () => messageRows({ chats: shownChats ?? [], groups: shownGroups, filter, query, preview }),
+    [shownChats, shownGroups, filter, query, preview],
   );
   // The first screenful of conversations rises in once, as the list arrives.
   const entering = useListEntrance(chats !== null && rows.length > 0);
   const unreadCount = useMemo(
-    () => (chats ?? []).filter((c) => c.unread > 0).length + groups.filter((g) => g.unread > 0).length,
-    [chats, groups],
+    () => (shownChats ?? []).filter((c) => c.unread > 0).length + shownGroups.filter((g) => g.unread > 0).length,
+    [shownChats, shownGroups],
   );
 
-  const open = (row: MessageRow) =>
-    row.kind === 'direct'
-      ? navigation.navigate('Chat', { userId: row.chat.userId, username: row.chat.username })
-      : navigation.navigate('GroupThread', { groupId: row.group.id, name: row.group.name });
+  /*
+   * The conversation marks itself read as it opens, so its count leaves the row and the tab at once; the lists read on
+   * coming back have the last word if that did not get through.
+   */
+  const open = (row: MessageRow) => {
+    if (row.kind === 'direct') {
+      const { userId, unread } = row.chat;
+      if (unread > 0) {
+        setChats((list) => list && list.map((c) => (c.userId === userId ? { ...c, unread: 0 } : c)));
+        report((now) => ({ chats: Math.max(0, now.chats - unread) }));
+      }
+      navigation.navigate('Chat', { userId, username: row.chat.username });
+      return;
+    }
+    const { id, unread } = row.group;
+    if (unread > 0) {
+      setGroups((list) => list.map((g) => (g.id === id ? { ...g, unread: 0 } : g)));
+      report((now) => ({ groups: Math.max(0, now.groups - unread) }));
+    }
+    navigation.navigate('GroupThread', { groupId: id, name: row.group.name });
+  };
 
   const findFriends = () => navigation.navigate('Search');
   const newGroup = () => setComposing(true);
-  const nothingAtAll = chats !== null && chats.length === 0 && groups.length === 0;
+  const nothingAtAll = shownChats !== null && shownChats.length === 0 && shownGroups.length === 0;
   const typed = query.trim().length > 0;
   // The new-group row heads a non-empty list; an empty one offers it as its button.
-  const offersNewGroup = chats !== null && !nothingAtAll && !typed && (filter === 'all' || (filter === 'groups' && groups.length > 0));
+  const offersNewGroup = shownChats !== null && !nothingAtAll && !typed && (filter === 'all' || (filter === 'groups' && shownGroups.length > 0));
 
   const header = (
     <View style={styles.listHead}>
@@ -219,7 +245,7 @@ export function MessagesScreen(): React.JSX.Element {
           <View style={styles.faces}>
             {requests.slice(0, 2).map((r, i) => (
               <View key={r.userId} style={[styles.face, i > 0 && styles.faceBehind, { borderColor: colors.surface }]}>
-                <InitialsAvatar name={r.username} id={r.userId} size={32} photoUrl={r.avatarUrl ?? undefined} />
+                <Avatar name={r.username} size={32} photoUrl={r.avatarUrl ?? undefined} />
               </View>
             ))}
             {/* Friend requests are tickets, as invites to play are: the glyph on the faces' corner. */}
@@ -402,7 +428,7 @@ function ConversationRow({
       style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
     >
       {row.kind === 'direct' ? (
-        <InitialsAvatar name={row.name} id={row.chat.userId} size={52} photoUrl={row.chat.avatarUrl ?? undefined} />
+        <Avatar name={row.name} size={52} photoUrl={row.chat.avatarUrl ?? undefined} />
       ) : (
         // A group in its rounded square, so it is never mistaken for a person with that name.
         <GroupAvatar name={row.name} id={row.group.id} size={52} photoUrl={row.group.photoUrl} />

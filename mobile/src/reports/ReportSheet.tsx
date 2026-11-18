@@ -16,8 +16,8 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
-import { blockUser } from '../social/blocks';
-import { leaveGroup } from '../groups/api';
+import { useBlock } from '../social/blocks';
+import { useLeaveGroup } from '../groups/api';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -276,7 +276,8 @@ function NoteStep({
 
 /**
  * After: thanks, what happens next, and what helps at once (a block ends it for you and tells nobody; leaving a group
- * takes you out). Each is one tap and confirms itself.
+ * takes you out). Each is one tap and is done at once, as on the website: the person or group leaves the lists, the
+ * page is told, and the server after; a refusal takes it back and says why here, or wherever the reader is by then.
  */
 function DoneStep({
   receipt,
@@ -293,13 +294,12 @@ function DoneStep({
   onBlocked?: (userId: string) => void;
   onLeftGroup?: (groupId: string) => void;
 }): React.JSX.Element {
-  const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const navigation = useNavigation<RootNavigation>();
   const dir = useDirection();
-  const [blocked, setBlocked] = useState<'idle' | 'busy' | 'done'>('idle');
-  const [left, setLeft] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [blocked, setBlocked] = useState(false);
+  const [left, setLeft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const heading = t('report.done.title');
   useAnnounce(heading);
@@ -311,34 +311,30 @@ function DoneStep({
     [],
   );
 
+  /** A refusal said on this screen while it is open; once it has closed, wherever the reader is. */
+  const saidHere = (undo: () => void) => (refusal: ApiError): boolean => {
+    if (!alive.current) return false;
+    undo();
+    setError(describeError(refusal, t));
+    return true;
+  };
+  const blockNow = useBlock(saidHere(() => setBlocked(false)));
+  const leaveNow = useLeaveGroup(saidHere(() => setLeft(false)));
+
   const block = (): void => {
-    if (!blockable || blocked !== 'idle') return;
-    setBlocked('busy');
-    void blockUser(client, blockable.userId).then((res) => {
-      if (!alive.current) return;
-      if (res.ok) {
-        setBlocked('done');
-        onBlocked?.(blockable.userId);
-      } else {
-        setBlocked('idle');
-        setError(describeError(res.error, t));
-      }
-    });
+    if (!blockable || blocked) return;
+    setError(null);
+    setBlocked(true);
+    blockNow(blockable.userId);
+    onBlocked?.(blockable.userId);
   };
 
   const leave = (): void => {
-    if (!leavable || left !== 'idle') return;
-    setLeft('busy');
-    void leaveGroup(client, leavable.groupId).then((res) => {
-      if (!alive.current) return;
-      if (res.ok) {
-        setLeft('done');
-        onLeftGroup?.(leavable.groupId);
-      } else {
-        setLeft('idle');
-        setError(describeError(res.error, t));
-      }
-    });
+    if (!leavable || left) return;
+    setError(null);
+    setLeft(true);
+    leaveNow(leavable.groupId);
+    onLeftGroup?.(leavable.groupId);
   };
 
   return (
@@ -375,17 +371,16 @@ function DoneStep({
         <View style={styles.action}>
           <ClayButton
             label={
-              blocked === 'done'
+              blocked
                 ? t('report.done.blocked')
                 : blockable.name
                   ? t('report.done.block', { name: blockable.name })
                   : t('report.done.blockThem')
             }
-            icon={blocked === 'done' ? 'check' : 'block'}
+            icon={blocked ? 'check' : 'block'}
             tone="danger"
             variant="outline"
-            busy={blocked === 'busy'}
-            disabled={blocked === 'done'}
+            disabled={blocked}
             onPress={block}
             style={styles.stretch}
           />
@@ -395,12 +390,11 @@ function DoneStep({
 
       {leavable ? (
         <ClayButton
-          label={left === 'done' ? t('report.done.left') : t('groups.leave', { group: leavable.name })}
-          icon={left === 'done' ? 'check' : 'sign-out'}
+          label={left ? t('report.done.left') : t('groups.leave', { group: leavable.name })}
+          icon={left ? 'check' : 'sign-out'}
           tone="danger"
           variant="outline"
-          busy={left === 'busy'}
-          disabled={left === 'done'}
+          disabled={left}
           onPress={leave}
           style={styles.stretch}
         />

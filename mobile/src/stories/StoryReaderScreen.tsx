@@ -21,6 +21,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -241,23 +242,26 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   }, [client, headwords]);
 
   /** Save word / Saved: on screen at once, then on the server; a refusal reverts and says why (a full vocabulary, limits/limitCopy.ts). */
+  const saving = useIntents<string, boolean>(
+    async (entryId, on) => {
+      const res = await saveWord(client, entryId, on);
+      if (res.ok) {
+        setSaved((was) => {
+          const next = new Set(was);
+          if (on) next.add(entryId);
+          else next.delete(entryId);
+          return next;
+        });
+      }
+      return res;
+    },
+    { failed: (error, entryId) => setSaveError({ entryId, text: limitErrorText(error, t) ?? describeError(error, t) }) },
+  );
+  const isSaved = (entryId: string | null | undefined): boolean => !!entryId && saving.shown(entryId, saved.has(entryId));
   const toggleSave = (entryId: string): void => {
-    const on = !saved.has(entryId);
     haptic('tap');
-    const mark = (value: boolean) =>
-      setSaved((was) => {
-        const next = new Set(was);
-        if (value) next.add(entryId);
-        else next.delete(entryId);
-        return next;
-      });
-    mark(on);
     setSaveError(null);
-    void saveWord(client, entryId, on).then((res) => {
-      if (res.ok) return;
-      mark(!on);
-      setSaveError({ entryId, text: limitErrorText(res.error, t) ?? describeError(res.error, t) });
-    });
+    saving.want(entryId, !isSaved(entryId), saved.has(entryId));
   };
 
   // The category's name for the story's slug; the list is small and cached on the server.
@@ -408,13 +412,11 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     });
   };
 
-  const toggleBookmark = (): void => {
-    if (!story) return;
-    const on = !(me?.bookmarked ?? false);
-    haptic('tap');
-    const patch = (value: boolean) =>
+  const bookmarking = useIntents<string, boolean>(async (id, on) => {
+    const res = await setBookmark(client, id, on);
+    if (res.ok && shown.current?.id === id) {
       setMe((was) => ({
-        bookmarked: value,
+        bookmarked: on,
         paragraph: was?.paragraph ?? 0,
         share: was?.share ?? 0,
         finishedAt: was?.finishedAt ?? null,
@@ -422,10 +424,14 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
         total: was?.total ?? null,
         attemptsToday: was?.attemptsToday ?? 0,
       }));
-    patch(on);
-    void setBookmark(client, story.id, on).then((res) => {
-      if (!res.ok && shown.current?.id === story.id) patch(!on);
-    });
+    }
+    return res;
+  });
+  const bookmarked = story ? bookmarking.shown(story.id, me?.bookmarked ?? false) : false;
+  const toggleBookmark = (): void => {
+    if (!story) return;
+    haptic('tap');
+    bookmarking.want(story.id, !bookmarked, me?.bookmarked ?? false);
   };
 
   const textScale = prefs.textScale;
@@ -472,11 +478,11 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     <Pressable
       onPress={toggleBookmark}
       accessibilityRole="button"
-      accessibilityLabel={me?.bookmarked ? t('stories.library.bookmarked') : t('stories.library.bookmark')}
-      accessibilityState={{ selected: me?.bookmarked ?? false }}
+      accessibilityLabel={bookmarked ? t('stories.library.bookmarked') : t('stories.library.bookmark')}
+      accessibilityState={{ selected: bookmarked }}
       style={({ pressed }) => [styles.headerButton, pressed && heldDim]}
     >
-      <Icon name={me?.bookmarked ? 'bookmark-fill' : 'bookmark'} size={22} color={me?.bookmarked ? colors.primary : colors.textPrimary} />
+      <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={22} color={bookmarked ? colors.primary : colors.textPrimary} />
     </Pressable>
   );
 
@@ -590,14 +596,18 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
               story={story}
               onOpen={() => setGloss(entry)}
               clips={clips}
-              saved={!!entry.entryId && saved.has(entry.entryId)}
+              saved={isSaved(entry.entryId)}
               onSave={entry.entryId ? () => toggleSave(entry.entryId!) : undefined}
               saveColumn={headwords}
             />
           ))}
         </Card>
         {/* A save refused from the list shows under it; one refused in the word's sheet shows there. */}
-        {saveError && !gloss ? <Note tone="danger" icon="alert">{saveError.text}</Note> : null}
+        {saveError && !gloss ? (
+          <Note tone="danger" icon="alert" live>
+            {saveError.text}
+          </Note>
+        ) : null}
       </View>
     ) : null;
 
@@ -802,7 +812,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           entry={gloss}
           story={story}
           clips={clips}
-          saved={!!gloss.entryId && saved.has(gloss.entryId)}
+          saved={isSaved(gloss.entryId)}
           onSave={gloss.entryId ? () => toggleSave(gloss.entryId!) : undefined}
           error={saveError && saveError.entryId === gloss.entryId ? saveError.text : null}
           onClose={() => {
@@ -1045,7 +1055,11 @@ function GlossSheet({
           ) : null}
         </View>
       ) : null}
-      {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
+      {error ? (
+        <Note tone="danger" icon="alert" live>
+          {error}
+        </Note>
+      ) : null}
     </Sheet>
   );
 }

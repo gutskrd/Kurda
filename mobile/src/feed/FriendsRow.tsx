@@ -8,7 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { springTo, useListEntrance } from '../theme/animate';
 import { bucket, type RailFriend, type SocialRailData } from '../social/rail';
@@ -90,7 +90,7 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
         spoken={`${t('feed.friends.you')}, ${t('post.open')}`}
         onPress={() => require('post') && navigation.navigate('Compose')}
       >
-        <InitialsAvatar name={me} id={user?.id ?? ''} size={FACE} photoUrl={user?.profilePhotoUrl ?? undefined} />
+        <Avatar name={me} size={FACE} photoUrl={ownAvatarUrl(user)} />
         <View style={[styles.plus, { backgroundColor: colors.primary, borderColor: colors.background }]}>
           <Icon name="plus" size={14} color={colors.textOnPrimary} />
         </View>
@@ -115,7 +115,7 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
         const spoken = f.activity ? t('feed.friends.playing', { name }) : f.online ? t('feed.friends.online', { name }) : name;
         return (
           <Face key={f.userId} label={name} spoken={spoken} ring={ring} delay={entering(i + 1)} onPress={() => navigation.navigate('UserProfile', { userId: f.userId })}>
-            <InitialsAvatar name={name} id={f.userId} size={FACE} photoUrl={f.avatarUrl ?? undefined} />
+            <Avatar name={name} size={FACE} photoUrl={f.avatarUrl ?? undefined} />
           </Face>
         );
       })}

@@ -26,7 +26,7 @@ import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import type { FriendService } from '../friends/service.js';
 import type { Notification } from '../push/service.js';
 import { areFriendsSql } from '../users/age.js';
-import { canJoin } from './access.js';
+import { canJoinEach } from './access.js';
 import { gameNotFound } from './errors.js';
 import { MULTI_GAME_TITLES } from '../mp/titles.js';
 import type { PlayEvents } from './events.js';
@@ -217,14 +217,14 @@ export class PlayService {
     let limited = false;
     // friends only; a block reads as 'blocked' here. Everyone asked, in one query
     const statuses = await this.deps.friends.statusesBetween(hostId, wanted);
-    for (const inviteeId of wanted) {
-      if (facts.memberIds.includes(inviteeId) || facts.removedIds.includes(inviteeId)) continue;
-      if (statuses.get(inviteeId) !== 'friends') continue;
-      // A friend the game would refuse (a minor or unknown age in an open game, or a block with someone in it) is invited as
-      // far as the host can tell: counted, listed as pending, expiring on time and carded in the DM, or `invited` would
-      // detect minors and third-party blocks. The invite is held: the card reads 'unavailable' to them, and no banner,
-      // inbox entry or event follows.
-      const held = !(await canJoin(this.pool, joinCheckFor(facts, inviteeId)));
+    const asked = wanted.filter((id) => !facts.memberIds.includes(id) && !facts.removedIds.includes(id) && statuses.get(id) === 'friends');
+    // A friend the game would refuse (a minor or unknown age in an open game, or a block with someone in it) is invited as
+    // far as the host can tell: counted, listed as pending, expiring on time and carded in the DM, or `invited` would
+    // detect minors and third-party blocks. The invite is held: the card reads 'unavailable' to them, and no banner,
+    // inbox entry or event follows. Whether the game would take each of them is one query.
+    const joinable = await canJoinEach(this.pool, facts, asked.map((id) => ({ id, removed: false })));
+    for (const [i, inviteeId] of asked.entries()) {
+      const held = !joinable[i];
       const rematchOf = before?.memberIds.includes(inviteeId) ? facts.rematchOf : null;
       const outcome = await this.recordInvite(hostId, inviteeId, facts, now, { held, rematchOf });
       if (outcome === 'cooldown') continue;
@@ -718,18 +718,6 @@ export class PlayService {
       avatarUrl: resolveAvatarUrl(row.profile_photo_key, row.selected_avatar_key, this.publicUrl),
     };
   }
-}
-
-/** The join rule's question for a lobby and someone not in it yet. */
-function joinCheckFor(facts: LobbyFacts, userId: string) {
-  return {
-    joinerId: userId,
-    hostId: facts.hostId,
-    access: facts.access,
-    memberIds: facts.memberIds,
-    chatGroupId: facts.chatGroupId,
-    removed: facts.removedIds.includes(userId),
-  };
 }
 
 /** A rematch offer counts while it is fresh and not taken back. */

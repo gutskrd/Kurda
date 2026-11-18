@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { WidgetPrefs } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
+import { useIntents } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { reloadLetterWidget } from '../widget/reload';
 
@@ -8,24 +9,26 @@ import { reloadLetterWidget } from '../widget/reload';
  * Pins a received letter to the home-screen widget from a correspondence, or unpins it so the widget shows the
  * newest. The choice belongs to the account (shared WidgetPrefs), so every phone follows it; this phone's widget
  * reloads at once (widget/reload.ts). Nothing is offered until the server has said what is pinned, since acting
- * without knowing could unpin a letter pinned on another phone. The server refuses NOT_FOUND and LETTER_REMOVED.
+ * without knowing could unpin a letter pinned on another phone. A pin shows at once and is put back if the server
+ * refuses (NOT_FOUND, LETTER_REMOVED).
  */
 const WIDGET_PREFS_PATH = '/letters/widget/prefs';
 
 const isPrefs = (v: unknown): v is WidgetPrefs =>
   typeof v === 'object' && v !== null && typeof (v as WidgetPrefs).showWords === 'boolean' && ((v as WidgetPrefs).pinnedLetterId === null || typeof (v as WidgetPrefs).pinnedLetterId === 'string');
 
-export function useWidgetPin(client: ApiClient): {
+export function useWidgetPin(
+  client: ApiClient,
+  /** The letter was removed meanwhile, so the correspondence should be read again. */
+  onRemoved: () => void,
+): {
   /** The pinned letter, null for always the newest; undefined until the server has said. */
   pinned: string | null | undefined;
-  /** The letter being pinned or unpinned right now. */
-  busy: string | null;
   error: ApiError | null;
-  /** Resolves to the server's refusal code when it says no (LETTER_REMOVED or NOT_FOUND). */
-  toggle: (letterId: string) => Promise<string | undefined>;
+  /** Pins the letter, or unpins it if it is the one pinned; shown at once and put back if the server says no. */
+  toggle: (letterId: string) => void;
 } {
   const [prefs, setPrefs] = useState<WidgetPrefs | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
@@ -38,25 +41,38 @@ export function useWidgetPin(client: ApiClient): {
     };
   }, [client]);
 
-  const toggle = useCallback(
-    async (letterId: string): Promise<string | undefined> => {
-      if (!prefs || busy) return undefined;
-      const next: WidgetPrefs = { pinnedLetterId: prefs.pinnedLetterId === letterId ? null : letterId, showWords: prefs.showWords };
-      setBusy(letterId);
-      setError(null);
-      const res = await client.put<unknown>(WIDGET_PREFS_PATH, next);
-      setBusy(null);
-      if (!res.ok) {
-        setError(res.error);
-        return res.error.code ?? 'FAILED';
+  const pinning = useIntents<'pin', string | null, unknown>(
+    async (_key, pinnedLetterId) => {
+      // Only the pin: the words choice is the widget settings page's, and is left as the server has it.
+      const res = await client.put<unknown>(WIDGET_PREFS_PATH, { pinnedLetterId });
+      if (res.ok) {
+        const answer = res.data;
+        setPrefs((was) =>
+          isPrefs(answer) ? { pinnedLetterId: answer.pinnedLetterId, showWords: answer.showWords } : { showWords: was?.showWords ?? true, pinnedLetterId },
+        );
+        // Reload this phone's widget now rather than at its next refresh.
+        reloadLetterWidget();
       }
-      setPrefs(isPrefs(res.data) ? { pinnedLetterId: res.data.pinnedLetterId, showWords: res.data.showWords } : next);
-      // Reload this phone's widget now rather than at its next refresh.
-      reloadLetterWidget();
-      return undefined;
+      return res;
     },
-    [client, prefs, busy],
+    {
+      answered: (data, sent) => (isPrefs(data) ? data.pinnedLetterId : sent),
+      failed: (refused) => {
+        setError(refused);
+        if (refused.code === 'LETTER_REMOVED') onRemoved();
+      },
+    },
+  );
+  const pinned = prefs ? pinning.shown('pin', prefs.pinnedLetterId) : undefined;
+
+  const toggle = useCallback(
+    (letterId: string): void => {
+      if (!prefs) return;
+      setError(null);
+      pinning.want('pin', pinned === letterId ? null : letterId, prefs.pinnedLetterId);
+    },
+    [prefs, pinning, pinned],
   );
 
-  return { pinned: prefs ? prefs.pinnedLetterId : undefined, busy, error, toggle };
+  return { pinned, error, toggle };
 }

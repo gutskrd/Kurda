@@ -34,6 +34,8 @@ import {
   type QuestView,
 } from './quests.js';
 import { heldDim } from '../theme/MotionParts';
+import { useNavigation } from '@react-navigation/native';
+import type { RootNavigation } from '../navigation/rootStack';
 
 interface ActiveEvent {
   key: string;
@@ -46,6 +48,7 @@ interface ActiveEvent {
  */
 export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
+  const navigation = useNavigation<RootNavigation>();
   const { t } = useI18n();
   const { colors } = useTheme();
   const [events, setEvents] = useState<EventQuestsView[] | null>(null);
@@ -126,7 +129,14 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
       <View style={styles.screen}>
         <ScreenHeader title={t('events.title')} onBack={onExit} browse />
 
-        <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} empty={<EmptyState title={t('events.none')} body={t('events.noneBody')} />}>
+        <AsyncBoundary
+          loading={events === null}
+          error={events === null ? error : null}
+          isEmpty={events?.length === 0}
+          onRetry={() => void load()}
+          // Between events the page says what one is and where it will show, and offers today's quests meanwhile.
+          empty={<EmptyState title={t('events.none')} body={t('events.noneWhat')} action={{ label: t('quests.title'), onPress: () => navigation.navigate('Quests') }} />}
+        >
           {() => events == null ? null : (
           <ScrollView contentContainerStyle={styles.content} refreshControl={pull}>
             {claimError ? (

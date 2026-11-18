@@ -98,6 +98,21 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
     expect(off.json()).toMatchObject({ on: false, engagement: { likes: 0, liked: false } });
   });
 
+  it('sets the state it is asked for, so a repeated or late request changes nothing', async () => {
+    const saved = await call('POST', `/posts/image/${pictureId}/bookmark`, tokens.me!, { on: true });
+    expect(saved.json()).toMatchObject({ on: true, engagement: { bookmarks: 1, bookmarked: true } });
+    const again = await call('POST', `/posts/image/${pictureId}/bookmark`, tokens.me!, { on: true });
+    expect(again.json()).toMatchObject({ on: true, engagement: { bookmarks: 1, bookmarked: true } });
+
+    const off = await call('POST', `/posts/image/${pictureId}/bookmark`, tokens.me!, { on: false });
+    expect(off.json()).toMatchObject({ on: false, engagement: { bookmarks: 0, bookmarked: false } });
+    const late = await call('POST', `/posts/image/${pictureId}/bookmark`, tokens.me!, { on: false });
+    expect(late.json()).toMatchObject({ on: false, engagement: { bookmarks: 0, bookmarked: false } });
+
+    const wrong = await call('POST', `/posts/image/${pictureId}/bookmark`, tokens.me!, { on: 'yes' });
+    expect(wrong.statusCode).toBe(400);
+  });
+
   it('counts other people without claiming their like as yours', async () => {
     await call('POST', `/posts/library/${storyId}/like`, tokens.mate!);
     const mine = await call('POST', `/posts/library/${storyId}/like`, tokens.me!);
@@ -296,6 +311,7 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
     for (const id of unreadable) {
       for (const kind of ['like', 'bookmark', 'repost']) {
         expect((await call('POST', `/posts/library/${id}/${kind}`, tokens.me!)).statusCode, `${kind} ${id}`).toBe(404);
+        expect((await call('POST', `/posts/library/${id}/${kind}`, tokens.me!, { on: true })).statusCode, `${kind} ${id} on`).toBe(404);
       }
     }
     const kept = await pool.query(`SELECT 1 FROM post_engagements WHERE user_id = $1 AND target_id = ANY($2)`, [ids.me, unreadable]);
@@ -308,5 +324,8 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
     const off = await call('POST', `/posts/library/${later}/like`, tokens.me!);
     expect(off.statusCode).toBe(200);
     expect(off.json().on).toBe(false);
+    const setOff = await call('POST', `/posts/library/${later}/like`, tokens.me!, { on: false });
+    expect(setOff.statusCode).toBe(200);
+    expect(setOff.json().on).toBe(false);
   });
 });

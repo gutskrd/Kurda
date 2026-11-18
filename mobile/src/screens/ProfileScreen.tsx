@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { ActivityIndicator, Image, RefreshControl, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
@@ -10,11 +10,10 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, ErrorRetry, GlassCard, GradientBackground } from '../theme/glass';
-import { display, statValue, statCaption } from '../theme/fonts';
+import { display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon } from '../theme/Icon';
-import { useCountUp } from '../theme/animate';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { TabHeader } from '../navigation/TopBar';
 import { useOpenMenu } from '../navigation/SideMenu';
@@ -22,39 +21,37 @@ import { HeaderButton } from '../navigation/HeaderButton';
 import { useDirection } from '../reports/direction';
 import { useUnread } from '../messages/unread';
 import { SITE_ORIGIN } from '../feed/api';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { Horizon } from '../profile/Horizon';
 import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
-import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { LevelBar, OnlyYou, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { ProfileTree } from '../tree/ProfileTree';
-import { AvatarStage } from '../profile/AvatarStage';
-import { OverviewGrid, OverviewSkeleton, type OverviewTile } from '../profile/OverviewGrid';
-import { Framed, LeagueEmblem } from '../ranks/art';
+import { Framed } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { leagueTint } from '../ranks/tint';
-import { knownTier, leagueLabel, leagueName } from '../leagues/format';
+import { VISIBILITY_LABEL } from '../social/format';
 import { useFreshBadges } from '../badges/BadgeCelebrationHost';
-import { useCourseDialect } from '../learn/courseDialect';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
 import { useSendErrorAlert } from '../reports/SendError';
 import { useI18n } from '../i18n/I18nContext';
-import type { Streak } from '../streak/format';
+import { learningStats, type Streak } from '../streak/format';
+import { freezeSlots } from '../streak/kept';
 import { StreakSheet } from '../streak/StreakSheet';
 import { formatNumber } from '../i18n/format';
 import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
-import { dialectNameKey } from '../i18n/dialectName';
+import type { Visibility } from '../social/format';
 
 /** The avatar's size: the largest thing on the screen. */
 const AVATAR = 96;
 /** The avatar with a season frame: the ring sits outside the avatar, which keeps its size. */
 const FRAMED = Math.round(AVATAR / SEASON_FRAME_INNER);
-/** The tinted stage the avatar springs onto, with room round the frame for its two soft discs. */
-const STAGE = FRAMED + 36;
+/** The ring of page colour that lifts the avatar off the banner it overlaps. */
+const RING = 4;
 /** The banner behind the avatar: the worn background, or the learner's own horizon until they wear one. */
 const BANNER = 124;
 
@@ -69,6 +66,8 @@ interface Me extends ProfileCosmetics {
   profilePhotoUrl: string | null;
   /** When the account was made; the year shows under the handle. */
   createdAt?: string | null;
+  /** Who may open the profile; absent on an older server. */
+  profileVisibility?: Visibility;
 }
 
 /**
@@ -97,7 +96,7 @@ function GuestProfile(): React.JSX.Element {
         <GlassCard style={styles.guestCard}>
           <View style={styles.guestInner}>
             <View style={styles.guestHead}>
-              <InitialsAvatar name={user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={null} />
+              <Avatar name={user?.username ?? ''} size={AVATAR} />
               {/* The guest's generated name. */}
               <Text style={[styles.guestName, { color: colors.textSecondary }]} numberOfLines={1}>
                 {user?.username}
@@ -120,16 +119,16 @@ function GuestProfile(): React.JSX.Element {
 }
 
 /**
- * Your own profile, in the order its owner looks for things: identity (banner, avatar, name, handle and year
- * joined), actions (Edit, Share, find friends), progress (three counters and the overview tiles), then badges,
- * ranks and writing. Nothing is written over the banner, since text on someone's artwork is only as readable as
- * the artwork allows. Places rather than profile actions (shop, settings, saved, badges, tags, library) live in
- * the menu.
+ * Your own profile, laid out as the website's: identity (banner, avatar, name, handle, year joined, who can see it,
+ * bio), actions (Edit, Share, find friends), the level and four figures, then the tree, badges, league and writing,
+ * the numbers only you see, and activity. Nothing is written over the banner, since text on someone's artwork is only
+ * as readable as the artwork allows. Places rather than profile actions (shop, settings, saved, badges, tags,
+ * library) live in the menu.
  */
 function AccountProfile() {
-  const { user, client } = useAuth();
+  const { user, client, refreshUser } = useAuth();
   const navigation = useNavigation<RootNavigation>();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const { width: windowWidth } = useWindowDimensions();
   const tabBarInset = useTabBarInset();
   const openMenu = useOpenMenu();
@@ -147,9 +146,8 @@ function AccountProfile() {
   const [progressSettled, setProgressSettled] = useState(false);
   const [zer, setZer] = useState<number | null>(null);
   const [friends, setFriends] = useState<number | null>(null);
-  /** Ranks, league, showcase and season frame. */
+  /** League, showcase and frame. */
   const [progress, setProgress] = useState<{
-    ranks: ProfileRank[];
     league: ProfileLeague | null;
     badges: ShowcaseBadge[];
     frameSku: string | null;
@@ -170,8 +168,6 @@ function AccountProfile() {
   const showSendError = useSendErrorAlert();
   // Badges earned since the app opened wear a "New" chip in the showcase.
   const fresh = useFreshBadges();
-  // The course's dialect, for the course tile.
-  const course = useCourseDialect();
 
   /*
    * The session user carries identity only, so the profile comes from /me, the wallet from /me/wallet, the friend
@@ -200,11 +196,10 @@ function AccountProfile() {
         if (f.ok) setFriends(f.data.total ?? f.data.friends.length);
         if (inv.ok) setIconsOwned((inv.data.items ?? []).filter((i) => i.category === 'icon').length);
 
-        // Ranks, league, showcase and season frame come from your own public profile, which already computes them, as the website does.
+        // League, showcase and frame come from your own public profile, which already computes them, as the website does.
         const id = m.ok ? m.data.user.id : null;
         if (id) {
           const p = await client.get<{
-            ranks?: ProfileRank[];
             league?: ProfileLeague | null;
             badges?: ShowcaseBadge[];
             frameSku?: string | null;
@@ -214,7 +209,6 @@ function AccountProfile() {
           }>(`/users/${id}`);
           if (active && p.ok) {
             setProgress({
-              ranks: p.data.ranks ?? [],
               league: p.data.league ?? null,
               badges: p.data.badges ?? [],
               frameSku: p.data.frameSku ?? null,
@@ -249,9 +243,12 @@ function AccountProfile() {
     setUploading(true);
     const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t, locale);
     setUploading(false);
-    if (res.ok) setPhotoUrl(res.url);
-    else showSendError(t('profile.photoFailed'), { message: res.error, limited: res.limited });
-  }, [client, uploading, showSendError, t, locale]);
+    if (res.ok) {
+      setPhotoUrl(res.url);
+      // The tab bar and everywhere else wearing your face read it from the session.
+      void refreshUser();
+    } else showSendError(t('profile.photoFailed'), { message: res.error, limited: res.limited });
+  }, [client, uploading, showSendError, t, locale, refreshUser]);
 
   /*
    * Shares your profile's address. The app does not claim hevalo.app links until the association files exist (see
@@ -265,9 +262,6 @@ function AccountProfile() {
   }, [me, user, t]);
 
   const country = me?.country ? countryName(me.country, locale) ?? me.country : null;
-  const leagueTier = knownTier(progress?.league?.tier);
-  // The stage takes the league's colour, or the brand's before there is a league.
-  const stageTint = leagueTier ? leagueTint(leagueTier, scheme)[1] : colors.primary;
   const joined = me?.createdAt ? new Date(me.createdAt) : null;
   const joinedYear = joined && !Number.isNaN(joined.getTime()) ? joined.getFullYear() : null;
   const username = me?.username ?? user?.username ?? '';
@@ -279,48 +273,40 @@ function AccountProfile() {
     ? `@${username} ·  ${t('profile.joined', { year: joinedYear }).replace(/ /g, ' ')}`
     : `@${username}`;
 
-  // Built from the parts that exist, joined by interpuncts, and absent when none do (most people own no icons).
-  const aside = [zer === null ? null : `${formatNumber(zer, locale)} Zêr`, iconsOwned ? `${iconsOwned} ${t('profile.stat.icons')}` : null].filter(
-    (part): part is string => part !== null,
-  );
-
-  // The overview tiles. XP has nothing behind it, so it is the only one not pressable.
-  const tiles = useMemo<OverviewTile[]>(() => {
-    const burning = streak && streak.current > 0 ? fireLevel(streak.current) : null;
-    return [
-      {
-        key: 'streak',
-        art: burning ? <Fire size={34} level={burning} /> : <Icon name="flame" size={26} color={colors.textSecondary} />,
-        value: streak?.current ?? 0,
-        label: t('profile.stat.streak'),
-        onPress: streak ? () => setStreakOpen(true) : undefined,
-      },
-      {
-        key: 'course',
-        art: <CourseFlag />,
-        value: t(dialectNameKey(course)),
-        label: t('profile.stat.course'),
-        onPress: () => navigation.navigate('Tabs', { screen: 'Learn' }),
-      },
-      {
-        key: 'league',
-        art: leagueTier ? <LeagueEmblem tier={leagueTier} size={36} label={leagueLabel(t, leagueTier)} /> : <Icon name="trophy" size={24} color={colors.textSecondary} />,
-        value: leagueTier ? leagueName(t, leagueTier) : null,
-        label: t('profile.league'),
-        onPress: () => navigation.navigate('League'),
-      },
-      {
-        key: 'xp',
-        art: <Icon name="bolt" size={26} color={colors.gold} />,
-        value: me?.level?.xp ?? me?.xp ?? 0,
-        label: t('profile.stat.xp'),
-      },
-    ];
-  }, [streak, course, leagueTier, me, colors, t, navigation]);
+  const number = (n: number | null | undefined): string | null => (n == null ? null : formatNumber(n, locale));
+  const streakDays = streak?.current ?? 0;
+  // The four figures the website shows. The streak opens its sheet; friends and badges open their pages.
+  const facts: ProfileFact[] = [
+    {
+      key: 'streak',
+      label: t('profile.stat.streak'),
+      value: settled ? number(streakDays) : null,
+      art: <Fire size={18} level={fireLevel(streakDays)} />,
+      spoken: t(streakDays === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: formatNumber(streakDays, locale) }),
+      onPress: streak ? () => setStreakOpen(true) : undefined,
+    },
+    { key: 'xp', label: t('profile.stat.xp'), value: settled ? number(me?.level?.xp ?? me?.xp ?? 0) : null },
+    { key: 'friends', label: t('nav.friends'), value: settled ? (number(friends) ?? '—') : null, onPress: () => navigation.navigate('Friends') },
+    // The count arrives with the public profile, after the first answers.
+    { key: 'badges', label: t('profile.badges'), value: progressSettled ? (number(progress?.achievements) ?? '—') : null, onPress: () => navigation.navigate('Badges') },
+  ];
+  const stats = streak ? learningStats(streak) : null;
+  // A Hevalo+ member has room for a second freeze, and the hint says how many rather than "one".
+  const freezeRoom = streak ? freezeSlots(streak).max : 1;
+  // The numbers only you see, as the website's own card has them; Zêr leads to where it is spent.
+  const yours: ProfileFact[] = [
+    { key: 'longest', label: t('profile.stat.longestStreak'), value: stats ? number(stats.longest) : null },
+    { key: 'days', label: t('profile.stat.daysLearned'), value: stats ? number(stats.daysLearned) : null },
+  ];
+  const yoursMore: ProfileFact[] = [
+    { key: 'freezes', label: t('profile.stat.freezes'), value: stats ? number(stats.freezes) : null },
+    { key: 'zer', label: 'Zêr', value: settled ? (number(zer) ?? '—') : null, onPress: () => navigation.navigate('Shop') },
+  ];
+  const visibility = me?.profileVisibility ? VISIBILITY_LABEL[me.profileVisibility] : null;
 
   const face = (
     <>
-      <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={photoUrl} />
+      <Avatar name={user?.displayName ?? user?.username ?? ''} size={AVATAR} photoUrl={photoUrl ?? me?.avatarUrl ?? ownAvatarUrl(user)} />
       {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
     </>
   );
@@ -365,18 +351,21 @@ function AccountProfile() {
 
         {/* The avatar on its stage over the banner's lower edge, then name, handle, year, location and bio. */}
         <View style={[styles.hero, styles.heroOverBanner]}>
-          <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel={t('profile.changePhoto')} style={({ pressed }) => pressed && heldDim}>
-            <AvatarStage tint={stageTint} size={STAGE}>
-              {/* The frame rings the avatar; the avatar and its icon keep their size inside it. */}
-              <Framed sku={progress?.frameSku} url={progress?.frameUrl} size={FRAMED} label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
-                {face}
-              </Framed>
-              {uploading ? (
-                <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
-                  <ActivityIndicator color={colors.textOnScrim} />
-                </View>
-              ) : null}
-            </AvatarStage>
+          <Pressable
+            onPress={changePhoto}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.changePhoto')}
+            style={({ pressed }) => [styles.face, { borderColor: colors.background, backgroundColor: colors.background }, pressed && heldDim]}
+          >
+            {/* The frame rings the avatar; the avatar and its icon keep their size inside it. */}
+            <Framed sku={progress?.frameSku} url={progress?.frameUrl} size={FRAMED} label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
+              {face}
+            </Framed>
+            {uploading ? (
+              <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
+                <ActivityIndicator color={colors.textOnScrim} />
+              </View>
+            ) : null}
           </Pressable>
           <View style={[styles.nameRow, { flexDirection: dir.row }]}>
             {/* A long name wraps to a second line rather than being cut. */}
@@ -394,14 +383,32 @@ function AccountProfile() {
               <Text style={[styles.countryName, { color: colors.textSecondary }]}>{country}</Text>
             </View>
           ) : null}
-          {me?.bio ? <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{me.bio}</Text> : null}
+          {/* Who can open this page, said on the page itself, and one tap from where it is changed. */}
+          {visibility ? (
+            <Pressable
+              onPress={() => navigation.navigate('SettingsPage', { page: 'visibility' })}
+              accessibilityRole="link"
+              style={({ pressed }) => [styles.seen, { flexDirection: dir.row }, pressed && heldDim]}
+              testID="profile-seen-by"
+            >
+              <Icon name="eye" size={15} tone="secondary" />
+              <Text style={[styles.seenText, { color: colors.textSecondary }]}>{t('profile.seenBy', { who: t(visibility) })}</Text>
+            </Pressable>
+          ) : null}
+          {me?.bio ? (
+            <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{me.bio}</Text>
+          ) : me ? (
+            <Pressable onPress={() => navigation.navigate('EditProfile')} accessibilityRole="link" style={({ pressed }) => pressed && heldDim} testID="profile-add-bio">
+              <Text style={[styles.addBio, { color: colors.primary }]}>{t('profile.addBio')}</Text>
+            </Pressable>
+          ) : null}
         </View>
 
         {/*
-          Edit and Share, the same size side by side, and the find-friends button. The buttons are text only: icons left
-          too little room at 320 points and long labels in German, Kurmancî and Soranî were cut off. A long label wraps and
-          both buttons grow to match. Each reaches at most half the gap toward the next, so a tap between goes to the
-          nearer one.
+          Edit and Share side by side, and the find-friends button. The buttons are text only, each label on one line:
+          where the three do not fit (Soranî, German), a button moves to a second row and both rows fill the width,
+          rather than a label wrapping inside its pill. Each reaches at most half the gap toward the next, so a tap
+          between goes to the nearer one.
         */}
         <View style={[styles.actions, { flexDirection: dir.row }]}>
           <ReachGroup gap={spacing.sm}>
@@ -412,7 +419,9 @@ function AccountProfile() {
               testID="profile-edit"
               style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
             >
-              <Text style={[styles.actionText, { color: colors.textPrimary }]}>{t('profile.edit')}</Text>
+              <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
+                {t('profile.edit')}
+              </Text>
             </Pressable>
             <Pressable
               onPress={share}
@@ -421,7 +430,9 @@ function AccountProfile() {
               testID="profile-share"
               style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
             >
-              <Text style={[styles.actionText, { color: colors.textPrimary }]}>{t('profile.share')}</Text>
+              <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
+                {t('profile.share')}
+              </Text>
             </Pressable>
             <Pressable
               onPress={() => navigation.navigate('Friends')}
@@ -435,28 +446,15 @@ function AccountProfile() {
           </ReachGroup>
         </View>
 
-        {/* Friends and badges counts open their pages; the level has nothing behind it, so it is not pressable. */}
-        <View style={[styles.stats, { flexDirection: dir.row }]}>
-          <Stat label={t('nav.friends')} value={friends} loading={!settled} onPress={() => navigation.navigate('Friends')} />
-          {/* The count arrives with the public profile, after the first answers. */}
-          <Stat label={t('profile.badges')} value={progress?.achievements ?? null} loading={!progressSettled} onPress={() => navigation.navigate('Badges')} />
-          <Stat label={t('profile.stat.level')} value={me?.level?.level ?? 1} loading={!settled} />
-        </View>
-        {!settled ? (
-          <SkeletonText size={typography.sizes.xs} width={120} align="center" />
-        ) : aside.length > 0 ? (
-          <Text style={[styles.aside, { color: colors.textSecondary }]} numberOfLines={1}>
-            {aside.join('  ·  ')}
-          </Text>
+        {me?.level ? (
+          <View style={styles.level}>
+            <LevelBar level={me.level} />
+          </View>
         ) : null}
+        <ProfileFacts facts={facts} testID="profile-facts" />
+        {settled && !me ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : null}
 
         <GiftedNote background={me?.background} icon={me?.icon} />
-
-        {/*
-          The overview tiles once the first answers are in, the league tile filling in as the showcase arrives; if the
-          account could not be read, an error with a retry rather than an endless shimmer.
-        */}
-        {settled && me ? <OverviewGrid tiles={tiles} /> : settled ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : <OverviewSkeleton />}
 
         {/* The three showcased badges, each game's rank, and the league. */}
         {!progress && !progressSettled ? (
@@ -470,12 +468,10 @@ function AccountProfile() {
         {progress ? (
           <ProgressShowcase
             own
-            ranks={progress.ranks}
             league={progress.league}
             badges={progress.badges}
             fresh={fresh}
             onBadges={() => navigation.navigate('Badges')}
-            onRanks={(game) => navigation.navigate('Ranks', { game })}
             onLeague={() => navigation.navigate('League')}
           />
         ) : null}
@@ -484,61 +480,27 @@ function AccountProfile() {
         {me?.favoritePoem ? <FavoriteRow label={t('profile.favoritePoem')} title={me.favoritePoem.title} /> : null}
         {me?.favoriteStory ? <FavoriteRow label={t('profile.favoriteStory')} title={me.favoriteStory.title} /> : null}
 
+        {me ? (
+          <OnlyYou title={t('profile.yourProgress')}>
+            <ProfileFacts facts={yours} />
+            <ProfileFacts facts={yoursMore} />
+            {stats ? (
+              <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>
+                {freezeRoom > 1
+                  ? t('profile.freezeHintPlus', { count: stats.sessionsPerFreeze, max: formatNumber(freezeRoom, locale) })
+                  : t('profile.freezeHint', { count: stats.sessionsPerFreeze })}
+              </Text>
+            ) : null}
+            {iconsOwned ? (
+              <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{`${t('profile.stat.icons')} · ${formatNumber(iconsOwned, locale)}`}</Text>
+            ) : null}
+          </OnlyYou>
+        ) : null}
+
         {user?.id ? <ProfileActivity key={reloadKey} userId={user.id} own /> : null}
       </ScrollView>
       <StreakSheet streak={streakOpen ? streak : null} onClose={() => setStreakOpen(false)} onRestored={setStreak} />
     </GradientBackground>
-  );
-}
-
-/** The course tile's picture: the course's flag, or the Learn tab's book until it loads or if it fails, never an empty box. */
-function CourseFlag(): React.JSX.Element {
-  const { colors } = useTheme();
-  const [broken, setBroken] = useState(false);
-  const uri = flagUrl('KU');
-  if (!uri || broken) return <Icon name="book" size={24} color={colors.textSecondary} />;
-  return <Image source={{ uri }} style={styles.courseFlag} resizeMode="contain" accessibilityElementsHidden onError={() => setBroken(true)} />;
-}
-
-/** A profile counter that counts up as it arrives; an unknown value is a dash, never a zero that reads as real. */
-function Stat({ label, value, onPress, loading = false }: { label: string; value: number | null; onPress?: () => void; loading?: boolean }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { locale } = useI18n();
-  const count = useCountUp(value ?? 0);
-  const shown = value === null ? '—' : formatNumber(count, locale);
-  const settled = value === null ? '—' : formatNumber(value, locale);
-  const body = (
-    <>
-      {loading ? (
-        // A placeholder, since a 0 or 1 shown before the real number reads as real.
-        <SkeletonText size={typography.sizes.lg} width={28} align="center" />
-      ) : (
-        <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
-          {shown}
-        </Text>
-      )}
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]} numberOfLines={1}>
-        {label}
-      </Text>
-    </>
-  );
-  // Screen readers hear the final number, not the one mid-count.
-  if (!onPress) {
-    return (
-      <View accessible accessibilityLabel={`${settled} ${label}`} style={styles.stat}>
-        {body}
-      </View>
-    );
-  }
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${settled} ${label}`}
-      style={({ pressed }) => [styles.stat, pressed && { opacity: pressedDim }]}
-    >
-      {body}
-    </Pressable>
   );
 }
 
@@ -550,8 +512,10 @@ const styles = StyleSheet.create({
 
   // The avatar centred, with everything about who this is under it.
   hero: { alignSelf: 'stretch', alignItems: 'center', gap: 4, marginTop: spacing.xs },
-  // Half the stage overlaps the banner's lower edge, less the column's gap.
-  heroOverBanner: { marginTop: -(STAGE / 2 + spacing.sm) },
+  // Half the avatar overlaps the banner's lower edge, less the column's gap.
+  heroOverBanner: { marginTop: -(FRAMED / 2 + RING + spacing.sm) },
+  // Ringed in the page's colour, so the avatar stands off the banner.
+  face: { borderRadius: radii.pill, borderWidth: RING },
   // The upload spinner covers the avatar alone, not the stage.
   avatarOverlay: {
     position: 'absolute',
@@ -564,11 +528,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // The three numbers share the width evenly.
-  stats: { alignSelf: 'stretch', justifyContent: 'space-around', marginTop: spacing.sm },
-  stat: { alignItems: 'center', gap: 2, minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  statValue: { ...statValue, fontVariant: ['tabular-nums'] },
-  statLabel: statCaption,
 
   nameRow: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
   name: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
@@ -576,17 +535,23 @@ const styles = StyleSheet.create({
   country: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
   // A plain 22x16 image, as on the website; a radius this small would be a rounding error.
   flag: { width: 22, height: 16 },
-  courseFlag: { width: 30, height: 22 },
   countryName: { fontSize: typography.sizes.sm },
   bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
-  aside: { fontSize: typography.sizes.xs, textAlign: 'center' },
+  level: { alignSelf: 'stretch', marginTop: spacing.sm },
+  seen: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  seenText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
+  addBio: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
+  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
   showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
 
-  // Both buttons stretch to the taller, so a two-line label keeps them the same size.
-  actions: { alignSelf: 'stretch', alignItems: 'stretch', gap: spacing.sm, marginTop: spacing.md },
-  // Drawn a full fingertip tall: a 36pt button with hit slop looked smaller than its target.
+  // The buttons wrap to a second row where they do not fit, and each row's buttons share its width.
+  actions: { alignSelf: 'stretch', alignItems: 'stretch', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md },
+  // Drawn a full fingertip tall: a 36pt button with hit slop looked smaller than its target. As wide as its label to
+  // begin with, then a share of what its row leaves.
   action: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: 'auto',
+    maxWidth: '100%',
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.pill,
     alignItems: 'center',

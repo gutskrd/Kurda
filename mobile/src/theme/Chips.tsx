@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { reachRoom } from '../a11y/a11y';
 import { Pressable, ReachGroup } from './Pressable';
-import { layout, radii, spacing, typography, wash } from './tokens';
+import { layout, radii, spacing, typography } from './tokens';
 import { useTheme } from './ThemeProvider';
 import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
@@ -11,8 +11,7 @@ import { pressedDim } from './motion';
 /**
  * A row of filter chips (All · Unread · Groups). Unlike the segmented control, which splits a screen into equal
  * halves, chips narrow a list, each as wide as its word, and the row scrolls sideways when words do not fit. The
- * chosen chip has the violet wash with violet text and is announced as selected; solid violet is for a screen's main
- * button.
+ * chosen chip is solid violet with the button label's colour, as on the website, and is announced as selected.
  *
  * The row sits in the page's gutter but scrolls out to the screen's edges, so a clipped chip reads as "more this
  * way". Chips are drawn 36 tall and answer over 48 across their word plus half the gap each side, so there are no
@@ -44,14 +43,15 @@ export function Chips<T extends string>({
   return (
     <ScrollView
       ref={scroller}
-      // Right to left, the first chip is on the right, so start the row there.
+      // Right to left, the first chip is on the right, so start the row there: a short row is as wide as the screen
+      // and starts at its right edge, a long one is scrolled to its start.
       onContentSizeChange={() => {
         if (mirrored) scroller.current?.scrollToEnd({ animated: false });
       }}
       horizontal
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[styles.row, rr.content, { flexDirection: dir.row }]}
+      contentContainerStyle={[styles.row, rr.content, { flexDirection: dir.row }, mirrored ? styles.rowMirrored : null]}
       style={[styles.scroller, rr.scroller]}
     >
       {/* Each chip reaches half the gap to the next, and vertically as far as the row's room (the group's row gap is twice it). */}
@@ -74,15 +74,16 @@ export function Chips<T extends string>({
               reach="open"
               style={({ pressed }) => [
                 styles.chip,
-                { backgroundColor: active ? wash(colors.primary) : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
+                { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
               ]}
             >
-              <Text style={[styles.text, { color: active ? colors.primary : colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.text, { color: active ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
                 {label}
               </Text>
+              {/* The count turns over on the chosen chip, so it stays a mark of its own. */}
               {count ? (
-                <View style={[styles.count, { backgroundColor: colors.primary }]}>
-                  <Text style={[styles.countText, { color: colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
+                <View style={[styles.count, { backgroundColor: active ? colors.textOnPrimary : colors.primary }]}>
+                  <Text style={[styles.countText, { color: active ? colors.primary : colors.textOnPrimary }]}>{count > 9 ? '9+' : count}</Text>
                 </View>
               ) : null}
             </Pressable>
@@ -96,6 +97,7 @@ export function Chips<T extends string>({
 const styles = StyleSheet.create({
   scroller: { flexGrow: 0, marginHorizontal: -layout.gutter },
   row: { gap: spacing.sm, alignItems: 'center', paddingHorizontal: layout.gutter },
+  rowMirrored: { flexGrow: 1 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

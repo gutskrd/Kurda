@@ -18,7 +18,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { getMyRanks } from '../ranks/api';
 import { daysLeftText, seasonTitle } from '../ranks/format';
 import { acceptInvite, listInvites } from '../play/api';
@@ -63,7 +63,16 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
  * handful of games reads faster than a sort control. Games still short of approved content are only named, under
  * the stamps.
  */
-export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
+export function GamesView({
+  scrollRef,
+  code,
+  onCodeShown,
+}: {
+  scrollRef?: Ref<ScrollView>;
+  /** An invite link's join code, opened in Join with a code (play/JoinByCode). */
+  code?: string;
+  onCodeShown?: () => void;
+}): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { client, isGuest } = useAuth();
   const { colors } = useTheme();
@@ -245,7 +254,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
               : t('play.banner.invited', { name: invite.from.name, game });
             return (
               <View key={invite.id} style={[styles.invite, { backgroundColor: colors.surface, flexDirection: dir.row }]}>
-                <InitialsAvatar name={invite.from.name} id={invite.from.name} size={36} photoUrl={invite.from.avatarUrl} />
+                <Avatar name={invite.from.name} size={36} photoUrl={invite.from.avatarUrl} />
                 <Text style={[styles.inviteText, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
                   {headline}
                 </Text>
@@ -296,7 +305,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       ) : null}
 
       {/* A code a friend read out or sent opens their game, whichever of the games it is. */}
-      <JoinCodeCard />
+      <JoinCodeCard code={code} onCodeShown={onCodeShown} />
 
       <View style={styles.section}>
         <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">

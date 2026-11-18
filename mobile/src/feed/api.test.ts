@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ApiClient } from '../api/client';
-import { SITE_ORIGIN, getFeed, getSaved, postUrl, toggleEngagement } from './api';
+import { SITE_ORIGIN, getFeed, getSaved, postUrl, setEngagement } from './api';
 
 /** Enough of the client to record what a call asked for. */
 function spyClient(): { client: ApiClient; get: ReturnType<typeof vi.fn>; post: ReturnType<typeof vi.fn> } {
@@ -23,16 +23,16 @@ describe('the wall’s calls', () => {
     expect(get).toHaveBeenLastCalledWith('/feed');
   });
 
-  it('toggles against the post it was given, on either half of the wall', async () => {
+  it('sets the wanted state on the post it was given, on either half of the wall', async () => {
     const { client, post } = spyClient();
-    await toggleEngagement(client, { targetType: 'library', id: 'abc' }, 'like');
-    expect(post).toHaveBeenCalledWith('/posts/library/abc/like');
+    await setEngagement(client, { targetType: 'library', id: 'abc' }, 'like', true);
+    expect(post).toHaveBeenCalledWith('/posts/library/abc/like', { on: true });
 
-    await toggleEngagement(client, { targetType: 'image', id: 'xyz' }, 'bookmark');
-    expect(post).toHaveBeenLastCalledWith('/posts/image/xyz/bookmark');
+    await setEngagement(client, { targetType: 'image', id: 'xyz' }, 'bookmark', false);
+    expect(post).toHaveBeenLastCalledWith('/posts/image/xyz/bookmark', { on: false });
 
-    await toggleEngagement(client, { targetType: 'library', id: 'abc' }, 'repost');
-    expect(post).toHaveBeenLastCalledWith('/posts/library/abc/repost');
+    await setEngagement(client, { targetType: 'library', id: 'abc' }, 'repost', true);
+    expect(post).toHaveBeenLastCalledWith('/posts/library/abc/repost', { on: true });
   });
 
   it('pages the saved list', async () => {

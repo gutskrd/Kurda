@@ -1,9 +1,14 @@
 /**
- * The busiest reads use their indexes (migrations `dm-messages-either-side` and `exercises-by-review-item`) on tables
- * filled enough to plan like a full database; everything, statistics included, is rolled back.
+ * The busiest reads use their indexes (migrations `dm-messages-either-side`, `exercises-by-review-item`,
+ * `wallet-ledger-by-time`, `group-reads-by-member` and `wall-in-time-order`) on tables filled enough to plan like a
+ * full database; everything, statistics included, is rolled back.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
+import { EconomyService } from '../economy/service.js';
+import { FeedService } from '../feed/service.js';
+import { ImagePostService } from '../images/service.js';
+import { LibraryService } from '../library/service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -33,6 +38,36 @@ describe.skipIf(!DATABASE_URL)('indexes for the busiest reads (integration)', ()
       await client.query('ROLLBACK');
       client.release();
     }
+  }
+
+  /** The first statement `run` sends through a pool that is really `client`, to plan exactly what a service asks. */
+  async function firstStatement(client: pg.PoolClient, run: (pool: pg.Pool) => Promise<unknown>): Promise<{ sql: string; params: unknown[] }> {
+    const sent: Array<{ sql: string; params: unknown[] }> = [];
+    const pool = {
+      query: (sql: string, params: unknown[] = []) => {
+        sent.push({ sql, params });
+        return client.query(sql, params);
+      },
+    } as unknown as pg.Pool;
+    await run(pool);
+    return sent[0]!;
+  }
+
+  /** One author with `n` published written posts and `n` pictures, an hour apart, newest last. */
+  async function fillWall(client: pg.PoolClient, n: number): Promise<void> {
+    await client.query(`INSERT INTO users (email, username) VALUES ('hri_wall_' || $1 || '@it.kurda.app', 'hri_wall_' || $1)`, [suffix]);
+    await client.query(
+      `INSERT INTO library_posts (author_id, author_role, type, title, body, status, published_at, created_at)
+       SELECT u.id, 'user', 'poem', 'Helbest', repeat('peyv ', 60), 'published', now() - g * interval '1 hour', now() - g * interval '1 hour'
+         FROM users u, generate_series(1, $2) g WHERE u.username = 'hri_wall_' || $1`,
+      [suffix, n],
+    );
+    await client.query(
+      `INSERT INTO image_posts (author_id, author_role, image_media_id, caption, created_at)
+       SELECT u.id, 'user', 'hri/' || g, 'Wêne', now() - g * interval '1 hour' - interval '30 minutes'
+         FROM users u, generate_series(1, $2) g WHERE u.username = 'hri_wall_' || $1`,
+      [suffix, n],
+    );
   }
 
   /** Sixty people, each in a conversation of ten messages with every other, all read but the last of each. */
@@ -113,5 +148,63 @@ describe.skipIf(!DATABASE_URL)('indexes for the busiest reads (integration)', ()
     );
     expect(plan).toMatch(/"Index Name":"exercises_id_text_idx"[^}]*"Index Cond":"\(\(id\)::text = r\.item_id\)"/);
     expect(plan).not.toMatch(/"Node Type":"Seq Scan"[^}]*"Relation Name":"exercises"/);
+  });
+
+  it('sums a day of the wallet ledger from that day’s pages, not the whole ledger', async () => {
+    // the economy rollup (economy/service.ts `aggregateDay`), over a ledger written in time order as it always is
+    const plan = await planAfter(
+      async (client) => {
+        await client.query(`INSERT INTO users (email, username) VALUES ('hri_payer_' || $1 || '@it.kurda.app', 'hri_payer_' || $1)`, [suffix]);
+        await client.query(
+          `INSERT INTO wallet_ledger (user_id, currency, amount, reason, created_at)
+           SELECT u.id, 'zer', 10, 'lesson', now() - interval '60 days' + g * interval '1 minute'
+             FROM users u, generate_series(1, 60 * 24 * 60 / 2) g WHERE u.username = 'hri_payer_' || $1 ORDER BY g`,
+          [suffix],
+        );
+      },
+      ['wallet_ledger'],
+      (client) => firstStatement(client, (pool) => new EconomyService(pool).aggregateDay(new Date(Date.now() - 10 * 86_400_000))),
+    );
+    expect(plan).toContain('"Index Name":"wallet_ledger_created_at_brin"');
+    expect(plan).not.toMatch(/"Node Type":"Seq Scan"[^}]*"Relation Name":"wallet_ledger"/);
+  });
+
+  it('finds one member’s read marks without reading every group’s', async () => {
+    // the join the group unread counts make (groups/chat-service.ts `unread`), polled by the social rail
+    const plan = await planAfter(
+      async (client) => {
+        await fillMessages(client);
+        await client.query(
+          `WITH g AS (INSERT INTO groups (name) SELECT 'hri ' || n FROM generate_series(1, 40) n RETURNING id)
+           INSERT INTO group_reads (group_id, user_id) SELECT g.id, u.id FROM g, users u WHERE u.username LIKE 'hri\\_%\\_' || $1`,
+          [suffix],
+        );
+      },
+      ['group_reads'],
+      async (client) => ({ sql: `SELECT group_id, last_read_at FROM group_reads WHERE user_id = $1`, params: [await someoneInTheMiddle(client)] }),
+    );
+    expect(plan).toContain('"Index Name":"group_reads_user_idx"');
+    expect(plan).not.toMatch(/"Node Type":"Seq Scan"[^}]*"Relation Name":"group_reads"/);
+  });
+
+  it('reads the newest page of the wall off both tables’ indexes, without sorting every post', async () => {
+    const plan = await planAfter(
+      (client) => fillWall(client, 2000),
+      ['users', 'library_posts', 'image_posts'],
+      (client) => firstStatement(client, (pool) => new FeedService(pool).list(null, { limit: 20 })),
+    );
+    expect(plan).toContain('"Index Name":"library_posts_wall_idx"');
+    expect(plan).toContain('"Index Name":"image_posts_wall_idx"');
+    expect(plan).not.toMatch(/"Node Type":"Seq Scan"[^}]*"Relation Name":"(library|image)_posts"/);
+  });
+
+  it('lists the newest published stories and pictures off an index', async () => {
+    for (const [index, run] of [
+      ['library_posts_published_idx', (pool: pg.Pool) => new LibraryService(pool).list({ limit: 20 })],
+      ['image_posts_wall_idx', (pool: pg.Pool) => new ImagePostService(pool).list({ limit: 20 })],
+    ] as const) {
+      const plan = await planAfter((client) => fillWall(client, 2000), ['users', 'library_posts', 'image_posts'], (client) => firstStatement(client, run));
+      expect(plan).toContain(`"Index Name":"${index}"`);
+    }
   });
 });

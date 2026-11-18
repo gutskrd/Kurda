@@ -10,13 +10,14 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 // The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ApiResult } from '../api/types';
-import { UnreadProvider } from './unread';
+import { UnreadProvider, useUnread } from './unread';
 import { FriendRequestsScreen } from './FriendRequestsScreen';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -65,6 +66,34 @@ describe('friend requests', () => {
     // … and back when the server could not take the answer.
     answer(serverDown);
     expect(await screen.findByRole('button', { name: 'Accept friend request from rojin' })).toBeTruthy();
+  });
+});
+
+describe('the request count', () => {
+  function Count(): React.JSX.Element {
+    return <span data-testid="requests">{useUnread().counts.requests}</span>;
+  }
+
+  it('drops as a request is answered, before the server has it, and comes back with the reason when refused', async () => {
+    const said = watchNotices();
+    let answer: (r: ApiResult<never>) => void = () => undefined;
+    testAuth.client = fakeClient({
+      ...unread,
+      'GET /friends/requests': ok({ requests: [{ userId: 'u3', username: 'rojin' }] }),
+      'POST /friends/requests/u3/decline': () => new Promise<ApiResult<never>>((resolve) => (answer = resolve)),
+    } as never);
+    renderWithProviders(
+      <UnreadProvider>
+        <Count />
+        <FriendRequestsScreen onExit={() => undefined} />
+      </UnreadProvider>,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Decline friend request from rojin' }));
+    await waitFor(() => expect(screen.getByTestId('requests').textContent).toBe('0'));
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByTestId('requests').textContent).toBe('1');
+    expect(await screen.findByRole('button', { name: 'Decline friend request from rojin' })).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
   });
 });
 

@@ -30,7 +30,7 @@ describe('the composer’s Send', () => {
     });
     testAuth.client = client;
     renderWithProviders(<ChatScreen userId="u2" username="azad" onExit={() => undefined} />);
-    const field = await screen.findByLabelText('Message…');
+    const field = await screen.findByLabelText('Write a message…');
     expect(disabled(screen.getByRole('button', { name: 'Send' }))).toBe(true);
 
     // Spaces are not a message.
@@ -59,7 +59,7 @@ describe('a message being sent', () => {
       'POST /chat/u2/messages': () => new Promise<ApiResult<unknown>>((r) => (resolve = r)),
     });
     renderWithProviders(<ChatScreen userId="u2" username="azad" onExit={() => undefined} />);
-    const field = await screen.findByLabelText('Message…');
+    const field = await screen.findByLabelText('Write a message…');
     fireEvent.change(field, { target: { value: 'Silav' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     return { answer: (result) => act(async () => resolve(result)), field };
@@ -72,9 +72,12 @@ describe('a message being sent', () => {
     expect(sending.textContent).toContain('Silav');
     expect(sending.getAttribute('aria-busy')).toBe('true');
     expect((field as HTMLTextAreaElement).value).toBe('');
+    const bubble = screen.getByText('Silav');
     await answer(ok(sent));
     expect(screen.queryByTestId('message-sending')).toBeNull();
+    // The server's copy takes the same row, which is never drawn afresh.
     expect(screen.getAllByText('Silav')).toHaveLength(1);
+    expect(screen.getByText('Silav')).toBe(bubble);
   });
 
   it('is taken out again when the server refuses it, with the words back in the field and the reason said', async () => {

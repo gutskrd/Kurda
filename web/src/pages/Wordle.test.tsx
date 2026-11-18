@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Wordle } from './Wordle';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -101,6 +101,64 @@ describe('Wordle', () => {
     renderApp(<Wordle />, ['/app/games/peyvok']);
     expect(await screen.findByRole('button', { name: 'k' })).toBeInTheDocument();
     expect(screen.queryByText(/XP/)).toBeNull();
+  });
+
+  it('shows the player’s figures under a finished game, in the page’s language', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/daily')) return jsonResponse(200, wonGame);
+        if (url.includes('/wordle/stats')) return jsonResponse(200, { played: 1240, winPercentage: 83, currentStreak: 3, longestStreak: 9, averageGuesses: 3.75 });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+    const figures = await screen.findByRole('region', { name: 'Statistics' });
+    const read = within(figures);
+    expect(read.getByText('1,240')).toBeInTheDocument();
+    expect(read.getByText('83')).toBeInTheDocument();
+    expect(read.getByText('9')).toBeInTheDocument();
+    expect(read.getByText('3.8')).toBeInTheDocument();
+    // "Avg" is for the eye; the label read out is whole.
+    expect(read.getByText('Average guesses to win')).toHaveClass('sr-only');
+  });
+
+  it('reads the figures only once a game is over, so they count it', async () => {
+    let asked = 0;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/games/w1/guesses')) return jsonResponse(200, wonGame);
+        if (url.includes('/wordle/daily')) return jsonResponse(200, startedGame);
+        if (url.includes('/wordle/stats')) {
+          asked += 1;
+          return jsonResponse(200, { played: 1, winPercentage: 100, currentStreak: 1, longestStreak: 1, averageGuesses: 1 });
+        }
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+    await userEvent.click(await screen.findByRole('button', { name: 'k' }));
+    expect(asked).toBe(0);
+    await userEvent.click(screen.getByRole('button', { name: 'a' }));
+    await userEvent.click(screen.getByRole('button', { name: 'r' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Enter' }));
+    expect(await screen.findByRole('region', { name: 'Statistics' })).toBeInTheDocument();
+    expect(asked).toBe(1);
+  });
+
+  it('shows no figures before the first game, nor an average before the first win', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/daily')) return jsonResponse(200, { ...wonGame, status: 'lost', target: 'kar' });
+        if (url.includes('/wordle/stats')) return jsonResponse(200, { played: 2, winPercentage: 0, currentStreak: 0, longestStreak: 0, averageGuesses: 0 });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+    const figures = await screen.findByRole('region', { name: 'Statistics' });
+    expect(within(figures).getByText('—')).toBeInTheDocument();
   });
 
   it('shows a friendly message when the word pool is empty', async () => {
@@ -343,6 +401,25 @@ describe('Peyvok’s word, once the game is over', () => {
     const done = await screen.findByRole('button', { name: 'Zum Wortschatz hinzugefügt' });
     expect(done).toHaveAttribute('aria-pressed', 'true');
     expect(done).toBeDisabled();
+  });
+
+  it('shows the word saved at once, and unsaved with the reason when the vocabulary is full', async () => {
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/wordle/games/w1/save') && init?.method === 'POST') return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/wordle/daily')) return jsonResponse(200, { ...wonGame, word: card });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Save to vocabulary' }));
+    expect(screen.getByRole('button', { name: 'Saved to vocabulary' })).toHaveAttribute('aria-pressed', 'true');
+    answer(jsonResponse(409, { code: 'LIMIT_REACHED', message: 'full', details: { limit: 'saved_words', max: 2000 } }));
+    expect(await screen.findByRole('button', { name: 'Save to vocabulary' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText(/Your vocabulary is full/)).toBeInTheDocument();
   });
 
   it('opens a word saved before as saved, and falls back to English where the reader’s language has no meaning', async () => {

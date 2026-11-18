@@ -4,7 +4,7 @@ import { PressableScale } from '../theme/MotionParts';
 import type { OutgoingInviteState, PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
 import { Icon, type IconName } from '../theme/Icon';
@@ -111,7 +111,7 @@ export function LobbyInvites({ game, lobbyId, refreshKey = 0 }: { game: PlayGame
               outlined={pending}
               shimmer={pending}
               muted={!pending && !joined}
-              stub={<InitialsAvatar name={i.name} id={i.userId} size={28} photoUrl={i.avatarUrl} />}
+              stub={<Avatar name={i.name} size={28} photoUrl={i.avatarUrl} />}
               style={styles.ticket}
               bodyStyle={[styles.body, { flexDirection: dir.row }]}
             >

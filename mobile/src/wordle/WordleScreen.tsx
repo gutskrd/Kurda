@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import { spacing, typography } from '../theme/tokens';
 import { sectionLabel, display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
@@ -110,7 +111,6 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [submitting, setSubmitting] = useState(false);
   const [stats, setStats] = useState<WordleStats | null>(null);
   // Save to vocabulary on the finished game's word: on its way, and why it did not land.
-  const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   // Only the most recently requested game may land: a slow answer for an earlier request (another difficulty's
   // daily, or a practice word) would otherwise replace the board pressed after it.
@@ -136,7 +136,6 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     setStarting(true);
     setNote(null);
     setDraft([]);
-    setSaving(false);
     setSaveError(null);
     setWonNow(false);
     const res = await client.post<WordleGameView>(`/wordle/${mode}`, { difficulty });
@@ -206,20 +205,22 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
    * Save the finished game's word to the player's vocabulary by the game rather than the entry, so the server
    * saves exactly that word and counts it once however often it is pressed.
    */
-  const saveWord = async () => {
+  const saving = useIntents<string, boolean>(
+    async (id) => {
+      const res = await client.post<{ saved: boolean }>(`/wordle/games/${id}/save`);
+      if (res.ok) setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved: true } } : g));
+      return res;
+    },
+    // A full vocabulary (limits/limitCopy.ts) or a network failure is shown under the button, which comes back to retry.
+    { failed: (error) => setSaveError(describeError(error, t)) },
+  );
+  const wordSaved = !!game?.word && saving.shown(game.id, game.word.saved);
+  const saveWord = () => {
     const id = game?.id;
-    if (!id || !game.word?.entryId || game.word.saved || saving) return;
-    setSaving(true);
+    if (!id || !game.word?.entryId || wordSaved) return;
+    haptic('tap');
     setSaveError(null);
-    const res = await client.post<{ saved: boolean }>(`/wordle/games/${id}/save`);
-    setSaving(false);
-    if (res.ok) {
-      haptic('tap');
-      setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved: true } } : g));
-    } else {
-      // A full vocabulary (limits/limitCopy.ts) or a network failure is shown under the button, which stays to retry.
-      setSaveError(describeError(res.error, t));
-    }
+    saving.want(id, true, false);
   };
 
   // The result as the grid of squares with the score above and the site's address below, as the web sends (share/winText.ts).
@@ -280,7 +281,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 celebrateAfterMs={wonNow ? turnMs(game.targetLength, reduce) : null}
                 save={
                   game.word?.entryId
-                    ? { saved: game.word.saved, busy: saving, onSave: () => void saveWord(), error: saveError }
+                    ? { saved: wordSaved, onSave: saveWord, error: saveError }
                     : undefined
                 }
                 difficulty={difficulty}

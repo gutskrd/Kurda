@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { ReachGroup } from '../theme/Pressable';
 import { CHARACTER_NAMES, type DictionaryAudio, type RecordingVoice } from '@kurda/shared';
@@ -19,7 +19,7 @@ import { SourceLine } from './SourceLine';
 import type { Entry } from './types';
 import { useHardwareBack } from '../navigation/hardwareBack';
 import { useI18n } from '../i18n/I18nContext';
-import { describeError, isMaintenance } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 
 /** A pronunciation's speaker and timeline, sent beside its URL. */
 function voiceOf(recording: DictionaryAudio): RecordingVoice | null {
@@ -60,16 +60,14 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
     };
   }, [client, entryId]);
 
-  const toggleSave = () => {
-    const next = !saved;
-    setSaved(next); // optimistic
-    void (next ? client.put(`/dictionary/entries/${entryId}/save`) : client.delete(`/dictionary/entries/${entryId}/save`)).then((res) => {
-      if (res.ok) return;
-      // It did not take: the star goes back, and a full vocabulary says why (limits/limitCopy.ts).
-      setSaved(!next);
-      if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
-    });
-  };
+  // Shown at once and sent in the background; a refusal puts it back and says why, a full vocabulary included.
+  const saving = useIntents<'saved', boolean>(async (_key, on) => {
+    const res = await (on ? client.put(`/dictionary/entries/${entryId}/save`) : client.delete(`/dictionary/entries/${entryId}/save`));
+    if (res.ok) setSaved(on);
+    return res;
+  });
+  const shownSaved = saving.shown('saved', saved);
+  const toggleSave = () => saving.want('saved', !shownSaved, saved);
 
   return (
     <GradientBackground>
@@ -98,13 +96,13 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                 <PressableScale
                   onPress={toggleSave}
                   accessibilityRole="button"
-                  accessibilityLabel={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
-                  accessibilityState={{ selected: saved }}
+                  accessibilityLabel={shownSaved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
+                  accessibilityState={{ selected: shownSaved }}
                   reach="open"
                   style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
                 >
                   {/* A saved word is on, and on is violet, as a bookmarked story is. */}
-                  <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={22} color={saved ? colors.primary : colors.textSecondary} />
+                  <Icon name={shownSaved ? 'bookmark-fill' : 'bookmark'} size={22} color={shownSaved ? colors.primary : colors.textSecondary} />
                 </PressableScale>
               </ReachGroup>
             </View>

@@ -150,6 +150,14 @@ interface LetterRow {
 }
 
 /** The columns a `LetterRow` is read from, for a letter `l` (or the table itself when `alias` is empty). */
+/** SQL: how many correspondences the person `$1` has open. */
+const OPEN_THREADS_SQL = `SELECT count(*)::int FROM letter_threads WHERE ended_at IS NULL AND (user_lo = $1 OR user_hi = $1)`;
+
+/** SQL: birds `$1` called today, against `BIRD_CALLS_PER_DAY`; one its writer recalled within a minute of arriving does not count. */
+const CALLS_TODAY_SQL = `SELECT count(*)::int FROM letter_visits
+  WHERE visitor_id = $1 AND called_at > now() - interval '1 day'
+    AND NOT COALESCE(outcome = 'recalled' AND ended_at < called_at + interval '1 minute', false)`;
+
 const LETTER_COLUMNS = (alias = ''): string => ['id', 'sender_id', 'body', 'decor', 'status', 'created_at', 'read_at'].map((c) => (alias ? `${alias}.${c}` : c)).join(', ');
 
 const toItem = (row: LetterRow, me: string): LetterItem => ({
@@ -369,7 +377,7 @@ export class LetterService {
 
   /** How many correspondences somebody has open. */
   private async countOpen(db: Pick<pg.Pool, 'query'>, me: string): Promise<number> {
-    const r = await db.query<{ n: number }>(`SELECT count(*)::int AS n FROM letter_threads WHERE ended_at IS NULL AND (user_lo = $1 OR user_hi = $1)`, [me]);
+    const r = await db.query<{ n: number }>(`SELECT (${OPEN_THREADS_SQL}) AS n`, [me]);
     return r.rows[0]?.n ?? 0;
   }
 
@@ -423,14 +431,8 @@ export class LetterService {
     );
   }
 
-  /** Birds called today against `BIRD_CALLS_PER_DAY`; one its writer recalled within a minute of arriving does not count. */
   private async callsToday(db: Pick<pg.Pool, 'query'>, me: string): Promise<number> {
-    const r = await db.query<{ n: number }>(
-      `SELECT count(*)::int AS n FROM letter_visits
-        WHERE visitor_id = $1 AND called_at > now() - interval '1 day'
-          AND NOT COALESCE(outcome = 'recalled' AND ended_at < called_at + interval '1 minute', false)`,
-      [me],
-    );
+    const r = await db.query<{ n: number }>(`SELECT (${CALLS_TODAY_SQL}) AS n`, [me]);
     return r.rows[0]?.n ?? 0;
   }
 
@@ -470,23 +472,52 @@ export class LetterService {
    * correspondence would land again on each visit. Remove it once no such build is supported.
    */
   async home(userId: string, opts: { legacyWindow?: boolean } = {}): Promise<LettersHome> {
-    const me = await this.me(this.pool, userId);
+    const [me, restriction, muted] = await Promise.all([
+      this.me(this.pool, userId),
+      activeRestriction(this.pool, userId, 'chat'),
+      this.deps.moderation?.isChatMuted(userId),
+    ]);
     const band = me.birth_year !== null && me.birth_month !== null ? letterAgeBand({ year: me.birth_year, month: me.birth_month }) : null;
-    const restricted = (await activeRestriction(this.pool, userId, 'chat')) !== null || (await this.deps.moderation?.isChatMuted(userId)) === true;
+    const restricted = restriction !== null || muted === true;
     await this.flyOn(this.pool);
     await this.settleVisits(this.pool, userId);
     await this.endBlocked(this.pool, userId);
     await inTransaction(this.pool, (c) => this.comeHome(c, userId));
-    const seen = await this.snapshot(async (db) => {
-      const clock = await db.query<{ now: Date }>(`SELECT now() AS now`);
-      const chosen = await db.query<{ bird: number }>(`SELECT bird FROM letter_birds WHERE user_id = $1`, [userId]);
-      const open = await this.countOpen(db, userId);
-      const out = await db.query<{ created_at: Date; called_at: Date | null }>(
-        `SELECT l.created_at, v.called_at
-           FROM letters l LEFT JOIN letter_visits v ON v.letter_id = l.id AND v.ended_at IS NULL
-          WHERE l.sender_id = $1 AND l.status = 'flying'`,
+    const read = this.snapshot(async (db) => {
+      // The clock and every single figure of the page in one read: the bird chosen, the correspondences open, the calls
+      // made today, your bird out, and your bird home by itself, nobody having answered it, not yet seen at the window.
+      const figures = await db.query<{
+        now: Date;
+        chosen: number | null;
+        bird_chosen: boolean;
+        open: number;
+        calls: number;
+        out_since: Date | null;
+        out_called: Date | null;
+        returned_id: string | null;
+        returned_at: Date | null;
+        returned_why: LetterReturnReason | null;
+      }>(
+        `SELECT now() AS now,
+                (SELECT bird FROM letter_birds WHERE user_id = $1) AS chosen,
+                EXISTS (SELECT 1 FROM letter_birds WHERE user_id = $1) AS bird_chosen,
+                (${OPEN_THREADS_SQL}) AS open,
+                (${CALLS_TODAY_SQL}) AS calls,
+                out.created_at AS out_since, out.called_at AS out_called,
+                ret.id AS returned_id, ret.recalled_at AS returned_at, ret.recalled_why AS returned_why
+           FROM (SELECT 1) AS one
+           LEFT JOIN LATERAL (
+             SELECT l.created_at, v.called_at
+               FROM letters l LEFT JOIN letter_visits v ON v.letter_id = l.id AND v.ended_at IS NULL
+              WHERE l.sender_id = $1 AND l.status = 'flying'
+              LIMIT 1) out ON true
+           LEFT JOIN LATERAL (
+             SELECT id, recalled_at, recalled_why FROM letters
+              WHERE sender_id = $1 AND status = 'recalled' AND landed_at IS NULL AND recalled_why IN ('unanswered','band','full')
+              ORDER BY recalled_at DESC LIMIT 1) ret ON true`,
         [userId],
       );
+      const f = figures.rows[0]!;
       const pals = await db.query<{ id: string; other: string; name: string; bird: number | null; last_letter_at: Date; your_turn: boolean; unread: number }>(
         `SELECT t.id, o.id AS other, ${NAME_SQL('o')} AS name, ${BIRD_SQL('o')} AS bird, t.last_letter_at,
                 ${YOUR_TURN_SQL('t.id', '$1::uuid')} AS your_turn,
@@ -535,27 +566,22 @@ export class LetterService {
           LIMIT ${LANDINGS_MAX}`,
         [userId],
       );
-      // your bird home by itself, nobody having answered it, not yet seen home at the window
-      const returned = await db.query<{ id: string; recalled_at: Date; recalled_why: LetterReturnReason }>(
-        `SELECT id, recalled_at, recalled_why FROM letters
-          WHERE sender_id = $1 AND status = 'recalled' AND landed_at IS NULL AND recalled_why IN ('unanswered','band','full')
-          ORDER BY recalled_at DESC LIMIT 1`,
-        [userId],
-      );
       return {
-        now: clock.rows[0]!.now,
-        chosen: chosen.rows[0]?.bird ?? null,
-        birdChosen: chosen.rows.length > 0,
-        open,
-        out: out.rows[0] ?? null,
+        now: f.now,
+        chosen: f.chosen,
+        birdChosen: f.bird_chosen,
+        open: f.open,
+        out: f.out_since ? { created_at: f.out_since, called_at: f.out_called } : null,
         pals: pals.rows,
         sky: sky?.rows ?? [],
         landings: landings.rows,
-        returned: returned.rows[0] ?? null,
+        returned: f.returned_id ? { id: f.returned_id, recalled_at: f.returned_at!, recalled_why: f.returned_why! } : null,
         visitor: await this.visitorOf(db, userId),
-        calls: await this.callsToday(db, userId),
+        calls: f.calls,
       };
     });
+    // the purse and the paper do not change with the letters, so they are read alongside
+    const [seen, balances, paper] = await Promise.all([read, this.deps.wallet?.balances(userId), this.paperOf(userId)]);
 
     const penPals: PenPal[] = seen.pals.map((p) => ({
       threadId: p.id,
@@ -611,7 +637,7 @@ export class LetterService {
       refusal: !band ? 'birth_month' : restricted ? 'restricted' : null,
       bird: personOf(userId, me.name, seen.chosen).bird,
       birdChosen: seen.birdChosen,
-      zer: (await this.deps.wallet?.balances(userId))?.zer ?? 0,
+      zer: balances?.zer ?? 0,
       out,
       flight,
       returned,
@@ -624,7 +650,7 @@ export class LetterService {
       arrival,
       penPals,
       roomForMore: seen.open < PEN_PALS_MAX,
-      paper: await this.paperOf(userId),
+      paper,
       now: seen.now.toISOString(),
     };
   }

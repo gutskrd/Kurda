@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '../reports/testing/harness';
 import { AppErrorBoundary } from './AppErrorBoundary';
@@ -37,9 +37,8 @@ describe('the error boundary round the screens', () => {
       </AppErrorBoundary>,
     );
     expect(await screen.findByTestId('crash-retry')).toBeTruthy();
-    // The calm fawn the offline state wears, not a red alarm: it is never the reader's doing.
-    expect(screen.getByTestId('crash-art')).toBeTruthy();
-    expect(document.querySelector('svg')).toBeNull();
+    // The puzzled Hevalo the offline state wears, not a red alarm: it is never the reader's doing.
+    expect(within(screen.getByTestId('crash-art')).getByTestId('hevalo-peek')).toBeTruthy();
     expect(reportRenderError).toHaveBeenCalledTimes(1);
     const [error, componentStack] = vi.mocked(reportRenderError).mock.calls[0]!;
     expect((error as Error).message).toBe('lesson is undefined');

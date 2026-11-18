@@ -74,7 +74,7 @@ export function DmThread({
   const t = useT();
   const { state } = useRealtime();
   const { openProfile } = useProfileModal();
-  const { refreshUnread } = useMessages();
+  const { refreshUnread, markSeen } = useMessages();
   const [messages, setMessages] = useState<DmMessage[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
@@ -185,12 +185,16 @@ export function DmThread({
     }
   }, [client, otherId]);
 
-  /** Clears the unread badge and sends the read receipt, on open and on each arrival so the badge never returns. */
+  /**
+   * Clears the unread badge at once and sends the read receipt, on open and on each arrival so the badge never returns.
+   * The counts are read again after, so a receipt that did not go brings the badge back.
+   */
   const markRead = useCallback(async () => {
+    markSeen('dm', otherId);
     await client.post(`/chat/${otherId}/read`).catch(() => undefined);
     refreshUnread();
     onSent();
-  }, [client, otherId, refreshUnread, onSent]);
+  }, [client, otherId, markSeen, refreshUnread, onSent]);
 
   useEffect(() => {
     setMessages(null);
@@ -348,6 +352,7 @@ export function DmThread({
         target={{ targetType: 'dm_message', targetId: reporting?.id ?? '' }}
         block={{ userId: otherId, name: otherName ?? t('chat.thisPerson') }}
         onBlocked={() => setBlockedHere(true)}
+        onBlockRefused={() => setBlockedHere(false)}
       />
       <Composer
         value={text}

@@ -96,7 +96,7 @@ const envSchema = z.object({
   MEDIA_IMAGE_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
   /** Voice notes are stored as uploaded, so their cost is capped by upload size and a rate limit. */
   MEDIA_AUDIO_MAX_UPLOAD_MB: z.coerce.number().positive().default(3),
-  /** Advisory max recording length (client-enforced); the server caps by size. */
+  /** Longest recording, seconds, read from the file's own container (media/audioCheck.ts). */
   MEDIA_AUDIO_MAX_SECONDS: z.coerce.number().int().positive().default(120),
   MEDIA_AUDIO_ALLOWED_TYPES: z.string().default('audio/mpeg,audio/mp4,audio/webm'),
   MEDIA_AUDIO_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(20),

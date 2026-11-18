@@ -1,0 +1,204 @@
+/*
+ * Events (events/): the card on Learn while one runs, and the page of its quests. Cards and bars as the daily quests
+ * draw theirs; motion uses transform and opacity only, and none plays under Reduce Motion.
+ */
+
+/* ---- the card on Learn, slim beside the daily quests ---------------------------- */
+.event-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--container-narrow);
+  min-height: 64px;
+  margin: 0 auto var(--space-5);
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    background var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+.event-card:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+  text-decoration: none;
+}
+.event-card:active {
+  transform: scale(var(--press-scale));
+}
+/* the event's mark, on the wash of the gold every reward is drawn in */
+.event-card-mark {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
+  background: var(--hue-wash);
+  color: var(--hue-deep);
+}
+.event-card-text {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+.event-card-title {
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.event-card-sub {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.event-card-go {
+  flex: none;
+  color: var(--ink-4);
+}
+
+/* ---- the page ----------------------------------------------------------------- */
+.events-page {
+  max-width: var(--container-narrow);
+}
+.events-notice {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: var(--space-4);
+}
+.events-notice p {
+  margin: 0;
+}
+.event {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-5);
+}
+.event-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.event-name {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-section);
+  font-weight: 700;
+}
+.event-ends {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.event-quests {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.event-quest {
+  display: grid;
+  gap: 10px;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+/* one ready to claim is ringed in gold, as a waiting chest's card is */
+.event-quest.is-claimable {
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+}
+.event-quest-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.event-quest-title {
+  margin: 0;
+  font-weight: 700;
+}
+.event-quest-reward {
+  display: inline-flex;
+  flex: none;
+  gap: 12px;
+  margin: 0;
+  color: var(--ink-2);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.event-quest-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+}
+.event-quest-bar {
+  position: relative;
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+.event-quest-bar > span {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: var(--primary);
+}
+.event-quest.is-claimed .event-quest-bar > span {
+  background: var(--success);
+}
+.event-quest-count {
+  flex: none;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.event-quest-claimed {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  color: var(--success);
+  font-size: var(--text-secondary);
+  font-weight: 700;
+}
+/* claimed just now: the word lands with a little spring */
+.event-quest.is-fresh .event-quest-claimed {
+  animation: event-claimed var(--dur-slow) var(--ease-spring) both;
+}
+@keyframes event-claimed {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .event-quest.is-fresh .event-quest-claimed {
+    animation: none;
+  }
+}
+.event-quest-spinner {
+  width: 14px;
+  height: 14px;
+  border-width: 2px;
+  margin-inline-end: 6px;
+}

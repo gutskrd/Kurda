@@ -462,17 +462,37 @@ describe('a letter on your widget', () => {
     // Only a received letter can go on your widget.
     fireEvent.click(await screen.findByRole('button', { name: 'Show on my widget, Letter from Baran' }));
     expect(screen.queryByTestId('letter-widget-l1')).toBeNull();
-    await waitFor(() => expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ pinnedLetterId: 'l2', showWords: false }));
+    await waitFor(() => expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ pinnedLetterId: 'l2' }));
     expect(await screen.findByRole('button', { name: 'Take off my widget, Letter from Baran' })).toBeTruthy();
     expect(reloadLetterWidget).toHaveBeenCalledTimes(1);
     expect(screen.getByLabelText(/On your widget\.$/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Take off my widget, Letter from Baran' }));
-    await waitFor(() => expect(client.calls.filter((c) => c.method === 'PUT').map((c) => c.body)).toEqual([
-      { pinnedLetterId: 'l2', showWords: false },
-      { pinnedLetterId: null, showWords: false },
-    ]));
+    const puts = () => client.calls.filter((c) => c.method === 'PUT').map((c) => c.body);
+    await waitFor(() => expect(puts()).toEqual([{ pinnedLetterId: 'l2' }, { pinnedLetterId: null }]));
     expect(await screen.findByRole('button', { name: 'Show on my widget, Letter from Baran' })).toBeTruthy();
     expect(reloadLetterWidget).toHaveBeenCalledTimes(2);
+  });
+
+  it('pins at once, ends rapid taps on the last one, and puts a refused pin back', async () => {
+    const answers: ((r: unknown) => void)[] = [];
+    const client = fakeClient({
+      [`GET /letters/threads/${THREAD}`]: ok(thread()),
+      'GET /letters/widget/prefs': ok({ pinnedLetterId: null, showWords: false }),
+      'PUT /letters/widget/prefs': () => new Promise((resolve) => answers.push(resolve)),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Show on my widget, Letter from Baran' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Take off my widget, Letter from Baran' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show on my widget, Letter from Baran' }));
+    expect(screen.getByRole('button', { name: 'Take off my widget, Letter from Baran' })).toBeTruthy();
+    const puts = () => client.calls.filter((c) => c.method === 'PUT').map((c) => c.body);
+    expect(puts()).toEqual([{ pinnedLetterId: 'l2' }]);
+    await act(async () => answers[0]!({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    // The last tap wanted what was refused: back to the newest letter, and why is said.
+    expect(screen.getByRole('button', { name: 'Show on my widget, Letter from Baran' })).toBeTruthy();
+    expect(screen.getByTestId('letters-widget-error').textContent).toBe('Can’t reach Hevalo right now. Check your connection and try again.');
+    expect(reloadLetterWidget).not.toHaveBeenCalled();
   });
 
   it('says so when the letter was taken down meanwhile, and reads the letters again', async () => {

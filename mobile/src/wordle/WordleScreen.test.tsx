@@ -274,6 +274,22 @@ describe('Peyvok’s word, once the game is over', () => {
     expect(screen.queryByRole('button', { name: 'Save to vocabulary' })).toBeNull();
   });
 
+  it('shows the word saved before the server answers, and puts the button back with the reason when it refuses', async () => {
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'GET /wordle/stats': ok(STATS),
+      'POST /wordle/daily': ok(withWord(over('won'), card)),
+      'POST /wordle/games/w1/save': () => new Promise((resolve) => (answer = resolve)),
+    } as never);
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Daily' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Save to vocabulary' }));
+    expect(screen.getByRole('button', { name: 'Saved to vocabulary' })).toBeTruthy();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'Network request failed' } }));
+    expect(screen.getByRole('button', { name: 'Save to vocabulary' }).getAttribute('aria-disabled')).not.toBe('true');
+    expect(screen.getByTestId('peyvok-answer').querySelector('[aria-live="polite"]')?.textContent).toMatch(/\w/);
+  });
+
   it('says why a save did not land, under the button, and keeps the button to try again', async () => {
     testAuth.client = fakeClient({
       'GET /wordle/stats': ok(STATS),

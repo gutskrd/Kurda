@@ -406,6 +406,29 @@ describe('GiftUnwrap', () => {
     expect(onThanks).toHaveBeenCalledTimes(1);
   });
 
+  it('wears the gift before the server answers, and takes it off again with the reason when refused', async () => {
+    let answer: (r: unknown) => void = () => undefined;
+    const opened = card({ myGiftId: 'g1', myOpened: true, recipients: [{ name: null, avatarUrl: null, isMe: true, opened: true }] });
+    testAuth.client = fakeClient({
+      'POST /gifts/g1/open': ok({ card: opened, equippable: 'background' }),
+      'PUT /me/cosmetics/background': () => new Promise((resolve) => (answer = resolve)),
+    } as never);
+    renderWithProviders(
+      <GiftUnwrap
+        target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }}
+        onClose={() => undefined}
+        onOpened={() => undefined}
+        onThanks={async () => null}
+      />,
+    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Skip' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Wear it' }));
+    expect(screen.getByRole('button', { name: 'You’re wearing it' })).toBeTruthy();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByRole('button', { name: 'Wear it' })).toBeTruthy();
+    expect(screen.getByText('Can’t reach Hevalo right now. Check your connection and try again.')).toBeTruthy();
+  });
+
   it('is felt once, as the lid comes off — or at the tap that skips to it', async () => {
     vi.useFakeTimers();
     resetHaptics();

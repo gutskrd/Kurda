@@ -1,12 +1,10 @@
 import { useId } from 'react';
-import { storyTextDirection } from '@kurda/shared';
 import { Button } from '../components/Button';
 import { InviteIcon } from '../components/icons';
 import { formatUntil } from '../reports/restriction';
-import { courseDialect } from '../stories/prefs';
 import { useLocale, useT, type Translate } from '../i18n/I18nProvider';
 import { GroupAvatar } from './GroupAvatar';
-import { GREETINGS } from './standing';
+import { useGreetings } from './greetings';
 
 /**
  * An empty group chat: the group's picture and name, whether it is new or cleared by the reader, and three greetings
@@ -30,9 +28,7 @@ export function GroupWelcome({
   const t = useT();
   const locale = useLocale();
   const id = useId();
-  // The learner's course as this device knows it; Kurmancî before the first lesson.
-  const dialect = courseDialect() ?? 'kurmanci';
-  const { lang, dir } = storyTextDirection(dialect);
+  const { greetings, lang, dir } = useGreetings();
 
   return (
     <div className="gwelcome">
@@ -51,7 +47,7 @@ export function GroupWelcome({
             {t('groups.welcome.sayHello')}
           </p>
           <div className="gwelcome-chips">
-            {GREETINGS[dialect].map((text) => (
+            {greetings.map((text) => (
               <button
                 key={text}
                 type="button"

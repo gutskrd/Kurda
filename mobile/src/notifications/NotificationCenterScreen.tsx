@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { RefreshControl, SectionList, StyleSheet, View } from 'react-native';
 import { isPlayGame, noticeFiltersFor, noticePicture, noticeShows, type IncomingInvite, type NoticeFilter } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { useIntents, useSayNotSaved } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -122,16 +123,42 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
     void load().finally(() => setRefreshing(false));
   }, [load]);
 
+  /*
+   * Read at once, the bell with it, and the server told after. A refusal makes them unread again: said for Mark all
+   * read, which was asked for, and quietly for one read by opening it, which has gone on to wherever it leads.
+   */
+  const say = useSayNotSaved();
+  const unread = useCallback((ids: ReadonlySet<string>) => {
+    setItems((list) => (list ? list.map((i) => (ids.has(i.id) ? { ...i, readAt: null } : i)) : list));
+  }, []);
+  const readNow = useCallback((ids: ReadonlySet<string>) => {
+    const now = new Date().toISOString();
+    setItems((list) => (list ? list.map((i) => (ids.has(i.id) ? { ...i, readAt: i.readAt ?? now } : i)) : list));
+  }, []);
+  const markedAll = useRef<ReadonlySet<string>>(new Set());
+  const readingAll = useIntents<'all', boolean>(() => client.post('/me/notifications/read-all'), {
+    failed: (error) => {
+      unread(markedAll.current);
+      say(error);
+    },
+  });
+  const reading = useIntents<string, boolean>((id) => client.post(`/me/notifications/${id}/read`), {
+    failed: (_error, id) => unread(new Set([id])),
+  });
+
   const markAll = useCallback(() => {
-    setItems((list) => (list ? list.map((i) => ({ ...i, readAt: i.readAt ?? new Date().toISOString() })) : list));
-    void client.post('/me/notifications/read-all');
-  }, [client]);
+    const ids = new Set((items ?? []).filter((i) => !i.readAt).map((i) => i.id));
+    if (ids.size === 0) return;
+    markedAll.current = ids;
+    readNow(ids);
+    readingAll.want('all', true, false);
+  }, [items, readNow, readingAll]);
 
   const open = useCallback(
     (item: InboxItem) => {
       if (!item.readAt) {
-        setItems((list) => (list ? list.map((i) => (i.id === item.id ? { ...i, readAt: new Date().toISOString() } : i)) : list));
-        void client.post(`/me/notifications/${item.id}/read`);
+        readNow(new Set([item.id]));
+        reading.want(item.id, true, false);
       }
       const link = resolveDeepLink(item.data);
       // A caring message is read here, with its helpline; it has no screen.
@@ -143,25 +170,34 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
       // sends them.
       if (link) void followDeepLink(link, navigation, client);
     },
-    [client, navigation],
+    [client, navigation, readNow, reading],
   );
 
   /**
    * Take one away: it starts leaving at once and the server is told; if the server refuses (and it was not already
-   * gone), it comes back.
+   * gone), it comes back in its place and the reason is said.
    */
+  const removing = useIntents<string, boolean>(
+    async (id) => {
+      const res = await client.delete(`/me/notifications/${id}`);
+      return res.ok || res.error.status === 404 ? { ok: true, data: null } : res;
+    },
+    {
+      failed: (error, id) => {
+        setLeaving((s) => minus(s, id));
+        setRemoved((s) => minus(s, id));
+        say(error);
+      },
+    },
+  );
   const remove = useCallback(
     (item: InboxItem) => {
       setOpenId(null);
       setLeaving((s) => plus(s, item.id));
       haptic('tap');
-      void client.delete(`/me/notifications/${item.id}`).then((res) => {
-        if (res.ok || res.error.status === 404) return;
-        setLeaving((s) => minus(s, item.id));
-        setRemoved((s) => minus(s, item.id));
-      });
+      removing.want(item.id, true, false);
     },
-    [client],
+    [removing],
   );
 
   const gone = useCallback((id: string) => {

@@ -160,6 +160,58 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(six.count, six.statements.join('\n')).toBeLessThanOrEqual(8);
     });
 
+    it('a friend’s profile tabs cost the same for one post as for five, and never read the whole profile again', async () => {
+      const post = (author: string, n: number) =>
+        pool.query(
+          `INSERT INTO library_posts (author_id, author_role, type, title, body, status, published_at)
+           SELECT $1, 'user', 'poem', 'Poem ' || i, 'Lines ' || i, 'published', now() - i * interval '1 minute' FROM generate_series(1, $2::int) i`,
+          [author, n],
+        );
+      await post(ids.f1!, 1);
+      await post(ids.f2!, 5);
+      const shown = (x: { statements: readonly string[] }) => x.statements.join('\n');
+      const one = await steady('GET', `/users/${ids.f1}/activity?kind=posts`, 'me');
+      const five = await steady('GET', `/users/${ids.f2}/activity?kind=posts`, 'me');
+      expect(five.body.items).toHaveLength(5);
+      expect(five.count, shown(five)).toBe(one.count);
+      // the session read, who may see it and where you stand, then the posts with their authors, engagement and pictures
+      expect(five.count, shown(five)).toBeLessThanOrEqual(7);
+      const friends = await steady('GET', `/users/${ids.f2}/friends`, 'me');
+      expect(friends.body.friends.length).toBeGreaterThan(0);
+      // the session read, who may see it and where you stand, and the list
+      expect(friends.count, shown(friends)).toBeLessThanOrEqual(4);
+      for (const tab of [five, friends]) expect(shown(tab)).not.toMatch(/FROM game_ratings|badge_showcase/);
+    });
+
+    it('the account read is the session, the row, its profile and the streak, without ranks or badges', async () => {
+      const me = await steady('GET', '/me', 'me');
+      expect(me.body.user.id).toBe(ids.me);
+      expect(me.count, me.statements.join('\n')).toBeLessThanOrEqual(4);
+      expect(me.statements.join('\n')).not.toMatch(/FROM game_ratings|badge_showcase/);
+    });
+
+    it('the letters page costs the same with no pen pals as with three, within its budget', async () => {
+      for (const tag of ['f2', 'f3', 'f4']) {
+        const { lo, hi } = canonicalPair(ids.f1!, ids[tag]!);
+        const thread = await pool.query<{ id: string }>(
+          `INSERT INTO letter_threads (user_lo, user_hi, last_letter_at) VALUES ($1, $2, now()) RETURNING id`,
+          [lo, hi],
+        );
+        await pool.query(
+          `INSERT INTO letters (sender_id, recipient_id, thread_id, body, age_band, status, delivered_at)
+           VALUES ($1, $2, $3, 'Silav', '18+', 'delivered', now())`,
+          [ids[tag], ids.f1, thread.rows[0]!.id],
+        );
+      }
+      // as the apps ask for it
+      const none = await steady('GET', '/letters?landings=1', 'f5');
+      const three = await steady('GET', '/letters?landings=1', 'f1');
+      expect(three.body.penPals).toHaveLength(3);
+      expect(three.body.landings).toHaveLength(3);
+      expect(three.count, three.statements.join('\n')).toBe(none.count);
+      expect(three.count, three.statements.join('\n')).toBeLessThanOrEqual(20);
+    });
+
     it('the heartbeat is the session read and one statement', async () => {
       const beat = await steady('POST', '/me/heartbeat', 'me');
       expect(beat.count, beat.statements.join('\n')).toBeLessThanOrEqual(2);

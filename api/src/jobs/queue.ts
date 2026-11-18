@@ -44,6 +44,21 @@ export function jobRetryOptions(def: Pick<JobDefinition<unknown>, 'retry'>, opts
   };
 }
 
+/** Jobs added per round trip by `enqueueMany`: one transaction in Redis each, so a large run does not stall it. */
+export const ENQUEUE_BATCH = 500;
+
+function validPayload<T>(def: JobDefinition<T>, payload: T): T {
+  const parsed = def.schema.safeParse(payload);
+  if (!parsed.success) {
+    throw new Error(
+      `invalid payload for job "${def.name}": ${parsed.error.issues
+        .map((i) => `${i.path.join('.')}: ${i.message}`)
+        .join('; ')}`,
+    );
+  }
+  return parsed.data;
+}
+
 export class JobQueue {
   constructor(private readonly queue: Queue) {}
 
@@ -58,15 +73,7 @@ export class JobQueue {
 
   /** Validates the payload against the job's schema before it reaches Redis, so a bad producer fails its own request. */
   async enqueue<T>(def: JobDefinition<T>, payload: T, opts: EnqueueOptions = {}): Promise<string> {
-    const parsed = def.schema.safeParse(payload);
-    if (!parsed.success) {
-      throw new Error(
-        `invalid payload for job "${def.name}": ${parsed.error.issues
-          .map((i) => `${i.path.join('.')}: ${i.message}`)
-          .join('; ')}`,
-      );
-    }
-    const job = await this.queue.add(def.name, parsed.data, {
+    const job = await this.queue.add(def.name, validPayload(def, payload), {
       jobId: opts.idempotencyKey,
       delay: opts.delayMs,
       // Priority: auth emails, then push, then analytics.
@@ -74,6 +81,16 @@ export class JobQueue {
       ...jobRetryOptions(def, opts),
     });
     return job.id as string;
+  }
+
+  /**
+   * Many jobs of one kind, validated as `enqueue` does (none is queued if any is invalid) and added a few hundred per
+   * round trip rather than one each.
+   */
+  async enqueueMany<T>(def: JobDefinition<T>, payloads: readonly T[]): Promise<void> {
+    const opts = { priority: priorityForJob(def.name), ...jobRetryOptions(def) };
+    const jobs = payloads.map((payload) => ({ name: def.name, data: validPayload(def, payload), opts }));
+    for (let i = 0; i < jobs.length; i += ENQUEUE_BATCH) await this.queue.addBulk(jobs.slice(i, i + ENQUEUE_BATCH));
   }
 
   /** The waiting-job depth, the backpressure signal. */

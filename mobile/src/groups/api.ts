@@ -1,5 +1,8 @@
+import { useCallback } from 'react';
 import type { ApiClient } from '../api/client';
-import type { ApiResult } from '../api/types';
+import { createHiddenSet, useIntents, useSayNotSaved } from '../api/optimistic';
+import type { ApiError, ApiResult } from '../api/types';
+import { useAuth } from '../auth/AuthContext';
 // One definition of the hierarchy, shared with the API and the browser.
 export type { Role } from '@kurda/shared';
 import type {
@@ -76,6 +79,33 @@ export function markGroupRead(client: ApiClient, groupId: string): Promise<ApiRe
 
 export function leaveGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
   return client.post<{ ok: true }>(`/groups/${groupId}/leave`);
+}
+
+// Groups left from this phone: they leave the conversation list at once, before the server has it.
+const left = createHiddenSet();
+export const useLeftGroups = left.useHidden;
+
+/**
+ * Leave a group, once the question has been answered: it leaves the list at once and the server is told after. A
+ * refusal brings it back and says why, wherever the reader has gone since; `saidHere` may say it in place instead,
+ * returning true when it did.
+ */
+export function useLeaveGroup(saidHere?: (error: ApiError) => boolean): (groupId: string) => void {
+  const { client } = useAuth();
+  const say = useSayNotSaved();
+  const leaving = useIntents<string, boolean>((groupId) => leaveGroup(client, groupId), {
+    failed: (error, groupId) => {
+      left.unhide(groupId);
+      if (!saidHere?.(error)) say(error);
+    },
+  });
+  return useCallback(
+    (groupId: string) => {
+      left.hide(groupId);
+      leaving.want(groupId, true, false);
+    },
+    [leaving],
+  );
 }
 
 /** Start a group: a name is all it needs. Its maker owns it and adds friends from its chat. */

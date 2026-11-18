@@ -34,6 +34,7 @@ import type { ApiResult } from '../api/types';
 import { onPostDeleted, type DeletedPost } from '../composer/postDeleted';
 import type { LibraryComment, LibraryPost } from './types';
 import { LibraryPostScreen } from './LibraryPostScreen';
+import { watchNotices } from '../testing/notices';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -133,6 +134,64 @@ describe('the post’s author', () => {
   });
 });
 
+/* The website's page has the wall's row under the post and says how often it was read; so does the phone's. */
+describe('the post’s own row', () => {
+  const ENGAGEMENT = 'GET /posts/library/p1/engagement';
+  const counts = { likes: 4, bookmarks: 1, reposts: 2, liked: false, bookmarked: false, reposted: false };
+
+  it('says how often it was read, and shows its likes, reposts and comments as the wall does', async () => {
+    open({ [ENGAGEMENT]: ok({ engagement: counts }) });
+    expect(await screen.findByText('3 reads')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Like (4)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Repost (2)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '3 comments (3)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+  });
+
+  it('likes at once, before the server answers, and keeps the server’s totals after', async () => {
+    const reply = deferred<ApiResult<unknown>>();
+    const { client } = open({ [ENGAGEMENT]: ok({ engagement: counts }), 'POST /posts/library/p1/like': () => reply.promise });
+    fireEvent.click(await screen.findByRole('button', { name: 'Like (4)' }));
+    expect(screen.getByRole('button', { name: 'Unlike (5)' })).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/posts/library/p1/like')?.body).toEqual({ on: true });
+    await act(async () => reply.resolve(ok({ on: true, engagement: { ...counts, likes: 6, liked: true } })));
+    expect(await screen.findByRole('button', { name: 'Unlike (6)' })).toBeTruthy();
+  });
+
+  it('still shows the post, with no counts, when its numbers could not be read', async () => {
+    open();
+    expect(await screen.findByText('Rovî û Gur')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Like' })).toBeTruthy();
+  });
+
+  it('sends the post to a friend in chat from Share, saying who it went to', async () => {
+    const { client } = open({
+      [ENGAGEMENT]: ok({ engagement: counts }),
+      'GET /friends?limit=500': ok({ total: 1, friends: [{ userId: 'u-azad', username: 'azad', displayName: null, avatarUrl: null, online: false, lastSeenAt: null }] }),
+      'POST /chat/u-azad/messages': ok({ id: 'm1' }),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share this post' }));
+    expect(screen.getByRole('button', { name: 'Share…' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy link' })).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Message azad' }));
+    expect(await screen.findByText('Sent to azad.')).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/chat/u-azad/messages')?.body).toEqual({ body: 'Rovî û Gur\nhttps://hevalo.app/app/library/p1' });
+  });
+
+  it('brings the friends back with why, when the message did not go', async () => {
+    open({
+      [ENGAGEMENT]: ok({ engagement: counts }),
+      'GET /friends?limit=500': ok({ total: 1, friends: [{ userId: 'u-azad', username: 'azad', displayName: null, avatarUrl: null, online: false, lastSeenAt: null }] }),
+      'POST /chat/u-azad/messages': fail({ status: 403, code: 'NOT_FRIENDS', message: 'Not friends' }),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share this post' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Message azad' }));
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(screen.queryByText('Sent to azad.')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Message azad' })).toBeTruthy();
+  });
+});
+
 describe('a comment’s author', () => {
   it('shows who wrote it, with their picture and how long ago in words, and opens their profile', async () => {
     open({}, [comment('c1')]);
@@ -173,13 +232,15 @@ describe('posting a comment', () => {
     expect(await screen.findByText('Pir xweş e')).toBeTruthy();
     expect(screen.getByText('Posting…')).toBeTruthy();
     expect(screen.getByText('4 comments')).toBeTruthy();
+    const row = screen.getByText('Pir xweş e');
     await act(async () => reply.resolve(ok(comment('c9', { authorId: 'me', author: me, body: 'Pir xweş e', createdAt: new Date().toISOString() }))));
     await waitFor(() => expect(screen.queryByText('Posting…')).toBeNull());
-    expect(screen.getByText('Pir xweş e')).toBeTruthy();
+    // The server's copy takes the same row, which is never drawn afresh.
+    expect(screen.getByText('Pir xweş e')).toBe(row);
   });
 
   it('takes it back off and says why when the server refuses it, keeping what was written', async () => {
-    open({ 'POST /library/posts/p1/comments': fail({ status: 500, kind: 'server', message: 'boom' }) }, [comment('c1')]);
+    open({ 'POST /library/posts/p1/comments': fail({ status: 422, message: 'refused' }) }, [comment('c1')]);
     await screen.findByText('comment c1');
     type('Ev dê neçe');
     send();
@@ -254,7 +315,7 @@ describe('replies', () => {
   });
 
   it('goes back to replying to the same person when the reply is refused', async () => {
-    open({ 'POST /library/posts/p1/comments': fail({ status: 500, kind: 'server' }) }, [comment('c1')]);
+    open({ 'POST /library/posts/p1/comments': fail({ status: 422, message: 'refused' }) }, [comment('c1')]);
     await screen.findByText('comment c1');
     fireEvent.click(screen.getByRole('button', { name: 'Reply' }));
     type('Erê');
@@ -263,6 +324,45 @@ describe('replies', () => {
     expect(screen.getByText('Replying to @azad')).toBeTruthy();
     expect(screen.queryByText('Erê', { ignore: 'textarea' })).toBeNull();
     expect((screen.getByPlaceholderText('Add a comment…') as HTMLTextAreaElement).value).toBe('Erê');
+  });
+});
+
+/* As on the website: a comment the server was not reached for stays where it was written, for Try again or Cancel. */
+describe('a comment that did not go', () => {
+  it('stays in the thread as not sent, counted, and goes on Try again', async () => {
+    let tries = 0;
+    const { client } = open(
+      {
+        'POST /library/posts/p1/comments': () =>
+          tries++ === 0
+            ? fail({ kind: 'network', status: 0, message: 'offline' })
+            : ok(comment('c9', { authorId: 'me', author: me, body: 'Pir xweş e', createdAt: new Date().toISOString() })),
+      },
+      [comment('c1')],
+    );
+    await screen.findByText('comment c1');
+    type('Pir xweş e');
+    send();
+    expect(await screen.findByText('Not sent')).toBeTruthy();
+    expect(screen.getByText('Pir xweş e', { ignore: 'textarea' })).toBeTruthy();
+    expect(screen.getByText('4 comments')).toBeTruthy();
+    expect(alert).not.toHaveBeenCalled();
+    expect((screen.getByPlaceholderText('Add a comment…') as HTMLTextAreaElement).value).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
+    await waitFor(() => expect(screen.queryByText('Not sent')).toBeNull());
+    expect(client.calls.filter((c) => c.method === 'POST')).toHaveLength(2);
+    expect(screen.getByText('4 comments')).toBeTruthy();
+  });
+
+  it('leaves on Cancel, uncounted, its words back in the composer', async () => {
+    open({ 'POST /library/posts/p1/comments': fail({ kind: 'network', status: 0, message: 'offline' }) }, [comment('c1')]);
+    await screen.findByText('comment c1');
+    type('Pir xweş e');
+    send();
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByText('Not sent')).toBeNull();
+    expect(screen.getByText('3 comments')).toBeTruthy();
+    expect((screen.getByPlaceholderText('Add a comment…') as HTMLTextAreaElement).value).toBe('Pir xweş e');
   });
 });
 
@@ -331,13 +431,22 @@ describe('deleting your own post', () => {
     stop();
   });
 
-  it('stays, and says why, when the server refuses', async () => {
-    const { onExit } = open({ 'DELETE /library/posts/p1': fail({ status: 500, kind: 'server', message: 'boom' }) });
+  it('goes at once, once confirmed, and says why when the server refused, the lists keeping it', async () => {
+    const said = watchNotices();
+    const heard: DeletedPost[] = [];
+    const stop = onPostDeleted((p) => heard.push(p));
+    let answer: (r: unknown) => void = () => undefined;
+    const { onExit } = open({ 'DELETE /library/posts/p1': () => new Promise((resolve) => (answer = resolve)) } as never);
     fireEvent.click(await screen.findByRole('button', { name: 'Post options' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete post' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
-    expect(await screen.findByRole('alert')).toBeTruthy();
-    expect(onExit).not.toHaveBeenCalled();
+    // Gone before the server has answered.
+    expect(onExit).toHaveBeenCalledTimes(1);
+    await act(async () => answer(fail({ status: 500, kind: 'server', message: 'boom' })));
+    expect(said).toHaveBeenCalledWith('Something went wrong on our end. Please try again shortly.');
+    // The lists were never told it was gone.
+    expect(heard).toEqual([]);
+    stop();
   });
 
   it('offers no menu on somebody else’s post', async () => {

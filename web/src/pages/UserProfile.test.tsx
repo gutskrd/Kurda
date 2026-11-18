@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Routes, Route } from 'react-router-dom';
 import { UserProfile } from './UserProfile';
 import { renderApp, jsonResponse } from '../test/utils';
+import { onNotice } from '../lib/notice';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -171,5 +172,76 @@ describe('UserProfile (other user, full page)', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Add friend' }));
     expect(await screen.findByRole('button', { name: 'Cancel your request to Zana K' })).toHaveTextContent('Requested');
     expect(document.querySelector('.friend-ask-ticket')).toBeNull();
+  });
+});
+
+/** Serves the profile, and holds each write until the test answers it; `writes` lists them in order. */
+function heldWrites(user: unknown) {
+  const writes: Array<{ method: string; url: string; answer: (res: Response) => void }> = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      const method = init?.method ?? 'GET';
+      if (method !== 'GET') return new Promise<Response>((answer) => writes.push({ method, url, answer }));
+      if (url.includes('/users/')) return jsonResponse(200, user);
+      return jsonResponse(200, {});
+    }),
+  );
+  renderApp(<Routes><Route path="/app/users/:id" element={<UserProfile />} /></Routes>, ['/app/users/u2']);
+  return writes;
+}
+
+describe('UserProfile friend answers, shown before the server has them', () => {
+  const zana = (friendStatus: string) => ({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus, private: false });
+
+  it('says Requested at once, and offers Add friend again with the reason when the server refuses', async () => {
+    const writes = heldWrites(zana('none'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add friend' }));
+    expect(screen.getByRole('button', { name: 'Cancel your request to Zana K' })).toHaveTextContent('Requested');
+    writes[0]!.answer(jsonResponse(409, { code: 'LIMIT_REACHED', message: 'too many', details: { limit: 'friend_requests_sent', max: 50 } }));
+    expect(await screen.findByRole('button', { name: 'Add friend' })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).not.toBeEmptyDOMElement();
+  });
+
+  it('ends quick presses in the last one, sending it only once the first is answered', async () => {
+    const writes = heldWrites(zana('none'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Add friend' }));
+    // Taken back before the request has even been answered.
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel your request to Zana K' }));
+    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    expect(screen.getByRole('button', { name: 'Add friend' })).toBeInTheDocument();
+    expect(writes.map((w) => w.method)).toEqual(['POST']);
+    writes[0]!.answer(jsonResponse(200, { outcome: 'requested' }));
+    await waitFor(() => expect(writes.map((w) => w.method)).toEqual(['POST', 'DELETE']));
+    writes[1]!.answer(jsonResponse(200, { ok: true }));
+    await waitFor(() => expect(writes).toHaveLength(2));
+    expect(screen.getByRole('button', { name: 'Add friend' })).toBeInTheDocument();
+  });
+
+  it('ends a friendship once confirmed, before the server answers, and makes you friends again with a notice if refused', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    const writes = heldWrites(zana('friends'));
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana K' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Remove Zana K as a friend' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /press again to confirm/i }));
+    expect(await screen.findByRole('button', { name: 'Add friend' })).toBeInTheDocument();
+    expect(writes.map((w) => `${w.method} ${new URL(w.url).pathname}`)).toEqual(['DELETE /friends/u2']);
+    writes[0]!.answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Message' })).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
+  });
+
+  it('makes you friends at once on Accept, and brings the request back with a notice if refused', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    const writes = heldWrites(zana('pending_in'));
+    await userEvent.click(await screen.findByRole('button', { name: 'Accept request' }));
+    expect(await screen.findByRole('button', { name: 'Message' })).toBeInTheDocument();
+    writes[0]!.answer(jsonResponse(404, { code: 'NO_REQUEST', message: 'no pending request from that user' }));
+    expect(await screen.findByRole('button', { name: 'Accept request' })).toBeInTheDocument();
+    expect(notices).toEqual(['Something went wrong. Please try again.']);
+    stop();
   });
 });

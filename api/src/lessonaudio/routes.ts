@@ -37,7 +37,7 @@ import { registerAudioParser, storeAudioMedia } from '../media/audioMedia.js';
 import { audioLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { ALPHABET_AUDIO_ROLES } from '../alphabet/routes.js';
-import { readWav } from '../alphabet/wav.js';
+import { readWav } from '../media/wav.js';
 import { LessonAudioService } from './service.js';
 import { lessonsPlaying } from './publish-guard.js';
 import { bustStoryLists } from '../stories/service.js';
@@ -117,6 +117,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
     '/admin/lesson-audio',
     {
       config: {
+        rawBody: true,
         // A recording session walks hundreds of short items, so this allows several times the alphabet's pace; storage and
         // media op ceilings still bound the cost.
         rateLimit: { max: 600, windowMs: 60 * 60_000, per: 'user-or-ip' as const },

@@ -1,5 +1,5 @@
 /** The gateway over a store that stops answering, with real WebSocket clients and no database: the message fails, the connection and process carry on. */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import Fastify, { type FastifyInstance } from 'fastify';
 import fastifyWebsocket from '@fastify/websocket';
 import WebSocket from 'ws';
@@ -75,5 +75,26 @@ describe('realtime gateway when its store fails', () => {
     ws.send(JSON.stringify({ type: 'ping' }));
     await pong;
     expect(ws.readyState).toBe(WebSocket.OPEN);
+  });
+});
+
+describe('taking people out of a room', () => {
+  it('drops all their invites in one delete and tells each of their connections to leave', async () => {
+    const kv = new MemoryKV();
+    const bus = new LocalRoomBus();
+    const gateway = new RealtimeGateway(kv, bus);
+    const heard: Array<{ room: string; event: Record<string, unknown> }> = [];
+    bus.onEvent((room, event) => heard.push({ room, event }));
+    for (const user of ['a', 'b', 'c']) await gateway.invite('group:g', user);
+    const deletes = vi.spyOn(kv, 'del');
+
+    await gateway.revokeAll('group:g', ['a', 'b']);
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(deletes).toHaveBeenCalledTimes(1);
+    expect(await kv.getMany(['rt:invite:group:g:a', 'rt:invite:group:g:b', 'rt:invite:group:g:c'])).toEqual([null, null, '1']);
+    expect(heard.map((h) => [h.room, h.event.userId])).toEqual([
+      ['group:g', 'a'],
+      ['group:g', 'b'],
+    ]);
   });
 });

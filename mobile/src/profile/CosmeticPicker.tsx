@@ -6,6 +6,8 @@ import { ToggleRow } from '../theme/Toggle';
 import { countByCategory, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
+import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
@@ -23,7 +25,7 @@ import { TIER_NAME_KEY } from '../ranks/format';
 import { KIND_LABEL, kindWithCount } from '../shop/format';
 import { ItemArt, KindChips, SEARCH_MAX } from '../shop/ItemFilters';
 import { equip, inventory, setIconVisibility, type CosmeticSlot, type InventoryItem } from './cosmetics';
-import { InitialsAvatar } from './InitialsAvatar';
+import { Avatar, ownAvatarUrl } from './Avatar';
 import { Loading } from '../theme/Loading';
 
 type Kind = ItemCategory;
@@ -81,7 +83,6 @@ export function CosmeticPicker({
   const dir = useDirection();
 
   const [items, setItems] = useState<InventoryItem[] | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showIcon, setShowIcon] = useState(iconVisible);
   // Null until chosen; then the first kind you own any of.
@@ -108,47 +109,54 @@ export function CosmeticPicker({
     };
   }, [client, user]);
 
-  const choose = useCallback(
-    (slot: CosmeticSlot, sku: string, equipped: boolean) => {
-      if (busy) return;
-      setBusy(sku);
+  // What /me has you wearing, or a fresher answer to a tap here, so a tile does not flicker back while /me is re-read.
+  const [worn, setWorn] = useState<Record<CosmeticSlot, string | null>>({ background: equippedBackground, icon: equippedIcon });
+  useEffect(() => setWorn({ background: equippedBackground, icon: equippedIcon }), [equippedBackground, equippedIcon]);
+  const said = (failure: ApiError) => setError(describeError(failure, t));
+
+  // A tap puts it on or takes it off at once; the server is told after, and a refusal puts it back with the reason.
+  const dressing = useIntents<CosmeticSlot | 'frame', string | null>(
+    async (slot, sku) => {
+      if (slot === 'frame') {
+        const res = await wearFrame(client, sku);
+        if (res.ok) setWearing(res.data.frameSku);
+        return res;
+      }
+      const res = await equip(client, slot, sku);
+      if (res.ok) {
+        setWorn((w) => ({ ...w, [slot]: sku }));
+        onChanged();
+      }
+      return res;
+    },
+    { failed: said },
+  );
+  const put = useCallback(
+    (slot: CosmeticSlot | 'frame', sku: string, on: boolean) => {
       setError(null);
       // Tapping what you have on takes it off.
-      void equip(client, slot, equipped ? null : sku).then((res) => {
-        setBusy(null);
-        if (res.ok) onChanged();
-        else setError(describeError(res.error, t));
-      });
+      dressing.want(slot, on ? null : sku, slot === 'frame' ? wearing : worn[slot]);
     },
-    [busy, client, onChanged, t],
+    [dressing, wearing, worn],
   );
 
-  const wear = useCallback(
-    (sku: string, on: boolean) => {
-      if (busy) return;
-      setBusy(sku);
-      setError(null);
-      void wearFrame(client, on ? null : sku).then((res) => {
-        setBusy(null);
-        if (res.ok) setWearing(res.data.frameSku);
-        else setError(describeError(res.error, t));
-      });
+  const iconShown = useIntents<'icon', boolean>(
+    async (_key, next) => {
+      const res = await setIconVisibility(client, next);
+      if (res.ok) {
+        setShowIcon(next);
+        onChanged();
+      }
+      return res;
     },
-    [busy, client, t],
+    { failed: said },
   );
-
   const toggleIcon = useCallback(
     (next: boolean) => {
-      setShowIcon(next);
-      void setIconVisibility(client, next).then((res) => {
-        if (res.ok) onChanged();
-        else {
-          setShowIcon(!next);
-          setError(describeError(res.error, t));
-        }
-      });
+      setError(null);
+      iconShown.want('icon', next, showIcon);
     },
-    [client, onChanged, t],
+    [iconShown, showIcon],
   );
 
   const owned = useMemo(() => items ?? [], [items]);
@@ -169,7 +177,8 @@ export function CosmeticPicker({
   const searchable = ofKind.length > SEARCH_FROM;
   const shown = searchable ? ofKind.filter((i) => matchesQuery({ name: nameOf(i) }, query)) : ofKind;
 
-  const equippedSku = current === 'background' ? equippedBackground : current === 'icon' ? equippedIcon : current === 'frame' ? wearing : null;
+  const equippedSku =
+    current === 'frame' ? dressing.shown('frame', wearing) : current === 'background' || current === 'icon' ? dressing.shown(current, worn[current]) : null;
   const wide = current === 'background';
   const room = width || 327; // Before the first layout, the width of a small phone.
   const columns = Math.max(2, Math.floor((room + GAP) / (MIN_TILE[wide ? 'wide' : 'square'] + GAP)));
@@ -190,9 +199,9 @@ export function CosmeticPicker({
     return (
       <PressableScale
         key={item.sku}
-        onPress={() => (current === 'frame' ? wear(item.sku, on) : choose(current as CosmeticSlot, item.sku, on))}
+        onPress={() => put(current as CosmeticSlot | 'frame', item.sku, on)}
         accessibilityRole="button"
-        accessibilityState={{ selected: on, busy: busy === item.sku }}
+        accessibilityState={{ selected: on }}
         accessibilityLabel={on ? t('edit.itemEquipped', { name }) : name}
         accessibilityHint={on ? t('edit.hint.takeOff') : t('edit.hint.wear')}
         style={[styles.tile, { width: tile }]}
@@ -202,32 +211,19 @@ export function CosmeticPicker({
           {tier ? (
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
               <SeasonFramed tier={tier} size={Math.round(art * 0.86)} label={name}>
-                <InitialsAvatar
-                  name={user?.displayName ?? user?.username ?? ''}
-                  id={user?.id ?? ''}
-                  size={framedAvatarSize(Math.round(art * 0.86))}
-                />
+                <Avatar name={user?.displayName ?? user?.username ?? ''} size={framedAvatarSize(Math.round(art * 0.86))} photoUrl={ownAvatarUrl(user)} />
               </SeasonFramed>
             </View>
           ) : current === 'frame' && item.assetUrl ? (
             // One of the shop's frames, round your own face as a season frame is.
             <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
               <PictureFramed url={item.assetUrl} size={Math.round(art * 0.86)}>
-                <InitialsAvatar
-                  name={user?.displayName ?? user?.username ?? ''}
-                  id={user?.id ?? ''}
-                  size={framedAvatarSize(Math.round(art * 0.86))}
-                />
+                <Avatar name={user?.displayName ?? user?.username ?? ''} size={framedAvatarSize(Math.round(art * 0.86))} photoUrl={ownAvatarUrl(user)} />
               </PictureFramed>
             </View>
           ) : (
             <ItemArt category={item.category} path={item.assetUrl} width={art} />
           )}
-          {busy === item.sku ? (
-            <View style={[StyleSheet.absoluteFill, styles.busy, { backgroundColor: colors.glassFill }]}>
-              <Loading />
-            </View>
-          ) : null}
           {on ? (
             <View style={[styles.check, dir.row === 'row-reverse' ? styles.checkLeft : styles.checkRight, { backgroundColor: colors.primary }]}>
               <Icon name="check" size={12} tone="onPrimary" />
@@ -311,12 +307,16 @@ export function CosmeticPicker({
           {/* Showing it and owning it are different questions, so this switch hides the icon without giving it up.
              The words toggle it as well as the switch. */}
           {current === 'icon' && ofKind.length > 0 ? (
-            <ToggleRow label={t('edit.showPremiumIcon')} value={showIcon} onValueChange={toggleIcon} />
+            <ToggleRow label={t('edit.showPremiumIcon')} value={iconShown.shown('icon', showIcon)} onValueChange={toggleIcon} />
           ) : null}
         </>
       )}
 
-      {error ? <Text style={[styles.error, dir.text, { color: colors.danger }]}>{error}</Text> : null}
+      {error ? (
+        <Text style={[styles.error, dir.text, { color: colors.danger }]} accessibilityLiveRegion="polite">
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -331,7 +331,6 @@ const styles = StyleSheet.create({
   ringSquare: { borderRadius: radii.md + 2 },
   frameTile: { alignItems: 'center', justifyContent: 'center', borderRadius: radii.md },
   ways: { flexWrap: 'wrap', gap: spacing.sm },
-  busy: { alignItems: 'center', justifyContent: 'center' },
   check: { position: 'absolute', top: 4, width: 20, height: 20, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   checkRight: { right: 4 },
   checkLeft: { left: 4 },

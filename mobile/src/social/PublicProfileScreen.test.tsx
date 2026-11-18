@@ -10,7 +10,7 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 // The fire as its props: how big it burns, whoever draws it.
 vi.mock('../theme/Fire', () => import('../theme/testing/fireProbe'));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { Alert } from 'react-native';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
@@ -18,6 +18,7 @@ import type { HapticEvent } from '../feedback/hapticPacing';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { PublicProfileScreen } from './PublicProfileScreen';
+import { watchNotices } from '../testing/notices';
 
 /*
  * Another learner's profile: their streak's fire as big as their streak, so a friend a year in shows the Newroz fire.
@@ -154,11 +155,31 @@ describe('the menu about somebody', () => {
     await waitFor(() => expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/friends/u2')).toBe(true));
   });
 
+  it('ends a friendship as soon as it is confirmed, and brings it back with the reason when refused', async () => {
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
+    const said = watchNotices();
+    let answer: (r: unknown) => void = () => undefined;
+    visitBaran('friends', { 'DELETE /friends/u2': () => new Promise((resolve) => (answer = resolve)) } as never);
+    expect(await screen.findByRole('button', { name: 'Message' })).toBeTruthy();
+    // Remove friend is picked from the menu, and the question after it answered yes.
+    alert.mockImplementationOnce((_title, _message, buttons) => buttons?.find((b) => b.text === 'Remove friend')?.onPress?.());
+    fireEvent.click(screen.getByRole('button', { name: 'More about Baran Şêx' }));
+    // No longer friends before the server answers.
+    expect(screen.getByRole('button', { name: 'Add friend' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Message' })).toBeNull();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByRole('button', { name: 'Message' })).toBeTruthy();
+    expect(said).toHaveBeenLastCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+  });
+
   it('draws their own sky behind their face', async () => {
     visitBaran('none');
     expect(await screen.findByTestId('profile-horizon')).toBeTruthy();
   });
 });
+
+/** Baran's profile, as a stranger sees it, without their friendship. */
+const BARAN = { userId: 'u2', username: 'baran', displayName: 'Baran', private: false, xp: 10, streak: 0, achievements: 0 };
 
 describe('asking to be friends', () => {
   it('hands the request over from the button, which then says Requested, and takes it back through the same routes', async () => {
@@ -169,7 +190,7 @@ describe('asking to be friends', () => {
     vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
     let status = 'none';
     const client = fakeClient({
-      'GET /users/u2': () => ok({ userId: 'u2', username: 'baran', displayName: 'Baran', friendStatus: status, private: false, xp: 10, streak: 0, achievements: 0 }),
+      'GET /users/u2': () => ok({ ...BARAN, friendStatus: status }),
       'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
       'POST /friends/requests': () => {
         status = 'pending_out';
@@ -192,5 +213,58 @@ describe('asking to be friends', () => {
     expect(await screen.findByRole('button', { name: 'Add friend' })).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/friends/requests/u2')).toBe(true));
     stop();
+  });
+
+  it('says Requested before the server answers, sends the withdrawal after it, and goes back with the reason when refused', async () => {
+    const said = watchNotices();
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
+    const answers: ((r: unknown) => void)[] = [];
+    let status = 'none';
+    const client = fakeClient({
+      'GET /users/u2': () => ok({ ...BARAN, friendStatus: status }),
+      'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
+      'POST /friends/requests': () =>
+        new Promise((resolve) =>
+          answers.push((r) => {
+            status = 'pending_out';
+            resolve(r);
+          }),
+        ),
+      'DELETE /friends/requests/u2': () => new Promise((resolve) => answers.push(resolve)),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Add friend' }));
+    expect(screen.getByRole('button', { name: 'Requested' })).toBeTruthy();
+    // Taken back, once confirmed, before the first has been answered: shown at once, sent after it.
+    fireEvent.click(screen.getByRole('button', { name: 'Requested' }));
+    expect(screen.getByRole('button', { name: 'Add friend' })).toBeTruthy();
+    const writes = () => client.calls.filter((c) => c.method !== 'GET').map((c) => `${c.method} ${c.path}`);
+    expect(writes()).toEqual(['POST /friends/requests']);
+    await act(async () => answers[0]!(ok({ outcome: 'requested' })));
+    expect(writes()).toEqual(['POST /friends/requests', 'DELETE /friends/requests/u2']);
+    await act(async () => answers[1]!({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    // The withdrawal did not go: the request stands, as the server has it.
+    expect(screen.getByRole('button', { name: 'Requested' })).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+  });
+});
+
+describe('blocking somebody', () => {
+  it('leaves their profile at once, once confirmed, and says why when the block was refused', async () => {
+    const said = watchNotices();
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.text === 'Block')?.onPress?.());
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'GET /users/u2': ok({ ...BARAN, friendStatus: 'friends' }),
+      'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
+      'POST /friends/u2/block': () => new Promise((resolve) => (answer = resolve)),
+    } as never);
+    const onExit = vi.fn();
+    renderWithProviders(<PublicProfileScreen userId="u2" onExit={onExit} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'More about Baran' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+    await act(async () => answer({ ok: false, error: { kind: 'client', status: 409, code: 'LIMIT_REACHED', message: 'too many' } }));
+    expect(said).toHaveBeenCalledWith(expect.any(String));
   });
 });

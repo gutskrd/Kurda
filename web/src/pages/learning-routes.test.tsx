@@ -10,6 +10,7 @@ import { CourseMap } from './CourseMap';
 import { Lesson } from './Lesson';
 import { Review } from './Review';
 import { NextLesson } from './NextLesson';
+import { onNotice } from '../lib/notice';
 
 /* The learning routes as a learner moves through them (Learn, a course map, a lesson, a review, the next lesson after sign-up), against a scripted API. */
 
@@ -123,6 +124,8 @@ describe('Learn', () => {
 
     expect(await screen.findByText('Due now: 4')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/app/learn/review');
+    // And beside it, the other kinds of practice.
+    expect(screen.getByRole('link', { name: 'More ways to practise' })).toHaveAttribute('href', '/app/learn/practice');
 
     const first = (await screen.findByRole('heading', { name: 'Kurmanji for Beginners' })).closest('article')!;
     expect(within(first).getByText('Kurmancî')).toBeInTheDocument();
@@ -226,9 +229,8 @@ describe('Learn', () => {
     );
     routes('/app/learn');
     const today = await screen.findByRole('region', { name: 'Today' });
-    const goal = await within(today).findByRole('progressbar', { name: 'Today’s goal' });
-    expect(goal).toHaveAttribute('aria-valuenow', '60');
-    expect(goal).toHaveAttribute('aria-valuetext', '12 of 20 XP today');
+    const goal = await within(today).findByRole('button', { name: 'Today’s goal, 12 of 20 XP today' });
+    expect(goal).toHaveAttribute('aria-haspopup', 'dialog');
     expect(within(today).getByText('12/20 XP')).toBeInTheDocument();
     expect(within(today).getByText('5-day streak')).toBeInTheDocument();
     expect(within(today).getByRole('link', { name: '7 due' })).toHaveAttribute('href', '/app/learn/review');
@@ -248,8 +250,7 @@ describe('Learn', () => {
     );
     routes('/app/learn');
     const today = await screen.findByRole('region', { name: 'Today' });
-    const goal = await within(today).findByRole('progressbar', { name: 'Today’s goal' });
-    expect(goal).toHaveAttribute('aria-valuetext', 'Today’s goal is done');
+    expect(await within(today).findByRole('button', { name: 'Today’s goal is done' })).toBeInTheDocument();
     expect(within(today).getByText('130 XP')).toBeInTheDocument();
     expect(within(today).queryByText('130/20 XP')).not.toBeInTheDocument();
     expect(today.querySelector('.learn-strip-done')).not.toBeNull();
@@ -279,6 +280,89 @@ describe('Learn', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(button).toHaveFocus();
+  });
+
+  it('changes the daily goal from its ring, at once, and shows what the server then counts today', async () => {
+    const sent: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const path = new URL(url).pathname;
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true, streak: { current: 2, longest: 2, freezes: 0, lastActiveOn: null } } });
+        if (path === '/me/daily-goal' && init?.method === 'PUT') {
+          sent.push(JSON.parse(init.body as string));
+          return jsonResponse(200, { goal: 10, effectiveGoal: 10, earnedXp: 12, progress: 1, completed: true });
+        }
+        if (path === '/me/daily-goal') return jsonResponse(200, { goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false });
+        if (path === '/courses') return jsonResponse(200, { courses: [] });
+        return jsonResponse(200, { due: 0, available: 0 });
+      }),
+    );
+    routes('/app/learn');
+    const today = await screen.findByRole('region', { name: 'Today' });
+    await userEvent.click(await within(today).findByRole('button', { name: 'Today’s goal, 12 of 20 XP today' }));
+    const sheet = screen.getByRole('dialog', { name: 'Today' });
+    const goals = within(sheet).getByRole('group', { name: 'Goal: 20 XP' });
+    expect(within(goals).getByRole('radio', { name: '20 XP a day' })).toBeChecked();
+    expect(within(goals).getAllByRole('radio')).toHaveLength(4);
+
+    await userEvent.click(within(goals).getByRole('radio', { name: '10 XP a day' }));
+    expect(within(sheet).getByRole('radio', { name: '10 XP a day' })).toBeChecked();
+    await waitFor(() => expect(sent).toEqual([{ goal: 10 }]));
+    // A lower goal counts from today, so the strip's ring is met at once.
+    expect(await within(today).findByRole('button', { name: 'Today’s goal is done' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('puts the saved goal back, with a notice, when the change is refused', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const path = new URL(url).pathname;
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true } });
+        if (path === '/me/daily-goal' && init?.method === 'PUT') return jsonResponse(503, { code: 'UNAVAILABLE', message: 'down' });
+        if (path === '/me/daily-goal') return jsonResponse(200, { goal: 20, effectiveGoal: 20, earnedXp: 0, progress: 0, completed: false });
+        if (path === '/courses') return jsonResponse(200, { courses: [] });
+        return jsonResponse(200, { due: 0, available: 0 });
+      }),
+    );
+    const said: string[] = [];
+    const stop = onNotice((text) => said.push(text));
+    routes('/app/learn');
+    await userEvent.click(await screen.findByRole('button', { name: 'Today’s goal, 0 of 20 XP today' }));
+    const sheet = screen.getByRole('dialog', { name: 'Today' });
+    await userEvent.click(within(sheet).getByRole('radio', { name: '50 XP a day' }));
+    await waitFor(() => expect(within(sheet).getByRole('radio', { name: '20 XP a day' })).toBeChecked());
+    expect(said).toHaveLength(1);
+    stop();
+  });
+
+  it('offers today’s word among the practice tools, opening its dictionary entry', async () => {
+    serve({
+      'GET /courses': { courses: [] },
+      'GET /practice/due': { due: 0, available: 0 },
+      'GET /dictionary/word-of-day': { word: { entryId: 'e42', headword: 'hêvî', pos: 'n', definitionEn: 'hope', definitionKu: null } },
+    });
+    routes('/app/learn');
+    const tools = await screen.findByRole('region', { name: 'Practice' });
+    const word = await within(tools).findByRole('link', { name: /Word of the day/ });
+    expect(word).toHaveTextContent('hêvî');
+    expect(word).toHaveTextContent('n · hope');
+    expect(word).toHaveAttribute('href', '/app/dictionary?entry=e42');
+  });
+
+  it('leaves no gap among the tools on a day without a word', async () => {
+    serve({
+      'GET /courses': { courses: [] },
+      'GET /practice/due': { due: 0, available: 0 },
+      'GET /dictionary/word-of-day': { word: null },
+    });
+    routes('/app/learn');
+    const tools = await screen.findByRole('region', { name: 'Practice' });
+    await waitFor(() => expect(calls.some((c) => c.path === '/dictionary/word-of-day')).toBe(true));
+    await waitFor(() => expect(within(tools).queryByText('Word of the day')).toBeNull());
+    expect(tools.querySelector('.skeleton-late')).toBeNull();
   });
 
   it('says what review is before there is anything in it, and keeps a course whose map failed', async () => {
@@ -529,13 +613,13 @@ describe('a course map', () => {
     expect(within(done).queryByText(/A1/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Topic a/ })).not.toBeInTheDocument();
 
-    // The shut one after it: what it is, how many chapters, what opens it; and it does not open.
+    // The shut one after it: what it is, how many chapters, what opens it; it does not open, but offers the test into it.
     const shut = screen.getByTestId('lp-section-3');
     expect(within(shut).getByText('Intermediate')).toBeInTheDocument();
     expect(within(shut).getByText('One chapter')).toBeInTheDocument();
     expect(within(shut).getByText('Opens when Section 2 is done')).toBeInTheDocument();
     expect(shut.tagName).not.toBe('BUTTON');
-    expect(within(shut).queryByRole('button')).not.toBeInTheDocument();
+    expect(within(shut).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['Jump ahead to Chapter 4: a short test opens it']);
 
     // Pressed, the finished one opens again, and the learner's own folds into a card that says they are there.
     expect(done).toHaveAccessibleName('Section 1, Starter, First words and short sentences, Section complete, One chapter');
@@ -545,6 +629,24 @@ describe('a course map', () => {
     expect(within(here).getByText('You are here · 0 of 2 chapters done')).toBeInTheDocument();
     await userEvent.click(here);
     expect(screen.getByRole('button', { name: /^Topic d, You are here/ })).toBeInTheDocument();
+  });
+
+  it('offers a test into a later chapter on its first stop and on its section’s card, saying what the test is', async () => {
+    serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+
+    // Chapter 3's first stop, in the open section, is the offer rather than its card.
+    await userEvent.click(await screen.findByRole('button', { name: 'Jump ahead to Chapter 3: a short test opens it' }));
+    const offer = screen.getByRole('dialog', { name: 'Jump to Chapter 3?' });
+    expect(within(offer).getByText('Chapter 3 · House')).toBeInTheDocument();
+    expect(within(offer).getByText('About 10 questions')).toBeInTheDocument();
+    expect(within(offer).getByText('Passed with 2 mistakes or fewer')).toBeInTheDocument();
+    expect(within(offer).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r3');
+    await userEvent.keyboard('{Escape}');
+
+    // The shut section after it offers its own first chapter.
+    await userEvent.click(within(screen.getByTestId('lp-section-3')).getByRole('button', { name: 'Jump ahead to Chapter 4: a short test opens it' }));
+    expect(within(screen.getByRole('dialog', { name: 'Jump to Chapter 4?' })).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r4');
   });
 
   it('rings each topic with a piece for each lesson, stands a star on its coin for each round, and says the round in its card', async () => {
@@ -780,6 +882,29 @@ describe('review', () => {
     expect(await screen.findByText('Nothing to review yet')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Take a lesson' })).toHaveAttribute('href', '/app/learn/lesson/l1');
     expect(calls.filter((c) => c.path === '/practice/session')[0]!.body).toBeUndefined();
+  });
+
+  it('starts the kind of practice its address asks for, and ends it on the practice page', async () => {
+    serve({ 'POST /practice/session': session });
+    routes('/app/learn/review?mode=listen');
+    expect(await screen.findByText('apple')).toBeInTheDocument();
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/review/p1');
+    expect(calls.filter((c) => c.path === '/practice/session').map((c) => c.body)).toEqual([{ mode: 'listen' }]);
+    expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn/practice');
+  });
+
+  it('reviews the chapter its address names', async () => {
+    serve({ 'POST /practice/session': session });
+    routes('/app/learn/review?mode=unit&unit=u2');
+    expect(await screen.findByText('apple')).toBeInTheDocument();
+    expect(calls.filter((c) => c.path === '/practice/session').map((c) => c.body)).toEqual([{ mode: 'unit', unitId: 'u2' }]);
+  });
+
+  it('with nothing of a kind to practise, leads back to the other kinds', async () => {
+    serve({ 'POST /practice/session': { empty: true, suggestion: { lessonId: 'l1', title: 'Hello' } } });
+    routes('/app/learn/review?mode=mistakes');
+    expect(await screen.findByText('Nothing to practise here right now')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to practice' })).toHaveAttribute('href', '/app/learn/practice');
   });
 });
 

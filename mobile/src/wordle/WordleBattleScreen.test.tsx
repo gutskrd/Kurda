@@ -109,6 +109,28 @@ describe('WordleBattleScreen', () => {
     expect(await screen.findByLabelText('Join code')).toBeTruthy();
   });
 
+  it('asks friends in the same step, as the website does, makes the battle friendly and invites them once it exists', async () => {
+    const client = fakeClient({
+      'GET /friends?limit=500': ok({ total: 1, friends: [{ userId: 'u-azad', username: 'azad', displayName: 'Azad', online: false, avatarUrl: null }] }),
+      'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+      'POST /wordle/battles': ok(lobby()),
+      'POST /play/invites': ok({ ok: true, invited: 1 }),
+      'GET /wordle/battles/b1': ok(lobby()),
+    });
+    testAuth.client = client;
+    renderWithProviders(<WordleBattleScreen onExit={() => undefined} />);
+    expect(screen.getByRole('heading', { name: 'Who to invite' })).toBeTruthy();
+    // Games are played for fun: nothing to choose about ranks.
+    expect(screen.queryByRole('radio', { name: /^Rated/ })).toBeNull();
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Azad' }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create battle' }));
+    });
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/play/invites' && c.method === 'POST')).toBe(true));
+    expect(client.calls.find((c) => c.path === '/wordle/battles')?.body).toEqual({ difficulty: 'medium', rated: false });
+    expect(client.calls.find((c) => c.path === '/play/invites' && c.method === 'POST')?.body).toEqual({ game: 'wordle-battle', lobbyId: 'b1', userIds: ['u-azad'] });
+  });
+
   /*
    * Backing out of the lobby leaves it after asking, as a story game's lobby does, so others stop waiting for an
    * empty seat. The header's back and the lobby's Leave are the same exit.

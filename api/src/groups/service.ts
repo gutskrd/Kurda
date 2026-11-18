@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { stripControlChars } from '@kurda/shared';
+import { stripHiddenChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
 import {
@@ -35,15 +35,9 @@ import { notBlockedSql } from '../friends/blocked.js';
 import { isNotKnownAdultUser } from '../users/age.js';
 import { approvedNotice, bannedNotice, declinedNotice, removedNotice, requestNotice, type NoticeGroup, type PushNotice } from './notices.js';
 
-/**
- * A group's name or description as stored: control characters removed, and the invisible ones a name could hide
- * behind (zero-width space, byte-order mark, bidi overrides and isolates). Zero-width joiner and non-joiner stay,
- * since Soranî spelling and emoji use them.
- */
+/** A group's name or description as stored: without control characters or the invisible ones a name could hide behind. */
 function cleanGroupText(text: string): string {
-  return stripControlChars(text)
-    .replace(/[\u200B\uFEFF\u202A-\u202E\u2066-\u2069]/g, '')
-    .trim();
+  return stripHiddenChars(text).trim();
 }
 
 /**

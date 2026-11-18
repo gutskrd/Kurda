@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { useOptimisticSend } from '../lib/optimistic';
 import type { ApiError, WordleGame } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
@@ -8,7 +9,7 @@ import { TrophyIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard, useReveal } from '../components/WordleBoard';
 import { WordAnswer, type WordMeanings } from '../components/WordAnswer';
 import { useWordleKeys } from '../keyboard/wordleKeys';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
@@ -60,6 +61,56 @@ function writeChoice(choice: { mode: Mode; difficulty: Difficulty }): void {
   }
 }
 
+/** GET /wordle/stats: the player's games alone, daily and practice together. */
+interface WordleStats {
+  played: number;
+  winPercentage: number;
+  currentStreak: number;
+  longestStreak: number;
+  /** Guesses per win; 0 before the first win. */
+  averageGuesses: number;
+}
+
+/** The figures under a result, side by side as a profile's are: each label first in the markup, its figure first on screen. */
+function WordleStatsRow({ stats }: { stats: WordleStats }): React.JSX.Element {
+  const t = useT();
+  const locale = useLocale();
+  const whole = new Intl.NumberFormat(locale);
+  const average = stats.averageGuesses > 0 ? new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(stats.averageGuesses) : '—';
+  const figures: Array<{ key: string; label: React.ReactNode; value: string }> = [
+    { key: 'played', label: t('games.wordle.stat.played'), value: whole.format(stats.played) },
+    { key: 'win', label: t('games.wordle.stat.winPct'), value: whole.format(stats.winPercentage) },
+    { key: 'streak', label: t('games.wordle.stat.streak'), value: whole.format(stats.currentStreak) },
+    { key: 'best', label: t('games.wordle.stat.best'), value: whole.format(stats.longestStreak) },
+    {
+      key: 'average',
+      // The short label is for the eye; a screen reader hears it in full.
+      label: (
+        <>
+          <span aria-hidden="true">{t('games.wordle.stat.average')}</span>
+          <span className="sr-only">{t('games.wordle.stat.averageLabel')}</span>
+        </>
+      ),
+      value: average,
+    },
+  ];
+  return (
+    <section className="wordle-stats" aria-labelledby="wordle-stats-title">
+      <h2 className="wordle-stats-title" id="wordle-stats-title">
+        {t('games.wordle.statistics')}
+      </h2>
+      <dl className="wordle-stats-row">
+        {figures.map((f) => (
+          <div key={f.key} className="wordle-stat">
+            <dt>{f.label}</dt>
+            <dd>{f.value}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
+}
+
 /** A server refusal in the reader's language. */
 function guessError(err: ApiError, t: (key: MessageKey) => string): string {
   switch (err.code) {
@@ -97,9 +148,9 @@ export function Wordle(): React.JSX.Element {
   const [refusals, setRefusals] = useState(0);
   // The last guess's row is still turning over; the result waits for the tiles.
   const { revealing, hold } = useReveal();
-  // Save to vocabulary on the finished word: in flight, and why it failed.
-  const [saving, setSaving] = useState(false);
+  // Save to vocabulary on the finished word: why it failed.
   const [saveError, setSaveError] = useState<string | null>(null);
+  const sendShown = useOptimisticSend();
   // Each difficulty has its own daily, so only the game asked for last may land; a slow answer for an earlier chip would
   // otherwise show its word under the later one.
   const asked = useRef(0);
@@ -118,7 +169,6 @@ export function Wordle(): React.JSX.Element {
     setCurrent('');
     setNotice(null);
     setRefusals(0);
-    setSaving(false);
     setSaveError(null);
     const res = await client.post<PeyvokGame>(`/wordle/${mode}`, { difficulty });
     if (ask !== asked.current) return;
@@ -134,6 +184,22 @@ export function Wordle(): React.JSX.Element {
   const playing = game?.status === 'playing';
   // The rating box hears of a game played to its end here, not a daily reopened.
   useGameFinished('wordle', game?.id ?? null, game !== null && !playing);
+
+  // The figures are read whenever a result shows, so they count the game just finished; those read for an earlier game
+  // are not shown under this one.
+  const [stats, setStats] = useState<{ gameId: string; figures: WordleStats } | null>(null);
+  const finishedId = game && !playing ? game.id : null;
+  useEffect(() => {
+    if (!finishedId) return;
+    let live = true;
+    void client.get<WordleStats>('/wordle/stats').then((res) => {
+      if (live && res.ok) setStats({ gameId: finishedId, figures: res.data });
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, finishedId]);
+  const shownStats = stats && stats.gameId === finishedId && stats.figures.played > 0 ? stats.figures : null;
 
   const submit = useCallback(async () => {
     if (!game || !playing || submitting) return;
@@ -160,18 +226,18 @@ export function Wordle(): React.JSX.Element {
     }
   }, [client, game, playing, submitting, current, t, refuse, hold]);
 
-  /** Saves the finished game's word by game, so the server saves exactly that word and counts it once however often pressed. */
+  /**
+   * Saves the finished game's word by game, so the server saves exactly that word and counts it once however often
+   * pressed. Saved at once; a refusal (a full vocabulary, the network) unsaves it and says why under the button.
+   */
   const saveWord = useCallback(async () => {
     const id = game?.id;
-    if (!id || !game.word?.entryId || game.word.saved || saving) return;
-    setSaving(true);
+    if (!id || !game.word?.entryId || game.word.saved) return;
+    const marked = (saved: boolean): void => setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved } } : g));
     setSaveError(null);
-    const res = await client.post<{ saved: boolean }>(`/wordle/games/${id}/save`);
-    setSaving(false);
-    if (res.ok) setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved: true } } : g));
-    // A full vocabulary or the network, said as the dictionary says it, under the button.
-    else setSaveError(describeError(res.error, t));
-  }, [client, game, saving, t]);
+    marked(true);
+    await sendShown(() => client.post<{ saved: boolean }>(`/wordle/games/${id}/save`), { undo: () => marked(false) }, { onFailed: (e) => setSaveError(describeError(e, t)) });
+  }, [client, game, sendShown, t]);
 
   const press = useCallback(
     (key: string) => {
@@ -240,7 +306,7 @@ export function Wordle(): React.JSX.Element {
                   meanings={game.word?.meanings}
                   save={
                     game.word?.entryId
-                      ? { saved: game.word.saved, busy: saving, onSave: () => void saveWord(), error: saveError }
+                      ? { saved: game.word.saved, onSave: () => void saveWord(), error: saveError }
                       : undefined
                   }
                 />
@@ -252,6 +318,7 @@ export function Wordle(): React.JSX.Element {
                 <p className="muted">{t('games.wordle.comeBackTomorrow')}</p>
               )}
               <ShareWin text={wordGameShare(game, { practice: t('games.wordle.practice'), difficulty: t(DIFFICULTY_KEY[game.difficulty]) })} />
+              {shownStats && <WordleStatsRow stats={shownStats} />}
             </div>
           )}
           <WordleKeyboard keyboard={game.keyboard} onPress={press} disabled={!playing} />

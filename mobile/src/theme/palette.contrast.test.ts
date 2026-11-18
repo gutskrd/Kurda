@@ -51,6 +51,15 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.textOnPrimary, p.primary)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
+    // A chosen chip, tab or segment is solid violet on the grey track the others sit on: its word reads as a button's
+    // does, and the chip itself stands out from the track as a control must (WCAG 1.4.11).
+    it('a chosen chip stands 3:1 off the track, on the page and on a card, with its word at AA', () => {
+      for (const surface of [p.background, p.surface]) {
+        expect(contrastRatio(p.primary, over(p.controlTrack, surface)), surface).toBeGreaterThanOrEqual(AA_LARGE);
+      }
+      expect(contrastRatio(p.textOnPrimary, p.primary)).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
     // Secondary text is body text too (previews, captions, times), so it is held to the full 4.5:1.
     it('secondary text on the background meets AA (4.5:1)', () => {
       expect(contrastRatio(p.textSecondary, p.background)).toBeGreaterThanOrEqual(AA_NORMAL);

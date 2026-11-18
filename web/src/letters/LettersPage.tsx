@@ -466,7 +466,7 @@ export function LettersPage(): React.JSX.Element {
     status = (
       <>
         <p className="letters-status">{t('letters.refusal.birthMonth')}</p>
-        <Link to="/app/settings" className="btn btn-primary">
+        <Link to="/app/settings/birth-month" className="btn btn-primary">
           {t('letters.refusal.birthMonthAction')}
         </Link>
       </>

@@ -11,6 +11,7 @@ import { storeAudioMedia } from '../media/audioMedia.js';
 import { audioLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { mediaKey } from '../media/storage.js';
+import { mp3 } from '../test/audio-files.js';
 import { FakeStorage } from '../test/fake-storage.js';
 import { CasesService } from './cases-service.js';
 import { removeMedia, restoreContent } from './content-removal.js';
@@ -339,7 +340,7 @@ describe.skipIf(!DATABASE_URL)('the CSAM action (integration)', () => {
 
   it('never puts the same bytes back on the public bucket', async () => {
     const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
-    const raw = Buffer.concat([Buffer.from([0x49, 0x44, 0x33, 0x03, 0, 0, 0, 0]), Buffer.alloc(4096, 0x5a), Buffer.from(suffix)]);
+    const raw = mp3(12, parseInt(suffix, 36));
     const key = mediaKey('voice-note', createHash('sha256').update(raw).digest('hex'), 'audio/mpeg');
     keys.push(key);
     // quarantined once and since let go as an orphan: the row is unconfirmed

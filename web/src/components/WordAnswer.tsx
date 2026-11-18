@@ -50,7 +50,7 @@ export function WordAnswer({
 }: {
   word: string;
   meanings: WordMeanings | null | undefined;
-  save?: { saved: boolean; busy: boolean; onSave: () => void; error?: string | null };
+  save?: { saved: boolean; onSave: () => void; error?: string | null };
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -70,8 +70,7 @@ export function WordAnswer({
           type="button"
           className={`btn btn-ghost btn-sm wg-answer-save${save.saved ? ' is-on' : ''}`}
           aria-pressed={save.saved}
-          aria-busy={save.busy || undefined}
-          disabled={save.saved || save.busy}
+          disabled={save.saved}
           onClick={save.onSave}
         >
           <BookmarkIcon size={16} weight={save.saved ? 'fill' : 'regular'} />

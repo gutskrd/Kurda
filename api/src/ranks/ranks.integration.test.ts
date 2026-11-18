@@ -17,6 +17,7 @@ import { freshState, rateGame, type PlayerState } from './engine.js';
 import { exportRanks, eraseRanks } from './gdpr.js';
 import { networkHashOf } from '../net/network-key.js';
 import { writeSighting } from '../net/sightings.js';
+import { queriesDuring } from '../test/query-count.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const MINUTE = 60_000;
@@ -414,6 +415,36 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
       );
       expect((await ranks.profileRanks(a, false))[0]).toMatchObject({ resting: true, tier: null, points: null });
       expect((await ranks.profileRanks(a, true))[0]).toMatchObject({ resting: false, tier: 'ciya', points: 960, placing: false, placement: null });
+    });
+
+    it('reads your ranks in every game at once, Stêrk included, as each game’s own card shows them', async () => {
+      const games = ['stories', RANKED_GAMES[RANKED_GAMES.length - 1]!].sort();
+      const top = await user();
+      const crowd: string[] = [];
+      for (let i = 0; i < 50; i++) crowd.push(await user());
+      // far above anyone another suite rates, and fifty active players under it in each game
+      for (const game of games) {
+        await pool.query(
+          `INSERT INTO game_ratings (user_id, game, mu, sigma, points, rated_games, placement_done, season_id, last_rated_at)
+           SELECT p.id, $2, p.points / 40.0 + 6, 2, p.points, p.games, true, $3, $4
+             FROM unnest($1::uuid[], $5::int[], $6::int[]) AS p(id, points, games)`,
+          [[top, ...crowd], game, seasonOf(clock).id, clock, [2_000_000, ...crowd.map(() => 500)], [30, ...crowd.map(() => 12)]],
+        );
+      }
+      const none = await queriesDuring(pool, () => ranks.myRanks(crowd[0]!));
+      const mine = await queriesDuring(pool, () => ranks.myRanks(top));
+      const cards = [];
+      for (const game of RANKED_GAMES) cards.push(await ranks.card(top, game));
+      expect(mine.result.ranks).toEqual(cards);
+      expect(mine.result.ranks.filter((r) => r.tier === 'sterk').map((r) => r.game).sort()).toEqual(games);
+      expect(none.result.ranks.some((r) => r.tier === 'sterk')).toBe(false);
+      // the ratings and the cooldown, then one Stêrk judgement for every game that needs one
+      expect(none.count, none.statements.join('\n')).toBe(2);
+      expect(mine.count, mine.statements.join('\n')).toBe(3);
+
+      const profile = await queriesDuring(pool, () => ranks.profileRanks(top, false));
+      expect(profile.result.filter((r) => r.tier === 'sterk').map((r) => r.game)).toEqual(games);
+      expect(profile.count, profile.statements.join('\n')).toBe(2);
     });
   });
 

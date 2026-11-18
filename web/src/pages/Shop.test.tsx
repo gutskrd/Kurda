@@ -236,6 +236,19 @@ describe('Shop', () => {
     expect(tileNames()).toEqual(['Îstîkan']);
   });
 
+  it('describes what the shop ships with in the reader’s language, and finds it by those words', async () => {
+    localStorage.setItem('hevalo_locale', 'de');
+    const night: ShopItem = { ...CATALOGUE[0]!, sku: 'bg-made-seva-zozanan', name: 'Şeva Zozanan', description: 'Night on the high pastures' };
+    const sun: ShopItem = { ...CATALOGUE[2]!, sku: 'icon-made-roj', name: 'Roj', description: 'Sun' };
+    vi.stubGlobal('fetch', makeFetch([], [], { items: [night, sun] }));
+    renderApp(<Shop />, ['/app/shop']);
+    expect(await screen.findByText('Nacht auf den Hochweiden')).toBeInTheDocument();
+    expect(screen.queryByText('Night on the high pastures')).toBeNull();
+
+    await userEvent.type(screen.getByRole('searchbox'), 'sonne');
+    expect(tileNames()).toEqual(['Roj']);
+  });
+
   it('sorts by price, either way', async () => {
     vi.stubGlobal('fetch', makeFetch([]));
     renderApp(<Shop />, ['/app/shop?kind=background']);

@@ -32,6 +32,7 @@ import { CourseMapSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
+import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
 import { RoundStars, StarRow, TopicRing } from './PathRing';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
@@ -457,7 +458,8 @@ function sectionOf(path: Path<SkillNode>, key: string | null): number | null {
  * A course's lesson path, on the course page (pages/CourseMap.tsx) and as Learn's home (pages/Learn.tsx), by
  * @kurda/shared's `lessonPath` as on the phone. One section shows at a time, with earlier and later ones as cards, under
  * a pinned heading naming the top unit. A return from a lesson plays what changed (`PATH_RETURN`), or simply redraws
- * under reduced motion.
+ * under reduced motion. A later chapter that can be tested into offers its test on its first stop and on its section's
+ * card (JumpSheet.tsx).
  */
 export function CoursePath({
   courseId,
@@ -492,13 +494,15 @@ export function CoursePath({
 
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [guide, setGuide] = useState<{ skills: SkillNode[]; label: string } | null>(null);
+  const [jumpTo, setJumpTo] = useState<Unit | null>(null);
   const [away, setAway] = useState<'up' | 'down' | null>(null);
   const pathRef = useRef<HTMLDivElement>(null);
   const scrolled = useRef(false);
 
   // The review count decides where review sits, so the path waits once for it or its failure.
   const dueSettled = due.data !== null || due.error !== null;
-  const path = useMemo(() => (data && dueSettled ? lessonPath(data, { due: due.data?.due ?? 0 }) : null), [data, dueSettled, due.data]);
+  // Units that can be tested into are offered as such ("Jump here?", JumpSheet.tsx).
+  const path = useMemo(() => (data && dueSettled ? lessonPath(data, { due: due.data?.due ?? 0, offerJumps: true }) : null), [data, dueSettled, due.data]);
   const width = useWidth(pathRef, path !== null);
 
   // What changed since the path was last drawn here, read once on the first draw.
@@ -776,7 +780,12 @@ export function CoursePath({
           {path.sections.map((section, s) =>
             s !== open ? (
               <div key={section.key} className="lp-fold" data-holds={section.units.map((u) => u.unitId).join(' ')}>
-                <SectionCard section={section} here={s === path.section} onOpen={() => setPicked(s)} />
+                <SectionCard
+                  section={section}
+                  here={s === path.section}
+                  onOpen={() => setPicked(s)}
+                  onJump={section.jumpTo ? () => setJumpTo(section.jumpTo) : undefined}
+                />
               </div>
             ) : (
               <div key={section.key} className="lp-open-section" data-testid="lp-section-open">
@@ -834,6 +843,8 @@ export function CoursePath({
                             // On a return the bubble waits for its moment, then arrives at the new stop.
                             const bubble = isCurrent && (!playing || step! >= STEP.bubble);
                             const ring = stop.kind === 'skill' && stop.lessonsTotal > 0 ? ringNow(stop) : null;
+                            // A later chapter that can be tested into: its first stop offers the test rather than its card.
+                            const jumpHere = unit.jumpKey === stop.key;
                             return (
                               <li
                                 key={stop.key}
@@ -850,14 +861,21 @@ export function CoursePath({
                                     {stop.lessonsDone > 0 ? t('learn.continue') : t('learn.start')}
                                   </Link>
                                 )}
+                                {jumpHere && (
+                                  // For the pointer only: the stop under it is the same offer, named for the keyboard and screen readers.
+                                  <button type="button" className="lp-callout is-jump" tabIndex={-1} aria-hidden="true" onClick={() => setJumpTo(unit)}>
+                                    {t('coursemap.jump.bubble')}
+                                  </button>
+                                )}
                                 <button
                                   type="button"
                                   className={`lp-node ${stopClass(stop)}${finishing ? ' is-finishing' : ''}${opening ? ' is-opening' : ''}${wobbling ? ' is-wobbling' : ''}${unlocking ? ' is-unlocking' : ''}${near ? ' is-drawn' : ''}`}
                                   data-stop={stop.key}
-                                  aria-label={stopLabel(stop, unit)}
-                                  aria-expanded={isOpen}
+                                  aria-label={jumpHere ? t('coursemap.jump.label', { n: unit.number.toLocaleString(locale) }) : stopLabel(stop, unit)}
+                                  aria-haspopup={jumpHere ? 'dialog' : undefined}
+                                  aria-expanded={jumpHere ? undefined : isOpen}
                                   aria-controls={isOpen ? popId : undefined}
-                                  onClick={() => setOpenKey(isOpen ? null : stop.key)}
+                                  onClick={() => (jumpHere ? setJumpTo(unit) : setOpenKey(isOpen ? null : stop.key))}
                                 >
                                   {isCurrent && <span className="lp-glow" aria-hidden="true" />}
                                   {ring && near && stop.kind === 'skill' && (
@@ -920,6 +938,7 @@ export function CoursePath({
       )}
 
       <GuideSheet guide={guide} onClose={() => setGuide(null)} />
+      <JumpSheet unit={jumpTo} courseId={data.course.id} from={home ?? `/app/learn/course/${encodeURIComponent(courseId)}`} onClose={() => setJumpTo(null)} />
     </div>
   );
 }

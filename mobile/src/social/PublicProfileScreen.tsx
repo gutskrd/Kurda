@@ -4,12 +4,12 @@ import { Alert, Image, ScrollView, Share, StyleSheet, Text, View, useWindowDimen
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
-import type { ApiError, ApiResult } from '../api/types';
-import { describeError, isMaintenance } from '../api/errors';
+import type { ApiError } from '../api/types';
+import { useIntents, useSayNotSaved } from '../api/optimistic';
+import { useUnread } from '../messages/unread';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { statCaption, statValue } from '../theme/fonts';
 import { Fire } from '../theme/Fire';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -25,15 +25,17 @@ import { ProfileTree } from '../tree/ProfileTree';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { Framed } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { SEASON_FRAME_INNER, countryName, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { FavoriteRow, flagUrl } from '../profile/cosmetic-parts';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { ProfileActivity, ProfileActivitySkeleton } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends } from '../profile/ProfileFriends';
+import { LevelBar, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
+import type { LevelInfo } from '../profile/types';
 import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
-import { blockUser } from './blocks';
+import { useBlock } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { PlayWithButton } from '../play/PlayWithButton';
@@ -55,13 +57,11 @@ interface Profile {
   /** Their XP as older servers sent it; current ones send it inside `level`. */
   xp?: number;
   /** Their level and the XP behind it: where their XP is, on a profile you may see. */
-  level?: { xp: number; level: number } | null;
+  level?: LevelInfo | null;
   streak?: number;
   /** Their league tier, or null for someone not in the leagues (never a made-up "bronze"). */
   tier?: string | null;
   league?: ProfileLeague | null;
-  /** Game Ranks per game played; "Resting" ones carry no tier for others. */
-  ranks?: ProfileRank[];
   /** The season frame they wear round their avatar. */
   frameSku?: string | null;
   /** The picture of a frame from the shop; a season frame is drawn from its SKU. */
@@ -100,27 +100,18 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const facts = useFacts();
   // In right-to-left languages the numbers start on the right, as reading does.
   const dir = useDirection();
   const { width: windowWidth } = useWindowDimensions();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const { announce, region } = useAnnouncer();
-
-  /*
-   * A sent request is announced as the button hands its ticket over (TicketSlip), not on arriving at a profile already
-   * requested.
-   */
-  const status = profile?.friendStatus ?? null;
-  const lastStatus = useRef(status);
-  useEffect(() => {
-    const before = lastStatus.current;
-    lastStatus.current = status;
-    if (before === 'none' && status === 'pending_out') announce(t('friends.requestSent'));
-  }, [status, announce, t]);
+  const { report } = useUnread();
+  const say = useSayNotSaved();
+  const blockNow = useBlock();
 
   const load = useCallback(() => {
     void client.get<Profile>(`/users/${encodeURIComponent(userId)}`).then((res) => {
@@ -137,22 +128,58 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
   useFocusEffect(useCallback(() => load(), [load]));
 
-  const perform = useCallback(
-    async (status: FriendStatus) => {
-      setBusy(true);
-      // An offer made (a request sent, or accepted) is felt; taking one back is quiet.
-      if (status === 'none' || status === 'pending_in') haptic('tap');
-      let res: ApiResult<unknown> | null = null;
-      if (status === 'none') res = await client.post('/friends/requests', { userId });
-      else if (status === 'pending_in') res = await client.post(`/friends/requests/${encodeURIComponent(userId)}/accept`);
-      else if (status === 'pending_out') res = await client.delete(`/friends/requests/${encodeURIComponent(userId)}`);
-      else if (status === 'friends') res = await client.delete(`/friends/${encodeURIComponent(userId)}`);
-      setBusy(false);
-      // A request that did not go (a full friend list, too many outgoing) says why (limits/limitCopy.ts).
-      if (res && !res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
-      load();
+  /*
+   * Asking, accepting, withdrawing and, once confirmed, unfriending show at once and are sent after, the last tap
+   * winning; the answer's status is kept and the profile read again. A refusal (a full friend list, too many outgoing:
+   * limits/limitCopy.ts) goes back and says why.
+   */
+  const befriending = useIntents<string, FriendStatus, { outcome?: string } | null>(
+    async (id, wanted, confirmed) => {
+      const at = encodeURIComponent(id);
+      const res =
+        wanted === 'pending_out'
+          ? await client.post<{ outcome?: string }>('/friends/requests', { userId: id })
+          : wanted === 'friends'
+            ? await client.post<null>(`/friends/requests/${at}/accept`)
+            : await client.delete<null>(confirmed === 'pending_out' ? `/friends/requests/${at}` : `/friends/${at}`);
+      if (res.ok) {
+        const now = friendStatusAfter(res.data, wanted);
+        setProfile((p) => p && { ...p, friendStatus: now });
+        load();
+      }
+      return res;
     },
-    [client, userId, load, t],
+    {
+      answered: friendStatusAfter,
+      failed: (error, _id, confirmed) => {
+        // An accept that did not take leaves their request waiting, and counted.
+        if (confirmed === 'pending_in') report((now) => ({ requests: now.requests + 1 }));
+        say(error);
+      },
+    },
+  );
+  const status = profile ? befriending.shown(profile.userId, profile.friendStatus) : null;
+
+  /*
+   * A sent request is announced as the button hands its ticket over (TicketSlip), not on arriving at a profile already
+   * requested.
+   */
+  const lastStatus = useRef(status);
+  useEffect(() => {
+    const before = lastStatus.current;
+    lastStatus.current = status;
+    if (before === 'none' && status === 'pending_out') announce(t('friends.requestSent'));
+  }, [status, announce, t]);
+
+  const perform = useCallback(
+    (from: FriendStatus) => {
+      if (!profile) return;
+      // An offer made (a request sent, or accepted) is felt; taking one back is quiet.
+      if (from === 'none' || from === 'pending_in') haptic('tap');
+      if (from === 'pending_in') report((now) => ({ requests: Math.max(0, now.requests - 1) }));
+      befriending.want(profile.userId, from === 'none' ? 'pending_out' : from === 'pending_in' ? 'friends' : 'none', profile.friendStatus);
+    },
+    [profile, befriending, report],
   );
 
   /**
@@ -164,13 +191,13 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     (status: FriendStatus) => {
       const undo = undoAction(status);
       if (!undo) {
-        void perform(status);
+        perform(status);
         return;
       }
       const name = profile?.displayName ?? profile?.username ?? '';
       Alert.alert(t(undo.label), t(undo.prompt, { name }), [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: t(undo.label), style: 'destructive', onPress: () => void perform(status) },
+        { text: t(undo.label), style: 'destructive', onPress: () => perform(status) },
       ]);
     },
     [perform, profile, t],
@@ -184,15 +211,13 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         text: t('moderation.block'),
         style: 'destructive',
         onPress: () => {
-          // Blocked: their profile is gone for you; not blocked (at the block limit): say why.
-          void blockUser(client, userId).then((res) => {
-            if (res.ok) onExit();
-            else if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
-          });
+          // Blocked: their profile is gone for you at once; a refusal (at the block limit) is said wherever you are.
+          blockNow(userId);
+          onExit();
         },
       },
     ]);
-  }, [client, userId, onExit, t]);
+  }, [blockNow, userId, onExit, t]);
 
   const name = profile?.displayName ?? profile?.username ?? '';
   /** Their profile's address, as anybody can open it: the same link the website shares. */
@@ -210,7 +235,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       actions: [
         { label: t('profile.share'), onPress: share },
         // A friendship is ended from here, confirmed first (act), not by a button beside "Message".
-        ...(profile.friendStatus === 'friends' ? [{ label: t('friends.removeFriend'), destructive: true, onPress: () => act('friends') }] : []),
+        ...(status === 'friends' ? [{ label: t('friends.removeFriend'), destructive: true, onPress: () => act('friends') }] : []),
         { label: t('moderation.report'), onPress: () => setReporting(true) },
         { label: t('moderation.block'), destructive: true, onPress: block },
       ],
@@ -249,7 +274,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             if (!profile) return null;
             // A friend's button would only say so: ending it is in the menu, and what you do with a friend is write and
             // play.
-            const labelKey = profile.friendStatus === 'friends' ? null : friendActionLabel(profile.friendStatus);
+            const shown = status ?? profile.friendStatus;
+            const labelKey = shown === 'friends' ? null : friendActionLabel(shown);
             const cardWidth = windowWidth - layout.gutter * 2;
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
@@ -262,7 +288,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             size={Math.round(96 / SEASON_FRAME_INNER)}
             label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}
           >
-            <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={FACE} photoUrl={profile.avatarUrl} />
+            <Avatar name={profile.displayName ?? profile.username} size={FACE} photoUrl={profile.avatarUrl} />
           </Framed>
           </View>
           {/* The name they chose leads and the handle follows, as on your own profile and the website. */}
@@ -283,7 +309,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           {/* What you can do sits with who they are, above the numbers, within thumb reach without scrolling. */}
           {profile.friendStatus !== 'self' ? (
             <View style={styles.actions}>
-              {profile.friendStatus === 'friends' ? (
+              {shown === 'friends' ? (
                 <>
                   <ClayButton
                     label={t('profile.message')}
@@ -297,16 +323,15 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
               ) : null}
               {labelKey ? (
                 // A request is a ticket handed over: it slips away from the button, and home again when taken back.
-                <TicketSlip sent={profile.friendStatus === 'pending_out'}>
+                <TicketSlip sent={shown === 'pending_out'}>
                   <ClayButton
                     label={t(labelKey)}
-                    icon={profile.friendStatus === 'pending_out' ? 'ticket' : profile.friendStatus === 'none' ? 'user-plus' : undefined}
+                    icon={shown === 'pending_out' ? 'ticket' : shown === 'none' ? 'user-plus' : undefined}
                     // An undo is pressable but not an invitation, so it stays neutral.
-                    tone={isActionable(profile.friendStatus) && !isUndo(profile.friendStatus) ? 'primary' : 'neutral'}
+                    tone={isActionable(shown) && !isUndo(shown) ? 'primary' : 'neutral'}
                     size="large"
-                    busy={busy}
-                    disabled={!isActionable(profile.friendStatus)}
-                    onPress={() => require('friends') && act(profile.friendStatus)}
+                    disabled={!isActionable(shown)}
+                    onPress={() => require('friends') && act(shown)}
                   />
                 </TicketSlip>
               ) : null}
@@ -315,21 +340,15 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
           {profile.private ? null : (
             <>
-              <View style={[styles.stats, { flexDirection: dir.row }]}>
-                {/* Grouped and in the reader's own digits, as on their own profile. */}
-                <Stat label={t('profile.streak')} value={formatNumber(profile.streak ?? 0, locale)} fire={fireLevel(profile.streak ?? 0)} />
-                <Stat label={t('profile.stat.xp')} value={formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale)} />
-                {/* A league only while they take part, translated; nothing for somebody never in one. */}
-                {knownTier(profile.league?.tier ?? profile.tier) ? (
-                  <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
-                ) : null}
-                <Stat label={t('profile.badges')} value={formatNumber(profile.achievements ?? 0, locale)} />
+              {/* The level and the figures as on their own profile and the website, in the reader's own digits. */}
+              <View style={styles.stats}>
+                {profile.level ? <LevelBar level={profile.level} /> : null}
+                <ProfileFacts facts={facts(profile)} />
               </View>
 
               <ProfileTree tree={profile.tree} />
               <ProgressShowcase
                 own={false}
-                ranks={profile.ranks ?? []}
                 league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
                 badges={profile.badges ?? []}
               />
@@ -382,9 +401,9 @@ function ProfileCardSkeleton(): React.JSX.Element {
       </View>
       <SkeletonText size={typography.sizes.xl} width={120} align="center" raised />
       <SkeletonText size={typography.sizes.md} width={72} align="center" raised />
-      <View style={styles.stats}>
+      <View style={[styles.stats, styles.statsSkeleton]}>
         {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={styles.stat}>
+          <View key={i} style={styles.statSkeleton}>
             <SkeletonText size={typography.sizes.lg} width={36} align="center" raised />
             <SkeletonText size={typography.sizes.xs} width={48} align="center" raised />
           </View>
@@ -405,19 +424,26 @@ const LARGE_BUTTON = 50;
 function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode }) {
   return <ScreenHeader onBack={onExit} right={right} />;
 }
-/** A number and what it counts; `fire` puts the streak's fire before it, as big as their streak has grown it. */
-function Stat({ label, value, fire }: { label: string; value: string; fire?: FireLevel }) {
-  const { colors } = useTheme();
-  const dir = useDirection();
-  return (
-    <View style={styles.stat}>
-      <View style={[styles.statValueRow, { flexDirection: dir.row }]}>
-        {fire ? <Fire size={18} level={fire} /> : null}
-        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
-      </View>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
-    </View>
-  );
+/** Their streak, XP, league while they take part (nothing for somebody never in one), and badges. */
+function useFacts(): (profile: Profile) => ProfileFact[] {
+  const { t, locale } = useI18n();
+  return (profile) => {
+    const streak = profile.streak ?? 0;
+    const tier = knownTier(profile.league?.tier ?? profile.tier);
+    return [
+      {
+        key: 'streak',
+        label: t('profile.stat.streak'),
+        value: formatNumber(streak, locale),
+        // The fire as big as their streak has grown it; cold logs with none.
+        art: <Fire size={18} level={fireLevel(streak)} />,
+        spoken: t(streak === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: formatNumber(streak, locale) }),
+      },
+      { key: 'xp', label: t('profile.stat.xp'), value: formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale) },
+      ...(tier ? [{ key: 'league', label: t('profile.league'), value: leagueName(t, tier) }] : []),
+      { key: 'badges', label: t('profile.badges'), value: formatNumber(profile.achievements ?? 0, locale) },
+    ];
+  };
 }
 
 const styles = StyleSheet.create({
@@ -437,11 +463,15 @@ const styles = StyleSheet.create({
   flag: { width: 22, height: 16 },
   countryName: { fontSize: typography.sizes.sm },
   bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
-  stats: { flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: spacing.md },
-  stat: { alignItems: 'center', gap: 2 },
-  statValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statValue,
-  statLabel: statCaption,
+  stats: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.md },
+  statsSkeleton: { flexDirection: 'row', justifyContent: 'space-around' },
+  statSkeleton: { alignItems: 'center', gap: 2 },
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   dim: { textAlign: 'center', marginTop: spacing.md },
 });
+
+/** Where the two of you stand once the server has answered: a request to someone who had asked you makes you friends. */
+function friendStatusAfter(answer: { outcome?: string } | null, sent: FriendStatus): FriendStatus {
+  if (sent !== 'pending_out') return sent;
+  return answer?.outcome === 'accepted' || answer?.outcome === 'already_friends' ? 'friends' : 'pending_out';
+}

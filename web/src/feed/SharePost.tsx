@@ -7,6 +7,7 @@ import { ShareIcon, LinkIcon, SendIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { ApiError, FeedItem, UserSummary } from '../lib/types';
 import { SendError } from '../reports/SendError';
+import { useOptimisticSend } from '../lib/optimistic';
 
 /**
  * Passing a post on, behind one button: sending it to a friend as a message, or sharing the link out. The device's
@@ -116,7 +117,7 @@ function SendToFriend({
   const t = useT();
   const [friends, setFriends] = useState<UserSummary[] | null>(null);
   const [q, setQ] = useState('');
-  const [sending, setSending] = useState<string | null>(null);
+  const sendShown = useOptimisticSend();
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [failed, setFailed] = useState<ApiError | null>(null);
 
@@ -132,20 +133,15 @@ function SendToFriend({
 
   if (!signedIn) return <p className="muted share-note">{t('share.signInToSend')}</p>;
 
+  /** Said as sent at once; a message that did not go brings the friends back with why (lib/optimistic.ts). */
   async function send(friend: UserSummary): Promise<void> {
-    if (sending) return;
-    setSending(friend.userId);
     setFailed(null);
-    const body = shareText(item) ? `${shareText(item)}\n${url}` : url;
-    const res = await client.post(`/chat/${friend.userId}/messages`, { body });
-    setSending(null);
-    if (!res.ok) {
-      setFailed(res.error);
-      return;
-    }
     setSentTo(friend.username);
+    const shown = Date.now();
+    const body = shareText(item) ? `${shareText(item)}\n${url}` : url;
+    const res = await sendShown(() => client.post(`/chat/${friend.userId}/messages`, { body }), { undo: () => setSentTo(null) }, { onFailed: setFailed });
     // Long enough to read who it went to.
-    window.setTimeout(onSent, 1200);
+    if (res.ok) window.setTimeout(onSent, Math.max(0, 1200 - (Date.now() - shown)));
   }
 
   return (
@@ -181,7 +177,6 @@ function SendToFriend({
                   <button
                     type="button"
                     className="gift-friend"
-                    disabled={sending !== null}
                     onClick={() => void send(f)}
                   >
                     <Avatar url={f.avatarUrl} glyphSize={18} />

@@ -26,9 +26,15 @@ interface UnreadValue {
   messages: number;
   /** Ask the server again; `soon` is a nudge that may be folded into one already on its way. */
   refresh: (opts?: { soon?: boolean }) => void;
-  /** A screen that has just loaded the same lists says what it found, so nothing is asked twice. */
-  report: (patch: Partial<Omit<UnreadCounts, 'gifts'>>) => void;
+  /**
+   * A screen that has just loaded the same lists says what it found, so nothing is asked twice; or, as a function of
+   * the counts now, how a change made there moves them before the server has it (a request answered, a chat opened).
+   */
+  report: (patch: Partial<Counted> | ((now: Counted) => Partial<Counted>)) => void;
 }
+
+/** The counts this provider reads itself; the gift count is the shop badge's own. */
+type Counted = Omit<UnreadCounts, 'gifts'>;
 
 const EMPTY: UnreadCounts = { chats: 0, groups: 0, requests: 0, notifications: 0, gifts: 0 };
 
@@ -60,7 +66,7 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
   const { client, user, isGuest } = useAuth();
   const signedIn = Boolean(user) && !isGuest;
   const gifts = useUnseenGifts();
-  const [counts, setCounts] = useState<Omit<UnreadCounts, 'gifts'>>(EMPTY);
+  const [counts, setCounts] = useState<Counted>(EMPTY);
   const lastAnswer = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Set while the counts wait for the connection to open; a read as it opens also covers anything sent before.
@@ -107,8 +113,8 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
     schedule(OPEN_WAIT_MS);
   }, [schedule]);
 
-  const report = useCallback((patch: Partial<Omit<UnreadCounts, 'gifts'>>) => {
-    setCounts((prev) => ({ ...prev, ...patch }));
+  const report = useCallback<UnreadValue['report']>((patch) => {
+    setCounts((prev) => ({ ...prev, ...(typeof patch === 'function' ? patch(prev) : patch) }));
   }, []);
 
   useEffect(() => {

@@ -128,6 +128,16 @@ export function weekEndsAt(weekKey: string): Date {
   return new Date(Date.parse(`${weekKey}T00:00:00Z`) + 7 * DAY_MS);
 }
 
+/**
+ * Whole days before a league week closing at `endsAt` (an ISO time) closes, 0 on its last day; null when the time cannot
+ * be read. Both apps show this number, so a reader with both never sees two counts.
+ */
+export function weekDaysLeft(endsAt: string, now: number = Date.now()): number | null {
+  const at = Date.parse(endsAt);
+  if (Number.isNaN(at)) return null;
+  return Math.max(0, Math.floor((at - now) / DAY_MS));
+}
+
 /** When small groups of the week are merged (Wednesday 00:00 UTC). */
 export function weekMergeAt(weekKey: string): Date {
   return new Date(Date.parse(`${weekKey}T00:00:00Z`) + (MERGE_WEEKDAY - 1) * DAY_MS);

@@ -14,11 +14,16 @@ import { onBackFromBackground } from '../net/backFromBackground';
  * Everyone currently showing the count: the screen that opens the gifts is not the one that draws the badge, so this
  * tells the badge when they were opened.
  */
-const watchers = new Set<() => void>();
+const watchers = new Set<{ refresh: () => void; lower: (by: number | 'all') => void }>();
 
 /** Say that the gift list has been read, so the badge stops claiming otherwise. */
 export function giftsWereOpened(): void {
-  for (const refresh of watchers) refresh();
+  for (const watcher of watchers) watcher.refresh();
+}
+
+/** Gifts seen here before the server has said so: the badge drops at once, and the next count read has the last word. */
+export function giftsSeen(by: number | 'all'): void {
+  for (const watcher of watchers) watcher.lower(by);
 }
 
 /** A gift arrived or was unwrapped: count again. */
@@ -43,10 +48,11 @@ export function useUnseenGifts(): number {
       return;
     }
     refresh();
-    watchers.add(refresh);
+    const watcher = { refresh, lower: (by: number | 'all') => setCount((n) => (by === 'all' ? 0 : Math.max(0, n - by))) };
+    watchers.add(watcher);
     const stopListening = onBackFromBackground(AppState, refresh);
     return () => {
-      watchers.delete(refresh);
+      watchers.delete(watcher);
       stopListening();
     };
   }, [signedIn, refresh]);

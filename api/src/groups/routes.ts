@@ -135,6 +135,7 @@ export function registerGroupRoutes(
     {
       schema: { params: idParam },
       config: {
+        rawBody: true,
         rateLimit: { max: limits?.uploadRateMax ?? 10, windowMs: limits?.uploadRateWindowMs ?? 60 * 60_000, per: 'user-or-ip' as const },
         skipValidation: true,
       },
@@ -176,7 +177,7 @@ export function registerGroupRoutes(
    */
   const leaveRoom = async (groupId: string, userIds: readonly string[]): Promise<void> => {
     if (!app.hasDecorator('realtime')) return;
-    for (const userId of userIds) await app.realtime.revoke(groupRoom(groupId), userId).catch(() => undefined);
+    await app.realtime.revokeAll(groupRoom(groupId), userIds).catch(() => undefined);
   };
 
   // Nobody joins a group by themselves; kept so older apps showing a Join button are told why.

@@ -9,8 +9,6 @@ import type { EconomyService } from '../economy/service.js';
  * heals on the next one.
  */
 /** Re-aggregate this many trailing days on each scheduled run. */
-
-/** Re-aggregate this many trailing days on each scheduled run. */
 export const ROLLUP_WINDOW_DAYS = 3;
 
 /** Often enough that "today" stays current, cheap enough to be unnoticeable. */

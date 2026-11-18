@@ -72,7 +72,7 @@ export function WordAnswer({
 }: {
   word: string;
   meanings: WordMeanings | null | undefined;
-  save?: { saved: boolean; busy: boolean; onSave: () => void; error?: string | null };
+  save?: { saved: boolean; onSave: () => void; error?: string | null };
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -87,8 +87,8 @@ export function WordAnswer({
         <Pressable
           onPress={save.onSave}
           accessibilityRole="button"
-          accessibilityState={{ disabled: save.saved || save.busy, busy: save.busy }}
-          disabled={save.saved || save.busy}
+          accessibilityState={{ disabled: save.saved }}
+          disabled={save.saved}
           // One 20-point line (its style says so), answered at a fingertip's reach above and below it.
           style={({ pressed }) => [styles.saveRow, { flexDirection: dir.row }, pressed && heldDim]}
         >

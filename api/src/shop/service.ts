@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { WalletService, type Currency } from '../wallet/service.js';
 import type { Cache } from '../cache/cache.js';
+import { isBuiltInArtKey, isUploadedArtKey } from '../cosmetics/access.js';
 import { claimArt, releaseArt } from './art.js';
 
 export interface ShopItem {
@@ -168,8 +169,17 @@ export class ShopService {
     }
   }
 
-  /** Hold the art an item is being saved with (shop/art.ts), or refuse the save. */
-  private async claim(client: pg.PoolClient, assetKey: string | null, category: string): Promise<void> {
+  /**
+   * Hold the art an item is being saved with (shop/art.ts), or refuse the save. New art for a background or an icon
+   * must be uploaded art or a file the site ships, as an edit requires (shop/catalogue.ts); a key kept from before is
+   * left as it is.
+   */
+  private async claim(client: pg.PoolClient, assetKey: string | null, category: string, before: string | null = null): Promise<void> {
+    if (assetKey && assetKey !== before && (category === 'background' || category === 'icon')) {
+      if (!isUploadedArtKey(assetKey) && !isBuiltInArtKey(category, assetKey)) {
+        throw new AppError('BAD_ART_KEY', 400, `that is not ${category === 'icon' ? 'an icon' : 'a background'}'s picture`);
+      }
+    }
     const claimed = await claimArt(client, assetKey, category);
     if (!claimed.ok) throw new AppError(claimed.code, 409, claimed.message);
   }
@@ -186,7 +196,7 @@ export class ShopService {
         `SELECT asset_key FROM shop_items WHERE sku = $1 FOR UPDATE`,
         [input.sku],
       );
-      await this.claim(client, input.assetKey ?? null, category);
+      await this.claim(client, input.assetKey ?? null, category, was.rows[0]?.asset_key ?? null);
       const saved = await client.query<ItemRow>(
         `INSERT INTO shop_items
            (sku, name, description, category, currency, price, is_unique, active, in_stock, available_from, available_to,

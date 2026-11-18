@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { ToggleRow } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import { spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
@@ -44,19 +45,19 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
     };
   }, [client, userId]);
 
+  // The switch has already moved under the thumb; putting it back on a refusal is less confusing than one that lags.
+  const saving = useIntents<ProfileSection, boolean>(
+    async (key, next) => {
+      const res = await client.patch<{ sections: ProfileSections }>('/me/profile/sections', { [key]: next });
+      if (res.ok) setSections(res.data.sections);
+      return res;
+    },
+    { failed: (failure) => setError(describeError(failure, t)) },
+  );
   const toggle = (key: ProfileSection, next: boolean): void => {
-    // Optimistic: the switch has already moved under the thumb, and putting it back on failure is less confusing than
-    // one that lags a round trip.
-    setSections((prev) => (prev ? { ...prev, [key]: next } : prev));
-    void client.patch<{ sections: ProfileSections }>('/me/profile/sections', { [key]: next }).then((res) => {
-      if (res.ok) {
-        setSections(res.data.sections);
-        setError(null);
-      } else {
-        setSections((prev) => (prev ? { ...prev, [key]: !next } : prev));
-        setError(describeError(res.error, t));
-      }
-    });
+    if (!sections) return;
+    setError(null);
+    saving.want(key, next, sections[key] !== false);
   };
 
   const heading = (
@@ -89,7 +90,7 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
           key={key}
           label={t(COPY[key].label)}
           hint={t(COPY[key].hint)}
-          value={sections[key] !== false}
+          value={saving.shown(key, sections[key] !== false)}
           onValueChange={(next) => toggle(key, next)}
           style={[styles.row, { borderBottomColor: colors.separator }]}
         >

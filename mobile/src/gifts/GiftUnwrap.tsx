@@ -14,6 +14,7 @@ import type { EquippableCategory, GiftCard } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';
 import { describeError } from '../api/errors';
+import { useIntents } from '../api/optimistic';
 import type { ApiError } from '../api/types';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
@@ -28,6 +29,7 @@ import { useDirection } from '../reports/direction';
 import { SHEET_MAX_WIDTH } from '../reports/sheet';
 import { SendErrorNotice } from '../reports/SendError';
 import { openGift, wearGift } from './api';
+import { giftsSeen, refreshGiftBadge } from '../shop/useUnseenGifts';
 import { GiftBox, NewrozFlame, Seed, Spark } from './art';
 import { unwrapPlan, type Particle } from './motion';
 import { heldDim } from '../theme/MotionParts';
@@ -78,7 +80,7 @@ export function GiftUnwrap({
   const [revealed, setRevealed] = useState(false);
   const [equippable, setEquippable] = useState<EquippableCategory | null>(card.equippable);
   const [openError, setOpenError] = useState<string | null>(null);
-  const [worn, setWorn] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [worn, setWorn] = useState(false);
   const [thanked, setThanked] = useState<'idle' | 'busy' | 'done'>('idle');
   const [actionError, setActionError] = useState<string | null>(null);
   const [thanksError, setThanksError] = useState<ApiError | null>(null);
@@ -93,10 +95,15 @@ export function GiftUnwrap({
   const opened = useRef(onOpened);
   opened.current = onOpened;
 
+  // Whether it was opened before this moment, read once: the card is replaced by the opened one.
+  const openedBefore = useRef(target.card.myOpened);
   // Open it on the server as the moment starts, so "Opened ✓" reaches the sender.
   useEffect(() => {
     let alive = true;
+    // An unopened gift leaves the badge at once; a refusal reads the count again.
+    if (!openedBefore.current) giftsSeen(1);
     void openGift(client, target.giftId).then((res) => {
+      if (!res.ok) refreshGiftBadge();
       if (!alive) return;
       if (res.ok) {
         setEquippable(res.data.equippable);
@@ -143,17 +150,20 @@ export function GiftUnwrap({
     );
   }, [revealed, details, reduce, t, card.name, target.fromName]);
 
+  // Worn at once: it is already yours. A refusal takes it off again and says why.
+  const wearing = useIntents<EquippableCategory, boolean>(
+    async (category) => {
+      const res = await wearGift(client, category, card.sku);
+      if (res.ok) setWorn(true);
+      return res;
+    },
+    { failed: (error) => setActionError(describeError(error, t)) },
+  );
+  const wearShown = equippable ? wearing.shown(equippable, worn) : worn;
   const wear = (): void => {
-    if (!equippable || worn !== 'idle') return;
-    setWorn('busy');
+    if (!equippable || wearShown) return;
     setActionError(null);
-    void wearGift(client, equippable, card.sku).then((res) => {
-      if (res.ok) setWorn('done');
-      else {
-        setWorn('idle');
-        setActionError(describeError(res.error, t));
-      }
-    });
+    wearing.want(equippable, true, worn);
   };
 
   const thank = (): void => {
@@ -222,12 +232,11 @@ export function GiftUnwrap({
             <View style={styles.actions}>
               {equippable ? (
                 <ClayButton
-                  label={worn === 'done' ? t('gift.unwrap.wearing') : t('gift.unwrap.wear')}
-                  icon={worn === 'done' ? 'check' : undefined}
+                  label={wearShown ? t('gift.unwrap.wearing') : t('gift.unwrap.wear')}
+                  icon={wearShown ? 'check' : undefined}
                   tone="primary"
                   size="large"
-                  busy={worn === 'busy'}
-                  disabled={worn === 'done'}
+                  disabled={wearShown}
                   onPress={wear}
                   style={styles.stretch}
                 />

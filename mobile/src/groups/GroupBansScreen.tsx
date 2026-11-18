@@ -9,7 +9,7 @@ import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
 import { formatUntil } from '../reports/sendErrors';
 import { EmptyState } from '../theme/EmptyState';
@@ -108,7 +108,7 @@ export function GroupBansScreen({ groupId, onExit }: { groupId: string; onExit: 
                 // Held, the row fills as a list row does; it opens their profile.
                 style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
               >
-                <InitialsAvatar name={b.username} id={b.userId} size={44} photoUrl={b.avatarUrl} />
+                <Avatar name={b.username} size={44} photoUrl={b.avatarUrl} />
                 <View style={styles.names}>
                   <Text style={[styles.name, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
                     {b.username}

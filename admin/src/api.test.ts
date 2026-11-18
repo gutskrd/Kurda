@@ -26,6 +26,19 @@ describe('the admin API client', () => {
     expect(getToken()).toBe('tok-1');
   });
 
+  it('sends nothing to a path an id from the address turned into another endpoint’s', async () => {
+    const { calls } = fakeApi(on('GET', '/admin/users/u1', json({ user: {} })));
+    // #/users/..%2F..%2Fadmin%2Fsession%2Fend reads as the id "../../admin/session/end"
+    for (const path of ['/admin/users/../../admin/session/end', '/admin/moderation/cases/%2e%2e/approvals', '/admin/users/..\\x']) {
+      const err = await api(path, { method: 'POST', body: {} }).catch((e: unknown) => e);
+      expect((err as ApiError).code, path).toBe('NOT_FOUND');
+    }
+    await expect(apiUpload('/admin/art/../x', new Uint8Array([1]), 'image/png')).rejects.toBeInstanceOf(ApiError);
+    expect(calls).toEqual([]);
+    await api('/admin/users/u1');
+    expect(calls.map((c) => c.path)).toEqual(['/admin/users/u1']);
+  });
+
   it('does not sign an admin out for a mistyped 2FA code', async () => {
     fakeApi(on('POST', '/admin/auth/verify', failure(401, 'INVALID_CODE', 'invalid or expired code')));
     const err = (await api('/admin/auth/verify', { method: 'POST', body: { code: '000000' } }).catch((e: unknown) => e)) as ApiError;

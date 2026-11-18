@@ -20,6 +20,7 @@ import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack
 import { PALETTES } from '../theme/palette';
 import { EntryDetail } from './EntryDetail';
 import type { Entry } from './types';
+import { watchNotices } from '../testing/notices';
 
 function entry(audio: DictionaryAudio[]): Entry {
   return {
@@ -113,6 +114,48 @@ describe('a saved word', () => {
     await waitFor(() => expect(mark('Remove bookmark')).toBe(night.primary));
     fireEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
     await waitFor(() => expect(mark('Bookmark word')).toBe(night.textSecondary));
+  });
+});
+
+describe('saving a word', () => {
+  it('shows the bookmark before the server answers, and ends rapid taps on the last one', async () => {
+    const answers: ((r: unknown) => void)[] = [];
+    const later = () => new Promise((resolve) => answers.push(resolve));
+    const client = fakeClient({
+      'GET /dictionary/entries/e1': ok(entry([])),
+      'PUT /dictionary/entries/e1/save': later,
+      'DELETE /dictionary/entries/e1/save': later,
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<EntryDetail entryId="e1" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Bookmark word' }));
+    expect(screen.getByRole('button', { name: 'Remove bookmark' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bookmark word' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
+    expect(screen.getByRole('button', { name: 'Bookmark word' })).toBeTruthy();
+    const writes = () => client.calls.filter((c) => c.method !== 'GET').map((c) => c.method);
+    expect(writes()).toEqual(['PUT']);
+    await act(async () => answers[0]!(ok({ saved: true })));
+    // The server now has it saved and the last tap did not want it: that is sent next.
+    expect(writes()).toEqual(['PUT', 'DELETE']);
+    await act(async () => answers[1]!(ok({ saved: false })));
+    expect(screen.getByRole('button', { name: 'Bookmark word' })).toBeTruthy();
+  });
+
+  it('puts the bookmark back when the server refuses, and says why', async () => {
+    const said = watchNotices();
+    let answer: (r: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'GET /dictionary/entries/e1': ok(entry([])),
+      'PUT /dictionary/entries/e1/save': () => new Promise((resolve) => (answer = resolve)),
+    } as never);
+    renderWithProviders(<EntryDetail entryId="e1" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Bookmark word' }));
+    expect(screen.getByRole('button', { name: 'Remove bookmark' })).toBeTruthy();
+    await act(async () => answer({ ok: false, error: { kind: 'client', status: 403, code: 'LIMIT', message: 'Your vocabulary is full.' } }));
+    expect(screen.getByRole('button', { name: 'Bookmark word' })).toBeTruthy();
+    expect(said).toHaveBeenCalledWith('Your vocabulary is full.');
   });
 });
 

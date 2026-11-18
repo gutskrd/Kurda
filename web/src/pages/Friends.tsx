@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { useApiGet } from '../lib/useApi';
-import { describeError } from '../lib/api';
 import { useProfileModal } from '../profile/ProfileModal';
 import { UserActions } from '../profile/UserActions';
 import { ErrorState, EmptyState } from '../components/states';
@@ -15,6 +14,9 @@ import { LinkButton } from '../components/Button';
 import { SearchIcon } from '../components/icons';
 import { useRail } from '../social/RailProvider';
 import { RequestTicket } from '../social/FriendTickets';
+import { railEdits } from '../social/useSocialRail';
+import { failureText, useOptimisticSend } from '../lib/optimistic';
+import { useUnfriend } from '../social/unfriend';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
@@ -34,6 +36,15 @@ function Row({ user, actions, meta }: { user: UserSummary; actions?: React.React
   );
 }
 
+/** A set update that takes `id` out. */
+const without =
+  (id: string) =>
+  (s: ReadonlySet<string>): ReadonlySet<string> => {
+    const next = new Set(s);
+    next.delete(id);
+    return next;
+  };
+
 /**
  * Friends (/app/friends): your friends, requests waiting on you, and the ones you sent; finding new people is Search's
  * job, linked at the top. Messages links here for requests, so they come first, each a friendship ticket
@@ -50,30 +61,42 @@ export function Friends(): React.JSX.Element {
   const waiting = useRail().data.requests.length;
   // Why an answer failed: a full friend list (theirs or yours) is said rather than the request just staying.
   const [err, setErr] = useState<string | null>(null);
+  const { adjust } = useRail();
+  const sendShown = useOptimisticSend();
+  const unfriendNow = useUnfriend();
+  /** Friends blocked or removed here, gone from the list before the server answers (reports/block.ts, social/unfriend.ts). */
+  const [goneHere, setGoneHere] = useState<ReadonlySet<string>>(() => new Set());
+  /** Sent requests taken back here, gone from the list before the server answers. */
+  const [withdrawn, setWithdrawn] = useState<ReadonlySet<string>>(() => new Set());
 
   /** Takes back a request you sent; the other person is not told either way. */
   async function cancelRequest(userId: string): Promise<void> {
-    await client.delete(`/friends/requests/${userId}`);
-    sent.reload();
+    setWithdrawn((s) => new Set(s).add(userId));
+    const res = await sendShown(() => client.delete(`/friends/requests/${userId}`), { undo: () => setWithdrawn(without(userId)) });
+    if (res.ok) sent.reload();
   }
 
   /**
-   * Removes a friend. Removing (mutual, reversible) and blocking (silent, absolute) both live in the row's ⋯
-   * (profile/UserActions.tsx), where removing is confirmed and a block says what it does first.
+   * Removes a friend, gone from the list as soon as it is confirmed. Removing (mutual, reversible) and blocking (silent,
+   * absolute) both live in the row's ⋯ (profile/UserActions.tsx), where removing is confirmed and a block says what it
+   * does first.
    */
   async function unfriend(userId: string): Promise<void> {
-    await client.delete(`/friends/${userId}`);
-    friends.reload();
+    setGoneHere((s) => new Set(s).add(userId));
+    await unfriendNow(userId, () => setGoneHere(without(userId)));
   }
 
-  /** Answers a request; returns whether it went through, so the ticket is stamped or folded only then. */
+  /** Answers a request, counted at once everywhere; returns whether it went through, so a refused ticket opens again. */
   async function respond(userId: string, accept: boolean): Promise<boolean> {
     setErr(null);
-    const res = await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
-    if (!res.ok) {
-      setErr(describeError(res.error, t));
-      requests.reload();
-    }
+    // Someone removed here earlier who asked again is a friend once more.
+    if (accept) setGoneHere(without(userId));
+    const res = await sendShown(
+      () => client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`),
+      adjust(railEdits.requestAnswered(userId)),
+      { onFailed: (error) => setErr(failureText(error, t)) },
+    );
+    if (!res.ok) requests.reload();
     return res.ok;
   }
 
@@ -82,6 +105,9 @@ export function Friends(): React.JSX.Element {
     requests.reload();
     friends.reload();
   }
+
+  const outgoing = (sent.data?.requests ?? []).filter((u) => !withdrawn.has(u.userId));
+  const yours = (friends.data?.friends ?? []).filter((u) => !goneHere.has(u.userId));
 
   return (
     <div className="container container-narrow">
@@ -127,11 +153,11 @@ export function Friends(): React.JSX.Element {
       )}
 
       {/* Requests you sent, so a misfire is visible and can be undone. */}
-      {!sent.loading && (sent.data?.requests.length ?? 0) > 0 && (
+      {!sent.loading && outgoing.length > 0 && (
         <section className="friend-section">
           <h2 className="friend-heading">{t('friends.sent')}</h2>
           <div className="post-list">
-            {sent.data!.requests.map((u) => (
+            {outgoing.map((u) => (
               <Row
                 key={u.userId}
                 user={u}
@@ -156,11 +182,11 @@ export function Friends(): React.JSX.Element {
           <FriendListSkeleton widths={[44, 36]} />
         ) : friends.error ? (
           <ErrorState message={friends.error} onRetry={friends.reload} />
-        ) : (friends.data?.friends.length ?? 0) === 0 ? (
+        ) : yours.length === 0 ? (
           <EmptyState title={t('friends.noneTitle')} message={t('friends.noneBody')} />
         ) : (
           <div className="post-list">
-            {friends.data!.friends.map((u) => (
+            {yours.map((u) => (
               <Row
                 key={u.userId}
                 user={u}
@@ -177,7 +203,8 @@ export function Friends(): React.JSX.Element {
                         title: t('friends.removeWho', { name: u.username }),
                         onConfirm: () => unfriend(u.userId),
                       }}
-                      onBlocked={friends.reload}
+                      onBlocked={() => setGoneHere((s) => new Set(s).add(u.userId))}
+                      onBlockRefused={() => setGoneHere(without(u.userId))}
                     />
                   </>
                 }

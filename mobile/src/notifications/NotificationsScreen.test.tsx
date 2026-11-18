@@ -94,9 +94,31 @@ describe('notification settings', () => {
     await act(async () => {
       fireEvent.click(earlier);
     });
-    expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ quietStartMin: 21 * 60 + 30 });
+    // Both ends go together, as the server takes them.
+    expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ quietStartMin: 21 * 60 + 30, quietEndMin: 7 * 60 });
     // In the reader's own way of writing the time: English counts twelve hours.
     expect(screen.getByText(/^9:30\sPM$/)).toBeTruthy();
+  });
+
+  it('moves the time at once on rapid steps and sends only the last once the first is answered', async () => {
+    const answers: ((r: unknown) => void)[] = [];
+    const client = fakeClient({
+      'GET /me/notification-prefs': ok(PREFS),
+      'PUT /me/notification-prefs': (body: unknown) => new Promise((resolve) => answers.push(() => resolve(ok({ ...PREFS, ...(body as object) })))),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
+    const earlier = await screen.findByRole('button', { name: 'Start half an hour earlier' });
+    fireEvent.click(earlier);
+    fireEvent.click(earlier);
+    fireEvent.click(earlier);
+    expect(screen.getByText(/^8:30\sPM$/)).toBeTruthy();
+    const sent = () => client.calls.filter((c) => c.method === 'PUT').map((c) => (c.body as { quietStartMin: number }).quietStartMin);
+    expect(sent()).toEqual([21 * 60 + 30]);
+    await act(async () => answers[0]!(undefined));
+    expect(sent()).toEqual([21 * 60 + 30, 20 * 60 + 30]);
+    await act(async () => answers[1]!(undefined));
+    expect(screen.getByText(/^8:30\sPM$/)).toBeTruthy();
   });
 
   // Each step is drawn 36pt across with the time between the two: nothing close, so it reaches a fingertip past every

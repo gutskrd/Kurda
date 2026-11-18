@@ -11,22 +11,22 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useCountUp } from '../theme/animate';
-import { cellState, dailyAction, plusGemsOf, type DailyClaim, type DailyStatus } from './daily';
+import { cellState, dailyAction, dailyClaimed, plusGemsOf, type DailyClaim, type DailyStatus } from './daily';
 import { haptic } from '../feedback/haptics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 
 /**
- * The daily Zêr calendar and claim, on the Learn screen above the lessons. The reward is paid for learning, so
- * until a lesson or practice is finished today the card says so instead of offering a claim the server would
- * refuse. A day already claimed when the screen opened hides the card. A Hevalo+ member's claim also brings gems,
- * noted in one quiet line.
+ * The daily Zêr calendar and claim, at the top of Home as on the website. The reward is paid for learning, so until a
+ * lesson or practice is finished today the card says so, with `onLearn` as the way there, instead of offering a claim
+ * the server would refuse. A day already claimed when the screen opened hides the card. A Hevalo+ member's claim also
+ * brings gems, noted in one quiet line.
  *
  * Days are told apart by more than colour: a taken day shows a check on gold, today a violet wash and edge, and
- * days to come stay plain. The week runs right to left in Soranî and Arabic, and each day is read out whole.
- * `onClaimed` is told after a claim is paid.
+ * days to come stay plain. The week runs right to left in Soranî and Arabic, and each day is read out whole. A claim
+ * tells the rest of the app (`dailyClaimed`), so Learn's purse shows the new Zêr.
  */
-export function DailyRewardCard({ onClaimed }: { onClaimed?: () => void }) {
+export function DailyRewardCard({ onLearn }: { onLearn?: () => void }) {
   const { client } = useAuth();
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
@@ -54,11 +54,11 @@ export function DailyRewardCard({ onClaimed }: { onClaimed?: () => void }) {
       // A light tick as the Zêr counts up; it comes daily, so nothing grander.
       haptic('tap');
       setJustEarned(res.data);
-      onClaimed?.();
+      dailyClaimed();
     }
     // Refused (for example a stale status with nothing learned today): reload so the card shows what is needed.
     load();
-  }, [client, load, onClaimed]);
+  }, [client, load]);
 
   if (!status) return settled ? null : <DailyRewardSkeleton />;
   const action = dailyAction(status);
@@ -103,15 +103,13 @@ export function DailyRewardCard({ onClaimed }: { onClaimed?: () => void }) {
       </View>
 
       {action === 'claim' ? (
-        // The quieter pill: on Learn the one solid button is the next lesson.
-        <ClayButton
-          label={t('rewards.claimZer', { amount: status.reward })}
-          icon="coin"
-          busy={claiming}
-          onPress={claim}
-        />
+        // The page's one filled button while it waits, as on the website.
+        <ClayButton label={t('rewards.claimZer', { amount: status.reward })} icon="coin" tone="primary" busy={claiming} onPress={claim} />
       ) : action === 'learnFirst' ? (
-        <Text style={[styles.done, { color: colors.textPrimary }]}>{t('daily.learnFirst', { amount: status.reward })}</Text>
+        <>
+          <Text style={[styles.done, { color: colors.textPrimary }]}>{t('daily.learnFirst', { amount: status.reward })}</Text>
+          {onLearn ? <ClayButton label={t('daily.goLearn')} variant="outline" onPress={onLearn} /> : null}
+        </>
       ) : (
         justEarned != null ? (
           <ClaimedLine amount={justEarned.reward} />

@@ -1,5 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import type { RestrictionScope } from '@kurda/shared';
+import { AUDIO_KINDS } from '../media/audioMedia.js';
 import { activeRestriction, mutedError } from './sanctions-service.js';
 import type { Executor } from './tx.js';
 
@@ -28,18 +29,18 @@ export async function assertUnrestricted(db: Executor, userId: string, scope: Ex
 }
 
 /**
- * Whether this person may attach a voice file to a post or comment: a confirmed audio upload that moderation has not
- * taken down, from someone not barred from media (403 MUTED, thrown). Checked at attach time because a key uploaded
- * another way, or before the limit, could otherwise be published; and a picture upload is not a voice note even though
- * its key is public.
+ * Whether this person may attach a voice file to a post or comment: their own confirmed recording that moderation has
+ * not taken down, from someone not barred from media (403 MUTED, thrown). Checked at attach time because a key uploaded
+ * before the limit could otherwise be published, and because a key is public once it is on a post: someone else's
+ * recording, the course's audio, a picture upload and any other string are all refused alike.
  */
 export async function voiceAttachable(db: Executor, userId: string, key: string): Promise<boolean> {
   await assertUnrestricted(db, userId, 'media');
   const r = await db.query(
     `SELECT 1 FROM media_uploads
-      WHERE key = $1 AND confirmed_at IS NOT NULL AND content_type LIKE 'audio/%'
-        AND scan_status <> 'blocked' AND quarantine_state IS NULL`,
-    [key],
+      WHERE key = $1 AND uploader_id = $2 AND kind = ANY($3::text[]) AND confirmed_at IS NOT NULL
+        AND content_type LIKE 'audio/%' AND scan_status <> 'blocked' AND quarantine_state IS NULL`,
+    [key, userId, [...AUDIO_KINDS]],
   );
   return (r.rowCount ?? 0) > 0;
 }

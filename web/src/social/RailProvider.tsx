@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useSocialRail, type Arrival, type SocialRailData } from './useSocialRail';
+import { useSocialRail, type Arrival, type RailEdit, type SocialRailData } from './useSocialRail';
+import type { ShownChange } from '../lib/optimistic';
 import { readRenamed } from '../lib/renamedKey';
 
 interface RailContext {
@@ -11,6 +12,8 @@ interface RailContext {
   arrivals: Arrival[];
   dismiss: (key: string) => void;
   refresh: () => void;
+  /** Draws a change at once, before the server has it (useSocialRail `railEdits`). */
+  adjust: (edit: RailEdit) => ShownChange;
   open: boolean;
   setOpen: (open: boolean) => void;
   /** Wide screens only: the rail is a strip of icons rather than a full column. */
@@ -24,6 +27,8 @@ interface RailContext {
  * The value outside a provider, as on signed-out pages. A frozen module constant, so callers need no null check and
  * the nav does not re-render on each pass.
  */
+const NO_CHANGE: ShownChange = { undo: () => undefined, keep: () => undefined };
+
 const ABSENT: RailContext = {
   data: {
     you: null,
@@ -39,6 +44,7 @@ const ABSENT: RailContext = {
   arrivals: [],
   dismiss: () => undefined,
   refresh: () => undefined,
+  adjust: () => NO_CHANGE,
   open: false,
   setOpen: () => undefined,
   collapsed: false,
@@ -81,7 +87,7 @@ export function RailProvider({ children }: { children: React.ReactNode }): React
 }
 
 function OwnRail({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const { data, loading, failed, arrivals, dismiss, refresh, soon } = useSocialRail();
+  const { data, loading, failed, arrivals, dismiss, refresh, soon, adjust } = useSocialRail();
   const { pathname } = useLocation();
   const shownPath = useRef(pathname);
   const [open, setOpen] = useState(false);
@@ -117,8 +123,8 @@ function OwnRail({ children }: { children: React.ReactNode }): React.JSX.Element
   const total = data.unread.challenges + data.unread.requests + data.unread.groups;
 
   const value = useMemo(
-    () => ({ data, loading, failed, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed, total }),
-    [data, loading, failed, arrivals, dismiss, refresh, open, collapsed, total],
+    () => ({ data, loading, failed, arrivals, dismiss, refresh, adjust, open, setOpen, collapsed, setCollapsed, total }),
+    [data, loading, failed, arrivals, dismiss, refresh, adjust, open, collapsed, total],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

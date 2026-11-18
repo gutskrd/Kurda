@@ -3,6 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Friends } from './Friends';
 import { renderApp, jsonResponse } from '../test/utils';
+import { onNotice } from '../lib/notice';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -199,7 +200,7 @@ describe('Friends', () => {
       '/friends': { friends: [{ userId: 'u2', username: 'zana', displayName: 'Zana' }] },
     });
     vi.stubGlobal('fetch', fetchMock);
-    renderApp(<Friends />);
+    const first = renderApp(<Friends />);
     const sent = (method: string, path: string): boolean =>
       fetchMock.mock.calls.some(([url, init]) => String(url).endsWith(path) && init?.method === method);
 
@@ -218,14 +219,66 @@ describe('Friends', () => {
     await userEvent.click(within(menu).getByRole('menuitem', { name: /press again to confirm/i }));
     await waitFor(() => expect(sent('DELETE', '/friends/u2')).toBe(true));
     await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    first.unmount();
 
     // A block says what it does before it is done.
-    await userEvent.click(screen.getByRole('button', { name: 'More about Zana' }));
+    renderApp(<Friends />);
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Block' }));
     const ask = screen.getByRole('dialog', { name: 'Block Zana' });
     expect(sent('POST', '/friends/u2/block')).toBe(false);
     await userEvent.click(within(ask).getByRole('button', { name: 'Block' }));
     await waitFor(() => expect(sent('POST', '/friends/u2/block')).toBe(true));
+  });
+
+  it('takes a blocked friend off the list at once, and brings them back with a notice if the server refuses', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'POST' && url.endsWith('/friends/u2/block')) return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [{ userId: 'u2', username: 'zana', displayName: 'Zana' }] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Block' }));
+    await userEvent.click(within(screen.getByRole('dialog', { name: 'Block Zana' })).getByRole('button', { name: 'Block' }));
+    expect(screen.queryByRole('button', { name: 'Play with Zana' })).not.toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Play with Zana' })).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
+  });
+
+  it('takes a removed friend off the list once confirmed, and brings them back with a notice if the server refuses', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'DELETE' && url.endsWith('/friends/u2')) return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [{ userId: 'u2', username: 'zana', displayName: 'Zana' }] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Remove zana as a friend' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /press again to confirm/i }));
+    expect(screen.queryByRole('button', { name: 'Play with Zana' })).not.toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Play with Zana' })).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
   });
 
   it('sends finding someone new to Search', async () => {
@@ -308,5 +361,53 @@ describe('Friends', () => {
     await waitFor(() =>
       expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes('/friends/requests/u3/decline') && init?.method === 'POST')).toBe(true),
     );
+  });
+
+  it('stamps an accepted ticket before the server answers', async () => {
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'POST') return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/friends/requests/outgoing')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [{ userId: 'u3', username: 'rojda' }] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    const ticket = await screen.findByRole('group', { name: 'rojda wants to be friends' });
+    await userEvent.click(within(ticket).getByRole('button', { name: 'Accept' }));
+    expect(within(ticket).getByText('Friends')).toHaveClass('ticket-stamp');
+    answer(jsonResponse(500, {}));
+    // Refused: the ticket opens again, and the page says why.
+    expect(await within(ticket).findByRole('button', { name: 'Accept' })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent('Something went wrong on our end. Please try again shortly.');
+  });
+
+  it('takes a sent request off the list at once, and puts it back when the server keeps it', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'DELETE') return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/friends/requests/outgoing')) return jsonResponse(200, { requests: [{ userId: 'u7', username: 'hevi' }] });
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /cancel your request to hevi/i }));
+    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    expect(screen.queryByText('hevi')).not.toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByText('hevi')).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
   });
 });

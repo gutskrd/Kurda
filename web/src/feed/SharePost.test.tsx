@@ -132,6 +132,28 @@ describe('sharing a post', () => {
     expect(await screen.findByText(/Sent to zana/)).toBeInTheDocument();
   });
 
+  it('says sent at once, and brings the friends back with why when the message did not go', async () => {
+    signedIn();
+    let answer!: (res: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [{ userId: 'f1', username: 'zana', avatarUrl: null }] });
+        if (init?.method === 'POST') return new Promise<Response>((r) => (answer = r));
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'u1', username: 'me' } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<SharePost item={item} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Share this post' }));
+    await userEvent.click(await screen.findByRole('button', { name: /zana/ }));
+    expect(screen.getByText(/Sent to zana/)).toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: /zana/ })).toBeInTheDocument();
+    expect(screen.getByText('That message did not send. Try again.')).toBeInTheDocument();
+  });
+
   it('asks a signed-out reader to sign in rather than listing nobody', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<SharePost item={item} />);

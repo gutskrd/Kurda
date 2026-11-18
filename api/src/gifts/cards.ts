@@ -55,8 +55,25 @@ export async function giftCards(
   viewer: CardViewer,
   publicUrl: PublicUrl = () => null,
 ): Promise<Map<string, GiftCard>> {
-  const cards = new Map<string, GiftCard>();
-  if (batchIds.length === 0) return cards;
+  return cardsFrom(await cardRows(executor, batchIds, viewer), viewer.id, publicUrl);
+}
+
+/**
+ * A batch's card as each of these viewers sees it, keyed by viewer, from one read. Every viewer must see everyone
+ * on the card (`seesEveryone`), which leaves only what is theirs to differ between them.
+ */
+export async function giftCardsForEach(
+  executor: Pick<pg.Pool, 'query'>,
+  batchId: string,
+  viewerIds: ReadonlyArray<string | null>,
+  publicUrl: PublicUrl = () => null,
+): Promise<Map<string | null, GiftCard | null>> {
+  const rows = await cardRows(executor, [batchId], { id: null, seesEveryone: true });
+  return new Map(viewerIds.map((id) => [id, cardsFrom(rows, id, publicUrl).get(batchId) ?? null]));
+}
+
+async function cardRows(executor: Pick<pg.Pool, 'query'>, batchIds: readonly string[], viewer: CardViewer): Promise<CardRow[]> {
+  if (batchIds.length === 0) return [];
   // created_at, then id: the order the recipients were given their gifts in
   const rows = await executor.query<CardRow>(
     `SELECT g.id, g.batch_id, g.to_user_id, g.price, g.currency, g.opened_at,
@@ -70,21 +87,25 @@ export async function giftCards(
       ORDER BY g.batch_id, g.created_at, g.id`,
     [[...new Set(batchIds)], viewer.id, viewer.seesEveryone],
   );
+  return rows.rows;
+}
 
+function cardsFrom(rows: readonly CardRow[], viewerId: string | null, publicUrl: PublicUrl): Map<string, GiftCard> {
   const byBatch = new Map<string, CardRow[]>();
-  for (const r of rows.rows) {
+  for (const r of rows) {
     const list = byBatch.get(r.batch_id) ?? [];
     list.push(r);
     byBatch.set(r.batch_id, list);
   }
 
+  const cards = new Map<string, GiftCard>();
   for (const [batchId, list] of byBatch) {
     const first = list[0]!;
-    const mine = viewer.id ? list.find((r) => r.to_user_id === viewer.id) ?? null : null;
+    const mine = viewerId ? list.find((r) => r.to_user_id === viewerId) ?? null : null;
     const recipients: GiftRecipient[] = list
       .filter((r) => !r.gone)
       .map((r) => {
-        const isMe = r.to_user_id === viewer.id;
+        const isMe = r.to_user_id === viewerId;
         const shown = isMe || r.shown;
         return {
           name: shown ? r.username : null,
