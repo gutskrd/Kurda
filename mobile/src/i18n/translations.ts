@@ -2980,6 +2980,8 @@ export type TranslationKey =
   | 'learn.continue.progress'
   | 'learn.today.title'
   | 'learn.today.goal'
+  | 'learn.today.goalShort'
+  | 'learn.course.road'
   | 'learn.today.goalMet'
   | 'learn.today.goalSetting'
   | 'learn.today.goalOption'
@@ -6882,6 +6884,8 @@ const en: Catalog = {
   'learn.continue.progress': '{done} of {total} skills done',
   'learn.today.title': 'Today',
   'learn.today.goal': '{xp} of {goal} XP today',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'The Kurmanji Road',
   'learn.today.goalMet': 'Daily goal reached. Nice work!',
   'learn.today.goalSetting': 'Goal: {xp} XP',
   'learn.today.goalOption': '{xp} XP a day',
@@ -10781,6 +10785,8 @@ const ku: Catalog = {
   'learn.continue.progress': '{done} ji {total} mijaran qediyan',
   'learn.today.title': 'Îro',
   'learn.today.goal': 'Îro {xp} ji {goal} XP',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'Rêya Kurmancî',
   'learn.today.goalMet': 'Armanca rojane pêk hat. Destê te xweş!',
   'learn.today.goalSetting': 'Armanc: {xp} XP',
   'learn.today.goalOption': 'Rojê {xp} XP',
@@ -14680,6 +14686,8 @@ const de: Catalog = {
   'learn.continue.progress': '{done} von {total} Themen geschafft',
   'learn.today.title': 'Heute',
   'learn.today.goal': 'Heute {xp} von {goal} XP',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'Der Kurmancî-Weg',
   'learn.today.goalMet': 'Tagesziel erreicht. Gut gemacht!',
   'learn.today.goalSetting': 'Ziel: {xp} XP',
   'learn.today.goalOption': '{xp} XP am Tag',
@@ -18579,6 +18587,8 @@ const es: Catalog = {
   'learn.continue.progress': '{done} de {total} temas completados',
   'learn.today.title': 'Hoy',
   'learn.today.goal': '{xp} de {goal} XP hoy',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'El camino del kurmancî',
   'learn.today.goalMet': 'Meta diaria cumplida. ¡Buen trabajo!',
   'learn.today.goalSetting': 'Meta: {xp} XP',
   'learn.today.goalOption': '{xp} XP al día',
@@ -22478,6 +22488,8 @@ const tr: Catalog = {
   'learn.continue.progress': '{total} konudan {done} tanesi bitti',
   'learn.today.title': 'Bugün',
   'learn.today.goal': 'Bugün {xp} / {goal} XP',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'Kurmancî Yolu',
   'learn.today.goalMet': 'Günlük hedefe ulaştın. Harika!',
   'learn.today.goalSetting': 'Hedef: {xp} XP',
   'learn.today.goalOption': 'Günde {xp} XP',
@@ -26377,6 +26389,8 @@ const ar: Catalog = {
   'learn.continue.progress': 'المهارات المنجزة: {done} من {total}',
   'learn.today.title': 'اليوم',
   'learn.today.goal': '{xp} من {goal} XP اليوم',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'طريق الكرمانجية',
   'learn.today.goalMet': 'حققت هدفك اليومي. أحسنت!',
   'learn.today.goalSetting': 'الهدف: {xp} XP',
   'learn.today.goalOption': '{xp} XP في اليوم',
@@ -30276,6 +30290,8 @@ const fr: Catalog = {
   'learn.continue.progress': '{done} sur {total} thèmes terminés',
   'learn.today.title': 'Aujourd’hui',
   'learn.today.goal': '{xp} sur {goal} XP aujourd’hui',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'La route du kurmancî',
   'learn.today.goalMet': 'Objectif du jour atteint. Bravo !',
   'learn.today.goalSetting': 'Objectif : {xp} XP',
   'learn.today.goalOption': '{xp} XP par jour',
@@ -34175,6 +34191,8 @@ const nl: Catalog = {
   'learn.continue.progress': '{done} van {total} onderdelen klaar',
   'learn.today.title': 'Vandaag',
   'learn.today.goal': 'Vandaag {xp} van {goal} XP',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'De Kurmancî-weg',
   'learn.today.goalMet': 'Dagdoel gehaald. Goed gedaan!',
   'learn.today.goalSetting': 'Doel: {xp} XP',
   'learn.today.goalOption': '{xp} XP per dag',
@@ -38075,6 +38093,8 @@ const ckb: Catalog = {
   'learn.continue.progress': '{done} لە {total} بابەت تەواو بوون',
   'learn.today.title': 'ئەمڕۆ',
   'learn.today.goal': 'ئەمڕۆ {xp} لە {goal} XP',
+  'learn.today.goalShort': '{xp}/{goal} XP',
+  'learn.course.road': 'ڕێگای کورمانجی',
   'learn.today.goalMet': 'ئامانجی ڕۆژانە پێکرا. دەستت خۆش!',
   'learn.today.goalSetting': 'ئامانج: {xp} XP',
   'learn.today.goalOption': 'ڕۆژانە {xp} XP',
