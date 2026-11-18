@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   WHO_AM_I_ANSWER_SECONDS,
   WHO_AM_I_ASK_SECONDS,
@@ -32,7 +32,7 @@ import { GameRoom, multiSeatName } from '../play/GameRoom';
 import { InviteSheet } from '../play/InviteSheet';
 import { useGameView } from '../play/useGameView';
 import { useDirection } from '../reports/direction';
-import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Loading } from '../theme/Loading';
 import { useTheme } from '../theme/ThemeProvider';
@@ -40,7 +40,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { DIFFICULTY_KEY } from '../games/partyChoices';
 import { useServerNow } from '../impostor/ImpostorBoard';
-import { Cloth, GoldButton } from '../impostor/parts';
+import { Card, Cloth, GoldButton, listed } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
 import { WhoAmICouch, useCouchOffer } from './WhoAmICouch';
 import {
@@ -54,7 +54,6 @@ import {
   VerdictCard,
   answerWord,
   kindOf,
-  listed,
   type TableSeat,
 } from './WhoAmIStage';
 import { dialectNameKey } from '../i18n/dialectName';
@@ -65,7 +64,10 @@ type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<WhoAmITableBoar
 /** How long each of a turn's three waits runs, for the share of it that is left. */
 const WAIT_SECONDS: Record<WhoAmITableBoard['phase'], number> = { ask: WHO_AM_I_ASK_SECONDS, answer: WHO_AM_I_ANSWER_SECONDS, decide: WHO_AM_I_DECIDE_SECONDS };
 
-/** How each way the game can end reads, under who everyone was. A game called off with everyone gone reads as one too few were left in. */
+/**
+ * How each way the game can end reads, under who everyone was. A game called off with everyone gone reads as too few
+ * left.
+ */
 const END_KEY: Record<NonNullable<WhoAmITableBoard['endedBy']>, TranslationKey> = {
   'all-done': 'games.whoAmI.end.allDone',
   time: 'games.whoAmI.end.time',
@@ -74,27 +76,21 @@ const END_KEY: Record<NonNullable<WhoAmITableBoard['endedBy']>, TranslationKey> 
 };
 
 /**
- * Who Am I? on the phone: everyone wears a Kurdish word on their forehead
- * that the others can read and they cannot, and finds out who they are by
- * asking yes/no questions in Kurdish. The friends who read the card answer
- * yes, could be, no or not sure, and the card's own answer is the judge of
- * theirs. Never played alone.
+ * Who Am I? on the phone: everyone wears a Kurdish word on their forehead that only the others can read, and finds out
+ * who they are by asking yes/no questions. The friends answer yes, could be, no or not sure, judged by the card's own
+ * answer. Never played alone.
  *
- * Without an id, the start: the night stage with the hidden deer, what the
- * game is in two short sentences, and its two ways, each offered only where
- * approved identities and questions allow. On this phone, passed round a room
- * (WhoAmICouch.tsx), is the main way in: it comes first and wears the gold
- * button. With friends online, through the invite sheet, is the quieter card
- * under it. With an id, the room (play/GameRoom.tsx) with the table inside,
- * for an account only. `way` is the way a card on the Games page asked for.
- * The website's whoami/WhoAmI.tsx plays the same game.
+ * Without an id, the start: the night stage and the game's two ways, each offered only where approved content allows.
+ * On this phone (WhoAmICouch.tsx) comes first with the gold button; with friends online, through the invite sheet, is
+ * the quieter card under it. With an id, the room (play/GameRoom.tsx), for an account only. `way` is the way a Games
+ * card asked for. The website's whoami/WhoAmI.tsx plays the same game.
  */
 export function WhoAmIScreen({ id: initialId, way, onExit }: { id?: string; way?: 'phone' | 'friends'; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const dialect = useCourseDialect();
   const [id, setId] = useState<string | null>(initialId ?? null);
   const [onPhone, setOnPhone] = useState(way === 'phone' && !initialId);
-  // kept here, above the start, so the sheet a card asked for opens once and not again each time the start comes back
+  // Kept above the start, so the sheet a card asked for opens once, not each time the start comes back.
   const [inviting, setInviting] = useState(way === 'friends' && !initialId);
   useEffect(() => {
     if (!initialId) return;
@@ -102,7 +98,7 @@ export function WhoAmIScreen({ id: initialId, way, onExit }: { id?: string; way?
     setInviting(false);
   }, [initialId]);
   useEffect(() => () => leftResults(), [id]);
-  // where the game can be played on one phone in the learner's Kurdish; a room has no use for the answer
+  // Where the game can be played on one phone in the learner's Kurdish; a room has no use for the answer.
   const offer = useCouchOffer(dialect, !id);
 
   if (id) {
@@ -120,7 +116,7 @@ export function WhoAmIScreen({ id: initialId, way, onExit }: { id?: string; way?
   if (onPhone && offer && offer.difficulties.length > 0) {
     return (
       <GradientBackground>
-        {/* the game on one phone keeps its own header, whose way back asks before a game is lost */}
+        {/* The game on one phone keeps its own header, whose way back asks before a game is lost. */}
         <WhoAmICouch offer={offer} onLeave={() => setOnPhone(false)} />
       </GradientBackground>
     );
@@ -135,20 +131,7 @@ export function WhoAmIScreen({ id: initialId, way, onExit }: { id?: string; way?
   );
 }
 
-/**
- * A glass card with its contents laid out by `style`. The glass card's own
- * style is its frame's, so a gap or an alignment given there never reaches
- * what is inside it.
- */
-function Card({ style, children }: { style: StyleProp<ViewStyle>; children: React.ReactNode }): React.JSX.Element {
-  return (
-    <GlassCard>
-      <View style={style}>{children}</View>
-    </GlassCard>
-  );
-}
-
-// ---------- the start ----------
+// The start.
 
 function Start({
   offer,
@@ -157,7 +140,7 @@ function Start({
   onPhone,
 }: {
   offer: WhoAmICouchOffer | null | undefined;
-  /** the invite sheet is open, or was asked for on the way in */
+  /** The invite sheet is open, or was asked for on the way in. */
   inviting: boolean;
   onInviting: (open: boolean) => void;
   onPhone: () => void;
@@ -166,11 +149,11 @@ function Start({
   const { t } = useI18n();
   const gate = useAccountGate();
   const dialect = useCourseDialect();
-  // a guest is not told where the game is played online, and is offered an account at its door instead
+  // A guest is not told where the game is played online, and is offered an account at its door instead.
   const online = useMpAvailability('who-am-i', !gate.isGuest);
   if (offer === undefined || (!gate.isGuest && online === null)) return <Loading style={styles.loading} />;
   const phone = (offer?.difficulties.length ?? 0) > 0;
-  // the same approved identities fill both ways, so what one phone is offered a guest's account would be too
+  // The same approved identities fill both ways, so what one phone is offered a guest's account would be too.
   const together = gate.isGuest ? phone : groupDialects(online).length > 0;
   if (!phone && !together) {
     return (
@@ -185,7 +168,7 @@ function Start({
   };
   return (
     <>
-      {/* the night every game opens on: the one who wears the card, and what the game is */}
+      {/* The night every game opens on: the one who wears the card, and what the game is. */}
       <Cloth style={styles.stage}>
         <ForeheadCard dialect={dialect} category={null} identity={null} size={180} night />
         <Text style={styles.stageLine}>{t('games.whoAmI.intro')}</Text>
@@ -202,8 +185,8 @@ function Start({
         </Card>
       ) : null}
       {together ? (
-        // Under the way on one phone this is the second way in, and says so quietly: smaller words, and a button that
-        // is only an outline. Gold is for the first thing to press, so it wears gold only where it is the only way.
+        // Beneath the one-phone way this is the second way in, so it is quieter: smaller words and an outline button.
+        // It wears gold only where it is the only way.
         <Card style={phone ? styles.quiet : styles.way}>
           <Text accessibilityRole="header" style={[phone ? styles.quietTitle : styles.title, { color: colors.textPrimary }]}>
             {t('games.whoAmI.online')}
@@ -224,7 +207,7 @@ function Start({
   );
 }
 
-// ---------- the room ----------
+// The room.
 
 /** The earlier of the turn's present wait and the game's own end: when the server next settles something by itself. */
 function nextDeadline(board: WhoAmITableBoard): string {
@@ -268,25 +251,16 @@ function moveError(error: ApiError, t: ReturnType<typeof useI18n>['t']): string 
 }
 
 /**
- * The table itself, inside the room: whose turn it is and what it waits for,
- * against the server's clock; the question on the table, to answer or to
- * watch being answered; the card's verdict; the reader's own questions (the
- * ones the server suggests asking next first, and for a beginner each with
- * what it means under it); and everyone as a row of foreheads.
+ * The table inside the room: whose turn it is and what it waits for, against the server's clock; the question on the
+ * table; the card's verdict; the reader's own questions (suggested first, with meanings for a beginner); and everyone
+ * as a row of foreheads.
  *
- * Nothing lists the words the reader might be while questions are being
- * asked: a list of choices in sight all along would make the game a quiz. On
- * their own turn "I know who I am!" opens the tiles to guess from, and "Not
- * yet" closes them again; a turn that has to be a guess opens them by itself.
+ * Nothing lists the words the reader might be while questions are asked, which would make it a quiz: "I know who I am!"
+ * opens the tiles to guess from and "Not yet" closes them; a turn that must be a guess opens them by itself. What the
+ * reader must do next is always straight under the banner.
  *
- * What the reader must do next is always straight under the banner. On their
- * own turn that is their questions and the way to guess, and the row of
- * foreheads moves under them; the rest of the time the row comes first and
- * their own list waits below it, to think with.
- *
- * Every card here is drawn from the board as the server sent it to this
- * reader. Their own is not on it until it is off their forehead (`card` null
- * on their seat, `mine.identity` null), and nothing here draws one that is.
+ * Every card is drawn from the board as the server sent it to this reader; their own is absent until it is off their
+ * forehead (`card` and `mine.identity` null), and nothing here draws one that is.
  */
 function TableBoard({ view, skew, move }: { view: TableView; skew: number; move: Move }): React.JSX.Element | null {
   const { colors } = useTheme();
@@ -295,12 +269,12 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
   const now = useServerNow(skew, view.status === 'active');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // the tile of a wrong guess just made, said once under the tiles until the next move
+  // The tile of a wrong guess just made, said once under the tiles until the next move.
   const [missed, setMissed] = useState<string | null>(null);
-  // the moment of the game at which the reader last said they know who they are: the tiles are open for that moment only
+  // The moment at which the reader last said they know who they are: the tiles are open for that moment only.
   const [knowsAt, setKnowsAt] = useState<string | null>(null);
-  // the questions this reader has said look wrong on a card, by seat and question: the same verdict is drawn twice, loud
-  // while it is decided on and quiet after, and the thank-you stays a thank-you in both
+  // The questions this reader reported on a card, by seat and question: the verdict is drawn twice (loud while decided,
+  // quiet after), and the thank-you stays in both.
   const [reported, setReported] = useState<readonly string[]>([]);
   const board = view.board;
   if (!board || board.turn === null) return null;
@@ -315,16 +289,16 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
   const asker = name(turn);
   const myTurn = turn === me;
   const guessing = !!mine && !mine.solved && !mine.out;
-  // the reader's own turn, at a moment something of theirs can be pressed
+  // The reader's own turn, at a moment something of theirs can be pressed.
   const acting = myTurn && guessing && phase !== 'answer';
-  // this wait of this turn, by name: saying "I know" opens the tiles for it, and the next wait starts with them closed
+  // This wait of this turn, by name: saying "I know" opens the tiles for it, and the next wait starts with them closed.
   const moment = `${board.turns}:${phase}`;
-  // a turn that has to be a guess has nothing else on it, so the tiles are there without being asked for
+  // A turn that must be a guess has nothing else on it, so the tiles are there unasked.
   const choosing = acting && (mine?.mustGuess === true || knowsAt === moment);
   const toAnswer = phase === 'answer' && pending !== null && me !== null && pending.waiting.includes(me);
   const answered = phase === 'answer' && pending !== null && me !== null && pending.answered.includes(me);
   const left = Math.max(0, Math.ceil((Date.parse(board.phaseEndsAt) - now) / 1000));
-  // the game's own clock, the longest it may run: said quietly, so its end is no surprise
+  // The game's own clock, the longest it may run: said quietly, so its end is no surprise.
   const gameLeft = Math.max(0, Math.ceil((Date.parse(board.endsAt) - now) / 1000));
 
   const act = async (body: WhoAmITableMove): Promise<void> => {
@@ -361,7 +335,7 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
     seat: s.seat,
     name: name(s.seat),
     mine: s.seat === me,
-    // the reader's own seat has no card on the board until it is off their forehead: the hidden mark is drawn for it
+    // The reader's own seat has no card on the board until it is off their forehead: the hidden mark is drawn for it.
     card: s.card,
     kind: s.seat === me && !s.card ? kindOf(mine?.category ?? null, t) : null,
     points: s.points,
@@ -372,7 +346,7 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
     onTurn: s.seat === turn,
     answer: phase === 'answer' && pending ? (pending.answered.includes(s.seat) ? 'answered' : pending.waiting.includes(s.seat) ? 'waiting' : null) : null,
   }));
-  // the card the question is about, for those answering it; never the reader's own
+  // The card the question is about, for those answering it; never the reader's own.
   const askerCard = pending && pending.seat !== me ? (board.seats.find((s) => s.seat === pending.seat)?.card ?? null) : null;
   const askerCardSpoken = askerCard
     ? `${t('games.couch.cardOf', { name: asker })}: ${askerCard.word}, ${meaningIn(askerCard.meanings, locale) ?? askerCard.meanings.en}`
@@ -415,8 +389,8 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
     ) : acting ? (
       <ClayButton label={t('games.whoAmI.iKnow')} tone="primary" size="large" disabled={busy} onPress={() => setKnowsAt(moment)} />
     ) : null;
-  // The asker's card is theirs to read only once it is off their forehead: a reader who could see it may say its answer
-  // looks wrong, and the asker, who could not, is not asked to.
+  // Only someone who could read the asker's card may report its answer, so the asker is asked only once their card is
+  // off their forehead.
   const readsCard = !!told && me !== null && (told.seat !== me || mine?.identity != null);
   const reportKey = told ? `${told.seat}:${told.question.id}` : '';
   /** What the card said to the last question, and how each friend's answer went by it: loud while it is decided on, quiet after. */
@@ -440,7 +414,7 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
         }
       />
     ) : null;
-  // with every question asked there is nothing to wait for: the turn is a guess, and the banner says so
+  // With every question asked there is nothing to wait for: the turn is a guess, and the banner says so.
   const pass =
     acting && !mine?.mustGuess ? <ClayButton label={t('games.whoAmI.pass')} variant="outline" disabled={busy} onPress={() => void act({ kind: 'pass' })} /> : null;
 
@@ -515,7 +489,7 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
 
       <Foreheads dialect={dialect} seats={seats} label={t('games.whoAmI.table')} />
 
-      {/* the reader's own card, only once the server has sent it: they have it, or are out of guesses */}
+      {/* The reader's own card, only once the server has sent it: they have it, or are out of guesses. */}
       {mine?.identity ? (
         <View style={styles.mine}>
           <ForeheadCard dialect={dialect} category={mine.category} identity={mine.identity} size={180} />
@@ -534,7 +508,7 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
       ) : null}
       {acting && phase === 'decide' ? deck : null}
 
-      {/* the last question stays on the table while the next turn is chosen, for whoever missed what the card said */}
+      {/* The last question stays on the table while the next turn is chosen, for whoever missed what the card said. */}
       {phase === 'ask' ? verdict(true) : null}
       <ScoringNote answers={board.answers} />
     </View>

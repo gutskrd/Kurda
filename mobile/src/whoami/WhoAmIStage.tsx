@@ -43,37 +43,18 @@ import { heldDim } from '../theme/MotionParts';
 import { turnCard } from '../theme/animate';
 
 /**
- * Who Am I?'s stage on the phone: the parts the room with friends
- * (WhoAmIScreen.tsx) and the game on one phone (WhoAmICouch.tsx) are both
- * drawn from (the website's are in whoami/WhoAmIStage.tsx).
+ * Who Am I?'s stage on the phone: the parts the online room (WhoAmIScreen.tsx) and the game on one phone
+ * (WhoAmICouch.tsx) are drawn from, as the website's whoami/WhoAmIStage.tsx is. Hevalo's silhouette with a card on his
+ * forehead, the suggested questions, the question deck with each card's answer stamped in the dialect's own words, the
+ * guess tiles, the answer keys (each with a mark as well as a colour, so no answer is told by colour alone), the room's
+ * judgement keys, the verdict card, and what folds away.
  *
- * Hevalo's silhouette with a card on his forehead, large for the one the
- * screen is about and small for every seat at the table; the questions worth
- * asking next as cards one tap asks; the deck of Kurdish questions, the
- * suggested ones first, where Ask asks one and the card's answer is stamped
- * on it in the dialect's own words (Erê / Dibe / Na, بەڵێ / ڕەنگە / نەخێر);
- * the paper tiles a player online guesses from once they say they know, a
- * wrong one crossed out; the keys a friend answers a question with, yes,
- * could be and no in a row in the order the dialect reads and not sure as a
- * quieter key under them, each with its mark as well as its colour so no
- * answer is told by colour alone; the room's three keys for who a player said
- * they are (that is it, close, not yet) in the same colours; the card's
- * verdict as a card of its own colour, amber for "could be" with a line that
- * says what that means, and under it the way to say the card's answer looks
- * wrong; and what folds away under a title, how the game scores among it.
- *
- * What a question means is under it wherever a beginner reads it (the
- * suggested cards, the beginner's deck, the question read out on one phone);
- * elsewhere a tap shows it, so a learner further on tries the Kurdish first.
- *
- * Nothing here decides what may be seen. A card is drawn when it is handed in
- * and the hidden mark when it is not, so a screen shows a player their own
- * card only once the rules have taken it off their forehead. Kurdish keeps
- * its own direction everywhere; with Reduce Motion the card and the stamps
- * simply appear.
+ * A question's meaning is shown under it wherever a beginner reads it; elsewhere a tap shows it, so learners further on
+ * try the Kurdish first. Nothing here decides what may be seen: a card is drawn when handed in and the hidden mark when
+ * not. Kurdish keeps its own direction everywhere; under Reduce Motion the card and stamps simply appear.
  */
 
-export const WHO_AM_I_TONE = learnGame('who-am-i').tone;
+const WHO_AM_I_TONE = learnGame('who-am-i').tone;
 
 const CATEGORY_KEY: Record<string, TranslationKey> = {
   animal: 'games.whoAmI.cat.animal',
@@ -84,15 +65,15 @@ const CATEGORY_KEY: Record<string, TranslationKey> = {
   nature: 'games.whoAmI.cat.nature',
 };
 
-/** A card is paper in the light theme and the dark, as the table's cards are: the same card whoever looks at it. */
+/** A card is paper in both themes, as the table's cards are: the same card whoever looks at it. */
 const PAPER = '#fbf6e9';
 const PAPER_EDGE = '#d8ccb0';
 const PAPER_INK = '#2a2a33';
 const PAPER_SOFT = '#5b5b66';
 /**
- * Yes, could be and no as three clear colours that read at a glance and belong together: a fresh green, the app's
- * gold and a warm red, each with the darker edge its key stands on. Green and red carry white (5.0:1 and 5.1:1); gold
- * is too light for white, so it carries the deep brown the app writes on gold (8.6:1), as a yellow sign does.
+ * Yes, could be and no as three colours that read at a glance: green, the app's gold and a warm red, each with a darker
+ * edge. Green and red carry white (5.0:1 and 5.1:1); gold is too light for white, so it carries the deep brown the app
+ * writes on gold (8.6:1).
  */
 const ON_ANSWER = '#ffffff';
 const ON_ANSWER_SOFT = 'rgba(255, 255, 255, 0.88)';
@@ -101,7 +82,7 @@ const ON_GOLD = '#3a2800';
 const ON_GOLD_SOFT = 'rgba(58, 40, 0, 0.82)';
 const ON_GOLD_VEIL = 'rgba(58, 40, 0, 0.1)';
 
-/** What the card can say, as the fill of the key or the card that says it, the edge that key stands on, and the ink written on it. */
+/** What the card can say: the fill of its key or card, the edge the key stands on, and the ink on it. */
 const FILL: Record<WhoAmIAnswer, { face: string; edge: string; ink: string; soft: string; veil: string }> = {
   yes: { face: '#1a7f45', edge: '#11592f', ink: ON_ANSWER, soft: ON_ANSWER_SOFT, veil: ON_ANSWER_VEIL },
   sometimes: { face: '#ffbf1f', edge: '#b98500', ink: ON_GOLD, soft: ON_GOLD_SOFT, veil: ON_GOLD_VEIL },
@@ -109,8 +90,8 @@ const FILL: Record<WhoAmIAnswer, { face: string; edge: string; ink: string; soft
 };
 
 /**
- * The same three as words written on the page itself, the stamps: a step deeper on the light page and a step lighter
- * on the dark one, so each reads on its own ground (at least 6:1 on either), while keeping its hue.
+ * The same three as words on the page (the stamps): a step deeper on the light page and lighter on the dark, so each
+ * reads at least 6:1 on its ground while keeping its hue.
  */
 const WORD_ON_PAGE: Record<'light' | 'dark', Record<WhoAmIAnswer, string>> = {
   light: { yes: '#17723a', sometimes: '#7a5600', no: '#b42318' },
@@ -126,14 +107,14 @@ const WORD_KEY: Record<GameDialect, Record<WhoAmISays, TranslationKey>> = {
 };
 
 /**
- * The two answers in between in the reader's own words, for under the Kurdish. Yes and no stand alone, as they always
- * have here: they are among the first words the course teaches. Could be and not sure are new to most learners.
+ * The two in-between answers in the reader's own words, under the Kurdish. Yes and no are among the first words the
+ * course teaches, so they stand alone.
  */
 const GLOSS_KEY: Partial<Record<WhoAmISays, TranslationKey>> = { sometimes: 'games.whoAmI.sometimes', unsure: 'games.whoAmI.unsure' };
 
 /**
- * An answer in the dialect's own words: what the card said (yes, could be, no), or what a friend said, which may also
- * be not sure. The card answers in the Kurdish being played, whatever the app is written in.
+ * An answer in the dialect's own words: the card's (yes, could be, no) or a friend's, which may also be not sure.
+ * Always in the Kurdish being played, whatever the app language.
  */
 export function answerWord(dialect: GameDialect, answer: WhoAmIAnswer | 'unsure', t: Translate): string {
   return t(WORD_KEY[dialect][answer]);
@@ -157,22 +138,11 @@ export function kindOf(category: string | null, t: Translate): string | null {
   return category !== null && CATEGORY_KEY[category] ? t(CATEGORY_KEY[category]!) : null;
 }
 
-/** Names read as a list the way the reader's language joins them; a comma where the phone cannot say. */
-export function listed(names: readonly string[], locale: string): string {
-  try {
-    const formats = Intl as unknown as { ListFormat?: new (locale: string, options: { type: 'conjunction' }) => { format(items: readonly string[]): string } };
-    if (formats.ListFormat) return new formats.ListFormat(locale, { type: 'conjunction' }).format(names);
-  } catch {
-    // an older engine has no list format: the comma below says it well enough
-  }
-  return names.join(', ');
-}
-
 function kurdish(dialect: GameDialect): { writingDirection: 'rtl' | 'ltr' } {
   return { writingDirection: dialectDirection(dialect).dir };
 }
 
-/** A card as it is read: the word, and what it means. */
+/** A card as read: the word and its meaning. */
 export interface CardFace {
   word: string;
   meanings: Meanings;
@@ -186,9 +156,8 @@ const CARD_LARGE_W = 168;
 const CARD_LARGE_H = 92;
 
 /**
- * How a card is cut for where it is read: on the reader's own screen, small
- * on a deer drawn beside a banner (the mark or the word alone), or large for
- * friends who read it from where they sit.
+ * How a card is cut for where it is read: on the reader's own screen, small on a deer beside a banner (the mark or the
+ * word alone), or large for friends reading from where they sit.
  */
 export type CardCut = 'regular' | 'small' | 'large';
 
@@ -204,15 +173,15 @@ export function ForeheadCard({
   hiddenLabel,
 }: {
   dialect: GameDialect;
-  /** what kind of thing it is, when the card may say (every tile that kind); null when it may not */
+  /** What kind of thing it is, when the card may say; null when it may not. */
   category: string | null;
-  /** the card's face, once it may be read here; null while it stays hidden */
+  /** The card's face, once it may be read here; null while it stays hidden. */
   identity: CardFace | null;
   size?: number;
   cut?: CardCut;
-  /** on the night cloth, where the deer is the evening's colour whatever the theme */
+  /** On the night cloth, where the deer is the evening's colour whatever the theme. */
   night?: boolean;
-  /** what a screen reader calls the hidden card, where it is not the reader's own */
+  /** What a screen reader calls the hidden card, where it is not the reader's own. */
   hiddenLabel?: string;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
@@ -236,7 +205,7 @@ export function ForeheadCard({
   const kind = kindOf(category, t);
   const small = cut === 'small';
   const large = cut === 'large';
-  // a card never narrower than a word needs, however small the one who wears it is drawn; the small cut alone follows the deer
+  // A card is never narrower than a word needs, however small the deer is drawn; only the small cut follows the deer.
   const width = small ? size * 0.62 : large ? Math.max(CARD_LARGE_W, size * FOREHEAD.width) : Math.max(CARD_W, size * FOREHEAD.width);
   const height = small ? size * 0.36 : large ? CARD_LARGE_H : CARD_H;
   return (
@@ -277,8 +246,8 @@ export function ForeheadCard({
 }
 
 /**
- * An answer as a stamp, in the dialect's own words: the card's yes, could be or no in its colour, or what a friend
- * said, not sure among them, which only a friend says and is stamped in the page's quiet ink.
+ * An answer as a stamp in the dialect's words: the card's yes, could be or no in its colour, or a friend's not sure in
+ * the page's quiet ink.
  */
 function Stamp({ dialect, answer, large = false }: { dialect: GameDialect; answer: WhoAmISays; large?: boolean }): React.JSX.Element {
   const { t } = useI18n();
@@ -312,11 +281,11 @@ function Stamp({ dialect, answer, large = false }: { dialect: GameDialect; answe
 export interface TableSeat {
   seat: number;
   name: string;
-  /** the reader's own seat */
+  /** The reader's own seat. */
   mine: boolean;
-  /** the card on this forehead, where the screen may show it; null draws the hidden mark */
+  /** The card on this forehead, where the screen may show it; null draws the hidden mark. */
   card: CardFace | null;
-  /** what kind of thing a hidden card is, when it may say */
+  /** What kind of thing a hidden card is, when it may say. */
   kind: string | null;
   points: number;
   asked: number;
@@ -324,7 +293,7 @@ export interface TableSeat {
   out: boolean;
   left: boolean;
   onTurn: boolean;
-  /** while a question is being answered: whether this seat has answered it or is still to; null when it has no say */
+  /** While a question is being answered: whether this seat has answered or is still to; null when it has no say. */
   answer: 'answered' | 'waiting' | null;
 }
 
@@ -332,10 +301,9 @@ const MINI = 80;
 const MINI_CARD_H = 40;
 
 /**
- * Everyone at the table as a row of small foreheads: the deer with that
- * seat's card, the name under it, the points and the questions asked, a mark
- * for whoever has their card, is out or has left, and gold round the seat on
- * turn. Two to a row for two or four, three for the rest, so six fit a phone.
+ * Everyone at the table as a row of small foreheads, each with name, points and questions asked, a mark for whoever has
+ * their card, is out or has left, and gold round the seat on turn. Two to a row for two or four, three otherwise, so
+ * six fit a phone.
  */
 export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; seats: readonly TableSeat[]; label: string }): React.JSX.Element {
   const { colors, scheme } = useTheme();
@@ -359,7 +327,8 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
               : s.answer === 'waiting'
                 ? t('games.whoAmI.seat.answering')
                 : done;
-        // whose turn it is in the violet of the place you are in; green and red only for a guess that was right or a player out of guesses
+        // Whose turn it is in the violet of where you are; green and red only for a right guess or a player out of
+        // guesses.
         const tagColour = s.left
           ? colors.textSecondary
           : s.onTurn
@@ -447,9 +416,8 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
 // ───────────────────────────────────────────────────────────── the questions and the tiles
 
 /**
- * The questions worth asking next, for a learner who does not know where to
- * begin: each a card of the table's own cloth, its Kurdish large and what it
- * means under it for every reader, and one tap asks it.
+ * The questions worth asking next, for a learner who does not know where to begin: each on the table's cloth, its
+ * Kurdish large with its meaning under it, asked by one tap.
  */
 export function SuggestedQuestions({
   dialect,
@@ -476,7 +444,7 @@ export function SuggestedQuestions({
               onAsk(q.id);
             }}
             accessibilityRole="button"
-            // the meaning is part of what the card says, so someone listening hears it as someone looking reads it
+            // The meaning is part of what the card says, so a listener hears it as a reader sees it.
             accessibilityLabel={`${t('games.whoAmI.ask')}: ${q.ku} (${meaning})`}
             style={styles.suggestEdge}
           >
@@ -499,11 +467,9 @@ export function SuggestedQuestions({
 }
 
 /**
- * A player's own questions as a list: those asked first, each with the card's
- * answer stamped on it, then those still to ask, each with Ask where the
- * reader may. Given the ones worth asking next, it puts those at the top under
- * a label of their own and the rest under another, so a learner's eye lands on
- * where to begin.
+ * A player's questions as a list: those asked first, each with the card's answer stamped on it, then those still to
+ * ask, each with Ask where allowed. `suggested` ones go to the top under their own label, so the eye lands where to
+ * begin.
  */
 export function QuestionDeck({
   dialect,
@@ -516,23 +482,23 @@ export function QuestionDeck({
   onAsk,
 }: {
   dialect: GameDialect;
-  /** the list's heading; none where what holds the list has already said what it is */
+  /** The list's heading; none where its container already says what it is. */
   title?: string;
   questions: readonly WhoAmIQuestion[];
   asked: readonly WhoAmIAsked[];
-  /** the questions worth asking next, put first under a label of their own; those already asked are left where they are */
+  /** The questions worth asking next, put first under their own label; those already asked stay where they are. */
   suggested?: readonly string[];
-  /** what each question means is under it with no tap: the beginner's list */
+  /** Each question's meaning is under it with no tap: the beginner's list. */
   meanings?: boolean;
   busy?: boolean;
-  /** asking one, on the reader's turn to; null where the list is only to be read */
+  /** Asking one, on the reader's turn; null where the list is only to be read. */
   onAsk: ((question: string) => void) | null;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
   const dir = useDirection();
   const [open, setOpen] = useState<string | null>(null);
-  // the card's own word for each question asked: a list kept before there were three answers holds yes or not, and is read so
+  // The card's own word for each question asked; a list kept before there were three answers holds only yes or no.
   const answers = new Map(asked.map((a) => [a.question, askedVerdict(a)]));
   const first = suggested.map((id) => questions.find((q) => q.id === id)).filter((q): q is WhoAmIQuestion => !!q && !answers.has(q.id));
   const rest = [
@@ -597,10 +563,8 @@ export function QuestionDeck({
 }
 
 /**
- * The words a player may be, as paper tiles to pick one from and guess. They
- * are a game with friends online's alone, and are drawn only once the player
- * says they know: a list of choices in sight all along would be a quiz, not
- * the game. On one phone there are none, and who one is is said out loud.
+ * The words a player may be, as paper tiles to guess from, online only and only once the player says they know: a list
+ * in sight all along would make it a quiz. On one phone there are none, and a guess is said aloud.
  */
 export function GuessTiles({
   dialect,
@@ -611,7 +575,7 @@ export function GuessTiles({
 }: {
   dialect: GameDialect;
   tiles: readonly WhoAmITile[];
-  /** the tiles guessed wrongly so far */
+  /** The tiles guessed wrongly so far. */
   crossed: readonly string[];
   busy?: boolean;
   onGuess: (tile: string) => void;
@@ -663,9 +627,8 @@ export function GuessTiles({
 // ───────────────────────────────────────────────────────────── the question on the table
 
 /**
- * A question said in full: its Kurdish, large, and what it means at a tap.
- * `plain` writes the meaning under it from the start, for a room of beginners
- * reading it together: nothing to press, and nothing kept back.
+ * A question in full: its Kurdish large, and its meaning at a tap. `plain` shows the meaning from the start, for a room
+ * of beginners reading together.
  */
 export function QuestionCard({
   dialect,
@@ -677,10 +640,10 @@ export function QuestionCard({
 }: {
   dialect: GameDialect;
   question: WhoAmIQuestion;
-  /** the colours of what it is written on */
+  /** The colours of what it is written on. */
   ink: string;
   soft: string;
-  /** `loud` is for the one screen that holds nothing else: the question to read out to the room */
+  /** `loud` is for the screen that holds nothing else: the question to read out to the room. */
   size?: 'regular' | 'large' | 'loud';
   plain?: boolean;
 }): React.JSX.Element {
@@ -714,10 +677,8 @@ export function QuestionCard({
 }
 
 /**
- * "Could be" as a mark beside its word: a wave, in the weight of the check and
- * the cross on the keys beside it. The icon set has no wave of this meaning,
- * so it is drawn here, on the icons' own 256-unit grid, as the website draws
- * it.
+ * "Could be" as a wave beside its word, in the weight of the keys' check and cross. The icon set has none, so it is
+ * drawn here on the icons' 256-unit grid, as the website draws it.
  */
 function MaybeMark({ size, color }: { size: number; color: string }): React.JSX.Element {
   return (
@@ -741,11 +702,8 @@ function AnswerMark({ answer, size, color }: { answer: WhoAmISays; size: number;
 }
 
 /**
- * One answer as a key a thumb cannot miss, standing on its own edge: its mark,
- * the dialect's word, and for the two answers in between the reader's word for
- * it under that. Yes, could be and no are filled in their colours; not sure is
- * the quiet neutral the app writes the other side's words on, one line across
- * the row's width, since it says only that the friend cannot tell.
+ * One answer as a large key on its own edge: its mark, the dialect's word and, for the in-between answers, the reader's
+ * word under it. Yes, could be and no are filled in their colours; not sure is a quiet neutral line across the row.
  */
 function AnswerKey({
   dialect,
@@ -792,11 +750,9 @@ function AnswerKey({
 }
 
 /**
- * What a friend says to a question about somebody else's card: yes, could be
- * and no in a row, in the dialect's own words and in the order the dialect
- * reads (so in Soranî the yes is on the right), and not sure as a quieter key
- * under them, for whoever cannot tell from the card. A table made for two
- * answers (`answers` 2) offers yes and no alone, as it always did.
+ * A friend's answer to a question about somebody else's card: yes, could be and no in a row in the dialect's reading
+ * order (in Soranî yes is on the right), and not sure as a quieter key under them. A two-answer table (`answers` 2)
+ * offers only yes and no.
  */
 export function AnswerButtons({
   dialect,
@@ -809,7 +765,7 @@ export function AnswerButtons({
   disabled?: boolean;
   onAnswer: (says: WhoAmISays) => void;
 }): React.JSX.Element {
-  // the order the keys stand in, as the rules list them (WHO_AM_I_SAYS): not sure is its own key, below the row
+  // The keys' order, as the rules list them (WHO_AM_I_SAYS); not sure is its own key below the row.
   const row: readonly WhoAmISays[] = answers === 4 ? ['yes', 'sometimes', 'no'] : ['yes', 'no'];
   return (
     <View style={styles.answers}>
@@ -823,17 +779,15 @@ export function AnswerButtons({
   );
 }
 
-/** What a room says to a guess said out loud: that is who they are, it is close (another word for the same thing), or not yet. */
+/** What a room says to a guess said aloud: that is it, close (another word for the same thing), or not yet. */
 export type Judged = 'right' | 'close' | 'wrong';
 
-/** Each judgement in the colours and the mark of the answer it stands nearest to, so the two sets of keys read alike. */
+/** Each judgement in the colours and mark of its nearest answer, so the two sets of keys read alike. */
 const JUDGED_AS: Record<Judged, WhoAmIAnswer> = { right: 'yes', close: 'sometimes', wrong: 'no' };
 
 /**
- * The room's three keys for a guess said out loud, in the reader's own words,
- * since a guess is no question of the game's: that is it, close, not yet. In
- * the colours, the marks and the order of yes, could be and no, one under the
- * other so each whole phrase fits a phone.
+ * The room's three keys for a guess said aloud, in the reader's words since a guess is not a game question. In the
+ * colours, marks and order of yes, could be and no, stacked so each phrase fits a phone.
  */
 export function JudgeButtons({ labels, onJudge }: { labels: Readonly<Record<Judged, string>>; onJudge: (judged: Judged) => void }): React.JSX.Element {
   const dir = useDirection();
@@ -876,8 +830,8 @@ const MARK_KEY: Record<WhoAmITableMark, TranslationKey> = {
 };
 
 /**
- * How it went, by a mark as well as a word: a check for right, a wave for close, a cross for wrong, a question mark for
- * not sure. An answer let run out has no mark, only its words.
+ * How it went, by a mark as well as a word: check right, wave close, cross wrong, question mark not sure. An answer let
+ * run out has no mark.
  */
 const MARKED_AS: Record<Exclude<WhoAmITableMark, 'none'>, WhoAmISays> = { right: 'yes', close: 'sometimes', wrong: 'no', unsure: 'unsure' };
 
@@ -885,22 +839,19 @@ const MARKED_AS: Record<Exclude<WhoAmITableMark, 'none'>, WhoAmISays> = { right:
 export interface VerdictAnswer {
   seat: number;
   name: string;
-  /** what they said; null when their time ran out */
+  /** What they said; null when their time ran out. */
   says: WhoAmISays | null;
-  /** how the card scored it: right, close, wrong, not sure, or none for no answer in time */
+  /** How the card scored it: right, close, wrong, not sure, or none for no answer in time. */
   mark: WhoAmITableMark;
 }
 
-/** A card and a question as the server knows them: by their ids on one phone, by the game and the seat at a table it runs. */
+/** A card and a question as the server knows them: by their ids on one phone, by game and seat at an online table. */
 export type ReportBody = { identity: string; question: string } | { game: string; seat: number; question: string };
 
 /**
- * The way to say a card's answer looks wrong, at the foot of its verdict, for
- * a reader who could see the card: one tap, nothing to type, and a thank-you
- * in its place, which a screen reader hears as well. The server only counts
- * it on the card for the people who keep the cards; nothing a player sends
- * changes what a card says. `done` is for a screen that draws the same
- * verdict again further down, so the thank-you stays a thank-you.
+ * Reporting a card's answer as wrong, at the foot of its verdict, for a reader who could see the card: one tap, then a
+ * thank-you (also announced). The server only flags the card for its editors; nothing a player sends changes it. `done`
+ * is for a verdict drawn again further down, so the thank-you stays.
  */
 function ReportAnswer({ body, ink, done = false, onDone }: { body: ReportBody; ink: string; done?: boolean; onDone?: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -951,14 +902,9 @@ function ReportAnswer({ body, ink, done = false, onDone }: { body: ReportBody; i
 }
 
 /**
- * What the card itself said to a question: a card of the answer's own colour,
- * green for yes, amber for could be and clay for no, with who asked, the
- * question, and how each friend answered by the card (right, close, wrong,
- * not sure, or no answer in time). "Could be" says under it what that means,
- * since it is the one answer a learner may not expect a card to give.
- * `quiet` draws it on the page's own surface, for the last question while the
- * next turn is already under way. `report` puts the way to say the card's
- * answer looks wrong at its foot, where the reader could see the card.
+ * What the card said to a question, on a card of the answer's colour, with who asked, the question and how each friend
+ * did. "Could be" says what it means, since a learner may not expect a card to give it. `quiet` draws it on the page's
+ * surface, for the last question while the next turn is under way; `report` adds the way to report it.
  */
 export function VerdictCard({
   dialect,
@@ -976,12 +922,12 @@ export function VerdictCard({
   question: WhoAmIQuestion;
   verdict: WhoAmIAnswer;
   answers?: readonly VerdictAnswer[];
-  /** a line under the answer: how the friends did, on one phone */
+  /** A line under the answer: how the friends did, on one phone. */
   note?: string;
   quiet?: boolean;
-  /** the question's meaning is under it from the start, as it was when it was read out */
+  /** The question's meaning is under it from the start, as when it was read out. */
   plain?: boolean;
-  /** the card and the question to report, and whether this reader already has */
+  /** The card and question to report, and whether this reader already has. */
   report?: { body: ReportBody; done?: boolean; onDone?: () => void } | null;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -1034,9 +980,8 @@ export function VerdictCard({
 // ───────────────────────────────────────────────────────────── what folds away
 
 /**
- * A part of the screen folded away under its title: there for whoever asks,
- * out of the way of the game. `bare` lays what is inside straight on the
- * page, for a list whose rows have fills of their own.
+ * A part of the screen folded under its title, out of the game's way. `bare` lays its contents straight on the page,
+ * for a list whose rows have fills of their own.
  */
 export function Fold({
   title,
@@ -1048,7 +993,7 @@ export function Fold({
   title: string;
   icon?: IconName;
   bare?: boolean;
-  /** open from the start, where what is inside is the next thing to reach for */
+  /** Open from the start, where its contents are the next thing to reach for. */
   startOpen?: boolean;
   children: React.ReactNode;
 }): React.JSX.Element {
@@ -1077,11 +1022,9 @@ export function Fold({
 }
 
 /**
- * How the game scores, folded away under its title. `guesses` is how many
- * wrong guesses put a player out where the note stands: one more in one room,
- * with nothing to pick from, than at a table online. `answers` is how many
- * the friends are offered: only a table of four says how "could be" and "not
- * sure" score.
+ * How the game scores, folded under its title. `guesses` is how many wrong guesses put a player out (one more in one
+ * room than online); `answers` is how many the friends are offered, and only a table of four explains "could be" and
+ * "not sure".
  */
 export function ScoringNote({ guesses = WHO_AM_I_GUESSES, answers = 4 }: { guesses?: number; answers?: WhoAmIAnswerCount }): React.JSX.Element {
   const { colors } = useTheme();
@@ -1117,7 +1060,7 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     backgroundColor: PAPER,
   },
-  // the same card on a deer drawn small: no room round its mark, and a lighter edge
+  // The same card on a deer drawn small: no room round its mark, and a lighter edge.
   cardSmall: { position: 'absolute', alignItems: 'center', justifyContent: 'center', borderRadius: radii.xs, borderWidth: 2, backgroundColor: PAPER },
   cardMark: { fontSize: 28, fontWeight: typography.weights.bold, color: PAPER_INK },
   cardMarkSmall: { fontSize: 16, lineHeight: 20, fontWeight: typography.weights.bold, color: PAPER_INK },
@@ -1128,11 +1071,11 @@ const styles = StyleSheet.create({
   cardKindLarge: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, color: PAPER_SOFT },
 
   table: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
-  // the gold round a seat is its turn, a state and not a frame: every other seat's edge is clear
+  // Gold round a seat marks its turn, a state not a frame; every other seat's edge is clear.
   seat: { width: '31%', alignItems: 'center', gap: 2, paddingVertical: spacing.xs, paddingHorizontal: 2, borderWidth: 2, borderRadius: radii.lg },
   seatWide: { width: '47%', alignItems: 'center', gap: 2, paddingVertical: spacing.xs, paddingHorizontal: 2, borderWidth: 2, borderRadius: radii.lg },
   mini: { alignSelf: 'stretch', height: MINI, alignItems: 'center' },
-  // as wide as its seat on a phone's three to a row, and no wider than a card held to a forehead where the seats are wide
+  // As wide as its seat at three to a row, and no wider than a forehead card where the seats are wide.
   miniCard: {
     position: 'absolute',
     alignSelf: 'center',
@@ -1160,9 +1103,9 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   muted: { fontSize: typography.sizes.sm },
-  // what a group of questions is, said small over it
+  // What a group of questions is, said small over it.
   group: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
-  // a suggested question is a card of the table's cloth standing on its own edge, and goes down onto it under the thumb
+  // A suggested question stands on its own edge and presses down onto it under the thumb.
   suggestEdge: { borderRadius: radii.lg, backgroundColor: TABLE.nightDeep, paddingBottom: 4 },
   suggestFace: {
     minHeight: 64,
@@ -1200,7 +1143,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tiles: { flexWrap: 'wrap', gap: spacing.sm },
-  // a tile is a paper card standing on its own edge, and goes down onto it when it is chosen
+  // A tile is a paper card on its own edge, and presses down onto it when chosen.
   tileEdge: { minWidth: 120, flexGrow: 1, borderRadius: radii.md, backgroundColor: PAPER_EDGE, paddingBottom: 4 },
   tile: { minHeight: 56, borderWidth: 3, borderRadius: radii.md, padding: spacing.sm, alignItems: 'center', justifyContent: 'center', gap: 2, backgroundColor: PAPER },
   tileWord: { fontSize: 18, fontWeight: typography.weights.bold, color: PAPER_INK },
@@ -1215,7 +1158,7 @@ const styles = StyleSheet.create({
   saidHint: { fontSize: typography.sizes.xs, textAlign: 'center' },
   answers: { alignSelf: 'stretch', gap: spacing.sm },
   answerRow: { alignSelf: 'stretch', gap: spacing.sm },
-  // in a row the keys share its width and stand as tall as the tallest, so the one with a word under it is no taller
+  // In a row the keys share its width and stand as tall as the tallest.
   answerEdge: { flex: 1, minWidth: 0, borderRadius: radii.lg, paddingBottom: 5 },
   answerFace: {
     flexGrow: 1,
@@ -1229,7 +1172,7 @@ const styles = StyleSheet.create({
   },
   answerText: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   answerGloss: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  // not sure: one line across the row's width, its mark, word and gloss side by side, and lower than the keys above it
+  // Not sure: one line across the row, mark, word and gloss side by side, lower than the keys above.
   unsureEdge: { alignSelf: 'stretch', borderRadius: radii.lg, paddingBottom: 4 },
   unsureFace: {
     minHeight: 52,
@@ -1243,7 +1186,7 @@ const styles = StyleSheet.create({
   },
   unsureText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   judges: { alignSelf: 'stretch', gap: spacing.sm },
-  // one under the other each is as tall as its own face: sharing out a height that is not there would fold them flat
+  // Stacked, each is as tall as its own face; sharing out a height that is not there would fold them flat.
   judgeEdge: { borderRadius: radii.lg, paddingBottom: 5 },
   judgeFace: { minHeight: 64, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radii.lg },
   answerPhrase: { flexShrink: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
@@ -1254,9 +1197,9 @@ const styles = StyleSheet.create({
   verdictLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase', textAlign: 'center' },
   verdictWord: { fontSize: 44, lineHeight: 54, fontWeight: typography.weights.bold, textAlign: 'center' },
   verdictNote: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  // what "could be" means, straight under the card's word: the one answer a learner may not expect a card to give
+  // What "could be" means, straight under the card's word.
   verdictEither: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
-  // the way to say the card looks wrong: a quiet line at the foot of the verdict, in the card's own ink
+  // Reporting the card: a quiet line at the foot of the verdict, in the card's ink.
   report: { alignSelf: 'stretch', alignItems: 'center', gap: 2 },
   reportButton: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: spacing.md, borderRadius: radii.xl },
   reportText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
@@ -1269,7 +1212,7 @@ const styles = StyleSheet.create({
   verdictMarkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 
   fold: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
-  // laid bare, only the title is a surface: what opens under it sits on the page like the rows round it
+  // Laid bare, only the title is a surface; what opens under it sits on the page like the rows round it.
   foldBare: { gap: spacing.sm },
   foldHeadBare: { borderRadius: radii.lg, paddingHorizontal: spacing.md },
   foldHead: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', gap: spacing.sm },
