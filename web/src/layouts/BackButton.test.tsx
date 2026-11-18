@@ -11,7 +11,7 @@ import { OWNS } from './navLinks';
 import { forgetTrail, useTrail } from './trail';
 
 afterEach(() => {
-  // the window's history and what was noted of it are one for the whole file: each test starts on a page opened cold
+  // History and the trail are shared by the whole file, so each test starts on a page opened cold.
   forgetTrail();
   window.history.replaceState(null, '', '/');
 });
@@ -50,7 +50,7 @@ function Shell(): React.JSX.Element {
   return <Outlet />;
 }
 
-/** A corner of the site in the browser's own history: Learn, a course's page with the way back, a lesson, and the alphabet. */
+/** A history of Learn, a course page with its back button, a lesson, and the alphabet. */
 function visit(at: string) {
   window.history.replaceState(null, '', at);
   return render(
