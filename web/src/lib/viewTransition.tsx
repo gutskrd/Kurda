@@ -4,96 +4,30 @@ import { NavigationType, Router, UNSAFE_createBrowserHistory as createBrowserHis
 import { playsMotion } from './motion';
 
 /**
- * How one page becomes the next: carried, not cut.
+ * Page changes as view transitions, where a pressed card's picture grows into the head of the page it opens.
  *
- * A link followed used to be a hard cut: one page was there, then another
- * was, and the reader found their place again. Here the browser keeps a
- * picture of the page being left while the next one is drawn, and fades the
- * one into the other (its view transitions; the movements themselves are in
- * styles/motion.css, on the same tokens as everything else). A card pressed
- * on the way does more than fade: its picture travels to the matching head of
- * the page it opens and becomes it, and on the way back the head shrinks to
- * the card it came from.
+ * `CarriedRouter` is the library's BrowserRouter written out so that every change of page (link, redirect, Back,
+ * Forward) runs inside a view transition; the library offers that only to its data routers. It uses the library's
+ * `UNSAFE_createBrowserHistory`, so an upgrade that moves it fails the build here. Nothing is carried without browser
+ * support, under reduced motion, or when only the query or hash changes.
  *
- * All of it is an extra. Where the browser has no view transitions, or the
- * reader asked their device for less motion, nothing here runs and a page
- * changes exactly as it always did (`carriesPages`).
- *
- * `CarriedRouter` is the app's router. The router library draws a new page
- * the moment the address changes, and only its data routers can be told to
- * wait for a transition, one link at a time; the app's routes are components,
- * where that request is quietly dropped. So this is the library's own
- * BrowserRouter, written out, with one difference: a change of page is handed
- * to the browser as a transition, and drawn inside it. That covers every way
- * of getting to a page at once — a link, a redirect, the browser's own Back
- * and Forward — with no link having to ask. It is built on the library's own
- * browser history, the very one BrowserRouter uses, which the library exports
- * under a name that warns it may move between versions: if it does, this file
- * stops compiling, which is the right way to find out.
- *
- * Only another page is carried (`isAnotherPage`): a filter, a tab or a
- * conversation chosen changes what follows the `?`, and the reader has not
- * gone anywhere, as layouts/usePageTop.ts also has it.
- *
- * To make the next card grow into its page, name the journey once at each
- * end, with the same words:
- *
- *   on the card   <img ref={useGrowsFrom(`recipe:${id}`, { within: '.recipe-card' })} />
- *   on the page   <img ref={useGrowsInto(`recipe:${id}`)} />
- *
- * `within` is the card around the picture, whose links start the journey;
- * without it the element is its own card. The page's line goes at the top of
- * the page, above anything the page waits for: calling it is how the page
- * says that the head is coming, which is what a card's picture is held for.
- * A picture fills the box as it travels from the one size to the other, so
- * the two ends should show the same drawing. A whole card that becomes a page
- * says `shape: 'card'` at both ends instead: its words are not scaled, and
- * the box opens from the card's size to the page's. Nothing else is needed,
- * and nothing has to be undone: the way back is found from the same two
- * lines.
- *
- * The browser pairs the two ends by a name both wear, and gives up on the
- * whole transition if two things on one page wear the same name. So nothing
- * wears one at rest. The card pressed takes the name as the page is left, the
- * head takes it as the next page is drawn, and both drop it when the picture
- * has landed. A story listed on three shelves is therefore no trouble: only
- * the one that was pressed is named.
- *
- * The next page has `HOLD_MS` to show the head it has promised. A page still
- * waiting for its data after that is shown as it is, and the change is the
- * plain fade: the picture is an addition to getting there, never a wait for
- * it. A page that promises no such head is not waited for at all. Going back
- * works the same way round, with two more conditions: the card has to be on
- * the page that is returned to, and on the screen. A list that has changed,
- * or is somewhere else by now, gets the plain fade as well. A list that is
- * drawn in two goes, its cards moving when the second arrives, gives null for
- * the journey until it has its final shape (pages/Games.tsx): a head goes
- * back to where its card will stay, and is held for that.
- *
- * Back and Forward land where the reader was. The browser puts the scroll
- * back by itself as soon as the address changes, which is before the page it
- * belongs to has been drawn here, so inside a transition the place is kept
- * and put back by this file instead (`left`), once the page is there — and
- * if the page comes back shorter than it was, part of it still being asked
- * for, it is waited for within the same `HOLD_MS` and put back when it is
- * long enough. A shelf scrolled sideways is put back too, for the card a
- * head is returning to. A page whose place is not known — one from before
- * the tab was loaded again — is not carried: it changes at once, and the
- * browser restores it as it always has. Neither is a Back the reader made
- * by swiping the page aside on a phone: the browser has moved the page under
- * the finger by then, and a second movement would play the change twice.
+ * Name a journey once at each end with the same words: `useGrowsFrom(name, { within: '.card' })` on the card's picture
+ * and `useGrowsInto(name)` at the top of the page, above anything it waits for; `shape: 'card'` at both ends grows a
+ * whole card into the page. The browser drops a transition when two elements share a name, so names are worn only
+ * during a change. The next page has `HOLD_MS` to draw its head before the plain fade is used. Back and Forward restore
+ * the scroll here, once the page is drawn, and a swipe-back the browser has already animated is not carried again.
  */
 
-/** How long the page being left is held still for the next one, at most; after that the next page is shown as it is. */
+/** The longest the old page is held for the next one; after that the next page is shown as it is. */
 export const HOLD_MS = 400;
 
-/** What travels: a picture, the same drawing at both ends, or a card that becomes a longer page. */
+/** A picture keeps the same drawing at both ends; a card opens into a longer page. */
 export type CarriedShape = 'picture' | 'card';
 
-/** The name each shape travels under; styles/motion.css draws the two by these. */
+/** The transition name of each shape, used by styles/motion.css. */
 const WORN: Record<CarriedShape, string> = { picture: 'carried-picture', card: 'carried-card' };
 
-/** On the root element for as long as a page is changing: the bars take their own names for exactly that long (styles/motion.css). */
+/** On the root element while a page is changing, so the bars take their own transition names (styles/motion.css). */
 const CHANGING = 'is-changing-page';
 
 type BrowserHistory = ReturnType<typeof createBrowserHistory>;
@@ -108,7 +42,7 @@ interface Box {
   bottom: number;
 }
 
-/** A card pressed a moment ago: what it carries, and the page its link leads to. */
+/** A card just pressed: its journey and the page its link leads to. */
 interface Pressed {
   journey: string;
   shape: CarriedShape;
@@ -122,11 +56,7 @@ interface Scrolled {
   top: number;
 }
 
-/**
- * Where a journey started: the page its card is on, the page it opened,
- * where on the screen the card was, and how far each shelf around it had
- * been scrolled, the nearest first.
- */
+/** Where a journey started: the card's page and screen box, the page it opened, and the scroll of each shelf around it, nearest first. */
 interface Home {
   path: string;
   to: string;
@@ -138,70 +68,61 @@ interface Home {
 interface Plan {
   journey: string;
   shape: CarriedShape;
-  /** what wears the name on the page being left */
+  /** The element wearing the name on the page being left. */
   from: HTMLElement;
-  /** which end the next page has to show for the picture to land */
+  /** Which end the next page must show for the picture to land. */
   end: 'head' | 'card';
-  /** where the card was when it was pressed, for the way back to it; only that page is held for the card */
+  /** Where the card was when pressed, for the way back; only that page is held for the card. */
   home: Home | null;
 }
 
 /** A change of page in progress. */
 interface Flight {
-  /** the key of the page it is waiting to see drawn, and that page's path */
+  /** The key of the page it is waiting to see drawn, and that page's path. */
   awaits: string;
   path: string;
-  /**
-   * True from the moment the browser is asked until the next page is handed
-   * to it: another change of address in that time is part of this one, and
-   * is drawn after it, in the order the addresses changed.
-   */
+  /** True from asking the browser until the next page is handed over; address changes meanwhile join this change, in order. */
   open: boolean;
-  /** the changes of address it has yet to draw, until the browser calls for the next page; null once they are drawn */
+  /** Address changes not yet drawn; null once drawn. */
   waiting: Update[] | null;
-  /** where to put the scroll once the page is there (Back and Forward), or undefined to leave it to the page */
+  /** The scroll to restore once the page is drawn (Back and Forward), or undefined to leave it to the page. */
   top: number | undefined;
-  /** tells it the page it waits for has been drawn */
+  /** Resolves the wait for the page being drawn. */
   drawn: (() => void) | null;
-  /** tells it something that could be the other end has just been drawn */
+  /** Called when something that could be the other end has been drawn. */
   arrived: (() => void) | null;
-  /** stops it waiting for the other end */
+  /** Stops waiting for the other end. */
   dropped: (() => void) | null;
-  /** everything given a name for it, to take the names off again */
+  /** Every element named for this change, so the names can come off again. */
   worn: HTMLElement[];
 }
 
-/** The pictures of cards on the page now, by journey, and the heads of pages. */
+/** Card pictures and page heads currently drawn, by journey. */
 const cards = new Map<string, Set<HTMLElement>>();
 const heads = new Map<string, Set<HTMLElement>>();
 const shapes = new WeakMap<HTMLElement, CarriedShape>();
-/** The heads the page on the screen says it has, drawn yet or not: how many parts of it say so, by journey. */
+/** How many parts of the current page promise a head for each journey, drawn yet or not. */
 const promised = new Map<string, number>();
-/** Where each journey made in this tab started, for the way back. */
+/** Where each journey in this tab started, for the way back. */
 const homes = new Map<string, Home>();
-/** How far down each page was when it was left, by its entry in the browser's history. */
+/** The scroll position of each page when it was left, by history key. */
 const left = new Map<string, number>();
 
 let pressed: Pressed | null = null;
 let flight: Flight | null = null;
 /** The key of the page drawn last. */
 let lastDrawn: string | null = null;
-/**
- * Whether the browser itself has just moved the page across for the Back or
- * Forward now arriving: a swipe from the edge of a phone's screen, which
- * slides the page under the finger. The page has been carried already, by
- * the hand, and carrying it again would play the change twice.
- */
+/** Set when the browser animated this Back or Forward itself (an edge swipe); carrying it again would play the change twice. */
 let swiped = false;
 
-/** Keeps a map to its newest entries: one tab can open a great many pages. */
+/** Caps a map at its newest entries, since one tab can open many pages. */
 function keep<V>(map: Map<string, V>, key: string, value: V, most = 200): void {
   map.delete(key);
   map.set(key, value);
   if (map.size > most) map.delete(map.keys().next().value as string);
 }
 
-/** Everything remembered is dropped: for the tests, where one file is many visits. */
+/** Clears everything remembered, for tests. */
 export function forgetCarried(): void {
   settle();
   cards.clear();
@@ -214,33 +135,23 @@ export function forgetCarried(): void {
   swiped = false;
 }
 
-/** Whether a change of page is carried here: the browser can do it, and the reader has not asked for less motion. */
+/** Whether page changes are carried: the browser supports view transitions and the reader has not asked for less motion. */
 export function carriesPages(): boolean {
   return typeof document !== 'undefined' && typeof document.startViewTransition === 'function' && playsMotion();
 }
 
-/** An address as the router reads it: `/app/` is `/app`. */
+/** A path as the router matches it, without a trailing slash. */
 const trimmed = (pathname: string): string => (pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname);
 
-/**
- * Whether one address is another page than the other. What follows the `?`
- * or the `#` is the same page narrowed or scrolled: a search typed a letter
- * at a time rewrites the address on every one, and must not fade the page
- * each time.
- */
+/** Whether two addresses are different pages; a change of query or hash (a search typed letter by letter) is not. */
 export function isAnotherPage(from: Pick<Location, 'pathname'>, to: Pick<Location, 'pathname'>): boolean {
   return trimmed(from.pathname) !== trimmed(to.pathname);
 }
 
-/** Whether a box cuts off what overflows it ('' is what a browser without layout answers, and cuts nothing). */
+/** Whether an overflow value clips; '' comes from a browser without layout and clips nothing. */
 const clips = (overflow: string): boolean => overflow !== '' && overflow !== 'visible';
 
-/**
- * The part of an element that is on the screen, or null when none of it is:
- * it is off the window, or scrolled out of a shelf that scrolls sideways, or
- * not drawn at all. A picture is only ever sent somewhere it can be seen
- * arriving.
- */
+/** The visible part of an element, or null when it is off the window, scrolled out of a shelf, or not drawn. */
 function seen(el: HTMLElement): Box | null {
   if (!el.isConnected) return null;
   const own = el.getBoundingClientRect();
@@ -262,7 +173,7 @@ function seen(el: HTMLElement): Box | null {
   return box.right > box.left && box.bottom > box.top ? box : null;
 }
 
-/** The largest of them on the screen: a page that shows its picture twice lands the card on the bigger one. */
+/** The largest visible element of a set, so a page showing a picture twice lands on the bigger one. */
 function biggest(among: Set<HTMLElement> | undefined): HTMLElement | null {
   let best: HTMLElement | null = null;
   let most = 0;
@@ -277,7 +188,7 @@ function biggest(among: Set<HTMLElement> | undefined): HTMLElement | null {
   return best;
 }
 
-/** The boxes around an element that scroll by themselves inside the page (a shelf of cards scrolled sideways), the nearest first. */
+/** The ancestors that scroll inside the page, nearest first. */
 function shelvesOf(el: HTMLElement): HTMLElement[] {
   const found: HTMLElement[] = [];
   for (let up = el.parentElement; up && up !== document.body && up !== document.documentElement; up = up.parentElement) {
@@ -289,13 +200,8 @@ function shelvesOf(el: HTMLElement): HTMLElement[] {
 }
 
 /**
- * The card a head goes back to: the one of them where the pressed card was.
- *
- * The same story can stand on several shelves, and the one at the height the
- * pressed card was at is the one that was pressed. A page drawn again draws
- * its shelves from their start, so the shelves round that card are first put
- * back where they had been scrolled to. After that the card is either on the
- * screen, and is the answer, or it is not, and there is none.
+ * The card a head returns to: among cards for the same journey, the one at the pressed card's height. A redrawn page
+ * starts its shelves at zero, so their scroll is restored first; if the card is then off screen, there is none.
  */
 function cardAt(among: Set<HTMLElement> | undefined, home: Home | null, redrawn = true): HTMLElement | null {
   let best: HTMLElement | null = null;
@@ -320,13 +226,13 @@ function cardAt(among: Set<HTMLElement> | undefined, home: Home | null, redrawn 
   return seen(best) ? best : null;
 }
 
-/** Puts an end of a journey on the books while it is drawn; gives back the way to take it off. */
+/** Registers an end of a journey while it is drawn; returns the cleanup. */
 function enrol(book: Map<string, Set<HTMLElement>>, journey: string, el: HTMLElement, shape: CarriedShape): () => void {
   const listed = book.get(journey) ?? new Set<HTMLElement>();
   book.set(journey, listed);
   listed.add(el);
   shapes.set(el, shape);
-  // a change of page may be waiting for exactly this
+  // A change of page may be waiting for exactly this.
   flight?.arrived?.();
   return () => {
     listed.delete(el);
@@ -334,32 +240,24 @@ function enrol(book: Map<string, Set<HTMLElement>>, journey: string, el: HTMLEle
   };
 }
 
-/**
- * A press on a card: remembered if it was a plain press on a link of the
- * card's, for the change of page that link starts and no other. A press that
- * opens another tab, or a button that goes nowhere, carries nothing.
- */
+/** Remembers a plain press on one of the card's links, for the page change that link starts; new-tab presses carry nothing. */
 function press(e: MouseEvent, host: HTMLElement, card: HTMLElement, journey: string, shape: CarriedShape): void {
   if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   const link = e.target instanceof Element ? e.target.closest<HTMLAnchorElement>('a[href]') : null;
-  // the link is in the card, or the card is in the link: a cover inside the link that is the whole card
+  // The link is inside the card, or the card is inside the link (a cover that is the whole card).
   if (!link || !(host.contains(link) || link.contains(host))) return;
   if (link.target && link.target !== '_self') return;
   const mine: Pressed = { journey, shape, card, to: trimmed(link.pathname) };
   pressed = mine;
-  // the link changes the address before this press is over; whatever is still here after it led nowhere
+  // The link has changed the address by now; a press still remembered led nowhere.
   window.setTimeout(() => {
     if (pressed === mine) pressed = null;
   }, 0);
 }
 
 /**
- * For the picture on a card that grows into a page: give the result as its
- * `ref`. `journey` is the same words the page's head is given
- * (`useGrowsInto`). `within` is a selector for the card around the picture,
- * whose links start the journey; left out, the element is its own card. A
- * component that is a card in one place and something else in another gives
- * null where it is not one.
+ * A ref for the picture on a card that grows into a page; `journey` matches the page's `useGrowsInto`. `within` selects
+ * the card whose links start the journey (default: the element itself). Pass null where the component is not a card.
  */
 export function useGrowsFrom(
   journey: string | null,
@@ -369,7 +267,7 @@ export function useGrowsFrom(
     (el: HTMLElement | null) => {
       if (!el || journey === null) return undefined;
       const host = (within ? el.closest<HTMLElement>(within) : null) ?? el;
-      // heard on the way down, so the press is known before the link it lands on changes the address
+      // Capture phase, so the press is known before the link changes the address.
       const onClick = (e: MouseEvent): void => press(e, host, el, journey, shape);
       host.addEventListener('click', onClick, true);
       const strike = enrol(cards, journey, el, shape);
@@ -383,18 +281,11 @@ export function useGrowsFrom(
 }
 
 /**
- * For the head of a page that a card grows into: give the result as its
- * `ref`, with the card's own `journey` and `shape`.
+ * A ref for the head of a page that a card grows into, with the card's `journey` and `shape`.
  *
- * Calling it is a promise as well. A page says here that it has such a head
- * from the moment it is on the screen, which may be before the head is — a
- * story's cover waits for the story. A page that has made the promise is the
- * only one a card's picture is held for; a link in a card that leads to any
- * other page ("sign in to play", a game whose page has no cover) changes the
- * page at once. So the call belongs at the top of the page, above whatever
- * the page still has to wait for, and its result goes down to the head. A
- * component that is a page's head in one place and something else in another
- * gives null where it is not one, and promises nothing there.
+ * Calling it also promises the head from the moment the page mounts, before the head itself may be drawn, and only a
+ * page with that promise is waited for. So call it at the top of the page, above anything the page waits for, and pass
+ * the ref down. Pass null where the component is not a page head.
  */
 export function useGrowsInto(
   journey: string | null,
@@ -412,13 +303,13 @@ export function useGrowsInto(
   return useCallback((el: HTMLElement | null) => (el && journey !== null ? enrol(heads, journey, el, shape) : undefined), [journey, shape]);
 }
 
-/** Gives an element the name its shape travels under, for this change of page. */
+/** Gives an element its shape's transition name for this change. */
 function wear(f: Flight, el: HTMLElement, shape: CarriedShape): void {
   el.style.viewTransitionName = WORN[shape];
   f.worn.push(el);
 }
 
-/** A change of page is over, or overtaken: every name it gave comes off, so nothing wears one at rest. */
+/** Ends or abandons a change of page, taking off every name it gave. */
 function settle(f: Flight | null = flight): void {
   if (!f) return;
   for (const el of f.worn) el.style.viewTransitionName = '';
@@ -430,15 +321,9 @@ function settle(f: Flight | null = flight): void {
 }
 
 /**
- * What this change of page carries, if anything.
- *
- * The card just pressed, when the page being opened is the one its link leads
- * to. Otherwise the head of the page being left, when its card is known to be
- * somewhere (the journey was made in this tab) or the reader is going Back:
- * it lands only if the page arrived at turns out to have the card, so a link
- * that leads home by way of an old address is as good as Back. Or, on
- * Forward, the card that was pressed the first time, when the same page is
- * being opened again.
+ * What this change of page carries, if anything: the card just pressed, when the next page is the one its link opens;
+ * else the head of the page being left, when its card's page is known or this is Back, landing only if the next page
+ * has the card; else, on Forward, the card pressed the first time.
  */
 function planFor(from: Location, to: Location, popped: boolean, mine: Pressed | null): Plan | null {
   const here = trimmed(from.pathname);
@@ -457,20 +342,20 @@ function planFor(from: Location, to: Location, popped: boolean, mine: Pressed | 
   if (!popped) return null;
   for (const [journey, home] of homes) {
     if (home.path !== here || home.to !== next) continue;
-    // the page is as the reader has it now, shelves included: the card goes from where it stands
+    // The page is as the reader has it now, shelves included, so the card starts from where it is.
     const card = cardAt(cards.get(journey), home, false);
     if (card) return { journey, shape: shapes.get(card) ?? 'picture', from: card, end: 'head', home: null };
   }
   return null;
 }
 
-/** Told by the router as each page is drawn. */
+/** Called by the router as each page is drawn. */
 function drawn(location: Location): void {
   lastDrawn = location.key;
   if (flight && flight.awaits === location.key) flight.drawn?.();
 }
 
-/** Waits for the page a change is going to, until `until`; false when it was not drawn in time. */
+/** Waits until the awaited page is drawn or `until` passes; false when it was not drawn in time. */
 function drawnBy(f: Flight, until: number): Promise<boolean> {
   if (lastDrawn === f.awaits) return Promise.resolve(true);
   return new Promise((resolve) => {
@@ -486,18 +371,14 @@ function drawnBy(f: Flight, until: number): Promise<boolean> {
   });
 }
 
-/** A wait of `ms`. */
 const pause = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
 
-/** How often a page that is still growing is looked at again, while the last one is held for it. */
+/** How often a growing page is checked again while the old one is held. */
 const LOOK_MS = 30;
 
 /**
- * Back and Forward: the page is put where the reader left it. A list is not
- * always its full length the moment it is drawn — part of it is still being
- * asked for — and a page too short to be scrolled that far cannot be put
- * there yet. So it is tried again as the page grows, until it is there or
- * `until` has come, and then it is as near as the page allows.
+ * Restores the scroll for Back and Forward. A list may still be loading and too short to scroll that far, so this
+ * retries as the page grows until `until`, then settles as near as the page allows.
  */
 async function placedBy(f: Flight, until: number): Promise<void> {
   const key = f.awaits;
@@ -509,19 +390,15 @@ async function placedBy(f: Flight, until: number): Promise<void> {
 }
 
 /**
- * The other end of what is carried, on the page just drawn: the head, or the
- * card it came from. A page that has drawn it answers at once: with it, or,
- * when it is drawn somewhere off the screen, with nothing. A page that has
- * not drawn it yet is waited for, until `until`, only where it is known to
- * be coming: a head the page has promised (`useGrowsInto`), a card on the
- * page it was pressed on. Any other page answers now, with nothing.
+ * The other end on the page just drawn: the head, or the card it came from. Off screen counts as none. If it is not
+ * drawn yet, it is waited for until `until` only when it is expected: a promised head, or a card on its own page.
  */
 function landing(f: Flight, plan: Plan, until: number): Promise<HTMLElement | null> {
   const book = plan.end === 'head' ? heads : cards;
   const isDrawn = (): boolean => (book.get(plan.journey)?.size ?? 0) > 0;
   const isComing = (): boolean => (plan.end === 'head' ? promised.has(plan.journey) : plan.home?.path === f.path);
   const found = (): HTMLElement | null => {
-    // a card is looked for where the reader left the list, and what is drawn with it may have made the list longer
+    // The card is looked for at the restored scroll, and what was drawn with it may have lengthened the list.
     if (f.top !== undefined) window.scrollTo({ top: f.top, behavior: 'instant' });
     return plan.end === 'head' ? biggest(heads.get(plan.journey)) : cardAt(cards.get(plan.journey), plan.home);
   };
@@ -542,19 +419,17 @@ function landing(f: Flight, plan: Plan, until: number): Promise<HTMLElement | nu
   });
 }
 
-/** How the router draws: one change of address, and whatever the page just drawn is waiting to do. */
+/** How the router draws a change of address. */
 interface Draws {
-  /** hands a change of address to the page, to be drawn as soon as its code is here */
+  /** Hands an address change to the page, drawn once its code has loaded. */
   apply: (update: Update) => void;
-  /** lets the page that was just drawn do at once what it does on being drawn — send the reader on, ask for its data */
+  /** Lets the page just drawn run its effects at once (redirects, data requests). */
   finish: () => void;
 }
 
 /**
- * The next page, drawn while the browser holds the picture of the last one:
- * what the browser's transition waits on. The addresses are applied before
- * anything else, in the order they changed, so a page is never left undrawn
- * by a transition that went wrong.
+ * Draws the next page while the browser holds a picture of the last; the transition waits on this. Addresses apply
+ * first, in order, so a failed transition never leaves a page undrawn.
  */
 async function nextPage(f: Flight, plan: Plan | null, draws: Draws, skip: () => void): Promise<void> {
   const until = Date.now() + HOLD_MS;
@@ -564,12 +439,11 @@ async function nextPage(f: Flight, plan: Plan | null, draws: Draws, skip: () => 
     for (;;) {
       const key = f.awaits;
       if (!(await drawnBy(f, until))) {
-        // its code is slow today: the old page is let go, and the new one cuts in when it is ready, as it always did
+        // The page's code is slow: the old page is let go and the new one cuts in when it is ready.
         skip();
         return;
       }
-      // a page that only sends the reader on (an old address) is not the page: it is let do so now, and the page it
-      // leads to is waited for in its place
+      // A page that only redirects is not the destination: let it redirect now and wait for where it leads.
       draws.finish();
       if (f.awaits !== key) continue;
       await placedBy(f, until);
@@ -577,7 +451,7 @@ async function nextPage(f: Flight, plan: Plan | null, draws: Draws, skip: () => 
       if (!plan) return;
       const lands = await landing(f, plan, until);
       if (f.awaits !== key) continue;
-      // where the page the card was on is still drawn, the card must not wear the name beside the head
+      // Where the card's page is still drawn, the card must not share the head's name.
       plan.from.style.viewTransitionName = '';
       if (lands) wear(f, lands, plan.shape);
       return;
@@ -587,12 +461,8 @@ async function nextPage(f: Flight, plan: Plan | null, draws: Draws, skip: () => 
   }
 }
 
-/**
- * One change of address, drawn. Carried when it is another page and the
- * browser and the reader allow it; otherwise applied at once, exactly as the
- * library's own router does.
- */
-export function changePage(from: Location, update: Update, draws: Draws): void {
+/** Draws one change of address: carried when it is another page and the browser and reader allow it, otherwise applied at once. */
+function changePage(from: Location, update: Update, draws: Draws): void {
   const to = update.location;
   const popped = update.action === NavigationType.Pop;
   const mine = pressed;
@@ -601,21 +471,20 @@ export function changePage(from: Location, update: Update, draws: Draws): void {
   swiped = false;
 
   if (flight?.open) {
-    // the next page is still being got ready and the address has moved again (a page that sends the reader on, a second
-    // press, Back twice): it is one change, to wherever this leads, drawn in the order the addresses changed
+    // The address moved again before the next page was ready (a redirect, a second press, Back twice): one change to
+    // wherever it ends up, drawn in order.
     flight.awaits = to.key;
     flight.path = trimmed(to.pathname);
     flight.top = popped ? left.get(to.key) : undefined;
-    // and the head is looked for on that page, not the one it was first expected on
+    // The head is now looked for on the new destination.
     flight.dropped?.();
     if (flight.waiting) flight.waiting.push(update);
     else draws.apply(update);
     return;
   }
-  // where the page being left was, for the day the reader comes back to it (a page passed through in a hurry was never
-  // on the screen, and what it remembers of an earlier visit is left alone)
+  // Remember the scroll for coming back; a page passed through without being shown keeps what it had.
   keep(left, from.key, window.scrollY);
-  // a page whose place is not known is the browser's to restore, which it can only do when the page is drawn at once
+  // A page whose scroll is unknown is left to the browser to restore, which needs it drawn at once.
   if (!carriesPages() || !isAnotherPage(from, to) || document.visibilityState === 'hidden' || moved || (popped && !left.has(to.key))) {
     draws.apply(update);
     return;
@@ -646,7 +515,7 @@ export function changePage(from: Location, update: Update, draws: Draws): void {
     return nextPage(f, plan, draws, () => transition?.skipTransition());
   };
   if (popped) {
-    // the browser has begun gliding the page being left to where the next one was; it is put back before its picture is taken
+    // The browser has started scrolling the old page for Back; put it back before its picture is taken.
     const at = window.scrollY;
     requestAnimationFrame(() => {
       if (f.waiting) window.scrollTo({ top: at, behavior: 'instant' });
@@ -661,7 +530,7 @@ export function changePage(from: Location, update: Update, draws: Draws): void {
     draws.apply(update);
     return;
   }
-  // the browser calls back even for a transition it skips; should it ever not, the page still changes
+  // The browser calls back even for a skipped transition; this timer changes the page should it ever not.
   late = window.setTimeout(() => {
     if (!f.waiting) return;
     for (const waiting of f.waiting) draws.apply(waiting);
@@ -669,7 +538,7 @@ export function changePage(from: Location, update: Update, draws: Draws): void {
     f.open = false;
     transition?.skipTransition();
   }, HOLD_MS);
-  // a transition skipped (the tab was hidden, another began) is reported as a refusal, which is nobody's error
+  // A skipped transition (hidden tab, another one started) rejects, which is not an error.
   const over = (): void => settle(f);
   transition.ready.catch(() => undefined);
   transition.updateCallbackDone.catch(() => undefined);
@@ -677,17 +546,15 @@ export function changePage(from: Location, update: Update, draws: Draws): void {
 }
 
 /**
- * The app's router: the library's BrowserRouter, with each change of page
- * handed to `changePage`. A change it does not carry is applied as that
- * router applies every change, as a transition of the page's own, so a page
- * whose code is still arriving leaves the last one standing until it is here.
+ * The app's router: the library's BrowserRouter with each change handed to `changePage`. Changes it does not carry are
+ * applied in a React transition, as that router does, so the old page stays up while the next page's code loads.
  */
 export function CarriedRouter({ children }: { children: React.ReactNode }): React.JSX.Element {
   const [history] = useState(() => createBrowserHistory({ v5Compat: true }));
   const [state, setState] = useState(() => ({ action: history.action, location: history.location }));
-  // counted up to have the page drawn once more, at once: the page's own effects are let run before that, which is the point
+  // Bumped to redraw at once, after the page's own effects have run.
   const [, setTurn] = useState(0);
-  // the page the reader is on or on the way to: the last address handed over, drawn yet or not
+  // The last address handed over, drawn yet or not.
   const here = useRef(state.location);
 
   useLayoutEffect(() => {
@@ -695,7 +562,7 @@ export function CarriedRouter({ children }: { children: React.ReactNode }): Reac
       apply: ({ action, location }) => startTransition(() => setState({ action, location })),
       finish: () => flushSync(() => setTurn((n) => n + 1)),
     };
-    // heard on the way down, which is before the history hears it and reports the change
+    // Capture phase, before the history hears the event and reports the change.
     const onPop = (e: PopStateEvent): void => {
       swiped = e.hasUAVisualTransition === true;
     };
@@ -710,7 +577,7 @@ export function CarriedRouter({ children }: { children: React.ReactNode }): Reac
       window.removeEventListener('popstate', onPop, true);
     };
   }, [history]);
-  // after every effect of the page itself, which is when the page is on the screen to be pictured
+  // After the page's own effects, when it is on screen to be pictured.
   useLayoutEffect(() => drawn(state.location), [state.location]);
 
   return (

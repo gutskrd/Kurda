@@ -15,24 +15,11 @@ import '../games/game-stage.css';
 import './invite-page.css';
 
 /**
- * Where a game's invite link lands (/join/<game>/<CODE>, shared/src/join-link.ts):
- * the page a friend sees who tapped a link in a message, with or without an
- * account, on a phone or a desk.
- *
- * It says what they were asked to: the game's own picture, playing, its name,
- * who is waiting for them when the link says, and the code. Then one thing
- * to press. Signed in, that is Join: the same join as typing the code, and
- * straight into the lobby. Not signed in, it is making an account, or signing
- * in, and coming back here to join, with the code still in the address.
- *
- * The link opens no door of its own. A game for the host's friends takes the
- * host's friends, whoever holds its code or its link, so a refusal here is
- * answered with what to do about it: when the link names the host, a friend
- * request to them from this page, and Join again once they have said yes.
- *
- * Nothing from the address is drawn but the game it names from a fixed list,
- * a code that passed the code's own pattern, and a person the server says
- * exists: `parseJoinLink` reads nothing else.
+ * Where an invite link lands (/join/<game>/<CODE>, shared/src/join-link.ts), with or without an account: the game's
+ * picture and name, who is waiting when the link says, the code, and one button. Signed in, that is Join, the same as
+ * typing the code; otherwise sign up or in and return here. A friends-only game still takes only the host's friends, so
+ * a refusal offers a friend request to the host when the link names them. Only the game, a valid code and a person the
+ * server confirms are read from the address (`parseJoinLink`).
  */
 
 
@@ -49,13 +36,13 @@ export function InvitePage(): React.JSX.Element {
   const [message, setMessage] = useState<string | null>(null);
   const [asked, setAsked] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   const mounted = useRef(true);
-  // set on every mount, not only the first: a page mounted twice in a row would otherwise stay marked as gone, and drop the join's answer
+  // Set on every mount, or a page mounted twice in a row would stay marked gone and drop the join's answer.
   useEffect(() => {
     mounted.current = true;
     return () => void (mounted.current = false);
   }, []);
 
-  // who is asking, when the link says: read from the server, so a name is never taken from an address
+  // Who is asking, confirmed by the server, so a name is never taken from an address.
   const from = link?.from ?? null;
   useEffect(() => {
     if (!from || status === 'restoring') return;
@@ -81,7 +68,7 @@ export function InvitePage(): React.JSX.Element {
     );
   }
 
-  // the picture the invitation wears: its game's stamp (a story game has none, and wears the ticket)
+  // The game's stamp; a story game has none and wears the ticket.
   const emblem = PLAY_GAME_EMBLEM[link.game] ?? null;
   const name = host ? host.displayName || host.username : null;
   const back = location.pathname + location.search;
@@ -100,7 +87,7 @@ export function InvitePage(): React.JSX.Element {
       navigate(lobbyPath(res.data.game, res.data.lobbyId), { replace: true });
       return;
     }
-    // an account that has not answered the birth month question: the app asks it now, as for any game
+    // An account without a birth month is asked now, as for any game.
     if (!res.ok && res.error.code === 'BIRTH_DATE_REQUIRED') void refreshUser();
     setPhase('refused');
     setMessage(res.ok ? t('play.join.notFound') : joinCodeError(res.error, t));
@@ -116,11 +103,11 @@ export function InvitePage(): React.JSX.Element {
     if (res.ok) setHost({ ...host, friendStatus: 'pending_out' });
   }
 
-  // a friends game takes the host's friends: someone who is not one yet is shown the way to become one
+  // A friends game takes the host's friends; someone who is not one is shown how to become one.
   const stranger = signedIn && host !== null && (host.friendStatus === 'none' || host.friendStatus === 'pending_in');
   const waiting = signedIn && host?.friendStatus === 'pending_out';
-  // The server says "no such game" for a game somebody may not join as for a code nobody is using. Beside the way
-  // to become the host's friend that sentence reads as a broken code, so there the way forward is said instead.
+    // The server says "no such game" both for a code nobody uses and a game this person may not join; beside the friend
+    // request that reads as a broken code, so the way forward is said instead.
   const unexplained = phase === 'refused' && message === t('play.join.notFound');
   const befriending = unexplained && name !== null && (stranger || waiting);
   const chars = [...link.code];

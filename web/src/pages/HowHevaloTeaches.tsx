@@ -7,23 +7,13 @@ import { LIMITS, PRINCIPLES } from '../teaching/principles';
 import { SOURCES, SOURCE_ORDER, authorList, locator, shortCite, type SourceId } from '../teaching/sources';
 
 /*
- * How Hevalo teaches, and why — with the studies to check it against.
- *
- * The owner asked for the site to say that Hevalo is built on learning science,
- * and for that to be true. So every principle here is told in three parts that
- * do not lean on each other: what the research found, said no more strongly
- * than the study does; what Hevalo does about it, which is only what the code
- * does; and the studies themselves, linked. Then a section of what we do not
- * claim, which is the part a careful reader looks for first.
- *
- * No "proven", no percentages of improvement, no "learn twice as fast": the
- * research does not license any of that for Kurdish, and the page says so.
- *
- * See teaching/principles.ts for the words and teaching/sources.ts for the
- * references, which stay in the language they were published in.
+ * How Hevalo teaches, with the studies to check it against. Each principle has three independent parts: what the
+ * research found (no stronger than the study), what Hevalo does (only what the code does), and the linked studies; then
+ * what we do not claim. No "proven" and no improvement figures. Words are in teaching/principles.ts and references in
+ * teaching/sources.ts, kept in their published language.
  */
 
-/** A study named in passing, linked to where it can be read. Not translated: see sources.ts. */
+/** A study named in passing, linked to where it can be read; not translated (see sources.ts). */
 function Ref({ id }: { id: SourceId }): React.JSX.Element {
   const s = SOURCES[id];
   return (
@@ -56,13 +46,8 @@ export function HowHevaloTeaches(): React.JSX.Element {
   const { hash } = useLocation();
 
   /*
-   * The front page links to a principle by its anchor. The layout scrolls to
-   * an anchor when the address changes, but this page is fetched the first time
-   * somebody opens it, so on that first visit the section is not there yet when
-   * the layout looks. It looks again once the page is. The anchors are plain
-   * ASCII, so the hash is looked up as it is, with no decoding to go wrong.
-   * (The layout does decode it, and keeps a malformed one as written, so a
-   * hand-typed `#%E0` breaks neither; the test goes through the layout.)
+   * The front page links to principles by anchor, but on a first visit this page's code loads after the layout has
+   * looked for the anchor, so it looks again here. Anchors are plain ASCII, so the hash is used undecoded.
    */
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView();

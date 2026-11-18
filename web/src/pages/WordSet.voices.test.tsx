@@ -6,10 +6,7 @@ import { SYNTHESISED_WORD_CLIPS } from '@kurda/shared';
 import { WordSet } from './WordSet';
 import { jsonResponse, renderApp } from '../test/utils';
 
-/*
- * A word set once the owner has recorded a word and chosen who says it. In a
- * file of its own: the page asks for its recordings once, and keeps them.
- */
+/* A word set with a recorded word and its speaker; its own file, since the page fetches its recordings once and keeps them. */
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -43,7 +40,7 @@ describe('WordSet: who says a word', () => {
     );
 
     const listen = await screen.findByRole('button', { name: 'Listen to sor' });
-    // the recordings arrive after the first paint; the tile's button plays whatever has arrived by then
+    // The recordings arrive after the first paint; the tile's button plays whatever has arrived by then.
     await waitFor(async () => {
       await userEvent.click(listen);
       expect(heard.at(-1)).toBe('https://media.test/sor.wav');
@@ -55,7 +52,7 @@ describe('WordSet: who says a word', () => {
     expect(within(sheet).getByRole('button', { name: 'Listen' })).toBeInTheDocument();
     expect(within(sheet).queryByText('Computer voice — a guide, not a native speaker.')).toBeNull();
 
-    // blue has no recording: its synthesised clip still plays, and nobody stands on the card
+    // Blue has no recording: its synthesised clip still plays, and nobody stands on the card.
     await userEvent.click(within(sheet).getByRole('button', { name: 'Next word' }));
     expect(heard.at(-1)).toMatch(new RegExp(`/audio/words/${SYNTHESISED_WORD_CLIPS['words:colours:kmr:blue']}$`));
     await waitFor(() => expect(sheet.querySelector('.speaking-character')).toBeNull());

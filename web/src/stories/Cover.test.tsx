@@ -13,7 +13,7 @@ describe('a story’s cover', () => {
     expect(img).toHaveAttribute('alt', '');
     expect(img).toHaveAttribute('loading', 'lazy');
     expect(container.querySelector('.story-cover')).toHaveAttribute('aria-hidden', 'true');
-    // no drawing of its own any more: a picture, or a plain ground
+    // No drawing of its own: a picture, or a plain ground.
     expect(container.querySelector('svg')).toBeNull();
   });
 
@@ -30,7 +30,7 @@ describe('a story’s cover', () => {
       expect((container.querySelector('.story-cover') as HTMLElement).style.backgroundColor).toBe(rgb(rug.ground));
       unmount();
     }
-    // a shelf of them is not one rug over and over
+    // A shelf of them is not one rug over and over.
     const seen = new Set(['kmr-qelema-sin', 'kmr-bacansor-penir-nan', 'kmr-nameya-dapire', 'kmr-top-u-ape-mehmud', 'kmr-barana-newroze', 'kmr-reya-gund', 'kmr-rovi-u-hirc'].map((sl) => storyRugFor(sl).key));
     expect(seen.size).toBeGreaterThanOrEqual(5);
     for (const key of seen) expect(STORY_RUGS.map((r) => r.key)).toContain(key);
@@ -42,13 +42,13 @@ describe('a story’s cover', () => {
     fireEvent.error(broken.container.querySelector('img')!);
     expect(broken.container.querySelector('img')).toBeNull();
     expect((broken.container.querySelector('.story-cover') as HTMLElement).style.backgroundColor).toBe(rgb(rug.ground));
-    // given another picture, it tries that one
+    // Given another picture, it tries that one.
     broken.rerender(<StoryCover slug="kmr-reya-gund" cover="mij" />);
     expect(broken.container.querySelector('img')).toHaveAttribute('src', '/cosmetics/backgrounds/made-19-mij.webp');
   });
 
   it('knows a path for every cover the admin can choose, and the site serves a file there', () => {
-    // Vite's own view of the folder the site serves, so a cover whose file was moved fails here
+    // Vite's view of the served folder, so a moved cover file fails here.
     const served = new Set(Object.keys(import.meta.glob('/public/cosmetics/backgrounds/*.webp')).map((p) => p.replace(/^\/public/, '')));
     for (const c of STORY_COVERS) {
       expect(served).toContain(`/cosmetics/backgrounds/${c.file}`);

@@ -46,19 +46,19 @@ describe('Settings: the list', () => {
     for (const group of [en['settings.eyebrow'], en['settings.group.preferences'], en['settings.group.privacy'], en['settings.group.about']]) {
       expect(screen.getByRole('heading', { name: group, level: 2 })).toBeInTheDocument();
     }
-    // what each is set to now, at the end of its row, so most of the page is read without opening anything
+    // What each is set to now, at the end of its row, so most of the page is read without opening anything.
     expect(await within(row(en['settings.privacy.title'])).findByText(en['settings.visibility.members'])).toBeInTheDocument();
     expect(within(row(en['settings.leagues.title'])).getByText(en['settings.on'])).toBeInTheDocument();
     expect(within(row(en['settings.appearance.title'])).getByText(en['settings.appearance.dark'])).toBeInTheDocument();
     expect(within(row(en['language.settingsTitle'])).getByText('English')).toBeInTheDocument();
     expect(within(row(en['settings.username.title'])).getByText('@ada')).toBeInTheDocument();
     expect(row(en['settings.username.title'])).toHaveAttribute('href', '/app/settings/username');
-    // each opens its own page
+    // Each opens its own page.
     expect(row(en['settings.privacy.title'])).toHaveAttribute('href', '/app/settings/visibility');
     expect(row(en['settings.blocked.title'])).toHaveAttribute('href', '/app/settings/blocked');
     expect(row(en['reports.mine.title'])).toHaveAttribute('href', '/app/settings/reports');
     expect(row(en['standing.title'])).toHaveAttribute('href', '/app/settings/standing');
-    // signing out is a row of its own, last, beside deleting — which is red and behind a page of its own
+    // Signing out is a row of its own, last, beside deleting — which is red and behind a page of its own.
     expect(screen.getByRole('button', { name: /^sign out$/i })).toBeInTheDocument();
     expect(row(en['settings.delete.title'])).toHaveClass('is-danger');
     expect(row(en['settings.delete.title'])).toHaveAttribute('href', '/app/settings/delete');
@@ -69,14 +69,14 @@ describe('Settings: the list', () => {
     renderApp(<Settings />, ['/app/settings']);
     const search = await screen.findByRole('searchbox', { name: en['settings.search'] });
 
-    // "accent" is the keyboard page's first choice, not the row's own name
+    // "accent" is the keyboard page's first choice, not the row's own name.
     await userEvent.type(search, 'accent');
     expect(row(en['keyboard.settings.title'])).toBeInTheDocument();
     expect(screen.queryByText(en['settings.privacy.title'])).not.toBeInTheDocument();
-    // a group with nothing left in it goes too
+    // A group with nothing left in it goes too.
     expect(screen.queryByRole('heading', { name: en['settings.group.privacy'] })).not.toBeInTheDocument();
 
-    // "light" is one of the themes, without its capital
+    // "light" is one of the themes, without its capital.
     await userEvent.clear(search);
     await userEvent.type(search, 'light');
     expect(row(en['settings.appearance.title'])).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe('Settings: the list', () => {
     await userEvent.click(await screen.findByText(en['settings.appearance.title']));
 
     expect(await screen.findByRole('heading', { name: en['settings.appearance.title'], level: 1 })).toBeInTheDocument();
-    // opened from the list, so the reader is taken to the new page's title
+    // Opened from the list, so the reader is taken to the new page's title.
     expect(screen.getByRole('heading', { name: en['settings.appearance.title'], level: 1 })).toHaveFocus();
     await userEvent.click(screen.getByRole('link', { name: en['standing.backToSettings'] }));
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
@@ -122,7 +122,7 @@ describe('Settings: the list', () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me(), '/me/notification-prefs': { prefs: {} } })));
     renderApp(<Settings />, ['/app/settings']);
 
-    // nothing picked yet: the notifications page, beside the list
+    // Nothing picked yet: the notifications page, beside the list.
     expect(await screen.findByRole('heading', { name: 'Settings', level: 1 })).toBeInTheDocument();
     const paneTitle = (): HTMLElement | null => document.getElementById('settings-page-title');
     expect(paneTitle()).toHaveTextContent(en['notifications.title']);
@@ -133,7 +133,7 @@ describe('Settings: the list', () => {
     await waitFor(() => expect(paneTitle()).toHaveTextContent(en['settings.appearance.title']));
     expect(row(en['settings.appearance.title'])).toHaveAttribute('aria-current', 'page');
     expect(row(en['notifications.title'])).not.toHaveAttribute('aria-current');
-    // the list is still there
+    // The list is still there.
     expect(screen.getByRole('searchbox', { name: en['settings.search'] })).toBeInTheDocument();
   });
 });
@@ -143,8 +143,8 @@ describe('Settings: the pages', () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me({ profileVisibility: 'members' }) })));
     renderApp(<Settings />, ['/app/settings/visibility']);
 
-    // the label alone cannot carry the difference between "everyone here" and
-    // "everyone at all", so the consequence of each is written out under it
+    // The label alone cannot carry the difference between "everyone here" and
+    // "everyone at all", so the consequence of each is written out under it.
     const members = await screen.findByRole('radio', { name: 'Hevalo members' });
     expect(members).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Anyone on the web' })).not.toBeChecked();
@@ -170,10 +170,7 @@ describe('Settings: the pages', () => {
     expect(within(row(en['settings.privacy.title'])).getByText('Friends only')).toBeInTheDocument();
   });
 
-  /**
-   * The weekly leagues are one tap out and one tap back in. Leaving is a
-   * PATCH /me, and the server takes them out of this week's table at once.
-   */
+  // Leaving is a PATCH /me, and the server takes them off this week's table at once.
   it('takes you out of the weekly leagues in one tap', async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (init?.method === 'PATCH') return jsonResponse(200, me({ leaguesEnabled: false }));
@@ -193,10 +190,7 @@ describe('Settings: the pages', () => {
     expect(screen.queryByText(en['settings.leagues.minorHint'])).not.toBeInTheDocument();
   });
 
-  /**
-   * Under 18 the profile is never on the open web. The server refuses it; the
-   * page does not offer it, and says why.
-   */
+  // Under 18 a profile is never public: the server refuses it, and the page does not offer it and says why.
   it('does not offer a minor the open web, and starts their leagues off', async () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me({ minor: true, leaguesEnabled: false, profileVisibility: 'friends' }) })));
     const { unmount } = renderApp(<Settings />, ['/app/settings/visibility']);
@@ -215,13 +209,13 @@ describe('Settings: the pages', () => {
     vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me() })));
     renderApp(<Settings />, ['/app/settings/theme']);
 
-    // dark is the look before anybody chooses
+    // Dark is the look before anybody chooses.
     expect(await screen.findByRole('radio', { name: 'Dark' })).toBeChecked();
     await userEvent.click(screen.getByRole('radio', { name: 'Light' }));
     expect(screen.getByRole('radio', { name: 'Light' })).toBeChecked();
     expect(document.documentElement.dataset.theme).toBe('light');
     expect(localStorage.getItem('hevalo_theme')).toBe('light');
-    // nothing is sent: this is a choice about the screen, not the account
+    // Nothing is sent: this is a choice about the screen, not the account.
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH')).toBe(false);
     delete document.documentElement.dataset.theme;
   });
@@ -235,7 +229,7 @@ describe('Settings: the pages', () => {
     renderApp(<Settings />, ['/app/settings/language']);
 
     expect(await screen.findByRole('radio', { name: 'English' })).toBeChecked();
-    // in English, each says what it is in English too
+    // In English, each says what it is in English too.
     expect(screen.getByText('German')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('radio', { name: 'Deutsch' }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([, i]) => (i as RequestInit | undefined)?.method === 'PATCH')).toBe(true));
@@ -262,7 +256,7 @@ describe('Settings: the pages', () => {
     vi.stubGlobal('fetch', fetchMock);
     const { unmount } = renderApp(<Settings />, ['/app/settings/devices']);
     expect(await screen.findByText('Safari on iPhone')).toBeInTheDocument();
-    // signing out, here or everywhere, is on this page too
+    // Signing out, here or everywhere, is on this page too.
     expect(screen.getByRole('button', { name: /^sign out everywhere$/i })).toBeInTheDocument();
     unmount();
 

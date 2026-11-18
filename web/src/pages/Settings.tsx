@@ -57,12 +57,8 @@ const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
 type Visibility = (typeof VISIBILITIES)[number];
 
 /**
- * 'Everyone' has to say *the web*, out loud.
- *
- * Hevalo can be read without an account, so the widest setting is genuinely
- * public — findable, linkable, readable by someone who never signed up. A chip
- * labelled "Everyone" reads like "everyone here", which is what 'Members' is,
- * and nobody should learn the difference after the fact.
+ * The visibility labels. The widest setting really is the public web, readable without an account, so it says so;
+ * "Everyone" alone would read as "everyone here", which is what Members means.
  */
 const VIS_LABEL_KEY: Record<Visibility, MessageKey> = {
   everyone: 'settings.visibility.everyone',
@@ -84,8 +80,8 @@ const THEME_LABEL: Record<ThemePreference, MessageKey> = {
   system: 'settings.appearance.system',
 };
 
-/** Where to write to a person about anything at all. */
-export const SUPPORT_EMAIL = 'support@hevalo.app';
+/** Where to write to a person about anything. */
+const SUPPORT_EMAIL = 'support@hevalo.app';
 
 /** Every page Settings opens, each at /app/settings/<page>. */
 const PAGES = [
@@ -125,49 +121,38 @@ const PAGE_TITLE: Record<SettingsPage, MessageKey> = {
   delete: 'settings.delete.title',
 };
 
-/** What a wide screen shows beside the list before anything is picked: the page most often looked for. */
+/** The page shown beside the list on a wide screen before one is picked: the one most often looked for. */
 const FIRST_PAGE: SettingsPage = 'notifications';
 
-/** At this width the list and the page open from it sit side by side. */
+/** From this width the list and its page sit side by side. */
 const WIDE = '(min-width: 960px)';
 
-export const settingsPath = (page: SettingsPage): string => `/app/settings/${page}`;
+const settingsPath = (page: SettingsPage): string => `/app/settings/${page}`;
 
-/** Which page the address names: /app/settings/<page>, or none for the list itself. */
+/** The page the address names (/app/settings/<page>), or none for the list. */
 function pageOf(pathname: string): string | undefined {
   return /^\/app\/settings\/([^/]+)\/?$/.exec(pathname)?.[1];
 }
 
 /**
- * Settings, as a list.
- *
- * It used to be every setting at once: fifteen boxes down one page, each with
- * its controls open, so finding one meant reading past all the others. Now it
- * is a short list in five groups — your account, how Hevalo behaves for you,
- * who can see you, about Hevalo, and leaving — each row saying what it is set
- * to, and one tap from its own page. On a wide screen the list stays on the
- * start side and the page opens beside it.
- *
- * Signing out and deleting the account are the last rows, apart from the
- * rest, deleting in red and behind a second step: what cannot be undone
- * should be found when looked for, not met on the way to something else.
+ * Settings as a short list in five groups (account, behaviour, visibility, about, leaving), each row showing its value
+ * and opening its own page; on a wide screen the page opens beside the list. Signing out and deleting the account come
+ * last and apart, deleting in red behind a second step.
  */
 export function Settings(): React.JSX.Element {
   const t = useT();
   const location = useLocation();
   const wide = useMediaQuery(WIDE);
-  // asked every time, never drawn from memory: each page's switches and fields start from this answer and
-  // keep what they started with, so an answer a moment old would leave them saying the wrong thing
+  // Fetched fresh: each page's controls start from this answer, so a stale one would show wrong values.
   const { data, loading, error, reload } = useApiGet<{ user: MeProfile }>('/me', { fresh: true });
-  // what has been changed here since /me answered, so the list says it at once
+  // Changes made here since /me answered, so the list shows them at once.
   const [changed, setChanged] = useState<Partial<MeProfile>>({});
   const user = data ? { ...data.user, ...changed } : null;
   const me: MeState = { user, loading, error, reload, onChanged: (patch) => setChanged((c) => ({ ...c, ...patch })) };
 
   const named = pageOf(location.pathname);
   const page = isPage(named) ? named : undefined;
-  // what is on screen now, and whether it is not what was there a moment ago: a
-  // page opened from the list puts the reader at its title, as a new screen would
+  // What is on screen now; a page opened from the list takes the reader to its title, as a new screen would.
   const showing = wide ? (page ?? FIRST_PAGE) : (page ?? 'list');
   const before = useRef<string | null>(null);
   const moved = before.current !== null && before.current !== showing;
@@ -175,7 +160,7 @@ export function Settings(): React.JSX.Element {
     before.current = showing;
   });
 
-  // the old address of the notification settings, from links already sent
+  // The notification settings' old address, from links already sent.
   if (!named && location.hash === '#notifications') return <Navigate to={settingsPath('notifications')} replace />;
   if (named !== undefined && !page) return <Navigate to="/app/settings" replace />;
 
@@ -212,7 +197,7 @@ export function Settings(): React.JSX.Element {
   );
 }
 
-/** The account as Settings knows it, and how to tell the list a page has changed it. */
+/** The account as Settings knows it, and how a page tells the list it changed something. */
 interface MeState {
   user: MeProfile | null;
   loading: boolean;
@@ -227,21 +212,18 @@ interface Row {
   title: string;
   subtitle?: string;
   value?: React.ReactNode;
-  /** the value as words, for the search */
+  /** The value in words, for the search. */
   valueText?: string;
   to?: string;
   href?: string;
   onClick?: () => void;
   destructive?: boolean;
-  /** the names of what its page holds, so a search finds the row by them */
+  /** Names of what its page holds, so a search finds the row by them. */
   terms?: string[];
   page?: SettingsPage;
 }
 
-/**
- * The list: a search, then the groups. While something is typed only the
- * rows that match are left, in their groups, and a group with none is gone.
- */
+/** The list: a search, then the groups; while searching only matching rows remain, and empty groups go. */
 function SettingsIndex({ me, current }: { me: MeState; current?: SettingsPage }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
@@ -252,11 +234,11 @@ function SettingsIndex({ me, current }: { me: MeState; current?: SettingsPage })
   const [query, setQuery] = useState('');
 
   const user = me.user;
-  /** a value that needs the account: a short grey bar until it has answered, nothing if it could not */
+  /** A value from the account: a short grey bar until it answers, nothing if it failed. */
   const fromAccount = (value: string | undefined): React.ReactNode =>
     user ? value : me.loading ? <Skeleton line w={64} className="settings-row-value-skeleton" /> : undefined;
   const username = user ? (
-    // a handle reads left to right in every language, @ first
+    // A handle reads left to right in every language, @ first.
     <span dir="ltr">@{user.username}</span>
   ) : undefined;
 
@@ -428,10 +410,7 @@ function SettingsIndex({ me, current }: { me: MeState; current?: SettingsPage })
   );
 }
 
-/**
- * One page: its title, and what it holds. On a phone it has the way back
- * to the list above its title; on a wide screen the list is beside it.
- */
+/** One page: its title and contents, with the way back to the list above the title on a phone. */
 function SettingsPageView({
   page,
   me,
@@ -443,7 +422,7 @@ function SettingsPageView({
   me: MeState;
   heading: 'h1' | 'h2';
   back?: boolean;
-  /** opened from the list rather than landed on: the reader is taken to its title */
+  /** Opened from the list rather than landed on, so focus goes to its title. */
   focus?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -452,13 +431,13 @@ function SettingsPageView({
   const Heading = heading;
   const title = useRef<HTMLHeadingElement>(null);
 
-  // only when it opens: the page is keyed on its name, so this is once per page
+  // Only on opening: the page is keyed by name, so this runs once per page.
   const focusOnOpen = useRef(focus);
   useEffect(() => {
     if (focusOnOpen.current) title.current?.focus({ preventScroll: true });
   }, []);
 
-  /** a page that needs the account waits for it, in its own shape, and says so if it could not have it */
+  /** A page needing the account waits for it in its own shape, and says so if it failed. */
   const needsAccount = (render: (user: MeProfile) => React.ReactNode): React.ReactNode =>
     me.user ? (
       render(me.user)
@@ -547,7 +526,7 @@ function SettingsPageView({
           {t(PAGE_TITLE[page])}
         </Heading>
       </div>
-      {/* the sounds page keeps its parts' own headings: it holds two things, sounds and vibration */}
+      {/* The sounds page keeps its parts' headings, since it holds both sounds and vibration. */}
       <div className="settings-page-body" data-keep-headings={page === 'sounds' ? '' : undefined}>
         {body}
       </div>
@@ -556,17 +535,9 @@ function SettingsPageView({
 }
 
 /**
- * The language Hevalo speaks to you in.
- *
- * Applied the moment it is chosen and saved to the account in the background,
- * rather than the other way round: waiting for a round trip before the list
- * changes would make choosing a language feel broken on a slow connection, and
- * the change is trivially reversible if the save fails.
- *
- * It is stored on the account rather than only in this browser so that it
- * follows you — signing in on a borrowed laptop should not mean choosing again.
- * Each language is written in itself, and under it in the language now on
- * screen, so someone who landed in the wrong one can still find their own.
+ * The interface language: applied at once and saved to the account in the background, since waiting would feel broken
+ * on a slow connection and a failed save is easily undone. Saved on the account so it follows you to other devices.
+ * Each language is written in itself and in the current language, so someone in the wrong one can find theirs.
  */
 function Language({ current }: { current?: string | null }): React.JSX.Element {
   const { client, refreshUser } = useAuth();
@@ -585,12 +556,11 @@ function Language({ current }: { current?: string | null }): React.JSX.Element {
     const res = await client.request('PATCH', '/me', { body: { locale: next } });
     setBusy(false);
     if (res.ok) {
-      // so /me carries the new value if this page is revisited
+      // So /me carries the new value if this page is revisited.
       await refreshUser();
       return;
     }
-    // put it back rather than leaving the interface in a language the account
-    // does not actually have — the next reload would undo it anyway
+    // Revert rather than leave the interface in a language the account does not have.
     setLocale(previous);
     setFailed(true);
   }
@@ -617,12 +587,7 @@ function Language({ current }: { current?: string | null }): React.JSX.Element {
       <p className="settings-page-note" role="status">
         {failed ? <span className="settings-page-error">{t('language.failed')}</span> : busy ? null : t('language.savedTo', { language: name })}
       </p>
-      {/*
-        Said plainly rather than discovered. The screens are translated now, so
-        this no longer warns about them — but emails still render in English
-        whatever the account is set to, and somebody who picks Kurdish and then
-        gets an English email should know that is a gap being filled, not a bug.
-      */}
+      {/* Emails still go out in English whatever the setting, so that is said plainly. */}
       {locale !== 'en' && <p className="settings-page-note">{t('language.partial')}</p>}
     </>
   );
@@ -638,13 +603,7 @@ function nameIn(locale: string, code: string): string | null {
   }
 }
 
-/**
- * Dark, light, or whatever this device is set to.
- *
- * Applied the moment it is chosen and kept on this device rather than the
- * account: it is about the screen in front of you, and the same person may
- * want light on a laptop by day and dark on a phone at night.
- */
+/** Dark, light or the device's setting, applied at once and kept per device, since it is about the screen in front of you. */
 function Appearance(): React.JSX.Element {
   const t = useT();
   const [preference, setPreference] = useThemePreference();
@@ -663,13 +622,9 @@ function Appearance(): React.JSX.Element {
 }
 
 /**
- * In or out of the weekly leagues, in one tap.
- *
- * A league ranks you against strangers by XP every week. That suits some
- * people and puts others off learning, and a leaderboard that cannot be left is
- * the kind of pressure the rest of the app tries not to apply. Leaving takes
- * effect at once — you drop out of this week's table — and nothing else you
- * have earned changes. A minor starts out of them and is told why.
+ * In or out of the weekly leagues in one tap, since a leaderboard that cannot be left is pressure the app avoids.
+ * Leaving takes effect at once (off this week's table) and changes nothing else earned. Minors start out and are told
+ * why.
  */
 function Leagues({ enabled, minor, onChanged }: { enabled: boolean; minor: boolean; onChanged: (on: boolean) => void }): React.JSX.Element {
   const { client, refreshUser } = useAuth();
@@ -708,11 +663,7 @@ function Leagues({ enabled, minor, onChanged }: { enabled: boolean; minor: boole
   );
 }
 
-/**
- * Who can see your profile, as four rows with what each one means written
- * under it: the difference between "everyone here" and "everyone at all" is
- * read before the choice, not learned after it.
- */
+/** Profile visibility as four rows, each with what it means, so "everyone here" and "everyone at all" are read before choosing. */
 function Privacy({ current, minor, onChanged }: { current: Visibility; minor: boolean; onChanged: (v: Visibility) => void }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -748,8 +699,7 @@ function Privacy({ current, minor, onChanged }: { current: Visibility; minor: bo
           value: v,
           title: t(VIS_LABEL_KEY[v]),
           subtitle: t(VIS_HINT_KEY[v]),
-          // under 18 a profile is never on the open web; the server refuses
-          // it too, this just does not offer it
+          // Under 18 a profile is never public; the server refuses it too.
           disabled: minor && v === 'everyone',
         }))}
         onChange={(v) => void change(v)}

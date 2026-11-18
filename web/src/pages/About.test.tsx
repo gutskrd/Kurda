@@ -6,10 +6,7 @@ import { renderApp } from '../test/utils';
 afterEach(() => localStorage.clear());
 
 describe('About', () => {
-  /**
-   * The fonts, icons and emoji are other people's work, used under licences
-   * that ask to be named; the shop's art and the stickers are Hevalo's own.
-   */
+  // Fonts, icons and emoji are used under licences that ask to be named; the shop art and stickers are Hevalo's own.
   it('credits the work it uses, with each licence, and says the art is its own', () => {
     renderApp(<About />, ['/about']);
     expect(screen.getByRole('heading', { level: 2, name: 'Credits & licences' })).toBeInTheDocument();

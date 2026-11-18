@@ -1,46 +1,32 @@
 import type { MessageKey } from '../i18n/en';
 
 /**
- * The colour maths, done here rather than handed to the browser.
+ * The photo editor's colour maths as a pixel loop rather than `ctx.filter`, which renders inconsistently across
+ * engines (WebKit paints a filtered `drawImage` only partly) and has nothing for highlights, shadows or skin-safe
+ * saturation. A 720px preview grades within a frame, and the output can be asserted on directly.
  *
- * The obvious way to filter a canvas is `ctx.filter`, which takes CSS filter
- * functions. It is not used, for two reasons. It is still not baseline —
- * WebKit shipped it late and with a known bug where a filtered `drawImage`
- * paints only part of the image — so the same picture would come out
- * differently depending on who made it, which is the one thing this editor is
- * built not to do. And it cannot express half of what is here: there is no CSS
- * function for recovering highlights, lifting shadows, or protecting a face
- * from a saturation slider.
- *
- * So it is a pixel loop. That sounds slow and is not, at the sizes involved: a
- * 720px preview is half a million pixels and lands inside a frame, and the
- * export runs once. Being ordinary TypeScript, it is also the only part of the
- * editor whose output can be asserted on directly.
- *
- * Everything is a number from -100 to 100, where 0 is "leave it alone", so a
- * preset and a person's own adjustments are the same kind of thing and can
- * simply be added together.
+ * Every value runs from -100 to 100 with 0 meaning unchanged, so a preset and a person's own adjustments add together.
  */
 
 export interface Adjustments {
-  /** in stops, at the extremes: -100 is two stops down, +100 two stops up */
+  /** In stops at the extremes: -100 is two stops down, +100 two up. */
   exposure: number;
   contrast: number;
-  /** negative recovers a blown sky, positive opens the bright end further */
+  /** Negative recovers a blown sky; positive opens the bright end further. */
   highlights: number;
-  /** positive lifts what is buried in the dark */
+  /** Positive lifts what is buried in the dark. */
   shadows: number;
-  /** towards amber, or towards blue */
+  /** Towards amber, or towards blue. */
   warmth: number;
   saturation: number;
-  /** saturation that leaves already-vivid colour, and skin, alone */
+  /** Saturation that leaves already vivid colour, and skin, alone. */
   vibrance: number;
-  /** milky blacks — the matte look */
+  /** Milky blacks: the matte look. */
   fade: number;
   vignette: number;
-  /** film grain, as a texture that does not change with the output size */
+  /** Film grain, as a texture that does not change with output size. */
   grain: number;
-  /** block size, as a share of the short edge — applied before everything else */
+  /** Block size as a share of the short edge, applied before everything else. */
   pixelate: number;
 }
 
@@ -60,7 +46,7 @@ export const NEUTRAL: Adjustments = {
 
 export const ADJUSTMENT_KEYS = Object.keys(NEUTRAL) as ReadonlyArray<keyof Adjustments>;
 
-/** In the order a photographer works: light, then tone, then colour, then look. */
+/** In a photographer's order: light, tone, colour, then look. */
 export const ADJUSTMENT_LABEL_KEYS: Record<keyof Adjustments, MessageKey> = {
   exposure: 'photo.adjust.exposure',
   contrast: 'photo.adjust.contrast',
@@ -91,23 +77,16 @@ const clampAdj = (key: keyof Adjustments, v: number): number => {
   return v < r.min ? r.min : v > r.max ? r.max : v;
 };
 
-/** Every value scaled towards doing nothing. This is what a filter's strength is. */
+/** Every value scaled towards doing nothing; this is a filter's strength. */
 export function scale(a: Adjustments, strength: number): Adjustments {
   const k = Math.max(0, Math.min(1, strength));
   const out = { ...NEUTRAL };
-  // `|| 0` normalises the negative zero that -20 * 0 produces, so an untouched
-  // filter compares equal to neutral and does not churn the grading cache key
+  // `|| 0` turns the -0 from -20 * 0 into 0, so an untouched filter equals neutral and keeps the cache key stable.
   for (const key of ADJUSTMENT_KEYS) out[key] = a[key] * k || 0;
   return out;
 }
 
-/**
- * A filter plus what the person did on top of it.
- *
- * Adding works because 0 means "unchanged" everywhere: a preset that warms by
- * 30 and a slider pulled 10 the other way leave 20, which is what someone
- * dragging that slider expects to happen.
- */
+/** A filter plus the person's own changes, added since 0 means unchanged everywhere. */
 export function combine(a: Adjustments, b: Adjustments): Adjustments {
   const out = { ...NEUTRAL };
   for (const key of ADJUSTMENT_KEYS) out[key] = clampAdj(key, a[key] + b[key]);
@@ -119,25 +98,16 @@ const clamp01 = (v: number): number => (v < 0 ? 0 : v > 1 ? 1 : v);
 export type ColourStop = readonly [at: number, r: number, g: number, b: number];
 
 /**
- * A gradient map: brightness in, colour out.
- *
- * This is the mechanism behind a thermal camera and behind real sepia, and it is
- * a different kind of thing from the sliders. A slider moves the colours a
- * picture already has; a gradient map throws them away and repaints the picture
- * from its brightness alone. Nothing in the adjustment set can express that,
- * which is why it is threaded through separately instead of being a tenth
- * slider.
- *
- * `amount` mixes between the original and the mapped colour, so a filter built
- * on one can still be turned down.
+ * A gradient map: brightness in, colour out, as in a thermal camera or real sepia. It repaints the picture from its
+ * brightness, which no slider can express, so it is passed separately. `amount` mixes it with the original.
  */
 export interface ToneMap {
-  /** 768 bytes: r, g, b for each of 256 brightness steps */
+  /** 768 bytes: r, g, b for each of 256 brightness steps. */
   ramp: Uint8Array;
   amount: number;
 }
 
-/** Build the 256-step ramp once, from a handful of stops. */
+/** Builds the 256-step ramp once from a handful of stops. */
 export function buildRamp(stops: readonly ColourStop[]): Uint8Array {
   const ramp = new Uint8Array(768);
   if (stops.length === 0) return ramp;
@@ -163,17 +133,10 @@ export function buildRamp(stops: readonly ColourStop[]): Uint8Array {
   return ramp;
 }
 
-/**
- * Grain, sampled from a fixed lattice rather than from the pixel grid.
- *
- * Noise per pixel would be a different texture at every size — coarse in a
- * 720px preview, fine in a 1280px export — and the preview would stop being a
- * preview of anything. Sampling a fixed grid mapped onto the picture keeps the
- * grain the same *relative* texture whatever it is drawn at.
- */
+/** Grain is sampled from a fixed lattice mapped onto the picture, so the preview and export show the same texture. */
 const GRAIN_LATTICE = 1100;
 
-/** A deterministic -1..1 from two integers. Cheap, and film-like enough. */
+/** A deterministic -1..1 from two integers; cheap, and film-like enough. */
 function noiseAt(gx: number, gy: number): number {
   let h = Math.imul(gx, 374761393) + Math.imul(gy, 668265263);
   h = Math.imul(h ^ (h >>> 13), 1274126177);
@@ -182,12 +145,8 @@ function noiseAt(gx: number, gy: number): number {
 }
 
 /**
- * Pixelate, by averaging square blocks.
- *
- * A separate pass because it is the one effect that is not a function of a
- * pixel on its own: it needs the neighbours, which the main loop deliberately
- * never looks at. It runs first, so everything else grades the blocks rather
- * than grading detail that is about to be thrown away.
+ * Pixelates by averaging square blocks. A separate pass because it needs neighbours, which the main loop never reads;
+ * it runs first so the grading works on the blocks.
  */
 export function pixelate(data: Uint8ClampedArray, width: number, height: number, block: number): void {
   const size = Math.max(1, Math.round(block));
@@ -229,59 +188,29 @@ export function pixelate(data: Uint8ClampedArray, width: number, height: number,
 export function blockSizeFor(amount: number, width: number, height: number): number {
   if (amount <= 0) return 1;
   const short = Math.min(width, height);
-  // at 100 a block is 6% of the short edge: chunky, still recognisable
+  // At 100 a block is 6% of the short edge: chunky but recognisable.
   return Math.max(2, Math.round((amount / 100) * short * 0.06));
 }
 
 
-/** Rec. 709 luminance — how bright a colour looks, not how big its numbers are. */
+/** Rec. 709 luminance: how bright a colour looks. */
 const LUMA_R = 0.2126;
 const LUMA_G = 0.7152;
 const LUMA_B = 0.0722;
 
-/**
- * A soft 0→1 ramp. Used for the highlight and shadow masks, because a hard
- * cut-off at mid-grey leaves a visible seam across anything with a gradient in
- * it — a sky, most obviously.
- */
+/** A soft 0→1 ramp for the highlight and shadow masks; a hard cut at mid-grey leaves a seam across a sky. */
 function smoothstep(edge0: number, edge1: number, x: number): number {
   const t = clamp01((x - edge0) / (edge1 - edge0));
   return t * t * (3 - 2 * t);
 }
 
 /**
- * Apply adjustments to raw RGBA bytes, in place.
+ * Applies adjustments to raw RGBA bytes in place, in a photographer's order: white balance, exposure, contrast, then
+ * highlights and shadows, colour intensity, and the look. The order changes the result.
  *
- * The order is the one a photographer works in and is not arbitrary: white
- * balance first, because everything downstream reads colour; then exposure, to
- * put the picture in the right place overall; then the tonal range, coarse
- * (contrast) before fine (highlights, shadows); then colour intensity; then the
- * two effects that are about the look rather than the exposure. Reordering it
- * gives different pictures, not the same picture differently arranged.
- */
-/**
- * Apply adjustments to raw RGBA bytes, in place.
- *
- * The order is the one a photographer works in and is not arbitrary: white
- * balance first, because everything downstream reads colour; then exposure, to
- * put the picture in the right place overall; then the tonal range, coarse
- * (contrast) before fine (highlights, shadows); then colour intensity; then the
- * two effects that are about the look rather than the exposure. Reordering it
- * gives different pictures, not the same picture differently arranged.
- *
- * Written for speed, because the cost of this function is the frame rate of
- * every slider in the editor. The plain version of it measured 71ms on a 720px
- * preview — fourteen frames a second, which feels broken. Three things fixed
- * that, and they are why the code below looks the way it does:
- *
- *   - Everything that depends only on one channel's own value — white balance,
- *     exposure, contrast — is precomputed into a 256-entry table per channel.
- *     There are only 256 possible inputs, so the whole first half of the
- *     pipeline collapses into three array lookups per pixel.
- *   - `Math.hypot` is correct and slow: it guards against overflow that cannot
- *     happen here. The vignette uses a plain square root of precomputed squares.
- *   - Nested loops over y and x, so a pixel's coordinates are already known
- *     rather than recovered with a modulo and a division per pixel.
+ * This is the frame rate of every slider, so it is written for speed (a plain version took 71 ms on a 720px preview):
+ * per-channel work is precomputed into 256-entry tables, luminance curves are tables too, the vignette avoids
+ * `Math.hypot`, and nested loops over y and x keep coordinates without division.
  */
 export function applyAdjustments(
   data: Uint8ClampedArray,
@@ -293,9 +222,9 @@ export function applyAdjustments(
   const toning = tone && tone.amount > 0 ? tone : null;
   if (isNeutral(adj) && !toning) return;
 
-  // two stops each way at the extremes
+  // Two stops each way at the extremes.
   const exposure = Math.pow(2, (adj.exposure / 100) * 2);
-  // 0 leaves it; -100 flattens towards mid-grey; +100 roughly doubles the slope
+  // 0 leaves it; -100 flattens towards mid-grey; +100 roughly doubles the slope.
   const contrast = adj.contrast >= 0 ? 1 + adj.contrast / 100 : 1 + adj.contrast / 200;
   const highlights = adj.highlights / 100;
   const shadows = adj.shadows / 100;
@@ -304,16 +233,12 @@ export function applyAdjustments(
   const vibrance = adj.vibrance / 100;
   const fade = adj.fade / 100;
   const vignette = adj.vignette / 100;
-  // 0.14 at full: any more and it stops reading as film and starts as noise
+  // 0.14 at full; more stops reading as film.
   const grain = (adj.grain / 100) * 0.14;
 
   /*
-   * White balance, exposure and contrast, for every value a byte can hold.
-   *
-   * Warmth pulls the three channels apart, so there are three tables; the rest
-   * of the chain is the same for each. The result is deliberately not clamped
-   * to 0..1 — contrast can push a value past either end, and the highlight and
-   * shadow steps below want to see that before it is squared off.
+   * White balance, exposure and contrast for every byte value: three tables, since warmth pulls the channels apart.
+   * Deliberately unclamped, so the highlight and shadow steps see values past either end.
    */
   const table = (shift: number): Float32Array => {
     const lut = new Float32Array(256);
@@ -327,7 +252,7 @@ export function applyAdjustments(
     return lut;
   };
   const lutR = table(warmth * 0.12);
-  // green moves a little the other way, or warming just looks like magenta
+  // Green moves a little the other way, or warming looks magenta.
   const lutG = table(warmth * 0.02);
   const lutB = table(warmth * -0.12);
 
@@ -335,14 +260,7 @@ export function applyAdjustments(
   const colour = saturation !== 0 || vibrance !== 0;
   const fadeLift = fade * 0.16;
 
-  /*
-   * The highlight and shadow curves, per possible brightness.
-   *
-   * Both are functions of one number — how bright the pixel looks — so they
-   * are tables too, read with the luminance quantised to 256 steps. That is
-   * finer than the eight-bit values going in and out, so nothing is lost, and
-   * it removes two `smoothstep` calls from every pixel.
-   */
+  /* The highlight and shadow curves per brightness, read with luminance quantised to 256 steps. */
   let hiK: Float32Array | null = null;
   let loAdd: Float32Array | null = null;
   if (shapesTone) {
@@ -350,17 +268,17 @@ export function applyAdjustments(
     loAdd = new Float32Array(256);
     for (let v = 0; v < 256; v += 1) {
       const lum = v / 255;
-      // only the top half, easing in, so a sky recovers without a seam
+      // Only the top half, easing in, so a sky recovers without a seam.
       hiK[v] = 1 + highlights * smoothstep(0.45, 1, lum) * 0.85;
       loAdd[v] = shadows * smoothstep(0.55, 0, lum) * 0.28;
     }
   }
 
-  // the corner distance, so the vignette is a circle whatever the shape
+  // The corner distance, so the vignette is a circle whatever the shape.
   const halfW = width / 2;
   const halfH = height / 2;
   const invMaxDist = 1 / (Math.sqrt(halfW * halfW + halfH * halfH) || 1);
-  // the horizontal half of the distance, which does not change down a column
+  // The horizontal part of the distance, constant down a column.
   const colSq = vignette !== 0 ? new Float32Array(width) : null;
   if (colSq) {
     for (let x = 0; x < width; x += 1) {
@@ -368,7 +286,7 @@ export function applyAdjustments(
       colSq[x] = dx * dx;
     }
   }
-  /* the falloff by distance from the middle, likewise a curve over one number */
+  /* The falloff by distance from the middle, likewise a curve over one number. */
   const VIG_STEPS = 512;
   let vigK: Float32Array | null = null;
   if (colSq) {
@@ -378,8 +296,7 @@ export function applyAdjustments(
     }
   }
 
-  // the lattice is mapped onto the picture, so the grain is the same relative
-  // texture at preview size and at export size
+  // The lattice is mapped onto the picture, so the grain matches at preview and export size.
   const lattice = width > 0 ? GRAIN_LATTICE / width : 0;
   const latticeY = height > 0 ? GRAIN_LATTICE / height : 0;
 
@@ -390,7 +307,7 @@ export function applyAdjustments(
     let i = y * width * 4;
 
     for (let x = 0; x < width; x += 1, i += 4) {
-      // white balance, exposure and contrast, already done
+      // White balance, exposure and contrast, from the tables.
       let r = lutR[data[i]!]!;
       let g = lutG[data[i + 1]!]!;
       let b = lutB[data[i + 2]!]!;
@@ -399,8 +316,7 @@ export function applyAdjustments(
         const lum = clamp01(LUMA_R * r + LUMA_G * g + LUMA_B * b);
         const bucket = (lum * 255) | 0;
         const k = hiK[bucket]!;
-        // added rather than multiplied: multiplying black by anything is black,
-        // and the whole point of the shadow slider is to get something out of it
+        // Added rather than multiplied, since multiplying black gives black.
         const lift = loAdd[bucket]!;
         r = r * k + lift;
         g = g * k + lift;
@@ -415,11 +331,10 @@ export function applyAdjustments(
         const lum = LUMA_R * r + LUMA_G * g + LUMA_B * b;
         let amount = saturation;
         if (vibrance !== 0) {
-          // how colourful it already is, 0 (grey) to 1 (pure)
+          // How colourful it already is, 0 (grey) to 1 (pure).
           const mx = r > g ? (r > b ? r : b) : g > b ? g : b;
           const mn = r < g ? (r < b ? r : b) : g < b ? g : b;
-          // the less colour there is, the more vibrance gives it. This is what
-          // keeps a face from going orange when a landscape needs the help.
+          // The less colour there is, the more vibrance adds, which keeps faces from going orange.
           amount += vibrance * (1 - (mx - mn));
         }
         const k = 1 + amount;
@@ -429,9 +344,7 @@ export function applyAdjustments(
       }
 
       if (toning) {
-        // brightness in, colour out: the picture is repainted from its own
-        // luminance, which is the only way to get a thermal palette or a real
-        // sepia rather than a desaturated approximation of one
+        // Repaint from luminance, the only way to get a thermal palette or a real sepia.
         const lum = LUMA_R * r + LUMA_G * g + LUMA_B * b;
         const at = ((lum * 255) | 0) * 3;
         const a = toning.amount;
@@ -448,8 +361,7 @@ export function applyAdjustments(
       }
 
       if (grain !== 0) {
-        // one value for all three channels, so it reads as luminance grain
-        // rather than as coloured speckle
+        // One value for all three channels, so it reads as luminance grain rather than coloured speckle.
         const n = noiseAt((x * lattice) | 0, gy) * grain;
         r += n;
         g += n;
@@ -467,7 +379,7 @@ export function applyAdjustments(
       data[i] = r * 255;
       data[i + 1] = g * 255;
       data[i + 2] = b * 255;
-      // alpha is left alone: these are adjustments, not a way to erase anything
+      // Alpha is left alone.
     }
   }
 }

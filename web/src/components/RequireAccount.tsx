@@ -6,24 +6,15 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /**
- * A page that needs an account.
- *
- * Most of the app is open to read — the community's wall, its posts, its
- * rankings, the alphabet. This wraps the parts that are about *you* or about
- * reaching other people: your messages, your saved posts, your settings, your
- * lessons, and the games, which the server scores against an account whether
- * you play alone or against someone.
- *
- * A signed-out visitor is asked rather than bounced. Being redirected to a login
- * form, with no explanation and no way back, is how you lose someone who was
- * only curious.
+ * Wraps pages that need an account: your messages, saved posts, settings and lessons, and the games, which the server
+ * scores against an account. A signed-out visitor is asked to join rather than redirected to a login form.
  */
 export function RequireAccount({
   children,
   what,
 }: {
   children: React.ReactNode;
-  /** what this page is for, as a catalogue key — e.g. `gate.what.playOthers` */
+  /** What this page is for, as a catalogue key, e.g. `gate.what.playOthers`. */
   what: MessageKey;
 }): React.JSX.Element {
   const { status, user } = useAuth();
@@ -32,15 +23,14 @@ export function RequireAccount({
 
   if (status === 'restoring') return <Loading label={t('gate.restoring')} />;
 
-  // signed in but unverified: the app stays closed until the emailed code is in
+  // Signed in but unverified: the app stays closed until the emailed code is in.
   if (status === 'signedIn' && user && !user.emailVerified && location.pathname !== VERIFY_PATH) {
     return <Navigate to={VERIFY_PATH} replace />;
   }
 
   if (status === 'signedIn') return <>{children}</>;
 
-  // the whole address: a game invite is `/app/games/peyvok-battle?id=…`, and
-  // without its query the way back after signing in leads to an empty page
+  // The whole address, since a game invite carries its lobby in the query (`?id=…`).
   const from = location.pathname + location.search;
 
   return (

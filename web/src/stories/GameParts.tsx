@@ -18,23 +18,15 @@ export type Act = (path: string, body?: unknown) => Promise<ApiResult<StoryGameV
 export type Announce = (text: string) => void;
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/**
- * A player as this viewer may name them (the identity rule): their name when
- * the server gave it — yourself, a friend, anyone in an open game — and
- * "Player 3" otherwise, never a guess.
- */
+/** A player as this viewer may name them: the server's name when given (yourself, a friend, an open game), else "Player 3". */
 export function playerName(p: Pick<StoryGamePlayer, 'seat' | 'name' | 'isMe'>, t: Translate): string {
   if (p.isMe) return t('games.you');
   return p.name ?? t('stories.game.playerN', { seat: p.seat });
 }
 
 /**
- * Where a game is in its questions (design notes §6): a small ring filled as
- * far as this question, and "2 of 5" beside it. The heading is still named
- * "Question 2 of 5" for a screen reader, which is what the game announces
- * and what the keyboard lands on; the ring and the short words are for the
- * eye. `ref` and the rest go to the heading, so a question can still take
- * the focus when it appears.
+ * Where a game is in its questions: a small ring and "2 of 5". The heading is still named "Question 2 of 5" for screen
+ * readers, and `ref` goes to it so a new question can take focus.
  */
 export const QuestionCounter = forwardRef<HTMLHeadingElement, { index: number; total: number; id: string }>(function QuestionCounter({ index, total, id }, ref) {
   const t = useT();
@@ -68,17 +60,14 @@ export function SettingsLine({ view }: { view: StoryGameView }): React.JSX.Eleme
   );
 }
 
-/** Said before anyone starts reading, and while they read: the text will not be there for the questions. */
+/** Said before and during reading: the text will not be there for the questions. */
 export function FromMemoryNote({ view }: { view: StoryGameView }): React.JSX.Element | null {
   const t = useT();
   if (view.settings.textDuring !== 'hidden') return null;
   return <p className="sg-note">{t('stories.game.fromMemory')}</p>;
 }
 
-/**
- * Double time on timed questions, for this player only: remembered on the
- * device, and nobody else is told who uses it.
- */
+/** Double time on timed questions for this player only, remembered on the device and told to nobody else. */
 export function ExtraTimeToggle({ view, act }: { view: StoryGameView; act: Act }): React.JSX.Element | null {
   const t = useT();
   const [busy, setBusy] = useState(false);
@@ -133,19 +122,17 @@ export function Evidence({ story, paragraph, sentence }: { story: StoryDetail | 
   );
 }
 
-/** Whether a keypress belongs to a field or a dialog rather than to the game's shortcuts. */
+/** Whether a keypress belongs to a field or dialog rather than the game's shortcuts. */
 export function typingElsewhere(e: KeyboardEvent): boolean {
   const el = e.target;
-  // a key sent to the window itself has no element to be in
+  // A key sent to the window itself is in no element.
   if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return true;
   return document.querySelector('[role="dialog"][aria-modal="true"]') !== null;
 }
 
 /**
- * The option number a key gives (1–9), or null. The digit row and keypad are
- * read by their place (`code`), so a Soranî or Arabic layout — whose digit row
- * types ١ ٢ ٣ ٤ — and an AZERTY one answer with the same keys; Eastern Arabic
- * and Persian digits typed some other way count too.
+ * The option number (1–9) a key gives, or null. Digit keys are read by `code`, so Arabic-script and AZERTY layouts work,
+ * and Eastern Arabic and Persian digits typed another way count too.
  */
 export function optionNumber(e: Pick<KeyboardEvent, 'key' | 'code'>): number | null {
   const place = /^(?:Digit|Numpad)([1-9])$/.exec(e.code ?? '');
@@ -158,7 +145,7 @@ export function optionNumber(e: Pick<KeyboardEvent, 'key' | 'code'>): number | n
   return null;
 }
 
-/** A question's words in a language the reader reads: its prompt, its options in the game's order, and the explanation once revealed. */
+/** A question's words in a language the reader reads: prompt, options in the game's order, and the explanation once revealed. */
 export interface QuestionHelp {
   lang: AppLocale;
   prompt: string | null;
@@ -167,11 +154,8 @@ export interface QuestionHelp {
 }
 
 /**
- * A question in the reader's own language, where it has been translated into
- * it and the story is not already in that language; else in English, from the
- * question's English translation or the English it always had beside it;
- * else nothing. The options of a translation are in the game's order, so an
- * option's translation stands beside the option it translates.
+ * A question in the reader's language where translated and the story is not already in it; else English, from its
+ * translation or its original English; else nothing. Translated options follow the game's order.
  */
 export function questionHelp(
   q: { promptEn: string | null; explanationEn?: string | null; translations?: Partial<Record<AppLocale, StoryQuestionTranslation>> },
@@ -189,11 +173,9 @@ export function questionHelp(
 }
 
 /**
- * "Show in English" / "Hide English", or "Show the translation" / "Hide the
- * translation" when the help is in the reader's own language: the words say
- * what a press does, so the state is plain without a pressed style (and a
- * screen reader hears the same words). One remembered choice for the
- * questions and their answers.
+ * "Show in English" / "Hide English", or "Show the translation" / "Hide the translation" for help in the reader's own
+ * language; the words say what a press does, so no pressed style is needed. One remembered choice for questions and
+ * answers.
  */
 export function EnglishToggle({ on, onChange, english = true }: { on: boolean; onChange: (on: boolean) => void; english?: boolean }): React.JSX.Element {
   const t = useT();
@@ -211,12 +193,12 @@ export function EnglishToggle({ on, onChange, english = true }: { on: boolean; o
   );
 }
 
-/** The direction a help text in an interface language is set in. */
+/** The text direction of help in an interface language. */
 export function helpDir(lang: string): 'rtl' | 'ltr' {
   return lang === 'ar' || lang === 'ckb' ? 'rtl' : 'ltr';
 }
 
-/** Re-render on a schedule only while something is waiting to change. */
+/** Re-renders on a schedule only while something is waiting to change. */
 export function useTick(on: boolean, every = 1_000): void {
   const [, setN] = useState(0);
   useEffect(() => {

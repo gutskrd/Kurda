@@ -20,7 +20,7 @@ describe('the last answers the app keeps', () => {
     const client = clientAnswering({ ok: true, data: { friends: ['rojda'] } });
     await ask(client, 'u1', '/friends');
     expect(lastAnswer('u2', '/friends')).toBeNull();
-    // and it does not come back for the first person either: it was dropped, not hidden
+    // And it does not come back for the first person either: it was dropped, not hidden.
     expect(lastAnswer('u1', '/friends')).toBeNull();
   });
 

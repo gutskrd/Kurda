@@ -6,12 +6,7 @@ import type { DeliveredExercise, PlayableSession } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
 import { LESSON_PATHS, SessionPlayer } from './SessionPlayer';
 
-/*
- * How a lesson feels: pairs answered as they are made, answers built from
- * word tiles, a prompt's words a tap away from their meanings, a run named
- * over the bar and across the screen, and the verdict sheet — against a fake
- * API that grades as each test says.
- */
+/* How a lesson feels: live pairs, word tiles, glossed prompts, runs and the verdict sheet, against a grading fake API. */
 
 let answers: Array<{ exerciseId: string; answer: unknown }> = [];
 let grade: (body: { exerciseId: string; answer: unknown }) => unknown = () => right;
@@ -69,7 +64,7 @@ describe('pairs answered as they are made', () => {
     await screen.findByText('Match the pairs');
     expect(screen.queryByRole('button', { name: 'Check' })).not.toBeInTheDocument();
 
-    // the meaning first, then its Kurdish card
+    // The meaning first, then its Kurdish card.
     await userEvent.click(screen.getByRole('button', { name: 'apple' }));
     expect(screen.getByRole('button', { name: 'apple' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.click(screen.getByRole('button', { name: 'sêv' }));
@@ -78,11 +73,11 @@ describe('pairs answered as they are made', () => {
     expect(made).toHaveClass('is-right', 'is-flash');
     expect(screen.getByRole('button', { name: /apple.*paired with sêv/ })).toBeDisabled();
     expect(live()).toContain('sêv and apple: a pair');
-    // settled: spent, flat on its lip
+    // Settled: spent, flat on its lip.
     await waitFor(() => expect(made).toHaveClass('is-spent'));
     expect(answers).toHaveLength(0);
 
-    // and from the keyboard: a number picks a Kurdish card, Shift with it a meaning — the last pair answers at once
+    // And from the keyboard: a number picks a Kurdish card, Shift with it a meaning — the last pair answers at once.
     await userEvent.keyboard('2{Shift>}1{/Shift}');
     await sheet();
     expect(answers[0]).toEqual({
@@ -105,7 +100,7 @@ describe('pairs answered as they are made', () => {
     expect(sev).toHaveClass('is-wrong', 'is-flash');
     expect(screen.getByRole('button', { name: 'water' })).toHaveClass('is-wrong', 'is-flash');
     expect(live()).toContain('sêv and water are not a pair');
-    // nothing stays picked, and both can be tried again once the flash is over
+    // Nothing stays picked, and both can be tried again once the flash is over.
     expect(sev).toBeEnabled();
     expect(sev).toHaveAttribute('aria-pressed', 'false');
     await waitFor(() => expect(sev).toHaveClass('is-idle'));
@@ -116,7 +111,7 @@ describe('pairs answered as they are made', () => {
     lesson([{ ...match, pairOf: undefined }]);
     await userEvent.click(await screen.findByRole('button', { name: 'sêv' }));
     await userEvent.click(screen.getByRole('button', { name: 'water' }));
-    // a pair made, right or wrong, is kept until Check
+    // A pair made, right or wrong, is kept until Check.
     expect(screen.getByRole('button', { name: /sêv.*paired with water/ })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
     expect(answers).toHaveLength(0);
@@ -138,7 +133,7 @@ describe('an answer built from word tiles', () => {
 
     await userEvent.click(within(bank()).getByRole('button', { name: 'Ez' }));
     expect(onLine()).toEqual(['Ez']);
-    // its place in the bank keeps a ghost, which is not a button
+    // Its place in the bank keeps a ghost, which is not a button.
     expect(within(bank()).queryByRole('button', { name: 'Ez' })).not.toBeInTheDocument();
     expect(bank().querySelector('.tile-ghost')).toHaveTextContent('Ez');
     expect(live()).toContain('Added Ez');
@@ -147,12 +142,12 @@ describe('an answer built from word tiles', () => {
     await userEvent.click(within(bank()).getByRole('button', { name: 'av' }));
     await userEvent.click(within(bank()).getByRole('button', { name: 'nan' }));
     expect(onLine()).toEqual(['Ez', 'av', 'nan']);
-    // a tap on the line sends a tile home; the ones after it close up
+    // A tap on the line sends a tile home; the ones after it close up.
     await userEvent.click(within(line()).getByRole('button', { name: 'av' }));
     expect(onLine()).toEqual(['Ez', 'nan']);
     expect(within(bank()).getByRole('button', { name: 'av' })).toBeInTheDocument();
     expect(live()).toContain('Took back av');
-    // Backspace takes back the last; a number lays that tile of the bank
+    // Backspace takes back the last; a number lays that tile of the bank.
     await userEvent.keyboard('{Backspace}');
     expect(onLine()).toEqual(['Ez']);
     await userEvent.keyboard('1');
@@ -162,7 +157,7 @@ describe('an answer built from word tiles', () => {
     await userEvent.click(check);
     await sheet();
     expect(answers[0]).toEqual({ exerciseId: 't', answer: { text: 'Ez nan dixwim' } });
-    // the line stands, wearing the verdict, and its tiles no longer move
+    // The line stands, wearing the verdict, and its tiles no longer move.
     expect(within(line()).getByRole('button', { name: 'nan' })).toHaveClass('is-right');
     expect(within(line()).getByRole('button', { name: 'nan' })).toBeDisabled();
   });
@@ -198,7 +193,7 @@ describe('an answer built from word tiles', () => {
     await sheet();
     expect(answers[0]).toEqual({ exerciseId: 't', answer: { text: 'Ez nan dixwim' } });
 
-    // the next one opens on the keyboard, and the tiles are a tap away
+    // The next one opens on the keyboard, and the tiles are a tap away.
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
     await screen.findByRole('textbox');
     await userEvent.click(screen.getByRole('button', { name: 'Use word tiles' }));
@@ -225,7 +220,7 @@ describe('an answer built from word tiles', () => {
 
   it('flies a tile from where it was to where it lands, and only fades it in under reduced motion', async () => {
     const flights: Keyframe[][] = [];
-    // jsdom has neither layout nor web animations: each tile stands a little further along than the last
+    // jsdom has neither layout nor web animations: each tile stands a little further along than the last.
     let x = 0;
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(() => {
       x += 40;
@@ -266,7 +261,7 @@ describe('a prompt word and its meanings', () => {
     lesson([mc]);
     const word = await screen.findByRole('button', { name: 'What “Sêv” means' });
     expect(word).toHaveAttribute('aria-expanded', 'false');
-    // a word the course does not know is plain text
+    // A word the course does not know is plain text.
     expect(screen.queryByRole('button', { name: 'What “e” means' })).not.toBeInTheDocument();
 
     await userEvent.click(word);
@@ -280,7 +275,7 @@ describe('a prompt word and its meanings', () => {
     expect(word).toHaveFocus();
     expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l1');
 
-    // from the keyboard: Enter on the word opens it, another word takes its place
+    // From the keyboard: Enter on the word opens it, another word takes its place.
     await userEvent.keyboard('{Enter}');
     expect(screen.getByRole('list', { name: 'What “Sêv” means' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'What “sor” means' }));
@@ -292,7 +287,7 @@ describe('a prompt word and its meanings', () => {
     await userEvent.click(word);
     await userEvent.click(screen.getByText('Choose the answer'));
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
-    // opening a word answered nothing
+    // Opening a word answered nothing.
     expect(answers).toHaveLength(0);
   });
 
@@ -310,7 +305,7 @@ describe('a run of right answers', () => {
     await sheet();
   };
   const goOn = async (): Promise<void> => userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
-  // five right answers in a row, each gone on from: the first milestone
+  // Five right answers in a row, each gone on from: the first milestone.
   const toFive = async (): Promise<void> => {
     for (let i = 0; i < 5; i++) {
       await answer('x');
@@ -332,7 +327,7 @@ describe('a run of right answers', () => {
     const three = label();
     await goOn();
     await answer('x');
-    // grown: a new label, which pops as it arrives
+    // Grown: a new label, which pops as it arrives.
     expect(label()).toHaveTextContent('×4 in a row');
     expect(label()).not.toBe(three);
     await goOn();
@@ -345,12 +340,12 @@ describe('a run of right answers', () => {
     await toFive();
     const moment = document.querySelector('.lesson-run-moment');
     expect(moment).toHaveTextContent('5 in a row!');
-    // the next exercise waits behind it
+    // The next exercise waits behind it.
     expect(screen.getByRole('region', { name: 'Feedback' })).toBeInTheDocument();
     await userEvent.keyboard('{Enter}');
     expect(document.querySelector('.lesson-run-moment')).toBeNull();
     expect(await screen.findByText('word f')).toBeInTheDocument();
-    // the Enter that skipped it neither went on twice nor answered the next one
+    // The Enter that skipped it neither went on twice nor answered the next one.
     expect(screen.queryByRole('region', { name: 'Feedback' })).not.toBeInTheDocument();
     expect(answers).toHaveLength(5);
   });

@@ -1,21 +1,10 @@
-/**
- * Reading a course map: which lessons are done, which one is next, which are
- * still closed, and how far through a course the learner is. Pure, so the
- * rules are tested once and the Learn page, the map and "your first lesson"
- * after sign-up all agree on them.
- */
+/** Reading a course map: done, next and locked lessons and course progress, shared by Learn, the map and the first lesson after sign-up. */
 import { isSoraniDialect, lessonStates as pathLessonStates, type LessonState as PathLessonState } from '@kurda/shared';
 import type { CourseMap, SkillNode } from './types';
 
 /**
- * done — finished, and open to play again;
- * next — the first unfinished lesson of a skill that is open;
- * locked — the rest: lessons of a skill not open yet, and those after `next`,
- *          which come in order (the phone opens a skill at its first
- *          unfinished lesson too).
- *
- * The rule is the lesson path's own (@kurda/shared), so the Learn page, the
- * path and the phone read one rule.
+ * Done: finished, and open to play again; next: the first unfinished lesson of an open skill; locked: the rest, which
+ * open in order. The rule is the lesson path's own (@kurda/shared), as on the phone.
  */
 export type LessonState = PathLessonState;
 
@@ -23,7 +12,7 @@ export function lessonStates(skill: SkillNode): LessonState[] {
   return pathLessonStates(skill);
 }
 
-/** A lesson the learner can open from the map: one finished, or the one up next. */
+/** A lesson the learner can open: finished, or up next. */
 export function isOpen(state: LessonState): boolean {
   return state !== 'locked';
 }
@@ -35,11 +24,11 @@ export interface NextLesson {
 }
 
 export interface CourseProgress {
-  /** lessons finished */
+  /** Lessons finished. */
   done: number;
-  /** lessons published */
+  /** Lessons published. */
   total: number;
-  /** the first lesson up next, in course order; null when the course is finished or has nothing open */
+  /** The first lesson up next in course order; null when the course is finished or nothing is open. */
   next: NextLesson | null;
 }
 
@@ -60,7 +49,7 @@ export function courseProgress(map: CourseMap): CourseProgress {
   return { done, total, next };
 }
 
-/** How a course's variety is named, in its own spelling: the same in every interface language. */
+/** A course's variety in its own spelling, the same in every interface language. */
 export function dialectName(dialect: string): string {
   if (isSoraniDialect(dialect)) return 'Soranî';
   const d = dialect.trim().toLowerCase();
@@ -69,9 +58,8 @@ export function dialectName(dialect: string): string {
 }
 
 /**
- * The attributes Kurdish text needs, so a screen reader speaks it as Kurdish
- * and a Soranî line runs right to left: `ku` for Kurmancî, `ckb` with `rtl`
- * for Soranî (the alphabet page marks its letters the same way).
+ * The attributes Kurdish text needs to be spoken as Kurdish and laid out right: `ku` for Kurmancî, `ckb` with `rtl` for
+ * Soranî, as the alphabet page marks its letters.
  */
 export function kurdishText(dialect: string | null | undefined): { lang: 'ku' | 'ckb'; dir: 'ltr' | 'rtl' } {
   return isSoraniDialect(dialect) ? { lang: 'ckb', dir: 'rtl' } : { lang: 'ku', dir: 'ltr' };

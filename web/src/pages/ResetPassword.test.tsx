@@ -80,7 +80,7 @@ describe('ResetPassword', () => {
     await userEvent.type(screen.getByLabelText('Confirm new password'), 'password123');
     await userEvent.click(screen.getByRole('button', { name: /update password/i }));
     expect(await screen.findByText(en['error.code.passwordBreached'])).toBeInTheDocument();
-    // the form stays, so a different password can be tried with the same link
+    // The form stays, so a different password can be tried with the same link.
     expect(screen.getByLabelText('New password')).toBeInTheDocument();
   });
 

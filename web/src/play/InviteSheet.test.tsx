@@ -69,7 +69,7 @@ describe('InviteSheet', () => {
 
     const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
     expect(await within(sheet).findByRole('checkbox', { name: /Rojda/ })).toBeChecked();
-    // the friend it was opened for comes first, whatever else is ticked later
+    // The friend it was opened for comes first, whatever else is ticked later.
     await userEvent.click(within(sheet).getByRole('checkbox', { name: /Berfin/ }));
     expect(within(sheet).getAllByRole('checkbox')[0]).toHaveAccessibleName(/Rojda/);
     await userEvent.click(within(sheet).getByRole('checkbox', { name: /Berfin/ }));
@@ -86,7 +86,7 @@ describe('InviteSheet', () => {
     const { calls } = api();
     open({ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } });
     const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
-    // Friendly first, among friends
+    // Friendly first, among friends.
     expect(within(sheet).getByRole('radio', { name: /Friendly/ })).toBeChecked();
     await userEvent.click(within(sheet).getByRole('radio', { name: /Rated/ }));
     await userEvent.click(within(sheet).getByRole('button', { name: 'Create and invite (1)' }));
@@ -103,7 +103,7 @@ describe('InviteSheet', () => {
     const games = await screen.findByRole('radiogroup', { name: 'Game' });
     await userEvent.click(await within(games).findByRole('radio', { name: 'Stories' }));
     expect(screen.getByRole('radiogroup', { name: 'Who’s playing' })).toBeInTheDocument();
-    // only the lengths that have a story, and the counts that length offers
+    // Only the lengths that have a story, and the counts that length offers.
     const lengths = await screen.findByRole('radiogroup', { name: 'Length' });
     expect(within(lengths).getAllByRole('radio')).toHaveLength(1);
     expect(within(screen.getByRole('radiogroup', { name: 'Questions' })).getByRole('radio', { name: '3 questions' })).toBeChecked();
@@ -124,7 +124,7 @@ describe('InviteSheet', () => {
     open({ kind: 'new', game: 'stories' }, true);
 
     const timer = await screen.findByRole('radiogroup', { name: 'Time per question' });
-    // a game with friends is timed unless the host says otherwise
+    // A game with friends is timed unless the host says otherwise.
     expect(within(timer).getByRole('radio', { name: '60 seconds' })).toBeChecked();
     await userEvent.click(within(timer).getByRole('radio', { name: '30 seconds' }));
     await userEvent.click(within(screen.getByRole('radiogroup', { name: 'The story during questions' })).getByRole('radio', { name: 'From memory' }));
@@ -164,7 +164,7 @@ describe('InviteSheet', () => {
 
     const list = await screen.findByRole('group', { name: 'Who to invite' });
     const boxes = await within(list).findAllByRole('checkbox');
-    // asked recently first, then who is online, then the rest by name
+    // Asked recently first, then who is online, then the rest by name.
     expect(boxes.map((b) => b.closest('label')?.querySelector('.invite-friend-name')?.textContent)).toEqual(['Zana', 'Rojda', 'Berfin']);
     expect(within(list).getByText('Recent')).toBeInTheDocument();
     expect(within(list).getByText(/online/)).toBeInTheDocument();
@@ -204,7 +204,7 @@ describe('InviteSheet', () => {
     open({ kind: 'new', game: 'rhyme-match' }, true);
     expect(await screen.findByText('No friends to invite yet.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Find friends' })).toHaveAttribute('href', '/app/friends');
-    // a game can still be made, and shared by its code
+    // A game can still be made, and shared by its code.
     expect(screen.getByRole('button', { name: 'Create game' })).toBeEnabled();
   });
 
@@ -244,7 +244,7 @@ describe('InviteSheet', () => {
   });
 
   it('says the server is not ready yet, not that the game is gone, when the API has no play routes', async () => {
-    // an API older than playing with friends answers with its not-found handler
+    // An API older than playing with friends answers with its not-found handler.
     api({ 'POST /play/lobbies': new Response(JSON.stringify({ code: 'NOT_FOUND', message: 'route not found' }), { status: 404 }) });
     open({ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } });
     const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
@@ -275,7 +275,7 @@ describe('InviteSheet', () => {
     await userEvent.click(screen.getByRole('checkbox', { name: /Zana/ }));
     expect(tickets().map((t) => t.textContent)).toEqual(['Berfin', 'Zana']);
     expect(tickets()[0]).toHaveClass('ticket', 'ticket--rhyme-match');
-    // a picture of the ticked boxes, which a screen reader already has
+    // A picture of the ticked boxes, which a screen reader already has.
     expect(tray()).toHaveAttribute('aria-hidden', 'true');
     expect(screen.getByRole('checkbox', { name: /Berfin/ }).closest('label')?.querySelector('.invite-friend-ticket')).not.toBeNull();
     await userEvent.click(screen.getByRole('checkbox', { name: /Berfin/ }));
@@ -294,7 +294,7 @@ describe('InviteSheet', () => {
     expect(sent).toHaveTextContent('Tickets sent');
     expect(sent).toHaveTextContent('Rojda and Berfin');
     expect(posted(calls, '/play/lobbies')).toMatchObject({ invite: ['u2', 'u1'] });
-    // the moment first, then the lobby
+    // The moment first, then the lobby.
     expect(where()).toBe('/app/games');
     await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=new-1'));
   });

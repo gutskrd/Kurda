@@ -9,34 +9,13 @@ import { originIn } from '../lib/opener';
 import { lockPageScroll } from '../lib/scrollLock';
 
 /**
- * Accessible modal dialog: closes on Escape / backdrop click, takes the focus
- * when it opens and keeps it (Tab and Shift+Tab wrap round inside, as they do
- * in a Sheet — a dialog that lets the keyboard walk out into the page under
- * its backdrop has lost its reader), restores focus on close, and locks body
- * scroll while open.
+ * Accessible modal dialog: closes on Escape or a backdrop press, traps Tab inside, restores focus on close and locks page
+ * scroll. It is portalled to the end of the page so a dialog opened inside a layered box (a full-screen chat on a phone)
+ * is not drawn under the header.
  *
- * It is drawn at the end of the page, as a Sheet is, and not where it is
- * written: a dialog opened from inside a box with its own layer (a chat open
- * full-screen on a phone is one) was otherwise drawn inside that layer, under
- * the site's header, its top and its close button out of reach.
- *
- * Closed, it leaves the way it came (lib/motion.ts `useLeaving`,
- * styles/motion.css): the picture of it stays for a moment and goes, while
- * everything that matters has already happened — the focus is back where it
- * was, the page scrolls again, and what is still drawn is inert, is no longer
- * a dialog to assistive technology, and cannot be pressed. For a reader who
- * asked for less motion it is simply gone.
- *
- * It comes from what opened it. As it opens it asks where the press that
- * opened it was — the point touched, or the control the keyboard was on
- * (lib/opener.ts) — and takes that as the point its panel grows out of, and
- * shrinks back to when it is closed (styles/motion.css `panel-grow`). The
- * point is kept for as long as the dialog is drawn, so it leaves for where it
- * came from even if the page has moved since. One that nothing opened (a
- * badge earned, a warning) has no such point and rises in the middle as
- * dialogs always did; so does every dialog for a reader who asked for less
- * motion. A Sheet does not do this: it comes from the bottom edge, which is
- * where it lives.
+ * Its panel grows out of the press that opened it (lib/opener.ts, styles/motion.css `panel-grow`) and shrinks back there
+ * on close; a dialog nothing opened rises in the middle. Closing plays its exit (lib/motion.ts `useLeaving`) while focus,
+ * scroll and inertness are already restored. Under reduced motion it simply appears and goes.
  */
 export function Modal({
   open,
@@ -52,21 +31,18 @@ export function Modal({
   const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
-  // The latest onClose, read when it is needed. Most callers pass a fresh
-  // arrow on every render, and with it in the effect below, any re-render of
-  // the page underneath — a game's state arriving every few seconds — ran the
-  // effect again: focus went back to the panel, out of whatever field the
-  // reader was typing in.
+  // Callers pass a fresh arrow each render; keeping it in the effect re-ran it on every re-render and pulled focus out of
+  // the field being typed in.
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
   const leaving = useLeaving(open);
-  // what it held when it was last open: most callers stop passing it the moment they close it
+  // What it held when last open: most callers stop passing it the moment they close it.
   const held = useRef(children);
   if (open) held.current = children;
-  // where the panel grows from, as a transform origin; null when nothing opened it
+  // The panel's transform origin; null when nothing opened it.
   const [origin, setOrigin] = useState<string | null>(null);
 
-  // before the first frame of it is drawn, so the panel never starts from the middle and then changes its mind
+  // Before the first frame, so the panel never starts from the middle and then moves.
   useLayoutEffect(() => {
     if (open) setOrigin(panelRef.current ? originIn(panelRef.current) : null);
   }, [open]);
@@ -78,7 +54,7 @@ export function Modal({
     panelRef.current?.focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent): void => {
-      // words in a search field go first; the next Escape closes
+      // A search field's words are cleared first; the next Escape closes.
       if (e.key === 'Escape') {
         if (!escapeClearsField(e)) closeRef.current();
       } else if (panelRef.current) wrapTab(e, panelRef.current);

@@ -1,48 +1,26 @@
 /**
- * Finding a word, on a dictionary that is nothing but files.
+ * Search on a dictionary made of files. Words are split into small files by how they begin (`se`, `ser`, `sera`, …),
+ * each at most LIMIT words with their page and a short gloss; typing loads only the file the query falls in (about
+ * 20 KB) and filters it locally, so nothing is sent and the file says nothing about the reader. Files load as scripts,
+ * not fetches, since the pages run under `connect-src 'none'`; each is one call with a JSON literal.
  *
- * ── why it was needed ────────────────────────────────────────────────────
- *
- * 409,435 words and no search box. The only way to a word was letter → range
- * → scroll, which is how a printed dictionary works and how nobody looks a
- * word up on a phone. Every dictionary people actually use opens on a box.
- *
- * ── how, with no server ──────────────────────────────────────────────────
- *
- * The words are split into small files by how they begin — `se`, `ser`,
- * `sera`, … — each holding at most LIMIT words, with the place each one lives
- * and a few words of what it means. Typing loads only the one file the query
- * falls in (about 20 KB), once, and filters it as you type. Nothing is sent
- * anywhere: the file is the same for every reader and says nothing about who
- * asked.
- *
- * The files are loaded as scripts, not fetched. These pages run under
- * `connect-src 'none'` (see public/_headers), which is a second wall between a
- * stranger's Wiktionary text and the network, and a search box is not a reason
- * to take it down. A `<script src>` to this origin is already allowed, and each
- * file is a single call with a JSON literal in it — data, never markup.
- *
- * ── what typing finds ────────────────────────────────────────────────────
- *
- * Most keyboards have no ê, î, û, ç or ş, so the match ignores them: "sev"
- * finds sêv, "cav" finds çav. The suggestion shows the word as it is really
- * spelled, so the reader learns the spelling by finding the word. A query
- * typed with the marks ranks the words that have them first.
+ * Matching ignores ê, î, û, ç and ş, which most keyboards lack ("sev" finds sêv); suggestions show the real spelling,
+ * and a query typed with marks ranks words that have them first.
  */
 import { foldLetter } from '@kurda/shared';
 import { compareKeys } from './ferheng-alphabet.js';
 import { formOf, isInflected } from './ferheng-entries.js';
 import { pageKey, type Page } from './ferheng-pages.js';
 
-/** The most words one file holds before it is split by the next letter. */
+/** The most words one file holds before it splits by the next letter. */
 export const LIMIT = 1500;
 /** How long the meaning in a suggestion may be. */
 const GLOSS = 72;
 
-/** The five marks most keyboards cannot type, folded away for matching only. */
+/** The five marks most keyboards cannot type, folded for matching only. */
 const MARKS: Record<string, string> = { ê: 'e', î: 'i', û: 'u', ç: 'c', ş: 's' };
 
-/** What a word is matched by: its page key with the five marks folded. Mirrored exactly in the client below. */
+/** What a word is matched by: its page key with the five marks folded; mirrored exactly in the client below. */
 export function searchKey(word: string): string {
   return pageKey(word).replace(/[êîûçş]/g, (c) => MARKS[c]!);
 }
@@ -67,12 +45,8 @@ export function rowOf(word: Page['words'][number], page: string): Row {
 }
 
 /**
- * Split the dictionary into files by how its words begin.
- *
- * A prefix with more than LIMIT words splits by its next letter; the words
- * that are exactly the prefix get a file of their own, named with a trailing
- * dot. Ids are the prefixes themselves; `fileName` turns them into names safe
- * for any host.
+ * Splits the dictionary into files by how its words begin: a prefix past LIMIT splits by its next letter, and words that
+ * are exactly the prefix get their own file, named with a trailing dot. Ids are the prefixes; `fileName` makes them safe.
  */
 export function shard(pages: readonly Page[]): Map<string, Row[]> {
   const all: Array<{ key: string; row: Row }> = [];
@@ -102,12 +76,12 @@ export function shard(pages: readonly Page[]): Map<string, Row[]> {
     all.filter((i) => i.key),
     '',
   );
-  // within a file, in dictionary order, so a short query lists words the way the pages do
+  // Within a file, dictionary order, so a short query lists words as the pages do.
   for (const rows of out.values()) rows.sort((a, b) => compareKeys(pageKey(a[0]), pageKey(b[0])));
   return out;
 }
 
-/** A file name for an id: its code points in hex, so no host has to agree on how to spell ş or ڕ in a path. */
+/** A file name for an id: its code points in hex, so no host has to agree on spelling ş or ڕ in a path. */
 export function fileName(id: string): string {
   return `${[...id].map((c) => (c === '.' ? 'x' : c.codePointAt(0)!.toString(16))).join('-')}.js`;
 }
@@ -116,7 +90,7 @@ export function fileName(id: string): string {
 export const SEARCH_DIR = 'ferheng/s';
 export const SEARCH_FILE = 'search.js';
 
-/** One file: a call, with the rows as a JSON literal. `<` is escaped so the text can never read as markup. */
+/** One file: a call with the rows as a JSON literal, `<` escaped so the text can never read as markup. */
 export function shardFile(id: string, rows: Row[]): string {
   return `__hevaloSearch(${JSON.stringify(id)},${JSON.stringify(rows).replace(/</g, '\\u003c')});\n`;
 }
@@ -129,15 +103,9 @@ function variantTable(): Record<string, string> {
 }
 
 /**
- * The search box's script.
- *
- * Plain ES5-ish like chrome.js, because it is not bundled. It finds every
- * `form.search` on the page, shows it (the form is hidden in the markup, so a
- * browser without scripts never sees a box that does nothing), and answers as
- * the reader types.
- *
- * It is a combobox in the ARIA sense: arrows move through the suggestions,
- * Enter opens the highlighted one (or the first), Escape closes the list.
+ * The search box's script, plain ES5-style like chrome.js since it is not bundled. It shows every `form.search` (hidden
+ * in the markup for script-free browsers) and works as an ARIA combobox: arrows move, Enter opens the highlighted or first
+ * suggestion, Escape closes.
  */
 export function searchScript(ids: readonly string[]): string {
   return `/* Generated by web/scripts/ferheng-search.ts. Search the dictionary, with no server. */
@@ -152,7 +120,7 @@ export function searchScript(ids: readonly string[]): string {
   var cache = {};
   var waiting = {};
 
-  // the same two keys the build uses: pageKey, then the five marks folded
+  // The same two keys the build uses: pageKey, then the five marks folded.
   function pageKey(s) {
     var out = '';
     var t = String(s).normalize('NFKC').toLowerCase().normalize('NFC').replace(/[^\\p{L}]/gu, '').replace(/\\p{Lm}/gu, '');
@@ -203,7 +171,7 @@ export function searchScript(ids: readonly string[]): string {
       var key = fold(rows[i][0]);
       if (key.indexOf(q) !== 0) continue;
       var exact = key === q ? 0 : 1;
-      // typed with the marks: words that have them, as typed, come first
+      // Typed with the marks: words that have them as typed come first.
       var spelled = pageKey(rows[i][0]).indexOf(typed) === 0 ? 0 : 1;
       var form = rows[i][2].indexOf('→') === 0 ? 1 : 0;
       hits.push({ row: rows[i], score: [exact, spelled, form, key.length, i] });
@@ -311,7 +279,7 @@ export function searchScript(ids: readonly string[]): string {
       var opts = options();
       if (opts.length) location.href = opts[Math.max(0, active)].href;
     });
-    // a click outside closes the list; back in the box opens it again
+    // A click outside closes the list; back in the box opens it again.
     document.addEventListener('click', function (e) {
       if (!form.contains(e.target)) list.hidden = true;
     });

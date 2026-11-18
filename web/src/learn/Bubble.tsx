@@ -6,21 +6,16 @@ import { useT } from '../i18n/I18nProvider';
 import type { LineToken } from './asks';
 
 /**
- * A speech bubble: what an exercise asks, said by the character standing
- * beside it when one was chosen for its recording (`ExerciseVoice`), its tail
- * pointing to where they stand — the start side, whichever way the page
- * reads. With nobody chosen it stands alone, tail and all.
+ * A speech bubble for what an exercise asks, its tail pointing to the start side where the character chosen for its
+ * recording stands (`ExerciseVoice`); with nobody, it stands alone.
  */
 export function Bubble({ className, children }: { className?: string; children: React.ReactNode }): React.JSX.Element {
   return <div className={`lesson-bubble${className ? ` ${className}` : ''}`}>{children}</div>;
 }
 
 /**
- * The prompt, its words a tap away from what they mean (`promptTokens`): a
- * word the course knows is underlined with dots, and a tap, a click or Enter
- * on it opens its meanings under it. Escape, a tap anywhere else or a second
- * tap closes them; one is open at a time. Tokens that do not add up to the
- * prompt are not trusted, and the prompt is shown as it is.
+ * The prompt with glossed words (`promptTokens`): dotted words open their meanings on a tap, click or Enter, and close on
+ * Escape, an outside tap or a second tap; one is open at a time. Tokens that do not add up to the prompt are ignored.
  */
 export function PromptWords({ text, tokens }: { text: string | undefined; tokens?: PromptToken[] }): React.JSX.Element | null {
   const [open, setOpen] = useState<number | null>(null);
@@ -47,19 +42,16 @@ export function PromptWords({ text, tokens }: { text: string | undefined; tokens
   );
 }
 
-/** What a missing-word item's gap holds: nothing yet, the word chosen or typed, and how that word was graded. */
+/** What a missing-word gap holds: nothing yet, or the word chosen or typed and how it was graded. */
 export interface GapFill {
   text: string;
   verdict: 'right' | 'wrong' | null;
 }
 
 /**
- * An item's line, alone in its bubble (`lineTokens`): a Kurdish line in the
- * display face, each word the course knows a tap away from its meanings and a
- * word the item brings in underlined a little more strongly; an English line
- * in the plain face. A missing-word item's gap is a slot the width of a word,
- * which holds the word chosen or typed as the learner answers (`gap`), so the
- * sentence is read whole before Check.
+ * An item's line alone in its bubble (`lineTokens`): a Kurdish line in the display face with glossed words, new ones
+ * underlined more strongly; an English line in the plain face. A missing word's gap is a word-wide slot holding the
+ * answer as it is given (`gap`), so the sentence reads whole before Check.
  */
 export function LineWords({
   tokens,
@@ -71,10 +63,10 @@ export function LineWords({
 }: {
   tokens: readonly LineToken[];
   english: boolean;
-  /** the course's Kurdish, for a Kurdish line */
+  /** The course's Kurdish, for a Kurdish line. */
   lang?: string;
   dir: 'ltr' | 'rtl';
-  /** a single word to name (a picture item's): larger still */
+  /** A single word to name (a picture item's), larger still. */
   big?: boolean;
   gap?: GapFill;
 }): React.JSX.Element {
@@ -103,11 +95,7 @@ export function LineWords({
   );
 }
 
-/**
- * The native recording of a line, at the start of its bubble: the speaker in a
- * round red button, and under it the same recording at 0.75× in a small chip,
- * each lit while it plays (`PlayButton`).
- */
+/** A line's recording at the start of its bubble: a round red play button, with a 0.75× chip under it (`PlayButton`). */
 export function LinePlay({ src }: { src: string }): React.JSX.Element {
   const t = useT();
   const [rate, setRate] = useState<number | null>(null);
@@ -131,7 +119,7 @@ export function LinePlay({ src }: { src: string }): React.JSX.Element {
   );
 }
 
-/** How near the window's edge a word's meanings may come. */
+/** How close a word's meanings may come to the window's edge. */
 const EDGE = 8;
 
 function Word({
@@ -149,7 +137,7 @@ function Word({
   meanings: string[];
   open: boolean;
   onToggle: (index: number, on: boolean) => void;
-  /** a word the item brings in: its underline a little stronger */
+  /** A word the item introduces, underlined a little more strongly. */
   isNew?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -158,7 +146,7 @@ function Word({
   const pop = useRef<HTMLSpanElement>(null);
   const label = t('lesson.words.meaningsOf', { word: text });
 
-  // Escape closes them before the lesson hears it as "leave"; so does a tap anywhere else
+  // Escape closes them before the lesson takes it as "leave"; so does a tap anywhere else.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent): void => {
@@ -179,7 +167,7 @@ function Word({
     };
   }, [open, index, onToggle]);
 
-  // centred under the word, and moved along to stay inside the window, its arrow still on the word
+  // Centred under the word and kept inside the window, the arrow still on the word.
   useLayoutEffect(() => {
     const el = pop.current;
     if (!open || !el) return;
@@ -215,14 +203,10 @@ function Word({
   );
 }
 
-/** The waveform's bars, tallest in the middle of a phrase, in tenths of the bubble's height. */
+/** The waveform's bars, tallest mid-phrase, in tenths of the bubble's height. */
 const WAVE = [2, 4, 3, 6, 9, 5, 8, 10, 7, 4, 8, 9, 5, 3, 2];
 
-/**
- * Listening's bubble: the recording itself, a speaker and its waveform, which
- * moves while it plays (and is still under reduced motion). A tap plays it
- * again; "Slower" under the bubble plays it at 0.75×, lit while it does.
- */
+/** Listening's bubble: a speaker and a waveform that moves while playing (still under reduced motion); "Slower" plays at 0.75×. */
 export function SoundBubble({ src, label }: { src: string; label: string }): React.JSX.Element {
   const t = useT();
   const [rate, setRate] = useState<number | null>(null);

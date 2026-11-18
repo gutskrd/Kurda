@@ -25,28 +25,19 @@ const SEEN_BY: Record<MeProfile['profileVisibility'], MessageKey> = {
 };
 
 /**
- * The signed-in user's own profile: the same page everybody else's is
- * (profile/FullProfile), with what is yours to do in place of the friend
- * actions — edit and share in a row under your words, and the menu of the
- * shop, your friends, your badges and settings in the banner's corner — and
- * one section more that only you are shown: the streak numbers a missed day
- * never takes away, your freezes and your Zêr. All editing lives on
- * /app/profile/edit.
- *
- * It also says who can open this page, with the way to change it: a profile
- * is the most public thing an account has, and nobody should have to go
- * looking through Settings to learn who is reading theirs.
+ * Your own profile: the page everyone else sees (profile/FullProfile) with your actions instead of the friend ones (edit
+ * and share, and a corner menu of shop, friends, badges and settings), plus a section only you see: streak numbers,
+ * freezes and Zêr. It also says who can open it, with the way to change that. Editing is on /app/profile/edit.
  */
 export function Profile(): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
   const locale = useLocale();
   const [me, setMe] = useState<MeProfile | null>(null);
-  // who you are is known before /me answers, so your public profile (sections,
-  // badges, frame) is asked for with the rest rather than after it
+  // Who you are is known before /me answers, so your public profile is fetched with the rest.
   const selfId = user?.id ?? null;
   const [zer, setZer] = useState<number | null>(null);
-  // only how many: the faces are on the Friends page, one tap from the number
+  // Only the count; the faces are on the Friends page, a tap from the number.
   const [friendCount, setFriendCount] = useState<number | null>(null);
   const [icons, setIcons] = useState<InventoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +45,7 @@ export function Profile(): React.JSX.Element {
   const [reloadKey, setReloadKey] = useState(0);
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
-  // badges, ranks, league and frame: /me does not carry them, your public profile does
+  // Badges, ranks, league and frame come from your public profile, not /me.
   const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements' | 'tree'> | null>(null);
 
   useEffect(() => {
@@ -73,17 +64,12 @@ export function Profile(): React.JSX.Element {
       if (m.ok && m.data?.user?.username) setMe(m.data.user);
       else setError(m.ok ? t('profile.yoursNotLoaded') : describeError(m.error, t));
       if (w.ok) setZer(w.data.balances.zer);
-      // an API that predates paging sends no total and no limit: it sent the
-      // whole list, so its length is the total
+      // An API older than paging sends no total: it sent the whole list, so its length is the total.
       if (f.ok) setFriendCount(f.data.total ?? (f.data.friends ?? []).length);
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
 
-      // your own activity sections: /me does not carry them, and the public
-      // profile endpoint already works them out the same way it does for
-      // everyone else. Asked with the rest, so the badges and the activity are
-      // there when the page is, rather than arriving a moment later and
-      // pushing everything under them down; asked after, only when who you are
-      // was not known yet.
+      // Your activity sections come from the public profile endpoint, worked out as for everyone, fetched with the rest so
+      // nothing arrives late and pushes the page down; fetched after only when who you are was not known yet.
       const id = m.ok ? m.data?.user?.id : undefined;
       const p = early && id === selfId ? early : id ? await client.get<PublicProfile>(`/users/${id}`) : null;
       if (cancelled) return;
@@ -132,9 +118,9 @@ export function Profile(): React.JSX.Element {
     <FullProfile
       own
       view={view}
-      // everything that is yours but is not this page, behind the menu in the banner's corner
+      // Everything yours that is not this page, behind the banner's corner menu.
       corner={<ProfileMenu />}
-      // what is yours to do with the page itself: change it, and send it to somebody
+      // What to do with the page itself: change it, and send it to somebody.
       headerAction={
         <div className="pc-acts">
           <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">
@@ -159,7 +145,7 @@ export function Profile(): React.JSX.Element {
               { key: 'longest', label: t('profile.stat.longestStreak'), value: number(me.streak.longest) },
               { key: 'days', label: t('profile.stat.daysLearned'), value: number(me.streak.daysLearned ?? 0) },
               { key: 'freezes', label: t('profile.stat.freezes'), value: number(me.streak.freezes) },
-              // the coin leads to where it is spent
+              // The coin leads to where it is spent.
               { key: 'zer', label: 'Zêr', value: zer === null ? '—' : number(zer), icon: <CoinIcon size={15} />, to: '/app/shop' },
             ]}
           />

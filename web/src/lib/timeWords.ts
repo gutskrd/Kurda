@@ -1,16 +1,10 @@
 import type { MessageKey } from '../i18n/en';
 
 /**
- * Spans of time in words, for sentences rather than for a narrow column:
- * "2 hours ago" under a signed-in device, "about 15 minutes" in a lockout.
- * (The rail's compact "2h ago" is social/time.ts.)
- *
- * The browser's `Intl` has these, plurals and all — Arabic alone has six forms
- * for a number of hours — so it says them wherever it has the language. It
- * does not have Kurdish: Chromium answers in English, and full ICU data gives
- * "-2 h". Kurmancî and Soranî never change the noun after a number, so the
- * catalogue's "{count} demjimêr berê" is right for every count, and it is what any
- * language the browser lacks falls back to.
+ * Spans of time in words for sentences ("2 hours ago", "about 15 minutes"); the rail's compact "2h ago" is
+ * social/time.ts. `Intl` handles plurals where it knows the language. It has no Kurdish, so Kurdish and any other
+ * missing language use the catalogue's phrase, which works for every count since Kurdish nouns do not change after a
+ * number.
  */
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
@@ -33,11 +27,7 @@ const AGO: Record<Unit, MessageKey> = {
   day: 'time.words.daysAgo',
 };
 
-/**
- * How long ago, in whole minutes, hours or days: "5 minutes ago",
- * "2 hours ago", "yesterday". Under a minute is the caller's to say (it is
- * usually "now" of some kind), so this starts at one minute.
- */
+/** How long ago in whole minutes, hours or days ("5 minutes ago", "yesterday"); under a minute is the caller's to say. */
 export function agoInWords(iso: string, t: Translate, locale: string, now = Date.now()): string {
   const then = new Date(iso).getTime();
   const minutes = Number.isNaN(then) ? 1 : Math.max(1, Math.floor((now - then) / 60_000));
@@ -47,10 +37,7 @@ export function agoInWords(iso: string, t: Translate, locale: string, now = Date
   return t(AGO[unit], { count });
 }
 
-/**
- * A wait, rounded the way a person would say it: whole minutes under an hour,
- * whole hours after that. The sentence it goes into says "about".
- */
+/** A wait rounded as a person would say it: whole minutes under an hour, whole hours after; the sentence says "about". */
 export function durationInWords(seconds: number, t: Translate, locale: string): string {
   const minutes = Math.max(1, Math.ceil(seconds / 60));
   const [count, unit]: [number, 'minute' | 'hour'] = minutes < 60 ? [minutes, 'minute'] : [Math.round(minutes / 60), 'hour'];

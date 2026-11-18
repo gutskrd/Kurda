@@ -12,10 +12,9 @@ import type { MessageKey } from '../i18n/en';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * One player in a Peyvok Battle or Rhyme Match, by seat, as the server lets
- * this viewer see them (contract §B2): a name only for yourself, your friends,
- * or anyone in a game open to adults; otherwise "Player 3". Another player's
- * `userId` is an opaque `seat:N`, never their account.
+ * A player in a Peyvok Battle or Rhyme Match by seat, as the server lets this viewer see them: a name only for yourself,
+ * your friends, or anyone in a game open to adults, otherwise "Player 3". Another player's `userId` is an opaque
+ * `seat:N`.
  */
 export interface SeatPlayer {
   seat: number;
@@ -24,7 +23,7 @@ export interface SeatPlayer {
   avatarUrl: string | null;
   isMe: boolean;
   isHost: boolean;
-  /** left after the start; still listed so seats do not move */
+  /** Left after the start; still listed so seats do not move. */
   gone: boolean;
 }
 
@@ -35,9 +34,8 @@ export function seatName(p: Pick<SeatPlayer, 'seat' | 'name' | 'isMe'>, t: Trans
 }
 
 /**
- * Who is in the lobby, by seat — with the host marked, and Remove beside the
- * others for the host (asked twice: it cannot be taken back). The same panel
- * as a story game's lobby, so the three games' lobbies read alike.
+ * Who is in the lobby by seat, the host marked, with Remove beside the others for the host (confirmed twice). The same
+ * panel as a story game's lobby.
  */
 export function LobbyRoster({
   players,
@@ -51,12 +49,12 @@ export function LobbyRoster({
   max: number;
   canRemove: boolean;
   onRemove: (seat: number) => Promise<void>;
-  /** the game and lobby the players sit in: a ⋯ beside each other player reports them by seat */
+  /** The game and lobby, so a ⋯ beside each other player can report them by seat. */
   game: PlayGame;
   gameId: string;
 }): React.JSX.Element {
   const t = useT();
-  // the server leaves your own face to the client, which has it already
+  // The server leaves your own face to the client, which has it already.
   const myAvatar = useRail().data.you?.avatarUrl ?? null;
   const present = players.filter((p) => !p.gone);
   return (
@@ -95,10 +93,7 @@ export function LobbyRoster({
   );
 }
 
-/**
- * Leaving a lobby. The host leaving calls the game off for everyone (the
- * others were let in as the host's friends), so the host is asked that.
- */
+/** Leaving a lobby; the host is warned that leaving calls the game off for everyone. */
 export function LeaveLobby({ isHost, onLeave }: { isHost: boolean; onLeave: () => Promise<void> }): React.JSX.Element {
   const t = useT();
   return (
@@ -116,18 +111,16 @@ export function LeaveLobby({ isHost, onLeave }: { isHost: boolean; onLeave: () =
 export type RoomGone = 'started' | 'gone' | 'cancelled';
 
 const GONE_KEY: Record<RoomGone, { title: MessageKey; body: MessageKey }> = {
-  // a latecomer: the game is running, it just is not theirs to join any more
+  // A latecomer: the game is running, just not theirs to join any more.
   started: { title: 'play.room.startedTitle', body: 'stories.error.started' },
-  // not found, not allowed, removed — one answer, as the server gives one
+  // Not found, not allowed or removed: one answer, as the server gives one.
   gone: { title: 'stories.game.goneTitle', body: 'stories.error.notFound' },
   cancelled: { title: 'stories.game.cancelledTitle', body: 'stories.game.cancelled' },
 };
 
 /**
- * A game this person cannot be in: one that started without them, one that
- * is gone or not theirs to see, or one the host called off — said plainly,
- * with a way to start their own. The heading takes the focus, as the page's
- * content changed under them.
+ * A game this person cannot be in (started without them, gone, or called off), said plainly with a way to start their
+ * own. The heading takes focus, since the page changed under them.
  */
 export function RoomUnavailable({
   why,

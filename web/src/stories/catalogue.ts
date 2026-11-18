@@ -7,11 +7,7 @@ import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 
-/**
- * How long a list of stories is kept in the tab. The server caches the list
- * for five minutes too, and a story is added or taken down by a reviewer, not
- * every minute; going from the hub to a story and back should not ask again.
- */
+/** How long a story list is kept in the tab; the server caches it for five minutes too, and stories change rarely. */
 const KEEP_MS = 5 * 60 * 1000;
 
 type Listed = { stories: StoryListItem[] } | { error: ApiError };
@@ -22,12 +18,7 @@ function listKey(dialect: StoryDialect | null): string {
   return dialect ?? 'all';
 }
 
-/**
- * `GET /stories` (one variety, or every published story), kept for a few
- * minutes. The list is paged, so the most a page gives is asked for: the
- * sheet that sets up a game needs to know which lengths exist, not every
- * story, and fifty is more than a variety has for now.
- */
+/** `GET /stories` (one variety, or all), kept a few minutes; one page of fifty is enough to know which lengths exist. */
 function fetchList(client: ApiClient, dialect: StoryDialect | null, fresh = false): Promise<Listed> {
   const key = listKey(dialect);
   const kept = lists.get(key);
@@ -36,22 +27,19 @@ function fetchList(client: ApiClient, dialect: StoryDialect | null, fresh = fals
     .get<{ stories: StoryListItem[] }>(dialect ? `/stories?dialect=${dialect}&limit=50` : '/stories?limit=50')
     .then((r): Listed => (r.ok ? { stories: Array.isArray(r.data.stories) ? r.data.stories : [] } : { error: r.error }));
   lists.set(key, { at: Date.now(), stories });
-  // a failure is not kept: the next look asks again
+  // A failure is not kept, so the next look asks again.
   void stories.then((s) => {
     if ('error' in s && lists.get(key)?.stories === stories) lists.delete(key);
   });
   return stories;
 }
 
-/** For tests: forget every list. */
+/** Forgets every list, for tests. */
 export function clearStoryLists(): void {
   lists.clear();
 }
 
-/**
- * The published stories of one variety, easiest and shortest first (the
- * server's order). `enabled` false asks nothing (a sheet set to another game).
- */
+/** The published stories of one variety in the server's order (easiest, shortest first); `enabled` false asks nothing. */
 export function useStoryList(dialect: StoryDialect, enabled = true): {
   stories: StoryListItem[] | null;
   error: string | null;
@@ -79,36 +67,13 @@ export function useStoryList(dialect: StoryDialect, enabled = true): {
   return { ...state, reload };
 }
 
-/** How many published stories another variety has, for "switch to …" on an empty one; null while unknown. */
-export function useStoryCount(dialect: StoryDialect, enabled: boolean): number | null {
-  const { client } = useAuth();
-  const [count, setCount] = useState<number | null>(null);
-  useEffect(() => {
-    if (!enabled) return;
-    let live = true;
-    void fetchList(client, dialect).then((s) => {
-      if (live) setCount('stories' in s ? s.stories.length : null);
-    });
-    return () => {
-      live = false;
-    };
-  }, [client, dialect, enabled]);
-  return count;
-}
-
 export type Availability = 'unknown' | 'yes' | 'none';
 
 let available: Promise<Availability> | null = null;
 
 /**
- * Whether any story is published at all — the Stories card says "Coming
- * soon" when none is (contract §A1). Unknown until asked, and "unknown" is
- * shown as the normal card: a card should not flash "Coming soon" at
- * somebody while the answer is on its way, or when it never arrives.
- *
- * A plain request rather than the signed-in client: the list is public, and
- * the front page that asks has no account to send. `enabled` lets it ask
- * only once the card is near the screen. Asked once per tab.
+ * Whether any story is published, so the Stories card can say "Coming soon"; "unknown" shows the normal card. A plain
+ * public request, since the front page has no account; `enabled` waits until the card is near the screen. Once per tab.
  */
 export function useStoriesAvailable(enabled = true): Availability {
   const [answer, setAnswer] = useState<Availability>('unknown');
@@ -124,7 +89,7 @@ export function useStoriesAvailable(enabled = true): Availability {
       })
       .catch(() => 'unknown' as const)
       .then((a) => {
-        // an answer that did not come is asked for again next time
+        // An answer that did not come is asked again next time.
         if (a === 'unknown') available = null;
         return a;
       });
@@ -138,7 +103,7 @@ export function useStoriesAvailable(enabled = true): Availability {
   return answer;
 }
 
-/** For tests: forget the answer. */
+/** Forgets the answer, for tests. */
 export function resetStoriesAvailable(): void {
   available = null;
 }
@@ -146,11 +111,8 @@ export function resetStoriesAvailable(): void {
 let categories: Promise<StoryCategory[] | null> | null = null;
 
 /**
- * The categories stories are filed under (`GET /stories/categories`), asked
- * for once per tab: a story page names its own from them, and the list
- * changes when an editor adds one, not while anyone reads. Null while on
- * the way or when the answer never came, and a page then shows the story
- * without naming its category rather than showing its slug.
+ * The story categories (`GET /stories/categories`), fetched once per tab. Null while loading or after a failure, when a
+ * page omits the category rather than show its slug.
  */
 export function useStoryCategories(): StoryCategory[] | null {
   const { client } = useAuth();
@@ -159,7 +121,7 @@ export function useStoryCategories(): StoryCategory[] | null {
     let live = true;
     categories ??= client.get<{ categories: StoryCategory[] }>('/stories/categories').then((r) => {
       if (r.ok && Array.isArray(r.data.categories)) return r.data.categories;
-      // an answer that did not come is asked for again next time
+      // An answer that did not come is asked again next time.
       categories = null;
       return null;
     });
@@ -173,7 +135,7 @@ export function useStoryCategories(): StoryCategory[] | null {
   return list;
 }
 
-/** For tests: forget the categories. */
+/** Forgets the categories, for tests. */
 export function clearStoryCategories(): void {
   categories = null;
 }

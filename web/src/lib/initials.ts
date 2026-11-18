@@ -1,13 +1,10 @@
 /**
- * Initials on a colour of their own, for a person or a group with no picture.
- *
- * The letters and colours are the phone's own (mobile/src/profile/
- * initials.ts): the same id wears the same colour on both, and every colour
- * keeps white letters at AA contrast.
+ * Initials on a colour, for a person or group without a picture. Letters and colours match the phone's
+ * (mobile/src/profile/initials.ts), and every colour keeps white letters at AA contrast.
  */
 const COLOURS = ['#2D6A4F', '#1B6E8C', '#8E44AD', '#C0392B', '#8A5A0B', '#2C3E50', '#147D6F', '#A83279'] as const;
 
-/** A word's letters and numbers; every character when it has none, so an emoji-only name still shows something. */
+/** A word's letters and digits, or every character when it has none, so an emoji-only name still shows something. */
 function meaningful(word: string): string[] {
   const all = Array.from(word);
   const letters = all.filter((c) => /[\p{L}\p{N}]/u.test(c));
@@ -25,7 +22,7 @@ export function initialsOf(name: string | null | undefined): string {
   return raw.toUpperCase() || '?';
 }
 
-/** FNV-1a, as the phone hashes: the same id lands on the same colour there and here. */
+/** FNV-1a, as on the phone, so an id gets the same colour on both. */
 function hash(s: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {

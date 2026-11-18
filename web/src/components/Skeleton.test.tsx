@@ -5,10 +5,7 @@ import { FeedSkeleton, RankingsSkeleton } from './skeletons';
 
 describe('Skeleton', () => {
   it('leaves a line box without a height, so the stylesheet decides it', () => {
-    // The whole point of `line` is that the bar is one line of whatever element
-    // it stands in — `height: 1lh` in CSS. An inline height here would override
-    // that and put the guessing back, which is what made the first draft of the
-    // feed skeleton 72px shorter than the card that replaced it.
+    // `line` is one line of its element (`height: 1lh` in CSS); an inline height would override it.
     const { container } = render(<Skeleton line w="70%" />);
     const box = container.firstElementChild as HTMLElement;
     expect(box.className).toContain('skeleton-line');
@@ -43,7 +40,7 @@ describe('SkeletonRegion', () => {
 
     const region = screen.getByRole('status');
     expect(region.getAttribute('aria-busy')).toBe('true');
-    // the label is the only thing announced; the boxes are decoration
+    // The label is the only thing announced; the boxes are decoration.
     expect(region.textContent).toBe('Loading the wall…');
     for (const box of region.querySelectorAll('.skeleton')) {
       expect(box.getAttribute('aria-hidden')).toBe('true');
@@ -63,10 +60,7 @@ describe('screen skeletons', () => {
   });
 
   it('is built from the real screen\u2019s own class names', () => {
-    // This is what makes the placeholder the same height as the thing: padding,
-    // gaps and line-height all come from the finished screen's rules. A skeleton
-    // rebuilt out of plain divs would look right today and drift on the next
-    // stylesheet change, silently.
+    // Padding, gaps and line height come from the finished screen's rules, so a skeleton of plain divs would drift.
     const { container } = render(<FeedSkeleton count={2} />);
     expect(container.querySelector('.feed')).not.toBeNull();
     expect(container.querySelectorAll('.fcard')).toHaveLength(2);
@@ -81,15 +75,13 @@ describe('screen skeletons', () => {
     ]) {
       expect(container.querySelector(cls), cls).not.toBeNull();
     }
-    // and the text stand-ins sit *inside* those elements, which is where the
-    // line height comes from
+    // The text stand-ins sit inside those elements, which give them their line height.
     expect(container.querySelector('.fcard-name > .skeleton-line')).not.toBeNull();
     expect(container.querySelector('.fcard-title > .skeleton-line')).not.toBeNull();
   });
 
   it('keeps the same cards carrying a picture on every render', () => {
-    // A reshuffle between renders would move everything below it — the exact
-    // jump a skeleton exists to prevent.
+    // A reshuffle between renders would move everything below it.
     const first = render(<FeedSkeleton count={6} />).container.innerHTML;
     const second = render(<FeedSkeleton count={6} />).container.innerHTML;
     expect(first).toBe(second);

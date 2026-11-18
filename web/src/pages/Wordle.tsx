@@ -20,10 +20,8 @@ type Mode = 'daily' | 'practice';
 type Difficulty = 'easy' | 'medium' | 'hard';
 
 /**
- * A game as the server sends it: once it is finished, `word` is the answer's
- * card, with its meanings in every language a word card gives and the
- * dictionary entry to save it as (null when there is none spelt exactly so).
- * A server from before it sends no `word`, and the result is as it was.
+ * A game as the server sends it; once finished, `word` is the answer's card with its meanings and the dictionary entry to
+ * save (null when none is spelt exactly so). Older servers send no `word`.
  */
 type PeyvokGame = WordleGame & { word?: { entryId: string | null; meanings: WordMeanings; saved: boolean } | null };
 
@@ -33,11 +31,7 @@ const DIFFICULTY_KEY: Record<Difficulty, MessageKey> = {
   hard: 'games.difficulty.hard',
 };
 
-/**
- * How Peyvok was last played on this device — today's word or a practice one,
- * and how hard — so the game opens the way it was left. On this device only:
- * it is a habit of the hand, not something an account needs to carry.
- */
+/** How Peyvok was last played on this device (today's word or practice, and difficulty), so it opens the same way. */
 const CHOICE_KEY = 'hevalo_peyvok_choice';
 const MODES: readonly Mode[] = ['daily', 'practice'];
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
@@ -53,7 +47,7 @@ function readChoice(): { mode: Mode; difficulty: Difficulty } {
       difficulty: DIFFICULTIES.includes(difficulty as Difficulty) ? (difficulty as Difficulty) : first.difficulty,
     };
   } catch {
-    // nothing kept, or storage blocked: the game opens as it always did
+    // Nothing kept, or storage blocked: the default opening.
     return first;
   }
 }
@@ -62,11 +56,11 @@ function writeChoice(choice: { mode: Mode; difficulty: Difficulty }): void {
   try {
     localStorage.setItem(CHOICE_KEY, JSON.stringify(choice));
   } catch {
-    // storage blocked: the choice lasts for this visit
+    // Storage blocked: the choice lasts for this visit.
   }
 }
 
-/** A refusal from the server, in the reader's language. */
+/** A server refusal in the reader's language. */
 function guessError(err: ApiError, t: (key: MessageKey) => string): string {
   switch (err.code) {
     case 'WRONG_LENGTH':
@@ -81,27 +75,15 @@ function guessError(err: ApiError, t: (key: MessageKey) => string): string {
 }
 
 /**
- * A single-player Kurdish Peyvok — server-scored, answer withheld until it ends.
- *
- * Played alone it earns no XP (XP is for lessons, stories and games played
- * online with other people), so the result shows no figure of it and says so
- * once, with where XP is earned.
- *
- * The result names the word, found or not, with what it means in the
- * reader's language and Save to vocabulary (components/WordAnswer.tsx): the
- * meaning is the word card's for exactly this word, never the nearest
- * dictionary hit, and a word nobody has written a meaning for is shown alone.
- *
- * Under the result there is a quiet Share, as the phone's game has: the grid
- * of squares the guesses made, with the score over it and the site's address
- * under it (share/winText.ts). Only squares and counts, so it gives nothing
- * of the word away, and a word that was not found can be shown as well as
- * one that was.
+ * Solo Peyvok, scored by the server with the answer withheld until the end. Played alone it earns no XP, said once. The
+ * result names the word, found or not, with its meaning from the word's own card and Save to vocabulary
+ * (components/WordAnswer.tsx). A quiet Share sends the grid of squares, the score and the site's address
+ * (share/winText.ts), which gives nothing of the word away.
  */
 export function Wordle(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  // the way it was last played on this device: the same two questions are not asked again before every game
+  // The way it was last played on this device, so the same questions are not asked before every game.
   const [mode, setMode] = useState<Mode>(() => readChoice().mode);
   const [difficulty, setDifficulty] = useState<Difficulty>(() => readChoice().difficulty);
   useEffect(() => writeChoice({ mode, difficulty }), [mode, difficulty]);
@@ -111,15 +93,15 @@ export function Wordle(): React.JSX.Element {
   const [current, setCurrent] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  // guesses the game would not take, counted: each one shakes the row it was typed in
+  // Refused guesses, counted: each shakes the row it was typed in.
   const [refusals, setRefusals] = useState(0);
-  // the last guess's row is still turning over: the result waits for the tiles to have said it
+  // The last guess's row is still turning over; the result waits for the tiles.
   const { revealing, hold } = useReveal();
-  // Save to vocabulary on the finished game's word: on its way, and why it did not land
+  // Save to vocabulary on the finished word: in flight, and why it failed.
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  // Each difficulty has a daily of its own, so the chips are pressed one after another; only the game asked for
-  // last may land, or a slow answer for the chip left behind would show its word under the chip pressed after it.
+  // Each difficulty has its own daily, so only the game asked for last may land; a slow answer for an earlier chip would
+  // otherwise show its word under the later one.
   const asked = useRef(0);
 
   const refuse = useCallback((why: string) => {
@@ -150,7 +132,7 @@ export function Wordle(): React.JSX.Element {
   }, [start]);
 
   const playing = game?.status === 'playing';
-  // the rating box hears of a game played to its end here (not a daily reopened)
+  // The rating box hears of a game played to its end here, not a daily reopened.
   useGameFinished('wordle', game?.id ?? null, game !== null && !playing);
 
   const submit = useCallback(async () => {
@@ -168,7 +150,7 @@ export function Wordle(): React.JSX.Element {
     if (res.ok) {
       setGame(res.data);
       setCurrent('');
-      // the word found is a right answer, running out of tries a gentle miss; a guess along the way is neither
+      // Finding the word is a right answer, running out a gentle miss; guesses along the way are neither.
       if (res.data.status !== 'playing') {
         haptic(res.data.status === 'won' ? 'correct' : 'wrong');
         hold(res.data.targetLength, res.data.status === 'won');
@@ -178,10 +160,7 @@ export function Wordle(): React.JSX.Element {
     }
   }, [client, game, playing, submitting, current, t, refuse, hold]);
 
-  /**
-   * The finished game's word into the player's vocabulary, by the game rather than by the entry: the server saves
-   * exactly the word the game was about, and counts it once toward the words learned however often it is pressed.
-   */
+  /** Saves the finished game's word by game, so the server saves exactly that word and counts it once however often pressed. */
   const saveWord = useCallback(async () => {
     const id = game?.id;
     if (!id || !game.word?.entryId || game.word.saved || saving) return;
@@ -190,13 +169,13 @@ export function Wordle(): React.JSX.Element {
     const res = await client.post<{ saved: boolean }>(`/wordle/games/${id}/save`);
     setSaving(false);
     if (res.ok) setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved: true } } : g));
-    // a full vocabulary, or the network: said as the dictionary says it, under the button
+    // A full vocabulary or the network, said as the dictionary says it, under the button.
     else setSaveError(describeError(res.error, t));
   }, [client, game, saving, t]);
 
   const press = useCallback(
     (key: string) => {
-      // while a guess is being judged the keys are let go, not dimmed: the board is about to answer
+      // While a guess is judged the keys are ignored, not dimmed: the board is about to answer.
       if (!game || !playing || submitting) return;
       setNotice(null);
       if (key === 'Enter') return void submit();
@@ -206,8 +185,7 @@ export function Wordle(): React.JSX.Element {
     [game, playing, submitting, submit],
   );
 
-  // the physical keyboard: any key that types a letter of the alphabet
-  // (AltGr, Option and dead keys included), Backspace and Enter
+  // The physical keyboard: any key typing an alphabet letter (AltGr, Option and dead keys included), Backspace and Enter.
   useWordleKeys(playing, press);
 
   return (
@@ -255,7 +233,7 @@ export function Wordle(): React.JSX.Element {
                 {game.status === 'won' ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
                 {game.target && game.status === 'lost' && <> {t('games.wordle.theWordWas', { word: game.target })}</>}
               </p>
-              {/* found or not, the word is the lesson: what it means, and a way to keep it */}
+              {/* Found or not, the word is the lesson: its meaning, and a way to keep it. */}
               {game.target && (
                 <WordAnswer
                   word={game.target}

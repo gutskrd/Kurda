@@ -1,16 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-// the fire as its props: how big it burns and what it grows from, whoever draws it
+// The fire as its props: how big it burns and what it grows from.
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { act, render, screen } from '@testing-library/react';
 import { RUN_MOMENT_MS, fireSizeToFit, runMoment } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { RunLabel, RunMoment } from './Run';
 
-/*
- * A run of right answers grows the streak's fire within the lesson: the
- * label's fire burns at the run's stage, and a milestone where it reached a
- * new one grows into it, holding the screen until it has.
- */
+/* A run of right answers grows the fire: the label burns at the run's stage, and a milestone grows into a new one. */
 
 afterEach(() => vi.useRealTimers());
 

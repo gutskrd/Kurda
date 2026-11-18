@@ -39,7 +39,7 @@ describe('the code boxes', () => {
     expect(input.tagName).toBe('INPUT');
     expect(document.querySelector('.code-boxes')).toHaveAttribute('aria-hidden', 'true');
     expect(boxes()).toEqual(['', '', '', '', '', '']);
-    // a code reads left to right even on a page that reads right to left
+    // A code reads left to right even on a page that reads right to left.
     expect(input.closest('.code-entry-field')).toHaveAttribute('dir', 'ltr');
   });
 
@@ -49,11 +49,11 @@ describe('the code boxes', () => {
     await userEvent.type(field(), 'ab o-c');
     expect(field()).toHaveValue('ABC');
     expect(boxes()).toEqual(['A', 'B', 'C', '', '', '']);
-    // the fourth box is the one being filled, and wears the caret
+    // The fourth box is the one being filled, and wears the caret.
     const active = document.querySelectorAll('.code-box')[3]!;
     expect(active).toHaveClass('is-active');
     expect(active.querySelector('.code-box-caret')).not.toBeNull();
-    // Backspace takes the last one back
+    // Backspace takes the last one back.
     await userEvent.type(field(), '{Backspace}');
     expect(boxes()).toEqual(['A', 'B', '', '', '', '']);
     expect(document.querySelectorAll('.code-box')[2]).toHaveClass('is-active');
@@ -65,7 +65,7 @@ describe('the code boxes', () => {
     await userEvent.type(field(), 'abc234');
     await waitFor(() => expect(joins(calls).map((c) => c.body)).toEqual([{ code: 'ABC234' }]));
     expect(await screen.findByRole('status')).toHaveTextContent('You’re in! Opening the game…');
-    // the boxes turn green, a handful of flecks is thrown, and then the lobby
+    // The boxes turn green, a handful of flecks is thrown, and then the lobby.
     expect(document.querySelector('.code-entry')).toHaveClass('is-joined');
     expect(document.querySelectorAll('.celebrate-fleck').length).toBeGreaterThan(0);
     await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'));
@@ -156,7 +156,7 @@ describe('a code that does not get you in', () => {
     await waitFor(() => expect(calls.some((c) => c.path === '/me')).toBe(true));
     const before = calls.filter((c) => c.path === '/me').length;
     await userEvent.type(field(), 'abc234');
-    // the account is read again, and the app's own gate asks the question
+    // The account is read again, and the app's own gate asks the question.
     await waitFor(() => expect(calls.filter((c) => c.path === '/me').length).toBeGreaterThan(before));
   });
 });

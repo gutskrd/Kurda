@@ -3,26 +3,15 @@ import type { StoryMe } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { putProgress } from './api';
 
-/** The least time between two writes of where a reader is; the server refuses more than sixty a minute. */
+/** The least time between progress writes; the server refuses more than sixty a minute. */
 export const PROGRESS_EVERY_MS = 10_000;
 
 /**
- * Where a signed-in reader has got to in a story, kept on the server as they
- * read (`PUT /stories/:id/progress`): the furthest paragraph that has come
- * into view, the share of the text that is, and `finished` once the last
- * paragraph has been seen — the server sets `finishedAt` once and never
- * takes it back, and that is what opens the check.
- *
- * Paragraphs are watched with an IntersectionObserver through the ref each
- * one gets from `observe`. Writes are spaced at least ten seconds apart, so
- * a reader scrolling through a story costs a handful of requests, not one a
- * paragraph; what is still unsent goes when the story is finished, when the
- * page is hidden or left, and when the reader goes elsewhere in the app.
- * Nothing is watched or written for a visitor, or where the browser has no
- * observer (a test).
- *
- * `onMe` is handed the server's answer, the reader's whole record on the
- * story, so the page can show the check open the moment it is.
+ * Saves a signed-in reader's place (`PUT /stories/:id/progress`): the furthest paragraph seen, its share of the text,
+ * and `finished` once the last paragraph shows, after which the server sets `finishedAt` for good and the check opens.
+ * Paragraphs register through `observe` for an IntersectionObserver. Writes are at least ten seconds apart, and pending
+ * ones go at once on finishing, hiding or leaving the page, or navigating away. Nothing runs for a visitor or without an
+ * observer (tests). `onMe` gets the server's record so the page can open the check at once.
  */
 export function useReadingProgress({
   storyId,
@@ -32,20 +21,20 @@ export function useReadingProgress({
   onMe,
 }: {
   storyId: string;
-  /** how many paragraphs the story has */
+  /** How many paragraphs the story has. */
   count: number;
   enabled: boolean;
-  /** the record the story arrived with, so the furthest paragraph never goes backwards */
+  /** The record the story arrived with, so the furthest paragraph never goes backwards. */
   initial: StoryMe | null;
   onMe: (me: StoryMe) => void;
 }): { observe: (index: number) => (el: HTMLElement | null) => void } {
   const { client } = useAuth();
   const io = useRef<IntersectionObserver | null>(null);
   const indexOf = useRef(new WeakMap<Element, number>());
-  // the paragraphs hand themselves in as they are drawn, which is before the observer exists
+  // Paragraphs register as they are drawn, before the observer exists.
   const elements = useRef(new Set<HTMLElement>());
   const state = useRef({
-    // before anything was read the record says paragraph 0 and no share: the first paragraph still counts as new
+    // An unread record says paragraph 0 and no share, so the first paragraph still counts as new.
     furthest: initial && initial.share > 0 ? initial.paragraph : -1,
     finished: initial?.finishedAt !== null && initial?.finishedAt !== undefined,
     dirty: false,
@@ -71,12 +60,12 @@ export function useReadingProgress({
     void putProgress(client, id, { paragraph: s.furthest, share, ...(s.finished ? { finished: true } : {}) }).then((res) => {
       s.sending = false;
       if (res.ok && res.data && res.data.me) tell(res.data.me);
-      // a write that did not land is tried again with the next change
+      // A failed write is retried with the next change.
       else if (!res.ok) s.dirty = true;
     });
   }, [client]);
 
-  /** Send now if the last write is old enough, else at the next slot — once, however many paragraphs scroll by meanwhile. */
+  /** Sends now if the last write is old enough, else once at the next slot. */
   const schedule = useCallback(
     (now = false) => {
       const s = state.current;
@@ -102,7 +91,7 @@ export function useReadingProgress({
       if (index <= s.furthest && (!last || s.finished)) return;
       s.furthest = Math.max(s.furthest, index);
       s.dirty = true;
-      // reaching the end is told at once: the check waits on it
+      // Reaching the end is sent at once, since the check waits on it.
       if (last && !s.finished) {
         s.finished = true;
         schedule(true);
@@ -123,7 +112,7 @@ export function useReadingProgress({
           if (index !== undefined) seen(index);
         }
       },
-      // half of a paragraph in view is reading it; a line peeking in at the foot is not
+      // Half a paragraph in view counts as reading it; a line peeking in at the foot does not.
       { threshold: 0.5 },
     );
     io.current = observer;
@@ -134,7 +123,7 @@ export function useReadingProgress({
     };
   }, [enabled, seen]);
 
-  // the page hidden or left: what is unsent goes now
+  // The page hidden or left: send what is pending now.
   useEffect(() => {
     if (!enabled) return;
     const onHide = (): void => {
@@ -148,7 +137,7 @@ export function useReadingProgress({
       const s = state.current;
       if (s.timer) clearTimeout(s.timer);
       s.timer = null;
-      // leaving for elsewhere in the app: the request outlives the page
+      // Navigating elsewhere in the app: the request outlives the page.
       if (s.dirty) {
         s.dirty = false;
         const share = count > 0 ? Math.min(1, (s.furthest + 1) / count) : 0;

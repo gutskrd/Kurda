@@ -2,24 +2,18 @@ import { conversationLineVoice, type DeliveredExercise, type Feedback } from '@k
 import { CharacterStage } from '../characters/CharacterStage';
 import { spokenClips, type MaybeSpoken, type SpokenClip } from '../characters/clips';
 
-/** A run of words in quotation marks: the Kurdish a prompt such as “Roj baş” tê çi wateyê? asks about. */
+/** Words in quotation marks: the Kurdish a prompt such as “Roj baş” tê çi wateyê? asks about. */
 const QUOTED = /[“"«„]([^”"»“]+)[”"»“]/;
 
-/**
- * The words a recording beside the prompt says, as near as the exercise tells
- * them: what the prompt quotes, or the prompt itself. Only for moving the
- * mouth when no timeline was saved with the recording.
- */
+/** What a recording beside the prompt says, as near as the exercise tells (the quoted words, or the prompt), for mouth movement without a timeline. */
 export function promptWords(prompt: string | undefined): string | null {
   if (!prompt) return null;
   return QUOTED.exec(prompt)?.[1]?.trim() || prompt;
 }
 
 /**
- * Every recording an exercise can play that has a character: the listening
- * clip (its words are the answer, so they are not sent), the model, the
- * recordings of the options or the Kurdish cards, and a conversation's lines,
- * each with whoever says it.
+ * Every recording with a character an exercise can play: the listening clip (without its words, which are the answer),
+ * the model, the options' or Kurdish cards' recordings, and a conversation's lines, each with its speaker.
  */
 export function exerciseClips(exercise: DeliveredExercise): SpokenClip[] {
   const list: MaybeSpoken[] = [
@@ -27,14 +21,14 @@ export function exerciseClips(exercise: DeliveredExercise): SpokenClip[] {
     { src: exercise.modelAudioUrl, voice: exercise.modelAudioVoice, text: promptWords(exercise.prompt) },
   ];
   for (const [said, src] of Object.entries(exercise.audio ?? {})) list.push({ src, voice: exercise.audioVoices?.[said], text: said });
-  // a line is always said by its own part's character, whichever voice its recording was saved under
+  // A line is always said by its own part's character, whatever voice its recording was saved under.
   (exercise.lines ?? []).forEach((line, i) =>
     list.push({ src: exercise.lineAudio?.[i], voice: conversationLineVoice(exercise.speakers ?? [], line, exercise.lineVoices?.[i]), text: line.text }),
   );
   return spokenClips(list);
 }
 
-/** The model the feedback plays, when it has a character the exercise above does not already show. */
+/** The model the feedback plays, when it has a character not already shown by the exercise. */
 export function feedbackClip(exercise: DeliveredExercise, feedback: Feedback): SpokenClip | null {
   const [clip] = spokenClips([{ src: feedback.modelAudioUrl, voice: feedback.modelAudioVoice, text: feedback.correction ?? promptWords(exercise.prompt) }]);
   if (!clip) return null;
@@ -42,12 +36,9 @@ export function feedbackClip(exercise: DeliveredExercise, feedback: Feedback): S
 }
 
 /**
- * Who says an exercise's recordings, beside what plays them: the whole figure
- * on a stage (`CharacterStage`), speaking while one of `clips` plays and
- * waiting between them, with `children` — the play buttons, or the words
- * being asked about — standing beside it. It cheers a right answer and
- * thinks a wrong one over (`verdict`). With no character among `clips`, the
- * children alone, exactly as before.
+ * Who says an exercise's recordings: the whole figure on a stage (`CharacterStage`), speaking while one of `clips`
+ * plays, with `children` (play buttons, or the words asked about) beside it; it cheers or ponders by `verdict`. Without a
+ * character among `clips`, just the children.
  */
 export function ExerciseVoice({
   clips,
@@ -58,9 +49,9 @@ export function ExerciseVoice({
 }: {
   clips: readonly SpokenClip[];
   verdict?: 'right' | 'wrong' | null;
-  /** a stage this tall whatever the window, for an exercise with more to show under it (`STAGE.card`) */
+  /** A fixed stage height, for an exercise with more to show under it (`STAGE.card`). */
   height?: number;
-  /** the least share of the stage's width the character takes (`CharacterStage`) */
+  /** The least share of the stage's width the character takes (`CharacterStage`). */
   share?: number;
   children?: React.ReactNode;
 }): React.JSX.Element {

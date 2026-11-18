@@ -4,22 +4,8 @@ import { Button } from './Button';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Keeps one page's render error from taking the whole site down.
- *
- * React unmounts the entire tree when a render throws — it cannot know which
- * state is still consistent — so without a boundary the browser is left on a
- * blank page. Reload is the only way out, and the reader has no reason to guess
- * that reloading is what is wanted.
- *
- * It sits inside `<main>`, in the same place and for the same reason as the
- * Suspense boundary already there: above the route table it would take the
- * navigation down with the page, and the bars staying put is the truth of what
- * is happening. Only the page is gone.
- *
- * It resets on `resetKey`, which is the path — so navigating anywhere clears a
- * caught error rather than sticking on it for the rest of the session, which is
- * the trap a plain "try again" falls into when the page is deterministically
- * broken.
+ * Keeps one page's render error from blanking the whole site. It sits inside `<main>`, beside the Suspense boundary, so
+ * the bars stay up, and it resets on `resetKey` (the path) so navigating away clears the error.
  */
 interface Props {
   children: ReactNode;
@@ -44,9 +30,7 @@ class Boundary extends Component<Props & { t: ReturnType<typeof useT> }, State> 
   }
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
-    // No reporting service is wired up. React has already logged the error by
-    // the time this runs; the component stack is the part it does not repeat,
-    // and it is what makes a bug report worth reading.
+    // No reporting service is wired up. React has logged the error already; the component stack is what it leaves out.
     console.error('[web] page crashed', error, info.componentStack);
   }
 
@@ -62,11 +46,7 @@ class Boundary extends Component<Props & { t: ReturnType<typeof useT> }, State> 
         <p className="lead" style={{ margin: '16px auto 30px', maxWidth: '46ch' }}>
           {t('error.crash.body')}
         </p>
-        {/*
-          The message names internals, and a deployed build shows it to
-          strangers. import.meta.env.DEV is false in every production build, so
-          this line is not in the bundle the public gets.
-        */}
+        {/* The message names internals, so it is shown only in development builds. */}
         {import.meta.env.DEV ? (
           <pre style={{ margin: '0 auto 24px', maxWidth: '60ch', whiteSpace: 'pre-wrap', textAlign: 'left' }}>
             {error.message || String(error)}

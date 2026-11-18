@@ -19,19 +19,10 @@ import { rememberedEnglish, showEnglishFor } from './prefs';
 import { PlayerReport } from '../reports/PlayerReport';
 
 /**
- * The end of a game (contract §A1, design notes §6): how it went, the XP
- * and whether it counted — and, for a check repeated the same day, what a
- * repeat pays, from the server's own count — then every question again, the
- * missed ones first, with the story's own words for each answer. Two ways
- * on: back to the story, or another story.
- *
- * Standings never shame: a podium only from four players; a duo is two
- * scores and a total, without places; three players are listed by seat,
- * with your own place said to you alone. Rank never changes XP.
- *
- * `again` is "Play again" from the play layer (a pair rematch, or the host's
- * next round), so every game plays again the same way; a check is taken
- * again from the story itself.
+ * The end of a game: how it went, the XP and whether it counted (and what a same-day repeat pays), then every question
+ * again, missed ones first, with the story's words for each answer, and two ways on. Standings never shame: a podium only
+ * from four players, a duo shows two scores and a total, and three are listed by seat with your place told to you
+ * alone. `again` is the play layer's "Play again"; a check is retaken from the story.
  */
 export function GameResults({
   view,
@@ -53,7 +44,7 @@ export function GameResults({
   useEffect(() => {
     heading.current?.focus();
     if (me) announce(t('stories.results.score', { correct: me.correct, total: me.total }));
-    // once, when the results arrive
+    // Once, when the results arrive.
   }, [Boolean(results)]);
 
   return (
@@ -64,7 +55,7 @@ export function GameResults({
 
       {me && (
         <div className="sg-reward">
-          {/* dir: "+15 XP" reads the same in a right-to-left page, not "XP 15+" */}
+          {/* `dir` keeps "+15 XP" from reading "XP 15+" on a right-to-left page. */}
           {me.xp > 0 && (
             <span className="sg-xp" dir="ltr">
               +{me.xp} XP
@@ -84,7 +75,7 @@ export function GameResults({
         </div>
       )}
 
-      {/* a game with others: what it did to your Stories rank (Game Ranks) */}
+      {/* A game with others: what it did to your Stories rank. */}
       {me && view.mode !== 'solo' && <RankResult game="stories" gameRef={view.id} />}
 
       {results && view.mode !== 'solo' && <Standings view={view} standings={results.standings} />}
@@ -111,7 +102,7 @@ function Standings({ view, standings }: { view: StoryGameView; standings: StoryG
   if (standings.length < 2) return null;
 
   if (standings.length === 2) {
-    // a duo: two scores and what they made together — no winner named
+    // A duo: two scores and their total, no winner named.
     const [a, b] = [...standings].sort((x, y) => Number(y.isMe) - Number(x.isMe));
     return (
       <div className="sg-standings is-duo">
@@ -133,7 +124,7 @@ function Standings({ view, standings }: { view: StoryGameView; standings: StoryG
 
   const mine = standings.find((s) => s.isMe);
   if (standings.length === 3) {
-    // three: by seat, so the list says nothing the scores do not
+    // Three: by seat, so the list says nothing the scores do not.
     return (
       <div className="sg-standings">
         <h3 className="sg-panel-title">{t('stories.results.standings')}</h3>
@@ -168,11 +159,7 @@ function Standings({ view, standings }: { view: StoryGameView; standings: StoryG
   );
 }
 
-/**
- * Everyone else who sat in the game, by seat and without scores, each with
- * the ⋯ to report them (reports/PlayerReport): the standings name only the
- * podium once there are four or more, and nobody's place is said twice.
- */
+/** Everyone else in the game, by seat and without scores, each with a ⋯ to report them (reports/PlayerReport). */
 function OtherPlayers({ view }: { view: StoryGameView }): React.JSX.Element | null {
   const t = useT();
   const others = view.players.filter((p) => !p.isMe).sort((a, b) => a.seat - b.seat);
@@ -208,7 +195,7 @@ function BoardRow({ s, total }: { s: StoryGameStanding; total: number }): React.
   );
 }
 
-/** Every question again, the missed ones first and open; the rest folded. */
+/** Every question again, the missed ones first and open, the rest folded. */
 function Review({ view, items, story }: { view: StoryGameView; items: StoryGameReviewItem[]; story: StoryDetail | null }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -223,7 +210,7 @@ function Review({ view, items, story }: { view: StoryGameView; items: StoryGameR
       </h3>
       {ordered.map((item) => {
         const wrong = missed(item);
-        // the question in the reader's language where it has been translated into it, else in English
+        // In the reader's language where translated, else English.
         const help = english ? questionHelp(item, locale, view.settings.dialect) : null;
         return (
           <details key={item.index} className={`sg-review-item${wrong ? ' is-missed' : ''}`} open={wrong}>
@@ -287,11 +274,8 @@ function Review({ view, items, story }: { view: StoryGameView; items: StoryGameR
 }
 
 /**
- * What a check repeated today paid, in the server's own numbers: the story's
- * record for this reader, read once the results are in, says how many checks
- * they finished on it today — this one among them. From the third on a check
- * pays nothing (PAID_STORY_REPEATS_PER_DAY); a second pays a quarter. Nothing
- * for a first check, or while the record is on its way.
+ * What a check repeated today paid, from the story's record once results are in: a second check pays a quarter, from
+ * the third on nothing (PAID_STORY_REPEATS_PER_DAY). Nothing for a first check or while loading.
  */
 function useRepeatNote(storyId: string | null): string | null {
   const t = useT();

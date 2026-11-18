@@ -16,15 +16,6 @@ import {
 } from '@kurda/shared';
 import { Fire } from './Fire';
 
-/*
- * The streak's fire on the website: every stage burning with what it
- * promises, its painted flame playing frame by frame, the light version
- * beside a number, a cold hearth when the streak is not burning, growing from
- * one stage into the next on the day it grew, still (one frame) for a reader
- * who asked for less motion, and hidden from a screen reader every time — the
- * words beside it say the streak.
- */
-
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -58,13 +49,13 @@ describe('the fire', () => {
       expect(sheets(svg), stage).toEqual([stage]);
       expect(svg.querySelectorAll('circle.fire-rise')).toHaveLength(drawing.embers.length);
       expect(svg.querySelectorAll('path.fire-rise')).toHaveLength(0);
-      // its glow round it, and the same light pooled on the ground, both breathing
+      // A glow round it and the same light pooled on the ground, both breathing.
       expect(svg.querySelectorAll('ellipse.fire-loop')).toHaveLength(2);
-      // the stones and the sun come with the biggest fires
+      // Stones and the sun come with the biggest fires.
       expect(svg.querySelectorAll('[fill$="-stone)"]').length > 0, stage).toBe(stage === 'blaze' || stage === 'newroz');
       expect(svg.querySelector('[fill$="-rays)"]') !== null, stage).toBe(stage === 'newroz');
     }
-    // a window as big as the flame onto its sheet, which steps along a row a frame at a time, and down a row at the end of each
+    // A window onto the sheet, stepping along a row a frame at a time and down a row at the end of each.
     const { box, sheet } = fireDrawing(lvl('campfire'), 168).painted!;
     const image = fire(<Fire size={168} level={lvl('campfire')} />).querySelector('image')!;
     const window = image.closest('svg.fire-flame')!;
@@ -77,7 +68,7 @@ describe('the fire', () => {
     expect(down).toHaveClass('fire-frames', 'fire-frames-down');
     expect([across.style.getPropertyValue('--fire-steps'), across.style.getPropertyValue('--fire-shift')]).toEqual([String(FIRE_SPRITE_COLS), `${-sheet.sheet.w}px`]);
     expect([down.style.getPropertyValue('--fire-steps'), down.style.getPropertyValue('--fire-shift')]).toEqual([String(FIRE_SPRITE_ROWS), `${-sheet.sheet.h}px`]);
-    // a row's frames in the time the whole loop takes to go down a row
+    // A row's frames in the time the whole loop takes to go down a row.
     expect(down.style.getPropertyValue('--fire-period')).toBe(`${FIRE_SPRITE_MS}ms`);
     expect(across.style.getPropertyValue('--fire-period')).toBe(`${FIRE_SPRITE_MS / FIRE_SPRITE_ROWS}ms`);
   });
@@ -111,7 +102,7 @@ describe('the fire', () => {
       expect(sheets(svg)).toEqual([]);
       expect(svg.querySelectorAll('.fire-rise, ellipse')).toHaveLength(0);
     }
-    // no streak yet: the grey flame, standing still
+    // No streak yet: the grey flame, standing still.
     expect(fire(<Fire size={20} level={lvl('cold')} />)).toHaveClass('is-small', 'is-unlit', 'is-still');
   });
 
@@ -127,7 +118,7 @@ describe('the fire', () => {
     const frame = fireFrame('campfire');
     expect(growing).toHaveAttribute('viewBox', `${frame.x} ${frame.y} ${frame.w} ${frame.h}`);
     expect(Number(growing.getAttribute('height'))).toBeCloseTo((frame.h * 125) / FIRE_VIEW.h, 9);
-    // beside a number it is the light version's own box, framed or not
+    // Beside a number it is the light version's own box, framed or not.
     expect(fire(<Fire size={FIRE_SMALL} level={lvl('spark')} framed />)).toHaveAttribute('viewBox', `${FIRE_SMALL_VIEW.x} ${FIRE_SMALL_VIEW.y} ${FIRE_SMALL_VIEW.w} ${FIRE_SMALL_VIEW.h}`);
   });
 
@@ -137,9 +128,9 @@ describe('the fire', () => {
     expect(svg).toHaveClass('is-lit', 'is-still');
     expect(svg.querySelectorAll('.fire-rise')).toHaveLength(0);
     expect(sheets(svg)).toEqual(['bonfire']);
-    // the first frame, held: nothing steps
+    // The first frame, held: nothing steps.
     expect(svg.querySelectorAll('.fire-frames')).toHaveLength(0);
-    // a cold hearth still shows its smoke, held where it is
+    // A cold hearth still shows its smoke, held in place.
     const cold = fire(<Fire size={168} level={lvl('cold')} />);
     const smoke = cold.querySelector('path[fill$="-smoke)"]') as SVGPathElement;
     expect(cold.querySelectorAll('path[fill$="-smoke)"]')).toHaveLength(1);
@@ -161,12 +152,12 @@ describe('the fire', () => {
     expect(sheets(old)).toEqual(['spark']);
     expect(old.style.getPropertyValue('--fire-delay')).toBe(`${FIRE_GROW.delayMs}ms`);
     expect(old.style.getPropertyValue('--fire-period')).toBe(`${FIRE_GROW.ms}ms`);
-    // stretching up toward the new one's size, then gone
+    // Stretching up towards the new one's size, then gone.
     expect(Number(old.style.getPropertyValue('--fire-k1').match(/scale\([\d.]+, ([\d.]+)\)/)?.[1])).toBeGreaterThan(1);
     expect(old.style.getPropertyValue('--fire-o3')).toBe('0');
     const grown = [...svg.querySelectorAll<SVGGElement>('.fire-grow:not(.is-gone)')].find((g) => sheets(g).length > 0)!;
     expect(sheets(grown)).toEqual(['kindling']);
-    // it starts at the old one's size, unseen, and fades in over it
+    // It starts at the old one's size, unseen, and fades in over it.
     expect([grown.style.getPropertyValue('--fire-o0'), grown.style.getPropertyValue('--fire-o3')]).toEqual(['0', '1']);
     expect(svg.querySelectorAll('circle.fire-grow, .fire-grow > circle').length).toBeGreaterThan(0);
     fireEvent.animationEnd(old);

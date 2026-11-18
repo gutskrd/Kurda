@@ -3,17 +3,9 @@ import postcss, { type Declaration, type Root, type Rule } from 'postcss';
 import { HAND_TUNED, LARGE_ENOUGH, REACH_CONTROLS, SCROLLERS, STANDALONE_LINKS } from './reach';
 
 /*
- * The reach is one stylesheet written from the lists in reach.ts, and it
- * holds only while the rest of the styles leave it room. These read every
- * stylesheet as it is written and hold all of it to the lists: the stylesheet
- * names exactly what the lists name, the tokens are the sizes a mouse and a
- * finger are given, no listed control spends its own `::before` (the reach is
- * that pseudo-element, and a second rule for it would undo the first), and no
- * listed control clips what reaches past its own edges.
- *
- * The files are read from the disk: a stylesheet a test imports arrives
- * empty. This workspace's types are the browser's, so the little asked of the
- * machine the suite runs on is described here in full.
+ * Holds every stylesheet to the lists in reach.ts: the reach stylesheet names exactly the listed controls with the
+ * right tokens, no listed control has another `::before` (the reach is that pseudo-element), and none clips its own
+ * overflow. Stylesheets are read from disk because an imported one arrives empty in tests.
  */
 interface FileSystem {
   readFileSync(file: URL, encoding: 'utf8'): string;
@@ -21,7 +13,7 @@ interface FileSystem {
 }
 const fileSystem = 'node:fs';
 const { readFileSync, readdirSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
-// the app's sources, wherever the suite is run from; held in a name, so the build does not take it for an asset of its own
+// The app's sources wherever the suite runs from; kept in a variable so the build does not treat it as an asset.
 const here = import.meta.url;
 const src = new URL('../', here);
 
@@ -33,23 +25,14 @@ const sheets = readdirSync(src, { recursive: true })
 const parsed = new Map<string, Root>(sheets.map((p) => [p, postcss.parse(read(p), { from: p })]));
 const reachSheet = parsed.get('styles/reach.css')!;
 
-/*
- * Work another change still owes, kept here by name so it cannot be
- * forgotten: each entry must still be found wanting (a test below checks
- * that), and comes off its list in the change that gives it its room.
- */
-/** Scrolling rows that still wait for their room (none now: the impostor's start screen took its own). */
+/** Scrolling rows still waiting for their room; each must still fall short, and leaves the list once fixed. */
 const ROOM_AWAITED = new Set<string>();
-/** Controls whose old hand-made area past their edges still waits to go (none now: the letters' change pill gave its up). */
+/** Controls whose old hand-made `::after` area still has to go. */
 const AFTER_AWAITED = new Set<string>();
 
-/**
- * Rows that keep less room than the rest, and why: the kinds of shop item
- * fade out at their end, and that mask lifts the row over what is above it,
- * so room past the tabs would take presses meant for the gift picker's "for".
- */
+/** Rows that keep less room, and why: the shop's item tabs fade out, and more room would take presses meant for the gift picker. */
 const ROOM_HELD = new Map<string, number>([['.item-tabs', 4]]);
-/** The room above and below every other scrolling row: the most a control drawn 32px tall reaches where a finger is about. */
+/** The room above and below every other scrolling row: the most a 32px control reaches under a finger. */
 const ROOM = 8;
 
 /** Splits a selector list on its own commas, leaving those inside brackets and parentheses alone. */
@@ -86,7 +69,7 @@ function whereGroups(selector: string): string[][] {
   return groups;
 }
 
-/** A selector's compounds, the parts between its combinators: `.a > .b:hover .c` is `.a`, `.b:hover`, `.c`. */
+/** A selector's compounds between combinators: `.a > .b:hover .c` is `.a`, `.b:hover`, `.c`. */
 function compounds(selector: string): string[] {
   const out: string[] = [];
   let depth = 0;
@@ -103,7 +86,7 @@ function compounds(selector: string): string[] {
   return out;
 }
 
-/** What a compound says of the element itself: arguments that are about other elements, and attribute values, are left out. */
+/** What a compound says of the element itself, without arguments about other elements or attribute values. */
 function ownPart(compound: string): string {
   let out = '';
   let skip = 0;
@@ -141,14 +124,14 @@ function readCompound(compound: string): Compound {
   };
 }
 
-/** Whether a compound stands for an element that the entry (`.btn`, `.request-name.is-link`, `.auth-alt a`) describes. */
+/** Whether a selector stands for an element the entry (`.btn`, `.request-name.is-link`, `.auth-alt a`) describes. */
 function describes(entry: string, selector: string): boolean {
   const want = compounds(entry).map(readCompound);
   const have = compounds(selector).map(readCompound);
   const fits = (w: Compound, h: Compound): boolean => (w.tag === null || w.tag === h.tag) && w.classes.every((c) => h.classes.includes(c));
   const last = have[have.length - 1];
   if (!last || !fits(want[want.length - 1]!, last)) return false;
-  // what the entry asks of the element's ancestors, found in order among the selector's own
+  // The entry's ancestor parts, found in order among the selector's.
   let at = 0;
   for (const w of want.slice(0, -1)) {
     while (at < have.length - 1 && !fits(w, have[at]!)) at++;
@@ -175,7 +158,7 @@ function rulesOf(root: Root): Array<{ rule: Rule; media: string[] }> {
 }
 
 const declarations = (rule: Rule): Declaration[] => (rule.nodes ?? []).filter((n): n is Declaration => n.type === 'decl');
-/** Where a rule is written: the sheet, from the app's sources, and the line. */
+/** Where a rule is written: sheet path and line. */
 const where = (rule: Rule, path: string): string => `${path}:${rule.source?.start?.line ?? '?'}`;
 
 const LISTED = [...REACH_CONTROLS, ...STANDALONE_LINKS] as string[];
@@ -213,7 +196,7 @@ describe('the lists of what reaches', () => {
   it('keep the hand-tuned controls out of the reach altogether', () => {
     const tuned = HAND_TUNED as readonly string[];
     expect(LISTED.filter((c) => tuned.includes(c))).toEqual([]);
-    // nor by a class the hand-tuned control also carries
+    // Nor by a class the hand-tuned control also carries.
     expect(LISTED.filter((c) => HAND_TUNED.some((t) => describes(c, t)))).toEqual([]);
   });
 
@@ -247,7 +230,7 @@ describe('the reach, as the stylesheet writes it', () => {
     expect(links, 'their reach').toBeDefined();
     const said = (rule: Rule): string[] => declarations(rule).map((d) => `${d.prop}: ${d.value}`);
     expect(said(links!)).toEqual(said(controls!));
-    // and with a mouse no reach at all: outside that condition they are named only where the areas are tinted
+    // With a mouse there is no reach: outside that condition they are named only where areas are tinted.
     const named = top.filter(({ rule }) => whereGroups(rule.selector).some((g) => g.some((s) => (STANDALONE_LINKS as readonly string[]).includes(s))));
     expect(named.map(({ rule }) => rule.selector.split(/\s/)[0])).toEqual([':root.show-reach']);
   });
@@ -292,7 +275,7 @@ describe('the sizes the reach is measured in', () => {
   });
 });
 
-/** Rules elsewhere that give a listed control a `::before` of their own, which would undo its reach. */
+/** Rules elsewhere that give a listed control its own `::before`, which would undo its reach. */
 function ownBefores(roots: Iterable<[string, Root]>): string[] {
   const taken: string[] = [];
   for (const [path, root] of roots) {
@@ -307,7 +290,7 @@ function ownBefores(roots: Iterable<[string, Root]>): string[] {
   return taken;
 }
 
-/** Rules that make a listed control clip what reaches past its edges, by the entry they clip. */
+/** Rules that make a listed control clip its overflow, by entry. */
 function clippers(roots: Iterable<[string, Root]>): Array<{ entry: string; at: string }> {
   const clips = (d: Declaration): boolean =>
     (/^overflow(-x|-y|-inline|-block)?$/.test(d.prop) && /\b(hidden|clip|auto|scroll)\b/.test(d.value)) ||
@@ -320,7 +303,7 @@ function clippers(roots: Iterable<[string, Root]>): Array<{ entry: string; at: s
       if (!clip) continue;
       for (const s of rule.selectors) {
         const parts = compounds(s);
-        // a rule for a control's own pseudo-element clips that, not the control
+        // A rule for a pseudo-element clips that, not the control.
         if (/::/.test(parts[parts.length - 1] ?? '')) continue;
         for (const entry of LISTED) if (describes(entry, s)) found.push({ entry, at: `${where(rule, path)} ${s}: ${clip.prop}: ${clip.value}` });
       }
@@ -329,7 +312,7 @@ function clippers(roots: Iterable<[string, Root]>): Array<{ entry: string; at: s
   return found;
 }
 
-/** Rules that give a listed control an `::after` reaching past its edges: a hand-made area from before the reach, which would stand beside it. */
+/** Rules that give a listed control an `::after` past its edges, a hand-made area from before the reach. */
 function afterReaches(roots: Iterable<[string, Root]>): Array<{ entry: string; at: string }> {
   const side = /^(inset(-block|-inline)?(-start|-end)?|top|right|bottom|left)$/;
   const found: Array<{ entry: string; at: string }> = [];
@@ -347,7 +330,7 @@ function afterReaches(roots: Iterable<[string, Root]>): Array<{ entry: string; a
   return found;
 }
 
-/** The tokens on `:root` (styles/tokens.css), as they are written, for reading a length that names one. */
+/** The `:root` tokens (styles/tokens.css) as written, to resolve lengths that name one. */
 const TOKENS = new Map(
   rulesOf(parsed.get('styles/tokens.css')!)
     .filter(({ rule, media }) => rule.selector === ':root' && media.length === 0)
@@ -373,7 +356,7 @@ function words(value: string): string[] {
   return out;
 }
 
-/** Plain arithmetic on numbers, with brackets: what is left of a `calc()` once its lengths are numbers. */
+/** Plain arithmetic with brackets: a `calc()` once its lengths are numbers. */
 function arithmetic(text: string): number | undefined {
   const tokens = text.match(/\d*\.?\d+|[-+*/()]/g) ?? [];
   if (tokens.join('') !== text.replace(/\s+/g, '')) return undefined;
@@ -402,7 +385,7 @@ function arithmetic(text: string): number | undefined {
   return at === tokens.length && Number.isFinite(v) ? v : undefined;
 }
 
-/** A length in px: px itself, a token that holds one, or calc() arithmetic of them; undefined for anything a stylesheet alone cannot say (auto, %, em). */
+/** A length in px from px, a token or calc(); undefined for what a stylesheet alone cannot say (auto, %, em). */
 function px(value: string, depth = 0): number | undefined {
   if (depth > 8) return undefined;
   let known = true;
@@ -419,7 +402,7 @@ function px(value: string, depth = 0): number | undefined {
   return known && !/[a-z%]/i.test(text) ? arithmetic(text) : undefined;
 }
 
-/** The top and bottom a padding or margin declaration sets, as written; this site writes horizontally, so block start is top. */
+/** The top and bottom of a padding or margin declaration; the site is horizontal, so block start is top. */
 function blockSides(d: Declaration, box: 'padding' | 'margin'): { top?: string; bottom?: string } {
   const w = words(d.value);
   if (d.prop === box) return { top: w[0], bottom: w[2] ?? w[0] };
@@ -429,7 +412,7 @@ function blockSides(d: Declaration, box: 'padding' | 'margin'): { top?: string; 
   return {};
 }
 
-/** How much a selector weighs against another for the same element: ids, then classes, attributes and states, then tags. */
+/** Selector specificity: ids, then classes, attributes and states, then tags. */
 function weight(selector: string): number {
   const own = selector.replace(/:where\([^)]*\)/g, '');
   const ids = (own.match(/#[\w-]+/g) ?? []).length;
@@ -439,12 +422,8 @@ function weight(selector: string): number {
 }
 
 /**
- * A scrolling row as each rule that names it leaves it: the rules it stands
- * on (under no more conditions, and weighing less or written earlier) taken
- * in the order the browser takes them, then the rule itself. One entry for
- * every rule under which the row scrolls sideways, with its padding and the
- * margin above in px, 0 where nothing sets them and undefined where a
- * stylesheet alone cannot say.
+ * A scrolling row's padding and top margin in px under each rule that makes it scroll sideways, after the cascade of
+ * the rules it stands on; 0 where unset and undefined where a stylesheet alone cannot say.
  */
 function scrollerBoxes(row: string, roots: Iterable<[string, Root]>): Array<{ at: string; top?: number; bottom?: number; marginTop?: number }> {
   const placed: Array<{ rule: Rule; path: string; conditions: string[]; weight: number; order: number }> = [];
@@ -493,7 +472,7 @@ describe('the rest of the stylesheets', () => {
   });
 
   it('let no listed control clip what reaches past its own edges', () => {
-    // the segments and the landing page's tabs among them, now that their words clip in spans of their own
+    // The segments and the landing page's tabs too, now that their words clip in spans of their own.
     expect(clippers(others).map(({ at }) => at)).toEqual([]);
   });
 
@@ -507,7 +486,7 @@ describe('the rest of the stylesheets', () => {
   });
 
   it('are read the way they are written', () => {
-    // the reading itself, on sheets whose answer is known: a check that reads nothing would pass for ever
+    // The reading itself, on known sheets: a check that reads nothing would always pass.
     expect(ownBefores(sheet('.card .chip::before { content: "" } .chip .dot::before, .chip-row::before { content: "" }'))).toEqual([
       'known.css:1 .card .chip::before (.chip)',
     ]);
@@ -530,7 +509,7 @@ describe('the rows that scroll sideways', () => {
       if (boxes.length === 0) short.push(`${row}: scrolls nowhere`);
       for (const b of boxes) {
         if (!((b.top ?? -1) >= room && (b.bottom ?? -1) >= room)) short.push(`${b.at} ${row}: padding ${b.top} above and ${b.bottom} below, under ${room}`);
-        // below a row, room may be padding it already had (the profile's tabs over their line, the editor's filters), so only the top is held to its margin
+        // Below a row, the room may be existing padding, so only the top is held to its margin.
         if (!((b.marginTop ?? 0) <= -room)) short.push(`${b.at} ${row}: margin ${b.marginTop} above, so the room moves the row down`);
       }
     }

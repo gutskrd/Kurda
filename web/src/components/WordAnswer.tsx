@@ -5,27 +5,17 @@ import { BookmarkIcon } from './icons';
 import './word-answer.css';
 
 /**
- * What a word game teaches at its end: the word it was about, with what it
- * means, and the rhymes a round left unfound.
- *
- * The server sends a word's meanings in every interface language a word card
- * gives (api/src/game/word-meanings.ts) and the reader is shown their own,
- * falling back to English, as the riddles and proverbs do. A meaning nobody has
- * written is simply left out: the word is still the answer, and a guessed
- * translation would teach the wrong thing.
+ * What a word game teaches at its end: the word with its meaning, and the rhymes a round left unfound. Meanings come in
+ * each interface language (api/src/game/word-meanings.ts), shown in the reader's own or English; a missing meaning is
+ * left out rather than guessed.
  */
 
-/** A spelling compared for sameness only: case, outer spaces and the shape of its letters set aside. */
+/** Compares spellings ignoring case, outer spaces and letter forms. */
 function same(a: string, b: string): boolean {
   return a.normalize('NFC').trim().toLowerCase() === b.normalize('NFC').trim().toLowerCase();
 }
 
-/**
- * What to show under `word`: the reader's own meaning, else the English one,
- * and never the word itself again. A Kurmancî reader of a Kurmancî word would
- * otherwise read "zevî" under "zevî" wherever a card gives the word as its own
- * meaning; English, or nothing, says more than that.
- */
+/** The reader's meaning, else the English one, but never the word itself again (a card can give a word as its own meaning). */
 function shownMeaning(meanings: WordMeanings | null | undefined, locale: string, word: string): string | null {
   const own = meaningIn(meanings, locale);
   if (own && !same(own, word)) return own;
@@ -36,7 +26,7 @@ function shownMeaning(meanings: WordMeanings | null | undefined, locale: string,
 /** What a word means, by interface language; empty when nobody has written it yet. */
 export type WordMeanings = Partial<Record<string, string>>;
 
-/** A rhyme the round could have found, with its meanings (`missed` on a round or a match's results). */
+/** A rhyme the round could have found, with its meanings (`missed` in results). */
 export interface RhymeHint {
   word: string;
   meanings: WordMeanings;
@@ -50,11 +40,8 @@ function letters(dialect: WordGameDialect): GameDialect {
 }
 
 /**
- * The answer of a finished Peyvok: the word, large, with its meaning under
- * it, and Save to vocabulary when the dictionary has the word to save it as.
- * Saving is the page's to do (it knows the game); this only says how it
- * stands. The button stays a button once the word is saved, pressed and
- * still, so the line does not jump and a screen reader hears it is on.
+ * A finished Peyvok's word, large, with its meaning, and Save to vocabulary when the dictionary has it. The page does the
+ * saving; once saved the button stays, pressed and still, so the line does not jump.
  */
 export function WordAnswer({
   word,
@@ -100,11 +87,7 @@ export function WordAnswer({
   );
 }
 
-/**
- * What a word means, said in one quiet line under a sentence that already
- * names the word (a battle's "The word was …"). Nothing at all when nobody has
- * written a meaning for it.
- */
+/** A word's meaning in one quiet line under a sentence that already names it; nothing when no meaning is written. */
 export function WordMeaningLine({ word, meanings }: { word: string; meanings: WordMeanings | null | undefined }): React.JSX.Element | null {
   const locale = useLocale();
   const meaning = shownMeaning(meanings, locale, word);
@@ -116,13 +99,7 @@ export function WordMeaningLine({ word, meanings }: { word: string; meanings: Wo
   );
 }
 
-/**
- * The rhymes a round did not find, each with its meaning, under a heading of
- * its own: finding rhymes is half of the game, and seeing the ones that got
- * away, with what they mean, is how the next round goes better. Up to ten
- * come from the server, those with a meaning first; none, and there is no
- * list at all.
- */
+/** The rhymes a round did not find, with their meanings, under their own heading; the server sends up to ten, meanings first. */
 export function MissedRhymes({
   hints,
   dialect,

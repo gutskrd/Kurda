@@ -92,13 +92,13 @@ describe('Messages', () => {
     await userEvent.click(screen.getByRole('button', { name: /^send$/i }));
 
     expect(await screen.findByText('Hey there')).toBeInTheDocument();
-    // a POST to the messages endpoint was made
+    // A POST to the messages endpoint was made.
     expect(fetchMock.mock.calls.some(([u, i]) => String(u).includes('/chat/u2/messages') && (i as RequestInit)?.method === 'POST')).toBe(true);
   });
 
   it('marks a direct conversation read as soon as it is opened', async () => {
-    // the endpoint always existed and the group channel called it; the direct
-    // thread never did, so a DM stayed unread however long you looked at it
+    // The endpoint always existed and the group channel called it; the direct
+    // thread never did, so a DM stayed unread however long you looked at it.
     const fetchMock = vi.fn(async (url: string, _init?: RequestInit) => {
       if (String(url).includes('/chat/u2/messages')) {
         return jsonResponse(200, {
@@ -144,8 +144,8 @@ describe('Messages', () => {
       </AuthProvider>,
     );
 
-    // thread is open (compose box present) and empty; wait until the provider
-    // has connected (auth settled → event subscription wired), then a DM arrives
+    // Thread is open (compose box present) and empty; wait until the provider
+    // has connected (auth settled → event subscription wired), then a DM arrives.
     expect(await screen.findByLabelText('Message')).toBeInTheDocument();
     await waitFor(() => expect(isConnected()).toBe(true));
     emit({
@@ -153,14 +153,12 @@ describe('Messages', () => {
       event: { type: 'dm', from: 'u2', message: { id: 'rt1', senderId: 'u2', body: 'Live hello', createdAt: '2026-08-24T11:00:00Z', deliveredAt: null, readAt: null } },
     });
 
-    // it shows up without any additional fetch/poll
+    // It shows up without any additional fetch/poll.
     await waitFor(() => expect(screen.getByText('Live hello')).toBeInTheDocument());
   });
 
   it('shows a read receipt on your own message and updates it live', async () => {
-    // the server has tracked delivered_at/read_at all along and publishes
-    // dm_read — nothing on the client ever showed it, so a sent message looked
-    // identical whether it had been read or had never arrived
+    // The server tracks delivered_at and read_at and publishes dm_read, so a read message must look different.
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
@@ -224,7 +222,7 @@ describe('Messages', () => {
     expect(await screen.findByLabelText('Message')).toBeInTheDocument();
     await waitFor(() => expect(isConnected()).toBe(true));
 
-    // someone else's typing must not show up in this thread
+    // Someone else's typing must not show up in this thread.
     emit({ room: 'user:me', event: { type: 'dm_typing', from: 'someone-else' } });
     expect(screen.queryByText(/is typing/)).not.toBeInTheDocument();
 
@@ -264,10 +262,10 @@ describe('Messages', () => {
 
     renderApp(<Messages />, ['/app/messages']);
 
-    // one tap, on the list everyone lands on: no tab to find first
+    // One tap, on the list everyone lands on: no tab to find first.
     await pressNewGroup();
     const form = within(screen.getByRole('dialog', { name: 'New group' }));
-    // a name is all it asks: nothing to choose about who may find or join it
+    // A name is all it asks: nothing to choose about who may find or join it.
     expect(form.queryByText(/privacy|invite-only|anyone can/i)).not.toBeInTheDocument();
     expect(form.queryByRole('button', { name: /^open$/i })).not.toBeInTheDocument();
     expect(form.getByRole('button', { name: 'Create group' })).toBeDisabled();
@@ -277,7 +275,7 @@ describe('Messages', () => {
     await waitFor(() => expect(calls).toHaveLength(1));
     expect(calls[0]!.body).toEqual({ name: 'Kurmancî learners' });
 
-    // the group's chat opens with its add-friends sheet up, the friends listed, nothing pressed
+    // The group's chat opens with its add-friends sheet up, the friends listed, nothing pressed.
     const sheet = within(await screen.findByRole('dialog', { name: 'Add friends' }));
     expect(await sheet.findByRole('button', { name: 'Add Roj' })).toBeInTheDocument();
     await userEvent.click(sheet.getByRole('button', { name: 'Done' }));
@@ -307,7 +305,7 @@ describe('Messages', () => {
 
     expect(screen.queryByRole('button', { name: /discover|join/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('searchbox', { name: /search groups/i })).not.toBeInTheDocument();
-    // the list of everyone's groups is never asked for
+    // The list of everyone's groups is never asked for.
     expect(asked.some((a) => /^GET \S+\/groups$/.test(a) && !a.includes('/me/groups'))).toBe(false);
   });
 
@@ -384,7 +382,7 @@ describe('Messages', () => {
 
     await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
     expect(await screen.findByRole('link', { name: /My Club/ })).toHaveAttribute('href', '/app/messages?group=g1');
-    // how many are in it, and no word about who may come in
+    // How many are in it, and no word about who may come in.
     expect(screen.getByText('1 member')).toBeInTheDocument();
     expect(screen.queryByText(/invite-only|open group/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /discover|join/i })).not.toBeInTheDocument();
@@ -419,7 +417,7 @@ describe('Messages', () => {
 
     renderApp(<Messages />, ['/app/messages?group=g1']);
 
-    // the creator is the owner: the group's page offers changing it, and a member's ⋯ offers making them an admin
+    // The creator is the owner: the group's page offers changing it, and a member's ⋯ offers making them an admin.
     await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
     expect(await screen.findByRole('button', { name: 'Edit group' })).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Options for zana' }));
@@ -463,7 +461,7 @@ describe('Messages', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
     await userEvent.click(await screen.findByRole('button', { name: /^Leave Test Group$/ }));
-    expect(calls).toHaveLength(0); // asked, not done
+    expect(calls).toHaveLength(0); // Asked, not done.
 
     const ask = screen.getByRole('alertdialog', { name: 'Leave Test Group' });
     await userEvent.click(within(ask).getByRole('button', { name: 'Leave Test Group' }));
@@ -477,8 +475,8 @@ describe('Messages', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
 
-    // the server refuses an owner's leave (a group with no owner has nobody who
-    // can hand it on), so the roster says so rather than asking and failing
+    // The server refuses an owner's leave (a group with no owner has nobody who
+    // can hand it on), so the roster says so rather than asking and failing.
     expect(await screen.findByText(/To leave, make someone else the owner first/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Leave Test Group$/ })).not.toBeInTheDocument();
   });
@@ -537,7 +535,7 @@ describe('Messages', () => {
     });
 
     await waitFor(() => expect(screen.getByText('Silav hemû!')).toBeInTheDocument());
-    expect(screen.getByText('zana')).toBeInTheDocument(); // sender name shown on others' bubbles
+    expect(screen.getByText('zana')).toBeInTheDocument(); // Sender name shown on others' bubbles.
   });
 
   describe('the list', () => {
@@ -574,7 +572,7 @@ describe('Messages', () => {
       expect(await screen.findByText('zana')).toBeInTheDocument();
       expect(screen.getByText('berfin')).toBeInTheDocument();
       expect(await screen.findByText('Kurmancî club')).toBeInTheDocument();
-      // unread reads as unread: bolder, and counted
+      // Unread reads as unread: bolder, and counted.
       expect(screen.getByText('zana').closest('a')).toHaveClass('is-unread');
       expect(screen.getByText('berfin').closest('a')).not.toHaveClass('is-unread');
       expect(screen.getAllByText('just now').length).toBeGreaterThan(0);
@@ -600,7 +598,7 @@ describe('Messages', () => {
       const row = await screen.findByRole('link', { name: /Friend requests/ });
       expect(row).toHaveAttribute('href', '/app/friends');
       expect(row.textContent).toContain('Serhat');
-      // above the first conversation
+      // Above the first conversation.
       const first = await screen.findByText('zana');
       expect(row.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
@@ -615,12 +613,12 @@ describe('Messages', () => {
     it('starts a new conversation with a friend', async () => {
       serve();
       renderApp(<Messages />, ['/app/messages']);
-      // at the top of the list, and in the empty half of the screen beside it
+      // At the top of the list, and in the empty half of the screen beside it.
       const [start] = await screen.findAllByRole('button', { name: 'New message' });
       await userEvent.click(start!);
       const dialog = await screen.findByRole('dialog', { name: 'New message' });
       await userEvent.click(await within(dialog).findByRole('button', { name: /Rojda/ }));
-      // the thread opens for them
+      // The thread opens for them.
       expect(await screen.findByRole('textbox', { name: 'Message' })).toBeInTheDocument();
     });
   });

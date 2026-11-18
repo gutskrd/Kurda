@@ -11,15 +11,13 @@ afterEach(() => {
 });
 
 /**
- * Route fetch by URL so /friends, its two request lists and /users/search each
- * answer. Longest key first: '/friends/requests/outgoing' contains
- * '/friends/requests', so a plain find() would hand the sent list the incoming
- * fixture and quietly show every pending request twice.
+ * Routes fetch by URL, longest key first: '/friends/requests/outgoing' contains '/friends/requests', so a plain find()
+ * would hand the sent list the incoming fixture.
  */
 function routedFetch(map: Record<string, unknown>) {
   const keys = Object.keys(map).sort((a, b) => b.length - a.length);
   // `init` is unused here but kept in the signature so tests can assert on the
-  // method a control actually sent, not merely on the URL it touched
+  // method a control actually sent, not merely on the URL it touched.
   return vi.fn(async (url: string, _init?: RequestInit) => {
     const key = keys.find((k) => url.includes(k));
     return jsonResponse(200, key ? map[key] : {});
@@ -27,11 +25,7 @@ function routedFetch(map: Record<string, unknown>) {
 }
 
 describe('Friends', () => {
-  /**
-   * Two labels here are built from a name — "Remove {name} as a friend" — and a
-   * placeholder that did not survive translation is a button reading
-   * "Retirer {name} de tes amis" with the braces still in it. Worth one test.
-   */
+  // Two labels are built from a name ("Remove {name} as a friend"), and a lost placeholder would show its braces.
   it('reads in the chosen language, names and all', async () => {
     localStorage.setItem('hevalo_locale', 'fr');
     vi.stubGlobal(
@@ -47,7 +41,7 @@ describe('Friends', () => {
     expect(await screen.findByRole('heading', { name: 'Amis', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Trouver des gens' })).toHaveAttribute('href', '/app/search');
     expect(screen.getByRole('heading', { name: 'Tes amis' })).toBeInTheDocument();
-    // what ends a friendship is behind the row’s ⋯, named for the person too
+    // What ends a friendship is behind the row’s ⋯, named for the person too.
     await userEvent.click(screen.getByRole('button', { name: 'En savoir plus sur zana' }));
     expect(screen.getByTitle('Retirer zana de tes amis')).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: 'Bloquer' })).toBeInTheDocument();
@@ -102,7 +96,7 @@ describe('Friends', () => {
     renderApp(<Friends />);
 
     await screen.findByText('online1');
-    // exactly one presence dot (the online friend)
+    // Exactly one presence dot (the online friend).
     expect(document.querySelectorAll('.presence-dot')).toHaveLength(1);
   });
 
@@ -152,7 +146,7 @@ describe('Friends', () => {
 
     await screen.findByText('Requests');
     expect(screen.queryByText('Sent')).not.toBeInTheDocument();
-    // one row, in the incoming section — not two
+    // One row, in the incoming section — not two.
     expect(screen.getAllByText('rojda')).toHaveLength(1);
   });
 
@@ -167,7 +161,7 @@ describe('Friends', () => {
 
     const cancel = await screen.findByRole('button', { name: /cancel your request to hevi/i });
     await userEvent.click(cancel);
-    // armed, not fired: one press must not undo something silently
+    // Armed, not fired: one press must not undo something silently.
     expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/friends/requests/u7'))).toBe(false);
 
     await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
@@ -191,16 +185,13 @@ describe('Friends', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Play with Zana' }));
     const sheet = await screen.findByRole('dialog', { name: 'Play with Zana' });
-    // the game is the reader's to choose; the friend is already ticked
+    // The game is the reader's to choose; the friend is already ticked.
     expect(within(sheet).getByRole('radiogroup', { name: 'Game' })).toBeInTheDocument();
     expect(await within(sheet).findByRole('checkbox', { name: /Zana/ })).toBeChecked();
     expect(within(sheet).getByRole('button', { name: 'Create and invite (1)' })).toBeInTheDocument();
   });
 
-  /**
-   * A row used to carry three buttons — a game, Remove and Block — and two of
-   * the three ended the friendship from one press beside the one pressed most.
-   */
+  // Removing and blocking end a friendship, so they sit behind the row's ⋯, away from the game button.
   it('keeps the game in a friend’s row and puts removing and blocking behind its ⋯', async () => {
     const fetchMock = routedFetch({
       '/friends/requests/outgoing': { requests: [] },
@@ -213,7 +204,7 @@ describe('Friends', () => {
       fetchMock.mock.calls.some(([url, init]) => String(url).endsWith(path) && init?.method === method);
 
     expect(await screen.findByRole('button', { name: 'Play with Zana' })).toBeInTheDocument();
-    // nothing in the row itself takes them off the list or blocks them
+    // Nothing in the row itself takes them off the list or blocks them.
     expect(screen.queryByText('Remove')).not.toBeInTheDocument();
     expect(screen.queryByText('Block')).not.toBeInTheDocument();
 
@@ -221,14 +212,14 @@ describe('Friends', () => {
     const menu = screen.getByRole('menu');
     expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent?.trim())).toEqual(['Remove', 'Report', 'Block']);
 
-    // removing is asked twice, there in the menu
+    // Removing is asked twice, there in the menu.
     await userEvent.click(within(menu).getByRole('menuitem', { name: 'Remove zana as a friend' }));
     expect(sent('DELETE', '/friends/u2')).toBe(false);
     await userEvent.click(within(menu).getByRole('menuitem', { name: /press again to confirm/i }));
     await waitFor(() => expect(sent('DELETE', '/friends/u2')).toBe(true));
     await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
 
-    // a block says what it does before it is done
+    // A block says what it does before it is done.
     await userEvent.click(screen.getByRole('button', { name: 'More about Zana' }));
     await userEvent.click(screen.getByRole('menuitem', { name: 'Block' }));
     const ask = screen.getByRole('dialog', { name: 'Block Zana' });
@@ -248,7 +239,7 @@ describe('Friends', () => {
     );
     renderApp(<Friends />);
 
-    // one field for people and words, with the people you may know under it
+    // One field for people and words, with the people you may know under it.
     expect(await screen.findByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/search');
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
   });
@@ -294,11 +285,11 @@ describe('Friends', () => {
     const ticket = await screen.findByRole('group', { name: 'Rojda wants to be friends' });
     expect(ticket).toHaveClass('ticket', 'ticket--friend');
     await userEvent.click(within(ticket).getByRole('button', { name: 'Accept' }));
-    // the stub torn, the stamp on, and said aloud
+    // The stub torn, the stamp on, and said aloud.
     expect(await within(ticket).findByText('Friends')).toHaveClass('ticket-stamp');
     expect(ticket).toHaveClass('is-torn');
     expect(within(ticket).getByRole('status')).toHaveTextContent('You and Rojda are friends now');
-    // then the request leaves the list
+    // Then the request leaves the list.
     await waitFor(() => expect(screen.queryByRole('group', { name: 'Rojda wants to be friends' })).not.toBeInTheDocument());
   });
 

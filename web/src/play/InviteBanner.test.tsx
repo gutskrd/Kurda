@@ -51,7 +51,7 @@ describe('InviteBanner', () => {
     }));
     fakeApi({ 'GET /play/invites': lists([incoming({ summary: { difficulty: 'hard', rated: false } })]) });
     renderPlay(<InviteBanner />);
-    // no room for the word on one line: the icon, with the word for a screen reader
+    // No room for the word on one line: the icon, with the word for a screen reader.
     expect(within(await screen.findByRole('status')).getByText('Friendly')).toHaveClass('sr-only');
   });
 
@@ -88,7 +88,7 @@ describe('InviteBanner', () => {
     const notNow = await screen.findByRole('button', { name: 'Not now' });
     await userEvent.click(notNow);
     const menu = screen.getByRole('menu', { name: 'Not now' });
-    // the first answer has the focus; arrows move, Escape closes and gives the focus back
+    // The first answer has the focus; arrows move, Escape closes and gives the focus back.
     expect(within(menu).getByRole('menuitem', { name: 'Later' })).toHaveFocus();
     await userEvent.keyboard('{ArrowDown}');
     expect(within(menu).getByRole('menuitem', { name: 'Not this game' })).toHaveFocus();
@@ -166,7 +166,7 @@ describe('InviteBanner', () => {
     const chip = await screen.findByRole('status');
     expect(within(chip).getByText('Rojda invited you to Pêşbaziya Peyvan')).toBeInTheDocument();
     expect(within(chip).getByRole('button', { name: 'Join' })).toBeInTheDocument();
-    // the settings and "Not now" wait behind "Show more", which is not "Not now"
+    // The settings and "Not now" wait behind "Show more", which is not "Not now".
     expect(within(chip).queryByText('Hard')).toBeNull();
     expect(within(chip).queryByRole('button', { name: 'Not now' })).toBeNull();
     const more = within(chip).getByRole('button', { name: 'Show more' });
@@ -252,7 +252,7 @@ describe('InviteBanner', () => {
     renderPlay(<InviteBanner />);
     await userEvent.click(await screen.findByRole('button', { name: 'Join' }));
     await waitFor(() => expect(screen.getByRole('status')).toHaveClass('is-torn'));
-    // the lobby waits for the tear
+    // The lobby waits for the tear.
     expect(where()).toBe('/app/games');
     await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'));
   });
@@ -271,7 +271,7 @@ describe('InviteBanner', () => {
     fakeApi({ 'GET /play/invites': lists(), 'POST /play/invites/i1/accept': { game: 'wordle-battle', lobbyId: 'b1' } });
     renderPlay(<InviteBanner />);
     await userEvent.click(await screen.findByRole('button', { name: 'Join' }));
-    // well inside the time a tear takes
+    // Well inside the time a tear takes.
     await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'), { timeout: 250 });
     expect(document.querySelector('.is-torn')).toBeNull();
   });
@@ -290,7 +290,7 @@ describe('InviteBanner', () => {
     expect(shown).toHaveLength(2);
     const fan = [...document.querySelectorAll('.invite-fan')];
     expect(fan.map((f) => f.classList.contains('ticket--rhyme-match') || f.classList.contains('ticket--stories'))).toEqual([true, true]);
-    // the edges are a picture of the count, which is said in words
+    // The edges are a picture of the count, which is said in words.
     expect(fan.every((f) => f.getAttribute('aria-hidden') === 'true')).toBe(true);
     expect(within(shown[1]!).getByText('+2 more')).toBeInTheDocument();
   });

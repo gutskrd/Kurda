@@ -1,31 +1,16 @@
 /**
- * What a Hevalo link looks like when it is pasted somewhere else.
+ * The edge Worker in front of the SPA. Link previews (chat apps, social networks) do not run JavaScript, so shared
+ * posts, invitations, wins and listed pages get their own title, description, picture and canonical written into the
+ * shell's head here. It also builds the sitemap, answers dead dictionary addresses and scanner probes with real 404s,
+ * and passes everything else through from the asset binding.
  *
- * The app is a Vite SPA: the server sends one `index.html` for every path and
- * React fills it in. That is fine for a reader and useless for everything that
- * unfurls a link — WhatsApp, Telegram, iMessage, Slack, Twitter, Facebook — none
- * of which runs the JavaScript that would set the title. Every post shared out
- * of Hevalo arrived as the same grey card, whichever
- * post it was.
- *
- * So a post's URL gets its real title, its author, its first lines and its
- * picture written into the HTML head before the page leaves the edge. Everything
- * else is served exactly as before: static assets straight from the bundle, and
- * the SPA shell for every other path.
- *
- * Three rules hold this together, and all three matter:
- *
- *   1. Only two URL shapes are ever looked up, and only after the id parses as a
- *      UUID. The worker is not a proxy for whatever path someone asks for.
- *   2. Everything from the API is escaped on the way into the markup. A post is
- *      user-written text going into HTML attributes — it is the one place in
- *      this file where a mistake is a stored XSS.
- *   3. A slow or broken API costs the reader nothing: the shell goes out
- *      unchanged. A preview is a nicety; the page is not.
+ * Rules: only fixed URL shapes are looked up, and only after an id parses as a UUID; everything from the API is
+ * escaped into the markup, since post text in an attribute is where a mistake becomes stored XSS; and a slow or broken
+ * API costs nothing, as the shell then goes out unchanged.
  */
 
 import { SOURCES, SOURCE_ORDER, type Source } from './teaching/sources';
-// the one file, not the package: its index would bring the whole of @kurda/shared into the edge script
+// The one file, not the package, whose index would pull all of @kurda/shared into the edge script.
 import { isScannerProbe } from '@kurda/shared/src/scanner-paths';
 import { parseJoinLink, type JoinLink, type JoinLinkGame } from '@kurda/shared/src/join-link';
 import { GAME_NAMES } from '@kurda/shared/src/games/names';
@@ -33,13 +18,8 @@ import { LEAGUE_TIER_META } from '@kurda/shared/src/leagues';
 import { parseWinLink, winCardPath, winLinkPath, type WinLink } from '@kurda/shared/src/win-link';
 
 /*
- * The two pieces of the Workers runtime this file uses, declared here rather
- * than pulled in from @cloudflare/workers-types.
- *
- * That package replaces the DOM lib rather than sitting beside it, and this is
- * one file in a sixty-file browser app that needs `document`. Two small
- * interfaces cost less than a global type conflict across all of it, and they
- * say exactly what is being relied on.
+ * The two Workers runtime types this file uses, declared here because @cloudflare/workers-types replaces the DOM lib
+ * that the rest of the app needs.
  */
 interface Fetcher {
   fetch(request: Request): Promise<Response>;
@@ -57,7 +37,7 @@ declare class HTMLRewriter {
 
 interface Env {
   ASSETS: Fetcher;
-  /** Origin of the API, e.g. https://kurda-api.onrender.com */
+  /** Origin of the API, e.g. https://kurda-api.onrender.com. */
   API_ORIGIN?: string;
 }
 
@@ -68,7 +48,7 @@ const PREVIEW_TTL_SECONDS = 300;
 /** A slow API must not hold the page up. */
 const API_TIMEOUT_MS = 2_000;
 
-/** Lengths that read well in an unfurled card rather than being truncated by it. */
+/** Lengths that read well in an unfurled card rather than being cut by it. */
 const MAX_TITLE = 70;
 const MAX_DESCRIPTION = 200;
 
@@ -77,13 +57,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** The two kinds of post that have a page of their own. */
 type PostRoute = { api: string; kind: 'library' | 'image' };
 
-/**
- * Which post, if any, this path is.
- *
- * Deliberately a fixed table rather than anything derived from the path: the id
- * is the only part that varies, and it has to be a UUID before it is put in a
- * URL. Anything else falls through to the SPA, which is what it did before.
- */
+/** Which post, if any, this path is: a fixed table, with the id checked as a UUID before it goes into a URL. */
 function routeFor(pathname: string): PostRoute | null {
   const library = /^\/app\/library\/([^/]+)\/?$/.exec(pathname);
   if (library && UUID.test(library[1]!)) return { api: `/library/posts/${library[1]}`, kind: 'library' };
@@ -94,7 +68,7 @@ function routeFor(pathname: string): PostRoute | null {
   return null;
 }
 
-/** Escape for an HTML attribute value. Everything below is user-written. */
+/** Escapes an HTML attribute value; everything below is user-written. */
 function attr(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -104,7 +78,7 @@ function attr(value: string): string {
     .replace(/'/g, '&#39;');
 }
 
-/** Collapse whitespace and cut on a word boundary, so a preview ends cleanly. */
+/** Collapses whitespace and cuts on a word boundary, so a preview ends cleanly. */
 function trim(value: string, max: number): string {
   const flat = value.replace(/\s+/g, ' ').trim();
   if (flat.length <= max) return flat;
@@ -127,7 +101,7 @@ function previewOf(post: Record<string, unknown>, kind: PostRoute['kind']): Prev
   const rawTitle = typeof post.title === 'string' ? post.title : '';
   const rawBody = typeof post.body === 'string' ? post.body : typeof post.caption === 'string' ? post.caption : '';
 
-  // a picture usually has no title, so the byline becomes the headline
+  // A picture usually has no title, so the byline becomes the headline.
   const headline = rawTitle.trim() || (kind === 'image' ? 'A picture on Hevalo' : 'A post on Hevalo');
   const title = by ? `${trim(headline, MAX_TITLE)} · @${by}` : trim(headline, MAX_TITLE);
 
@@ -141,13 +115,13 @@ function previewOf(post: Record<string, unknown>, kind: PostRoute['kind']): Prev
   return { title, description, image };
 }
 
-/** Ask the API for one post. Never throws, never waits long. */
+/** Asks the API for one post; never throws, never waits long. */
 async function fetchPost(apiOrigin: string, path: string): Promise<Record<string, unknown> | null> {
   try {
     const res = await fetch(`${apiOrigin}${path}`, {
       headers: { accept: 'application/json' },
       signal: AbortSignal.timeout(API_TIMEOUT_MS),
-      // the post is public and the same for everyone, so the edge may keep it
+      // The post is public and the same for everyone, so the edge may keep it.
       cf: { cacheTtl: PREVIEW_TTL_SECONDS, cacheEverything: true },
     } as RequestInit);
     if (!res.ok) return null;
@@ -158,16 +132,8 @@ async function fetchPost(apiOrigin: string, path: string): Promise<Record<string
 }
 
 /**
- * Every tag this file writes, and therefore every tag it has to take out first.
- *
- * Appending without removing was the bug, and it was invisible from the markup:
- * the page ends up with two `og:title`s, the shell's generic one **first**, and
- * everything that unfurls a link reads the first. So a shared post carried the
- * site's own card — "Hevalo", the landing-page blurb, the home page's URL —
- * which is exactly the thing this worker was written to stop.
- *
- * A `<title>` was already being removed, which is why the browser tab looked
- * right and the card did not.
+ * Every tag this file writes, and so every tag it removes first: with two `og:title`s, link previews read the shell's
+ * generic first one.
  */
 const REPLACED = [
   'title',
@@ -188,14 +154,7 @@ const REPLACED = [
   'meta[name="twitter:image"]',
 ];
 
-/**
- * Swap the shell's head for this page's.
- *
- * `HTMLRewriter` streams, so this costs nothing in memory and adds no round
- * trip. Anything the new tags cover is removed on the way past rather than
- * duplicated — a document with two of a tag is a document whose meaning is
- * whichever one the reader happens to take.
- */
+/** Swaps the shell's head for this page's, streaming through `HTMLRewriter` and removing whatever the new tags replace. */
 function withHead(html: Response, tags: ReadonlyArray<string | ''>): Response {
   const rewriter = new HTMLRewriter();
   for (const selector of REPLACED) rewriter.on(selector, { element: (el) => el.remove() });
@@ -224,11 +183,8 @@ function previewHead(preview: Preview, url: string): Array<string | ''> {
 }
 
 /**
- * What each game is called on the card of an invitation to it: its own name,
- * which is Kurmancî and the same for every reader (shared: games/names.ts).
- * The words round it are English, as the rest of this file's are: whatever
- * unfurls a link is not told who will read it. The message the link arrives
- * in is in the sender's language, and the page it opens is in the reader's.
+ * Each game's name on an invitation card: its Kurmancî name, the same for every reader (shared games/names.ts). The rest
+ * of this file's words are English, since a link preview does not say who will read it.
  */
 const INVITE_GAME: Record<JoinLinkGame, string> = {
   'wordle-battle': GAME_NAMES['wordle-battle'],
@@ -239,19 +195,13 @@ const INVITE_GAME: Record<JoinLinkGame, string> = {
   'who-am-i': GAME_NAMES['who-am-i'],
 };
 
-/** The games with a card of their own (api/scripts/generate-invite-art.ts); the rest show the site's. */
+/** Games with their own card (api/scripts/generate-invite-art.ts); the rest show the site's. */
 const INVITE_CARDS: ReadonlySet<JoinLinkGame> = new Set(['wordle-battle', 'rhyme-match', 'last-letter', 'impostor', 'who-am-i']);
 
 /**
- * An invitation to a game, as a head: the game's name and its own picture,
- * and the code said once more for whoever reads the card without tapping it.
- *
- * Nothing is looked up. The link says which game it is and what its code is
- * (shared/src/join-link.ts), both read by a pattern that takes nothing else,
- * so this is a table lookup like a listed page's: it cannot fail, costs no
- * request, and gives nobody a way to ask the server which codes are in use.
- * Who shared the link is not on the card: the address may name them, and a
- * name from an address is not put into markup.
+ * An invitation as a head: the game's name, its picture and the code. Nothing is looked up, since the link's game and
+ * code are read by a strict pattern (shared/src/join-link.ts), so it cannot fail and reveals no codes. Who shared it is
+ * not shown, since a name from an address is never put into markup.
  */
 function inviteHead(invite: JoinLink, url: string): Array<string | ''> {
   const title = `You’re invited to play ${INVITE_GAME[invite.game]} on Hevalo`;
@@ -279,13 +229,8 @@ function inviteHead(invite: JoinLink, url: string): Array<string | ''> {
 }
 
 /**
- * What the card of a shared win says under its picture: what was done, in a
- * few words, and where. English, as the rest of this file's words are; the
- * line the link arrives under is in the sender's language and the page it
- * opens is in the reader's (share/WinPage.tsx).
- *
- * The word game's card says the game and not how it went: the same link is
- * under a game that was lost.
+ * What a shared win's card says under its picture, in English like the rest of this file (share/WinPage.tsx). The word
+ * game's card names the game, not the result, since the same link goes under a lost game.
  */
 function winWords(win: WinLink): { title: string; description: string } {
   const hevalo = 'A postcard from Hevalo, where Kurdish is learned a few minutes at a time.';
@@ -293,7 +238,7 @@ function winWords(win: WinLink): { title: string; description: string } {
     case 'lesson':
       return { title: 'One more Kurdish lesson done', description: hevalo };
     case 'streak':
-      // one day is not yet a row of them
+      // One day is not yet a row of them.
       return { title: win.days !== null && win.days > 1 ? `${win.days} days of Kurdish in a row` : 'A Kurdish streak, kept alive', description: hevalo };
     case 'badge':
       return { title: 'A new badge on Hevalo', description: hevalo };
@@ -305,15 +250,10 @@ function winWords(win: WinLink): { title: string; description: string } {
 }
 
 /**
- * A shared win, as a head: what was done, and the postcard drawn for it
- * (shared: art/share-card.ts, as a picture by api/scripts/generate-share-art.ts).
- *
- * Nothing is looked up, and there is nothing to look up: the link says what
- * kind of win it is and at most one detail of a fixed shape, both read by a
- * pattern that takes nothing else (shared/src/win-link.ts), and it never says
- * whose. So this is a table lookup like an invitation's. It cannot fail,
- * costs no request, and puts nothing from an address into markup but a count
- * of days and a league's own name.
+ * A shared win as a head: what was done and its postcard (shared art/share-card.ts, drawn by
+ * api/scripts/generate-share-art.ts). The link's kind and single detail are read by a strict pattern
+ * (shared/src/win-link.ts) and never say whose, so nothing is looked up and only a day count or a league name reaches the
+ * markup.
  */
 function winHead(win: WinLink, url: string): Array<string | ''> {
   const { title, description } = winWords(win);
@@ -339,20 +279,9 @@ function winHead(win: WinLink, url: string): Array<string | ''> {
 }
 
 /**
- * The head a listed, non-post page should have had all along.
- *
- * The canonical is the reason this exists. `index.html` carries
- * `<link rel="canonical" href="https://hevalo.app/">` and the asset binding
- * hands that same file to every path, so **every URL on the site was telling
- * search engines it was a duplicate of the home page** — the library posts
- * included, which are the only pages here anyone would search for. A sitemap of
- * five URLs, four of which asked not to be indexed, and the fifth of which had
- * already been collapsed into the first.
- *
- * Only the paths that really are pages get one. An unknown path still gets the
- * shell, and the shell pointing at `/` is the right answer for it: a typo under
- * `/app/` is not a page, and a canonical of its own would invite a crawler to
- * collect them.
+ * The head for a listed page that is not a post. Its own canonical matters most: index.html's points at `/`, and the
+ * asset binding serves that file for every path, so without this every page told search engines it duplicated the home
+ * page. Unknown paths keep the shell's, which is right for a typo.
  */
 function staticHead(page: StaticPage, url: string): Array<string | ''> {
   return [
@@ -377,14 +306,8 @@ function staticHead(page: StaticPage, url: string): Array<string | ''> {
 }
 
 /**
- * A schema.org data block for the head.
- *
- * A data block, not a script: it is never executed, so the CSP's `script-src
- * 'self'` does not apply to it — the same reasoning as the one in index.html.
- * JSON is not HTML, though, and a `</script>` inside a string would end the
- * element early, so every character that could open or close markup is
- * written as a JSON escape. What goes in here is our own text today; the
- * escaping is so that it stays safe when it is not.
+ * A schema.org data block for the head. Never executed, so `script-src 'self'` does not apply, but `</script>` in a
+ * string would end it early, so every character that could open or close markup is JSON-escaped.
  */
 function jsonLd(data: Record<string, unknown>): string {
   const json = JSON.stringify(data)
@@ -397,10 +320,8 @@ function jsonLd(data: Record<string, unknown>): string {
 }
 
 /**
- * A study as schema.org has it: a ScholarlyArticle inside its issue, inside its
- * volume, inside its journal — as far down as the reference goes. A paper in a
- * conference's proceedings is part of those proceedings, which are no
- * Periodical, so they are named and nothing more.
+ * A study as schema.org has it: a ScholarlyArticle in its issue, volume and journal, as far as the reference goes.
+ * Conference proceedings are not a Periodical, so they are only named.
  */
 function scholarlyArticle(s: Source): Record<string, unknown> {
   let container: Record<string, unknown> =
@@ -413,7 +334,7 @@ function scholarlyArticle(s: Source): Record<string, unknown> {
     '@type': 'ScholarlyArticle',
     headline: s.title,
     name: s.title,
-    // "et al." has no schema.org form: the authors the reference names are listed
+    // "et al." has no schema.org form, so the authors the reference names are listed.
     author: s.authors.map(([family, initials]) => ({ '@type': 'Person', familyName: family, name: `${initials} ${family}` })),
     datePublished: String(s.year),
     ...(s.pages ? { pagination: s.pages } : {}),
@@ -423,15 +344,8 @@ function scholarlyArticle(s: Source): Record<string, unknown> {
 }
 
 /**
- * "How Hevalo teaches" as what it is: an article by Hevalo's maker that cites
- * its sources. The citations are the page's own reference list
- * (teaching/sources.ts), in the order it prints them, so the head and the page
- * cannot cite different papers.
- *
- * The site, the app and the organisation are the shell's own graph in
- * index.html; this points at them by `@id` rather than describing them twice.
- * No date: the page has no publication date worth asserting, and an invented
- * one is worse than none.
+ * "How Hevalo teaches" as an article by Hevalo's maker citing the page's own reference list (teaching/sources.ts), in its
+ * order. It points at the shell's site, app and organisation by `@id`, and carries no date, since none is worth asserting.
  */
 function teachingArticle(page: StaticPage, url: string): Record<string, unknown> {
   const site = new URL('/', url).toString();
@@ -452,50 +366,32 @@ function teachingArticle(page: StaticPage, url: string): Record<string, unknown>
   };
 }
 
-/** How long the edge may reuse the sitemap. It only changes when somebody publishes. */
+/** How long the edge may reuse the sitemap; it only changes when somebody publishes. */
 const SITEMAP_TTL_SECONDS = 3_600;
-/** Bounded: five pages of a hundred is five hundred posts, and a fixed cost. */
+/** Five pages of a hundred posts: a fixed cost. */
 const SITEMAP_PAGES = 5;
 const SITEMAP_PAGE_SIZE = 100;
 
 /**
- * The paths worth submitting that are not a post, and what each one is.
- *
- * The shell says the same thing on all of them, because the shell is written
- * once and React fills in the rest — so a crawler, which does not run React,
- * read four copies of the landing page under four URLs. Search engines answer
- * that by keeping one and dropping the others, which is the correct response to
- * four identical pages and the wrong outcome for four different ones.
- *
- * The copy is English and stays English: this is the head a crawler gets, and a
- * crawler has no account and no locale to read one from. The app itself is
- * translated the moment it starts.
+ * The listed paths that are not posts, each with its own head, since crawlers do not run React and would otherwise read
+ * the landing page under every URL. English, as a crawler has no locale; the app translates itself on start.
  */
 interface StaticPage {
   path: string;
   title: string;
   description: string;
-  /** schema.org for the head, for a page that is more than a page of the site */
+  /** Schema.org for the head, for a page that is more than a page of the site. */
   structuredData?: (page: StaticPage, url: string) => Record<string, unknown>;
 }
 
 const STATIC_PAGES: ReadonlyArray<StaticPage> = [
-  /*
-   * The front door is the one page whose title is more than the name. It is the
-   * result somebody looking for a way to learn Kurdish is shown, and "Hevalo" on
-   * its own tells them nothing; see `usePageMeta`, which gives the rendered page
-   * the same title in the reader's own language.
-   */
+  /* The front page's title says more than the name, since it is what someone searching for Kurdish lessons sees (`usePageMeta` matches it). */
   {
     path: '/',
     title: 'Hevalo — Learn Kurdish and Kurmanji with friends',
     description:
       'Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser.',
   },
-  /*
-   * The wall, described as what it is. It used to promise "short lessons" here
-   * too, which the browser does not have — the lessons are in the phone app.
-   */
   {
     path: '/app',
     title: 'Kurdish stories, poems and pictures · Hevalo',
@@ -525,11 +421,7 @@ const STATIC_PAGES: ReadonlyArray<StaticPage> = [
     description:
       'Is Hevalo free? Which Kurdish does it teach? How do you play with friends, and where are the lessons? Straight answers about learning Kurdish on Hevalo.',
   },
-  /*
-   * The page a careful reader checks Hevalo against, so a crawler gets what it
-   * cites as well as what it says: an Article whose citations are the studies
-   * on the page (see `teachingArticle`).
-   */
+  /* The page readers check Hevalo against, with its studies as the Article's citations (`teachingArticle`). */
   {
     path: '/how-hevalo-teaches',
     title: 'How Hevalo teaches — and the research behind it',
@@ -555,7 +447,7 @@ const STATIC_PAGES: ReadonlyArray<StaticPage> = [
     description:
       'The rules for using Hevalo, in plain words: your account, how to treat other people, what you post, and how Zêr and gems work.',
   },
-  /* where a rights holder with no account sends a copyright notice (contract-3 §C) */
+  /* Where a rights holder without an account sends a copyright notice. */
   {
     path: '/copyright',
     title: 'Copyright · Hevalo',
@@ -567,20 +459,9 @@ const STATIC_PAGES: ReadonlyArray<StaticPage> = [
 const STATIC_PATHS = STATIC_PAGES.map((p) => p.path);
 
 /**
- * The sitemap, built from what is actually published.
- *
- * A static file would list the four paths above and nothing else, which misses
- * the only pages here worth finding: the library of Kurdish stories and poems.
- * Those are rows in a database, so the list has to come from the API —
- * `GET /library/posts` is public and returns only `status = 'published'`, which
- * is exactly the set that belongs in a sitemap.
- *
- * Bounded on purpose. An unbounded loop at the edge is a request that gets
- * slower every time somebody writes a poem.
- *
- * A failed fetch still returns a valid sitemap with the static paths in it: half
- * a sitemap is worth more than a 500, which a crawler can read as the whole site
- * being unavailable.
+ * The sitemap from what is published: the static pages plus library posts from the public `GET /library/posts`, which
+ * returns only published ones. Bounded, so it does not slow with every new post, and a failed fetch still returns the
+ * static paths, since a 500 can read as the whole site being down.
  */
 async function sitemap(apiOrigin: string, origin: string): Promise<Response> {
   const urls: Array<{ loc: string; lastmod?: string }> = STATIC_PATHS.map((p) => ({ loc: origin + p }));
@@ -595,7 +476,7 @@ async function sitemap(apiOrigin: string, origin: string): Promise<Response> {
 
     for (const raw of posts) {
       const post = raw as { id?: unknown; updatedAt?: unknown; publishedAt?: unknown };
-      // the id goes straight into a URL, so it is a UUID or it is nothing
+      // The id goes straight into a URL, so it is a UUID or nothing.
       if (typeof post.id !== 'string' || !UUID.test(post.id)) continue;
       const when = typeof post.updatedAt === 'string' ? post.updatedAt : post.publishedAt;
       urls.push({
@@ -604,7 +485,7 @@ async function sitemap(apiOrigin: string, origin: string): Promise<Response> {
       });
     }
 
-    // a short page is the last page
+    // A short page is the last page.
     if (posts.length < SITEMAP_PAGE_SIZE) break;
   }
 
@@ -625,53 +506,30 @@ async function sitemap(apiOrigin: string, origin: string): Promise<Response> {
   });
 }
 
-/**
- * The published dictionary, which is files rather than a screen in the app —
- * one folder per language it is published in.
- *
- * `/ferheng/` is Kurmancî and `/dictionary/` is English. They are siblings
- * rather than one nested under the other because everything a level under them
- * is a letter or a range of words, named from the corpus, and both `ku` and
- * `en` are plausible range names. See web/scripts/ferheng-copy.ts.
- */
+/** The published dictionary's folders: `/ferheng/` in Kurmancî and `/dictionary/` in English (web/scripts/ferheng-copy.ts). */
 const DICTIONARIES = ['/ferheng', '/dictionary'] as const;
 
-/** Which of them a path belongs to, or null if it belongs to neither. */
+/** Which of them a path belongs to, or null. */
 function dictionaryOf(pathname: string): string | null {
   return DICTIONARIES.find((d) => pathname.startsWith(`${d}/`)) ?? null;
 }
 
 /**
- * A dictionary address, answered as a dictionary address.
- *
- * Cloudflare serves the SPA shell for any path it has no file for, and
- * `public/_headers` applies the dictionary's policy by URL rather than by file.
- * So a stale /ferheng/ link got the app shell under `default-src 'none'`, the
- * shell's own bundle was refused, React never booted, and the reader was left
- * looking at nothing at all. Measured live on /ferheng/sa-sc/: "Loading the
- * script … violates the following Content Security Policy directive:
- * default-src 'none'". It was a 200, too, so a crawler was told the page was
- * fine.
- *
- * The shell is recognised by the one thing every real dictionary page has and
- * it does not: a link to the dictionary's own stylesheet. Reading the body is
- * affordable here — these pages carry a day of edge cache, so the Worker sees
- * them rarely, and an unmatched path reaches the Worker either way.
+ * Answers a dictionary address. For paths without a file Cloudflare serves the app shell, but `_headers` applies the
+ * dictionary's `default-src 'none'` by URL, so the shell loaded nothing and showed a blank 200. The shell is recognised by
+ * lacking the dictionary stylesheet link; these pages are edge-cached for a day, so reading the body is cheap.
  */
 async function ferheng(assets: Response, url: URL, env: Env, base: string): Promise<Response> {
   const html = await assets.text();
   if (html.includes(`${base}/ferheng.css`)) {
-    // a real page; hand back exactly what the asset binding gave us
+    // A real page: return exactly what the asset binding gave.
     return new Response(html, { status: assets.status, headers: assets.headers });
   }
 
-  // the 404 of the language whose path was asked for, so a reader who typed a
-  // dead /dictionary/ address is not answered in Kurmancî
+  // The 404 in the language of the path asked for.
   const page = await env.ASSETS.fetch(new Request(new URL(`${base}/404.html`, url.origin).toString()));
-  // A response made here gets none of `_headers` on the way out, so the
-  // dictionary's policy (CSP, framing, nosniff…) is carried over from what the
-  // asset binding answered for this address. Not its caching or validators,
-  // which described the shell and not this page.
+  // A response made here gets none of `_headers`, so the dictionary's policy (CSP, framing, nosniff) is copied from the
+  // asset binding's answer, but not its caching or validators, which described the shell.
   const headers = new Headers(assets.headers);
   for (const name of ['cache-control', 'etag', 'last-modified', 'content-length']) headers.delete(name);
   headers.set('content-type', 'text/html; charset=utf-8');
@@ -679,15 +537,8 @@ async function ferheng(assets: Response, url: URL, env: Env, base: string): Prom
 }
 
 /**
- * A scanner's probe, answered as what it is: nothing lives there.
- *
- * Without this the asset binding answered /wp-login.php, /.env and every PHP
- * script a scanner tried with the app shell and a 200, the same as a real page,
- * which told it something was there and was worth another try. Hevalo runs no
- * PHP and keeps no files like these (@kurda/shared scanner-paths.ts), so they
- * get a plain 404 before the asset binding is asked. A real file is never
- * here: an address that matches one is served by the asset binding without
- * running this script at all.
+ * A plain 404 for scanner probes (/wp-login.php, /.env and the like; @kurda/shared scanner-paths.ts), which the asset
+ * binding answered with the shell and a 200. Real files are served before this script runs.
  */
 function notFound(): Response {
   return new Response('Not found\n', {
@@ -707,46 +558,32 @@ export default {
 
     if (isScannerProbe(url.pathname, url.search)) return notFound();
 
-    /*
-     * Built here rather than shipped as a file in the bundle, because it has to
-     * list what is published now — not what was published when the site was last
-     * deployed. Answered before the asset binding is asked, so a stray
-     * `public/sitemap.xml` could never shadow it.
-     */
+    /* Built here, not shipped as a file, so it lists what is published now, and answered first so no stray sitemap.xml can shadow it. */
     if (request.method === 'GET' && url.pathname === '/sitemap.xml') {
       return sitemap(env.API_ORIGIN ?? DEFAULT_API, url.origin);
     }
 
-    // the asset binding answers everything else; this only rewrites what comes back
+    // The asset binding answers everything else; this only rewrites what comes back.
     const assets = await env.ASSETS.fetch(request);
 
     if (request.method !== 'GET') return assets;
 
-    // a path that resolved to a real file is left alone, whatever it looks like
+    // A path that resolved to a real file is left alone, whatever it looks like.
     const type = assets.headers.get('content-type') ?? '';
     if (!type.includes('text/html')) return assets;
 
     const dictionary = dictionaryOf(url.pathname);
     if (dictionary) return ferheng(assets, url, env, dictionary);
 
-    /*
-     * A listed page: its own title, its own description, its own address. No
-     * API call and nothing that can fail, so this needs no fallback — it is a
-     * table lookup and a rewrite of markup already in hand.
-     */
+    /* A listed page: its own title, description and address, from a table, so nothing can fail. */
     const page = STATIC_PAGES.find((p) => p.path === url.pathname);
     if (page) {
-      // the query string is not part of the page; a canonical carrying one
-      // invites a crawler to index ?ref=… as a page of its own
+      // The canonical drops the query, which would otherwise invite indexing ?ref=… as its own page.
       const clean = new URL(url.pathname, url.origin).toString();
       return withHead(assets, staticHead(page, clean));
     }
 
-    /*
-     * An invitation to a game: the game's own card, from the link alone. A
-     * lobby lasts an evening, so the page is kept out of search results, and
-     * its canonical is the link without whoever shared it.
-     */
+    /* An invitation: the game's own card from the link alone, kept out of search results, its canonical without the sharer. */
     const invite = parseJoinLink(url.pathname, url.search);
     if (invite) {
       const clean = new URL(url.pathname.replace(/\/$/, ''), url.origin).toString();
@@ -755,12 +592,7 @@ export default {
       return invited;
     }
 
-    /*
-     * A win somebody shared: the postcard of its kind, from the link alone.
-     * The page is about nobody and says what any other of its kind says, so
-     * it is kept out of search results; its canonical is the win as it was
-     * read, without whatever was mistyped after it.
-     */
+    /* A shared win: its kind's postcard from the link alone, kept out of search results, its canonical as read. */
     const win = parseWinLink(url.pathname);
     if (win) {
       const shared = withHead(assets, winHead(win, new URL(winLinkPath(win), url.origin).toString()));
@@ -779,13 +611,13 @@ export default {
 
     const clean = new URL(url.pathname, url.origin).toString();
     const rewritten = withHead(assets, previewHead(preview, clean));
-    // the preview is public and identical for everyone who opens this link
+    // The preview is public and the same for everyone who opens this link.
     rewritten.headers.set('cache-control', `public, max-age=0, s-maxage=${PREVIEW_TTL_SECONDS}`);
     return rewritten;
   },
 };
 
-// exported for the tests, which is the only reason these are not file-local
+// Exported for the tests, the only reason these are not file-local.
 export const __test = {
   routeFor,
   attr,

@@ -22,7 +22,7 @@ const seat = (n: number, extra: Record<string, unknown> = {}) => ({
   ...extra,
 });
 
-// the API's shape since the play layer: players by seat, and nobody else's account id
+// The API's shape since the play layer: players by seat, and nobody else's account id.
 const lobby = {
   id: 'rm1',
   status: 'lobby',
@@ -201,12 +201,12 @@ describe('RhymeMatch', () => {
     expect(within(list).getByText('nan')).toBeInTheDocument();
     expect(within(list).getByText('bread')).toBeInTheDocument();
     expect(within(list).getByText('ziman')).toBeInTheDocument();
-    // after the table's own results, not in place of them
+    // After the table's own results, not in place of them.
     expect(screen.getByText('The prompt was baran.').compareDocumentPosition(list) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('turns away a word whose ending does all the rhyming, in general words', async () => {
-    // malan is mal with an ending: only the ending rhymes with baran
+    // Malan is mal with an ending: only the ending rhymes with baran.
     const baran = { ...active, prompt: 'baran' };
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(

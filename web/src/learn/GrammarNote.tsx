@@ -11,20 +11,9 @@ function Inline({ spans }: { spans: Span[] }): React.JSX.Element {
 }
 
 /**
- * A skill's grammar note — its "Tips" (KUR-038) — drawn from the markdown the
- * course editors write, with the parser the phone uses (@kurda/shared). The
- * note becomes React elements, never markup, so nothing an editor types can
- * run.
- *
- * Its headings sit one level under the heading the note is shown beneath:
- * h3 under the lesson's "Tips" (an h2), h4 under a skill's own h3 on the
- * course map (`headingLevel`). They look the same either way.
- *
- * Notes mix the interface language with Kurdish, so the note as a whole is not
- * marked as either, and each line takes its own direction (`dir="auto"` on
- * every block, not on the note): a direction set once on the note would be
- * the first line's, and a Soranî line under an English one would then be laid
- * out left to right, its punctuation at the wrong end.
+ * A skill's grammar note (its "Tips"), rendered from the editors' markdown with the phone's parser (@kurda/shared) into
+ * React elements, never markup, so nothing typed can run. Headings sit one level under the surrounding heading
+ * (`headingLevel`). Notes mix languages, so each block gets `dir="auto"` rather than one direction for the whole note.
  */
 export function GrammarNote({ source, headingLevel = 3 }: { source: string; headingLevel?: 3 | 4 }): React.JSX.Element {
   const Head = headingLevel === 3 ? 'h3' : 'h4';
@@ -50,8 +39,7 @@ export function GrammarNote({ source, headingLevel = 3 }: { source: string; head
               </p>
             );
           case 'bullets':
-            // the list takes the direction of its first item, so its bullets
-            // sit on the side that item starts from
+            // The list takes its first item's direction, so bullets sit on the side it starts from.
             return (
               <ul key={i} dir="auto">
                 {block.items.map((item, j) => (

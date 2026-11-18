@@ -4,16 +4,17 @@ import { useAuth } from '../auth/AuthProvider';
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import type { ApiResult } from '../lib/types';
+import { pageVisible } from '../lib/pollWhileVisible';
 
 /** Waits between failed long-polls: quick at first, never hammering. */
 export const VIEW_BACKOFF_MS = [1_000, 2_000, 5_000] as const;
 /** The least time between two long-polls that brought nothing new. */
 export const VIEW_POLL_FLOOR_MS = 1_000;
-/** The least time between any two long-polls: a server answering at once over and over is never asked in a tight loop. */
+/** The least time between any two long-polls, so an instantly answering server is never asked in a tight loop. */
 export const VIEW_POLL_MIN_GAP_MS = 250;
-/** How long the connection may be down before the long-poll takes over: one opening right away never starts one. */
+/** How long the connection may be down before the long-poll takes over, so a quick reconnect never starts one. */
 export const LONG_POLL_GRACE_MS = 1_500;
-/** A read when nothing has said anything for this long, while connected: a safety net, not how news arrives. */
+/** A safety read after this much silence while connected. */
 export const VIEW_SAFETY_MS = 20_000;
 /** How long after a deadline the game is asked about, so the server has settled it. */
 export const DEADLINE_SLACK_MS = 600;
@@ -21,19 +22,19 @@ export const DEADLINE_SLACK_MS = 600;
 export type GameViewLoad<Board> =
   | { state: 'loading' }
   | { state: 'ready'; view: MultiView<Board> }
-  /** not a member and may not be (never, removed, no such game), or a game that started without them */
+  /** Not a member and may not become one (never, removed, no such game), or a game that started without them. */
   | { state: 'gone'; why: 'gone' | 'started' }
   | { state: 'error'; code?: string };
 
 export interface GameViewHandle<Board, Outcome = unknown> {
   load: GameViewLoad<Board>;
-  /** milliseconds to add to Date.now() for the server's time */
+  /** Milliseconds to add to Date.now() for the server's time. */
   skew: number;
-  /** read it again now (the same one read, however many ask at once) */
+  /** Reads it again now; concurrent asks share one read. */
   refresh: () => void;
-  /** a control (`join`, `start`, `leave`, `remove`…): its answer is the new view, applied before the caller hears it */
+  /** A control (`join`, `start`, `leave`, `remove`…); its answer, the new view, is applied before the caller hears it. */
   act: (path: string, body?: unknown) => Promise<ApiResult<MultiView<Board>>>;
-  /** a move: the new view is applied, and the mover's own outcome handed back */
+  /** A move; the new view is applied and the mover's own outcome returned. */
   move: (body: unknown) => Promise<ApiResult<MultiMoveAnswer<Board, Outcome>>>;
 }
 
@@ -51,30 +52,16 @@ const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
     });
   });
 
-function visible(): boolean {
-  return typeof document === 'undefined' || document.visibilityState !== 'hidden';
-}
-
 /**
- * One multiplayer learning game, kept current (api/src/mp), the same way for
- * every game the engine runs.
+ * One multiplayer learning game kept current (api/src/mp), the same for every game the engine runs.
  *
- * - With the realtime connection up, the server says `play_changed` whenever
- *   the game moves (coalesced on the server to one per 300 ms and a trailing
- *   one), and the view is read then. Reads are single-flight: one in the air
- *   at a time, and a burst of events while it is out is one more read after.
- *   A version older than the one in hand is dropped, so a slow answer never
- *   undoes a newer one. A slow read every 20 s, only while the tab is in
- *   front, covers an event that was lost.
- * - With the connection down, the long-poll takes over: ask with the version
- *   last seen, the server answers when it moves on (or after 20 s, or just
- *   after its next deadline), ask again — after a second if nothing came,
- *   after 1, 2, then 5 s if the request failed.
- * - Just after a deadline (a turn running out, `deadlineOf`), the game is
- *   asked once with its version: the server settles what is due before it
- *   answers, so the next turn shows on time without waiting for the push.
- * - The server's clock is the one that counts: `serverNow` in every view
- *   gives the offset to this browser's, and every countdown is drawn with it.
+ * - Connected: the server's `play_changed` (coalesced to one per 300 ms) triggers a read. Reads are single-flight, a
+ *   burst during one becomes one more after, and an older version never replaces a newer one. A safety read every 20 s,
+ *   in front only, covers a lost event.
+ * - Disconnected: a long-poll with the last version, answered when the game moves, after 20 s or after its next
+ *   deadline; asked again after 1 s when nothing came, or after 1, 2, then 5 s on failure.
+ * - Just after a deadline (`deadlineOf`) the game is asked once, so the server settles it and the next turn shows on time.
+ * - `serverNow` in every view gives the clock offset that every countdown uses.
  */
 export function useGameView<Board, Outcome = unknown>(
   game: MultiGame,
@@ -151,14 +138,14 @@ export function useGameView<Board, Outcome = unknown>(
     })();
   }, [read, base]);
 
-  // the first read
+  // The first read.
   useEffect(() => {
     viewRef.current = null;
     setLoad({ state: 'loading' });
     refresh();
   }, [refresh]);
 
-  // the push: this game moved
+  // The push: this game moved.
   const onChanged = useCallback(
     (env: RealtimeEventEnvelope) => {
       const e = env.event as { game?: unknown; lobbyId?: unknown };
@@ -172,14 +159,14 @@ export function useGameView<Board, Outcome = unknown>(
   const following = view !== null && live(view.status);
   const connected = connection === 'open';
 
-  // connected: a slow safety read, only in front; a tab coming back reads at once
+  // Connected: a slow safety read, in front only; a tab coming back reads at once.
   useEffect(() => {
     if (!following || !connected) return;
     const timer = setInterval(() => {
-      if (visible()) refresh();
+      if (pageVisible()) refresh();
     }, VIEW_SAFETY_MS);
     const onVisible = (): void => {
-      if (visible()) refresh();
+      if (pageVisible()) refresh();
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
@@ -188,7 +175,7 @@ export function useGameView<Board, Outcome = unknown>(
     };
   }, [following, connected, refresh]);
 
-  // not connected: the long-poll, for as long as the game is on
+  // Not connected: the long-poll, while the game is on.
   useEffect(() => {
     if (!following || connected) return;
     const controller = new AbortController();
@@ -218,7 +205,7 @@ export function useGameView<Board, Outcome = unknown>(
     return () => controller.abort();
   }, [following, connected, read, base]);
 
-  // just after a deadline: ask with the version, so the server settles it first
+  // Just after a deadline: ask with the version, so the server settles it first.
   const deadline = view && live(view.status) && deadlineOf.current ? deadlineOf.current(view) : null;
   const version = view?.version ?? null;
   useEffect(() => {
@@ -232,7 +219,7 @@ export function useGameView<Board, Outcome = unknown>(
     async (path: string, body?: unknown): Promise<ApiResult<MultiView<Board>>> => {
       const res = await client.post<MultiView<Board>>(`${base}/${path}`, body ?? {});
       if (res.ok && res.data && 'id' in res.data) apply(res.data);
-      // a refusal the page words itself (full, started, not the host); only a game that is gone changes what is shown
+      // Refusals the page words itself (full, started, not the host); only a gone game changes what is shown.
       else if (!res.ok && res.error.status === 404) fail(404, res.error.code);
       return res;
     },

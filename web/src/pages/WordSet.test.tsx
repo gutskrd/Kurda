@@ -7,12 +7,9 @@ import { WordSet } from './WordSet';
 import { jsonResponse, renderApp } from '../test/utils';
 
 /*
- * A word set as a visitor meets it: the tiles, each with its own play button
- * where there is a sound, the card a word opens into with its sound and its
- * meaning, and the round at the foot. jsdom has no layout, so the card opens
- * in the sheet, as on a phone. The recordings winning over the synthesised
- * clips are in WordSet.voices.test.tsx: a page asks for them once and keeps
- * them, so that needs a file of its own.
+ * A word set as a visitor meets it: the tiles with their play buttons, the card a word opens (a sheet, since jsdom has no
+ * layout), and the round. Recordings replacing synthesised clips are in WordSet.voices.test.tsx, since the page fetches
+ * them once.
  */
 
 afterEach(() => {
@@ -70,7 +67,7 @@ describe('a word set', () => {
     expect(screen.getByText('A colour comes after the word it describes.')).toBeInTheDocument();
     expect(screen.getByText('0 of 11 explored')).toBeInTheDocument();
 
-    // the play button is a button of its own, beside the word, and plays without opening anything
+    // The play button is a button of its own, beside the word, and plays without opening anything.
     await userEvent.click(screen.getByRole('button', { name: 'Listen to sor' }));
     expect(heard.at(-1)).toMatch(synthesised('words:colours:kmr:red'));
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -88,12 +85,12 @@ describe('a word set', () => {
     expect(sheet.querySelector('.speaking-character')).toBeNull();
     expect(heard.at(-1)).toMatch(synthesised('words:colours:kmr:red'));
 
-    // stepping on opens the next word, which says itself
+    // Stepping on opens the next word, which says itself.
     await userEvent.click(within(sheet).getByRole('button', { name: 'Next word' }));
     expect(within(sheet).getByRole('heading', { name: 'şîn, blue' })).toBeInTheDocument();
     expect(heard.at(-1)).toMatch(synthesised('words:colours:kmr:blue'));
 
-    // both are ticked, and kept in this browser
+    // Both are ticked, and kept in this browser.
     expect(JSON.parse(localStorage.getItem('hevalo_words_colours_seen')!)).toEqual({ kmr: ['red', 'blue'], ckb: [] });
     expect(screen.getByText('2 of 11 explored')).toBeInTheDocument();
   });
@@ -103,7 +100,7 @@ describe('a word set', () => {
     expect(await screen.findByRole('tab', { name: 'Soranî', selected: true })).toBeInTheDocument();
     expect(document.querySelector('.wd-grid')).toHaveAttribute('dir', 'rtl');
     expect(screen.getByRole('button', { name: 'Listen to ڕەش' })).toBeInTheDocument();
-    // grey's dark ł has no synthesised voice: nothing to press until it is recorded
+    // grey's dark ł has no synthesised voice: nothing to press until it is recorded.
     expect(screen.queryByRole('button', { name: 'Listen to خۆڵەمێشی' })).toBeNull();
 
     await userEvent.click(screen.getByRole('button', { name: 'خۆڵەمێشی, grey' }));
@@ -145,7 +142,7 @@ describe('a word set', () => {
       'Pêncşem, Thursday',
       'În, Friday',
     ]);
-    // the number inside the name, picked out on its own, and today's pill
+    // The number inside the name, picked out on its own, and today's pill.
     expect(within(tiles[1]!).getByText('Yek').tagName).toBe('MARK');
     expect(within(tiles[2]!).getByText('îro')).toBeInTheDocument();
 
@@ -170,7 +167,7 @@ describe('a word set', () => {
     expect(within(sheet).getByText('Season')).toBeInTheDocument();
     expect(within(sheet).getByText('bihar')).toBeInTheDocument();
     expect(within(sheet).getByText('Newroz, the Kurdish new year, is on 21 March.')).toBeInTheDocument();
-    // and the other name Kurmancî has for some of them
+    // And the other name Kurmancî has for some of them.
     await userEvent.click(within(sheet).getByRole('button', { name: 'Previous word' }));
     expect(within(sheet).getByRole('heading', { name: 'Sibat, February' })).toBeInTheDocument();
     expect(within(sheet).getByText('Also called')).toBeInTheDocument();
@@ -191,14 +188,14 @@ describe('check yourself, with words', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     const dots = screen.getByRole('list', { name: 'Question 1 of 8' });
     expect(within(dots).getAllByRole('listitem')).toHaveLength(8);
-    // a number heard is answered with its digits, and the word plays by itself
+    // A number heard is answered with its digits, and the word plays by itself.
     expect(screen.getByText('Listen. Which number is it?')).toBeInTheDocument();
     expect(heard.at(-1)).toMatch(/\/audio\/words\//);
     expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument();
 
     const options = screen.getAllByRole('button').filter((b) => b.classList.contains('ab-option'));
     expect(options).toHaveLength(3);
-    // answer with the keyboard, the way a desktop reader can
+    // Answer with the keyboard, the way a desktop reader can.
     await userEvent.keyboard('1');
     const status = await screen.findByRole('status');
     expect(status).toHaveTextContent(/Right\.|Not quite: it’s/);

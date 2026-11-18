@@ -14,7 +14,7 @@ afterEach(() => {
 
 function routed(user: unknown, calls: Array<{ url: string; body: unknown; method?: string }> = []) {
   return vi.fn(async (url: string, init?: RequestInit) => {
-    // everything that changes something is written down: a request sent or taken back, a friendship ended
+    // Everything that changes something is written down: a request sent or taken back, a friendship ended.
     if (url.includes('/friends/requests') || (init?.method ?? 'GET') !== 'GET') {
       calls.push({ url, body: init?.body ? JSON.parse(init.body as string) : null, method: init?.method ?? 'GET' });
       return jsonResponse(200, { ok: true });
@@ -52,23 +52,19 @@ describe('UserProfile (other user, full page)', () => {
     );
 
     expect(await screen.findByText('Zana K')).toBeInTheDocument();
-    // country: real flag image + name under the username
+    // Country: real flag image + name under the username.
     expect(screen.getByText('Germany')).toBeInTheDocument();
     expect((document.querySelector('.mkp-country .flag') as HTMLImageElement | null)?.src).toContain('flagcdn.com/w40/de.png');
     expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 5');
     expect((document.querySelector('.pc-banner .pcard-bg-media') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
     expect(screen.getByText('River Song')).toBeInTheDocument();
-    // no self-only Edit Profile button; a friend action instead
+    // No self-only Edit Profile button; a friend action instead.
     expect(screen.queryByRole('link', { name: /edit profile/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /add friend/i }));
     expect(calls.some((c) => c.url.includes('/friends/requests'))).toBe(true);
   });
 
-  /**
-   * Somebody's numbers are part of who they are, so they are in the card with
-   * their name: once they were a second card that a phone showed under every
-   * post the person had written.
-   */
+  // Their numbers sit in the card with their name, as plain numbers.
   it('shows their numbers with their name, as numbers and not as ways into your own pages', async () => {
     render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'friends', private: false, bio: null, xp: 410, streak: 3, achievements: 5, online: true });
     expect(await screen.findByRole('heading', { level: 1, name: 'Zana K' })).toBeInTheDocument();
@@ -78,11 +74,11 @@ describe('UserProfile (other user, full page)', () => {
     expect(figure('Streak')).toBe('3');
     expect(figure('XP')).toBe('410');
     expect(figure('Badges')).toBe('5');
-    // how many friends they have was not sent, so it is not guessed at
+    // How many friends they have was not sent, so it is not guessed at.
     expect(within(card).queryByText('Friends', { selector: '.mkp-fact-label' })).toBeNull();
     expect(within(card).getByRole('list').querySelectorAll('a')).toHaveLength(0);
 
-    // here now is said once, by their name; an empty bio is not announced on somebody else's profile
+    // Here now is said once, by their name; an empty bio is not announced on somebody else's profile.
     expect(within(card).getAllByText('Online')).toHaveLength(1);
     expect(screen.queryByText(/no bio/i)).toBeNull();
     expect(screen.queryByRole('link', { name: 'Add a few words about yourself' })).toBeNull();
@@ -95,19 +91,14 @@ describe('UserProfile (other user, full page)', () => {
     expect(await screen.findByRole('dialog', { name: 'Play with Zana K' })).toBeInTheDocument();
   });
 
-  /**
-   * The menu about somebody is in the far corner of their banner. Sending
-   * their profile on leads it; reporting them and blocking them are two
-   * separate, plainly named items, each one press from the menu; and where the
-   * two of you are friends, so is ending that.
-   */
+  // The corner menu leads with sharing their profile, with report and block as separate items, and unfriend for friends.
   it('keeps what can be done about them in the corner menu: share, and report and block apart', async () => {
     render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'none', private: false });
     const more = await screen.findByRole('button', { name: 'More about Zana K' });
     expect(document.querySelector('.pc-corner')).toContainElement(more);
     await userEvent.click(more);
     expect(screen.getAllByRole('menuitem').map((item) => item.textContent?.trim())).toEqual(['Share profile', 'Report', 'Block']);
-    // none of it is among the buttons under their words
+    // None of it is among the buttons under their words.
     expect(within(document.querySelector<HTMLElement>('.pc-acts')!).queryByRole('button', { name: /block|report/i })).toBeNull();
   });
 
@@ -145,7 +136,7 @@ describe('UserProfile (other user, full page)', () => {
     render({ userId: 'u3', username: 'ghost', displayName: 'Ghost', friendStatus: 'none', private: true });
     expect(await screen.findByText('Ghost')).toBeInTheDocument();
     expect(screen.getByText(/private/i)).toBeInTheDocument();
-    // full showcase is not rendered
+    // Full showcase is not rendered.
     expect(document.querySelector('.mkp-showcase')).toBeNull();
   });
 
@@ -158,14 +149,14 @@ describe('UserProfile (other user, full page)', () => {
     const requested = await screen.findByRole('button', { name: 'Cancel your request to Zana K' });
     expect(requested).toHaveTextContent('Requested');
     expect(screen.getByRole('status')).toHaveTextContent('Request sent');
-    // the ticket on its way to them
+    // The ticket on its way to them.
     expect(document.querySelector('.friend-ask-ticket.is-away')).not.toBeNull();
 
     await userEvent.click(requested);
     await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
     expect(await screen.findByRole('button', { name: 'Add friend' })).toBeInTheDocument();
     expect(calls.some((c) => c.method === 'DELETE' && c.url.endsWith('/friends/requests/u2'))).toBe(true);
-    // and back it comes
+    // And back it comes.
     expect(document.querySelector('.friend-ask-ticket.is-back')).not.toBeNull();
   });
 

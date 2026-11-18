@@ -46,7 +46,7 @@ describe('playNotification', () => {
   it('leaves every other notification as the server wrote it', () => {
     expect(playNotification(note(null), t)).toBeNull();
     expect(playNotification(note({ kind: 'gift', giftId: 'g1' }), t)).toBeNull();
-    // a game or a lobby it cannot read is not a link to nowhere
+    // A game or a lobby it cannot read is not a link to nowhere.
     expect(playNotification(note({ kind: 'play_invite', game: 'quiz', lobbyId: 'x' }), t)).toBeNull();
     expect(playNotification(note({ kind: 'play_invite', game: 'stories' }), t)).toBeNull();
   });

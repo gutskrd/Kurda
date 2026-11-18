@@ -12,18 +12,9 @@ import { seenCounts } from '../words/seen';
 import { LETTERS_NAME, SET_BODY, SET_NAME, SET_TITLE } from '../words/sets';
 
 /**
- * Letters and words: the alphabet first, then the colours, the numbers, the
- * days of the week and the months, each a set taught the way the alphabet is.
- * One card each, with its Kurdish name, a picture of what is in it, and how
- * much of it has been opened in this browser; the letters' card opens the
- * alphabet (Alphabet.tsx), a set's card opens the set (WordSet.tsx).
- *
- * The letters stood on their own tile in Learn's tools beside this one; they
- * are the first of the same steps, so they sit at the top of the same list.
- *
- * Open to everyone, account or not, like the alphabet: the words and their
- * synthesised clips are files on this site, and the owner's recordings arrive
- * in the alphabet's own answer once there are any.
+ * Letters and words: the alphabet first, then colours, numbers, days and months, each a set taught like the alphabet.
+ * One card each with its Kurdish name, a picture and how much has been opened in this browser. Open to everyone: the
+ * words and synthesised clips ship with the site.
  */
 export function Words(): React.JSX.Element {
   const t = useT();
@@ -32,7 +23,7 @@ export function Words(): React.JSX.Element {
   const [dialect] = useScript(locale);
   const counts = useMemo(() => seenCounts(), []);
   const letters = useMemo(() => lettersSeen(dialect), [dialect]);
-  // where the tool's card on Learn lands when it is pressed, and what goes back to it
+  // Where the tool's card on Learn lands, and what goes back to it.
   const head = useGrowsInto('learn:words', { shape: 'card' });
 
   return (
@@ -85,7 +76,7 @@ interface CardProps {
 function Card({ id, to, dialect, title, name: names, body, seen, total }: CardProps): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
-  // the card's Kurdish name, in the dialect the pages teach in — or the other one for a reader whose title already is that word
+  // The card's Kurdish name in the taught dialect, or the other one for a reader whose title already is that word.
   const named: AlphabetScript = (dialect === 'kmr' && locale === 'ku') || (dialect === 'ckb' && locale === 'ckb') ? (dialect === 'kmr' ? 'ckb' : 'kmr') : dialect;
   const name = wordIn(names, named);
   const all = total > 0 && seen >= total;
@@ -120,12 +111,7 @@ function Card({ id, to, dialect, title, name: names, body, seen, total }: CardPr
   );
 }
 
-/**
- * A picture of what a card holds, in place of an icon: toy blocks with the
- * first letters (in the script the pages teach in), a paint palette, an
- * abacus, the sun (roj, the day) and a wall calendar, drawn in the shared art
- * so the phone shows the same five.
- */
+/** A picture of what a card holds (toy blocks, a palette, an abacus, the sun, a calendar), in the shared art so the phone shows the same. */
 function Teaser({ id, dialect }: { id: WordsCardId; dialect: AlphabetScript }): React.JSX.Element {
   const markup = useMemo(() => ({ __html: wordSetSvg({ set: id, size: 44, script: dialect === 'ckb' ? 'arabic' : 'latin' }) }), [id, dialect]);
   return <span className="wd-teaser" aria-hidden="true" dangerouslySetInnerHTML={markup} />;

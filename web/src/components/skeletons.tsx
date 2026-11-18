@@ -1,46 +1,25 @@
 /**
- * What each screen looks like before it has anything to say.
- *
- * Every one of these is built from the real component's own class names, with
- * `Skeleton` boxes standing in for the words and the pictures. That is the
- * whole point, and it is not decoration: the padding, the gaps, the grid, the
- * avatar size and — through `line` — the line height all come from the same
- * stylesheet rules the finished screen uses, so the placeholder cannot be a
- * different height from the thing that replaces it.
- *
- * The first draft of this file picked heights by hand and measured 72px short
- * on a feed card, which meant every card jumped the moment it arrived. Numbers
- * chosen here are only for things that genuinely have a fixed size — an avatar,
- * a thumbnail, a button. Everything made of text takes its height from the
- * element it sits in.
- *
- * Where a screen's shape is genuinely not known in advance — restoring a
- * session, waiting for an opponent, connecting to a match — there is no
- * skeleton here and the spinner stays. A skeleton is a promise about what is
- * about to appear, and the app should not make one it cannot keep.
- *
- * Most of these take an optional `label`: the message a screen reader hears
- * while the boxes are on screen. It defaults to a plain "Loading…", but a
- * screen that has something more useful to say — "Loading the wall", "Loading
- * your saved posts" — passes its own key, so the announcement names the thing
- * being waited for rather than the fact of waiting.
+ * Loading placeholders for each screen, built from the real components' class names with `Skeleton` boxes for words
+ * and pictures, so padding, gaps and line heights come from the same rules and nothing jumps when content arrives. Only
+ * things with a fixed size (avatars, thumbnails, buttons) get numbers here. Screens whose shape is not known in advance
+ * keep a spinner. `label` is the key a screen reader hears, defaulting to "Loading…".
  */
 import { Fragment } from 'react';
 import { Skeleton, SkeletonRegion, SkeletonText } from './Skeleton';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
-/** Repeat a row `n` times. */
+/** Repeats a row `n` times. */
 function times(n: number, render: (i: number) => React.ReactNode): React.ReactNode[] {
   return Array.from({ length: n }, (_, i) => render(i));
 }
 
-/** A button's place: a pill at the height that size of button has on this screen (ui.css). */
+/** A button's place: a pill at that button size's height (ui.css). */
 function ButtonBox({ w, size = 'md' }: { w: number | string; size?: 'sm' | 'md' | 'lg' }): React.JSX.Element {
   return <Skeleton w={w} className={`skeleton-btn${size === 'md' ? '' : ` skeleton-btn-${size}`}`} />;
 }
 
-/** The avatar every list and card starts with, at whatever size its CSS says. */
+/** The avatar a list or card starts with, sized by its CSS. */
 function AvatarBox({ className = 'friend-avatar' }: { className?: string }): React.JSX.Element {
   return (
     <span className="avatar-wrap">
@@ -50,15 +29,8 @@ function AvatarBox({ className = 'friend-avatar' }: { className?: string }): Rea
 }
 
 /**
- * A post on the wall.
- *
- * The picture is the one thing a post may or may not have, and it is by far the
- * tallest — so guessing wrong about it moves everything below it. Only every
- * third post gets one here, which is roughly how the wall reads, and it is the
- * same three every time so a reload does not reshuffle the page. Each is laid
- * out in the wall's order: who posted it, the picture (at the shape a picture
- * without known sides is given, PostPictures) or the words, the row of
- * actions, then a picture's caption and when.
+ * Posts on the wall. Every third has a picture, the tallest part of a post, roughly as the wall reads, and always the
+ * same three so a reload does not reshuffle the page.
  */
 export function FeedSkeleton({
   count = 4,
@@ -67,7 +39,7 @@ export function FeedSkeleton({
 }: {
   count?: number;
   label?: MessageKey;
-  /** the list's own class beside `feed`, where the real list has one (a profile's activity) */
+  /** The list's own class beside `feed`, where the real list has one (a profile's activity). */
   className?: string;
 }): React.JSX.Element {
   const t = useT();
@@ -78,7 +50,7 @@ export function FeedSkeleton({
   );
 }
 
-/** The posts themselves, for a placeholder that is already inside a loading region (a profile's activity). */
+/** The posts alone, for a placeholder already inside a loading region (a profile's activity). */
 function FeedCards({ count }: { count: number }): React.JSX.Element {
   return (
     <>
@@ -89,7 +61,7 @@ function FeedCards({ count }: { count: number }): React.JSX.Element {
   );
 }
 
-/** One post's placeholder, in the wall's order (feed/FeedCard): one line of who and when, the words, a picture on some, the pills. */
+/** One post in the wall's order (feed/FeedCard): who and when, the words, a picture on some, the pills. */
 function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
   return (
     <article className={picture ? 'fcard fcard-image has-pics' : 'fcard'}>
@@ -125,7 +97,7 @@ function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
       )}
 
       <footer className="fcard-actions">
-        {/* sized by feed.css, so they grow with the real pills on a touch screen */}
+        {/* Sized by feed.css, so they grow with the real pills on a touch screen. */}
         {times(2, (j) => (
           <Skeleton key={`pill-${j}`} className="fcard-act-box" />
         ))}
@@ -137,10 +109,7 @@ function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
   );
 }
 
-/**
- * The Friends page's people: a face, a name and a handle, and the row's
- * buttons at its end (or under the name on a phone), in the list's spacing.
- */
+/** The Friends page's people: a face, a name, a handle and the row's buttons. */
 export function FriendListSkeleton({
   count = 6,
   actions = 1,
@@ -148,9 +117,9 @@ export function FriendListSkeleton({
   label,
 }: {
   count?: number;
-  /** how many worded buttons each row carries, as the page's own rows do */
+  /** How many worded buttons each row carries, as the page's own rows do. */
   actions?: number;
-  /** or the row's own buttons, by width, where they are not words: a friend's game and ⋯ */
+  /** Or the row's buttons by width, where they are not words: a friend's game and ⋯. */
   widths?: readonly number[];
   label?: MessageKey;
 }): React.JSX.Element {
@@ -181,7 +150,7 @@ export function FriendListSkeleton({
   );
 }
 
-/** People you have blocked, as Settings lists them: a face, a name, the handle and date, and Unblock. */
+/** Blocked people, as Settings lists them. */
 export function BlocklistSkeleton({ count = 3, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
   const t = useT();
   return (
@@ -206,11 +175,7 @@ export function BlocklistSkeleton({ count = 3, label }: { count?: number; label?
   );
 }
 
-/**
- * Signed-in devices, as Settings lists them: the device's picture, its name
- * and when it was last used, and Sign out on every row but the first, which is
- * the device you are holding.
- */
+/** Signed-in devices, as Settings lists them; every row but the first (this device) has Sign out. */
 export function DeviceListSkeleton({ count = 2, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
   const t = useT();
   return (
@@ -235,7 +200,7 @@ export function DeviceListSkeleton({ count = 2, label }: { count?: number; label
   );
 }
 
-/** Friends to send something to (a gift, a post): a face and a name per row, as the picker lists them. */
+/** Friends to send something to (a gift, a post), as the picker lists them. */
 export function PickFriendSkeleton({ count = 4, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
   const t = useT();
   return (
@@ -256,11 +221,7 @@ export function PickFriendSkeleton({ count = 4, label }: { count?: number; label
   );
 }
 
-/**
- * Rows of the shared list (shell.css `.list`): Search's people and words, and
- * anything else drawn as a list of rows. A face where the rows have one, a
- * name and the line under it, and the chevron's room where the rows lead on.
- */
+/** Rows of the shared list (shell.css `.list`), such as Search's people and words. */
 export function ListRowsSkeleton({
   count = 5,
   avatar = false,
@@ -297,7 +258,7 @@ export function ListRowsSkeleton({
   );
 }
 
-/** The leaderboard. Rank, name, score — three columns that never vary. */
+/** The leaderboard: rank, name, score. */
 export function RankingsSkeleton({ count = 10 }: { count?: number }): React.JSX.Element {
   const t = useT();
   return (
@@ -319,13 +280,7 @@ export function RankingsSkeleton({ count = 10 }: { count?: number }): React.JSX.
   );
 }
 
-/**
- * The week's league card while it is on its way, in its own order: the
- * league's name, what it means and the days left, the six emblems in a row
- * (the middle one bigger), the line across, the goal ring with the line about
- * the goal beside it, and the first places of the table — the card's own
- * classes, so it is the card's size at every width.
- */
+/** The week's league card, in the card's own classes so it matches at every width. */
 export function LeagueCardSkeleton({ rows = 30 }: { rows?: number }): React.JSX.Element {
   return (
     <div className="league-page league-now skeleton-late" aria-hidden="true">
@@ -351,7 +306,7 @@ export function LeagueCardSkeleton({ rows = 30 }: { rows?: number }): React.JSX.
       <div className="league-goal-row">
         <Skeleton circle className="league-skel-ring" />
         <div className="league-goal-text">
-          {/* the status line's own grey box, empty */}
+          {/* The status line's own grey box, empty. */}
           <p className="league-status is-plain">
             <span style={{ visibility: 'hidden' }}>{'\u00a0'}</span>
           </p>
@@ -363,7 +318,7 @@ export function LeagueCardSkeleton({ rows = 30 }: { rows?: number }): React.JSX.
       <ol className="rank-list">
         {times(rows, (i) => (
           <Fragment key={i}>
-            {/* the line under the places that move up, and over the ones that move down */}
+            {/* The lines under the promotion places and over the relegation ones. */}
             {(i === 5 || i === rows - 5) && (
               <li className="league-divider">
                 <Skeleton line w={160} />
@@ -387,11 +342,7 @@ export function LeagueCardSkeleton({ rows = 30 }: { rows?: number }): React.JSX.
   );
 }
 
-/**
- * The conversation list down the side of Messages: each row a face, a name
- * with its time at the end, and the last line said — spaced as the list
- * spaces them, and enough of them to fill a tall window's column.
- */
+/** The conversation list down the side of Messages, enough rows to fill a tall column. */
 export function ConversationsSkeleton({ count = 8 }: { count?: number }): React.JSX.Element {
   const t = useT();
   const names = [104, 72, 88, 96, 64, 110, 80, 92];
@@ -422,14 +373,8 @@ export function ConversationsSkeleton({ count = 8 }: { count?: number }): React.
 }
 
 /**
- * A chat thread.
- *
- * The day's divider, then bursts that alternate sides: a face and a name over
- * the other person's, the bubbles at the widths short messages are, and the
- * burst's time under it — spaced as the thread spaces them. Each bubble is the
- * bubble itself in grey, one line tall, so it is exactly as high as a one-line
- * message. It is the same pattern every time, so the thread does not appear
- * to shuffle while it loads.
+ * A chat thread: the day's divider, then bursts alternating sides, each bubble one line tall in grey. Always the same
+ * pattern, so the thread does not seem to shuffle while it loads.
  */
 export function ThreadSkeleton(): React.JSX.Element {
   const t = useT();
@@ -473,13 +418,7 @@ export function ThreadSkeleton(): React.JSX.Element {
   );
 }
 
-/**
- * The Shop below its heading, as the catalogue lays itself out: the kinds as
- * tabs, the search, sort and filters, the count, the first kind's label, and
- * its tiles — each a picture at a background's shape, a name and a line under
- * it, the price, and Buy beside the gift button. Ten tiles: two rows on a wide
- * screen, five on a phone's two columns, which is a screenful either way.
- */
+/** The Shop below its heading; ten tiles are a screenful on a wide screen and on a phone. */
 export function ShopSkeleton({ count = 10, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
   const t = useT();
   return (
@@ -539,7 +478,7 @@ export function ShopSkeleton({ count = 10, label }: { count?: number; label?: Me
                 <span className="shop-price">
                   <Skeleton line w={64} />
                 </span>
-                {/* Buy takes the room the gift button leaves, as it does on a real tile */}
+                {/* Buy takes the room the gift button leaves, as on a real tile. */}
                 <Skeleton className="skeleton-btn skeleton-btn-sm" style={{ flex: '1 1 auto', width: 'auto' }} />
                 <Skeleton className="shop-gift-btn" />
               </div>
@@ -551,7 +490,7 @@ export function ShopSkeleton({ count = 10, label }: { count?: number; label?: Me
   );
 }
 
-/** One story card's place: its cover, a title, a line of summary and the row of facts, in the card's own classes. */
+/** One story card: its cover, a title, a line of summary and the facts, in the card's own classes. */
 function StoryCardBox({ title }: { title: string }): React.JSX.Element {
   return (
     <div className="story-card">
@@ -573,11 +512,7 @@ function StoryCardBox({ title }: { title: string }): React.JSX.Element {
   );
 }
 
-/**
- * The stories a search or a filter found: cards in the results' own grid
- * (one column on a phone, two or three from a tablet up), each a cover, a
- * title, a line of what it is about and its facts.
- */
+/** Stories a search or filter found, in the results' own grid. */
 export function StoryListSkeleton({ count = 6, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
   const t = useT();
   const titles = ['48%', '36%', '56%', '40%', '44%', '30%', '52%', '38%'];
@@ -594,11 +529,7 @@ export function StoryListSkeleton({ count = 6, label }: { count?: number; label?
   );
 }
 
-/**
- * The library's shelves while they are on their way: two rows of cards under
- * a heading's line each, in the shelves' own classes, so the page keeps its
- * shape when the stories land.
- */
+/** The library's shelves: two rows of cards under a heading each. */
 export function StoryLibrarySkeleton({ label }: { label?: MessageKey }): React.JSX.Element {
   const t = useT();
   const titles = ['48%', '36%', '56%', '40%'];
@@ -622,7 +553,7 @@ export function StoryLibrarySkeleton({ label }: { label?: MessageKey }): React.J
   );
 }
 
-/** The dictionary's rows while a first search is on its way: a word and the line that says what it means. */
+/** Dictionary rows while a first search is on its way. */
 export function DictRowsSkeleton({ count = 6 }: { count?: number }): React.JSX.Element {
   const t = useT();
   return (
@@ -645,7 +576,7 @@ export function DictRowsSkeleton({ count = 6 }: { count?: number }): React.JSX.E
   );
 }
 
-/** One dictionary entry on its way: the headword with its variety, the save button, and two senses. */
+/** One dictionary entry: the headword with its variety, the save button, and two senses. */
 export function EntrySkeleton(): React.JSX.Element {
   const t = useT();
   return (
@@ -681,11 +612,7 @@ export function EntrySkeleton(): React.JSX.Element {
   );
 }
 
-/**
- * Badges below the page's heading: the showcase's three slots beside the
- * numbers, then the first family's medals in their grid — each a medal, its
- * name and what it means. Eight medals: two rows on a desk, four on a phone.
- */
+/** Badges below the heading: the showcase's three slots, then the first family's medals; eight fill two rows on a desk. */
 export function BadgesSkeleton({ count = 8 }: { count?: number }): React.JSX.Element {
   const t = useT();
   return (
@@ -758,7 +685,7 @@ export function BadgesSkeleton({ count = 8 }: { count?: number }): React.JSX.Ele
   );
 }
 
-/** A profile's activity as a list (games played, things liked): a glyph, what it was, and when. */
+/** A profile's activity as a list (games played, things liked). */
 export function ActivityRowsSkeleton({ count = 4 }: { count?: number }): React.JSX.Element {
   const t = useT();
   return (
@@ -818,13 +745,7 @@ export function CommentsSkeleton({ count = 3 }: { count?: number }): React.JSX.E
   );
 }
 
-/**
- * The mini profile card.
- *
- * This one matters more than most: it opens over the page you were reading, at
- * a size the modal has already committed to, so a card that changes height on
- * arrival shoves the whole overlay about.
- */
+/** The mini profile card, which opens over the page at a committed size, so it must not change height on arrival. */
 export function ProfileCardSkeleton(): React.JSX.Element {
   const t = useT();
   return (
@@ -872,7 +793,7 @@ export function ProfileCardSkeleton(): React.JSX.Element {
                 </div>
               ))}
             </dl>
-            {/* one full-width button: Message, Add friend or Accept, as the card has it */}
+            {/* One full-width button: Message, Add friend or Accept. */}
             <div className="pc-actions">
               <ButtonBox size="sm" w="100%" />
             </div>
@@ -887,14 +808,8 @@ export function ProfileCardSkeleton(): React.JSX.Element {
 }
 
 /**
- * The full profile page, as FullProfile lays it out, in its one column: the
- * wide card with its banner, face, name and handle, the buttons, the level
- * bar and the row of numbers; then the second section (your badges, or their
- * friends), on your own the section only you are shown, and the activity with
- * its tabs.
- *
- * The banner is the short one: whether somebody has a background is not known
- * until their profile arrives, and most people have none.
+ * The full profile page as FullProfile lays it out. The banner is the short one, since most people have no background
+ * and it is not known until the profile arrives.
  */
 export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey; own?: boolean }): React.JSX.Element {
   const t = useT();
@@ -1016,7 +931,7 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
                   </span>
                 ))}
               </div>
-              {/* the first tab is their posts, as cards: two of them, as the tab itself loads */}
+              {/* The first tab is their posts, as two cards. */}
               <div className="feed mkp-activity-feed">
                 <FeedCards count={2} />
               </div>
@@ -1057,7 +972,7 @@ export function CardStackSkeleton({
   );
 }
 
-/** A post's byline: a face, a name and when, as PostAuthor draws one. */
+/** A post's byline as PostAuthor draws it. */
 function BylineBox(): React.JSX.Element {
   return (
     <div className="byline byline-md">
@@ -1076,11 +991,7 @@ function BylineBox(): React.JSX.Element {
   );
 }
 
-/**
- * A single post's page: the way back, then a written post's card — its kind
- * and reads, title, byline and body — or a picture's, which is the wall's own
- * post (DimenPost draws a FeedCard) — and the comments' heading under it.
- */
+/** A single post's page: the way back, the post's card (a written post, or a picture as the wall's FeedCard), and the comments' heading. */
 export function PostSkeleton({ withImage = false }: { withImage?: boolean }): React.JSX.Element {
   const t = useT();
   return (
@@ -1116,7 +1027,7 @@ export function PostSkeleton({ withImage = false }: { withImage?: boolean }): Re
   );
 }
 
-/** The course list on Learn: a card per course, with its progress and its two ways in. */
+/** The course list on Learn: a card per course with its progress and two ways in. */
 export function CourseGridSkeleton({ count = 2 }: { count?: number }): React.JSX.Element {
   const t = useT();
   return (
@@ -1148,15 +1059,10 @@ export function CourseGridSkeleton({ count = 2 }: { count?: number }): React.JSX
   );
 }
 
-/**
- * A course's lesson path: the page's head as the map draws it — the way back,
- * the course's name and how far along it is, the two courses to switch
- * between and the one button — then the first unit's banner and the first
- * stops down the winding line, leaning the way the path leans.
- */
+/** A course's lesson path: the map's head, then the first unit's banner and stops leaning as the path leans. */
 export function CourseMapSkeleton(): React.JSX.Element {
   const t = useT();
-  // the same lean as the path's own: middle, start, middle, end
+  // The path's own lean: middle, start, middle, end.
   const lean = [0, -72, 0, 72];
   return (
     <SkeletonRegion label={t('common.loading')}>
@@ -1210,12 +1116,7 @@ export function CourseMapSkeleton(): React.JSX.Element {
   );
 }
 
-/**
- * The bell's list while it is on its way: a group's label, then rows of a face,
- * a line of what happened and its time — the rows' own classes, so each is the
- * height of the row that replaces it. Every third has a second line, the way a
- * gift or a badge says a little more.
- */
+/** The bell's list, in the rows' own classes; every third row has a second line, as gifts and badges do. */
 export function NotificationsSkeleton({ count = 6 }: { count?: number }): React.JSX.Element {
   const t = useT();
   const widths = ['86%', '70%', '78%', '64%', '82%', '58%'];

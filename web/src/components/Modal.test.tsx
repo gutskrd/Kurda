@@ -17,7 +17,7 @@ function Page({ tick }: { tick: number }): React.JSX.Element {
       <button type="button" onClick={() => setOpen(true)}>
         open
       </button>
-      {/* a fresh onClose on every render, as most callers pass one */}
+      {/* A fresh onClose on every render, as most callers pass one. */}
       <Modal open={open} onClose={() => setOpen(false)} label="Invite friends">
         <input aria-label="Search your friends" />
         <span>tick {tick}</span>
@@ -61,7 +61,7 @@ describe('Modal', () => {
     expect(close).toHaveFocus();
     await userEvent.tab({ shift: true });
     expect(search).toHaveFocus();
-    // never out to the "open" button under the backdrop
+    // Never out to the "open" button under the backdrop.
     expect(screen.getByRole('button', { name: 'open' })).not.toHaveFocus();
   });
 
@@ -76,7 +76,7 @@ describe('Modal', () => {
   });
 });
 
-/** A dialog that starts closed and is opened from a button, which is where the focus has to go back to. */
+/** A dialog that starts closed and is opened from a button, where focus must return. */
 function Opened({ sheet = false }: { sheet?: boolean }): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const Dialog = sheet ? Sheet : Modal;
@@ -86,14 +86,14 @@ function Opened({ sheet = false }: { sheet?: boolean }): React.JSX.Element {
         open
       </button>
       <Dialog open={open} onClose={() => setOpen(false)} label="Invite friends">
-        {/* gone from the caller the moment it closes, as most callers write it */}
+        {/* Gone from the caller the moment it closes, as most callers write it. */}
         {open && <p>Who do you want to invite?</p>}
       </Dialog>
     </>
   );
 }
 
-/** A browser that plays motion: it can be asked, and the reader has not asked for less. */
+/** A browser that plays motion, or one with reduced motion. */
 function withMotion(reduced = false): void {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: reduced && query.includes('prefers-reduced-motion'),
@@ -126,16 +126,16 @@ describe.each([
     act(() => {
       fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
     });
-    // no dialog any more, to a screen reader or a test; the focus is back on what opened it
+    // No dialog any more, to a screen reader or a test; focus is back on the opener.
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(opener).toHaveFocus();
-    // what is still drawn is only a picture: its words are there, inert and hidden, on their way out
+    // What is still drawn is only a picture: inert and hidden, on its way out.
     const picture = screen.getByText('Who do you want to invite?').closest('.is-leaving');
     expect(picture).not.toBeNull();
     expect(picture).toHaveAttribute('inert');
     expect(picture).toHaveAttribute('aria-hidden', 'true');
 
-    // and after one `--dur` it is gone altogether
+    // After one `--dur` it is gone.
     act(() => {
       vi.advanceTimersByTime(LEAVE_MS);
     });
@@ -191,7 +191,7 @@ describe('where a dialog comes from', () => {
         <Opened />
       </I18nProvider>,
     );
-    // a browser without layout rests the panel at the window's corner with no size, so its middle is that corner
+    // Without layout the panel rests at the window's corner with no size, so its middle is that corner.
     fireEvent.click(screen.getByRole('button', { name: 'open' }), { clientX: 310, clientY: 620, detail: 1 });
     expect(screen.getByRole('dialog', { name: 'Invite friends' })).toBe(panel());
     expect(panel()).toHaveClass('is-from-opener');
@@ -209,7 +209,7 @@ describe('where a dialog comes from', () => {
     const drawn = { left: 40, top: 700, right: 140, bottom: 740, width: 100, height: 40, x: 40, y: 700, toJSON: () => ({}) };
     opener.getBoundingClientRect = () => drawn as DOMRect;
     opener.focus();
-    // Enter on a button reaches the page as a click at no point at all
+    // Enter on a button reaches the page as a click at no point.
     fireEvent.click(opener, { clientX: 0, clientY: 0, detail: 0 });
     expect(panel()).toHaveClass('is-from-opener');
     expect(panel().style.transformOrigin).toBe('calc(50% + 90px) calc(50% + 720px)');
@@ -235,7 +235,7 @@ describe('where a dialog comes from', () => {
 
   it('rises in the middle, as it always did, when nothing opened it', () => {
     withMotion();
-    // a dialog that is simply there: a badge earned, a warning to read
+    // A dialog that is simply there: a badge earned, a warning.
     render(
       <I18nProvider>
         <Page tick={0} />
@@ -248,7 +248,7 @@ describe('where a dialog comes from', () => {
   it('rises in the middle when it arrives by itself, long after the last press', () => {
     withMotion();
     vi.useFakeTimers();
-    /** A dialog the page opens when it is told to, not when something is pressed. */
+    /** A dialog the page opens by itself, not from a press. */
     const arrives = (open: boolean): React.JSX.Element => (
       <I18nProvider>
         <Modal open={open} onClose={() => undefined} label="A badge earned">

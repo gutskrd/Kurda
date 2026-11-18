@@ -72,11 +72,10 @@ describe('Civak', () => {
 
     expect(await screen.findByText('Çîroka min')).toBeInTheDocument();
     expect(screen.getByText('Dara Hinarê')).toBeInTheDocument();
-    // the merge is the point: a picture sits between the words, not on its own
-    // page — and it opens full size, so it is a button named for what it does
+    // A picture sits between the words rather than on its own page, and opens full size, so it is a button named for that.
     const picture = screen.getByRole('button', { name: 'Open picture 1 of 1' });
     expect(picture.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
-    // one name over each post, and a picture's words above it rather than a caption under it
+    // One name over each post, and a picture's words above it rather than a caption under it.
     expect(screen.getAllByText('dilan')).toHaveLength(3);
     expect(document.querySelectorAll('.fcard-name')).toHaveLength(3);
     expect(screen.getByText('Çiyayên welêt').closest('.fcard-body')?.nextElementSibling).toHaveClass('fcard-media');
@@ -100,7 +99,7 @@ describe('Civak', () => {
 
   it('starts on the half and kind the address asked for', async () => {
     const { queries } = feedFetch([item('library:p1')]);
-    // so /app/poems can simply redirect here and land somewhere meaningful
+    // So /app/poems can simply redirect here and land somewhere meaningful.
     renderApp(<Civak />, ['/app/civak?section=gotin&kind=helbest']);
     await waitFor(() => expect(queries[0]).toContain('kind=helbest'));
     expect(screen.getByRole('button', { name: 'Sort and filter — Writing · Poem' })).toBeInTheDocument();
@@ -114,8 +113,7 @@ describe('Civak', () => {
 
   it('drops a kind that does not belong to the half it is asked with', async () => {
     const { queries } = feedFetch([item('library:s1')]);
-    // a helbest inside Dîmen is a contradiction the server refuses, so the
-    // leftover kind is dropped rather than sent
+    // A helbest inside Dîmen is refused by the server, so the leftover kind is dropped rather than sent.
     renderApp(<Civak />, ['/app/civak?section=dimen&kind=helbest']);
     await waitFor(() => expect(queries).toHaveLength(1));
     expect(queries[0]).toContain('section=dimen');
@@ -133,8 +131,7 @@ describe('Civak', () => {
     await userEvent.click(like);
 
     await waitFor(() => expect(posts).toContain('POST /posts/library/s1/like'));
-    // the server's answer replaces the card in place — a reload would lose your
-    // scroll position for the sake of one number
+    // The server's answer replaces the card in place; a reload would lose the scroll position for one number.
     await waitFor(() => expect(within(card).getByRole('button', { name: 'Unlike (1)' })).toBeInTheDocument());
     expect(card.textContent).toContain('1');
     expect(queries).toHaveLength(1);
@@ -142,7 +139,7 @@ describe('Civak', () => {
 
   it('fills the heart and counts the like at the press, before the server has answered, and lets a save go meanwhile', async () => {
     signIn();
-    // the like is held back until the test lets it go; everything else answers at once
+    // The like is held back until the test lets it go; everything else answers at once.
     let letGo: () => void = () => undefined;
     const held = new Promise<void>((resolve) => (letGo = resolve));
     const posts: string[] = [];
@@ -170,19 +167,19 @@ describe('Civak', () => {
     await waitFor(() => expect(like).toBeEnabled());
     await userEvent.click(like);
 
-    // at once: the heart is on, the count has moved, and the sparks are round a filled heart
+    // At once: the heart is on, the count has moved, and the sparks are round a filled heart.
     expect(within(card).getByRole('button', { name: 'Unlike (3)' })).toHaveAttribute('aria-pressed', 'true');
     expect(card.querySelector('.fcard-like.is-on .fcard-burst')).not.toBeNull();
-    // and the other two are not held while it is on its way
+    // And the other two are not held while it is on its way.
     const save = within(card).getByRole('button', { name: 'Save' });
     expect(save).toBeEnabled();
     await userEvent.click(save);
     await waitFor(() => expect(within(card).getByRole('button', { name: 'Remove from saved' })).toBeInTheDocument());
-    // a second press on the heart while the first is unanswered is let go: one like is sent, not two
+    // A second press on the heart while the first is unanswered is let go: one like is sent, not two.
     await userEvent.click(within(card).getByRole('button', { name: /^Unlike/ }));
     expect(posts.filter((p) => p === 'like')).toHaveLength(1);
 
-    // the server's totals have the last word: somebody else liked it meanwhile
+    // The server's totals have the last word: somebody else liked it meanwhile.
     letGo();
     await waitFor(() => expect(within(card).getByRole('button', { name: 'Unlike (5)' })).toBeInTheDocument());
   });
@@ -205,7 +202,7 @@ describe('Civak', () => {
     await waitFor(() => expect(like).toBeEnabled());
     await userEvent.click(like);
 
-    // back as it was: not liked, no sparks left round an empty heart, and a line under the row
+    // Back as it was: not liked, no sparks left round an empty heart, and a line under the row.
     await waitFor(() => expect(within(card).getByRole('status')).toHaveTextContent('Something went wrong on our end'));
     expect(within(card).getByRole('button', { name: 'Like' })).toHaveAttribute('aria-pressed', 'false');
     expect(card.querySelector('.fcard-burst')).toBeNull();
@@ -235,7 +232,7 @@ describe('Civak', () => {
     renderApp(<Civak />, ['/app/civak']);
 
     const like = await screen.findByRole('button', { name: 'Sign in to like' });
-    // the count is still readable; it is the label that says what it is
+    // The count is still readable; it is the label that says what it is.
     expect(like).toBeDisabled();
     expect(like.textContent).toContain('4');
     await userEvent.click(like);
@@ -253,18 +250,13 @@ describe('Civak', () => {
     renderApp(<Civak />, ['/app/civak']);
 
     expect(await screen.findByText('Jiyan bi kurdî xweştire.')).toBeInTheDocument();
-    // scoped to the card: 'Saying' also names a filter chip above it
+    // Scoped to the card: 'Saying' also names a filter chip above it.
     expect(within(screen.getByRole('article')).getByText('Saying')).toBeInTheDocument();
   });
 
   /**
-   * The wall in another language, section names and all.
-   *
-   * Civak, Gotin, Dîmen, Çîrok, Helbest, Wêne and Mîm are Kurdish words, and
-   * Kurdish is one of the eight languages this app is read in rather than a
-   * layer on top of the others. Somebody who chose Spanish gets Spanish;
-   * leaving the sections in a language they do not read would make the app
-   * harder to use, not more authentic.
+   * The wall in another language, section names and all: the Kurdish section words are translated like everything else,
+   * since Kurdish is one of the app's languages rather than a layer over them.
    */
   describe('in another language', () => {
     it('translates the sections, not only the words around them', async () => {
@@ -285,7 +277,7 @@ describe('Civak', () => {
       expect(within(panel).getByRole('button', { name: 'Mostrar publicaciones' })).toBeInTheDocument();
     });
 
-    /** In Kurmancî those words ARE the translation, so they come back. */
+    /** In Kurmancî those words are the translation, so they come back. */
     it('keeps the Kurdish words for someone reading in Kurdish', async () => {
       localStorage.setItem('hevalo_locale', 'ku');
       await preloadCatalogue();
@@ -322,11 +314,6 @@ describe('Civak', () => {
       expect(screen.getByTitle('Speichern')).toBeInTheDocument();
     });
 
-    /*
-     * This asked "what are you posting?" — words or pictures — in Turkish.
-     * There is no such question any more (one box for both, web/src/composer),
-     * so what is pinned now is that the one box speaks the reader's language.
-     */
     it('offers to post in your language, in one box for words and pictures', async () => {
       localStorage.setItem('hevalo_locale', 'tr');
       await preloadCatalogue();
@@ -359,10 +346,10 @@ describe('Civak', () => {
 
       const group = await screen.findByRole('group', { name: '3 pictures' });
       expect(within(group).getAllByRole('button', { name: /^Open picture/ })).toHaveLength(3);
-      // the author's description, never the post's words, is what a reader hears
+      // The author's description, never the post's words, is what a reader hears.
       expect(within(group).getByRole('button', { name: 'Open picture 1 of 3: Agirê Newrozê' })).toBeInTheDocument();
       expect(within(group).getByRole('button', { name: 'Open picture 2 of 3' })).toBeInTheDocument();
-      // on the wall they are swiped through, not tiled
+      // On the wall they are swiped through, not tiled.
       expect(group).toHaveClass('pp-strip');
       expect(group.querySelector('.pp-counter')?.textContent).toBe('1/3');
     });
@@ -404,11 +391,7 @@ describe('Civak', () => {
     });
   });
 
-  /**
-   * Sort and filter are one button, not rows of toggles: the wall opens on the
-   * posts, and the choices are there when they are wanted. Choices are a draft
-   * until "Show posts"; a chip says what differs from the plain wall while it does.
-   */
+  /** Sort and filter behind one button: choices are a draft until "Show posts", and a chip shows what differs from the plain wall. */
   describe('sort and filter', () => {
     /** Where the router is, so a test can see a choice reach the address. */
     function Where(): React.JSX.Element {
@@ -446,14 +429,14 @@ describe('Civak', () => {
 
       const sortBy = within(panel()).getByRole('radiogroup', { name: 'Sort by' });
       expect(names(sortBy)).toEqual(['Newest', 'Oldest', 'Most popular', 'Most discussed']);
-      // what the ranked two count is said under them
+      // What the ranked two count is said under them.
       expect(within(sortBy).getByRole('radio', { name: 'Most popular' })).toHaveAccessibleDescription('Hearts, reposts and comments');
       expect(within(sortBy).getByRole('radio', { name: 'Most discussed' })).toHaveAccessibleDescription('Most comments');
-      // the order chosen now is ticked, and is where the keyboard starts
+      // The order chosen now is ticked, and is where the keyboard starts.
       const newest = within(sortBy).getByRole('radio', { name: 'Newest' });
       expect(newest).toHaveAttribute('aria-checked', 'true');
       expect(newest).toHaveFocus();
-      // newest first reads everything, so there is no range to choose
+      // Newest first reads everything, so there is no range to choose.
       expect(within(panel()).queryByRole('radiogroup', { name: 'From' })).not.toBeInTheDocument();
 
       expect(names(within(panel()).getByRole('radiogroup', { name: 'Show' }))).toEqual([
@@ -466,7 +449,7 @@ describe('Civak', () => {
         'Photo',
         'Meme',
       ]);
-      // nothing to reset on the plain wall, and no chip while it is the plain wall
+      // Nothing to reset on the plain wall, and no chip while it is the plain wall.
       expect(within(panel()).getByRole('button', { name: 'Reset' })).toBeDisabled();
       expect(screen.queryByRole('button', { name: 'Back to newest' })).not.toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Show everything' })).not.toBeInTheDocument();
@@ -477,12 +460,12 @@ describe('Civak', () => {
       await userEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
       await userEvent.click(within(panel()).getByRole('radio', { name: 'Most popular' }));
 
-      // a ranked order looks back over a range, all of it until told otherwise
+      // A ranked order looks back over a range, all of it until told otherwise.
       const from = within(panel()).getByRole('radiogroup', { name: 'From' });
       expect(names(from)).toEqual(['Today', 'This week', 'This month', 'This year', 'All time']);
       expect(within(from).getByRole('radio', { name: 'All time' })).toHaveAttribute('aria-checked', 'true');
       await userEvent.click(within(from).getByRole('radio', { name: 'This week' }));
-      // a draft: nothing is asked for until it is shown
+      // A draft: nothing is asked for until it is shown.
       expect(queries).toHaveLength(1);
 
       await userEvent.click(within(panel()).getByRole('button', { name: 'Show posts' }));
@@ -513,7 +496,7 @@ describe('Civak', () => {
       expect(queries.at(-1)).toContain('kind=mim');
       expect(where()).toBe('?section=dimen&kind=mim');
       expect(screen.queryByRole('button', { name: 'Most popular · This week' })).not.toBeInTheDocument();
-      // the chip went, so the keyboard lands on the funnel rather than nowhere
+      // The chip went, so the keyboard lands on the funnel rather than nowhere.
       expect(screen.getByRole('button', { name: 'Sort and filter — Pictures · Meme' })).toHaveFocus();
     });
 
@@ -545,7 +528,7 @@ describe('Civak', () => {
       expect(queries).toHaveLength(1);
       expect(where()).toBe('');
 
-      // and the draft went with it: the panel opens on what the wall shows
+      // And the draft went with it: the panel opens on what the wall shows.
       await userEvent.click(button);
       expect(within(panel()).getByRole('radio', { name: 'Newest' })).toHaveAttribute('aria-checked', 'true');
       expect(within(panel()).getByRole('radio', { name: 'Everything' })).toHaveAttribute('aria-checked', 'true');
@@ -562,7 +545,7 @@ describe('Civak', () => {
       expect(within(panel()).getByRole('radio', { name: 'Newest' })).toHaveAttribute('aria-checked', 'true');
       expect(within(panel()).getByRole('radio', { name: 'Everything' })).toHaveAttribute('aria-checked', 'true');
       expect(reset).toBeDisabled();
-      // still a draft
+      // Still a draft.
       expect(queries).toHaveLength(1);
 
       await userEvent.click(within(panel()).getByRole('button', { name: 'Show posts' }));
@@ -603,7 +586,7 @@ describe('Civak', () => {
       expect(screen.getByRole('button', { name: 'Sort and filter' })).toBeInTheDocument();
       cleanup();
 
-      // a range means nothing to the oldest first, so it is not sent
+      // A range means nothing to the oldest first, so it is not sent.
       const third = await wall('/app/civak?sort=oldest&period=week');
       expect(third.queries[0]).toContain('sort=oldest');
       expect(third.queries[0]).not.toContain('period=');
@@ -627,18 +610,18 @@ describe('Civak', () => {
       await userEvent.keyboard('{ArrowUp}');
       expect(within(panel()).getByRole('radio', { name: 'Most discussed' })).toHaveAttribute('aria-checked', 'true');
 
-      // Tab to the range, where left goes back along the row
+      // Tab to the range, where left goes back along the row.
       await userEvent.tab();
       expect(within(panel()).getByRole('radio', { name: 'All time' })).toHaveFocus();
       await userEvent.keyboard('{ArrowLeft}');
       expect(within(panel()).getByRole('radio', { name: 'This year' })).toHaveAttribute('aria-checked', 'true');
-      // then to the kinds
+      // Then to the kinds.
       await userEvent.tab();
       expect(within(panel()).getByRole('radio', { name: 'Everything' })).toHaveFocus();
       await userEvent.keyboard('{ArrowDown}');
       expect(within(panel()).getByRole('radio', { name: 'All writing' })).toHaveAttribute('aria-checked', 'true');
 
-      // Reset, Show posts, and round again to the ✕ at the top
+      // Reset, Show posts, and round again to the ✕ at the top.
       await userEvent.tab();
       expect(within(panel()).getByRole('button', { name: 'Reset' })).toHaveFocus();
       await userEvent.tab();
@@ -673,7 +656,7 @@ describe('Civak', () => {
         vi.fn(async (url: string) => {
           if (!url.includes('/feed')) return jsonResponse(200, {});
           queries.push(url.slice(url.indexOf('/feed')));
-          // the second page has moved on by one: its first post was the last of the first page
+          // The second page has moved on by one: its first post was the last of the first page.
           return jsonResponse(200, { items: url.includes('offset=0') ? page(0) : url.includes('offset=20') ? page(19) : [] });
         }),
       );
@@ -683,21 +666,21 @@ describe('Civak', () => {
       await screen.findByText('Post 38');
       expect(screen.getAllByText('Post 19')).toHaveLength(1);
       expect(screen.getAllByRole('article')).toHaveLength(39);
-      // and the next page starts where the server's last one ended, not at the count shown
+      // And the next page starts where the server's last one ended, not at the count shown.
       await userEvent.click(screen.getByRole('button', { name: 'Show more' }));
       await waitFor(() => expect(queries.at(-1)).toContain('offset=40'));
     });
 
     it('offers the whole wall again when a filter or a range leaves it empty', async () => {
       const kinds = await wall('/app/civak?section=dimen&kind=mim', []);
-      // the chip's ✕ and the empty wall's button say the same thing; the latter is the second
+      // The chip's ✕ and the empty wall's button say the same thing; the latter is the second.
       const [, fromEmpty] = screen.getAllByRole('button', { name: 'Show everything' });
       await userEvent.click(fromEmpty!);
       await waitFor(() => expect(kinds.queries.at(-1)).toContain('section=all'));
       cleanup();
 
       const ranged = await wall('/app/civak?sort=popular&period=day', []);
-      // not "find people" — the wall has posts, just none liked today
+      // Not "find people" — the wall has posts, just none liked today.
       expect(screen.queryByRole('link', { name: 'Find people' })).not.toBeInTheDocument();
       await userEvent.click(screen.getByRole('button', { name: 'Show everything' }));
       await waitFor(() => expect(ranged.queries.at(-1)).not.toContain('sort='));
@@ -706,8 +689,7 @@ describe('Civak', () => {
   });
 
   it('shows an unfamiliar kind rather than an empty badge', async () => {
-    // CARD_LABEL is deliberately open: if the server ships a kind before the web
-    // knows its name, the wall should still render it, not a blank chip
+    // CARD_LABEL is open, so a kind the server ships before the web knows its name still renders.
     feedFetch([item('library:x1', { kind: 'axaftin', title: 'Something new' })]);
     renderApp(<Civak />, ['/app/civak']);
 
@@ -715,11 +697,7 @@ describe('Civak', () => {
     expect(screen.getByText('axaftin')).toBeInTheDocument();
   });
 
-  /**
-   * With today's reward there to take, the top of Home had two filled buttons:
-   * Claim, and the wall's +. A screen has one thing to press first; while the
-   * claim waits it is Claim, and the + is drawn quietly until it has been made.
-   */
+  // While today's reward waits, Claim is the one filled button and the + is drawn quietly until claimed.
   it('has one filled button while today’s reward waits: Claim, with the + drawn quietly until it is claimed', async () => {
     signIn();
     vi.stubGlobal(
@@ -743,9 +721,9 @@ describe('Civak', () => {
     await waitFor(() => expect(plus).toHaveClass('is-secondary'));
 
     await userEvent.click(claim);
-    // claimed: nothing competes with the + any more, and it is the wall's filled button again
+    // Claimed: nothing competes with the + any more, and it is the wall's filled button again.
     await waitFor(() => expect(plus).not.toHaveClass('is-secondary'));
-    // and the claim landed: the coin is marked for its pop, with its sparks beside it
+    // And the claim landed: the coin is marked for its pop, with its sparks beside it.
     expect(document.querySelector('.zer-coin')).toHaveClass('is-landed');
     expect(document.querySelector('.zer-burst')).not.toBeNull();
   });
@@ -767,14 +745,14 @@ describe('Civak', () => {
     renderApp(<Civak />, ['/app/civak']);
 
     const plus = await screen.findByRole('button', { name: 'Post something' });
-    // the day's reward is in: its card steps aside, and the + keeps its fill
+    // The day's reward is in: its card steps aside, and the + keeps its fill.
     await waitFor(() => expect(document.querySelector('.zer-card')).toBeNull());
     expect(plus).not.toHaveClass('is-secondary');
   });
 
   describe('coming back to the wall', () => {
     it('rises in the first time it arrives, and is simply there, without waiting, the next time', async () => {
-      // the wall answers at once the first time; the second time it is held back until the test lets it go
+      // The wall answers at once the first time; the second time it is held back until the test lets it go.
       let asked = 0;
       let letGo: () => void = () => undefined;
       const held = new Promise<void>((resolve) => (letGo = resolve));
@@ -787,18 +765,18 @@ describe('Civak', () => {
           return jsonResponse(200, { items: [item('library:s1', asked > 1 ? { title: 'Çîroka min, ji nû ve' } : {})] });
         }),
       );
-      // inside the app's gate, as the page always is: it is drawn once it is known who is reading
+      // Inside the app's gate, as the page always is: it is drawn once it is known who is reading.
       const first = renderApp(<AppGate><Civak /></AppGate>, ['/app/civak']);
       await screen.findByText('Çîroka min');
       await waitFor(() => expect(document.querySelector('.feed')).toHaveClass('rise-in'));
       first.unmount();
 
       renderApp(<AppGate><Civak /></AppGate>, ['/app/civak']);
-      // the wall it showed is there while the server has not answered yet, and it does not rise in again
+      // The wall it showed is there while the server has not answered yet, and it does not rise in again.
       expect(await screen.findByText('Çîroka min')).toBeInTheDocument();
       expect(asked).toBe(2);
       expect(document.querySelector('.feed')).not.toHaveClass('rise-in');
-      // and what it was asked for behind that takes its place when it comes
+      // And what it was asked for behind that takes its place when it comes.
       letGo();
       expect(await screen.findByText('Çîroka min, ji nû ve')).toBeInTheDocument();
     });
@@ -806,12 +784,12 @@ describe('Civak', () => {
     it('keeps what had been read further down, under the first page as it is now', () => {
       const page = (from: number, count: number) => Array.from({ length: count }, (_, i) => item(`library:p${from + i}`) as never);
       const showing = { key: 'k', items: page(0, 40), nextOffset: 40, more: true };
-      // a post was made since: it leads, and nothing read before is lost or shown twice
+      // A post was made since: it leads, and nothing read before is lost or shown twice.
       const now = firstPage(showing, 'k', [item('library:new') as never, ...page(0, 19)]);
       expect(now.items).toHaveLength(41);
       expect(now.items[0]).toMatchObject({ key: 'library:new' });
       expect(now.nextOffset).toBe(40);
-      // a post taken down from the first page is gone when nothing new pushed it out
+      // A post taken down from the first page is gone when nothing new pushed it out.
       const without = firstPage(showing, 'k', page(1, 20));
       expect(without.items.some((i) => i.key === 'library:p0')).toBe(false);
       expect(without.items).toHaveLength(39);
@@ -822,7 +800,7 @@ describe('Civak', () => {
       const first = renderApp(<Civak />, ['/app/civak']);
       await screen.findByText('Çîroka min');
       first.unmount();
-      // another filter is another wall to fetch, but the same list on the same screen
+      // Another filter is another wall to fetch, but the same list on the same screen.
       renderApp(<Civak />, ['/app/civak?section=dimen']);
       await screen.findByText('Çîroka min');
       expect(document.querySelector('.feed')).not.toHaveClass('rise-in');
@@ -837,7 +815,7 @@ describe('Civak', () => {
           return jsonResponse(200, { items: url.includes('offset=0') ? page(0) : url.includes('offset=20') ? page(20) : [] });
         }),
       );
-      // a browser that can watch for the end: jsdom cannot, so the test stands in for it
+      // A browser that can watch for the end: jsdom cannot, so the test stands in for it.
       let seen: (entries: Array<{ isIntersecting: boolean }>) => void = () => undefined;
       vi.stubGlobal(
         'IntersectionObserver',
@@ -852,7 +830,7 @@ describe('Civak', () => {
       renderApp(<Civak />, ['/app/civak']);
       await screen.findByText('Post 0');
       expect(screen.getByRole('button', { name: 'Show more' })).toBeInTheDocument();
-      // the wall may set up a fresh watcher as it settles, so the end comes into view for whichever is watching now
+      // The wall may set up a fresh watcher as it settles, so the end comes into view for whichever is watching now.
       let told: typeof seen | null = null;
       await waitFor(
         () => {
@@ -864,7 +842,7 @@ describe('Civak', () => {
         },
         { timeout: 3000 },
       );
-      // as jsdom had it, for whatever runs after this
+      // As jsdom had it, for whatever runs after this.
       vi.stubGlobal('IntersectionObserver', undefined);
     });
   });

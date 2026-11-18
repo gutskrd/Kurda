@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-/*
- * Every fire on the website burns at a level: as big as the streak or the run
- * it stands for has grown it (shared `fireLevel`, `runFireLevel`), never
- * simply lit or not.
- */
+/* Every fire on the website burns at a level (shared `fireLevel`, `runFireLevel`), never simply lit or not. */
 
 const sources = import.meta.glob<string>(['../**/*.tsx', '!../**/*.test.tsx'], { query: '?raw', import: 'default', eager: true });
 

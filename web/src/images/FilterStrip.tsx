@@ -9,15 +9,7 @@ import { useT } from '../i18n/I18nProvider';
 const THUMB = 62;
 
 /**
- * The filters, each shown on the actual photograph.
- *
- * A row of names would make you try all ten to find out what they do. Showing
- * them on the picture in front of you is the whole reason this pattern exists,
- * and it is cheap here: ten thumbnails at 62px is about forty thousand pixels
- * altogether, less than a tenth of one preview frame.
- *
- * The thumbnails follow the crop rather than the whole picture, so what they
- * preview is what is actually going to be posted.
+ * The filters, each previewed on the actual crop; ten 62px thumbnails cost less than a tenth of one preview frame.
  */
 export function FilterStrip({
   image,
@@ -29,12 +21,12 @@ export function FilterStrip({
   image: CanvasImageSource;
   crop: CropRect;
   activeKey: string;
-  /** bumped when overlay artwork decodes, so a thumbnail that needs it redraws */
+  /** Bumped when overlay artwork decodes, so a thumbnail that needs it redraws. */
   artReady: number;
   onPick: (key: string) => void;
 }): React.JSX.Element {
   const t = useT();
-  // the middle square of the crop, so every thumbnail is the same shape
+  // The crop's middle square, so every thumbnail is the same shape.
   const side = Math.min(crop.sw, crop.sh);
   const sx = crop.sx + (crop.sw - side) / 2;
   const sy = crop.sy + (crop.sh - side) / 2;
@@ -59,13 +51,7 @@ export function FilterStrip({
   );
 }
 
-/**
- * One filter, on this picture.
- *
- * Deliberately does not go through `compose`: that keeps a single cached graded
- * canvas for the live preview, and ten thumbnails asking it for ten different
- * gradings would evict that entry ten times per redraw.
- */
+/** One filter on this picture, bypassing `compose` so the thumbnails do not evict the preview's cached grade. */
 function Thumb({
   image,
   sx,
@@ -97,8 +83,7 @@ function Thumb({
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(image, sx, sy, side, side, 0, 0, px, px);
 
-    // the same grade the live preview and the export will use, at full
-    // strength: a thumbnail is what the filter does, not what it is doing now
+    // The same grade as preview and export, at full strength: what the filter does.
     const grade = gradeOf(filterKey, 1, NEUTRAL);
     if (gradeDoesNothing(grade)) return;
     try {
@@ -107,8 +92,7 @@ function Thumb({
       ctx.putImageData(pixels, 0, 0);
       if (grade.overlay) drawOverlay(ctx, px, px, grade.overlay);
     } catch {
-      // a tainted canvas refuses a read-back; an ungraded thumbnail is a fine
-      // outcome for something that is only a hint at what the filter does
+      // A tainted canvas refuses a read-back; an ungraded thumbnail is fine for a hint.
     }
   }, [image, sx, sy, side, filterKey, artReady]);
 

@@ -38,7 +38,7 @@ describe('SearchField', () => {
     expect(field()).toHaveValue('');
     expect(field()).toHaveFocus();
     expect(clearButton()).toBeNull();
-    // and the next search starts straight away
+    // The next search starts straight away.
     await userEvent.keyboard('rojbaş');
     expect(field()).toHaveValue('rojbaş');
   });
@@ -49,7 +49,7 @@ describe('SearchField', () => {
         <Field start="silav" />
       </I18nProvider>,
     );
-    // fireEvent returns false when the default was prevented
+    // fireEvent returns false when the default was prevented.
     expect(fireEvent.mouseDown(clearButton()!)).toBe(false);
   });
 
@@ -72,7 +72,7 @@ describe('SearchField', () => {
     await userEvent.keyboard('{Escape}');
     expect(field()).toHaveValue('');
     expect(onKeyDown).not.toHaveBeenCalled();
-    // nothing left to clear: the Escape goes on to whatever is around the field
+    // Nothing left to clear, so the Escape goes on to whatever is around the field.
     await userEvent.keyboard('{Escape}');
     expect(onKeyDown).toHaveBeenCalledOnce();
   });

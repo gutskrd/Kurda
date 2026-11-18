@@ -2,11 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import * as icons from './icons';
 
-/**
- * The icon façade is the one place a wrong import shows up as a blank space
- * rather than an error, so this walks every name it exports and checks a real
- * glyph comes out at the size asked for.
- */
+/** A wrong import in the icon façade shows as a blank space rather than an error, so every export is drawn here. */
 const ENTRIES = Object.entries(icons).filter(([, v]) => typeof v === 'function') as Array<
   [string, (p: { size?: number }) => React.JSX.Element]
 >;
@@ -14,13 +10,12 @@ const ENTRIES = Object.entries(icons).filter(([, v]) => typeof v === 'function')
 describe('icons', () => {
   it('exports the whole set the app imports by name', () => {
     const names = ENTRIES.map(([n]) => n);
-    // the ones screens actually reach for; a rename should fail here, loudly,
-    // rather than silently leaving a hole in a toolbar
+    // The ones screens use by name; a rename should fail here rather than leave a hole in a toolbar.
     for (const expected of [
       'PersonGlyph', 'BookIcon', 'FeatherIcon', 'GameIcon', 'PhotoIcon', 'HeartIcon',
       'CommentIcon', 'TrophyIcon', 'UserIcon', 'UsersIcon', 'FlameIcon', 'CoinIcon',
       'TilesIcon', 'WaveformIcon', 'ChevronIcon', 'GiftIcon', 'MenuIcon', 'CloseIcon',
-      'SunIcon', 'MoonIcon', 'GearIcon', 'ArrowIcon', 'BookmarkIcon', 'TextIcon', 'EyeIcon',
+      'MoonIcon', 'GearIcon', 'ArrowIcon', 'BookmarkIcon', 'TextIcon', 'EyeIcon',
     ]) {
       expect(names).toContain(expected);
     }
@@ -32,8 +27,7 @@ describe('icons', () => {
       const svg = container.querySelector('svg');
       expect(svg, `${name} drew nothing`).not.toBeNull();
       expect(svg!.getAttribute('width'), `${name} ignored size`).toBe('24');
-      // decorative by default: the label belongs on the control, not the glyph
-      // (the coin and gem are drawn inside a hidden wrapper, so look upwards too)
+      // Decorative by default; the label belongs on the control. The coin and gem sit inside a hidden wrapper.
       expect(svg!.closest('[aria-hidden="true"]'), `${name} is not hidden`).not.toBeNull();
       unmount();
     }
@@ -42,13 +36,12 @@ describe('icons', () => {
   it('gives the password toggle two different glyphs', () => {
     const open = render(<icons.EyeIcon />).container.innerHTML;
     const shut = render(<icons.EyeIcon off />).container.innerHTML;
-    // one icon in one place with two states — if they matched, the button would
-    // look inert while it was in fact working
+    // Two states of one icon; if they matched, the button would look inert while working.
     expect(open).not.toBe(shut);
   });
 
   it('tells the two people icons apart', () => {
-    // the social panel is your friends, not your profile
+    // The social panel is your friends, not your profile.
     const one = render(<icons.UserIcon size={20} />).container.innerHTML;
     const many = render(<icons.UsersIcon size={20} />).container.innerHTML;
     expect(one).not.toBe(many);

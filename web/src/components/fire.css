@@ -1,13 +1,8 @@
 /*
- * The streak's fire (components/Fire.tsx). Every moving part runs one of
- * three keyframes with its own poses, period and phase, set on it from the
- * shared drawing (`art/fire.ts`): a loop eases through its four poses and
- * back, a rise runs straight up through its six and starts again unseen, and
- * a growth eases once through its four and stays. The stops here are the
- * drawing's `FIRE_LOOP_STOPS`, `FIRE_RISE_STOPS` and `FIRE_GROW_STOPS`; the
- * eased curve is the sine ease the phone samples. Only transform and opacity
- * change, each about the part's own root in the drawing's units. The painted
- * flame's sheet steps along its rows and down them, a whole frame at a time.
+ * The streak's fire (components/Fire.tsx). Each moving part runs one of three keyframes with its own poses, period and
+ * phase from the shared drawing (`art/fire.ts`): a loop through four poses and back, a rise through six that restarts
+ * unseen, and a one-off growth through four. The stops are the drawing's `FIRE_LOOP_STOPS`, `FIRE_RISE_STOPS` and
+ * `FIRE_GROW_STOPS`. Only transform and opacity change.
  */
 .fire {
   display: inline-block;
@@ -110,7 +105,7 @@
   }
 }
 
-/* the painted flame: its sheet moved a frame at a time, `--fire-steps` steps of `--fire-shift` in all over `--fire-period` */
+/* The painted flame's sheet, moved a frame at a time: `--fire-steps` steps of `--fire-shift` over `--fire-period`. */
 .fire-frames {
   animation-duration: var(--fire-period);
   animation-timing-function: steps(var(--fire-steps));
@@ -137,13 +132,13 @@
   }
 }
 
-/* a fire not burning, or standing still for somebody who asked for less motion */
+/* A fire not burning, or standing still under reduced motion. */
 .fire.is-still .fire-part,
 .fire.is-still .fire-frames {
   animation: none;
 }
 
-/* motion turned down while it burns: the fire stands still at the stage it grew into, its flame one frame */
+/* Reduced motion while it burns: the fire stands still at the stage it grew into. */
 @media (prefers-reduced-motion: reduce) {
   .fire-part,
   .fire-grow,

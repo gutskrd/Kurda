@@ -1,10 +1,6 @@
 /**
- * What goes into the head of a shared post.
- *
- * The risky half of this file is `attr`: a post is user-written text on its way
- * into an HTML attribute, so a miss there is a stored XSS that fires in every
- * chat app that unfurls the link. The rest is about a preview reading well —
- * ending on a word, naming the author, not claiming a picture it does not have.
+ * What goes into a shared post's head. The risky part is `attr`: post text going into an HTML attribute, where a miss is
+ * stored XSS in every preview of the link. The rest is about a preview reading well.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { winCardName, winCardNames, winCards, winLinkUrl } from '@kurda/shared';
@@ -22,7 +18,7 @@ describe('which paths get a preview', () => {
   });
 
   it('looks nothing up for a path that is not a post', () => {
-    // the worker is not a proxy for whatever someone puts in the URL
+    // The worker is not a proxy for whatever someone puts in the URL.
     for (const path of ['/', '/app/civak', '/app/users/x', '/assets/index.js', '/app/library']) {
       expect(routeFor(path), path).toBeNull();
     }
@@ -47,7 +43,7 @@ describe('escaping', () => {
       '&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;',
     );
     expect(attr("' onmouseover='alert(1)")).toBe('&#39; onmouseover=&#39;alert(1)');
-    // & first, or the escapes themselves become a way back out
+    // & first, or the escapes themselves become a way back out.
     expect(attr('&lt;script&gt;')).toBe('&amp;lt;script&amp;gt;');
   });
 
@@ -72,8 +68,7 @@ describe('trimming', () => {
     expect(out.endsWith('…')).toBe(true);
     expect(out.length).toBeLessThanOrEqual(21);
 
-    // what is left must be a run of whole words from the start of the source —
-    // "the quick brown fox", never "the quick brown f"
+    // What is left must be whole words from the start: "the quick brown fox", never "the quick brown f".
     const kept = out.slice(0, -1);
     expect(source.startsWith(kept)).toBe(true);
     expect(source[kept.length]).toBe(' ');
@@ -81,7 +76,7 @@ describe('trimming', () => {
 
   it('still cuts when there is no word boundary to cut on', () => {
     const out = trim('a'.repeat(60), 20);
-    expect(out).toHaveLength(21); // 20 + the ellipsis
+    expect(out).toHaveLength(21); // 20 + the ellipsis.
   });
 });
 
@@ -107,8 +102,7 @@ describe('what a preview says', () => {
   });
 
   it('claims no picture it cannot vouch for', () => {
-    // an http:// or javascript: value in og:image is not a picture, it is a
-    // request made by whoever opens the preview
+    // An http:// or javascript: og:image is a request made by whoever opens the preview, not a picture.
     for (const bad of ['http://cdn.test/a.webp', 'javascript:alert(1)', '/relative.webp', '']) {
       expect(previewOf({ title: 'x', author, imageUrl: bad }, 'image')!.image, bad).toBeNull();
     }
@@ -123,7 +117,7 @@ describe('what a preview says', () => {
 
   it('keeps a long title inside what a card will show', () => {
     const p = previewOf({ title: 'x'.repeat(200), author }, 'library')!;
-    // the ellipsis and the byline are the only things past the cut
+    // The ellipsis and the byline are the only things past the cut.
     expect(p.title.length).toBeLessThan(90);
     expect(p.title.endsWith('· @rojîn')).toBe(true);
   });
@@ -167,7 +161,7 @@ describe('the sitemap', () => {
     expect(xml).toContain('<loc>https://hevalo.app/</loc>');
     expect(xml).toContain('<loc>https://hevalo.app/app/games</loc>');
     expect(xml).toContain(`<loc>https://hevalo.app/app/library/${ID}</loc>`);
-    // a date, not a timestamp: a sitemap lastmod is a day
+    // A date, not a timestamp: a sitemap lastmod is a day.
     expect(xml).toContain('<lastmod>2026-09-28</lastmod>');
   });
 
@@ -182,11 +176,7 @@ describe('the sitemap', () => {
     expect(xml.endsWith('</urlset>')).toBe(true);
   });
 
-  /**
-   * The id goes straight into a URL. Anything that is not a UUID is dropped
-   * rather than escaped, because there is no reason for it to be there and no
-   * safe rendering of a guess.
-   */
+  // The id goes straight into a URL, so anything that is not a UUID is dropped rather than escaped.
   it('drops anything whose id is not a UUID', async () => {
     vi.stubGlobal(
       'fetch',
@@ -196,7 +186,7 @@ describe('the sitemap', () => {
 
     expect(xml).not.toContain('passwd');
     expect(xml).toContain(`/app/library/${ID}`);
-    // the static paths plus the one good post
+    // The static paths plus the one good post.
     expect(xml.match(/<url>/g)).toHaveLength(__test.STATIC_PAGES.length + 1);
   });
 
@@ -215,10 +205,7 @@ describe('the sitemap', () => {
     expect(fetchMock).toHaveBeenCalledTimes(5);
   });
 
-  /*
-   * Half a sitemap beats a 500, which a crawler can read as the whole site being
-   * unavailable — and the four paths that need no API are still true.
-   */
+  // Half a sitemap beats a 500, which a crawler can read as the whole site being down.
   it('still answers when the API does not', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('down'); }));
     const res = await sitemap('https://api.test', ORIGIN);
@@ -240,12 +227,7 @@ describe('what a page tells a search engine it is', () => {
   const { staticHead, previewHead, STATIC_PAGES, REPLACED } = __test;
   const head = (tags: ReadonlyArray<string | ''>) => tags.filter(Boolean).join('');
 
-  /**
-   * The bug this whole section exists for. `index.html` carries one canonical
-   * pointing at `/`, and the asset binding serves that same file for every
-   * path — so every URL in the sitemap was asking not to be indexed, and the
-   * library posts, the only pages worth finding, were asking loudest.
-   */
+  // Index.html's canonical points at `/` and is served for every path, so each listed page needs its own.
   it('gives a page its own address, not the shell', () => {
     const url = 'https://hevalo.app/app/games';
     expect(head(staticHead(STATIC_PAGES[1]!, url))).toContain(`<link rel="canonical" href="${url}" />`);
@@ -255,14 +237,10 @@ describe('what a page tells a search engine it is', () => {
     expect(head(previewHead(preview, post))).toContain(`<link rel="canonical" href="${post}" />`);
   });
 
-  /**
-   * Appending without removing is invisible in the markup and decisive in the
-   * result: everything that unfurls a link reads the *first* og:title, and the
-   * shell's generic one comes first. A shared post carried the site's own card.
-   */
+  // Previews read the first og:title, and the shell's generic one comes first, so every written tag replaces the shell's.
   it('replaces every tag it writes, so nothing is said twice', () => {
     const preview = { title: 'Helbest', description: 'Rêzek', image: 'https://cdn.test/a.jpg' };
-    // every meta the two heads write, whichever attribute names it
+    // Every meta the two heads write, whichever attribute names it.
     const written = head(previewHead(preview, 'https://hevalo.app/app/library/abc'))
       + head(staticHead(STATIC_PAGES[0]!, 'https://hevalo.app/'));
     for (const [, kind, name] of written.matchAll(/(property|name)="([^"]+)"/g)) {
@@ -292,10 +270,7 @@ describe('what a page tells a search engine it is', () => {
   });
 });
 
-/**
- * How Hevalo teaches, as a crawler and a link preview read it: its own head,
- * and an Article whose citations are the studies the page itself cites.
- */
+/** The teaching page as crawlers and previews read it: its own head, and an Article citing the page's studies. */
 describe('the teaching page, for a search engine', () => {
   const { staticHead, jsonLd, STATIC_PAGES } = __test;
   const URL_ = 'https://hevalo.app/how-hevalo-teaches';
@@ -402,16 +377,8 @@ describe('the teaching page, for a search engine', () => {
 });
 
 /**
- * The blank page.
- *
- * Cloudflare answers a path it has no file for with the SPA shell, and
- * `public/_headers` applies the dictionary's policy by URL rather than by file.
- * So a stale /ferheng/ link was served the app shell under `default-src
- * 'none'`, the shell's own bundle was refused, and the reader got nothing at
- * all — with a 200 on it, so a crawler was told the page was fine.
- *
- * Stale links are the normal case, not the odd one: page boundaries follow how
- * the words divide, so a re-import moves every range URL the last build had.
+ * A stale dictionary link got the app shell under the dictionary's `default-src 'none'`, a blank page with a 200.
+ * Re-imports move page ranges, so stale links are normal.
  */
 describe('a dictionary address with no page behind it', () => {
   const { ferheng } = __test;
@@ -430,7 +397,7 @@ describe('a dictionary address with no page behind it', () => {
   });
 
   it('keeps the dictionary’s security headers on its 404', async () => {
-    // what the asset binding answers for a /ferheng/ address carries that path's `_headers` rules
+    // What the asset binding answers for a /ferheng/ address carries that path's `_headers` rules.
     const served = new Response(shell, {
       status: 200,
       headers: {
@@ -448,7 +415,7 @@ describe('a dictionary address with no page behind it', () => {
     expect(res.headers.get('x-frame-options')).toBe('DENY');
     expect(res.headers.get('x-content-type-options')).toBe('nosniff');
     expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8');
-    // the shell's caching and validators are not this page's
+    // The shell's caching and validators are not this page's.
     expect(res.headers.get('cache-control')).toBeNull();
     expect(res.headers.get('etag')).toBeNull();
   });
@@ -459,11 +426,7 @@ describe('a dictionary address with no page behind it', () => {
     expect(await res.text()).toBe(page);
   });
 
-  /**
-   * The dictionary is published once per language, at sibling paths. A dead
-   * /dictionary/ address must not be answered in Kurmancî, and an English page
-   * must not be mistaken for the shell because it links a different stylesheet.
-   */
+  // Each language has its own 404, and an English page is not mistaken for the shell because it links another stylesheet.
   it('answers each language from its own folder', async () => {
     const english = page.replace('/ferheng/ferheng.css', '/dictionary/ferheng.css').replace('lang="ku"', 'lang="en"');
     const enUrl = new URL('https://hevalo.app/dictionary/sa-sc/');
@@ -485,16 +448,12 @@ describe('a dictionary address with no page behind it', () => {
     expect(dictionaryOf('/ferheng/se/')).toBe('/ferheng');
     expect(dictionaryOf('/dictionary/se/')).toBe('/dictionary');
     expect(dictionaryOf('/app/library/abc')).toBeNull();
-    // the bare path is the app's own route, not a page in either dictionary
+    // The bare path is the app's own route, not a page in either dictionary.
     expect(dictionaryOf('/dictionary')).toBeNull();
   });
 });
 
-/**
- * A scanner asking for a PHP script or a secrets file is told nothing lives
- * there, without the asset binding being asked: the app shell with a 200 was
- * what made /wp-login.php look like a page worth another try.
- */
+/** A scanner's probe for a PHP script or secrets file gets a 404 without the asset binding, which answered with the shell and a 200. */
 describe('a scanner’s probe', () => {
   const assets = vi.fn(async () => new Response('<!doctype html><div id="root"></div>', { status: 200, headers: { 'content-type': 'text/html' } }));
   const env = { ASSETS: { fetch: assets } } as unknown as Parameters<typeof worker.fetch>[1];
@@ -555,14 +514,11 @@ describe('an invitation to a game', () => {
   });
 });
 
-/**
- * A win somebody shared (shared: win-link.ts): the link under their line is
- * drawn as the postcard of that kind of win, and says nothing of whose it is.
- */
+/** A shared win (shared win-link.ts) is drawn as its kind's postcard and says nothing of whose it is. */
 describe('a shared win', () => {
   const { winHead, REPLACED } = __test;
   const head = (tags: ReadonlyArray<string | ''>) => tags.filter(Boolean).join('');
-  // kept in a name of its own: written inline, the bundler takes the address for a file to pack
+  // Kept in a name of its own: written inline, the bundler takes the address for a file to pack.
   const here = import.meta.url;
   const cards = new URL('../public/share/', here);
 
@@ -593,7 +549,7 @@ describe('a shared win', () => {
       expect(tags, String(days)).toContain('content="A Kurdish streak, kept alive"');
       expect(tags, String(days)).toContain('https://hevalo.app/share/streak.png');
     }
-    // 31 days are said, and drawn with the fire alone: only the days a streak is shared on have their figures drawn
+    // 31 days are said, and drawn with the fire alone: only the days a streak is shared on have their figures drawn.
     const odd = head(winHead({ kind: 'streak', days: 31 }, 'https://hevalo.app/win/streak/31'));
     expect(odd).toContain('content="31 days of Kurdish in a row"');
     expect(odd).toContain('https://hevalo.app/share/streak.png');
@@ -621,12 +577,7 @@ describe('a shared win', () => {
     }
   });
 
-  /*
-   * The pictures are read from the disk, as the files the site will serve. A
-   * test runs on a machine with files, while this workspace's types are the
-   * browser's: the two things asked of that machine are described here in
-   * full, so nothing else of it becomes something the app could reach for.
-   */
+  /* The pictures are read from disk as the site serves them; the file-system calls used are declared here, as this workspace has browser types. */
   interface FileSystem {
     readFileSync(file: URL): Uint8Array;
     readdirSync(folder: URL): string[];
@@ -637,11 +588,11 @@ describe('a shared win', () => {
     const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
     for (const name of winCardNames()) {
       const png = readFileSync(new URL(`${name}.png`, cards));
-      // a PNG says what it is in its first bytes, and its width and height in its first chunk, each as four bytes
+      // A PNG says what it is in its first bytes, and its width and height in its first chunk, each as four bytes.
       expect(String.fromCharCode(...png.subarray(1, 4)), name).toBe('PNG');
       const sizes = new DataView(png.buffer, png.byteOffset, png.byteLength);
       expect([sizes.getUint32(16), sizes.getUint32(20)], name).toEqual([1200, 630]);
-      // light enough for a phone to fetch in the middle of a conversation
+      // Light enough for a phone to fetch in the middle of a conversation.
       expect(png.byteLength, name).toBeLessThan(120_000);
     }
   });
@@ -713,7 +664,7 @@ describe('a shared win', () => {
     });
 
     it('leaves an address that is no win’s to the app, untouched', async () => {
-      // no rewriter is there to be asked: reaching for one would throw
+      // No rewriter is there to be asked: reaching for one would throw.
       for (const path of ['/win', '/win/', '/win/profile', '/win/lesson/a/b', '/winner/lesson', '/app/win/lesson']) {
         const res = await get(path);
         expect(await res.text(), path).toBe(shell);

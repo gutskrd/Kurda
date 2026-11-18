@@ -6,7 +6,7 @@ import { kurdishText } from './map';
 import { TextAnswer } from './TextAnswer';
 import { Tile } from './Tile';
 
-/** How a translate or listening item is answered: by laying word tiles, or by typing. */
+/** How a translate or listening item is answered: word tiles, or typing. */
 export type AnswerMode = 'tiles' | 'keys';
 
 /** The learner's choice between the two, kept on this device. */
@@ -24,15 +24,11 @@ function writeMode(mode: AnswerMode): void {
   try {
     localStorage.setItem(MODE_KEY, mode);
   } catch {
-    // storage blocked: the choice lasts as long as the page
+    // Storage blocked: the choice lasts as long as the page.
   }
 }
 
-/**
- * Tiles when the server sent a bank to build the answer from, unless the
- * learner chose the keyboard on this device; the keyboard when it sent none,
- * as before.
- */
+/** Tiles when the server sent a bank, unless the learner chose the keyboard on this device; the keyboard otherwise. */
 export function useAnswerMode(bank: readonly string[] | undefined): [AnswerMode, (mode: AnswerMode) => void] {
   const [mode, setMode] = useState<AnswerMode>(readMode);
   const choose = useCallback((next: AnswerMode) => {
@@ -42,18 +38,15 @@ export function useAnswerMode(bank: readonly string[] | undefined): [AnswerMode,
   return [bank && bank.length > 0 ? mode : 'keys', choose];
 }
 
-/** How long a tile takes to fly to the line or back to its place: the slow token (tokens.css). */
+/** How long a tile takes to fly to the line or back: the slow token (tokens.css). */
 const FLY_MS = 280;
 const FLY_EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
-/** Arabic script: a Soranî bank is laid right to left; one in a Latin script left to right, whatever the course. */
+/** Arabic script: a Soranî bank runs right to left, a Latin one left to right, whatever the course. */
 const ARABIC_SCRIPT = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/;
 
 /**
- * Each tile from where it was to where it is now (first, last, invert, play):
- * the one just laid flies from the bank to the line, one taken back flies
- * home, and the others close up behind it. A tile already in flight starts
- * again from where it is. Under reduced motion nothing travels: the tile that
- * moved fades in at its new place.
+ * Animates tiles from their old to their new places (FLIP): the laid tile flies from the bank, a returned one flies
+ * home, and the rest close up; a tile in flight restarts from where it is. Under reduced motion the moved tile fades in.
  */
 function fly(tiles: ReadonlyMap<number, HTMLElement>, was: ReadonlyMap<number, DOMRect>, moved: number): void {
   const still = prefersReducedMotion();
@@ -78,12 +71,9 @@ function fly(tiles: ReadonlyMap<number, HTMLElement>, was: ReadonlyMap<number, D
 }
 
 /**
- * An answer built from word tiles (a delivered exercise's `bank`): a tap lays
- * a tile at the end of the ruled line, leaving a grey ghost of it in the bank;
- * a tap on a tile on the line sends it home. On a keyboard a number lays (or
- * takes back) that tile, Backspace takes back the last one, and a letter
- * typed switches to typing (`onType`). The answer is the line's words joined
- * by spaces (`tileAnswer`), sent as a typed one is.
+ * An answer built from word tiles (the exercise's `bank`): a tap lays a tile on the line, leaving a ghost in the bank,
+ * and a tap on the line sends it home. Number keys lay or lift tiles, Backspace lifts the last, and a letter switches to
+ * typing (`onType`). The answer is the line's words joined by spaces (`tileAnswer`).
  */
 function TileLine({
   bank,
@@ -115,11 +105,11 @@ function TileLine({
   const t = useT();
   const kurdish = kurdishText(dialect);
   const dir = bank.some((word) => ARABIC_SCRIPT.test(word)) ? 'rtl' : 'ltr';
-  // Kurdish when it reads the way the course's Kurdish does: a Soranî course's English answer is not marked Soranî
+  // Marked Kurdish only when it reads in the course's direction: a Soranî course's English answer is not Soranî.
   const lang = dir === kurdish.dir ? kurdish.lang : undefined;
   const [said, setSaid] = useState('');
   const tiles = useRef(new Map<number, HTMLButtonElement>());
-  // where every tile stood before a move, which one moved, and where it was on the line and whether it had the focus
+  // Every tile's place before a move, which moved, where it was on the line, and whether it had focus.
   const before = useRef<{ rects: Map<number, DOMRect>; moved: number; at: number; focused: boolean } | null>(null);
   const off = locked || busy;
 
@@ -148,13 +138,13 @@ function TileLine({
     if (!was) return;
     fly(tiles.current, was.rects, was.moved);
     if (!was.focused) return;
-    // a keyboard goes on from where it was: the next tile in the bank, or the next one on the line
+    // The keyboard continues from where it was: the next tile in the bank, or on the line.
     const free = bank.map((_, j) => j).filter((j) => !placed.includes(j));
     const next = was.at < 0 ? (free.find((j) => j > was.moved) ?? free.at(-1) ?? placed.at(-1)) : (placed[Math.min(was.at, placed.length - 1)] ?? was.moved);
     if (next !== undefined) tiles.current.get(next)?.focus();
   }, [placed, bank]);
 
-  // the keys read the line as it is now, not as it was when the listener was set
+  // The keys read the line as it is now, not as at setup.
   const keys = useRef({ place, lift, placed, onType });
   keys.current = { place, lift, placed, onType };
   useEffect(() => {
@@ -163,7 +153,7 @@ function TileLine({
       if (e.metaKey || e.ctrlKey || e.altKey || e.isComposing || e.defaultPrevented) return;
       if ((e.target as HTMLElement | null)?.closest?.('input, textarea, select, [contenteditable], [role="dialog"]')) return;
       const now = keys.current;
-      // the key's place, not what it types
+      // The key's position, not what it types.
       const n = /^(?:Digit|Numpad)([1-9])$/.exec(e.code)?.[1];
       if (n && !e.shiftKey) {
         const i = Number(n) - 1;
@@ -213,7 +203,7 @@ function TileLine({
       <div className="lesson-bank" role="group" aria-label={t('lesson.tiles.bank')} lang={lang} dir={dir}>
         {bank.map((word, i) =>
           placed.includes(i) ? (
-            // where it came from, kept: the bank never closes up
+            // Its old place is kept, so the bank never closes up.
             <span key={i} className="tile-ghost" aria-hidden="true">
               {word}
             </span>
@@ -234,11 +224,9 @@ function TileLine({
 }
 
 /**
- * A translate or listening item's answer: word tiles when the item has a
- * bank and the learner has not chosen the keyboard, else the typed answer
- * with its key bar — and the way to switch between them, remembered on this
- * device. What the tiles had built carries over into the field, and so does
- * a letter typed while the tiles were showing.
+ * A translate or listening answer: word tiles when there is a bank and the learner has not chosen the keyboard, else the
+ * typed answer with its key bar, and a remembered way to switch. What the tiles built, and a letter typed over them,
+ * carry over into the field.
  */
 export function BuiltAnswer({
   bank,
@@ -265,7 +253,7 @@ export function BuiltAnswer({
   verdict: 'right' | 'wrong' | null;
   onReady: (ready: boolean) => void;
   onAnswer: (answer: { text: string }, given: string) => void;
-  /** hears the answer as it is built or typed, for a gap that shows it */
+  /** Hears the answer as it is built or typed, for a gap that shows it. */
   onText?: (text: string) => void;
 }): React.JSX.Element {
   const t = useT();
@@ -313,7 +301,7 @@ export function BuiltAnswer({
   return (
     <div className="lesson-built">
       {answer}
-      {/* kept in its place once answered (unseen), so nothing above the verdict moves */}
+      {/* Kept in place, unseen, once answered so nothing above the verdict moves. */}
       <button
         type="button"
         className={`lesson-mode${locked ? ' is-spent' : ''}`}

@@ -54,11 +54,11 @@ import { TableChoices, type TableOffer } from '../games/partyChoices';
 
 /** What the sheet is opened for. */
 export type InviteTarget =
-  /** a new game: from a game's page, a profile, a friends row, a DM, a results screen */
+  /** A new game: from a game's page, a profile, a friends row, a DM or a results screen. */
   | { kind: 'new'; game?: PlayGame; friend?: { userId: string; name: string }; story?: ChosenStory }
-  /** a new game whose card is posted in a group chat: its members join from there */
+  /** A new game whose card is posted in a group chat, for its members to join. */
   | { kind: 'group'; groupId: string; groupName: string }
-  /** friends into a lobby that is already open */
+  /** Friends into a lobby already open. */
   | { kind: 'lobby'; game: PlayGame; lobbyId: string; room: number; exclude?: readonly string[] };
 
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -83,10 +83,8 @@ const wait = (ms: number): Promise<void> => new Promise((resolve) => window.setT
 const RHYME_DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
 
 /**
- * The varieties a Rhyme Match can be made in now (`GET /rhyme/availability`):
- * a variety without enough curated prompts cannot start a match, so it is not
- * offered. Until the server answers, or when it cannot say, both are offered,
- * as they were before it could.
+ * The varieties a Rhyme Match can be made in now (`GET /rhyme/availability`); one without enough prompts is not offered.
+ * Both are offered until the server answers, or when it cannot say.
  */
 function useRhymeDialects(enabled: boolean): readonly Dialect[] {
   const { client } = useAuth();
@@ -116,23 +114,11 @@ function useTitle(target: InviteTarget): string {
 }
 
 /**
- * "Invite to play" (contract §B1): one sheet for every online game and every
- * way in — a game's page, a friend's profile, the friends list, a chat, the
- * results of a game, a lobby. The game, its presets (radio chips, nothing to
- * type), and the friends to ask; creating makes the lobby with you in it,
- * asks them, and takes you there.
- *
- * In a group chat nobody is picked: the game's card goes to the group, and
- * its members join from the card. Into a lobby that already exists, only the
- * friends are asked for.
- *
- * Drawn over the page through a portal: the chat's game button sits inside
- * the composer's form, and a form inside a form is not a form.
- *
- * Asking is handing tickets over (play/InviteTickets.tsx): each friend picked
- * gets a ticket above the button, Send sends them flying to their friends,
- * and the sheet says "Tickets sent" for a moment before it closes or opens
- * the lobby. A refusal brings them back.
+ * "Invite to play": one sheet for every online game from every way in. Pick the game, its presets and friends; creating
+ * makes the lobby with you in it, asks them and takes you there. In a group chat the game's card goes to the group
+ * instead; into an existing lobby only friends are picked. Portalled, because the chat's game button sits inside the
+ * composer's form. Friends picked get tickets that fly off on Send (play/InviteTickets.tsx), and a refusal brings them
+ * back.
  */
 export function InviteSheet({
   open,
@@ -143,24 +129,21 @@ export function InviteSheet({
   open: boolean;
   onClose: () => void;
   target: InviteTarget;
-  /** the game is the page's own: offer its presets, not a choice of game */
+  /** The page's own game: offer its presets, not a choice of game. */
   lockGame?: boolean;
 }): React.JSX.Element | null {
   const title = useTitle(target);
   if (!open) return null;
   return createPortal(
     <Modal open onClose={onClose} label={title}>
-      {/* mounted only while open, so every opening starts from the presets */}
+      {/* Mounted only while open, so every opening starts from the presets. */}
       <InviteForm target={target} lockGame={lockGame} onDone={onClose} />
     </Modal>,
     document.body,
   );
 }
 
-/**
- * The sheet's form, also drawn in place on a game's own page (Peyvok Battle,
- * Rhyme Match), where "make a game" and "ask friends" are the same step.
- */
+/** The sheet's form, also drawn on a game's own page (Peyvok Battle, Rhyme Match), where making a game and asking friends are one step. */
 export function InviteForm({
   target,
   lockGame = false,
@@ -169,9 +152,9 @@ export function InviteForm({
 }: {
   target: InviteTarget;
   lockGame?: boolean;
-  /** after the invites went out (the sheet closes) */
+  /** After the invites went out (the sheet closes). */
   onDone?: () => void;
-  /** the page already says what this is: no heading of its own */
+  /** False when the page already says what this is. */
   heading?: boolean;
 }): React.JSX.Element {
   const t = useT();
@@ -180,20 +163,20 @@ export function InviteForm({
   const navigate = useNavigate();
   const { refresh } = usePlayInvites();
   const title = useTitle(target);
-  // Stories is offered once a story is published (asked only when it could be offered)
+  // Stories is offered once a story is published (asked only when it could be offered).
   const storiesOpen = useStoriesAvailable(!(lockGame || target.kind === 'lobby')) !== 'none';
-  // The Last Letter, in the dialects whose dictionary can check players' words
+  // The Last Letter, in the dialects whose dictionary can check words.
   const lastLetterDialects = offeredDialects(
     useLastLetterAvailability(target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === 'last-letter'))),
     'group',
   );
-  // Impostor, in the varieties and at the levels its approved cards allow
+  // Impostor, in the varieties and at the levels its approved cards allow.
   const partyAsked = (g: PartyGame) => target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === g));
   const impostorOffer = usePartyOffer('impostor', partyAsked('impostor'));
-  // Who Am I? with friends, where its content lets it be played (and at which difficulties)
+  // Who Am I? with friends, where its content allows (and at which difficulties).
   const askTable = target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === 'who-am-i'));
   const tableOffers = useMpAvailability<TableOffer>('who-am-i', askTable);
-  // its choices, handed up by its own chips; null until there is something to choose
+  // Its choices from its own chips; null until there is something to choose.
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const fixedStory = target.kind === 'new' ? (target.story ?? null) : null;
   const gameFixed = lockGame || target.kind === 'lobby';
@@ -203,25 +186,25 @@ export function InviteForm({
   );
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [dialect, setDialect] = useState<Dialect>(() => fixedStory?.dialect ?? defaultVariety(locale));
-  // a friend's invite is a game for two; a group's, for the group
+  // A friend's invite is a game for two; a group's, for the group.
   const [mode, setMode] = useState<StoryMode>(target.kind === 'group' ? 'group' : 'duo');
   const [length, setLength] = useState<StoryLength>(fixedStory?.length ?? 'short');
   const [count, setCount] = useState<QuestionCount>(DEFAULT_QUESTION_COUNT[fixedStory?.length ?? 'short']);
-  // the timer follows the mode until it is set by hand, as in the game's own setup
+  // The timer follows the mode until set by hand, as in the game's own setup.
   const [timer, setTimer] = useState<TimerSeconds>(DEFAULT_TIMER[mode]);
   const [timerTouched, setTimerTouched] = useState(false);
   const [text, setText] = useState<TextDuring>('visible');
   const [friends, setFriends] = useState<string[]>(target.kind === 'new' && target.friend ? [target.friend.userId] : []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // the tickets: in the hand, flying to the friends, or sent; and how many times a hand was refused
+  // The tickets: in the hand, flying or sent, and how many times a hand was refused.
   const [phase, setPhase] = useState<'hand' | 'flying' | 'sent'>('hand');
   const [refusals, setRefusals] = useState(0);
   const [still] = useState(prefersReducedMotion);
-  // who the friends are, for their tickets: the picker's list, and whoever the sheet was opened for
+  // The friends for their tickets: the picker's list and whoever the sheet was opened for.
   const [known, setKnown] = useState<readonly UserSummary[]>([]);
   const form = useRef<HTMLFormElement>(null);
-  // what follows the moment after sending (the sheet closing, the lobby opening), done once even if the sheet is closed first
+  // What follows sending (closing, opening the lobby), done once even if the sheet closes first.
   const after = useRef<(() => void) | null>(null);
   useEffect(
     () => () => {
@@ -231,11 +214,10 @@ export function InviteForm({
     },
     [],
   );
-  // Rated or Friendly (Game Ranks): the host's last choice for this game, else
-  // Friendly — every game made here is among friends or in a chat
+  // Rated or Friendly: the host's last choice for this game, else Friendly, since every game here is among friends.
   const [rated, setRated] = useRatedChoice(game, false);
 
-  // the lengths a story game can be made with: those with a published story
+  // The lengths a story game can use: those with a published story.
   const { stories } = useStoryList(fixedStory?.dialect ?? dialect, game === 'stories' && !fixedStory);
   const lengths = useMemo(
     () => (fixedStory ? [fixedStory.length] : STORY_LENGTHS.filter((l) => (stories ?? []).some((s) => s.length === l))),
@@ -249,7 +231,7 @@ export function InviteForm({
   }, [length]);
   useEffect(() => {
     if (!timerTouched) setTimer(DEFAULT_TIMER[mode]);
-  }, [mode]); // the mode alone: a timer set by hand stays as set
+  }, [mode]); // The mode alone: a timer set by hand stays as set.
 
   const games: PlayGame[] = [
     'wordle-battle',
@@ -259,7 +241,7 @@ export function InviteForm({
     ...((impostorOffer ?? []).length > 0 || game === 'impostor' ? (['impostor'] as const) : []),
     ...(groupDialects(tableOffers).length > 0 || game === 'who-am-i' ? (['who-am-i'] as const) : []),
   ];
-  // Impostor's lobby: a variety it is offered in (the chosen one when it is), and a level offered there
+  // Impostor: an offered variety (the chosen one when it is) and a level offered there.
   const partyOffer = game === 'impostor' ? (impostorOffer ?? []) : [];
   const wanted: LetterDialect = dialect === 'sorani' ? 'ckb' : 'kmr';
   const partyHere = partyOffer.find((o) => o.dialect === wanted) ?? partyOffer[0] ?? null;
@@ -270,15 +252,15 @@ export function InviteForm({
       : (partyHere.difficulties[0] ?? null)
     : null;
   const [clueSeconds, setClueSeconds] = useState<ImpostorClueSeconds>(IMPOSTOR_DEFAULT_CLUE_SECONDS);
-  // the word may come from one category: those with enough approved cards at the level chosen, or any
+  // The word may come from one category with enough approved cards at the level, or any.
   const impostorCategories = categoriesAt(useImpostorCategories(game === 'impostor' && target.kind !== 'lobby' ? (partyHere?.dialect ?? null) : null), difficultyNow);
   const [category, setCategory] = useState('');
   const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
-  // a Rhyme Match is made in a variety with enough prompts for one: the chosen one when it has them
+  // A Rhyme Match needs a variety with enough prompts: the chosen one when it has them.
   const rhymeDialects = useRhymeDialects(target.kind !== 'lobby' && game === 'rhyme-match');
   const rhymeDialect: Dialect = rhymeDialects.includes(dialect) ? dialect : rhymeDialects[0]!;
   const [turnSeconds, setTurnSeconds] = useState<LastLetterTurnSeconds>(LAST_LETTER_DEFAULT_TURN_SECONDS);
-  // a Last Letter lobby is in one dialect the dictionary can check: the chosen one if it is offered
+  // A Last Letter lobby uses one dialect the dictionary can check: the chosen one if offered.
   const letterDialect: LetterDialect =
     lastLetterDialects.length > 0 && !lastLetterDialects.includes(dialect === 'sorani' ? 'ckb' : 'kmr')
       ? lastLetterDialects[0]!
@@ -291,13 +273,13 @@ export function InviteForm({
       : game === 'stories' && mode === 'duo'
         ? 1
         : MAX_INVITEES_PER_REQUEST;
-  // a game for two keeps the one friend chosen last
+  // A game for two keeps the friend chosen last.
   useEffect(() => {
     setFriends((f) => (f.length > max ? f.slice(-max) : f));
   }, [max]);
 
   const storyReady = (game !== 'stories' || lengths.length > 0) && (game !== 'impostor' || target.kind === 'lobby' || partyHere !== null);
-  // a table of Who Am I? is made only with something its content can be played with
+  // A Who Am I? table needs something its content can be played with.
   const partyReady = target.kind === 'lobby' || game !== 'who-am-i' || partySettings !== null;
 
   function settings(): Record<string, unknown> {
@@ -336,12 +318,7 @@ export function InviteForm({
         });
   const handing = groupName !== null || admits.length > 0;
 
-  /**
-   * Sends the invites (or makes the game), with the tickets on their way
-   * while the server answers. They land before anything else happens: a
-   * refusal brings them back, and a yes has its moment, after which the sheet
-   * closes and a new game's lobby opens.
-   */
+  /** Sends the invites (or makes the game) while the tickets fly; a refusal brings them back, a yes closes the sheet or opens the lobby. */
   async function submit(): Promise<void> {
     setBusy(true);
     setError(null);
@@ -358,8 +335,7 @@ export function InviteForm({
         : await client.post<{ game?: PlayGame; lobbyId?: string; invited: number }>('/play/lobbies', {
             game,
             settings: settings(),
-            // every friend asked gets the game's card in your conversation with
-            // them, so an invite from a DM lands in that DM like any other
+            // Each friend asked gets the game's card in your conversation with them.
             ...(target.kind === 'group' ? { chat: { groupId: target.groupId } } : friends.length > 0 ? { invite: friends } : {}),
           });
     const left = flight - (Date.now() - began);
@@ -411,8 +387,7 @@ export function InviteForm({
       className="invite-sheet"
       onSubmit={(e) => {
         e.preventDefault();
-        // the chat's composer is this form's parent in React's tree, portal
-        // or not: its own submit would send whatever is typed in the chat
+        // The chat composer is this form's parent in React's tree despite the portal, and would send the typed message.
         e.stopPropagation();
         if (!busy) void submit();
       }}

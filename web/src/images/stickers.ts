@@ -1,45 +1,23 @@
 /**
- * The sticker catalogue, and the loaded pictures behind it.
- *
- * Everything is a picture, emoji included. They used to be drawn as text in
- * whichever emoji font the writer's machine happened to have, which meant a
- * post made on Windows carried Segoe's emoji to everyone who saw it and the
- * same post made on a Mac carried Apple's. One picture, made twice, coming out
- * differently. Drawing from files makes the export identical everywhere.
- *
- * The emoji artwork is Noto Emoji's images, which the project licenses under
- * the Apache License 2.0 (its fonts are OFL; these are not the fonts), resized
- * and re-encoded as WebP. Apple's set is not licensed for use off Apple's own
- * platforms and cannot be shipped in a web app; Noto is the closest freely
- * redistributable one. See web/public/emoji/NOTICE.txt for the licence.
- *
- * Everything lives under this app's own origin. That is not incidental:
- * drawing a cross-origin image onto a canvas taints it, and a tainted canvas
- * refuses `toBlob` entirely — one sticker from elsewhere would stop the whole
- * picture being posted, not just fail to appear.
+ * The sticker catalogue and its loaded pictures. Emoji are pictures too, so an export looks the same on every system.
+ * The emoji artwork is Noto Emoji's images under the Apache License 2.0 (web/public/emoji/NOTICE.txt). Everything is
+ * served from this app's own origin, because a cross-origin image taints the canvas and a tainted canvas refuses
+ * `toBlob`.
  */
 
 import type { MessageKey } from '../i18n/en';
 
 export interface PictureSticker {
   src: string;
-  /**
-   * A stable identifier, carried onto the layer as its glyph. Never displayed
-   * for a picture sticker — the image is — so it stays the same in every
-   * language, which is what makes a saved picture portable.
-   */
+  /** A stable identifier carried onto the layer as its glyph; never shown, so a saved picture is the same in every language. */
   name: string;
-  /** What the picker announces, when the name is a description and not a noun. */
+  /** What the picker announces, when the name is a description rather than a noun. */
   labelKey?: MessageKey;
 }
 
 /**
- * Kurdish marks, a few words, and a heart and a star — kept short, because a
- * picker of thousands is a search box.
- *
- * Every one is drawn by scripts/generate-cosmetic-art.mjs, which owns
- * web/public/stickers. The suns and the flag badge keep the file names they
- * always had, so a picture saved with one of them still finds it.
+ * Kurdish marks, a few words, a heart and a star, drawn by scripts/generate-cosmetic-art.mjs into web/public/stickers.
+ * The suns and the flag badge keep their old file names so saved pictures still find them.
  */
 export const PICTURE_STICKERS: readonly PictureSticker[] = [
   { src: '/stickers/kurdistan_badge.webp', name: 'Kurdistan' },
@@ -54,9 +32,9 @@ export const PICTURE_STICKERS: readonly PictureSticker[] = [
 ];
 
 export interface EmojiSticker {
-  /** the character itself: the accessible name, and the last-resort fallback */
+  /** The character itself: the accessible name and the last-resort fallback. */
   glyph: string;
-  /** codepoints joined by '-', which is also the filename */
+  /** Codepoints joined by '-', which is also the file name. */
   key: string;
 }
 
@@ -65,16 +43,9 @@ export function emojiSrc(key: string): string {
   return `/emoji/${key}.webp`;
 }
 
-/**
- * A curated set rather than all three thousand.
- *
- * A picker of everything is a search problem, and a search box is not what
- * someone decorating a photograph wants in their way. Ordered by kind so the
- * grid reads in bands: faces, then hearts and hands, then marks, then the
- * world, then things.
- */
+/** A curated set rather than all of them, ordered in bands: faces, hearts and hands, marks, the world, things. */
 export const EMOJI_STICKERS: readonly EmojiSticker[] = [
-  // faces
+  // Faces
   { glyph: '😀', key: '1f600' },
   { glyph: '😂', key: '1f602' },
   { glyph: '🥹', key: '1f979' },
@@ -91,7 +62,7 @@ export const EMOJI_STICKERS: readonly EmojiSticker[] = [
   { glyph: '😴', key: '1f634' },
   { glyph: '🥳', key: '1f973' },
   { glyph: '😇', key: '1f607' },
-  // hearts and hands
+  // Hearts and hands.
   { glyph: '❤️', key: '2764' },
   { glyph: '🧡', key: '1f9e1' },
   { glyph: '💛', key: '1f49b' },
@@ -104,7 +75,7 @@ export const EMOJI_STICKERS: readonly EmojiSticker[] = [
   { glyph: '✌️', key: '270c' },
   { glyph: '🤝', key: '1f91d' },
   { glyph: '💪', key: '1f4aa' },
-  // marks
+  // Marks
   { glyph: '🔥', key: '1f525' },
   { glyph: '✨', key: '2728' },
   { glyph: '⭐', key: '2b50' },
@@ -117,7 +88,7 @@ export const EMOJI_STICKERS: readonly EmojiSticker[] = [
   { glyph: '⚡', key: '26a1' },
   { glyph: '💫', key: '1f4ab' },
   { glyph: '🌈', key: '1f308' },
-  // the world
+  // The world
   { glyph: '🌹', key: '1f339' },
   { glyph: '🌻', key: '1f33b' },
   { glyph: '🌞', key: '1f31e' },
@@ -128,7 +99,7 @@ export const EMOJI_STICKERS: readonly EmojiSticker[] = [
   { glyph: '🌊', key: '1f30a' },
   { glyph: '☕', key: '2615' },
   { glyph: '🎵', key: '1f3b5' },
-  // things
+  // Things
   { glyph: '⚽', key: '26bd' },
   { glyph: '🏀', key: '1f3c0' },
   { glyph: '🍉', key: '1f349' },
@@ -145,12 +116,7 @@ export function stickerImage(src: string): HTMLImageElement | null {
   return loaded.get(src) ?? null;
 }
 
-/**
- * Load a sticker, at most once per src.
- *
- * Resolves null rather than rejecting when a file is missing: one absent
- * sticker should cost you that sticker, not the picture you were making.
- */
+/** Loads a sticker at most once per src; resolves null for a missing file so one sticker cannot cost the picture. */
 export function ensureSticker(src: string): Promise<HTMLImageElement | null> {
   const already = loaded.get(src);
   if (already) return Promise.resolve(already);
@@ -175,7 +141,7 @@ export function ensureSticker(src: string): Promise<HTMLImageElement | null> {
   return promise;
 }
 
-/** Load every picture a set of layers refers to, so a draw can be synchronous. */
+/** Loads every picture a set of layers refers to, so a draw can be synchronous. */
 export async function ensureStickersFor(srcs: readonly (string | undefined)[]): Promise<void> {
   await Promise.all(srcs.filter((s): s is string => typeof s === 'string').map(ensureSticker));
 }

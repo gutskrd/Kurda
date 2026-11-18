@@ -24,7 +24,7 @@ describe('agoInWords', () => {
 
   it('uses the browser’s words where it has the language, plurals and all', () => {
     expect(agoInWords(before(120), translator(de), 'de', NOW)).toBe('vor 2 Stunden');
-    // Arabic has a dual: "two hours" is one word
+    // Arabic has a dual: "two hours" is one word.
     expect(agoInWords(before(120), translator(ar), 'ar', NOW)).toBe('قبل ساعتين');
   });
 

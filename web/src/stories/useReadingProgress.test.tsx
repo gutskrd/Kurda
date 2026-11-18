@@ -5,10 +5,7 @@ import { AuthProvider } from '../auth/AuthProvider';
 import { fakeApi, type Call } from './testing';
 import { PROGRESS_EVERY_MS, useReadingProgress } from './useReadingProgress';
 
-/**
- * A browser's observer, stood in for: the test says which paragraph came
- * into view by calling what the hook handed over.
- */
+/** A stand-in IntersectionObserver: the test says which paragraph came into view through the hook's callback. */
 let seen: IntersectionObserverCallback | null = null;
 const observed: Element[] = [];
 class FakeObserver {
@@ -75,19 +72,19 @@ describe('keeping a reader’s place', () => {
     show(1);
     await act(() => vi.advanceTimersByTimeAsync(0));
     expect(puts(calls)).toEqual([{ paragraph: 1, share: 0.4 }]);
-    // more paragraphs inside the ten seconds: nothing yet
+    // More paragraphs inside the ten seconds: nothing yet.
     show(2);
     show(3);
     show(2);
     await act(() => vi.advanceTimersByTimeAsync(5_000));
     expect(puts(calls)).toHaveLength(1);
-    // the slot comes: one write, with the furthest
+    // The slot comes: one write, with the furthest.
     await act(() => vi.advanceTimersByTimeAsync(PROGRESS_EVERY_MS - 5_000));
     expect(puts(calls)).toEqual([
       { paragraph: 1, share: 0.4 },
       { paragraph: 3, share: 0.8 },
     ]);
-    // the server's answer is handed back each time
+    // The server's answer is handed back each time.
     expect(told.map((m) => m.paragraph)).toEqual([1, 3]);
   });
 
@@ -98,7 +95,7 @@ describe('keeping a reader’s place', () => {
         <Reading count={5} initial={me({ paragraph: 3, share: 0.8 })} onMe={() => undefined} />
       </AuthProvider>,
     );
-    // paragraphs before the remembered one change nothing
+    // Paragraphs before the remembered one change nothing.
     show(1);
     await act(() => vi.advanceTimersByTimeAsync(0));
     expect(puts(calls)).toEqual([]);

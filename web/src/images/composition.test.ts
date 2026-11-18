@@ -14,17 +14,11 @@ describe('outputSize', () => {
   });
 
   it('takes only what the shape leaves', () => {
-    // a square out of a landscape picture is as wide as the picture is tall
+    // A square out of a landscape picture is as wide as the picture is tall.
     expect(outputSize(1600, 900, 1, WHOLE_PICTURE)).toEqual({ width: 900, height: 900 });
   });
 
-  /**
-   * The bug this replaced. The export size used to be fixed per shape and held
-   * constant through the zoom, so closing in sampled fewer source pixels and
-   * then stretched them back up to the same output — a five-fold upscale of a
-   * fifth of the picture by the top of the range. Zooming in now yields a
-   * smaller picture, never a softer one.
-   */
+  // Zooming in yields a smaller picture from the crop's own pixels, never an upscaled one.
   it('never enlarges, however far it is zoomed', () => {
     const iw = 4000;
     const ih = 3000;
@@ -33,12 +27,9 @@ describe('outputSize', () => {
     for (const zoom of [1, 1.5, 2, 3, ZOOM_RANGE.max]) {
       const size = outputSize(iw, ih, 1, at(zoom));
       const crop = cropRect(iw, ih, 1, at(zoom));
-      // the output is never bigger than the pixels it came from — this is the
-      // whole fix, and the reason a zoomed picture stays sharp
+      // The output is never bigger than the pixels it came from.
       expect(size.width).toBeLessThanOrEqual(Math.round(crop.sw));
-      // and it never grows as the crop tightens. It can hold steady rather than
-      // fall while the crop is still above MAX_EDGE, because there the ceiling
-      // is what decides the size, not the crop.
+      // It never grows as the crop tightens; above MAX_EDGE the ceiling decides, so it may hold steady.
       expect(size.width).toBeLessThanOrEqual(previous);
       previous = size.width;
     }
@@ -57,7 +48,7 @@ describe('outputSize', () => {
     const ih = 3000;
     const crop = cropRect(iw, ih, 1, at(3));
     const size = outputSize(iw, ih, 1, at(3));
-    // under MAX_EDGE, fitWithin only ever shrinks — so this is a plain copy
+    // Under MAX_EDGE, fitWithin only shrinks, so this is a plain copy.
     expect(Math.round(crop.sw)).toBeLessThanOrEqual(MAX_EDGE);
     expect(size).toEqual({ width: Math.round(crop.sw), height: Math.round(crop.sh) });
   });
@@ -72,16 +63,13 @@ describe('outputSize', () => {
     expect(size).toEqual({ width: 768, height: 768 });
   });
 
-  /**
-   * The two halves of the fix meet here: the zoom stops where the crop would
-   * fall below what is worth posting, so the export can never come out tiny.
-   */
+  // The zoom stops where the crop would fall below the floor, so the export is never tiny.
   it('cannot be zoomed below the floor, however hard it is pushed', () => {
     for (const [iw, ih] of [[900, 900], [1000, 750], [4032, 3024], [640, 480]]) {
       const capped = at(maxZoomFor(iw!, ih!, 1));
       const size = outputSize(iw!, ih!, 1, capped);
       const shortest = Math.min(iw!, ih!);
-      // either the floor is met, or the picture was already smaller than it
+      // Either the floor is met, or the picture was already smaller.
       expect(Math.max(size.width, size.height)).toBeGreaterThanOrEqual(Math.min(MIN_EXPORT_EDGE, shortest));
     }
   });
@@ -142,13 +130,7 @@ describe('drawOverlay', () => {
     vi.restoreAllMocks();
   });
 
-  /**
-   * The bug this guards. The graded picture is cached, and the artwork loads
-   * asynchronously — so the first draw happens before the flag exists. If that
-   * counted as finished it would be cached, and every later draw would hit the
-   * cache and hand back the same flagless picture for ever. The flag could
-   * never appear, however long you waited.
-   */
+  // The graded picture is cached, so a draw before the artwork loads must not count as finished.
   it('reports itself unfinished when the artwork has not arrived', () => {
     const { ctx, drawn } = fakeCanvas();
     expect(drawOverlay(ctx, 800, 600, overlay())).toBe(false);
@@ -168,7 +150,7 @@ describe('drawOverlay', () => {
     stubImage();
     await ensureSticker('/filters/test-flag.webp');
     const { ctx, drawn } = fakeCanvas();
-    // strength turned to zero: there is nothing to draw, but nothing is pending
+    // Zero strength: nothing to draw, but nothing pending.
     expect(drawOverlay(ctx, 800, 600, overlay({ opacity: 0 }))).toBe(true);
     expect(drawn).toEqual([]);
   });
@@ -182,22 +164,17 @@ describe('drawOverlay', () => {
     expect(drawn[0]!.left + drawn[0]!.w).toBeCloseTo(800, 6);
   });
 
-  /**
-   * Sized by width alone, a nearly square artwork hangs off the bottom of a
-   * landscape crop — and a canvas clips that without saying so, which would
-   * quietly cost the flag its lower half on the shape most photographs are.
-   */
+  // Sized by width alone, a nearly square artwork would be clipped on a landscape crop.
   it('shrinks rather than overflowing a wide picture', async () => {
     stubImage({ width: 1000, height: 1000 });
     await ensureSticker('/filters/test-flag.webp');
     const { ctx, drawn } = fakeCanvas();
 
-    // 0.6 of 800 is 480 wide, which on a square artwork would be 480 tall —
-    // taller than 0.6 of a 600px picture
+    // 0.6 of 800 is 480 wide, so a square artwork would be taller than 0.6 of 600.
     drawOverlay(ctx, 800, 600, overlay());
     expect(drawn[0]!.h).toBeLessThanOrEqual(600 * 0.6 + 0.001);
     expect(drawn[0]!.w).toBeLessThan(800 * 0.6);
-    // and the proportions survive it
+    // The proportions survive.
     expect(drawn[0]!.w / drawn[0]!.h).toBeCloseTo(1, 6);
   });
 

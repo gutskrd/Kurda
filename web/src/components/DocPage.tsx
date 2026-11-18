@@ -3,19 +3,12 @@ import { usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { ZAGROSIAN_URL } from '../brand/zagrosian';
 
-/**
- * A page of plain words: About, the FAQ, How Hevalo teaches, Privacy, Terms.
- *
- * One layout for all of them, because they are the same kind of page — a claim at
- * the top, then a column of short sections, each a heading and a paragraph or
- * two. Every word comes from the catalogues, so these read in the visitor's
- * language like the rest of the site.
- */
+/** A page of plain words (About, the FAQ, How Hevalo teaches, Privacy, Terms): a claim, then short sections. */
 export interface DocSection {
   title: MessageKey;
-  /** a paragraph, by key; or anything else the section needs to say */
+  /** A paragraph by key, or anything else the section needs. */
   body: MessageKey | ReactNode;
-  /** an anchor, for a section something links to directly */
+  /** An anchor for a section linked to directly. */
   id?: string;
 }
 
@@ -35,9 +28,8 @@ export function DocPage({
   metaTitle: MessageKey;
   metaDescription: MessageKey;
   sections: ReadonlyArray<DocSection>;
-  /** what comes between the opening and the sections, such as a list of them */
+  /** What comes between the opening and the sections, such as a list of them. */
   beforeSections?: ReactNode;
-  /** what comes after the sections */
   children?: ReactNode;
 }): React.JSX.Element {
   const t = useT();
@@ -63,7 +55,7 @@ export function DocPage({
   );
 }
 
-/** Who is behind Hevalo, with the company's own address. Closes all three pages. */
+/** Who is behind Hevalo, with the company's address; closes all three pages. */
 export function MadeBy({ inline = false }: { inline?: boolean }): React.JSX.Element {
   const t = useT();
   return (

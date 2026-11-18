@@ -1,51 +1,12 @@
 /**
- * The published dictionary, in whichever of the app's nine languages the
- * reader is using.
+ * The published dictionary's bar, footer and labels in the reader's language. The pages are published in Kurmancî and
+ * English only (ferheng-copy.ts), so `/<base>/chrome.js`, generated from the app's catalogues and ferheng-copy.ts, reads
+ * the stored `hevalo_locale` (else the browser's language, as `resolveLocale` does) and rewrites only elements marked
+ * `data-copy`, building text nodes and `<br>`s so no string can become HTML. Without it the page is unchanged.
  *
- * ── the problem ──────────────────────────────────────────────────────────
- *
- * These pages are published in two languages — see ferheng-copy.ts for why not
- * nine — and a reader who is not using Kurmancî is sent to the English set. So
- * somebody using Hevalo in German, Turkish or Arabic clicked Dictionary and the
- * page turned English under their cursor: the bar they had just been using,
- * the headings, the counts, the labels, the footer. The words in the
- * dictionary are Kurdish whatever happens, and the definitions exist in
- * English and Kurmancî only; everything around them belonged to the reader a
- * moment ago.
- *
- * ── the fix, and the one thing it does ───────────────────────────────────
- *
- * One small file per language set, `/<base>/chrome.js`, generated from the
- * app's own catalogues (for the bar and footer) and from ferheng-copy.ts (for
- * the page) so it cannot fall out of step with either. It reads the language
- * the app stored — the same `hevalo_locale` the SPA writes, falling back to the
- * browser's language exactly as `resolveLocale` does — and, when that is not
- * the language the page was published in, rewrites the text of the elements
- * marked `data-copy` and nothing else. No request, no storage write, no
- * markup: it builds text nodes and `<br>`s and moves the page's own links, so
- * no string in it can ever become HTML.
- *
- * Without it, or where it is blocked, the page is exactly what it was.
- *
- * ── why a script is allowed here at all ──────────────────────────────────
- *
- * These pages ran no script by design: `_headers` gave them a policy with no
- * `script-src`, as a second line behind the escaping in escape.ts, so that a
- * stranger's Wiktionary text could never execute even if it got past the first.
- *
- * The policy is now `script-src 'self'` and no more, which keeps what that was
- * for. An injected inline script, or inline handler, is still refused. A
- * `<script src>` can only name a file on this origin, and every script file on
- * this origin is one of ours: user uploads live on another host, the Worker's
- * pages are HTML, and `X-Content-Type-Options: nosniff` (sent on every path)
- * stops a browser running anything that is not served as JavaScript. Even one
- * of the app's own bundles, pulled in by an injection, could reach nothing —
- * `connect-src` here is still `'none'`.
- *
- * It is `'self'` rather than this file's full URL so that it works wherever the
- * site is deployed. Pinned to `https://hevalo.app/...` it was refused on every
- * preview and test deployment, which is exactly where the fix is checked, and
- * the page stayed English there.
+ * Its policy is `script-src 'self'`: injected inline script is still refused, every script on this origin is ours
+ * (uploads live on another host, and `nosniff` is sent everywhere), and `connect-src` stays `'none'`. It is `'self'`
+ * rather than a full URL so preview deployments work too.
  */
 import { ar } from '../src/i18n/ar.js';
 import { ckb } from '../src/i18n/ckb.js';
@@ -59,16 +20,10 @@ import { tr } from '../src/i18n/tr.js';
 import { APP_LOCALES, type AppLocale } from '@kurda/shared';
 import { PAGE_TEXT, type PageText } from './ferheng-copy.js';
 
-/** What the file is called inside each language's folder. */
+/** The file's name inside each language's folder. */
 export const CHROME_FILE = 'chrome.js';
 
-/**
- * Every piece of the bar and footer that has a word in it, by the app key that
- * already says it.
- *
- * Only keys whose meaning is the same in both places, so the bar reads the way
- * the app's own bar reads in that language.
- */
+/** Every bar and footer piece with words in it, by the app key that already says it with the same meaning. */
 export const BAR_KEYS = [
   'nav.home',
   'nav.dictionary',
@@ -90,13 +45,9 @@ export const BAR_KEYS = [
 ] as const;
 
 /**
- * Every piece of the page itself, from ferheng-copy.ts.
- *
- * A template where the published copy is a function: `{n}`, `{letter}` and the
- * rest are filled from the element's own `data-v-*` attributes, so the number
- * on the page and the number in the sentence are the same number. `\n` is a
- * line break — the front page's headline is two lines — and `{wiki}` and
- * `{licence}` in the licence sentence are the two links already in the footer.
+ * Every piece of the page itself, from ferheng-copy.ts. Function copy becomes a template whose `{n}`, `{letter}` and the
+ * rest come from the element's `data-v-*` attributes; `\n` is a line break, and `{wiki}` and `{licence}` are the footer's
+ * two links.
  */
 export const PAGE_KEYS = [
   'page.alphabets.hawar',
@@ -136,21 +87,12 @@ export type BarKey = (typeof BAR_KEYS)[number];
 export type PageKey = (typeof PAGE_KEYS)[number];
 export type ChromeKey = BarKey | PageKey;
 
-/** For the backwards-compatible name the tests and pages grew up with. */
-export const CHROME_KEYS: readonly ChromeKey[] = [...BAR_KEYS, ...PAGE_KEYS];
-
 const CATALOGUES: Record<AppLocale, Catalogue> = { ku, ckb, en, nl, de, es, fr, tr, ar };
 
 /**
- * Mark an element as one the script may relabel.
- *
- * Its text by default; `attr` for a label that lives in an attribute, such as
- * the menu toggle's `aria-label`. A text hook goes on an inline `<span>` that
- * holds only the words: the script replaces its whole text and sets `dir` on
- * it, which on a link or heading would also flip that block's alignment. The
- * pages use `labelled()` in ferheng-pages.ts for exactly this.
- *
- * `vars` are the values a template's `{name}` holes are filled with.
+ * Marks an element the script may relabel: its text by default, or an attribute (`attr`, such as the toggle's
+ * `aria-label`). Text hooks go on an inline span holding only the words, since the script sets `dir` on it; the pages use
+ * `labelled()` in ferheng-pages.ts. `vars` fill a template's `{name}` holes.
  */
 export function copyHook(key: ChromeKey, attr?: 'aria-label' | 'placeholder', vars?: Record<string, string | number>): string {
   const filled = Object.entries(vars ?? {})
@@ -159,12 +101,12 @@ export function copyHook(key: ChromeKey, attr?: 'aria-label' | 'placeholder', va
   return ` data-copy="${key}"${attr ? ` data-copy-attr="${attr}"` : ''}${filled}`;
 }
 
-/* the same five characters escape.ts escapes; repeated here so this file stays importable on its own */
+/* The same five characters escape.ts escapes, repeated so this file stays importable on its own. */
 function escapeAttr(value: string): string {
   return value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 }
 
-/** A published function, turned back into the template it fills. */
+/** A published function turned back into the template it fills. */
 const hole = (name: string): string => `{${name}}`;
 
 /** One language's page text, as flat templates. */
@@ -197,7 +139,7 @@ function pageTemplates(p: PageText): Record<PageKey, string> {
     'page.rows.synonyms': p.rows.synonyms,
     'page.root': p.root,
     'page.licence': p.licence,
-    // the four shapes of <title> the pages use; see document_() in ferheng-pages.ts
+    // The four <title> shapes the pages use; see document_() in ferheng-pages.ts.
     'page.title.index': `${p.titleSuffix} — Hevalo`,
     'page.title.words': `${hole('here')} · ${p.titleSuffix}`,
     'page.title.letter': `${p.letter.title(hole('letter'))} · ${p.titleSuffix}`,
@@ -207,11 +149,11 @@ function pageTemplates(p: PageText): Record<PageKey, string> {
 
 export interface ChromeWords {
   words: Record<ChromeKey, string>;
-  /** the corpus's part-of-speech labels in this language; a label not listed is shown as the corpus wrote it */
+  /** The corpus's part-of-speech labels in this language; unlisted ones show as the corpus wrote them. */
   pos: Record<string, string>;
 }
 
-/** Each language's words, English wherever a catalogue has a gap — as the app does. */
+/** Each language's words, falling back to English wherever a catalogue has a gap, as the app does. */
 export function chromeTable(): Record<AppLocale, ChromeWords> {
   const table = {} as Record<AppLocale, ChromeWords>;
   for (const { code } of APP_LOCALES) {
@@ -223,29 +165,16 @@ export function chromeTable(): Record<AppLocale, ChromeWords> {
 }
 
 /**
- * The script itself.
+ * The script itself, written for old browsers since it is not bundled (`var`, plain loops, no arrows). It runs where it
+ * is placed, right after the bar so the bar is relabelled before paint, and again once the document has parsed. The bar
+ * keeps its shape in every language with right-to-left words in their own spans; the footer takes the reader's
+ * direction; the entries keep the published direction.
  *
- * Written for the oldest browser that can open the page, because it is not
- * bundled: `var`, plain loops, no arrow functions. It runs where it is placed
- * — straight after the bar, so the bar is relabelled before it is painted — and
- * again once the document has parsed, for the page and the footer.
- *
- * The bar keeps the same shape in every language, as the app's does — brand on
- * the left, the way in on the right — and only its words change; each one is
- * set right to left inside its own span where the language needs it. The
- * footer takes the reader's direction as a whole, as the app's footer does.
- * The page between them keeps the published direction, because its entries —
- * Kurmancî words, English or Kurmancî definitions — read left to right.
- *
- * Four kinds of mark:
- *   - `data-copy` — replace the text with this key's template, `{name}` filled
- *     from `data-v-name`, `\n` drawn as a `<br>`;
- *   - `data-copy-attr="aria-label"` (or `placeholder`) — the same, into that attribute;
- *   - `data-copy-slots` — the template's `{name}` holes are the element's own
- *     children marked `data-slot="name"` (the licence's two links), moved back
- *     in between the new words rather than rebuilt;
- *   - `data-copy-pos` — a part-of-speech label, looked up by the corpus's own
- *     word for it.
+ * Marks:
+ *   - `data-copy`: replace the text with this key's template, `{name}` from `data-v-name`, `\n` as `<br>`;
+ *   - `data-copy-attr="aria-label"` (or `placeholder`): the same, into that attribute;
+ *   - `data-copy-slots`: the template's holes are the element's own `data-slot` children, moved between the new words;
+ *   - `data-copy-pos`: a part-of-speech label, looked up by the corpus's word for it.
  */
 export function chromeScript(): string {
   const rtl = APP_LOCALES.filter((l) => l.dir === 'rtl').map((l) => l.code);
@@ -308,7 +237,7 @@ export function chromeScript(): string {
     el.setAttribute('dir', dir);
   }
   function relabel() {
-    // the bar is left to right in every language, as the app's is; the footer follows the app's footer
+    // The bar is left to right in every language, as the app's is; the footer follows the app's footer.
     var bar = document.querySelector('header.nav');
     if (bar) bar.setAttribute('lang', locale);
     var footer = document.querySelector('footer.footer');

@@ -53,7 +53,7 @@ describe('useLobbyUpdates', () => {
     vi.advanceTimersByTime(60_000);
     expect(read).toHaveBeenCalledTimes(1);
 
-    // coming back reads at once: it may have missed something while hidden
+    // Coming back reads at once: it may have missed something while hidden.
     hidden(false);
     document.dispatchEvent(new Event('visibilitychange'));
     expect(read).toHaveBeenCalledTimes(2);

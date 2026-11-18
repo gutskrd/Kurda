@@ -1,16 +1,7 @@
 /**
- * Reading a join code the way people actually hand them over, for the code
- * boxes (play/JoinCode.tsx), and saying in the reader's words why one did not
- * get them in.
- *
- * A code arrives typed one character at a time, pasted as "abc-234" or
- * "ABC 234", typed on an Arabic or Soranî keyboard whose digits are ٢ and ۲,
- * or pasted inside the whole sentence a friend sent ("…type ABC 234."). The
- * boxes only ever hold the six characters themselves, so everything here
- * comes down to those, and anything that cannot be part of a code is dropped
- * rather than refused: a stray space is not worth an error. The server reads
- * what it is sent the same way (`normalizeJoinCode`), so nothing here decides
- * whether a code is good — only what was meant.
+ * Reads a join code however it is handed over (typed, pasted as "abc-234" or "ABC 234", with Arabic-script digits, or
+ * inside a whole sentence), and words why one failed. Anything that cannot be part of a code is dropped rather than
+ * refused. The server normalises the same way (`normalizeJoinCode`), so nothing here judges a code.
  */
 import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH, isMissingRoute } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
@@ -19,7 +10,7 @@ import type { ApiError } from '../lib/types';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/** The digits an Arabic or a Soranî keyboard types, as the digits they are. */
+/** Arabic and Soranî keyboard digits as ASCII digits. */
 function foldDigits(text: string): string {
   return text
     .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660))
@@ -28,23 +19,15 @@ function foldDigits(text: string): string {
 
 const inAlphabet = (ch: string): boolean => JOIN_CODE_ALPHABET.includes(ch);
 
-/**
- * A code standing on its own in a sentence: three characters of the alphabet,
- * perhaps a space or a dash, three more, and no letter or digit touching
- * either end — so a word like "TYPE" next to the code is never read into it.
- */
+/** A code standing alone in a sentence: 3 + 3 characters, an optional space or dash, nothing touching either end. */
 const IN_A_SENTENCE = new RegExp(
   String.raw`(?:^|[^A-Z0-9])([${JOIN_CODE_ALPHABET}]{3})[\s-]?([${JOIN_CODE_ALPHABET}]{3})(?![A-Z0-9])`,
   'g',
 );
 
 /**
- * What the boxes should hold after this change to the field: at most six
- * characters of the alphabet, upper case. A field holding only code
- * characters, spaces and dashes is the code being typed or pasted; anything
- * longer and wordier is a message with a code in it, and the last code-shaped
- * word in it is the one meant (the message ends with it). Failing both, the
- * characters that could be a code are kept, in order.
+ * What the boxes hold after a change: at most six upper-case code characters. Code characters with spaces and dashes are
+ * the code itself; a wordier message takes its last code-shaped word; otherwise the code characters, in order.
  */
 export function codeFromTyping(raw: string): string {
   const upper = foldDigits(raw).toUpperCase();
@@ -56,12 +39,8 @@ export function codeFromTyping(raw: string): string {
 }
 
 /**
- * Why a code did not get someone in, as the person who typed it can act on:
- * a code nobody is using (or a game they may not join — the server never says
- * which, and neither does this), a full or a started game, too many tries,
- * and otherwise what the app says of any failed request (offline, the server
- * down). A server that has no such route yet is said plainly, as everywhere
- * the play layer meets one.
+ * Why a code failed, as the person can act on it: unknown (or not theirs to join; the server never says which), full,
+ * started, too many tries, or a general request failure. A server without the route is said plainly.
  */
 export function joinCodeError(error: ApiError, t: Translate): string {
   if (isMissingRoute(error)) return t('play.error.notOnServer');

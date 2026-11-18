@@ -20,11 +20,7 @@ import { useMemoryOwner } from '../lib/useApi';
 
 const PAGE = 20;
 
-/**
- * The wall as it stands: its posts, where the next page starts on the server,
- * and whether there is one. It carries the filter and order it was fetched
- * for (`key`), so a wall is never shown, or remembered, under another's.
- */
+/** The wall as it stands: posts, the server's next offset and whether there is more, keyed by the filter and order it was fetched for. */
 interface Wall {
   key: string;
   items: FeedItem[];
@@ -33,15 +29,9 @@ interface Wall {
 }
 
 /**
- * A first page that has just arrived, laid over the wall that was already
- * showing (drawn from memory, or about to be refreshed after a post).
- *
- * With nothing showing it is simply the wall. Otherwise the new page leads —
- * a post made since is at the top, a count that moved is the new one — and
- * what had been read further down stays under it, so coming back to a wall
- * that was scrolled does not cut it back to its first twenty. A post that was
- * in the first page before and is in neither now, when nothing new pushed it
- * out, has been taken down, and goes.
+ * Lays a fresh first page over the wall already showing (from memory, or before a refresh after posting). The new page
+ * leads, and what was read further down stays under it, so returning to a scrolled wall keeps its place. A post that was
+ * on the old first page and is in neither now, with nothing new pushing it out, was taken down and goes.
  */
 export function firstPage(showing: Wall | null, key: string, page: FeedItem[]): Wall {
   const held = showing?.items ?? [];
@@ -54,29 +44,18 @@ export function firstPage(showing: Wall | null, key: string, page: FeedItem[]): 
 }
 
 /**
- * Civak — everything the community has written and posted, on one wall.
- *
- * Stories, poems and pictures were three pages that were the same page three
- * times, and a poem posted this morning was invisible to anyone browsing
- * pictures. One wall, one card, and a filter for when you do want just one kind
- * — behind a button, so the wall opens on the posts rather than on a choice.
- *
- * The order (newest, oldest, most popular, most discussed, and how far back
- * the ranked two look) sits behind the same button.
- *
- * The filter and the order live in the URL so a wall can be linked to as it
- * is shown, and so the old /app/stories and /app/poems addresses can simply
- * redirect here. Whatever is the plain wall's is left out of it.
+ * Civak: everything the community posts on one wall, with a filter by kind and the order (newest, oldest, most popular,
+ * most discussed, and their range) behind one button. Both live in the URL, so a wall can be linked to and old
+ * /app/stories and /app/poems addresses redirect here; the plain wall's values are left out.
  */
 export function Civak(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const [params, setParams] = useSearchParams();
   const section = asSection(params.get('section'));
-  // a kind belongs to a half; one left over from the other half is dropped
-  // rather than asked for, which the server would refuse
+  // A kind from the other half is dropped rather than sent, since the server would refuse it.
   const kind = kindWithin(section, params.get('kind'));
-  // an order or a range the address does not mean falls back to the plain wall's
+  // An order or range the address does not mean falls back to the plain wall's.
   const rawSort = params.get('sort');
   const sort = isFeedSort(rawSort) ? rawSort : DEFAULT_FEED_SORT;
   const rawPeriod = params.get('period');
@@ -91,17 +70,15 @@ export function Civak(): React.JSX.Element {
     if (to.sort !== DEFAULT_FEED_SORT) next.sort = to.sort;
     if (sortRanks(to.sort) && to.period !== DEFAULT_FEED_PERIOD) next.period = to.period;
     setParams(next, { replace: true });
-    // a new order or filter starts from its first post: back up to the top of the wall if it has been scrolled
-    // past — at once, as a new page starts at its top, not gliding up through the wall that is being replaced
+    // A new order or filter starts at its first post, so jump back to the top if scrolled past, at once rather than
+    // gliding through the wall being replaced.
     const top = row.current?.getBoundingClientRect().top;
     if (top !== undefined && top < 0) row.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
   };
 
   /*
-   * The wall as it was last drawn in this tab, for this filter and order
-   * (lib/apiMemory.ts): coming back to it — from a post, from Learn — shows
-   * it at once, as far down as it had been read, and the first page is asked
-   * for again behind it. Only a wall never seen before waits on a skeleton.
+   * The wall as last drawn in this tab for this filter and order (lib/apiMemory.ts), shown at once on returning, as far
+   * down as it was read, while the first page refreshes; only an unseen wall waits on a skeleton.
    */
   const who = useMemoryOwner();
   const wallKey = `feed:${section}:${kind ?? ''}:${sort}:${sortRanks(sort) ? period : ''}`;
@@ -109,15 +86,15 @@ export function Civak(): React.JSX.Element {
   wallNow.current = wallKey;
   const recall = (key: string): Wall | null => (who ? (lastAnswer<Wall>(who, key)?.data ?? null) : null);
   const [held, setWall] = useState<Wall | null>(() => recall(wallKey));
-  // the filter was changed a moment ago and the wall in hand is still the last one's: that is not this wall
+  // Just after a filter change the wall in hand is still the previous one's.
   const wall = held && held.key === wallKey ? held : null;
   const shown = useRef(wall);
   shown.current = wall;
   const items = wall?.items ?? null;
-  // only a wall that arrives rises in, and only the first time in this tab: one drawn from memory is simply there
+  // Only a wall that arrives rises in, once per tab; one from memory is simply there.
   const arriving = useArrival(!!items && items.length > 0, 'civak');
   const [error, setError] = useState<string | null>(null);
-  // today's reward is waiting to be claimed: Claim is the one filled button on the page while it is, and the + steps back
+  // While today's reward waits, Claim is the page's one filled button and the + steps back.
   const [claimWaiting, setClaimWaiting] = useState(false);
   const more = wall?.more ?? false;
   const [loadingMore, setLoadingMore] = useState(false);
@@ -127,14 +104,14 @@ export function Civak(): React.JSX.Element {
     async (offset: number): Promise<void> => {
       const query = new URLSearchParams({ section, limit: String(PAGE), offset: String(offset) });
       if (kind) query.set('kind', kind);
-      // the plain wall's order is left out, so its address is the one it always was
+      // The plain wall's order is left out, so its address is unchanged.
       if (sort !== DEFAULT_FEED_SORT) query.set('sort', sort);
       if (sortRanks(sort) && period !== DEFAULT_FEED_PERIOD) query.set('period', period);
       const res = await client.get<{ items: FeedItem[] }>(`/feed?${query}`);
-      // the filter or the order was changed while this was on its way: it is another wall's answer now
+      // The filter or order changed while this was in flight, so it belongs to another wall.
       if (wallNow.current !== wallKey) return;
       if (!res.ok) {
-        // a wall already on the screen stays there when the server cannot be reached; an empty one says why
+        // A wall already on screen stays when the server cannot be reached; an empty one says why.
         if (shown.current && shown.current.items.length > 0) return;
         setError(describeError(res.error, t));
         setWall({ key: wallKey, items: [], nextOffset: 0, more: false });
@@ -145,19 +122,18 @@ export function Civak(): React.JSX.Element {
       setWall((prev) => {
         const showing = prev && prev.key === wallKey ? prev : null;
         if (offset === 0) return firstPage(showing, wallKey, batch);
-        // a ranked wall can shift between two pages — a post liked meanwhile moves up — so a post
-        // already shown is not shown twice
+        // A ranked wall can shift between pages (a post liked meanwhile moves up), so a post already shown is skipped.
         const before = showing?.items ?? [];
         const seen = new Set(before.map((i) => i.key));
-        // where the next page starts on the server, which is not always how many cards are shown
+        // The server's next offset, which is not always the number of cards shown.
         return { key: wallKey, items: [...before, ...batch.filter((i) => !seen.has(i.key))], nextOffset: offset + batch.length, more: batch.length === PAGE };
       });
     },
-    // (`t` only words a failure, and a language changed mid-visit is no reason to ask for the wall again)
+    // `t` only words failures, and a language change mid-visit is no reason to refetch.
     [client, section, kind, sort, period, wallKey],
   );
 
-  // asked once for each wall: when the page opens, and when its filter or order changes (`load` is that wall's)
+  // Asked once per wall: on opening, and when the filter or order changes (`load` is that wall's).
   const recallNow = useRef(recall);
   recallNow.current = recall;
   useEffect(() => {
@@ -166,19 +142,15 @@ export function Civak(): React.JSX.Element {
     void load(0);
   }, [load, wallKey]);
 
-  // what is on the wall now is what coming back to it shows (never a wall that only failed to load)
+  // What is on the wall now is what returning shows (never a wall that only failed to load).
   useEffect(() => {
     if (who && wall && !error) remember(who, wall.key, wall);
   }, [who, wall, error]);
 
-  /*
-   * The next page arrives as the end of the wall comes near, so reading on
-   * needs no press; the button under the wall stays, for a keyboard, a screen
-   * reader and a browser that cannot watch for it.
-   */
+  /* The next page loads as the wall's end nears; the button under it stays for keyboards, screen readers and old browsers. */
   const nextOffset = wall?.nextOffset ?? 0;
   const loadMore = useCallback(async (): Promise<void> => {
-    // one page at a time: the end of the wall can be seen, and the button pressed, while a page is on its way
+    // One page at a time: the end can be seen and the button pressed while one is in flight.
     if (fetchingMore.current) return;
     fetchingMore.current = true;
     setLoadingMore(true);
@@ -194,19 +166,19 @@ export function Civak(): React.JSX.Element {
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) void loadMore();
       },
-      // a screen and a half early, so the posts are usually there before the reader is
+      // A screen and a half early, so posts are usually there before the reader is.
       { rootMargin: '0px 0px 150% 0px' },
     );
     watcher.observe(el);
     return () => watcher.disconnect();
   }, [more, loadMore]);
 
-  /** Replace one card in place, so a like does not reload the wall. */
+  /** Replaces one card in place, so a like does not reload the wall. */
   const replace = useCallback((next: FeedItem) => {
     setWall((prev) => (prev ? { ...prev, items: prev.items.map((i) => (i.key === next.key ? next : i)) } : prev));
   }, []);
 
-  /** A post its author just deleted is gone; leaving the card would be a lie. */
+  /** Removes a post its author just deleted. */
   const drop = useCallback((gone: FeedItem) => {
     setWall((prev) => (prev ? { ...prev, items: prev.items.filter((i) => i.key !== gone.key) } : prev));
   }, []);
@@ -218,18 +190,13 @@ export function Civak(): React.JSX.Element {
         <p className="page-sub">{t('civak.subtitle')}</p>
       </div>
 
-      {/*
-        The claim used to sit on a separate page of tiles that was the first
-        thing you saw. That page is gone — this wall is home now — so the one
-        thing on it that was not a door comes with it. It renders nothing at all
-        for a visitor without an account, and nothing once today is claimed.
-      */}
+      {/* Today's reward; nothing for a visitor or once claimed. */}
       <DailyReward onClaimWaiting={setClaimWaiting} />
 
-      {/* the week's league in one line, with the goal ring: a door to it, not a copy */}
+      {/* The week's league in one line with the goal ring, linking to it. */}
       <HomeLeagueLine />
 
-      {/* how the wall is sorted and narrowed, then the funnel and the + — the + belongs with the wall it adds to */}
+      {/* How the wall is sorted and narrowed, then the funnel and the +, which belongs with the wall it adds to. */}
       <div className="feed-filters" ref={row}>
         <FeedFilter value={value} onChange={choose} />
         <PostButton onPosted={() => void load(0)} secondary={claimWaiting} />
@@ -240,8 +207,8 @@ export function Civak(): React.JSX.Element {
       {items === null ? (
         <FeedSkeleton label="civak.loading" />
       ) : items.length === 0 ? (
-        // an empty wall still has a next step: the people whose posts would fill it,
-        // or, when it is only empty of one kind or one range, the whole wall again
+        // An empty wall still has a next step: people whose posts would fill it, or the whole wall when only a kind or
+        // range is empty.
         <EmptyState
           title={t('civak.empty')}
           message={isDefaultFilter(value) ? t('civak.emptyBody') : undefined}
@@ -259,7 +226,7 @@ export function Civak(): React.JSX.Element {
         />
       ) : (
         <>
-          {/* the first screenful rises in once, as the wall arrives (styles/motion.css) */}
+          {/* The first screenful rises in once as the wall arrives (styles/motion.css). */}
           <div className={arriving ? 'feed rise-in' : 'feed'}>
             {items.map((item) => (
               <FeedCard key={item.key} item={item} onChanged={replace} onRemoved={drop} />
@@ -267,7 +234,7 @@ export function Civak(): React.JSX.Element {
           </div>
           {more && (
             <>
-              {/* what the page watches for: the end of the wall coming near */}
+              {/* Watched for the wall's end coming near. */}
               <div ref={end} aria-hidden="true" />
               <button type="button" className="mkp-more" onClick={() => void loadMore()} aria-busy={loadingMore || undefined}>
                 {t('common.showMore')}

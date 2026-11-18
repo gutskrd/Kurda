@@ -1,17 +1,6 @@
 /**
- * Which group of Learn somebody was last on: the lessons, the stories, or the
- * games.
- *
- * Learn is one place with three views, and the tab that opens it goes back to
- * the view you left — somebody who plays every evening should not have to
- * switch to Games every time, somebody reading a story a night should land
- * among the stories, and somebody working through a course should not be
- * dropped into either. Lessons until a choice has been made.
- *
- * Each view keeps its own address (/app/learn, /app/learn/stories and
- * /app/games), so a link, a bookmark or the old Play shortcut still lands on
- * the view it names; this only decides where the tab goes when nothing named
- * one.
+ * The Learn group last visited (lessons, stories or games), so the Learn tab returns to it; Lessons until a choice is
+ * made. Each group keeps its own address, so links and bookmarks still land where they name.
  */
 export type LearnView = 'lessons' | 'stories' | 'games';
 
@@ -43,7 +32,7 @@ export function rememberLearnView(view: LearnView): void {
   try {
     localStorage.setItem(KEY, view);
   } catch {
-    // site data blocked: the tab opens Lessons, which is still a working answer
+    // Site data blocked: the tab opens Lessons, which still works.
   }
 }
 

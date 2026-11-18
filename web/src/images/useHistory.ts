@@ -1,21 +1,21 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-/** How many steps back you can go. Deep enough to feel unlimited, bounded enough to forget. */
+/** How many steps back undo can go. */
 export const HISTORY_DEPTH = 60;
 
 export interface History<T> {
   present: T;
   canUndo: boolean;
   canRedo: boolean;
-  /** A discrete change — added a sticker, chose a font. Its own step. */
+  /** A discrete change (a sticker added, a font chosen): its own step. */
   set: (next: T) => void;
-  /** A change mid-gesture — a drag, a slider being moved. Not a step yet. */
+  /** A change mid-gesture (a drag, a moving slider): not a step yet. */
   preview: (next: T) => void;
-  /** The gesture is over. Everything since it began becomes one step. */
+  /** Ends the gesture, making everything since it began one step. */
   settle: () => void;
   undo: () => void;
   redo: () => void;
-  /** Start again from a new document, forgetting everything. */
+  /** Starts again from a new document, forgetting everything. */
   reset: (value: T) => void;
 }
 
@@ -26,26 +26,13 @@ interface Stacks<T> {
 }
 
 /**
- * Undo and redo over a value you replace rather than mutate.
- *
- * The whole difficulty of undo in a direct-manipulation editor is that a drag
- * is not one change. Dragging a sticker across a picture emits a new state on
- * every pointer event, and recording each one means pressing undo two hundred
- * times to put the sticker back — which is not undo, it is rewind.
- *
- * So there are two ways to change the value. `set` is a discrete act and gets
- * its own step. `preview` is a moment inside a gesture: it updates what you see
- * and remembers, once, what things looked like before the gesture started.
- * `settle` closes the gesture and turns all of it into a single step. A drag,
- * however long, costs one press of undo — and a gesture that ends where it
- * began costs nothing at all.
- *
- * Values are treated as immutable: steps share structure rather than copying,
- * so a deep stack of layer lists stays cheap.
+ * Undo and redo over an immutable value. `set` records a discrete step; `preview` updates the value during a gesture,
+ * remembering the state before it once; `settle` turns the gesture into a single step, or nothing if it ended where it
+ * began.
  */
 export function useHistory<T>(initial: T): History<T> {
   const [stacks, setStacks] = useState<Stacks<T>>({ past: [], present: initial, future: [] });
-  /** what the value was when the current gesture started, or null between gestures */
+  /** The value when the current gesture started, or null between gestures. */
   const gestureBase = useRef<{ value: T } | null>(null);
 
   const push = useCallback((past: T[], entry: T): T[] => {
@@ -55,9 +42,7 @@ export function useHistory<T>(initial: T): History<T> {
 
   const set = useCallback(
     (next: T): void => {
-      // a gesture still open when something discrete happens — typing, then
-      // reaching for a button — is closed first, so both are steps and neither
-      // swallows the other
+      // An open gesture is closed first, so it and this discrete change are separate steps.
       const base = gestureBase.current;
       gestureBase.current = null;
       setStacks((s) => {
@@ -82,7 +67,7 @@ export function useHistory<T>(initial: T): History<T> {
     gestureBase.current = null;
     if (!base) return;
     setStacks((s) =>
-      // a gesture that changed nothing leaves no trace
+      // A gesture that changed nothing leaves no trace.
       Object.is(base.value, s.present) ? s : { past: push(s.past, base.value), present: s.present, future: [] },
     );
   }, [push]);

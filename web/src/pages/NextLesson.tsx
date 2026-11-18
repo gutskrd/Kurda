@@ -6,13 +6,9 @@ import { courseProgress } from '../learn/map';
 import { useCourses } from '../learn/useCourses';
 
 /**
- * "Your next lesson" (/app/learn/next): the first lesson up next in the first
- * course that has one — for somebody who has just signed up, the first lesson
- * of the first course. Where a new account lands after confirming its email:
- * the community wall can wait, and the reason most people came cannot.
- * Anything that stops it finding one goes to Learn instead, which shows every
- * course. While it looks it shows the lesson's own frame, in the lesson's own
- * shell (App.tsx), so the lesson opens into a picture that is already there.
+ * "Your next lesson" (/app/learn/next): the first lesson up next in the first course with one, where a new account lands
+ * after confirming its email. Anything that prevents finding one goes to Learn. It shows the lesson's frame in the
+ * lesson's shell (App.tsx) while looking, so the lesson opens into a picture already there.
  */
 export function NextLesson(): React.JSX.Element {
   const t = useT();
@@ -38,6 +34,6 @@ export function NextLesson(): React.JSX.Element {
     navigate('/app/learn', { replace: true });
   }, [entries, error, navigate]);
 
-  // the lesson's frame from the first moment: this page only ever leads to one
+  // The lesson's frame from the first moment, since this page only ever leads to a lesson.
   return <LessonPlaceholder label={t('lesson.loading')} />;
 }

@@ -1,14 +1,9 @@
-/**
- * Shared API contract types for the web client. These mirror the shapes the
- * existing API + mobile client already use (see mobile/src/api/types.ts and
- * mobile/src/auth/AuthContext.tsx) so the web app speaks the same protocol —
- * no new/duplicated backend logic.
- */
+/** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
 import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
-/** Every API call returns a result — callers never try/catch fetch. */
+/** Every API call returns a result; callers never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
 
 export interface ApiError {
@@ -20,10 +15,8 @@ export interface ApiError {
   requestId?: string;
   status?: number;
   /**
-   * The envelope's `details`, as the server sent them: what a refusal knows
-   * beyond its code — until when a mute lasts (shared `MutedErrorDetails`),
-   * why an account is suspended (`SuspendedErrorDetails`). Unknown on purpose:
-   * a reader checks the shape before trusting it.
+   * The envelope's `details`, such as how long a mute lasts (shared `MutedErrorDetails`) or why an account is
+   * suspended (`SuspendedErrorDetails`). Unknown on purpose: check the shape before trusting it.
    */
   details?: unknown;
 }
@@ -40,19 +33,15 @@ export interface SessionUser {
   username: string;
   displayName: string | null;
   emailVerified: boolean;
-  /** resolved avatar (populated by /me; absent right after login until refresh) */
+  /** Resolved avatar; filled by /me, absent right after login until a refresh. */
   avatarUrl?: string | null;
-  /** the interface language this account chose; absent on older responses */
+  /** The interface language this account chose; absent on older responses. */
   locale?: string | null;
-  /**
-   * No birth month on record (a Google/Apple sign-up, or an account from before
-   * it was asked): the app asks once before anything else. Absent on older
-   * responses, which reads as "nothing to ask".
-   */
+  /** No birth month on record (a Google or Apple sign-up, or an older account), so the app asks once first. Absent means no. */
   birthDateRequired?: boolean;
-  /** 13–17 today, as the server works it out (/me only) */
+  /** Aged 13–17 today, as the server works it out (/me only). */
   minor?: boolean;
-  /** takes part in the weekly leagues (/me only) */
+  /** Takes part in the weekly leagues (/me only). */
   leaguesEnabled?: boolean;
 }
 
@@ -61,27 +50,20 @@ export interface AuthPayload {
   tokens: TokenPair;
 }
 
-/**
- * Streak summary as returned by GET /me (api streaks StreakSummary). This is an
- * OBJECT, not a number — rendering it directly throws React error #31.
- */
+/** The streak summary from GET /me. An object, not a number: rendering it directly throws React error #31. */
 export interface StreakSummary {
   current: number;
   longest: number;
   freezes: number;
   lastActiveOn: string | null;
-  /** days with a finished lesson or practice session, ever; absent on older responses */
+  /** Days with a finished lesson or practice session, ever; absent on older responses. */
   daysLearned?: number;
-  /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
+  /** Finished sessions towards the next freeze, out of `sessionsPerFreeze`. */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
-  /** the most freezes that can be held at once: one, two for a Hevalo+ member */
+  /** The most freezes held at once: one, or two for a Hevalo+ member. */
   maxFreezes?: number;
-  /**
-   * The streak that ended and can still be restored: how long it was, what
-   * that costs now, and when the offer ends. Null when there is nothing to
-   * restore; absent on older responses.
-   */
+  /** The ended streak that can still be restored, with its price and deadline; null when none, absent on older responses. */
   repair?: StreakRepairOffer | null;
 }
 
@@ -92,22 +74,18 @@ export interface StreakRepairResult {
   days: number;
   costGems: number;
   free: boolean;
-  /** the gem balance afterwards */
+  /** The gem balance afterwards. */
   gems: number;
   streak: StreakSummary;
 }
 
-/**
- * A resolved equipped background (server has already checked ownership/premium
- * and turned the R2 key into a ready-to-render URL). `type` picks the element:
- * image/gif → <img>, video → <video>.
- */
 /** Who sent an equipped item, when it arrived as a gift rather than a purchase. */
 export interface Gifter {
   id: string;
   username: string;
 }
 
+/** An equipped background with a ready URL; `type` picks the element (<img> for image and gif, <video> for video). */
 export interface ProfileBackground {
   sku: string;
   assetKey: string;
@@ -124,10 +102,7 @@ export interface ProfileIcon {
   giftedBy?: Gifter | null;
 }
 
-/**
- * Level + progress, derived server-side from XP with the single shared formula.
- * `progress` is 0..1 toward the next level. Never compute level on the client.
- */
+/** Level and progress (0–1 towards the next level), computed by the server from XP; never compute it here. */
 export interface LevelInfo {
   xp: number;
   level: number;
@@ -136,28 +111,25 @@ export interface LevelInfo {
   progress: number;
 }
 
-/** A favorite poem/story as exposed publicly — id + title only. */
+/** A favourite poem or story as shown publicly: id and title only. */
 export interface FavoriteRef {
   id: string;
   title: string;
 }
 
-/**
- * Resolved cosmetic + progression fields shared by /me and /users/:id. All
- * optional so older responses (and privacy-hidden profiles) stay valid.
- */
+/** Cosmetic and progression fields of /me and /users/:id, optional for older responses and hidden profiles. */
 export interface ProfileCosmetics {
-  /** Resolved avatar: uploaded photo → selected default avatar → null. */
+  /** Uploaded photo, else the chosen default avatar, else null. */
   avatarUrl?: string | null;
   background?: ProfileBackground | null;
   icon?: ProfileIcon | null;
   level?: LevelInfo;
   premium?: boolean;
-  /** presence — only present when viewing yourself or a friend */
+  /** Presence; only sent for yourself or a friend. */
   online?: boolean;
   favoritePoem?: FavoriteRef | null;
   favoriteStory?: FavoriteRef | null;
-  /** ISO-3166 alpha-2 country code (e.g. "DE"), shown as a flag + name */
+  /** ISO 3166 alpha-2 code (e.g. "DE"), shown as a flag and name. */
   country?: string | null;
 }
 
@@ -165,13 +137,13 @@ export interface ProfileCosmetics {
 export interface MeProfile extends SessionUser, ProfileCosmetics {
   bio: string | null;
   xp: number;
-  /** /me returns the full streak object; use streak.current for the count. */
+  /** The full streak object; use `streak.current` for the count. */
   streak: StreakSummary;
   /** 'everyone' is the public web; 'members' is everyone signed in. */
   profileVisibility: 'everyone' | 'members' | 'friends' | 'nobody';
   profilePhotoUrl: string | null;
   createdAt: string;
-  /** self-only equip state, for the cosmetic pickers (not exposed publicly) */
+  /** Self-only equip state, for the cosmetic pickers. */
   selectedAvatarKey?: string | null;
   equippedBackgroundSku?: string | null;
   equippedIconSku?: string | null;
@@ -181,13 +153,7 @@ export interface MeProfile extends SessionUser, ProfileCosmetics {
 
 export type FriendStatus = 'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked' | 'self';
 
-/**
- * Someone you have blocked (GET /friends/blocks).
- *
- * No `online` field, unlike every other user summary: the server does not send
- * one. Somebody you have blocked should not be getting a live signal about
- * where you are, and the reverse holds too.
- */
+/** Someone you have blocked (GET /friends/blocks). No `online`: neither side gets a live presence signal. */
 export interface BlockedUser {
   userId: string;
   username: string;
@@ -196,37 +162,33 @@ export interface BlockedUser {
   blockedAt: string;
 }
 
-/** Another user's public profile (GET /users/:id — privacy/block gated). */
+/** Another user's public profile (GET /users/:id), gated by privacy and blocks. */
 export interface PublicProfile extends ProfileCosmetics {
   userId: string;
   username: string;
   displayName: string | null;
   friendStatus: FriendStatus;
-  /** true when privacy hides the details (identity still shown to allow a request) */
+  /** True when privacy hides the details; identity still shows so a request can be sent. */
   private: boolean;
   bio?: string | null;
   profilePhotoUrl?: string | null;
   xp?: number;
   streak?: number;
-  /**
-   * Their Learning League tier, or null for someone not taking part (and for
-   * someone who never joined — not Bronze, as it once read). A key: translate
-   * it (ranks/names), never print it.
-   */
+  /** Their league tier, or null when they do not take part or never joined. A key: translate it (ranks/names). */
   tier?: LeagueTier | null;
   league?: ProfileLeague | null;
-  /** Game Ranks per game they play this season (contract 4); "Resting" ones carry no tier for others */
+  /** Game ranks per game this season; resting ones carry no tier for others. */
   ranks?: ProfileRank[];
-  /** the frame worn round the avatar: a season frame's SKU or a shop frame's; null for none */
+  /** The avatar frame's SKU (season or shop frame), or null. */
   frameSku?: string | null;
-  /** the picture of a frame from the shop (a season frame has none: it is drawn from its SKU) */
+  /** A shop frame's picture; season frames have none and are drawn from their SKU. */
   frameUrl?: string | null;
-  /** the three badges they show (a minor's only to friends) */
+  /** The three badges they show (a minor's only to friends). */
   badges?: ShowcaseBadge[];
   achievements?: number;
-  /** which activity sections this profile shows; null when it is private */
+  /** Which activity sections this profile shows; null when private. */
   sections?: ProfileSections | null;
-  /** their tree as it stands today; null before they plant one or when the profile is private, absent on a server without trees */
+  /** Their tree today; null before planting or when private, absent on a server without trees. */
   tree?: TreeGlimpse | null;
 }
 
@@ -252,7 +214,7 @@ export interface ImagePost {
   createdAt: string;
 }
 
-/** How a post has been received, and whether you are part of it. */
+/** How a post has been received, and whether you took part. */
 export interface PostEngagement {
   likes: number;
   bookmarks: number;
@@ -264,27 +226,21 @@ export interface PostEngagement {
 
 /** One card on the community wall (GET /feed). */
 export interface FeedItem {
-  /** unique across both source tables */
+  /** Unique across both source tables. */
   key: string;
   targetType: 'library' | 'image';
   id: string;
-  /**
-   * A gotin — a saying, posted without a title — has been one of these since
-   * the wall absorbed the three old pages, but this union never learned it.
-   * Nothing narrows on `kind` today, so it went unnoticed; the badge renders
-   * from `CARD_LABEL`, which is deliberately open and falls back to the raw
-   * kind so an unfamiliar one from the server still shows something.
-   */
+  /** The badge renders from `CARD_LABEL`, which falls back to the raw kind for one the server adds later. */
   kind: 'gotin' | 'story' | 'poem' | 'image' | 'meme';
   author: PostAuthorRef;
   title: string | null;
   excerpt: string | null;
   imageUrl: string | null;
-  /** the first picture's description; null when nobody wrote one */
+  /** The first picture's description; null when nobody wrote one. */
   imageAlt?: string | null;
-  /** every picture, in order (at most four); absent from an API older than pictures on posts */
+  /** Every picture, in order (at most four); absent from an API older than pictures on posts. */
   images?: FeedImage[];
-  /** marked as a meme, for the Memes filter */
+  /** Marked as a meme, for the Memes filter. */
   meme?: boolean;
   href: string;
   viewCount: number;
@@ -304,7 +260,7 @@ export interface ActivityEntry {
   kind: ProfileSection;
   title: string;
   detail: string | null;
-  /** where it lives, when it has a page of its own */
+  /** Where it lives, when it has a page of its own. */
   href: string | null;
   imageUrl: string | null;
   at: string;
@@ -316,43 +272,39 @@ export interface UserSummary {
   username: string;
   displayName?: string | null;
   avatarUrl?: string | null;
-  /** present on friend lists / requests / suggestions — online in the last few minutes */
+  /** On friend lists, requests and suggestions: online in the last few minutes. */
   online?: boolean;
-  /** present on search results: already friends with whoever searched */
+  /** On search results: already friends with the searcher. */
   friend?: boolean;
 }
 
-/** A friend suggestion (GET /friends/suggestions) — with mutual-friend count. */
+/** A friend suggestion (GET /friends/suggestions) with its mutual-friend count. */
 export interface SuggestedFriend extends UserSummary {
   mutualCount: number;
 }
 
-/** A default-avatar option (GET /cosmetics/avatars). default-01 is always free. */
+/** A default avatar option (GET /cosmetics/avatars); default-01 is always free. */
 export interface AvatarOption {
   key: string;
   requiresPremium: boolean;
 }
 
-/**
- * What a chat message carries besides text (shared `ChatMessageExtras`): a
- * gift to unwrap or a game card. Optional here because a message from an
- * older server, or a fixture, has none — it is then a plain text message.
- */
+/** A chat message's gift or game card (shared `ChatMessageExtras`); without them it is plain text. */
 export interface ChatExtras {
   kind?: ChatMessageKind;
   gift?: GiftCard | null;
   game?: ChatGameRef | null;
 }
 
-/** A 1:1 direct message (chat). */
+/** A one-to-one direct message. */
 export interface DmMessage extends ChatExtras {
   id: string;
   senderId: string;
-  /** who wrote it — the thread shows a name per burst, not per message */
+  /** The thread shows a name per burst, not per message. */
   username: string;
-  /** resolved server-side (uploaded photo -> chosen avatar) */
+  /** Uploaded photo, else the chosen avatar. */
   avatarUrl: string | null;
-  /** null for a gift or a game card */
+  /** Null for a gift or a game card. */
   body: string | null;
   createdAt: string;
   deliveredAt: string | null;
@@ -366,7 +318,7 @@ export interface Conversation {
   avatarUrl?: string | null;
   online?: boolean;
   lastMessage: string;
-  /** what the last message was, so a gift or a game card reads as one in the list */
+  /** The last message's kind, so a gift or game card reads as one in the list. */
   lastKind?: ChatMessageKind;
   lastAt: string;
   lastFromMe: boolean;
@@ -376,7 +328,7 @@ export interface Conversation {
 export type LetterFeedback = 'green' | 'yellow' | 'gray';
 export type WordleStatus = 'playing' | 'won' | 'lost';
 
-/** One scored guess row (feedback per Kurdish letter). */
+/** One scored guess, with feedback per Kurdish letter. */
 export interface WordleGuessRow {
   guess: string;
   letters: string[];
@@ -393,7 +345,7 @@ export interface WordleGame {
   guesses: WordleGuessRow[];
   keyboard: Record<string, LetterFeedback>;
   remainingAttempts: number;
-  /** revealed only once the game is over */
+  /** Revealed only once the game is over. */
   target: string | null;
   xpAwarded: number | null;
 }
@@ -427,10 +379,7 @@ export interface RhymeResult {
 
 export type GroupRole = 'owner' | 'moderator' | 'member';
 
-/**
- * A group / club (KUR-084). Every group is private: its members see it, and
- * the only way in is to be added by its owner or an admin who is your friend.
- */
+/** A group. Every group is private: members see it, and only its owner or an admin who is your friend can add you. */
 export interface Group {
   id: string;
   name: string;
@@ -438,11 +387,11 @@ export interface Group {
   ownerId: string | null;
   archivedAt: string | null;
   memberCount: number;
-  /** the group's own picture on the CDN; null (or absent, from an older server) shows its initials */
+  /** The group's picture on the CDN; null or absent shows its initials. */
   photoUrl?: string | null;
 }
 
-/** A group in the caller's own list (GET /me/groups) — carries their role. */
+/** A group in the caller's own list (GET /me/groups), with their role. */
 export interface MyGroup extends Group {
   myRole: GroupRole;
 }
@@ -451,25 +400,23 @@ export interface MyGroup extends Group {
 export interface GroupMember {
   userId: string;
   username: string;
-  /** resolved server-side, so the roster shows real faces not initials */
+  /** Resolved by the server, so the roster shows faces rather than initials. */
   avatarUrl: string | null;
   role: GroupRole;
   joinedAt: string;
 }
 
 /**
- * Group detail with its roster and the caller's own role (GET /groups/:id).
- * Only a member is given it whole. Someone banned gets the name, the picture
- * and where they stand, with everything else empty; anyone else is answered
- * 404, as for a group that does not exist.
+ * A group with its roster and the caller's role (GET /groups/:id). Only members get it whole; a banned user gets the
+ * name, picture and standing, and anyone else a 404.
  */
 export interface GroupDetail extends Group {
   members: GroupMember[];
-  /** null for someone banned, the only non-member who is answered at all */
+  /** Null for a banned user, the only non-member answered at all. */
   myRole: GroupRole | null;
-  /** where the caller stands with it; an older server leaves it out, and `myRole` says as much */
+  /** Where the caller stands; older servers leave it out, and `myRole` says as much. */
   standing?: GroupStanding;
-  /** requests to come back waiting, for the owner and the admins */
+  /** Requests to rejoin waiting, for the owner and admins. */
   pendingRequests?: number;
 }
 /** A group chat message (GET/POST /groups/:id/chat). */
@@ -477,9 +424,9 @@ export interface GroupMessage extends ChatExtras {
   id: string;
   senderId: string;
   username: string;
-  /** resolved server-side (uploaded photo -> chosen avatar) */
+  /** Uploaded photo, else the chosen avatar. */
   avatarUrl: string | null;
-  /** null for a gift or a game card; '' once deleted */
+  /** Null for a gift or a game card; '' once deleted. */
   body: string | null;
   createdAt: string;
   deleted: boolean;
@@ -491,7 +438,7 @@ export interface WalletBalances {
   gems: number;
 }
 
-/** A buyable catalog item (GET /shop). Owned unique items are hidden here. */
+/** A buyable catalogue item (GET /shop); owned unique items are left out. */
 export interface ShopItem {
   sku: string;
   name: string;
@@ -501,11 +448,11 @@ export interface ShopItem {
   price: number;
   isUnique: boolean;
   premiumOnly: boolean;
-  /** resolved thumbnail URL for cosmetics (null for non-media / unconfigured storage) */
+  /** Thumbnail URL for cosmetics; null for items without media or without storage configured. */
   assetUrl: string | null;
 }
 
-/** An owned item (GET /me/inventory), incl. resolved cosmetic asset. */
+/** An owned item (GET /me/inventory) with its cosmetic asset. */
 export interface InventoryItem {
   sku: string;
   name: string;
@@ -531,12 +478,9 @@ export interface DailyRewardStatus {
   schedule: number[];
   alreadyClaimedToday: boolean;
   cycleDay: number;
-  /**
-   * A lesson or practice session was finished today — what a claim needs.
-   * Absent on older responses, where canClaim alone decides.
-   */
+  /** A lesson or practice was finished today, which a claim needs; absent on older responses, where `canClaim` decides. */
   learnedToday?: boolean;
-  /** gems a claim today adds for a Hevalo+ member; 0 or absent for everyone else */
+  /** Extra gems a claim today gives a Hevalo+ member; 0 or absent for everyone else. */
   plusGems?: number;
 }
 
@@ -546,16 +490,16 @@ export interface ClaimResult {
   cycleDay: number;
   reward: number;
   balance: number;
-  /** gems a Hevalo+ member received with the claim; 0 or absent for everyone else */
+  /** Gems a Hevalo+ member received with the claim; 0 or absent for everyone else. */
   plusGems?: number;
 }
 
-/** A community library post (story or poem) — the one public browse endpoint. */
+/** A community library post (story or poem), from the public browse endpoint. */
 export interface LibraryPost {
   id: string;
   authorId: string;
   authorRole: string;
-  /** resolved server-side on the read paths, so a post shows who wrote it */
+  /** Resolved on the read paths, so a post shows who wrote it. */
   author: { id: string; username: string; avatarUrl: string | null };
   type: 'story' | 'poem';
   title: string;

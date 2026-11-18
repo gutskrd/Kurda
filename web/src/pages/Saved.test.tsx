@@ -57,7 +57,7 @@ describe('Saved', () => {
     renderApp(<Saved />, ['/app/saved']);
 
     expect(await screen.findByText('Çîroka min')).toBeInTheDocument();
-    // someone else's reading list is theirs; there is nothing to address here
+    // Someone else's reading list is theirs; there is nothing to address here.
     expect(urls[0]).toBe('/me/saved?limit=20&offset=0');
   });
 
@@ -66,8 +66,8 @@ describe('Saved', () => {
     savedFetch([item('library:s1', { commentCount: 7, engagement: engagement({ likes: 4 }) })]);
     renderApp(<Saved />, ['/app/saved']);
 
-    // a reading list that rendered posts differently would make you re-read each
-    // one to work out what it was
+    // A reading list that rendered posts differently would make you re-read each
+    // one to work out what it was.
     const card = (await screen.findByText('Çîroka min')).closest<HTMLElement>('.fcard')!;
     expect(within(card).getByText('dilan')).toBeInTheDocument();
     expect(card.textContent).toContain('7');
@@ -84,8 +84,8 @@ describe('Saved', () => {
     await waitFor(() => expect(unsave).toBeEnabled());
     await userEvent.click(unsave);
 
-    // here the list *is* the saves, so a post you just removed sitting in it
-    // would be a lie
+    // Here the list *is* the saves, so a post you just removed sitting in it
+    // would be a lie.
     await waitFor(() => expect(screen.queryByText('Çîroka min')).not.toBeInTheDocument());
     expect(screen.getByText('Bajarê Kevn')).toBeInTheDocument();
   });
@@ -107,7 +107,7 @@ describe('Saved', () => {
     await waitFor(() => expect(within(card).getByRole('button', { name: 'Remove from saved' })).toBeEnabled());
     await userEvent.click(within(card).getByRole('button', { name: 'Remove from saved' }));
 
-    // the server did not accept it, so nothing may disappear
+    // The server did not accept it, so nothing may disappear.
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.getByText('Çîroka min')).toBeInTheDocument();
   });

@@ -20,11 +20,7 @@ import { ArrowIcon, LockIcon, PersonGlyph } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
 
-/**
- * Dedicated Edit Profile page (/app/profile/edit). ALL profile customization
- * lives here — the full profile view itself is read-only. Buying cosmetics is in
- * the Shop; here you equip what you own and edit your details.
- */
+/** Edit Profile (/app/profile/edit): all profile customisation, equipping what you own and editing your details; buying is in the Shop. */
 export function ProfileEdit(): React.JSX.Element {
   const t = useT();
   const { client, refreshUser } = useAuth();
@@ -54,10 +50,10 @@ export function ProfileEdit(): React.JSX.Element {
     void refreshUser();
   };
 
-  // the heading needs nothing from the account, so it is the page's from the first frame
+  // The heading needs nothing from the account, so it shows from the first frame.
   const header = (
     <div className="page-header">
-      {/* the way back, as every page draws it: the chevron that points back in the page's own direction, then the words */}
+      {/* The way back, as on every page: a chevron pointing back in the page's direction, then the words. */}
       <Link to="/app/profile" className="back-link">
         <ArrowIcon size={16} />
         {t('edit.back')}
@@ -84,7 +80,7 @@ export function ProfileEdit(): React.JSX.Element {
     <div className="container container-narrow">
       {header}
 
-      {/* refreshed backgrounds and icons: the one-time notice (contract-3 §S) */}
+      {/* The one-time notice about refreshed backgrounds and icons. */}
       <RefreshedNoticeLoader />
       <ProfilePhotoPicker me={me} onChanged={changed} />
       <ProfileDetailsForm me={me} onSaved={changed} />
@@ -101,7 +97,7 @@ export function ProfileEdit(): React.JSX.Element {
   );
 }
 
-/** Display name + bio. */
+/** Display name and bio. */
 function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -111,8 +107,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
   const [country, setCountry] = useState(me.country ?? '');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
-  // a refusal of the save itself, which may be a limit on the account (a post
-  // mute covers a name and a bio, which others read) — said with SendError
+  // A refusal of the save itself, possibly an account limit (a post mute covers name and bio), said with SendError.
   const [saveErr, setSaveErr] = useState<ApiError | null>(null);
 
   const dirty = displayName.trim() !== (me.displayName ?? '') || bio !== (me.bio ?? '') || country !== (me.country ?? '');
@@ -125,7 +120,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
     const body: { displayName?: string; bio?: string; country?: string } = {};
     if (displayName.trim() !== (me.displayName ?? '')) body.displayName = displayName.trim();
     if (bio !== (me.bio ?? '')) body.bio = bio;
-    if (country !== (me.country ?? '')) body.country = country; // '' clears it
+    if (country !== (me.country ?? '')) body.country = country; // '' clears it.
     const res = await client.patch('/me', body);
     setBusy(false);
     if (res.ok) {
@@ -166,7 +161,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
   );
 }
 
-/** Pick a default avatar (premium ones locked for non-premium users). */
+/** Picks a default avatar (premium ones locked for non-premium users). */
 function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
@@ -175,12 +170,12 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
   const registry = useApiGet<{ avatars: AvatarOption[] }>('/cosmetics/avatars');
-  // a default an admin has replaced is offered as its new picture
+  // A default an admin has replaced is offered as its new picture.
   const overrides = useArtOverrides();
   const avatars: AvatarOption[] =
     registry.data?.avatars && registry.data.avatars.length > 0
       ? registry.data.avatars
-      // every built-in avatar is free, so the offline fallback must not lock any
+      // Every built-in avatar is free, so the offline fallback must not lock any.
       : DEFAULT_AVATAR_KEYS.map((key) => ({ key, requiresPremium: false }));
   const isPremium = me.premium ?? false;
 
@@ -190,9 +185,8 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
     setBusy(key ?? '__none__');
     setMsg(null);
     setSelected(key);
-    // An uploaded photo always wins over a default avatar, so choosing an avatar
-    // would otherwise appear to do nothing. Remove the uploaded photo first (from
-    // the DB + storage) so the selected avatar actually becomes the picture.
+    // An uploaded photo always wins over a default avatar, so remove it first (database and storage) or choosing would
+    // appear to do nothing.
     if (me.profilePhotoUrl) {
       const del = await client.delete('/me/profile-picture');
       if (!del.ok) {

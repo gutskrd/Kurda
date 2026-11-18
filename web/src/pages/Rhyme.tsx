@@ -19,20 +19,17 @@ import { courseDialect } from '../stories/prefs';
 type Dialect = 'kurmanci' | 'sorani';
 const DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
 
-/** The variety this reader learns: the course they are on, else Soranî when the interface is, else Kurmancî. */
+/** This reader's variety: their course, else Soranî when the interface is, else Kurmancî. */
 function ownVariety(locale: string): Dialect {
   return courseDialect() ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
 }
 
-/** A round as the server sends it: once it has ended, the rhymes it left unfound (absent from a server from before it). */
+/** A round as the server sends it, with the unfound rhymes once ended (absent from older servers). */
 type RhymeRound = RhymeGame & { missed?: RhymeHint[] | null };
 
 /**
- * Which varieties a round can be played in now (`GET /rhyme/availability`): a
- * variety without enough curated prompts would open on a word from the other
- * one, or on none, so it is shown as coming soon instead. Null until the
- * server answers, and when it cannot say: then both are offered, as they were
- * before it could.
+ * Which varieties a round can be played in now (`GET /rhyme/availability`); one without enough prompts shows as coming
+ * soon. Null until the server answers or when it cannot say, and then both are offered.
  */
 function useRhymeOffered(): Partial<Record<Dialect, boolean>> | null {
   const { client } = useAuth();
@@ -44,7 +41,7 @@ function useRhymeOffered(): Partial<Record<Dialect, boolean>> | null {
       if (!alive || !dialects) return;
       const known: Partial<Record<Dialect, boolean>> = {};
       for (const d of DIALECTS) if (typeof dialects[d]?.available === 'boolean') known[d] = dialects[d].available;
-      // an answer that offers nothing says nothing either: better both chips than none
+      // An answer offering nothing says nothing either: better both chips than none.
       if (DIALECTS.some((d) => known[d] === true)) setOffered(known);
     });
     return () => {
@@ -54,53 +51,38 @@ function useRhymeOffered(): Partial<Record<Dialect, boolean>> | null {
   return offered;
 }
 
-/** A found rhyme, kept for the on-screen list this round. */
+/** A found rhyme, kept for this round's list. */
 interface Found {
   word: string;
   quality: RhymeResult['quality'];
   points: number;
 }
 
-/**
- * Why a word was refused. Keys rather than sentences: the reason comes back
- * from the server as a code, and the words for it belong in the catalogues
- * with everything else the player reads.
- */
+/** Why a word was refused, as catalogue keys for the server's reason codes. */
 const REJECT_KEY: Record<string, MessageKey> = {
   'not-a-word': 'games.rhyme.reject.notAWord',
   'is-prompt': 'games.rhyme.reject.isPrompt',
   'already-used': 'games.rhyme.reject.alreadyUsed',
   'no-rhyme': 'games.rhyme.reject.noRhyme',
   profane: 'games.rhyme.reject.profane',
-  // an ending doing all the rhyming (malan for baran) has no sentence of its own yet: the general one says it fairly
+  // An ending doing all the rhyming (malan for baran) has no sentence of its own yet; the general one is fair.
   inflected: 'games.rhyme.reject.other',
 };
 
 /**
- * Solo Rhyming Words — a timed round; each rhyme is scored server-side.
- *
- * The page opens on a start, not on a running clock: the round is a minute
- * long and begins when it is asked for, so nobody arrives to find ten seconds
- * of it already gone. Choosing the other variety comes back to the start for
- * the same reason.
- *
- * A round here is played alone, so it earns no XP: the result gives the
- * score and the rhymes found, and one line on where XP is earned. Under it
- * are the rhymes the round left unfound, with what they mean.
- *
- * The page opens on the reader's own variety (their course, else the
- * interface's) when rounds are offered in it, and on Kurmancî otherwise. A
- * variety without rounds yet keeps its chip, marked coming soon, and says so
- * in place of Start.
+ * Solo rhyming: a timed round with each rhyme scored by the server. The page opens on Start, not a running clock, and
+ * switching variety returns to it. Played alone it earns no XP; the result gives the score, the rhymes found and the ones
+ * missed with their meanings. It opens on the reader's variety when rounds are offered there, else Kurmancî; a variety
+ * without rounds keeps its chip marked coming soon.
  */
 export function Rhyme(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  // where the game's card lands when it is pressed on the Games page: its cover, large, before a round is on
+  // Where the game's card lands from the Games page: its cover, large, before a round starts.
   const cover = useGrowsInto('game:rhyme');
   const locale = useLocale();
   const offered = useRhymeOffered();
-  // where the page opens until a chip is pressed: the reader's own variety, when rounds are offered in it
+  // Where the page opens until a chip is pressed: the reader's own variety, when offered.
   const [preferred] = useState<Dialect>(() => ownVariety(locale));
   const [picked, setPicked] = useState<Dialect | null>(null);
   const isOffered = (d: Dialect): boolean => offered?.[d] !== false;
@@ -115,13 +97,13 @@ export function Rhyme(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly(t('games.rhyme.noPasting'));
   const inputRef = useRef<HTMLInputElement>(null);
-  // "End round" before the clock runs out is giving the round up
+  // "End round" before time is giving the round up.
   const [endedEarly, setEndedEarly] = useState(false);
-  // nothing is asked of the server, and no clock runs, until Start is pressed
+  // Nothing is asked and no clock runs until Start.
   const [started, setStarted] = useState(false);
 
   const start = useCallback(async () => {
-    // the round is in this variety now, whatever is heard about the others while it runs
+    // The round is in this variety now, whatever is heard about the others meanwhile.
     setPicked(dialect);
     setStarted(true);
     setGame(null);
@@ -142,7 +124,7 @@ export function Rhyme(): React.JSX.Element {
     }
   }, [client, dialect]);
 
-  /** The other variety's words: back to the start, with nothing running. */
+  /** The other variety: back to the start, nothing running. */
   const choose = (d: Dialect): void => {
     if (d === dialect) return;
     setPicked(d);
@@ -156,7 +138,7 @@ export function Rhyme(): React.JSX.Element {
   };
 
   const active = game?.status === 'active' && remaining > 0;
-  // the rating box hears of a round the server has ended — not of one given up
+  // The rating box hears of a round the server ended, not one given up.
   useGameFinished('rhyme', game?.id ?? null, game?.status === 'ended', endedEarly);
 
   const end = useCallback(async () => {
@@ -165,7 +147,7 @@ export function Rhyme(): React.JSX.Element {
     if (res.ok) setGame(res.data.game);
   }, [client, game]);
 
-  // countdown; when it runs out, finalize the round on the server
+  // Countdown; when it runs out, finalise the round on the server.
   useEffect(() => {
     if (!game || game.status !== 'active') return;
     if (remaining <= 0) {
@@ -202,7 +184,7 @@ export function Rhyme(): React.JSX.Element {
   }
 
   const seconds = Math.ceil(remaining / 1000);
-  // the prompt and the rhymes are in the round's own letters: a Soranî word reads right to left, whatever the page does
+  // The prompt and rhymes are in the round's own script, so a Soranî word reads right to left.
   const script = dialectDirection(game?.dialect === 'sorani' ? 'ckb' : 'kmr');
 
   return (
@@ -222,7 +204,7 @@ export function Rhyme(): React.JSX.Element {
         <div className="gs-start">
           <div className="gs-hero">
             <GameArt game="rhyme" size={148} moving ref={cover} />
-            {/* a variety with no rounds yet says so where its Start would be: nothing to press that cannot work */}
+            {/* A variety without rounds says so where Start would be. */}
             <p className="gs-hero-line">{isOffered(dialect) ? t('games.rhyme.body') : t('games.rhyme.notOffered')}</p>
           </div>
           {isOffered(dialect) && (
@@ -258,7 +240,7 @@ export function Rhyme(): React.JSX.Element {
 
           {active ? (
             <form className="rhyme-compose" onSubmit={submit}>
-              {/* a rhyme is a word you thought of; a dictionary tab is one paste away */}
+              {/* A rhyme is a word you thought of; a dictionary tab is one paste away. */}
               <input
                 ref={inputRef}
                 className="input"
@@ -271,7 +253,7 @@ export function Rhyme(): React.JSX.Element {
                 autoFocus
                 {...typeOnly}
               />
-              {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+              {/* Busy, it keeps its word and width; an ellipsis shrank it and said nothing. */}
               <Button type="submit" disabled={busy || word.trim().length === 0} aria-busy={busy || undefined}>
                 {t('games.submit')}
               </Button>
@@ -279,13 +261,13 @@ export function Rhyme(): React.JSX.Element {
           ) : (
             <div className="wordle-result">
               <p className="wordle-result-title">{t('games.rhyme.roundOver', { score: game.score, count: game.accepted })}</p>
-              {/* a round alone earns no XP: said once, where what it paid used to stand */}
+              {/* A solo round earns no XP, said once. */}
               <p className="gs-alone">{t('games.noXpAlone')}</p>
               <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
             </div>
           )}
 
-          {/* one slot: a refused paste is the more urgent of the two to answer */}
+          {/* One slot; a refused paste is the more urgent message. */}
           {(pasteNotice ?? notice) && (
             <div className="wordle-notice" role="status">
               {pasteNotice ?? notice}
@@ -305,7 +287,7 @@ export function Rhyme(): React.JSX.Element {
             </ul>
           )}
 
-          {/* once the round is over: what it could also have found, each word with what it means */}
+          {/* Once over: what it could also have found, each with its meaning. */}
           {!active && <MissedRhymes hints={game.missed} dialect={game.dialect} />}
 
           {active && (

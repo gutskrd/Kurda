@@ -3,16 +3,9 @@ import { useT } from '../i18n/I18nProvider';
 import type { FaqEntry } from '../landing/faq';
 
 /**
- * Questions that open to their answers.
- *
- * `<details>` rather than a disclosure built from buttons and state: it opens
- * with Enter and Space, announces itself as expandable, works before (and
- * without) any script, and every answer is in the page for a search engine to
- * read whether it is open or not.
- *
- * With `structuredData` it also writes the list as schema.org FAQPage — in the
- * reader's language, because it is built from the same translated strings. A
- * data block, never executed, so the CSP's `script-src 'self'` does not apply.
+ * Questions that open to their answers, as `<details>`: keyboard and screen-reader support built in, working without
+ * script, and every answer readable by search engines. `structuredData` also writes the list as schema.org FAQPage in the
+ * reader's language; a data block is never executed, so the CSP's `script-src 'self'` does not apply.
  */
 export function FaqList({
   entries,
@@ -33,7 +26,7 @@ export function FaqList({
             </summary>
             <div className="faq-a">
               <p>{t(e.a)}</p>
-              {/* on a line of its own under the answer, so where a finger is about it answers a little above and below its words (styles/reach.css) */}
+              {/* On its own line, so its touch reach extends above and below its words (styles/reach.css). */}
               {e.link &&
                 (e.link.external ? (
                   <a className="doc-link reach-line" href={e.link.to} target="_blank" rel="noreferrer noopener">

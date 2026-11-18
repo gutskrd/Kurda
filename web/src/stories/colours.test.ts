@@ -1,22 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 /*
- * The stories' colours, by one rule the phone keeps too: gold is for what is
- * earned; the violet is for what can be pressed, is chosen, is on, or says
- * "look at this"; and progress along a road is violet.
- *
- * The suite draws no styles, and a stylesheet a test imports arrives empty, so
- * the rules are read from the disk as they are written, the way
- * styles/tokens.test.ts reads the hues. The one thing asked of the machine
- * the test runs on is described here in full.
+ * The stories' colours, by the rule the phone keeps too: gold for what is earned; violet for what can be pressed, is
+ * chosen or on, or asks for attention, and for progress. Stylesheets are read from disk, since an imported one is empty
+ * in tests (as styles/tokens.test.ts does).
  */
 interface FileSystem {
   readFileSync(file: URL, encoding: 'utf8'): string;
 }
 const fileSystem = 'node:fs';
 const { readFileSync } = (await import(/* @vite-ignore */ fileSystem)) as FileSystem;
-// the stylesheets beside this folder, wherever the suite is run from: written as `new URL('…', import.meta.url)`, the
-// build would take the path for an asset of its own and hand back its address, not the file
+// The stylesheets beside this folder; a `new URL('…', import.meta.url)` would be bundled as an asset instead of read.
 const here = import.meta.url;
 const sheet = (name: string): string => readFileSync(new URL(`../styles/${name}`, here), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 const stories = sheet('stories.css');

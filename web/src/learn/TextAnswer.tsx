@@ -4,12 +4,8 @@ import { useT } from '../i18n/I18nProvider';
 import { kurdishText } from './map';
 
 /**
- * The letters a keyboard lacks, as buttons above the answer (KUR-037): ê î û
- * ç ş for Kurmancî, and for Soranî the letters an Arabic or Persian keyboard
- * either lacks or types as a look-alike that is a different character. A tap
- * puts the letter where the caret was and gives the caret back, so typing
- * carries straight on; a key does not take the focus from the field on a
- * pointer, and on a keyboard it is one Tab away and hands it back.
+ * Buttons for letters a keyboard lacks: ê î û ç ş for Kurmancî, and for Soranî the letters an Arabic or Persian keyboard
+ * lacks or types as a look-alike. A tap inserts at the caret and gives focus back to the field.
  */
 function KeyBar({
   dialect,
@@ -33,7 +29,7 @@ function KeyBar({
           dir={dir}
           disabled={disabled}
           aria-label={t('lesson.keys.insert', { letter })}
-          // keep the caret in the field on a click
+          // Keep the caret in the field on a click.
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => onKey(letter)}
         >
@@ -45,11 +41,8 @@ function KeyBar({
 }
 
 /**
- * A typed answer — translate, writing, and the transcription of a listening
- * item — with the key bar. Enter checks it, and so does Check in the action
- * bar, which submits this form by its `id`. Once it is checked the field
- * stays, read-only, with what was typed, so the verdict can be read against
- * it.
+ * A typed answer (translate, writing, a listening transcription) with the key bar. Enter checks it, as does the action
+ * bar's Check, which submits this form by `id`. Once checked the field stays read-only beside the verdict.
  */
 export function TextAnswer({
   id: formId,
@@ -63,21 +56,21 @@ export function TextAnswer({
   onAnswer,
   onText,
 }: {
-  /** the form's id, which the action bar's Check submits */
+  /** The form's id, which the action bar's Check submits. */
   id: string;
   label: string;
-  /** what the field starts with: what word tiles had built, when the learner switches to typing */
+  /** The field's starting text: what the word tiles had built, when switching to typing. */
   initial?: string;
   dialect: string | null | undefined;
-  /** graded: the answer stands as typed */
+  /** Graded: the answer stands as typed. */
   locked: boolean;
   busy: boolean;
-  /** how it was graded, once it has been: the field pops, or shakes once (styles/motion.css) */
+  /** How it was graded: the field pops or shakes once (styles/motion.css). */
   verdict?: 'right' | 'wrong' | null;
-  /** whether anything has been typed, for Check */
+  /** Whether anything has been typed, for Check. */
   onReady: (ready: boolean) => void;
   onAnswer: (answer: { text: string }, given: string) => void;
-  /** hears the text as it is typed, for a gap that shows it */
+  /** Hears the text as typed, for a gap that shows it. */
   onText?: (text: string) => void;
 }): React.JSX.Element {
   const id = useId();
@@ -90,7 +83,7 @@ export function TextAnswer({
   useEffect(() => onReady(written), [written, onReady]);
   useEffect(() => onText?.(text), [text, onText]);
 
-  // the field is where a typed exercise starts, so the caret is put there, after anything it starts with
+  // A typed exercise starts in the field, with the caret after any starting text.
   useEffect(() => {
     const el = input.current;
     if (!el) return;
@@ -98,7 +91,7 @@ export function TextAnswer({
     el.setSelectionRange(el.value.length, el.value.length);
   }, []);
 
-  // put the caret after a letter the key bar added, once the text has it
+  // Put the caret after a letter the key bar added, once the text has it.
   useEffect(() => {
     if (caret.current === null || !input.current) return;
     input.current.focus();

@@ -32,24 +32,15 @@ import { WordCard } from '../words/WordCard';
 import { WordPractice } from '../words/WordPractice';
 
 /**
- * One word set — the colours, the numbers, the days or the months — taught
- * the way the alphabet is (pages/Alphabet.tsx): Kurmancî or Soranî at the
- * switch, the words as tiles drawn to fit the set, each with its sound in the
- * corner and opening into a card that says it at once, and a round of
- * questions to check yourself with. The colours are swatches with their names
- * on a label that reads on any of them; the numbers show their digits,
- * Soranî's own beside the Western ones; the days run from Saturday with the
- * number inside each name marked, and today's says so; the months carry their
- * season's tint, the calendar's first and then the Kurdish year from Newroz.
- *
- * Nothing waits on the server: the words and their synthesised clips are on
- * this site, and the recordings take the clips' place when they arrive
+ * One word set (colours, numbers, days or months), taught like the alphabet (pages/Alphabet.tsx): a script switch,
+ * word tiles drawn to suit the set, each opening a card that says it, and a round of questions. Nothing waits on the
+ * server: words and synthesised clips ship with the site, and recordings replace the clips when they arrive
  * (alphabet/audio.ts). An address naming no set leads back to the sets.
  */
 export function WordSet(): React.JSX.Element {
   const { set } = useParams();
   if (!isWordSetId(set)) return <Navigate to="/app/learn/words" replace />;
-  // keyed, so another set starts from its own first word and its own ticks
+  // Keyed, so another set starts from its own first word and ticks.
   return <SetPage key={set} set={set} />;
 }
 
@@ -64,7 +55,7 @@ function SetPage({ set }: { set: WordSetId }): React.JSX.Element {
   const groups = useMemo(() => wordGroups(set), [set]);
   const order = useMemo(() => groups.flatMap((g) => g.words.map((w) => w.id)), [groups]);
 
-  // on a wide screen there is always a word open beside the grid; on a phone, one opens when tapped
+  // On a wide screen a word is always open beside the grid; on a phone one opens when tapped.
   const [picked, setPicked] = useState<string | null>(null);
   const [sheet, setSheet] = useState(false);
   useEffect(() => {
@@ -74,7 +65,7 @@ function SetPage({ set }: { set: WordSetId }): React.JSX.Element {
   const current = findWord(set, picked ?? order[0]!)!;
 
   const [seen, markSeen] = useWordsSeen(set, dialect);
-  // hearing it the moment it is tapped is the point of tapping: the word and its sound, together
+  // Tapping plays the word at once: the word and its sound together.
   const open = (id: string): void => {
     setPicked(id);
     markSeen(id);
@@ -177,11 +168,8 @@ function SetPage({ set }: { set: WordSetId }): React.JSX.Element {
 }
 
 /**
- * One word in the grid, drawn to fit its set: a button that opens the word
- * (and says it), read out as the word and then what it means — "sor, red" —
- * with the word's own play button in the corner, so it can be heard without
- * being opened. No play button where there is no sound yet. A tick once it
- * has been opened.
+ * One word tile drawn for its set: a button that opens and says the word, read as the word then its meaning ("sor,
+ * red"), with its own play button in the corner when there is a sound, and a tick once opened.
  */
 function WordTile({
   word,
@@ -248,7 +236,7 @@ function WordTile({
   );
 }
 
-/** A colour's tile: filled with it, the name on a label of its own, so it reads the same on white, on yellow and on black. */
+/** A colour's tile, filled with it, its name on a label that reads on any colour. */
 function ColourTile({
   word,
   dialect,
@@ -285,7 +273,7 @@ function TileMeaning({ meaning }: { meaning: Meaning }): React.JSX.Element {
   return <MeaningText meaning={meaning} className="wd-tile-meaning" />;
 }
 
-/** Which tint is which season: each with its Kurdish name and what it means. */
+/** Which tint is which season, each with its Kurdish name and meaning. */
 function SeasonLegend({ dialect }: { dialect: AlphabetScript }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();

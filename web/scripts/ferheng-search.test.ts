@@ -4,7 +4,7 @@ import { formOf } from './ferheng-entries';
 import { pageKey, paginate, wordsPage, type Word } from './ferheng-pages';
 import { LIMIT, fileName, rowOf, searchKey, searchScript, shard, shardFile, shorten } from './ferheng-search';
 
-/** a, b, … z, ba, bb, …: distinct words of letters only, as page keys keep only letters */
+/** a, b, … z, ba, bb, …: distinct letter-only words, since page keys keep only letters. */
 const letters = (i: number): string => {
   let out = '';
   do {
@@ -42,7 +42,7 @@ describe('the search files', () => {
     expect(searchKey('Sêv')).toBe('sev');
     expect(searchKey('çav')).toBe('cav');
     expect(searchKey('şîr')).toBe('sir');
-    // Soranî variants fold the way the pages fold them
+    // Soranî variants fold as the pages fold them.
     expect(searchKey('كتێب')).toBe(searchKey('کتێب'));
   });
 
@@ -58,7 +58,7 @@ describe('the search files', () => {
     expect(all).toHaveLength(words.length);
     expect(new Set(all.map((r) => r[0])).size).toBe(words.length);
     for (const rows of files.values()) expect(rows.length).toBeLessThanOrEqual(LIMIT);
-    // the prefix that split keeps its exact word in a file of its own
+    // The prefix that split keeps its exact word in a file of its own.
     expect(files.get('ser.')?.map((r) => r[0])).toEqual(['ser']);
   });
 
@@ -125,7 +125,7 @@ describe('the search box, in a browser', () => {
     expect(found).toEqual(['sev', 'sêv', 'seva']);
     const first = form.querySelector<HTMLAnchorElement>('.search-list a')!;
     expect(first.getAttribute('href')).toBe('/dictionary/s/#sev');
-    // typed with the mark, the marked word comes first
+    // Typed with the mark, the marked word comes first.
     expect((await type('sêv'))[0]).toBe('sêv');
   });
 
