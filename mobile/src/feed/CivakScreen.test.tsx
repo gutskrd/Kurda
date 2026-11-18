@@ -97,7 +97,7 @@ describe('Home', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Go to Learn' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Learn', { view: 'lessons' });
     fireEvent.click(await screen.findByRole('button', { name: /^Your week/ }));
-    expect(navigation.navigate).toHaveBeenCalledWith('League');
+    expect(navigation.navigate).toHaveBeenCalledWith('Rankings', { board: 'xp', span: 'week' });
   });
 
   /* The old Library and Memes pages are Home's two halves now: a link or the menu opens the wall on one. */
