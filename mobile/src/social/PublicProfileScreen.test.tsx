@@ -157,6 +157,7 @@ describe('the menu about somebody', () => {
 
   it('ends a friendship as soon as it is confirmed, and brings it back with the reason when refused', async () => {
     const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
+    const said = watchNotices();
     let answer: (r: unknown) => void = () => undefined;
     visitBaran('friends', { 'DELETE /friends/u2': () => new Promise((resolve) => (answer = resolve)) } as never);
     expect(await screen.findByRole('button', { name: 'Message' })).toBeTruthy();
@@ -168,7 +169,7 @@ describe('the menu about somebody', () => {
     expect(screen.queryByRole('button', { name: 'Message' })).toBeNull();
     await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
     expect(screen.getByRole('button', { name: 'Message' })).toBeTruthy();
-    expect(alert).toHaveBeenLastCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+    expect(said).toHaveBeenLastCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
   });
 
   it('draws their own sky behind their face', async () => {

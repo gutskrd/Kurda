@@ -104,7 +104,7 @@ describe('a message to the group that did not go', () => {
   it('stays in the thread as not sent, and leaves on Cancel with its words back in the field', async () => {
     open([said('m1', 'u2', 'azad', 'Silav', 2)], undefined, () => fail({ kind: 'network', status: 0, message: 'offline' }));
     await screen.findByText('Silav');
-    const field = screen.getByPlaceholderText(/Message/) as HTMLTextAreaElement;
+    const field = screen.getByPlaceholderText(/message/i) as HTMLTextAreaElement;
     fireEvent.change(field, { target: { value: 'Ez têm' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     expect(await screen.findByText('Not sent')).toBeTruthy();

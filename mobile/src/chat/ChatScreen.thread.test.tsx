@@ -131,7 +131,7 @@ describe('a conversation nobody has written in yet', () => {
 
 /* As on the website: a message the server was not reached for stays where it was written, for Try again or Cancel. */
 describe('a message that did not go', () => {
-  const field = () => screen.getByPlaceholderText(/Message/) as HTMLTextAreaElement;
+  const field = () => screen.getByPlaceholderText(/message/i) as HTMLTextAreaElement;
   const write = (words: string) => {
     fireEvent.change(field(), { target: { value: words } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
