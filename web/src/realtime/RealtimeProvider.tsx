@@ -5,27 +5,19 @@ import { RealtimeClient } from './RealtimeClient';
 import type { RealtimeEventEnvelope, RealtimeState } from './events';
 
 /**
- * App-wide realtime context. Connects the RealtimeClient once the user is signed
- * in and tears it down on logout. Cross-tab safe: only the tab holding the
- * `hevalo-realtime` Web Lock opens the socket (one connection per browser); it
- * fans events out to the other tabs over a BroadcastChannel, so every tab's
- * subscribers receive events regardless of which one owns the socket. Falls back
- * to a per-tab connection where Web Locks are unavailable (the client's 4001
- * cooldown keeps two instances from warring).
+ * App-wide realtime context, connected while signed in. Only the tab holding the `hevalo-realtime` Web Lock opens the
+ * socket, fanning events out to other tabs over a BroadcastChannel; without Web Locks each tab connects, and the
+ * client's 4001 cooldown keeps them from fighting.
  *
- * Rooms (beyond the auto-joined `user:<id>`) are joined through the leader's one
- * socket. Each tab announces the set of rooms it wants; the leader joins the
- * union and leaves rooms no tab wants any more. Tabs re-announce on a `hello`, so
- * a newly-elected leader (or a fresh tab) reconciles to the correct union.
+ * Rooms beyond `user:<id>` are joined through the leader's socket: each tab announces the rooms it wants, and the
+ * leader joins the union and leaves the rest. Tabs re-announce on `hello`, so a new leader or tab reconciles.
  */
 interface RealtimeContextValue {
   state: RealtimeState;
-  /** Subscribe to a specific event type; returns an unsubscribe function. */
+  /** Subscribes to one event type; returns an unsubscribe function. */
   onEvent: (type: string, handler: (envelope: RealtimeEventEnvelope) => void) => () => void;
-  /** Ref-counted room join for this tab; returns a matching leave. */
+  /** Ref-counted room join for this tab; returns the matching leave. */
   joinRoom: (room: string) => () => void;
-  /** Send a client message out the leader's socket (routed cross-tab if needed). */
-  send: (message: Record<string, unknown>) => void;
 }
 
 const RealtimeCtx = createContext<RealtimeContextValue | null>(null);
@@ -37,7 +29,6 @@ type BcMessage =
   | { k: 'event'; env: RealtimeEventEnvelope }
   | { k: 'state'; s: RealtimeState }
   | { k: 'rooms'; tabId: string; rooms: string[] }
-  | { k: 'send'; msg: Record<string, unknown> }
   | { k: 'hello' };
 
 export function RealtimeProvider({
@@ -51,7 +42,7 @@ export function RealtimeProvider({
   const { client: api, status } = useAuth();
   const [state, setState] = useState<RealtimeState>('idle');
 
-  // --- event subscribers (stable across renders) ---
+  // Event subscribers, stable across renders.
   const handlers = useRef<Map<string, Set<EventHandler>>>(new Map());
   const deliver = useRef((env: RealtimeEventEnvelope) => {
     const set = handlers.current.get(env.event.type);
@@ -60,19 +51,19 @@ export function RealtimeProvider({
       try {
         h(env);
       } catch {
-        /* a subscriber throwing must not break delivery */
+        /* A subscriber throwing must not break delivery. */
       }
     }
   }).current;
 
-  // --- room coordination state (survives effect re-runs) ---
+  // Room coordination state, surviving effect re-runs.
   const tabId = useRef(Math.random().toString(36).slice(2)).current;
   const clientRef = useRef<RealtimeClient | null>(null);
   const isLeaderRef = useRef(false);
   const bcRef = useRef<BroadcastChannel | null>(null);
-  const myRoomCounts = useRef<Map<string, number>>(new Map()); // this tab's ref-counts
-  const peerRooms = useRef<Map<string, Set<string>>>(new Map()); // tabId → rooms
-  const leaderJoined = useRef<Set<string>>(new Set()); // what the socket is joined to
+  const myRoomCounts = useRef<Map<string, number>>(new Map()); // This tab's ref-counts.
+  const peerRooms = useRef<Map<string, Set<string>>>(new Map()); // Other tabs' rooms, by tab id.
+  const leaderJoined = useRef<Set<string>>(new Set()); // What the socket is joined to.
 
   // Union of every tab's desired rooms.
   const roomUnion = useRef(() => {
@@ -98,12 +89,6 @@ export function RealtimeProvider({
     bcRef.current?.postMessage({ k: 'rooms', tabId, rooms: mine } satisfies BcMessage);
   }).current;
 
-  // send a client message out the one socket: directly if we're the leader,
-  // otherwise ask the leader tab to send it on our behalf.
-  const sendMessage = useRef((msg: Record<string, unknown>) => {
-    if (isLeaderRef.current) clientRef.current?.send(msg);
-    else bcRef.current?.postMessage({ k: 'send', msg } satisfies BcMessage);
-  }).current;
 
   useEffect(() => {
     if (status !== 'signedIn') return;
@@ -123,8 +108,8 @@ export function RealtimeProvider({
     const bc = 'BroadcastChannel' in globalThis ? new BroadcastChannel('hevalo-realtime') : null;
     bcRef.current = bc;
 
-    // leader: our socket's events/state → local subscribers + other tabs.
-    // Re-reconcile on every 'open' so rooms are (re)joined after a reconnect.
+    // The leader passes its socket's events and state to local subscribers and other tabs, and reconciles rooms on
+    // every open so they are rejoined after a reconnect.
     const offEvent = rc.on('event', (env) => {
       deliver(env);
       bc?.postMessage({ k: 'event', env } satisfies BcMessage);
@@ -133,7 +118,7 @@ export function RealtimeProvider({
       setState(s);
       bc?.postMessage({ k: 'state', s } satisfies BcMessage);
       if (s === 'open') {
-        leaderJoined.current = new Set(); // a fresh socket starts in no rooms
+        leaderJoined.current = new Set(); // A fresh socket starts in no rooms.
         reconcile();
       }
     });
@@ -146,16 +131,14 @@ export function RealtimeProvider({
           if (d.tabId === tabId) return;
           peerRooms.current.set(d.tabId, new Set(d.rooms));
           reconcile();
-        } else if (d?.k === 'send') {
-          if (isLeaderRef.current) clientRef.current?.send(d.msg); // only the socket-owner sends
         } else if (d?.k === 'hello') {
-          announce(); // a new/late tab appeared — re-assert our rooms so it reconciles
+          announce(); // A new tab appeared, so re-announce our rooms for it to reconcile.
         }
       };
-      bc.postMessage({ k: 'hello' } satisfies BcMessage); // ask peers to re-announce
+      bc.postMessage({ k: 'hello' } satisfies BcMessage); // Ask peers to re-announce.
     }
 
-    // tab leadership: only the Web Lock holder connects the socket
+    // Tab leadership: only the Web Lock holder connects the socket.
     let cancelled = false;
     let releaseLock: (() => void) | undefined;
     const locks = (navigator as { locks?: LockManager }).locks;
@@ -163,7 +146,7 @@ export function RealtimeProvider({
       isLeaderRef.current = true;
       leaderJoined.current = new Set();
       rc.connect();
-      reconcile(); // join rooms wanted before we were elected (applied on 'open')
+      reconcile(); // Join rooms wanted before election, applied on 'open'.
     };
     if (locks?.request) {
       const held = new Promise<void>((resolve) => {
@@ -172,7 +155,7 @@ export function RealtimeProvider({
       void locks.request('hevalo-realtime', { mode: 'exclusive' }, async () => {
         if (cancelled) return;
         becomeLeader();
-        await held; // hold the lock (stay leader) until cleanup
+        await held; // Hold the lock, staying leader, until cleanup.
       });
     } else {
       becomeLeader();
@@ -228,29 +211,22 @@ export function RealtimeProvider({
           }
         };
       },
-      send: sendMessage,
     }),
-    [state, reconcile, announce, sendMessage],
+    [state, reconcile, announce],
   );
 
   return <RealtimeCtx.Provider value={value}>{children}</RealtimeCtx.Provider>;
 }
 
-/**
- * Current realtime connection state (for a subtle indicator, if wanted).
- * Degrades to 'idle' when no provider is mounted (e.g. in isolated unit tests),
- * so consumers never crash for lack of realtime.
- */
+/** The current realtime connection state, or 'idle' when no provider is mounted, as in isolated unit tests. */
 export function useRealtime(): { state: RealtimeState } {
   const ctx = useContext(RealtimeCtx);
   return { state: ctx?.state ?? 'idle' };
 }
 
 /**
- * Subscribe to realtime events of one type (e.g. 'dm', 'group_msg').
- * The handler must be stable or wrapped in useCallback by the caller if it
- * closes over changing values; here we re-subscribe whenever it changes.
- * A no-op when no provider is mounted, so features degrade gracefully.
+ * Subscribes to realtime events of one type, such as 'dm'. It re-subscribes whenever the handler changes, so callers
+ * should keep it stable with useCallback. A no-op without a provider.
  */
 export function useRealtimeEvent(type: string, handler: (envelope: RealtimeEventEnvelope) => void): void {
   const ctx = useContext(RealtimeCtx);
@@ -260,10 +236,7 @@ export function useRealtimeEvent(type: string, handler: (envelope: RealtimeEvent
   }, [ctx, type, handler]);
 }
 
-/**
- * Keep a room joined for as long as the calling component is mounted (e.g. a
- * group chat channel). Ref-counted and cross-tab safe. No-op without a provider.
- */
+/** Keeps a room joined while the calling component is mounted. Ref-counted and cross-tab safe; a no-op without a provider. */
 export function useRealtimeRoom(room: string | null | undefined): void {
   const ctx = useContext(RealtimeCtx);
   useEffect(() => {
@@ -273,12 +246,8 @@ export function useRealtimeRoom(room: string | null | undefined): void {
 }
 
 /**
- * Like useRealtimeRoom, but for a set of rooms that changes over time — e.g. every
- * group you belong to, so their messages reach you from anywhere in the app and
- * not only while that group's channel is open.
- *
- * Rooms are keyed by their joined string rather than array identity, so a caller
- * re-deriving an equal list on each render does not churn joins and leaves.
+ * Like useRealtimeRoom for a changing set of rooms, such as every group the reader is in. Keyed by the joined string
+ * rather than array identity, so an equal list re-derived on each render does not churn joins.
  */
 export function useRealtimeRooms(rooms: readonly string[]): void {
   const ctx = useContext(RealtimeCtx);
@@ -290,14 +259,4 @@ export function useRealtimeRooms(rooms: readonly string[]): void {
       for (const leave of leaves) leave();
     };
   }, [ctx, key]);
-}
-
-/**
- * Returns a function to send a client message out the realtime socket (e.g. a
- * game's `ready` / `answer`). Routed through the leader tab. No-op without a
- * provider, so callers stay unit-testable.
- */
-export function useRealtimeSend(): (message: Record<string, unknown>) => void {
-  const ctx = useContext(RealtimeCtx);
-  return ctx?.send ?? (() => undefined);
 }

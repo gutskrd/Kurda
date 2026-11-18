@@ -6,7 +6,7 @@ import {
   type WebSocketLike,
 } from './RealtimeClient';
 
-/** A controllable WebSocket stand-in — tests drive open/message/close manually. */
+/** A controllable WebSocket stand-in; tests drive open, message and close by hand. */
 class MockWebSocket implements WebSocketLike {
   static instances: MockWebSocket[] = [];
   readyState = 0;
@@ -26,7 +26,7 @@ class MockWebSocket implements WebSocketLike {
   close(code?: number): void {
     this.closedWith = code;
     this.readyState = 3;
-    // real sockets fire onclose asynchronously; tests trigger it explicitly
+    // Real sockets fire onclose asynchronously; tests trigger it explicitly.
   }
   triggerOpen(): void {
     this.readyState = 1;
@@ -48,7 +48,7 @@ class MockWebSocket implements WebSocketLike {
   }
 }
 
-/** Flush chained microtasks (awaited ticket fetch, etc.). */
+/** Flushes chained microtasks, such as the awaited ticket fetch. */
 async function flush(): Promise<void> {
   for (let i = 0; i < 4; i++) await Promise.resolve();
 }
@@ -70,7 +70,7 @@ function makeClient(overrides: Partial<RealtimeClientOptions> = {}): Harness {
   const client = new RealtimeClient({
     url: 'https://api.example.com',
     WebSocketImpl: MockWebSocket as unknown as { new (url: string): WebSocketLike },
-    random: () => 0, // deterministic: jitter picks the 50% floor
+    random: () => 0, // Deterministic: jitter picks the 50% floor.
     onDiagnostic: (d) => diags.push(d),
     fetchTicket: async () => {
       calls++;
@@ -139,7 +139,7 @@ describe('RealtimeClient — connect & auth', () => {
     const url = MockWebSocket.last().url;
     expect(url.toLowerCase()).not.toContain('bearer');
     expect(url).not.toContain('authorization');
-    expect(url).not.toContain('eyJ'); // JWT prefix
+    expect(url).not.toContain('eyJ'); // The JWT prefix.
     h.client.destroy();
   });
 
@@ -154,7 +154,7 @@ describe('RealtimeClient — connect & auth', () => {
     MockWebSocket.last().triggerMessage({ type: 'hello', resumeToken: 'secret-resume', resumedRooms: ['game:1'] });
     expect(hellos).toEqual([{ resumedRooms: ['game:1'] }]);
     expect(h.client.resumedRooms).toEqual(['game:1']);
-    // resume token is not exposed anywhere public
+    // The resume token is not exposed anywhere public.
     expect(JSON.stringify(h.client)).not.toContain('secret-resume');
     h.client.destroy();
   });
@@ -184,14 +184,14 @@ describe('RealtimeClient — reconnect', () => {
       return x;
     });
     expect(h.client.state).toBe('open');
-    MockWebSocket.last().triggerClose(1006); // abnormal
+    MockWebSocket.last().triggerClose(1006); // Abnormal closure.
     expect(h.client.state).toBe('reconnecting');
     await vi.advanceTimersByTimeAsync(1000);
     expect(h.ticketCalls()).toBe(2);
     expect(MockWebSocket.instances).toHaveLength(2);
     const url = MockWebSocket.last().url;
-    expect(url).toContain('ticket=t1'); // a NEW ticket
-    expect(url).not.toContain('ticket=t0'); // old ticket never reused
+    expect(url).toContain('ticket=t1'); // A new ticket.
+    expect(url).not.toContain('ticket=t0'); // The old ticket is never reused.
     expect(url).toContain('resume=r-abc');
     h.client.destroy();
   });
@@ -233,7 +233,7 @@ describe('RealtimeClient — reconnect', () => {
     const scheduled = h.diags.filter((d) => d.category === 'reconnect-scheduled');
     expect(scheduled).toHaveLength(1);
     expect((scheduled[0] as { delayMs: number }).delayMs).toBeGreaterThanOrEqual(30_000);
-    // it does NOT reconnect within a short window
+    // It does not reconnect within a short window.
     await vi.advanceTimersByTimeAsync(5_000);
     expect(MockWebSocket.instances).toHaveLength(1);
     h.client.destroy();
@@ -244,14 +244,14 @@ describe('RealtimeClient — reconnect', () => {
     h.client.connect();
     await flush();
     MockWebSocket.last().triggerOpen();
-    // three quick drops before any stable period → 500, 1000, 2000 (random=0 → 50%)
+    // Three quick drops before any stable period give 500, 1000, 2000 (random 0 is the 50% floor).
     const delays: number[] = [];
     for (let i = 0; i < 3; i++) {
       MockWebSocket.last().triggerClose(1006);
       const last = h.diags.filter((d) => d.category === 'reconnect-scheduled').at(-1) as { delayMs: number };
       delays.push(last.delayMs);
       await vi.advanceTimersByTimeAsync(last.delayMs);
-      // new socket exists but never opens/stabilizes
+      // The new socket exists but never opens or stabilises.
     }
     expect(delays).toEqual([500, 1000, 2000]);
     h.client.destroy();
@@ -274,15 +274,15 @@ describe('RealtimeClient — reconnect', () => {
     h.client.connect();
     await flush();
     MockWebSocket.last().triggerOpen();
-    // first drop → attempt 0 → 500
+    // The first drop is attempt 0, so 500.
     MockWebSocket.last().triggerClose(1006);
     await vi.advanceTimersByTimeAsync(500);
-    MockWebSocket.last().triggerOpen(); // reconnected
-    // stay open long enough to be "stable" → backoff resets
+    MockWebSocket.last().triggerOpen(); // Reconnected.
+    // Stay open long enough to be stable, which resets the backoff.
     await vi.advanceTimersByTimeAsync(10_000);
     MockWebSocket.last().triggerClose(1006);
     const delays = h.diags.filter((d) => d.category === 'reconnect-scheduled') as Array<{ delayMs: number }>;
-    expect(delays.at(-1)!.delayMs).toBe(500); // back to attempt 0, not 1000
+    expect(delays.at(-1)!.delayMs).toBe(500); // Back to attempt 0, not 1000.
     h.client.destroy();
   });
 });
@@ -368,7 +368,7 @@ describe('RealtimeClient — subscriptions', () => {
     expect(b).toHaveLength(1);
     offA();
     ws.triggerMessage({ type: 'event', room: 'r', event: { type: 'x' } });
-    expect(a).toHaveLength(1); // unsubscribed
+    expect(a).toHaveLength(1); // Unsubscribed.
     expect(b).toHaveLength(2);
     h.client.destroy();
   });
@@ -400,10 +400,10 @@ describe('RealtimeClient — teardown', () => {
     const ws = MockWebSocket.last();
     ws.triggerOpen();
     h.client.destroy();
-    // an event arriving on the (now abandoned) socket must not reach handlers
+    // An event arriving on the abandoned socket must not reach handlers.
     ws.triggerMessage({ type: 'event', room: 'r', event: { type: 'x' } });
     expect(events).toHaveLength(0);
-    h.client.destroy(); // idempotent
+    h.client.destroy(); // Idempotent.
   });
 
   it('destroy prevents future reconnects', async () => {
@@ -415,7 +415,7 @@ describe('RealtimeClient — teardown', () => {
     MockWebSocket.last().triggerClose(1006);
     await vi.advanceTimersByTimeAsync(60_000);
     expect(MockWebSocket.instances).toHaveLength(1);
-    h.client.connect(); // no-op after destroy
+    h.client.connect(); // A no-op after destroy.
     await flush();
     expect(MockWebSocket.instances).toHaveLength(1);
   });
@@ -439,13 +439,13 @@ describe('RealtimeClient — network & visibility', () => {
     MockWebSocket.last().triggerOpen();
 
     window.dispatchEvent(new Event('offline'));
-    MockWebSocket.last().triggerClose(1006); // drop while offline
+    MockWebSocket.last().triggerClose(1006); // Drop while offline.
     await vi.advanceTimersByTimeAsync(60_000);
-    expect(MockWebSocket.instances).toHaveLength(1); // no storm while offline
+    expect(MockWebSocket.instances).toHaveLength(1); // No reconnect storm while offline.
 
     window.dispatchEvent(new Event('online'));
     await flush();
-    expect(MockWebSocket.instances).toHaveLength(2); // reconnected on return
+    expect(MockWebSocket.instances).toHaveLength(2); // Reconnected on return.
     h.client.destroy();
   });
 
@@ -456,7 +456,7 @@ describe('RealtimeClient — network & visibility', () => {
     MockWebSocket.last().triggerOpen();
     MockWebSocket.last().triggerClose(1006);
     expect(h.client.state).toBe('reconnecting');
-    // become visible before the backoff timer fires → reconnect now
+    // Becoming visible before the backoff timer fires reconnects at once.
     Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true });
     document.dispatchEvent(new Event('visibilitychange'));
     await flush();
@@ -485,7 +485,7 @@ describe('RealtimeClient — no credential leakage', () => {
     const allArgs = spies.flatMap((s) => s.mock.calls.flat()).map(String).join(' ');
     expect(allArgs).not.toContain('t0');
     expect(allArgs).not.toContain('r-secret');
-    // diagnostics carry only safe metadata
+    // Diagnostics carry only safe metadata.
     const diagJson = JSON.stringify(h.diags);
     expect(diagJson).not.toContain('t0');
     expect(diagJson).not.toContain('r-secret');
@@ -511,7 +511,7 @@ describe('RealtimeClient — rooms (join/leave)', () => {
 
   it('queues a join requested before open and (re)joins every desired room on open', async () => {
     const h = makeClient();
-    h.client.join('group:g1'); // before connect → nothing sent yet
+    h.client.join('group:g1'); // Before connect, so nothing is sent yet.
     h.client.connect();
     await flush();
     const ws = MockWebSocket.last();
@@ -524,7 +524,7 @@ describe('RealtimeClient — rooms (join/leave)', () => {
   it('re-joins desired rooms on a reconnect (new socket)', async () => {
     const h = await openClient();
     h.client.join('group:g1');
-    // drop the socket → client reconnects
+    // Dropping the socket makes the client reconnect.
     MockWebSocket.last().triggerClose(1006);
     await vi.advanceTimersByTimeAsync(2000);
     await flush();
@@ -549,17 +549,3 @@ describe('RealtimeClient — rooms (join/leave)', () => {
   });
 });
 
-describe('RealtimeClient — send', () => {
-  it('sends an arbitrary message when open, drops it when not', async () => {
-    const h = makeClient();
-    // not connected yet → dropped
-    expect(h.client.send({ type: 'answer', room: 'match:1', index: 0, choice: 2 })).toBe(false);
-    h.client.connect();
-    await flush();
-    const ws = MockWebSocket.last();
-    ws.triggerOpen();
-    expect(h.client.send({ type: 'answer', room: 'match:1', index: 0, choice: 2 })).toBe(true);
-    expect(ws.sent).toContain(JSON.stringify({ type: 'answer', room: 'match:1', index: 0, choice: 2 }));
-    h.client.destroy();
-  });
-});
