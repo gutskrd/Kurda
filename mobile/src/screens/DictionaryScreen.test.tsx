@@ -15,6 +15,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ApiResult } from '../api/types';
 import type { SavedWord } from '../dictionary/types';
+import { navigation } from '../play/testing/navigation';
 import { DictionaryScreen } from './DictionaryScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -61,5 +62,18 @@ describe('the saved words', () => {
     expect(headwords()).toEqual(['mal', 'av', 'nan']);
     expect(notices).toEqual(['Can’t reach Hevalo right now. Check your connection and try again.']);
     stop();
+  });
+});
+
+describe('before a search', () => {
+  it('is never a blank page: it points a beginner to the alphabet and shows today’s word', async () => {
+    testAuth.client = fakeClient({
+      'GET /me/saved-words': ok({ words: [] }),
+      'GET /dictionary/word-of-day': ok({ word: { entryId: 'e9', headword: 'baran', pos: 'noun', definitionEn: 'rain', definitionKu: null } }),
+    });
+    renderWithProviders(<DictionaryScreen onBack={() => undefined} />);
+    expect(await screen.findByText('baran')).toBeTruthy();
+    fireEvent.click(screen.getByRole('link', { name: 'New to the letters? Start with the alphabet' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Alphabet');
   });
 });

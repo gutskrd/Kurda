@@ -1168,7 +1168,7 @@ export type TranslationKey =
   | 'nav.profile'
   | 'events.title'
   | 'events.none'
-  | 'events.noneBody'
+  | 'events.noneWhat'
   | 'events.someMissing'
   | 'events.bannerSubtitle'
   | 'events.claim'
@@ -1939,6 +1939,7 @@ export type TranslationKey =
   | 'chat.copy'
   | 'dictionary.related'
   | 'dictionary.recent'
+  | 'alphabet.link'
   | 'grammar.title'
   | 'lesson.answer'
   | 'lesson.review'
@@ -4531,7 +4532,7 @@ const en: Catalog = {
   'nav.profile': 'Profile',
   'events.title': 'Events',
   'events.none': 'No events are running right now.',
-  'events.noneBody': 'Check back soon!',
+  'events.noneWhat': 'Events run for a few days at a time, with quests of their own and Zêr and gems to win. When one starts, you’ll find it on Learn. Until then, today’s quests are waiting.',
   'events.someMissing': 'Some events didn’t load.',
   'events.bannerSubtitle': 'Quests & rewards — tap to play',
   'events.claim': 'Claim',
@@ -5314,6 +5315,7 @@ const en: Catalog = {
   'chat.copy': 'Copy',
   'dictionary.related': 'Related',
   'dictionary.recent': 'Recent',
+  'alphabet.link': 'New to the letters? Start with the alphabet',
   'grammar.title': 'Tips',
   'lesson.answer': 'Answer:',
   'lesson.review': 'Review',
@@ -8434,7 +8436,7 @@ const ku: Catalog = {
   'nav.profile': 'Profîl',
   'events.title': 'Bûyer',
   'events.none': 'Niha tu bûyer nayên lîstin.',
-  'events.noneBody': 'Paşê were!',
+  'events.noneWhat': 'Bûyer çend rojan didomin, bi erkên xwe yên taybet û Zêr û gewherên ku tu dikarî qezenc bikî. Dema yek dest pê bike, tu yê wê di Fêrbûnê de bibînî. Heta wê demê, erkên îro li benda te ne.',
   'events.someMissing': 'Hin bûyer nehatin barkirin.',
   'events.bannerSubtitle': 'Erk û xelat — bitikîne û bilîze',
   'events.claim': 'Bistîne',
@@ -9217,6 +9219,7 @@ const ku: Catalog = {
   'chat.copy': 'Kopî bike',
   'dictionary.related': 'Peywendîdar',
   'dictionary.recent': 'Yên dawî',
+  'alphabet.link': 'Tîp ji te re nû ne? Bi alfabeyê dest pê bike',
   'grammar.title': 'Serişte',
   'lesson.answer': 'Bersiv:',
   'lesson.review': 'Dubare',
@@ -12336,7 +12339,7 @@ const de: Catalog = {
   'nav.profile': 'Profil',
   'events.title': 'Events',
   'events.none': 'Zurzeit laufen keine Events.',
-  'events.noneBody': 'Schau später wieder vorbei!',
+  'events.noneWhat': 'Events laufen ein paar Tage lang, mit eigenen Aufgaben und Zêr und Edelsteinen zu gewinnen. Sobald eins beginnt, findest du es unter Lernen. Bis dahin warten die Aufgaben von heute.',
   'events.someMissing': 'Einige Events konnten nicht geladen werden.',
   'events.bannerSubtitle': 'Aufgaben & Belohnungen – zum Spielen tippen',
   'events.claim': 'Abholen',
@@ -13119,6 +13122,7 @@ const de: Catalog = {
   'chat.copy': 'Kopieren',
   'dictionary.related': 'Verwandt',
   'dictionary.recent': 'Zuletzt',
+  'alphabet.link': 'Die Buchstaben sind neu für dich? Fang mit dem Alphabet an',
   'grammar.title': 'Tipps',
   'lesson.answer': 'Antwort:',
   'lesson.review': 'Wiederholen',
@@ -16238,7 +16242,7 @@ const es: Catalog = {
   'nav.profile': 'Perfil',
   'events.title': 'Eventos',
   'events.none': 'No hay eventos ahora mismo.',
-  'events.noneBody': '¡Vuelve pronto!',
+  'events.noneWhat': 'Los eventos duran unos días, con misiones propias y Zêr y gemas para ganar. Cuando empiece uno, lo verás en Aprender. Mientras tanto, te esperan las misiones de hoy.',
   'events.someMissing': 'Algunos eventos no se han podido cargar.',
   'events.bannerSubtitle': 'Misiones y recompensas — toca para jugar',
   'events.claim': 'Reclamar',
@@ -17021,6 +17025,7 @@ const es: Catalog = {
   'chat.copy': 'Copiar',
   'dictionary.related': 'Relacionadas',
   'dictionary.recent': 'Recientes',
+  'alphabet.link': '¿Nuevo con las letras? Empieza por el alfabeto',
   'grammar.title': 'Consejos',
   'lesson.answer': 'Respuesta:',
   'lesson.review': 'Repasar',
@@ -20140,7 +20145,7 @@ const tr: Catalog = {
   'nav.profile': 'Profil',
   'events.title': 'Etkinlikler',
   'events.none': 'Şu anda etkinlik yok.',
-  'events.noneBody': 'Sonra tekrar bak!',
+  'events.noneWhat': 'Etkinlikler birkaç gün sürer; kendi görevleri ve kazanılacak Zêr ile mücevherleri vardır. Biri başladığında onu Öğren’de bulursun. O zamana kadar bugünün görevleri seni bekliyor.',
   'events.someMissing': 'Bazı etkinlikler yüklenemedi.',
   'events.bannerSubtitle': 'Görevler ve ödüller — oynamak için dokun',
   'events.claim': 'Al',
@@ -20923,6 +20928,7 @@ const tr: Catalog = {
   'chat.copy': 'Kopyala',
   'dictionary.related': 'İlgili',
   'dictionary.recent': 'Yakın zamanda',
+  'alphabet.link': 'Harfleri yeni mi öğreniyorsun? Alfabeyle başla',
   'grammar.title': 'İpuçları',
   'lesson.answer': 'Cevap:',
   'lesson.review': 'Gözden geçir',
@@ -24042,7 +24048,7 @@ const ar: Catalog = {
   'nav.profile': 'الملف الشخصي',
   'events.title': 'الفعاليات',
   'events.none': 'لا توجد فعاليات حاليًا.',
-  'events.noneBody': 'عُد قريبًا!',
+  'events.noneWhat': 'تستمر الفعاليات بضعة أيام، ولها مهامها الخاصة وZêr وجواهر يمكنك ربحها. عندما تبدأ واحدة ستجدها في «تعلّم». وحتى ذلك الحين، مهام اليوم بانتظارك.',
   'events.someMissing': 'تعذّر تحميل بعض الفعاليات.',
   'events.bannerSubtitle': 'مهام ومكافآت — اضغط للّعب',
   'events.claim': 'استلام',
@@ -24825,6 +24831,7 @@ const ar: Catalog = {
   'chat.copy': 'نسخ',
   'dictionary.related': 'ذات صلة',
   'dictionary.recent': 'الأخيرة',
+  'alphabet.link': 'جديد على الحروف؟ ابدأ بالأبجدية',
   'grammar.title': 'نصائح',
   'lesson.answer': 'الإجابة:',
   'lesson.review': 'مراجعة',
@@ -27944,7 +27951,7 @@ const fr: Catalog = {
   'nav.profile': 'Profil',
   'events.title': 'Événements',
   'events.none': 'Aucun événement en cours pour le moment.',
-  'events.noneBody': 'Reviens bientôt !',
+  'events.noneWhat': 'Les événements durent quelques jours, avec leurs propres quêtes et des Zêr et des gemmes à gagner. Quand l’un commence, tu le trouves dans Apprendre. En attendant, les quêtes du jour t’attendent.',
   'events.someMissing': 'Certains événements n’ont pas pu être chargés.',
   'events.bannerSubtitle': 'Quêtes et récompenses — touche pour jouer',
   'events.claim': 'Récupérer',
@@ -28727,6 +28734,7 @@ const fr: Catalog = {
   'chat.copy': 'Copier',
   'dictionary.related': 'Associés',
   'dictionary.recent': 'Récents',
+  'alphabet.link': 'Tu découvres les lettres ? Commence par l’alphabet',
   'grammar.title': 'Astuces',
   'lesson.answer': 'Réponse :',
   'lesson.review': 'Réviser',
@@ -31846,7 +31854,7 @@ const nl: Catalog = {
   'nav.profile': 'Profiel',
   'events.title': 'Evenementen',
   'events.none': 'Er zijn nu geen evenementen.',
-  'events.noneBody': 'Kom later terug!',
+  'events.noneWhat': 'Evenementen duren een paar dagen, met eigen opdrachten en Zêr en edelstenen om te winnen. Zodra er een begint, vind je het bij Leren. Tot die tijd wachten de opdrachten van vandaag.',
   'events.someMissing': 'Sommige evenementen konden niet worden geladen.',
   'events.bannerSubtitle': 'Opdrachten en beloningen — tik om te spelen',
   'events.claim': 'Ophalen',
@@ -32629,6 +32637,7 @@ const nl: Catalog = {
   'chat.copy': 'Kopiëren',
   'dictionary.related': 'Gerelateerd',
   'dictionary.recent': 'Recent',
+  'alphabet.link': 'Ken je de letters nog niet? Begin met het alfabet',
   'grammar.title': 'Tips',
   'lesson.answer': 'Antwoord:',
   'lesson.review': 'Herhalen',
@@ -35749,7 +35758,7 @@ const ckb: Catalog = {
   'nav.profile': 'پرۆفایل',
   'events.title': 'بۆنەکان',
   'events.none': 'ئێستا هیچ بۆنەیەک نییە.',
-  'events.noneBody': 'دواتر بگەڕێوە!',
+  'events.noneWhat': 'بۆنەکان چەند ڕۆژێک دەخایەنن، ئەرکی تایبەتی خۆیان هەیە و Zêr و گەوهەریان تێدایە بۆ بردنەوە. کاتێک یەکێکیان دەست پێدەکات، لە بەشی فێربوون دەیبینیت. تا ئەو کاتە، ئەرکەکانی ئەمڕۆ چاوەڕێتن.',
   'events.someMissing': 'هەندێک بۆنە بار نەکران.',
   'events.bannerSubtitle': 'ئەرک و خەڵات — بۆ یاریکردن دەستی لێبدە',
   'events.claim': 'وەرگرتن',
@@ -36532,6 +36541,7 @@ const ckb: Catalog = {
   'chat.copy': 'لەبەرگرتنەوە',
   'dictionary.related': 'پەیوەندیدار',
   'dictionary.recent': 'دواییەکان',
+  'alphabet.link': 'پیتەکان بۆ تۆ نوێن؟ بە ئەلفوبێ دەست پێ بکە',
   'grammar.title': 'ئامۆژگاری',
   'lesson.answer': 'وەڵام:',
   'lesson.review': 'پێداچوونەوە',
