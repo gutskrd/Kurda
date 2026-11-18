@@ -1,14 +1,8 @@
 /**
- * The Stories' proverbs, for learners (routes.ts): a variety's published
- * proverbs, of a theme when one is asked for, the proverb of the day, and one
- * proverb's page. Reading is open to everyone and pays nothing.
- *
- * Only published, approved rows are read, each checked again as it is read
- * (a row a rule now refuses is left out), and a proverb that is not one is
- * 404, the same as one that never existed. Each is sent with every language
- * it has been translated into, whatever that language's review says
- * (content-translations.ts), and without the notes left for its reviewers.
- * The round on the proverbs reads them from here too (proverb-round.ts).
+ * The Stories' proverbs for learners: a variety's published proverbs (optionally by theme), the proverb of the day,
+ * and one proverb's page. Open to everyone and unpaid. Only published, approved rows are read, each rechecked, and
+ * anything else is 404 like a missing one. Each goes with every translation it has, whatever its review status, and
+ * without the reviewers' notes. The proverb round reads them from here too.
  */
 import type pg from 'pg';
 import {
@@ -80,11 +74,7 @@ export class ProverbService {
     return localDate(now, safeTimeZone(res.rows[0]?.timezone));
   }
 
-  /**
-   * A variety's proverbs, of one theme when it is given; the themes its
-   * proverbs cover, in the list's order, for the filter; and the proverb the
-   * day puts forward, among all of them whatever the filter.
-   */
+  /** A variety's proverbs (optionally one theme), the themes they cover for the filter, and the day's proverb among all of them. */
   async list(dialect: GameDialect, theme: ProverbTheme | undefined, userId: string | null, now = new Date()): Promise<ProverbList> {
     const [all, day] = await Promise.all([publishedProverbs(this.pool, { dialect }), this.today(userId, now)]);
     const covered = new Set(all.flatMap((p) => p.payload.themes));

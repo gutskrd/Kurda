@@ -1,47 +1,25 @@
 /**
- * A short round on the Stories' proverbs, made, kept and paid by the solo
- * games' round (games/solo.ts) like any game played alone:
+ * A short round on the Stories' proverbs, made, kept and paid like any solo game (games/solo.ts):
  *
- *   meaning   — a proverb in Kurdish, and three meanings to choose its own from
- *   situation — a little scene where someone would say one, and three Kurdish
- *               proverbs to choose the one that fits
- *   complete  — a Kurdish proverb with its last word missing, and three
- *               Kurdish words to finish it with
+ *   meaning   — a Kurdish proverb and three meanings to choose from
+ *   situation — a short scene and three Kurdish proverbs to choose the fitting one
+ *   complete  — a Kurdish proverb missing its last word, and three words to finish it
  *
- * Five items, each from a different published proverb of the variety, the
- * ones the learner has met least recently first (`game_seen`). The other two
- * options of an item are other proverbs', drawn where they can be from
- * proverbs that share no theme with it, so two sayings about patience are
- * never both offered as the one that fits. A round is in one language: the
- * learner's interface language (`users.locale`) when at least five proverbs
- * are translated into it, else English, so no option stands out by being in
- * another language. A Kurmancî proverb has no Kurmancî translation (it is
- * the original), so a learner whose interface is Kurmancî plays its
- * Kurmancî proverbs in English, and likewise in Soranî.
+ * Five items from different published proverbs of the variety, least recently seen first (`game_seen`). Wrong
+ * options are other proverbs', preferably sharing no theme, so two sayings about patience never both fit. A round is
+ * in one language: the interface language when at least five proverbs are translated into it, else English, so no
+ * option stands out. Kurmancî and Soranî proverbs have no translation into their own language, so those learners play
+ * meaning and situation in English.
  *
- * A scene is the translation's own little scene; where it quotes the
- * proverb's rendering in its language, the quotation is replaced with …, so
- * the scene asks the question rather than answering it. The quotation is
- * found as a reader would see it: Arabic's short vowels and its stretching
- * mark (written in some places and not in others) and punctuation are left
- * out on both sides before they are compared.
+ * A scene is the translation's own; where it quotes the proverb, the quote becomes …, matched ignoring Arabic short
+ * vowels, the stretching mark and punctuation. Completion is all Kurdish, so Kurdish-interface learners get a round in
+ * their language: the word removed is the last of three letters or more, and the other options are other proverbs'
+ * missing words, nearest in final letter and length, never one that would make a variant of the proverb. The
+ * correction is in the learner's language where translated, else English.
  *
- * A proverb to finish is the one way of playing that is all in Kurdish, so a
- * learner whose interface is Kurdish has a round in their own language too.
- * The word taken out is the proverb's last word of three letters or more
- * (Mêvan mêvanê Xwedê ye loses Xwedê, not ye). The other two words are other
- * proverbs' missing words in the same variety, the nearest first: ending in
- * the same letter, then as long, so the right one does not stand out by its
- * shape. A word that would make one of the proverb's own variants is never
- * offered beside it: it would be right too. Its correction is in the
- * learner's language where the proverb is translated into it, else English.
- *
- * The answers stay in the round on the server; an item is sent with its
- * options and never its answer, nor the proverb it is about in a scene. What
- * a round pays follows the solo games' rules with this round's own (`rules`):
- * no XP, as no game played alone pays, and the streak and the daily goal when
- * at least half of it was right on the first try. Reading a proverb pays
- * nothing either.
+ * Answers stay on the server; items go without their answer or, in a scene, the proverb. Pay follows the solo rules
+ * with this round's own `rules`: no XP, and the streak and daily goal when at least half was right first time.
+ * Reading a proverb pays nothing.
  */
 import type pg from 'pg';
 import { z } from 'zod';
@@ -92,7 +70,7 @@ const FALLBACK: AppLocale = 'en';
 /** Text compared as a reader would: case and spacing aside. */
 const plainKey = (s: string): string => s.normalize('NFC').toLocaleLowerCase().replace(/\s+/g, ' ').trim();
 
-/** Arabic's short vowels, its dagger alef and its stretching mark: written in some places and not others. */
+/** Arabic short vowels, dagger alef and stretching mark, written inconsistently. */
 const ARABIC_MARKS = /[\u064B-\u065F\u0670\u0640]/u;
 /** Marks that end or break up a sentence, compared as nothing. */
 const PUNCTUATION = /[\p{P}\p{S}]/u;
@@ -125,11 +103,7 @@ function readerKey(text: string): { key: string; at: number[] } {
   return { key, at };
 }
 
-/**
- * The scene with the proverb's own rendering taken out of it, wherever it is
- * quoted: compared as a reader would see them (`readerKey`), and cut from the
- * scene as it is written.
- */
+/** The scene with the proverb's rendering removed wherever quoted, compared by `readerKey` and cut as written. */
 export function sceneWithout(scene: string, rendering: string): string {
   const needle = readerKey(rendering).key.trim();
   if (needle.length < 4) return scene;
@@ -152,14 +126,10 @@ export interface ProverbGap {
   after: string;
 }
 
-/** The shortest word a proverb to finish may lose: a shorter last word is a little word like ye or e. */
+/** The shortest word a completion may remove; shorter last words are particles like ye or e. */
 const GAP_MIN_LETTERS = 3;
 
-/**
- * Where a proverb is to be finished (pure, for the tests): its last word of
- * three letters or more, with the text before it and after it as written.
- * Null when it has no such word.
- */
+/** Where a proverb is to be finished: its last word of three letters or more, with the text around it. Null when none. */
 export function proverbGap(text: string): ProverbGap | null {
   const words = [...text.matchAll(/[\p{L}\p{M}’']+/gu)];
   for (let i = words.length - 1; i >= 0; i--) {
@@ -205,7 +175,7 @@ export class ProverbRound implements SoloEngine<ProverbItem, ProverbRoundItemVie
     return { items: items as ProverbItem[], meta: { mode: this.mode, locale } };
   }
 
-  /** A round of proverbs to finish: five that each have a word to take out and two near words to offer beside it. */
+  /** A completion round: five proverbs, each with a word to remove and two near words to offer. */
   private async buildComplete(ask: RoundAsk, db: Pick<pg.Pool, 'query'>): Promise<{ items: ProverbItem[]; meta: Record<string, unknown> } | null> {
     const [proverbs, seen, user] = await Promise.all([
       publishedProverbs(db, { dialect: ask.dialect }),
@@ -236,7 +206,7 @@ export class ProverbRound implements SoloEngine<ProverbItem, ProverbRoundItemVie
     return { items, meta: { mode: this.mode, locale } };
   }
 
-  /** One proverb to finish: its own word and the two nearest other proverbs' words, in a drawn order. */
+  /** One completion item: its word and the two nearest other proverbs' words, in a drawn order. */
   private completeItem(p: Proverb, gap: ProverbGap, words: readonly string[], locale: AppLocale, seed: string, repeat: boolean): ProverbItem | null {
     const key = (w: string) => foldForDialect(w, p.dialect);
     const own = key(gap.word);

@@ -1,38 +1,16 @@
 /**
- * The starter riddles and proverbs (api/content/games/riddles.json and
- * proverbs.json): the Stories' own collections, which the owner wants
- * learners to have, so each is seeded once and published.
+ * The starter riddles and proverbs (api/content/games/riddles.json and proverbs.json), seeded once and published.
+ * Each entry becomes a `starter` row in its variety (shared/src/lore.ts), published and approved with every
+ * translation unreviewed, since publishing does not claim a native speaker checked it; the reviewer note goes in
+ * `notes`, which learner routes never send. A riddle's level is its difficulty's; a proverb's is the file's `level`,
+ * else the middle one.
  *
- * Each entry in a file is one row in its variety, written the way the
- * collections are (shared/src/lore.ts): the Kurdish fields, its sources, a
- * note for its reviewers, and its translations into the other app languages.
- * Seeding makes it a `starter` row, published and approved, with every
- * translation unreviewed beside it: publishing is not a claim that a native
- * speaker has checked the text, and the reviewers track that per language in
- * the admin. The note for the reviewers is kept in the row (`notes`), which
- * the learner routes never send. A riddle's level is its difficulty's; a
- * proverb's is the file's `level`, else the middle one.
- *
- * Until a person changes a starter in the admin (every admin action sets
- * `updated_by`), its file is where it is written: a later start brings the
- * row, and each translation no reviewer has touched, up to the file, so a
- * correction reaches the app with the next deploy. Once someone has changed
- * it, the admin is where it lives.
- *
- * An entry is checked whole before anything of it is written — the row by
- * `checkGameContent`, each translation by `checkLoreTranslation` — and one
- * with any problem is logged and left for a later start, once the file is
- * fixed. A seeded one is remembered in `content_seeds`, as the starter
- * stories and the first case are, so a starter an editor deleted stays gone.
- *
- * An entry may be kept back (`"status": "held"`: a saying waiting for a
- * native speaker and a source) or taken out (`"status": "retired"`). A held
- * one is seeded as a draft and never published, and an untouched row of it
- * that is live goes back to draft; a retired one is never seeded, and an
- * untouched row of it is archived. The status is the file's, not the row's,
- * so it is taken off before the entry is checked.
- *
- * Nothing here throws: a broken file must not stop the API starting.
+ * Until someone changes a starter in the admin (which sets `updated_by`), the file is its source: each start brings
+ * the row and its untouched translations up to the file. An entry is checked whole first (`checkGameContent`,
+ * `checkLoreTranslation`); a bad one is logged and left for a later start. Seeds are remembered in `content_seeds`,
+ * so a deleted starter stays gone. `"status": "held"` seeds a draft that is never published (a live untouched row
+ * returns to draft); `"retired"` is never seeded and archives an untouched row. Nothing here throws, so a broken file
+ * never stops the API.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
@@ -79,7 +57,7 @@ const fileSchemas = {
   proverb: z.object({ proverbs: z.array(entry) }),
 } as const;
 
-/** A value without the keys a file leaves null or empty: an optional field absent rather than blank. */
+/** A value without the keys a file leaves null or empty, so optional fields are absent rather than blank. */
 function tidy(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(tidy);
   if (value !== null && typeof value === 'object') {
@@ -195,7 +173,7 @@ export async function seedStarterLore(
           client.release();
         }
       }
-      // every starter no person has changed: brought up to its file, and published, held back or archived as it says
+      // Every starter nobody has changed is brought up to its file, and published, held or archived as it says.
       for (const e of read.entries) {
         if (!e.ok) continue;
         const outcome = await keepCurrent(pool, kind, e);
@@ -220,7 +198,7 @@ export async function seedStarterLore(
   return { seeded, refreshed, published, held, retired };
 }
 
-/** A value as text with its keys in order, so a row read back from jsonb compares equal to the file it came from. */
+/** A value as text with its keys in order, so a jsonb row compares equal to the file it came from. */
 function stable(value: unknown): string {
   const sorted = (v: unknown): unknown =>
     Array.isArray(v)
@@ -232,11 +210,8 @@ function stable(value: unknown): string {
 }
 
 /**
- * One starter brought up to its file and published, under a row lock, when no
- * person has changed it: the row's text and level, and each translation no
- * reviewer has touched (a translation the file adds is added; one a reviewer
- * marked or edited stays theirs). A held one is kept a draft, and goes back
- * to one if it was live; a retired one is archived.
+ * Brings one untouched starter up to its file under a row lock: its text, level and each translation no reviewer
+ * has touched (new ones are added). A held one stays or returns to draft; a retired one is archived.
  */
 async function keepCurrent(
   pool: pg.Pool,
