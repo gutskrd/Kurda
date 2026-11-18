@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ProfileRank } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { ProgressShowcase } from './ProgressShowcase';
 
@@ -11,37 +10,21 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 
-const rank = (over: Partial<ProfileRank>): ProfileRank => ({
-  game: 'wordle-battle',
-  tier: 'gir',
-  division: 2,
-  points: 450,
-  resting: false,
-  placing: false,
-  placement: null,
-  seasonPeakTier: 'gir',
-  bestTier: 'gir',
-  ...over,
-});
-
 describe('ProgressShowcase', () => {
   afterEach(cleanup);
 
-  it('says how far through placement someone is, rather than 0 of 5', () => {
-    renderWithProviders(
-      <ProgressShowcase
-        own={false}
-        badges={[]}
-        league={null}
-        ranks={[
-          rank({ game: 'rhyme-match', tier: null, division: null, points: null, placing: true, placement: { played: 3, of: 5 }, seasonPeakTier: null, bestTier: null }),
-          rank({}),
-        ]}
-      />,
-    );
-    expect(screen.getAllByText('Placing 3/5').length).toBeGreaterThan(0);
-    expect(screen.queryByText('Placing 0/5')).toBeNull();
-    expect(screen.getAllByText('Gir II').length).toBeGreaterThan(0);
+  it('shows the league and opens it, and nothing of games, which are played for fun', () => {
+    const onLeague = vi.fn();
+    renderWithProviders(<ProgressShowcase own={false} badges={[]} league={{ tier: 'cem' }} onLeague={onLeague} />);
+    expect(screen.getByText('Çem')).toBeTruthy();
+    expect(screen.queryByText(/Placing|Gir/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Çem/ }));
+    expect(onLeague).toHaveBeenCalled();
+  });
+
+  it('shows nothing of somebody else’s with no badges on show and no league', () => {
+    const { container } = renderWithProviders(<ProgressShowcase own={false} badges={[]} league={null} />);
+    expect(container.textContent).toBe('');
   });
 
   it('marks a badge earned since the app opened as new, and the others not', () => {
@@ -53,23 +36,10 @@ describe('ProgressShowcase', () => {
           { key: 'peyvok', family: 'learning', tier: 1, tierKey: 'sifir' },
         ]}
         league={null}
-        ranks={[]}
         fresh={new Set(['agir'])}
       />,
     );
     expect(screen.getAllByTestId('badge-new')).toHaveLength(1);
     expect(screen.getByText('New')).toBeTruthy();
-  });
-
-  it('falls back to a bare "Placing" when the count is not sent', () => {
-    renderWithProviders(
-      <ProgressShowcase
-        own={false}
-        badges={[]}
-        league={null}
-        ranks={[rank({ tier: null, division: null, points: null, placing: true, placement: undefined as never, seasonPeakTier: null, bestTier: null })]}
-      />,
-    );
-    expect(screen.getAllByText('Placing').length).toBeGreaterThan(0);
   });
 });

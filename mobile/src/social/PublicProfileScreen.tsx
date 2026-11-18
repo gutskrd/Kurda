@@ -11,7 +11,6 @@ import { useUnread } from '../messages/unread';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { statCaption, statValue } from '../theme/fonts';
 import { Fire } from '../theme/Fire';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -27,12 +26,14 @@ import { ProfileTree } from '../tree/ProfileTree';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { Framed } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { SEASON_FRAME_INNER, countryName, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { FavoriteRow, flagUrl } from '../profile/cosmetic-parts';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Avatar } from '../profile/Avatar';
 import { ProfileActivity, ProfileActivitySkeleton } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends } from '../profile/ProfileFriends';
+import { LevelBar, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
+import type { LevelInfo } from '../profile/types';
 import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
 import { useBlock } from './blocks';
@@ -57,13 +58,11 @@ interface Profile {
   /** Their XP as older servers sent it; current ones send it inside `level`. */
   xp?: number;
   /** Their level and the XP behind it: where their XP is, on a profile you may see. */
-  level?: { xp: number; level: number } | null;
+  level?: LevelInfo | null;
   streak?: number;
   /** Their league tier, or null for someone not in the leagues (never a made-up "bronze"). */
   tier?: string | null;
   league?: ProfileLeague | null;
-  /** Game Ranks per game played; "Resting" ones carry no tier for others. */
-  ranks?: ProfileRank[];
   /** The season frame they wear round their avatar. */
   frameSku?: string | null;
   /** The picture of a frame from the shop; a season frame is drawn from its SKU. */
@@ -102,6 +101,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const facts = useFacts();
   // In right-to-left languages the numbers start on the right, as reading does.
   const dir = useDirection();
   const { width: windowWidth } = useWindowDimensions();
@@ -299,7 +299,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             size={Math.round(96 / SEASON_FRAME_INNER)}
             label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}
           >
-            <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={FACE} photoUrl={profile.avatarUrl} />
+            <Avatar name={profile.displayName ?? profile.username} size={FACE} photoUrl={profile.avatarUrl} />
           </Framed>
           </View>
           {/* The name they chose leads and the handle follows, as on your own profile and the website. */}
@@ -352,21 +352,15 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 
           {profile.private ? null : (
             <>
-              <View style={[styles.stats, { flexDirection: dir.row }]}>
-                {/* Grouped and in the reader's own digits, as on their own profile. */}
-                <Stat label={t('profile.streak')} value={formatNumber(profile.streak ?? 0, locale)} fire={fireLevel(profile.streak ?? 0)} />
-                <Stat label={t('profile.stat.xp')} value={formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale)} />
-                {/* A league only while they take part, translated; nothing for somebody never in one. */}
-                {knownTier(profile.league?.tier ?? profile.tier) ? (
-                  <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
-                ) : null}
-                <Stat label={t('profile.badges')} value={formatNumber(profile.achievements ?? 0, locale)} />
+              {/* The level and the figures as on their own profile and the website, in the reader's own digits. */}
+              <View style={styles.stats}>
+                {profile.level ? <LevelBar level={profile.level} /> : null}
+                <ProfileFacts facts={facts(profile)} />
               </View>
 
               <ProfileTree tree={profile.tree} />
               <ProgressShowcase
                 own={false}
-                ranks={profile.ranks ?? []}
                 league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
                 badges={profile.badges ?? []}
               />
@@ -419,9 +413,9 @@ function ProfileCardSkeleton(): React.JSX.Element {
       </View>
       <SkeletonText size={typography.sizes.xl} width={120} align="center" raised />
       <SkeletonText size={typography.sizes.md} width={72} align="center" raised />
-      <View style={styles.stats}>
+      <View style={[styles.stats, styles.statsSkeleton]}>
         {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={styles.stat}>
+          <View key={i} style={styles.statSkeleton}>
             <SkeletonText size={typography.sizes.lg} width={36} align="center" raised />
             <SkeletonText size={typography.sizes.xs} width={48} align="center" raised />
           </View>
@@ -442,19 +436,26 @@ const LARGE_BUTTON = 50;
 function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode }) {
   return <ScreenHeader onBack={onExit} right={right} />;
 }
-/** A number and what it counts; `fire` puts the streak's fire before it, as big as their streak has grown it. */
-function Stat({ label, value, fire }: { label: string; value: string; fire?: FireLevel }) {
-  const { colors } = useTheme();
-  const dir = useDirection();
-  return (
-    <View style={styles.stat}>
-      <View style={[styles.statValueRow, { flexDirection: dir.row }]}>
-        {fire ? <Fire size={18} level={fire} /> : null}
-        <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
-      </View>
-      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
-    </View>
-  );
+/** Their streak, XP, league while they take part (nothing for somebody never in one), and badges. */
+function useFacts(): (profile: Profile) => ProfileFact[] {
+  const { t, locale } = useI18n();
+  return (profile) => {
+    const streak = profile.streak ?? 0;
+    const tier = knownTier(profile.league?.tier ?? profile.tier);
+    return [
+      {
+        key: 'streak',
+        label: t('profile.stat.streak'),
+        value: formatNumber(streak, locale),
+        // The fire as big as their streak has grown it; cold logs with none.
+        art: <Fire size={18} level={fireLevel(streak)} />,
+        spoken: t(streak === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: formatNumber(streak, locale) }),
+      },
+      { key: 'xp', label: t('profile.stat.xp'), value: formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale) },
+      ...(tier ? [{ key: 'league', label: t('profile.league'), value: leagueName(t, tier) }] : []),
+      { key: 'badges', label: t('profile.badges'), value: formatNumber(profile.achievements ?? 0, locale) },
+    ];
+  };
 }
 
 const styles = StyleSheet.create({
@@ -474,11 +475,9 @@ const styles = StyleSheet.create({
   flag: { width: 22, height: 16 },
   countryName: { fontSize: typography.sizes.sm },
   bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
-  stats: { flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: spacing.md },
-  stat: { alignItems: 'center', gap: 2 },
-  statValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statValue,
-  statLabel: statCaption,
+  stats: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.md },
+  statsSkeleton: { flexDirection: 'row', justifyContent: 'space-around' },
+  statSkeleton: { alignItems: 'center', gap: 2 },
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   dim: { textAlign: 'center', marginTop: spacing.md },
 });
