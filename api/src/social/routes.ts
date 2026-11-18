@@ -193,14 +193,18 @@ export function registerSocialRoutes(
 
 
 
-  /** Likes or saves a post with one toggle; the database decides from what is stored, so a double click cannot desync the heart and count. */
+  /**
+   * Likes, saves or reposts a post. With `{ on }` it sets that state, so a repeated or late request changes nothing;
+   * without a body it toggles, the database deciding from what is stored, as older apps expect.
+   */
   app.post(
     '/posts/:type/:id/:kind',
     {
       schema: {
         params: z.object({ type: z.string().max(16), id: z.uuid(), kind: z.string().max(16) }),
+        body: z.object({ on: z.boolean().optional() }).nullish(),
       },
-      config: { rateLimit: { max: 120, windowMs: 60_000, per: 'user-or-ip' as const }, skipValidation: true },
+      config: { rateLimit: { max: 120, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: requireAccount,
     },
     async (req) => {
@@ -208,7 +212,9 @@ export function registerSocialRoutes(
       if (!isTargetType(type)) throw new AppError('BAD_TARGET', 400, 'unknown post type');
       if (!isEngagementKind(kind)) throw new AppError('BAD_KIND', 400, 'unknown engagement');
 
-      const { on } = await engagement.toggle(req.user!.id, type, id, kind);
+      const wanted = (req.body as { on?: boolean } | null | undefined)?.on;
+      const { on } =
+        wanted === undefined ? await engagement.toggle(req.user!.id, type, id, kind) : await engagement.set(req.user!.id, type, id, kind, wanted);
       const counts = await engagement.forPosts(req.user!.id, type, [id]);
       return { on, engagement: counts.get(id) };
     },
