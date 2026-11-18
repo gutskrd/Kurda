@@ -19,16 +19,12 @@ import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
 
-// posts and comments both re-export these, so a caller importing from here
-// still gets the one shared loader
+// Re-exported so callers importing from here get the one shared loader.
 export { loadAuthors, unknownAuthor, type Author };
 
 /**
- * What a written post is.
- *
- * A çîrok and a helbest are pieces of work — titled, and looked for by name. A
- * gotin is a saying: a line or two, read in passing and no title needed. Any of
- * them can carry up to four pictures.
+ * What a written post is. A çîrok and a helbest are titled works, found by name; a gotin is a saying of a line or two
+ * with no title. Any can carry up to four pictures.
  */
 export type PostType = WrittenPostType;
 
@@ -40,12 +36,8 @@ export type AuthorRole = 'user' | 'admin';
 export type PostStatus = 'draft' | 'published' | 'removed';
 
 /**
- * Unfinished server drafts one person may keep at once (@kurda/shared, where
- * the apps read it too). A draft reaches nobody, so saving one is not gated
- * like a post; this is what bounds them instead — without it a new account
- * could store drafts as fast as the route takes them, for good. Only the apps
- * installed before drafts moved onto the device save them, and a person
- * finishing their writing has a handful.
+ * Unfinished server drafts one person may keep (@kurda/shared). Drafts reach nobody and are not gated like posts, so
+ * this bounds them; only older apps save drafts on the server.
  */
 export { MAX_OPEN_DRAFTS };
 
@@ -59,7 +51,7 @@ export interface PostMediaInput {
 export interface PostMedia {
   mediaKey: string;
   altText: string | null;
-  /** the size it was stored at, px; null for nothing recorded */
+  /** The stored size in pixels; null when unrecorded. */
   width: number | null;
   height: number | null;
 }
@@ -118,13 +110,7 @@ export interface LibraryPost {
 }
 
 
-/**
- * A post with its author attached.
- *
- * A separate type rather than optional fields on LibraryPost: the read paths
- * always populate it and the write paths never do, so making it optional would
- * push a "did this one come with an author?" check onto every caller.
- */
+/** A post with its author attached; a separate type because read paths always fill it and write paths never do. */
 export interface LibraryPostWithAuthor extends LibraryPost {
   author: Author;
 }
@@ -140,10 +126,7 @@ export interface ListFilters {
   viewerId?: string | null;
 }
 
-/**
- * Why a post was refused: its shape (the same check the composer runs, see
- * `@kurda/shared` post-composer) or one of the pictures it names.
- */
+/** Why a post was refused: its shape (the composer's check) or one of its pictures. */
 export type PostRejection = PostProblem | { code: PictureClaimFailure; mediaKey: string };
 
 type Invalid = { ok: false; reason: 'invalid'; problem: PostRejection };
@@ -162,12 +145,7 @@ export function createProblem(input: CreateInput): PostProblem | null {
   return postProblems(contentOf(input))[0] ?? null;
 }
 
-/**
- * Every word a post shows, one block of text, for the spam check and the
- * screening: title, text, alt texts and credit, the empty ones left out. (The
- * title used to be interpolated as it came, so a gotin was screened as the word
- * "undefined" or "null" followed by its text.)
- */
+/** Every word a post shows as one block, for the spam check and screening: title, text, alt texts and credit, empty ones left out. */
 export function postWords(post: {
   title?: string | null;
   body?: string | null;
@@ -181,10 +159,8 @@ export function postWords(post: {
 }
 
 /**
- * The words an edit adds or changes, and only those: a title, text or credit
- * that differs, an alt text that is new for its picture. Empty when an edit
- * only reorders, removes or re-sends what was there — re-screening unchanged
- * words would count them as repeats in the spam check.
+ * Only the words an edit adds or changes: a different title, text or credit, or a new alt text. Empty for reorders,
+ * removals and resends, since re-screening unchanged words would count them as spam repeats.
  */
 export function changedWords(current: LibraryPost, patch: UpdateInput): string {
   const changed = (next: string | null | undefined, now: string | null): string | null =>
@@ -199,20 +175,11 @@ export function changedWords(current: LibraryPost, patch: UpdateInput): string {
 }
 
 /**
- * Community library authoring + browsing (KUR-281). A post is words, pictures,
- * or both (up to four, each its author's own upload); audio is optional; admins
- * and signed-in users author, guests only read. Text is control-char-stripped
- * on input (#108, newlines preserved for poems); web/admin surfaces escape on
- * render. Removal is soft (retained for moderation #285), and so a removed
- * post keeps its pictures.
- *
- * What a minor publishes is read by them and their friends only: to anyone
- * else, signed in or not, it is not there (users/age.ts `writtenForSql`). A
- * public byline was a way to find minors, and a stranger's reply a way to
- * reach one. It is worked out when read, so it ends by itself at 18.
- *
- * Nor is anything here read across a block, in either direction
- * (friends/blocked.ts): to the reader the post is simply not there.
+ * Library writing and browsing. A post is words, up to four of its author's own pictures, or both, with optional
+ * audio. Text is stripped of control characters on input (newlines kept for poems) and escaped by the apps. Removal
+ * is soft and kept for moderation, pictures included. A minor's posts are read only by them and their friends
+ * (users/age.ts `writtenForSql`), decided at read time so it ends at 18, and nothing is read across a block in either
+ * direction (friends/blocked.ts).
  */
 export class LibraryService {
   constructor(private readonly pool: pg.Pool) {}
@@ -226,7 +193,7 @@ export class LibraryService {
     const publish = input.publish !== false;
 
     return this.inTransaction(async (client) => {
-      // a new draft is counted under the author's lock, so a burst of saves cannot pass MAX_OPEN_DRAFTS together
+      // New drafts are counted under the author's lock, so a burst of saves cannot pass MAX_OPEN_DRAFTS together.
       if (!publish) {
         await lockPersonFor(client, 'drafts', authorId);
         const drafts = await client.query<{ n: number }>(
@@ -258,14 +225,7 @@ export class LibraryService {
     });
   }
 
-  /**
-   * Attach authors to posts in one extra query.
-   *
-   * Every post statement selects whole rows from library_posts alone; joining
-   * users into each of them would mean rewriting five statements to serve one
-   * display concern. A single lookup keyed by the ids already in hand is both
-   * smaller and easier to keep right.
-   */
+  /** Attaches authors in one extra query keyed by the ids in hand, rather than joining users into every post statement. */
   async withAuthors(posts: LibraryPost[], publicUrl: PublicUrl = () => null): Promise<LibraryPostWithAuthor[]> {
     const authors = await loadAuthors(this.pool, posts.map((p) => p.authorId), publicUrl);
     return posts.map((p) => ({ ...p, author: authors.get(p.authorId) ?? unknownAuthor(p.authorId) }));
@@ -295,13 +255,7 @@ export class LibraryService {
     return this.hydrate(res.rows);
   }
 
-  /**
-   * Your own unpublished drafts, most recently touched first.
-   *
-   * The composer keeps drafts on the device now, but the apps installed before
-   * it saved them on the server with no way to find them again; this is that
-   * way, so a draft can be opened, finished and published.
-   */
+  /** Your own unpublished server drafts, most recently touched first, so older apps' drafts can be finished. */
   async drafts(authorId: string, opts: { limit?: number; offset?: number } = {}): Promise<LibraryPost[]> {
     const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
     const offset = Math.max(0, opts.offset ?? 0);
@@ -322,11 +276,7 @@ export class LibraryService {
     return res.rows[0]!.n;
   }
 
-  /**
-   * Read a single published post and count the view — someone else's. An
-   * author opening their own post (to read it again, or to edit it) is not a
-   * reader, and counting it let them raise their own count.
-   */
+  /** Reads a published post and counts the view, except the author's own, so authors cannot raise their own count. */
   async get(id: string, viewerId: string | null = null): Promise<LibraryPost | null> {
     const res = await this.pool.query<Row>(
       `UPDATE library_posts
@@ -339,30 +289,21 @@ export class LibraryService {
     return (await this.hydrate(res.rows))[0] ?? null;
   }
 
-  /**
-   * A post as it stands, draft or published, for deciding what an edit or a
-   * publish needs before it is made. Not for showing: no view counted, no
-   * reader rules — the write that follows checks who may make it.
-   */
+  /** A post as it stands, draft or published, for deciding what an edit needs: no view counted and no reader rules. */
   async current(id: string): Promise<LibraryPost | null> {
     const res = await this.pool.query<Row>(`SELECT * FROM library_posts WHERE id = $1 AND status <> 'removed'`, [id]);
     return (await this.hydrate(res.rows))[0] ?? null;
   }
 
   /**
-   * Author or admin edits a post.
-   *
-   * The edit is checked as the post it makes — the same rules as a new one, so
-   * clearing a story's title or taking the last picture off an empty post is
-   * refused, not half-applied. New pictures must be unused uploads of the
-   * post's author (an admin cannot put their own upload on someone's post);
-   * pictures left out of `media` are let go to the orphan sweep, unless a
-   * moderator still has to look at them.
+   * An author or admin edits a post. The result is checked as a new post would be, so an invalid edit is refused, not
+   * half-applied. New pictures must be the author's unused uploads, even for an admin; pictures left out go to the
+   * orphan sweep unless a moderator still needs them.
    */
   async update(id: string, actorId: string, actorIsAdmin: boolean, patch: UpdateInput): Promise<MutateResult> {
     return this.owned(id, actorId, actorIsAdmin, async (client, row) => {
       const current = toPost(row, await this.mediaFor(client, [id]));
-      // nothing asked for: nothing changes, not even when it was last edited
+      // Nothing asked for, so nothing changes, not even the edit time.
       if (Object.values(patch).every((v) => v === undefined)) return { ok: true as const, post: current };
       const { content: next, media: nextMedia } = mergeEdit(current, patch);
       const [problem] = postProblems(next);
@@ -377,10 +318,8 @@ export class LibraryService {
         if (!claim.ok) {
           return { ok: false as const, reason: 'invalid' as const, problem: { code: claim.code, mediaKey: claim.mediaKey } };
         }
-        // a reported post's pictures are what its moderator will need to see:
-        // taken off it, they are kept, as a removed post's are, rather than
-        // handed to the sweep — or an author could clear a reported picture
-        // away before anybody opened the case
+        // A reported post's removed pictures are kept for its moderator, as a removed post's are, so an author cannot clear
+        // one away before the case is opened.
         const dropped = nowKeys.filter((k) => !nextKeys.includes(k));
         if (dropped.length > 0 && !(await underReport(client, id))) await releasePostPictures(client, dropped);
         await client.query(`DELETE FROM library_post_media WHERE post_id = $1`, [id]);
@@ -457,10 +396,7 @@ export class LibraryService {
     }
   }
 
-  /**
-   * Run `fn` only if the actor owns the post or is an admin, with the post's
-   * row locked. A refusal `fn` returns rolls back whatever it had done.
-   */
+  /** Runs `fn` with the post's row locked if the actor owns it or is an admin; a refusal from `fn` rolls back its work. */
   private async owned(
     id: string,
     actorId: string,
@@ -489,10 +425,7 @@ export class LibraryService {
   }
 }
 
-/**
- * The post an edit would make — the patch laid over the post as it stands —
- * as the shared check reads it, and the pictures it would have.
- */
+/** The post an edit would make (the patch over the current post) as the shared check reads it, and its pictures. */
 function mergeEdit(
   current: LibraryPost,
   patch: UpdateInput,
@@ -507,8 +440,7 @@ function mergeEdit(
       title: patch.title !== undefined ? patch.title : current.title,
       body: patch.body !== undefined ? patch.body : current.body,
       pictures: media,
-      // taking the last picture off a meme makes it a post again, unless the
-      // edit asks for a meme with no picture, which is refused
+      // Removing the last picture from a meme makes it an ordinary post, unless the edit asks for a pictureless meme, which is refused.
       meme: patch.meme ?? (current.meme && media.length > 0),
       sourceCredit: patch.sourceCredit !== undefined ? patch.sourceCredit : current.sourceCredit,
     },
@@ -527,16 +459,12 @@ export function addedPictures(current: LibraryPost, patch: UpdateInput): string[
 }
 
 /**
- * Whether a post has a report nobody has resolved yet: its moderation case
- * (#102, `library_post:<id>`) still open — every report joins the open case
- * about what it reports as it is filed (moderation/reports-service.ts), and
- * the old table's open rows are synced into one of their own — or an open row
- * in the old table that the queue has not taken in yet.
+ * Whether a post has an unresolved report: its moderation case (`library_post:<id>`) is open, or the old table has an
+ * open row the queue has not taken in yet.
  */
 async function underReport(executor: Pick<pg.PoolClient, 'query'>, postId: string): Promise<boolean> {
   const res = await executor.query<{ reported: boolean }>(
-    // "open" written as the partial unique index on (source, source_ref)
-    // writes it, so the open case is found from that index alone
+    // "Open" is written as the partial unique index on (source, source_ref) writes it, so that index alone answers.
     `SELECT EXISTS (SELECT 1 FROM moderation_cases
                      WHERE source IN ('report', 'library_report') AND source_ref = 'library_post:' || $1::uuid::text
                        AND ${OPEN_CASE_PREDICATE})
@@ -559,7 +487,7 @@ function contentOf(input: CreateInput): PostContent {
   };
 }
 
-/** Write a post's pictures in order, with the size each upload was stored at. */
+/** Writes a post's pictures in order with the size each was stored at. */
 async function writeMedia(
   executor: Pick<pg.PoolClient, 'query'>,
   postId: string,
