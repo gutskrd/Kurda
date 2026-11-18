@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Animated, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
 import { useIntents } from '../api/optimistic';
@@ -20,7 +20,8 @@ import { formatCompact, formatNumber } from '../i18n/format';
 import type { Locale } from '../i18n/translations';
 import { springTo, timing } from '../theme/animate';
 import { useDirection } from '../reports/direction';
-import { postUrl, setEngagement } from './api';
+import { setEngagement } from './api';
+import { SharePostSheet } from './SharePostSheet';
 import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem, type PostEngagement } from './types';
 import { PostPictures } from '../composer/PostPictures';
 import { usePostMenu } from '../composer/PostExtras';
@@ -51,56 +52,28 @@ function withWishes(told: PostEngagement, wanted: (kind: EngagementKind) => bool
   return shown;
 }
 
+/** A post's like, repost and save as drawn, and the taps that change them; shared by its card and its own page. */
+export interface PostEngagementState {
+  shown: PostEngagement;
+  /** Goes up with each like made here, for the heart's burst. */
+  likes: number;
+  like: () => void;
+  act: (kind: EngagementKind) => void;
+}
+
 /**
- * One post on the wall, written or a picture, in one shape: a header line (author, kind, age, "⋯"), the text, the
- * pictures, and a row of pills (like, comments, repost, share, save). A double tap likes with a blooming heart; a
- * single tap opens the post. Like, repost and save are shown at once (api/optimistic.ts), each on its own, and go back
- * with a short message on refusal; guests are offered an account first (auth/AccountGate). `standalone` is the post on its own page.
- * Memoised, since liking one post re-renders the wall.
+ * Like, repost and save, each shown at once and sent on its own (api/optimistic.ts); the server's answer brings the
+ * true totals, and a refusal goes back with a short message. Guests are offered an account first (auth/AccountGate).
+ * `onChanged` is told the fresh totals.
  */
-export const FeedCard = memo(function FeedCard({
-  item,
-  onChanged,
-  standalone = false,
-  onDeleted,
-}: {
-  item: FeedItem;
-  /** Told the fresh totals, so a like does not reload the wall. */
-  onChanged?: (next: FeedItem) => void;
-  /** The post on its own page. */
-  standalone?: boolean;
-  /** Told when its author deletes it from its menu, so a page showing it can close. */
-  onDeleted?: () => void;
-}): React.JSX.Element {
-  const navigation = useNavigation<RootNavigation>();
+export function usePostEngagement(item: FeedItem, onChanged?: (next: FeedItem) => void): PostEngagementState {
   const { client } = useAuth();
-  // A guest reads the wall; liking, reposting and saving are the account's (auth/AccountGate).
   const { require } = useAccountGate();
-  const { colors } = useTheme();
-  const { t, locale } = useI18n();
-  const dir = useDirection();
-  // Each like made here, so the heart answers the press before the server does.
   const [likes, setLikes] = useState(0);
-  // Each like made by a double tap, for the heart in the middle of the post.
-  const [blooms, setBlooms] = useState(0);
   // The engagement as the server last told it: the item's, or a fresher answer to a tap here.
   const [told, setTold] = useState(item.engagement);
-  const [reporting, setReporting] = useState(false);
   useEffect(() => setTold(item.engagement), [item.engagement]);
 
-  const open = useCallback(() => {
-    if (standalone) return;
-    if (item.targetType === 'library') navigation.navigate('LibraryPost', { postId: item.id });
-    else navigation.navigate('MemeDetail', { postId: item.id });
-  }, [navigation, item.targetType, item.id, standalone]);
-  // Your own post's Edit and Delete, on a long press, the "⋯" (and as an action for a screen reader).
-  const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onDeleted, onActivate: open });
-  const openAuthor = useCallback(() => navigation.navigate('UserProfile', { userId: item.author.id }), [navigation, item.author.id]);
-
-  /*
-   * Like, repost and save are each shown at once and sent on their own; the server's answer brings the true totals.
-   * What is drawn is its last answer with each change still on its way laid over it.
-   */
   const wishes = useIntents<EngagementKind, boolean, { on: boolean; engagement: PostEngagement }>(
     async (kind, on) => {
       const res = await setEngagement(client, item, kind, on);
@@ -136,6 +109,106 @@ export const FeedCard = memo(function FeedCard({
     wishes.want('like', !now.current.liked, told.liked);
   }, [may, wishes, told]);
 
+  return { shown, likes, like, act };
+}
+
+/**
+ * The row of pills under a post: like, comments, repost, then share and save at the far end. Share opens a sheet that
+ * passes the post on, out of the app or to a friend in chat (SharePostSheet), as the website's does.
+ */
+export function PostActions({
+  item,
+  engage,
+  onComment,
+}: {
+  item: FeedItem;
+  engage: PostEngagementState;
+  onComment: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const [sharing, setSharing] = useState(false);
+  const e = engage.shown;
+  const count = (n: number): number | undefined => (n > 0 ? n : undefined);
+  return (
+    <View style={[styles.actions, { flexDirection: dir.row }]}>
+      {/* The pills share the row's gap between them, and the 12 above them with what they are under. */}
+      <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
+        <Action
+          icon={e.liked ? 'heart-fill' : 'heart'}
+          tint={e.liked ? colors.danger : undefined}
+          on={e.liked}
+          label={e.liked ? t('feed.unlike') : t('feed.like')}
+          count={count(e.likes)}
+          burst={engage.likes}
+          onPress={engage.like}
+        />
+        <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={count(item.commentCount)} onPress={onComment} />
+        <Action
+          icon="repost"
+          on={e.reposted}
+          tint={e.reposted ? colors.success : undefined}
+          label={e.reposted ? t('repost.undo') : t('repost.do')}
+          count={count(e.reposts)}
+          onPress={() => engage.act('repost')}
+        />
+        <View style={styles.spacer} />
+        {/* Sharing has its own glyph: the paper plane means Messages and Send. */}
+        <Action icon="share" label={t('share.post')} onPress={() => setSharing(true)} />
+        <Action
+          icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
+          on={e.bookmarked}
+          label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
+          onPress={() => engage.act('bookmark')}
+        />
+      </ReachGroup>
+      {sharing ? <SharePostSheet item={item} onClose={() => setSharing(false)} /> : null}
+    </View>
+  );
+}
+
+/**
+ * One post on the wall, written or a picture, in one shape: a header line (author, kind, age, "⋯"), the text, the
+ * pictures, and a row of pills (`PostActions`). A double tap likes with a blooming heart; a single tap opens the post.
+ * `standalone` is the post on its own page. Memoised, since liking one post re-renders the wall.
+ */
+export const FeedCard = memo(function FeedCard({
+  item,
+  onChanged,
+  standalone = false,
+  onDeleted,
+}: {
+  item: FeedItem;
+  /** Told the fresh totals, so a like does not reload the wall. */
+  onChanged?: (next: FeedItem) => void;
+  /** The post on its own page. */
+  standalone?: boolean;
+  /** Told when its author deletes it from its menu, so a page showing it can close. */
+  onDeleted?: () => void;
+}): React.JSX.Element {
+  const navigation = useNavigation<RootNavigation>();
+  // A guest reads the wall; liking, reposting and saving are the account's (auth/AccountGate).
+  const { require } = useAccountGate();
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
+  // Each like made by a double tap, for the heart in the middle of the post.
+  const [blooms, setBlooms] = useState(0);
+  const [reporting, setReporting] = useState(false);
+  const engage = usePostEngagement(item, onChanged);
+  const { like } = engage;
+  const liked = engage.shown.liked;
+
+  const open = useCallback(() => {
+    if (standalone) return;
+    if (item.targetType === 'library') navigation.navigate('LibraryPost', { postId: item.id });
+    else navigation.navigate('MemeDetail', { postId: item.id });
+  }, [navigation, item.targetType, item.id, standalone]);
+  // Your own post's Edit and Delete, on a long press, the "⋯" (and as an action for a screen reader).
+  const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onDeleted, onActivate: open });
+  const openAuthor = useCallback(() => navigation.navigate('UserProfile', { userId: item.author.id }), [navigation, item.author.id]);
+
   /*
    * One tap opens the post; two quick taps like it, so the first tap waits briefly for a second. A double tap on
    * a liked post keeps it liked: the gesture only adds a heart.
@@ -152,7 +225,7 @@ export const FeedCard = memo(function FeedCard({
       // A guest's double tap asks for the account before any heart blooms.
       if (!require('react')) return;
       setBlooms((n) => n + 1);
-      if (!shown.liked) like();
+      if (!liked) like();
       return;
     }
     lastTap.current = now;
@@ -160,27 +233,14 @@ export const FeedCard = memo(function FeedCard({
       single.current = null;
       open();
     }, DOUBLE_TAP_MS);
-  }, [like, open, shown.liked, require]);
-
-  /** Hand the post to the system share sheet. */
-  const share = useCallback(async () => {
-    const url = postUrl(item);
-    const message = item.title ? `${item.title}\n${url}` : url;
-    try {
-      await Share.share({ message, url });
-    } catch {
-      // The sheet was dismissed or the platform refused it; nothing was shared.
-    }
-  }, [item]);
+  }, [like, open, liked, require]);
 
   // An unfamiliar kind prints itself rather than an empty word.
   const badgeKey = CARD_LABEL_KEY[item.kind];
   const badge = badgeKey ? t(badgeKey) : item.kind;
   const who = item.author.displayName || item.author.username;
-  const e = shown;
   const pictures = feedImages(item);
   const when = noticeTime(item.at, t, locale);
-  const count = (n: number): number | undefined => (n > 0 ? n : undefined);
   // A picture's words are its caption, under it; a written post's words are the post.
   const words = item.title || item.excerpt;
 
@@ -263,39 +323,7 @@ export const FeedCard = memo(function FeedCard({
         ) : null}
       </Bloom>
 
-      <View style={[styles.actions, { flexDirection: dir.row }]}>
-        {/* The pills share the row's gap between them, and the 12 above them with what they are under. */}
-        <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
-          <Action
-            icon={e.liked ? 'heart-fill' : 'heart'}
-            tint={e.liked ? colors.danger : undefined}
-            on={e.liked}
-            label={e.liked ? t('feed.unlike') : t('feed.like')}
-            count={count(e.likes)}
-            burst={likes}
-            onPress={like}
-          />
-          <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={count(item.commentCount)} onPress={open} />
-          <Action
-            icon="repost"
-            on={e.reposted}
-            tint={e.reposted ? colors.success : undefined}
-            label={e.reposted ? t('repost.undo') : t('repost.do')}
-            count={count(e.reposts)}
-            onPress={() => act('repost')}
-          />
-          <View style={styles.spacer} />
-          {/* Sharing has its own glyph: the paper plane means Messages and Send, and a post is not sent to anyone here. */}
-          <Action icon="share" label={t('share.post')} onPress={() => void share()} />
-          <Action
-            icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
-            on={e.bookmarked}
-            label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
-            onPress={() => act('bookmark')}
-          />
-        </ReachGroup>
-      </View>
-
+      <PostActions item={item} engage={engage} onComment={open} />
 
       {menu.sheet}
       {reporting ? (

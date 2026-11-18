@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -35,8 +35,19 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useDirection } from '../reports/direction';
 import { noticeTime } from '../notifications/inbox';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useAccountGate } from '../auth/AccountGate';
+import { getEngagement } from '../feed/api';
+import { PostActions, usePostEngagement } from '../feed/FeedCard';
+import type { FeedItem, PostEngagement } from '../feed/types';
+import { formatNumber } from '../i18n/format';
 
-/** Read a library post: title and body, an inline audio player when it has a narration, and a comment thread with a composer. */
+const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
+
+/**
+ * Read a written post: how often it was read, its title and body, an inline audio player when it has a narration, the
+ * wall's row of like, comments, repost, share and save (counts from GET /posts/library/:id/engagement, as the website's
+ * page reads them), and a comment thread with a composer.
+ */
 export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
@@ -49,7 +60,9 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null; name?: string } | null>(null);
 
   const [post, setPost] = useState<LibraryPost | null>(null);
+  const [engagement, setEngagement] = useState<PostEngagement | null>(null);
   const [failed, setFailed] = useState(false);
+  const { require } = useAccountGate();
   const [draft, setDraft] = useState('');
   const [voiceUri, setVoiceUri] = useState<string | null>(null);
 
@@ -62,13 +75,18 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 
   const loadAll = useCallback(async () => {
     setFailed(false);
-    const [p] = await Promise.all([getPost(client, postId), loadComments()]);
+    const [p, e] = await Promise.all([getPost(client, postId), getEngagement(client, { targetType: 'library', id: postId }), loadComments()]);
     if (!p.ok) {
       setFailed(true);
       return;
     }
     setPost(p.data);
+    // Numbers that did not come are shown as none rather than holding the post back.
+    setEngagement(e.ok && e.data.engagement ? e.data.engagement : NO_ENGAGEMENT);
   }, [client, postId, loadComments]);
+
+  // The post in the wall's shape, so its row of actions is the wall's own.
+  const item = useMemo(() => (post ? asFeedItem(post, engagement ?? NO_ENGAGEMENT) : null), [post, engagement]);
 
   useEffect(() => {
     void loadAll();
@@ -136,6 +154,12 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
             <PostSkeleton />
           ) : (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+              <View style={[styles.reads, { flexDirection: dir.row, alignSelf: edge }]}>
+                <Icon name="eye" size={14} color={colors.textSecondary} />
+                <Text style={[styles.readsText, { color: colors.textSecondary }]}>
+                  {t(post.viewCount === 1 ? 'library.readOne' : 'library.reads', { count: formatNumber(post.viewCount, locale) })}
+                </Text>
+              </View>
               {/* A gotin has no title; its pictures come first on its own page, words under them. */}
               {post.title ? <Text style={[styles.title, dir.free, { color: colors.textPrimary }]}>{post.title}</Text> : null}
               {/* Who wrote it and when, as the wall says it: a tap opens their profile. */}
@@ -160,6 +184,11 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               {post.audioUrl ? <AudioPlayer url={post.audioUrl} /> : null}
               {post.body ? <Text style={[styles.postBody, dir.free, { color: colors.textPrimary }]}>{post.body}</Text> : null}
               {post.sourceCredit ? <SourceCredit text={post.sourceCredit} /> : null}
+              {item ? (
+                <View style={styles.actions}>
+                  <PostRow item={item} onChanged={(next) => setEngagement(next.engagement)} onComment={() => require('comment') && thread.inputRef.current?.focus()} />
+                </View>
+              ) : null}
               {post.authorId !== user?.id ? (
                 <Pressable
                   onPress={() =>
@@ -223,6 +252,34 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   );
 }
 
+/** The wall's row under the post, its taps shown at once (feed/FeedCard `usePostEngagement`). */
+function PostRow({ item, onChanged, onComment }: { item: FeedItem; onChanged: (next: FeedItem) => void; onComment: () => void }): React.JSX.Element {
+  const engage = usePostEngagement(item, onChanged);
+  return <PostActions item={item} engage={engage} onComment={onComment} />;
+}
+
+/** A written post in the wall's own shape. */
+function asFeedItem(post: LibraryPost, engagement: PostEngagement): FeedItem {
+  const images = postImages(post);
+  return {
+    key: `library:${post.id}`,
+    targetType: 'library',
+    id: post.id,
+    kind: post.meme ? 'meme' : post.type,
+    author: { id: post.author?.id ?? post.authorId, username: post.author?.username ?? '', displayName: null, avatarUrl: post.author?.avatarUrl ?? null },
+    title: post.title,
+    excerpt: post.body || null,
+    imageUrl: images[0]?.url ?? null,
+    images,
+    meme: post.meme,
+    href: `/app/library/${post.id}`,
+    viewCount: post.viewCount,
+    commentCount: post.commentCount,
+    engagement,
+    at: post.publishedAt ?? post.createdAt,
+  };
+}
+
 /**
  * The loading placeholder: title, a page of body at its line height and the comments heading, using the page's
  * own styles so text lands where the grey stood.
@@ -265,6 +322,10 @@ const styles = StyleSheet.create({
   author: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   when: { fontSize: typography.sizes.sm },
   reportRow: { alignItems: 'center', gap: spacing.xs },
+  reads: { alignItems: 'center', gap: spacing.xs },
+  readsText: { fontSize: typography.sizes.sm },
+  // The row runs to the page's edges as on the wall, whose pills keep their own gutter.
+  actions: { marginHorizontal: -layout.gutter },
   screen: { flex: 1, paddingHorizontal: layout.gutter },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   title: { ...display(typography.sizes.xl) },

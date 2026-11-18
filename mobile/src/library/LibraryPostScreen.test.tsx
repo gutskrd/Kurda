@@ -133,6 +133,64 @@ describe('the post’s author', () => {
   });
 });
 
+/* The website's page has the wall's row under the post and says how often it was read; so does the phone's. */
+describe('the post’s own row', () => {
+  const ENGAGEMENT = 'GET /posts/library/p1/engagement';
+  const counts = { likes: 4, bookmarks: 1, reposts: 2, liked: false, bookmarked: false, reposted: false };
+
+  it('says how often it was read, and shows its likes, reposts and comments as the wall does', async () => {
+    open({ [ENGAGEMENT]: ok({ engagement: counts }) });
+    expect(await screen.findByText('3 reads')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Like (4)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Repost (2)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '3 comments (3)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+  });
+
+  it('likes at once, before the server answers, and keeps the server’s totals after', async () => {
+    const reply = deferred<ApiResult<unknown>>();
+    const { client } = open({ [ENGAGEMENT]: ok({ engagement: counts }), 'POST /posts/library/p1/like': () => reply.promise });
+    fireEvent.click(await screen.findByRole('button', { name: 'Like (4)' }));
+    expect(screen.getByRole('button', { name: 'Unlike (5)' })).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/posts/library/p1/like')?.body).toEqual({ on: true });
+    await act(async () => reply.resolve(ok({ on: true, engagement: { ...counts, likes: 6, liked: true } })));
+    expect(await screen.findByRole('button', { name: 'Unlike (6)' })).toBeTruthy();
+  });
+
+  it('still shows the post, with no counts, when its numbers could not be read', async () => {
+    open();
+    expect(await screen.findByText('Rovî û Gur')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Like' })).toBeTruthy();
+  });
+
+  it('sends the post to a friend in chat from Share, saying who it went to', async () => {
+    const { client } = open({
+      [ENGAGEMENT]: ok({ engagement: counts }),
+      'GET /friends?limit=500': ok({ total: 1, friends: [{ userId: 'u-azad', username: 'azad', displayName: null, avatarUrl: null, online: false, lastSeenAt: null }] }),
+      'POST /chat/u-azad/messages': ok({ id: 'm1' }),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share this post' }));
+    expect(screen.getByRole('button', { name: 'Share…' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy link' })).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Message azad' }));
+    expect(await screen.findByText('Sent to azad.')).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/chat/u-azad/messages')?.body).toEqual({ body: 'Rovî û Gur\nhttps://hevalo.app/app/library/p1' });
+  });
+
+  it('brings the friends back with why, when the message did not go', async () => {
+    open({
+      [ENGAGEMENT]: ok({ engagement: counts }),
+      'GET /friends?limit=500': ok({ total: 1, friends: [{ userId: 'u-azad', username: 'azad', displayName: null, avatarUrl: null, online: false, lastSeenAt: null }] }),
+      'POST /chat/u-azad/messages': fail({ status: 403, code: 'NOT_FRIENDS', message: 'Not friends' }),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Share this post' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Message azad' }));
+    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(screen.queryByText('Sent to azad.')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Message azad' })).toBeTruthy();
+  });
+});
+
 describe('a comment’s author', () => {
   it('shows who wrote it, with their picture and how long ago in words, and opens their profile', async () => {
     open({}, [comment('c1')]);
