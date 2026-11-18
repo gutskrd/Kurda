@@ -163,7 +163,7 @@ describe('the round on the proverbs', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
     expect(await screen.findByRole('heading', { name: 'Round finished' })).toBeInTheDocument();
     expect(screen.getByText('Today counts for your streak.')).toBeInTheDocument();
-    // played alone it pays nothing, and says so once; no figure of XP anywhere
+    // Played alone it pays nothing and says so once, with no XP figure anywhere.
     expect(screen.getByText(/earns no XP/)).toBeInTheDocument();
     expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
     expect(within(screen.getByRole('region', { name: 'The proverbs in this round' })).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual([

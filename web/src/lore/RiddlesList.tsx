@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-// Soranî riddles in a face made for Arabic script
+// Soranî riddles in a typeface made for Arabic script.
 import '@fontsource-variable/vazirmatn';
 import { Link, useSearchParams } from 'react-router-dom';
 import { RIDDLE_DIFFICULTIES, dialectDirection, type RiddleCard, type RiddleDifficulty, type RiddleList, type RiddleState } from '@kurda/shared';
@@ -17,20 +17,16 @@ import './lore.css';
 
 type Load = { state: 'loading' } | { state: 'ready'; list: RiddleList } | { state: 'error'; message: string };
 
-/** What a list row and the riddle of the day say a riddle's state is: the server's for an account, the tab's for a visitor. */
-export function stateOf(card: RiddleCard, signedIn: boolean): RiddleState {
+/** A riddle's state for the list: the server's for an account, the tab's for a visitor. */
+function stateOf(card: RiddleCard, signedIn: boolean): RiddleState {
   if (signedIn) return card.state;
   return visitorRiddle(card.slug)?.state ?? 'new';
 }
 
 /**
- * The riddles (/app/learn/riddles): Metelok, the second of the Stories
- * section's shelves. At the top the riddle of the day, then every riddle of
- * the variety, easiest first, to be narrowed to one difficulty. Each shows
- * its question — in Kurdish, with the reader's language under it when they
- * ask for it — how hard it is, what it is about, and how far the reader has
- * got with it. Never a hint, an answer or an explanation: the list is asked
- * for alone, and nothing on it fetches more.
+ * The riddles (/app/learn/riddles), Metelok, the Stories section's second shelf: the riddle of the day, then every
+ * riddle of the variety, easiest first, filterable by difficulty. Each shows its question (with an optional
+ * translation), difficulty, category and progress, never a hint or answer.
  */
 export function RiddlesList(): React.JSX.Element {
   const t = useT();
@@ -58,7 +54,7 @@ function Riddles(): React.JSX.Element {
   const [translations, setTranslations] = useState(rememberedTranslations);
 
   useEffect(() => {
-    // asked once the session is known, so a learner's own states come with the list
+    // Fetched once the session is known, so the learner's states come with the list.
     if (status === 'restoring') return;
     let live = true;
     setLoad({ state: 'loading' });
@@ -98,7 +94,7 @@ function Riddles(): React.JSX.Element {
     return out;
   }, [list]);
   const shown = (list?.riddles ?? []).filter((r) => !difficulty || r.difficulty === difficulty);
-  // the toggle only where some question has something to show: a Kurmancî reader of Kurmancî riddles reads them as they are
+  // Offer the toggle only when some question has a translation to show.
   const translatable = (list?.riddles ?? []).some((r) => inReaderLanguage(r.translations, locale, r.dialect) !== null);
 
   return (
@@ -154,7 +150,7 @@ function Riddles(): React.JSX.Element {
   );
 }
 
-/** One of the difficulty filter's choices: a radio drawn as a chip, with how many riddles it holds. */
+/** One difficulty filter choice: a radio drawn as a chip, with its riddle count. */
 function FilterChip({ on, onPick, label, count }: { on: boolean; onPick: () => void; label: string; count: number }): React.JSX.Element {
   const locale = useLocale();
   return (
@@ -166,7 +162,7 @@ function FilterChip({ on, onPick, label, count }: { on: boolean; onPick: () => v
   );
 }
 
-/** "Solved: 3 of 12", with a hairline that fills as they go. */
+/** "Solved: 3 of 12", with a filling hairline. */
 function SolvedCount({ solved, total }: { solved: number; total: number }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -191,7 +187,7 @@ function SolvedCount({ solved, total }: { solved: number; total: number }): Reac
   );
 }
 
-/** The riddle the day puts forward, set larger than the rest, with the way to it. */
+/** The riddle of the day, set larger than the rest, with a link to it. */
 function DailyRiddle({ card, signedIn, translations }: { card: RiddleCard; signedIn: boolean; translations: boolean }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -231,7 +227,7 @@ function StateMark({ state }: { state: Exclude<RiddleState, 'new'> }): React.JSX
   );
 }
 
-/** A riddle in the list: its question, and under it what it is and how far the reader has got. The whole row leads to it. */
+/** A riddle in the list: its question, then its details and progress; the whole row links to it. */
 function RiddleRow({ card, signedIn, translations, today }: { card: RiddleCard; signedIn: boolean; translations: boolean; today: boolean }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();

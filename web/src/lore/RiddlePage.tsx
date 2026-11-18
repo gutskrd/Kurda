@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-// Soranî riddles in a face made for Arabic script
+// Soranî riddles in a typeface made for Arabic script.
 import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -37,22 +37,14 @@ const NEAR_KEY: Record<RiddleNear, MessageKey> = {
   language: 'lore.riddle.inKurdish',
 };
 
-/** What the answer page is handed when it is reached from here: a right guess's answer and pay, or a reveal the learner confirmed. */
+/** What the answer page receives from here: a right guess's answer and pay, or a confirmed reveal. */
 export type AnswerArrival = { solved: Extract<RiddleGuessResult, { correct: true }> } | { reveal: true };
 
 /**
- * A riddle (/app/learn/riddles/:slug), open to everyone.
- *
- * The question, large, in Kurdish, with the reader's language a tap away;
- * a field to guess in, which the server judges; the hints one at a time,
- * each fetched when it is asked for; and Show the answer, which asks once
- * and then goes to the answer's own page. Nothing on this page holds a hint
- * not yet taken, the answer or why it is right — not in the markup, not in
- * a tooltip, not in anything fetched ahead.
- *
- * A signed-in learner's hints and state are the server's. A visitor's are
- * kept in the tab (api.ts), and the hints they took are fetched again, one
- * by one, when they come back to the riddle.
+ * A riddle (/app/learn/riddles/:slug), open to everyone: the question in Kurdish with its translation a tap away, a
+ * guess the server judges, hints fetched one at a time, and Show the answer, which confirms and opens the answer page.
+ * Nothing on the page holds an untaken hint, the answer or its explanation. A visitor's progress is kept in the tab
+ * (api.ts), and their taken hints are refetched one by one on return.
  */
 export function RiddlePage(): React.JSX.Element {
   const { slug = '' } = useParams();
@@ -72,7 +64,7 @@ function RiddleLoader({ slug }: { slug: string }): React.JSX.Element {
     void client.get<{ riddle: RiddleDetail }>(`/riddles/${encodeURIComponent(slug)}`).then((res) => {
       if (!live) return;
       if (res.ok && res.data.riddle) setLoad({ state: 'ready', riddle: res.data.riddle });
-      // not published (any more) looks the same as never published
+      // Unpublished looks the same as never published.
       else if (!res.ok && res.error.status === 404) setLoad({ state: 'gone' });
       else if (!res.ok) setLoad({ state: 'error', message: describeError(res.error, t) });
     });
@@ -109,7 +101,7 @@ function Riddle({ riddle }: { riddle: RiddleDetail }): React.JSX.Element {
   const [hints, setHints] = useState<RiddleHint[]>(riddle.hintsUsed);
   const [hintBusy, setHintBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
-  // a visitor coming back to a riddle sees again the hints they took in this tab, fetched one by one as before
+  // A returning visitor sees the hints they took in this tab, refetched one by one.
   useEffect(() => {
     if (signedIn) return;
     const taken = Math.min(visitorRiddle(riddle.slug)?.hints ?? 0, riddle.hintCount);
@@ -146,7 +138,7 @@ function Riddle({ riddle }: { riddle: RiddleDetail }): React.JSX.Element {
   }
 
   const done = state === 'solved' || state === 'revealed';
-  // a visitor who came straight here (a friend's challenge) is told once what an account would keep; from the list they were told there
+  // A visitor arriving directly, such as from a challenge, sees the guest note once; the list already showed it.
   const cameFromList = (location.state as { fromList?: boolean } | null)?.fromList === true;
 
   return (
@@ -204,10 +196,8 @@ function Riddle({ riddle }: { riddle: RiddleDetail }): React.JSX.Element {
 }
 
 /**
- * The guess: typed in Kurdish, with the letters a keyboard may not have a
- * tap away, sent to the server, which says whether it is the answer. Wrong,
- * it says so kindly and the guess stays to be changed; right, the answer's
- * page opens on the moment it was solved.
+ * The guess, typed in Kurdish with a key bar for missing letters and judged by the server. A wrong guess stays to be
+ * edited; a right one opens the answer page on the solve.
  */
 function GuessForm({ riddle, hintsTaken, onWrong }: { riddle: RiddleDetail; hintsTaken: number; onWrong: () => void }): React.JSX.Element {
   const t = useT();
@@ -219,14 +209,14 @@ function GuessForm({ riddle, hintsTaken, onWrong }: { riddle: RiddleDetail; hint
   const [busy, setBusy] = useState(false);
   const [wrong, setWrong] = useState(0);
   const [tried, setTried] = useState<string | null>(null);
-  // how near the last wrong guess was, when it was: said instead of a plain "not quite"
+  // How near the last wrong guess was, shown instead of a plain "not quite".
   const [near, setNear] = useState<RiddleNear | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const locale = useLocale();
   const field = useRef<HTMLInputElement>(null);
   const caret = useRef<number | null>(null);
 
-  // the caret goes back after a letter the key bar added, once the field has it
+  // Restore the caret after a key bar letter once the field has it.
   useEffect(() => {
     const at = caret.current;
     if (at === null) return;
@@ -249,7 +239,7 @@ function GuessForm({ riddle, hintsTaken, onWrong }: { riddle: RiddleDetail; hint
     if (!text || busy || text === tried) return;
     setBusy(true);
     setProblem(null);
-    // the interface language, so a guess that is the answer in it is told to say it in Kurdish
+    // The interface language, so a guess that is the answer in it is told to answer in Kurdish.
     const res = await client.post<RiddleGuessResult>(`/riddles/${encodeURIComponent(riddle.slug)}/guess`, { guess: text, locale });
     setBusy(false);
     if (!res.ok) {
@@ -323,7 +313,7 @@ function GuessForm({ riddle, hintsTaken, onWrong }: { riddle: RiddleDetail; hint
   );
 }
 
-/** The hints taken, each unfolding where it is asked for, and the button for the next while there is one. */
+/** The hints taken, each unfolding in place, and the button for the next while there is one. */
 function Hints({ riddle, hints, busy, onTake }: { riddle: RiddleDetail; hints: RiddleHint[]; busy: boolean; onTake: () => void }): React.JSX.Element | null {
   const t = useT();
   const locale = useLocale();
@@ -369,7 +359,7 @@ function Hints({ riddle, hints, busy, onTake }: { riddle: RiddleDetail; hints: R
   );
 }
 
-/** Show the answer: asked once, here, and then the answer's own page. */
+/** Show the answer: a confirmation here, then the answer page. */
 function Reveal({ riddle }: { riddle: RiddleDetail }): React.JSX.Element {
   const t = useT();
   const { status } = useAuth();

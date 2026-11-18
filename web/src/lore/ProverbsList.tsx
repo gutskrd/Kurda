@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-// Soranî proverbs in a face made for Arabic script
+// Soranî proverbs in a typeface made for Arabic script.
 import '@fontsource-variable/vazirmatn';
 import { Link, useSearchParams } from 'react-router-dom';
 import { PROVERB_ROUND_ITEMS, dialectDirection, isProverbTheme, type ProverbList, type ProverbView } from '@kurda/shared';
@@ -18,15 +18,9 @@ import './lore.css';
 type Load = { state: 'loading' } | { state: 'ready'; list: ProverbList } | { state: 'error'; message: string };
 
 /**
- * The proverbs (/app/learn/proverbs): Gotinên pêşiyan, the sayings of those
- * who came before, the third of the Stories section's shelves. The proverb of
- * the day at the top, then every proverb of the variety, to be narrowed to a
- * theme; each in Kurdish with the reader's language under it, and where it
- * comes from. At the foot, the short round on them.
- *
- * The whole variety is asked for once and a theme narrows it here: there are
- * a few dozen, and the proverb of the day stays at the top whatever theme is
- * chosen.
+ * The proverbs (/app/learn/proverbs), Gotinên pêşiyan, the Stories section's third shelf: the proverb of the day, then
+ * every proverb of the variety with its translation and origin, filterable by theme, and the round at the foot. The
+ * whole variety is fetched once and filtered here, since there are only a few dozen.
  */
 export function ProverbsList(): React.JSX.Element {
   const t = useT();
@@ -159,7 +153,7 @@ function ProverbOfTheDay({ proverb }: { proverb: ProverbView }): React.JSX.Eleme
   );
 }
 
-/** A proverb in the list: the Kurdish, the reader's language under it, and where it comes from. */
+/** A proverb in the list: the Kurdish, its translation and its origin. */
 function ProverbRow({ proverb }: { proverb: ProverbView }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -189,10 +183,10 @@ function ProverbRow({ proverb }: { proverb: ProverbView }): React.JSX.Element {
   );
 }
 
-/** The short round on the proverbs, offered once there are enough to make one. */
+/** The proverb round, offered once there are enough proverbs for one. */
 function RoundInvite({ dialect, count }: { dialect: ProverbView['dialect']; count: number }): React.JSX.Element | null {
   const t = useT();
-  // a round is five proverbs, each beside two others
+  // A round is five proverbs, each beside two others.
   if (count < PROVERB_ROUND_ITEMS) return null;
   return (
     <section className="lore-round-invite" aria-labelledby="lore-round-title">

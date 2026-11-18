@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-// Soranî riddles in a face made for Arabic script
+// Soranî riddles in a typeface made for Arabic script.
 import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { dialectDirection, type RiddleAnswer, type RiddleCard, type RiddleDetail, type RiddleList } from '@kurda/shared';
@@ -23,15 +23,9 @@ type Step =
   | { state: 'error'; message: string };
 
 /**
- * A riddle's answer (/app/learn/riddles/:slug/answer): its own page, so
- * seeing an answer is always something the learner chose.
- *
- * Reached from the riddle, it opens on what happened there — solved by a
- * guess (a small moment, and the XP the server paid, if any), or the answer
- * asked for and confirmed. Reached any other way (an address typed, a link),
- * it asks first, once, unless the riddle is already solved or its answer
- * already shown. Then: the answer, why it is right, where the riddle comes
- * from and its sources, a friend to challenge, and the next riddle.
+ * A riddle's answer on its own page (/app/learn/riddles/:slug/answer), so seeing it is always a choice. From the
+ * riddle it opens on a solve (with any XP paid) or a confirmed reveal; arriving any other way it asks first, unless
+ * already solved or shown. Then the answer, its explanation, origin and sources, a challenge button and the next riddle.
  */
 export function RiddleAnswerPage(): React.JSX.Element {
   const { slug = '' } = useParams();
@@ -47,7 +41,7 @@ function AnswerLoader({ slug }: { slug: string }): React.JSX.Element {
   const arrival = location.state as AnswerArrival | null;
   const [step, setStep] = useState<Step>({ state: 'loading' });
   const [nonce, setNonce] = useState(0);
-  // the moment is had once: going back and forth to this page later shows the answer, not the moment again
+  // The moment plays once; returning to this page later shows only the answer.
   const moment = useRef(arrival && 'solved' in arrival ? arrival.solved : null);
 
   async function reveal(riddle: RiddleDetail, live: () => boolean): Promise<void> {
@@ -76,9 +70,9 @@ function AnswerLoader({ slug }: { slug: string }): React.JSX.Element {
       const riddle = res.data.riddle;
       const solved = moment.current;
       if (solved) {
-        // the guess was right: its answer came with it, and nothing more is asked
+        // The guess was right and brought the answer, so nothing more is asked.
         setStep({ state: 'ready', riddle: { ...riddle, state: 'solved' }, answer: solved.answer, solvedNow: true, xp: solved.xp });
-        // the moment belongs to this arrival; a reload or Back shows the answer without it
+        // The moment belongs to this arrival; a reload or Back shows the answer without it.
         navigate('.', { replace: true, state: null });
         return;
       }
@@ -89,7 +83,7 @@ function AnswerLoader({ slug }: { slug: string }): React.JSX.Element {
     return () => {
       live = false;
     };
-    // the arrival is read once, with the page; what it was is kept in `moment`
+    // The arrival is read once with the page and kept in `moment`.
   }, [client, slug, status, nonce, t]);
 
   const backTo = step.state === 'ready' || step.state === 'ask' ? riddlePath(step.riddle.slug) : RIDDLES;
@@ -117,7 +111,7 @@ function AnswerLoader({ slug }: { slug: string }): React.JSX.Element {
   );
 }
 
-/** Come here without having asked: the riddle again, and the one question before its answer. */
+/** Arrived without asking: the riddle again, and a confirmation before its answer. */
 function AskFirst({ riddle, onYes }: { riddle: RiddleDetail; onYes: () => void }): React.JSX.Element {
   const t = useT();
   const { status } = useAuth();
@@ -152,7 +146,7 @@ function Answer({ riddle, answer, solvedNow, xp }: { riddle: RiddleDetail; answe
   const tr = useMemo(() => inReaderLanguage(answer.translations, locale, riddle.dialect), [answer.translations, locale, riddle.dialect]);
   const question = useMemo(() => inReaderLanguage(riddle.translations, locale, riddle.dialect), [riddle.translations, locale, riddle.dialect]);
   const heading = useRef<HTMLHeadingElement>(null);
-  // the answer takes the focus as it arrives, so a screen reader starts where the page did
+  // The answer takes focus as it arrives, so screen readers start there.
   useEffect(() => heading.current?.focus(), []);
 
   return (
@@ -214,11 +208,7 @@ function Answer({ riddle, answer, solvedNow, xp }: { riddle: RiddleDetail; answe
   );
 }
 
-/**
- * The way on: the next riddle the reader has not done, after this one in the
- * list's order (round to the start), or the list itself when every one is
- * done. The list is asked for its questions alone, as it always is.
- */
+/** The next unfinished riddle after this one in list order, wrapping around, or the list when all are done. */
 function NextRiddle({ riddle }: { riddle: RiddleCard }): React.JSX.Element {
   const t = useT();
   const { client, status } = useAuth();

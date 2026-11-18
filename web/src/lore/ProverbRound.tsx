@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-// Soranî proverbs in a face made for Arabic script
+// Soranî proverbs in a typeface made for Arabic script.
 import '@fontsource-variable/vazirmatn';
 import { Link } from 'react-router-dom';
 import {
@@ -24,7 +24,7 @@ import { describeError } from '../lib/api';
 import { haptic } from '../lib/haptics';
 import { dialectName } from '../learn/map';
 import { PROVERBS, inVariety, proverbPath, useLoreDialect } from './api';
-// the round wears the solo games' shell: the same stones, verdicts and results
+// The round uses the solo games' shell: the same stones, verdicts and results.
 import '../games/games.css';
 import './lore.css';
 
@@ -45,18 +45,10 @@ function nextOpen(states: readonly SoloItemState[]): number {
 }
 
 /**
- * The round on the proverbs (/app/learn/proverbs/play), in the style of the
- * games played alone: five proverbs, three choices each, two tries.
- *
- *   What does it mean? — a proverb in Kurdish, and three meanings
- *   Which one fits?    — a little scene, and three proverbs to choose from
- *
- * Made, checked and settled on the server (api/src/lore/proverb-round.ts),
- * which keeps the answers: an item comes with its options and nothing that
- * gives the right one away. Played alone, it pays no XP, and its results say
- * so once; a round with at least half right on the first try counts for the
- * streak and the day's goal, and that is said either way. A round left open
- * is offered again until it expires.
+ * The proverb round (/app/learn/proverbs/play), styled like the solo games: five proverbs, three choices, two tries,
+ * asking either what a proverb means or which proverb fits a scene. The server (api/src/lore/proverb-round.ts) builds
+ * and scores it and keeps the answers. It pays no XP, which the results say once; at least half right on the first
+ * try counts for the streak and daily goal. An unfinished round is offered again until it expires.
  */
 export function ProverbRound(): React.JSX.Element {
   const [dialect] = useLoreDialect();
@@ -82,7 +74,7 @@ function Round({ dialect }: { dialect: GameDialect }): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
 
-  // a round of this mode left unfinished, to offer first
+  // An unfinished round of this mode, offered first.
   useEffect(() => {
     let live = true;
     setOpen(null);
@@ -144,7 +136,7 @@ function Round({ dialect }: { dialect: GameDialect }): React.JSX.Element {
     if (!res.ok) return fail(res.error.code, describeError(res.error, t));
     if (res.data.expired) return fail('GAME_SESSION_EXPIRED', '');
     begin(res.data);
-    // every item answered and only the finish missing: finish it now
+    // Every item answered and only the finish missing, so finish it now.
     if (nextOpen(res.data.states) >= res.data.items.length) await finish(res.data.id);
   };
 
@@ -175,7 +167,7 @@ function Round({ dialect }: { dialect: GameDialect }): React.JSX.Element {
     setResult(null);
   };
 
-  // the heading takes the focus on each new phase, so a screen reader hears where it is
+  // The heading takes focus on each new phase, so screen readers announce it.
   useEffect(() => {
     heading.current?.focus();
   }, [phase]);
@@ -300,11 +292,7 @@ function Round({ dialect }: { dialect: GameDialect }): React.JSX.Element {
   );
 }
 
-/**
- * One item: what is asked, and its three choices. A choice tried and wrong
- * is struck out for the second try; once the item is done the right one is
- * marked, and the one chosen wrongly stays struck.
- */
+/** One item and its three choices; a wrong choice is struck out, and once done the right one is marked. */
 function RoundItem({
   item,
   state,
@@ -326,7 +314,7 @@ function RoundItem({
   }, [result]);
   const done = state.done || result?.done === true;
   const right = result?.done ? (result.correction?.choice ?? null) : null;
-  // a meaning is in the round's language; a proverb to choose is in Kurdish
+  // A meaning is in the round's language; a proverb is in Kurdish.
   const optionLang = item.mode === 'meaning' ? { lang: item.locale, dir: 'auto' as const } : kurdish;
 
   return (
@@ -337,7 +325,7 @@ function RoundItem({
           {item.proverb}
         </p>
       ) : item.mode === 'complete' ? (
-        // the missing word is a gap of its own, so it reads as a blank to fill and a screen reader says so
+        // The missing word is its own element, so it reads as a blank to fill, for screen readers too.
         <p className="lore-round-prompt lore-display lore-verse" lang={kurdish.lang} dir={kurdish.dir}>
           {item.before}{' '}
           <span className="lore-gap" role="img" aria-label={t('lore.round.ask.complete')}>
@@ -375,7 +363,7 @@ function RoundItem({
   );
 }
 
-/** Once an item is done: the proverb it was about, what it says, and what it means. */
+/** Once an item is done: its proverb, translation and meaning. */
 function Correction({ correction, dialect }: { correction: ProverbRoundCorrection; dialect: GameDialect }): React.JSX.Element {
   const { lang, dir } = dialectDirection(dialect);
   return (
@@ -393,7 +381,7 @@ function Correction({ correction, dialect }: { correction: ProverbRoundCorrectio
   );
 }
 
-/** The proverbs a round went through, each a way to its own page. */
+/** The round's proverbs, each linking to its page. */
 function MetInRound({ corrections, dialect }: { corrections: ProverbRoundCorrection[]; dialect: GameDialect }): React.JSX.Element {
   const t = useT();
   const { lang, dir } = dialectDirection(dialect);
