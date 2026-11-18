@@ -6,12 +6,15 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { badgeDef, type BadgeUnlockedEvent } from '@kurda/shared';
-import { BadgeService, profileShowcase, type BadgeNotices } from './service.js';
+import { BadgeService, CATALOGUE_VERSION, profileShowcase, type BadgeNotices } from './service.js';
 import { addXp, makeLearner, removeLearners, type LearnerOptions, type TestLearner } from '../test/progress.js';
 import { befriend } from '../test/social.js';
-import type { Notification } from '../push/service.js';
+import type { Notification, PushService } from '../push/service.js';
 import { DictionaryRepository } from '../dictionary/repository.js';
 import { PRACTICE_TARGET } from '../practice/practice-select.js';
+import { queriesDuring } from '../test/query-count.js';
+import { badgeNotices } from '../jobs/badge-jobs.js';
+import { InboxService } from '../notifications/inbox-service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const DAY = 86_400_000;
@@ -23,7 +26,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
   const live: Array<{ userId: string; e: BadgeUnlockedEvent }> = [];
   const pushes: Array<{ userId: string; day: string }> = [];
   const notices: BadgeNotices = {
-    record: async (userId, n) => void recorded.push({ userId, n }),
+    recordAll: async (userId, notifications) => void recorded.push(...notifications.map((n) => ({ userId, n }))),
     realtime: async (userId, e) => void live.push({ userId, e }),
     pushLater: async (userId, day) => void pushes.push({ userId, day }),
   };
@@ -924,6 +927,20 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       expect(recorded.filter((r) => r.userId === q.id)).toHaveLength(1);
     });
 
+    it('writes the notices of several unlocks at once in one statement', async () => {
+      const push = { deliver: async () => ({}) } as unknown as PushService;
+      const told: BadgeService = new BadgeService(pool, {
+        notices: badgeNotices({ inbox: new InboxService(pool), realtime: async () => undefined, badges: () => told, push }),
+      });
+      const p = await learner();
+      await told.evaluate(p.id);
+      await pool.query(`INSERT INTO user_streaks (user_id, current_streak, longest_streak, days_learned) VALUES ($1, 30, 30, 30)`, [p.id]);
+      const run = await queriesDuring(pool, () => told.recordStreak(p.id, 30));
+      const notes = await pool.query(`SELECT data->>'key' AS key FROM notifications WHERE user_id = $1 AND data->>'kind' = 'badge'`, [p.id]);
+      expect(notes.rows.length).toBeGreaterThanOrEqual(2);
+      expect(run.statements.filter((sql) => sql.startsWith('INSERT INTO notifications'))).toHaveLength(1);
+    });
+
     it('unseen unlocks wait for the celebration, and are marked seen', async () => {
       const p = await counted();
       await pool.query(`INSERT INTO user_streaks (user_id, current_streak, longest_streak, days_learned) VALUES ($1, 7, 7, 1)`, [p.id]);
@@ -950,6 +967,21 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       expect(page.badges.find((b) => b.key === 'tire-rast')).toMatchObject({ hidden: true, hintKey: 'badges.tire-rast.hint' });
       expect(page.badges).toHaveLength(62);
       expect(page.monthlyChallenge.goal).toBeGreaterThanOrEqual(8);
+    });
+
+    it('counts a learner seen for the first time or on an older catalogue, and otherwise only reads', async () => {
+      const p = await learner();
+      await addXp(pool, p.id, 50, new Date());
+      const first = await queriesDuring(pool, () => badges.list(p.id));
+      expect(first.statements.some((s) => s.includes('pg_advisory_xact_lock'))).toBe(true);
+      const again = await queriesDuring(pool, () => badges.list(p.id));
+      expect(again.result).toEqual(first.result);
+      // whether they are counted, then their badges, the rarity and their own figures
+      expect(again.count, again.statements.join('\n')).toBe(4);
+      await pool.query(`UPDATE badge_users SET catalogue = 1 WHERE user_id = $1`, [p.id]);
+      const older = await queriesDuring(pool, () => badges.list(p.id));
+      expect(older.statements.some((s) => s.includes('UPDATE badge_users SET catalogue'))).toBe(true);
+      expect((await pool.query(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [p.id])).rows[0]!.catalogue).toBe(CATALOGUE_VERSION);
     });
 
     it('shows rarity only once 500 are active', async () => {

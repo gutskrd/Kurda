@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { BadgeNotices, BadgeService } from '../badges/service.js';
-import type { PushService } from '../push/service.js';
+import type { Notification, PushService } from '../push/service.js';
 import type { JobQueue } from './queue.js';
 import { defineJob, type JobDefinition } from './registry.js';
 
@@ -49,14 +49,14 @@ export function makeBadgePushJob(badges: BadgeService, push: PushService): JobDe
  * deduplicated per learner and day when there is a queue, sent at once when there is not.
  */
 export function badgeNotices(deps: {
-  inbox: { record: BadgeNotices['record'] };
+  inbox: { recordAll(items: ReadonlyArray<{ userId: string; notification: Notification }>): Promise<void> };
   realtime: (userId: string, event: Record<string, unknown> & { type: string }) => Promise<void>;
   badges: () => BadgeService;
   push: PushService;
   jobs?: JobQueue | null;
 }): BadgeNotices {
   return {
-    record: (userId, n) => deps.inbox.record(userId, n),
+    recordAll: (userId, notifications) => deps.inbox.recordAll(notifications.map((notification) => ({ userId, notification }))),
     realtime: (userId, event) => deps.realtime(userId, event as unknown as Record<string, unknown> & { type: string }),
     pushLater: async (userId, day) => {
       if (deps.jobs) {

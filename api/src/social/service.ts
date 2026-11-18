@@ -11,6 +11,7 @@ import { inLeaguesSql } from '../leagues/service.js';
 import { profileShowcase } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { resolveSections, type SectionVisibility } from './profile-activity.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
 export interface FavoriteRef {
@@ -200,9 +201,10 @@ export class SocialService {
 
   /**
    * Someone's public profile, gated by privacy and blocks. `viewerId` is null for a signed-out reader, the least
-   * privileged case: no blocks, no friends, so friends-only and nobody profiles show what any stranger sees.
+   * privileged case: no blocks, no friends, so friends-only and nobody profiles show what any stranger sees. Without
+   * `ranksAndBadges` the ranks and showcase are left unread, for callers that show neither.
    */
-  async profile(viewerId: string | null, targetId: string): Promise<PublicProfile> {
+  async profile(viewerId: string | null, targetId: string, opts: { ranksAndBadges?: boolean } = {}): Promise<PublicProfile> {
     const row = await this.pool.query<{
       username: string;
       display_name: string | null;
@@ -314,27 +316,9 @@ export class SocialService {
         WHERE u.id = $1 AND u.deleted_at IS NULL`,
       [targetId, viewerId],
     );
-    const u = row.rows[0];
-    if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
-
+    const found = row.rows[0];
     const isSelf = viewerId !== null && viewerId === targetId;
-    // A guest has no profile others can open: to anyone else the id is unknown, not private.
-    if (u.guest && !isSelf) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
-    // one read says both whether a block stands between them and where they stand
-    const friendStatus: FriendStatus =
-      isSelf ? 'self' : viewerId === null ? 'none' : await this.friends.statusBetween(viewerId, targetId);
-    // a block hides the profile entirely — never reveal the block itself
-    if (friendStatus === 'blocked') {
-      throw new AppError('USER_NOT_FOUND', 404, 'no such user');
-    }
-    // An 'everyone' stored before their age was known reads as 'members' for a minor or unknown age.
-    const visibility: Visibility =
-      u.profile_visibility === 'everyone' && !isKnownAdultRow(u) ? 'members' : u.profile_visibility;
-    const canSeeDetail =
-      isSelf ||
-      visibility === 'everyone' ||
-      (visibility === 'members' && viewerId !== null) ||
-      (visibility === 'friends' && friendStatus === 'friends');
+    const { u, friendStatus, canSeeDetail } = standing(found, viewerId, targetId, await this.statusOf(found, viewerId, targetId));
 
     const base: PublicProfile = {
       userId: targetId,
@@ -376,6 +360,14 @@ export class SocialService {
       u.favorite_story_id && u.fs_title != null
         ? { id: u.favorite_story_id, title: u.fs_title, type: u.fs_type ?? '', status: u.fs_status ?? '' }
         : null;
+    const [ranks, badges] =
+      opts.ranksAndBadges === false
+        ? [undefined, undefined]
+        : await Promise.all([
+            this.ranks.profileRanks(targetId, isSelf),
+            // a minor's showcase only to themselves and their friends
+            profileShowcase(this.pool, targetId, viewerId),
+          ]);
     return {
       ...base,
       bio: u.bio,
@@ -392,14 +384,67 @@ export class SocialService {
       streak: u.streak,
       tier: toLeagueTier(u.tier),
       league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
-      ranks: await this.ranks.profileRanks(targetId, isSelf),
+      ranks,
       frameSku: u.frame_sku,
       frameAssetKey: u.frame_asset,
       achievements: u.achievements,
-      // a minor's showcase only to themselves and their friends
-      badges: await profileShowcase(this.pool, targetId, viewerId),
+      badges,
       // presence is private: only the user themselves and their friends see it
       online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
     };
   }
+
+  /**
+   * Whether the viewer may see the detail of someone's profile, by the rules of `profile` and without reading the
+   * rest of it, with the sections the owner shows: for the lists a profile leads to (friends, posts, tags).
+   */
+  async access(viewerId: string | null, targetId: string): Promise<{ private: boolean; sections: SectionVisibility }> {
+    const row = await this.pool.query<GateRow & { profile_sections: unknown }>(
+      `SELECT profile_visibility, birth_year, birth_month, guest, profile_sections FROM users WHERE id = $1 AND deleted_at IS NULL`,
+      [targetId],
+    );
+    const found = row.rows[0];
+    const { u, canSeeDetail } = standing(found, viewerId, targetId, await this.statusOf(found, viewerId, targetId));
+    return { private: !canSeeDetail, sections: resolveSections(u.profile_sections) };
+  }
+
+  /** Where the viewer stands with a profile's owner, read only when it decides anything: someone else's live account, signed in. */
+  private async statusOf(u: GateRow | undefined, viewerId: string | null, targetId: string): Promise<FriendStatus | null> {
+    if (!u || u.guest || viewerId === null || viewerId === targetId) return null;
+    return this.friends.statusBetween(viewerId, targetId);
+  }
+}
+
+/** What deciding whether a profile shows takes from its owner's row. */
+interface GateRow {
+  profile_visibility: Visibility;
+  birth_year: number | null;
+  birth_month: number | null;
+  guest: boolean;
+}
+
+/**
+ * Where the viewer stands with a profile and whether its detail shows them; `status` is null for one's own profile or a
+ * signed-out reader. A missing account, a guest's (to anyone but its owner) and one a block stands across are all
+ * "no such user", so neither a block nor a guest is revealed.
+ */
+function standing<Row extends GateRow>(
+  u: Row | undefined,
+  viewerId: string | null,
+  targetId: string,
+  status: FriendStatus | null,
+): { u: Row; friendStatus: FriendStatus; canSeeDetail: boolean } {
+  if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
+  const isSelf = viewerId !== null && viewerId === targetId;
+  if (u.guest && !isSelf) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
+  const friendStatus: FriendStatus = isSelf ? 'self' : (status ?? 'none');
+  if (friendStatus === 'blocked') throw new AppError('USER_NOT_FOUND', 404, 'no such user');
+  // An 'everyone' stored before their age was known reads as 'members' for a minor or unknown age.
+  const visibility: Visibility = u.profile_visibility === 'everyone' && !isKnownAdultRow(u) ? 'members' : u.profile_visibility;
+  const canSeeDetail =
+    isSelf ||
+    visibility === 'everyone' ||
+    (visibility === 'members' && viewerId !== null) ||
+    (visibility === 'friends' && friendStatus === 'friends');
+  return { u, friendStatus, canSeeDetail };
 }

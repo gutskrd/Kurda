@@ -70,7 +70,8 @@ export const CATALOGUE_VERSION = Math.max(1, ...Object.keys(CATALOGUE_ADDITIONS)
 
 /** The in-app list, the live celebration, and one push a day at most. */
 export interface BadgeNotices {
-  record(userId: string, notification: Notification): Promise<void>;
+  /** Writes one learner's notifications together. */
+  recordAll(userId: string, notifications: readonly Notification[]): Promise<void>;
   realtime(userId: string, event: BadgeUnlockedEvent): Promise<void>;
   /**
    * Schedules the day's single push, a while after the first unlock so it can bundle the rest. Called at most once
@@ -315,6 +316,13 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     return unlocks;
   }
 
+  /** Whether this learner was counted against the current catalogue, which leaves a count with no trigger nothing to do. */
+  private async counted(userId: string): Promise<boolean> {
+    const r = await this.pool.query<{ catalogue: number | null }>(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [userId]);
+    const row = r.rows[0];
+    return row !== undefined && (row.catalogue ?? CATALOGUE_VERSION) >= CATALOGUE_VERSION;
+  }
+
   /** Quietly counts the badges added to the catalogue since this learner was last counted. */
   private async catchUp(client: Executor, userId: string, catalogue: number | null): Promise<void> {
     const from = catalogue ?? CATALOGUE_VERSION;
@@ -392,6 +400,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     const notices = this.deps.notices;
     if (!notices || unlocks.length === 0) return;
     const warn = (what: string) => (err: unknown) => this.deps.log?.warn({ err, userId }, what);
+    const told: Notification[] = [];
     for (const u of unlocks) {
       const def = badgeDef(u.key)!;
       const event: BadgeUnlockedEvent = {
@@ -404,15 +413,14 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
       };
       await notices.realtime(userId, event).catch(warn('badge_unlocked not sent'));
       // English for the list; the apps write their own words from `data`
-      await notices
-        .record(userId, {
-          category: 'progress',
-          title: 'A new badge',
-          body: def.secret ? 'You found a secret badge.' : `You earned ${def.nameKu}.`,
-          data: { kind: 'badge', key: u.key, tier: String(u.tier) },
-        })
-        .catch(warn('badge notification not recorded'));
+      told.push({
+        category: 'progress',
+        title: 'A new badge',
+        body: def.secret ? 'You found a secret badge.' : `You earned ${def.nameKu}.`,
+        data: { kind: 'badge', key: u.key, tier: String(u.tier) },
+      });
     }
+    await notices.recordAll(userId, told).catch(warn('badge notification not recorded'));
     const day = this.now().toISOString().slice(0, 10);
     const claimed = await this.pool.query(
       `INSERT INTO badge_push_days (user_id, day) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
@@ -448,8 +456,8 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
 
   /** `GET /me/badges`: every badge, the learner's progress on it, the showcase, secrets and rarity. */
   async list(userId: string): Promise<BadgesResponse> {
-    // make sure what they have done is counted (quietly, the first time)
-    await this.evaluate(userId, []);
+    // make sure what they have done is counted (quietly, the first time); once counted there is nothing to count here
+    if (!(await this.counted(userId))) await this.evaluate(userId, []);
     // The learner's own single values ride one statement together.
     const ctx = new MeasureContext(this.pool, userId);
     const [rows, rarity, days, units, showcase, legacyWin] = await Promise.all([
