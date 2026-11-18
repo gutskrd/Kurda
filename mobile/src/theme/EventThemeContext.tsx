@@ -24,13 +24,34 @@ const EventThemeContext = createContext<EventThemeValue>({
   refresh: () => {},
 });
 
-/** How often live events are re-polled, so the theme reverts near a boundary. */
-const POLL_MS = 60_000;
+/** GET /events/active; `nextChangeAt` is absent from older servers. */
+interface ActiveEvents {
+  events: ActiveEventLite[];
+  nextChangeAt?: string | null;
+}
+
+/** The wait when the next change is not known: an older server, no answer, or a phone clock that runs ahead. */
+const RETRY_MS = 60_000;
+/** The longest wait, so an admin's edit to an event still reaches the phone. */
+export const MAX_WAIT_MS = 15 * 60_000;
+/** Asked this long after the boundary, so the server is past it too. */
+const MARGIN_MS = 2_000;
+
+/** How long to wait before asking again, given the server's next boundary. */
+export function nextAskIn(nextChangeAt: string | null | undefined, now: number): number {
+  if (nextChangeAt === undefined) return RETRY_MS;
+  if (nextChangeAt === null) return MAX_WAIT_MS;
+  const wait = Date.parse(nextChangeAt) - now;
+  // A boundary already passed here but not on the server: this phone's clock runs ahead.
+  if (!(wait > 0)) return RETRY_MS;
+  return Math.min(MAX_WAIT_MS, wait + MARGIN_MS);
+}
 
 /**
- * Tracks the active event theme app-wide. Live events are re-polled on mount, on return from the background, and on
- * a slow interval that stops in the background, so the theme applies while an event runs and reverts when it ends,
- * with no stored state to go stale. Opting out gives null.
+ * Tracks the active event theme app-wide. Live events are read on mount, on return from the background, and again
+ * just after the next boundary the server gives (at most MAX_WAIT_MS later), with nothing timed in the background,
+ * so the theme applies while an event runs and reverts when it ends, with no stored state to go stale. Opting out
+ * gives null.
  */
 export function EventThemeProvider({ children }: { children: ReactNode }) {
   const { client, status } = useAuth();
@@ -47,36 +68,39 @@ export function EventThemeProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const refresh = useCallback(() => {
+  // Reads the live events and resolves how long until they should be read again (null: not signed in).
+  const refresh = useCallback(async (): Promise<number | null> => {
     if (status !== 'signedIn') {
       setActive([]);
-      return;
+      return null;
     }
-    void client.get<{ events: ActiveEventLite[] }>('/events/active').then((res) => {
-      if (mounted.current && res.ok) setActive(res.data.events);
-    });
+    const res = await client.get<ActiveEvents>('/events/active');
+    if (mounted.current && res.ok) setActive(res.data.events);
+    return nextAskIn(res.ok ? res.data.nextChangeAt : undefined, Date.now());
   }, [client, status]);
 
   useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
+    let live = true;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const stop = (): void => {
-      if (interval) clearInterval(interval);
-      interval = null;
+      if (timer) clearTimeout(timer);
+      timer = null;
     };
-    const start = (): void => {
+    const ask = (): void => {
       stop();
-      interval = setInterval(refresh, POLL_MS);
+      void refresh().then((wait) => {
+        if (!live || wait === null || AppState.currentState === 'background') return;
+        stop();
+        timer = setTimeout(ask, wait);
+      });
     };
-    refresh();
-    if (AppState.currentState !== 'background') start();
+    ask();
     const away = AppState.addEventListener('change', (s: AppStateStatus) => {
       if (s === 'background') stop();
     });
-    const stopListening = onBackFromBackground(AppState, () => {
-      refresh();
-      start();
-    });
+    const stopListening = onBackFromBackground(AppState, ask);
     return () => {
+      live = false;
       stop();
       // react-native-web returns nothing where the page cannot report its visibility.
       away?.remove();
