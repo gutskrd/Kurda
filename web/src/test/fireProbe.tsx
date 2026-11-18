@@ -1,8 +1,7 @@
 import type { FireLevel } from '@kurda/shared';
 
 /**
- * The fire as the props it was given, for a test that asks how big it burns
- * and what it grows from rather than how it is drawn:
+ * Renders the fire's props instead of drawing it, for tests that check its size and source:
  * `vi.mock('../components/Fire', () => import('../test/fireProbe'))`.
  */
 export function Fire({

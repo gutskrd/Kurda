@@ -6,14 +6,8 @@ import { ProfileModalProvider } from '../profile/ProfileModal';
 import { I18nProvider } from '../i18n/I18nProvider';
 
 /**
- * Render a tree wrapped in the contexts the real app always provides: auth, the
- * router, the profile modal, and the interface language.
- *
- * The language belongs here rather than in each test because `useT` throws
- * without it, exactly as `useAuth` does — a component that asks for a word is
- * no more optional about its provider than one that asks who is signed in.
- * Tests get English, since jsdom's navigator reports `en-US` and nothing has
- * been stored.
+ * Renders a tree inside the providers the app always has: auth, the router, the profile modal and the interface
+ * language. The language is English, since jsdom reports `en-US` and nothing is stored.
  */
 export function renderApp(ui: ReactNode, initialEntries: InitialEntry[] = ['/']): RenderResult {
   return render(
@@ -43,9 +37,5 @@ export function routedFetch(map: Record<string, unknown>): (url: string) => Prom
   };
 }
 
-/**
- * How long to wait for a sign-in page to move on: it stays a moment after
- * getting someone in, for Hevalo to be pleased (auth/arrival), on top of the
- * usual wait, which a busy machine running the whole suite can need in full.
- */
+/** How long to wait for a sign-in page to move on: it pauses after signing in (auth/arrival) on top of the usual wait. */
 export const MOVES_ON = { timeout: 8000 } as const;

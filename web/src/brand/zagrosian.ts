@@ -1,20 +1,7 @@
 /**
- * The Zagrosian mark, for the credit in the footer.
- *
- * Hevalo is a Zagrosian product and the footer should say so, the way a
- * publisher's imprint sits on the last page rather than on the cover.
- *
- * The path is the one zagrosian.com draws itself — its light-on-dark variant,
- * which is the one that belongs on Hevalo's dark footer. Kept as data here
- * rather than as a file in `public/` for one reason: `fill="currentColor"`. An
- * `<img>` cannot inherit a colour, so the mark could not sit muted beside the
- * copyright line and brighten with the rest of the link on hover. Inline SVG
- * can, and it is markup rather than a fetch, so it needs no exception from the
- * `img-src 'self'` the published dictionary is served under.
- *
- * Both footers read it from here — the app's `Footer.tsx` and the dictionary's
- * generated one — so there is one copy of somebody else's trademark in this
- * repository and one place to correct it if they redraw it.
+ * The Zagrosian mark for the footer credit, in its light-on-dark variant. It is inline SVG data rather than a file in
+ * `public/` so it can take `currentColor` and needs no `img-src` exception in the published dictionary. Both the
+ * app's footer and the dictionary's generated one read it from here.
  */
 
 export const ZAGROSIAN_URL = 'https://zagrosian.com';
