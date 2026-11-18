@@ -22,7 +22,8 @@ import {
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useTreeSeason } from './season';
 
-const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
+/** Hides a drawing's layers from screen readers. */
+export const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
 /** The swing's wave: the breeze's, a little later. */
 const SWING_WAVE = treeWave(TREE_SWING.lag);

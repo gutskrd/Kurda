@@ -109,7 +109,7 @@ export function widgetImageUrl(apiBase: string, size: { w: number; h: number; sc
   return `${apiBase}${WIDGET_IMAGE_PATH}?w=${size.w}&h=${size.h}&scale=${size.scale}&sky=${sky}`;
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+export const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 function isWidgetLetter(v: unknown): v is WidgetLetter {
   if (!isRecord(v) || !isRecord(v.from) || !isRecord(v.paper)) return false;

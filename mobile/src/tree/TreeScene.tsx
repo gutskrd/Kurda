@@ -4,7 +4,7 @@ import { SvgXml } from 'react-native-svg';
 import { TREE_FOOT, TREE_STUDIO, TREE_STUDIO_PLACE, treeStudioSvg, type TreeHealth, type TreeSeason, type TreeSeasonAir, type TreeStage } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { radii } from '../theme/tokens';
-import { TreeArt } from './TreeArt';
+import { HIDDEN, TreeArt } from './TreeArt';
 import { useTreeSeason } from './season';
 
 /**
@@ -13,8 +13,6 @@ import { useTreeSeason } from './season';
  * left (shared `art/tree-scene.ts`). All decoration: screen readers hear about the tree, not the weather, and
  * nothing moves under Reduce Motion or while the screen is not focused.
  */
-
-const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
 /** The season's colour, for before its picture is drawn and wherever the scene is wider than its square. */
 export function studioColour(season: TreeSeason): string {

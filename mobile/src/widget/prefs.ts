@@ -1,7 +1,7 @@
 import type { WidgetLetter, WidgetPrefs, WidgetSettings } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
-import { WIDGET_PREFS_PATH } from './contract';
+import { isRecord, WIDGET_PREFS_PATH } from './contract';
 import { reloadLetterWidget } from './reload';
 
 /**
@@ -9,8 +9,6 @@ import { reloadLetterWidget } from './reload';
  * the words show or only the sender. Every device's widget follows; this device's is asked to catch up at once,
  * the others at their next refresh.
  */
-
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** The settings as the server sent them, with any fields a choices-only answer leaves out filled as empty. */
 function asSettings(raw: unknown): WidgetSettings | null {
