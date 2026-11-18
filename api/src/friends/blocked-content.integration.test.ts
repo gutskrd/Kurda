@@ -1,12 +1,7 @@
 /**
- * A block hides what each of the two people wrote from the other, against
- * real Postgres.
- *
- * Ana has blocked Ben, and Cal has blocked Ana: one of each direction, so
- * every surface is checked from both ends. Ana sees nothing of Ben's or Cal's,
- * neither of them sees anything of Ana's, and Dev — who has blocked nobody and
- * whom nobody has blocked — still sees all of it, so a test that passes only
- * because a list came back empty would fail on Dev.
+ * A block hides what each of the two people wrote from the other, against real Postgres. Ana has blocked Ben and
+ * Cal has blocked Ana, so every surface is checked in both directions; Dev, with no blocks, still sees everything,
+ * so a test passing only on an empty list fails on Dev.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
