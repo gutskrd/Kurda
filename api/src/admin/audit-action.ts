@@ -1,27 +1,22 @@
 /**
- * Pure helpers deciding what counts as an auditable admin mutation (KUR-104).
- * Every state-changing call under /admin on a successful response is logged —
- * the rule is here (and unit-tested) so "no exemptions" is verifiable, not a
- * property of scattered per-route code.
+ * What counts as an auditable admin mutation. Every successful state-changing admin call is logged; the rule lives
+ * here, unit-tested, so "no exemptions" is verifiable.
  */
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
- * A successful, state-changing admin request that must be audited: anything
- * under /admin, and any other route whose guard asks for a staff role
- * (`staffRoute`) — the shop's catalogue writes live at /shop/items, and
- * pricing the shop went unrecorded because of where its URL happened to be.
+ * A successful, state-changing admin request that must be audited: anything under /admin, plus any route whose guard
+ * asks for a staff role (`staffRoute`), such as the shop's catalogue writes at /shop/items.
  */
 export function isAuditableAdminMutation(method: string, url: string, statusCode: number, staffRoute = false): boolean {
   return MUTATING.has(method.toUpperCase()) && (url.startsWith('/admin/') || staffRoute) && statusCode < 400;
 }
 
 /**
- * The thing a route acts on, from its path parameters: most routes name it
- * `:id`, but a user's bot score is `:userId`, a tag, rule, flag or event its
- * `:key`, a shop item its `:sku` and a story category its `:slug` — and an
- * audit row with no target cannot be found by the thing it changed.
+ * The thing a route acts on, from its path parameters: usually `:id`, but `:userId` for a bot score, `:key` for a tag,
+ * rule, flag or event, `:sku` for a shop item and `:slug` for a story category. An audit row without a target cannot be
+ * found by what it changed.
  */
 export function auditTargetId(params: unknown): string | null {
   if (typeof params !== 'object' || params === null) return null;
@@ -33,9 +28,8 @@ export function auditTargetId(params: unknown): string | null {
 }
 
 /**
- * What kind of thing a route's `:id` names, so an audit row says what its
- * target is: a moderation case's history in the case view is read by case id,
- * and a user's by user id. Null for routes whose id is something else.
+ * What kind of thing a route's `:id` names, so an audit row says what its target is (case history is read by case id, a
+ * user's by user id). Null for routes whose id is something else.
  */
 export function auditTargetType(routeUrl: string): string | null {
   if (routeUrl.startsWith('/admin/moderation/cases/:id')) return 'moderation_case';
@@ -56,10 +50,8 @@ export function auditTargetType(routeUrl: string): string | null {
 }
 
 /**
- * Stable action label from the HTTP method + route template. A dry run (a
- * moderation decision's `preview`, a rhyme rebuild's `dryRun`) is logged too —
- * nothing is exempt — but under its own name, so a case's history never shows
- * a preview as a decision and the trail never shows a look as a change.
+ * Stable action label from the HTTP method and route template. Dry runs (a moderation decision's `preview`, a rhyme
+ * rebuild's `dryRun`) are logged too, under their own name, so a preview never reads as a decision.
  */
 export function auditActionName(method: string, routeUrl: string, body?: unknown): string {
   const b = typeof body === 'object' && body !== null ? (body as { preview?: unknown; dryRun?: unknown }) : {};

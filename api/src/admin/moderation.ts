@@ -1,11 +1,7 @@
 /**
- * Pure admin moderation helpers (KUR-101). Ban/mute state is derived from
- * timestamps so a temp-ban lapses on its own at expiry (no sweep needed), and
- * every action requires a non-empty reason — the audit trail is only useful if
- * it says *why*.
+ * Pure admin moderation helpers. Ban state derives from timestamps so a temp ban lapses at expiry without a sweep, and
+ * every action needs a non-empty reason for the audit trail.
  */
-
-export type ModAction = 'warn' | 'mute' | 'temp_ban' | 'perm_ban' | 'unban' | 'wallet_adjust';
 
 export type BanState = 'active' | 'temp_banned' | 'perm_banned';
 
@@ -16,15 +12,6 @@ export function banState(now: Date, bannedAt: Date | null, bannedUntil: Date | n
   if (!bannedAt) return 'active';
   if (bannedUntil === null) return 'perm_banned';
   return bannedUntil.getTime() > now.getTime() ? 'temp_banned' : 'active';
-}
-
-/** Whether the account is currently blocked from signing in. */
-export function isBanned(now: Date, bannedAt: Date | null, bannedUntil: Date | null): boolean {
-  return banState(now, bannedAt, bannedUntil) !== 'active';
-}
-
-export function isMuted(now: Date, mutedUntil: Date | null): boolean {
-  return mutedUntil !== null && mutedUntil.getTime() > now.getTime();
 }
 
 /** Trimmed reason, or null if it's missing/blank/too long — reason is mandatory. */

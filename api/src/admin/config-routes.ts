@@ -11,10 +11,8 @@ const rejectBody = z.object({ reason: z.string().max(500).optional() });
 const idParam = z.object({ id: z.uuid() });
 
 /**
- * Shop + event configuration with dual-admin approval (KUR-103). Admin-only.
- * Proposing a low-impact change applies it immediately; a sensitive one queues
- * for a *different* admin to approve/reject. Applied changes bust the cache via
- * the underlying Shop/Event services.
+ * Shop and event configuration with dual-admin approval. Admin-only. A low-impact change applies immediately; a
+ * sensitive one waits for a different admin. Applied changes bust caches through the Shop/Event services.
  */
 export function registerConfigRoutes(app: FastifyInstance, config: ConfigService): void {
   app.post(

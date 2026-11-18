@@ -1,4 +1,4 @@
-/** Shop + event config with dual-admin approval via HTTP (CI job). KUR-103. */
+/** Shop and event config with dual-admin approval, over HTTP. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

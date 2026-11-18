@@ -1,9 +1,6 @@
 /**
- * Giving someone the content editor role from their page, against real
- * Postgres: a superadmin's alone, with a reason, written to the person's
- * history; only to an account that confirmed its address; and opening the
- * lessons' audio studio to them at once, and closing it at once when taken
- * away.
+ * Granting the content editor role from a person's page against real Postgres: superadmin only, with a reason, in the
+ * person's history, only to a confirmed address, and opening or closing the lessons' audio studio at once.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

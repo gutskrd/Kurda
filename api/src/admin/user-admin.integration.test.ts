@@ -1,4 +1,4 @@
-/** Admin user management (KUR-101) against real Postgres. */
+/** Admin user management against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -56,12 +56,7 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     await app.close();
   });
 
-  /**
-   * The panel used to answer nothing until you typed a name, which meant the
-   * only way to find an account was to already know it. These are the two
-   * things that had to become true: no query lists everybody, and the count is
-   * of everybody rather than of the page you happen to be holding.
-   */
+  /** No query lists everybody, and the count covers everybody rather than the page. */
   it('lists everyone when asked nothing, newest first, and counts them all', async () => {
     const all = await svc.search();
     expect(all.users.length).toBeGreaterThanOrEqual(2);
@@ -174,11 +169,7 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect((await svc.detail(targetId))!.ban).toBe('active');
   });
 
-  /**
-   * A moderator looking for "who is suspended right now", or which accounts
-   * are staff, used to page through everyone. Each filter narrows the list
-   * (and its count) to what is true now: an ended suspension is not one.
-   */
+  /** Each filter narrows the list and its count to what is true now: an ended suspension is not one. */
   it('filters to who is restricted, muted or staff right now, and says so on each row', async () => {
     const prefix = `flt${suffix}`.slice(0, 12);
     const banned = await reg(`${prefix}_ban`, '10.101.0.3');
@@ -245,10 +236,7 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect((await svc.detail(id))!.age).toBe('unknown');
   });
 
-  /**
-   * Hevalo+ by days, for testers and reviewers while it cannot be bought:
-   * given, extended from where it ends, and every grant in the history.
-   */
+  /** Hevalo+ by days for testers and reviewers: given, extended from where it ends, and every grant in the history. */
   describe('granting Hevalo+', () => {
     const plusActions = async (id: string) =>
       (await svc.detail(id))!.actions.filter((a) => a.action === 'plus_grant');

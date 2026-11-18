@@ -1,4 +1,4 @@
-/** Admin RBAC + mandatory TOTP 2FA (KUR-099) against real Postgres. */
+/** Admin RBAC + mandatory TOTP 2FA against real Postgres. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';

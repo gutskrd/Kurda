@@ -6,41 +6,26 @@ import { classifyRhyme, normalizeWord, rhymePattern, type Dialect, type RhymeQua
 import { applyRulings, rhymeGroupSizes } from '../game/rhyme-groups.js';
 
 /**
- * How many rhyming words a prompt's list shows before it stops.
- *
- * Over the pool this never bit — a few hundred words, and a prompt had a
- * handful of rhymes. Over an imported dictionary a common ending has tens of
- * thousands, and nobody reads those; the count beside the list is the part a
- * curator acts on.
+ * How many rhyming words a prompt's list shows. Over an imported dictionary a common ending has tens of thousands; the
+ * count beside the list is what a curator acts on.
  */
 const RHYME_LIST_LIMIT = 200;
 import { DIFFICULTY_LENGTHS, type Difficulty } from '../game/wordle-daily.js';
 import { dictionaryKey, letterCount } from '@kurda/shared';
 
 /**
- * Admin management of the shared game word pool (`dict_entries`).
+ * Admin management of the shared game word pool (`dict_entries`). One dictionary drives every word game: Peyvok picks
+ * targets from it and validates guesses against it, and Rhyme draws prompts from it and accepts only words in it, so a
+ * word added here is playable everywhere.
  *
- * One dictionary drives every word game: Peyvok picks its targets from it and
- * validates guesses against it, and Rhyme draws prompts from it and only accepts
- * submissions that are in it. So adding a word here makes it playable everywhere.
- *
- * Rhymes are NOT stored — `classifyRhyme` derives them from how two words end
- * (the rime in Kurmancî, the last letters in Soranî), so an admin curates
- * *words* and the rhyme sets follow.
- * `GET /admin/dictionary/rhymes` exposes that computation so an admin can see
- * which words currently rhyme with a given one and spot thin coverage.
+ * Rhymes are not stored: `classifyRhyme` derives them from how two words end (the rime in Kurmancî, the last letters in
+ * Soranî), so admins curate words and the rhyme sets follow. `GET /admin/dictionary/rhymes` exposes that computation to
+ * spot thin coverage.
  *
  * Writes are role-gated server-side; the admin SPA only hides UI.
  */
 
-/**
- * A boolean in a query string, which `z.coerce.boolean()` cannot read.
- *
- * Coercion is `Boolean(value)`, and every non-empty string is truthy — so
- * `?inGames=false` parsed as **true** and the "dictionary only" view returned
- * the pool. The word "false" is the one input a flag like this is guaranteed to
- * receive, so it has to be read rather than coerced.
- */
+/** A boolean in a query string. `z.coerce.boolean()` is `Boolean(value)`, so the string "false" would read as true. */
 const queryBool = z.enum(['true', 'false']).transform((v) => v === 'true');
 
 const listQuery = z.object({
@@ -50,9 +35,8 @@ const listQuery = z.object({
   /** only words marked as rhyme prompts */
   prompts: queryBool.optional(),
   /**
-   * Which set to browse. The game pool by default, because that is what this
-   * screen is for and because the dictionary behind it may be hundreds of
-   * thousands of rows; `false` reaches those, to promote one into the pool.
+   * Which set to browse: the game pool by default, since the dictionary behind it may be hundreds of thousands of rows;
+   * `false` reaches those to promote one into the pool.
    */
   inGames: queryBool.default(true),
   limit: z.coerce.number().int().min(1).max(200).default(50),
@@ -102,15 +86,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   const canEdit = [requireAuth, requireRoles('admin', 'superadmin', 'content_editor')];
 
   /**
-   * Browse the word pool: search, filter by letter length, paginated.
-   *
-   * Every condition is SQL now, and so is the page. This used to select all the
-   * matching rows and then filter and slice them here, which was survivable at a
-   * few hundred curated words — but the *dictionary-only* view is the one that
-   * holds a whole imported lexicon, and it is also the one an admin has to use
-   * to promote words into the games. `letter_count` is stored (1751000114000)
-   * so the band filter is an index scan rather than 447,000 rows crossing the
-   * wire on every keystroke.
+   * Browse the word pool: search, filter by letter length, paginated, all in SQL. `letter_count` is stored
+   * (1751000114000) so the band filter is an index scan even over a whole imported lexicon.
    */
   app.get('/admin/dictionary', { schema: { querystring: listQuery }, preHandler: canEdit }, async (req) => {
     const { q, length, prompts, inGames, limit, offset } = req.query as z.infer<typeof listQuery>;
@@ -130,12 +107,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     if (prompts) conds.push('is_rhyme_prompt');
 
     /*
-     * Counted separately rather than with COUNT(*) OVER(), which was the first
-     * thing tried. A window function has to see every matching row before the
-     * LIMIT can throw them away, so it sorts the whole set: measured at 400,000
-     * dictionary rows, the unfiltered browse took 791ms that way and 26ms as
-     * two queries — a count that reads no rows in order, and a page the index
-     * hands back fifty of.
+     * Counted separately rather than with COUNT(*) OVER(): a window function sorts every matching row before LIMIT
+     * discards them (791 ms vs 26 ms at 400,000 rows).
      */
     const where = conds.join(' AND ');
     const [counted, rows] = await Promise.all([
@@ -161,10 +134,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     };
   });
 
-  /**
-   * Add words (bulk). Idempotent: a word whose normalized form already exists is
-   * reported as skipped rather than duplicated.
-   */
+  /** Add words in bulk. Idempotent: a word whose normalized form exists is reported as skipped. */
   app.post('/admin/dictionary', { schema: { body: addBody }, preHandler: canEdit }, async (req) => {
     const { words, dialect, isRhymePrompt } = req.body as z.infer<typeof addBody>;
     const added: string[] = [];
@@ -223,9 +193,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   });
 
   /**
-   * Choose whether a word is used as a rhyme prompt. Rounds pick only from the
-   * curated set once anything is marked, so an admin can keep out words that have
-   * no rhyming partner and would make an unplayable round.
+   * Choose whether a word is a rhyme prompt. Once anything is marked, rounds pick only from the marked set, so admins
+   * can exclude words with no rhyming partner.
    */
   app.patch(
     '/admin/dictionary/:id',
@@ -279,11 +248,7 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
         await app.db.query(`UPDATE dict_entries SET is_rhyme_prompt = $2 WHERE id = $1`, [id, isRhymePrompt]);
       }
 
-      /*
-       * Dropping a word out of the pool takes its prompt flag with it. A prompt
-       * that is not in the pool is a round the game will never open, and a
-       * coverage view counting it would be counting a word nobody can be asked.
-       */
+      /* Dropping a word from the pool clears its prompt flag: a prompt outside the pool is a round that never opens. */
       if (inGames !== undefined) {
         await app.db.query(
           inGames
@@ -303,13 +268,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   );
 
   /**
-   * Rename a word, carrying its rhyme decisions with it.
-   *
-   * Decisions are keyed by the NORMALIZED form, not the word's id, so a rename
-   * would otherwise orphan every one of them: the curated pairs would silently
-   * stop applying and reappear only if the old spelling ever came back. All of it
-   * happens in one transaction — a half-migrated rename would leave decisions
-   * pointing at a word that no longer exists.
+   * Rename a word, carrying its rhyme decisions with it. Decisions are keyed by the NORMALIZED form, not the id, so a
+   * rename would otherwise orphan them. One transaction, so decisions never point at a word that no longer exists.
    */
   async function renameWord(id: string, from: string, headword: string, to: string): Promise<void> {
     const client = await app.db.connect();
@@ -385,18 +345,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   );
 
   /**
-   * Which words rhyme with `word` — computed, never stored.
+   * Which words rhyme with `word`, computed, never stored, over the whole dictionary rather than the pool, because
+   * players may answer with any dictionary word.
    *
-   * **The whole dictionary, not the pool.** A player may answer with any word
-   * the dictionary knows, so the pool was never the right set to report: after
-   * an import it would show three rhymes for a prompt the game accepts forty
-   * thousand answers to, and a curator would read that as thin coverage and go
-   * looking for work that does not exist.
-   *
-   * It is a prefix scan on the reversed headword (1751000117000) rather than
-   * `classifyRhyme` over every row, so the set it reads got a thousand times
-   * bigger while the work got smaller. The list is capped — nobody scrolls
-   * forty thousand words — and `total` says what the cap hid.
+   * A prefix scan on the reversed headword (1751000117000) rather than `classifyRhyme` over every row. The list is
+   * capped and `total` says what the cap hid.
    */
   app.get('/admin/dictionary/rhymes', { schema: { querystring: rhymeQuery }, preHandler: canEdit }, async (req) => {
     const { word, dialect } = req.query as z.infer<typeof rhymeQuery>;
@@ -440,13 +393,9 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     );
 
     /*
-     * Every word a curator has ruled on for this prompt, fetched by name.
-     *
-     * The prefix scan above finds what the endings accept, and that is not the
-     * same set: a ruling can bring in a word that does not rhyme at all, and it
-     * can sit past the cap on a prompt with thousands of partners. Both are
-     * decisions somebody made deliberately, so neither may go missing because
-     * of where it happened to fall in a list.
+     * Every word a curator has ruled on for this prompt, fetched by name. The prefix scan finds what the endings
+     * accept, which is a different set: a ruling can bring in a non-rhyming word, or one past the cap, and neither may
+     * go missing.
      */
     const named = decided.size
       ? await app.db.query<{ headword: string; headword_normalized: string }>(
@@ -506,22 +455,11 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   });
 
   /**
-   * The words a round can actually open with, each with how much it has to rhyme
-   * against.
+   * The words a round can open with, each with how much it has to rhyme against, so unplayable prompts are visible.
    *
-   * A prompt with nothing to rhyme with makes an unplayable round, and that was
-   * invisible until someone hit it in a game.
-   *
-   * **The counts are over the dictionary**, because that is what the game
-   * accepts — the pool is what it *asks*. Counting the pool made a prompt with
-   * forty thousand valid answers read as having three, which is a curator sent
-   * to fix something that is not broken.
-   *
-   * It used to compare every listed word against every pool word. One grouped
-   * pass over the dictionary replaces that: a rhyme group is a suffix group
-   * (1751000117000), so counting how many words end in each letter and each
-   * pair of letters answers the whole page at once, exactly, however many
-   * prompts are on it.
+   * Counts are over the dictionary, since that is what the game accepts (the pool is only what it asks). A rhyme group
+   * is a suffix group (1751000117000), so one grouped pass counting words by last letter and last two letters answers
+   * the whole page exactly.
    */
   app.get('/admin/rhyme/prompts', { schema: { querystring: promptsQuery }, preHandler: canEdit }, async (req) => {
     // One dialect at a time: a round opens on a word of its own dialect, and the two rhyme by different rules (the
@@ -604,28 +542,14 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   });
 
   /**
-   * Make every word that has something to rhyme with a base word.
+   * Mark every word that has something to rhyme with as a base word.
    *
-   * There is a cliff in how base words are chosen: a round falls back to the
-   * whole pool while NOTHING is marked, so marking the very first word silently
-   * takes every other word out of the game. Marking two words does not narrow
-   * the game a little — it narrows it to two. That is how a 159-word pool came
-   * to serve two prompts, and nothing in the admin page said so.
+   * Rounds fall back to the whole pool while NOTHING is marked, so marking the first word silently drops every other
+   * word from the game, and two marked words make a two-word game. This marks every word with at least one partner, so
+   * the curated set starts as the whole playable pool and marking more adds to it. Words with no rhyme stay unmarked,
+   * which is what the flag is for.
    *
-   * This is the way back, and the way to a set that cannot bite: it marks every
-   * word that has at least one partner, so the curated set starts out as the
-   * whole playable pool and marking one more word after that adds to it rather
-   * than replacing it. Words with no rhyme are deliberately left unmarked —
-   * excluding those is what the flag was for.
-   *
-   * The count is computed exactly as `GET /admin/rhyme/prompts` computes it —
-   * over the dictionary, from the same grouped pass — so the number here and
-   * the number on the page agree.
-   *
-   * After an import there is usually nothing left for it to exclude: a word is
-   * unplayable only if the dictionary holds nothing else ending in its last
-   * letter, and among several hundred thousand words that is close to nobody.
-   * Running it is still how the cliff above gets unset.
+   * The count uses the same grouped pass over the dictionary as `GET /admin/rhyme/prompts`, so the two numbers agree.
    */
   app.post(
     '/admin/rhyme/prompts/rebuild',
@@ -695,9 +619,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   );
 
   /**
-   * Decide a pair explicitly. 'perfect' / 'near' accept the word (and set what it
-   * scores); 'none' rules it out even though the endings match. Passing 'auto'
-   * removes the decision and hands the pair back to the derived result.
+   * Decide a pair explicitly. 'perfect' / 'near' accept the word (and set its score); 'none' rules it out even though
+   * the endings match; 'auto' removes the decision and returns the pair to the derived result.
    */
   app.put(
     '/admin/dictionary/rhymes',
@@ -708,10 +631,8 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
           rhyme: z.string().min(1).max(64),
           quality: z.enum(['perfect', 'near', 'none', 'auto']),
           /**
-           * Put the rhyme in the word pool if it is not already there. A rhyme
-           * outside the pool is rejected by the game as "not a word" whatever
-           * this says, so adding one is genuinely two changes; the caller opts
-           * in rather than having a decision silently grow the pool.
+           * Also add the rhyme to the word pool. The game rejects words outside the pool as "not a word" whatever the
+           * decision says, so adding one is a separate, opt-in change.
            */
           addToPool: z.boolean().default(false),
           dialect: z.enum(['kurmanji', 'sorani']).default('kurmanji'),
@@ -764,15 +685,12 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   );
 
   /**
-   * Pool health: how many words sit in each Peyvok difficulty band, so an admin
-   * can see at a glance whether a difficulty is thin (or empty → EMPTY_POOL).
+   * Pool health: how many words sit in each Peyvok difficulty band, to spot a thin or empty (EMPTY_POOL) difficulty.
    */
   app.get('/admin/dictionary/stats', { config: { skipValidation: true }, preHandler: canEdit }, async () => {
     /*
-     * Length bands describe what Peyvok can offer, so they count the pool. The
-     * dictionary behind it is counted separately below — the two numbers
-     * answer different questions, and showing only the second is how you end up
-     * believing there are 447,000 words to play with.
+     * Length bands describe what Peyvok can offer, so they count the pool; the dictionary behind it is counted
+     * separately below.
      */
     const rows = await app.db.query<{ headword: string }>(`SELECT headword FROM dict_entries WHERE in_games`);
     const byLength = new Map<number, number>();
