@@ -61,7 +61,7 @@ describe('refreshed items in the Shop', () => {
     renderApp(<Shop />, ['/app/shop']);
     const notice = await screen.findByRole('region', { name: 'Your backgrounds and icons have new art' });
 
-    // the notice holds one button, and it only closes the notice
+    // The notice has one button, which only closes it.
     expect(within(notice).getAllByRole('button').map((b) => b.textContent)).toEqual(['Got it']);
     expect(screen.queryByRole('button', { name: /return/i })).toBeNull();
     expect(screen.queryByText(/return/i)).toBeNull();

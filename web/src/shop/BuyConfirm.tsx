@@ -6,26 +6,17 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import './buyConfirm.css';
 
 /** What the dialog needs of the item being bought. */
-export interface BuyConfirmItem {
+interface BuyConfirmItem {
   name: string;
   price: number;
   currency: 'zer' | 'gems';
 }
 
 /**
- * The moment before something is bought: what it is, what it costs, and that
- * the purchase is final.
- *
- * Nothing bought in the shop can be handed back for Zêr or gems, so the place
- * to say so is here, before the money moves, in the calm voice of a shop
- * assistant rather than the small print of a receipt. Free items skip this:
- * nothing is spent, so there is nothing to be sure about.
- *
- * The bird and the tree on the same page ask here too, with a little more:
- * a picture of what is being had, the Zêr there are beside the price, and how
- * many are missing when they do not reach it, which keeps the confirm from
- * being pressed. Planting a tree costs nothing and says what it replaces in
- * place of the note about purchases; a price of nothing is not shown at all.
+ * The confirmation before a purchase: the item, its price, and that purchases are final, since nothing can be
+ * refunded. Free items skip it. The bird and tree sections use it too, adding a picture, the balance beside the price
+ * and any shortfall, which disables the confirm. Planting a tree is free and shows what it replaces instead of the
+ * note; a zero price is not shown.
  */
 export function BuyConfirm({
   item,
@@ -45,17 +36,17 @@ export function BuyConfirm({
   busy: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-  /** what the dialog asks, in place of "Buy {name}?" */
+  /** The question, in place of "Buy {name}?". */
   title?: string;
-  /** a picture of what is being had, over the question */
+  /** A picture of the item, above the question. */
   art?: ReactNode;
-  /** the Zêr there are, said under the price so the cost is read against what is held */
+  /** The Zêr balance, shown under the price. */
   balance?: number | null;
-  /** how many are missing, when the balance does not reach the price */
+  /** How many are missing when the balance does not reach the price. */
   short?: string | null;
-  /** what there is to know before saying yes, in place of the note that a purchase is final */
+  /** What to know before confirming, in place of the note that purchases are final. */
   note?: ReactNode;
-  /** why the last try did not go through */
+  /** Why the last try did not go through. */
   error?: string | null;
   confirmLabel?: string;
   cancelLabel?: string;
@@ -76,7 +67,7 @@ export function BuyConfirm({
           {item.price > 0 && (
             <p className="buy-confirm-price">
               {item.currency === 'gems' ? <GemIcon size={16} /> : <CoinIcon size={16} />}
-              {/* Zêr keeps its Kurmancî name in every language, as a currency does */}
+              {/* Zêr keeps its Kurmancî name in every language, as a currency does. */}
               {`${item.price.toLocaleString(locale)} ${item.currency === 'gems' ? t('shop.gems') : 'Zêr'}`}
             </p>
           )}

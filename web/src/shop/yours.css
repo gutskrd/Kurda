@@ -1,10 +1,6 @@
 /*
- * Your bird and your tree, in the Shop (shop/YourBird.tsx, shop/YourTree.tsx).
- *
- * They sit over the catalogue in the catalogue's own clothes: the small
- * capitals of a kind's heading, the tile's grey ground and hairline edge, the
- * gold of a price. What is new is only what these two need — a row of birds
- * to pick from, and a shelf of trees that becomes a swipe on a phone.
+ * The bird and tree sections in the Shop (shop/YourBird.tsx, shop/YourTree.tsx), styled like the catalogue. Only the
+ * row of birds and the shelf of trees, swiped on a phone, are new.
  */
 .yours {
   margin-bottom: 30px;
@@ -19,7 +15,7 @@
 .yours-head .item-section-title {
   margin: 0;
 }
-/* the way to the bird's or the tree's own page: quiet, at the end of the heading */
+/* The link to the bird's or tree's page, quiet at the end of the heading. */
 .yours-link {
   display: inline-flex;
   align-items: center;
@@ -34,7 +30,7 @@
 .yours-link:hover {
   color: var(--ink);
 }
-/* the chevron points on, which is to the left on a right-to-left page */
+/* The chevron points onward, which is left on a right-to-left page. */
 [dir='rtl'] .yours-link-chevron {
   transform: scaleX(-1);
 }
@@ -65,7 +61,7 @@
   color: var(--danger);
   font-size: 0.9rem;
 }
-/* a section that could not be read: what went wrong, in a sentence, and the way to try again */
+/* A section that failed to load: what went wrong and a retry. */
 .yours-failed {
   display: flex;
   flex-wrap: wrap;
@@ -79,14 +75,14 @@
   font-size: 0.92rem;
 }
 
-/* ---- the birds ------------------------------------------------------------ */
+/* ---- The birds ------------------------------------------------------------ */
 .yours-birds {
   display: grid;
   grid-template-columns: repeat(8, max-content);
   gap: 10px;
   margin: 16px 0 14px;
 }
-/* two even rows of four where eight do not fit */
+/* Two even rows of four where eight do not fit. */
 @media (max-width: 600px) {
   .yours-birds {
     grid-template-columns: repeat(4, max-content);
@@ -96,7 +92,7 @@
 .yours-birds--waiting {
   margin-bottom: 4px;
 }
-/* each bird a round button, at least a finger wide; the one picked ringed in the ink colour, a ring that shows in forced colours too */
+/* Each bird is a round button at least a finger wide; the picked one has an ink ring that also shows in forced colours. */
 .yours-bird {
   position: relative;
   display: grid;
@@ -122,7 +118,7 @@
 .yours-bird:has(input:disabled) {
   cursor: default;
 }
-/* the bird that is yours, ticked, whichever is picked */
+/* The reader's own bird is ticked, whichever is picked. */
 .yours-bird-mine {
   position: absolute;
   right: -1px;
@@ -136,16 +132,12 @@
   background: var(--ink);
   color: var(--surface-solid);
 }
-/* the bird made yours a moment ago takes the bow a bought tile takes (pages.css `shop-pop`) */
+/* A bird just got takes the bow a bought tile takes (pages.css `shop-pop`). */
 .yours-bird.is-won,
 .yours-tree.is-won {
   animation: shop-pop 0.5s cubic-bezier(0.22, 1.2, 0.36, 1);
 }
-/*
- * A bird's round portrait, here and in the dialog that asks about it: the
- * letters page draws it the same way, but its stylesheet is not loaded until
- * that page is opened.
- */
+/* A bird's round portrait, here and in its dialog; the letters page's stylesheet is not loaded until that page opens. */
 .yours-bird .letter-badge,
 .buy-confirm-art .letter-badge {
   display: grid;
@@ -160,7 +152,7 @@
   width: 100%;
   height: 100%;
 }
-/* the bird picked, and what can be done about it, on a line of its own under the row */
+/* The picked bird and its action, on a line of their own under the row. */
 .yours-foot {
   display: flex;
   flex-wrap: wrap;
@@ -184,7 +176,7 @@
 .yours-picked-tick {
   color: var(--success);
 }
-/* how far there is to go, in the pill a short price on a tile wears */
+/* The shortfall, in the pill an unaffordable tile wears. */
 .yours-short {
   padding: 1px 8px;
   border-radius: var(--r-pill);
@@ -200,10 +192,10 @@
   margin-inline-start: auto;
 }
 
-/* ---- the trees ------------------------------------------------------------ */
+/* ---- The trees ------------------------------------------------------------ */
 .yours-trees {
   display: grid;
-  /* five to a row beside the social panel, so the ten kinds are two even rows */
+  /* Five to a row beside the social panel, so the ten kinds make two even rows. */
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 12px;
   margin: 0;
@@ -225,7 +217,7 @@
   border-radius: var(--r-md);
   background: var(--surface-2);
 }
-/* the tree that stands: its edge in its own colour, the way the tree page washes everything in it */
+/* The planted tree's tile has its edge in the tree's colour. */
 .yours-tree.is-standing {
   border-color: color-mix(in srgb, var(--tree) 60%, var(--border));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--tree) 28%, transparent);
@@ -237,11 +229,7 @@
   border-radius: var(--r-sm);
   overflow: hidden;
 }
-/*
- * The picture is drawn at a fixed size and says so in its own style; here it
- * fills the tile instead, whatever width the row gives it. It is drawn in
- * vectors, so it is as sharp at one size as at another.
- */
+/* The picture's inline size is overridden to fill the tile; it is vector art, so it stays sharp. */
 .yours-tree-art > .tree-picture {
   width: 100% !important;
   height: 100% !important;
@@ -276,7 +264,7 @@
   font-size: 0.82rem;
   font-weight: 600;
 }
-/* the one growing: a small pill in its own colour, with a leaf's dot */
+/* The growing one: a small pill in its colour with a leaf dot. */
 .yours-tree-now {
   display: inline-flex;
   align-items: center;
@@ -296,7 +284,7 @@
   border-radius: 50%;
   background: var(--tree);
 }
-/* the button on the tile's floor, level along the row whether a tile has a meaning under its name or not */
+/* The button at the tile's foot, level along the row whether or not a tile shows a meaning. */
 .yours-tree-act {
   width: 100%;
   margin-top: auto;
@@ -305,19 +293,14 @@
   margin-bottom: auto;
 }
 
-/*
- * On a phone the kinds are one row to swipe through, from the screen's edge
- * to its edge, rather than five rows of two: the row stops on a tile, and the
- * one cut off at the end says there are more.
- */
+/* On a phone the kinds are one edge-to-edge row that snaps to tiles; the one cut off at the end shows there are more. */
 @media (max-width: 640px) {
   .yours-trees {
     grid-template-columns: none;
     grid-auto-flow: column;
     grid-auto-columns: 136px;
     gap: 10px;
-    /* 8px more room above and below than it shows, taken back by the margins: a scrolling row
-       cuts off whatever reaches past it, such as a press that lands just beside a tile's button */
+    /* 8px padding above and below, taken back by the margins, since a scrolling row clips anything reaching past it. */
     margin-block: -8px;
     margin-inline: -16px;
     padding: calc(2px + 8px) 16px calc(6px + 8px);

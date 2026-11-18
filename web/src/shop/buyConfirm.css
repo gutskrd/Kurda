@@ -1,9 +1,6 @@
-/*
- * The buy confirmation (web/src/shop/BuyConfirm.tsx): the item, its price in
- * the gold of Zêr, and the plain note that a purchase is final.
- */
+/* The buy confirmation (shop/BuyConfirm.tsx): the item, its price in Zêr gold, and the note that purchases are final. */
 .buy-confirm-title {
-  /* clear of the modal's ×, which sits top right in either direction */
+  /* Clear of the modal's ×, which sits top right in either direction. */
   margin: 0 40px 10px 0;
   font-family: var(--font-sans);
   font-size: 1.1rem;
@@ -42,11 +39,7 @@
   }
 }
 
-/*
- * The bird and the tree ask here too, with their picture over the question:
- * then the dialog is centred on the picture, as the tree page's own question
- * is, and its two answers share the width under it.
- */
+/* With a picture over the question (bird and tree), the dialog is centred and its two buttons share the width. */
 .buy-confirm.has-art {
   display: grid;
   justify-items: center;
@@ -58,7 +51,7 @@
   margin: 6px 0 14px;
 }
 .buy-confirm.has-art .buy-confirm-title {
-  /* clear of the ×, on both sides, so the centred question stays centred */
+  /* Clear of the × on both sides, so the centred question stays centred. */
   margin-inline: 40px;
 }
 .buy-confirm.has-art .buy-confirm-price {
@@ -72,14 +65,14 @@
 .buy-confirm.has-art .buy-confirm-actions > * {
   flex: 1 1 0;
 }
-/* what is held, quieter than the price it is read against */
+/* The balance, quieter than the price. */
 .buy-confirm-balance {
   margin: 0 0 12px;
   color: var(--ink-3);
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
 }
-/* how many are missing: the one number that matters when the balance falls short */
+/* The shortfall, when the balance does not reach the price. */
 .buy-confirm-short {
   margin: 0 0 10px;
   color: var(--ink);
