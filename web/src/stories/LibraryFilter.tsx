@@ -1,22 +1,8 @@
 /**
- * The stories library's search, sort and filter (Learn → Stories), built
- * from the same panel as the community wall's (components/FilterSheet.tsx).
- *
- * The search field stays in view and searches as you type. Everything else
- * is behind the funnel beside it, in one panel: the order (easiest first,
- * newest, A to Z), the level by its plain name with a line on what it means,
- * the length with the minutes it takes, read aloud or not, and the category
- * with how many stories it holds. Choices there are a draft until "Show N
- * stories", whose number is asked of the server as they change. While
- * anything is on, the funnel is filled, its name says what, and a chip for
- * each part under the search says so too, with a ✕ that lets just that part
- * go — and "Clear all" once there are two.
- *
- * Which Kurdish is not in the panel: the library shows one variety at a time,
- * chosen by the switch at its top (StoriesLibrary.tsx), and every list and
- * count here is that variety's.
- *
- * What is chosen lives in the address, so a filtered shelf can be linked to.
+ * The library's search, sort and filter, built on the community wall's panel (components/FilterSheet.tsx). The search
+ * field searches as you type; order, level, length, narration and category sit behind the funnel as a draft until
+ * "Show N stories", whose count the server answers as choices change. Active parts show as chips. The variety is not a
+ * filter: the library's switch chooses it. Everything lives in the address, so a filtered shelf can be linked to.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -46,7 +32,7 @@ import type { MessageKey } from '../i18n/en';
 import { categoryLabel, categoryTitle, levelHint, levelName } from './labels';
 import { LENGTH_KEY, minutesLabel } from './SetupSheet';
 
-/** What narrows or orders the library, apart from the words typed in the search. */
+/** What narrows or orders the library, apart from the search words. */
 export interface LibraryFilters {
   level: StoryLevel | null;
   length: StoryLength | null;
@@ -55,7 +41,7 @@ export interface LibraryFilters {
   sort: StorySort;
 }
 
-/** The library as it opens: its shelves, nothing narrowed. */
+/** The library as it opens: nothing narrowed. */
 export const NO_FILTERS: LibraryFilters = { level: null, length: null, narrated: false, category: null, sort: DEFAULT_STORY_SORT };
 
 export const SORT_KEY: Record<StorySort, MessageKey> = {
@@ -69,10 +55,8 @@ export function isPlain(f: LibraryFilters): boolean {
 }
 
 /**
- * The filters and the search words from the address. A level is written as
- * its CEFR letter there, as links already made have it, and read as a letter
- * or a number; anything the address does not mean is passed over. A variety
- * in the address (`dialect`) is not a filter: the library reads it itself.
+ * The filters and search words from the address. A level is written as its CEFR letter, as existing links have it, and
+ * read as a letter or number; anything unknown is skipped. `dialect` is not a filter; the library reads it itself.
  */
 export function readFilters(params: URLSearchParams): LibraryFilters & { q: string } {
   const rawLevel = params.get('level');
@@ -89,7 +73,7 @@ export function readFilters(params: URLSearchParams): LibraryFilters & { q: stri
   };
 }
 
-/** The address for what is typed and chosen; whatever is the plain library's is left out of it. */
+/** The address for the search and filters, leaving out the plain library's defaults. */
 export function writeFilters(q: string, f: LibraryFilters): URLSearchParams {
   const p = new URLSearchParams();
   if (q.trim()) p.set('q', q.trim());
@@ -101,7 +85,7 @@ export function writeFilters(q: string, f: LibraryFilters): URLSearchParams {
   return p;
 }
 
-/** What GET /stories is asked, in the variety on show; the default order is left out, so its lists are the ones they always were. */
+/** The GET /stories query in the shown variety; the default order is omitted so its lists stay as they were. */
 export function queryOf(q: string, f: LibraryFilters, dialect: StoryDialect): StoryQuery {
   return {
     q: q.trim() || undefined,
@@ -114,16 +98,13 @@ export function queryOf(q: string, f: LibraryFilters, dialect: StoryDialect): St
   };
 }
 
-/** How long a draft waits for the next choice before its count is asked for. */
+/** How long a draft waits for the next choice before asking its count. */
 const COUNT_DEBOUNCE_MS = 250;
 
 /**
- * How many stories a draft would show, for the panel's "Show N stories".
- * Asked of the server as `GET /stories?…&limit=1`, which answers the total
- * beside one story, a moment after the choices stop changing. The order does
- * not change a count, so it is left out; what is already known is not asked
- * again — the whole library's count, the list on show, a draft seen before.
- * Null until there is a number.
+ * How many stories a draft would show, from `GET /stories?…&limit=1` a moment after the choices settle. Order is left
+ * out of the count, and known totals (the whole library, the list shown, a draft seen before) are not asked again.
+ * Null until known.
  */
 function useDraftCount(open: boolean, q: string, draft: LibraryFilters, dialect: StoryDialect, known: { key: string; total: number }[]): number | null {
   const { client } = useAuth();
@@ -139,7 +120,7 @@ function useDraftCount(open: boolean, q: string, draft: LibraryFilters, dialect:
       setCount(ready);
       return;
     }
-    // the last number stays up meanwhile, rather than the button changing its words twice
+    // The last number stays meanwhile, so the button's words change once.
     let live = true;
     const timer = setTimeout(() => {
       void client.get<{ stories: StoryListItem[]; total: number }>(`/stories${key}`).then((res) => {
@@ -155,17 +136,14 @@ function useDraftCount(open: boolean, q: string, draft: LibraryFilters, dialect:
     };
   }, [open, key, fromKnown, client]);
 
-  // a panel opened again starts from what it knows, not from the last draft's number
+  // A reopened panel starts from what it knows, not the last draft's number.
   useEffect(() => {
     if (!open) setCount(null);
   }, [open]);
   return open ? count : null;
 }
 
-/**
- * The search field with the funnel beside it, and the chips under them while
- * anything is on.
- */
+/** The search field with the funnel beside it, and chips under them while anything is on. */
 export function LibraryFilterBar({
   q,
   typed,
@@ -176,18 +154,18 @@ export function LibraryFilterBar({
   library,
   shownTotal,
 }: {
-  /** the search words the address has, which the list on show was asked with */
+  /** The search words from the address, which the shown list was asked with. */
   q: string;
-  /** what is in the field now, a moment ahead of `q` */
+  /** What is in the field now, a moment ahead of `q`. */
   typed: string;
   onType: (q: string) => void;
   value: LibraryFilters;
   onChange: (next: LibraryFilters) => void;
-  /** the variety on show: every count here is of its stories */
+  /** The variety shown; every count here is of its stories. */
   dialect: StoryDialect;
-  /** that variety's front page, for its total and the levels and categories that hold something */
+  /** That variety's front page, for its total and the levels and categories that hold something. */
   library: StoryLibrary | null;
-  /** how many stories the list on show has in all, once it is known */
+  /** The shown list's total, once known. */
   shownTotal: number | null;
 }): React.JSX.Element {
   const t = useT();
@@ -196,7 +174,7 @@ export function LibraryFilterBar({
   const { id, draft, setDraft } = sheet;
   const set = (next: Partial<LibraryFilters>): void => setDraft((d) => ({ ...d, ...next }));
 
-  // what is known without asking: the whole library, and the list on show
+  // Known without asking: the whole library and the shown list.
   const known = useMemo(() => {
     const out: { key: string; total: number }[] = [];
     const countKey = (f: LibraryFilters, words: string): string => storyQueryString({ ...queryOf(words, f, dialect), sort: undefined, limit: 1 });
@@ -213,7 +191,7 @@ export function LibraryFilterBar({
         ? t('stories.filter.applyNone')
         : t(count === 1 ? 'stories.filter.applyOne' : 'stories.filter.apply', { count: number(count) });
 
-  // only levels and categories a reader would find something in, and the one chosen whatever it holds
+  // Only levels and categories with something in them, plus the chosen one whatever it holds.
   const levels = useMemo(() => {
     const have = library?.levels;
     if (!have) return [...STORY_LEVELS];
@@ -223,7 +201,7 @@ export function LibraryFilterBar({
   const categoryOf = (slug: string): string => categoryLabel(slug, library?.categories, locale, t) ?? slug;
   const minutesFor = (length: StoryLength): string => minutesLabel(dialect, length, t);
 
-  // what is on, in the order the panel has it: one chip each, and the funnel's name
+  // What is on, in the panel's order: one chip each, and the funnel's name.
   const chips: Array<{ key: string; label: string; icon?: React.ReactNode; clear: string; undo: Partial<LibraryFilters> }> = [];
   if (value.sort !== DEFAULT_STORY_SORT) {
     chips.push({ key: 'sort', label: t(SORT_KEY[value.sort]), icon: <SortIcon size={15} />, clear: t('stories.sort.clear'), undo: { sort: DEFAULT_STORY_SORT } });

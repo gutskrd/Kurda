@@ -52,15 +52,15 @@ describe('the lobby', () => {
             }),
     });
     game();
-    // the code on its ticket, read out one character at a time, and where a friend types it
+    // The code on its ticket, read out one character at a time, and where a friend types it.
     expect(await screen.findByRole('button', { name: 'Copy the join code A B C 2 3 4' })).toHaveTextContent('ABC234');
     expect(screen.getByText('Friends open Games → Join with a code and type it in.')).toBeInTheDocument();
-    // a stranger to you is a seat, never a name
+    // A stranger to you is a seat, never a name.
     expect(screen.getByText('Player 2')).toBeInTheDocument();
     expect(screen.getByText('You')).toBeInTheDocument();
     expect(screen.getByText(/From memory: the story is hidden/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Start' })).toBeDisabled();
-    // Player 2 is here but away from the page
+    // Player 2 is here but away from the page.
     expect(screen.getByText('Waiting for everyone to come back to the game.')).toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe('the lobby', () => {
     game();
     await screen.findByRole('button', { name: /Copy the join code/ });
     await waitFor(() => expect(calls.some((c) => c.path === '/story-games/g-1?v=4')).toBe(true));
-    // the next version arrives: the reading starts, and the poll asks for what comes after it
+    // The next version arrives: the reading starts, and the poll asks for what comes after it.
     act(() => poll.release(gameView({ version: 5, status: 'reading', code: 'ABC234' })));
     expect(await screen.findByRole('button', { name: 'I’ve finished reading' })).toBeInTheDocument();
     await waitFor(() => expect(calls.some((c) => c.path === '/story-games/g-1?v=5')).toBe(true));
@@ -158,14 +158,14 @@ describe('the lobby', () => {
       'GET /story-games/g-1': (c: Call) => {
         if (!c.path.includes('?v=')) return gameView({ version: 4 });
         asked.push(Date.now());
-        // something overdue that settling did not move: the same version, at once
+        // Something overdue that settling did not move: the same version, at once.
         return gameView({ version: 4 });
       },
     });
     game();
     await screen.findByRole('button', { name: /Copy the join code/ });
     await new Promise((r) => setTimeout(r, 1_300));
-    // without a floor this would be hundreds of requests
+    // Without a floor this would be hundreds of requests.
     expect(asked.length).toBeGreaterThanOrEqual(2);
     expect(asked.length).toBeLessThanOrEqual(3);
     for (let i = 1; i < asked.length; i++) expect(asked[i]! - asked[i - 1]!).toBeGreaterThanOrEqual(900);
@@ -175,7 +175,7 @@ describe('the lobby', () => {
   it('says a game it may not see is not available', async () => {
     fakeApi({ 'GET /story-games/g-1': jsonResponse(404, { code: 'GAME_NOT_FOUND' }) });
     game();
-    // the heading is on the page a moment before its effect focuses it
+    // The heading is on the page a moment before its effect focuses it.
     const heading = await screen.findByRole('heading', { name: 'Game not available' });
     await waitFor(() => expect(heading).toHaveFocus());
     expect(screen.getByRole('link', { name: 'Back to stories' })).toBeInTheDocument();
@@ -284,9 +284,7 @@ describe('reading, near the end', () => {
     const before = pauses.length;
     act(() => poll.release(question({ mode: 'duo', activeCount: 2, version: 3 })));
     await screen.findByRole('heading', { name: 'Question 1 of 3' });
-    // the player was paused when the reading went, with this story's sentence in it;
-    // the reading phase lets go of the player as it unmounts, which can be a beat
-    // after the question is on screen
+    // The reading phase pauses the player as it unmounts, which can be a beat after the question shows.
     await waitFor(() => expect(pauses.length).toBeGreaterThan(before));
     expect(pauses.at(-1)).toBe('https://cdn.test/1.m4a');
     vi.unstubAllGlobals();
@@ -305,7 +303,7 @@ describe('a question', () => {
     game();
     const heading = await screen.findByRole('heading', { name: 'Question 1 of 3' });
     await waitFor(() => expect(heading).toHaveFocus());
-    // English under the question at level 1
+    // English under the question at level 1.
     expect(screen.getByText('How old is Rojîn?')).toHaveAttribute('lang', 'en');
     expect(screen.getByText('Rojîn çend salî ye?')).toHaveAttribute('lang', 'ku');
     await userEvent.keyboard('2');
@@ -330,9 +328,9 @@ describe('a question', () => {
     });
     game();
     const heading = await screen.findByRole('heading', { name: 'Question 1 of 3' });
-    // the keys are listened for in the same pass that focuses the heading
+    // The keys are listened for in the same pass that focuses the heading.
     await waitFor(() => expect(heading).toHaveFocus());
-    // the focused heading has the key, as on a page
+    // The focused heading has the key, as on a page.
     fireEvent.keyDown(heading, { key: '٢', code: 'Digit2' });
     await waitFor(() => expect(calls.find((c) => c.path.endsWith('/answers'))?.body).toEqual({ index: 0, choice: 1 }));
   });
@@ -351,7 +349,7 @@ describe('a question', () => {
     fakeApi({ 'GET /story-games/g-1/story': story, 'GET /story-games/g-1': question() });
     game();
     await screen.findByRole('heading', { name: 'Question 1 of 3' });
-    // level 1: English is shown, and the button hides it
+    // Level 1: English is shown, and the button hides it.
     expect(screen.getByText('How old is Rojîn?')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Hide English' }));
     expect(screen.queryByText('How old is Rojîn?')).toBeNull();
@@ -435,7 +433,7 @@ describe('a question', () => {
     game();
     await screen.findByRole('heading', { name: 'Question 1 of 3' });
     await waitFor(() => expect(document.querySelector('[aria-live="polite"]')?.textContent).toMatch(/10 seconds left/));
-    // the count itself is hidden from screen readers
+    // The count itself is hidden from screen readers.
     expect(document.querySelector('.sg-clock')).toHaveAttribute('aria-hidden', 'true');
   });
 });
@@ -498,7 +496,7 @@ describe('the answer, in English', () => {
     });
     game();
     await screen.findByText('Çîrok dibêje: “Ew deh salî ye.”');
-    // level 2: no English until asked for
+    // Level 2: no English until asked for.
     expect(screen.queryByText('The story says she is ten.')).toBeNull();
     await userEvent.click(screen.getByRole('button', { name: 'Show in English' }));
     expect(screen.getByText('The story says she is ten.')).toHaveAttribute('lang', 'en');
@@ -545,7 +543,7 @@ describe('the results', () => {
     game();
     const xp = await screen.findByText('+15 XP');
     await waitFor(() => expect(document.documentElement).toHaveAttribute('dir', 'rtl'));
-    // dir="ltr" isolates the badge from the page's direction (HTML gives [dir] unicode-bidi: isolate)
+    // dir="ltr" isolates the badge from the page's direction.
     expect(xp).toHaveAttribute('dir', 'ltr');
   });
 
@@ -620,14 +618,14 @@ describe('the results', () => {
       'GET /story-games/g-1': {
         ...base,
         mode: 'solo',
-        // the story was renamed since the game began: the results carry the address it has now
+        // The story was renamed since the game began: the results carry the address it has now.
         results: { ...base.results!, storySlug: 'qelema-sin-a-nu', standings: base.results!.standings.slice(0, 1), me: { ...base.results!.me!, xp: 0, learningCounted: false } },
       },
     });
     game();
     expect(await screen.findByText(/Answer at least half the questions in one day/)).toBeInTheDocument();
     expect(screen.queryByText(/XP/)).toBeNull();
-    // two ways on: the story the check was on, by the slug the results carry, and the library
+    // Two ways on: the story the check was on, by the slug the results carry, and the library.
     expect(screen.getByRole('link', { name: 'Back to the story' })).toHaveAttribute('href', '/app/learn/stories/qelema-sin-a-nu');
     expect(screen.getByRole('link', { name: 'Another story' })).toHaveAttribute('href', '/app/learn/stories');
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
@@ -728,7 +726,7 @@ describe('after merging with the social and rating tracks', () => {
       await waitFor(() => expect(heard).toEqual([{ game: 'stories', gaveUp: false }]));
       first.unmount();
 
-      // the same results opened again later: nothing new finished here
+      // The same results opened again later: nothing new finished here.
       fakeApi({ 'GET /story-games/g-1/story': story, 'GET /story-games/g-1': finished() });
       game();
       expect(await screen.findByRole('heading', { name: 'You got 3 of 3 right' })).toBeInTheDocument();

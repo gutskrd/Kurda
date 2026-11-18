@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-// Soranî in a face made for Arabic script (fetched only when a story page is opened)
+// Soranî in a face made for Arabic script, fetched only when a story page opens.
 import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -42,32 +42,19 @@ import { VarietySwitch } from '../lore/LoreParts';
 type Load = { state: 'loading' } | { state: 'ready'; story: StoryDetail } | { state: 'gone' } | { state: 'error'; message: string };
 
 /**
- * A story (/app/learn/stories/:slug) — open to everyone, signed in or not;
- * the check after it needs an account.
+ * A story (/app/learn/stories/:slug), open to everyone; the check after it needs an account. The overview (cover, facts,
+ * synopsis, Read or Continue and Listen, bookmark, key vocabulary, check) sits above the text, which has the glossary,
+ * per-paragraph translations, a docked player when recorded, and the reader's place saved as they go.
  *
- * One page with two halves (design notes §1–2). At the top the overview: the
- * cover, the title, what the story is (level, category, minutes, words,
- * narrated), who it comes from, the synopsis, Read or Continue and Listen,
- * the bookmark, the key vocabulary and the check. Under it the text itself,
- * at a reader's own size, with the glossary marked, the translation a toggle
- * away under each paragraph, the player docked at the foot when there are
- * recordings, and the reader's place kept on the server as they go.
- *
- * A story told in both varieties is one story: the Kurmancî | Soranî switch
- * the library has stands at the head of the overview, set to the telling on
- * show, and the other side opens that telling in this page's place — its own
- * overview, from the top, not "the same paragraph", since the two are not cut
- * alike — and keeps the choice, so the library opens on it too. A story told
- * once has no switch, and names its variety in the byline instead. Opening a
- * story of the other variety from a link shows what the link names and keeps
- * no choice.
+ * A story told in both varieties has the library's Kurmancî | Soranî switch at its head; switching opens the other
+ * telling from its top in this page's place and keeps the choice. A story told once names its variety in the byline.
  */
 export function StoryReader(): React.JSX.Element {
   const { slug = '' } = useParams();
   return <StoryPage key={slug} slug={slug} />;
 }
 
-/** What the switch hands the page it opens: the other telling, asked for already, so the page has it at once. */
+/** What the switch hands the page it opens: the other telling, already fetched. */
 interface Handover {
   story?: StoryDetail;
 }
@@ -79,21 +66,21 @@ function StoryPage({ slug }: { slug: string }): React.JSX.Element {
   const navigate = useNavigate();
   const handed = (location.state as Handover | null)?.story;
   const [load, setLoad] = useState<Load>(() => (handed?.slug === slug ? { state: 'ready', story: handed } : { state: 'loading' }));
-  // the telling the switch handed over is shown as it came, and not asked for a second time
+  // A handed-over telling is shown as it came, not fetched again.
   const handedOver = useRef(handed?.slug === slug);
   const [nonce, setNonce] = useState(0);
   const signedIn = status === 'signedIn';
-  // where the story's card lands when it is pressed in the library, and what goes back to the card: said here, while
-  // the story is still being asked for, so the page is held for the cover that comes with it (lib/viewTransition.tsx)
+  // The library card's cover lands here (lib/viewTransition.tsx); promised now, while the story loads, so the page is
+  // held for it.
   const cover = useGrowsInto(`story:${slug}`);
 
-  // the hand-over is for this one opening: taken out of the history, so a reload asks for the story afresh
+  // The handover is for this opening only, so a reload fetches the story afresh.
   useEffect(() => {
     if (handed) navigate(`${location.pathname}${location.search}`, { replace: true, state: null });
-  }, []); // once, as the page opens
+  }, []); // Once, as the page opens.
 
   useEffect(() => {
-    // the story is asked for once the session is known, so a reader's own record arrives with it
+    // Fetched once the session is known, so the reader's own record comes with it.
     if (status === 'restoring') return;
     if (handedOver.current) {
       handedOver.current = false;
@@ -104,7 +91,7 @@ function StoryPage({ slug }: { slug: string }): React.JSX.Element {
     void client.get<StoryDetail>(`/stories/${encodeURIComponent(slug)}`).then((res) => {
       if (!live) return;
       if (res.ok) setLoad({ state: 'ready', story: res.data });
-      // unpublished — to be fixed, or taken down — looks the same as never published
+      // Unpublished looks the same as never published.
       else if (res.error.status === 404) setLoad({ state: 'gone' });
       else setLoad({ state: 'error', message: describeError(res.error, t) });
     });
@@ -134,7 +121,7 @@ const TRADITION_KEY: Record<StoryTradition, MessageKey> = {
   original: 'stories.overview.tradition.original',
 };
 
-/** The stories' spelling of a variety in the games' (the switch the library, the riddles and the proverbs share speaks that one). */
+/** The stories' variety spelling in the games' terms, which the shared switch speaks. */
 const GAME_SPELLING: Record<StoryDialect, GameDialect> = { kurmanci: 'kmr', sorani: 'ckb' };
 
 function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTMLSpanElement> }): React.JSX.Element {
@@ -143,7 +130,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
   const navigate = useNavigate();
   const { client, status } = useAuth();
   const signedIn = status === 'signedIn';
-  // the other telling on its way, while the switch already says it; and why the last one did not come
+  // The other telling being fetched while the switch already shows it, and why the last one failed.
   const [switching, setSwitching] = useState<StoryDialect | null>(null);
   const [switchProblem, setSwitchProblem] = useState<string | null>(null);
   const { lang, dir } = storyTextDirection(story.dialect);
@@ -155,7 +142,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
   const categories = useStoryCategories();
   const text = useRef<HTMLDivElement>(null);
   const { observe } = useReadingProgress({ storyId: story.id, count: story.paragraphs.length, enabled: signedIn, initial: story.me ?? null, onMe: setMe });
-  // the reader's place when the page opened: offered once, as a way back to it
+  // The reader's place when the page opened, offered once as a way back.
   const [resume, setResume] = useState<number | null>(() => (story.me && !story.me.finishedAt && story.me.paragraph > 0 ? story.me.paragraph : null));
 
   const changeSize = useCallback((next: number) => {
@@ -163,7 +150,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
     rememberTextSize(next);
   }, []);
 
-  // the translation in the reader's language, else English, cut to the paragraphs; none when the story has neither
+  // The translation in the reader's language, else English, cut to paragraphs; none when the story has neither.
   const translation = useMemo(() => {
     const own = story.translations?.[locale];
     if (own && own.length === story.paragraphs.length) return { lang: locale, paragraphs: own };
@@ -179,7 +166,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
 
   const scrollToParagraph = (index: number): void => {
     const el = text.current?.querySelector<HTMLElement>(`[data-paragraph="${index}"]`) ?? text.current;
-    // a reader who asked for less motion is taken there at once
+    // Instant under reduced motion.
     el?.scrollIntoView?.({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   };
 
@@ -204,7 +191,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
     setBookmarkProblem(t('stories.library.bookmarkFailed'));
   }
 
-  // a legend's chapters: where the reader is among them, and how far they have read, from the saved place and the page
+  // A legend's chapters: where the reader is among them and how far they have read.
   const sections = useMemo(() => story.sections ?? [], [story.sections]);
   const position = useChapterPosition(text, sections);
   const furthest = Math.max(position.furthest, me && me.share > 0 ? me.paragraph : -1);
@@ -214,13 +201,12 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
   const left = minutesLeft({ readingMinutes: story.readingMinutes, me: me ?? undefined });
   const finished = me?.finishedAt !== null && me?.finishedAt !== undefined;
   const narrated = narratedKey(story);
-  // the same story in the other variety, when it has been told in both
+  // The same story in the other variety, when told in both.
   const otherTelling = story.versions.find((v) => v.dialect !== story.dialect) ?? null;
 
   /**
-   * The switch: the other telling, asked for while this one stays, then opened in this page's place (the address
-   * moves to it, Back still leads to where the reader came from) and kept as the reader's choice. One that does not
-   * come leaves the reader where they were, and says so.
+   * The switch: fetches the other telling while this one stays, then opens it here (Back still returns to where the
+   * reader came from) and keeps the choice. A failed fetch leaves the reader where they were and says so.
    */
   async function switchTo(next: GameDialect): Promise<void> {
     const dialect = storySpelling(next);
@@ -270,7 +256,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
           <h1 id="story-title" className="story-title" lang={lang} dir={dir}>
             {story.title}
           </h1>
-          {/* the title in the reader's language, under the Kurdish one, which stays the story's own */}
+          {/* The title in the reader's language under the Kurdish one. */}
           {meta.title && (
             <p className="story-title-tr" lang={meta.title.lang} dir={localeDir(meta.title.lang)}>
               {meta.title.text}
@@ -279,7 +265,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
           <p className="story-byline">
             <span>{t(TRADITION_KEY[story.tradition])}</span>
             {story.author && <span>{story.author}</span>}
-            {/* which Kurdish it is: said by the switch when there is one */}
+            {/* Which Kurdish it is, unless the switch says so. */}
             {!otherTelling && <span>{dialectName(story.dialect)}</span>}
           </p>
           {story.summary && (
@@ -360,7 +346,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
           translations={translation}
           observe={signedIn ? observe : undefined}
         />
-        {/* a story with notes or sources says where it comes from after reading, with the rest of it */}
+        {/* A story with notes or sources says where it comes from after reading. */}
         {!about && (story.source || story.attributionNote) && (
           <footer className="story-about">
             <h2 className="story-section-title">{t('stories.overview.aboutTitle')}</h2>
@@ -379,12 +365,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
             {story.attributionNote && <p>{story.attributionNote}</p>}
           </footer>
         )}
-        {/*
-         * Docked inside the text, the player stays at the foot of the screen
-         * while the text is on it, and nowhere above it: the overview's own
-         * buttons are never under it, and Listen brings the text — and the
-         * player with it — into view.
-         */}
+        {/* Docked inside the text, the player is at the foot of the screen only while the text is, never over the overview. */}
         {audio.track.length > 0 && <StoryPlayerBar audio={audio} docked />}
       </div>
 
@@ -395,12 +376,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
   );
 }
 
-/**
- * "Key vocabulary": every glossary word with its meaning in the reader's
- * language, its part of speech when the dictionary knows the word, a play
- * button when the dictionary has a recording of it, and Save word when it is
- * a headword — the way to the words that needs no hunting in the text.
- */
+/** "Key vocabulary": every glossary word with its meaning in the reader's language, part of speech, recording and Save word. */
 function KeyVocabulary({ glossary, dialect }: { glossary: readonly StoryGlossEntry[]; dialect: StoryDetail['dialect'] }): React.JSX.Element | null {
   const t = useT();
   const locale = useLocale();
@@ -436,14 +412,10 @@ function KeyVocabulary({ glossary, dialect }: { glossary: readonly StoryGlossEnt
 }
 
 /**
- * The check (design notes §1, §6): five questions on the story, the existing
- * solo game started with STORY_ASSESSMENT. Locked until the reader has
- * finished the story — the server's `finishedAt`, set as they read — then
- * "Check what you understood", or their best so far and "Check again". An
- * unfinished check on this story is offered to go back to first, rather than
- * replaced unasked. A second check on the same day says what it pays, from
- * the server's own numbers, before it is started. The questions can also be
- * played with friends, from here.
+ * The check: five questions on the story, the solo game started with STORY_ASSESSMENT. Locked until the server marks the
+ * story finished, then "Check what you understood", or the best so far and "Check again". An unfinished check is offered
+ * first rather than replaced, and a second check on the same day says what it pays before starting. It can also be
+ * played with friends from here.
  */
 function CheckBlock({ story, me, id }: { story: StoryDetail; me: StoryMe | null; id: string }): React.JSX.Element {
   const t = useT();

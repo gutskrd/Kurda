@@ -1,15 +1,10 @@
-/**
- * The words a story's facts are shown with: a level's plain name and what it
- * means, the minutes left from where a reader got to, a category's name in
- * the reader's language. Shared by the library's cards, its filter and the
- * story page, so none of them says the same thing two ways.
- */
+/** The words for a story's facts (level, minutes left, category), shared by cards, the filter and the story page. */
 import { categoryName, categoryNameKey, levelHintKey, levelNameKey, type StoryCategory, type StoryLevel, type StoryListItem } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/** "Beginner": what a reader is shown for a level, never the CEFR letter (see `levelNameKey`). */
+/** "Beginner": a level's name for readers, never the CEFR letter (see `levelNameKey`). */
 export function levelName(level: StoryLevel, t: Translate): string {
   return t(levelNameKey(level));
 }
@@ -20,9 +15,8 @@ export function levelHint(level: StoryLevel, t: Translate): string {
 }
 
 /**
- * How many minutes of a story are left for this reader, from how far through
- * it they got: never less than one while anything is left, and null before
- * they started or once they finished — a card then shows the story's own time.
+ * The minutes left for this reader from how far they got: at least one while anything is left, null before starting or
+ * once finished (the card then shows the story's own time).
  */
 export function minutesLeft(story: Pick<StoryListItem, 'readingMinutes' | 'me'>): number | null {
   const me = story.me;
@@ -31,18 +25,15 @@ export function minutesLeft(story: Pick<StoryListItem, 'readingMinutes' | 'me'>)
 }
 
 /**
- * A category's name in the reader's language. One the library was seeded
- * with is named from the catalogue (`categoryNameKey`), in all nine
- * languages, because the library's list names it in English, Kurmancî and
- * Soranî only; one an editor added since is named from the list, English
- * where it has no name in the reader's language.
+ * A category's name in the reader's language: seeded categories from the catalogue (`categoryNameKey`) in all nine
+ * languages, since the list names them only in English, Kurmancî and Soranî; later ones from the list, else English.
  */
 export function categoryTitle(category: StoryCategory, locale: string, t: Translate): string {
   const key = categoryNameKey(category.slug);
   return key ? t(key) : categoryName(category, locale);
 }
 
-/** The same for a category known only by its slug: null for one neither the catalogue nor the list knows. */
+/** The same for a category known only by slug; null when neither the catalogue nor the list knows it. */
 export function categoryLabel(slug: string, categories: readonly StoryCategory[] | null | undefined, locale: string, t: Translate): string | null {
   const key = categoryNameKey(slug);
   if (key) return t(key);
@@ -50,7 +41,7 @@ export function categoryLabel(slug: string, categories: readonly StoryCategory[]
   return found ? categoryName(found, locale) : null;
 }
 
-/** The categories by slug, each in the reader's language, for a card to name its own. */
+/** The categories by slug in the reader's language, for cards. */
 export function categoryNames(categories: readonly StoryCategory[] | undefined, locale: string, t: Translate): ReadonlyMap<string, string> {
   return new Map((categories ?? []).map((c) => [c.slug, categoryTitle(c, locale, t)]));
 }

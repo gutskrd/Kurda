@@ -7,13 +7,10 @@ import type { ApiResult } from '../lib/types';
 export const POLL_BACKOFF_MS = [1_000, 2_000, 5_000] as const;
 
 /**
- * The least time between two long-polls that brought nothing new. The server
- * answers at once when something is overdue, and if settling it did not move
- * the game (another request got there first, an expiry changed nothing) the
- * answer is the version just sent: asking straight back would spin into the
- * route's limit, and the 429s would then delay the real next phase.
+ * The least time between two long-polls that brought nothing new. An overdue game answers at once with the same
+ * version when settling changed nothing, so asking straight back would hit the route's rate limit.
  */
-export const POLL_FLOOR_MS = 1_000;
+const POLL_FLOOR_MS = 1_000;
 
 /** How an answer went, once the network has had its say. */
 export type AnswerOutcome = 'ok' | 'late' | 'moved' | { error: string | undefined; status?: number };
@@ -21,7 +18,7 @@ export type AnswerOutcome = 'ok' | 'late' | 'moved' | { error: string | undefine
 export type GameLoad =
   | { state: 'loading' }
   | { state: 'ready'; view: StoryGameView }
-  /** not a member (never, removed, or no such game): all look the same */
+  /** Not a member (never, removed, or no such game); all look the same. */
   | { state: 'gone' }
   | { state: 'error'; code?: string; status?: number };
 
@@ -37,26 +34,17 @@ const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
 const live = (s: StoryGameStatus): boolean => s !== 'finished' && s !== 'cancelled';
 
 /**
- * One story game, kept current (contract §A3).
- *
- * A duo or group game is followed with the long-poll: ask with the version
- * last seen, the server answers when it moves on (or after 20 s, or at its
- * next deadline), ask again at once — or, when the answer brought nothing new
- * and came back quickly, after a second. A failed request waits 1, 2, then 5
- * seconds before the next. Nothing waits while the game is over.
- *
- * A solo game is never polled: every action answers with the new view, and a
- * timed solo question is read once more just after its deadline, so the
- * reveal comes on time without a tap.
- *
- * The server's clock is the one that counts: `serverNow` in every view gives
- * the offset to the browser's, and every countdown is drawn from it.
+ * One story game kept current. Duo and group games long-poll with the last version: the server answers when the game
+ * moves, after 20 s or at its next deadline, and the next ask is immediate, or after a second when nothing came back
+ * quickly; failures wait 1, 2, then 5 s. Solo games are never polled, since every action returns the new view; a timed
+ * solo question is read once after its deadline for the reveal. `serverNow` in each view gives the clock offset for
+ * countdowns.
  */
 export function useStoryGame(id: string): {
   load: GameLoad;
-  /** milliseconds to add to Date.now() for the server's time */
+  /** Milliseconds to add to Date.now() for the server's time. */
   skew: number;
-  /** an action's answer is the new view; it is applied before the caller hears it */
+  /** An action's answer is the new view, applied before the caller hears it. */
   act: (path: string, body?: unknown) => Promise<ApiResult<StoryGameView>>;
   answer: (index: number, choice: number) => Promise<AnswerOutcome>;
   refresh: () => void;
@@ -68,7 +56,7 @@ export function useStoryGame(id: string): {
   const skewRef = useRef(0);
   const [kick, setKick] = useState(0);
 
-  /** Takes a view unless a newer one is already in hand (a slow poll arriving after an action's reply). */
+  /** Takes a view unless a newer one is already in hand (a slow poll after an action's reply). */
   const apply = useCallback((view: StoryGameView) => {
     const have = viewRef.current;
     if (have && have.id === view.id && view.version < have.version) return;
@@ -90,7 +78,7 @@ export function useStoryGame(id: string): {
 
   const refresh = useCallback(() => setKick((k) => k + 1), []);
 
-  // the first read, and a read on demand
+  // The first read, and reads on demand.
   useEffect(() => {
     const controller = new AbortController();
     void client.get<StoryGameView>(`/story-games/${encodeURIComponent(id)}`, { signal: controller.signal }).then((res) => {
@@ -104,7 +92,7 @@ export function useStoryGame(id: string): {
   const view = load.state === 'ready' ? load.view : null;
   const following = view !== null && view.mode !== 'solo' && live(view.status);
 
-  // a duo or group game: the long-poll, for as long as the game is on
+  // Duo and group games: the long-poll while the game is on.
   useEffect(() => {
     if (!following) return;
     const controller = new AbortController();
@@ -119,10 +107,10 @@ export function useStoryGame(id: string): {
         if (signal.aborted) return;
         if (res.ok) {
           failures = 0;
-          // an empty answer means the server let the wait go; just ask again
+          // An empty answer means the server let the wait go; ask again.
           const fresh = res.data && 'id' in res.data ? res.data : null;
           if (fresh) apply(fresh);
-          // a new version is asked after at once; the same one, back quickly, waits out the floor
+          // A new version is followed up at once; the same one, back quickly, waits out the floor.
           const gap = POLL_FLOOR_MS - (Date.now() - asked);
           if ((!fresh || fresh.version <= current.version) && gap > 0) await sleep(gap, signal);
           continue;
@@ -135,7 +123,7 @@ export function useStoryGame(id: string): {
     return () => controller.abort();
   }, [following, client, id, apply, fail]);
 
-  // a timed solo question: read once just after it closes, for the reveal
+  // A timed solo question: read once just after it closes, for the reveal.
   const soloDeadline = view && view.mode === 'solo' && view.status === 'question' ? view.phaseEndsAt : null;
   useEffect(() => {
     if (!soloDeadline) return;
@@ -155,11 +143,9 @@ export function useStoryGame(id: string): {
   );
 
   /**
-   * An answer, sent until it is known to have arrived (contract §A1): the
-   * same choice again after a network failure, until the question's deadline
-   * plus the grace the server allows. ALREADY_ANSWERED means an earlier try
-   * got through; NOT_CURRENT that the game moved on (read it again, quietly);
-   * TOO_LATE that it arrived after the deadline.
+   * Sends an answer until it is known to have arrived, retrying the same choice after network failures until the
+   * deadline plus the server's grace. ALREADY_ANSWERED means an earlier try got through; NOT_CURRENT that the game moved
+   * on (re-read quietly); TOO_LATE that it missed the deadline.
    */
   const answer = useCallback(
     async (index: number, choice: number): Promise<AnswerOutcome> => {
@@ -188,7 +174,7 @@ export function useStoryGame(id: string): {
           fail(404, code);
           return { error: code, status };
         }
-        // a refusal that will not change on a second try
+        // Refusals that will not change on a second try.
         const transient = kind === 'network' || kind === 'server' || kind === 'rate_limited';
         if (!transient) return { error: code, status };
         const serverNow = Date.now() + skewRef.current;
@@ -196,7 +182,7 @@ export function useStoryGame(id: string): {
           refresh();
           return 'late';
         }
-        // an untimed solo question has no deadline: a few tries, then the reader decides
+        // An untimed solo question has no deadline: a few tries, then the reader decides.
         if (deadline === null && attempt >= 6) return { error: code, status };
         const wait = Math.min(400 * 2 ** attempt, 3_000);
         await new Promise((r) => setTimeout(r, deadline === null ? wait : Math.min(wait, Math.max(200, deadline - serverNow))));
@@ -208,11 +194,7 @@ export function useStoryGame(id: string): {
   return { load, skew, act, answer, refresh };
 }
 
-/**
- * The text a game is played on (`GET /story-games/:id/story`): the game's own
- * copy, whatever has happened to the story since. Asked for once the game is
- * past its lobby, where the host may still change the story.
- */
+/** The text a game is played on (`GET /story-games/:id/story`), the game's own copy; fetched once past the lobby. */
 export function useGameStory(id: string, wanted: boolean): StoryDetail | null {
   const { client } = useAuth();
   const [story, setStory] = useState<StoryDetail | null>(null);
@@ -229,7 +211,7 @@ export function useGameStory(id: string, wanted: boolean): StoryDetail | null {
   return story;
 }
 
-/** The server's time, ticking once a second while `on` (countdowns, the reading caps). */
+/** The server's time, ticking each second while `on` (countdowns, reading caps). */
 export function useServerClock(skew: number, on: boolean): number {
   const [now, setNow] = useState(() => Date.now() + skew);
   useEffect(() => {

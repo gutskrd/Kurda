@@ -1,10 +1,4 @@
-/**
- * What the Stories screens ask the API, and how they say what went wrong.
- *
- * The shapes are @kurda/shared's (`StoryListItem`, `StoryDetail`,
- * `StoryGameView` …) — the API returns them and the phone reads the same — so
- * nothing here redefines one.
- */
+/** What the Stories screens ask the API, and how failures are worded; the shapes are @kurda/shared's. */
 import type {
   GameAccess,
   QuestionCount,
@@ -25,10 +19,8 @@ import type { MessageKey } from '../i18n/en';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * Where the stories live: the library is Learn's Stories group, a story is
- * read under it, and a game on one is played at the games' address — the
- * game is a game, whichever group it was started from, and the invites
- * already sent point there.
+ * Where stories live: the library under Learn, stories read under it, and games at the games' address, which invites
+ * already sent point to.
  */
 export const STORIES_LIBRARY = '/app/learn/stories';
 export const readerPath = (slug: string): string => `${STORIES_LIBRARY}/${encodeURIComponent(slug)}`;
@@ -47,7 +39,7 @@ export interface CreateStoryGame {
   access: GameAccess;
   skipReading?: boolean;
   extraTime?: boolean;
-  /** duo and group: Rated or Friendly (Game Ranks); solo has nobody to rank against */
+  /** Duo and group: Rated or Friendly; solo has nobody to rank against. */
   rated?: boolean;
 }
 
@@ -55,13 +47,13 @@ export function createGame(client: ApiClient, body: CreateStoryGame): Promise<Ap
   return client.post<StoryGameView>('/story-games', body);
 }
 
-/** Keep a story on your shelf, or take it off: `PUT` / `DELETE /stories/:id/bookmark`, both idempotent. */
+/** Adds or removes a story from your shelf (`PUT` / `DELETE /stories/:id/bookmark`, both idempotent). */
 export function setBookmark(client: ApiClient, storyId: string, on: boolean): Promise<ApiResult<{ bookmarked: boolean }>> {
   const path = `/stories/${encodeURIComponent(storyId)}/bookmark`;
   return on ? client.put<{ bookmarked: boolean }>(path) : client.delete<{ bookmarked: boolean }>(path);
 }
 
-/** Where a reader has got to in a story: `PUT /stories/:id/progress`, answered with their whole record on it. */
+/** Saves a reader's place (`PUT /stories/:id/progress`), answered with their whole record on the story. */
 export function putProgress(
   client: ApiClient,
   storyId: string,
@@ -70,7 +62,7 @@ export function putProgress(
   return client.put<{ me: StoryMe }>(`/stories/${encodeURIComponent(storyId)}/progress`, body);
 }
 
-/** The refusals a story game can answer with, in the reader's words. */
+/** A story game's refusals, in the reader's words. */
 const GAME_ERROR_KEY: Record<string, MessageKey> = {
   GAME_NOT_FOUND: 'stories.error.notFound',
   GAME_STARTED: 'stories.error.started',

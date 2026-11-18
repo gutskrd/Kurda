@@ -9,7 +9,7 @@ import { StoryReader } from './StoryReader';
 import { clearStoryCategories } from './catalogue';
 import { detail, fakeApi, gameView, notFound, refused, type Call } from './testing';
 
-/** The one player the app has: a fake that remembers what it was asked to play. */
+/** A fake of the app's one player, recording what it was asked to play. */
 const played: string[] = [];
 class FakeAudio extends EventTarget {
   src = '';
@@ -31,7 +31,7 @@ class FakeAudio extends EventTarget {
   }
 }
 
-/** A browser's observer, stood in for: the test says which paragraph came into view. */
+/** A stand-in IntersectionObserver: the test says which paragraph came into view. */
 let seen: IntersectionObserverCallback | null = null;
 const observed: Element[] = [];
 class FakeObserver {
@@ -90,7 +90,7 @@ describe('the story page', () => {
     const title = await screen.findByRole('heading', { level: 1, name: 'Qelema Şîn' });
     expect(title).toHaveAttribute('lang', 'ku');
     expect(title).toHaveAttribute('dir', 'ltr');
-    // the level by its plain name, what it means on hover, and no CEFR letter
+    // The level by its plain name, what it means on hover, and no CEFR letter.
     expect(screen.getByText('Starter')).toHaveAttribute('title', 'First words and short sentences');
     expect(screen.queryByText('A1')).toBeNull();
     expect(await screen.findByText('Everyday life')).toBeInTheDocument();
@@ -100,12 +100,12 @@ describe('the story page', () => {
     expect(screen.getByText('Kurmancî')).toBeInTheDocument();
     expect(screen.getByText('Rojîn li dibistana nû ye.')).toHaveAttribute('lang', 'ku');
     expect(screen.getByRole('button', { name: 'Read' })).toBeInTheDocument();
-    // nothing recorded: nothing to listen to, and no bar
+    // Nothing recorded: nothing to listen to, and no bar.
     expect(screen.queryByRole('button', { name: 'Listen' })).toBeNull();
     expect(screen.queryByRole('group', { name: 'Listen to the story' })).toBeNull();
-    // no picture of its own: it lies on its rug
+    // No picture of its own: it lies on its rug.
     expect(document.querySelector('.story-overview-cover img')).toHaveAttribute('src', `/cosmetics/backgrounds/${storyRugFor('qelema-sin').file}`);
-    // the text is under the overview, a paragraph at a time
+    // The text is under the overview, a paragraph at a time.
     expect(screen.getByText(/Îro Rojîn diçe/).closest('p')).toHaveAttribute('lang', 'ku');
   });
 
@@ -162,7 +162,7 @@ describe('the story page', () => {
     expect(within(words).getByText('noun')).toBeInTheDocument();
     await userEvent.click(within(words).getByRole('button', { name: 'Play pronunciation' }));
     expect(played).toEqual(['https://cdn.test/dibistan.m4a']);
-    // one Save: the other word is not in the dictionary
+    // One Save: the other word is not in the dictionary.
     const save = within(words).getAllByRole('button', { name: 'Save word' });
     expect(save).toHaveLength(1);
     await userEvent.click(save[0]!);
@@ -191,7 +191,7 @@ describe('the story page', () => {
     });
     reader();
     const marks = await screen.findAllByRole('button', { name: /^dibistanê$/i });
-    // once per paragraph in the text: the second "Dibistanê" is plain text
+    // Once per paragraph in the text: the second "Dibistanê" is plain text.
     expect(marks).toHaveLength(1);
     await userEvent.click(marks[0]!);
     const pop = screen.getByRole('dialog', { name: 'dibistanê' });
@@ -218,7 +218,7 @@ describe('the story page', () => {
     await userEvent.click(toggles[0]!);
     expect(screen.getByText('Heute geht Rojîn zur Schule. Sie ist zehn.')).toHaveAttribute('lang', 'de');
     expect(screen.getByRole('button', { name: 'Übersetzung ausblenden' })).toHaveAttribute('aria-expanded', 'true');
-    // the second paragraph keeps its own toggle, closed
+    // The second paragraph keeps its own toggle, closed.
     expect(screen.queryByText(/Şîlan ist ihre Freundin/)).toBeNull();
   });
 
@@ -248,13 +248,13 @@ describe('the story page', () => {
     await screen.findByRole('heading', { level: 1 });
     expect(screen.getAllByText('Finish the story first.')).toHaveLength(2);
     expect(screen.getAllByRole('button', { name: 'Check what you understood' })[0]).toBeDisabled();
-    // the paragraphs are watched from an effect, which runs a moment after the page is drawn: on a busy machine the heading is there first
+    // The paragraphs are watched from an effect that runs just after the draw; on a busy machine the heading comes first.
     await waitFor(() => expect(observed).toHaveLength(2));
     show(0);
     await waitFor(() => expect(calls.filter((c) => c.method === 'PUT').map((c) => c.body)).toEqual([{ paragraph: 0, share: 0.5 }]));
     show(1);
     await waitFor(() => expect(calls.filter((c) => c.method === 'PUT').at(-1)?.body).toEqual({ paragraph: 1, share: 1, finished: true }));
-    // the check opens with the server's word
+    // The check opens with the server's word.
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Check what you understood' })[0]).toBeEnabled());
     expect(screen.queryByText('Finish the story first.')).toBeNull();
   });
@@ -316,20 +316,20 @@ describe('the story page', () => {
       }),
     });
     reader();
-    // the overview's Listen, first on the page; the paragraph has its own under it
+    // The overview's Listen, first on the page; the paragraph has its own under it.
     await userEvent.click((await screen.findAllByRole('button', { name: 'Listen' }))[0]!);
     expect(played).toEqual(['https://cdn.test/1.m4a']);
     expect(document.querySelector('.story-sentence.is-reading')?.textContent).toBe(S1);
-    // the bar is docked under the text, with the narrator
+    // The bar is docked under the text, with the narrator.
     const bar = screen.getByRole('group', { name: 'Listen to the story' });
     expect(within(bar).getByText('Hamo')).toBeInTheDocument();
     expect(within(bar).getByText('2 of 4 sentences recorded')).toBeInTheDocument();
-    // a tap on the band, or its button, says the sentence again
+    // A tap on the band, or its button, says the sentence again.
     await userEvent.click(screen.getByRole('button', { name: 'Say this sentence again' }));
     expect(played).toEqual(['https://cdn.test/1.m4a', 'https://cdn.test/1.m4a']);
     await userEvent.click(document.querySelector('.story-sentence.is-reading')!);
     expect(played).toHaveLength(3);
-    // the first line ends and the next begins
+    // The first line ends and the next begins.
     act(() => soundPlayer()!.dispatchEvent(new Event('ended')));
     expect(played.at(-1)).toBe('https://cdn.test/2.m4a');
     expect(document.querySelector('.story-sentence.is-reading')?.textContent).toBe(S2);
@@ -343,7 +343,7 @@ describe('the story page', () => {
         asked.push({ text: this.textContent, options });
       },
     });
-    // the first sentence is below the fold, the second in the middle of the screen
+    // The first sentence is below the fold, the second in the middle of the screen.
     const rect = (top: number) => ({ top, bottom: top + 30, height: 30, left: 0, right: 300, width: 300, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
       if (this.textContent === S1) return rect(window.innerHeight + 200);
@@ -369,7 +369,7 @@ describe('the story page', () => {
       await waitFor(() => expect(sentences()).toEqual([{ text: S1, options: { block: 'center', behavior: 'smooth' } }]));
       act(() => soundPlayer()!.dispatchEvent(new Event('ended')));
       expect(document.querySelector('.story-sentence.is-reading')?.textContent).toBe(S2);
-      // already in sight, clear of the bar and the player: the page stays where it is
+      // Already in sight, clear of the bar and the player: the page stays where it is.
       expect(sentences()).toHaveLength(1);
     } finally {
       delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
@@ -379,7 +379,7 @@ describe('the story page', () => {
   it('offers Listen on a paragraph with recordings, and nothing on one without', async () => {
     fakeApi({ 'GET /stories/qelema-sin': detail({ audio: { [lessonAudioKey(S1)]: 'https://cdn.test/1.m4a' } }) });
     reader();
-    // the paragraph's own Listen, under it, beside the overview's Listen
+    // The paragraph's own Listen, under it, beside the overview's Listen.
     const listens = await screen.findAllByRole('button', { name: 'Listen' });
     expect(listens).toHaveLength(2);
     await userEvent.click(listens[1]!);
@@ -408,7 +408,7 @@ describe('the story page', () => {
     expect(screen.getAllByRole('link', { name: 'Create an account' })[0]).toHaveAttribute('href', '/register');
     expect(screen.queryByRole('button', { name: /Bookmark/ })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Check what you understood' })).toBeNull();
-    // nothing watched, nothing written
+    // Nothing watched, nothing written.
     expect(observed).toHaveLength(0);
     expect(calls.some((c) => c.method === 'PUT')).toBe(false);
   });
@@ -428,7 +428,7 @@ describe('the story page', () => {
     });
     /** Where the router is, so a test can see the switch move the address. */
     function Where(): React.JSX.Element {
-      // a plain paragraph: an <output> is a status of its own, and the page's "continue" prompt is the status looked for
+      // A plain paragraph, since an <output> is a status and the page's "continue" prompt is the status looked for.
       return <p data-testid="where">{useLocation().pathname}</p>;
     }
     const open = (slug = 'qelema-sin') =>
@@ -455,7 +455,7 @@ describe('the story page', () => {
       await screen.findByRole('heading', { level: 1, name: 'Qelema Şîn' });
       expect(chosen()).toEqual(['Kurmancî']);
       expect(screen.queryByRole('link', { name: /Also in/ })).toBeNull();
-      // the switch says which Kurdish this is: the byline does not say it again
+      // The switch says which Kurdish this is: the byline does not say it again.
       expect(screen.queryByText('Kurmancî', { selector: '.story-byline span' })).toBeNull();
     });
 
@@ -463,18 +463,18 @@ describe('the story page', () => {
       const { calls } = fakeApi({ 'GET /stories/qelema-sin': KURMANCI, 'GET /stories/penuse-sin': SORANI });
       open();
       await screen.findByRole('heading', { level: 1, name: 'Qelema Şîn' });
-      // part-way through the Kurmancî one
+      // Part-way through the Kurmancî one.
       expect(screen.getByRole('button', { name: 'Continue · 1 min left' })).toBeInTheDocument();
       await userEvent.click(within(group()).getByRole('radio', { name: 'Soranî' }));
       const title = await screen.findByRole('heading', { level: 1, name: 'پێنووسە شینەکە' });
       expect(title).toHaveAttribute('lang', 'ckb');
       expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/stories/penuse-sin');
       expect(chosen()).toEqual(['Soranî']);
-      // its own overview, its own place: unread, so Read
+      // Its own overview, its own place: unread, so Read.
       expect(screen.getByRole('button', { name: 'Read' })).toBeInTheDocument();
       expect(screen.queryByRole('status')).toBeNull();
       expect(localStorage.getItem('hevalo.stories.variety')).toBe('sorani');
-      // the telling the switch asked for is the one shown: not asked for a second time
+      // The telling the switch asked for is the one shown: not asked for a second time.
       expect(calls.filter((c) => c.path === '/stories/penuse-sin')).toHaveLength(1);
     });
 

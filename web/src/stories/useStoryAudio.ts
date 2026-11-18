@@ -5,14 +5,13 @@ import { onBuffering, onEnded, onError, onPlaying, onTime, play, position as pla
 /** One recorded sentence, where it is in the story and on the stitched timeline. */
 export interface AudioSentence {
   paragraph: number;
-  /** index into `storySentences(paragraph)` */
+  /** Index into `storySentences(paragraph)`. */
   sentence: number;
   url: string;
-  /** what it says */
   text: string;
-  /** who says it, when an editor chose a character for it */
+  /** Who says it, when an editor chose a character. */
   voice?: RecordingVoice;
-  /** how long it lasts, and where it starts when every recorded sentence plays in order; 0 when the server sent no timing */
+  /** Its length; with `startMs` its place on the stitched timeline. 0 when the server sent no timing. */
   durationMs: number;
   startMs: number;
 }
@@ -20,67 +19,55 @@ export interface AudioSentence {
 /** What is being read aloud: the whole story, or one paragraph. */
 export type AudioScope = { kind: 'story' } | { kind: 'paragraph'; paragraph: number };
 
-/** The speeds the player offers, in the order its chip cycles through them. */
-export const PLAYBACK_RATES = [0.75, 1, 1.25] as const;
+/** The player's speeds, in the order its chip cycles through them. */
+const PLAYBACK_RATES = [0.75, 1, 1.25] as const;
 export type PlaybackRate = (typeof PLAYBACK_RATES)[number];
 
-/** The speed after `rate` on the chip: 1× → 1.25× → 0.75× → 1×, so the usual speed is one press from either side. */
+/** The next speed on the chip: 1× → 1.25× → 0.75× → 1×, so the usual speed is one press from either side. */
 export function nextRate(rate: PlaybackRate): PlaybackRate {
   const at = PLAYBACK_RATES.indexOf(rate);
   return PLAYBACK_RATES[(at + 1) % PLAYBACK_RATES.length]!;
 }
 
 export interface StoryAudio {
-  /** every recorded sentence in reading order */
+  /** Every recorded sentence in reading order. */
   track: AudioSentence[];
-  /** the paragraphs that have at least one recording */
+  /** Paragraphs with at least one recording. */
   paragraphsWithAudio: Set<number>;
-  /** how many sentences could be recorded, against `track.length` recorded ones */
+  /** How many sentences could be recorded, against `track.length` recorded. */
   recordable: number;
-  /** the stitched timeline's length; 0 when the server sent no timings, and then nothing can be sought */
+  /** The stitched timeline's length; 0 without timings, when nothing can be sought. */
   totalMs: number;
   scope: AudioScope | null;
   playing: boolean;
-  /** the network is holding the current sentence up */
+  /** The network is holding the current sentence up. */
   buffering: boolean;
-  /** the current sentence would not play */
+  /** The current sentence would not play. */
   failed: boolean;
-  /** the sentence being read (or paused on) */
+  /** The sentence being read or paused on. */
   current: { paragraph: number; sentence: number } | null;
-  /** index into `track` of the sentence being read (or paused on) */
+  /** Index into `track` of the sentence being read or paused on. */
   index: number | null;
   rate: PlaybackRate;
   playParagraph: (paragraph: number) => void;
-  /** read the whole story: on from a pause, else from the top */
+  /** Reads the whole story: on from a pause, else from the top. */
   playStory: () => void;
   pause: () => void;
   previous: () => void;
   next: () => void;
-  /** go to a point on the stitched timeline and read on from there */
+  /** Goes to a point on the stitched timeline and reads on. */
   seek: (ms: number) => void;
-  /** say the current sentence again from its start */
+  /** Replays the current sentence from its start. */
   replay: () => void;
   setSpeed: (rate: PlaybackRate) => void;
   halt: () => void;
 }
 
 /**
- * Reading a story aloud from its studio recordings, one sentence after
- * another, through the app's one player (`lib/sound`), so a story never talks
- * over a letter or a lesson.
- *
- * Only recordings play — nothing is synthesised, and a sentence with no
- * recording is skipped, never guessed at. Nothing plays by touching the
- * text: a paragraph has its own Listen button, and a narrated story a
- * player bar. Whatever is playing stops when the screen goes, and when
- * `stopWhen` turns true (the questions starting). `voices` says who says
- * each recording, by the same keys as `audio`, for the reader to show them.
- *
- * `narration` is the server's stitched timeline (every recorded sentence
- * with its length and where it starts): with it the bar can show elapsed and
- * total and be dragged along, and a pause keeps its place in the sentence.
- * Without it (a game's copy of an older story) the track is built from the
- * recordings alone and plays the same way, only without a seek line.
+ * Reads a story aloud from its recordings, sentence by sentence, through the app's one player (`lib/sound`). Nothing is
+ * synthesised; unrecorded sentences are skipped. Playback stops when the screen goes or `stopWhen` turns true. `voices`
+ * names who says each recording. With `narration`, the server's stitched timeline, the bar shows times, can seek, and a
+ * pause keeps its place mid-sentence; without it the track plays the same with no seek line.
  */
 export function useStoryAudio(
   paragraphs: readonly string[],
@@ -119,7 +106,7 @@ export function useStoryAudio(
   const [failed, setFailed] = useState(false);
   const [rate, setRateState] = useState<PlaybackRate>(1);
 
-  // the callbacks below read the latest of these without being rebuilt on every sentence
+  // Callbacks read the latest of these without being rebuilt every sentence.
   const live = useRef({ scope, position, rate, track });
   live.current = { scope, position, rate, track };
 
@@ -132,7 +119,7 @@ export function useStoryAudio(
   const start = useCallback((i: number, s: AudioScope, fromMs = 0) => {
     const item = live.current.track[i];
     if (!item) return;
-    // the player's events can arrive before React renders again: they must already see this sentence
+    // Player events can arrive before React re-renders, and must already see this sentence.
     live.current = { ...live.current, scope: s, position: i };
     setScope(s);
     setPosition(i);
@@ -151,7 +138,7 @@ export function useStoryAudio(
     setBuffering(false);
   }, []);
 
-  // one sentence ends: the next one in the same scope, or the end
+  // A sentence ended: the next in the same scope, or the end.
   useEffect(
     () =>
       onEnded((src) => {
@@ -168,7 +155,7 @@ export function useStoryAudio(
     [inScope, start],
   );
 
-  // something else took the player (a letter, another paragraph's button elsewhere): let go
+  // Something else took the player (a letter, another paragraph's button): let go.
   useEffect(
     () =>
       onPlaying((src) => {
@@ -182,7 +169,7 @@ export function useStoryAudio(
     [],
   );
 
-  // the network holding our sentence up, or losing it
+  // The network holding our sentence up, or losing it.
   useEffect(
     () =>
       onBuffering((src, waiting) => {
@@ -203,7 +190,7 @@ export function useStoryAudio(
     [],
   );
 
-  // leaving the screen, or the questions starting, ends the reading
+  // Leaving the screen, or the questions starting, ends the reading.
   useEffect(() => () => {
     if (live.current.position !== null) stop();
   }, []);
@@ -222,7 +209,7 @@ export function useStoryAudio(
 
   const playStory = useCallback(() => {
     const { position: at, scope: s, track: tr } = live.current;
-    // carry on from a pause in the whole story — inside the sentence, where it stopped — otherwise from the top
+    // Resume a paused story mid-sentence; otherwise start from the top.
     if (s?.kind === 'story' && at !== null) {
       const item = tr[at];
       if (item && resume(item.url)) {
@@ -297,10 +284,8 @@ export function useStoryAudio(
 }
 
 /**
- * Where the reading is on the stitched timeline, following the player's own
- * clock: the current sentence's start plus how far into it the clip is. Kept
- * out of `useStoryAudio`'s state on purpose — it changes a few times a second,
- * and only the bar's line and numbers need to move with it, not the text.
+ * The position on the stitched timeline from the player's clock. Kept out of `useStoryAudio`'s state because it changes
+ * several times a second and only the bar needs it.
  */
 export function useNarrationClock(audio: StoryAudio): number {
   const item = audio.index !== null ? audio.track[audio.index] : undefined;
@@ -308,7 +293,7 @@ export function useNarrationClock(audio: StoryAudio): number {
   const startMs = item?.startMs ?? 0;
   const [within, setWithin] = useState(0);
   useEffect(() => {
-    // a sentence started part-way through (a seek) begins where it was put, before its clock has ticked
+    // A sentence started part-way (a seek) begins where it was put, before its clock ticks.
     const now = playerPosition();
     setWithin(url && now.src === url ? now.ms : 0);
     if (!url) return;
@@ -316,7 +301,7 @@ export function useNarrationClock(audio: StoryAudio): number {
       if (src === url) setWithin(ms);
     });
   }, [url]);
-  // a sentence that has ended sits at its end until the next begins
+  // An ended sentence sits at its end until the next begins.
   const cap = item ? item.durationMs || Infinity : 0;
   return item ? startMs + Math.min(within, cap) : 0;
 }

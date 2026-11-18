@@ -8,19 +8,16 @@ import { TEXT_SIZES } from './prefs';
 import { nextRate, useNarrationClock, type StoryAudio } from './useStoryAudio';
 
 /**
- * Who says the story's lines, at the head of the reader's tools so it stays
- * in view while the text scrolls: the character of the line being read,
- * mouth moving with it, and between lines the last one heard (before any, the
- * first). A story's lines can each have their own. Nothing when none has a
- * character. Named for a screen reader ("Xezo speaking"), since no button
- * says who is reading.
+ * Who says the story's lines, at the head of the reader's tools: the current line's character with a moving mouth,
+ * between lines the last one heard (the first before any). Nothing when no line has a character. Named for screen
+ * readers ("Xezo speaking").
  */
 export function StorySpeaker({ audio }: { audio: StoryAudio }): React.JSX.Element | null {
   const clips = useMemo(() => spokenClips(audio.track.map((s) => ({ src: s.url, voice: s.voice, text: s.text }))), [audio.track]);
   return <ClipSpeaker clips={clips} className="speaker-tile story-speaker" />;
 }
 
-/** Smaller / larger text, remembered on the device by the caller. */
+/** Smaller and larger text; the caller remembers the choice. */
 export function TextSizeControl({ step, onChange }: { step: number; onChange: (next: number) => void }): React.JSX.Element {
   const t = useT();
   return (
@@ -51,7 +48,7 @@ export function TextSizeControl({ step, onChange }: { step: number; onChange: (n
   );
 }
 
-/** "1:05" — minutes and seconds of a point on the timeline, for the bar's clock and the seek line's spoken value. */
+/** "1:05": a timeline point as minutes and seconds, for the bar's clock and the seek line's spoken value. */
 export function clockText(ms: number): string {
   const whole = Math.max(0, Math.round(ms / 1000));
   const m = Math.floor(whole / 60);
@@ -59,16 +56,12 @@ export function clockText(ms: number): string {
   return `${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
-/** The speed chip's word for a rate: "1×", "0.75×", "1.25×" — a number, the same in every language. */
+/** The speed chip's word: "1×", "0.75×", "1.25×", the same in every language. */
 export function rateText(rate: number): string {
   return `${rate}×`;
 }
 
-/**
- * The narrator's chip on the bar: the character saying the line being read
- * (mouth moving), and their name beside them. Nothing at all when no line
- * has a character — the bar then starts at its buttons.
- */
+/** The narrator's chip on the bar: the current line's character and name; nothing when no line has one. */
 function Narrator({ audio }: { audio: StoryAudio }): React.JSX.Element | null {
   const t = useT();
   const clips = useMemo(() => spokenClips(audio.track.map((s) => ({ src: s.url, voice: s.voice, text: s.text }))), [audio.track]);
@@ -84,11 +77,8 @@ function Narrator({ audio }: { audio: StoryAudio }): React.JSX.Element | null {
 }
 
 /**
- * The seek line over the stitched timeline: a range the finger or the arrow
- * keys move, drawn as a thin line with a dot. While a drag is under way the
- * line follows the finger and the reading is moved once, when it lets go —
- * moving it on every pixel would start the clip a hundred times. The arrow
- * keys have no drag, so they move the reading at once.
+ * The seek line over the stitched timeline. A drag moves the line and seeks once on release, rather than restarting the
+ * clip on every pixel; arrow keys seek at once.
  */
 function SeekLine({ audio, elapsed }: { audio: StoryAudio; elapsed: number }): React.JSX.Element {
   const t = useT();
@@ -123,17 +113,10 @@ function SeekLine({ audio, elapsed }: { audio: StoryAudio; elapsed: number }): R
 }
 
 /**
- * The whole story read aloud, in one bar (design notes §4): the narrator,
- * a sentence back, play or pause — a quiet spinner in the button while the
- * network holds a sentence up — a sentence on, the seek line over the
- * stitched timeline with elapsed and total, and a speed chip that cycles
- * 1× → 1.25× → 0.75×. A story not recorded throughout says so under the
- * line ("4 of 9 sentences recorded") and plays what there is; a sentence
- * that will not play says so in one line and leaves the text readable.
- *
- * `docked` is the reader's own bar, held at the foot of the screen; without
- * it the bar sits among the tools (a game's reading phase, where the dock
- * at the foot is the game's).
+ * The whole story read aloud in one bar: narrator, previous sentence, play or pause (with a spinner while buffering),
+ * next sentence, the seek line with elapsed and total, and a speed chip. A partly recorded story says so ("4 of 9
+ * sentences recorded"), and a sentence that will not play says so in one line. `docked` holds it at the screen's foot in
+ * the reader; otherwise it sits among the tools (a game's reading phase).
  */
 export function StoryPlayerBar({ audio, docked = false }: { audio: StoryAudio; docked?: boolean }): React.JSX.Element {
   const t = useT();

@@ -10,16 +10,9 @@ import { StoryCover } from './Cover';
 import { levelHint, levelName, minutesLeft, narratedKey } from './labels';
 
 /**
- * A story on a shelf of the library (design notes §5): its cover, title and
- * one line of summary, then its facts — its level by its plain name (what
- * that means on hover), its category, how long it takes (or how long is left
- * for this reader), and a headphones mark when it can be listened to. A hairline along the foot shows how far the reader got; a finished
- * story's runs the whole way.
- *
- * The bookmark is a button of its own beside the link, not inside it (a
- * button in a link is two controls in one place), and it is optimistic: the
- * mark fills at once, the request follows, and only a refusal turns it back
- * and says so. A visitor has no shelf, so no bookmark.
+ * A story on a library shelf: cover, title, a line of summary, then its level, category, time (or time left) and a
+ * headphones mark when narrated, with a hairline of progress along the foot. The bookmark is a separate button beside
+ * the link and optimistic, reverting with a message only on refusal; visitors have none.
  */
 export function StoryCard({
   story,
@@ -27,9 +20,9 @@ export function StoryCard({
   onBookmarked,
 }: {
   story: StoryListItem;
-  /** the category's name in the reader's language, when the story is filed */
+  /** The category's name in the reader's language, when filed. */
   category: string | null;
-  /** told after the server agreed, so the library's shelves can follow */
+  /** Told once the server agreed, so the library's shelves can follow. */
   onBookmarked?: (story: StoryListItem, bookmarked: boolean) => void;
 }): React.JSX.Element {
   const t = useT();
@@ -39,13 +32,13 @@ export function StoryCard({
   const [bookmarked, setBookmarked] = useState(story.me?.bookmarked === true);
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  // the same story arrives again from another shelf: the server's word wins
+  // The same story may arrive again from another shelf; the server's word wins.
   useEffect(() => setBookmarked(story.me?.bookmarked === true), [story.me?.bookmarked]);
 
   const left = minutesLeft(story);
   const share = story.me ? (story.me.finishedAt ? 1 : Math.max(0, Math.min(1, story.me.share))) : 0;
   const narrated = narratedKey(story);
-  // the cover goes with the reader into the story, and the story's own cover comes back to this card, whichever shelf it was on
+  // The cover travels into the story and back to this card, whichever shelf it was on.
   const cover = useGrowsFrom(`story:${story.slug}`, { within: '.story-card' });
 
   async function toggle(): Promise<void> {

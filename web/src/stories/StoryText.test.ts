@@ -21,7 +21,7 @@ describe('paragraphSentences', () => {
     const word = s!.pieces.find((p) => p.gloss)!;
     expect(word.lead).toBe('“');
     expect(word.trail).toBe(',');
-    // nothing is lost or doubled: the sentence reads as written
+    // Nothing is lost or doubled: the sentence reads as written.
     expect(s!.pieces.map((p) => `${p.lead ?? ''}${p.text}${p.trail ?? ''}`).join('')).toBe('Ew dibêje: “Fermo, du hene.”');
   });
 

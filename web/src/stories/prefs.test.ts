@@ -23,7 +23,7 @@ describe('the variety Stories opens on', () => {
     rememberCourseDialect('sorani');
     localStorage.setItem('hevalo.stories.variety', 'kurmanci');
     expect(defaultVariety('en')).toBe('sorani');
-    // a course spelled the course's way is read as its variety
+    // A course spelled the course's way is read as its variety.
     rememberCourseDialect('kurmanji');
     expect(defaultVariety('ckb')).toBe('kurmanci');
   });

@@ -1,14 +1,7 @@
 /**
- * What the reader adds for a story told in chapters — a legend — and for the
- * things a story carries beside its text: where the reader is among the
- * chapters, the list of them to jump from, the title and summary in the
- * reader's language, the questions to think about afterwards, and the notes
- * and sources that say what the story is and where it comes from.
- *
- * A chapter is a heading paragraph ("## Title", `storySections`), so every
- * index into the paragraphs — the reader's saved place, the narration, an
- * answer's evidence — is the one list it always was, and progress by chapter
- * is read from the same saved place.
+ * The extras around a story's text: chapter position and contents for a legend, the title and summary in the reader's
+ * language, reflection questions, and notes and sources. A chapter is a heading paragraph ("## Title",
+ * `storySections`), so every paragraph index (saved place, narration, evidence) stays one list.
  */
 import { useEffect, useMemo, useState, type RefObject } from 'react';
 import {
@@ -24,21 +17,17 @@ import { CheckIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
-/** A story's own interface language: a Kurmancî story is the `ku` interface's language, a Soranî one `ckb`'s. */
+/** A story's own interface language: `ku` for Kurmancî, `ckb` for Soranî. */
 export function ownLocale(dialect: StoryDetail['dialect']): AppLocale {
   return dialect === 'sorani' ? 'ckb' : 'ku';
 }
 
-/** The direction text in an interface language is set in. */
+/** The text direction of an interface language. */
 export function localeDir(lang: string): 'rtl' | 'ltr' {
   return lang === 'ar' || lang === 'ckb' ? 'rtl' : 'ltr';
 }
 
-/**
- * Something in the reader's language from a story's translations: theirs,
- * else English. Nothing when the reader's language is the story's own, nor
- * when neither is there.
- */
+/** Something from a story's translations in the reader's language, else English; nothing when that is the story's own. */
 export function inReaderLanguage<T>(translations: Partial<Record<AppLocale, T>> | undefined, locale: AppLocale, own: AppLocale): { lang: AppLocale; value: T } | null {
   if (locale === own) return null;
   const theirs = translations?.[locale];
@@ -47,7 +36,7 @@ export function inReaderLanguage<T>(translations: Partial<Record<AppLocale, T>> 
   return en ? { lang: 'en', value: en } : null;
 }
 
-/** The story's title and summary in the reader's language, each where it has been translated (else English); the Kurdish stays the story's own. */
+/** The story's title and summary in the reader's language where translated (else English); the Kurdish stays the story's own. */
 export function useMetaTranslation(story: Pick<StoryDetail, 'dialect' | 'metaTranslations'>): {
   title: { lang: AppLocale; text: string } | null;
   summary: { lang: AppLocale; text: string } | null;
@@ -67,14 +56,12 @@ export function useMetaTranslation(story: Pick<StoryDetail, 'dialect' | 'metaTra
   }, [story.dialect, story.metaTranslations, locale]);
 }
 
-/** Where a chapter is: the line under the app's bar and the reader's tools that a chapter has to have crossed to be the one being read. */
+/** The line below the top bar and reader's tools that a chapter must cross to count as being read. */
 const READING_LINE = 180;
 
 /**
- * Which chapter is on the screen and the furthest paragraph scrolled to,
- * read from the page as it scrolls (once a frame at most). -1 is the
- * introduction, or nothing yet. Nothing is watched for a story without
- * chapters, nor where nothing has been laid out (a test).
+ * The chapter on screen and the furthest paragraph scrolled to, read at most once a frame; -1 is the introduction or
+ * nothing yet. Nothing is watched without chapters or layout (tests).
  */
 export function useChapterPosition(container: RefObject<HTMLElement | null>, sections: readonly StorySection[]): { current: number; furthest: number } {
   const [position, setPosition] = useState({ current: -1, furthest: -1 });
@@ -112,22 +99,19 @@ export function useChapterPosition(container: RefObject<HTMLElement | null>, sec
   return position;
 }
 
-/** The last paragraph of each chapter: the one before the next heading, or the story's last. */
+/** Each chapter's last paragraph: the one before the next heading, or the story's last. */
 function chapterEnds(sections: readonly StorySection[], count: number): number[] {
   return sections.map((s, i) => (sections[i + 1]?.paragraph ?? count) - 1);
 }
 
-/** A heading's title in the translation the reader is shown, where it has one in the same place. */
+/** A heading's title in the shown translation, when it has one in the same place. */
 function translatedTitle(translation: { paragraphs: readonly string[] } | null, paragraph: number): string | null {
   return storyHeadingTitle(translation?.paragraphs[paragraph] ?? '');
 }
 
 /**
- * The chapters, as a book's contents: the introduction when there is one,
- * then each chapter by its number and Kurdish title, its title in the
- * reader's language under it, and a mark for each chapter read — one line of
- * segments above them says how far through the chapters the reader is. Each
- * entry takes them to its chapter.
+ * The chapters as contents: the introduction if any, then each chapter by number and Kurdish title with its translated
+ * title and a read mark, under a segmented progress line. Each entry jumps to its chapter.
  */
 export function ChapterContents({
   story,
@@ -217,7 +201,7 @@ export function ChapterContents({
   );
 }
 
-/** Where the reader is, and the way to any chapter, in the reader's tools that stay in reach while the text scrolls. */
+/** Where the reader is, and a way to any chapter, in the tools that stay in reach while scrolling. */
 export function ChapterPicker({ sections, current, onJump }: { sections: readonly StorySection[]; current: number; onJump: (paragraph: number) => void }): React.JSX.Element | null {
   const t = useT();
   if (sections.length === 0) return null;
@@ -244,11 +228,7 @@ export function ChapterPicker({ sections, current, onJump }: { sections: readonl
   );
 }
 
-/**
- * "Think about it": open questions to turn over after reading, in Kurdish
- * with the reader's language under each. Nothing is asked back, scored or
- * paid.
- */
+/** "Think about it": open questions in Kurdish with the reader's language under each; nothing is asked back or scored. */
 export function Reflections({ story }: { story: Pick<StoryDetail, 'dialect' | 'reflections'> }): React.JSX.Element | null {
   const t = useT();
   const locale = useLocale();
@@ -297,7 +277,7 @@ export const SOURCE_TYPE_KEY: Record<StorySourceType, MessageKey> = {
   adapted: 'stories.source.type.adapted',
 };
 
-/** A note's body as its paragraphs. */
+/** A note's body as paragraphs. */
 function paragraphsOf(body: string): string[] {
   return body
     .split(/\n\s*\n/)
@@ -305,17 +285,14 @@ function paragraphsOf(body: string): string[] {
     .filter(Boolean);
 }
 
-/** Whether a story has anything for "About this story" beyond the one source line older stories name. */
+/** Whether a story has anything for "About this story" beyond the single source line older stories have. */
 export function hasAbout(story: Pick<StoryDetail, 'notes' | 'sources'>): boolean {
   return story.notes.length > 0 || story.sources.length > 0;
 }
 
 /**
- * "About this story", after reading: the notes — what is history and what is
- * legend, how the versions differ, what a custom means — each in the reader's
- * language with its Kurdish a tap away, then the sources the telling draws
- * on, each with what kind of source it is and a link where there is one. One
- * quiet column under a hairline, never a row of cards.
+ * "About this story", after reading: the notes, in the reader's language with the Kurdish a tap away, then the sources
+ * with their kind and a link where there is one, in one quiet column.
  */
 export function AboutStory({ story }: { story: Pick<StoryDetail, 'dialect' | 'notes' | 'sources' | 'source' | 'sourceUrl' | 'attributionNote'> }): React.JSX.Element | null {
   const t = useT();
