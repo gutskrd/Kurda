@@ -70,7 +70,8 @@ export const CATALOGUE_VERSION = Math.max(1, ...Object.keys(CATALOGUE_ADDITIONS)
 
 /** The in-app list, the live celebration, and one push a day at most. */
 export interface BadgeNotices {
-  record(userId: string, notification: Notification): Promise<void>;
+  /** Writes one learner's notifications together. */
+  recordAll(userId: string, notifications: readonly Notification[]): Promise<void>;
   realtime(userId: string, event: BadgeUnlockedEvent): Promise<void>;
   /**
    * Schedules the day's single push, a while after the first unlock so it can bundle the rest. Called at most once
@@ -399,6 +400,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     const notices = this.deps.notices;
     if (!notices || unlocks.length === 0) return;
     const warn = (what: string) => (err: unknown) => this.deps.log?.warn({ err, userId }, what);
+    const told: Notification[] = [];
     for (const u of unlocks) {
       const def = badgeDef(u.key)!;
       const event: BadgeUnlockedEvent = {
@@ -411,15 +413,14 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
       };
       await notices.realtime(userId, event).catch(warn('badge_unlocked not sent'));
       // English for the list; the apps write their own words from `data`
-      await notices
-        .record(userId, {
-          category: 'progress',
-          title: 'A new badge',
-          body: def.secret ? 'You found a secret badge.' : `You earned ${def.nameKu}.`,
-          data: { kind: 'badge', key: u.key, tier: String(u.tier) },
-        })
-        .catch(warn('badge notification not recorded'));
+      told.push({
+        category: 'progress',
+        title: 'A new badge',
+        body: def.secret ? 'You found a secret badge.' : `You earned ${def.nameKu}.`,
+        data: { kind: 'badge', key: u.key, tier: String(u.tier) },
+      });
     }
+    await notices.recordAll(userId, told).catch(warn('badge notification not recorded'));
     const day = this.now().toISOString().slice(0, 10);
     const claimed = await this.pool.query(
       `INSERT INTO badge_push_days (user_id, day) VALUES ($1, $2) ON CONFLICT DO NOTHING`,

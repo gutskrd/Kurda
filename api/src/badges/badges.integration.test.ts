@@ -9,10 +9,12 @@ import { badgeDef, type BadgeUnlockedEvent } from '@kurda/shared';
 import { BadgeService, CATALOGUE_VERSION, profileShowcase, type BadgeNotices } from './service.js';
 import { addXp, makeLearner, removeLearners, type LearnerOptions, type TestLearner } from '../test/progress.js';
 import { befriend } from '../test/social.js';
-import type { Notification } from '../push/service.js';
+import type { Notification, PushService } from '../push/service.js';
 import { DictionaryRepository } from '../dictionary/repository.js';
 import { PRACTICE_TARGET } from '../practice/practice-select.js';
 import { queriesDuring } from '../test/query-count.js';
+import { badgeNotices } from '../jobs/badge-jobs.js';
+import { InboxService } from '../notifications/inbox-service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const DAY = 86_400_000;
@@ -24,7 +26,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
   const live: Array<{ userId: string; e: BadgeUnlockedEvent }> = [];
   const pushes: Array<{ userId: string; day: string }> = [];
   const notices: BadgeNotices = {
-    record: async (userId, n) => void recorded.push({ userId, n }),
+    recordAll: async (userId, notifications) => void recorded.push(...notifications.map((n) => ({ userId, n }))),
     realtime: async (userId, e) => void live.push({ userId, e }),
     pushLater: async (userId, day) => void pushes.push({ userId, day }),
   };
@@ -923,6 +925,20 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       await pool.query(`INSERT INTO user_streaks (user_id, current_streak, longest_streak, days_learned) VALUES ($1, 7, 7, 1)`, [q.id]);
       await Promise.all([badges.recordStreak(q.id, 7), badges.recordStreak(q.id, 7), badges.recordStreak(q.id, 7)]);
       expect(recorded.filter((r) => r.userId === q.id)).toHaveLength(1);
+    });
+
+    it('writes the notices of several unlocks at once in one statement', async () => {
+      const push = { deliver: async () => ({}) } as unknown as PushService;
+      const told: BadgeService = new BadgeService(pool, {
+        notices: badgeNotices({ inbox: new InboxService(pool), realtime: async () => undefined, badges: () => told, push }),
+      });
+      const p = await learner();
+      await told.evaluate(p.id);
+      await pool.query(`INSERT INTO user_streaks (user_id, current_streak, longest_streak, days_learned) VALUES ($1, 30, 30, 30)`, [p.id]);
+      const run = await queriesDuring(pool, () => told.recordStreak(p.id, 30));
+      const notes = await pool.query(`SELECT data->>'key' AS key FROM notifications WHERE user_id = $1 AND data->>'kind' = 'badge'`, [p.id]);
+      expect(notes.rows.length).toBeGreaterThanOrEqual(2);
+      expect(run.statements.filter((sql) => sql.startsWith('INSERT INTO notifications'))).toHaveLength(1);
     });
 
     it('unseen unlocks wait for the celebration, and are marked seen', async () => {
