@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { CHAT_GREETINGS, greetingDialect } from '@kurda/shared';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -12,7 +13,6 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import type { ClearedView } from './clearing';
 import { GroupAvatar } from './GroupAvatar';
-import { GREETINGS } from './greetings';
 import { pressedDim } from '../theme/motion';
 import { useDirection } from '../reports/direction';
 
@@ -99,20 +99,21 @@ export function WelcomeCard({
 }
 
 /**
- * Three ways to say hello in the learner's own Kurdish, each sent with one tap. Shared with a first conversation with
- * one friend (chat/DmWelcome.tsx); `hint` tells a screen reader where the tap sends it.
+ * Three ways to say hello in the reader's Kurdish (shared `greetingDialect`): the interface's when it is Kurdish, else
+ * the course's. Each is sent with one tap. Shared with a first conversation with one friend (chat/DmWelcome.tsx);
+ * `hint` tells a screen reader where the tap sends it.
  */
 export function Greetings({ hint, onGreet }: { hint: string; onGreet: (greeting: string) => void }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
-  const script = useCourseDialect();
+  const { t, locale } = useI18n();
+  const script = greetingDialect(locale, useCourseDialect());
   // Right to left, the first greeting is on the right, as reading starts there.
   const dir = useDirection();
   return (
     <View style={styles.greet}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.welcome.sayHello')}</Text>
       <View style={[styles.chips, { flexDirection: dir.row }]}>
-        {GREETINGS[script].map((greeting) => (
+        {CHAT_GREETINGS[script].map((greeting) => (
           <Pressable
             key={greeting}
             onPress={() => onGreet(greeting)}

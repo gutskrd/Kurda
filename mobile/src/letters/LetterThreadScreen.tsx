@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { Alert, AppState, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LETTERS_CHANGED, type LetterItem, type LetterThread } from '@kurda/shared';
+import { LETTERS_CHANGED, freshLetters, letterThreadPath, withEarlierLetters, type LetterItem, type LetterThread } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useUserEvents, type UserEvent } from '../realtime/useUserEvents';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { showActions } from '../theme/actionSheet';
-import { ErrorRetry, GradientBackground } from '../theme/glass';
+import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -31,13 +31,14 @@ import { onLetterNotice } from './letterPushes';
 const FRONT_GAP_MS = 5000;
 
 /**
- * One correspondence (the website's web/src/letters/LetterThreadPage.tsx): every letter oldest first, each on its own
- * paper, and at the foot either the paper to write back on, when it is your turn, or a line saying your bird is with
- * them. A received letter can be pinned to the widget or reported. The pen pal's ⋯ menu holds report, block and
+ * One correspondence (the website's web/src/letters/LetterThreadPage.tsx): its newest letters oldest first, each on its
+ * own paper, with the earlier ones a press away, and at the foot either the paper to write back on, when it is your
+ * turn, or a line saying your bird is with them. A received letter can be pinned to the widget or reported. The pen pal's ⋯ menu holds report, block and
  * goodbye, which asks first and closes the letters for both.
  *
  * While in view it is re-read on `letters_changed`, on a notification for it, and on return to the front, so a new
- * letter appears here (it still lands at your window once). An answer in progress is kept as a draft (drafts.ts).
+ * letter appears here (it still lands at your window once); earlier letters already shown stay (shared `freshLetters`).
+ * An answer in progress is kept as a draft (drafts.ts).
  */
 export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onExit: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -59,12 +60,23 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   const blockNow = useBlock();
 
   const load = useCallback(async (): Promise<void> => {
-    const res = await client.get<LetterThread>(`/letters/threads/${encodeURIComponent(threadId)}`);
+    const res = await client.get<LetterThread>(letterThreadPath(threadId));
     if (res.ok) {
-      setThread(res.data);
+      setThread((shown) => freshLetters(shown, res.data));
       setError(null);
     } else setError(res.error);
   }, [client, threadId]);
+
+  const [earlier, setEarlier] = useState<{ busy: boolean; error: ApiError | null }>({ busy: false, error: null });
+  const firstShown = thread?.letters[0]?.id;
+  const showEarlier = useCallback(() => {
+    if (!firstShown) return;
+    setEarlier({ busy: true, error: null });
+    void client.get<LetterThread>(letterThreadPath(threadId, firstShown)).then((res) => {
+      if (res.ok) setThread((shown) => (shown ? withEarlierLetters(shown, res.data) : shown));
+      setEarlier({ busy: false, error: res.ok ? null : res.error });
+    });
+  }, [client, threadId, firstShown]);
   // A letter removed meanwhile cannot be pinned: read again, and it shows as removed.
   const widget = useWidgetPin(client, () => void load());
 
@@ -195,6 +207,23 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
                   {name}
                 </Text>
               </View>
+              {thread.earlier ? (
+                <View style={styles.earlier}>
+                  <ClayButton
+                    label={t('letters.thread.earlier')}
+                    variant="outline"
+                    busy={earlier.busy}
+                    onPress={showEarlier}
+                    style={styles.earlierButton}
+                    testID="letters-earlier"
+                  />
+                  {earlier.error ? (
+                    <Text style={[styles.widgetError, styles.centred, { color: colors.danger }]} accessibilityLiveRegion="polite">
+                      {describeError(earlier.error, t)}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
               <View style={styles.list}>
                 {letters.map((l) => (
                   <LetterSheet
@@ -284,6 +313,9 @@ const styles = StyleSheet.create({
   who: { alignItems: 'center', gap: spacing.md - 4 },
   name: { flex: 1, ...display(typography.sizes.xl) },
   list: { gap: spacing.md },
+  earlier: { alignItems: 'center', gap: spacing.sm },
+  earlierButton: { alignSelf: 'center' },
+  centred: { textAlign: 'center' },
   widgetError: { fontSize: typography.sizes.sm, lineHeight: 19 },
   note: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', padding: spacing.md - 2, borderRadius: radii.lg, overflow: 'hidden' },
 });

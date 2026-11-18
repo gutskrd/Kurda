@@ -179,6 +179,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
       expect((await call('GET', '/games/availability?dialect=kurmanji', '')).statusCode).toBe(400);
     });
 
+    it('answers for both varieties at once when none is named, each as it is asked alone', async () => {
+      const both = await call('GET', '/games/availability', '');
+      expect(both.statusCode, both.body).toBe(200);
+      const alone = await Promise.all(['kmr', 'ckb'].map(async (d) => (await call('GET', `/games/availability?dialect=${d}`, '')).json()));
+      expect(both.json()).toEqual({ dialects: alone });
+    });
+
     it('offers no game made of content nobody has published', async () => {
       const res = await call('GET', '/games/availability?dialect=ckb', '');
       const detective = res.json().games.find((g: { id: string }) => g.id === 'detective');

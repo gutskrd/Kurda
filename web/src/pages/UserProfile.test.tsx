@@ -218,6 +218,21 @@ describe('UserProfile friend answers, shown before the server has them', () => {
     expect(screen.getByRole('button', { name: 'Add friend' })).toBeInTheDocument();
   });
 
+  it('ends a friendship once confirmed, before the server answers, and makes you friends again with a notice if refused', async () => {
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    const writes = heldWrites(zana('friends'));
+    await userEvent.click(await screen.findByRole('button', { name: 'More about Zana K' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Remove Zana K as a friend' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: /press again to confirm/i }));
+    expect(await screen.findByRole('button', { name: 'Add friend' })).toBeInTheDocument();
+    expect(writes.map((w) => `${w.method} ${new URL(w.url).pathname}`)).toEqual(['DELETE /friends/u2']);
+    writes[0]!.answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Message' })).toBeInTheDocument();
+    expect(notices).toHaveLength(1);
+    stop();
+  });
+
   it('makes you friends at once on Accept, and brings the request back with a notice if refused', async () => {
     const notices: string[] = [];
     const stop = onNotice((text) => notices.push(text));

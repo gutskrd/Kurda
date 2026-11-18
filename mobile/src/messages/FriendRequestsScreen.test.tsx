@@ -27,8 +27,7 @@ afterEach(() => {
 
 const serverDown: ApiResult<never> = { ok: false, error: { kind: 'server', message: 'unavailable', status: 503 } };
 const unread = {
-  'GET /chat/conversations': ok({ conversations: [] }),
-  'GET /me/groups/unread': ok({ unread: [] }),
+  'GET /chat/unread': ok({ direct: [], groups: [] }),
   'GET /me/notifications/unread-count': ok({ count: 0 }),
   'GET /me/gifts/unseen': ok({ unseen: 0 }),
 };

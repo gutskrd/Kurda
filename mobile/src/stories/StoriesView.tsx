@@ -300,7 +300,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         ) : resultsError ? (
           <ErrorRetry message={describeError(resultsError, t)} onRetry={() => setFilter({ ...filter })} />
         ) : results && results.stories.length === 0 ? (
-          <Note icon="story">{t('stories.library.empty')}</Note>
+          <Note icon="story">{t('stories.library.noMatch')}</Note>
         ) : results ? (
           <>
             {grid(results.stories)}
@@ -337,7 +337,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
             ))}
           </View>
         ) : null}
-        {library.total === 0 ? <Note icon="story">{t('stories.library.emptyAll')}</Note> : null}
+        {library.total === 0 ? <Note icon="story">{t('stories.library.empty')}</Note> : null}
         {shelves.map((shelf) => {
           if (shelf.stories.length === 0) return null;
           const from = shown;

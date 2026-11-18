@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { LETTER_BIRDS, LETTER_MAX, LETTER_MIN, letterAgeBand, letterBirdOf, letterNoticeOf, letterProblem, letterText } from './letters.js';
+import {
+  LETTER_BIRDS,
+  LETTER_MAX,
+  LETTER_MIN,
+  freshLetters,
+  letterAgeBand,
+  letterBirdOf,
+  letterNoticeOf,
+  letterProblem,
+  letterText,
+  letterThreadPath,
+  withEarlierLetters,
+  type LetterItem,
+  type LetterThread,
+} from './letters.js';
 
 const NOW = new Date(Date.UTC(2026, 10, 13));
 
@@ -108,5 +122,46 @@ describe('a letter’s notification', () => {
     expect(letterNoticeOf({ kind: 'gift', threadId: thread })).toBeNull();
     expect(letterNoticeOf(null)).toBeNull();
     expect(letterNoticeOf('letter')).toBeNull();
+  });
+});
+
+describe('a correspondence a page at a time', () => {
+  const letter = (n: number): LetterItem => ({ id: `l${n}`, mine: n % 2 === 0, body: `Name ${n}`, decor: null, removed: false, sentAt: '', readAt: null });
+  const thread = (from: number, to: number, earlier?: boolean): LetterThread => ({
+    threadId: 't1',
+    person: { id: 'p', name: 'Rojda', bird: 1 },
+    letters: Array.from({ length: to - from + 1 }, (_, i) => letter(from + i)),
+    yourTurn: false,
+    closed: false,
+    ...(earlier === undefined ? {} : { earlier }),
+  });
+  const ids = (t: LetterThread) => t.letters.map((l) => l.id);
+
+  it('asks for the newest page, or the page before a letter', () => {
+    expect(letterThreadPath('t 1')).toBe('/letters/threads/t%201?limit=10');
+    expect(letterThreadPath('t1', 'l5')).toBe('/letters/threads/t1?before=l5&limit=10');
+  });
+
+  it('puts earlier letters before those shown, once each, with whether more remain', () => {
+    const shown = withEarlierLetters(thread(11, 20, true), thread(1, 11, false));
+    expect(ids(shown)).toEqual(ids(thread(1, 20)));
+    expect(shown.earlier).toBe(false);
+  });
+
+  it('keeps the earlier letters shown when the newest are read again, with a new one among them', () => {
+    const shown = withEarlierLetters(thread(11, 20, true), thread(1, 10, false));
+    const again = freshLetters(shown, { ...thread(12, 21, true), yourTurn: true });
+    expect(ids(again)).toEqual(ids(thread(1, 21)));
+    expect(again).toMatchObject({ earlier: false, yourTurn: true });
+    // the newest page alone: its first letter stays when a new one pushes it off the fresh page
+    const moved = freshLetters(thread(11, 20, true), thread(12, 21, true));
+    expect(ids(moved)).toEqual(ids(thread(11, 21)));
+    expect(moved.earlier).toBe(true);
+  });
+
+  it('takes a fresh read as it is when nothing is shown yet, when the two would not meet, or from a server without pages', () => {
+    expect(freshLetters(null, thread(11, 20, true))).toEqual(thread(11, 20, true));
+    expect(ids(freshLetters(thread(1, 10, false), thread(31, 40, true)))).toEqual(ids(thread(31, 40)));
+    expect(freshLetters(thread(5, 10, true), thread(1, 12))).toEqual(thread(1, 12));
   });
 });

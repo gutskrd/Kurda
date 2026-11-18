@@ -19,6 +19,7 @@ import {
   type CouchCategory,
   type CouchDeck,
   type CouchOffer,
+  type EveryDialect,
   type GameDialect,
   type GameDifficulty,
   type WordCardContent,
@@ -32,7 +33,8 @@ import type { PublishedContent, TrustedSources } from './sources.js';
  * Impostor on one phone passed round a room (shared/src/games/impostor/couch.ts): where it can be played, and the
  * cards for an evening.
  *
- *   GET  /games/impostor/couch?dialect=kmr|ckb   the difficulties it is offered at, each with its categories
+ *   GET  /games/impostor/couch?dialect=kmr|ckb   the difficulties it is offered at, each with its categories; without a
+ *                                                dialect, both varieties as `{ dialects }`
  *   POST /games/impostor/couch/deck              { dialect, difficulty, category?, count?, exclude? }: cards to play with (10 a minute)
  *
  * The cards are the table game's own approved, published word cards, read through the trusted readers, so drafts never
@@ -50,7 +52,8 @@ type Card = Pick<PublishedContent<'word_card'>, 'level' | 'payload'>;
 const MINIMUM = learnGame('impostor').minimum;
 const DECKS_PER_MINUTE = 10;
 
-const offerQuery = z.object({ dialect: z.enum(GAME_DIALECTS) });
+// without a dialect, both varieties' offers (shared `readEveryDialect`)
+const offerQuery = z.object({ dialect: z.enum(GAME_DIALECTS).optional() });
 const deckBody = z.strictObject({
   dialect: z.enum(GAME_DIALECTS),
   difficulty: z.enum(GAME_DIFFICULTIES),
@@ -142,9 +145,10 @@ export function couchDeck(
 }
 
 export function registerCouchRoutes(app: FastifyInstance, sources: TrustedSources): void {
-  app.get('/games/impostor/couch', { schema: { querystring: offerQuery }, preHandler: requireAuth }, async (req): Promise<CouchOffer> => {
+  const offer = async (dialect: GameDialect): Promise<CouchOffer> => couchOffer(await sources.content('word_card', dialect), dialect);
+  app.get('/games/impostor/couch', { schema: { querystring: offerQuery }, preHandler: requireAuth }, async (req): Promise<CouchOffer | EveryDialect<CouchOffer>> => {
     const { dialect } = req.query as z.infer<typeof offerQuery>;
-    return couchOffer(await sources.content('word_card', dialect), dialect);
+    return dialect ? offer(dialect) : { dialects: await Promise.all(GAME_DIALECTS.map(offer)) };
   });
 
   app.post(

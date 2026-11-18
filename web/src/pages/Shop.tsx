@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { applyItemFilter, categoriesIn, countByCategory, groupByCategory, itemCategory } from '@kurda/shared';
+import { applyItemFilter, categoriesIn, countByCategory, groupByCategory, itemCategory, shopItemDescription } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { requestId } from '../lib/api';
@@ -177,14 +177,14 @@ export function Shop(): React.JSX.Element {
       (shop.data?.items ?? []).map((i) => ({
         sku: i.sku,
         name: i.name,
-        description: i.description ?? null,
+        description: shopItemDescription(i, locale),
         category: i.category,
         price: i.price,
         currency: i.currency,
         assetUrl: i.assetUrl,
         owned: ownedSkus.has(i.sku),
       })),
-    [shop.data, ownedSkus],
+    [shop.data, ownedSkus, locale],
   );
 
   /** Plays the celebration once, then clears it so it can play again. */

@@ -161,7 +161,8 @@ export function RiddleAnswerScreen({ slug, onExit }: { slug: string; onExit: () 
           ) : list ? (
             <Note icon="check">{t('lore.answer.allDone', { variety: t(dialectNameKey(dialect)) })}</Note>
           ) : null}
-          <ClayButton label={t('lore.answer.back')} variant="outline" onPress={onExit} />
+          <ClayButton label={t('lore.answer.back')} variant="outline" onPress={() => navigation.replace('Riddle', { slug })} testID="riddle-back" />
+          <ClayButton label={t('lore.answer.allRiddles')} variant="outline" onPress={onExit} />
         </View>
       </ScrollView>
     </GradientBackground>

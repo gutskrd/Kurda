@@ -67,7 +67,7 @@ function makeFetch(calls: Array<{ url: string; body: unknown }>) {
  */
 function inventoryFetch(
   calls: Array<{ url: string; method: string; body: unknown }>,
-  { tag = false, frameWorn = null as string | null } = {},
+  { tag = false } = {},
 ) {
   return vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
     const body = init?.body ? JSON.parse(init.body as string) : null;
@@ -84,7 +84,6 @@ function inventoryFetch(
       });
     }
     if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 1000, gems: 5 } });
-    if (url.includes('/users/1')) return jsonResponse(200, { userId: '1', username: 'ada', frameSku: frameWorn });
     if (url.includes('/shop')) {
       return jsonResponse(200, {
         items: [
@@ -108,7 +107,7 @@ describe('CosmeticCustomizer', () => {
   it('equips an owned background and buys an icon (server-authoritative)', async () => {
     const calls: Array<{ url: string; body: unknown }> = [];
     vi.stubGlobal('fetch', vi.fn(makeFetch(calls)));
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile']);
 
     // owned background is equippable
     const ownedName = await screen.findByText('Owned BG');
@@ -151,7 +150,7 @@ describe('CosmeticCustomizer', () => {
         return jsonResponse(200, {});
       }),
     );
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile']);
 
     const freeTile = (await screen.findByText('Daybreak')).closest('figure')!;
     expect(within(freeTile).queryByText('Hevalo+')).not.toBeInTheDocument();
@@ -168,7 +167,7 @@ describe('CosmeticCustomizer', () => {
 
   it('shows empty states when the catalog is not seeded — each on its own tab', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile']);
     expect(await screen.findByText('No backgrounds available yet.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
     expect(screen.getByText('No icons available yet.')).toBeInTheDocument();
@@ -182,7 +181,7 @@ describe('CosmeticCustomizer', () => {
     const calls: Array<{ url: string; body: unknown }> = [];
     vi.stubGlobal('fetch', vi.fn(makeFetch(calls)));
     const withIcon: MeProfile = { ...me, premium: true, equippedIconSku: 'ic-buy', premiumIconEnabled: true };
-    renderApp(<CosmeticCustomizer me={withIcon} onChanged={() => {}} />, ['/app/profile']);
+    renderApp(<CosmeticCustomizer me={withIcon} frameSku={null} onChanged={() => {}} />, ['/app/profile']);
 
     await userEvent.click(await screen.findByRole('tab', { name: /Icons/ }));
     const toggle = screen.getByRole('checkbox', { name: /show the icon on my profile/i });
@@ -196,7 +195,7 @@ describe('CosmeticCustomizer', () => {
 
   it('hides the visibility toggle when no icon is equipped', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile']);
     await userEvent.click(await screen.findByRole('tab', { name: /Icons/ }));
     await screen.findByText('No icons available yet.');
     expect(screen.queryByRole('checkbox', { name: /show the icon on my profile/i })).not.toBeInTheDocument();
@@ -205,7 +204,7 @@ describe('CosmeticCustomizer', () => {
   it('files your cosmetics under tabs with counts, what you own first and badged', async () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
     vi.stubGlobal('fetch', inventoryFetch(calls));
-    renderApp(<CosmeticCustomizer me={{ ...me, equippedBackgroundSku: 'bg-gola' }} onChanged={() => {}} />, ['/app/profile/edit']);
+    renderApp(<CosmeticCustomizer me={{ ...me, equippedBackgroundSku: 'bg-gola' }} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
     await screen.findByText('Gola Şîn');
 
     // backgrounds, icons and frames; no Tags tab while no tag is owned
@@ -231,7 +230,7 @@ describe('CosmeticCustomizer', () => {
   it('takes the worn background off', async () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
     vi.stubGlobal('fetch', inventoryFetch(calls));
-    renderApp(<CosmeticCustomizer me={{ ...me, equippedBackgroundSku: 'bg-gola' }} onChanged={() => {}} />, ['/app/profile/edit']);
+    renderApp(<CosmeticCustomizer me={{ ...me, equippedBackgroundSku: 'bg-gola' }} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
     const worn = (await screen.findByText('Gola Şîn')).closest('figure')!;
     await userEvent.click(within(worn).getByRole('button', { name: /Take Gola Şîn off/ }));
     expect(await screen.findByText('Removed.')).toBeInTheDocument();
@@ -249,7 +248,7 @@ describe('CosmeticCustomizer', () => {
         url.includes('/me/cosmetics/background') ? new Promise<Response>((r) => (answer = r)) : serve(url, init),
       ),
     );
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
     const tile = (await screen.findByText('Hevalo')).closest('figure')!;
     await userEvent.click(within(tile).getByRole('button', { name: 'Equip' }));
     expect(within(tile).getByText('Equipped')).toBeInTheDocument();
@@ -261,7 +260,7 @@ describe('CosmeticCustomizer', () => {
   it('wears and takes off a season frame from the Frames tab', async () => {
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
     vi.stubGlobal('fetch', inventoryFetch(calls));
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
     await screen.findByText('Gola Şîn');
 
     await userEvent.click(screen.getByRole('tab', { name: /Frames/ }));
@@ -293,7 +292,6 @@ describe('CosmeticCustomizer', () => {
           });
         }
         if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 3000, gems: 0 } });
-        if (url.includes('/users/1')) return jsonResponse(200, { userId: '1', username: 'ada', frameSku: null, frameUrl: null });
         if (url.includes('/shop')) {
           return jsonResponse(200, {
             items: [{ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', currency: 'zer', price: 1400, isUnique: true, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' }],
@@ -302,7 +300,7 @@ describe('CosmeticCustomizer', () => {
         return jsonResponse(200, {});
       }),
     );
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
     await userEvent.click(await screen.findByRole('tab', { name: /Frames/ }));
 
     // the one that is owned first, then the one for sale; each by its own name, as a ring round a face
@@ -318,18 +316,20 @@ describe('CosmeticCustomizer', () => {
     expect(calls.find((c) => c.url.includes('/me/cosmetics/frame'))).toMatchObject({ method: 'PUT', body: { sku: 'frame-made-genim' } });
   });
 
-  it('knows which frame is worn, from your own profile', async () => {
-    vi.stubGlobal('fetch', inventoryFetch([], { frameWorn: 'frame_rank_gir' }));
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+  it('shows the frame the page says is worn, and asks nothing more to know it', async () => {
+    const calls: Array<{ url: string; method: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', inventoryFetch(calls));
+    renderApp(<CosmeticCustomizer me={me} frameSku="frame_rank_gir" onChanged={() => {}} />, ['/app/profile/edit']);
     await screen.findByText('Gola Şîn');
     await userEvent.click(screen.getByRole('tab', { name: /Frames/ }));
     const frame = screen.getByText('Gir season frame', { selector: '.cosmetic-name' }).closest('figure')!;
     expect(await within(frame).findByText('Equipped')).toBeInTheDocument();
+    expect(calls.filter((c) => c.url.includes('/users/'))).toEqual([]);
   });
 
   it('lists an owned tag on a Tags tab, with the way to where tags are managed', async () => {
     vi.stubGlobal('fetch', inventoryFetch([], { tag: true }));
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
     await screen.findByText('Gola Şîn');
 
     await userEvent.click(screen.getByRole('tab', { name: /Tags/ }));
@@ -343,7 +343,7 @@ describe('CosmeticCustomizer', () => {
 
   it('narrows to owned or not owned, searches without the Kurdish letters, sorts, and clears', async () => {
     vi.stubGlobal('fetch', inventoryFetch([]));
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
     await screen.findByText('Gola Şîn');
 
     await userEvent.click(screen.getByRole('radio', { name: 'Owned' }));
@@ -372,7 +372,7 @@ describe('CosmeticCustomizer', () => {
 
   it('says so when nothing matches, with the way back', async () => {
     vi.stubGlobal('fetch', inventoryFetch([]));
-    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+    renderApp(<CosmeticCustomizer me={me} frameSku={null} onChanged={() => {}} />, ['/app/profile/edit']);
     await screen.findByText('Gola Şîn');
     await userEvent.type(screen.getByLabelText('Search your cosmetics'), 'zzzz');
     expect(screen.getByText(/Nothing matches that/)).toBeInTheDocument();

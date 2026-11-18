@@ -81,6 +81,7 @@ import { FriendRequestsScreen } from './src/messages/FriendRequestsScreen';
 import { LettersScreen } from './src/letters/LettersScreen';
 import { LetterThreadScreen } from './src/letters/LetterThreadScreen';
 import { LETTER_LINKS } from './src/letters/links';
+import { WEB_PATH_LINKS } from './src/navigation/webPaths';
 import { LetterWidgetScreen } from './src/widget/LetterWidgetScreen';
 import { LetterWidgetSync } from './src/widget/LetterWidgetSync';
 import { UnreadProvider, useUnread } from './src/messages/unread';
@@ -177,11 +178,10 @@ const linking: LinkingOptions<RootStackParamList> = {
     screens: {
       // `?view=games` on Learn arrives as the tab's own param.
       Tabs: { screens: linkingScreens() },
-      // `hevalo://search` was the Search tab's address and is now the search page's.
-      Search: 'search',
+      // Search, a lesson and the words at the website's addresses, the phone's older ones kept as aliases.
+      ...WEB_PATH_LINKS,
       // A shared profile (Profile → Share) opens in the app for anyone who has it.
       UserProfile: 'app/users/:userId',
-      Lesson: 'lesson/:lessonId',
       // The website's "your next lesson", where a new account lands.
       NextLesson: 'app/learn/next',
       // Practice opens on its hub, where every kind is one tap away.
@@ -192,9 +192,6 @@ const linking: LinkingOptions<RootStackParamList> = {
       HearIt: 'app/learn/practice/hear-it',
       // The website's alphabet, `?script=ckb` included, opens the phone's.
       Alphabet: 'app/alphabet',
-      // The colours, numbers, days and months, and one set by name: `app/words/colours?script=ckb`.
-      Words: 'app/words',
-      WordSet: 'app/words/:set',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
       LastLetter: inviteRoutePath('last-letter'),

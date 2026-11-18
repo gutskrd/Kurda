@@ -494,6 +494,8 @@ export {
   BIRD_OUT_DAYS,
   LANDINGS_MAX,
   LETTERS_CHANGED,
+  LETTERS_PAGE,
+  LETTERS_PAGE_MAX,
   LETTERS_PER_DAY,
   LETTER_AGE_BANDS,
   LETTER_BIRDS,
@@ -504,12 +506,15 @@ export {
   PEN_PALS_MAX,
   SKY_BIRDS_SHOWN,
   VISIT_HOURS,
+  freshLetters,
   isLetterBird,
   letterAgeBand,
   letterBirdOf,
   letterNoticeOf,
   letterProblem,
   letterText,
+  letterThreadPath,
+  withEarlierLetters,
   type BirdOutResult,
   type LetterAgeBand,
   type LetterFlight,
@@ -574,7 +579,12 @@ export * from './games/index.js';
 
 /** Shop items by kind: the categories, search, filters and orders the shop, the inventory and the gift picker share. */
 export * from './shop-items.js';
+export * from './shop-descriptions.js';
 export * from './chat-cards.js';
+/** Unread chat counts for the badges, a group's capped, and how a badge writes one. */
+export * from './chat-unread.js';
+/** The Kurdish openers an empty chat offers, and which variety it offers them in. */
+export * from './chat-greetings.js';
 
 /** Typing Kurdish (the race, Peyvok's keyboard, the keyboard guide): how typed text is read and scored, and the race's shapes. */
 export * from './typing.js';

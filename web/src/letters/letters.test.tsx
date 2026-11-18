@@ -346,7 +346,7 @@ describe('letters by bird', () => {
   it('asks for a birth month before anybody can write', async () => {
     signIn({ 'GET /letters': home({ refusal: 'birth_month' }) });
     renderApp(<LettersPage />, ['/app/letters']);
-    expect(await screen.findByRole('link', { name: 'Add your birth month' })).toHaveAttribute('href', '/app/settings');
+    expect(await screen.findByRole('link', { name: 'Add your birth month' })).toHaveAttribute('href', '/app/settings/birth-month');
     expect(screen.queryByRole('button', { name: 'Write a letter' })).toBeNull();
   });
 
@@ -675,6 +675,29 @@ describe('letters by bird', () => {
       await new Promise((r) => setTimeout(r, 50));
       expect(screen.getByText('Silav Rojda! Ez Baran im.')).toBeInTheDocument();
       expect(screen.getByLabelText('Write back to Baran')).toHaveValue('Ez baş im');
+    });
+
+    it('opens on the newest letters, shows the earlier ones when asked, and keeps them when the letters are read again', async () => {
+      const page = (from: number, to: number) =>
+        Array.from({ length: to - from + 1 }, (_, i) => ({ id: `n${from + i}`, mine: (from + i) % 2 === 0, body: `Name ${from + i}`, decor: null, removed: false, sentAt: '2026-11-13T19:00:00.000Z', readAt: null }));
+      const open = at(thread({ letters: page(11, 20), earlier: true, yourTurn: false }));
+      expect(await screen.findByText('Name 20')).toBeInTheDocument();
+      expect(screen.queryByText('Name 10')).toBeNull();
+      const newest = sent(open.calls, 'GET', '/letters/threads/t1').at(-1)!;
+      expect(new URL(newest.url, 'http://x').search).toBe('?limit=10');
+
+      open.answers['GET /letters/threads/t1'] = thread({ letters: page(1, 10), earlier: false, yourTurn: false });
+      await userEvent.click(screen.getByRole('button', { name: 'Show earlier letters' }));
+      expect(await screen.findByText('Name 1')).toBeInTheDocument();
+      expect(new URL(sent(open.calls, 'GET', '/letters/threads/t1').at(-1)!.url, 'http://x').search).toBe('?before=n11&limit=10');
+      expect(screen.queryByRole('button', { name: 'Show earlier letters' })).toBeNull();
+
+      // their answer comes: the newest page moves on by one, and the earlier letters stay above it
+      open.answers['GET /letters/threads/t1'] = thread({ letters: page(12, 21), earlier: true, yourTurn: true });
+      act(() => open.ping());
+      expect(await screen.findByText('Name 21')).toBeInTheDocument();
+      expect(screen.getAllByText(/^Name \d+$/).map((el) => el.textContent)).toEqual(page(1, 21).map((l) => l.body));
+      expect(screen.queryByRole('button', { name: 'Show earlier letters' })).toBeNull();
     });
 
     it('reads the correspondence again when a reply is refused because it is not your turn any more', async () => {

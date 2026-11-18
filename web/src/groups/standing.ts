@@ -1,4 +1,4 @@
-import type { GroupChatCleared, GroupStanding, StoryDialect } from '@kurda/shared';
+import type { GroupChatCleared, GroupStanding } from '@kurda/shared';
 import type { ApiError, GroupDetail } from '../lib/types';
 
 /**
@@ -52,8 +52,3 @@ export function shownClear(cleared: GroupChatCleared | null): { kind: 'everyone'
   return cleared.forMe && mine !== null ? { kind: 'me', at: cleared.forMe } : null;
 }
 
-/** Three greetings per course variety for a quiet group, always in Kurdish since that is the point. */
-export const GREETINGS: Record<StoryDialect, readonly string[]> = {
-  kurmanci: ['Silav! 👋', 'Rojbaş!', 'Çawa yî?'],
-  sorani: ['سڵاو! 👋', 'بەیانیت باش!', 'چۆنی؟'],
-};

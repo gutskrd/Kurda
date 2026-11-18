@@ -1,3 +1,6 @@
+import { StyleSheet, Text, View } from 'react-native';
+import { useAuth } from '../auth/AuthContext';
+import { birthMonthLabel } from '../auth/birthMonth';
 import { haptic } from '../feedback/haptics';
 import { playSound } from '../feedback/sounds';
 import { useSoundPref } from '../feedback/soundPref';
@@ -6,23 +9,33 @@ import { useVibrationPref } from '../feedback/vibrationPref';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
 import { KeyboardSettingsList } from '../keyboard/KeyboardSettings';
+import { SUPPORT_EMAIL } from '../legal/links';
+import { useDirection } from '../reports/direction';
 import { CREDIT_LINES, splitCredit } from '../screens/credits';
 import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
 import { PREFERENCE_LABEL, THEME_PREFERENCES, type ThemePreference } from '../theme/appearance';
+import { ClayButton } from '../theme/glass';
 import { useEventTheme } from '../theme/EventThemeContext';
 import type { IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { layout, spacing, typography } from '../theme/tokens';
 import { useMyAccount } from './account';
 import { SettingsChoice, SettingsNote, SettingsPage, SettingsRow, SettingsSection, SettingsSwitch } from './list';
 
 /** The pages behind Settings' rows that are not screens of their own elsewhere. */
-export const SETTINGS_PAGES = ['language', 'theme', 'sounds', 'keyboard', 'leagues', 'visibility', 'credits'] as const;
+export const SETTINGS_PAGES = ['birthMonth', 'language', 'theme', 'sounds', 'keyboard', 'leagues', 'visibility', 'credits'] as const;
 export type SettingsPageKey = (typeof SETTINGS_PAGES)[number];
 
 /** One Settings page: a short list of one kind of choice, each explained beside it and saved as soon as it changes. */
 export function SettingsPageScreen({ page, onExit }: { page: SettingsPageKey; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   switch (page) {
+    case 'birthMonth':
+      return (
+        <SettingsPage title={t('age.label')} onExit={onExit}>
+          <BirthMonth />
+        </SettingsPage>
+      );
     case 'language':
       return (
         <SettingsPage title={t('settings.language')} onExit={onExit}>
@@ -66,6 +79,35 @@ export function SettingsPageScreen({ page, onExit }: { page: SettingsPageKey; on
         </SettingsPage>
       );
   }
+}
+
+/**
+ * The birth month on record, given once. With none on record, the way to the one-time question, which the app shows
+ * over every screen once the account it holds says one is missing.
+ */
+function BirthMonth(): React.JSX.Element {
+  const { t } = useI18n();
+  const { colors } = useTheme();
+  const dir = useDirection();
+  const { refreshUser } = useAuth();
+  const { birth, failed, retry } = useMyAccount();
+  if (!birth) return <SettingsSection first>{failed ? <NotRead failed={failed} retry={retry} /> : null}</SettingsSection>;
+  if (birth.year && birth.month) {
+    return (
+      <SettingsSection first footer={t('settings.birthMonth.help', { email: SUPPORT_EMAIL })}>
+        <Text style={[styles.birth, dir.text, { color: colors.textPrimary }]} testID="birth-month">
+          {birthMonthLabel(t, birth.year, birth.month)}
+        </Text>
+      </SettingsSection>
+    );
+  }
+  return (
+    <SettingsSection first footer={t('age.prompt.body')}>
+      <View style={styles.birthAdd}>
+        <ClayButton label={t('letters.refusal.birthMonthAction')} tone="primary" onPress={() => void refreshUser()} testID="birth-month-add" />
+      </View>
+    </SettingsSection>
+  );
 }
 
 /** Every language the app is in, each named in itself so it can be found by someone who reads no other. */
@@ -211,3 +253,7 @@ function Credits(): React.JSX.Element {
 /** The typeface, the icons and the emoji, in `CREDIT_LINES` order. */
 const CREDIT_ICONS: readonly IconName[] = ['text', 'star', 'image'];
 
+const styles = StyleSheet.create({
+  birth: { paddingHorizontal: layout.gutter, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
+  birthAdd: { paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
+});

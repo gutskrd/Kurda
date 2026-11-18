@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import { failureText, useOptimistic } from '../lib/optimistic';
-import type { ApiError, AvatarOption, MeProfile } from '../lib/types';
+import type { ApiError, ApiResult, AvatarOption, MeProfile, PublicProfile } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { useArtOverrides } from '../art/overrides';
 import { countriesIn } from '../lib/countries';
@@ -26,6 +26,7 @@ export function ProfileEdit(): React.JSX.Element {
   const t = useT();
   const { client, refreshUser } = useAuth();
   const [me, setMe] = useState<MeProfile | null>(null);
+  const [own, setOwn] = useState<ApiResult<PublicProfile> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
@@ -36,9 +37,13 @@ export function ProfileEdit(): React.JSX.Element {
     setError(null);
     void (async () => {
       const r = await client.get<{ user: MeProfile }>('/me');
+      // Your own profile as visitors see it says what /me does not: the frame worn and the sections shown. Read once here
+      // for the cosmetics and the sections both.
+      const mine = r.ok && r.data?.user?.id ? await client.get<PublicProfile>(`/users/${encodeURIComponent(r.data.user.id)}`) : null;
       if (cancelled) return;
       if (r.ok && r.data?.user?.username) setMe(r.data.user);
       else setError(r.ok ? t('profile.yoursNotLoaded') : describeError(r.error, t));
+      setOwn(mine);
       setLoading(false);
     })();
     return () => {
@@ -86,9 +91,9 @@ export function ProfileEdit(): React.JSX.Element {
       <ProfilePhotoPicker me={me} onChanged={changed} />
       <ProfileDetailsForm me={me} onSaved={changed} />
       <AvatarPicker me={me} onChanged={changed} />
-      <CosmeticCustomizer me={me} onChanged={changed} />
+      <CosmeticCustomizer me={me} frameSku={own?.ok ? (own.data.frameSku ?? null) : null} onChanged={changed} />
       <FavoritesPicker me={me} onChanged={changed} />
-      <SectionToggles me={me} />
+      <SectionToggles own={own} />
       <TagsCard />
 
       <div style={{ marginTop: 24 }}>

@@ -145,6 +145,14 @@ function ExerciseMoved({ to }: { to: string }): React.JSX.Element {
   return <Navigate to={{ pathname: to, search }} replace />;
 }
 
+/** An address the phone app used for search, a lesson or the words, sent to the website's own with its `:params` and query. */
+function PhoneAddress({ to }: { to: string }): React.JSX.Element {
+  const { search } = useLocation();
+  const params = useParams();
+  const pathname = to.replace(/:(\w+)/g, (_, name: string) => encodeURIComponent(params[name] ?? ''));
+  return <Navigate to={{ pathname, search }} replace />;
+}
+
 /** Paths of retired games under /app (lobbies were the page plus `?id=`), including the bare addresses some had. */
 const RETIRED_GAME_PATHS = ['games/dont-say', 'games/bluff', 'games/village', 'games/kingdom', 'village', 'kingdom', 'games/what-would-you-say'] as const;
 
@@ -173,6 +181,8 @@ export function AppRoutes(): React.JSX.Element {
       <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
       <Route path="/poems" element={<Navigate to="/app/civak?section=gotin&kind=helbest" replace />} />
       <Route path="/games" element={<Navigate to="/app/games" replace />} />
+      <Route path="/search" element={<PhoneAddress to="/app/search" />} />
+      <Route path="/lesson/:lessonId" element={<PhoneAddress to="/app/learn/lesson/:lessonId" />} />
 
       {/* Authentication. */}
       <Route element={<AuthLayout />}>
@@ -264,6 +274,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="games/hear-it" element={<ExerciseMoved to="/app/learn/practice/hear-it" />} />
         <Route path="learn/words" element={<Words />} />
         <Route path="learn/words/:set" element={<WordSet />} />
+        <Route path="words" element={<PhoneAddress to="/app/learn/words" />} />
+        <Route path="words/:set" element={<PhoneAddress to="/app/learn/words/:set" />} />
         {/* One route for both kinds; a post knows which it is. */}
         <Route path="library/:id" element={<LibraryPostPage />} />
         <Route path="civak" element={<CivakMoved />} />

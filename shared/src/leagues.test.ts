@@ -17,6 +17,7 @@ import {
   tierBelow,
   timezoneDistance,
   toLeagueTier,
+  weekDaysLeft,
   weekEndsAt,
   weekMergeAt,
   weekSeason,
@@ -85,6 +86,16 @@ describe('the league week', () => {
     expect(weekMergeAt('2026-10-12').toISOString()).toBe('2026-10-14T00:00:00.000Z');
     expect(previousWeek('2026-10-12')).toBe('2026-10-05');
     expect(nextWeek('2026-10-12')).toBe('2026-10-19');
+  });
+
+  it('counts the whole days left before it closes, 0 on its last day', () => {
+    const ends = '2026-10-26T00:00:00.000Z';
+    expect(weekDaysLeft(ends, Date.parse('2026-10-21T22:00:00Z'))).toBe(4);
+    expect(weekDaysLeft(ends, Date.parse('2026-10-24T00:00:00Z'))).toBe(2);
+    expect(weekDaysLeft(ends, Date.parse('2026-10-24T12:00:00Z'))).toBe(1);
+    expect(weekDaysLeft(ends, Date.parse('2026-10-25T09:00:00Z'))).toBe(0);
+    expect(weekDaysLeft(ends, Date.parse('2026-10-26T01:00:00Z'))).toBe(0);
+    expect(weekDaysLeft('soon', Date.parse('2026-10-24T00:00:00Z'))).toBeNull();
   });
 
   it('belongs to the calendar quarter its Monday is in', () => {

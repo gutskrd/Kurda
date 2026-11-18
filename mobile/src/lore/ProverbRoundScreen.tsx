@@ -194,7 +194,7 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
         ) : (
           <Text style={[...text, styles.honest]}>{t('games.solo.results.notCounted', { needed: results.needed, correct: results.firstTry })}</Text>
         )}
-        <Text style={muted}>{t('games.noXpAlone')}</Text>
+        <Text style={muted}>{t('lore.round.noXp')}</Text>
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
         <View style={styles.actions}>
           <TileButton label={t('games.solo.playAgain')} onPress={() => void start()} busy={busy} />
@@ -233,7 +233,7 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
           {proverbs.name}
         </Text>
         <Text style={[styles.title, ...text]} accessibilityRole="header">
-          {t('lore.round.play')}
+          {t('lore.round.title')}
         </Text>
         <Text style={[...text, styles.blurb]}>{t('lore.round.blurb')}</Text>
         <Text style={muted}>{variety}</Text>
@@ -270,7 +270,7 @@ export function ProverbRoundScreen({ dialect, mode: asked, onExit }: { dialect: 
         </View>
         {open ? <TileButton label={t('games.solo.continue')} onPress={() => void resume()} busy={busy} tone="success" /> : null}
         <TileButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} testID="proverb-round-start" />
-        <Text style={muted}>{t('games.noXpAlone')}</Text>
+        <Text style={muted}>{t('lore.round.noXp')}</Text>
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
       </ScrollView>
     );

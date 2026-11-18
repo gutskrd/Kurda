@@ -8,6 +8,7 @@ import {
   isFiltered,
   itemCategory,
   MAX_GIFT_RECIPIENTS,
+  shopItemDescription,
   type GiftCatalogItem,
   type GiftChatRef,
   type ItemFilter,
@@ -209,7 +210,8 @@ function PickerFlow({
   }
 
   // ---- The shelf by kind: what the tabs count and the panel shows ----
-  const items = shelf?.items ?? [];
+  // each description in the reader's language, so what is searched is what is read
+  const items = (shelf?.items ?? []).map((item) => ({ ...item, description: shopItemDescription(item, locale) }));
   // Everyone chosen already has it, so there is nobody to give it to.
   const everyoneHasIt = (item: ShelfItem): boolean => getting(item).length === 0;
   const keep = (item: ShelfItem): boolean => (!affordOnly || affordable(item)) && (!hideOwned || !everyoneHasIt(item));

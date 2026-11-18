@@ -22,6 +22,11 @@ export const MONTH_KEYS: readonly TranslationKey[] = [
   'age.month.12',
 ];
 
+/** A birth month as it is read ("March 2008"), the month named from the catalogue. */
+export function birthMonthLabel(t: (key: TranslationKey) => string, year: number, month: number): string {
+  return `${t(MONTH_KEYS[month - 1]!)} ${year}`;
+}
+
 /**
  * Why an answer stopped at age, kept while the app is open: 'refused' when sign-up made no account, 'closed' when the
  * one-time question closed an existing one.

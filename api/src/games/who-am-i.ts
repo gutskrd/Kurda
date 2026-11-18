@@ -2,7 +2,8 @@
  * Who Am I? on the server beside the table itself (mp/games/who-am-i.ts): what a table is dealt from, how a whole table
  * is dealt, and the game on one phone passed round a room (shared/src/games/who-am-i/couch.ts).
  *
- *   GET  /games/who-am-i/couch?dialect=kmr|ckb   the difficulties it can be played at on one phone
+ *   GET  /games/who-am-i/couch?dialect=kmr|ckb   the difficulties it can be played at on one phone; without a dialect,
+ *                                                both varieties as `{ dialects }`
  *   POST /games/who-am-i/couch/deal              { dialect, difficulty, players, answers? }: a card for everyone in the room (10 a minute)
  *   POST /games/who-am-i/report                  a card's answer to a question that a player thinks is wrong (5 a minute)
  *
@@ -49,6 +50,7 @@ import {
   type GameDifficulty,
   type GameLevel,
   type WhoAmICouchDeals,
+  type EveryDialect,
   type WhoAmICouchOffer,
   type DealUnit,
   type WhoAmIDeal,
@@ -193,7 +195,8 @@ export function dealTable(pool: WhoAmIPool, difficulty: GameDifficulty, seats: r
   return out;
 }
 
-const offerQuery = z.object({ dialect: z.enum(GAME_DIALECTS) });
+// without a dialect, both varieties' offers (shared `readEveryDialect`)
+const offerQuery = z.object({ dialect: z.enum(GAME_DIALECTS).optional() });
 const dealBody = z.strictObject({
   dialect: z.enum(GAME_DIALECTS),
   difficulty: z.enum(GAME_DIFFICULTIES),
@@ -285,10 +288,15 @@ async function reportedCard(db: Pick<pg.Pool, 'query'>, userId: string, body: z.
 }
 
 export function registerWhoAmICouchRoutes(app: FastifyInstance, sources: TrustedSources): void {
-  app.get('/games/who-am-i/couch', { schema: { querystring: offerQuery }, preHandler: requireAuth }, async (req): Promise<WhoAmICouchOffer> => {
-    const { dialect } = req.query as z.infer<typeof offerQuery>;
-    return { dialect, difficulties: tableDifficulties(await whoAmIPool(sources, dialect)) };
-  });
+  const offer = async (dialect: GameDialect): Promise<WhoAmICouchOffer> => ({ dialect, difficulties: tableDifficulties(await whoAmIPool(sources, dialect)) });
+  app.get(
+    '/games/who-am-i/couch',
+    { schema: { querystring: offerQuery }, preHandler: requireAuth },
+    async (req): Promise<WhoAmICouchOffer | EveryDialect<WhoAmICouchOffer>> => {
+      const { dialect } = req.query as z.infer<typeof offerQuery>;
+      return dialect ? offer(dialect) : { dialects: await Promise.all(GAME_DIALECTS.map(offer)) };
+    },
+  );
 
   app.post(
     '/games/who-am-i/couch/deal',

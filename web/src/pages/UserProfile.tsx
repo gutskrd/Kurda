@@ -13,6 +13,7 @@ import { PlayWithButton } from '../play/PlayButtons';
 import { AddFriendButton } from '../social/FriendTickets';
 import { useRail } from '../social/RailProvider';
 import { railEdits } from '../social/useSocialRail';
+import { useUnfriend } from '../social/unfriend';
 import { useOptimisticSend } from '../lib/optimistic';
 import { countryName } from '../lib/countries';
 import { ErrorState } from '../components/states';
@@ -35,6 +36,7 @@ export function UserProfile(): React.JSX.Element {
   const [attempt, setAttempt] = useState(0);
   // What you are to each other: the buttons change it and the corner menu reads it.
   const [status, setStatus] = useState<FriendStatus>('none');
+  const unfriend = useUnfriend();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -80,9 +82,10 @@ export function UserProfile(): React.JSX.Element {
             ? {
                 label: t('friends.removeFriend'),
                 title: t('friends.removeWho', { name }),
-                onConfirm: async () => {
-                  const res = await client.delete(`/friends/${profile.userId}`);
-                  if (res.ok) setStatus('none');
+                // No longer friends at once, and friends again if the server refuses.
+                onConfirm: () => {
+                  setStatus('none');
+                  void unfriend(profile.userId, () => setStatus('friends'));
                 },
               }
             : undefined

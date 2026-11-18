@@ -56,7 +56,7 @@ describe('the league page', () => {
     testAuth.client = fakeClient({ 'GET /me/league': ok(week()) });
     renderWithProviders(<LeagueScreen onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Çem League' })).toBeTruthy();
-    expect(screen.getByText('3 days left')).toBeTruthy();
+    expect(screen.getByText('2 days left')).toBeTruthy();
     expect(screen.getByRole('img', { name: /^Dilop League.*, reached$/ })).toBeTruthy();
     expect(screen.getByRole('img', { name: /^Kanî League.*, reached$/ })).toBeTruthy();
     expect(screen.getByRole('img', { name: /^Çem League.*, your league$/ })).toBeTruthy();

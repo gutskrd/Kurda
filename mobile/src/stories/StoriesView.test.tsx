@@ -200,7 +200,7 @@ describe('StoriesView', () => {
     const c = client();
     testAuth.client = c;
     renderWithProviders(<StoriesView />);
-    await screen.findByLabelText(/Your progress\. 1 of 3 stories read/);
+    await screen.findByLabelText(/Your progress\. 1 of 3 stories finished/);
     const count = (path: string) => c.calls.filter((call) => call.path === path).length;
     const before = [count('/stories/library?dialect=kurmanci'), count('/story-games/active')];
     fireEvent.click(screen.getByTestId('pull-to-refresh'));
@@ -210,7 +210,7 @@ describe('StoriesView', () => {
   it('opens on the reading so far, then the shelves: continue, featured, recent, categories, bookmarks', async () => {
     testAuth.client = client();
     renderWithProviders(<StoriesView />);
-    expect(await screen.findByLabelText(/Your progress\. 1 of 3 stories read\. Average check score: 80%/)).toBeTruthy();
+    expect(await screen.findByLabelText(/Your progress\. 1 of 3 stories finished\. Average check score: 80%/)).toBeTruthy();
     const headings = screen.getAllByRole('heading').map((h) => h.textContent);
     expect(headings).toEqual(['Continue reading', 'Featured', 'Recently added', 'Categories', 'Bookmarks', 'Play together']);
     // A card reads its title in the story's language and shows its facts in the app's.
@@ -448,11 +448,11 @@ describe('StoriesView', () => {
     expect(chosen()).toEqual(['Kurmancî']);
     // Nothing chosen yet, so nothing kept.
     expect(kept()).toBeUndefined();
-    expect(screen.getByLabelText(/Your progress\. 1 of 3 stories read/)).toBeTruthy();
+    expect(screen.getByLabelText(/Your progress\. 1 of 3 stories finished/)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('radio', { name: 'Soranî' }));
     // The Soranî page: its own newest, counts and tally.
-    expect(await screen.findByLabelText(/Your progress\. 0 of 1 stories read/)).toBeTruthy();
+    expect(await screen.findByLabelText(/Your progress\. 0 of 1 stories finished/)).toBeTruthy();
     expect(chosen()).toEqual(['Soranî']);
     expect(kept()).toBe('sorani');
     const recent = screen.getByRole('heading', { name: 'Recently added' }).parentElement!;
@@ -484,7 +484,7 @@ describe('StoriesView', () => {
     testAuth.client = c;
     renderWithProviders(<StoriesView />);
     // The phone remembered Soranî, so only its page is requested.
-    expect(await screen.findByLabelText(/Your progress\. 0 of 1 stories read/)).toBeTruthy();
+    expect(await screen.findByLabelText(/Your progress\. 0 of 1 stories finished/)).toBeTruthy();
     expect(chosen()).toEqual(['Soranî']);
     // The sheet counts the variety's own stories and offers its levels.
     fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));

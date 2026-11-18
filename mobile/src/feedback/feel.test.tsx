@@ -300,7 +300,7 @@ describe('something given', () => {
           : ok({ id: 'm1', senderId: 'me', recipientId: 'u-azad', body: (body as { body: string }).body, createdAt: '2026-10-20T10:00:00Z', readAt: null }),
     });
     renderWithProviders(<ChatScreen userId="u-azad" username="Azad" onExit={() => undefined} />);
-    const field = await screen.findByLabelText('Message…');
+    const field = await screen.findByLabelText('Write a message…');
     fireEvent.change(field, { target: { value: 'Silav' } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
     await waitFor(() => expect(felt).toEqual(['tap']));

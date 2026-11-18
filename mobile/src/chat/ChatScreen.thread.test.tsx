@@ -25,6 +25,7 @@ patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
   cleanup();
   resetCourseDialect();
+  localStorage.removeItem('kurda_locale_v1');
 });
 
 /** A message so many minutes before now, so "Today" is today whenever the test runs. */
@@ -119,11 +120,18 @@ describe('a conversation nobody has written in yet', () => {
     expect(await screen.findByText('Rojbaş!')).toBeTruthy();
     expect(screen.queryByText('This is the start of your conversation with rojda.')).toBeNull();
   });
+
+  it('greets in Soranî for a reader of the Soranî interface, on any course', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    open({ 'GET /chat/u2/messages': ok({ messages: [] }) });
+    expect(await screen.findByRole('button', { name: 'سڵاو! 👋' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Rojbaş!' })).toBeNull();
+  });
 });
 
 /* As on the website: a message the server was not reached for stays where it was written, for Try again or Cancel. */
 describe('a message that did not go', () => {
-  const field = () => screen.getByPlaceholderText(/Message/) as HTMLTextAreaElement;
+  const field = () => screen.getByPlaceholderText(/message/i) as HTMLTextAreaElement;
   const write = (words: string) => {
     fireEvent.change(field(), { target: { value: words } });
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));

@@ -155,6 +155,23 @@ describe('the menu about somebody', () => {
     await waitFor(() => expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/friends/u2')).toBe(true));
   });
 
+  it('ends a friendship as soon as it is confirmed, and brings it back with the reason when refused', async () => {
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => buttons?.find((b) => b.style === 'destructive')?.onPress?.());
+    const said = watchNotices();
+    let answer: (r: unknown) => void = () => undefined;
+    visitBaran('friends', { 'DELETE /friends/u2': () => new Promise((resolve) => (answer = resolve)) } as never);
+    expect(await screen.findByRole('button', { name: 'Message' })).toBeTruthy();
+    // Remove friend is picked from the menu, and the question after it answered yes.
+    alert.mockImplementationOnce((_title, _message, buttons) => buttons?.find((b) => b.text === 'Remove friend')?.onPress?.());
+    fireEvent.click(screen.getByRole('button', { name: 'More about Baran Şêx' }));
+    // No longer friends before the server answers.
+    expect(screen.getByRole('button', { name: 'Add friend' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Message' })).toBeNull();
+    await act(async () => answer({ ok: false, error: { kind: 'network', message: 'network request failed' } }));
+    expect(screen.getByRole('button', { name: 'Message' })).toBeTruthy();
+    expect(said).toHaveBeenLastCalledWith('Can’t reach Hevalo right now. Check your connection and try again.');
+  });
+
   it('draws their own sky behind their face', async () => {
     visitBaran('none');
     expect(await screen.findByTestId('profile-horizon')).toBeTruthy();
