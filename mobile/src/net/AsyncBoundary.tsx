@@ -48,7 +48,7 @@ export function AsyncBoundary({
       return <>{skeleton ?? <SkeletonList style={styles.skeleton} />}</>;
 
     case 'offline':
-      /* The fawn with the unplugged cable: a failed load looks different from an empty screen. */
+      /* Hevalo looks puzzled rather than glad: a failed load looks different from an empty screen. */
       return (
         <EmptyState
           art="offline"
