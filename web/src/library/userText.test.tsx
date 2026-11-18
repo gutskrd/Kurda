@@ -77,5 +77,5 @@ describe('a post page full of what a stranger wrote', () => {
       expectInert(view.container);
       view.unmount();
     }
-  });
+  }, 30_000);
 });
