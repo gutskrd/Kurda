@@ -53,7 +53,6 @@ export function StoryText({
   story,
   fontSize = STORY_BODY_SIZE,
   current = null,
-  evidence = null,
   onGloss,
   onReplay,
   listenable,
@@ -71,8 +70,6 @@ export function StoryText({
   fontSize?: number;
   /** The sentence being read aloud. */
   current?: TextPoint | null;
-  /** The passage a reveal points at. */
-  evidence?: TextPoint | null;
   onGloss?: (entry: StoryGlossEntry) => void;
   /** A tap on the sentence being read replays it. */
   onReplay?: () => void;
@@ -143,7 +140,6 @@ export function StoryText({
           );
         }
         const segments = paragraphSegments(paragraph, onGloss ? story.glossary : []);
-        const isEvidence = evidence?.paragraph === pi;
         const active = listening === pi;
         const translatedText = translation?.paragraphs[pi];
         const showTranslation = !!translatedText && !!translated?.has(pi);
@@ -151,7 +147,7 @@ export function StoryText({
           <View
             key={pi}
             onLayout={onParagraphLayout ? (e) => onParagraphLayout(pi, e.nativeEvent.layout.y) : undefined}
-            style={[styles.paragraph, isEvidence && evidence?.sentence === null ? { backgroundColor: colors.successFill } : null]}
+            style={styles.paragraph}
           >
             {pi === 0 && firstHeading > 0 ? (
               <Text style={[sectionLabel, { color: colors.textSecondary }, textStyle]} accessibilityRole="header">
@@ -183,8 +179,7 @@ export function StoryText({
             <Text {...textProps} style={[styles.body, { fontSize, lineHeight, color: colors.textPrimary }, textStyle]}>
               {segments.map((seg, si) => {
                 const reading = seg.sentence !== null && current?.paragraph === pi && current.sentence === seg.sentence;
-                const lit = reading || (seg.sentence !== null && isEvidence && evidence?.sentence === seg.sentence);
-                const bg = lit ? { backgroundColor: reading ? tint : colors.successFill } : null;
+                const bg = reading ? { backgroundColor: tint } : null;
                 if (seg.gloss && onGloss) {
                   const entry = seg.gloss;
                   return (

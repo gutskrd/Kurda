@@ -61,39 +61,34 @@ export function GlassCard({
  */
 export function GlassRow({
   icon,
-  iconColor,
   title,
   subtitle,
   value,
   trailing,
   onPress,
-  destructive = false,
 }: {
   icon?: IconName;
-  iconColor?: string;
   title: string;
   subtitle?: string;
   value?: string;
   /** Trailing node (chevron, switch, custom). A chevron is implied when onPress is set and no trailing or value is given. */
   trailing?: ReactNode;
   onPress?: () => void;
-  destructive?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   // The row starts on the reading side: the icon there, the chevron at the far end pointing onward.
   const dir = useDirection();
-  const titleColor = destructive ? colors.danger : colors.textPrimary;
   const body = (pressed: boolean) => (
     <>
       <View style={[styles.row, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}>
         {icon ? (
           <View style={styles.rowIcon}>
-            <Icon name={icon} size={20} color={iconColor ?? (destructive ? colors.danger : colors.primary)} />
+            <Icon name={icon} size={20} color={colors.primary} />
           </View>
         ) : null}
         <View style={styles.rowMain}>
           {/* A long name wraps to a second line rather than being cut. */}
-          <Text style={[styles.rowTitle, dir.text, { color: titleColor }]} numberOfLines={2}>{title}</Text>
+          <Text style={[styles.rowTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>{title}</Text>
           {subtitle ? <Text style={[styles.rowSubtitle, dir.text, { color: colors.textSecondary }]} numberOfLines={2}>{subtitle}</Text> : null}
         </View>
         {value ? <Text style={[styles.rowValue, { color: colors.textSecondary }]} numberOfLines={1}>{value}</Text> : null}

@@ -211,12 +211,12 @@ const TEXT_CONTENT_TYPE = {
   none: undefined,
 } as const;
 
-/** A link under a form; `destructive` is for the irreversible one (deleting the account), the screen's only red. */
-export function LinkText(props: { label: string; onPress: () => void; destructive?: boolean }) {
+/** A link under a form. */
+export function LinkText(props: { label: string; onPress: () => void }) {
   const { colors } = useTheme();
   return (
     <Pressable onPress={props.onPress} accessibilityRole="button" style={({ pressed }) => [styles.link, pressed && heldDim]}>
-      <Text style={[styles.linkText, { color: props.destructive ? colors.danger : colors.primary }]}>{props.label}</Text>
+      <Text style={[styles.linkText, { color: colors.primary }]}>{props.label}</Text>
     </Pressable>
   );
 }

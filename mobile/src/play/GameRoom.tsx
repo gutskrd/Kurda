@@ -45,10 +45,6 @@ interface GameRoomProps<Board> {
   /** The game's own word on how it ended. */
   ending?: (view: MultiView<Board>) => ReactNode;
   scoreOf: (result: MultiResult, view: MultiView<Board>) => string;
-  /** Why the lobby cannot start as it stands (a team too small), in the reader's words; null when it can. */
-  startProblem?: (view: MultiView<Board>) => string | null;
-  /** A team game's note about its teams, inside the team picker. */
-  teamNote?: (view: MultiView<Board>) => ReactNode;
 }
 
 /**
@@ -70,8 +66,6 @@ export function GameRoom<Board>({
   playing,
   ending,
   scoreOf,
-  startProblem,
-  teamNote,
 }: GameRoomProps<Board>): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -142,7 +136,6 @@ export function GameRoom<Board>({
 
   if (view.status === 'lobby') {
     const enough = present.length >= view.minPlayers;
-    const problem = enough ? (startProblem?.(view) ?? null) : null;
     return (
       <>
         {view.me !== null ? (
@@ -165,7 +158,6 @@ export function GameRoom<Board>({
                 isHost={view.isHost}
                 game={game}
                 lobbyId={id}
-                note={teamNote?.(view)}
                 onTeam={(seat, team) => control('team', { seat, team })}
               />
             ) : view.me !== null ? (
@@ -180,20 +172,16 @@ export function GameRoom<Board>({
             {view.me === null ? (
               <ClayButton label={busy ? t('games.joining') : t('play.room.join')} tone="primary" busy={busy} onPress={() => void control('join')} style={styles.stretch} />
             ) : view.isHost && enough ? (
-              <>
-                {problem ? <Text style={[styles.waiting, { color: colors.textSecondary }]}>{problem}</Text> : null}
-                <ClayButton
-                  label={busy ? t('games.starting') : t('play.room.start')}
-                  tone="primary"
-                  busy={busy}
-                  disabled={problem !== null}
-                  onPress={() => {
-                    haptic('tap');
-                    void control('start');
-                  }}
-                  style={styles.stretch}
-                />
-              </>
+              <ClayButton
+                label={busy ? t('games.starting') : t('play.room.start')}
+                tone="primary"
+                busy={busy}
+                onPress={() => {
+                  haptic('tap');
+                  void control('start');
+                }}
+                style={styles.stretch}
+              />
             ) : (
               <Text style={[styles.waiting, { color: colors.textSecondary }]}>{view.isHost ? t('play.room.waiting') : t('play.room.waitingHost')}</Text>
             )}

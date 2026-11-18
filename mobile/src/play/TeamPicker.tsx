@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import type { MultiGame, MultiSeat, UnitTone } from '@kurda/shared';
@@ -41,7 +41,6 @@ export function TeamPicker({
   isHost,
   game,
   lobbyId,
-  note,
   onTeam,
 }: {
   players: readonly MultiSeat[];
@@ -49,7 +48,6 @@ export function TeamPicker({
   isHost: boolean;
   game: MultiGame;
   lobbyId: string;
-  note?: ReactNode;
   onTeam: (seat: number, team: number) => Promise<void>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -75,7 +73,6 @@ export function TeamPicker({
       <Text accessibilityRole="header" style={[styles.heading, { color: colors.textPrimary }]}>
         {t('play.teams.title')}
       </Text>
-      {note}
       {numbers.map((team) => {
         const tone = toneOf(team);
         const members = present.filter((p) => (p.team ?? 1) === team);

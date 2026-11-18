@@ -123,7 +123,7 @@ export const LIGHT: Palette = {
   successFill: '#DCF7E1',
   dangerFill: '#FEE9E6',
 
-  // a deep indigo, not black: 16.8:1 on the page, and it sits with the violet where black sat beside it
+  // A deep indigo rather than black: 16.8:1 on the page, and it sits better beside the violet.
   textPrimary: '#14112E',
   // 6.3:1 on the page, 6.9:1 on a card and 5.5:1 on the other side's chat bubble.
   textSecondary: '#595870',
