@@ -146,39 +146,26 @@ export interface MoveAnswer {
 }
 
 /**
- * The engine every multiplayer learning game runs on (shared/src/games/multi):
- * lobbies and seats in three tables of their own, the play layer's lobby rules
- * (who may join, seats as "Player N", invites, codes, cards, rematches,
- * Rated/Friendly), and a phase engine generalised from the story games.
+ * The engine every multiplayer learning game runs on (shared/src/games/multi): lobbies and seats in their own tables,
+ * the play layer's lobby rules (joining, "Player N" seats, invites, codes, cards, rematches, Rated/Friendly), and a
+ * phase engine.
  *
- * The rules that keep it right with several API instances and a pool of ten
- * connections, as the story games' (story-games/service.ts):
- *
- * - Every change is one transaction that locks the lobby row first (`FOR
- *   UPDATE`), reads the database's clock after the lock, and only then checks
- *   who the caller is. Each bumps `version`; long-polls are woken after COMMIT.
- * - Deadlines are columns. `due_at` is the next instant something is due on a
- *   game, so a sweep on any replica finds what is due; on the instance that
- *   last touched a game a timer is armed for it too. An advance takes the row
- *   with `SKIP LOCKED` and judges due-ness on the locked row with the
- *   database's clock, so two replicas never both apply a timeout.
+ * Invariants for several API instances sharing a ten-connection pool (as in story-games/service.ts):
+ * - Every change is one transaction that locks the lobby row first (`FOR UPDATE`), reads the database clock after the
+ *   lock, and only then checks the caller. Each bumps `version`; long-polls wake after COMMIT.
+ * - Deadlines are columns: `due_at` is the next due instant, so any replica's sweep finds it, and the last instance to
+ *   touch a game also arms a timer. An advance takes the row with `SKIP LOCKED` and judges due-ness on the locked row,
+ *   so two replicas never both apply a timeout.
  * - A long-poll holds no connection while it waits.
- * - Placement XP, Game Ranks and the end of the game happen in the
- *   transaction that ends it, so nothing depends on anyone reading the result.
- * - Nothing waits on a pool connection while holding one: the free-text gate
- *   runs before the game's transaction, the dictionary lookups inside it on its
- *   own client. And the gate runs only for a member whose move it may be: who
- *   is asking, and whether it is their turn, is read first, cheaply and outside
- *   the lock (the rules judge again under it), so nobody's text reaches the
- *   chat pipeline, its classifier or its offense ladder for a move that would
- *   be refused anyway.
- * - A game that ends without counting (`counted` in its rules: called off,
- *   too few left) pays no placement and is closed for Game Ranks as void.
- * - Free text is never exchanged between two players who may not
- *   (`textApart`: a block, or a minor and someone not their friend): such a
- *   pair is never seated together in a game that takes it, what one writes is
- *   left out of the other's view, and a block made during a game takes the
- *   blocked player out of it (`onBlock`).
+ * - Placement XP, Game Ranks and the game's end happen in the transaction that ends it.
+ * - Nothing waits on a pool connection while holding one: the free-text gate runs before the game's transaction,
+ *   dictionary lookups inside it on its client. Membership and turn are checked cheaply outside the lock first (the
+ *   rules judge again under it), so no text reaches the chat pipeline for a move that would be refused.
+ * - A game that ends without counting (`counted`: called off, too few left) pays no placement and is closed as void for
+ *   Game Ranks.
+ * - Free text never passes between players who may not exchange it (`textApart`: a block, or a minor and a non-friend):
+ *   they are never seated together in a free-text game, one's text is left out of the other's view, and a block during
+ *   a game removes the blocked player (`onBlock`).
  */
 export class MultiplayerService {
   readonly presence: Presence;
@@ -212,10 +199,9 @@ export class MultiplayerService {
   // making a game
 
   /**
-   * A group lobby with its host in seat 1 (`POST /play/lobbies`, through the
-   * game's adapter). Settings are the game's presets (400 otherwise); 'open'
-   * only for a known adult; at most MAX_HOSTED_GAMES of this game at once, the
-   * oldest lobby nobody started giving way.
+   * A group lobby with its host in seat 1 (`POST /play/lobbies` via the game's adapter). Settings must be the game's
+   * presets (400 otherwise); 'open' only for a known adult; at most MAX_HOSTED_GAMES of this game at once, the oldest
+   * unstarted lobby giving way.
    */
   async create(hostId: string, game: MultiGame, raw: unknown, opts: { chatGroupId: string | null; fromChat: boolean }): Promise<string> {
     const m = moduleOf(game);
@@ -260,10 +246,8 @@ export class MultiplayerService {
   }
 
   /**
-   * One person against Hevalo (`POST /mp/:game/solo`): no lobby, nobody to
-   * invite, started at once. Offered only where the game has the content
-   * (`availability`). A person's earlier game against Hevalo of this game, if
-   * one is still going, ends where it stands: one at a time.
+   * One person against Hevalo (`POST /mp/:game/solo`): no lobby, started at once, only where the game has the content
+   * (`availability`). Any earlier solo game of this game still going ends where it stands.
    */
   async createSolo(userId: string, game: MultiGame, raw: unknown): Promise<MultiView> {
     const m = moduleOf(game);
@@ -362,10 +346,8 @@ export class MultiplayerService {
   }
 
   /**
-   * Leave: a lobby (the host leaving calls it off — the others were let in as
-   * the host's friends, so it cannot pass to someone else), or a game under
-   * way (gone: their seat is out, a Rated game counts it as a leave, and with
-   * every person gone the game ends).
+   * Leave a lobby (a host leaving calls it off, since the others joined as the host's friends) or a game under way (the
+   * seat is out, a Rated game counts a leave, and with every person gone the game ends).
    */
   async leave(lobbyId: string, userId: string): Promise<void> {
     await this.inLobby(lobbyId, async (t) => {
@@ -484,10 +466,9 @@ export class MultiplayerService {
   // playing
 
   /**
-   * A move by the player whose turn it is. What is due is applied first (a
-   * move after the turn's time is a move into the next turn, and is refused
-   * as not this player's), then the game's module prepares it, the rules judge
-   * it, and the view comes back with what the mover alone is told.
+   * A move by the player whose turn it is. What is due is applied first (a move after the turn's time lands in the next
+   * turn and is refused), then the module prepares it, the rules judge it, and the view returns with what only the
+   * mover is told.
    */
   async move(lobbyId: string, userId: string, body: unknown): Promise<MoveAnswer> {
     if (!UUID_RE.test(lobbyId)) throw gameNotFound();
@@ -549,12 +530,10 @@ export class MultiplayerService {
   }
 
   /**
-   * Before a move's text passes the free-text gate: the mover is a member
-   * still in a game under way, and it is their move — read without the lock,
-   * so it costs one query, and judged on the state as it stands unless
-   * something is due on it (a turn run out, a seat to pass over), which only
-   * the lock may settle and which may make it their move. The same refusals
-   * the move would meet under the lock, said before anyone reads the text.
+   * Before a move's text reaches the free-text gate: check that the mover is a member still in a game under way and
+   * that it is their move. Read without the lock in one query, judged on the current state unless something is due
+   * (only the lock may settle that, and it may make it their move). Raises the same refusals the move would get under
+   * the lock, before anyone reads the text.
    */
   private async mayType(lobby: LobbyRow, userId: string): Promise<void> {
     const players = await this.loadPlayers(this.pool, lobby.id);
@@ -573,10 +552,8 @@ export class MultiplayerService {
   // reading
 
   /**
-   * One game as `userId` may see it. A member sees it whole (as their seat);
-   * someone the join rule would let in sees an open lobby, to join it, and is
-   * told 'started' about a game under way; everyone else is told it does not
-   * exist.
+   * One game as `userId` may see it. Members see it whole (as their seat); someone the join rule admits sees an open
+   * lobby, and 'started' for a game under way; everyone else is told it does not exist.
    */
   async view(lobbyId: string, userId: string): Promise<MultiView> {
     if (!UUID_RE.test(lobbyId)) throw gameNotFound();
@@ -598,11 +575,9 @@ export class MultiplayerService {
   }
 
   /**
-   * `GET /mp/:game/:id?v=`: the view now when it moved past `v` (or no `v`
-   * was given), else once it does — or after at most 20 s, or just after its
-   * next deadline. As the story games' poll: the waiter is registered before
-   * the one plain read of the version, nothing is held while it waits, and
-   * something overdue is settled before answering.
+   * `GET /mp/:game/:id?v=`: the view now if it moved past `v` (or no `v`), else once it does, after at most 20 s, or
+   * just after its next deadline. As in the story games' poll, the waiter is registered before the single version read,
+   * nothing is held while waiting, and anything overdue is settled before answering.
    */
   async poll(lobbyId: string, userId: string, since: number | undefined, onClose: (stop: () => void) => void = () => undefined): Promise<MultiView | null> {
     if (!UUID_RE.test(lobbyId)) throw gameNotFound();
@@ -742,9 +717,8 @@ export class MultiplayerService {
   }
 
   /**
-   * A two-player rematch both asked for: a new game with the same settings and
-   * both in it, started at once — still the join rule's call. Asking twice
-   * gives the same one.
+   * A two-player rematch both asked for: a new game with the same settings and both players, started at once, still
+   * subject to the join rule. Asking twice gives the same one.
    */
   async startPairRematch(lobbyId: string): Promise<string> {
     let created: string | null = null;
@@ -857,9 +831,8 @@ export class MultiplayerService {
   // the clock: timers, the advance and the sweeps
 
   /**
-   * Apply whatever is due on a game, once per game per instance at a time.
-   * Skips a game another transaction holds (SKIP LOCKED) and tries again in
-   * 250 ms rather than parking a connection behind it.
+   * Apply whatever is due on a game, once per game per instance at a time. A game another transaction holds is skipped
+   * (SKIP LOCKED) and retried in 250 ms instead of parking a connection.
    */
   advance(lobbyId: string): Promise<void> {
     const running = this.inflight.get(lobbyId);
@@ -887,10 +860,9 @@ export class MultiplayerService {
   }
 
   /**
-   * On the play layer's timer, on every replica: lobbies nobody started are
-   * closed, games whose next deadline has passed are advanced (each with SKIP
-   * LOCKED, so the replicas share the work and none applies a deadline twice),
-   * and a game nothing has moved for STUCK_MINUTES ends where it stands.
+   * On the play layer's timer, on every replica: close lobbies nobody started, advance games past their next deadline
+   * (each with SKIP LOCKED, so replicas share the work and none applies a deadline twice), and end games nothing has
+   * moved for STUCK_MINUTES.
    */
   async sweep(game: MultiGame): Promise<void> {
     const idle = await this.pool.query<{ id: string; game: MultiGame; version: number }>(
@@ -927,9 +899,8 @@ export class MultiplayerService {
   }
 
   /**
-   * Every few hours: what players typed is cleared from games that ended a
-   * month ago (a report files its own copy when it is made), called-off
-   * lobbies go after a week and ended games after GAME_RETENTION_DAYS.
+   * Every few hours: clear typed text from games that ended a month ago (a report keeps its own copy), delete
+   * called-off lobbies after a week and ended games after GAME_RETENTION_DAYS.
    */
   async housekeeping(): Promise<{ cleared: number; deleted: number }> {
     const cleared = await this.pool.query(
@@ -951,14 +922,10 @@ export class MultiplayerService {
   }
 
   /**
-   * A block was made (after it committed): the pair are parted in every lobby
-   * and game they share. In a lobby the one who goes is the blocked player
-   * (the blocker, when the blocked player hosts it): the join rule would not
-   * have let them in together. In a game under way that takes free text, the
-   * blocked player is taken out of it — gone from the table, as a leave is,
-   * but neither rated nor paid for it, since it was not their choice — so the
-   * two stop seeing each other's text and stop playing together; the rules go
-   * on without them (`drop`). A game without free text plays on.
+   * After a block commits, part the pair in every lobby and game they share. In a lobby the blocked player goes (the
+   * blocker, if the blocked player hosts), as the join rule would not have seated them together. In a free-text game
+   * under way the blocked player is removed like a leave but neither rated nor paid, and the rules go on without them
+   * (`drop`). A game without free text plays on.
    */
   async onBlock(blockerId: string, blockedId: string): Promise<void> {
     const shared = await this.pool.query<{ id: string }>(
@@ -1104,13 +1071,11 @@ export class MultiplayerService {
   }
 
   /**
-   * The end, in the transaction that reached it: each seat's place and score,
-   * placement XP (only with at least two people who played to the end, less
-   * against the same people again today), and Game Ranks. A game against
-   * Hevalo pays nothing and rates nobody. A game its rules say did not count (`counted`: called off,
-   * too few left, the impostor gone) shows its places but pays no placement
-   * and is closed for Game Ranks as void: everyone still seated would
-   * otherwise share first place for a game nobody finished.
+   * The end, in the transaction that reached it: each seat's place and score, placement XP (only with at least two
+   * people who played to the end, reduced against the same people again today), and Game Ranks. A solo game against
+   * Hevalo pays nothing and rates nobody. A game that did not count (`counted`: called off, too few left, the impostor
+   * gone) shows places but pays no placement and is closed as void for Game Ranks, since otherwise everyone left would
+   * share first place.
    */
   private async finish(t: Tx, m: AnyGameModule): Promise<void> {
     const placed = m.rules.places(t.lobby.state);
@@ -1197,9 +1162,8 @@ export class MultiplayerService {
   }
 
   /**
-   * Bump the version with an update of the locked row. Every update carries
-   * the version it was decided on, so one that somehow did not hold the lock
-   * changes nothing rather than something else.
+   * Bump the version with an update of the locked row. Each update carries the version it was decided on, so one that
+   * somehow lacked the lock changes nothing.
    */
   private async bump(t: Tx, set: string, params: unknown[] = [], opts: { card?: boolean } = {}): Promise<void> {
     const res = await t.client.query<LobbyRow>(
@@ -1222,10 +1186,9 @@ export class MultiplayerService {
   }
 
   /**
-   * One transaction on one game: lock it (waiting up to 5 s; the advance skips
-   * instead), run `fn`, commit; then, outside the transaction, wake the
-   * waiters, tell the play layer, arm the timer and record any offense. A
-   * deadlock or serialization failure is retried once.
+   * One transaction on one game: lock it (waiting up to 5 s; the advance skips instead), run `fn`, commit; then,
+   * outside the transaction, wake waiters, tell the play layer, arm the timer and record any offense. A deadlock or
+   * serialization failure is retried once.
    */
   private async run<T>(lobbyId: string, fn: (t: Tx) => Promise<T>, opts: { skipLocked?: boolean } = {}): Promise<RunResult<T>> {
     for (let attempt = 0; ; attempt++) {
@@ -1267,9 +1230,8 @@ export class MultiplayerService {
   }
 
   /**
-   * The game, locked, with its players. A lobby of a game the engine no
-   * longer runs is not found here, as it is not found by any read: it is
-   * history, and nothing may act on it.
+   * The game, locked, with its players. A lobby of a game the engine no longer runs is not found here, as by every
+   * read: nothing may act on it.
    */
   private async lockWith(client: pg.PoolClient, lobbyId: string, skipLocked = false): Promise<Tx | null> {
     const l = await client.query<LobbyRow>(
@@ -1350,10 +1312,9 @@ export class MultiplayerService {
   }
 
   /**
-   * The join rule (`canJoin`), and for a game where players write to each
-   * other, that the joiner may exchange text with everyone at the table
-   * (`maySitTogether`): a minor sits only with their friends, and nobody sits
-   * with a minor who is not theirs. Refused the same way as any other no.
+   * The join rule (`canJoin`), plus for free-text games that the joiner may exchange text with everyone at the table
+   * (`maySitTogether`: a minor sits only with their friends, and nobody sits with a minor who is not theirs). Refused
+   * like any other no.
    */
   private async mayJoin(db: Executor, lobby: LobbyRow, players: readonly PlayerRow[], userId: string): Promise<boolean> {
     const memberIds = this.people(players).map((p) => p.user_id!);
@@ -1394,9 +1355,8 @@ export class MultiplayerService {
   }
 
   /**
-   * A member was heard from. The database copy of when is written at most
-   * every 15 s (Presence); a player who had been away is back at once — their
-   * turns are no longer passed over, and everyone's view says so.
+   * A member was heard from. The database copy is written at most every 15 s (Presence); a player who was away is back
+   * at once, so their turns are no longer passed and every view shows it.
    */
   private touch(lobbyId: string, userId: string, dbSeenAt: Date | null, storedAway: boolean): void {
     const { write, wasAway } = this.presence.touch(lobbyId, userId, dbSeenAt);

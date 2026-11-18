@@ -1,11 +1,9 @@
 import { GAME_NAMES, MULTI_GAMES, type MultiGame } from '@kurda/shared';
 
 /**
- * Each multiplayer learning game's name, for the places the server writes one
- * itself: an inbox entry's fallback text, the profile's list of games played
- * and the social rail's "playing now". A game's name is Kurmancî and the same
- * for every reader (shared: games/names.ts), so the server can say it without
- * knowing who will read it. The apps name games from their own catalogues.
+ * Each multiplayer game's name for text the server writes itself (inbox fallback text, the profile's games played, the
+ * social rail's "playing now"). Names are Kurmancî and the same for every reader (shared: games/names.ts); the apps
+ * name games from their own catalogues.
  */
 export const MULTI_GAME_TITLES: Readonly<Record<MultiGame, string>> = {
   'last-letter': GAME_NAMES['last-letter'],
@@ -20,12 +18,9 @@ export function multiTitleSql(column: string): string {
 }
 
 /**
- * `<column> IN (…)` naming the games the engine runs, for a query that reads
- * stored lobbies. Don't Say the Word! and Kurdish Bluff are no longer part of
- * Hevalo, and the lobbies played while they were stay in the database: with
- * this in its WHERE, such a lobby is not there for anything that plays, shows
- * or walks games, so no request and no timer ever looks for a module that
- * does not exist. Literals from the one list, never built from input.
+ * `<column> IN (…)` naming the games the engine runs, for queries over stored lobbies. Lobbies of retired games (Don't
+ * Say the Word!, Kurdish Bluff) stay in the database; this keeps them out of anything that plays, shows or walks games,
+ * so nothing looks for a missing module. Literals from the one list, never built from input.
  */
 export function playedGamesSql(column: string): string {
   return `${column} IN (${MULTI_GAMES.map((g) => `'${g}'`).join(', ')})`;

@@ -3,11 +3,8 @@ import type { JoinOutcome, LobbyFacts, PlayAdapter, Series } from '../play/types
 import type { MultiplayerService } from './service.js';
 
 /**
- * Any multiplayer learning game, as the play layer drives it (play/types.ts):
- * one adapter per game over the one engine, so invites, join codes, chat
- * cards, rematches and the next round, Rated/Friendly and the join rule work
- * for every new game the moment it is in `MULTI_GAMES`, with nothing written
- * for it here.
+ * The play layer's adapter (play/types.ts) for every multiplayer learning game on the engine, so invites, join codes,
+ * chat cards, rematches, Rated/Friendly and the join rule work for any game in `MULTI_GAMES` with nothing written here.
  */
 export class GenericLobbyAdapter implements PlayAdapter {
   constructor(
