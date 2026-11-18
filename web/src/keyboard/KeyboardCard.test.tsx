@@ -22,7 +22,7 @@ describe('Settings → Keyboard and accents', () => {
     await user.click(screen.getByRole('radio', { name: 'Alphabet order' }));
 
     expect(getKeyboardPrefs()).toMatchObject({ accentMode: 'hidden', keyBar: false, backtick: false, wordleLayout: 'alphabet' });
-    // the race's own note about a race in progress is not for Settings
+    // The race's note about a race in progress does not show in Settings.
     expect(screen.queryByText(/A race keeps the setting/)).not.toBeInTheDocument();
   });
 
@@ -34,7 +34,7 @@ describe('Settings → Keyboard and accents', () => {
 
     const dialog = screen.getByRole('dialog');
     expect(within(dialog).getByRole('heading', { name: 'Get the Kurmancî keyboard' })).toBeInTheDocument();
-    // not inside the frosted card, whose backdrop filter would trap the fixed dialog over it
+    // Not inside the frosted card, whose backdrop filter would trap the fixed dialog.
     expect(dialog.closest('.card')).toBeNull();
     await user.click(within(dialog).getByRole('button', { name: 'Done' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

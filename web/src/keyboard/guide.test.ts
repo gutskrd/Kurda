@@ -33,7 +33,7 @@ describe('the keyboard guides', () => {
       { text: 'Keyboard', ui: true },
       { text: '.', ui: false },
     ]);
-    // a placeholder with no name stays as it was rather than vanishing
+    // A placeholder with no name stays as written rather than vanishing.
     expect(stepParts({ key: 'x', en: '{3}' }, '{3}')).toEqual([{ text: '{3}', ui: false }]);
   });
 

@@ -4,7 +4,7 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useKeyboardPrefs, type WordleLayout } from './prefs';
 
-/** What each way of treating accents is called: its row in Settings says which one is on. */
+/** The name of each accent mode, shown on its row in Settings. */
 export const ACCENT_LABEL: Record<AccentMode, MessageKey> = {
   strict: 'keyboard.accent.strict',
   forgiving: 'keyboard.accent.forgiving',
@@ -23,20 +23,15 @@ const LAYOUTS: Array<{ value: WordleLayout; label: MessageKey }> = [
 ];
 
 /**
- * How this device types Kurdish: accents, the letter keys, the backtick
- * shortcut, Peyvok's layout — and the way back to the keyboard guide.
- *
- * The same controls in the race's own settings and in Settings, so a choice
- * made in one is the choice in the other (they share one store, `prefs`). Each
- * change applies at once; there is nothing to save. A race keeps the accent
- * mode it started with — the server scored it that way — so the race screen
- * says a change counts from the next one.
+ * How this device types Kurdish: accents, letter keys, the backtick shortcut, Peyvok's layout and the keyboard guide.
+ * The race's settings and Settings show the same controls over one store (`prefs`), applied at once. A race keeps the
+ * accent mode it started with, since the server scored it that way.
  */
 export function KeyboardSettings({
   context,
   onHelp,
 }: {
-  /** the race shows its own note about the race in progress; Settings shows Peyvok's layout too */
+  /** The race adds a note about the race in progress; Settings adds Peyvok's layout. */
   context: 'race' | 'settings';
   onHelp: () => void;
 }): React.JSX.Element {

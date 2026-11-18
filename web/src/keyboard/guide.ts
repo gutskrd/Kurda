@@ -10,11 +10,7 @@ import {
 } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 
-/**
- * The "get the Kurdish keyboard" card's logic, apart from how it looks: which
- * device's steps to show, how a step's sentence and the names on the device's
- * own screens fit together, and how far the "try it" box has got.
- */
+/** The keyboard guide's logic: which device's steps to show, how steps embed the system's menu names, and the "try it" box. */
 
 /** Accented letters missed in one race after which its result offers the guide. */
 export const GUIDE_AFTER_MISSES = 3;
@@ -23,10 +19,8 @@ export const GUIDE_AFTER_MISSES = 3;
 export const GUIDE_SNOOZE_MS = 14 * 24 * 3_600_000;
 
 /**
- * Whether a race's result offers the keyboard guide: three or more accented
- * letters went in without their accent — unless the guide was shown just
- * before this very race (the same guide twice in a minute is nagging, not
- * help), "Later" was said to it lately, or the run was not scored.
+ * Whether a race's result offers the keyboard guide: enough accents were missed, unless the guide was shown just
+ * before this race, was snoozed recently, or the run was not scored.
  */
 export function guideNudgeDue(
   result: { implausible: boolean; accentMisses: number },
@@ -41,12 +35,8 @@ export function guideNudgeDue(
 }
 
 /**
- * Every step sentence of every guide, as a message key.
- *
- * The guides live in @kurda/shared with their English; the words a reader
- * sees come from the catalogues. Listing the keys here ties the two together:
- * a step added to the shared guides without a sentence in the catalogues fails
- * the test beside this file, not on somebody's screen.
+ * Every guide step's message key. The guides live in @kurda/shared, so listing the keys here lets the test beside
+ * this file catch a new step that has no catalogue sentence.
  */
 export const GUIDE_STEP_KEYS: Record<string, MessageKey> = {
   'keyboardGuide.android.open': 'keyboardGuide.android.open',
@@ -86,9 +76,8 @@ export const PLATFORM_NAME: Record<KeyboardPlatform, MessageKey> = {
 };
 
 /**
- * The device this browser is on, or null when it cannot tell (a Chromebook,
- * say) — the card then asks. An iPad's Safari says it is a Mac; a touch screen
- * gives it away.
+ * The device this browser is on, or null when it cannot tell, in which case the card asks. An iPad reports itself as
+ * a Mac; its touch screen gives it away.
  */
 export function browserPlatform(): KeyboardPlatform | null {
   if (typeof navigator === 'undefined') return null;
@@ -96,7 +85,7 @@ export function browserPlatform(): KeyboardPlatform | null {
   try {
     coarsePointer = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
   } catch {
-    // no media queries: a desktop guess is the safe one
+    // No media queries: guessing desktop is safest.
   }
   return detectKeyboardPlatform(navigator.userAgent, undefined, { coarsePointer });
 }
@@ -106,10 +95,8 @@ export function guideSteps(platform: KeyboardPlatform, dialect: TypingDialect): 
 }
 
 /**
- * A step's sentence cut where the device's own names go: `{0}` and the like
- * become those names, marked so they can be set apart. The names stay in
- * English on purpose — "Kurdish (Latin)" in translation is a menu item nobody
- * can find on their screen.
+ * A step's sentence split at its placeholders (`{0}` and so on), which become the system's menu names, marked to be
+ * set apart. The names stay in English, since a translated menu name would not match the screen.
  */
 export function stepParts(step: KeyboardStep, sentence: string): Array<{ text: string; ui: boolean }> {
   const parts: Array<{ text: string; ui: boolean }> = [];
@@ -130,11 +117,7 @@ export function tryLetters(dialect: TypingDialect): readonly string[] {
   return dialect === 'sorani' ? SORANI_SPECIAL.slice(0, 5) : KURMANCI_SPECIAL;
 }
 
-/**
- * Which of the letters have been typed into the "try it" box. Upper or lower
- * case, and however the keyboard encoded them (a decomposed ê is ê), each
- * counts once it is anywhere in the box.
- */
+/** Which letters are anywhere in the "try it" box, in either case and however the keyboard encoded them. */
 export function lettersTyped(dialect: TypingDialect, text: string): Set<string> {
   const typed = normalizeTyping(text, dialect).toLowerCase();
   return new Set(tryLetters(dialect).filter((l) => typed.includes(l)));
