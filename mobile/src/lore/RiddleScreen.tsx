@@ -11,6 +11,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { KurdishAnswerInput } from '../lesson/components/KurdishAnswerInput';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COLUMN, Note, Pill, Sheet, useAnnouncer } from '../stories/ui';
@@ -43,6 +44,7 @@ import { mergeHints, rememberAnswer, rememberedAnswer, rememberedList } from './
  * after a hint and none after the answer was seen; Challenge a friend shares the question, never the answer.
  */
 export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
+  useHardwareBack(onExit);
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();

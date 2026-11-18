@@ -33,15 +33,6 @@ const PHONE_EXERCISES: Partial<Record<LearnGameId, PhoneExercise>> = {
 
 const PLAYABLE = Object.keys(PHONE_EXERCISES) as LearnGameId[];
 
-/**
- * Leave an exercise: back to the practice hub or Learn's Lessons half. Opened from a link, there is nothing
- * behind it, so it replaces itself with the hub, so Back from the hub does not return to the exercise.
- */
-export function leaveExercise(navigation: { canGoBack: () => boolean; goBack: () => void; replace: (screen: 'PracticeHub') => void }): void {
-  if (navigation.canGoBack()) navigation.goBack();
-  else navigation.replace('PracticeHub');
-}
-
 /** The exercises an availability answer offers, in registry order; none before it arrives. */
 export function exercisesOf(availability: GamesAvailability | null | undefined): PhoneExercise[] {
   return lessonExercises(availability, PLAYABLE).flatMap((g) => {
