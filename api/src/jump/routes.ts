@@ -7,10 +7,9 @@ const params = z.object({ courseId: z.uuid() });
 const body = z.object({ unitId: z.uuid() });
 
 /**
- * Jumping ahead on the lesson path (jump/service.ts). Starting is all there is
- * here: the test is then answered and finished as a practice session
- * (`/practice/sessions/:id/answers`, `/retry`, `/complete`), and finishing it
- * says whether the unit opened.
+ * Jumping ahead on the lesson path (jump/service.ts). Only the start is here: the test is answered and finished as a
+ * practice session (`/practice/sessions/:id/answers`, `/retry`, `/complete`), and finishing says whether the unit
+ * opened.
  */
 export function registerPathJumpRoutes(app: FastifyInstance): void {
   const jumps = new PathJumpService(app.db);

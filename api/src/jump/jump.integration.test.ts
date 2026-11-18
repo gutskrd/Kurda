@@ -1,7 +1,4 @@
-/**
- * Jumping ahead on the lesson path against real Postgres: starting a test,
- * answering it as a practice session, and what finishing it opens.
- */
+/** Jumping ahead on the lesson path against real Postgres: starting a test, answering it as practice, and what passing opens. */
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -38,7 +35,7 @@ describe.skipIf(!DATABASE_URL)('jumping ahead (integration)', () => {
   const start = (who: string, unitId: string) => call(who, 'POST', `/courses/${courseId}/jump`, { unitId });
   const map = async (who: string) => (await call(who, 'GET', `/courses/${courseId}/map`)).json();
 
-  /** Answer every item of a test, `wrong` of them wrongly; a second try at a miss is answered right. */
+  /** Answers every item of a test, `wrong` of them wrongly; a second try at a miss is answered right. */
   async function sit(who: string, test: { sessionId: string; exercises: Item[] }, wrong: number) {
     for (const [i, item] of test.exercises.entries()) {
       const miss = i < wrong;
@@ -157,7 +154,7 @@ describe.skipIf(!DATABASE_URL)('jumping ahead (integration)', () => {
     expect(xp.rows[0].n).toBe(0);
     const reviews = await pool.query(`SELECT count(*)::int n FROM review_items WHERE user_id = $1`, [users.ana!.id]);
     expect(reviews.rows[0].n).toBe(0);
-    // what it asked about was skipped, not learned: its misses are no mistakes to put right
+    // What it asked about was skipped, not learned, so its misses are not mistakes to put right.
     expect((await call('ana', 'GET', '/practice/hub')).json().mistakes).toBe(0);
     expect((await call('ana', 'POST', '/practice/session', { mode: 'mistakes' })).json().empty).toBe(true);
     // finishing again says the same
