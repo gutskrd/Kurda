@@ -30,18 +30,10 @@ export interface CouchAsk {
 }
 
 /**
- * The start of Impostor on the phone: what the game is in one line,
- * and one thing to press.
- *
- * It is laid out in the order a person decides: the hand of cards on the
- * table and "Play on this phone" first, since most games begin with people
- * already in a room; under it the three ways to play and the categories, each
- * of which opens the setup with that choice made; then how a round goes, and
- * a code from someone else. A game with friends who are elsewhere is the
- * second button on the table. Nothing is offered where there are no approved
- * word cards, and the screen says so plainly then. The categories shown are
- * the learner's own Kurdish where the game is offered in it, as the setup
- * they open is.
+ * The start of Impostor on the phone, in the order a person decides: the hand of cards and "Play on this phone" first,
+ * since most games begin with people already in a room; then the three ways to play and the categories, each opening
+ * the setup with that choice made; then how a round goes, and joining by code. Nothing is offered where there are no
+ * approved word cards, and the screen says so. Categories are in the learner's own Kurdish where offered.
  */
 export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -151,7 +143,8 @@ export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }
           <Text style={[styles.body, dir.text, { color: colors.textSecondary }]}>{t('games.impostor.intro')}</Text>
           {STEPS.map((key, i) => (
             <View key={key} style={[styles.howStep, { flexDirection: dir.row }]}>
-              {/* numbered as the setup's steps are, in the page's ink: this card is off the table, where gold is kept for what is earned */}
+              {/* Numbered as the setup's steps, in the page's ink: this card is off the table, where gold is kept for
+                 what is earned. */}
               <View style={[styles.howN, { backgroundColor: colors.textPrimary }]}>
                 <Text style={[styles.howNText, { color: colors.background }]}>{i + 1}</Text>
               </View>
@@ -161,7 +154,7 @@ export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }
         </View>
       </GlassCard>
 
-      {/* a game somebody else made: its code opens it, whichever game it turns out to be */}
+      {/* A game somebody else made: its code opens it, whichever game it is. */}
       <JoinCodeCard />
       {inviting ? <InviteSheet target={{ kind: 'new', game: 'impostor' }} onClose={() => setInviting(false)} /> : null}
     </>
