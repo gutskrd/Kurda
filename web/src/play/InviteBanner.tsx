@@ -7,6 +7,7 @@ import { CaretDownIcon, CloseIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { isFocusedPath } from '../layouts/focus';
 import { prefersReducedMotion } from '../lib/motion';
+import { useOptimisticSend } from '../lib/optimistic';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { Ticket, TicketBody, TicketGlyph, TicketStub, ticketClass } from '../ui/Ticket';
 import { GAME_NAME_KEY, lobbyPath, playError, summaryParts } from './playApi';
@@ -150,6 +151,7 @@ function Banner({
   const { client } = useAuth();
   const { refresh } = usePlayInvites();
   const navigate = useNavigate();
+  const sendShown = useOptimisticSend();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // How the ticket leaves: stub torn for Join, folded for Not now.
@@ -180,12 +182,27 @@ function Banner({
     navigate(lobbyPath(res.data.game ?? invite.game, res.data.lobbyId ?? invite.lobbyId));
   }
 
+  /** Folds away at once; an invite already gone counts as declined, and a refusal brings the banner back with why. */
   async function decline(reason: DeclineReason): Promise<void> {
     setBusy(true);
+    setError(null);
     if (!still) setGoing('leaving');
-    // The banner goes either way: a "not now" that failed to send is still not now.
-    await Promise.all([client.post(`/play/invites/${encodeURIComponent(invite.id)}/decline`, { reason }), still ? null : wait(FOLD_MS)]);
+    const [res] = await Promise.all([
+      sendShown(
+        () => client.post(`/play/invites/${encodeURIComponent(invite.id)}/decline`, { reason }),
+        {
+          undo: () => {
+            setGoing(null);
+            // The reason needs the whole banner.
+            setOpened(true);
+          },
+        },
+        { goneIsDone: true, onFailed: (e) => setError(playError(e, t)) },
+      ),
+      still ? null : wait(FOLD_MS),
+    ]);
     setBusy(false);
+    if (!res.ok && res.error.status !== 404) return;
     onDone();
     refresh();
   }

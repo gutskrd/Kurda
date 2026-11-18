@@ -72,7 +72,29 @@ describe('SectionToggles', () => {
     await userEvent.click(await screen.findByRole('checkbox', { name: /Games/ }));
 
     expect(await screen.findByRole('status')).toBeInTheDocument();
-    // not flipped optimistically: the profile still shows games
+    // Put back as the server has it: the profile still shows games.
     expect(screen.getByRole('checkbox', { name: /Games/ })).toBeChecked();
+  });
+
+  it('moves each box at once, and sends what changed meanwhile once the first answer comes', async () => {
+    const patches: Array<{ body: unknown; answer: (res: Response) => void }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/me/profile/sections')) return new Promise<Response>((answer) => patches.push({ body: JSON.parse(String(init?.body)), answer }));
+        return jsonResponse(200, { sections: ALL });
+      }),
+    );
+    renderApp(<SectionToggles me={me} />);
+
+    await userEvent.click(await screen.findByRole('checkbox', { name: /^Games/ }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /^Posts/ }));
+    expect(screen.getByRole('checkbox', { name: /^Games/ })).not.toBeChecked();
+    expect(screen.getByRole('checkbox', { name: /^Posts/ })).not.toBeChecked();
+    expect(patches.map((p) => p.body)).toEqual([{ games: false }]);
+    patches[0]!.answer(jsonResponse(200, { sections: { ...ALL, games: false } }));
+    await waitFor(() => expect(patches.map((p) => p.body)).toEqual([{ games: false }, { posts: false }]));
+    patches[1]!.answer(jsonResponse(200, { sections: { ...ALL, games: false, posts: false } }));
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: /^Posts/ })).not.toBeChecked());
   });
 });

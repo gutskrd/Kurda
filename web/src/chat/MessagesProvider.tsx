@@ -18,20 +18,21 @@ import { messagePreview, truncate, type Previewable } from './messagePreview';
 import { useT } from '../i18n/I18nProvider';
 import type { Translate } from '../i18n/I18nProvider';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
+import { onNotice } from '../lib/notice';
 
 /**
  * App-wide unread counts and arrival banners. Direct messages arrive on the reader's `user:<id>` room; this also
  * joins every `group:<id>` room the reader belongs to while signed in. No banner is raised for the conversation being
- * read or for the reader's own messages.
+ * read or for the reader's own messages. The same stack shows the app's short notices (lib/notice.ts).
  */
 
-/** One arrival banner. */
+/** One arrival banner, or a notice when it leads nowhere. */
 interface MessageToast {
   id: string;
   title: string;
   body: string;
-  /** where clicking it takes you */
-  to: string;
+  /** where clicking it takes you; null for a notice */
+  to: string | null;
 }
 
 interface MessagesContextValue {
@@ -39,6 +40,8 @@ interface MessagesContextValue {
   unreadTotal: number;
   /** Re-read the counts (after opening or reading a conversation). */
   refreshUnread: () => void;
+  /** Clears one conversation's count at once, before its read receipt is answered; `refreshUnread` brings the truth. */
+  markSeen: (kind: 'dm' | 'group', id: string) => void;
   toasts: MessageToast[];
   dismissToast: (id: string) => void;
 }
@@ -49,9 +52,12 @@ const MessagesCtx = createContext<MessagesContextValue | null>(null);
 const NO_PROVIDER: MessagesContextValue = {
   unreadTotal: 0,
   refreshUnread: () => undefined,
+  markSeen: () => undefined,
   toasts: [],
   dismissToast: () => undefined,
 };
+
+const NOTHING_UNREAD = { dm: {}, group: {} };
 
 /** How long an arrival banner stays before it disappears. */
 const TOAST_MS = 6000;
@@ -71,7 +77,8 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
   const signedIn = status === 'signedIn';
   const location = useLocation();
   const [groups, setGroups] = useState<MyGroup[]>([]);
-  const [unreadTotal, setUnreadTotal] = useState(0);
+  /** Unread messages by conversation: people by their id, groups by theirs. */
+  const [unread, setUnread] = useState<{ dm: Record<string, number>; group: Record<string, number> }>(NOTHING_UNREAD);
   const [toasts, setToasts] = useState<MessageToast[]>([]);
 
   // Which conversation is on screen right now. Derived from the URL rather than
@@ -101,16 +108,17 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
         client.get<{ conversations: Conversation[] }>('/chat/conversations'),
         client.get<{ unread: Array<{ groupId: string; unread: number }> }>('/me/groups/unread'),
       ]);
-      const dmCount = dms.ok ? (dms.data.conversations ?? []).reduce((n, c) => n + (c.unread ?? 0), 0) : 0;
-      const groupCount = gs.ok ? (gs.data.unread ?? []).reduce((n, g) => n + (g.unread ?? 0), 0) : 0;
-      setUnreadTotal(dmCount + groupCount);
+      setUnread({
+        dm: dms.ok ? Object.fromEntries((dms.data.conversations ?? []).map((c) => [c.userId, c.unread ?? 0])) : {},
+        group: gs.ok ? Object.fromEntries((gs.data.unread ?? []).map((g) => [g.groupId, g.unread ?? 0])) : {},
+      });
     })();
   }, [client, signedIn]);
 
   useEffect(() => {
     if (!signedIn) {
       setGroups([]);
-      setUnreadTotal(0);
+      setUnread(NOTHING_UNREAD);
       setToasts([]);
       return;
     }
@@ -132,6 +140,9 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
     setToasts((list) => (list.some((t) => t.id === toast.id) ? list : [...list, toast].slice(-MAX_TOASTS)));
     setTimeout(() => setToasts((list) => list.filter((t) => t.id !== toast.id)), TOAST_MS);
   }, []);
+
+  // A notice already showing is not stacked again, so a burst of failures while offline says it once.
+  useEffect(() => onNotice((text) => push({ id: `notice:${text}`, title: text, body: '', to: null })), [push]);
 
   const onDm = useCallback(
     (env: RealtimeEventEnvelope) => {
@@ -185,9 +196,14 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
     setToasts((list) => list.filter((t) => t.id !== id));
   }, []);
 
+  const markSeen = useCallback((kind: 'dm' | 'group', id: string) => {
+    setUnread((u) => (u[kind][id] ? { ...u, [kind]: { ...u[kind], [id]: 0 } } : u));
+  }, []);
+
+  const unreadTotal = useMemo(() => [...Object.values(unread.dm), ...Object.values(unread.group)].reduce((n, c) => n + c, 0), [unread]);
   const value = useMemo<MessagesContextValue>(
-    () => ({ unreadTotal, refreshUnread, toasts, dismissToast }),
-    [unreadTotal, refreshUnread, toasts, dismissToast],
+    () => ({ unreadTotal, refreshUnread, markSeen, toasts, dismissToast }),
+    [unreadTotal, refreshUnread, markSeen, toasts, dismissToast],
   );
 
   return (
@@ -211,22 +227,33 @@ function MessageToasts(): React.JSX.Element | null {
   if (toasts.length === 0) return null;
   return (
     <div className="msg-toasts" role="region" aria-label={t('chat.newMessages')}>
-      {toasts.map((toast) => (
-        <div key={toast.id} className="msg-toast" role="status">
-          <button
-            type="button"
-            className="msg-toast-open"
-            onClick={() => {
-              dismissToast(toast.id);
-              navigate(toast.to);
-            }}
-          >
-            <span className="msg-toast-title">{toast.title}</span>
-            <span className="msg-toast-body">{toast.body}</span>
-          </button>
-          <CloseButton className="msg-toast-close" label={t('chat.dismissFrom', { name: toast.title })} onClick={() => dismissToast(toast.id)} />
-        </div>
-      ))}
+      {toasts.map((toast) => {
+        const to = toast.to;
+        return (
+          <div key={toast.id} className="msg-toast" role="status">
+            {to === null ? (
+              <p className="msg-toast-open msg-toast-notice">{toast.title}</p>
+            ) : (
+              <button
+                type="button"
+                className="msg-toast-open"
+                onClick={() => {
+                  dismissToast(toast.id);
+                  navigate(to);
+                }}
+              >
+                <span className="msg-toast-title">{toast.title}</span>
+                <span className="msg-toast-body">{toast.body}</span>
+              </button>
+            )}
+            <CloseButton
+              className="msg-toast-close"
+              label={to === null ? t('common.close') : t('chat.dismissFrom', { name: toast.title })}
+              onClick={() => dismissToast(toast.id)}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

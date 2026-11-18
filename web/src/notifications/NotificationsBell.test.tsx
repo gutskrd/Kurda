@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { NotificationsBell } from './NotificationsBell';
 import { RailProvider } from '../social/RailProvider';
 import { renderApp, jsonResponse } from '../test/utils';
+import { onNotice } from '../lib/notice';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -16,8 +17,8 @@ const signIn = () =>
 
 type Note = Record<string, unknown>;
 
-/** Serves /me/social with these notifications and friends, and logs what is written. */
-function serve(notifications: Note[], friends: Note[] = []) {
+/** Serves /me/social with these notifications and friends, and logs what is written; `write` answers the writes. */
+function serve(notifications: Note[], friends: Note[] = [], write?: () => Promise<Response>) {
   const posts: string[] = [];
   vi.stubGlobal(
     'fetch',
@@ -30,7 +31,10 @@ function serve(notifications: Note[], friends: Note[] = []) {
         });
       }
       if (url.endsWith('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', emailVerified: true } });
-      if ((init?.method ?? 'GET') !== 'GET') posts.push(`${init!.method} ${url.slice(url.indexOf('/', 8))}`);
+      if ((init?.method ?? 'GET') !== 'GET') {
+        posts.push(`${init!.method} ${url.slice(url.indexOf('/', 8))}`);
+        if (write) return write();
+      }
       return jsonResponse(200, {});
     }),
   );
@@ -149,6 +153,42 @@ describe('NotificationsBell', () => {
     expect(screen.getByText('Two')).toBeInTheDocument();
     // The unread count follows at once.
     expect(screen.getByText('1 unread')).toBeInTheDocument();
+  });
+
+  it('marks one read before the server answers, and puts the dot back with a notice when it refuses', async () => {
+    signIn();
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    let answer!: (res: Response) => void;
+    serve([{ id: 'n1', category: 'social', title: 'One', body: null, createdAt: now(), readAt: null }], [], () => new Promise((r) => (answer = r)));
+    show();
+    const bell = await screen.findByRole('button', { name: 'Notifications, 1 new' });
+    await userEvent.click(bell);
+    await userEvent.click(screen.getByRole('button', { name: 'Mark as read: One' }));
+    // Read, and counted as read, while the request is still out.
+    expect(screen.queryByRole('button', { name: 'Mark as read: One' })).not.toBeInTheDocument();
+    expect(bell).toHaveAccessibleName('Notifications');
+    answer(jsonResponse(500, { code: 'INTERNAL' }));
+    expect(await screen.findByRole('button', { name: 'Mark as read: One' })).toBeInTheDocument();
+    expect(bell).toHaveAccessibleName('Notifications, 1 new');
+    expect(notices).toEqual(['Something went wrong on our end. Please try again shortly.']);
+    stop();
+  });
+
+  it('brings a removed one back when the server keeps it', async () => {
+    signIn();
+    const notices: string[] = [];
+    const stop = onNotice((text) => notices.push(text));
+    serve([{ id: 'n1', category: 'social', title: 'One', body: null, createdAt: now(), readAt: null }], [], async () =>
+      jsonResponse(500, { code: 'INTERNAL' }),
+    );
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Delete: One' }));
+    await waitFor(() => expect(notices).toHaveLength(1));
+    expect(screen.getByText('One')).toBeInTheDocument();
+    expect(screen.getByText('One').closest('.note-row')).not.toHaveClass('is-leaving');
+    stop();
   });
 
   it('offers a filter for each kind it has, and shows only that kind under it', async () => {

@@ -9,6 +9,8 @@ import { DictRowsSkeleton } from '../components/skeletons';
 import { BookmarkIcon, CloseIcon } from '../components/icons';
 import { SearchField } from '../components/SearchField';
 import { EntryView } from '../dictionary/EntryView';
+import { unsaveWord } from '../dictionary/save';
+import { useOptimisticSend } from '../lib/optimistic';
 import { SourceLine } from '../dictionary/SourceLine';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
@@ -20,6 +22,7 @@ import type { SavedWord, SearchResult } from '../dictionary/types';
  */
 export function Dictionary(): React.JSX.Element {
   const { client } = useAuth();
+  const sendShown = useOptimisticSend();
   const t = useT();
 
   const [query, setQuery] = useState('');
@@ -67,9 +70,15 @@ export function Dictionary(): React.JSX.Element {
     setOpenEntry(entryId);
   };
 
+  /** Off the list at once; a refusal puts the word back where it was, with a notice. */
   const removeSaved = async (entryId: string): Promise<void> => {
+    const at = saved.findIndex((w) => w.entryId === entryId);
+    const word = saved[at];
+    if (!word) return;
     setSaved((s) => s.filter((w) => w.entryId !== entryId));
-    await client.delete(`/dictionary/entries/${entryId}/save`);
+    await sendShown(() => unsaveWord(client, entryId), {
+      undo: () => setSaved((s) => (s.some((w) => w.entryId === entryId) ? s : [...s.slice(0, at), word, ...s.slice(at)])),
+    });
   };
 
   if (openEntry) {

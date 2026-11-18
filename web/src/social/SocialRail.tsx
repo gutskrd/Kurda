@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
@@ -9,11 +9,12 @@ import { GroupThread } from '../chat/GroupThread';
 import { RailStrip } from './RailStrip';
 import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
-import { toastsHere, type RailFriend, type SocialRailData } from './useSocialRail';
+import { railEdits, toastsHere, type RailFriend, type SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
 import { RequestTicket } from './FriendTickets';
 import { useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from '../groups/GroupAvatar';
+import { useOptimisticSend, type ShownChange } from '../lib/optimistic';
 
 /** What the dock beside the rail shows: one slot, so opening another conversation replaces it. */
 type DockTarget =
@@ -119,15 +120,18 @@ export function SocialRail(): React.JSX.Element | null {
 function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed: () => void; onChat?: (target: DockTarget) => void }): React.JSX.Element {
   const t = useT();
   const buckets = useMemo(() => bucket(data.friends), [data.friends]);
+  // Requests answered elsewhere leave at once; one answered here stays for its ticket's moment.
+  const answeringHere = useRef(new Set<string>());
+  const waiting = data.requests.filter((r) => !r.answered || answeringHere.current.has(r.userId));
   // Game invites have their own banner (play/InviteBanner.tsx), so `challenges` is not drawn.
-  const hasWaiting = data.requests.length > 0;
+  const hasWaiting = waiting.length > 0;
 
   return (
     <>
       {hasWaiting && (
-        <Section title={t('rail.waitingOnYou')} count={data.requests.length}>
-          {data.requests.map((r) => (
-            <RequestCard key={r.userId} who={r} onActed={onActed} />
+        <Section title={t('rail.waitingOnYou')} count={waiting.filter((r) => !r.answered).length}>
+          {waiting.map((r) => (
+            <RequestCard key={r.userId} who={r} here={answeringHere.current} onActed={onActed} />
           ))}
         </Section>
       )}
@@ -289,15 +293,34 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: D
   );
 }
 
-/** A friend request waiting on you, as a friendship ticket (social/FriendTickets.tsx). */
-function RequestCard({ who, onActed }: { who: RailFriend; onActed: () => void }): React.JSX.Element {
+/**
+ * A friend request waiting on you, as a friendship ticket (social/FriendTickets.tsx). The answer counts at once
+ * everywhere (`railEdits.requestAnswered`); `here` keeps this ticket on the rail until its moment is over.
+ */
+function RequestCard({ who, here, onActed }: { who: RailFriend; here: Set<string>; onActed: () => void }): React.JSX.Element {
   const { client } = useAuth();
+  const { adjust } = useRail();
+  const sendShown = useOptimisticSend();
+  const answered = useRef<ShownChange | null>(null);
   return (
     <RequestTicket
       person={who}
       compact
-      onAnswer={async (accept) => (await client.post(`/friends/requests/${who.userId}/${accept ? 'accept' : 'decline'}`)).ok}
-      onSettled={onActed}
+      onAnswer={async (accept) => {
+        here.add(who.userId);
+        const change = adjust(railEdits.requestAnswered(who.userId));
+        answered.current = change;
+        const undo = (): void => {
+          here.delete(who.userId);
+          change.undo();
+        };
+        return (await sendShown(() => client.post(`/friends/requests/${who.userId}/${accept ? 'accept' : 'decline'}`), { undo })).ok;
+      }}
+      onSettled={() => {
+        here.delete(who.userId);
+        answered.current?.keep?.();
+        onActed();
+      }}
     />
   );
 }

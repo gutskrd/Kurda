@@ -34,14 +34,14 @@ function page(path: string): void {
 }
 
 /** A server for someone signed in: who they are, who the host is to them, and what a join answers. */
-function signedIn(opts: { friendStatus?: string; join?: () => Response } = {}): ReturnType<typeof vi.fn> {
+function signedIn(opts: { friendStatus?: string; join?: () => Response; befriend?: () => Promise<Response> } = {}): ReturnType<typeof vi.fn> {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     if (url.endsWith('/me')) return jsonResponse(200, { user: { id: 'me', username: 'azad', displayName: 'Azad', email: 'azad@example.com', emailVerified: true } });
     if (url.endsWith(`/users/${HOST}`)) return jsonResponse(200, { userId: HOST, username: 'hamo', displayName: 'Hamo', friendStatus: opts.friendStatus ?? 'friends', private: false });
     if (url.endsWith('/play/join') && init?.method === 'POST') return opts.join ? opts.join() : jsonResponse(200, { game: 'impostor', lobbyId: 'lobby-1' });
-    if (url.endsWith('/friends/requests') && init?.method === 'POST') return jsonResponse(200, { ok: true });
+    if (url.endsWith('/friends/requests') && init?.method === 'POST') return opts.befriend ? opts.befriend() : jsonResponse(200, { ok: true });
     return jsonResponse(200, {});
   });
   vi.stubGlobal('fetch', fetchMock);
@@ -95,6 +95,22 @@ describe('a game’s invite link', () => {
     expect(JSON.parse(String((asked[1] as RequestInit).body))).toEqual({ userId: HOST });
     // Still on the invitation, with Join there to press again.
     expect(screen.getByRole('button', { name: 'Join the game' })).toBeEnabled();
+  });
+
+  it('says the friend request is on its way at once, and offers it again with the reason when it is refused', async () => {
+    let answer!: (res: Response) => void;
+    signedIn({
+      friendStatus: 'none',
+      join: () => jsonResponse(404, { code: 'NOT_FOUND', message: 'no open game has this code' }),
+      befriend: () => new Promise<Response>((r) => (answer = r)),
+    });
+    page(`/join/impostor/KVXV5E?from=${HOST}`);
+    await userEvent.click(await screen.findByRole('button', { name: 'Join the game' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Send Hamo a friend request' }));
+    expect(screen.getByText('Your friend request is on its way to Hamo. When they accept, tap Join again.')).toBeInTheDocument();
+    answer(jsonResponse(503, {}));
+    expect(await screen.findByRole('button', { name: 'Send Hamo a friend request' })).toBeInTheDocument();
+    expect(screen.getByText('The request could not be sent. Try again in a moment.')).toBeInTheDocument();
   });
 
   it('tells a friend plainly when the game is gone, and offers no friend request', async () => {

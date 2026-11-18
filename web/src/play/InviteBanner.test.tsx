@@ -104,6 +104,20 @@ describe('InviteBanner', () => {
     await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
   });
 
+  it('folds a declined invite away at once, and brings it back with why if the server refuses', async () => {
+    stillDevice();
+    fakeApi({ 'GET /play/invites': lists(), 'POST /play/invites/i1/decline': refused(503, 'UNAVAILABLE') });
+    renderPlay(<InviteBanner />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Later' }));
+    // Still waiting for an answer, so it is back, saying why, and can be put away as a failed Join can.
+    expect(await screen.findByText('Something went wrong on our end. Please try again shortly.')).toBeInTheDocument();
+    expect(document.querySelector('.invite-banner.is-leaving')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('says why a Join did not work, and can then be put away', async () => {
     fakeApi({ 'GET /play/invites': lists(), 'POST /play/invites/i1/accept': refused(409, 'GAME_FULL') });
     renderPlay(<InviteBanner />);

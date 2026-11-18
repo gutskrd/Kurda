@@ -103,12 +103,13 @@ describe('the blocklist in Settings', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: /show more/i })).not.toBeInTheDocument());
   });
 
-  it('keeps the row when the unblock fails, rather than pretending it worked', async () => {
+  it('takes the row away at once, and brings it back with the reason when the unblock fails', async () => {
+    let answer!: (res: Response) => void;
     const fetchMock = vi.fn(async (url: string) => {
       if (String(url).includes('/friends/blocks')) {
-        return jsonResponse(200, { blocked: [person(1, '2026-09-03T10:00:00.000Z')], total: 1 });
+        return jsonResponse(200, { blocked: [person(1, '2026-09-03T10:00:00.000Z'), person(2, '2026-09-01T10:00:00.000Z')], total: 2 });
       }
-      return jsonResponse(500, { error: { code: 'BOOM', message: 'nope' } });
+      return new Promise<Response>((r) => (answer = r));
     });
     vi.stubGlobal('fetch', fetchMock);
     renderApp(<BlockedUsers />);
@@ -117,9 +118,12 @@ describe('the blocklist in Settings', () => {
     const user = userEvent.setup();
     await user.click(screen.getByRole('button', { name: /unblock person 1/i }));
     await user.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    expect(screen.queryByText('Person 1')).not.toBeInTheDocument();
 
-    // Still blocked, and the row stays: a row vanishing while the block holds would mislead.
+    // Still blocked: the row comes back in its place, first, with why.
+    answer(jsonResponse(500, { error: { code: 'BOOM', message: 'nope' } }));
     await waitFor(() => expect(screen.getByRole('button', { name: /unblock person 1/i })).toBeInTheDocument());
-    expect(screen.getByText('Person 1')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /unblock person/i })[0]).toHaveAccessibleName(/person 1/i);
+    expect(screen.getByText('Something went wrong on our end. Please try again shortly.')).toBeInTheDocument();
   });
 });

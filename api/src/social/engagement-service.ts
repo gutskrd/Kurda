@@ -79,6 +79,29 @@ export class EngagementService {
   }
 
   /**
+   * Puts the like, save or repost into the state asked for and reports it. A set rather than a toggle, so an app that
+   * shows the change before the answer can repeat a request or have one arrive late without undoing the other. Only a
+   * post the person can read can be engaged with; removing always works.
+   */
+  async set(userId: string, type: TargetType, id: string, kind: EngagementKind, on: boolean): Promise<{ on: boolean }> {
+    if (!on) {
+      await this.pool.query(
+        `DELETE FROM post_engagements
+          WHERE user_id = $1 AND target_type = $2 AND target_id = $3 AND kind = $4`,
+        [userId, type, id, kind],
+      );
+      return { on: false };
+    }
+    if (!(await this.readable(userId, type, id))) throw new AppError('NOT_FOUND', 404, 'no such post');
+    await this.pool.query(
+      `INSERT INTO post_engagements (user_id, target_type, target_id, kind)
+       VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING`,
+      [userId, type, id, kind],
+    );
+    return { on: true };
+  }
+
+  /**
    * Whether `userId` can read this post where it is shown: published, not a minor's they are not friends with, no
    * block either way, as the wall and post page decide (feed/service.ts). Otherwise drafts, removed posts, a child's
    * poem or a blocker's post could be liked by id and counted.

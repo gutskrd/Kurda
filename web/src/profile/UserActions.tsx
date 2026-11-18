@@ -1,12 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useAuth } from '../auth/AuthProvider';
-import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { CloseButton } from '../components/CloseButton';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { BlockIcon, CheckIcon, FlagIcon, MoreIcon, RemovePersonIcon, ShareIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { ReportSheet } from '../reports/ReportSheet';
+import { useBlock } from '../reports/block';
 import { keepInView } from '../reports/keepInView';
 import { shareProfileLink } from './share';
 
@@ -22,6 +21,7 @@ export function UserActions({
   userId,
   name,
   onBlocked,
+  onBlockRefused,
   remove,
   share = false,
   className = '',
@@ -29,19 +29,19 @@ export function UserActions({
   userId: string;
   /** how to name them in the confirmations, so it is clear who this is about */
   name: string;
-  /** called once the block has actually landed */
+  /** Called as the block is confirmed, before the server answers (reports/block.ts). */
   onBlocked?: () => void;
+  /** The server refused the block: put back what `onBlocked` took away. */
+  onBlockRefused?: () => void;
   /** For a friend: the item’s label, its full meaning, and the removal. */
   remove?: { label: string; title: string; onConfirm: () => void | Promise<void> };
   /** on a profile: the menu also sends that profile's address to somebody */
   share?: boolean;
   className?: string;
 }): React.JSX.Element {
-  const { client } = useAuth();
   const t = useT();
+  const sendBlock = useBlock();
   const [panel, setPanel] = useState<Panel>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   // Without a share sheet the link is copied, said briefly in the item before the menu closes.
   const [copied, setCopied] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -75,7 +75,6 @@ export function UserActions({
   }, [panel]);
 
   function open(next: Panel): void {
-    setError(null);
     setPanel(next);
   }
 
@@ -92,17 +91,10 @@ export function UserActions({
     }, 1400);
   }
 
-  async function block(): Promise<void> {
-    setBusy(true);
-    setError(null);
-    const res = await client.post(`/friends/${userId}/block`);
-    setBusy(false);
-    if (!res.ok) {
-      setError(describeError(res.error, t));
-      return;
-    }
+  function block(): void {
     setPanel(null);
     onBlocked?.();
+    void sendBlock(userId, onBlockRefused);
   }
 
   return (
@@ -161,13 +153,12 @@ export function UserActions({
             <CloseButton className="is-inline" label={t('common.close')} onClick={() => setPanel(null)} />
           </div>
           <p className="user-menu-note">{t('moderation.blockNote')}</p>
-          {error && <div className="msg msg-error">{error}</div>}
           <div className="user-menu-actions">
-            <Button variant="secondary" size="sm" onClick={() => setPanel(null)} disabled={busy}>
+            <Button variant="secondary" size="sm" onClick={() => setPanel(null)}>
               {t('common.cancel')}
             </Button>
-            <button type="button" className="btn btn-sm user-menu-danger" onClick={() => void block()} disabled={busy}>
-              {busy ? t('moderation.blocking') : t('friends.block')}
+            <button type="button" className="btn btn-sm user-menu-danger" onClick={block}>
+              {t('friends.block')}
             </button>
           </div>
         </div>
@@ -181,6 +172,7 @@ export function UserActions({
         name={name}
         block={{ userId, name }}
         onBlocked={onBlocked}
+        onBlockRefused={onBlockRefused}
       />
     </div>
   );

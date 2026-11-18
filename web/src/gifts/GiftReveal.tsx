@@ -7,6 +7,7 @@ import { CheckIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { ApiError } from '../lib/types';
 import { lockPageScroll } from '../lib/scrollLock';
+import { useOptimisticSend } from '../lib/optimistic';
 import { SendError } from '../reports/SendError';
 import { Confetti, GiftBox, GiftItemArt, NewrozFlame } from './GiftArt';
 
@@ -37,7 +38,7 @@ export function GiftReveal({
 }): React.JSX.Element {
   const t = useT();
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const [busy, setBusy] = useState<'wear' | 'thank' | null>(null);
+  const sendShown = useOptimisticSend();
   const [worn, setWorn] = useState(false);
   const [thanked, setThanked] = useState(false);
   const [failed, setFailed] = useState<ApiError | null>(null);
@@ -47,14 +48,19 @@ export function GiftReveal({
     headingRef.current?.focus();
   }, []);
 
+  /** Worn or thanked at once; a refusal takes it back and says why under the buttons. */
   async function run(kind: 'wear' | 'thank'): Promise<void> {
-    setBusy(kind);
+    const shown = kind === 'wear' ? setWorn : setThanked;
     setFailed(null);
-    const refused = kind === 'wear' ? await actions.wear(card) : await actions.thank();
-    setBusy(null);
-    if (refused) setFailed(refused);
-    else if (kind === 'wear') setWorn(true);
-    else setThanked(true);
+    shown(true);
+    await sendShown(
+      async () => {
+        const refused = kind === 'wear' ? await actions.wear(card) : await actions.thank();
+        return refused ? { ok: false as const, error: refused } : { ok: true as const, data: null };
+      },
+      { undo: () => shown(false) },
+      { onFailed: setFailed },
+    );
   }
 
   const Heading = compact ? 'h3' : 'h2';
@@ -75,7 +81,7 @@ export function GiftReveal({
               <CheckIcon size={15} /> {t('gift.wearing')}
             </span>
           ) : (
-            <Button size="sm" onClick={() => void run('wear')} disabled={busy !== null}>
+            <Button size="sm" onClick={() => void run('wear')}>
               {t('gift.wear')}
             </Button>
           ))}
@@ -84,7 +90,7 @@ export function GiftReveal({
             <CheckIcon size={15} /> {t('gift.thanked')}
           </span>
         ) : (
-          <Button size="sm" variant={card.equippable && !worn ? 'secondary' : 'primary'} onClick={() => void run('thank')} disabled={busy !== null}>
+          <Button size="sm" variant={card.equippable && !worn ? 'secondary' : 'primary'} onClick={() => void run('thank')}>
             {t('gift.sayThanks')}
           </Button>
         )}
