@@ -178,6 +178,7 @@ export type TranslationKey =
   | 'play.sheet.groupTitle'
   | 'play.sheet.game'
   | 'play.sheet.friends'
+  | 'play.invite.friends'
   | 'play.sheet.alsoInvite'
   | 'play.sheet.groupHint'
   | 'play.sheet.search'
@@ -4096,6 +4097,7 @@ const en: Catalog = {
   'play.sheet.groupTitle': 'Start a game in this group',
   'play.sheet.game': 'Game',
   'play.sheet.friends': 'Friends to invite',
+  'play.invite.friends': 'Who to invite',
   'play.sheet.alsoInvite': 'Also invite',
   'play.sheet.groupHint': 'The game is posted in the group, and members can join from there.',
   'play.sheet.search': 'Search friends',
@@ -8000,6 +8002,7 @@ const ku: Catalog = {
   'play.sheet.groupTitle': 'Di vê komê de lîstikekê dest pê bike',
   'play.sheet.game': 'Lîstik',
   'play.sheet.friends': 'Hevalên ku tên vexwendin',
+  'play.invite.friends': 'Kê vedixwînî',
   'play.sheet.alsoInvite': 'Herwiha vexwîne',
   'play.sheet.groupHint': 'Lîstik di komê de tê weşandin, û endam dikarin ji wir tevlî bibin.',
   'play.sheet.search': 'Li hevalan bigere',
@@ -11903,6 +11906,7 @@ const de: Catalog = {
   'play.sheet.groupTitle': 'Ein Spiel in dieser Gruppe starten',
   'play.sheet.game': 'Spiel',
   'play.sheet.friends': 'Freunde, die du einlädst',
+  'play.invite.friends': 'Wen einladen',
   'play.sheet.alsoInvite': 'Auch einladen',
   'play.sheet.groupHint': 'Das Spiel erscheint in der Gruppe, und Mitglieder können von dort beitreten.',
   'play.sheet.search': 'Freunde suchen',
@@ -15806,6 +15810,7 @@ const es: Catalog = {
   'play.sheet.groupTitle': 'Empezar una partida en este grupo',
   'play.sheet.game': 'Juego',
   'play.sheet.friends': 'Amigos a invitar',
+  'play.invite.friends': 'A quién invitar',
   'play.sheet.alsoInvite': 'Invitar también',
   'play.sheet.groupHint': 'La partida se publica en el grupo y sus miembros pueden unirse desde allí.',
   'play.sheet.search': 'Buscar amigos',
@@ -19709,6 +19714,7 @@ const tr: Catalog = {
   'play.sheet.groupTitle': 'Bu grupta bir oyun başlat',
   'play.sheet.game': 'Oyun',
   'play.sheet.friends': 'Davet edilecek arkadaşlar',
+  'play.invite.friends': 'Kimi davet edeceksin',
   'play.sheet.alsoInvite': 'Ayrıca davet et',
   'play.sheet.groupHint': 'Oyun grupta paylaşılır, üyeler oradan katılabilir.',
   'play.sheet.search': 'Arkadaşlarda ara',
@@ -23612,6 +23618,7 @@ const ar: Catalog = {
   'play.sheet.groupTitle': 'ابدأ لعبة في هذه المجموعة',
   'play.sheet.game': 'اللعبة',
   'play.sheet.friends': 'أصدقاء للدعوة',
+  'play.invite.friends': 'من تدعو',
   'play.sheet.alsoInvite': 'ادعُ أيضًا',
   'play.sheet.groupHint': 'تُنشر اللعبة في المجموعة، ويمكن للأعضاء الانضمام من هناك.',
   'play.sheet.search': 'ابحث في الأصدقاء',
@@ -27515,6 +27522,7 @@ const fr: Catalog = {
   'play.sheet.groupTitle': 'Lancer une partie dans ce groupe',
   'play.sheet.game': 'Jeu',
   'play.sheet.friends': 'Amis à inviter',
+  'play.invite.friends': 'Qui inviter',
   'play.sheet.alsoInvite': 'Inviter aussi',
   'play.sheet.groupHint': 'La partie est publiée dans le groupe, et les membres peuvent la rejoindre depuis là.',
   'play.sheet.search': 'Rechercher des amis',
@@ -31418,6 +31426,7 @@ const nl: Catalog = {
   'play.sheet.groupTitle': 'Een spel starten in deze groep',
   'play.sheet.game': 'Spel',
   'play.sheet.friends': 'Vrienden om uit te nodigen',
+  'play.invite.friends': 'Wie uitnodigen',
   'play.sheet.alsoInvite': 'Ook uitnodigen',
   'play.sheet.groupHint': 'Het spel wordt in de groep geplaatst en leden kunnen van daaruit meedoen.',
   'play.sheet.search': 'Vrienden zoeken',
@@ -35322,6 +35331,7 @@ const ckb: Catalog = {
   'play.sheet.groupTitle': 'یارییەک لەم گرووپەدا دەست پێبکە',
   'play.sheet.game': 'یاری',
   'play.sheet.friends': 'هاوڕێیانی بانگهێشتکراو',
+  'play.invite.friends': 'کێ بانگهێشت دەکەیت',
   'play.sheet.alsoInvite': 'هەروەها بانگهێشت بکە',
   'play.sheet.groupHint': 'یارییەکە لە گرووپەکەدا بڵاو دەکرێتەوە و ئەندامان دەتوانن لەوێوە بەشداربن.',
   'play.sheet.search': 'بەدوای هاوڕێیاندا بگەڕێ',

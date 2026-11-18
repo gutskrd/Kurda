@@ -13,7 +13,8 @@ import { forgetImpostorCategories } from '../impostor/categories';
 import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { forgetPartyOffers } from '../party/offer';
 import { navigation } from './testing/navigation';
-import { InviteSheet, orderFriends, recentPlayers, sentText } from './InviteSheet';
+import { InviteSheet, sentText } from './InviteSheet';
+import { orderFriends, recentPlayers } from './FriendPicker';
 import { flightMs } from './SentTickets';
 import type { FriendSummary } from './api';
 
@@ -331,18 +332,17 @@ describe('InviteSheet', () => {
     expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toMatchObject({ game: 'rhyme-match', settings: { dialect: 'sorani' } });
   });
 
-  it('asks Rated or Friendly for a new game, says what each means, and sends the host’s choice', async () => {
+  it('asks no Rated or Friendly question, and makes every game friendly, since games are played for fun', async () => {
     const client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm1', invited: 0 }) }));
     testAuth.client = client;
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={() => undefined} />);
     fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Serwayan' }));
-    expect(screen.getByRole('radiogroup', { name: 'Game type' })).toBeTruthy();
-    expect(screen.getByRole('radio', { name: /^Friendly\. Just for fun/ }).getAttribute('aria-checked')).toBe('true');
-    fireEvent.click(screen.getByRole('radio', { name: /^Rated\. Counts for your rank/ }));
+    expect(screen.queryByRole('radiogroup', { name: 'Game type' })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /^Rated/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(client.calls.some((c) => c.path === '/play/lobbies')).toBe(true));
     const sent = client.calls.find((c) => c.path === '/play/lobbies')?.body as { settings: Record<string, unknown> };
-    expect(sent.settings.rated).toBe(true);
+    expect(sent.settings.rated).toBe(false);
   });
 
   it('asks more friends into a lobby that exists and says how many were asked', async () => {

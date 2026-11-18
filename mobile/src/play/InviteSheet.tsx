@@ -15,7 +15,6 @@ import {
   STORY_DIALECTS,
   type GameDialect,
   type GameDifficulty,
-  type InviteLists,
   type PlayGame,
   type StoryDialect,
   type StoryListItem,
@@ -24,7 +23,6 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError, type Translate } from '../api/errors';
 import type { ApiError } from '../api/types';
 import type { RootNavigation } from '../navigation/rootStack';
-import { Avatar } from '../profile/Avatar';
 import { ClayButton, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -36,16 +34,14 @@ import { StoryPresetFields, useCanHostOpen } from '../stories/SetupSheet';
 import { changeSetup, initialSetup, inviteSettings, type SetupState } from '../stories/setup';
 import { shownDialect, useStoryPrefs } from '../stories/prefs';
 import { Note, SectionLabel, Sheet } from '../stories/ui';
-import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummary } from './api';
+import { createLobby, inviteFriends, type FriendSummary } from './api';
+import { FriendPicker, togglePick, useFriendsToAsk } from './FriendPicker';
 import { GAME_ICON, GAME_NAME_KEY } from './labels';
 import { DIFFICULTY_KEY, type Difficulty } from '../wordle/board';
 import { lobbyRoute } from './routes';
 import { PickedTickets, SentFan, flightMs, type SendPhase, type TicketHolder } from './SentTickets';
 import { SendErrorNotice } from '../reports/SendError';
-import { RatedChoice } from '../ranks/Rated';
-import { useRatedChoice } from '../ranks/ratedPrefs';
 import { restrictionOf } from '../reports/sendErrors';
-import { SearchField } from '../theme/SearchField';
 import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
 import { CategoryArt } from '../impostor/art';
 import { categoriesAt, useImpostorCategories } from '../impostor/categories';
@@ -67,28 +63,6 @@ export type InviteTarget =
   | { kind: 'group'; groupId: string }
   /** More friends into an existing lobby. */
   | { kind: 'lobby'; game: PlayGame; lobbyId: string; mode?: 'duo' | 'group' };
-
-/** Friends who recently joined your games through an accepted invite, newest first; declined or expired invites do not count. */
-export function recentPlayers(lists: InviteLists): string[] {
-  return lists.outgoing.flatMap((o) => o.invitees.filter((i) => i.status === 'accepted').map((i) => i.userId));
-}
-
-/** Friends ordered: most recently played with first, then everyone by name. */
-export function orderFriends(friends: readonly FriendSummary[], recentIds: readonly string[], query: string): {
-  recent: FriendSummary[];
-  rest: FriendSummary[];
-} {
-  const q = query.trim().toLowerCase();
-  const match = (f: FriendSummary) =>
-    !q || f.username.toLowerCase().includes(q) || (f.displayName ?? '').toLowerCase().includes(q);
-  const byId = new Map(friends.map((f) => [f.userId, f]));
-  const recent = [...new Set(recentIds)].map((id) => byId.get(id)).filter((f): f is FriendSummary => !!f && match(f)).slice(0, 5);
-  const shown = new Set(recent.map((f) => f.userId));
-  const rest = friends
-    .filter((f) => !shown.has(f.userId) && match(f))
-    .sort((a, b) => Number(b.online) - Number(a.online) || (a.displayName ?? a.username).localeCompare(b.displayName ?? b.username));
-  return { recent, rest };
-}
 
 function inviteError(error: ApiError, t: Translate): string {
   if (error.code === 'OPEN_GAMES_ADULTS_ONLY' || error.code === 'OPEN_NOT_ALLOWED') return t('stories.error.openNotAllowed');
@@ -192,16 +166,12 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [story, setStory] = useState<SetupState>(() => initialSetup({ mode: 'duo', dialect, length: 'short' }));
-  const [friends, setFriends] = useState<FriendSummary[] | null>(null);
-  const [recentIds, setRecentIds] = useState<string[]>([]);
-  const [query, setQuery] = useState('');
+  const { friends, recentIds } = useFriendsToAsk();
   const preselected = target.kind === 'dm' ? target.friendId : target.kind === 'new' ? target.friendId : undefined;
   // From a DM the server invites that friend via `chat` regardless of picks, so they stay picked rather than offer a
   // choice that would not be honoured.
   const lockedId = target.kind === 'dm' ? target.friendId : null;
   const [picked, setPicked] = useState<string[]>(preselected ? [preselected] : []);
-  // Rated or Friendly for this game, as the host last left it.
-  const [rated, setRated] = useRatedChoice(game);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** An account limit (a chat mute blocks game cards too), shown as every send path shows it, with Account standing. */
@@ -234,19 +204,6 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const single = target.kind === 'lobby' ? target.mode === 'duo' : game === 'stories' && story.mode === 'duo';
   const limit = single ? 1 : MAX_INVITEES_PER_REQUEST;
 
-  useEffect(() => {
-    let live = true;
-    void listFriends(client).then((res) => {
-      if (live) setFriends(res.ok ? res.data.friends : []);
-    });
-    void listInvites(client).then((res) => {
-      if (live && res.ok) setRecentIds(recentPlayers(res.data));
-    });
-    return () => {
-      live = false;
-    };
-  }, [client]);
-
   // The variety's published stories, for the lengths and the story list.
   useEffect(() => {
     if (game !== 'stories' || target.kind === 'lobby') return;
@@ -265,9 +222,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     };
   }, [client, game, dialect, target.kind]);
 
-  const others = useMemo(() => (friends ?? []).filter((f) => f.userId !== lockedId), [friends, lockedId]);
   const lockedFriend = lockedId ? (friends ?? []).find((f) => f.userId === lockedId) : undefined;
-  const { recent, rest } = useMemo(() => orderFriends(others, recentIds, query), [others, recentIds, query]);
   // A two-player game from a DM is with that friend, so nobody else is offered.
   const offerOthers = !(lockedId && single);
 
@@ -275,11 +230,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     if (id === lockedId || phase !== 'picking') return;
     // Picking again after a send starts the next set of tickets.
     setSent(null);
-    setPicked((list) => {
-      if (list.includes(id)) return list.filter((x) => x !== id);
-      if (single) return [id];
-      return list.length >= limit ? list : [...list, id];
-    });
+    setPicked((list) => togglePick(list, id, single, limit));
   };
 
   /** An Impostor lobby's variety (the chosen one when offered) and a level offered there. */
@@ -295,6 +246,8 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const impostorCategories = categoriesAt(useImpostorCategories(impostorParty && impostorOffer.length > 0 ? impostorParty.dialect : null), impostorParty?.level);
   const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
   const settings = (): Record<string, unknown> => {
+    // Games are played for fun, so every one made here is friendly.
+    const rated = false;
     if (game === 'wordle-battle') return { difficulty, rated };
     if (game === 'rhyme-match') return { dialect: rhymeDialect, rated };
     if (game === 'impostor') {
@@ -372,41 +325,6 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const disabled = needsFriend && picked.length === 0;
   const storyDisabled = game === 'stories' && target.kind !== 'lobby' && stories.length === 0;
   const partyDisabled = game === 'who-am-i' && target.kind !== 'lobby' && partySettings === null;
-
-  const friendRow = (f: FriendSummary) => {
-    const locked = f.userId === lockedId;
-    const on = locked || picked.includes(f.userId);
-    const name = f.displayName ?? f.username;
-    return (
-      <Pressable
-        key={f.userId}
-        onPress={() => toggle(f.userId)}
-        disabled={locked}
-        accessibilityRole={single ? 'radio' : 'checkbox'}
-        accessibilityState={{ checked: on, disabled: locked }}
-        accessibilityLabel={f.online ? t('play.sheet.friendOnline', { name }) : name}
-        style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.controlTrack : 'transparent', opacity: pressed ? pressedDim : 1 }]}
-      >
-        <View>
-          <Avatar name={name} size={36} photoUrl={f.avatarUrl} />
-          {f.online ? <View style={[styles.online, { backgroundColor: colors.success, borderColor: colors.background }]} /> : null}
-        </View>
-        <View style={styles.friendText}>
-          <Text style={[styles.friendName, { color: colors.textPrimary }]} numberOfLines={1}>
-            {name}
-          </Text>
-          {f.displayName ? (
-            <Text style={[styles.friendHandle, { color: colors.textSecondary }]} numberOfLines={1}>
-              @{f.username}
-            </Text>
-          ) : null}
-        </View>
-        <View style={[styles.check, { borderColor: on ? colors.primary : colors.textSecondary, backgroundColor: on ? colors.primary : 'transparent' }]}>
-          {on ? <Icon name="check" size={14} color={colors.textOnPrimary} /> : null}
-        </View>
-      </Pressable>
-    );
-  };
 
   const title =
     target.kind === 'lobby' ? t('play.sheet.inviteTitle') : target.kind === 'group' ? t('play.sheet.groupTitle') : t('play.sheet.title');
@@ -560,11 +478,6 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
           ) : null}
           {game === 'who-am-i' ? <TableChoices offers={tableOffers ?? []} dialect={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} /> : null}
 
-          <View style={styles.field}>
-            <SectionLabel>{t('ranks.gameType')}</SectionLabel>
-            <RatedChoice value={rated} onChange={setRated} />
-          </View>
-
           {game === 'stories' ? (
             <>
               <View style={styles.field}>
@@ -595,27 +508,16 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
         {target.kind === 'group' ? (
           <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('play.sheet.groupHint')}</Text>
         ) : null}
-        {lockedFriend ? friendRow(lockedFriend) : null}
-        {offerOthers ? (
-          <SearchField value={query} onChangeText={setQuery} label={t('play.sheet.search')} returnKeyType="done" />
-        ) : null}
-        {friends === null || !offerOthers ? null : friends.length === 0 ? (
-          <Note>{t('play.sheet.noFriends')}</Note>
-        ) : (
-          <>
-            {recent.length > 0 ? (
-              <>
-                <Text style={[styles.subhead, { color: colors.textSecondary }]}>{t('play.sheet.recent')}</Text>
-                {recent.map(friendRow)}
-                <Text style={[styles.subhead, { color: colors.textSecondary }]}>{t('play.sheet.allFriends')}</Text>
-              </>
-            ) : null}
-            {rest.map(friendRow)}
-          </>
-        )}
-        {!single && picked.length >= limit ? (
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('play.sheet.limit', { count: limit })}</Text>
-        ) : null}
+        <FriendPicker
+          friends={friends}
+          recentIds={recentIds}
+          picked={picked}
+          onToggle={toggle}
+          single={single}
+          limit={limit}
+          locked={lockedFriend}
+          offerOthers={offerOthers}
+        />
       </View>
     </Sheet>
   );
@@ -638,18 +540,4 @@ const styles = StyleSheet.create({
   },
   gameName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
   hint: { fontSize: typography.sizes.sm, lineHeight: 19 },
-  subhead: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
-  friend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: 56,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.sm,
-  },
-  online: { position: 'absolute', right: -1, bottom: -1, width: 12, height: 12, borderRadius: radii.pill, borderWidth: 2 },
-  friendText: { flex: 1 },
-  friendName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  friendHandle: { fontSize: typography.sizes.sm },
-  check: { width: 24, height: 24, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 });
