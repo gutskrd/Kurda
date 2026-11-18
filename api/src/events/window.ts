@@ -1,9 +1,6 @@
 /**
- * Pure event-window logic (KUR-089). Activation is derived from the window
- * bounds at read time — no per-event state flip — so there is nothing to drift
- * out of sync. `nextBoundary` drives boundary-exact cache expiry: the active
- * list is valid until the next start/end among *all* events, so caching it with
- * a TTL to that instant makes the cache invalidate itself exactly on time.
+ * Pure event-window logic. Whether an event is live is derived from its bounds at read time, so no state can drift.
+ * `nextBoundary` gives the instant the active list can next change, which the cache's TTL runs to.
  */
 
 export interface EventDef {
@@ -29,10 +26,8 @@ export function isActive(e: Pick<EventDef, 'startsAt' | 'endsAt' | 'enabled'>, n
 }
 
 /**
- * The next instant (ms epoch) at which the active set could change — the
- * soonest future start or end across enabled events — or null if none remain
- * (all events are in the past). A start already reached or an end already
- * passed is not a future boundary.
+ * The next instant (ms epoch) the active set could change, the soonest future start or end among enabled events,
+ * or null when none remain. A start already reached or an end already passed does not count.
  */
 export function nextBoundary(events: readonly EventDef[], now: number): number | null {
   let next = Infinity;
@@ -46,10 +41,7 @@ export function nextBoundary(events: readonly EventDef[], now: number): number |
   return Number.isFinite(next) ? next : null;
 }
 
-/**
- * Enabled events live at `now`, ordered for rendering: highest priority first,
- * ties broken by earlier start then key for stable output.
- */
+/** Enabled events live at `now`: highest priority first, then earlier start, then key. */
 export function activeEvents(events: readonly EventDef[], now: number): EventDef[] {
   return events
     .filter((e) => isActive(e, now))

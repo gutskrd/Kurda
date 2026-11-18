@@ -1,10 +1,7 @@
 /**
- * Recurring cultural events (KUR-090). Cultural holidays repeat on a fixed
- * calendar day each year (Newroz = March 21). The events table (KUR-089) stores
- * concrete windows, so recurrence is materialized ahead of time: a template
- * declares month/day/duration, and `upcomingOccurrences` expands it into
- * per-year rows keyed `<key>-<year>` — idempotent to re-seed. Windows are UTC so
- * "March 21" is unambiguous regardless of server locale.
+ * Annual cultural events, such as Newroz on 21 March. The events table stores concrete windows, so a template's
+ * month, day and duration are expanded ahead of time into per-year rows keyed `<key>-<year>`, which is idempotent
+ * to re-seed. Windows are UTC, so the date never depends on the server's locale.
  */
 
 export interface AnnualEventTemplate {
@@ -55,9 +52,8 @@ export function occurrenceForYear(t: AnnualEventTemplate, year: number): EventOc
 }
 
 /**
- * The next `count` occurrences whose window has not already ended at `from` —
- * i.e. the currently-running one (if any) plus future years. Materialize a few
- * years ahead so the event always appears on time even if the seed isn't re-run.
+ * The next `count` occurrences whose window has not ended at `from`: the running one, if any, and future years.
+ * Seeding a few years ahead keeps the event on time even if the seed is not re-run.
  */
 export function upcomingOccurrences(
   t: AnnualEventTemplate,
