@@ -190,6 +190,28 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(me.statements.join('\n')).not.toMatch(/FROM game_ratings|badge_showcase/);
     });
 
+    it('the letters page costs the same with no pen pals as with three, within its budget', async () => {
+      for (const tag of ['f2', 'f3', 'f4']) {
+        const { lo, hi } = canonicalPair(ids.f1!, ids[tag]!);
+        const thread = await pool.query<{ id: string }>(
+          `INSERT INTO letter_threads (user_lo, user_hi, last_letter_at) VALUES ($1, $2, now()) RETURNING id`,
+          [lo, hi],
+        );
+        await pool.query(
+          `INSERT INTO letters (sender_id, recipient_id, thread_id, body, age_band, status, delivered_at)
+           VALUES ($1, $2, $3, 'Silav', '18+', 'delivered', now())`,
+          [ids[tag], ids.f1, thread.rows[0]!.id],
+        );
+      }
+      // as the apps ask for it
+      const none = await steady('GET', '/letters?landings=1', 'f5');
+      const three = await steady('GET', '/letters?landings=1', 'f1');
+      expect(three.body.penPals).toHaveLength(3);
+      expect(three.body.landings).toHaveLength(3);
+      expect(three.count, three.statements.join('\n')).toBe(none.count);
+      expect(three.count, three.statements.join('\n')).toBeLessThanOrEqual(20);
+    });
+
     it('the heartbeat is the session read and one statement', async () => {
       const beat = await steady('POST', '/me/heartbeat', 'me');
       expect(beat.count, beat.statements.join('\n')).toBeLessThanOrEqual(2);
