@@ -11,7 +11,7 @@ function placed(box: { left: number; top: number; width: number; height: number 
   return el;
 }
 
-describe("Hevalo's icon", () => {
+describe('Hevalo’s icon', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();

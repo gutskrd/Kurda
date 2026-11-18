@@ -378,11 +378,6 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 /* For an empty Peyvok band, an inactive shop item and an unplayable base word. */
 .badge.danger { background: var(--bad-bg); color: var(--bad); border-color: color-mix(in srgb, var(--bad) 24%, transparent); }
 
-/* ---- Key/value detail grid --------------------------------------------- */
-.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; }
-.grid2 .k { color: var(--text-dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
-.grid2 .v { color: var(--text); }
-@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
 
 /* ---- Monospace areas --------------------------------------------------- */
 .code-area {
@@ -683,11 +678,7 @@ kbd {
 .studio-tabs .tab { padding: 9px 18px; font-size: 14px; }
 .rec { display: grid; gap: 10px; }
 
-.la-what { margin: 12px 0 0; font-size: 13px; line-height: 1.5; }
-.la-walk {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-  margin-bottom: 14px; padding: 12px 16px; font-weight: 500;
-}
+
 .la-course { margin-top: 8px; }
 .la-course-title { font-size: 17px; font-weight: 600; margin: 26px 0 0; letter-spacing: -0.01em; }
 .la-course .section-title { margin: 14px 0 10px; }

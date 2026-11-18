@@ -167,7 +167,7 @@ describe('keeping the session alive', () => {
     expect(fake.calls.some((c) => c.path === '/auth/refresh')).toBe(false);
   });
 
-  it("sends this browser's device id with every call, the same one each time", async () => {
+  it('sends this browser’s device id with every call, the same one each time', async () => {
     const fake = fakeApi(on('GET', '/admin/audit', json({})));
     await api('/admin/audit');
     await api('/admin/audit');

@@ -215,7 +215,7 @@
 .playbook .section-text + .section-text { margin-top: 8px; }
 
 /* ---- A person's page ------------------------------------------------------------------ */
-.person-title { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
 .user-tabs { position: sticky; top: 0; z-index: 5; padding: 6px 0; margin-bottom: 10px; background: linear-gradient(var(--bg-2), transparent); }
 @media (max-width: 1023px) { .user-tabs { top: var(--topbar-bottom); } }
 @media (max-width: 560px) {
