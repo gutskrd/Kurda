@@ -111,13 +111,14 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   }, [items, live, leaving, report]);
 
   const load = useCallback(async () => {
-    const [res, invited, social] = await Promise.all([
+    const [res, invited, mine] = await Promise.all([
       client.get<{ notifications: InboxItem[] }>('/me/notifications'),
       listInvites(client),
-      isGuest ? null : client.get<{ friends?: NoticeFriend[] }>('/me/social'),
+      // the friend list alone, not the social summary, which reads requests, groups and notifications besides
+      isGuest ? null : client.get<{ friends?: NoticeFriend[] }>('/friends'),
     ]);
     if (invited.ok) setInvites(liveInvites(invited.data.incoming, Date.now()));
-    if (social?.ok) setFriends(social.data.friends ?? []);
+    if (mine?.ok) setFriends(mine.data.friends ?? []);
     if (res.ok) {
       setItems(res.data.notifications);
       setError(null);

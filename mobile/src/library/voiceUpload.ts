@@ -19,15 +19,23 @@ export async function uploadVoiceNote(
   /** The app's language, so a limit's end is said as the reader would say it. */
   locale?: string,
 ): Promise<VoiceUploadResult> {
-  try {
+  // Past the client, which renews an expired session: a refusal for that renews it and sends once more.
+  const attempt = async (): Promise<FileSystem.FileSystemUploadResult | null> => {
     const token = await client.getAccessToken();
-    if (!token) return { ok: false, error: t('upload.sessionExpired') };
-
-    const res = await FileSystem.uploadAsync(`${client.baseUrl}/media/voice`, audio.uri, {
+    if (!token) return null;
+    return FileSystem.uploadAsync(`${client.baseUrl}/media/voice`, audio.uri, {
       httpMethod: 'POST',
       headers: { authorization: `Bearer ${token}`, 'content-type': audio.contentType ?? 'audio/mp4' },
       uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
     });
+  };
+  try {
+    let res = await attempt();
+    if (res?.status === 401) {
+      await client.get('/me');
+      res = await attempt();
+    }
+    if (!res) return { ok: false, error: t('upload.sessionExpired') };
     if (res.status >= 200 && res.status < 300) {
       try {
         const body = JSON.parse(res.body) as { audioMediaId?: string; url?: string };

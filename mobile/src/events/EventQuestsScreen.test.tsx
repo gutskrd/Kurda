@@ -50,7 +50,7 @@ describe('event quests', () => {
     });
     renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
     expect(await screen.findByText('Newroz')).toBeTruthy();
-    expect(screen.queryByText('No events are running right now. Check back soon!')).toBeNull();
+    expect(screen.queryByText('No events are running right now.')).toBeNull();
     expect(screen.getByText('Some events didn’t load.')).toBeTruthy();
     autumn = ok(view('autumn', 'Autumn'));
     await act(async () => {
@@ -64,7 +64,7 @@ describe('event quests', () => {
     testAuth.client = fakeClient({ 'GET /events/active': active, 'GET /events/newroz/quests': serverDown, 'GET /events/autumn/quests': serverDown });
     renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
     expect(await screen.findByText('Couldn’t load')).toBeTruthy();
-    expect(screen.queryByText('No events are running right now. Check back soon!')).toBeNull();
+    expect(screen.queryByText('No events are running right now.')).toBeNull();
   });
 
   it('says why a claim did not go through, in the reader’s words', async () => {

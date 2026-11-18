@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GAME_CONTENT_KINDS, checkGameContent, contentHeadline, gameContentSchema, isGameContentKind, kurdishTexts, meaningIn, sameWords } from './content.js';
+import { GAME_CONTENT_KINDS, checkGameContent, contentHeadline, gameContentSchema, kurdishTexts, meaningIn, sameWords } from './content.js';
 import { LEARN_GAMES, gameOfKind } from './registry.js';
 import { LORE_KINDS, isLoreKind } from '../lore.js';
 
@@ -17,7 +17,7 @@ describe('the content kinds', () => {
       expect(LEARN_GAMES.filter((g) => g.contentKinds.includes(kind)), kind).toHaveLength(1);
       expect(gameOfKind(kind)).not.toBeNull();
     }
-    expect(LORE_KINDS.every((k) => isGameContentKind(k))).toBe(true);
+    expect(LORE_KINDS.every((k) => (GAME_CONTENT_KINDS as readonly string[]).includes(k))).toBe(true);
   });
 });
 
@@ -87,7 +87,7 @@ describe('checkGameContent', () => {
   });
 
   it('knows no kind written for a game that is no longer part of Hevalo', () => {
-    for (const kind of ['taboo_card', 'bluff_card', 'building_name', 'scenario']) expect(isGameContentKind(kind)).toBe(false);
+    for (const kind of ['taboo_card', 'bluff_card', 'building_name', 'scenario']) expect(GAME_CONTENT_KINDS).not.toContain(kind);
   });
 
   it('lists every Kurdish text of a row with its path', () => {

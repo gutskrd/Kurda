@@ -11,7 +11,9 @@ import { heldDim } from '../theme/MotionParts';
 import { Pressable } from '../theme/Pressable';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { besideName, textIn, varietyName } from './labels';
+import { besideName, textIn } from './labels';
+import { openableSourceUrl } from './sourceLink';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /**
  * Small pieces the riddle and proverb screens share: a collection's title
@@ -41,7 +43,7 @@ export function CollectionTitle({ kurmanci, localized, line }: { kurmanci: strin
 /** Kurmancî or Soranî: which variety's riddles (or proverbs) the list holds. */
 export function VarietySwitch({ value, onChange }: { value: GameDialect; onChange: (d: GameDialect) => void }): React.JSX.Element {
   const { t } = useI18n();
-  return <Segmented<GameDialect> options={['kmr', 'ckb']} value={value} onChange={onChange} labelOf={varietyName} groupLabel={t('stories.variety')} />;
+  return <Segmented<GameDialect> options={['kmr', 'ckb']} value={value} onChange={onChange} labelOf={(d) => t(dialectNameKey(d))} groupLabel={t('stories.variety')} />;
 }
 
 /** A labelled part of a page: the small grey word, then what it is about. */
@@ -111,17 +113,19 @@ export function SourcesList({ sources }: { sources: readonly LoreSource[] }): Re
     <Section label={t('lore.sources')}>
       <View style={styles.sources}>
         {sources.map((s, i) => {
+          // only an https address is a link (sourceLink.ts); any other source reads as plain text
+          const url = openableSourceUrl(s.url);
           const body = (
             <>
-              <Text style={[styles.sourceTitle, dir.free, { color: s.url ? colors.primary : colors.textPrimary }]}>{s.title}</Text>
+              <Text style={[styles.sourceTitle, dir.free, { color: url ? colors.primary : colors.textPrimary }]}>{s.title}</Text>
               {s.author ? <Text style={[styles.sourceMeta, dir.free, { color: colors.textSecondary }]}>{s.author}</Text> : null}
               {s.note ? <Text style={[styles.sourceMeta, dir.free, { color: colors.textSecondary }]}>{s.note}</Text> : null}
             </>
           );
-          return s.url ? (
+          return url ? (
             <Pressable
               key={`${s.title}-${i}`}
-              onPress={() => void Linking.openURL(s.url!).catch(() => undefined)}
+              onPress={() => void Linking.openURL(url).catch(() => undefined)}
               accessibilityRole="link"
               accessibilityLabel={s.title}
               accessibilityHint={t('lore.source.open')}

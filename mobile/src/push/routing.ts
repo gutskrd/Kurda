@@ -1,3 +1,4 @@
+import { StackActions } from '@react-navigation/core';
 import { letterNoticeOf } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -33,7 +34,8 @@ export function openPushTarget(target: PushTarget, navigation: RootNavigation, c
       void followDeepLink(target.link, navigation, client);
       return;
     case 'learn':
-      navigation.navigate('Tabs', { screen: 'Learn' });
+      // Back down to the tabs from whatever is open, rather than a second set of tabs over it.
+      navigation.dispatch(StackActions.popTo('Tabs', { screen: 'Learn' }));
       return;
     case 'inbox':
       navigation.navigate('NotificationCenter');

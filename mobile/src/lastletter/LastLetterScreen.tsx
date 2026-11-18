@@ -24,9 +24,9 @@ import { ChainReview, LastLetterBoardView } from './LastLetterBoard';
 import { offeredDialects, useLastLetterAvailability } from './availability';
 import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
+import { dialectNameKey } from '../i18n/dialectName';
 
 /** A dialect is called by its own name in every language, the way a language is. */
-const DIALECT_NAME: Record<LetterDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
 
 /**
  * The Last Letter: a word chain in one Kurdish, with friends or against Hevalo. Without an id it shows the start
@@ -116,7 +116,7 @@ function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Elemen
             <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lastLetter.againstHevaloBlurb')}</Text>
             {solo.length > 1 ? (
               <View style={styles.stretch}>
-                <Segmented<LetterDialect> groupLabel={t('games.lastLetter.kurdish')} options={solo} value={soloDialect} onChange={setDialect} labelOf={(d) => DIALECT_NAME[d]} />
+                <Segmented<LetterDialect> groupLabel={t('games.lastLetter.kurdish')} options={solo} value={soloDialect} onChange={setDialect} labelOf={(d) => t(dialectNameKey(d))} />
               </View>
             ) : null}
             <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.lastLetter.turnTime')}</Text>
@@ -159,7 +159,7 @@ function Room({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (i
         const s = v.settings as { turnSeconds?: number };
         return (
           <Text style={[styles.note, { color: colors.textSecondary }]}>
-            {DIALECT_NAME[v.dialect]}
+            {t(dialectNameKey(v.dialect))}
             {s.turnSeconds ? ` · ${t('games.lastLetter.seconds', { count: s.turnSeconds })}` : ''}
           </Text>
         );

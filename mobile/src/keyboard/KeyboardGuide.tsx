@@ -14,6 +14,7 @@ import { Pressable, ReachReset } from '../theme/Pressable';
 import { haptic } from '../feedback/haptics';
 import type { KeyboardPlatform, TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useModalSlide } from '../a11y/useReducedMotion';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -59,6 +60,7 @@ export function KeyboardGuide({
   const dir = useDirection();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
+  const slide = useModalSlide();
   const [prefs, setPrefs] = useKeyboardPrefs();
   const detected = useMemo(
     () => guidePlatform(Platform.OS, (globalThis as { navigator?: { userAgent?: string } }).navigator?.userAgent ?? ''),
@@ -85,7 +87,7 @@ export function KeyboardGuide({
   const steps = guideSteps(platform, dialect);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal visible={visible} animationType={slide} presentationStyle="pageSheet" onRequestClose={onClose}>
       {/* A card of its own over the settings it opened from, so their reach groups do not cap it. */}
       <ReachReset>
         <KeyboardAvoidingView

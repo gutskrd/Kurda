@@ -204,9 +204,11 @@ export function ChatScreen({
       // Older than the page the thread loaded: the server has its card.
       void openGiftApi(client, giftId).then((res) => {
         if (res.ok) setUnwrapping({ giftId, card: res.data.card, fromName: name });
+        // A gift that cannot be opened now says so, rather than the tap doing nothing.
+        else if (!isMaintenance(res.error)) Alert.alert(t('error.generic'), describeError(res.error, t));
       });
     },
-    [client, messages, name],
+    [client, messages, name, t],
   );
 
   // Arrived from the gift banner or its notification: unwrap it once the thread is here.

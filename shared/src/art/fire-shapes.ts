@@ -1,12 +1,8 @@
 /**
- * The outlines the streak's fire is drawn with, which `fire.ts` puts
- * together stage by stage: the light version's flame beside a number, the
- * logs, the hearth stones, the sun's halo, and the ribbon smoke rises in.
- * Only shapes live here; how each stage places, colours and moves them is
- * `fire.ts`'s. (The whole fire's flame is painted: `fire-sprites.ts`.)
- *
- * A layer of the small flame is a few points smoothed into one soft outline,
- * so nothing in it can come to a point.
+ * The outlines the streak fire is built from, assembled stage by stage in `fire.ts`: the small flame, logs, hearth
+ * stones, the Newroz sun's halo and the smoke ribbon. Only shapes live here; placement, colour and motion are in
+ * `fire.ts`, and the main flame is pre-painted (`fire-sprites.ts`). Small-flame layers are a few points smoothed into
+ * one outline, so nothing in them comes to a point.
  */
 import { n, type Pt } from './svg.js';
 
@@ -20,7 +16,7 @@ export interface Box {
 /** Where the small flame below is rooted, in the 120-wide box it was drawn in. */
 export const SHAPE_ROOT: Pt = [60, 138];
 
-/** Curves through `points` and back to the first (Catmull-Rom as cubic Béziers): a few points make one soft shape with no corner anywhere. */
+/** A closed Catmull-Rom curve through `points` as cubic Béziers: a few points make one soft shape with no corners. */
 function blob(points: readonly Pt[]): string {
   const at = (i: number): Pt => points[(i + points.length) % points.length] as Pt;
   const p = ([x, y]: Pt): string => `${n(x)} ${n(y)}`;
@@ -33,10 +29,8 @@ function blob(points: readonly Pt[]): string {
 }
 
 /**
- * The light version's flame, beside a number: a bold, nearly round body
- * whose top parts into two round lobes, the left one small and low, with a
- * plain round drop of gold inside it and a pale drop of a heart in that;
- * drawn to fill its box, rooted where the big fire's are.
+ * The small flame shown beside a number: a bold, nearly round body whose top parts into two lobes (the left one small
+ * and low), a round gold drop inside it and a pale heart in that. Fills its box, rooted where the big fire's flame is.
  */
 export const SMALL_SHAPES = {
   outer: blob([
@@ -110,7 +104,7 @@ export function mapPath(d: string, f: (x: number, y: number) => Pt): string {
   });
 }
 
-/** The box round a path of moves, lines and curves (a curve's handles included, so it never comes out smaller). */
+/** The box round a path of moves, lines and curves, curve handles included, so it is never too small. */
 export function pathBox(d: string): Box {
   const xs: number[] = [];
   const ys: number[] = [];
@@ -128,17 +122,13 @@ export function oval(cx: number, cy: number, rx: number, ry: number): string {
   return pebble(cx, cy, rx, ry, ry, 0);
 }
 
-/** A ring from radius `inner` out to `outer`: a circle with a hole, the hole drawn the other way round so it stays open. */
+/** A ring from `inner` to `outer`: a circle with a hole drawn in the opposite direction so it stays open. */
 export function ring(cx: number, cy: number, inner: number, outer: number): string {
   const back = mapPath(oval(cx, cy, inner, inner), (x, y) => [x, cy * 2 - y]);
   return oval(cx, cy, outer, outer) + back;
 }
 
-/**
- * A rounded lump `a` either side of (cx, cy), `top` above it and `bottom`
- * below, its crown pushed `lean` along: a stone, or an ellipse with no lean
- * and top and bottom alike.
- */
+/** A rounded lump `a` either side of (cx, cy), `top` above and `bottom` below, its crown pushed `lean` along. */
 export function pebble(cx: number, cy: number, a: number, top: number, bottom: number, lean: number): string {
   const k = 0.5523;
   const p = (x: number, y: number): string => `${n(x)} ${n(y)}`;
@@ -155,16 +145,16 @@ export function pebble(cx: number, cy: number, a: number, top: number, bottom: n
 /** A log seen from the side: a capsule `r` thick either side of the line from (x1, y1) to (x2, y2). */
 function capsule(x1: number, y1: number, x2: number, y2: number, r: number): string {
   const len = Math.hypot(x2 - x1, y2 - y1);
-  // across the log, towards its upper edge
+  // Across the log, toward its upper edge.
   const nx = (y2 - y1) / len;
   const ny = -(x2 - x1) / len;
   const p = (x: number, y: number, side: number): string => `${n(x + nx * r * side)} ${n(y + ny * r * side)}`;
-  // each end a half circle, as two quarter curves
+  // Each end a half circle, as two quarter curves.
   const end = (x: number, y: number, from: number): string => {
     const k = 0.5523 * r;
     const [ax, ay] = [x + nx * r * from, y + ny * r * from];
     const [bx, by] = [x - nx * r * from, y - ny * r * from];
-    // outwards along the log from this end
+    // Outward along the log from this end.
     const [ox, oy] = from === 1 ? [(x2 - x1) / len, (y2 - y1) / len] : [-(x2 - x1) / len, -(y2 - y1) / len];
     const [tx, ty] = [x + ox * r, y + oy * r];
     const q = (u: number, v: number): string => `${n(u)} ${n(v)}`;
@@ -179,14 +169,13 @@ function capsule(x1: number, y1: number, x2: number, y2: number, r: number): str
 export type LogPart = 'bark' | 'barkShade' | 'barkLight' | 'cut' | 'ring' | 'char';
 
 /**
- * A chunky round log from its sawn end (x1, y1), where its rings show, to
- * (x2, y2): bark, the fire's light along its top, the cut face; burnt black
- * in two places along its top once it has burnt and gone cold (`charred`).
+ * A chunky log from its sawn end (x1, y1), where its rings show, to (x2, y2): bark, firelight along its top and the cut
+ * face, with two burnt patches along the top once `charred`.
  */
 export function log(x1: number, y1: number, x2: number, y2: number, bark: 'bark' | 'barkShade', charred: boolean): { part: LogPart; d: string }[] {
   const r = 8.5;
   const len = Math.hypot(x2 - x1, y2 - y1);
-  // lifted towards the log's top, whichever way along it is drawn: the side the fire lights
+  // Toward the log's top, whichever way it is drawn: the side the fire lights.
   const up = x2 >= x1 ? 1 : -1;
   const along = (t: number, lift: number): [number, number] => [x1 + (x2 - x1) * t + ((y2 - y1) / len) * lift * up, y1 + (y2 - y1) * t - ((x2 - x1) / len) * lift * up];
   const edge = (from: number, to: number, lift: number, thick: number): string => capsule(...along(from, lift), ...along(to, lift), thick);
@@ -205,26 +194,23 @@ export function log(x1: number, y1: number, x2: number, y2: number, bark: 'bark'
 }
 
 /**
- * The hearth's ring of stones round the logs, seen from a little above:
- * the far ones small and behind the fire, the near ones bigger and in front
- * of the logs. Each a round, plump pebble lit by the fire on the face towards
- * it, a little different from its neighbours so they read as stones, not
- * beads.
+ * The hearth's ring of stones round the logs, seen from a little above: far ones small and behind the fire, near ones
+ * larger and in front. Each is a plump pebble lit on the face toward the fire, varied so they read as stones, not beads.
  */
 export function hearthStones(cx: number, cy: number, rx: number, ry: number): Record<'back' | 'front', { part: 'stone' | 'stoneLight'; d: string }[]> {
   const count = 14;
   const stones = Array.from({ length: count }, (_, i) => {
-    // half a step round, so no stone sits dead in the middle in front
+    // Offset half a step, so no stone sits dead centre in front.
     const angle = ((i + 0.5) / count) * Math.PI * 2;
     const near = Math.sin(angle);
-    // a fixed wobble per stone, the same on every machine
+    // A fixed per-stone wobble, the same on every machine.
     const wobble = ((i * 7) % 5) / 4 - 0.5;
     const a = 10.4 + 2.4 * near + wobble * 1.6;
     const top = 6.8 + 1.8 * near - wobble * 0.8;
     const x = cx + rx * Math.cos(angle);
     const y = cy + ry * near;
-    // the fire's light on the face towards it, on the side nearer the fire: the far stones' faces, which face us too, broadly
-    // lit; the near ones' backs turned away from us, so only a rim of light along their tops
+    // Firelight on the face toward the fire: the far stones face us too and are broadly lit; the near ones have their
+    // backs to us, so only a rim of light along their tops.
     const inward = -Math.cos(angle) * a * 0.22;
     const light = near <= 0 ? pebble(x + inward, y - top * 0.12, a * 0.78, top * 0.62, top * 0.4, wobble) : pebble(x + inward, y - top * 0.62, a * 0.7, top * 0.36, top * 0.12, wobble * 1.4);
     return {
@@ -236,20 +222,19 @@ export function hearthStones(cx: number, cy: number, rx: number, ry: number): Re
       ],
     };
   });
-  // the farthest drawn first, so a nearer stone overlaps its neighbour
+  // Farthest first, so a nearer stone overlaps its neighbour.
   stones.sort((s, t) => s.y - t.y);
   return { back: stones.filter((s) => s.near <= 0).flatMap((s) => s.pieces), front: stones.filter((s) => s.near > 0).flatMap((s) => s.pieces) };
 }
 
 /**
- * The sun's rays round the Newroz fire, as one outline: soft rays standing
- * out from `inner`, narrowing to a round end, long and short by turns. As
- * many as fill the ring evenly, a number with no meaning of its own.
+ * The sun's rays round the Newroz fire, as one outline: soft rays from `inner`, narrowing to a round end, alternately
+ * long and short. The count only needs to fill the ring evenly.
  */
 export const HALO_RAYS = 32;
 
 export function haloRays(cx: number, cy: number, inner: number, long: number, short: number): string {
-  // a point `r` out along the ray at angle `a`, moved `side` across it
+  // A point `r` out along the ray at angle `a`, shifted `side` across it.
   const p = (r: number, a: number, side = 0): string => `${n(cx + r * Math.sin(a) + side * Math.cos(a))} ${n(cy - r * Math.cos(a) + side * Math.sin(a))}`;
   const foot = inner * Math.tan((Math.PI / HALO_RAYS) * 0.72);
   const end = foot * 0.3;
@@ -257,17 +242,13 @@ export function haloRays(cx: number, cy: number, inner: number, long: number, sh
   for (let i = 0; i < HALO_RAYS; i++) {
     const a = (i / HALO_RAYS) * Math.PI * 2;
     const reach = (i % 2 === 0 ? long : short) - end;
-    // up one side, round its end in one curve, down the other
+    // Up one side, round its end in one curve, down the other.
     d += `M${p(inner, a, -foot)}L${p(reach, a, -end)}C${p(reach + end * 1.33, a, -end)} ${p(reach + end * 1.33, a, end)} ${p(reach, a, end)}L${p(inner, a, foot)}Z`;
   }
   return d;
 }
 
-/**
- * A thin ribbon along `line` (bottom first), `widths` thick at each of its
- * points: a curl of smoke. Smoothed through its points, so a
- * few of them make a soft curve.
- */
+/** A thin smoke ribbon along `line` (bottom first), `widths` thick at each point, smoothed through its points. */
 export function ribbon(line: readonly Pt[], widths: readonly number[]): string {
   const side = (s: number): Pt[] =>
     line.map(([x, y], i) => {
@@ -283,7 +264,7 @@ export function ribbon(line: readonly Pt[], widths: readonly number[]): string {
   return `M${p(left[0] as Pt)}${smooth(left)}L${p(right[0] as Pt)}${smooth(right)}Z`;
 }
 
-/** Curves through `points` (Catmull-Rom as cubic Béziers), from the first, which is already reached. */
+/** An open Catmull-Rom curve through `points` as cubic Béziers, starting from the first, which is already reached. */
 function smooth(points: readonly Pt[]): string {
   const at = (i: number): Pt => points[Math.max(0, Math.min(points.length - 1, i))] as Pt;
   const p = ([x, y]: Pt): string => `${n(x)} ${n(y)}`;

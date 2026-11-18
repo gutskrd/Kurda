@@ -1,9 +1,42 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { TokenPair, TokenStorage } from '../api/types';
-import type { DeviceIdStore } from './deviceId';
+import { newDeviceId, type DeviceIdStore } from './deviceId';
+import { checkInstall, type InstallKeychain, type InstallLocalStore } from './install';
 
 const KEY = 'kurda_tokens_v1';
+const DEVICE_KEY = 'kurda_device_id_v1';
+
+// Loaded lazily, as onboarding/storage.ts does: the web bundle must never
+// evaluate the native module, whose web entry throws when it is imported.
+let localStore: InstallLocalStore | null = null;
+function appStorage(): InstallLocalStore {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  localStore ??= require('@react-native-async-storage/async-storage').default as InstallLocalStore;
+  return localStore;
+}
+
+const keychain: InstallKeychain = {
+  get: (key) => SecureStore.getItemAsync(key),
+  set: (key, value) => SecureStore.setItemAsync(key, value),
+  remove: (key) => SecureStore.deleteItemAsync(key),
+};
+
+let installChecked: Promise<unknown> | null = null;
+
+/**
+ * Once per start, before the session or the device id is first read or
+ * written on a phone: the ones an earlier install of the app left in the
+ * Keychain are forgotten (install.ts), so a reinstalled phone does not open
+ * the account of whoever had it before.
+ */
+function afterInstallCheck(): Promise<unknown> {
+  // a missing native module is a check that could not be made, not a session that cannot be read
+  installChecked ??= Promise.resolve()
+    .then(() => checkInstall({ local: appStorage(), keychain }, [KEY, DEVICE_KEY], newDeviceId))
+    .catch(() => 'unknown');
+  return installChecked;
+}
 
 /**
  * Persists the token pair in the platform keystore (iOS Keychain /
@@ -12,6 +45,7 @@ const KEY = 'kurda_tokens_v1';
  */
 export class SecureTokenStorage implements TokenStorage {
   async get(): Promise<TokenPair | null> {
+    await afterInstallCheck();
     const raw = await SecureStore.getItemAsync(KEY);
     if (!raw) return null;
     try {
@@ -23,10 +57,12 @@ export class SecureTokenStorage implements TokenStorage {
   }
 
   async set(tokens: TokenPair): Promise<void> {
+    await afterInstallCheck();
     await SecureStore.setItemAsync(KEY, JSON.stringify(tokens));
   }
 
   async clear(): Promise<void> {
+    await afterInstallCheck();
     await SecureStore.deleteItemAsync(KEY);
   }
 }
@@ -60,8 +96,6 @@ export function createTokenStorage(): TokenStorage {
   return Platform.OS === 'web' ? new WebTokenStorage() : new SecureTokenStorage();
 }
 
-const DEVICE_KEY = 'kurda_device_id_v1';
-
 /**
  * Where this install's device id is kept (auth/deviceId.ts): in the keystore
  * beside the tokens on a phone, in localStorage on the web. Either may throw;
@@ -75,7 +109,7 @@ export function createDeviceIdStore(): DeviceIdStore {
     };
   }
   return {
-    get: () => SecureStore.getItemAsync(DEVICE_KEY),
-    set: (id) => SecureStore.setItemAsync(DEVICE_KEY, id),
+    get: () => afterInstallCheck().then(() => SecureStore.getItemAsync(DEVICE_KEY)),
+    set: (id) => afterInstallCheck().then(() => SecureStore.setItemAsync(DEVICE_KEY, id)),
   };
 }

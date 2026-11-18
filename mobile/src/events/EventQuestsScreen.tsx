@@ -126,7 +126,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
       <View style={styles.screen}>
         <ScreenHeader title={t('events.title')} onBack={onExit} browse />
 
-        <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} empty={<EmptyState title={t('events.none')} />}>
+        <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} empty={<EmptyState title={t('events.none')} body={t('events.noneBody')} />}>
           {() => events == null ? null : (
           <ScrollView contentContainerStyle={styles.content} refreshControl={pull}>
             {claimError ? (

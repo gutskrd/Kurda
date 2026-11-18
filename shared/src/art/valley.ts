@@ -1,21 +1,13 @@
 /**
- * The painted valley: the colours and brushes the lesson path is drawn with
- * (art/path-land.ts and art/valley-landmarks.ts), so the ground, the road,
- * the stops and every chapter's landmark read as one painting.
- *
- * The owner chose this look for the Kurmanji Road: Hamo's country seen from a
- * little above in the late afternoon — terraced fields, poplars and orchards,
- * earth houses with flat roofs, the far Zagros — painted in flat planes with
- * no outlines, each form one face and one step of shade, the light from the
- * upper left and every shadow a flat patch of the ground's own darker colour
- * to the lower right. Nothing glows, nothing is bevelled, no gradients.
- *
- * By evening (a dark screen) the same painting is taken toward the dusk's
- * violet (`dusk`), as the village is, keeping fire and lit windows warm.
+ * The painted valley: the colours and brushes the lesson path is drawn with (path-land.ts, valley-landmarks-1.ts and
+ * -2.ts), so ground, road, stops and landmarks read as one painting. Flat planes with no outlines, each form one face
+ * and one step of shade, light from the upper left and every shadow a flat patch of the ground's darker colour to the
+ * lower right; no glows, bevels or gradients. On a dark screen the same painting is blended toward a dusk violet
+ * (`dusk`), with fire and lit windows kept warm (`warm`).
  */
 import { mix, n, type Pt } from './svg.js';
 
-/** The day's colours. Every drawing of the road takes its colours from here, so a change here repaints the whole valley. */
+/** The day's colours; every drawing of the road takes its colours from here. */
 export const VALLEY = {
   sky: '#f7efdf',
   far: '#cdd3df',
@@ -84,15 +76,15 @@ export const VALLEY = {
   smoke: '#e7e3dc',
 } as const;
 
-/** The evening's violet, as the village's dusk (art/kingdom/pen.ts). */
+/** The evening violet that `dusk` and `warm` blend toward. */
 const DUSK = '#2a2448';
 
-/** A day colour as the evening shows it: taken `amount` toward the dusk; fire and lit things are passed through `warm`. */
+/** A day colour by evening: blended `amount` toward the dusk; fire and lit things use `warm` instead. */
 export function dusk(hex: string, dark: boolean, amount = 0.26): string {
   return dark ? mix(hex, DUSK, amount) : hex;
 }
 
-/** A light that stays warm by evening (fire, a lit window, the gold of a finished stop), only a little dimmed. */
+/** A light that stays warm by evening (fire, a lit window, a finished stop's gold), only slightly dimmed. */
 export function warm(hex: string, dark: boolean): string {
   return dark ? mix(hex, DUSK, 0.08) : hex;
 }
@@ -101,7 +93,7 @@ export function warm(hex: string, dark: boolean): string {
 
 const f = (v: number): string => n(v);
 
-/** A smooth line through the points (Catmull-Rom, as cubic Béziers), open or closed. */
+/** A smooth Catmull-Rom line through the points as cubic Béziers, open or closed. */
 export function smoothPath(pts: readonly Pt[], closed = false): string {
   if (pts.length < 2) return '';
   const p = closed ? [pts[pts.length - 1]!, ...pts, pts[0]!, pts[1]!] : [pts[0]!, ...pts, pts[pts.length - 1]!];
@@ -116,7 +108,7 @@ export function smoothPath(pts: readonly Pt[], closed = false): string {
   return closed ? `${d}Z` : d;
 }
 
-/** A soft, hand-cut round: `n` points about an ellipse, each pushed in or out by up to `jitter` of the radius. */
+/** A soft, hand-cut round: `points` points about an ellipse, each pushed in or out by up to `jitter` of the radius. */
 export function blobPath(cx: number, cy: number, rx: number, ry: number, points: number, jitter: number, random: () => number, rot = 0): string {
   const pts: Pt[] = [];
   for (let i = 0; i < points; i++) {
@@ -146,14 +138,13 @@ export interface Foliage {
   face: string;
   light: string;
   shade: string;
-  /** small round fruit or blossom dotted through the crown */
+  /** Small round fruit or blossom dotted through the crown. */
   dots?: string;
 }
 
 /**
- * A round-crowned tree standing at (x, y) — its foot — `s` times the size of
- * a road-side apricot: its shadow on the ground to the lower right, the trunk,
- * the crown in shade, its face, one lit cap, and what hangs in it.
+ * A round-crowned tree with its foot at (x, y), `s` times the size of a roadside apricot: its shadow to the lower
+ * right, the trunk, the crown's shade, face and lit cap, and what hangs in it.
  */
 export function roundTree(x: number, y: number, s: number, leaf: Foliage, ground: string, random: () => number): string {
   let out = fill(ellipsePath(x + 5 * s, y + 2, 15 * s, 5 * s), ground);
@@ -169,7 +160,7 @@ export function roundTree(x: number, y: number, s: number, leaf: Foliage, ground
   return out;
 }
 
-/** A poplar, the valley's tall one: lit on its left, in shade on its right, and a streak of light down its lit side. */
+/** A poplar: lit on its left, shaded on its right, with a streak of light down its lit side. */
 export function poplar(x: number, y: number, s: number, leaf: Foliage, ground: string): string {
   const top = y - 52 * s;
   const mid = y - 26 * s;
@@ -197,7 +188,7 @@ export function bush(x: number, y: number, s: number, leaf: Foliage, ground: str
 
 // ─────────────────────────────────────────────────────────── trees that grow
 
-/** One lobe of a tree's crown: its middle, and how far it reaches across and up. */
+/** One lobe of a tree's crown: its centre and its reach across and up. */
 export interface CrownLobe {
   x: number;
   y: number;
@@ -205,7 +196,7 @@ export interface CrownLobe {
   ry: number;
 }
 
-/** A limb: where it leaves the trunk, a point it bends through, where it ends in the crown, and how thick it is where it leaves. */
+/** A limb: where it leaves the trunk, a point it bends through, where it ends in the crown, and its starting thickness. */
 export interface TreeLimb {
   from: Pt;
   bend: Pt;
@@ -214,42 +205,36 @@ export interface TreeLimb {
 }
 
 /**
- * A tree as it grows: a trunk from its foot to where it forks, limbs from
- * there up into the crown, and the crown as a few lobes of different sizes.
- * The lobes are drawn over the limbs, so every limb has to end well inside
- * one of them, or it would stop short of the leaves it carries.
+ * A tree as it grows: a trunk from its foot to the fork, limbs up into the crown, and the crown as a few lobes. Lobes
+ * are drawn over the limbs, so every limb must end well inside one or it would stop short of its leaves.
  */
 export interface TreeShape {
   foot: Pt;
-  /** how thick the trunk is where it stands */
+  /** The trunk's thickness at its foot. */
   base: number;
-  /** where the trunk divides into its limbs */
+  /** Where the trunk divides into limbs. */
   fork: Pt;
   limbs: readonly TreeLimb[];
   lobes: readonly CrownLobe[];
-  /** how far the crown's edge strays from a smooth round, as a share of its size (a blossoming crown is ragged, a walnut's fuller) */
+  /** How far the crown's edge strays from a smooth round, as a share of its size (a blossoming crown is ragged). */
   rough?: number;
-  /** how big what hangs in the crown is: fruit, or the flowers of a tree in blossom */
+  /** The size of what hangs in the crown: fruit, or blossom. */
   dot?: number;
-  /** whether it casts its own shadow; a tree whose picture lays one broad shade under everything does not */
+  /** Whether it casts its own shadow; not when the picture lays one broad shade under everything. */
   shadow?: boolean;
 }
 
-/** The lit face of a crown lobe: a little smaller than its shade and drawn toward the light at the upper left. */
+/** A lobe's lit face: a little smaller than its shade and shifted toward the light at the upper left. */
 const faceOf = (l: CrownLobe): CrownLobe => ({ x: l.x - l.rx * 0.06, y: l.y - l.ry * 0.08, rx: l.rx * 0.9, ry: l.ry * 0.88 });
 
-/** Whether a point lies inside a lobe's face, kept `margin` of the way in from its edge so a hand-cut edge never uncovers it. */
+/** Whether a point lies inside a lobe's face, `margin` of the way in from its edge, so a hand-cut edge never uncovers it. */
 function withinFace(p: Pt, lobe: CrownLobe, margin: number): boolean {
   const f = faceOf(lobe);
   const k = 1 - margin;
   return ((p[0] - f.x) / (f.rx * k)) ** 2 + ((p[1] - f.y) / (f.ry * k)) ** 2 <= 1;
 }
 
-/**
- * Whether a tree is joined up: every limb ends inside the face of a lobe (a
- * quarter of the way in, where the crown's edge cannot uncover it), and a
- * trunk with no limbs forks inside the crown itself.
- */
+/** Whether every limb ends inside a lobe's face (a quarter of the way in), and a limbless trunk forks inside the crown. */
 export function limbsReachCrown(t: TreeShape): boolean {
   const inCrown = (p: Pt): boolean => t.lobes.some((l) => withinFace(p, l, 0.25));
   if (t.lobes.length === 0) return false;
@@ -258,9 +243,9 @@ export function limbsReachCrown(t: TreeShape): boolean {
 }
 
 /** A closed polygon through the points. */
-const polygon = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => `${f(x)} ${f(y)}`).join('L')}Z`;
+export const polygon = (pts: readonly Pt[]): string => `M${pts.map(([x, y]) => `${f(x)} ${f(y)}`).join('L')}Z`;
 
-/** A limb as a filled shape that thins from `width` where it leaves to a third of that at its end, along a curve through its bend. */
+/** A limb as a filled shape thinning from `width` to a third of that, along a curve through its bend. */
 function limbPath(limb: TreeLimb): string {
   const at = (t: number): Pt => {
     const u = 1 - t;
@@ -283,12 +268,9 @@ function limbPath(limb: TreeLimb): string {
 }
 
 /**
- * A tree drawn from its shape: its shadow on the ground to the lower right,
- * the trunk with its right side a step darker, the crown's shade, the limbs
- * running up into it, the crown's lit face over their ends, one patch of
- * light at its upper left, and what hangs in it (fruit or blossom, dotted
- * by hand rather than in a pattern). A tree whose limbs stop short of its
- * crown is refused, so no drawing can show a branch hanging in the air.
+ * A tree drawn from its shape: shadow, trunk with its right side darker, the crown's shade, limbs up into it, the lit
+ * face over their ends, one patch of light at the upper left, and hand-placed fruit or blossom. A tree whose limbs stop
+ * short of its crown throws, so no drawing shows a branch hanging in the air.
  */
 export function grownTree(t: TreeShape, leaf: Foliage, bark: { face: string; shade: string }, ground: string, random: () => number): string {
   if (!limbsReachCrown(t)) throw new RangeError('art: a tree whose limbs stop short of its crown');
@@ -298,7 +280,7 @@ export function grownTree(t: TreeShape, leaf: Foliage, bark: { face: string; sha
   const right = Math.max(...t.lobes.map((l) => l.x + l.rx));
   const spread = right - left;
   let out = t.shadow === false ? '' : fill(ellipsePath(fx + spread * 0.16, fy + 0.8, spread * 0.4, Math.max(1.8, spread * 0.08)), ground);
-  // the trunk flares a little at its foot and narrows to the fork; its right side is in shade
+  // The trunk flares a little at its foot and narrows to the fork; its right side is in shade.
   const b = t.base / 2;
   const k = (t.base * 0.62) / 2;
   out += fill(polygon([[fx - b * 1.25, fy], [fx - b * 0.8, fy - b], [kx - k, ky], [kx + k, ky], [fx + b * 0.8, fy - b], [fx + b * 1.2, fy]]), bark.face);
@@ -310,11 +292,11 @@ export function grownTree(t: TreeShape, leaf: Foliage, bark: { face: string; sha
     const face = faceOf(l);
     return blobPath(face.x, face.y, face.rx, face.ry, 9, rough, random);
   }).join(''), leaf.face);
-  // the one patch of light sits on the lobe that reaches highest toward the upper left
+  // The patch of light sits on the lobe that reaches highest toward the upper left.
   const lit = [...t.lobes].sort((a, c) => a.x - a.rx * 0.5 + (a.y - a.ry) - (c.x - c.rx * 0.5 + (c.y - c.ry)))[0]!;
   out += fill(blobPath(lit.x - lit.rx * 0.32, lit.y - lit.ry * 0.38, lit.rx * 0.46, lit.ry * 0.34, 7, 0.2, random), leaf.light);
   if (leaf.dots) {
-    // fruit or flowers dotted by hand: each where it falls, but never on top of another
+    // Fruit or flowers placed one by one, never on top of another.
     let dots = '';
     const placed: Array<[number, number, number]> = [];
     const size = t.dot ?? Math.max(0.9, spread / 26);
@@ -333,11 +315,9 @@ export function grownTree(t: TreeShape, leaf: Foliage, bark: { face: string; sha
 }
 
 /**
- * A small orchard tree standing at (x, y), `s` times the size of a road-side
- * apricot: a short trunk that forks into three limbs, each ending in a lobe
- * of the crown, and a fourth lobe filling in under them. `lean` sets the
- * crown over a little to one side, and the lobes are sized by hand from
- * `random`, so no two trees of an orchard are the same tree.
+ * A small orchard tree at (x, y), `s` times a roadside apricot: a short trunk forking into three limbs, each ending in a
+ * crown lobe, with a fourth lobe filling in below. `lean` shifts the crown sideways, and `random` sizes the lobes so no
+ * two trees match.
  */
 export function orchardTree(x: number, y: number, s: number, lean: number, random: () => number): TreeShape {
   const v = (): number => 0.9 + random() * 0.2;
@@ -362,7 +342,7 @@ export function orchardTree(x: number, y: number, s: number, lean: number, rando
   };
 }
 
-/** The bark of the valley's fruit trees by day or by evening: its face and its side in shade. */
+/** The fruit trees' bark by day or evening: its face and its shaded side. */
 export function bark(dark: boolean): { face: string; shade: string } {
   return { face: dusk(VALLEY.trunk, dark), shade: dusk(VALLEY.trunkShade, dark) };
 }
@@ -389,9 +369,8 @@ export function flowers(x: number, y: number, colour: string): string {
 }
 
 /**
- * An earth house with a flat roof, seen a little from above and to the right:
- * its front `w` × `h` from (x, y) its foot on the left, its side `d` deep in
- * shade, the lit roof with its low parapet, a window, and a door when asked.
+ * A flat-roofed earth house seen a little from above and to the right: its front `w` × `h` with its left foot at
+ * (x, y), its side `d` deep in shade, the lit roof with a low parapet, a window, and an optional door.
  */
 export function earthHouse(
   x: number,
@@ -409,12 +388,12 @@ export function earthHouse(
   out += stroke(`M${f(x)} ${f(y - h)}h${f(w)}l${f(d)} ${f(-d * 0.5)}`, c(VALLEY.parapet), 2);
   out += fill(`M${f(x + w * 0.62)} ${f(y - h * 0.62)}h${f(w * 0.16)}v${f(h * 0.22)}h${f(-w * 0.16)}Z`, opts.dark ? warm('#f2c35c', true) : VALLEY.window);
   if (opts.door) out += fill(`M${f(x + w * 0.16)} ${f(y)}v${f(-h * 0.5)}a${f(w * 0.11)} ${f(w * 0.11)} 0 0 1 ${f(w * 0.22)} 0v${f(h * 0.5)}Z`, c(opts.door));
-  // apricots drying on the roof, a warm row of dots
+  // Apricots drying on the roof, a warm row of dots.
   if (opts.roofLine) out += `<path d="M${f(x + d * 0.3 + 6)} ${f(y - h - d * 0.2)}h${f(w - 12)}" stroke="${c(opts.roofLine)}" stroke-width="2.4" stroke-dasharray="2.4 2.2" stroke-linecap="round"/>`;
   return out;
 }
 
-/** The leaves of the valley's trees by day or by evening, and an orchard's fruit. */
+/** The valley trees' leaves by day or evening, with an orchard's fruit. */
 export function foliage(dark: boolean, dots?: string): Foliage {
   return {
     face: dusk(VALLEY.leaf, dark),
@@ -424,7 +403,7 @@ export function foliage(dark: boolean, dots?: string): Foliage {
   };
 }
 
-/** A poplar's leaves by day or by evening. */
+/** A poplar's leaves by day or evening. */
 export function poplarLeaves(dark: boolean): Foliage {
   return { face: dusk(VALLEY.poplar, dark), light: dusk(VALLEY.poplarLight, dark), shade: dusk(VALLEY.poplarShade, dark) };
 }
@@ -432,22 +411,17 @@ export function poplarLeaves(dark: boolean): Foliage {
 // ─────────────────────────────────────────────────────────── landmarks
 
 /**
- * The one small moving thing of a landmark, which the apps lay over it and
- * move gently (`pathLoopSvg`): the flag of Kurdistan (`colours`, by the
- * gate, over the bazaar, the school's yard and Amed's tower) stirring, steam
- * or smoke rising, water rippling, the Newroz flame, a bee, the bus stop's
- * sign.
+ * A landmark's one moving part, which the apps lay over it and animate (`pathLoopSvg`): the flag of Kurdistan
+ * (`colours`), steam or smoke, rippling water, the Newroz flame, a bee, or the bus stop's sign.
  */
 export type ValleyLoopKind = 'steam' | 'water' | 'colours' | 'flame' | 'smoke' | 'bee' | 'sign';
 
 /**
- * A chapter's landmark in the painted valley, on the 120-unit canvas: its
- * drawing (foot near y 114, from about x 4 to x 116, its shadow on the
- * ground included), and where on the canvas its moving part sits at rest —
- * the box the apps lay the moving sprite into.
+ * A chapter's landmark on the 120-unit canvas: its drawing (foot near y 114, spanning about x 4 to x 116, shadow
+ * included), and the box where its moving part sits at rest, which the apps lay the moving sprite into.
  */
 export interface ValleyLandmark {
-  /** `page` when it is drawn on a page of its own colour (a book's opener, a stamp) rather than on the path's land, where what belongs to the land behind it is left out */
+  /** `page` is set when drawn on a page of its own colour (a chapter opener, a stamp), which leaves out the land behind it. */
   draw: (dark: boolean, random: () => number, page?: boolean) => string;
   loop: { kind: ValleyLoopKind; x: number; y: number; w: number; h: number };
 }
@@ -455,10 +429,8 @@ export interface ValleyLandmark {
 // ─────────────────────────────────────────────────────────── the flag of Kurdistan
 
 /**
- * The flag's colours, softened a little to sit in the painting but kept true
- * enough that nobody could take it for another flag: its red, its white, its
- * green and the sun's gold, and each band one step darker where the cloth
- * folds away from the light.
+ * The flag's colours, softened to sit in the painting but true enough that it cannot be mistaken for another flag, with
+ * each band a step darker where the cloth folds away from the light.
  */
 const FLAG = {
   red: '#dc3a32',
@@ -473,12 +445,9 @@ const FLAG = {
 type Cubic = readonly [Pt, Pt, Pt, Pt];
 
 /**
- * The flag of Kurdistan as the school flies it, on its own 20 × 16 canvas
- * with the pole along the left edge: three bands of equal depth, red over
- * white over green, and in the middle of the white the golden sun of
- * twenty-one rays, one standing straight up. The cloth is two deep for every
- * three it flies, as the flag is. `top` is its upper edge from the pole to
- * the free end, one easy wave in the wind; every band follows it down.
+ * The flag of Kurdistan as the school flies it, on a 20 × 16 canvas with the pole along the left edge: equal bands of
+ * red, white and green with the golden sun of twenty-one rays (one straight up) in the white. The cloth is 2:3. `top`
+ * is its upper edge from pole to free end, one easy wave; every band follows it.
  */
 export const KURDISTAN_FLAG = {
   w: 20,
@@ -495,7 +464,7 @@ function cubicAt([a, b, c, d]: Cubic, t: number): Pt {
   return [w[0] * a[0] + w[1] * b[0] + w[2] * c[0] + w[3] * d[0], w[0] * a[1] + w[1] * b[1] + w[2] * c[1] + w[3] * d[1]];
 }
 
-/** The stretch of a cubic Bézier between `t0` and `t1`, as a cubic of its own (de Casteljau's halving, twice). */
+/** The part of a cubic Bézier between `t0` and `t1` as a cubic of its own (de Casteljau subdivision, twice). */
 function cubicPart(q: Cubic, t0: number, t1: number): Cubic {
   const split = ([a, b, c, d]: Cubic, t: number): [Cubic, Cubic] => {
     const l = (p: Pt, r: Pt): Pt => [p[0] + (r[0] - p[0]) * t, p[1] + (r[1] - p[1]) * t];
@@ -507,21 +476,18 @@ function cubicPart(q: Cubic, t0: number, t1: number): Cubic {
   return split(split(q, t1)[0], t0 / t1)[1];
 }
 
-/** The cloth hanging under a stretch of its top edge, from `from` to `to` below it: along the edge, down its far end, back along the edge lowered, and up. */
+/** The cloth under a stretch of the top edge, from `from` to `to` below it: along the edge, down, back along the lowered edge, and up. */
 function cloth(edge: Cubic, from: number, to: number): string {
   const at = ([x, y]: Pt, dy: number): string => `${f(x)} ${f(y + dy)}`;
   const [a, b, c, d] = edge;
   return `M${at(a, from)}C${at(b, from)} ${at(c, from)} ${at(d, from)}L${at(d, to)}C${at(c, to)} ${at(b, to)} ${at(a, to)}Z`;
 }
 
-/**
- * Where the sun sits and how big it is: in the middle of the white, halfway
- * along the cloth, its rays reaching almost to the red and the green.
- */
+/** The sun's centre and size: in the middle of the white, halfway along the cloth, its rays almost reaching the red and green. */
 export function kurdistanSun(): { x: number; y: number; r: number; disc: number } {
   const { top, depth } = KURDISTAN_FLAG;
   const middle = (top[0][0] + top[3][0]) / 2;
-  // the edge runs steadily away from the pole, so halving finds the point of it above the middle of the cloth
+  // The edge moves steadily away from the pole, so bisection finds the point above the cloth's middle.
   let [lo, hi] = [0, 1];
   for (let i = 0; i < 30; i++) {
     const t = (lo + hi) / 2;
@@ -533,22 +499,20 @@ export function kurdistanSun(): { x: number; y: number; r: number; disc: number 
 }
 
 /**
- * The flag of Kurdistan (`KURDISTAN_FLAG`), painted flat on its own canvas:
- * the three bands, one fold in shade toward the free end where the wave
- * turns the cloth from the light, and the sun clear of the fold. The school
- * draws it at rest and the apps lay the same cloth over it to stir in the
- * wind (`pathLoopSvg`), so the two always agree.
+ * The flag of Kurdistan (`KURDISTAN_FLAG`) painted flat on its own canvas: the three bands, one shaded fold toward the
+ * free end, and the sun clear of the fold. The school draws it at rest and the apps lay the same cloth over it to move
+ * in the wind (`pathLoopSvg`), so the two always match.
  */
 export function kurdistanFlag(dark: boolean): string {
   const c = (hex: string): string => dusk(hex, dark);
   const { top, depth, rays } = KURDISTAN_FLAG;
   const third = depth / 3;
-  // each band reaches a hair under the next, which is laid over it, so no seam of what is behind the flag opens between them
+  // Each band runs a hair under the next, which overlaps it, so no seam opens between them.
   const bands = (edge: Cubic, red: string, white: string, green: string): string =>
     fill(cloth(edge, 0, third + 0.2), c(red)) + fill(cloth(edge, third, 2 * third + 0.2), c(white)) + fill(cloth(edge, 2 * third, depth), c(green));
   let out = bands(top, FLAG.red, FLAG.white, FLAG.green);
   out += bands(cubicPart(top, 0.66, 0.86), FLAG.redShade, FLAG.whiteShade, FLAG.greenShade);
-  // the sun: a star of rays round its disc, drawn ten times over and scaled down so its fine points keep their places
+  // The sun: rays round its disc, drawn at ten times the size and scaled down so the fine points keep their places.
   const sun = kurdistanSun();
   const pts: Pt[] = [];
   for (let k = 0; k < rays; k++) {
@@ -560,7 +524,7 @@ export function kurdistanFlag(dark: boolean): string {
   return out;
 }
 
-/** The flag of Kurdistan at rest in a landmark's loop box, flying from the pole at the box's left edge: the very cloth the apps make stir in the wind over it. */
+/** The flag at rest in a landmark's loop box, flying from the box's left edge: the same cloth the apps animate over it. */
 export function kurdistanFlagAt(box: { x: number; y: number; w: number }, dark: boolean): string {
   return `<g transform="translate(${f(box.x)} ${f(box.y)}) scale(${n(box.w / KURDISTAN_FLAG.w)})">${kurdistanFlag(dark)}</g>`;
 }

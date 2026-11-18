@@ -54,6 +54,12 @@ interface RequestOptions {
    */
   rawBody?: ArrayBuffer;
   headers?: Record<string, string>;
+  /**
+   * Send with the session as it stands and never renew it, for the last request a session makes as it signs out:
+   * a renewal finishing after sign-out would write a session back onto the phone. A 401 returns as the refusal it
+   * is.
+   */
+  once?: boolean;
 }
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -185,7 +191,7 @@ export class ApiClient {
 
       // Only a request that carried a token can have an expired one. A 401 without one is the endpoint's answer
       // (usually a wrong password), and its body says which, so do not discard it for a refresh.
-      if (res.status === 401 && tokens) return 'unauthorized';
+      if (res.status === 401 && tokens && !options.once) return 'unauthorized';
       return this.toResult<T>(res);
     };
 

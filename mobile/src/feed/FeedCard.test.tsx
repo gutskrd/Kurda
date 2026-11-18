@@ -274,6 +274,7 @@ describe('the wall', () => {
       'GET /friends/requests': ok({ requests: [] }),
       'GET /me/notifications/unread-count': ok({ count: 0 }),
       'GET /me/social': ok({ unread: { gifts: 0 } }),
+      'GET /me/gifts/unseen': ok({ unseen: 0 }),
     });
     renderWithProviders(
       <UnreadProvider>

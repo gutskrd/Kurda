@@ -1,15 +1,8 @@
 /**
- * The painted valley (art/valley.ts) and its landmarks hold together. Every
- * tree's limbs run into the crown they carry and every trunk into its
- * leaves, so no picture of the road shows a branch stopping short in the
- * air: the trees drawn limb by limb (`grownTree`) refuse to be drawn
- * otherwise, and the older round trees and poplars, which the lesson path
- * still plants, are measured from what they draw. The Newroz fire burns on
- * its ring of stones on a green mound, its flame at rest in the box the apps
- * make it flicker in. The gate, the bazaar, the school and Amed's tower fly
- * the flag of Kurdistan, true to the flag, and the apps make the very same
- * cloth stir over it; no other flag flies. And a landmark laid on a page of its own
- * colour casts that page's shade, not the meadow's.
+ * The painted valley (valley.ts) and its landmarks hold together: every limb reaches into the crown it carries (trees
+ * drawn limb by limb refuse otherwise, and the older round trees and poplars are measured), the Newroz fire sits on its
+ * stone ring with its flame at rest in its loop box, the flag of Kurdistan is true to the flag where it flies and the
+ * moving cloth matches it, no other flag flies, and a landmark on a page of its own colour casts that page's shade.
  */
 import { describe, expect, it } from 'vitest';
 import { PATH_LANDMARKS } from '../path-world.js';
@@ -49,7 +42,7 @@ describe('the valley’s trees', () => {
     expect(limbsReachCrown(short)).toBe(false);
     expect(() => grownTree(short, foliage(false), bark(false), '#bfd291', seeded('x'))).toThrow(RangeError);
     expect(limbsReachCrown({ ...good, lobes: [] })).toBe(false);
-    // a trunk with no limbs of its own has to fork inside its crown
+    // A trunk with no limbs must fork inside its crown.
     expect(limbsReachCrown({ ...good, limbs: [], fork: [good.lobes[1]!.x, good.lobes[1]!.y] })).toBe(true);
     expect(limbsReachCrown({ ...good, limbs: [], fork: [60, 96] })).toBe(false);
   });
@@ -65,7 +58,7 @@ describe('the valley’s trees', () => {
   it('grows the round trees’ and the poplars’ trunks up into their crowns, as the lesson path plants them', () => {
     for (const s of [0.5, 0.72, 1, 1.4]) {
       for (const seed of ['p', 'q', 'r']) {
-        // a round tree: its shadow, its trunk, then its crown; the trunk's top is well inside the crown
+        // A round tree: shadow, trunk, then crown; the trunk's top is well inside the crown.
         const [, trunk, crown] = paths(roundTree(60, 100, s, foliage(false), '#bfd291', seeded(seed)));
         const top = Math.min(...points(trunk!).map(([, y]) => y));
         const ys = points(crown!).map(([, y]) => y);
@@ -74,7 +67,7 @@ describe('the valley’s trees', () => {
         expect(Math.min(...xs)).toBeLessThan(60);
         expect(Math.max(...xs)).toBeGreaterThan(60);
       }
-      // a poplar: its shadow, its stem, then its leaves, whose foot comes down past the top of the stem
+      // A poplar: shadow, stem, then leaves, whose foot comes down past the top of the stem.
       const [, stem, leaves] = paths(poplar(60, 100, s, poplarLeaves(false), '#bfd291'));
       const stemTop = Math.min(...points(stem!).map(([, y]) => y));
       expect(stemTop, `poplar ${s}`).toBeLessThan(Math.max(...points(leaves!).map(([, y]) => y)));
@@ -89,7 +82,7 @@ describe('the valley’s trees', () => {
 
 describe('a landmark on a page of its own colour', () => {
   it('casts the shade it is given instead of the meadow’s green, and refuses one that is not a colour', () => {
-    // every landmark that stands on the meadow's shade (the snowbound hearth stands on snow)
+    // Every landmark standing on the meadow's shade (the snowbound hearth stands on snow).
     const onGrass = PATH_LANDMARKS.filter((landmark) => pathLandmarkSvg({ landmark }).includes('fill="#bfd291"'));
     expect(onGrass.length).toBeGreaterThanOrEqual(PATH_LANDMARKS.length - 1);
     for (const landmark of onGrass) {
@@ -110,7 +103,7 @@ describe('the Newroz fire', () => {
     expect(count(VALLEY.blossom)).toBe(2);
     expect(count(VALLEY.green)).toBe(1);
     expect(fills).toContain(VALLEY.fire);
-    // its flame at rest fills the box the apps make it flicker in, drawn on the moving flame's own canvas
+    // Its flame at rest fills the loop box, drawn on the moving flame's own canvas.
     const loop = PATH_LANDMARK_LOOP.newroz;
     expect(loop).toEqual({ kind: 'flame', x: 45, y: 31, w: 30, h: 46 });
     expect(still).toContain(`<g transform="translate(${loop.x} ${loop.y}) scale(1.2)">`);
@@ -127,7 +120,7 @@ describe('the school’s flag', () => {
   it('flies the flag of Kurdistan: red over white over green, two deep for three long, by day and by evening', () => {
     for (const dark of [false, true]) {
       const [red, white, green] = [...kurdistanFlag(dark).matchAll(/<path d="([^"]+)" fill="(#[0-9a-f]{6})"/g)].slice(0, 3).map((m) => ({ d: m[1]!, colour: rgb(m[2]!) }));
-      // the colours read as the flag's own: a red, a white and a green
+      // The colours read as the flag's own red, white and green.
       const [r1, g1, b1] = red!.colour;
       expect(r1).toBeGreaterThan(1.8 * Math.max(g1, b1));
       const [r2, g2, b2] = white!.colour;
@@ -135,12 +128,12 @@ describe('the school’s flag', () => {
       expect(Math.min(r2, g2, b2)).toBeGreaterThan(0.85 * Math.max(r2, g2, b2));
       const [r3, g3, b3] = green!.colour;
       expect(g3).toBeGreaterThan(1.4 * Math.max(r3, b3));
-      // the bands are of one depth and stand in that order, each starting where the one above it ends
+      // The bands are equally deep and in order, each starting where the one above ends.
       const third = KURDISTAN_FLAG.depth / 3;
       const tops = [red, white, green].map((band) => points(band!.d)[0]!);
       expect(tops[1]![1] - tops[0]![1]).toBeCloseTo(third, 0);
       expect(tops[2]![1] - tops[1]![1]).toBeCloseTo(third, 0);
-      // the cloth is three long for every two deep, from the pole to its free end and from the top of the red to the foot of the green
+      // The cloth is 3:2, measured from pole to free end and from the top of the red to the foot of the green.
       const all = [red, white, green].flatMap((band) => points(band!.d));
       const long = Math.max(...all.map(([x]) => x)) - Math.min(...all.map(([x]) => x));
       const deep = points(green!.d).at(-1)![1] - tops[0]![1];
@@ -156,7 +149,7 @@ describe('the school’s flag', () => {
       const [r, g, b] = rgb(sun![4]!);
       expect(r).toBeGreaterThan(g);
       expect(g).toBeGreaterThan(2 * b);
-      // its points go out to a ray's tip and back in to the disc between two rays, twenty-one times round
+      // Its points go out to a ray tip and back to the disc between rays, twenty-one times round.
       const pts = points(sun![3]!);
       const far = pts.map(([x, y]) => Math.hypot(x, y));
       const tips = far.filter((d) => d > 15);
@@ -165,7 +158,7 @@ describe('the school’s flag', () => {
       expect(Math.max(...far.filter((d) => d <= 15))).toBeLessThan(Math.min(...tips) * 0.7);
       expect(pts[0]![0]).toBeCloseTo(0, 0);
       expect(pts[0]![1]).toBeLessThan(0);
-      // it sits halfway along the cloth and in the middle of the white, its rays clear of the red and the green
+      // It sits halfway along the cloth in the middle of the white, its rays clear of the red and green.
       const middle = kurdistanSun();
       expect(Number(sun![1])).toBeCloseTo((KURDISTAN_FLAG.top[0][0] + KURDISTAN_FLAG.top[3][0]) / 2, 0);
       expect(2 * middle.r).toBeLessThan(KURDISTAN_FLAG.depth / 3);
@@ -197,7 +190,7 @@ describe('the school’s flag', () => {
   });
 
   it('flies no flag but Kurdistan’s on any landmark', () => {
-    // every cloth on a pole is the flag of Kurdistan; the kilims on their arms are weaving, not flags
+    // Every cloth on a pole is the flag of Kurdistan; the kilims on their arms are weaving, not flags.
     for (const [landmark, loop] of Object.entries(PATH_LANDMARK_LOOP)) {
       if (loop.kind !== 'colours') continue;
       expect(pathLandmarkSvg({ landmark: landmark as keyof typeof PATH_LANDMARK_LOOP, dark: false }), landmark).toContain(kurdistanFlag(false));

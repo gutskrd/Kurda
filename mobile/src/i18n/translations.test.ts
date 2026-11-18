@@ -52,16 +52,16 @@ describe('translation catalogs', () => {
    */
   it('promises no daily story in the notifications slide', () => {
     expect(TRANSLATIONS.en['onboarding.notify.title']).not.toMatch(/story/i);
-    expect(TRANSLATIONS.en['onboarding.notify.body']).toMatch(/streak/i);
+    // The slide says once, in Hevalo's bubble, what a reminder is.
+    expect(TRANSLATIONS.en['guide.intro.notify.says']).toMatch(/streak/i);
     for (const locale of LOCALES) {
-      const slide = `${TRANSLATIONS[locale]['onboarding.notify.title']} ${TRANSLATIONS[locale]['onboarding.notify.body']}`;
+      const slide = `${TRANSLATIONS[locale]['onboarding.notify.title']} ${TRANSLATIONS[locale]['guide.intro.notify.says']}`;
       expect(slide, locale).not.toMatch(/story|çîrok|Geschichte|relato|öykü|قصة|récit|verhaal|چیرۆک/i);
     }
   });
 
-  it('says the streak reminder is left in the app’s notifications, and can be turned on or off', () => {
-    expect(TRANSLATIONS.en['onboarding.notify.body']).toMatch(/leaves you a reminder in your notifications/i);
-    expect(TRANSLATIONS.en['onboarding.notify.body']).not.toMatch(/can remind you/i);
+  it('says the streak reminder is a note left only if wanted, turned on or off in the notifications’ own settings', () => {
+    expect(TRANSLATIONS.en['guide.intro.notify.says']).toMatch(/only if you want/i);
     expect(TRANSLATIONS.en['onboarding.notify.later']).toMatch(/on or off/i);
     // Every language names the place, in the word its Notifications screen uses.
     const place: Record<(typeof LOCALES)[number], string> = {
@@ -77,7 +77,7 @@ describe('translation catalogs', () => {
     };
     for (const locale of LOCALES) {
       expect(TRANSLATIONS[locale]['notifications.title'], locale).toMatch(new RegExp(place[locale].slice(0, 5), 'i'));
-      expect(TRANSLATIONS[locale]['onboarding.notify.body'], locale).toContain(place[locale]);
+      expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toMatch(new RegExp(place[locale].slice(0, 5), 'i'));
       expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toContain(TRANSLATIONS[locale]['settings.title']);
       expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toContain(TRANSLATIONS[locale]['settings.notifications']);
     }

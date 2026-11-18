@@ -29,7 +29,7 @@ const unread = {
   'GET /chat/conversations': ok({ conversations: [] }),
   'GET /me/groups/unread': ok({ unread: [] }),
   'GET /me/notifications/unread-count': ok({ count: 0 }),
-  'GET /me/social': ok({ unread: {} }),
+  'GET /me/gifts/unseen': ok({ unseen: 0 }),
 };
 
 function open(routes: Record<string, unknown>) {

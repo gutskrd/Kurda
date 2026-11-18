@@ -135,7 +135,7 @@ function SoundsList(): React.JSX.Element {
         }}
       />
       <SettingsSwitch
-        icon="audio-play"
+        icon="speaker-high"
         title={t('settings.sounds.autoplay')}
         subtitle={t('settings.sounds.autoplayHint')}
         value={autoplay}

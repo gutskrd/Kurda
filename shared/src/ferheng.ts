@@ -1,21 +1,9 @@
 /**
- * Wîkîferheng (Kurdish Wiktionary) → the lexicon format the importer reads.
- *
- * One implementation, used by both `convert-ferheng.ts` (a file at a time, for
- * looking at the output) and `import-ferheng.ts` (the whole thing, in memory).
- *
- * Two things about that data decide everything here.
- *
- * **The glosses are Kurdish.** This is Kurmancî explained in Kurmancî, not a
- * bilingual dictionary — so every definition goes to `definitionKu` and none to
- * `definitionEn`. Putting them in the English field would read as English in
- * both apps and be wrong in all nine languages at once. Senses with no English
- * are why migration 1751000113000 exists.
- *
- * **Its parts of speech are not ours.** `adj`, `name`, `proverb`, `abbrev`,
- * `character`, `unknown` — mapped below, and anything unrecognised becomes
- * `other` rather than being dropped: a headword with a vague label is still a
- * word the games should accept.
+ * The Kurdish Wiktionary converted to the lexicon format the importer reads, shared by `convert-ferheng.ts` (a file at a
+ * time) and `import-ferheng.ts` (everything, in memory). Its glosses are Kurmancî explained in Kurmancî, so every
+ * definition goes to `definitionKu` and none to `definitionEn`, where both apps would show it as English. Its parts of
+ * speech are mapped to ours, and anything unknown becomes `other` rather than being dropped: a vaguely labelled headword
+ * is still a word the games should accept.
  */
 
 export interface SourceEntry {
@@ -32,10 +20,10 @@ export interface ConvertedEntry {
   xrefs?: Array<{ headword: string; relation: 'synonym' }>;
 }
 
-/** Their label → ours. Anything missing falls through to 'other'. */
+/** Their label to ours; anything missing becomes 'other'. */
 const POS: Record<string, string> = {
   noun: 'noun',
-  name: 'noun', // a proper noun is still a noun to us
+  name: 'noun', // a proper noun is still a noun here
   verb: 'verb',
   adj: 'adjective',
   adv: 'adverb',
@@ -58,16 +46,10 @@ export interface Chunk {
 }
 
 /**
- * Which of the published files this run will actually read.
- *
- * The full Kurmancî set is 105 files and about an hour and a half, which is
- * longer than a shell session on a hosting dashboard reliably stays open. `from`
- * is what makes an interrupted run cheap to resume: it is the number the
- * progress line prints, so a run that died at `[41/105]` restarts with
- * `--from 41` and redoes that one file. Redoing a file costs nothing — the
- * importer skips what it has already seen — and starting one file early is a
- * far better default than starting one file late and leaving a gap nobody
- * would notice until a player's word was rejected.
+ * Which published files this run reads. The full Kurmancî set is 105 files and about an hour and a half, longer than a
+ * hosting dashboard's shell reliably stays open, so `from` resumes cheaply: it is the number the progress line prints, so
+ * a run that died at `[41/105]` restarts with `--from 41`. Redoing a file costs nothing, since the importer skips what it
+ * has seen, while starting one late would leave an unnoticed gap.
  */
 export function plan(files: readonly Chunk[], opts: { from?: number; limit?: number } = {}): {
   skipped: number;
@@ -90,13 +72,9 @@ function asStrings(value: unknown): string[] {
 }
 
 /**
- * Group by headword **and** part of speech.
- *
- * The source lists a word once per part of speech and sometimes more than once
- * for the same one — 53 such pairs in a single chunk of 9,767. The importer
- * reconciles by headword + POS, so two senses sharing both would arrive as a
- * conflict of a word with itself. Merging their glosses here is what the entry
- * means anyway: several readings of one word.
+ * Groups by headword and part of speech. The source sometimes lists a word more than once for the same part of speech,
+ * which the importer (reconciling by both) would see as a word conflicting with itself, so their glosses are merged into
+ * one entry: several readings of one word.
  */
 export function toLexicon(rows: readonly SourceEntry[], dialect = 'kurmanji'): ConvertedEntry[] {
   const byWord = new Map<string, Map<string, Set<string>>>();
@@ -131,7 +109,7 @@ export function toLexicon(rows: readonly SourceEntry[], dialect = 'kurmanji'): C
       dialect,
       senses: [...senses].map(([pos, texts]) => ({
         pos,
-        // several readings of one word, in the order the source gave them
+        // Several readings of one word, in the source's order.
         definitionKu: [...texts].join('; ').slice(0, MAX_DEFINITION),
       })),
       ...(xrefs.length > 0 ? { xrefs } : {}),

@@ -122,6 +122,10 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
         >
           <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
             <GoalRing xp={goal.earnedXp} goal={goal.effectiveGoal} size={RING} tint={[colors.gold, colors.goldText]} showNumbers={false} />
+            {/* The XP bolt in the middle: an empty ring alone, before the day's first lesson, looked like a picture that failed to load. */}
+            <View style={styles.ringMark} pointerEvents="none">
+              <Icon name="bolt" size={11} color={goal.earnedXp > 0 ? colors.goldText : colors.textSecondary} />
+            </View>
           </View>
         </Pressable>
       ) : null}
@@ -168,6 +172,7 @@ const styles = StyleSheet.create({
   // Each stat is a 44pt target however small its number.
   stat: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
   number: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  ringMark: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   sheetBody: { gap: spacing.md, paddingBottom: spacing.sm },
   goalHead: { alignItems: 'center', gap: spacing.md },
   goalWords: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

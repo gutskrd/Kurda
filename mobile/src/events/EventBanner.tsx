@@ -10,6 +10,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDirection } from '../reports/direction';
 
 interface ActiveEvent {
   key: string;
@@ -33,6 +34,7 @@ export function EventBanner() {
   // Uses the event's own theme, which may have no pack, and not for someone who turned event looks off.
   const uploaded = useArtOverride('event', optedOut ? null : event?.theme);
   const [failed, setFailed] = useState<string | null>(null);
+  const dir = useDirection();
   const picture = uploaded !== null && uploaded !== failed ? uploaded : null;
 
   useFocusEffect(
@@ -53,7 +55,8 @@ export function EventBanner() {
   return (
     <PressableScale
       onPress={() => navigation.navigate('EventQuests')}
-      style={[styles.banner, picture ? styles.pictured : null, { backgroundColor: pack ? pack.bannerColors[0] : colors.primary }]}
+      // In Arabic and Soranî the glyph starts on the right and the chevron points left, as everywhere in the app.
+      style={[styles.banner, { flexDirection: dir.row }, picture ? styles.pictured : null, { backgroundColor: pack ? pack.bannerColors[0] : colors.primary }]}
       accessibilityRole="button"
       accessibilityLabel={t('events.bannerLabel', { name: event.name })}
     >
@@ -67,10 +70,12 @@ export function EventBanner() {
         <Icon name={pack ? pack.icon : 'star'} size={GLYPH} color={ink} />
       )}
       <View style={{ flex: 1 }}>
-        <Text style={[styles.title, { color: ink }]}>{event.name}</Text>
-        <Text style={[styles.subtitle, { color: ink }]}>{t('events.bannerSubtitle')}</Text>
+        <Text style={[styles.title, dir.text, { color: ink }]}>{event.name}</Text>
+        <Text style={[styles.subtitle, dir.text, { color: ink }]}>{t('events.bannerSubtitle')}</Text>
       </View>
-      <Icon name="chevron-right" size={20} color={ink} />
+      <View style={dir.flip}>
+        <Icon name="chevron-right" size={20} color={ink} />
+      </View>
     </PressableScale>
   );
 }

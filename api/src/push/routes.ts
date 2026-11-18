@@ -51,7 +51,7 @@ export function registerPushRoutes(
     { schema: { body: tokenBody }, preHandler: requireAuth },
     async (req, reply) => {
       const found = await tokens.touch(req.user!.id, (req.body as z.infer<typeof tokenBody>).token);
-      if (!found) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'no such device' } });
+      if (!found) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such device' });
       return { ok: true };
     },
   );
@@ -61,7 +61,7 @@ export function registerPushRoutes(
     { schema: { body: tokenBody }, preHandler: requireAuth },
     async (req, reply) => {
       const found = await tokens.remove(req.user!.id, (req.body as z.infer<typeof tokenBody>).token);
-      if (!found) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'no such device' } });
+      if (!found) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such device' });
       return { ok: true };
     },
   );

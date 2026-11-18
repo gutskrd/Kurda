@@ -130,7 +130,7 @@ export function PracticeScreen({
       onExit={onExit}
       // What was missed here can be practised again at once, in this session's place.
       onPractise={(ids) => navigation.replace('Practice', { exerciseIds: ids })}
-      onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+      onPath={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
     />
   );
 }

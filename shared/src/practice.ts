@@ -1,29 +1,20 @@
 /**
- * Practice as a hub: the kinds of session a learner can start, which
- * exercises each one draws on, and what the hub shows before one starts
- * (GET /practice/hub).
- *
- * Every kind draws only on what the learner has met — their review items,
- * their own answers, the lessons they have finished — so practice never
- * teaches something new, and every kind is paid and counted for the streak by
- * the same rules as a review.
+ * Practice as a hub: the kinds of session, which exercises each draws on, and what the hub shows (GET /practice/hub).
+ * Every kind draws only on what the learner has met, so practice never teaches something new, and every kind is paid and
+ * counted for the streak like a review.
  */
 import type { ExerciseType } from './lesson-player.js';
 import type { UnitTone } from './lesson-path.js';
 
 /**
- * The kinds of practice session (POST /practice/session `mode`):
- *   review   — the words due again, padded with the weakest (the default);
- *   mistakes — what the learner last got wrong, lately;
- *   listen   — only exercises that are heard;
- *   speak    — only exercises that are said aloud;
- *   words    — only the word-level exercises;
- *   unit     — anything from one unit the learner has reached (`unitId`).
+ * The kinds of practice session (POST /practice/session `mode`): `review`, the words due, padded with the weakest (the
+ * default); `mistakes`, what was lately got wrong; `listen` and `speak`, only exercises heard or said; `words`, only
+ * word-level exercises; `unit`, anything from one reached unit (`unitId`).
  */
 export const PRACTICE_MODES = ['review', 'mistakes', 'listen', 'speak', 'words', 'unit'] as const;
 export type PracticeMode = (typeof PRACTICE_MODES)[number];
 
-/** The exercise types the modes that keep to some types draw on, from the lessons the learner has finished. */
+/** The exercise types the type-limited modes draw on, from the lessons the learner finished. */
 export const PRACTICE_MODE_TYPES = {
   listen: ['listening', 'conversation'],
   speak: ['speaking'],
@@ -34,7 +25,7 @@ export const PRACTICE_MODE_TYPES = {
 export interface PracticeHubUnit {
   unitId: string;
   title: string;
-  /** its place in its course, from 1: "Unit 2" */
+  /** its place in its course, from 1 ("Unit 2") */
   number: number;
   /** the colour the path gives it */
   tone: UnitTone;
@@ -52,8 +43,8 @@ export interface PracticeHub {
   listen: boolean;
   speak: boolean;
   words: boolean;
-  /** the learner has turned speaking exercises off (KUR-036) */
+  /** the learner turned speaking exercises off */
   skipSpeaking: boolean;
-  /** units finished, the most recently finished first */
+  /** finished units, most recently finished first */
   units: PracticeHubUnit[];
 }

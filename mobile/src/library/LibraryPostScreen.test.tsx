@@ -153,7 +153,7 @@ describe('a comment’s author', () => {
     const { client } = open({
       'POST /library/posts/p1/comments': ok(comment('new', { author: undefined, authorId: 'me', body: 'Spas!', createdAt: new Date().toISOString() })),
     });
-    await screen.findByText('No comments yet. Be the first to say something.');
+    await screen.findByText('No comments yet.');
     type('Spas!');
     send();
     await waitFor(() => expect(screen.getByRole('button', { name: 'rojda — open profile' })).toBeTruthy());
@@ -195,7 +195,7 @@ describe('posting a comment', () => {
     const { client } = open({
       'POST /library/posts/p1/comments': ok(comment('new', { author: undefined, authorId: 'me', body: 'Spas!', createdAt: new Date().toISOString() })),
     });
-    await screen.findByText('No comments yet. Be the first to say something.');
+    await screen.findByText('No comments yet.');
     fireEvent.click(screen.getByRole('button', { name: 'Record a voice note' }));
     await waitFor(() => expect(alert).toHaveBeenCalled());
     // Where things stand and what can be done instead; nobody is told to allow anything.

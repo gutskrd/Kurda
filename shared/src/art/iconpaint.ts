@@ -1,14 +1,7 @@
 /**
- * How an icon's parts are painted as a small enamel glyph in a metal: the
- * part says what it is (the metal, its shaded face, an accent, snow, a cut
- * line), this decides the colour and the light. The season mark on the rank
- * emblems draws its season this way.
- *
- * A glyph is the brightest thing on its badge — it is lit from within, the
- * metal's highlight at the top running to its light tone at the bottom. Parts
- * are not outlined: each is cut out of what lies beneath by a thin gap in the
- * field's own deep colour, the way a sticker sheet or an enamel cloisonné
- * separates its colours, and the whole glyph floats over its own shadow.
+ * Paints an icon's parts (icons.ts) as a small enamel glyph in a metal; the rank emblems' season marks use it. Parts
+ * carry no outline: each is separated from what lies beneath by a thin gap in the field's deep colour, and the glyph
+ * sits over its own shadow.
  */
 import type { Part } from './icons.js';
 import { ACCENT, STONE } from './palette.js';
@@ -20,7 +13,7 @@ import { linearBox, n2 } from './svg.js';
 export interface IconPaint {
   dr: Drawing;
   metal: Metal;
-  /** the ground the glyph sits on: its deep tone cuts the parts apart */
+  /** The ground under the glyph; its deep tone is the gap between parts. */
   field: Field;
   small: boolean;
   locked: boolean;
@@ -80,7 +73,7 @@ export function paintIcon(parts: readonly Part[], p: IconPaint): string {
 
   const raised = (part: Part): boolean => part.k === 'f' || part.k === 'a' || part.k === 'w' || part.k === 'c' || part.k === 'l';
 
-  // the glyph's shadow on the field: every raised part, dropped, in the field's deep tone
+  // The glyph's shadow: every raised part, dropped, in the field's deep tone.
   const shadow = shown
     .filter(raised)
     .map((part) =>

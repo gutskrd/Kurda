@@ -1,6 +1,6 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { BackHandler, Platform } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 /**
  * Android's back — the button, or the swipe in from the edge of the screen —
@@ -33,4 +33,20 @@ export function useHardwareBack(onBack: (() => void) | null): void {
       return () => sub.remove();
     }, [on]),
   );
+}
+
+/**
+ * A game under way: Android's back asks through `onBack`, and the iOS swipe
+ * from the edge is off while it does, so neither leaves the board without a
+ * word. Null gives both back.
+ */
+export function useGameBack(onBack: (() => void) | null): void {
+  useHardwareBack(onBack);
+  const navigation = useNavigation();
+  const held = onBack !== null;
+  useEffect(() => {
+    if (!held) return undefined;
+    navigation.setOptions({ gestureEnabled: false });
+    return () => navigation.setOptions({ gestureEnabled: true });
+  }, [navigation, held]);
 }

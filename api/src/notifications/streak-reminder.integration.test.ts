@@ -59,6 +59,11 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     );
   }
 
+  // a later day's run needs the learners active the day before it, or their streaks have ended by then
+  async function practisedOn(day: string, ...userIds: string[]): Promise<void> {
+    await pool.query(`UPDATE user_streaks SET last_active_on = $1 WHERE user_id = ANY($2::uuid[])`, [day, userIds]);
+  }
+
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
@@ -108,6 +113,7 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
     await pool.query(`UPDATE users SET locale = 'de' WHERE id = $1`, [minorOptedIn]);
     sent.length = 0;
     // a day of its own, so nothing has been sent yet
+    await practisedOn('2026-06-15', atRisk, minorOptedIn);
     await service.runHourly(new Date('2026-06-16T08:30:00Z'));
     const german = sent.find((s) => s.userId === minorOptedIn);
     expect(german?.notification.title).toBe('Ein paar Minuten Kurdisch?');
@@ -124,6 +130,7 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
   it('sends a minor no streak reminders unless they turned them on', async () => {
     sent.length = 0;
     // a day of its own: the first test already sent the 15th's reminders
+    await practisedOn('2026-06-16', minor, minorOptedIn);
     await service.runHourly(new Date('2026-06-17T08:30:00Z'));
     expect(sent.some((s) => s.userId === minor)).toBe(false);
     expect(sent.some((s) => s.userId === minorOptedIn)).toBe(true);
@@ -136,9 +143,50 @@ describe.skipIf(!DATABASE_URL)('streak reminders (integration)', () => {
       [atRisk],
     );
     sent.length = 0;
+    await practisedOn('2026-06-17', atRisk);
     await service.runHourly(new Date('2026-06-18T08:30:00Z'));
     expect(sent.some((s) => s.userId === atRisk)).toBe(false);
     await pool.query(`DELETE FROM notification_prefs WHERE user_id = $1`, [atRisk]);
+  });
+
+  it('sends nothing to an account waiting to be deleted, and sends again once the deletion is called off', async () => {
+    await pool.query(`UPDATE users SET deletion_requested_at = now() WHERE id = $1`, [atRisk]);
+    sent.length = 0;
+    await practisedOn('2026-06-18', atRisk);
+    await service.runHourly(new Date('2026-06-19T08:30:00Z'));
+    expect(sent.some((s) => s.userId === atRisk)).toBe(false);
+    // signed in again: the deletion is off, and the reminders with it
+    await pool.query(`UPDATE users SET deletion_requested_at = NULL WHERE id = $1`, [atRisk]);
+    await practisedOn('2026-06-19', atRisk);
+    await service.runHourly(new Date('2026-06-20T08:30:00Z'));
+    expect(sent.some((s) => s.userId === atRisk)).toBe(true);
+  });
+
+  /*
+   * One statement reads every learner's day, so a single zone Postgres does
+   * not know (stored before sign-up checked against the database's list)
+   * used to fail the whole run, and nobody was reminded that hour.
+   */
+  it('reads a zone the database does not know as UTC, and still reminds everyone else', async () => {
+    const odd = await register('streakZ', '10.96.0.5');
+    await seed(odd, 5, '2026-06-20');
+    await pool.query(`UPDATE users SET timezone = 'BET' WHERE id = $1`, [odd]);
+    sent.length = 0;
+    await practisedOn('2026-06-20', atRisk);
+    await service.runHourly(new Date('2026-06-21T08:30:00Z'));
+    expect(sent.some((s) => s.userId === odd)).toBe(true);
+    expect(sent.some((s) => s.userId === atRisk)).toBe(true);
+  });
+
+  it('reminds nobody of a streak that has already ended, but does while a freeze still holds it', async () => {
+    const lapsed = await register('streakL', '10.96.0.7');
+    const frozen = await register('streakF', '10.96.0.8');
+    await seed(lapsed, 10, '2026-06-10'); // four days missed, no freeze: the run ended, though nobody has looked since
+    await seed(frozen, 10, '2026-06-13'); // one day missed, covered by the freeze it holds
+    await pool.query(`UPDATE user_streaks SET freezes = 1 WHERE user_id = $1`, [frozen]);
+    await service.runHourly(new Date('2026-06-15T08:30:00Z'));
+    expect(sent.filter((s) => s.userId === lapsed)).toHaveLength(0);
+    expect(sent.filter((s) => s.userId === frozen)).toHaveLength(1);
   });
 
   it('does not fire the primary reminder outside the practice hour', async () => {

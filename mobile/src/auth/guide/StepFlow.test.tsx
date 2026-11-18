@@ -7,11 +7,13 @@ vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
 vi.mock('@react-navigation/native', () => import('./testing/navigation'));
+vi.mock('../../navigation/hardwareBack', () => import('../../navigation/testing/hardwareBack'));
 import { useState } from 'react';
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { onHaptic, resetHaptics } from '../../feedback/haptics';
 import { PACING, type HapticEvent } from '../../feedback/hapticPacing';
 import { TRANSLATIONS } from '../../i18n/translations';
+import { pressBack, resetHardwareBack } from '../../navigation/testing/hardwareBack';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { GuideField } from './GuideField';
@@ -39,10 +41,21 @@ beforeEach(() => {
 afterEach(() => {
   stop();
   cleanup();
+  resetHardwareBack();
 });
 
 /** A two-question flow: a name that must not be empty, then a word the server has the last say on. */
-function Flow({ onFinish, onExit, commit }: { onFinish: () => void; onExit?: () => void; commit: (word: string) => Promise<StepOutcome> }) {
+function Flow({
+  onFinish,
+  onExit,
+  presented,
+  commit,
+}: {
+  onFinish: () => void;
+  onExit?: () => void;
+  presented?: boolean;
+  commit: (word: string) => Promise<StepOutcome>;
+}) {
   const [name, setName] = useState('');
   const [word, setWord] = useState('');
   const steps: FlowStep[] = [
@@ -62,7 +75,7 @@ function Flow({ onFinish, onExit, commit }: { onFinish: () => void; onExit?: () 
       commit: () => commit(word),
     },
   ];
-  return <StepFlow steps={steps} onFinish={onFinish} onExit={onExit} />;
+  return <StepFlow steps={steps} onFinish={onFinish} onExit={onExit} presented={presented} />;
 }
 
 /** a step on its way out has gone */
@@ -134,6 +147,36 @@ describe('StepFlow', () => {
     expect((screen.getByTestId('name') as HTMLInputElement).value).toBe('Rojda');
     expect(bar().getAttribute('aria-valuenow')).toBe('1');
     await press(en['common.back']);
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('goes back a question on Android’s back too, and leaves Android’s back to the screen on the first', async () => {
+    const onExit = vi.fn();
+    renderWithProviders(<Flow onFinish={() => undefined} onExit={onExit} commit={async () => ({ ok: true })} />);
+    expect(pressBack()).toBe(false);
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'Rojda' } });
+    await press(en['common.continue']);
+    await screen.findByText('A word?');
+    await act(async () => {
+      expect(pressBack()).toBe(true);
+    });
+    expect(await screen.findByText('What is your name?')).toBeTruthy();
+    await turned();
+    expect((screen.getByTestId('name') as HTMLInputElement).value).toBe('Rojda');
+    expect(pressBack()).toBe(false);
+    expect(onExit).not.toHaveBeenCalled();
+  });
+
+  it('closes from the first question when it was opened over the app, and goes back a question after it', async () => {
+    const onExit = vi.fn();
+    renderWithProviders(<Flow onFinish={() => undefined} onExit={onExit} presented commit={async () => ({ ok: true })} />);
+    expect(screen.queryByRole('button', { name: en['common.back'] })).toBeNull();
+    fireEvent.change(screen.getByTestId('name'), { target: { value: 'Rojda' } });
+    await press(en['common.continue']);
+    await screen.findByText('A word?');
+    await press(en['common.back']);
+    expect(await screen.findByText('What is your name?')).toBeTruthy();
+    await press(en['common.close']);
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 

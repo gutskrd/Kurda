@@ -30,3 +30,8 @@ export function useReducedMotion(): boolean {
 
   return reduced;
 }
+
+/** How a Modal page comes up: sliding from the bottom, or fading in under Reduce Motion. */
+export function useModalSlide(): 'slide' | 'fade' {
+  return useReducedMotion() ? 'fade' : 'slide';
+}

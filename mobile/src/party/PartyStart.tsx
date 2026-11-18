@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { GameDialect } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { InviteSheet } from '../play/InviteSheet';
@@ -11,9 +10,6 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { usePartyOffer, type PartyGame } from './offer';
 import { Loading } from '../theme/Loading';
-
-/** A variety keeps its own name in every language, as a language does. */
-export const PARTY_DIALECT_NAME: Record<GameDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
 
 /** A party game's levels, named as the solo games name them. */
 export const PARTY_LEVEL_KEY = {

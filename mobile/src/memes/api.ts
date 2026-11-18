@@ -22,7 +22,7 @@ function query(filters: FeedFilters): string {
 export const listPosts = (client: ApiClient, filters: FeedFilters = {}): Promise<ApiResult<{ posts: ImagePost[] }>> =>
   client.get(`/images${query(filters)}`);
 
-export const getPost = (client: ApiClient, id: string): Promise<ApiResult<ImagePost>> => client.get(`/images/${id}`);
+export const getPost = (client: ApiClient, id: string): Promise<ApiResult<ImagePost>> => client.get(`/images/${encodeURIComponent(id)}`);
 
 export const createPost = (
   client: ApiClient,
@@ -39,7 +39,7 @@ export const listComments = (
   if (page.offset != null) p.set('offset', String(page.offset));
   if (page.sort) p.set('sort', page.sort);
   const s = p.toString();
-  return client.get(`/images/${postId}/comments${s ? `?${s}` : ''}`);
+  return client.get(`/images/${encodeURIComponent(postId)}/comments${s ? `?${s}` : ''}`);
 };
 
 export const addComment = (
@@ -47,12 +47,12 @@ export const addComment = (
   postId: string,
   body: string,
   parentId?: string,
-): Promise<ApiResult<Comment>> => client.post(`/images/${postId}/comments`, { body, ...(parentId ? { parentId } : {}) });
+): Promise<ApiResult<Comment>> => client.post(`/images/${encodeURIComponent(postId)}/comments`, { body, ...(parentId ? { parentId } : {}) });
 
 /** Direct replies to a comment, oldest first: one branch, loaded when it is opened. */
 export const listReplies = (client: ApiClient, commentId: string): Promise<ApiResult<{ comments: Comment[] }>> =>
-  client.get(`/images/comments/${commentId}/replies?limit=50`);
+  client.get(`/images/comments/${encodeURIComponent(commentId)}/replies?limit=50`);
 
 /** Delete your own comment; the server keeps a placeholder where it had replies. */
 export const deleteComment = (client: ApiClient, commentId: string): Promise<ApiResult<Comment>> =>
-  client.delete(`/images/comments/${commentId}`);
+  client.delete(`/images/comments/${encodeURIComponent(commentId)}`);

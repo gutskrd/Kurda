@@ -69,7 +69,7 @@ describe('Settings', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'visibility' });
     fireEvent.click(screen.getByRole('button', { name: 'Sounds and vibration' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('SettingsPage', { page: 'sounds' });
-    fireEvent.click(screen.getByRole('button', { name: 'Notifications' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Notification settings' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Notifications');
     fireEvent.click(screen.getByRole('button', { name: 'Blocked people' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('BlockedUsers');

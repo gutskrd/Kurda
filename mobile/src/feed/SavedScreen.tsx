@@ -156,7 +156,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
               <EmptyState
                 title={t('saved.empty')}
                 body={t('saved.empty.body')}
-                action={{ label: t('saved.empty.browse'), onPress: () => navigation.navigate('Tabs', { screen: 'Home' }) }}
+                action={{ label: t('saved.empty.browse'), onPress: () => navigation.popTo('Tabs', { screen: 'Home' }) }}
               />
             }
             ListFooterComponent={

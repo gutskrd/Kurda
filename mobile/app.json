@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Hevalo",
-    "slug": "hevalo",
+    "slug": "kurda",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -25,6 +25,7 @@
       },
       "supportsTablet": false,
       "bundleIdentifier": "app.hevalo.mobile",
+      "appleTeamId": "C66L2R2VX2",
       "appStoreUrl": "",
       "usesAppleSignIn": true,
       "entitlements": {
@@ -202,6 +203,9 @@
         }
       },
       "package": "app.hevalo.mobile",
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
       "playStoreUrl": "",
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",

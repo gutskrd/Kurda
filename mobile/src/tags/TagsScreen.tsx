@@ -15,9 +15,11 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { claimTag, myClaimedTags, myTags, setTagDisplayed, tagCatalog, unclaimTag } from './api';
 import { TagBadge } from './TagBadge';
-import { claimableCatalog, purchasableTags, tagLabel, type ClaimedTag, type ProfileTags, type TagRow } from './types';
+import { claimableCatalog, purchasableTags, type ClaimedTag, type ProfileTags, type TagRow } from './types';
+import { tagBadgeText, tagName } from './tagName';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { useDirection } from '../reports/direction';
 import { heldDim } from '../theme/MotionParts';
 
 /**
@@ -29,6 +31,8 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  // Rows start on the reading side in Arabic and Soranî.
+  const dir = useDirection();
 
   const [profile, setProfile] = useState<ProfileTags | null>(null);
   const [claimed, setClaimed] = useState<ClaimedTag[]>([]);
@@ -88,7 +92,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
   const revoke = useCallback(
     (tag: ClaimedTag) => {
-      Alert.alert(t('tags.remove'), t('tags.removeConfirm', { label: tag.label }), [
+      Alert.alert(t('tags.remove'), t('tags.removeConfirm', { label: tagName(tag, t) }), [
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('common.remove'),
@@ -120,13 +124,13 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.main')}</Text>
             {profile.main ? (
               <View style={styles.chips}>
-                <TagBadge label={profile.main.label} tone="main" />
+                <TagBadge label={tagName(profile.main, t)} tone="main" />
               </View>
             ) : (
               <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('tags.noMain')}</Text>
             )}
             {toBuy.map((tag) => (
-              <ClayButton key={tag.key} label={t('tags.getTag', { tag: tag.label })} tone="primary" onPress={() => navigation.navigate('Shop')} style={styles.buyBtn} />
+              <ClayButton key={tag.key} label={t('tags.getTag', { tag: tagName(tag, t) })} tone="primary" onPress={() => navigation.navigate('Shop')} style={styles.buyBtn} />
             ))}
 
             {/* auto tags */}
@@ -134,8 +138,8 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               <>
                 <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.automatic')}</Text>
                 <View style={styles.chips}>
-                  {autos.map((t) => (
-                    <TagBadge key={t.key} label={tagLabel(t)} />
+                  {autos.map((tag) => (
+                    <TagBadge key={tag.key} label={tagBadgeText(tag, t)} />
                   ))}
                 </View>
               </>
@@ -147,20 +151,20 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               <EmptyState title={t('tags.none')} />
             ) : (
               claimed.map((tag) => (
-                <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
+                <View key={tag.key} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
                   {/* The tag's name and text also toggle the switch: they are the bigger target. */}
                   <ToggleRow
-                    label={t('tags.showOnProfile', { tag: tag.label })}
+                    label={t('tags.showOnProfile', { tag: tagName(tag, t) })}
                     hint={tag.sensitive ? t('tags.sensitive') : undefined}
                     value={tag.displayed}
                     onValueChange={(v) => void toggleDisplay(tag, v)}
-                    style={styles.rowSwitch}
+                    style={[styles.rowSwitch, { flexDirection: dir.row }]}
                   >
                     {(toggle) => (
                       <>
                         <View style={styles.rowMain}>
-                          <TagBadge label={tagLabel(tag)} />
-                          <Text style={[styles.sensitive, { color: colors.textSecondary }]}>
+                          <TagBadge label={tagBadgeText(tag, t)} />
+                          <Text style={[styles.sensitive, dir.text, { color: colors.textSecondary }]}>
                             {tag.displayed ? t('tags.shownOnProfile') : t('tags.hiddenStatus')}
                             {tag.sensitive ? ` · ${t('tags.sensitive')}` : ''}
                           </Text>
@@ -173,7 +177,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                   <Pressable
                     onPress={() => revoke(tag)}
                     accessibilityRole="button"
-                    accessibilityLabel={t('tags.removeTag', { tag: tag.label })}
+                    accessibilityLabel={t('tags.removeTag', { tag: tagName(tag, t) })}
                     style={({ pressed }) => [styles.remove, pressed && heldDim]}
                   >
                     <Icon name="close" size={20} color={colors.danger} />
@@ -187,9 +191,9 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               <>
                 <Text style={[styles.section, { color: colors.textSecondary }]}>{t('tags.add')}</Text>
                 {toClaim.map((tag) => (
-                  <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
-                    <Text style={[styles.claimLabel, { color: colors.textPrimary }]}>
-                      {tag.label}
+                  <View key={tag.key} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
+                    <Text style={[styles.claimLabel, dir.text, { color: colors.textPrimary }]}>
+                      {tagName(tag, t)}
                       {tag.sensitive ? <Text style={{ color: colors.textSecondary }}>{` · ${t('tags.sensitive')}`}</Text> : null}
                     </Text>
                     <ClayButton label={t('tags.claim')} tone="neutral" onPress={() => startClaim(tag)} />
@@ -204,10 +208,10 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
         {/* Inline claim sheet. */}
         {claiming ? (
           <View style={[styles.sheet, { backgroundColor: colors.glassFill }]}>
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('tags.addTitle', { tag: claiming.label })}</Text>
+            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('tags.addTitle', { tag: tagName(claiming, t) })}</Text>
             <TextInput
               style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-              placeholder={t('tags.valuePlaceholder', { tag: claiming.label.toLowerCase() })}
+              placeholder={t('tags.valuePlaceholder', { tag: tagName(claiming, t).toLocaleLowerCase() })}
               placeholderTextColor={colors.textSecondary}
               value={value}
               onChangeText={setValue}
@@ -256,7 +260,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
   rowSwitch: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rowMain: { flex: 1, gap: 2 },
-  remove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.sm },
+  // A gap's width from the switch on whichever side it stands (the row's gap plus this padding), never a left margin.
+  remove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: spacing.xs },
   sensitive: { fontSize: typography.sizes.xs },
   claimLabel: { flex: 1, fontSize: typography.sizes.md },
   sheet: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.lg, borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },

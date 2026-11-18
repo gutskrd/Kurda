@@ -4,13 +4,13 @@ import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
-import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { ClayButton, ErrorRetry, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { useHardwareBack } from '../navigation/hardwareBack';
+import { useGameBack } from '../navigation/hardwareBack';
 import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
 import { LobbyRated, RatedChoice, RatedPill } from '../ranks/Rated';
@@ -44,6 +44,7 @@ import {
 import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { useDirection } from '../reports/direction';
+
 
 /**
  * Peyvok Battle: race a friend to the same word. Built on the poll-safe REST endpoints, so a realtime gateway can
@@ -185,12 +186,18 @@ function BattleRoom({
   }, [load]);
   useLobbyRefresh('wordle-battle', id, () => void load(), !gone && battle?.status !== 'finished' && battle?.status !== 'cancelled');
 
+  // Results are fetched once the battle is over and nothing polls; a failed fetch is shown with a retry, not an
+  // endless spinner.
+  const [resultsFailed, setResultsFailed] = useState(false);
+  const [resultsAsk, setResultsAsk] = useState(0);
   useEffect(() => {
     if (battle?.status !== 'finished' || results) return;
+    setResultsFailed(false);
     void getResults(client, id).then((r) => {
       if (r.ok) setResults(r.data);
+      else setResultsFailed(true);
     });
-  }, [battle?.status, results, client, id]);
+  }, [battle?.status, results, client, id, resultsAsk]);
 
   /*
    * A battle played to its end here counts as a finished game for the rating box once its results are in, as a
@@ -212,9 +219,9 @@ function BattleRoom({
   // An invite waits while a battle is on (the banner would sit over the board).
   useQuietInvites(battle?.status === 'active');
   const isHost = battle ? (battle.isHost ?? battle.createdBy === user?.id) : false;
-  // Backing out of the lobby leaves it after asking; Android's back mid-race asks before leaving the board.
+  // Backing out of the lobby leaves it after asking; mid-race Android's back asks and the iOS swipe is off.
   useLeaveLobbyOnBack(!gone && battle?.status === 'lobby' && me != null, isHost, () => leaveBattle(client, id));
-  useHardwareBack(active ? () => askLeaveGame(t, onExit) : null);
+  useGameBack(active ? () => askLeaveGame(t, onExit) : null);
 
   const submit = useCallback(async () => {
     if (!battle || !me || !active || busy) return;
@@ -407,6 +414,8 @@ function BattleRoom({
                 ))}
               </View>
             </>
+          ) : resultsFailed ? (
+            <ErrorRetry onRetry={() => setResultsAsk((n) => n + 1)} />
           ) : (
             <Loading />
           )}

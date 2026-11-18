@@ -66,6 +66,6 @@ describe('the saved posts, before anything is saved', () => {
     // The old wording named a place the app no longer has.
     expect(screen.queryByText(/Community/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Browse posts' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Home' });
+    expect(navigation.popTo).toHaveBeenCalledWith('Tabs', { screen: 'Home' });
   });
 });

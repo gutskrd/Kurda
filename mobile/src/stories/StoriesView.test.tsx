@@ -435,7 +435,7 @@ describe('StoriesView', () => {
   });
 
   /** The switch's two sides as they are named (a variety has one name in every language), and the one that is on. */
-  const sides = () => screen.getAllByRole('radio', { name: /^(Kurmancî|Soranî)$/ });
+  const sides = () => screen.getAllByRole('radio', { name: /^(Kurmancî|Soranî|کورمانجی|سۆرانی)$/ });
   const chosen = () => sides().filter((r) => r.getAttribute('aria-checked') === 'true').map((r) => r.getAttribute('aria-label'));
   const kept = (): unknown => JSON.parse(localStorage.getItem('hevalo_stories_prefs_v1') ?? '{}').dialect;
   const pages = (c: ReturnType<typeof client>) => c.calls.filter((call) => call.path.startsWith('/stories/library')).map((call) => call.path);
@@ -529,7 +529,8 @@ describe('StoriesView', () => {
     const c = client({ 'GET /stories/library?dialect=sorani': ok(SORANI_LIBRARY) });
     testAuth.client = c;
     const view = renderWithProviders(<StoriesView />);
-    await waitFor(() => expect(chosen()).toEqual(['Soranî']));
+    // a Soranî interface names the varieties in its own script
+    await waitFor(() => expect(chosen()).toEqual(['سۆرانی']));
     // the interface's own variety is only where the switch starts: nothing was chosen, so nothing is kept
     expect(kept()).toBeUndefined();
     view.unmount();
@@ -539,7 +540,7 @@ describe('StoriesView', () => {
     localStorage.setItem('hevalo_stories_prefs_v1', JSON.stringify({ dialect: 'kurmanci' }));
     renderWithProviders(<StoriesView />);
     await screen.findByRole('radiogroup', { name: 'شێوەزار' });
-    expect(chosen()).toEqual(['Kurmancî']);
+    expect(chosen()).toEqual(['کورمانجی']);
   });
 
   it('says so when the stories for a game’s setup do not come, and opens no empty sheet', async () => {

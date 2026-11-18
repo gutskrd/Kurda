@@ -6,6 +6,7 @@ import {
   MAX_UPLOAD_BYTES,
   MediaStorage,
   PRIVATE_CACHE_CONTROL,
+  PrivateStorageUnavailable,
   cloudflarePurge,
   createStorage,
   mediaKey,
@@ -298,8 +299,8 @@ describe('the private bucket', () => {
     expect(forgotten.sort()).toEqual([...quarantined, EXPORT].map((k) => `https://media.hevalo.app/${k}`).sort());
   });
 
-  it('keeps private files as before when the private bucket refuses a write, and says so', async () => {
-    const b = buckets({});
+  it('keeps evidence as before when the private bucket refuses a write, refuses data exports, and says so', async () => {
+    const b = buckets({ pub: ['image-post/x.webp'] });
     // a bucket of its own: a refusal holds for the whole process
     b.refuse('locked');
     const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'locked' });
@@ -310,12 +311,24 @@ describe('the private bucket', () => {
     });
     expect(said).toEqual([{ level: 'error', obj: { error: 'AccessDenied' } }]);
     expect(storage.hasPrivateBucket).toBe(false);
-    await storage.putPrivate(EXPORT, Buffer.from('{}'), 'application/json');
-    expect(b.keys('pub')).toEqual([EXPORT]);
-    expect(b.meta('pub', EXPORT)!.cacheControl).toBe(PRIVATE_CACHE_CONTROL);
+    // evidence is still taken off public view, under its unguessable key
+    await storage.copyToEvidence('image-post/x.webp', EVIDENCE);
+    expect(b.meta('pub', EVIDENCE)!.cacheControl).toBe(PRIVATE_CACHE_CONTROL);
+    // but a data export is never written to the bucket the CDN serves
+    await expect(storage.putPrivate(EXPORT, Buffer.from('{}'), 'application/json')).rejects.toBeInstanceOf(PrivateStorageUnavailable);
+    expect(b.keys('pub')).not.toContain(EXPORT);
     // the background jobs' own storage, in the same process, keeps to that too
     const jobs = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'locked' });
     expect(jobs.hasPrivateBucket).toBe(false);
+    await expect(jobs.putPrivate(EXPORT, Buffer.from('{}'), 'application/json')).rejects.toBeInstanceOf(PrivateStorageUnavailable);
+    expect(b.keys('pub')).not.toContain(EXPORT);
+  });
+
+  it('without a private bucket, keeps no data export at all', async () => {
+    const b = buckets({});
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app');
+    await expect(storage.putPrivate(EXPORT, Buffer.from('{}'), 'application/json')).rejects.toBeInstanceOf(PrivateStorageUnavailable);
+    expect(b.keys('pub')).toEqual([]);
   });
 
   it('once the private bucket takes a write, moves what is waiting and says how much', async () => {

@@ -153,8 +153,9 @@ export function ScreenHeader({
   const trailing = right ?? (browse && onBack && leading === 'back' ? <GlobalActions /> : null);
   // a title that is a way in is a third control in the bar, one gap from each side
   const titleControl = !!title && !!(titleAvatar || onTitlePress);
-  // how wide the way back and the trailing actions are, so neither side is squeezed under the title
-  const [ends, setEnds] = useState({ start: 0, end: 0 });
+  // how wide the way back and the trailing actions are, so neither side is squeezed under the title; until they are
+  // measured, a fingertip each, so a long title does not jump on the first frame
+  const [ends, setEnds] = useState(() => ({ start: onBack ? MIN_TOUCH_TARGET : 0, end: trailing ? MIN_TOUCH_TARGET : 0 }));
   const measure = useCallback(
     (key: 'start' | 'end') => (e: LayoutChangeEvent) => {
       const width = Math.ceil(e.nativeEvent.layout.width);

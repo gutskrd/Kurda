@@ -6,7 +6,6 @@ import {
   conversationLineVoice,
   conversationSpeaker,
   isConversationLineKey,
-  isLearnerPart,
   learnerPart,
   stageCast,
   stageLines,
@@ -109,8 +108,6 @@ describe('a conversation with the learner', () => {
       [0, 'Hamo'],
       [2, 'Hamo'],
     ]);
-    expect(isLearnerPart(speakers[1])).toBe(true);
-    expect(isLearnerPart(speakers[0])).toBe(false);
   });
 
   it('puts only the characters on the stage, and has them look out at the learner while the learner speaks', () => {

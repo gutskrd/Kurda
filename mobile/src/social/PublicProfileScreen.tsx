@@ -133,7 +133,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   }, [status, announce, t]);
 
   const load = useCallback(() => {
-    void client.get<Profile>(`/users/${userId}`).then((res) => {
+    void client.get<Profile>(`/users/${encodeURIComponent(userId)}`).then((res) => {
       if (res.ok) {
         setProfile(res.data);
         setError(null);
@@ -154,9 +154,9 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       if (status === 'none' || status === 'pending_in') haptic('tap');
       let res: ApiResult<unknown> | null = null;
       if (status === 'none') res = await client.post('/friends/requests', { userId });
-      else if (status === 'pending_in') res = await client.post(`/friends/requests/${userId}/accept`);
-      else if (status === 'pending_out') res = await client.delete(`/friends/requests/${userId}`);
-      else if (status === 'friends') res = await client.delete(`/friends/${userId}`);
+      else if (status === 'pending_in') res = await client.post(`/friends/requests/${encodeURIComponent(userId)}/accept`);
+      else if (status === 'pending_out') res = await client.delete(`/friends/requests/${encodeURIComponent(userId)}`);
+      else if (status === 'friends') res = await client.delete(`/friends/${encodeURIComponent(userId)}`);
       setBusy(false);
       // a request that did not go — a full friend list, too many out — says why (limits/limitCopy.ts)
       if (res && !res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));

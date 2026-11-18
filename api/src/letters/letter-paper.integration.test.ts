@@ -29,7 +29,7 @@ import { loadConfig } from '../config/env.js';
 import { bornYearsAgo } from '../test/age.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
 import { GdprService, eraseAccountData } from '../gdpr/service.js';
-import { hashWidgetToken } from './widget.js';
+import { WIDGET_TOKEN_DAYS, hashWidgetToken } from './widget.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -253,6 +253,54 @@ describe.skipIf(!DATABASE_URL)('letter paper and the letter widget (integration)
       const after = await tokenFor(b);
       await pool.query(`UPDATE users SET token_version = token_version + 1 WHERE id = $1`, [b.id]);
       expect((await asWidget(after, '/letters/widget/feed')).statusCode).toBe(401);
+    });
+
+    /*
+     * A phone signed out from somewhere else, because it was lost or handed
+     * on, must stop showing the account's letters on its home screen as well.
+     */
+    it('ends with the session it was made in: that device signed out, or its session run out', async () => {
+      const a = await adult('wsa');
+      const login = await send('POST', '/auth/login', {}, { email: a.email, password: 'a-strong-password1' });
+      expect(login.statusCode, login.body).toBe(200);
+      const elsewhere = (login.json() as { tokens: { accessToken: string } }).tokens.accessToken;
+      const mine = await tokenFor(a);
+      const made = await call('POST', '/letters/widget/tokens', elsewhere);
+      expect(made.statusCode, made.body).toBe(200);
+      const theirs = (made.json() as { token: string }).token;
+      expect((await asWidget(mine, '/letters/widget/feed')).statusCode).toBe(200);
+      expect((await asWidget(theirs, '/letters/widget/feed')).statusCode).toBe(200);
+
+      // the other device signed out from the session list: its widget goes, this one stays
+      const { sessions } = (await call('GET', '/me/sessions', a.token)).json() as { sessions: Array<{ id: string; current: boolean }> };
+      const other = sessions.find((s) => !s.current)!;
+      expect((await call('DELETE', `/me/sessions/${other.id}`, a.token)).statusCode).toBe(200);
+      expect((await asWidget(theirs, '/letters/widget/feed')).statusCode).toBe(401);
+      expect((await asWidget(mine, '/letters/widget/feed')).statusCode).toBe(200);
+
+      // a session that ran out, signed out by nobody, ends its widget the same way
+      await pool.query(`UPDATE refresh_tokens SET expires_at = now() - interval '1 minute' WHERE user_id = $1 AND revoked_at IS NULL`, [a.id]);
+      expect((await asWidget(mine, '/letters/widget/feed')).statusCode).toBe(401);
+    });
+
+    it('lasts its days at most, and a token made before tokens kept their session reads as ended until the app makes a new one', async () => {
+      const a = await adult('wda');
+      const token = await tokenFor(a);
+      expect((await asWidget(token, '/letters/widget/feed')).statusCode).toBe(200);
+      await pool.query(`UPDATE letter_widget_tokens SET created_at = now() - make_interval(days => $2::int) - interval '1 minute' WHERE token_hash = $1`, [
+        hashWidgetToken(token),
+        WIDGET_TOKEN_DAYS,
+      ]);
+      expect((await asWidget(token, '/letters/widget/feed')).statusCode).toBe(401);
+
+      const older = await tokenFor(a);
+      await pool.query(`UPDATE letter_widget_tokens SET family_id = NULL WHERE token_hash = $1`, [hashWidgetToken(older)]);
+      expect((await asWidget(older, '/letters/widget/feed')).statusCode).toBe(401);
+      // the app's next start hands the widget a new one in its place
+      const fresh = await tokenFor(a, older);
+      expect((await asWidget(fresh, '/letters/widget/feed')).statusCode).toBe(200);
+      const kept = await pool.query<{ family_id: string | null }>(`SELECT family_id FROM letter_widget_tokens WHERE token_hash = $1`, [hashWidgetToken(fresh)]);
+      expect(kept.rows[0]!.family_id).not.toBeNull();
     });
 
     it('may be pinned only to a letter a pen pal sent you, not taken down and not across a block', async () => {

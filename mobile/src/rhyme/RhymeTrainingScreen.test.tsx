@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn() }));
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -94,8 +94,8 @@ describe('RhymeTrainingScreen', () => {
 });
 
 /*
- * A variety without enough curated prompts keeps its place in the choice, marked coming soon in place of Start;
- * the screen opens on the learner's own variety when rounds are offered there.
+ * A variety without enough curated prompts is left out of the choice, and a choice of one is not shown; the
+ * screen opens on the learner's own variety when rounds are offered there.
  */
 describe('Rhyme training, in the varieties it is offered in', () => {
   const availability = (sorani: boolean) =>
@@ -106,20 +106,26 @@ describe('Rhyme training, in the varieties it is offered in', () => {
     localStorage.clear();
   });
 
-  it('marks a variety with no rounds yet as coming soon, and offers no Start in it', async () => {
+  it('leaves a variety with no rounds yet out of the choice, so nothing reads “coming soon”', async () => {
     const client = fakeClient({ 'GET /rhyme/availability': availability(false), 'POST /rhyme/training': ok(round()) });
     testAuth.client = client;
     renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
 
-    const sorani = await screen.findByRole('radio', { name: 'Soranî · Coming soon' });
-    expect(screen.getByRole('radio', { name: 'Kurmancî' }).getAttribute('aria-checked')).toBe('true');
-    fireEvent.click(sorani);
-    expect(screen.getByText('Rhyme games aren’t offered in this Kurdish yet.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: /^Start/ })).toBeNull();
-    expect(client.calls.some((c) => c.path === '/rhyme/training')).toBe(false);
+    // A choice of one is no choice: once the server has answered, there is nothing to pick.
+    await waitFor(() => expect(screen.queryByRole('radio', { name: /Soranî/ })).toBeNull());
+    expect(screen.queryByRole('radio', { name: 'Kurmancî' })).toBeNull();
+    expect(screen.queryByText(/Coming soon/)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
+    await waitFor(() => expect(client.calls.find((c) => c.path === '/rhyme/training')?.body).toEqual({ dialect: 'kurmanci' }));
+  });
 
-    // The other variety brings Start back, and its round is asked for in that variety.
-    fireEvent.click(screen.getByRole('radio', { name: 'Kurmancî' }));
+  it('drops a pick made before the server said that variety has no rounds', async () => {
+    let answer: (value: ReturnType<typeof availability>) => void = () => undefined;
+    const client = fakeClient({ 'GET /rhyme/availability': () => new Promise((resolve) => (answer = resolve)), 'POST /rhyme/training': ok(round()) });
+    testAuth.client = client;
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('radio', { name: 'Soranî' }));
+    await act(async () => answer(availability(false)));
     fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/rhyme/training')?.body).toEqual({ dialect: 'kurmanci' }));
   });
@@ -128,7 +134,7 @@ describe('Rhyme training, in the varieties it is offered in', () => {
     rememberCourseDialect('sorani');
     testAuth.client = fakeClient({ 'GET /rhyme/availability': availability(false) });
     renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
-    await waitFor(() => expect(screen.getByRole('radio', { name: 'Kurmancî' }).getAttribute('aria-checked')).toBe('true'));
+    await waitFor(() => expect(screen.queryByRole('radio', { name: 'Soranî' })).toBeNull());
     expect(screen.getByRole('button', { name: /^Start/ })).toBeTruthy();
     cleanup();
 

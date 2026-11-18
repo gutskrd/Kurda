@@ -10,7 +10,7 @@ import { Drift } from '../auth/guide/Drift';
 import { useScreenFocus } from '../auth/guide/focus';
 import { HevaloGuide, SpeechBubble } from '../auth/guide/HevaloGuide';
 import { useSpokenLine } from '../auth/guide/speech';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloPeek } from '../characters/HevaloPeek';
 import { useDirection } from '../reports/direction';
 import { springTo } from '../theme/animate';
 import { ClayButton, GradientBackground } from '../theme/glass';
@@ -310,17 +310,8 @@ function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
     <View style={[styles.slide, styles.centered]}>
       <SpeechBubble text={hello} tail="bottom" style={styles.heroBubble} />
       <Drift direction={arriving} mirrored={mirrored}>
-        <SpeakingCharacter
-          speaker="hevalo"
-          player={speech.player}
-          playing={speech.playing}
-          source={speech.source}
-          text={hello}
-          crop="half"
-          height={HERO_HEIGHT}
-          onPress={greeted}
-          style={styles.hero}
-        />
+        {/* Through a tear in the page, rather than cut off at the legs and floating. */}
+        <HevaloPeek size={HERO_HEIGHT} speech={speech} text={hello} onPress={greeted} style={styles.hero} />
       </Drift>
       <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
@@ -346,12 +337,12 @@ function NotificationsSlide({ arriving, mirrored }: SlideArrival): React.JSX.Ele
   return (
     <View style={[styles.slide, styles.centered]}>
       <HevaloGuide says={t('guide.intro.notify.says')} style={styles.guideArt} />
-      {/* One breath as the slide arrives, then still apart from the float: there are three lines to read under it. */}
+      {/* One breath as the slide arrives, then still apart from the float: there are two lines to read under it. */}
       <Drift direction={arriving} mirrored={mirrored} style={styles.notifArt}>
         <BreathingIcon name="bell" size={56} tone="primary" breaths={1} />
       </Drift>
       <Text style={[styles.title, { color: colors.textPrimary }, styles.notifTitle]}>{t('onboarding.notify.title')}</Text>
-      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('onboarding.notify.body')}</Text>
+      {/* Hevalo has just said what a reminder is in the bubble above, so the slide does not repeat it. */}
       <Text style={[styles.notifHint, { color: colors.textSecondary }]}>{t('onboarding.notify.later')}</Text>
     </View>
   );

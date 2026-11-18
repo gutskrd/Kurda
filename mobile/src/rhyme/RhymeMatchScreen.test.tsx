@@ -7,7 +7,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import type { MatchState } from './matchApi';
 import { RhymeMatchScreen } from './RhymeMatchScreen';
 import { backOut, navigation } from '../play/testing/navigation';
-import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
+import { pressBack, resetHardwareBack, swipeHeld } from '../navigation/testing/hardwareBack';
 import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -168,30 +168,26 @@ describe('RhymeMatchScreen', () => {
       renderWithProviders(<RhymeMatchScreen id="m1" onExit={onExit} />);
       await waitFor(() => expect(pressBack()).toBe(true));
       expect(alert.mock.calls[0]?.[0]).toBe('Leave this game?');
+      expect(swipeHeld()).toBe(true);
       // Staying keeps the round.
       expect(onExit).not.toHaveBeenCalled();
       expect(screen.getByLabelText('Your rhyme')).toBeTruthy();
     });
   });
 
-  /*
-   * A variety without enough curated prompts cannot open a match: it is marked coming soon in place of Create. A
-   * match opens on the learner's own variety.
-   */
+  /* A variety without enough curated prompts is left out of the choice; a match opens on the learner's own variety. */
   describe('making a match, in the varieties it is offered in', () => {
     const availability = (sorani: boolean) =>
       ok({ dialects: { kurmanci: { prompts: 150, available: true }, sorani: { prompts: sorani ? 80 : 0, available: sorani } }, minimum: 40 });
     afterEach(() => resetCourseDialect());
 
-    it('marks a variety with no matches yet as coming soon, and offers no Create in it', async () => {
+    it('leaves a variety with no matches yet out of the choice, and makes the match in one that has them', async () => {
       const client = fakeClient({ 'GET /rhyme/availability': availability(false), 'POST /rhyme/matches': ok(lobby()), 'GET /rhyme/matches/m1': ok(lobby()) });
       testAuth.client = client;
       renderWithProviders(<RhymeMatchScreen onExit={() => undefined} />);
-      fireEvent.click(await screen.findByRole('radio', { name: 'Soranî · Coming soon' }));
-      expect(screen.getByText('Rhyme games aren’t offered in this Kurdish yet.')).toBeTruthy();
-      expect(screen.queryByRole('button', { name: 'Create match' })).toBeNull();
+      await waitFor(() => expect(screen.queryByRole('radio', { name: /Soranî/ })).toBeNull());
+      expect(screen.queryByText(/Coming soon/)).toBeNull();
 
-      fireEvent.click(screen.getByRole('radio', { name: 'Kurmancî' }));
       fireEvent.click(screen.getByRole('button', { name: 'Create match' }));
       await waitFor(() => expect(client.calls.find((c) => c.path === '/rhyme/matches')?.body).toMatchObject({ dialect: 'kurmanci' }));
     });

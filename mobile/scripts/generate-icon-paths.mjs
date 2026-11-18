@@ -207,8 +207,8 @@ function shapes(glyph, weight) {
   return out;
 }
 
-/** The whole generated file as text, exported so the check can build and compare it: a hand edit to a generated file should fail CI. */
-export function buildIconPaths() {
+/** The whole generated file as text, so `--check` can compare it: a hand edit to a generated file should fail CI. */
+function buildIconPaths() {
   const rows = [];
   const problems = [];
   for (const [name, { glyph, weight = 'regular', note }] of Object.entries(MAP)) {
@@ -269,8 +269,6 @@ export type IconName = keyof typeof ICON_PATHS;
 
   return file;
 }
-
-export const ICON_PATHS_FILE = OUT;
 
 /**
  * Compare ignoring line endings: the file is stored LF but checked out CRLF on Windows (core.autocrlf), so the

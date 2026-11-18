@@ -5,7 +5,6 @@ import {
   BROW_STATES,
   CHARACTER_IDS,
   CHARACTER_NAMES,
-  CHARACTERS,
   DEFAULT_CHARACTER,
   EXPRESSION_MOUTHS,
   EYE_STATES,
@@ -13,6 +12,10 @@ import {
   STAGE_FIGURE_SHARE,
   WINDOW_PLACE,
   WINDOW_VIEW,
+  PEEK_PLACE,
+  PEEK_VIEW,
+  peekArt,
+  type PeekArt,
   characterArt,
   characterSvg,
   cropBody,
@@ -20,7 +23,6 @@ import {
   faceLayers,
   headFor,
   headGroup,
-  isCharacterId,
   stageBackdrop,
   stageFigure,
   windowArt,
@@ -92,7 +94,7 @@ function walk(el: El, visit: (e: El) => void): void {
   for (const c of el.children) walk(c, visit);
 }
 
-/** Only what react-native-svg's SvgXml draws the same as a browser. */
+/** Only what the phone's SVG renderer draws the same as a browser. */
 const ALLOWED = new Set(['svg', 'title', 'defs', 'g', 'path', 'circle', 'ellipse', 'linearGradient', 'radialGradient', 'stop', 'clipPath']);
 
 /** The elements whose positions are written by the pen, a tenth at a time (a gradient's are fractions of a box). */
@@ -272,11 +274,7 @@ describe('the characters', () => {
   it('are Hevalo, Hamo and Xezo, by those names', () => {
     expect([...CHARACTER_IDS]).toEqual(['hevalo', 'hamo', 'xezo']);
     expect(CHARACTER_NAMES).toEqual({ hevalo: 'Hevalo', hamo: 'Hamo', xezo: 'Xezo' });
-    expect(CHARACTERS.map((c) => c.name)).toEqual(['Hevalo', 'Hamo', 'Xezo']);
     expect(DEFAULT_CHARACTER).toBe('hevalo');
-    expect(isCharacterId('hamo')).toBe(true);
-    expect(isCharacterId('Hamo')).toBe(false);
-    expect(isCharacterId(undefined)).toBe(false);
   });
 
   for (const id of CHARACTER_IDS) {
@@ -850,5 +848,51 @@ describe('the pen', () => {
     );
     expect(d.startsWith('M0,0')).toBe(true);
     expect(d.endsWith('z')).toBe(true);
+  });
+});
+
+describe('the tear in the page Hevalo pokes his head through', () => {
+  const layers = (drawn: PeekArt): string[] => [drawn.back, drawn.cast, drawn.front, drawn.shadow];
+
+  it('is four well-formed drawings in its box, behind him, his shadow on the page, on our side of him and his shade, on a light page and a dark one', () => {
+    for (const dark of [false, true]) {
+      const drawn = peekArt({ dark, idPrefix: `tear${dark ? 'd' : 'l'}` });
+      for (const layer of layers(drawn)) {
+        const svg = parse(layer).children[0] as El;
+        expect(svg.name).toBe('svg');
+        expect(svg.attrs.viewBox).toBe(`${PEEK_VIEW.x} ${PEEK_VIEW.y} ${PEEK_VIEW.w} ${PEEK_VIEW.h}`);
+        expect(svg.attrs['aria-hidden']).toBe('true');
+        const { problems, ids, refs } = inspect(layer);
+        expect(problems).toEqual([]);
+        for (const r of refs) expect(ids).toContain(r);
+        for (const i of ids) expect(i.startsWith(`tear${dark ? 'd' : 'l'}-`)).toBe(true);
+        expect(inside(extent(layer), PEEK_VIEW)).toBe(true);
+      }
+    }
+    expect(peekArt().back).not.toBe(peekArt({ dark: true }).back);
+    expect(peekArt({ idPrefix: 'again' })).toEqual(peekArt({ idPrefix: 'again' }));
+  });
+
+  it('keeps two tears on a page apart: each its own ids', () => {
+    const ids = [...layers(peekArt({ idPrefix: 'one' })), ...layers(peekArt({ idPrefix: 'two' }))].flatMap((m) => inspect(m).ids);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('puts all of his head and antlers in the picture, and cuts him off under his chin, at the tear’s foot', () => {
+    const art = characterArt('hevalo');
+    const head = extent(headGroup(art));
+    const f = PEEK_PLACE.figure;
+    // his head crop's box, in the picture's units
+    const box = { x: PEEK_VIEW.x + f.left * PEEK_VIEW.w, y: PEEK_VIEW.y + f.top * PEEK_VIEW.h, w: f.width * PEEK_VIEW.w };
+    expect(box.x).toBeCloseTo(art.neck!.box.x);
+    expect(box.y).toBeCloseTo(art.neck!.box.y);
+    expect(box.w).toBeCloseTo(art.neck!.box.w);
+    // the cut is under his head and above where his neck widens into his chest at the window's sill
+    const cut = PEEK_VIEW.y + PEEK_PLACE.cut * PEEK_VIEW.h;
+    expect(cut).toBeGreaterThan(head.y + head.h - 1);
+    expect(cut).toBeLessThan(600);
+    // and he waits behind the page wholly under it before he comes through
+    expect(PEEK_VIEW.y + (PEEK_PLACE.figure.top + PEEK_PLACE.drop) * PEEK_VIEW.h).toBeCloseTo(cut);
+    expect(head.y).toBeGreaterThan(PEEK_VIEW.y);
   });
 });

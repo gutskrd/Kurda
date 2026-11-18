@@ -1,14 +1,8 @@
 /**
- * Cards made from approved words, in the admin panel: Who Am I?'s
- * identities are a word someone already approved — a word a
- * published lesson teaches (with the meaning the lesson gives it), or a
- * dictionary entry an admin curated for the games (with its senses and an
- * example) — picked, never typed. The API copies the Kurdish across; the
- * editor adds only what is not Kurdish (an identity's facts, a level).
- *
- * A word is named by where it was found (`ref`): `vocab:<key>` for a lesson's
- * or a story's word, `dict:<entryId>` for a dictionary entry. The ref is kept
- * as the row's origin, so a word becomes at most one card of each kind per
+ * Cards made from approved words in the admin: a Who Am I? identity is a word someone already approved (a lesson word
+ * with its meaning, or a dictionary entry curated for the games with its senses and example), picked, never typed. The API
+ * copies the Kurdish; the editor adds only what is not Kurdish (facts, a level). `ref` names where a word was found
+ * (`vocab:<key>` or `dict:<entryId>`) and is kept as the row's origin, so a word makes at most one card per kind and
  * variety.
  */
 import type { Meanings } from './content.js';
@@ -29,9 +23,9 @@ export interface GameWordCandidate {
   source: GameWordSource;
   dialect: GameDialect;
   word: string;
-  /** its approved meanings, by interface language (a dictionary's Kurdish definition under the variety's own code) */
+  /** its approved meanings by interface language (a dictionary's Kurdish definition under the variety's own code) */
   meanings: Partial<Meanings>;
-  /** a sentence using it, from the same approved source, when there is one */
+  /** a sentence using it from the same approved source, when there is one */
   example: { ku: string; meanings: Partial<Meanings> } | null;
   /** the rows already made of it, by kind */
   made: Partial<Record<WordCardKind, string>>;
@@ -43,7 +37,7 @@ export interface WordCardRequest {
   dialect: GameDialect;
   ref: string;
   level: number;
-  /** an identity's category and facts: yes, no, or "sometimes" where honest people would answer either way */
+  /** an identity's category and facts: yes, no, or "sometimes" where either is honest */
   category?: string;
   facts?: Record<string, WhoAmIFactValue>;
 }

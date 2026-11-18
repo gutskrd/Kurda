@@ -11,12 +11,13 @@ import { clearWidgetConfig, readWidgetConfig, widgetTokenRejected, writeWidgetCo
  * The widget cannot use the account session: on iPhone it is another program, it runs while the app is closed,
  * and an all-powerful session does not belong on a home screen. So the app requests a token that can only read
  * the widget's letter (`POST /letters/widget/tokens`, shown once) and stores it where the widget reads it
- * (storage.ts). Signing out revokes it with the token itself (`DELETE …/tokens/current`, which needs no session,
- * so it works after the session ends) and removes it locally.
+ * (storage.ts). Signing out revokes it with the token itself (`DELETE …/tokens/current`, which needs no session)
+ * and removes it locally.
  *
- * A fresh token is made on each app start and each sign-in, naming its predecessor as replaced, so a device never
- * holds two. Tokens also end with the account's sessions (a new password, signing out everywhere); the widget
- * then gets 401, records it in storage and shows "Open Hevalo", and the app makes a new one next time it opens.
+ * A fresh token is made on each app start and sign-in, naming its predecessor as replaced, so a device never
+ * holds two. The server also ends a token with the session it was made in, with all the account's sessions (a new
+ * password, signing out everywhere), and thirty days after creation. The widget then gets 401, records it in
+ * storage and shows "Open Hevalo", and the app makes a new one next time it opens.
  */
 
 export type TokenOutcome = 'kept' | 'made' | 'failed';

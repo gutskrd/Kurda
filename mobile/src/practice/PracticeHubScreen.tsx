@@ -122,7 +122,7 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
                 <HeroCard
                   hero={heroOf(hub)}
                   onStart={start}
-                  onLessons={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+                  onLessons={() => navigation.popTo('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
                 />
               </Rise>
               <Text style={[sectionLabel, styles.section, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { invitePath } from './game-invites.js';
-import { JOIN_LINK_ROUTE, JOIN_LINK_SEGMENTS, buildJoinLink, joinLinkPath, parseJoinLink } from './join-link.js';
+import { JOIN_LINK_SEGMENTS, buildJoinLink, joinLinkPath, parseJoinLink } from './join-link.js';
 import { PLAY_GAMES } from './play.js';
 import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH } from './stories.js';
 
@@ -49,9 +49,5 @@ describe('a join code as a link', () => {
     expect(joinLinkPath('stories', made)).toBe(`/join/stories/${made}`);
     for (const ch of JOIN_CODE_ALPHABET) expect(parseJoinLink(`/join/stories/${ch.repeat(JOIN_CODE_LENGTH)}`)).not.toBeNull();
     for (const ch of 'ILO01') expect(parseJoinLink(`/join/stories/${ch.repeat(JOIN_CODE_LENGTH)}`)).toBeNull();
-  });
-
-  it('gives a router the same shape', () => {
-    expect(JOIN_LINK_ROUTE).toBe('join/:game/:code');
   });
 });

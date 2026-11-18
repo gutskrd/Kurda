@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { WidgetSettings } from '@kurda/shared';
+import { Platform } from 'react-native';
 
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -106,16 +107,30 @@ describe('the letter widget’s page', () => {
     expect(reloadLetterWidget).not.toHaveBeenCalled();
   });
 
-  it('says how to add the widget, on iPhone and on Android, in a few steps each', async () => {
+  it('says how to add the widget on this phone, in a few steps, and never another platform’s way', async () => {
     testAuth.client = fakeClient({ 'GET /letters/widget/prefs': ok(settings({ letter: null })) });
     renderWithProviders(<LetterWidgetScreen onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Add it to your home screen' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'iPhone' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'Android' })).toBeTruthy();
     expect(screen.getByText('Tap Edit, then Add Widget. On older iPhones, tap + instead.')).toBeTruthy();
-    expect(screen.getByText('Tap Widgets.')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Android' })).toBeNull();
+    expect(screen.queryByText('Tap Widgets.')).toBeNull();
     // With no letter yet, the preview is the empty sill.
     expect(screen.getByText('No letter yet')).toBeTruthy();
+  });
+
+  it('on an Android phone, says the Android way only', async () => {
+    const os = Platform.OS;
+    Object.defineProperty(Platform, 'OS', { value: 'android', configurable: true });
+    try {
+      testAuth.client = fakeClient({ 'GET /letters/widget/prefs': ok(settings({ letter: null })) });
+      renderWithProviders(<LetterWidgetScreen onExit={() => undefined} />);
+      expect(await screen.findByRole('heading', { name: 'Android' })).toBeTruthy();
+      expect(screen.getByText('Tap Widgets.')).toBeTruthy();
+      expect(screen.queryByRole('heading', { name: 'iPhone' })).toBeNull();
+    } finally {
+      Object.defineProperty(Platform, 'OS', { value: os, configurable: true });
+    }
   });
 
   it('takes the widget off the other phones when it is on more than one, and this phone keeps its own', async () => {

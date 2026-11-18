@@ -5,18 +5,11 @@ import type { Dialect } from './matchApi';
 
 /**
  * Which varieties a rhyme round can be played in now, for training and matches (`GET /rhyme/availability`), and
- * which one a screen opens on. A variety without enough curated prompts is marked coming soon in place of Start.
- * Until the server answers, or when it cannot, both are offered. The web app does the same
- * (web/src/pages/Rhyme.tsx).
+ * which one a screen opens on. A variety without enough curated prompts is left out of the choice until it has
+ * them, and a choice of one is not shown. Until the server answers, or when it cannot, both are offered.
  */
 
 export const RHYME_DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
-
-/**
- * A variety keeps its own name in every language, as a language does; not a catalogue entry, which would invite
- * nine spellings of one word.
- */
-export const DIALECT_NAME: Record<Dialect, string> = { kurmanci: 'Kurmancî', sorani: 'Soranî' };
 
 /** What the server said, variety by variety; null until it has said anything useful. */
 export type RhymeOffered = Partial<Record<Dialect, boolean>> | null;
@@ -42,6 +35,11 @@ export function useRhymeOffered(): RhymeOffered {
     };
   }, [client]);
   return offered;
+}
+
+/** The varieties to offer, in their usual order: those the server has not ruled out. */
+export function offeredRhymeDialects(offered: RhymeOffered): Dialect[] {
+  return RHYME_DIALECTS.filter((d) => isRhymeOffered(offered, d));
 }
 
 /** Whether rounds can be started in `dialect`: anything the server has not ruled out is. */

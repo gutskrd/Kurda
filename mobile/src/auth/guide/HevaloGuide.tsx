@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { CharacterPoint } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
-import { SpeakingCharacter, type CharacterReaction } from '../../characters/SpeakingCharacter';
+import { HevaloPeek } from '../../characters/HevaloPeek';
+import type { CharacterReaction } from '../../characters/SpeakingCharacter';
 import { useDirection } from '../../reports/direction';
 import { timing } from '../../theme/animate';
 import { duration } from '../../theme/motion';
@@ -11,7 +12,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useScreenFocus } from './focus';
 import { useSpokenLine } from './speech';
 
-/** How tall Hevalo stands beside his bubble, head to waist. */
+/** How tall Hevalo and the tear he looks through stand beside his bubble, from his antlers to the tear's foot. */
 export const GUIDE_HEIGHT = 96;
 
 /**
@@ -28,8 +29,10 @@ const TAIL = 12;
 /**
  * Hevalo at the top of a step, saying its line.
  *
- * He stands head to waist beside a speech bubble with the words in it, and
- * says them: his mouth moves with the line (guide/speech.ts), he breathes,
+ * He pokes his head through a tear in the page beside a speech bubble with
+ * the words in it (characters/HevaloPeek), coming through as the screen
+ * opens: cut off at the waist and floating beside his words, he read as half
+ * a deer. He says the words: his mouth moves with the line (guide/speech.ts), he breathes,
  * blinks, and looks where he is told (`gaze`, at the field), tilts his head
  * at a refused answer and cheers at a right one (`reaction`), and greets a
  * tap. The bubble's words fade in whenever they change.
@@ -61,14 +64,10 @@ export function HevaloGuide({
   return (
     <View style={[styles.row, { flexDirection: dir.row }, style]} testID="hevalo-guide">
       <View aria-hidden testID="hevalo-guide-figure">
-        <SpeakingCharacter
-          speaker="hevalo"
-          player={speech.player}
-          playing={speech.playing}
-          source={speech.source}
+        <HevaloPeek
+          size={GUIDE_HEIGHT}
+          speech={speech}
           text={says}
-          crop="half"
-          height={GUIDE_HEIGHT}
           flip={dir.rtl}
           gaze={gaze}
           reaction={reaction}

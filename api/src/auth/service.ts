@@ -20,7 +20,7 @@ import { isMinorRow } from '../users/age.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { createVerificationCode, verifyCode, type VerifyResult } from './verification-codes.js';
 import { allowVerificationEmail } from './pending-signups.js';
-import { GdprService } from '../gdpr/service.js';
+import { GdprService, cancelPendingDeletion } from '../gdpr/service.js';
 import { CAPTCHA_AFTER_FAILURES, LockoutService, type LockoutScope } from './lockout.js';
 import {
   ACCESS_TOKEN_TTL_SECONDS,
@@ -862,12 +862,7 @@ export class AuthService {
 
     // a returning user keeps their account: logging in during the
     // deletion grace period cancels the deletion (KUR-024)
-    const cancelled = await this.pool.query(
-      `UPDATE users SET deletion_requested_at = NULL
-       WHERE id = $1 AND deletion_requested_at IS NOT NULL`,
-      [user.id],
-    );
-    if ((cancelled.rowCount ?? 0) > 0) {
+    if (await cancelPendingDeletion(this.pool, user.id)) {
       this.deps.log?.warn({ userId: user.id }, 'account deletion cancelled by login');
     }
 

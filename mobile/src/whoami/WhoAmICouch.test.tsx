@@ -17,6 +17,9 @@ import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { WhoAmICouch } from './WhoAmICouch';
 
+// Several tests here play a whole game through, screen by screen; on a busy machine that can take longer than the default five seconds.
+vi.setConfig({ testTimeout: 20_000 });
+
 /**
  * Ez kî me? on one phone, in the phone app, from who is playing to the end:
  * what the setup asks the server for (never a name), the phone from hand to

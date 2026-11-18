@@ -3,24 +3,11 @@ import type { AppLocale } from '../locales.js';
 import { kurdishNumber } from './number.js';
 
 /**
- * Words to know: colours, numbers, the days of the week and the months,
- * taught the way the alphabet is — a set of tiles to tap and hear, each word
- * in both dialects, and a round of questions to check yourself with.
- *
- * Every word is given in Kurmancî, and in Soranî in its own script with the
- * same word in Latin letters under it, for the many Kurds who read one script
- * and not the other. What it means is held here in the seven other languages
- * the app speaks; for a Kurdish reader the meaning shown is the same word in
- * the other dialect, as the alphabet does (`meaningLocale`).
- *
- * Each set carries what makes it worth learning as a set rather than as a
- * list: a colour's swatch and a phrase to say it in, a number's value (and
- * `kurdishNumber` for every number after it), where in the week a day falls
- * — the names count from Saturday, with the number inside them — and which
- * season each month is in, on the calendar on the wall and on the Kurdish one
- * that starts at Newroz.
- *
- * All of it is listed for a native speaker to check before it is relied on.
+ * Words to know (colours, numbers, the days and the months), taught like the alphabet: tiles to tap and hear in both
+ * dialects, and a round to check yourself with. Soranî comes in its own script with Latin letters under it, for Kurds who
+ * read only one script; a Kurdish reader's meaning is the word in the other dialect (`meaningLocale`). Each set carries
+ * what makes it a set: a colour's swatch and phrase, a number's value, a day's place in the week (counted from Saturday,
+ * with the number in its name), and each month's season on both calendars. All of it awaits a native speaker's check.
  */
 
 export type Dialect = 'kmr' | 'ckb';
@@ -276,11 +263,7 @@ export const NEWROZ: DayOfYear = { month: 3, day: 21 };
 
 const seasonOf = (month: number): Season => SEASON_ORDER[Math.floor(((month + 9) % 12) / 3)]!;
 
-/**
- * The months on the calendar on the wall, by their Kurdish names. Soranî says
- * them as Iraq and Syria do; Kurmancî has a second, older name for most of
- * them, from the Kurdish months they fall in.
- */
+/** The months on the wall calendar by their Kurdish names: Soranî's as Iraq and Syria say them, and Kurmancî's older second names. */
 export const CALENDAR_MONTHS: readonly CalendarMonth[] = (
   [
     ['jan', 'Kanûna Paşîn', 'کانوونی دووەم', 'kanûnî duwem', 'Rêbendan', { en: 'January', de: 'Januar', nl: 'januari', fr: 'janvier', es: 'enero', tr: 'Ocak', ar: 'كانون الثاني/يناير' }],
@@ -310,9 +293,8 @@ export const CALENDAR_MONTHS: readonly CalendarMonth[] = (
 }));
 
 /**
- * The Kurdish solar months. The year starts at Newroz, the first three months
- * are spring, and each season has three; the first six have 31 days, the next
- * five 30, the last 29 (30 in a leap year).
+ * The Kurdish solar months: the year starts at Newroz with spring, three months a season. The first six have 31 days, the
+ * next five 30, and the last 29 (30 in a leap year).
  */
 export const KURDISH_MONTHS: readonly KurdishMonth[] = (
   [
@@ -342,7 +324,7 @@ export const KURDISH_MONTHS: readonly KurdishMonth[] = (
   to: { month: to[0], day: to[1] },
 }));
 
-export const MONTHS: readonly Month[] = [...CALENDAR_MONTHS, ...KURDISH_MONTHS];
+const MONTHS: readonly Month[] = [...CALENDAR_MONTHS, ...KURDISH_MONTHS];
 
 /** A set's words, in the order its page shows them. */
 export function wordSet(set: WordSetId): readonly SetWord[] {
@@ -398,11 +380,8 @@ export function wordIn(word: Word, dialect: Dialect, { latin = false }: { latin?
 }
 
 /**
- * What a word means in `locale`: its word in that language, its digits for a
- * number — and in Kurmancî or Soranî, the word itself in that dialect, so a
- * Kurdish reader is shown the other dialect's word (pass `meaningLocale`'s
- * answer). A Kurdish month means its dates, which the page says in its own
- * words: null.
+ * What a word means in `locale`: its word in that language or a number's digits; for a Kurdish locale the word in that
+ * dialect (pass `meaningLocale`'s answer). Null for a Kurdish month, whose meaning is its dates.
  */
 export function wordGloss(word: SetWord, locale: AppLocale): string | null {
   if (locale === 'ku') return word.kmr;
@@ -417,10 +396,7 @@ export function glossIn(word: Word & { meaning: Gloss }, locale: AppLocale): str
   return locale === 'ku' ? word.kmr : locale === 'ckb' ? word.ckb : word.meaning[locale];
 }
 
-/**
- * A day's name split at the number inside it — Yek + şem, یەک + شەممە — for
- * marking it; null for Şemî and În, which have none.
- */
+/** A day's name split at the number inside it (Yek + şem, یەک + شەممە), for marking it; null for Şemî and În. */
 export function dayParts(day: Day, dialect: Dialect, { latin = false }: { latin?: boolean } = {}): { number: string; rest: string } | null {
   if (day.count === null) return null;
   const name = wordIn(day, dialect, { latin });

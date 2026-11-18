@@ -15,25 +15,10 @@ import {
 import { alphabetSounds, type AlphabetSounds } from './sounds.js';
 
 /**
- * "Check yourself": a short round of questions, built to teach as much as to test.
- *
- * What the research on learning says, and what each part of this does about it:
- *
- *  - Retrieval beats rereading (the testing effect). Every question makes the
- *    reader produce the link — sound to letter, letter to script — rather than
- *    look at it again.
- *  - Mix the kinds (interleaving). Listening, comparing, spelling, minimal
- *    pairs and script matching alternate, so each answer has to be worked out
- *    rather than carried over from the question before.
- *  - Aim at what is hard (desirable difficulty). Questions are drawn first from
- *    the letters that are false friends or new for the reader's own language,
- *    and the wrong options are the letters people really confuse — c with ç and
- *    j, i with î, ب with پ and ت — never three letters nobody would mix up.
- *  - Correct at once, and come back to it (feedback, successive relearning). A
- *    miss shows the right answer with its sound and why; the same item returns
- *    later in the round, so the last thing remembered is the right one.
- *  - Keep the stakes low. Nothing is scored, saved or ranked; the summary names
- *    what to look at again, and offers a round of just those.
+ * "Check yourself": a short round of questions built to teach as much as to test. Every question makes the reader recall
+ * the link rather than reread it; the kinds alternate so no answer carries over; questions favour the reader's false
+ * friends and new letters, and wrong options are the letters people really confuse (c with ç and j, i with î, ب with پ
+ * and ت). A miss shows the answer at once and returns later in the round. Nothing is scored, saved or ranked.
  */
 
 export type Script = 'kmr' | 'ckb';
@@ -58,8 +43,6 @@ export type Question =
   | { kind: 'script'; prompt: Option; options: Option[]; answer: string; topic: Topic }
   | { kind: 'form'; prompt: string; position: 'start' | 'middle' | 'end'; options: Option[]; answer: string; topic: Topic };
 
-export const ROUND = 8;
-
 /** Letters people actually confuse, nearest first. */
 const CONFUSE: Record<string, readonly string[]> = {
   c: ['ç', 'j'], ç: ['c', 'ş'], j: ['c', 'ş'], ş: ['s', 'ç'], s: ['ş', 'z'], z: ['s', 'j'],
@@ -76,12 +59,12 @@ const SHAPES: readonly (readonly string[])[] = [
   ['م', 'ن'],
 ];
 
-type Random = () => number;
+export type Random = () => number;
 
 /** The synthesised clips alone: what a round asks with before any recordings have arrived. */
 const SYNTHESISED = alphabetSounds();
 
-function shuffle<T>(xs: readonly T[], rand: Random): T[] {
+export function shuffle<T>(xs: readonly T[], rand: Random): T[] {
   const out = [...xs];
   for (let i = out.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
@@ -183,10 +166,8 @@ function formQuestion(target: SoraniLetter, rand: Random): Question {
 }
 
 /**
- * A round of eight. `focus` narrows it to letters the reader missed last time.
- * `rand` is injectable so the tests can pin a round down. `sounds` is where
- * each sound plays from now (`alphabetSounds`): a round started after the
- * recordings arrive asks with them.
+ * A round of eight. `focus` narrows it to letters missed last time, `rand` is injectable for tests, and `sounds` is where
+ * each sound plays from (`alphabetSounds`), so a round started after the recordings arrive asks with them.
  */
 export function makeRound(
   script: Script,

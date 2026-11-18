@@ -132,7 +132,7 @@ describe('the practice hub', () => {
     // The way to the lessons pays nothing of its own, so it promises nothing.
     expect(within(hero).queryByText('+5–10 XP')).toBeNull();
     fireEvent.click(within(hero).getByRole('button', { name: 'Go to lessons' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
+    expect(navigation.popTo).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
   });
 
   /*

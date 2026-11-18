@@ -1,8 +1,4 @@
-/**
- * A corpus of XSS attack payloads (KUR-108) for testing that every user-text
- * surface neutralizes injection. Shared so both the sanitizer's own tests and
- * the API's endpoint tests exercise the same known-bad inputs.
- */
+/** Known XSS payloads, shared so the sanitizer's tests and the API's endpoint tests try the same inputs on every user-text surface. */
 export const XSS_PAYLOADS: readonly string[] = [
   '<script>alert(1)</script>',
   '<img src=x onerror=alert(1)>',

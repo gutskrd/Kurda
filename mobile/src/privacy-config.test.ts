@@ -15,6 +15,7 @@ const appJson = rawAppJson as unknown as {
         NSPrivacyAccessedAPITypes: Array<{ NSPrivacyAccessedAPIType: string; NSPrivacyAccessedAPITypeReasons: string[] }>;
       };
     };
+    android: { blockedPermissions?: string[] };
     plugins: Array<string | [string, Record<string, unknown>]>;
   };
 };
@@ -96,5 +97,11 @@ describe('iOS privacy config (KUR-277)', () => {
     }
     const crash = privacyManifests.NSPrivacyCollectedDataTypes.find((d) => d.NSPrivacyCollectedDataType === 'NSPrivacyCollectedDataTypeCrashData');
     expect(crash?.NSPrivacyCollectedDataTypeLinked).toBe(false);
+  });
+});
+
+describe('Android permissions', () => {
+  it('keeps out drawing over other apps, which the project template asks for and Hevalo never uses', () => {
+    expect(appJson.expo.android.blockedPermissions).toContain('android.permission.SYSTEM_ALERT_WINDOW');
   });
 });

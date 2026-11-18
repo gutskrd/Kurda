@@ -219,25 +219,28 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
    */
   const row = (u: UserRow, right?: React.ReactNode, subtitle?: string) => {
     const sub = subtitle ?? u.displayName;
+    // the person and the row's own button side by side, never one inside the other: a screen reader reaches
+    // only the outer of two nested buttons, and a phone's Play or Add would be out of its reach
     return (
-      <PressableScale
-        key={u.userId}
-        style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
-        onPress={() => openProfile(u.userId)}
-        accessibilityRole="button"
-        accessibilityLabel={
-          u.displayName
-            ? t('friends.openProfileNamed', { username: u.username, name: u.displayName })
-            : t('friends.openProfile', { username: u.username })
-        }
-      >
-        <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
-        <View style={styles.rowMain}>
-          <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
-          {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}
-        </View>
+      <View key={u.userId} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
+        <PressableScale
+          style={[styles.rowOpen, { flexDirection: dir.row }]}
+          onPress={() => openProfile(u.userId)}
+          accessibilityRole="button"
+          accessibilityLabel={
+            u.displayName
+              ? t('friends.openProfileNamed', { username: u.username, name: u.displayName })
+              : t('friends.openProfile', { username: u.username })
+          }
+        >
+          <InitialsAvatar name={u.username} id={u.userId} size={36} photoUrl={u.avatarUrl ?? undefined} />
+          <View style={styles.rowMain}>
+            <Text style={[styles.username, dir.free, { color: colors.textPrimary }]}>{u.username}</Text>
+            {sub ? <Text style={[styles.display, dir.free, { color: colors.textSecondary }]}>{sub}</Text> : null}
+          </View>
+        </PressableScale>
         {right}
-      </PressableScale>
+      </View>
     );
   };
 
@@ -261,7 +264,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           style={styles.head}
           right={
             <Pressable
-              onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+              onPress={() => navigation.popTo('Tabs', { screen: 'Messages' })}
               reachSize={{ height: LINK_LINE }}
               style={({ pressed }) => [styles.messagesLink, { flexDirection: dir.row }, pressed && heldDim]}
               accessibilityRole="button"
@@ -415,6 +418,7 @@ const styles = StyleSheet.create({
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
+  rowOpen: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   rowMain: { flex: 1 },
   username: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   display: { fontSize: typography.sizes.sm },

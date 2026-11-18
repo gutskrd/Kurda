@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { AppState } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useRealtimeListener, useRealtimeReconnect } from '../realtime/RealtimeProvider';
+import { onBackFromBackground } from '../net/backFromBackground';
 import { useUnseenGifts } from '../shop/useUnseenGifts';
 import { messagesUnread } from './list';
 
@@ -45,9 +46,9 @@ const FRESH_MS = 15_000;
 
 /**
  * The tab shell's badge counts: unread direct messages, unread group messages, friend requests and unopened
- * notifications. Read when the shell appears, on returning to the foreground, on realtime reconnect, when a
- * direct message or gift arrives on your channel, and when a screen reports it has read something. No polling
- * timer.
+ * notifications. Read when the shell appears, on returning from the background (net/backFromBackground.ts), on
+ * realtime reconnect, when a direct message or gift arrives on your channel, and when a screen reports it has
+ * read something. No polling timer.
  *
  * The gift count is the shop badge's own (useUnseenGifts), so the two agree. A guest's counts are zero without
  * asking, since all four routes refuse guests.
@@ -97,11 +98,9 @@ export function UnreadProvider({ children }: { children: ReactNode }): React.JSX
       return;
     }
     load();
-    const foreground = AppState.addEventListener('change', (state) => {
-      if (state === 'active') refresh();
-    });
+    const stopListening = onBackFromBackground(AppState, () => refresh());
     return () => {
-      foreground.remove();
+      stopListening();
       if (timer.current) clearTimeout(timer.current);
     };
   }, [signedIn, load, refresh]);

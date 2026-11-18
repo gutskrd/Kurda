@@ -129,11 +129,6 @@ export function centred(style: TextStyle): TextStyle {
   return { ...style, textAlign: 'center' };
 }
 
-/** A variety by its own name, as the story screens call it. */
-export function varietyName(dialect: GameDialect): string {
-  return dialect === 'ckb' ? 'Soranî' : 'Kurmancî';
-}
-
 /** The variety a riddle or a proverb is in, read off its slug (`kmr-…`, `ckb-…`): its page can be set before it arrives. */
 export function dialectOfSlug(slug: string): GameDialect {
   return slug.startsWith('ckb-') ? 'ckb' : 'kmr';

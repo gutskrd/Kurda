@@ -1,35 +1,8 @@
 /**
- * Badges (contract 4, B3): something to collect.
- *
- * A badge is one calm, glossy piece: its family's shape in one colour, a
- * paler plate set into it, and one symbol pressed into the plate. Nothing
- * else — no figure, no wings, no glitter. Sixty of them on a page have to
- * read as one set and still be told apart at a glance, and a learner comes
- * back to that page for years; what is quiet stays beautiful.
- *
- * Each part says one thing, and none of them says it by colour alone:
- *
- * - the shape is the family (shapes.ts): learning a circle, habit a rounded
- *   square, games a hexagon, ranked a shield, friends a leaf, events a
- *   rosette, a secret a gem;
- * - the colour is the badge's own, so a page of them is as varied on a
- *   learner's first day as on their thousandth: a soft gradient across the
- *   face, lit from the upper left, with the badge's thickness under it;
- * - the symbol is the badge (badge-glyphs.ts): the fire of a streak, the
- *   open book of the lessons, the cat of Van;
- * - the number on the tag at its foot is the tier, in the tier's metal: the
- *   7 of a seven-day streak on copper, the 30 on silver, the 100 on gold, the
- *   365 on turquoise. Sifir, Zîv, Zêr and Firûze climb in metal while the
- *   number says the same without it.
- *
- * Small sizes get their own drawing rather than a shrunken one: under 56
- * pixels the piece fills the square, the tag gives way to four pips that
- * count the tier, and the shadow under it goes; under 32 the gloss goes too.
- *
- * States: `earned` is the whole badge; `locked` (not yet earned) is the same
- * piece in quiet greys, with the first number to reach on its tag; `secret`
- * is a secret badge not yet found — the gem in the night's violet with a "?"
- * on it, the same for every secret.
+ * Badges: a glossy piece in its family's shape (shapes.ts) and its own colour, a paler plate, and one symbol
+ * (badge-glyphs.ts); a tiered badge's tag shows its milestone in the tier's metal, so nothing relies on colour alone.
+ * Below `SMALL_BADGE` the piece fills the square and pips replace the tag; below `TINY_BADGE` the gloss goes too.
+ * `locked` is the same piece in greys, and `secret` a violet gem with a "?", the same for every secret.
  */
 import { BADGE_GLYPHS, GLYPH_VIEWBOX } from './badge-glyphs.js';
 import type { BadgeFamily, BadgeKey, BadgeTier, RankTier } from './keys.js';
@@ -50,30 +23,23 @@ export interface BadgeOptions {
   key: BadgeKey;
   /** 1 Sifir · 2 Zîv · 3 Zêr · 4 Firûze; ignored by single badges. Default 1. */
   tier?: BadgeTier;
-  /** default `earned` */
+  /** Defaults to `earned`. */
   state?: BadgeState;
-  /** pixels; default 96 */
+  /** Size in pixels; defaults to 96. */
   size?: number;
-  /**
-   * How many tiers the badge has; defaults to the art's own list. A single
-   * badge (1) shows no number and no pips.
-   */
+  /** How many tiers the badge has; defaults to the art's own list. A single badge (1) shows no number and no pips. */
   tiers?: number;
-  /** the accessible label; defaults to "Agir · Zêr" */
+  /** The accessible label; defaults to "Agir · Zêr". */
   title?: string;
   idPrefix?: string;
 }
 
-/** Under this many pixels a badge is drawn in its small version. */
+/** Below this many pixels the small version is drawn. */
 export const SMALL_BADGE = 56;
-/** Under this many pixels a badge keeps only its piece, its symbol and its pips. */
+/** Below this many pixels a badge keeps only its piece, its symbol and its pips. */
 export const TINY_BADGE = 32;
 
-/**
- * One colour in the five steps a piece is modelled in, light to dark: the
- * plate, the lit side of the face, the face, its far side, and the
- * thickness under it.
- */
+/** One colour in the five steps a piece is modelled in, light to dark: plate, lit side, face, far side, thickness. */
 interface Tone {
   plate: string;
   light: string;
@@ -82,7 +48,7 @@ interface Tone {
   deep: string;
 }
 
-/** A plate colour of the palette as the steps of a piece: softer than enamel, as a glazed thing is. */
+/** A palette plate colour as a piece's steps: softer than enamel, like glaze. */
 function toneOf(name: PlateName): Tone {
   const p = PLATES[name];
   return {
@@ -94,19 +60,18 @@ function toneOf(name: PlateName): Tone {
   };
 }
 
-/** A rank's own metal as the steps of a piece, so its badge is the colour of its emblem. */
+/** A rank's metal as a piece's steps, so its badge matches its emblem. */
 const toneOfMetal = (m: Metal): Tone => ({ plate: mix(m.hi, '#ffffff', 0.3), light: m.light, mid: mix(m.light, m.mid, 0.7), dark: m.mid, deep: m.dark });
 
-/** Not earned yet: the piece in quiet greys. */
+/** Not earned yet: the piece in greys. */
 const PEWTER: Tone = { plate: '#dfe2e8', light: '#c3c8d2', mid: '#a9b0bc', dark: '#8f96a4', deep: '#737a89' };
 
-/** A secret not yet found: the night's violet. */
+/** A secret not yet found: night violet. */
 const NIGHT: Tone = { plate: '#8f7be0', light: '#6a52cc', mid: '#4b36a8', dark: '#2f1f7c', deep: '#1a0e52' };
 
 /**
- * Each badge's own colour. Neighbours in a family differ, so a row of a
- * family's badges is a row of colours; where a colour says something — the
- * red of fire, the green of spring, the blue of a wave — it is that one.
+ * Each badge's colour. Neighbours in a family differ, so a family's row is a row of colours; where a colour carries
+ * meaning (fire red, spring green, wave blue) it is that one.
  */
 const HUE: Readonly<Record<string, PlateName>> = {
   // learning
@@ -141,7 +106,7 @@ const HUE: Readonly<Record<string, PlateName>> = {
   mamik: 'teal',
   bilbil: 'sky',
   elmas: 'indigo',
-  // ranked: the six tiers wear their rank's own colour (below)
+  // Ranked: the six tier badges use their rank's colour (below).
   hilkiser: 'orange',
   cihgirti: 'sky',
   // friends
@@ -161,7 +126,7 @@ const HUE: Readonly<Record<string, PlateName>> = {
   havin: 'gold',
   payiz: 'orange',
   mehane: 'indigo',
-  // secrets, once found
+  // Secrets, once found.
   'tire-rast': 'red',
   'ji-nu-ve': 'green',
   'kewe-ciye': 'orange',
@@ -174,7 +139,7 @@ const HUE: Readonly<Record<string, PlateName>> = {
   mirari: 'teal',
 };
 
-/** The ranked family's tier badges show their rank tier; the key says which. */
+/** The rank tier a ranked-family tier badge shows, read from its key. */
 function rankTierOf(key: BadgeKey): RankTier | undefined {
   return RANK_TIERS.find((t) => RANK_BADGE[t] === key);
 }
@@ -188,28 +153,25 @@ function toneFor(key: BadgeKey, state: BadgeState): Tone {
 }
 
 /**
- * The two symbols drawn here rather than taken from the icon family, which
- * has neither: the pomegranate that is broken open on Yalda night, and the
- * pearl. In the glyphs' own 256 box and at their weight.
+ * The two symbols drawn here because the icon family has neither: the pomegranate broken open on Yalda night, and the
+ * pearl. In the glyphs' 256 box, at their weight.
  */
 const DRAWN: Readonly<Record<string, readonly string[]>> = {
   yelda: [
-    // the fruit, and the crown it keeps from its flower
+    // The fruit, and the crown it keeps from its flower.
     'M128,76C81.6,76,44,113.6,44,160S81.6,244,128,244S212,206.4,212,160S174.4,76,128,76Z',
     'M96,84L88,28L112,52L128,20L144,52L168,28L160,84Z',
   ],
   mirari: [
-    // the pearl, round, with the light on it left open, and the glint it throws
+    // The pearl, with its highlight left open, and the glint it throws.
     'M116,64A76,76,0,1,1,116,216A76,76,0,1,1,116,64ZM88,98A17,17,0,1,0,88,132A17,17,0,1,0,88,98Z',
     'M198,22C202,44,212,54,234,58C212,62,202,72,198,94C194,72,184,62,162,58C184,54,194,44,198,22Z',
   ],
 };
 
 /**
- * The badge's own colour, as one value: for what an app draws round the
- * badge rather than on it — the soft wash behind it on its sheet, the light
- * under it on its tile. A badge not yet earned gives its grey, a secret not
- * yet found the night's violet, so the wash never tells what the badge will be.
+ * A badge's colour as one value, for what an app draws round it (the wash on its sheet, the light under its tile).
+ * Locked badges give their grey and unfound secrets the night violet, so the wash never gives the badge away.
  */
 export function badgeColour(key: BadgeKey, state: BadgeState = 'earned'): string {
   if (!isBadgeKey(key)) throw new RangeError(`art: no badge art for key ${String(key)}`);
@@ -222,33 +184,32 @@ function glyphOf(key: BadgeKey, state: BadgeState): readonly string[] {
   return BADGE_GLYPHS[key] ?? DRAWN[key] ?? [];
 }
 
-/** Whether the art has a symbol for a badge: every badge of the catalogue has to. */
+/** Whether the art has a symbol for a badge; every catalogue badge must. */
 export function hasBadgeGlyph(key: BadgeKey): boolean {
   return glyphOf(key, 'earned').length > 0;
 }
 
 interface Layout {
-  /** where the piece stands */
+  /** Where the piece stands. */
   at: Placement;
-  /** how thick it is, drawn under it */
+  /** Its thickness, drawn under it. */
   depth: number;
-  /** how big its plate is, against the piece */
+  /** The plate's size relative to the piece. */
   plate: number;
-  /** how big the symbol's box is, in canvas units */
+  /** The symbol box's size, in canvas units. */
   glyph: number;
 }
 
 /**
- * Where everything stands at a size. Full: the piece a little up from the
- * middle, leaving its foot for the tag (when it has tiers) and its shadow.
- * Small: the piece filling the square, a little raised when pips sit under it.
+ * Where everything stands at a size. Full: the piece a little above the middle, leaving its foot for the tag (when
+ * tiered) and its shadow. Small: the piece fills the square, raised a little when pips sit under it.
  */
 function layoutOf(detail: Detail, tiered: boolean): Layout {
   if (detail === 0) return tiered ? { at: { s: 0.84, y: 50 }, depth: 4.5, plate: 0.76, glyph: 46 } : { at: { s: 0.9, y: 54 }, depth: 4.5, plate: 0.76, glyph: 49 };
   return tiered ? { at: { s: 0.9, y: 52 }, depth: 4, plate: 0.76, glyph: 52 } : { at: { s: 0.98, y: 56 }, depth: 4, plate: 0.76, glyph: 56 };
 }
 
-/** The piece: its thickness, its face lit from the upper left, the gloss on it and the light along its upper edge. */
+/** The piece: its thickness, its face lit from the upper left, its gloss and the light along its upper edge. */
 function pieceOf(dr: Drawing, family: BadgeFamily, lay: Layout, t: Tone, detail: Detail): string {
   const { at, depth } = lay;
   const face = shapePath(family, at);
@@ -269,11 +230,11 @@ function pieceOf(dr: Drawing, family: BadgeFamily, lay: Layout, t: Tone, detail:
   );
   const out = [`<path d="${shapePath(family, { s: at.s, y: at.y + depth })}" fill="${t.deep}"/>`, `<path d="${face}" fill="url(#${fill})"/>`];
   if (detail === 2) return out.join('');
-  // the gloss: a soft light on the upper left of the face, fading before it reaches the middle
+  // The gloss: a soft light on the upper left of the face, fading before the middle.
   const gloss = dr.id('g');
   dr.def(radialBox(gloss, [[0, '#ffffff', 0.42], [1, '#ffffff', 0]], 0.28, 0.14, 0.62));
   out.push(`<path d="${face}" fill="url(#${gloss})"/>`);
-  // the edge: light where the piece turns toward the light, a shade where it turns away
+  // The edge: lit where the piece turns toward the light, shaded where it turns away.
   const edge = dr.id('e');
   dr.def(
     linearAt(
@@ -301,7 +262,7 @@ function plateOf(dr: Drawing, family: BadgeFamily, key: BadgeKey, state: BadgeSt
   const fill = dr.id('p');
   dr.def(linearAt(fill, [[0, '#ffffff'], [0.3, t.plate], [1, mix(t.plate, t.light, 0.55)]], 0, at.y - 44 * inner.s, 0, at.y + 48 * inner.s));
   const out = [
-    // the plate's own thickness, a line of shade under it
+    // The plate's own thickness, a line of shade under it.
     `<path d="${shapePath(family, { s: inner.s, y: inner.y + 1.8 })}" fill="${t.deep}" fill-opacity="0.35"/>`,
     `<path d="${plate}" fill="url(#${fill})"/>`,
   ];
@@ -312,7 +273,7 @@ function plateOf(dr: Drawing, family: BadgeFamily, key: BadgeKey, state: BadgeSt
     dr.def(linearAt(ink, [[0, t.mid], [1, t.deep]], 0, 0, 0, GLYPH_VIEWBOX));
     const d = glyph.join('');
     const placed = (dy: number): string => `translate(${n(60 - lay.glyph / 2)} ${n(at.y - lay.glyph / 2 + dy)}) scale(${n2(k)})`;
-    // pressed in: a line of light along its lower edge, then the symbol in the badge's own colour
+    // Pressed in: a line of light along the lower edge, then the symbol in the badge's colour.
     out.push(`<path d="${d}" transform="${placed(1.1)}" fill="#ffffff" fill-opacity="0.85"/>`);
     out.push(`<path d="${d}" transform="${placed(0)}" fill="url(#${ink})"/>`);
   }
@@ -325,9 +286,8 @@ const TAG_H = 16.5;
 const FIGURE_H = 9.2;
 
 /**
- * The tag at a tiered badge's foot: a capsule of the tier's metal with the
- * number the tier was earned at in it — or a star, for the tier that is
- * "every unit of the course", which is not a number the art knows.
+ * The tag at a tiered badge's foot: a capsule of the tier's metal holding the tier's milestone number, or a star for
+ * "every unit of the course", which is not a number.
  */
 function tagOf(dr: Drawing, milestone: number | 'all', m: Metal): string {
   const text = milestone === 'all' ? '' : String(milestone);
@@ -354,7 +314,7 @@ function pipsOf(dr: Drawing, tier: number, count: number, m: Metal): string {
   return `<path d="${capsule(60, cy, w, r * 2 + r * 1.3)}" fill="${m.deep}"/>` + pips(dr, m, count, tier, 60, cy, r, gap);
 }
 
-/** The shadow a piece casts on what it lies on: soft, and well inside the square. */
+/** The soft shadow a piece casts, well inside the square. */
 function shadowOf(dr: Drawing): string {
   const id = dr.id('s');
   dr.def(radialBox(id, [[0, '#000000', 0.2], [1, '#000000', 0]]));
@@ -380,7 +340,7 @@ export function badgeSvg(opts: BadgeOptions): string {
   if (!Number.isInteger(tiers) || tiers < 1 || tiers > 4) throw new RangeError(`art: tiers must be 1–4, got ${String(tiers)}`);
   const size = checkSize(opts.size, 96);
   const detail = detailFor(size, SMALL_BADGE, TINY_BADGE);
-  // a secret not yet found is the same gem whatever it hides
+  // An unfound secret is the same gem whatever it hides.
   const family: BadgeFamily = state === 'secret' ? 'secret' : badgeArt(key).family;
   const shownTier = (tiers > 1 ? Math.min(tier, tiers) : 1) as BadgeTier;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'badge', key, shownTier, state, tiers, detail));
@@ -390,7 +350,7 @@ export function badgeSvg(opts: BadgeOptions): string {
   const lay = layoutOf(detail, tiered);
   const tone = toneFor(key, state);
   const metal = locked ? STONE : TIER_METAL[shownTier];
-  // the number a tier was earned at; one the art does not know (a tier asked of a single badge) is counted in pips instead
+  // The tier's milestone; one the art does not know (a tier asked of a single badge) is shown as pips instead.
   const milestone = badgeArt(key).milestones[(locked ? 1 : shownTier) - 1];
 
   if (detail === 0) dr.add(shadowOf(dr));
@@ -402,9 +362,8 @@ export function badgeSvg(opts: BadgeOptions): string {
 }
 
 /**
- * Whether a badge has the glint (research §5.2): Zêr and Firûze, and the
- * badges with a single tier, which are rare. The apps play it once when the
- * badge is earned and again on hover or tap — never under reduced motion.
+ * Whether a badge has the glint: Zêr and Firûze tiers, and single-tier badges, which are rare. The apps play it once
+ * when earned and again on hover or tap, never under reduced motion.
  */
 export function badgeShines(key: BadgeKey, tier: BadgeTier = 1, tiers?: number): boolean {
   if (!isBadgeKey(key)) return false;
@@ -414,21 +373,16 @@ export function badgeShines(key: BadgeKey, tier: BadgeTier = 1, tiers?: number):
 
 export interface BadgeShineOptions {
   key: BadgeKey;
-  /** pixels; the same as the badge it lies on. Default 96. */
+  /** Size in pixels, the same as the badge it lies on; defaults to 96. */
   size?: number;
-  /**
-   * Where the glint is on its way across, 0 (off the upper left) to 1 (off
-   * the lower right). An app steps it over about a second to play the glint.
-   */
+  /** The glint's progress, 0 (off the upper left) to 1 (off the lower right); apps step it over about a second. */
   phase?: number;
   idPrefix?: string;
 }
 
 /**
- * The glint on its own: a soft band of light, clipped to the badge's face, to
- * lay over the badge at the same size — a gleam across a glazed piece, not a
- * flash. Decorative: its title says so, and the apps hide it from screen
- * readers.
+ * The glint alone: a soft band of light clipped to the badge's face, laid over the badge at the same size. Decorative
+ * and hidden from screen readers.
  */
 export function badgeShineSvg(opts: BadgeShineOptions): string {
   const { key } = opts;

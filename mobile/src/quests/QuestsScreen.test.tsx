@@ -57,7 +57,7 @@ describe('the quests after a lesson', () => {
     await waitFor(() => expect(screen.getAllByText('25 / 40').length).toBeGreaterThan(0));
     expect(screen.getByLabelText('Earn 40 XP: 25 of 40')).toBeTruthy();
     // The month's tally closes the list, its count climbing to where it stands.
-    expect(await screen.findByText('Quests done this month: 7')).toBeTruthy();
+    expect(await screen.findByText(/^7 of \d+ quests done$/)).toBeTruthy();
     // Nothing waits to be opened: on.
     expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy();
   });
@@ -79,7 +79,7 @@ describe('the quests after a lesson', () => {
     expect(await screen.findByLabelText('Keep your streak going: 1 of 1, Chest ready to open')).toBeTruthy();
     expect(screen.getByLabelText('Earn 40 XP: 25 of 40')).toBeTruthy();
     expect(screen.queryByLabelText(/Finish a lesson with no mistakes/)).toBeNull();
-    expect(screen.queryByText(/Quests done this month/)).toBeNull();
+    expect(screen.queryByText(/quests done$/)).toBeNull();
   });
 });
 
@@ -164,7 +164,7 @@ describe('the quests from Learn', () => {
     const client = fakeClient({ 'GET /me/quests': ok(day) });
     testAuth.client = client;
     renderWithProviders(<QuestsScreen place="learn" onDone={() => undefined} />);
-    expect(await screen.findByText('Quests done this month: 7')).toBeTruthy();
+    expect(await screen.findByText(/^7 of \d+ quests done$/)).toBeTruthy();
     const count = () => client.calls.filter((c) => c.path === '/me/quests').length;
     const before = count();
     fireEvent.click(screen.getByTestId('pull-to-refresh'));
@@ -183,7 +183,7 @@ describe('the quests from Learn', () => {
     });
     renderWithProviders(<QuestsScreen place="learn" onDone={() => undefined} />);
     expect((await screen.findAllByText('0 / 40')).length).toBeGreaterThan(0);
-    expect(await screen.findByText('Quests done this month: 7')).toBeTruthy();
+    expect(await screen.findByText(/^7 of \d+ quests done$/)).toBeTruthy();
     expect(screen.getByLabelText('7 of 87 so far this month')).toBeTruthy();
     await waitFor(() => expect(screen.getAllByText('25 / 40').length).toBeGreaterThan(0));
     expect(screen.getAllByTestId('quest-chest-shaking')).toHaveLength(2);
