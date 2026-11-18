@@ -68,7 +68,6 @@ export function SetupSheet({
   initialMode,
   story,
   catalogue,
-  initialLength,
   skipReading = false,
   lobby,
   onSaved,
@@ -80,7 +79,6 @@ export function SetupSheet({
   story?: ChosenStory | null;
   /** The hub's published stories of this variety, when no story is chosen. */
   catalogue?: readonly StoryListItem[];
-  initialLength?: StoryLength | null;
   /** Opened from the reader: the story has just been read. */
   skipReading?: boolean;
   /** A lobby's own settings, to change rather than create. */
@@ -105,7 +103,7 @@ export function SetupSheet({
 
   const [mode, setMode] = useState<StoryGameMode>(lobby?.mode ?? initialMode);
   const [length, setLength] = useState<StoryLength>(
-    fixed?.length ?? (initialLength && available.includes(initialLength) ? initialLength : (available[0] ?? 'short')),
+    fixed?.length ?? available[0] ?? 'short',
   );
   const [level, setLevel] = useState<StoryLevel | 'any'>('any');
   const [pick, setPick] = useState<string>('surprise');

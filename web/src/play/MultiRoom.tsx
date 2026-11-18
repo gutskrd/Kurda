@@ -54,10 +54,6 @@ export interface GameRoomProps<Board> {
   ending?: (view: MultiView<Board>) => ReactNode;
   /** A place's score in the game's words ("Words: 12"). */
   scoreOf: (result: MultiResult, view: MultiView<Board>) => string;
-  /** Why the lobby cannot start yet (a team too small), in the reader's words; null when it can. */
-  startProblem?: (view: MultiView<Board>) => string | null;
-  /** What a team game says about its teams, inside the team picker. */
-  teamNote?: (view: MultiView<Board>) => ReactNode;
 }
 
 /**
@@ -76,8 +72,6 @@ export function GameRoom<Board>({
   playing,
   ending,
   scoreOf,
-  startProblem,
-  teamNote,
 }: GameRoomProps<Board>): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
@@ -115,7 +109,6 @@ export function GameRoom<Board>({
 
   if (view.status === 'lobby') {
     const short = present.length < view.minPlayers;
-    const problem = short ? null : (startProblem?.(view) ?? null);
     return (
       <div className="match-lobby match-room mp-room">
         <CodeTicket
@@ -133,7 +126,6 @@ export function GameRoom<Board>({
             isHost={view.isHost}
             game={game}
             gameId={id}
-            note={teamNote?.(view)}
             onTeam={(seat, team) => control('team', { seat, team })}
             onRemove={(seat) => control('remove', { seat })}
           />
@@ -160,16 +152,9 @@ export function GameRoom<Board>({
             {busy ? t('games.joining') : t('play.room.join')}
           </Button>
         ) : view.isHost ? (
-          <>
-            {problem && (
-              <p className="mp-start-problem" role="status">
-                {problem}
-              </p>
-            )}
-            <Button size="lg" disabled={busy || short || problem !== null} onClick={() => void control('start')}>
-              {short ? t('play.room.waiting') : busy ? t('games.starting') : t('play.room.start')}
-            </Button>
-          </>
+          <Button size="lg" disabled={busy || short} onClick={() => void control('start')}>
+            {short ? t('play.room.waiting') : busy ? t('games.starting') : t('play.room.start')}
+          </Button>
         ) : (
           <p className="muted">{t('play.room.waitingHost')}</p>
         )}

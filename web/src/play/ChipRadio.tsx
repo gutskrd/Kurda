@@ -19,7 +19,6 @@ export function ChipRadio<T extends string | number>({
   options,
   onChange,
   name,
-  hideLabel = false,
   className,
 }: {
   label: string;
@@ -28,15 +27,13 @@ export function ChipRadio<T extends string | number>({
   onChange: (next: T) => void;
   /** Defaults to a unique one; give one when two groups must not share. */
   name?: string;
-  /** The label is for screen readers only, since the context says it already. */
-  hideLabel?: boolean;
   className?: string;
 }): React.JSX.Element {
   const auto = useId();
   const groupName = name ?? auto;
   return (
     <fieldset className={`chip-radio${className ? ` ${className}` : ''}`} role="radiogroup">
-      <legend className={hideLabel ? 'sr-only' : 'chip-radio-legend'}>{label}</legend>
+      <legend className="chip-radio-legend">{label}</legend>
       <div className="chip-radio-options">
         {options.map((o) => (
           <label key={String(o.value)} className={`chip-radio-option${o.value === value ? ' is-on' : ''}`}>

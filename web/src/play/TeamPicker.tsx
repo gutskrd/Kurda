@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import type { MultiGame, MultiSeat } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
@@ -39,7 +39,6 @@ export function TeamPicker({
   isHost,
   game,
   gameId,
-  note,
   onTeam,
   onRemove,
 }: {
@@ -49,8 +48,6 @@ export function TeamPicker({
   isHost: boolean;
   game: MultiGame;
   gameId: string;
-  /** What the game says about its teams ("three play together…"). */
-  note?: ReactNode;
   onTeam: (seat: number, team: number) => Promise<void>;
   onRemove: (seat: number) => Promise<void>;
 }): React.JSX.Element {
@@ -77,7 +74,6 @@ export function TeamPicker({
           {t('play.teams.title')} · {t('stories.game.players', { count: present.length, max })}
         </h2>
       </div>
-      {note}
       <div className="team-columns">
         {numbers.map((team) => {
           const members = present.filter((p) => (p.team ?? 1) === team);

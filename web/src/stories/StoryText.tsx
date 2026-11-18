@@ -17,12 +17,6 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import { TEXT_SIZES } from './prefs';
 import type { StoryAudio } from './useStoryAudio';
 
-/** Where an answer is in the text, to show it marked. */
-export interface Evidence {
-  paragraph: number;
-  sentence: number | null;
-}
-
 /** One run of a paragraph: plain text, or a glossary word with the quote or comma touching it, so a line never breaks between them. */
 type Piece = { text: string; gloss?: StoryGlossEntry; lead?: string; trail?: string };
 
@@ -93,7 +87,6 @@ export function StoryText({
   dialect,
   textSize,
   audio,
-  evidence,
   translations,
   observe,
   className,
@@ -105,8 +98,6 @@ export function StoryText({
   textSize: number;
   /** Read aloud; leave out where the text is only for looking back. */
   audio?: StoryAudio;
-  /** The sentence or paragraph an answer comes from, marked. */
-  evidence?: Evidence | null;
   /** The translation into the reader's language (or English), one entry per paragraph; none shows no toggle. */
   translations?: { lang: string; paragraphs: readonly string[] } | null;
   /** A ref for each paragraph, for the reading-progress watcher. */
@@ -120,7 +111,6 @@ export function StoryText({
   const [open, setOpen] = useState<{ key: string; entry: StoryGlossEntry; anchor: HTMLElement } | null>(null);
   const [shownTranslations, setShownTranslations] = useState<ReadonlySet<number>>(() => new Set());
   const reading = useRef<HTMLSpanElement | null>(null);
-  const marked = useRef<HTMLElement | null>(null);
   const calm = useMediaQuery('(prefers-reduced-motion: reduce)');
   const current = audio?.current ?? null;
 
@@ -137,11 +127,6 @@ export function StoryText({
     if (box.height > 0 && clearOfBar && clearOfPlayer) return;
     el.scrollIntoView?.({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
   }, [current?.paragraph, current?.sentence, calm]);
-
-  // The evidence for an answer is scrolled into view when it changes.
-  useEffect(() => {
-    if (evidence && marked.current) marked.current.scrollIntoView?.({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
-  }, [evidence?.paragraph, evidence?.sentence, calm]);
 
   // A legend's chapters: each heading's place and number, and where the introduction ends.
   const chapters = useMemo(() => {
@@ -189,29 +174,22 @@ export function StoryText({
         const intro = p < chapters.introEnd;
         const hasAudio = audio?.paragraphsWithAudio.has(p) ?? false;
         const thisPlaying = audio?.playing && audio.scope?.kind === 'paragraph' && audio.scope.paragraph === p;
-        const wholeParagraph = evidence?.paragraph === p && evidence.sentence === null;
         const translation = translations?.paragraphs[p];
         const translated = translation !== undefined && translation.trim() !== '';
         const showTranslation = translated && shownTranslations.has(p);
         return (
           <div className={`story-para${intro ? ' is-intro' : ''}`} key={p} dir={dir} ref={observe?.(p)} data-paragraph={p}>
             {intro && p === 0 && <p className="story-intro-label">{t('stories.chapters.intro')}</p>}
-            <p
-              lang={lang}
-              className={wholeParagraph ? 'is-evidence' : undefined}
-              ref={wholeParagraph ? (el) => void (marked.current = el) : undefined}
-            >
+            <p lang={lang}>
               {sentences.map((s) => {
                 const isReading = current?.paragraph === p && current.sentence === s.index;
-                const isEvidence = evidence?.paragraph === p && evidence.sentence === s.index;
                 return (
                   <span key={s.index}>
                     {s.lead}
                     <span
-                      className={`story-sentence${isReading ? ' is-reading' : ''}${isEvidence ? ' is-evidence' : ''}`}
+                      className={`story-sentence${isReading ? ' is-reading' : ''}`}
                       ref={(el) => {
                         if (isReading) reading.current = el;
-                        if (isEvidence) marked.current = el;
                       }}
                       onClick={
                         isReading && audio
