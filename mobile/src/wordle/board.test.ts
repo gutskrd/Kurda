@@ -99,7 +99,7 @@ describe('draft editing', () => {
     draft = typeLetter(draft, 's', 3);
     draft = typeLetter(draft, 'ê', 3);
     draft = typeLetter(draft, 'v', 3);
-    draft = typeLetter(draft, 'x', 3); // full — ignored
+    draft = typeLetter(draft, 'x', 3); // Full — ignored.
     expect(draft).toEqual(['s', 'ê', 'v']);
   });
 

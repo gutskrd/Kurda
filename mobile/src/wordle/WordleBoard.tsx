@@ -10,14 +10,13 @@ import { tileTone } from '../theme/tileTones';
 import type { BoardCell, BoardRow, Feedback } from './board';
 
 /**
- * A scored row turns its cells one after another, each this long after the
- * one before it and taking this long to turn: the numbers a join code's boxes
- * turn green on (play/JoinByCode.tsx), so the two feel like one thing.
+ * A scored row turns its cells in sequence, each this long after the last and taking this long, the same timing
+ * as the join-code boxes (play/JoinByCode.tsx).
  */
 export const TURN_STAGGER_MS = 80;
 export const TURN_MS = 300;
 
-/** How long a row of `cells` takes to turn, first cell to last: nothing under Reduce Motion, where the colours are simply there. */
+/** How long a row of `cells` takes to turn, first to last: nothing under Reduce Motion, where the colours just appear. */
 export function turnMs(cells: number, reduce: boolean): number {
   return reduce || cells <= 0 ? 0 : (cells - 1) * TURN_STAGGER_MS + TURN_MS;
 }
@@ -26,21 +25,12 @@ export function turnMs(cells: number, reduce: boolean): number {
 const TYPED_FROM = 0.86;
 
 /**
- * The grid of guessed letters.
+ * The grid of guessed letters, shared by the solo screen and Peyvok Battle so the colours, sizing and
+ * announcements stay in one place.
  *
- * Pulled out of the solo screen so Peyvok Battle can show the same board rather
- * than a second one that drifts — the colours, the sizing rule and the letter
- * announcements are all decisions worth having in one place.
- *
- * It answers the two things done on it. A letter typed pops into its cell, so
- * the key is seen to have landed where the eye already is. And a guess the
- * server has scored turns over a cell at a time, each showing its colour as it
- * comes round: what the guess was worth is the moment of the game, and it used
- * to be five squares changing colour between two frames. Only a row scored
- * while the board is on screen turns; the rows of a game opened again are
- * simply there. Under Reduce Motion nothing moves and the colours say it all.
- *
- * A caller gives a new game a new `key`, so the board starts afresh with it.
+ * A typed letter pops into its cell, and a scored guess turns over cell by cell, each revealing its colour. Only
+ * rows scored while the board is on screen turn; a reopened game's rows are static. Under Reduce Motion nothing
+ * moves. A caller gives a new game a new `key`, so the board starts afresh.
  */
 export function WordleBoard({
   board,
@@ -49,14 +39,14 @@ export function WordleBoard({
 }: {
   board: BoardRow[];
   cellSize: number;
-  /** solo shakes the board on a rejected guess (`useShake`'s points sideways); a battle need not */
+  /** Solo shakes the board on a rejected guess (`useShake`'s points sideways); a battle need not. */
   shake?: Animated.Value;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
   const done = board.reduce((n, r) => n + (r.state === 'done' ? 1 : 0), 0);
-  // the rows already scored when the board was first drawn: those are shown as they are
+  // Rows already scored when the board first drew are shown as they are.
   const base = useRef(done).current;
-  // each row scored since, by its place: one value a cell, 0 before it has turned and 1 after
+  // Each row scored since, by its place: one value a cell, 0 before it has turned and 1 after.
   const turns = useRef(new Map<number, Animated.Value[]>()).current;
   const turning = useRef(new Set<number>()).current;
   const turnOf = (row: number, cells: number): Animated.Value[] | null => {
@@ -79,7 +69,7 @@ export function WordleBoard({
     }
   }, [done, turns, turning]);
 
-  // a letter typed into the row being written: its cell pops, once, as it lands
+  // A letter typed into the row being written: its cell pops, once, as it lands.
   const active = board.find((r) => r.state === 'active');
   const typed = active ? active.cells.map((c) => c.letter) : [];
   const typedKey = typed.join('|');
@@ -97,7 +87,7 @@ export function WordleBoard({
       v.setValue(TYPED_FROM);
       springTo(v, 1, 'bouncy').start();
     });
-    // once for each change to what is typed
+    // Once for each change to what is typed.
   }, [typedKey, reduce]);
 
   const rows = board.map((row, ri) => {
@@ -120,10 +110,8 @@ export function WordleBoard({
 }
 
 /**
- * One square. Scored and turning (`turn`), it is drawn twice over: as it was
- * typed, until it is edge-on, and in its colour from there — one value on the
- * native driver, so the colour changes exactly as the square is side-on and
- * nothing waits on a timer.
+ * One square. When scored and turning (`turn`) it is drawn twice, as typed until edge-on and in its colour after,
+ * on one native-driver value, so the colour changes exactly at side-on with no timer.
  */
 function Cell({ cell, size, turn, pop }: { cell: BoardCell; size: number; turn: Animated.Value | null; pop: Animated.Value | null }): React.JSX.Element {
   const { colors } = useTheme();
@@ -131,11 +119,11 @@ function Cell({ cell, size, turn, pop }: { cell: BoardCell; size: number; turn: 
   const letter = cell.letter.toUpperCase();
   const box = { width: size, height: size };
   const text = { fontSize: size * 0.42 };
-  // an empty square has the quiet edge of a tile waiting to be chosen: the glass's white hairline vanished on the day's pale page
+  // An empty square has the quiet edge of a tile waiting to be chosen, visible on the day's pale page.
   const typedFace = { backgroundColor: 'transparent', borderColor: cell.letter ? colors.primary : tileTone(colors, 'idle').edge };
   const fill = feedbackColor(cell.feedback, colors);
   const scoredFace = { backgroundColor: fill, borderColor: fill };
-  // the square is sized in points, so its letter grows only as far as still fits it
+  // The square is sized in points, so its letter grows only as far as still fits it.
   const glyph = (ink: string) => (
     <Text style={[styles.cellText, text, { color: ink }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
       {letter}
@@ -171,12 +159,9 @@ export function feedbackColor(f: Feedback | null, colors: Palette): string {
 }
 
 /**
- * The colour a letter is written in on the fill `feedbackColor` gives it.
- *
- * A letter in the wrong square sits on the gold, and the white of a button's
- * label is 2.1:1 there by day, so it takes the ink made for gold. Green and
- * grey are dark enough by day, and light enough by evening, for the label
- * colour; a letter not scored yet has no fill and is plain text.
+ * The colour a letter is written in on its `feedbackColor` fill. A misplaced letter sits on gold, where the white
+ * label colour is only 2.1:1 by day, so it uses the ink made for gold. Green and grey suit the label colour in
+ * either scheme; an unscored letter has no fill and is plain text.
  */
 export function feedbackInk(f: Feedback | null, colors: Palette): string {
   if (f === 'yellow') return colors.textOnGold;
@@ -184,10 +169,8 @@ export function feedbackInk(f: Feedback | null, colors: Palette): string {
 }
 
 /**
- * What a letter is called out as.
- *
- * A screen reader gets the letter and how it scored — "K, correct" — because a
- * bare letter tells somebody who cannot see the colour nothing at all.
+ * What a letter is announced as: the letter and its score ("K, correct"), since a bare letter tells someone who
+ * cannot see the colour nothing.
  */
 export function cellLabel(
   letter: string,
@@ -215,7 +198,7 @@ const styles = StyleSheet.create({
   board: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.md },
   row: { flexDirection: 'row', gap: spacing.xs },
   cell: { borderRadius: radii.sm, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  // the two faces of a square that is turning, one over the other
+  // The two faces of a square that is turning, one over the other.
   face: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   cellText: { fontWeight: typography.weights.bold },
 });

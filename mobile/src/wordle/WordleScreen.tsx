@@ -59,14 +59,13 @@ interface WordleGameView {
   status: GameStatus;
   targetLength: number;
   guesses: GuessRow[];
-  /** best status seen per letter across all guesses (upgrade-only) */
+  /** Best status seen per letter across all guesses (upgrade-only). */
   keyboard: Record<string, Feedback>;
   remainingAttempts: number;
   target: string | null;
   /**
-   * Once the game is finished: the answer's card, with its meanings in every
-   * language a word card gives and the dictionary entry to save it as. Null
-   * while it is played.
+   * Once finished: the answer card, with its meanings in every language a word card gives and the dictionary
+   * entry to save it as. Null during play.
    */
   word?: WordCard | null;
 }
@@ -92,29 +91,16 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
 };
 
 /**
- * Kurdish Peyvok (KUR-305). Server-authoritative: the screen never holds the
- * answer — it posts guesses to #304 and renders the scored feedback. Board and
- * keyboard are derived from the returned state (pure `board.ts`); the keyboard
- * carries upgrade-only colour memory. Win/lose reveals the word with what it
- * means in the reader's language and Save to vocabulary (WordAnswer.tsx), plus
- * a spoiler-safe share grid: the squares of the guesses with the score over
- * them and the site's address under them, built by the shared builder so the
- * website's game shares the same thing.
+ * Kurdish Peyvok. Server-authoritative: the screen never holds the answer; it posts guesses and renders the
+ * scored feedback. Board and keyboard derive from the returned state (pure `board.ts`), and the keyboard keeps
+ * upgrade-only colour memory. A win or loss reveals the word with its meaning and Save to vocabulary
+ * (WordAnswer.tsx), plus a spoiler-safe share grid built by the shared builder, as the web game shares.
  *
- * The meaning comes with the finished game, from the word card for exactly
- * this word. It used to be looked up in the dictionary afterwards, and when
- * the search had no entry spelt exactly so, the first hit was shown instead:
- * another word's meaning under the answer. Saving goes by the game for the
- * same reason, so the server saves the word the game was about and counts it
- * once toward the words learned.
+ * The meaning comes with the finished game from the word card for exactly this word, and saving goes by the game,
+ * so the server saves that word and counts it once. Each difficulty has its own daily word, so the difficulty can
+ * be changed on the result as well as at the start.
  *
- * Each difficulty has a daily word of its own, so the difficulty can be
- * changed on the result as well as at the start: the next daily or practice
- * word is at the difficulty chosen there.
- *
- * Peyvok is played alone, so it earns no XP, daily or practice: XP is for
- * lessons, stories and games played online with other people. The result says
- * so in one quiet line, and neither it nor the statistics show an XP figure.
+ * Played alone, Peyvok earns no XP, daily or practice; the result says so in one line and shows no XP figure.
  */
 export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -130,16 +116,16 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [starting, setStarting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [stats, setStats] = useState<WordleStats | null>(null);
-  // Save to vocabulary on the finished game's word: on its way, and why it did not land
+  // Save to vocabulary on the finished game's word: on its way, and why it did not land.
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  // Only the game asked for last may land: a slow answer for the one asked before (another difficulty's daily,
-  // or a practice word) would otherwise put its board over the one pressed after it.
+  // Only the most recently requested game may land: a slow answer for an earlier request (another difficulty's
+  // daily, or a practice word) would otherwise replace the board pressed after it.
   const asked = useRef(0);
-  // the word was found by the guess just made, on this screen: the one time the result celebrates
+  // The guess just made on this screen found the word: the one time the result celebrates.
   const [wonNow, setWonNow] = useState(false);
 
-  // a guess the game will not take: the board shakes as every wrong answer in the app does, and is still under Reduce Motion
+  // A guess the game refuses shakes the board like every wrong answer in the app; still under Reduce Motion.
   const shake = useShake();
 
   const loadStats = useCallback(() => {
@@ -151,7 +137,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
   const start = async (mode: 'daily' | 'practice') => {
     const ask = ++asked.current;
-    // the rating box, if it came, belonged to the board this replaces
+    // The rating box, if it came, belonged to the board this replaces.
     leftResults();
     haptic('tap');
     setStarting(true);
@@ -185,15 +171,16 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       setDraft([]);
       setNote(null);
       if (res.data.status !== 'playing') {
-        // the word found has its moment, felt as that lands (ResultPanel); running out of tries is a gentle miss — a guess along the way is neither
+        // A found word gets its moment as it lands (ResultPanel); running out of tries is a gentle miss, and
+        // guesses along the way are neither.
         if (res.data.status === 'won') setWonNow(true);
         else haptic('wrong');
         loadStats();
-        // this guess ended it — a daily reopened after it was played is not a finish
+        // This guess ended it; a daily reopened after it was played is not a finish.
         reportGameFinished({ moment: res.data.status === 'won' ? 'won' : 'other' });
       }
     } else {
-      // a rejected guess consumes no attempt — keep the draft, explain inline
+      // A rejected guess consumes no attempt — keep the draft, explain inline.
       const code = res.error.code;
       setNote(
         code === 'NOT_A_WORD'
@@ -223,8 +210,8 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   );
 
   /**
-   * The finished game's word into the player's vocabulary, by the game rather than by the entry: the server saves
-   * exactly the word the game was about, and counts it once toward the words learned however often it is pressed.
+   * Save the finished game's word to the player's vocabulary by the game rather than the entry, so the server
+   * saves exactly that word and counts it once however often it is pressed.
    */
   const saveWord = async () => {
     const id = game?.id;
@@ -237,12 +224,12 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       haptic('tap');
       setGame((g) => (g && g.id === id && g.word ? { ...g, word: { ...g.word, saved: true } } : g));
     } else {
-      // a full vocabulary (limits/limitCopy.ts), or the network: said under the button, which stays to try again
+      // A full vocabulary (limits/limitCopy.ts) or a network failure is shown under the button, which stays to retry.
       setSaveError(describeError(res.error, t));
     }
   };
 
-  // the result as the grid of squares, with the score over it and the site's address under it: the same message the website sends (share/winText.ts)
+  // The result as the grid of squares with the score above and the site's address below, as the web sends (share/winText.ts).
   const shareResult = () => {
     if (!game || game.status === 'playing') return;
     shareOut(wordGameShare(game, { practice: t('games.wordle.practice'), difficulty: t(DIFFICULTY_KEY[game.difficulty]) }));
@@ -288,7 +275,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           </>
         ) : (
           <>
-            {/* a new game is a new board: only a row scored while it is on screen turns over */}
+            {/* A new game is a new board: only a row scored while it is on screen turns over. */}
             <WordleBoard key={game.id} board={board} cellSize={cellSize} shake={shake.translateX} />
 
             {note ? <Text style={[styles.note, { color: colors.danger }]}>{note}</Text> : null}
@@ -296,7 +283,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
             {finished ? (
               <ResultPanel
                 game={game}
-                // once the last row has turned over, so the two do not play over each other
+                // Once the last row has turned over, so the two do not play over each other.
                 celebrateAfterMs={wonNow ? turnMs(game.targetLength, reduce) : null}
                 save={
                   game.word?.entryId
@@ -314,11 +301,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           </>
         )}
       </ScrollView>
-      {/*
-        The keyboard stays at the bottom of the screen, edge to edge, while the
-        board scrolls above it: inside the scroller it moved with the board and
-        lost a third of its width to the screen's margins.
-      */}
+      {/* The keyboard stays pinned edge to edge at the bottom while the board scrolls above it. */}
       {game && !finished ? (
         <View style={[styles.keyboardDock, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
           <WordleKeyboard keyboard={game.keyboard} onKey={onKey} checking={submitting} />
@@ -329,8 +312,8 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 }
 
 /**
- * Win/lose result: the verdict, the note that a game alone earns no XP, the word with its meaning and Save, then the
- * next word at the difficulty chosen here, the day's word and share.
+ * The win or loss result: the verdict, the no-XP note, the word with its meaning and Save, then the next word at
+ * the chosen difficulty, the day's word and share.
  */
 function ResultPanel({
   game,
@@ -344,11 +327,11 @@ function ResultPanel({
   stats,
 }: {
   game: WordleGameView;
-  /** the word was found just now: its moment plays, this long after the panel appears; null for a result that is only shown */
+  /** The word was just found: its moment plays this long after the panel appears; null for a result that is only shown. */
   celebrateAfterMs: number | null;
-  /** Save to vocabulary, when the dictionary has the word to save it as */
+  /** Save to vocabulary, when the dictionary has the word to save it as. */
   save: React.ComponentProps<typeof WordAnswer>['save'];
-  /** the difficulty the next word is played at: each one has a daily of its own */
+  /** The difficulty the next word is played at: each one has a daily of its own. */
   difficulty: Difficulty;
   onDifficulty: (d: Difficulty) => void;
   onShare: () => void;
@@ -364,7 +347,7 @@ function ResultPanel({
     <View style={styles.result}>
       <GlassCard>
         <View style={styles.resultCard}>
-          {/* the line used to open with a party popper; the spark is the app's own, in the colour of a right answer */}
+          {/* The app's own spark, in the right-answer colour. */}
           {won ? (
             celebrateAfterMs !== null ? (
               <WinMoment delayMs={celebrateAfterMs} seed={game.guesses.length} />
@@ -386,10 +369,10 @@ function ResultPanel({
           )}
           <Text style={[styles.resultNote, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text>
 
-          {/* found or not, the word is the lesson: what it means, and a way to keep it */}
+          {/* Found or not, the word is the lesson: what it means, and a way to keep it. */}
           {game.target ? <WordAnswer word={game.target} meanings={game.word?.meanings} save={save} /> : null}
 
-          {/* the next word's difficulty, here as at the start: a daily of another difficulty is a word of its own */}
+          {/* The next word's difficulty, as at the start: each difficulty's daily is its own word. */}
           <View style={styles.nextDifficulty}>
             <Segmented<Difficulty>
               options={DIFFICULTIES}
@@ -400,10 +383,7 @@ function ResultPanel({
             />
           </View>
 
-          {/*
-            Another word is the one thing to press, and has the table's gold; the day's word and the share are the two quieter
-            ways on, side by side at one height. Share stood beside the gold button a third shorter than it.
-          */}
+          {/* Another word is the main action, in the table's gold; the day's word and Share are the two quieter options, side by side at one height. */}
           <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={styles.again} />
           <View style={[styles.resultActions, { flexDirection: dir.row }]}>
             <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={styles.half} />
@@ -434,12 +414,9 @@ function ResultPanel({
 const WIN_STAGE = 96;
 
 /**
- * The word found, as it is found: the app's one celebration (theme/celebration.ts),
- * small, on the result's own mark — the spark springs in, a ring widens once
- * behind it, a handful of flecks is thrown, and it is felt and heard once as
- * it lands. Only for a guess made here and now: a daily opened again after it
- * was solved shows the same spark and stays still. Under Reduce Motion the
- * spark fades in and nothing travels.
+ * The found word's moment: the app's celebration (theme/celebration.ts), small, on the result's mark: the spark
+ * springs in, a ring widens, flecks are thrown, with one haptic and sound on landing. Only for a guess made here
+ * and now; a reopened solved daily shows the spark still. Under Reduce Motion the spark fades in.
  */
 function WinMoment({ delayMs, seed }: { delayMs: number; seed: number }): React.JSX.Element {
   const { colors } = useTheme();
@@ -464,7 +441,7 @@ function Stat({ label, value }: { label: string; value: string }): React.JSX.Ele
   const { colors } = useTheme();
   return (
     <View style={styles.stat}>
-      {/* a figure, not something to press: in the page's ink, where the violet said it could be tapped */}
+      {/* A figure, not a control, so it is in the page's ink rather than violet. */}
       <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>
     </View>
@@ -475,10 +452,7 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   keyboardDock: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm, alignItems: 'center' },
-  // flex + centre so a long translated name shares the row with the back
-  // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
-  // Battle" in some languages is three
-  // the night the game opens on: its emblem acting the game out, its name, and how it is played
+  // The night the game opens on: its emblem acting the game out, its name and how it is played.
   stage: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
   stageName: { ...display(typography.sizes.xxl), color: TABLE.ink, textAlign: 'center', marginTop: spacing.sm },
   stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
@@ -486,10 +460,10 @@ const styles = StyleSheet.create({
   startStats: { fontSize: typography.sizes.sm, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   result: { gap: spacing.md, marginTop: spacing.md },
-  // what is in a card is laid out on a View inside it: a GlassCard's own style dresses its outside, so its children were never centred or spaced
+  // Lay out a card's contents on an inner View: a GlassCard's own style only dresses its outside.
   resultCard: { gap: spacing.sm },
   resultMark: { alignSelf: 'center' },
-  // the spark's own stage while it celebrates; the flecks may fly past its edges
+  // The spark's own stage while it celebrates; the flecks may fly past its edges.
   winStage: { alignSelf: 'center', width: WIN_STAGE, height: WIN_STAGE / 2, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
   resultTitle: { ...display(typography.sizes.xl), textAlign: 'center' },
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
@@ -500,7 +474,7 @@ const styles = StyleSheet.create({
   half: { flex: 1 },
   statsCard: { gap: spacing.sm },
   statsTitle: { ...sectionLabel },
-  // five figures, three and two: spaced evenly, so the two under the three sit in the middle and not at the edges
+  // Five figures, three and two, spaced evenly so the two under the three sit centred.
   statsGrid: { flexWrap: 'wrap', justifyContent: 'space-evenly', rowGap: spacing.md },
   stat: { width: '30%', alignItems: 'center' },
   statValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
