@@ -1,23 +1,15 @@
 /**
- * Spam / repetition escalation (KUR-295). Pure and deterministic: given how
- * often a user is repeating near-identical content and how fast they are
- * posting, decide the graduated response — allow → throttle → auto-mute →
- * auto-suspend — and whether to enqueue the account for human review (#102).
- * The write path gathers the signals (recent content + burst count) and applies
- * the returned action; every automated action is reversible + audited (#104).
+ * Pure spam escalation: from how often a user repeats near-identical content and how fast they post, the graduated
+ * response (allow, throttle, auto-mute, auto-suspend) and whether to queue the account for human review. The write
+ * path gathers the signals and applies the action; every automated action is reversible and audited.
  */
 
-/** Normalize content for near-identical comparison: lowercase, NFC, collapse
- *  whitespace. Shared with the AI-moderation spam path (#293). */
+/** Normalizes content for near-identical comparison: lowercase, NFC, whitespace collapsed; shared with automated moderation. */
 export function normalizeContent(text: string): string {
   return text.toLowerCase().normalize('NFC').replace(/\s+/g, ' ').trim();
 }
 
-/**
- * How many of the recent messages are near-identical to the candidate,
- * counting the candidate itself. v1 treats "near-identical" as equal after
- * normalization; fuzzier matching (edit distance) can extend this later.
- */
+/** How many recent messages are near-identical to the candidate, the candidate included; near-identical means equal after normalizing. */
 export function countNearIdentical(recent: readonly string[], candidate: string): number {
   const c = normalizeContent(candidate);
   let count = 1; // the candidate
@@ -66,14 +58,13 @@ export interface SpamSignals {
 
 export interface SpamVerdict {
   action: AbuseAction;
-  /** enqueue the account for moderator review (#102) — at mute or worse */
+  /** Queue the account for moderator review, at mute or worse. */
   queueForReview: boolean;
 }
 
 /**
- * Decide the response to a message from its spam signals: the most severe of
- * the repetition and burst escalations. Muting or suspending also queues the
- * account for review so a human confirms (and can reverse) the automated call.
+ * The response to a message from its spam signals: the more severe of the repetition and burst escalations. Muting or
+ * suspending also queues the account so a human confirms or reverses the automated call.
  */
 export function evaluateSpam(signals: SpamSignals): SpamVerdict {
   const action = mostSevere(repeatAction(signals.repeatCount), burstAction(signals.burstCount));

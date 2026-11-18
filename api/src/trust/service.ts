@@ -33,24 +33,16 @@ export interface TrustCheck extends ActionAllowance {
 export interface SpamOutcome {
   action: AbuseAction;
   queueForReview: boolean;
-  /** the account was auto-muted/suspended by this message */
+  /** The account was automatically muted or suspended by this message. */
   enforced: boolean;
 }
 
 /**
- * New-account trust levels + velocity limits + spam auto-suspension (KUR-295).
- * Orchestrates the pure cores (`levels.ts`, `spam.ts`) at the write boundary:
- * computes a per-request trust level from account facts, enforces per-level
- * action velocity caps (rolling counts in Redis), and detects duplicate/burst
- * spam — auto-muting or auto-suspending (ban, which revokes sessions) obvious
- * bots. Both are automatic sanctions now: the person gets the statement of
- * reasons (marked automatic, not yet reviewed by a person), sees it on their
- * standing page and can ask for a review; the enforced columns and the
- * `admin_actions` row (admin_id NULL) come from the sanctions service, so it is
- * visible + reversible (#101/#104) like any other.
- *
- * Without Redis the velocity/spam signals read as empty (fail-open) — enforced
- * in the integration environment where Redis is configured.
+ * New-account trust levels, velocity limits and spam auto-suspension at the write boundary, using the pure cores
+ * (`levels.ts`, `spam.ts`): a per-request trust level, per-level action caps on rolling Redis counts, and duplicate and
+ * burst spam detection that mutes or suspends obvious bots. Both are automatic sanctions through the sanctions service:
+ * the person gets a statement of reasons, sees it on their standing page and can ask for review, and an `admin_actions`
+ * row records it, visible and reversible. Without Redis the signals read empty and fail open.
  */
 export class TrustService {
   private readonly pool: pg.Pool;
@@ -65,7 +57,7 @@ export class TrustService {
     this.sanctions = new SanctionsService(pool);
   }
 
-  /** Effective trust level from account age + verification + violation history. */
+  /** The effective trust level from account age, verification and violation history. */
   async getLevel(userId: string): Promise<TrustLevel> {
     const res = await this.pool.query<{
       created_at: Date;
@@ -90,7 +82,7 @@ export class TrustService {
     });
   }
 
-  /** Whether one more `action` is allowed for the user right now (no increment). */
+  /** Whether one more `action` is allowed now, without counting it. */
   async checkAction(userId: string, action: ThrottledAction): Promise<TrustCheck> {
     const level = await this.getLevel(userId);
     const count = await this.recentCount(userId, action);
@@ -111,10 +103,8 @@ export class TrustService {
   }
 
   /**
-   * Assess a message for duplicate/burst spam and apply the graduated response.
-   * Mute/suspend are enforced immediately (so the offending message is the last
-   * one that lands) and logged; `queueForReview` is surfaced for the #102 queue
-   * (wired when that lands).
+   * Assesses a message for duplicate or burst spam and applies the graduated response. Mute and suspend are enforced at
+   * once, so the offending message is the last to land, and logged; `queueForReview` marks the account for review.
    */
   async assessContent(userId: string, text: string): Promise<SpamOutcome> {
     const recent = await this.recentContent(userId);
@@ -138,13 +128,9 @@ export class TrustService {
   // ---- enforcement ----------------------------------------------------------
 
   /**
-   * Spam lands wherever text does, so the mute covers both: messages (a chat
-   * mute) and posts and comments (a post mute), for the same hour. One notice
-   * says so; a second sanction is recorded without repeating it. Each is skipped
-   * while one of its kind is already in force — one sanction and one notice per
-   * incident, not one per message — so someone an admin muted in chat who now
-   * spams the library is still stopped there. The check runs under the
-   * person's lock, so a burst of messages arriving at once mutes them once.
+   * Spam lands wherever text does, so the mute covers messages (chat) and posts and comments (post) for the same hour,
+   * with one notice. Each is skipped while one of its kind is in force, so one incident is one sanction, and someone an
+   * admin already muted in chat is still stopped in the library. It runs under the person's lock, so a burst mutes once.
    */
   private async autoMute(userId: string): Promise<void> {
     const common = {
@@ -166,7 +152,7 @@ export class TrustService {
     });
   }
 
-  /** A day's suspension: ban + every live session revoked (KUR-016), as an automatic sanction. */
+  /** A day's suspension, a ban with every live session revoked, as an automatic sanction. */
   private async autoSuspend(userId: string): Promise<void> {
     await inTransaction(this.pool, (client) =>
       this.sanctions.apply(client, {
