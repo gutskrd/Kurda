@@ -54,7 +54,7 @@ describe('league names', () => {
 
 describe('weekEndText', () => {
   it('says the close in the reader’s own time, as a weekday and an hour — not a countdown', () => {
-    // Monday 00:00 UTC is Sunday evening in New York and Monday morning in Erbil
+    // Monday 00:00 UTC is Sunday evening in New York and Monday morning in Erbil.
     expect(weekEndText('2026-10-19T00:00:00.000Z', 'en', 'America/New_York')).toMatch(/Sun.*20:00|Sun.*8:00/);
     expect(weekEndText('2026-10-19T00:00:00.000Z', 'en', 'Asia/Baghdad')).toMatch(/Mon.*03:00|Mon.*3:00/);
     expect(weekEndText('not a date', 'en')).toBe('');
@@ -69,7 +69,7 @@ describe('weekLeftText', () => {
     expect(weekLeftText(t, ends, 'en', at('2026-10-24T00:00:00Z'))).toBe('2 days left');
     expect(weekLeftText(t, ends, 'en', at('2026-10-24T12:00:00Z'))).toBe('2 days left');
     expect(weekLeftText(t, ends, 'en', at('2026-10-25T00:00:00Z'))).toBe('1 day left');
-    // under a day: when, not how many hours
+    // Under a day: when, not how many hours.
     expect(weekLeftText(t, ends, 'en', at('2026-10-25T09:00:00Z'), 'Asia/Baghdad')).toMatch(/^Week ends Mon.*0?3:00/);
     expect(weekLeftText(t, 'soon', 'en')).toBe('');
   });
@@ -185,7 +185,7 @@ describe('the ceremony', () => {
     expect(ceremonyLine(t, down, ceremonyFor(down)!)).not.toMatch(/down|lost|dropped/i);
     const trophy = { ...base, tier: 'okyanus' as const, tierAfter: 'okyanus' as const, outcome: 'stayed' as const, trophy: true, rank: 1 };
     expect(ceremonyLine(t, trophy, ceremonyFor(trophy)!)).toBe('You finished #1 last week: top three in Okyanûs, a Pêla week.');
-    // in Kurdish too, with the Kurdish name of the league
+    // In Kurdish too, with the Kurdish name of the league.
     expect(ceremonyLine(tKu, base, ceremonyFor(base)!)).toBe('Hefteya borî tu bûyî #15 û derketî Çem.');
     expect(ceremonyLine(tCkb, base, ceremonyFor(base)!)).toBe('هەفتەی ڕابردوو #15 بوویت و سەرکەوتیت بۆ چەم.');
   });

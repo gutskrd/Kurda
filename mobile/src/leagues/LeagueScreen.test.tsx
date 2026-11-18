@@ -16,7 +16,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-// the pull to refresh as a button: the web's control has nothing to pull
+// The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 
 type Button = { text: string; style?: string; onPress?: () => void };
@@ -61,7 +61,7 @@ describe('the league page', () => {
     expect(screen.getByRole('img', { name: /^Kanî League.*, reached$/ })).toBeTruthy();
     expect(screen.getByRole('img', { name: /^Çem League.*, your league$/ })).toBeTruthy();
     expect(screen.getAllByRole('img', { name: /, still ahead$/ })).toHaveLength(3);
-    // the group, with you in it
+    // The group, with you in it.
     expect(screen.getByText('azad')).toBeTruthy();
     expect(screen.queryByText('Your week starts with a lesson')).toBeNull();
   });
@@ -71,7 +71,7 @@ describe('the league page', () => {
     renderWithProviders(<LeagueScreen onExit={() => undefined} />);
     expect(await screen.findByText('Your week starts with a lesson')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBeTruthy();
-    // and his own word on it
+    // And his own word on it.
     expect(screen.getByText('Do a lesson and I’ll wake up — then we take our place at this week’s table.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Start a lesson' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
@@ -93,7 +93,7 @@ describe('the league page', () => {
     const [title, body, buttons] = alert.mock.calls[0] as [string, string, Button[]];
     expect(title).toBe('Leave the weekly leagues?');
     expect(body).toMatch(/join again any time/);
-    // Cancel and Leave, neither one painted as the one to choose
+    // Cancel and Leave, neither one painted as the one to choose.
     expect(buttons.map((b) => [b.text, b.style])).toEqual([
       ['Cancel', 'cancel'],
       ['Leave', undefined],
