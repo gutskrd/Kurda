@@ -6,7 +6,7 @@ import { WalletService } from '../wallet/service.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
 import { localDate } from '../streaks/streak-logic.js';
 import { StreakService } from '../streaks/service.js';
-import { statusFor, type DailyRewardState, type DailyRewardStatus } from './daily-cycle.js';
+import { dailyRewardView, statusFor, type DailyRewardState, type DailyRewardView } from './daily-cycle.js';
 
 export interface ClaimResult {
   claimed: boolean;
@@ -60,12 +60,11 @@ export class DailyRewardService {
   }
 
   /** Cycle progress and the next reward for the calendar, and the gems a claim today adds for a Hevalo+ member (0 otherwise). */
-  async status(userId: string, now: Date = new Date()): Promise<DailyRewardStatus & { cycleDay: number; plusGems: number }> {
+  async status(userId: string, now: Date = new Date()): Promise<DailyRewardView> {
     const { tz, plus } = await this.account(userId, now);
     const today = localDate(now, tz);
     const state = await this.read(this.pool, userId);
-    const learned = await this.learnedOn(this.pool, userId, today);
-    return { ...statusFor(state, today, learned), cycleDay: state.cycleDay, plusGems: plus ? PLUS_DAILY_GEMS : 0 };
+    return dailyRewardView(state, today, await this.learnedOn(this.pool, userId, today), plus);
   }
 
   /**

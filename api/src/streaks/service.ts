@@ -324,6 +324,11 @@ export class StreakService {
    * statement; one that does settles again under the row lock, so it overwrites nothing changed meanwhile.
    */
   async get(userId: string, timeZone: string, now: Date = new Date()): Promise<StreakSummary> {
+    return (await this.current(userId, timeZone, now)).streak;
+  }
+
+  /** `get`, with the last day learned beside it, which the daily view needs for today's Zêr. */
+  async current(userId: string, timeZone: string, now: Date = new Date()): Promise<{ streak: StreakSummary; lastLearnedOn: string | null }> {
     const today = localDate(now, timeZone);
     let loaded = await this.load(this.pool, userId);
     let settled = settle(loaded.state, today);
@@ -334,7 +339,7 @@ export class StreakService {
         if (moved(loaded.state, settled)) await this.save(tx, userId, settled);
       });
     }
-    return this.summary(this.pool, userId, loaded, settled, loaded.tally, now, timeZone);
+    return { streak: await this.summary(this.pool, userId, loaded, settled, loaded.tally, now, timeZone), lastLearnedOn: loaded.tally.lastLearnedOn };
   }
 
   /**

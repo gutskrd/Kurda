@@ -1,3 +1,4 @@
+import { PLUS_DAILY_GEMS } from '@kurda/shared';
 import { dayDiff } from '../streaks/streak-logic.js';
 
 /**
@@ -58,4 +59,12 @@ export function statusFor(state: DailyRewardState, today: string, learnedToday: 
     alreadyClaimedToday,
     learnedToday,
   };
+}
+
+/** What GET /rewards/daily answers, and the daily view repeats: the status, the last claimed day, and a member's gems. */
+export type DailyRewardView = DailyRewardStatus & { cycleDay: number; plusGems: number };
+
+/** The status for `today`, with the gems a claim adds for a Hevalo+ member (0 for everyone else). */
+export function dailyRewardView(state: DailyRewardState, today: string, learnedToday: boolean, plus: boolean): DailyRewardView {
+  return { ...statusFor(state, today, learnedToday), cycleDay: state.cycleDay, plusGems: plus ? PLUS_DAILY_GEMS : 0 };
 }
