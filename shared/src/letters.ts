@@ -286,6 +286,29 @@ export interface LetterThread {
   earlier?: boolean;
 }
 
+/** The read of a correspondence an app makes: its newest page, or the page before a letter. */
+export function letterThreadPath(threadId: string, before?: string): string {
+  const page = before ? `before=${encodeURIComponent(before)}&limit=${LETTERS_PAGE}` : `limit=${LETTERS_PAGE}`;
+  return `/letters/threads/${encodeURIComponent(threadId)}?${page}`;
+}
+
+/**
+ * A fresh read of the newest letters, keeping the earlier ones already shown: they go back before the first fresh letter
+ * when it is among those shown. When it is not, so many letters came that the two would not meet, the read stands alone.
+ */
+export function freshLetters(shown: LetterThread | null, fresh: LetterThread): LetterThread {
+  const first = fresh.letters[0];
+  const at = shown && first && fresh.earlier !== undefined ? shown.letters.findIndex((l) => l.id === first.id) : -1;
+  if (!shown || at <= 0) return fresh;
+  return { ...fresh, letters: [...shown.letters.slice(0, at), ...fresh.letters], earlier: shown.earlier };
+}
+
+/** Earlier letters put before those shown, with whether more remain before them. */
+export function withEarlierLetters(shown: LetterThread, page: LetterThread): LetterThread {
+  const have = new Set(shown.letters.map((l) => l.id));
+  return { ...shown, letters: [...page.letters.filter((l) => !have.has(l.id)), ...shown.letters], earlier: page.earlier === true };
+}
+
 /** Your bird sent out to somebody new: it waits, from `since`, until somebody calls it. */
 export type BirdOutResult = { kind: 'waiting'; since: string };
 
