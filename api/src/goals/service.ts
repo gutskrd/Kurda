@@ -39,10 +39,8 @@ interface GoalRow {
 }
 
 /**
- * Daily-goal tracking (KUR-032). Today's progress is the XP earned since
- * local midnight; completion is credited the moment it crosses the day's
- * effective (minimum-in-force) goal. Evaluation is idempotent and can run
- * inside the lesson-completion transaction.
+ * Daily goals. Progress is the XP earned since local midnight, and completion is credited when it crosses the day's
+ * effective goal (the lowest in force). Evaluation is idempotent and can run inside the lesson transaction.
  */
 export class DailyGoalService {
   constructor(private readonly pool: pg.Pool) {}
@@ -72,10 +70,7 @@ export class DailyGoalService {
     return res.rows[0]!;
   }
 
-  /**
-   * Bring today's row up to date and credit completion once when earned XP
-   * reaches the effective goal. Safe to call repeatedly and inside a txn.
-   */
+  /** Brings today's row up to date and credits completion once; safe to repeat and to call inside a transaction. */
   async evaluate(
     executor: Executor,
     userId: string,
@@ -83,9 +78,8 @@ export class DailyGoalService {
     now: Date = new Date(),
   ): Promise<DailyGoalStatus> {
     const day = localDate(now, tz);
-    // the goal set, today's row (seeded from it if new) and the XP earned on
-    // the learner's today (DST-safe via AT TIME ZONE), as one statement: it
-    // runs on every lesson finished and every look at the home screen
+    // The goal, today's row (seeded if new) and the XP earned on the learner's day (DST-safe via AT TIME ZONE) in one
+    // statement, since this runs on every lesson and every home-screen view.
     const res = await executor.query<GoalRow & { goal: GoalOption; earned: string }>(
       `WITH current AS (
          SELECT COALESCE((SELECT daily_goal FROM users WHERE id = $1), $4::int) AS goal
@@ -133,9 +127,8 @@ export class DailyGoalService {
   }
 
   /**
-   * Change the goal. Today is judged against the LOWER of the old and new
-   * values (raising never claws back progress); the new value takes full
-   * effect tomorrow. Re-evaluates completion against the new effective goal.
+   * Changes the goal. Today is judged against the lower of the old and new values, so raising it never takes
+   * progress back; the new value applies fully tomorrow.
    */
   async setGoal(
     userId: string,
@@ -153,7 +146,7 @@ export class DailyGoalService {
       const oldGoal = await this.currentGoal(client, userId);
       await this.ensureRow(client, userId, day, oldGoal);
       await client.query(`UPDATE users SET daily_goal = $2 WHERE id = $1`, [userId, newGoal]);
-      // effective today = min(what was already in force, the new value)
+      // Effective today: the lower of what was in force and the new value.
       await client.query(
         `UPDATE daily_goals SET effective_goal = LEAST(effective_goal, $3)
          WHERE user_id = $1 AND goal_date = $2`,
