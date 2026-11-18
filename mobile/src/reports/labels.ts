@@ -73,11 +73,12 @@ export const STANDING_STATUS_LABEL: Record<StandingStatus, TranslationKey> = {
   banned: 'standing.status.banned',
 };
 
-export const ORIGIN_LABEL: Record<SanctionOrigin, TranslationKey> = {
-  report: 'standing.origin.report',
-  automatic: 'standing.origin.automatic',
-  moderator: 'standing.origin.moderator',
-};
+/** How a decision came about, as its statement of reasons must say, and whether a person has reviewed it. */
+export function originKey(s: { origin: SanctionOrigin; reviewedByPerson: boolean }): TranslationKey {
+  if (s.origin === 'report') return 'standing.origin.report';
+  if (s.origin === 'moderator') return 'standing.origin.moderator';
+  return s.reviewedByPerson ? 'standing.origin.automaticReviewed' : 'standing.origin.automatic';
+}
 
 export const APPEAL_STATUS_LABEL: Record<AppealStatus, TranslationKey> = {
   open: 'appeal.status.open',

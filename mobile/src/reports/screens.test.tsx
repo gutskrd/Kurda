@@ -135,11 +135,11 @@ describe('AccountStandingScreen', () => {
     });
     renderWithProviders(<AccountStandingScreen onExit={() => undefined} />);
     expect(await screen.findByText('Some things are limited for now.')).toBeTruthy();
-    expect(screen.getByText('Sending messages')).toBeTruthy();
+    expect(screen.getByText('Messages, gifts and game cards in chats')).toBeTruthy();
     expect(screen.getByText('Messages paused')).toBeTruthy();
     expect(screen.getAllByText('Rule: Bullying or harassment')).toHaveLength(2);
     expect(screen.getAllByText('You sent repeated insults to another learner.').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('After a report · Reviewed by a person').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Someone reported it, and a person on our team reviewed it.').length).toBeGreaterThan(0);
     // An earlier decision with its review answered.
     expect(screen.getByText('Reviewed: the decision stays')).toBeTruthy();
     expect(screen.getByText('We looked again.')).toBeTruthy();

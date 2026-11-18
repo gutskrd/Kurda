@@ -16,6 +16,7 @@ import { useRail } from '../social/RailProvider';
 import { RequestTicket } from '../social/FriendTickets';
 import { railEdits } from '../social/useSocialRail';
 import { failureText, useOptimisticSend } from '../lib/optimistic';
+import { useUnfriend } from '../social/unfriend';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
@@ -35,6 +36,15 @@ function Row({ user, actions, meta }: { user: UserSummary; actions?: React.React
   );
 }
 
+/** A set update that takes `id` out. */
+const without =
+  (id: string) =>
+  (s: ReadonlySet<string>): ReadonlySet<string> => {
+    const next = new Set(s);
+    next.delete(id);
+    return next;
+  };
+
 /**
  * Friends (/app/friends): your friends, requests waiting on you, and the ones you sent; finding new people is Search's
  * job, linked at the top. Messages links here for requests, so they come first, each a friendship ticket
@@ -53,37 +63,34 @@ export function Friends(): React.JSX.Element {
   const [err, setErr] = useState<string | null>(null);
   const { adjust } = useRail();
   const sendShown = useOptimisticSend();
-  /** Friends blocked here, gone from the list before the server answers (reports/block.ts). */
-  const [blockedHere, setBlockedHere] = useState<ReadonlySet<string>>(() => new Set());
+  const unfriendNow = useUnfriend();
+  /** Friends blocked or removed here, gone from the list before the server answers (reports/block.ts, social/unfriend.ts). */
+  const [goneHere, setGoneHere] = useState<ReadonlySet<string>>(() => new Set());
   /** Sent requests taken back here, gone from the list before the server answers. */
   const [withdrawn, setWithdrawn] = useState<ReadonlySet<string>>(() => new Set());
 
   /** Takes back a request you sent; the other person is not told either way. */
   async function cancelRequest(userId: string): Promise<void> {
     setWithdrawn((s) => new Set(s).add(userId));
-    const res = await sendShown(() => client.delete(`/friends/requests/${userId}`), {
-      undo: () =>
-        setWithdrawn((s) => {
-          const next = new Set(s);
-          next.delete(userId);
-          return next;
-        }),
-    });
+    const res = await sendShown(() => client.delete(`/friends/requests/${userId}`), { undo: () => setWithdrawn(without(userId)) });
     if (res.ok) sent.reload();
   }
 
   /**
-   * Removes a friend. Removing (mutual, reversible) and blocking (silent, absolute) both live in the row's ⋯
-   * (profile/UserActions.tsx), where removing is confirmed and a block says what it does first.
+   * Removes a friend, gone from the list as soon as it is confirmed. Removing (mutual, reversible) and blocking (silent,
+   * absolute) both live in the row's ⋯ (profile/UserActions.tsx), where removing is confirmed and a block says what it
+   * does first.
    */
   async function unfriend(userId: string): Promise<void> {
-    await client.delete(`/friends/${userId}`);
-    friends.reload();
+    setGoneHere((s) => new Set(s).add(userId));
+    await unfriendNow(userId, () => setGoneHere(without(userId)));
   }
 
   /** Answers a request, counted at once everywhere; returns whether it went through, so a refused ticket opens again. */
   async function respond(userId: string, accept: boolean): Promise<boolean> {
     setErr(null);
+    // Someone removed here earlier who asked again is a friend once more.
+    if (accept) setGoneHere(without(userId));
     const res = await sendShown(
       () => client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`),
       adjust(railEdits.requestAnswered(userId)),
@@ -100,7 +107,7 @@ export function Friends(): React.JSX.Element {
   }
 
   const outgoing = (sent.data?.requests ?? []).filter((u) => !withdrawn.has(u.userId));
-  const yours = (friends.data?.friends ?? []).filter((u) => !blockedHere.has(u.userId));
+  const yours = (friends.data?.friends ?? []).filter((u) => !goneHere.has(u.userId));
 
   return (
     <div className="container container-narrow">
@@ -196,14 +203,8 @@ export function Friends(): React.JSX.Element {
                         title: t('friends.removeWho', { name: u.username }),
                         onConfirm: () => unfriend(u.userId),
                       }}
-                      onBlocked={() => setBlockedHere((s) => new Set(s).add(u.userId))}
-                      onBlockRefused={() =>
-                        setBlockedHere((s) => {
-                          const next = new Set(s);
-                          next.delete(u.userId);
-                          return next;
-                        })
-                      }
+                      onBlocked={() => setGoneHere((s) => new Set(s).add(u.userId))}
+                      onBlockRefused={() => setGoneHere(without(u.userId))}
                     />
                   </>
                 }

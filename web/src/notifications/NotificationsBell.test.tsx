@@ -115,7 +115,7 @@ describe('NotificationsBell', () => {
     show();
     await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
     expect(await screen.findByText('Nothing new')).toBeInTheDocument();
-    expect(screen.getByText('Likes, comments, gifts and game invites will show up here.')).toBeInTheDocument();
+    expect(screen.getByText('Game invites, gifts, badges and news from Hevalo will show up here.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Find friends' })).toHaveAttribute('href', '/app/friends');
     // Nothing is new, so there is nothing to mark.
     expect(screen.queryByRole('button', { name: 'Mark all as read' })).not.toBeInTheDocument();

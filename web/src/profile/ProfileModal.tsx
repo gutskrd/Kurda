@@ -23,6 +23,7 @@ import { ShareProfile } from './ProfileMenu';
 import { AddFriendButton } from '../social/FriendTickets';
 import { useRail } from '../social/RailProvider';
 import { railEdits } from '../social/useSocialRail';
+import { useUnfriend } from '../social/unfriend';
 import { useOptimisticSend } from '../lib/optimistic';
 import { PlayWithButton } from '../play/PlayButtons';
 import { flagUrl, countryName } from '../lib/countries';
@@ -99,6 +100,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const [blocked, setBlocked] = useState(false);
   // what the two of you are to each other: the buttons change it, and the menu in the corner reads it
   const [status, setStatus] = useState<FriendStatus>('none');
+  const unfriend = useUnfriend();
 
   useEffect(() => {
     let cancelled = false;
@@ -244,9 +246,10 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
             ? {
                 label: t('friends.removeFriend'),
                 title: t('friends.removeWho', { name }),
-                onConfirm: async () => {
-                  const res = await client.delete(`/friends/${other.userId}`);
-                  if (res.ok) setStatus('none');
+                // no longer friends at once, and friends again if the server refuses
+                onConfirm: () => {
+                  setStatus('none');
+                  void unfriend(other.userId, () => setStatus('friends'));
                 },
               }
             : undefined

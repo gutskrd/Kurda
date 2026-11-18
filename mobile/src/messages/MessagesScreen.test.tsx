@@ -174,7 +174,7 @@ describe('Messages', () => {
     expect(screen.queryByTestId('messages-new-group')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Groups' }));
     expect(screen.getByTestId('messages-new-group')).toBeTruthy();
-    fireEvent.change(screen.getByLabelText('Search messages'), { target: { value: 'kl' } });
+    fireEvent.change(screen.getByLabelText('Search conversations'), { target: { value: 'kl' } });
     expect(screen.queryByTestId('messages-new-group')).toBeNull();
   });
 
@@ -192,9 +192,9 @@ describe('Messages', () => {
     const client = open();
     await screen.findByTestId('conversation-dm:u-azad');
     const asked = client.calls.length;
-    fireEvent.change(screen.getByLabelText('Search messages'), { target: { value: 'roj' } });
+    fireEvent.change(screen.getByLabelText('Search conversations'), { target: { value: 'roj' } });
     expect(rowNames()).toEqual(['dm:u-rojhat']);
-    fireEvent.change(screen.getByLabelText('Search messages'), { target: { value: 'nobody' } });
+    fireEvent.change(screen.getByLabelText('Search conversations'), { target: { value: 'nobody' } });
     expect(screen.getByText('No conversations match “nobody”.')).toBeTruthy();
     // No request per letter: the list is filtered where it is.
     expect(client.calls.length).toBe(asked);

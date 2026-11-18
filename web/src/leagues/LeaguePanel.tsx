@@ -5,6 +5,7 @@ import {
   TROPHY_PLACES,
   tierAbove,
   tierBelow,
+  weekDaysLeft,
   type LeagueStandingRow,
   type LeagueTier,
   type LeagueView,
@@ -101,9 +102,9 @@ export function LeaguePanel(): React.JSX.Element | null {
 
 /** How long the week has left in whole days ("3 days left"), and on its last day the local time it closes; never a countdown. */
 export function weekLeft(t: Translate, endsAt: string, locale: string, now: number = Date.now()): string {
-  const at = new Date(endsAt).getTime();
-  if (Number.isNaN(at)) return '';
-  const days = Math.floor((at - now) / 86_400_000);
+  // Counted once in shared, so the phone shows the same number.
+  const days = weekDaysLeft(endsAt, now);
+  if (days === null) return '';
   if (days >= 2) return t('leagues.daysLeft', { count: days });
   if (days === 1) return t('leagues.dayLeft');
   return t('leagues.weekEnds', { when: weekEnds(endsAt, locale) });

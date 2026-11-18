@@ -44,8 +44,8 @@ describe('cardStamp and cardSpent', () => {
   it('stamps a game the viewer is in, and one that is over with how it ended', () => {
     expect(cardStamp(card({}))).toBeNull();
     expect(cardStamp(card({ status: 'full', canJoin: false }))).toBeNull();
-    expect(cardStamp(card({ isMember: true, canJoin: false }))).toEqual({ key: 'play.card.joined', tone: 'success' });
-    expect(cardStamp(card({ status: 'started', isMember: true, canJoin: false }))).toEqual({ key: 'play.card.joined', tone: 'success' });
+    expect(cardStamp(card({ isMember: true, canJoin: false }))).toEqual({ key: 'play.ticket.joined', tone: 'success' });
+    expect(cardStamp(card({ status: 'started', isMember: true, canJoin: false }))).toEqual({ key: 'play.ticket.joined', tone: 'success' });
     expect(cardStamp(card({ status: 'finished', isMember: true, canJoin: false }))).toEqual({ key: 'play.card.finished', tone: 'muted' });
     expect(cardStamp(card({ status: 'cancelled', canJoin: false }))).toEqual({ key: 'play.card.cancelled', tone: 'muted' });
     // A card this viewer may not see says so in words, with no stamp.
@@ -106,7 +106,7 @@ describe('ChatGameCard', () => {
   it('shows the lobby as it is now, and joins it through the game’s own screen', async () => {
     testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({})) });
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
-    expect(await screen.findByText('Open · 2 of 8 joined')).toBeTruthy();
+    expect(await screen.findByText('2 of 8 joined')).toBeTruthy();
     expect(screen.getByText('“Nanê Germ” · 5 questions')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Join: Stories' }));
     expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: LOBBY });
@@ -154,7 +154,7 @@ describe('ChatGameCard, as a ticket', () => {
     testAuth.client = fakeClient({ [`GET /play/cards/stories/${LOBBY}`]: ok(card({ isMember: true, canJoin: false })) });
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} />);
     expect(await screen.findByText('You’re in')).toBeTruthy();
-    expect(screen.getByText('Open · 2 of 8 joined')).toBeTruthy();
+    expect(screen.getByText('2 of 8 joined')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Open: Stories' }));
     expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: LOBBY });
   });

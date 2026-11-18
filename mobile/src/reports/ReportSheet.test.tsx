@@ -88,7 +88,7 @@ describe('ReportSheet', () => {
     expect(screen.getByText('Report Rojda')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Someone may hurt themselves' }));
     // Help comes before the note.
-    expect(screen.getByText('If someone is in danger right now')).toBeTruthy();
+    expect(screen.getByText('If someone may hurt themselves')).toBeTruthy();
     expect(screen.queryByText('Send report')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Find a helpline' }));
     expect(open).toHaveBeenCalledWith(HELPLINE_URL);

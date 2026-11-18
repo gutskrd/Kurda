@@ -257,6 +257,18 @@ describe('a riddle’s answer', () => {
     expect(navigation.replace).toHaveBeenCalledWith('Riddle', { slug: 'kmr-ezman' });
   });
 
+  it('goes back to the riddle, or on to all of them, as the website does', async () => {
+    testAuth.client = fakeClient({});
+    rememberList('kmr', RIDDLES.riddles, RIDDLES.daily);
+    rememberAnswer('kmr-mum', ANSWER, true, 3);
+    const onExit = vi.fn();
+    renderWithProviders(<RiddleAnswerScreen slug="kmr-mum" onExit={onExit} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Back to the riddle' }));
+    expect(navigation.replace).toHaveBeenCalledWith('Riddle', { slug: 'kmr-mum' });
+    fireEvent.click(screen.getByRole('button', { name: 'All riddles' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
   it('asks for an answer it does not have yet, as when the app comes back to it', async () => {
     const client = fakeClient({
       'POST /riddles/kmr-mum/reveal': ok({ answer: ANSWER }),

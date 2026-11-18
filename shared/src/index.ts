@@ -558,7 +558,10 @@ export * from './games/index.js';
 
 /** Shop items by kind: the categories, search, filters and orders the shop, the inventory and the gift picker share. */
 export * from './shop-items.js';
+export * from './shop-descriptions.js';
 export * from './chat-cards.js';
+/** The Kurdish openers an empty chat offers, and which variety it offers them in. */
+export * from './chat-greetings.js';
 
 /** Typing Kurdish (the race, Peyvok's keyboard, the keyboard guide): how typed text is read and scored, and the race's shapes. */
 export * from './typing.js';

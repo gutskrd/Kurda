@@ -137,6 +137,9 @@ function toMe(row: MeRow) {
     analyticsConsent: row.analytics_consent,
     /** No birth month on record yet, so the clients ask once first; never for a guest, whom the claim form asks. */
     birthDateRequired: row.birth_year == null && !row.guest,
+    /** The birth month on record, for the account's own Settings; null until answered. */
+    birthYear: row.birth_year,
+    birthMonth: row.birth_month,
     guest: row.guest,
     /** 13–17 today, worked out now rather than stored (users/age.ts). */
     minor: isMinorRow(row),

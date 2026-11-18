@@ -198,7 +198,7 @@ function Hero({ card }: { card: RankCard }): React.JSX.Element {
         </View>
         {meaning ? <Text style={[styles.heroMeaning, { color: colors.textSecondary }]}>{meaning}</Text> : null}
         {placing ? (
-          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>{t('ranks.placingHint', { count: Math.max(0, head.of - head.played) })}</Text>
+          <Text style={[styles.heroSub, { color: colors.textSecondary }]}>{t('ranks.placingHint', { of: head.of })}</Text>
         ) : (
           <Text style={[styles.points, { color: colors.textPrimary }]}>{t('ranks.pointsCount', { count: formatNumber(card.points, locale) })}</Text>
         )}
@@ -243,7 +243,7 @@ function Ladder({ card }: { card: RankCard }): React.JSX.Element {
           const here = card.tier === tier && !card.placement;
           const floor = tier === 'sterk' ? null : RANK_TIERS.find((r) => r.key === tier)!.floor;
           const meaning = tierMeaning(t, tier);
-          const fact = tier === 'sterk' ? t('ranks.sterkRule', { share: STERK_RULE.topShare * 100, games: STERK_RULE.minGames }) : t('ranks.floor', { count: floor! });
+          const fact = tier === 'sterk' ? t('ranks.sterkRule', { share: STERK_RULE.topShare * 100, tier: rankLabel(t, 'lutke', 1), games: STERK_RULE.minGames }) : t('ranks.floor', { count: floor! });
           return (
             <View
               key={tier}

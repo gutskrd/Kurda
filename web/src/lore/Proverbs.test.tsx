@@ -163,8 +163,9 @@ describe('the round on the proverbs', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
     expect(await screen.findByRole('heading', { name: 'Round finished' })).toBeInTheDocument();
     expect(screen.getByText('Today counts for your streak.')).toBeInTheDocument();
-    // Played alone it pays nothing and says so once, with no XP figure anywhere.
-    expect(screen.getByText(/earns no XP/)).toBeInTheDocument();
+    // It pays nothing and says so once, in its own words: it has no friends mode to send anyone to.
+    expect(screen.getByText('A round of proverbs earns no XP.')).toBeInTheDocument();
+    expect(screen.queryByText(/with friends/)).toBeNull();
     expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
     expect(within(screen.getByRole('region', { name: 'The proverbs in this round' })).getAllByRole('link').map((l) => l.getAttribute('href'))).toEqual([
       '/app/learn/proverbs/kmr-av-dilop-dilop',
