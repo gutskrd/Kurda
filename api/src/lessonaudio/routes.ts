@@ -117,6 +117,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
     '/admin/lesson-audio',
     {
       config: {
+        rawBody: true,
         // A recording session walks hundreds of short items, so this allows several times the alphabet's pace; storage and
         // media op ceilings still bound the cost.
         rateLimit: { max: 600, windowMs: 60 * 60_000, per: 'user-or-ip' as const },

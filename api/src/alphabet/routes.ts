@@ -114,6 +114,7 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
     '/admin/alphabet/audio',
     {
       config: {
+        rawBody: true,
         rateLimit: { max: 120, windowMs: 60 * 60_000, per: 'user-or-ip' as const },
         skipValidation: true,
       },
