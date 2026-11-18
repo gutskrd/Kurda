@@ -36,17 +36,13 @@ import { DIFFICULTY_KEY } from './partyChoices';
 import { dialectNameKey } from '../i18n/dialectName';
 
 /**
- * What every learning game played alone has around its own board on the phone: the intro (the game's picture, the
- * difficulty), the round (progress, and the verdict and explanation after each answer), and results that say exactly
- * what happened. The website's games/SoloGameShell.tsx says the same things in the same order.
+ * What every learning game played alone has around its own board (`renderRound`): the intro, the round's progress with
+ * a verdict and explanation after each answer, and results that say exactly what happened, as the website's
+ * games/SoloGameShell.tsx does. The round is the server's (api/src/games/solo.ts), offered again while left open.
  *
- * A game played alone earns no XP (`paysAlone`), so it promises none and its results say so in one quiet line; a round
- * played well still counts as a day learned. The lessons' two practice exercises (`place: 'lessons'`) pay as lessons
- * do, and their results offer another round and Done, back to wherever they were opened.
- *
- * The round is the server's (api/src/games/solo.ts): made, checked and paid there once, and offered again while left
- * open. The game draws its own board (`renderRound`); this draws the rest. A game's start and result are on the Games
- * night scene with its emblem; an exercise keeps the lessons' plain page.
+ * A game played alone earns no XP (`paysAlone`) and says so in one quiet line; a round played well still counts as a
+ * day learned. The lessons' two practice exercises (`place: 'lessons'`) pay as lessons do, keep the lessons' plain
+ * page, and end with another round or Done. A game's start and result are on the Games night scene with its emblem.
  */
 
 export interface SoloRound<Item, H, C, B = unknown> {

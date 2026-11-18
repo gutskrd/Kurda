@@ -5,18 +5,12 @@ import type { TranslationKey } from '../i18n/translations';
 import { mutedDetails } from './suspension';
 
 /**
- * Why the server would not take something you sent (a message, a gift, a game card, a post, a comment, a picture, a
- * voice note, a profile change) when the reason is a limit on your account: what is limited and until when, in the
- * reader's language and time zone, pointing to Account standing where Hevalo wrote the reasons down. The browser says
- * the same (web/src/reports/restriction.ts).
- *
- * - `muted`: a Hevalo sanction (403 MUTED with `MutedErrorDetails`) on chat, posting, or pictures and voice, until a
- *   time or with no end set.
- * - `groupMuted`: 403 MUTED with no details, a group's own admins muting you there; not a Hevalo decision.
- * - `chatMuted`: 403 CHAT_MUTED, the automatic pause after several flagged messages, with no reasons or known end, so
- *   no date and no link.
- * - `suspended`: the account itself (ACCOUNT_SUSPENDED). Mid-session the client hands that to the suspension screen
- *   (`ApiClient.onSuspended`), so this is only the sentence for a screen that meets it first.
+ * Why the server would not take something you sent when the reason is a limit on your account: what is limited and
+ * until when, in the reader's language and time zone, with Account standing where Hevalo wrote the reasons down. The
+ * browser says the same (web/src/reports/restriction.ts). `muted` is a Hevalo sanction (403 MUTED with
+ * `MutedErrorDetails`); `groupMuted` is 403 MUTED with no details, a group's own mute; `chatMuted` is 403 CHAT_MUTED,
+ * the automatic pause with no reasons or known end; `suspended` is ACCOUNT_SUSPENDED, which mid-session goes to the
+ * suspension screen (`ApiClient.onSuspended`).
  */
 export type Restriction =
   | { kind: 'muted'; scope: MutedErrorDetails['scope']; until: string | null }

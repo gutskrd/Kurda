@@ -3,16 +3,13 @@ import type { GoogleResult } from './googleTypes';
 import { googleSignInAvailable } from './googleClientIds';
 
 /**
- * Native Google sign-in: obtains a Google ID token and hands it to the server (POST /auth/oauth), which verifies it.
- *
- * Client ids come from the build environment:
- * - EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID, the OAuth web client id; the token's audience, so the server's GOOGLE_CLIENT_IDS
- *   must include it.
- * - EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID, the iOS client id, which the build also turns into the iOS URL scheme
- *   (app.config.ts). Until the ids this platform needs are set, the sign-in screen does not offer Google.
+ * Native Google sign-in: obtains a Google ID token for the server to verify (POST /auth/oauth). The client ids come
+ * from the build environment (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID, the token's audience, which the server's
+ * GOOGLE_CLIENT_IDS must include; EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID, also the iOS URL scheme in app.config.ts); without
+ * them Google is not offered.
  *
  * The native SDK is imported lazily: it registers a TurboModule when evaluated, which throws on a build compiled
- * without it, so a build without the module just cannot sign in with Google rather than crashing at start-up.
+ * without it, so such a build just cannot sign in with Google instead of crashing at start-up.
  */
 const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
 const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID;

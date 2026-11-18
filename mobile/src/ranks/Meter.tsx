@@ -21,7 +21,7 @@ export function Meter({
   label,
   style,
 }: {
-  /** 0…1. */
+  /** 0 to 1. */
   fraction: number;
   /** Where the fill starts before sliding to `fraction` (default: no slide). */
   from?: number;

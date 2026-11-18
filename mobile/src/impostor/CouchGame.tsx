@@ -79,23 +79,16 @@ import { dialectNameKey } from '../i18n/dialectName';
 
 /**
  * Impostor on one phone, passed round a room: the phone's part in the shared rules
- * (shared/src/games/impostor/couch.ts), as the website's web/src/impostor/Couch.tsx is. It asks who is playing and how,
- * fetches an evening's approved cards and walks the room through each round: reading cards, clues in turn, the talk,
- * the vote, the caught impostor's guess and the reveal with the score.
+ * (shared/src/games/impostor/couch.ts), as the website's web/src/impostor/Couch.tsx is, played at the game's own table
+ * (table.ts). Because one screen is shared by people who must not see each other's cards, a card shows only while its
+ * holder presses it, a blank screen with the next name stands between players, cards are never stored, names stay on
+ * this phone, and every draw uses the phone's random generator. A round earns nothing, since the phone holds every
+ * card.
  *
- * Because one screen is shared by people who must not see each other's cards:
- * - a card shows only while its holder presses it; letting go, leaving the app or locking the screen hides it;
- * - between two players there is always a blank screen with the next player's name;
- * - the cards stay in memory for the evening and are never stored; the names are kept on this phone only;
- * - every draw comes from the phone's random generator, not a clock.
- *
- * A round here earns nothing, since the phone holds every card. An easily mistaken tap (going to the vote, each vote)
- * can be taken back for UNDO_MS; a tap that would reveal something new waits out that moment before it is played, so an
- * undo never shows what it took back. The caught impostor's guess is confirmed instead, since it ends the round. With
- * two impostors, catching one leads to a short second vote for the other.
- *
- * The game is set once for the evening: a card with no second word plays one round the plain way and says so. A fresh
- * batch is fetched without tonight's words. The round is played at the game's own table (table.ts).
+ * An easily mistaken tap (going to the vote, each vote) can be taken back for UNDO_MS, and a tap that would reveal
+ * something waits out that moment first, so an undo never shows what it took back. With two impostors, catching one
+ * leads to a short second vote. A card with no second word plays one round the plain way; fresh batches skip tonight's
+ * words.
  */
 
 const KEPT = 'hevalo_couch_v1';

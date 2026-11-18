@@ -1,11 +1,6 @@
 /**
- * Rendering the phone's components in a test.
- *
- * The app's tests were all logic until now: React Native's own sources are Flow
- * and do not load under Node. These render a component through react-native-web
- * in jsdom instead, with Testing Library — the same library and the same habits
- * as the browser's tests, so a sheet's steps, its labels and its roles are
- * asserted the way a person meets them.
+ * Rendering the phone's components in a test. React Native's own sources are Flow and do not load under Node, so
+ * components render through react-native-web in jsdom with Testing Library, as the browser's tests do.
  *
  * A test file starts with `// @vitest-environment jsdom` and these mocks (they
  * must be written in the file itself, where vitest hoists them):

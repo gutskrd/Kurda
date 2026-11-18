@@ -66,24 +66,15 @@ import { pressedDim } from '../theme/motion';
 
 /**
  * Who Am I? on one phone, passed round a room: the phone's part in the table's rules
- * (shared/src/games/who-am-i/rules.ts, started for a room by couch.ts). It asks who is playing and how hard, fetches a
- * card for everyone (approved identities, dealt by the server) and walks the room through a game in which nobody has to
- * remember anything.
+ * (shared/src/games/who-am-i/rules.ts, started for a room by couch.ts), with a server-dealt card for everyone and
+ * nothing to memorise. The holder reads a question out and turns the phone to the friends, who alone see the holder's
+ * card and tap the answer; nothing lists the words a player might be, so a guess is said aloud and judged right, close
+ * (no guess spent) or not yet.
  *
- * The holder picks a question (suggested, from their list, or their own) and reads it out, then turns the phone to
- * their friends, who alone see the holder's card and tap the answer (an own question is answered aloud and only
- * counted). Nothing lists the words a player might be, which would make it a quiz: a holder who thinks they know says
- * so aloud, and the friends judge it right, close (no guess spent, the turn passes on) or not yet.
- *
- * Because the screen is read by people who must not see their own card:
- * - a hidden card is drawn only on the friends' screen; an answer, leaving the app or locking the screen hides it;
- * - the way to that screen takes no tap in its first moment, so a double tap cannot turn the card up in front of its
- *   wearer;
- * - the holder's board shows nobody's hidden card, and each seat is drawn as its own wearer may see it;
- * - between two players there is always a blank screen with the next one's name;
- * - the cards are never stored, and the names never leave the phone.
- *
- * No clock runs here, and nothing is paid, since the phone holds every card.
+ * Because the screen is read by people who must not see their own card, a hidden card is drawn only on the friends'
+ * screen (hidden again on an answer, on leaving the app or on locking), the way there ignores taps for a moment so a
+ * double tap cannot turn it up, the holder's board shows nobody's hidden card, a blank screen stands between players,
+ * and cards and names never leave the phone. No clock runs and nothing is paid.
  */
 
 /** Where the game can be played on one phone in a Kurdish; undefined until the server answers, null when it could not. */

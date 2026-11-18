@@ -79,7 +79,7 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   // lands; an invalid id is never followed.
   const letter = letterNoticeOf(data);
   if (letter) return letter.threadId ? { screen: 'Letters', params: { bird: letter.threadId } } : { screen: 'Letters' };
-  // Progress (contract 4): badges and the weekly league.
+  // Progress: badges and the weekly league.
   if (data.kind === 'badge') return { screen: 'Badges' };
   if (data.kind === 'league_safe' || data.kind === 'league_promotion' || data.kind === 'league_trophy') return { screen: 'League' };
   switch (data.screen) {

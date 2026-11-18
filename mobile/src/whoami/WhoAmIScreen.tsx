@@ -251,16 +251,11 @@ function moveError(error: ApiError, t: ReturnType<typeof useI18n>['t']): string 
 }
 
 /**
- * The table inside the room: whose turn it is and what it waits for, against the server's clock; the question on the
- * table; the card's verdict; the reader's own questions (suggested first, with meanings for a beginner); and everyone
- * as a row of foreheads.
- *
- * Nothing lists the words the reader might be while questions are asked, which would make it a quiz: "I know who I am!"
- * opens the tiles to guess from and "Not yet" closes them; a turn that must be a guess opens them by itself. What the
- * reader must do next is always straight under the banner.
- *
- * Every card is drawn from the board as the server sent it to this reader; their own is absent until it is off their
- * forehead (`card` and `mine.identity` null), and nothing here draws one that is.
+ * The table inside the room: whose turn it is against the server's clock, the question on the table, the card's
+ * verdict, the reader's own questions (suggested first), and everyone as a row of foreheads. Nothing lists the words
+ * the reader might be while questions are asked: "I know who I am!" opens the guess tiles, and a turn that must be a
+ * guess opens them by itself. Every card is drawn from the board the server sent this reader, where their own is absent
+ * until it is off their forehead.
  */
 function TableBoard({ view, skew, move }: { view: TableView; skew: number; move: Move }): React.JSX.Element | null {
   const { colors } = useTheme();

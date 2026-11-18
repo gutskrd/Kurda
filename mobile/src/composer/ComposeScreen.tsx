@@ -103,17 +103,11 @@ async function pickFromLibrary(room: number): Promise<PickedPicture[]> {
 }
 
 /**
- * Writing a post: one box for words and up to four pictures. The words are focused as it opens; pictures can be added
- * at any moment and upload while you write; a title, the kind of post and a source are there when wanted. Cancel and
- * Post sit at the top, where the keyboard cannot cover them.
- *
- * Three ways in, one screen:
- * - a new post, its draft kept on this phone as it is written (drafts.ts);
- * - `postId`: editing your own post (words, title, pictures and their descriptions, the source);
- * - finishing a draft an older app version saved on the server, offered at the top of an empty composer.
- *
- * What may be posted is decided by `@kurda/shared` post-composer, which the API runs too: the counter counts as the
- * server does, and Post is enabled exactly when the server would accept the shape.
+ * Writing a post: one box for words and up to four pictures, which upload while you write; a title, the kind of post
+ * and a source are there when wanted, and Cancel and Post sit at the top, clear of the keyboard. It opens for a new
+ * post (its draft kept on this phone, drafts.ts), for editing your own post (`postId`), or to finish a draft an older
+ * app saved on the server. `@kurda/shared` post-composer, which the API runs too, decides what may be posted, so Post
+ * is enabled exactly when the server would accept it.
  */
 export function ComposeScreen({
   postId,

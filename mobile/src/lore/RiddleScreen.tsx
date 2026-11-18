@@ -36,15 +36,11 @@ import { InLanguage } from './parts';
 import { mergeHints, rememberAnswer, rememberedAnswer, rememberedList } from './store';
 
 /**
- * One riddle (`app/learn/riddles/<slug>`): the question large in its own Kurdish with its translation a tap away, the
- * hints taken, a guess field with the Kurdish key bar, one hint at a time, and Show the answer, which confirms once and
- * opens the answer screen.
- *
- * The server judges a guess (shared `riddleGuessMatches`), and the line under the field says what it forgives
- * (capitals, missing marks). A wrong guess is told kindly and kept to edit; a right one gets a small moment and the way
- * on to why it is right. Nothing here holds an answer, an untaken hint or an explanation before the learner asks. What
- * a solve is worth is shown: the riddle's XP, half once a hint is taken, none once the answer was seen. Challenge a
- * friend shares the question and address, never the answer.
+ * One riddle (`app/learn/riddles/<slug>`): the question in its own Kurdish with its translation a tap away, the hints
+ * taken, a guess field with the Kurdish key bar, and Show the answer, which confirms once and opens the answer screen.
+ * The server judges a guess (shared `riddleGuessMatches`) and the line under the field says what it forgives. Nothing
+ * here holds an answer, an untaken hint or an explanation before the learner asks. A solve pays the riddle's XP, half
+ * after a hint and none after the answer was seen; Challenge a friend shares the question, never the answer.
  */
 export function RiddleScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();

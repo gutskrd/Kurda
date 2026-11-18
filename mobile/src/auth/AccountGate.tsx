@@ -20,19 +20,13 @@ import { onGuestRefused } from './guestRefused';
 import { pressedDim } from '../theme/motion';
 
 /**
- * The account gate: where a guest (AuthContext `isGuest`) meets the things only an account can do. Guests learn like
- * anyone, but posting, messaging, friends, groups, the shop, the league and a profile need an account, and the server
- * refuses a guest at each (403 GUEST_ACCOUNT). A screen asks here first:
+ * Where a guest (AuthContext `isGuest`) meets the things only an account can do, which the server refuses with 403
+ * GUEST_ACCOUNT. A screen asks first with `if (!useAccountGate().require('post')) return;`: an account gets true, and a
+ * guest gets the offer (a sheet titled for `reason`) and false. `GuestWall` is the same offer as a whole screen for a
+ * route a guest should not see, and a refusal nothing asked about first opens the generic offer through `guestRefused`.
  *
- * const gate = useAccountGate(); if (!gate.require('post')) return;
- *
- * For an account `require` is true and nothing shows. For a guest it opens the offer (a sheet titled for `reason`, with
- * the two ways to an account and "not now") and answers false. `GuestWall` is the same offer as a whole screen, for a
- * route a guest should not see at all. A refusal nothing asked about first reaches the client, which tells
- * `guestRefused`, and the provider opens the generic offer instead of an alert.
- *
- * `AccountGateProvider` is mounted once, under the signed-in screens and above the root stack. Outside it (a screen
- * rendered alone in a test) the hook still answers, and opening the sheet does nothing.
+ * `AccountGateProvider` is mounted once, under the signed-in screens; outside it (a test) the hook still answers and
+ * the sheet does nothing.
  */
 export type GateReason = 'post' | 'react' | 'comment' | 'message' | 'friends' | 'groups' | 'shop' | 'league' | 'profile' | 'play' | 'save' | 'generic';
 

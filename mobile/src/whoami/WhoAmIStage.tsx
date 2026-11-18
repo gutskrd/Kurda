@@ -43,15 +43,11 @@ import { heldDim } from '../theme/MotionParts';
 import { turnCard } from '../theme/animate';
 
 /**
- * Who Am I?'s stage on the phone: the parts the online room (WhoAmIScreen.tsx) and the game on one phone
- * (WhoAmICouch.tsx) are drawn from, as the website's whoami/WhoAmIStage.tsx is. Hevalo's silhouette with a card on his
- * forehead, the suggested questions, the question deck with each card's answer stamped in the dialect's own words, the
- * guess tiles, the answer keys (each with a mark as well as a colour, so no answer is told by colour alone), the room's
- * judgement keys, the verdict card, and what folds away.
- *
- * A question's meaning is shown under it wherever a beginner reads it; elsewhere a tap shows it, so learners further on
- * try the Kurdish first. Nothing here decides what may be seen: a card is drawn when handed in and the hidden mark when
- * not. Kurdish keeps its own direction everywhere; under Reduce Motion the card and stamps simply appear.
+ * Who Am I?'s stage on the phone, shared by the online room (WhoAmIScreen.tsx) and the game on one phone
+ * (WhoAmICouch.tsx), as the website's whoami/WhoAmIStage.tsx is: the forehead cards, suggested questions, the question
+ * deck with answers stamped in the dialect's own words, guess tiles, answer and judgement keys (each with a mark as
+ * well as a colour), the verdict card, and what folds away. A question's meaning shows under it for beginners and at a
+ * tap otherwise. Nothing here decides what may be seen: a card is drawn when handed in and the hidden mark when not.
  */
 
 const WHO_AM_I_TONE = learnGame('who-am-i').tone;

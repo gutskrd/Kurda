@@ -49,19 +49,13 @@ export type ReportTarget =
   | { type: 'letter'; letterId: string };
 
 /**
- * The one report sheet, everywhere something can be reported. Props:
- * - `visible`: show it (a BottomSheet; keep it mounted and flip this).
- * - `target`: what is reported (`ReportTarget`).
- * - `name`: whom the title names ("Report Rojda", "Report Player 2"); left out, the title says what it is.
- * - `blockable`: `{ userId, name }` of the person behind it, to offer Block on the done screen (`name` null when there
- *   is none to show). Leave it out for a seat only, or for yourself.
- * - `leavable`: `{ groupId, name }` to offer Leave group on the done screen.
- * - `onClose()`: the sheet was closed (✕, drag down, Done, back).
- * - `onBlocked(userId)` / `onLeftGroup(groupId)`: after the one-tap action worked, so the screen can step away.
+ * The one report sheet, everywhere something can be reported: `visible` (keep it mounted and flip this), `target`,
+ * `name` for the title ("Report Rojda"; left out, the title says what it is), `blockable` `{ userId, name }` and
+ * `leavable` `{ groupId, name }` to offer Block or Leave group on the done screen, `onClose()`, and `onBlocked` /
+ * `onLeftGroup` once those worked.
  *
  * The steps: a category in plain, child-friendly words, most urgent first ("Someone may hurt themselves" shows where to
- * find help before anything else); an optional note with no minimum length; and a done screen that says what happens
- * next and offers what helps now. There is no personal mute to offer.
+ * find help before anything else); an optional note with no minimum length; and a done screen with what happens next.
  */
 export function ReportSheet({
   visible,

@@ -111,7 +111,7 @@ export function ScreenHeader({
               accessibilityRole={onTitlePress ? 'button' : 'header'}
               accessibilityLabel={title}
               accessibilityHint={titleHint}
-              // As far above and below as the way back, and its half of each gap beside it (the group's cap)
+              // As far above and below as the way back, and its half of each gap beside it (the group's cap).
               reach="open"
               style={({ pressed }) => [styles.titleRow, { flexDirection: dir.row }, pressed && styles.pressed]}
             >

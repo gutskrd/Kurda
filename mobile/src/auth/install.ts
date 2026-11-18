@@ -1,14 +1,10 @@
 /**
- * Whether the session kept on this phone belongs to this install. On an iPhone the Keychain, where the session is kept
- * (storage.ts), outlives an uninstall while the app's own storage does not, so a reinstall on a passed-on phone could
- * open the previous owner's account. Each install writes an id in both places, compared on start:
- *
- * - the same id in both: the same install; nothing to do.
- * - an id in the Keychain only: written by an earlier, removed install. Its session and device id are forgotten.
- * - an id in neither: a first start of a version that keeps the id, or a new install. The session is kept, since an
- *   update must not sign anybody out (a guest has no way back in).
- *
- * Anything unreadable changes nothing, and the next start asks again. No React Native here, so tests run it under Node.
+ * Whether the session kept on this phone belongs to this install. The iPhone Keychain, where the session is kept,
+ * outlives an uninstall while the app's own storage does not, so a reinstall on a passed-on phone could open the
+ * previous owner's account. Each install writes an id to both, compared on start: the same id means the same install;
+ * an id in the Keychain only means an earlier install, whose session and device id are forgotten; an id in neither
+ * means a first start or a new install, and the session is kept (an update must not sign out a guest, who has no way
+ * back in). Anything unreadable changes nothing. No React Native here, so tests run it under Node.
  */
 
 /** Where this install's id is kept, under the same name in both stores. */

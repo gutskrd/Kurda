@@ -102,7 +102,7 @@ describe('unreadBadge', () => {
   });
 });
 
-describe('progress notifications (contract 4)', () => {
+describe('progress notifications', () => {
   it('opens the badges for a badge, one or the day’s bundle', () => {
     expect(resolveDeepLink({ kind: 'badge', key: 'agir', tier: '2' })).toEqual({ screen: 'Badges' });
     expect(resolveDeepLink({ kind: 'badge', day: '2026-10-14' })).toEqual({ screen: 'Badges' });

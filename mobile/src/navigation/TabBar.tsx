@@ -28,19 +28,12 @@ const AVATAR = 22;
 const PAD = 6;
 
 /**
- * The tab bar: four places in one solid rounded bar floating over the bottom of the page, each an icon with its word
- * under it. Each tab screen leaves room for it under its last row (`useTabBarInset`).
- *
- * The chosen tab is shown three ways, none by colour alone: a solid glyph, a heavier word and a soft capsule behind it,
- * which slides to the chosen tab (no slide under Reduce Motion). Your own picture is the Profile tab.
- *
- * Only two things badge: Messages, with unread messages and friend requests (1–9, then "9+"), and Profile, with a dot
- * for a gift waiting to be unwrapped. Both are said in words to a screen reader. Tapping the tab you are on scrolls its
- * screen to the top (`useScrollToTop`). Mirrored in right-to-left languages.
- *
- * It is last in the tree with a z-index and, for Android, an elevation above anything a screen raises. While the
- * keyboard is up it is hidden: on Android the window shrinks for the keys, and the bar would ride up over the list
- * being typed into.
+ * The tab bar: four places in one solid rounded bar floating over the page's foot, each an icon with its word (screens
+ * leave room with `useTabBarInset`). The chosen tab has a solid glyph, a heavier word and a sliding capsule, so colour
+ * is never the only sign. Only Messages (unread messages and requests, 1–9 then "9+") and Profile (a dot for a gift to
+ * unwrap) badge, both said in words to a screen reader; tapping the current tab scrolls it to the top
+ * (`useScrollToTop`). It is last in the tree with a z-index and an Android elevation above anything a screen raises,
+ * and is hidden while the keyboard is up, since on Android the window shrinks and the bar would ride up over the list.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Element | null {
   const { colors } = useTheme();

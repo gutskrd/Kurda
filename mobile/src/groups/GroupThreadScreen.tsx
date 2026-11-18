@@ -70,15 +70,11 @@ function bannedFrom(error: ApiError): Banned | null {
 
 /**
  * A group channel, drawn like the DM thread (both use chat/MessageRow.tsx) except that each run of a member's messages
- * has their name over it and their face at its foot. History pages backwards on `before`, the oldest message held.
- *
- * A gift here reaches the room as a card that is nobody's in particular; each recipient's own card arrives on their
- * channel (`gift_received`) and is swapped in, and when one is opened (`group_msg_gift_opened`) the card is fetched
- * again, since it is drawn per viewer.
- *
- * An empty chat welcomes (Welcome.tsx); a new group opens with the add-friends sheet up (`addFriends`). Someone removed
- * or banned while it is open sees where they stand (Standing.tsx) in place of the chat, never a raw error; anyone else
- * is told there is no such group.
+ * has their name over it and their face at its foot; history pages backwards on `before`. A gift here is a card that is
+ * nobody's in particular, swapped for each recipient's own card when it arrives on their channel (`gift_received`) and
+ * fetched again when one is opened (`group_msg_gift_opened`), since it is drawn per viewer. An empty chat welcomes
+ * (Welcome.tsx). Someone removed or banned sees where they stand (Standing.tsx) instead of a raw error; anyone else is
+ * told there is no such group.
  */
 export function GroupThreadScreen({
   groupId,

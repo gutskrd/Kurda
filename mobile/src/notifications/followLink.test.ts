@@ -93,7 +93,7 @@ describe('notificationText', () => {
   });
 });
 
-describe('progress notifications (contract 4)', () => {
+describe('progress notifications', () => {
   const t = (key: string, vars?: Record<string, string | number>) =>
     vars ? `${key}(${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join(',')})` : key;
 
