@@ -1,11 +1,6 @@
 /**
- * The words of the book's pages as a reader takes them in (blocks.ts), on a
- * book of chapter 1 alone: every page has its words, without the running head
- * and the number; the cover's title is one heading; Kurmanji and English are
- * told apart, never inside a word, and the chapters' Kurmanji is marked where
- * an English line quotes it; speakers read as names; words in two faces keep
- * their space; what stands on one row reads as one line, and the number
- * badges are left out.
+ * The page text (blocks.ts) on a book of chapter 1 alone: running heads, page numbers and number badges are left
+ * out, Kurmanji and English are told apart but never inside a word, speakers read as names, and one row reads as one line.
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 import { loadRoadBookSources } from '../../src/books/sources.js';

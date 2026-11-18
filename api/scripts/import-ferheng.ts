@@ -1,22 +1,15 @@
 /**
- * Import all of Wîkîferheng, one published chunk at a time.
+ * Imports all of Wîkîferheng, one published chunk at a time, by walking its `index.json` manifest of about 105
+ * letter files.
  *
  *   tsx scripts/import-ferheng.ts [--lang ku|sor|zza] [--dry-run] [--from N] [--limit N]
  *
- * The Ferheng project publishes the Kurdish Wiktionary extraction as ~105
- * letter-bucketed JSON files plus an `index.json` manifest. This walks that
- * manifest, converting and importing each file in turn.
+ * One chunk at a time on purpose: the Kurmancî set is 65 MB and about 447,000 entries, and holding it all in memory
+ * kills a long import with nothing written. An interrupted run keeps what it did, a re-run skips what it has seen,
+ * and `--from N` resumes at the file the progress line last printed.
  *
- * **One chunk at a time on purpose.** The whole Kurmancî set is 65 MB of source
- * JSON and about 447,000 entries; parsing it in one piece and holding both the
- * source and the converted form in memory is how a long import dies three
- * quarters of the way through with nothing written. Chunk-at-a-time also means
- * an interrupted run has kept everything it already did, and re-running is safe
- * — the importer skips what it has seen. `--from N` picks up at the file the
- * progress line was last printing, so resuming does not re-read the first forty.
- *
- * Licence: the data is Wiktionary's, CC BY-SA 4.0 + GFDL. Attribution belongs
- * wherever the dictionary is shown — see docs/admin/dictionary-import.md.
+ * Licence: the data is Wiktionary's, CC BY-SA 4.0 and GFDL; attribution belongs wherever the dictionary is shown
+ * (docs/admin/dictionary-import.md).
  */
 import pg from 'pg';
 import { loadConfig } from '../src/config/env.js';
@@ -79,8 +72,7 @@ async function main(): Promise<void> {
       const done = i + 1;
       const elapsed = (Date.now() - started) / 1000;
       const eta = Math.round((elapsed / done) * (planned.length - done));
-      // numbered against the whole manifest, not against this run: the number
-      // printed here is the one to hand back to --from after an interruption
+            // Numbered against the whole manifest, not this run, so the printed number is the one to pass to --from.
       console.log(
         `[${String(skipped + done).padStart(3)}/${files.length}] ${chunk.file.padEnd(12)} ` +
           `+${String(res.entriesCreated).padStart(6)} entries  ` +

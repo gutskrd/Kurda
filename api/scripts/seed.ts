@@ -1,9 +1,4 @@
-/**
- * Runs every .sql file in api/seeds/ in lexicographic order against
- * DATABASE_URL. Seeds must be idempotent (INSERT ... ON CONFLICT DO
- * NOTHING or equivalent) — this runner executes all of them on every
- * invocation.
- */
+/** Runs every .sql file in api/seeds/ in name order against DATABASE_URL, every time, so seeds must be idempotent. */
 import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname } from 'node:path';

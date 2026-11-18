@@ -1,18 +1,9 @@
 /**
- * The words of the Hevalo book as it prints them, page by page: every run of
- * text the press sets, with where it stands, how big it is and in what face.
- *
- * The book is printed once, as for a reader, while `Press.set` and
- * `Press.line` (the only two ways the book puts words on paper) are watched;
- * both are put back as they were when the book is done, whatever happens.
- * Watching the press rather than reading the finished PDF back keeps what the
- * book knows and a PDF forgets: which runs make one paragraph, the face each
- * is in (so its language can be told), and the book's own name for each way
- * it sets type (`T` in page.ts). Words inside a drawing are drawn by the
- * drawing and are not text the press sets, so they are not here.
- *
- * Each run's `y` is its baseline, as the press hands it to the PDF writer,
- * so runs of different sizes on one line share it.
+ * The words of the Hevalo book as it prints them: every run the press sets, with its place, size and face. The book is
+ * printed once while `Press.set` and `Press.line`, the only ways it puts words on paper, are watched and then restored.
+ * Watching the press rather than reading the PDF back keeps what a PDF forgets: paragraphs, faces (and so language)
+ * and the book's names for its type. Words inside drawings are not here. Each run's `y` is its baseline, so runs of
+ * different sizes on one line share it.
  */
 import { createHash } from 'node:crypto';
 import { T } from '../../src/books/page.js';
@@ -39,12 +30,12 @@ export interface TextRun {
   width: number;
   /** the book's name for its type (a key of `T`), when the type is one of those exactly */
   typeKey: keyof typeof T | null;
-  /** the book's name for the type of the paragraph it is in, whatever face the run itself is in (a grammar note sets its Kurdish in other faces) */
+    /** The type of the paragraph the run is in, whatever its own face (a grammar note sets its Kurdish in other faces). */
   setIn: keyof typeof T | null;
   /** how many points apart the lines of its type sit */
   lead: number;
   align: 'left' | 'center' | 'right';
-  /** the column the call was placed in, for centred and right-aligned lines */
+    /** The column the call was placed in, for centred and right-aligned lines. */
   column: number;
   /** its line within the call, from 0 */
   line: number;
@@ -77,11 +68,7 @@ export async function captureRoadBook(options: RoadBookOptions): Promise<Capture
   let calls = 0;
   let pages = 0;
 
-  /**
-   * Runs `draw` with the writer's text calls counted: where each piece of
-   * text went is taken from the writer itself, so nothing about how the
-   * press places a baseline is repeated here.
-   */
+    /** Runs `draw` while counting the writer's text calls, so where each piece went comes from the writer itself. */
   const placed = (press: Press, draw: () => void): Array<{ x: number; y: number }> => {
     const doc = press.doc;
     const text = doc.text;
