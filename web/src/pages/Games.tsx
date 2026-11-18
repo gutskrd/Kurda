@@ -1,7 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { gameEmblemHue, gameOfTheDay, type GameEmblem } from '@kurda/shared';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
@@ -91,8 +91,6 @@ const MEANING: Partial<Record<GameEmblem, MessageKey>> = {
   impostor: 'games.impostor.meaning',
   'who-am-i': 'games.whoAmI.meaning',
 };
-
-type Translate = ReturnType<typeof useT>;
 
 /** What a game's name means in the reader's language, or null when there is nothing to add. */
 function meaningOf(game: GameEntry, t: Translate): string | null {

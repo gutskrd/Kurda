@@ -10,13 +10,11 @@ import {
   type StoryQuestionTranslation,
 } from '@kurda/shared';
 import type { ApiResult } from '../lib/types';
-import { useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import { rememberEnglish, rememberExtraTime } from './prefs';
 
 export type Act = (path: string, body?: unknown) => Promise<ApiResult<StoryGameView>>;
 export type Announce = (text: string) => void;
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** A player as this viewer may name them: the server's name when given (yourself, a friend, an open game), else "Player 3". */
 export function playerName(p: Pick<StoryGamePlayer, 'seat' | 'name' | 'isMe'>, t: Translate): string {

@@ -1,7 +1,5 @@
 import { USERNAME_MAX, USERNAME_MIN, refusedChars, type UsernameReason } from '@kurda/shared';
-import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * A refused username in the reader's words, one sentence per rule of shared/src/username.ts, whether the field or the

@@ -1,9 +1,9 @@
 import { limitOf, type LimitDetails, type LimitKind } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 import type { ApiError } from './types';
+import type { Translate } from '../i18n/I18nProvider';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * What each limit says when reached (@kurda/shared limits): the limit, its number, and what makes room, never blaming

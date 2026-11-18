@@ -15,8 +15,7 @@ import { INVITE_NAME_KEY } from '../lib/gameInvites';
 import { dialectName } from '../learn/map';
 import { gamePath, storyError } from '../stories/api';
 import { rememberedExtraTime } from '../stories/prefs';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /** A game's name as a catalogue key. */
 export const GAME_NAME_KEY: Record<PlayGame, MessageKey> = INVITE_NAME_KEY;

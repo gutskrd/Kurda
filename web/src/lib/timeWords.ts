@@ -1,4 +1,5 @@
 import type { MessageKey } from '../i18n/en';
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * Spans of time in words for sentences ("2 hours ago", "about 15 minutes"); the rail's compact "2h ago" is
@@ -6,7 +7,6 @@ import type { MessageKey } from '../i18n/en';
  * missing language use the catalogue's phrase, which works for every count since Kurdish nouns do not change after a
  * number.
  */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 const OWN_WORDS = new Set(['ku', 'ckb']);
 

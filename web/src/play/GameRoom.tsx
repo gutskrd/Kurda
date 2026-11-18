@@ -4,12 +4,10 @@ import type { PlayGame } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { HostIcon } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
 import { PlayerReport } from '../reports/PlayerReport';
 import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * A player in a Peyvok Battle or Rhyme Match by seat, as the server lets this viewer see them: a name only for yourself,

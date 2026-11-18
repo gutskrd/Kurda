@@ -4,15 +4,13 @@ import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { HostIcon, SwapIcon } from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { PlayerReport } from '../reports/PlayerReport';
 import { useRail } from '../social/RailProvider';
 import { multiSeatName } from './MultiRoom';
 import '../learn/path.css';
 import './teams.css';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** Each team's tone from the path's palette (`lp-tone-*`); a team is always named too, never told apart by colour alone. */
 export const TEAM_TONE: Readonly<Record<number, string>> = { 1: 'saffron', 2: 'river', 3: 'rose', 4: 'pine' };

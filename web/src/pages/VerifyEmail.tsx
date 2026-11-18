@@ -9,11 +9,8 @@ import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
 import { EditIcon } from '../components/icons';
 import { CodeBoxes } from '../components/CodeBoxes';
-import { useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import { takeAfterSignup } from '../auth/afterSignup';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** Where a newly confirmed account goes: its first lesson (pages/NextLesson.tsx finds it). */
 const AFTER_VERIFY = '/app/learn/next';

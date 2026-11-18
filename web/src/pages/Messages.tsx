@@ -9,7 +9,7 @@ import { limitText } from '../lib/limits';
 import type { ApiError, Conversation, MyGroup, UserSummary } from '../lib/types';
 import { messagePreview } from '../chat/messagePreview';
 import { PreviewIcon } from '../chat/PreviewIcon';
-import { useLocale, useT } from '../i18n/I18nProvider';
+import { useLocale, useT, type Translate } from '../i18n/I18nProvider';
 import { DmThread } from '../chat/DmThread';
 import { GroupThread } from '../chat/GroupThread';
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
@@ -34,8 +34,6 @@ import { LETTERS_HOME_PATH } from '../letters/useLettersHome';
 const CONVO_POLL_LIVE = 30000;
 const CONVO_POLL_FALLBACK = 5000;
 
-
-
 type Filter = 'all' | 'unread' | 'groups';
 
 /** A group's unread count, as GET /me/groups/unread gives it. */
@@ -50,7 +48,7 @@ interface KeptList {
 const LIST_MEMORY = 'messages:list';
 
 /** When a conversation last moved, as short as possible: "now", "5m", "3h", a weekday within the week, then a date. */
-function convoTime(iso: string, t: ReturnType<typeof useT>, locale: string, now = Date.now()): string {
+function convoTime(iso: string, t: Translate, locale: string, now = Date.now()): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return '';
   const minutes = Math.max(0, Math.floor((now - then) / 60_000));

@@ -4,11 +4,9 @@
  * refused. The server normalises the same way (`normalizeJoinCode`), so nothing here judges a code.
  */
 import { JOIN_CODE_ALPHABET, JOIN_CODE_LENGTH, isMissingRoute } from '@kurda/shared';
-import type { MessageKey } from '../i18n/en';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /** Arabic and Soranî keyboard digits as ASCII digits. */
 function foldDigits(text: string): string {

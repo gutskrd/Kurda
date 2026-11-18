@@ -1,7 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Button } from './Button';
-import { useT } from '../i18n/I18nProvider';
+import { useT, type Translate } from '../i18n/I18nProvider';
 
 /**
  * Keeps one page's render error from blanking the whole site. It sits inside `<main>`, beside the Suspense boundary, so
@@ -18,7 +18,7 @@ interface State {
   key: string;
 }
 
-class Boundary extends Component<Props & { t: ReturnType<typeof useT> }, State> {
+class Boundary extends Component<Props & { t: Translate }, State> {
   override state: State = { error: null, key: this.props.resetKey };
 
   static getDerivedStateFromError(error: Error): Partial<State> {

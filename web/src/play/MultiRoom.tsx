@@ -5,8 +5,7 @@ import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { TrophyIcon } from '../components/icons';
 import { ErrorState, Loading } from '../components/states';
-import { useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
+import { useT, type Translate } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
 import { PlayerReport } from '../reports/PlayerReport';
 import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
@@ -21,8 +20,6 @@ import { TeamPicker } from './TeamPicker';
 import { playError } from './playApi';
 import { useQuietInvites } from './quietInvites';
 import type { GameViewHandle } from './useGameView';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** "You", Hevalo, a friend's name, or "Player 3": a seat's name in a multiplayer learning game. */
 export function multiSeatName(p: Pick<MultiSeat, 'seat' | 'name' | 'isMe' | 'bot'>, t: Translate): string {

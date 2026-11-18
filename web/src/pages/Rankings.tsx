@@ -6,7 +6,7 @@ import { countryName } from '../lib/countries';
 import { ErrorState, EmptyState } from '../components/states';
 import { RankingsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
-import { useLocale, useT } from '../i18n/I18nProvider';
+import { useLocale, useT, type Translate } from '../i18n/I18nProvider';
 import { LeaguePanel } from '../leagues/LeaguePanel';
 import { RankList, RankRow } from '../ui/RankRow';
 import { BOARD_KINDS, BoardAmount, BoardSwitch, isBoardType, type BoardType } from '../ui/BoardSwitch';
@@ -287,7 +287,7 @@ function Leaderboard(): React.JSX.Element {
 }
 
 /** What a fully shown board's foot says: that this is everyone, or, for a board cut at its depth, that this is its top. */
-function endOfBoard(t: ReturnType<typeof useT>, board: Board, shown: number, locale: string): string {
+function endOfBoard(t: Translate, board: Board, shown: number, locale: string): string {
   if (shown === 0 || shown < board.total) return '';
   if (board.depth && board.total >= board.depth) return t('rankings.topOnly', { count: board.depth.toLocaleString(locale) });
   return t('rankings.thatsEveryone', { total: board.total });

@@ -11,8 +11,7 @@ import {
   type StoryListItem,
 } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /** The stories' variety spelling in the games' terms, which the shared Kurmancî | Soranî switch speaks. */
 export const GAME_SPELLING: Record<StoryDialect, GameDialect> = { kurmanci: 'kmr', sorani: 'ckb' };

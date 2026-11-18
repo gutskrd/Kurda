@@ -5,10 +5,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
-import { useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import { useT, type Translate } from '../i18n/I18nProvider';
 
 function resetError(err: ApiError, t: Translate): string {
   switch (err.code) {

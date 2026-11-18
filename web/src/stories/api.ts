@@ -15,8 +15,7 @@ import type { ApiClient } from '../lib/api';
 import { describeError } from '../lib/api';
 import type { ApiError, ApiResult } from '../lib/types';
 import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /**
  * Where stories live: the library under Learn, stories read under it, and games at the games' address, which invites

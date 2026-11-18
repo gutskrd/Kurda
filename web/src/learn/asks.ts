@@ -4,9 +4,7 @@
  * their type always was.
  */
 import { CHARACTER_NAMES, GAP, isSoraniDialect, type DeliveredExercise, type NewWord, type PromptToken } from '@kurda/shared';
-import type { MessageKey } from '../i18n/en';
-
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
+import type { Translate } from '../i18n/I18nProvider';
 
 /** The headline of an item that says what it asks, or null; `tiles` lets a listening headline say "Tap what you hear". */
 export function askHeadline(exercise: DeliveredExercise, t: Translate, how: { tiles: boolean; dialect: string | null | undefined }): string | null {

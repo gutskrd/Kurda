@@ -8,9 +8,9 @@ import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
 import { durationInWords } from './timeWords';
 import { usernameRefusalText } from './usernameText';
+import type { Translate } from '../i18n/I18nProvider';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
  * Browser API client, speaking the same protocol as the phone's (mobile/src/api/client.ts): it attaches the access

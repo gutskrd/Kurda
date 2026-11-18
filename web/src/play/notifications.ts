@@ -1,9 +1,8 @@
 import { isPlayGame, type IncomingInvite } from '@kurda/shared';
-import type { MessageKey } from '../i18n/en';
 import { GAME_NAME_KEY, joinPath } from './playApi';
+import type { Translate } from '../i18n/I18nProvider';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
-type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /** A notification as the rail holds it: the server's English and its data. */
 export interface InboxNote {
