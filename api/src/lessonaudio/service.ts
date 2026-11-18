@@ -22,7 +22,7 @@ import { playsRecordingOf } from './publish-guard.js';
 /** One lesson that uses a text, and how. */
 export interface LessonAudioUsage {
   courseId: string;
-  /** what the studio's course filter names it by (`?course=kurmanji-road`); a story's is its courseId */
+  /** The studio's course filter name (`?course=kurmanji-road`); for a story, its courseId. */
   courseSlug: string;
   courseTitle: string;
   unitId: string;
@@ -41,16 +41,13 @@ export interface LessonAudioUsage {
   live: boolean;
   /** the exercise types in this lesson that use the text, without repeats */
   exerciseTypes: ExerciseType[];
-  /**
-   * A listening item here has no clip of its own and this text is what it
-   * plays: until it is recorded, the item cannot be done at all.
-   */
+  /** A clipless listening item plays this text, so it cannot be done until this is recorded. */
   listeningNeedsIt: boolean;
 }
 
 export interface LessonAudioItem {
   key: string;
-  /** as the first lesson to use it writes it; as it was recorded, when no lesson does */
+  /** As the first lesson using it writes it, or as recorded when no lesson does. */
   text: string;
   recorded: boolean;
   url: string | null;
@@ -59,12 +56,9 @@ export interface LessonAudioItem {
   /** who is shown saying it, or null for no character (and for no recording) */
   speaker: SpeakerId | null;
   /**
-   * Who is to record it (`plannedSpeaker`): a conversation line's character,
-   * else the `voice` of the first exercise in course order that names one —
-   * so a sentence the road plans for Hamo is his, even when an older lesson
-   * used it first without saying whose it is. Null when nothing plans it:
-   * a story's sentence, an unused recording, a lesson written before voices.
-   * The recording's own `speaker` is who was heard; this is who was meant.
+   * Who is to record it: a conversation line's character, else the `voice` of the first exercise in course order
+   * naming one. Null when nothing plans it (a story sentence, an unused recording, a lesson without voices). The
+   * recording's own `speaker` is who was heard; this is who was meant.
    */
   plannedSpeaker: SpeakerId | null;
   /** it has a mouth timeline; PATCH /admin/audio/lesson sets one for a recording made without */
@@ -72,15 +66,13 @@ export interface LessonAudioItem {
   /** the stored timeline (null for none), only when the list is asked for it (`withLipsync`) */
   lipsync?: LipsyncData | null;
   /**
-   * A conversation's line: which conversation, and who says it (by place, and
-   * by name as the conversation writes it). Recorded with `&line=`, and filed
-   * under that part only. Absent for a plain text, and for an unused
-   * recording, whose conversation is no longer known.
+   * A conversation line: which conversation and who says it, by place and by name. Recorded with `&line=` and filed
+   * under that part. Absent for plain texts and unused recordings.
    */
   line?: { conversation: string; part: number; name: string; character: SpeakerId | null };
   /** lessons that use it, in course order: the first is where the studio files it */
   usedIn: LessonAudioUsage[];
-  /** recorded, but no lesson uses it any more (or it was added by hand) */
+  /** Recorded, but no lesson uses it any more, or it was added by hand. */
   unused: boolean;
 }
 
@@ -131,7 +123,7 @@ interface RecordingRow {
   lipsync: LipsyncData | null;
 }
 
-/** One sentence of a story as the editor's audio section lists it: where it is, what is said, and its recording if any. */
+/** One story sentence as the editor's audio section lists it: where it is, what is said, and its recording if any. */
 export interface StorySentenceAudio {
   /** index into storyParagraphs(body) */
   paragraph: number;
@@ -154,12 +146,9 @@ export interface StoryAudio {
 }
 
 /**
- * A story's recordable sentences in reading order with their recordings, for
- * the editor's audio section: the same cut the reader plays and the studio
- * lists (`storyAudioSentences`), the same sentences left out (one no
- * recording can hold is the editor's to split), and one query for the
- * recordings — the whole studio listing walks every lesson, which one story's
- * editor has no use for.
+ * A story's recordable sentences in reading order with their recordings, for the editor's audio section: the same
+ * cut the reader plays and the studio lists (`storyAudioSentences`), with one query for the recordings rather than
+ * the whole studio listing.
  */
 export async function storySentenceRecordings(db: Pick<pg.Pool, 'query'>, body: string): Promise<StoryAudio> {
   const sentences: StorySentenceAudio[] = [];
@@ -216,36 +205,21 @@ function playsWithoutClip(payload: unknown, key: string): boolean {
 }
 
 /**
- * The lessons' side of the audio studio: every Kurdish text a lesson wants
- * heard — and every sentence of a story, which the reader plays from the same
- * recordings — whether it has a recording yet, and which lessons use it.
+ * The lessons' side of the audio studio: every Kurdish text a lesson wants heard, and every story sentence the reader
+ * plays from the same recordings, with whether each is recorded and where it is used.
  */
 export class LessonAudioService {
   constructor(private readonly pool: pg.Pool) {}
 
   /**
-   * Walks every lesson in every course. For each lesson slot (skill and
-   * position) it reads two versions, which are usually one: the newest that
-   * is not archived — a draft, so editors can record before they publish —
-   * and the newest published one, which is what learners play meanwhile. A
-   * text either of them uses is needed; a recording neither uses is unused.
+   * Walks every lesson in every course, reading per slot the newest unarchived version (so editors can record drafts)
+   * and the newest published one. A text either uses is needed; a recording neither uses is unused. Rows come in
+   * course order, newest first within a slot, so a text's first usage and first `voice` decide where it is filed and
+   * who it is planned for.
    *
-   * Rows come in course order, newest version first within a slot, so the
-   * first usage of a text is where it first appears in the course, and the
-   * first `voice` met for it is who it is planned for (`plannedSpeaker`): the
-   * draft's, where an editor has changed it there.
-   *
-   * Then the stories: every sentence the reader can play (storyAudioSentences)
-   * of every story that is not archived, drafts included for the same reason
-   * as lessons. A story is filed as a course of its own per variety ("Stories
-   * — Kurmancî"), with the story as both its unit and its one lesson, so the
-   * studio groups it like any lesson; a sentence a lesson also uses stays
-   * filed under the lesson, with the story as one more usage.
-   *
-   * With `withLipsync`, every item also carries its stored timeline, null for
-   * none. Left out otherwise: a few hundred bytes a sentence, over every
-   * sentence of every lesson and story, is more than the studio's other
-   * screens need to load.
+   * Then every playable sentence of every unarchived story, filed as a course per variety ("Stories — Kurmancî") with
+   * the story as its unit and lesson; a sentence a lesson also uses stays under the lesson. `withLipsync` adds each
+   * stored timeline, left out otherwise as too large for the other screens.
    */
   async list(options: { withLipsync?: boolean } = {}): Promise<LessonAudioList> {
     const withLipsync = options.withLipsync === true;
@@ -352,7 +326,7 @@ export class LessonAudioService {
       };
       for (const paragraph of storyParagraphs(story.body)) {
         for (const text of storyAudioSentences(paragraph)) {
-          // a sentence no recording can hold is the editor's to split (validateStory says so), not the studio's to ask for
+          // A sentence no recording can hold is the editor's to split (validateStory says so), not the studio's to request.
           if (normalizeKurdish(text).length > LESSON_AUDIO_TEXT_MAX) continue;
           const key = lessonAudioKey(text);
           let item = items.get(key);
@@ -397,15 +371,9 @@ export class LessonAudioService {
   }
 
   /**
-   * One conversation, for the page its parts are recorded on: the lesson it is
-   * in, the conversation as written, and each line with its recording and who
-   * made it — so the people recording it, wherever they are, see each other's
-   * takes come in.
-   *
-   * The conversation is looked up by its id in the newest version of a lesson
-   * that has it and is not archived: a link sent to someone before the lesson
-   * got a new version still opens the conversation they are to record. With
-   * `lessonId`, in that lesson's own slot (its skill and place), else in any.
+   * One conversation for the page its parts are recorded on: the lesson, the conversation and each line with its
+   * recording and who made it, so remote recorders see each other's takes. Looked up in the newest unarchived lesson
+   * version that has it, so an older link still works; with `lessonId`, in that lesson's slot.
    */
   async conversation(id: string, lessonId: string | null): Promise<ConversationRecording | null> {
     const { rows } = await this.pool.query<ConversationRow>(
