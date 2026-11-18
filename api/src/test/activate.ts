@@ -8,24 +8,10 @@ interface Registered {
 }
 
 /**
- * Take a freshly registered test account through email confirmation.
- *
- * An unconfirmed account cannot write anything any more (see
- * `plugins/activation.ts`), which is true of a real signup too: the app holds
- * you on the verify screen until you type the code. Suites that register a user
- * and immediately post, like, buy or play were relying on a hole, so they have
- * to do what a person does.
- *
- * This walks the real endpoint rather than setting `email_verified_at` by hand,
- * for the same reason `pass2fa` walks the real enrollment: if confirmation ever
- * breaks, the suites that depend on it should break too, instead of quietly
- * testing a state the product can no longer reach. The only shortcut is reading
- * the code out of the database instead of out of an inbox — `createVerificationCode`
- * is the very function the mailer calls, so the code is minted the usual way.
- *
- * Every call gets its own address because the endpoint is rate limited per IP
- * (10/min) and a suite that makes a dozen players would otherwise throttle
- * itself on a limit that has nothing to do with what it is testing.
+ * Takes a newly registered test account through email confirmation, since unconfirmed accounts can do nothing
+ * (plugins/activation.ts), as for a real sign-up. It walks the real endpoint rather than setting `email_verified_at`, so
+ * suites break if confirmation does; the only shortcut is reading the code from the database, minted by the mailer's
+ * own `createVerificationCode`. Each call uses its own address, since the endpoint is limited per address.
  */
 export async function activate(app: FastifyInstance, pool: pg.Pool, registered: Registered): Promise<void> {
   const { user, tokens } = registered.json();

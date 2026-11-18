@@ -2,15 +2,10 @@ import type pg from 'pg';
 import { countStoryWords, type QuestionKind, type StoryDialect, type StoryLength, type StoryLevel } from '@kurda/shared';
 
 /**
- * A published story with a question bank, written straight into the tables
- * — the story games' suites need stories to play, and the stories' own admin
- * routes belong to another part of the API.
- *
- * The text is a short made-up story in plain Kurmancî; its paragraphs are what
- * the questions' evidence points at. A published fixture is approved too, as
- * the table requires of anything published. Every question has three options, the
- * right one at a known authored position, so a suite can answer right or
- * wrong on purpose after the game's shuffle (read the plan, or the reveal).
+ * A published story with a question bank written straight to the tables, for the story games' suites. The text is a
+ * short made-up Kurmancî story whose paragraphs the questions cite; published fixtures are approved too, as the table
+ * requires. Every question has three options with the right one at a known position, so a suite can answer right or
+ * wrong after the shuffle.
  */
 export interface StoryFixture {
   id: string;

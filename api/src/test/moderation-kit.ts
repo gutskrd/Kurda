@@ -4,10 +4,8 @@ import { activate } from './activate.js';
 import { pass2fa } from './admin-2fa.js';
 
 /**
- * People for the moderation suites: confirmed accounts with tokens, and admins
- * who have been through the real 2FA flow. Every request gets its own address
- * from a range the suite picks, so per-IP limits on sign-up and sign-in never
- * decide a test's outcome.
+ * People for the moderation suites: confirmed accounts with tokens, and admins through the real 2FA flow. Each request
+ * gets its own address from the suite's range, so per-address limits never decide an outcome.
  */
 export interface Person {
   id: string;
