@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
-import { insightTrend, weekdayName, xpAxis, type Insight, type TodayWeeks } from '@kurda/shared';
+import { insightTrend, localeDir, weekdayName, xpAxis, type Insight, type TodayWeeks } from '@kurda/shared';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
 /** One thing the insights say, in words. */
@@ -51,7 +51,7 @@ export function Insights({ weeks, insights }: { weeks: TodayWeeks; insights: rea
   const t = useT();
   const locale = useLocale();
   const words = useInsightWords();
-  const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
+  const rtl = localeDir(locale) === 'rtl';
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
   const box = useRef<HTMLDivElement>(null);
   const width = useWidth(box);
