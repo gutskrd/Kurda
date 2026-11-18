@@ -1,9 +1,7 @@
 /**
- * Through-server image/meme upload pipeline (KUR-291) against real Postgres +
- * MinIO. Exercises the cost-safe store (`storeImageMedia`) directly — validation,
- * resize/WebP, limits, idempotency, fail-closed storage — plus the route's
- * rate limit + the end-to-end upload→create flow. Skipped unless DATABASE_URL and
- * S3_ENDPOINT are set (the CI `migrations` job provides both).
+ * The through-server image upload against real Postgres and a real bucket: `storeImageMedia` directly (validation,
+ * resize to WebP, limits, idempotency, fail-closed storage), the route's rate limit, and upload then create. Skipped
+ * unless DATABASE_URL and S3_ENDPOINT are set.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';

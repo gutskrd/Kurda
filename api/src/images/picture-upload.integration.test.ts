@@ -1,12 +1,8 @@
 /**
- * `POST /images/upload` as the composer uses it, against real Postgres with a
- * bucket in memory: the signature only on what somebody made, an owner for
- * every upload, and an upload confirmed only by the post that uses it — so a
- * picture is posted once, by the person who uploaded it, and one nobody posts
- * is reclaimed by the orphan sweep.
- *
- * The cost-safety of the store (limits, failed writes, MinIO) is covered in
- * image-upload.integration.test.ts, which needs a real bucket.
+ * `POST /images/upload` as the composer uses it, against real Postgres with an in-memory bucket: the signature only
+ * on own work, an owner for every upload, and confirmation only by the post that uses it, so a picture is posted
+ * once by its uploader and an unposted one is reclaimed by the orphan sweep. Storage cost limits are covered in
+ * image-upload.integration.test.ts.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -144,7 +140,7 @@ describe.skipIf(!DATABASE_URL)('picture uploads for posts (integration)', () => 
     expect(plain.json().signed).toBe(false);
     expect(plain.json().imageMediaId).not.toBe(signed.json().imageMediaId);
 
-    // what was stored without the mark is exactly the processed picture
+    // Stored without the mark, it is exactly the processed picture.
     const limits = imagePostLimits(config);
     const processed = await processImage(bytes, {
       maxDimension: limits.maxDimension,
@@ -238,8 +234,7 @@ describe.skipIf(!DATABASE_URL)('picture uploads for posts (integration)', () => 
     expect(fresh).not.toBe(mine);
     expect((await call('POST', '/library/posts', { body: 'Dîsa', media: [{ mediaKey: fresh }] })).statusCode).toBe(201);
 
-    // and while a post still has it, uploading it again is a new upload too:
-    // one upload is still one post's
+    // Uploading it again while a post has it is a new upload, so one upload stays one post's.
     const later = (await upload(me.token, words)).json().imageMediaId;
     expect(later).not.toBe(fresh);
     expect((await row(later))).toMatchObject({ uploader_id: me.id, confirmed_at: null, scan_status: 'cleared' });
@@ -263,8 +258,7 @@ describe.skipIf(!DATABASE_URL)('picture uploads for posts (integration)', () => 
     // moderation takes the second copy off the public bucket
     await pool.query(`UPDATE media_uploads SET quarantine_state = 'done' WHERE key = $1`, [second]);
     const writes = storage.objects.size;
-    // the first key is still fine, but these bytes are not: not as a third
-    // copy of the owner's, and not as somebody else's upload of them
+    // The first key is still fine, but these bytes are refused as a third copy and as somebody else's upload.
     for (const res of [await upload(me.token, bytes, '?ownWork=false'), await upload(other.token, bytes, '?ownWork=false')]) {
       expect(res.statusCode).toBe(422);
       expect(res.json().code).toBe('IMAGE_REJECTED');
@@ -306,8 +300,7 @@ describe.skipIf(!DATABASE_URL)('picture uploads for posts (integration)', () => 
     try {
       await client.query('BEGIN');
       expect((await claimPostPictures(client, me.id, [key])).ok).toBe(true);
-      // a day and an hour later, the sweep lists it — the claim is not
-      // visible to it yet — and comes to delete it
+      // A day and an hour later the sweep lists it before the claim is visible to it, and comes to delete it.
       const sweep = new MediaService(pool, storage).cleanupOrphans(new Date(Date.now() + 25 * 3_600_000));
       for (let i = 0; ; i++) {
         const waiting = await pool.query(
