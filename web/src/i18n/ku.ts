@@ -4044,7 +4044,7 @@ export const ku: Catalogue = {
   'badges.pela.desc': 'Bi armanca bi cih hatî di nav sê yên pêşî yên lîgeke Okyanûs de biqedîne.',
   'badges.cay.name': 'Çay',
   'badges.cay.meaning': 'Çay',
-  'badges.cay.desc': 'Armanca xwe ya rojane bi cih bîne. Rojê yek, wek îstîkanek çay.',
+  'badges.cay.desc': 'Armanca xwe ya rojane bi cih bîne. Rojê yek, wek piyaneke çayê.',
   'badges.gula-hefte.name': 'Gula heftê',
   'badges.gula-hefte.meaning': 'Gula heftê',
   'badges.gula-hefte.desc': 'Di hemû heft rojên hefteyekê de fêr bibe, ji Duşemê heta Yekşemê.',
