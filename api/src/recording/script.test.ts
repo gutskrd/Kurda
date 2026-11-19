@@ -2,11 +2,14 @@ import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import {
   LETTER_CLIPS,
+  REACTION_LINES,
   WORD_SET_CLIPS,
   conversationClips,
   conversationLineKey,
   lessonAudioKey,
   lessonAudioTargets,
+  reactionKey,
+  reactionLine,
   storyAudioSentences,
   storyParagraphs,
 } from '@kurda/shared';
@@ -384,5 +387,43 @@ describe('who records from the people page', () => {
     expect(recordsOwnVoicesOnly(['voice_actor', 'content_editor'])).toBe(false);
     expect(recordsOwnVoicesOnly(['superadmin'])).toBe(false);
     expect(recordsOwnVoicesOnly([])).toBe(false);
+  });
+});
+
+describe('reaction lines in the script', () => {
+  it('lists each character’s reactions last, under that character, keyed by character and id, with the moment as the cue', () => {
+    const both = [reactionLine('hevalo', 'miss-1')!, reactionLine('xezo', 'miss-2')!];
+    const lines = buildScript({ exercises: [exercise({ type: 'conversation', payload: conversation })], stories: [], games: [], plan: PLAN, letters: [], words: [], reactions: both });
+    const hevalo = lines.at(-2)!;
+    expect(hevalo).toMatchObject({
+      id: `lesson|${reactionKey(both[0]!)}`,
+      store: 'lesson',
+      text: 'Ne xem e!',
+      voice: 'hevalo',
+      speaker: 'hevalo',
+      meaning: 'No worries!',
+      reaction: { character: 'hevalo', id: 'miss-1', moment: 'miss' },
+      conversation: null,
+      section: { id: 'reactions' },
+      live: true,
+    });
+    expect(hevalo.cue).toMatch(/one wrong/);
+    expect(hevalo.places).toEqual([{ kind: 'reaction', label: 'Reaction · A gentle miss', status: 'published', voice: 'hevalo', ref: null }]);
+    expect(lines.at(-1)).toMatchObject({ voice: 'xezo', speaker: 'xezo', text: 'Ne xem e, carek din.' });
+    // the lessons’ own lines keep their place and their reaction field is empty
+    expect(lines[0]).toMatchObject({ text: 'Silav! Bi xêr hatî!', reaction: null });
+  });
+
+  it('keeps two characters saying the same words apart, and lists the whole catalogue once', () => {
+    const hers = { ...reactionLine('hevalo', 'miss-1')!, character: 'xezo' as const };
+    const same = buildScript({ exercises: [], stories: [], games: [], plan: PLAN, letters: [], words: [], reactions: [reactionLine('hevalo', 'miss-1')!, hers] });
+    expect(same.map((l) => [l.voice, l.text])).toEqual([
+      ['hevalo', 'Ne xem e!'],
+      ['xezo', 'Ne xem e!'],
+    ]);
+    expect(same[0]!.key).not.toBe(same[1]!.key);
+    const all = buildScript({ exercises: [], stories: [], games: [], plan: PLAN, letters: [], words: [], reactions: REACTION_LINES });
+    expect(all).toHaveLength(REACTION_LINES.length);
+    expect(new Set(all.filter((l) => l.reaction?.moment === 'run-3').map((l) => l.voice))).toEqual(new Set(['hevalo', 'xezo']));
   });
 });

@@ -3,6 +3,7 @@ import {
   LESSON_AUDIO_TEXT_MAX,
   conversationClips,
   conversationLineKey,
+  isReactionKey,
   isSpeakerId,
   lessonAudioKey,
   lessonAudioTargets,
@@ -358,7 +359,8 @@ export class LessonAudioService {
       if (found) {
         Object.assign(found, recording);
         recorded += 1;
-      } else {
+      } else if (!isReactionKey(r.key)) {
+        // a reaction is the characters', recorded and listed on the record-by-person page
         unused.push({ key: r.key, text: r.text, ...recording, plannedSpeaker: null, usedIn: [], unused: true });
       }
     }

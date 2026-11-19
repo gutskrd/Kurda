@@ -7,7 +7,8 @@
  *   GET    /admin/lesson-audio/conversations/:id?lesson=…   one conversation's lines and takes, for its recording page
  *
  * A conversation line is recorded with `&line=<conversation id>:<part>` and filed under that part
- * (`conversationLineKey`), so the same words in another part or conversation stay separate. The PUT may name the
+ * (`conversationLineKey`), so the same words in another part or conversation stay separate; a reaction line with
+ * `&reaction=<character>:<id>`, filed by `reactionKey` and only with the catalogue's words. The PUT may name the
  * speaker (`&speaker=hevalo|hamo|xezo|none`) and the lip-sync timeline (`&lipsync=`, speakers/voice.ts); without a
  * speaker the new take keeps the old one's, and without a timeline it has none. PATCH /admin/audio/lesson changes
  * either later.
@@ -24,9 +25,13 @@ import {
   LESSON_AUDIO_MAX_SECONDS,
   LESSON_AUDIO_TEXT_MAX,
   conversationLineKey,
+  isReactionKey,
   lessonAudioKey,
   normalizeKurdish,
+  reactionKey,
+  reactionLine,
   type LipsyncData,
+  type ReactionCharacter,
   type SpeakerId,
 } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
@@ -41,6 +46,7 @@ import { readWav } from '../media/wav.js';
 import { LessonAudioService } from './service.js';
 import { lessonsPlaying } from './publish-guard.js';
 import { bustStoryLists } from '../stories/service.js';
+import { bustReactions } from './reactions.js';
 import { fitLipsync, lipsyncSummary, voiceFromQuery } from '../speakers/voice.js';
 import { RECORDING_ROLES, assertMayRecord } from '../recording/access.js';
 
@@ -60,26 +66,42 @@ interface Row {
 }
 
 const listQuery = z.object({ withLipsync: z.enum(['0', '1', 'false', 'true']).optional() });
-const textQuery = z.object({ text: z.string(), line: z.string().max(64).optional() });
+const textQuery = z.object({ text: z.string(), line: z.string().max(64).optional(), reaction: z.string().max(64).optional() });
 const conversationParams = z.object({ id: z.string().regex(CONVERSATION_ID) });
 const conversationQuery = z.object({ lesson: z.uuid().optional() });
 /** `<conversation id>:<part>`, the part being who says the line, by place */
 const LINE = /^([a-z0-9]{6,32}):(\d{1,2})$/;
+/** `<character>:<id>` of a reaction line */
+const REACTION = /^([a-z]{1,12}):([a-z0-9-]{1,40})$/;
 const keyQuery = z.object({ key: z.string().min(1).max(LESSON_AUDIO_TEXT_MAX * 2), force: z.string().optional() });
 
-/** The text to record as typed (NFC, spaces evened) and its key: a conversation line's when `line` names one. */
-function textFrom(query: unknown): { text: string; key: string; line: { conversation: string; part: number } | null } {
+/** The text to record as typed (NFC, spaces evened) and its key: a conversation line's when `line` names one, a reaction's when `reaction` does. */
+function textFrom(query: unknown): {
+  text: string;
+  key: string;
+  line: { conversation: string; part: number } | null;
+  reaction: { character: ReactionCharacter; id: string } | null;
+} {
   const parsed = textQuery.safeParse(query);
   const text = parsed.success ? normalizeKurdish(parsed.data.text) : '';
   if (!lessonAudioKey(text)) throw new AppError('EMPTY_TEXT', 400, 'say which text this is a recording of');
   if (text.length > LESSON_AUDIO_TEXT_MAX) {
     throw new AppError('TEXT_TOO_LONG', 400, `keep the text under ${LESSON_AUDIO_TEXT_MAX} characters`);
   }
-  if (parsed.data?.line === undefined) return { text, key: lessonAudioKey(text), line: null };
-  const m = LINE.exec(parsed.data.line);
+  const { line: named, reaction: said } = parsed.data ?? {};
+  if (named !== undefined && said !== undefined) throw new AppError('INVALID_LINE', 400, 'name a conversation line or a reaction, not both');
+  if (said !== undefined) {
+    const m = REACTION.exec(said);
+    const found = m ? reactionLine(m[1]!, m[2]!) : null;
+    if (!found) throw new AppError('UNKNOWN_REACTION', 400, 'name the reaction as <character>:<id> from the catalogue');
+    if (lessonAudioKey(found.ku) !== lessonAudioKey(text)) throw new AppError('REACTION_TEXT', 400, `this reaction says “${found.ku}”`);
+    return { text, key: reactionKey(found), line: null, reaction: { character: found.character, id: found.id } };
+  }
+  if (named === undefined) return { text, key: lessonAudioKey(text), line: null, reaction: null };
+  const m = LINE.exec(named);
   if (!m) throw new AppError('INVALID_LINE', 400, 'name the line as <conversation id>:<part>');
   const line = { conversation: m[1]!, part: Number(m[2]) };
-  return { text, key: conversationLineKey(line.conversation, line.part, text), line };
+  return { text, key: conversationLineKey(line.conversation, line.part, text), line, reaction: null };
 }
 
 /** `onTake` runs after every saved take without delaying the answer; road chapters go online once their last line is recorded. */
@@ -126,9 +148,11 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       preHandler: canTake,
     },
     async (req, reply) => {
-      const { text, key, line } = textFrom(req.query);
+      const { text, key, line, reaction } = textFrom(req.query);
       await assertMayRecord(app, req, 'lesson', key);
       const voice = voiceFromQuery(req.query);
+      // A reaction is always its own character's, whoever the upload names.
+      if (reaction) voice.speaker = reaction.character;
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
       if (!raw) return reply.code(415).send({ code: 'INVALID_AUDIO', message: 'send the recording as audio/wav' });
@@ -193,6 +217,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
           after: {
             text,
             ...(line ? { line } : {}),
+            ...(reaction ? { reaction } : {}),
             url: res.url,
             durationMs: info.durationMs,
             speaker: saved.speaker,
@@ -207,8 +232,9 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       } finally {
         client.release();
       }
-      // A story's "fully narrated" badge or a chapter's completion may have just changed.
+      // A story's "fully narrated" badge or a chapter's completion may have just changed, or the apps' reactions.
       await bustStoryLists(app.cache);
+      if (reaction) await bustReactions(app.cache);
       onTake();
       return reply.code(201).send({
         key: saved.key,
@@ -269,6 +295,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       client.release();
     }
     await bustStoryLists(app.cache);
+    if (isReactionKey(key)) await bustReactions(app.cache);
     // the file stays in storage: it is content-addressed and may be put back
     return { key, removed: true };
   });
