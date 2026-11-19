@@ -3402,6 +3402,9 @@ export type TranslationKey =
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   | 'settings.sounds.autoplay'
   | 'settings.sounds.autoplayHint'
+  | 'settings.sounds.characterVoices'
+  | 'settings.sounds.characterVoicesHint'
+  | 'reactions.says'
   | 'lesson.skipAll.listening'
   | 'lesson.skipAll.speaking'
   | 'common.undo'
@@ -7263,6 +7266,9 @@ const en: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Play pronunciations automatically',
   'settings.sounds.autoplayHint': 'After each answer, hear it said.',
+  'settings.sounds.characterVoices': 'Character voices',
+  'settings.sounds.characterVoicesHint': 'Hevalo and Xezal say a short word in Kurmancî at moments worth marking, never over a lesson’s own audio. Silent while Sounds is off.',
+  'reactions.says': '{name} says “{line}”',
   'lesson.skipAll.listening': 'No more listening in this lesson',
   'lesson.skipAll.speaking': 'No more speaking in this lesson',
   'common.undo': 'Undo',
@@ -11115,6 +11121,9 @@ const ku: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Bilêvkirinan bixweber lê bide',
   'settings.sounds.autoplayHint': 'Piştî her bersivê, bibihîze ka çawa tê gotin.',
+  'settings.sounds.characterVoices': 'Dengê karakteran',
+  'settings.sounds.characterVoicesHint': 'Hevalo û Xezal di demên taybet de gotineke kurt a kurmancî dibêjin, qet ne li ser dengê waneyê. Dema Deng girtî be, bêdeng in.',
+  'reactions.says': '{name} dibêje: “{line}”',
   'lesson.skipAll.listening': 'Di vê waneyê de êdî guhdarî tune',
   'lesson.skipAll.speaking': 'Di vê waneyê de êdî axaftin tune',
   'common.undo': 'Vegerîne',
@@ -14967,6 +14976,9 @@ const de: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Aussprache automatisch abspielen',
   'settings.sounds.autoplayHint': 'Nach jeder Antwort hörst du, wie sie gesagt wird.',
+  'settings.sounds.characterVoices': 'Stimmen der Figuren',
+  'settings.sounds.characterVoicesHint': 'Hevalo und Xezal sagen in besonderen Momenten ein kurzes Wort auf Kurmancî, nie über den Ton der Lektion hinweg. Still, solange „Töne“ aus ist.',
+  'reactions.says': '{name} sagt „{line}“',
   'lesson.skipAll.listening': 'Keine Hörübungen mehr in dieser Lektion',
   'lesson.skipAll.speaking': 'Keine Sprechübungen mehr in dieser Lektion',
   'common.undo': 'Rückgängig',
@@ -18819,6 +18831,9 @@ const es: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Reproducir las pronunciaciones automáticamente',
   'settings.sounds.autoplayHint': 'Después de cada respuesta, escucha cómo se dice.',
+  'settings.sounds.characterVoices': 'Voces de los personajes',
+  'settings.sounds.characterVoicesHint': 'Hevalo y Xezal dicen una palabra corta en kurmancî en los momentos especiales, nunca encima del audio de la lección. En silencio mientras «Sonidos» esté desactivado.',
+  'reactions.says': '{name} dice «{line}»',
   'lesson.skipAll.listening': 'Sin más ejercicios de escucha en esta lección',
   'lesson.skipAll.speaking': 'Sin más ejercicios de habla en esta lección',
   'common.undo': 'Deshacer',
@@ -22671,6 +22686,9 @@ const tr: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Telaffuzları otomatik oynat',
   'settings.sounds.autoplayHint': 'Her yanıttan sonra nasıl söylendiğini dinle.',
+  'settings.sounds.characterVoices': 'Karakter sesleri',
+  'settings.sounds.characterVoicesHint': 'Hevalo ve Xezal önemli anlarda Kurmancî kısa bir söz söyler, asla dersin kendi sesinin üstüne değil. Sesler kapalıyken sessizdir.',
+  'reactions.says': '{name} diyor ki: “{line}”',
   'lesson.skipAll.listening': 'Bu derste artık dinleme yok',
   'lesson.skipAll.speaking': 'Bu derste artık konuşma yok',
   'common.undo': 'Geri al',
@@ -26523,6 +26541,9 @@ const ar: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'تشغيل النطق تلقائيًا',
   'settings.sounds.autoplayHint': 'بعد كل إجابة، استمع إلى نطقها.',
+  'settings.sounds.characterVoices': 'أصوات الشخصيات',
+  'settings.sounds.characterVoicesHint': 'يقول Hevalo وXezal كلمة قصيرة بالكرمانجية في اللحظات المهمة، ولا يعلو صوتهما أبدًا على صوت الدرس. يصمتان ما دامت «الأصوات» متوقفة.',
+  'reactions.says': '{name}: «{line}»',
   'lesson.skipAll.listening': 'لا مزيد من الاستماع في هذا الدرس',
   'lesson.skipAll.speaking': 'لا مزيد من التحدّث في هذا الدرس',
   'common.undo': 'تراجع',
@@ -30375,6 +30396,9 @@ const fr: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Lire les prononciations automatiquement',
   'settings.sounds.autoplayHint': 'Après chaque réponse, écoute comment elle se dit.',
+  'settings.sounds.characterVoices': 'Voix des personnages',
+  'settings.sounds.characterVoicesHint': 'Hevalo et Xezal disent un petit mot en kurmancî aux moments qui comptent, jamais par-dessus l’audio de la leçon. Muets tant que « Sons » est désactivé.',
+  'reactions.says': '{name} dit « {line} »',
   'lesson.skipAll.listening': 'Plus d’écoute dans cette leçon',
   'lesson.skipAll.speaking': 'Plus d’oral dans cette leçon',
   'common.undo': 'Annuler',
@@ -34227,6 +34251,9 @@ const nl: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Uitspraak automatisch afspelen',
   'settings.sounds.autoplayHint': 'Hoor na elk antwoord hoe het wordt uitgesproken.',
+  'settings.sounds.characterVoices': 'Stemmen van de personages',
+  'settings.sounds.characterVoicesHint': 'Hevalo en Xezal zeggen op mooie momenten een kort woordje Kurmancî, nooit door het geluid van de les heen. Stil zolang Geluiden uit staat.',
+  'reactions.says': '{name} zegt ‘{line}’',
   'lesson.skipAll.listening': 'Geen luisteroefeningen meer in deze les',
   'lesson.skipAll.speaking': 'Geen spreekoefeningen meer in deze les',
   'common.undo': 'Ongedaan maken',
@@ -38080,6 +38107,9 @@ const ckb: Catalog = {
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'دەربڕینەکان بە شێوەی خۆکار لێبدە',
   'settings.sounds.autoplayHint': 'دوای هەر وەڵامێک، گوێ لە دەربڕینەکەی بگرە.',
+  'settings.sounds.characterVoices': 'دەنگی کارەکتەرەکان',
+  'settings.sounds.characterVoicesHint': 'Hevalo و Xezal لە ساتە تایبەتەکاندا وشەیەکی کورتی کورمانجی دەڵێن، هەرگیز بەسەر دەنگی وانەکەدا نا. کاتێک «دەنگەکان» کوژاوەتەوە، بێدەنگن.',
+  'reactions.says': '{name} دەڵێت: «{line}»',
   'lesson.skipAll.listening': 'لەم وانەیەدا چیتر گوێگرتن نییە',
   'lesson.skipAll.speaking': 'لەم وانەیەدا چیتر ئاخاوتن نییە',
   'common.undo': 'گەڕاندنەوە',

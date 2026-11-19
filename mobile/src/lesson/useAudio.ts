@@ -27,6 +27,20 @@ function audioCtor(): AudioCtor | null {
   return typeof g.Audio === 'function' ? g.Audio : null;
 }
 
+/** The recordings sounding now on any screen, so a character's reaction line never starts over one (characters/reactions.ts). */
+const sounding = new Set<object>();
+const starts = new Set<() => void>();
+
+export function recordingSounding(): boolean {
+  return sounding.size > 0;
+}
+
+/** Hears a recording start on any screen; a reaction line gives way to it. */
+export function onRecordingSound(listener: () => void): () => void {
+  starts.add(listener);
+  return () => starts.delete(listener);
+}
+
 /** Whether this host can play recordings at all, before one is loaded. */
 export function canPlayAudio(): boolean {
   return audioCtor() !== null || Platform.OS !== 'web';
@@ -125,8 +139,13 @@ export function useAudio(url: string | undefined): AudioControls {
     if (!url || (!Ctor && !phone)) return;
     let live = true;
     let loaded: Loaded | null = null;
+    const mine = {};
     const on: Events = {
       playing: (now) => {
+        if (now && live && !sounding.has(mine)) {
+          sounding.add(mine);
+          for (const l of starts) l();
+        } else if (!now) sounding.delete(mine);
         if (live) setPlaying(now);
       },
       error: () => {
@@ -147,6 +166,7 @@ export function useAudio(url: string | undefined): AudioControls {
     else void phonePlayback(url, on).then(take, on.error);
     return () => {
       live = false;
+      sounding.delete(mine);
       loaded?.release();
       loadedRef.current = null;
       setPlaying(false);

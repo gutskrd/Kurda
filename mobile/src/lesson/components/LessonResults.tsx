@@ -5,8 +5,10 @@ import {
   RESULTS_TIMING,
   WORD_PICTURES,
   afterResults,
+  endMoment,
   hueSteps,
   isSoraniDialect,
+  reactionDelayMs,
   resultsActions,
   resultsGrade,
   resultsOutcome,
@@ -30,11 +32,12 @@ import { timing, useCountUp } from '../../theme/animate';
 import { duration, pressedDim } from '../../theme/motion';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { TONES, type ToneColors } from '../../coursemap/path';
-import { NO_MOMENTS, type LessonMoments } from '../moments';
+import { NO_MOMENTS, lessonMoments, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
 import { ReminderOffer, useReminderOffer } from '../../push/ReminderOffer';
 import { useScreenBottomInset, useScreenTopInset } from '../../navigation/tabBarLayout';
 import { HevaloWindow } from '../../characters/HevaloWindow';
+import { sayReactionLater } from '../../characters/reactions';
 import { GoalRing } from '../../leagues/GoalRing';
 import { knownTier, leagueName } from '../../leagues/format';
 import { QuestsScreen } from '../../quests/QuestsScreen';
@@ -156,6 +159,9 @@ export function LessonResults({
     const id = setTimeout(() => setCheer(true), plan.hapticAtMs);
     return () => clearTimeout(id);
   }, [moment.playing, plan.hapticAtMs]);
+  // And says his word for the lesson once the title has landed (shared reactions.ts); a perfect lesson is known from the results alone.
+  const [perfect] = useState(() => lessonMoments(null, null, null, { kind: lesson ? 'lesson' : 'practice', accuracy: results.accuracy, skipped }).perfect === true);
+  useEffect(() => sayReactionLater(reactionDelayMs('celebration', !plan.travel), { moment: endMoment(perfect), character: 'hevalo', drawn: true }), [perfect, plan.travel]);
 
   // Whether the notification question is due, found out while the results are read (null until known).
   const remindersDue = useReminderOffer(offerReminders);
