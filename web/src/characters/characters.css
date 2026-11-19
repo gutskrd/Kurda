@@ -360,6 +360,10 @@
   padding-inline: var(--space-4);
   pointer-events: none;
 }
+/* Under the app bar where there is one; a lesson has none, so there it sits at the top. */
+body:has(.nav) .reaction-caption-place {
+  top: calc(var(--nav-bottom) + var(--space-3));
+}
 .reaction-caption {
   display: inline-flex;
   align-items: center;
