@@ -276,6 +276,39 @@ describe('recording one person’s lines', () => {
     expect(screen.getByText('1 line left of 3')).toBeInTheDocument();
   });
 
+  it('records a reaction as its character, with the moment and how to say it, filed by character and id', async () => {
+    const user = userEvent.setup();
+    const cheer = line({
+      id: 'lesson|reaction:xezo:run-3-1',
+      seq: 5000,
+      key: `reaction:xezo:run-3-1${WJ}pir baş e`,
+      text: 'Pir baş e!',
+      meaning: 'Very good!',
+      cue: 'The learner has just got three answers right in a row. A quick, happy cheer.',
+      hint: 'The village teacher: bright and kind, pleased with her pupil.',
+      reaction: { character: 'xezo', id: 'run-3-1', moment: 'run-3' },
+      section: { id: 'reactions', label: 'Reactions · heard all over the app' },
+      places: [{ kind: 'reaction', label: 'Reaction · Three right in a row', status: 'published', voice: 'xezo', ref: null }],
+    });
+    const api = show(
+      'xezo',
+      on('GET', /^\/admin\/recording\/people\/xezo\?/, json(page(XEZAL, [cheer]))),
+      on('PUT', /^\/admin\/lesson-audio\?/, json({ key: cheer.key, text: 'Pir baş e!', url: 'https://cdn.test/pir.wav', durationMs: 700, speaker: 'xezo' }, 201)),
+    );
+    const here = await screen.findByRole('article', { name: 'Pir baş e!' });
+    expect(within(here).getByText('Reaction · Three right in a row')).toBeInTheDocument();
+    expect(within(here).getByText(cheer.cue!)).toBeInTheDocument();
+    expect(within(here).getByText('Very good!')).toBeInTheDocument();
+    expect(within(here).getByText(`How: ${cheer.hint}`)).toBeInTheDocument();
+    await user.click(within(here).getByRole('button', { name: 'Record' }));
+    await user.click(await within(stage()).findByRole('button', { name: 'Stop' }));
+    await user.click(await within(stage()).findByRole('button', { name: 'Keep' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(api.calls.find((c) => c.method === 'PUT')!.path).toBe(
+      `/admin/lesson-audio?text=${encodeURIComponent('Pir baş e!')}&reaction=${encodeURIComponent('xezo:run-3-1')}&speaker=xezo`,
+    );
+  });
+
   it('works from a laptop’s keys: Space records and stops, Enter keeps, the arrows move', async () => {
     const user = userEvent.setup();
     const api = show('xezo', xezalLines, on('PUT', /^\/admin\/lesson-audio\?/, json({ key: 'k', url: 'https://cdn.test/x.wav', durationMs: 800, speaker: 'xezo' }, 201)));
