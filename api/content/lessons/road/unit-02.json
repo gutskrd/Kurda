@@ -2582,6 +2582,22 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
+                    "say": "Baran ne zarok e!",
+                    "voice": "hamo",
+                    "prompt": "Baran ne zarok e!",
+                    "options": [
+                      "Baran isn’t a child!",
+                      "Baran is a child!",
+                      "Baran isn’t ten!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
                     "say": "Şîr vexwe, mast bixwe!",
                     "voice": "hamo",
                     "prompt": "Şîr vexwe, mast bixwe!",
@@ -2594,7 +2610,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2610,7 +2626,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2627,7 +2643,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2641,7 +2657,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2657,7 +2673,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2670,22 +2686,23 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "translate",
+                  "position": 11,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Şîr vexwe, mast bixwe!",
-                    "voice": "hamo",
-                    "prompt": "Şîr vexwe, mast bixwe!",
-                    "accepted": [
-                      "Drink some milk, eat some yoghurt!",
-                      "Drink the milk, eat the yoghurt!",
-                      "Drink milk, eat yoghurt!"
-                    ]
+                    "ask": "meaning",
+                    "say": "Ez ne birçî me… sêv heye?",
+                    "voice": "hevalo",
+                    "prompt": "Ez ne birçî me… sêv heye?",
+                    "options": [
+                      "I’m not hungry… is there an apple?",
+                      "I’m hungry… is there an apple?",
+                      "I’m not hungry… there’s no apple."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2700,7 +2717,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2711,7 +2728,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2723,7 +2740,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2733,7 +2750,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3450,6 +3467,22 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
+                    "say": "Kerekî min heye, navê wî Bozo ye. Pisîkeke min tune.",
+                    "voice": "hamo",
+                    "prompt": "Kerekî min heye, navê wî Bozo ye. Pisîkeke min tune.",
+                    "options": [
+                      "I have a donkey, his name is Bozo. I don’t have a cat.",
+                      "I have a cat, its name is Bozo. I don’t have a donkey.",
+                      "Bozo has a donkey. He doesn’t have a cat."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
                     "say": "Ev cîranên min in.",
                     "voice": "hamo",
                     "prompt": "Ev cîranên min in.",
@@ -3462,7 +3495,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3470,19 +3503,6 @@
                     "prompt": "The dog is big, the donkey is very big.",
                     "accepted": [
                       "Kûçik mezin e, ker gelek mezin e."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Mirîşkên Dapîrê hene.",
-                    "voice": "hamo",
-                    "prompt": "Mirîşkên Dapîrê hene.",
-                    "accepted": [
-                      "Grandma has hens."
                     ]
                   }
                 },
@@ -3684,6 +3704,22 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
+                    "say": "Ez hevalê te me!",
+                    "voice": "hevalo",
+                    "prompt": "Ez hevalê te me!",
+                    "options": [
+                      "I’m your friend!",
+                      "You’re my friend!",
+                      "I’m your neighbour!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
                     "say": "Hêvî biçûk e.",
                     "voice": "hamo",
                     "prompt": "Hêvî biçûk e.",
@@ -3702,7 +3738,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3719,7 +3755,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3735,7 +3771,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3748,7 +3784,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3763,7 +3799,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3775,7 +3811,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3785,7 +3821,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3796,7 +3832,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3804,19 +3840,6 @@
                     "prompt": "Hêvî is little.",
                     "accepted": [
                       "Hêvî biçûk e."
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Navê min Hevalo ye!",
-                    "voice": "hevalo",
-                    "prompt": "Navê min Hevalo ye!",
-                    "accepted": [
-                      "My name is Hevalo!"
                     ]
                   }
                 },

@@ -3994,22 +3994,6 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Hamo, simbêlê xwe baş biparêze!",
-                    "voice": "xezo",
-                    "prompt": "Hamo, simbêlê xwe baş biparêze!",
-                    "options": [
-                      "Hamo, take good care of your moustache!",
-                      "Hamo, take good care of Hevalo!",
-                      "I’m looking at my moustache."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "missing",
                     "say": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
                     "voice": "xezo",
@@ -4024,7 +4008,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4040,7 +4024,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4057,7 +4041,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4072,12 +4056,30 @@
                     "correctIndex": 0,
                     "new": [
                       {
-                        "ku": "Rêya te vekirî be!",
-                        "en": "Safe journey!"
-                      },
-                      {
                         "ku": "Oxir be!",
                         "en": "Farewell! Good luck!"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Rêya te vekirî be!",
+                    "voice": "hamo",
+                    "prompt": "Rêya te vekirî be!",
+                    "options": [
+                      "Safe journey!",
+                      "Welcome back!",
+                      "Get well soon!"
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "Rêya te vekirî be!",
+                        "en": "Safe journey!"
                       }
                     ]
                   }
@@ -4311,6 +4313,23 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
+                    "say": "Rêya te vekirî be!",
+                    "voice": "hamo",
+                    "prompt": "Rêya te vekirî be!",
+                    "options": [
+                      "Xwedê ji te razî be!",
+                      "Bi xêr hatî!",
+                      "Noşî can be!"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Hamo says it to you"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
                     "prompt": "Sêvan’s friendship is in my heart for ever.",
@@ -4323,7 +4342,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4339,7 +4358,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -4354,7 +4373,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -4387,7 +4406,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4400,7 +4419,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4417,30 +4436,7 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Jin tilîliyan dikin.",
-                    "reference": "Jin tilîliyan dikin."
-                  }
-                },
-                {
                   "position": 10,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "This is a big celebration!",
-                    "accepted": [
-                      "Ev şahiyeke mezin e!",
-                      "Ev şahiyek mezin e!"
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -4451,7 +4447,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -4466,7 +4462,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4482,7 +4478,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4498,7 +4494,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4511,6 +4507,16 @@
                       "I’ll show you: the road is very long."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Rêya te vekirî be!",
+                    "reference": "Rêya te vekirî be!"
                   }
                 },
                 {

@@ -1762,22 +1762,6 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ev sêv ji bo te ye, Zerê!",
-                    "voice": "hevalo",
-                    "prompt": "Ev sêv ji bo te ye, Zerê!",
-                    "options": [
-                      "This apple is for you, Zerê!",
-                      "This fruit is for you.",
-                      "This tea is for you."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "Erê, maleke kevn û wêran. Xwediyê wê kî bû?",
                     "voice": "hamo",
                     "prompt": "Erê, maleke kevn û wêran. Xwediyê wê kî bû?",
@@ -1800,7 +1784,7 @@
                   }
                 },
                 {
-                  "position": 3,
+                  "position": 2,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1817,7 +1801,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1839,7 +1823,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1856,7 +1840,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1878,7 +1862,39 @@
                   }
                 },
                 {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hevalo, min tu dîtî!",
+                    "voice": "hamo",
+                    "prompt": "Hevalo, min tu dîtî!",
+                    "options": [
+                      "Hevalo, I saw you!",
+                      "Hevalo, you saw me!",
+                      "Hevalo, I can see you!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Na, te ez nedîtim!",
+                    "voice": "hevalo",
+                    "prompt": "Na, te ez nedîtim!",
+                    "options": [
+                      "No, you didn’t see me!",
+                      "No, I didn’t see you!",
+                      "Yes, you saw me!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1892,7 +1908,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1907,7 +1923,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1923,7 +1939,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu10s2l3a",
@@ -1998,7 +2014,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2010,7 +2026,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2020,7 +2036,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2031,7 +2047,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2046,7 +2062,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",

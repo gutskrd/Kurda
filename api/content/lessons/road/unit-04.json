@@ -3487,22 +3487,6 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "kes",
-                    "voice": "hamo",
-                    "prompt": "kes",
-                    "options": [
-                      "person",
-                      "not",
-                      "at all"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "missing",
                     "say": "Kes ji bo selikeke vala pere nade!",
                     "voice": "hamo",
@@ -3517,7 +3501,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3543,7 +3527,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3559,7 +3543,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3573,6 +3557,22 @@
                     ],
                     "correctIndex": 0,
                     "cue": "I don’t know! I have no idea at all!"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Kes nizane!",
+                    "voice": "hamo",
+                    "prompt": "Kes nizane!",
+                    "options": [
+                      "Nobody knows!",
+                      "Nobody pays!",
+                      "I don’t know!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -4098,6 +4098,22 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
+                    "say": "Ez ji sêvan hez dikim!",
+                    "voice": "hevalo",
+                    "prompt": "Ez ji sêvan hez dikim!",
+                    "options": [
+                      "I love apples!",
+                      "I don’t like apples!",
+                      "I’m eating the apples!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "missing",
                     "say": "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
                     "voice": "hamo",
@@ -4109,22 +4125,6 @@
                     ],
                     "correctIndex": 0,
                     "cue": "to laugh"
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "zik",
-                    "voice": "hevalo",
-                    "prompt": "zik",
-                    "options": [
-                      "belly, stomach",
-                      "full",
-                      "empty"
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -4279,12 +4279,15 @@
                 },
                 {
                   "position": 13,
-                  "type": "speaking",
+                  "type": "writing",
                   "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
-                    "reference": "Baş e. Ez jî dikenim! Mîrza, ez pere didim."
+                    "ask": "to-kurdish",
+                    "voice": "hevalo",
+                    "prompt": "I love apples!",
+                    "accepted": [
+                      "Ez ji sêvan hez dikim!",
+                      "Ez ji sêvan hez dikim"
+                    ]
                   }
                 },
                 {

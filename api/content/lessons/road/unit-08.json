@@ -2727,15 +2727,19 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
+                    "ask": "reply",
                     "say": "Kîjan mêwe herî şîrîn e?",
                     "voice": "hamo",
                     "prompt": "Kîjan mêwe herî şîrîn e?",
-                    "accepted": [
-                      "Which fruit is the sweetest?"
-                    ]
+                    "options": [
+                      "Sêv!",
+                      "Şekir!",
+                      "Penîr!"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "answer for Hevalo"
                   }
                 },
                 {
