@@ -1129,20 +1129,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Yek mirîşk heye.",
+                    "say": "Mirîşkek heye.",
                     "voice": "hamo",
-                    "prompt": "Yek mirîşk heye.",
+                    "prompt": "Mirîşkek heye.",
                     "options": [
-                      "There is one hen.",
+                      "There’s a hen.",
                       "There are two hens.",
                       "There’s no hen."
                     ],
                     "correctIndex": 0,
                     "new": [
-                      {
-                        "ku": "yek",
-                        "en": "one"
-                      },
                       {
                         "ku": "mirîşk",
                         "en": "hen, chicken"
@@ -1193,17 +1189,26 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Yek mirîşk heye.",
+                    "ask": "meaning",
+                    "say": "Yek, didu… du mirîşk!",
                     "voice": "hamo",
-                    "prompt": "Yek ___ heye.",
+                    "prompt": "Yek, didu… du mirîşk!",
                     "options": [
-                      "mirîşk",
-                      "mirîşkên",
-                      "keç"
+                      "One, two… two hens!",
+                      "One, two… two girls!",
+                      "One… one hen!"
                     ],
                     "correctIndex": 0,
-                    "cue": "There is one hen."
+                    "new": [
+                      {
+                        "ku": "yek",
+                        "en": "one"
+                      },
+                      {
+                        "ku": "du",
+                        "en": "two"
+                      }
+                    ]
                   }
                 },
                 {
@@ -1249,22 +1254,17 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ew du mirîşk in.",
+                    "ask": "missing",
+                    "say": "Yek, didu… du mirîşk!",
                     "voice": "hamo",
-                    "prompt": "Ew du mirîşk in.",
+                    "prompt": "Yek, didu… du ___!",
                     "options": [
-                      "Those are two hens.",
-                      "That’s one hen.",
-                      "Those are two apples."
+                      "mirîşk",
+                      "mirîşkek",
+                      "keç"
                     ],
                     "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "du",
-                        "en": "two"
-                      }
-                    ]
+                    "cue": "One, two… two hens!"
                   }
                 },
                 {
@@ -1320,7 +1320,8 @@
                     "ask": "repeat",
                     "voice": "hamo",
                     "prompt": "Ev keça Nazê ye.",
-                    "reference": "Ev keça Nazê ye."
+                    "reference": "Ev keça Nazê ye.",
+                    "say": "Ev keça Nazê ye."
                   }
                 },
                 {
@@ -1356,9 +1357,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "There is one hen.",
+                    "prompt": "There’s a hen.",
                     "accepted": [
-                      "Yek mirîşk heye."
+                      "Mirîşkek heye."
                     ]
                   }
                 },
@@ -1368,10 +1369,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Those are two hens.",
+                    "prompt": "One, two… two hens!",
                     "options": [
-                      "Ew du mirîşk in.",
-                      "Ew didu mirîşk in.",
+                      "Yek, didu… du mirîşk!",
+                      "Yek, didu… didu mirîşk!",
                       "Ew baş in, spas."
                     ],
                     "correctIndex": 0
@@ -1395,9 +1396,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Those are two hens.",
+                    "prompt": "One, two… two hens!",
                     "accepted": [
-                      "Ew du mirîşk in."
+                      "Yek, didu… du mirîşk!",
+                      "Yek, du… du mirîşk!"
                     ]
                   }
                 }
@@ -1943,13 +1945,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ew du mirîşk in.",
+                    "say": "Yek, didu… du mirîşk!",
                     "voice": "hamo",
-                    "prompt": "Ew du mirîşk in.",
+                    "prompt": "Yek, didu… du mirîşk!",
                     "options": [
-                      "Those are two hens.",
-                      "That’s one hen.",
-                      "Those are two apples."
+                      "One, two… two hens!",
+                      "One, two… two girls!",
+                      "One… one hen!"
                     ],
                     "correctIndex": 0
                   }
@@ -2013,13 +2015,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ew du mirîşk in.",
+                    "say": "Yek, didu… du mirîşk!",
                     "voice": "hamo",
-                    "prompt": "Ew du mirîşk in.",
+                    "prompt": "Yek, didu… du mirîşk!",
                     "options": [
-                      "Those are two hens.",
-                      "That’s one hen.",
-                      "Those are two apples."
+                      "One, two… two hens!",
+                      "One, two… two girls!",
+                      "One… one hen!"
                     ],
                     "correctIndex": 0
                   }
@@ -2147,9 +2149,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "There is one hen.",
+                    "prompt": "There’s a hen.",
                     "accepted": [
-                      "Yek mirîşk heye."
+                      "Mirîşkek heye."
                     ]
                   }
                 },
@@ -2387,7 +2389,7 @@
                     "options": [
                       "Penîr heye.",
                       "Penîr tune.",
-                      "Yek mirîşk heye."
+                      "Mirîşkek heye."
                     ],
                     "correctIndex": 0
                   }
