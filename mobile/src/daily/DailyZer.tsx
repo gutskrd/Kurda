@@ -20,7 +20,7 @@ const COIN_STAGE = 44;
 /**
  * Today's Zêr inside the daily view, as on the website: the day's reward with a claim button (the server sets the
  * amount), a lesson first until one is finished today, or tomorrow once taken, and the cycle as a quiet row of coins.
- * A claim plays the app's celebration around the coin once, with a word from Xezal, and tells the rest of the app
+ * A claim plays the app's celebration around the coin once, with a word from Xezo, and tells the rest of the app
  * (`dailyClaimed`), so Learn's purse shows the new Zêr. A Hevalo+ member sees the gems a claim adds.
  */
 export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; onClaimed: (daily: DailyStatus) => void; onLearn?: () => void }): React.JSX.Element {

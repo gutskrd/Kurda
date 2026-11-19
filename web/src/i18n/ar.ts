@@ -1177,7 +1177,7 @@ export const ar: Catalogue = {
   'settings.sounds.autoplay': 'تشغيل النطق تلقائيًا',
   'settings.sounds.autoplayHint': 'بعد كل إجابة، استمع إلى نطقها.',
   'settings.sounds.characterVoices': 'أصوات الشخصيات',
-  'settings.sounds.characterVoicesHint': 'يقول Hevalo وXezal كلمة قصيرة بالكرمانجية في اللحظات المهمة، ولا يعلو صوتهما أبدًا على صوت الدرس. يصمتان ما دام الرنين متوقفًا.',
+  'settings.sounds.characterVoicesHint': 'يقول Hevalo وXezo كلمة قصيرة بالكرمانجية في اللحظات المهمة، ولا يعلو صوتهما أبدًا على صوت الدرس. يصمتان ما دام الرنين متوقفًا.',
   'reactions.says': '{name}: «{line}»',
   'settings.vibration.title': 'الاهتزاز',
   'settings.vibration.toggle': 'الاهتزاز عند الإجابات الصحيحة واللحظات المميزة',

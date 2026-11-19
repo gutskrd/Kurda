@@ -1189,7 +1189,7 @@ export const ckb: Catalogue = {
   'settings.sounds.autoplay': 'دەربڕینەکان بە شێوەی خۆکار لێبدە',
   'settings.sounds.autoplayHint': 'دوای هەر وەڵامێک، گوێ لە دەربڕینەکەی بگرە.',
   'settings.sounds.characterVoices': 'دەنگی کارەکتەرەکان',
-  'settings.sounds.characterVoicesHint': 'Hevalo و Xezal لە ساتە تایبەتەکاندا وشەیەکی کورتی کورمانجی دەڵێن، هەرگیز بەسەر دەنگی وانەکەدا نا. کاتێک زەنگەکە کوژاوەتەوە، بێدەنگن.',
+  'settings.sounds.characterVoicesHint': 'Hevalo و Xezo لە ساتە تایبەتەکاندا وشەیەکی کورتی کورمانجی دەڵێن، هەرگیز بەسەر دەنگی وانەکەدا نا. کاتێک زەنگەکە کوژاوەتەوە، بێدەنگن.',
   'reactions.says': '{name} دەڵێت: «{line}»',
   'settings.vibration.title': 'لەرزین',
   'settings.vibration.toggle': 'بۆ وەڵامی ڕاست و ساتە تایبەتەکان بلەرزە',

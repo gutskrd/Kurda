@@ -57,7 +57,7 @@ export function setAutoplay(on: boolean): void {
 const VOICES_KEY = 'hevalo_character_voices';
 
 /**
- * Settings → Sounds → Character voices: Hevalo and Xezal say a short recorded line at moments (characters/reactions.ts).
+ * Settings → Sounds → Character voices: Hevalo and Xezo say a short recorded line at moments (characters/reactions.ts).
  * On unless turned off on this device; with lesson sounds off they are quiet too.
  */
 export function characterVoicesOn(): boolean {

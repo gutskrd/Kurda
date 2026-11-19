@@ -1182,7 +1182,7 @@ export const fr: Catalogue = {
   'settings.sounds.autoplay': 'Lire les prononciations automatiquement',
   'settings.sounds.autoplayHint': 'Après chaque réponse, écoute comment elle se dit.',
   'settings.sounds.characterVoices': 'Voix des personnages',
-  'settings.sounds.characterVoicesHint': 'Hevalo et Xezal disent un petit mot en kurmancî aux moments qui comptent, jamais par-dessus l’audio de la leçon. Muets tant que le carillon est coupé.',
+  'settings.sounds.characterVoicesHint': 'Hevalo et Xezo disent un petit mot en kurmancî aux moments qui comptent, jamais par-dessus l’audio de la leçon. Muets tant que le carillon est coupé.',
   'reactions.says': '{name} dit « {line} »',
   'settings.vibration.title': 'Vibration',
   'settings.vibration.toggle': 'Vibrer pour les bonnes réponses et les moments à fêter',

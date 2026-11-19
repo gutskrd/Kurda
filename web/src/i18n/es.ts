@@ -1181,7 +1181,7 @@ export const es: Catalogue = {
   'settings.sounds.autoplay': 'Reproducir las pronunciaciones automáticamente',
   'settings.sounds.autoplayHint': 'Después de cada respuesta, escucha cómo se dice.',
   'settings.sounds.characterVoices': 'Voces de los personajes',
-  'settings.sounds.characterVoicesHint': 'Hevalo y Xezal dicen una palabra corta en kurmancî en los momentos especiales, nunca encima del audio de la lección. En silencio mientras el sonido suave esté desactivado.',
+  'settings.sounds.characterVoicesHint': 'Hevalo y Xezo dicen una palabra corta en kurmancî en los momentos especiales, nunca encima del audio de la lección. En silencio mientras el sonido suave esté desactivado.',
   'reactions.says': '{name} dice «{line}»',
   'settings.vibration.title': 'Vibración',
   'settings.vibration.toggle': 'Vibrar con las respuestas correctas y los momentos especiales',

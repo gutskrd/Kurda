@@ -103,7 +103,7 @@ export function LeagueCeremony({
     // Plays as the stage opens; the Reduce Motion answer can arrive a moment late, and then it replays that way.
   }, [plan, burstKind, slide, words, ring, burst]);
 
-  // Moving up, Xezal says a word for it once the words have landed (shared reactions.ts).
+  // Moving up, Xezo says a word for it once the words have landed (shared reactions.ts).
   useEffect(
     () => (burstKind ? sayReactionLater((plan.travel ? LAND_MS + 120 : 0) + plan.detailsMs, { moment: 'promoted' }) : undefined),
     [burstKind, plan],

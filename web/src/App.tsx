@@ -384,7 +384,7 @@ export function App(): React.JSX.Element {
         <GiftArrivals />
         {/* A badge earned, celebrated wherever you are, after a game's own result. */}
         <BadgeCelebrations />
-        {/* Hevalo's and Xezal's reaction lines, captioned wherever they are said. */}
+        {/* Hevalo's and Xezo's reaction lines, captioned wherever they are said. */}
         <ReactionVoices />
         {/* Outermost: while Hevalo is offline nothing below can load, a suspension's reasons included. */}
         <MaintenanceGate>

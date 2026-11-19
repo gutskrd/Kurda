@@ -1,5 +1,5 @@
 /**
- * Hevalo's and Xezal's recorded reactions (shared reactions.ts), played through the app's one player (lib/sound.ts) so a
+ * Hevalo's and Xezo's recorded reactions (shared reactions.ts), played through the app's one player (lib/sound.ts) so a
  * line never sounds over lesson audio and the character drawn can say it. A line plays only while Character voices and
  * lesson sounds are on, the page is in front, nothing else is sounding and its moment is not resting; in a lesson whose
  * listening was put off, none play until the lesson closes. With no recorded variant nothing is heard.

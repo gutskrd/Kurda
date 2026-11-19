@@ -1,11 +1,12 @@
 /**
- * Hevalo's and Xezal's reaction lines: short everyday Kurmancî said at moments anywhere in the app (a run of right
+ * Hevalo's and Xezo's reaction lines: short everyday Kurmancî said at moments anywhere in the app (a run of right
  * answers, a miss, a lesson finished, the day's Zêr, the streak, a league promotion, a first day or a return). Each is
  * recorded once on the "Record by person" page, filed in `lesson_audio` under `reactionKey`, and the apps play one
  * recorded variant when its moment comes, in the voice of the character shown (`verdictVoice`, `REACTION_VOICE`).
  * Every Kurmancî line, and every meaning, needs a native speaker's check before it is recorded.
  */
 import type { AppLocale } from './locales.js';
+import { CHARACTER_NAMES } from './characters/types.js';
 import { celebrationPlan } from './celebration.js';
 import { lessonAudioKey } from './lesson-audio.js';
 import { VERDICT_TIMING, runMilestone } from './lesson-player.js';
@@ -63,8 +64,8 @@ export const REACTION_MOMENT_CUE: Readonly<Record<ReactionMoment, { title: strin
   'welcome-back': { title: 'Welcome back', cue: 'The learner is back after some days away. Glad to see them, never reproachful.' },
 };
 
-/** What the learner knows each one as: the teacher is Xezal to everyone but her uncle. */
-export const REACTION_NAMES: Readonly<Record<ReactionCharacter, string>> = { hevalo: 'Hevalo', xezo: 'Xezal' };
+/** What the learner knows each one as, the names the rest of the app uses. */
+export const REACTION_NAMES: Readonly<Record<ReactionCharacter, string>> = { hevalo: CHARACTER_NAMES.hevalo, xezo: CHARACTER_NAMES.xezo };
 
 /** How each character says them, for the record page. */
 export const REACTION_TONE: Readonly<Record<ReactionCharacter, string>> = {
@@ -91,7 +92,7 @@ function line(character: ReactionCharacter, moment: ReactionMoment, n: number, k
   return { id: `${moment}-${n}`, character, moment, ku, meaning };
 }
 
-/** The whole catalogue, Hevalo's lines and then Xezal's, each moment's variants together. */
+/** The whole catalogue, Hevalo's lines and then Xezo's, each moment's variants together. */
 export const REACTION_LINES: readonly ReactionLine[] = [
   line('hevalo', 'run-3', 1, 'Aferîn!', { en: 'Well done!', ckb: 'ئافەرین!', nl: 'Goed zo!', de: 'Gut gemacht!', es: '¡Bien hecho!', fr: 'Bravo !', tr: 'Aferin!', ar: 'أحسنت!' }),
   line('hevalo', 'run-3', 2, 'Sê li pey hev!', { en: 'Three in a row!', ckb: 'سێ لە دوای یەک!', nl: 'Drie op een rij!', de: 'Drei hintereinander!', es: '¡Tres seguidas!', fr: 'Trois d’affilée !', tr: 'Üst üste üç!', ar: 'ثلاثة على التوالي!' }),

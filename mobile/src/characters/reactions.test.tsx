@@ -18,7 +18,7 @@ import { setCharacterVoices } from '../feedback/voicesPref';
 import { ReactionCaption } from './ReactionCaption';
 import { REACTION_VOLUME, hushReactions, resetReactions, sayReaction } from './reactions';
 
-/* Hevalo’s and Xezal’s recorded reactions on the phone: when one is heard, on what, and its caption. */
+/* Hevalo’s and Xezo’s recorded reactions on the phone: when one is heard, on what, and its caption. */
 
 const take = (character: 'hevalo' | 'xezo', id: string): ReactionTake => ({ character, id, src: `https://cdn.test/${character}-${id}.wav`, voice: { speaker: character } });
 const TAKES = [take('hevalo', 'miss-1'), take('xezo', 'promoted-1')];
@@ -98,7 +98,7 @@ describe('the caption', () => {
   it('shows the line with the speaker’s face when nobody is drawn, and what it means on a tap', async () => {
     renderWithProviders(<ReactionCaption />);
     act(() => void sayReaction({ moment: 'promoted' }));
-    const caption = await screen.findByRole('button', { name: 'Xezal says “Pîroz be!”' });
+    const caption = await screen.findByRole('button', { name: 'Xezo says “Pîroz be!”' });
     expect(screen.getByText('Pîroz be!')).toBeTruthy();
     expect(screen.queryByText('Congratulations!')).toBeNull();
     fireEvent.click(caption);

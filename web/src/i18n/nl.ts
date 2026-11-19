@@ -1183,7 +1183,7 @@ export const nl: Catalogue = {
   'settings.sounds.autoplay': 'Uitspraak automatisch afspelen',
   'settings.sounds.autoplayHint': 'Hoor na elk antwoord hoe het wordt uitgesproken.',
   'settings.sounds.characterVoices': 'Stemmen van de personages',
-  'settings.sounds.characterVoicesHint': 'Hevalo en Xezal zeggen op mooie momenten een kort woordje Kurmancî, nooit door het geluid van de les heen. Stil zolang het belletje uit staat.',
+  'settings.sounds.characterVoicesHint': 'Hevalo en Xezo zeggen op mooie momenten een kort woordje Kurmancî, nooit door het geluid van de les heen. Stil zolang het belletje uit staat.',
   'reactions.says': '{name} zegt ‘{line}’',
   'settings.vibration.title': 'Trillen',
   'settings.vibration.toggle': 'Trillen bij goede antwoorden en momenten om te vieren',

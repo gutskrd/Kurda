@@ -1185,7 +1185,7 @@ export const ku: Catalogue = {
   'settings.sounds.autoplay': 'Bilêvkirinan bixweber lê bide',
   'settings.sounds.autoplayHint': 'Piştî her bersivê, bibihîze ka çawa tê gotin.',
   'settings.sounds.characterVoices': 'Dengê karakteran',
-  'settings.sounds.characterVoicesHint': 'Hevalo û Xezal di demên taybet de gotineke kurt a kurmancî dibêjin, qet ne li ser dengê waneyê. Dema zeng girtî be, bêdeng in.',
+  'settings.sounds.characterVoicesHint': 'Hevalo û Xezo di demên taybet de gotineke kurt a kurmancî dibêjin, qet ne li ser dengê waneyê. Dema zeng girtî be, bêdeng in.',
   'reactions.says': '{name} dibêje: “{line}”',
   'settings.vibration.title': 'Lerzîn',
   'settings.vibration.toggle': 'Ji bo bersivên rast û demên taybet bilerize',

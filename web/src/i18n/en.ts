@@ -1245,7 +1245,7 @@ export const en = {
   'settings.sounds.autoplay': 'Play pronunciations automatically',
   'settings.sounds.autoplayHint': 'After each answer, hear it said.',
   'settings.sounds.characterVoices': 'Character voices',
-  'settings.sounds.characterVoicesHint': 'Hevalo and Xezal say a short word in Kurmancî at moments worth marking, never over a lesson’s own audio. Silent while the chime is off.',
+  'settings.sounds.characterVoicesHint': 'Hevalo and Xezo say a short word in Kurmancî at moments worth marking, never over a lesson’s own audio. Silent while the chime is off.',
   'reactions.says': '{name} says “{line}”',
   'settings.vibration.title': 'Vibration',
   'settings.vibration.toggle': 'Buzz for right answers and moments worth marking',

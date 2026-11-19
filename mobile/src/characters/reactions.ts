@@ -1,5 +1,5 @@
 /**
- * Hevalo's and Xezal's recorded reactions (shared reactions.ts), played on a player of their own a little under lesson
+ * Hevalo's and Xezo's recorded reactions (shared reactions.ts), played on a player of their own a little under lesson
  * audio, with its clock handed to the character drawn so it says the line. A line plays only while Character voices
  * and Sounds are on, the app is in front, no lesson recording is sounding, no other line is, and its moment is not
  * resting; in a lesson whose listening was put off, none play until the lesson closes. With no recorded variant

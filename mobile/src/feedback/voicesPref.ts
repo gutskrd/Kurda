@@ -1,7 +1,7 @@
 import { deviceSwitch } from './devicePref';
 
 /**
- * Settings → Sounds → Character voices: whether Hevalo and Xezal say a short recorded line at moments worth marking
+ * Settings → Sounds → Character voices: whether Hevalo and Xezo say a short recorded line at moments worth marking
  * (characters/reactions.ts). On by default and kept per device, like Sounds (soundPref.ts), which silences them too.
  */
 const voices = deviceSwitch('hevalo_character_voices');
