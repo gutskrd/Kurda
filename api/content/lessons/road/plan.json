@@ -2142,7 +2142,7 @@
               "new": [
                 {"ku": "diz", "en": "thief", "pos": "noun", "gender": "mf", "forms": ["diz", "dizên", "dizan", "dizek", "dizê", "dizekî", "dizî", "diza", "dizeke"]},
                 {"ku": "parastin", "en": "to guard, to protect", "pos": "verb", "forms": ["parastin", "diparêzim", "diparêzî", "diparêze", "diparêzin", "biparêzim", "biparêze"]},
-                {"ku": "şûşe", "en": "bottle, jar; glass", "pos": "noun", "gender": "f", "forms": ["şûşe", "şûşeyên", "şûşeyan", "şûşeyek", "şûşeya", "şûşeyê", "şûşeyeke"]},
+                {"ku": "kûp", "en": "jar, pot", "pos": "noun", "gender": "f", "forms": ["kûp", "kûpên", "kûpan", "kûpek", "kûpa", "kûpê", "kûpeke"]},
                 {"ku": "bêguneh", "en": "innocent", "pos": "adj", "forms": ["bêguneh"]}
               ]
             },
@@ -3501,7 +3501,7 @@
     {"ku": "Hingê gur li dora min dimeşe.", "reason": "Hamo’s wolf story is in the past but this line is in the present, because the past of meşîn and gerîn comes later in chapter 9 — confirm that the storyteller’s present reads naturally here"},
     {"ku": "li cem", "reason": "budget: chapter 3 brings in 58 items (56 before), its talk lesson u03s3l3 six: “li cem” moves up from chapter 6 and “din” comes in for the owner’s “li cem Lorînê” and “Nîvê din li ku ye?” where the photo is found"},
     {"ku": "ma", "reason": "budget: chapter 7 brings in 73 items (72 before): “ma” moves up from chapter 9 for the owner’s “Çardeh roj ma ji Newrozê re.”"},
-    {"ku": "piyan", "reason": "budget: chapter 8 brings in 73 items (72 before): the owner wants “piyan” for the tea glass, and “şûşe” stays for the honey jars"},
+    {"ku": "piyan", "reason": "budget: chapter 8 brings in 73 items (72 before): the owner wants “piyan” for the tea glass and “kûp” for the honey jars"},
     {"ku": "erk", "reason": "budget: chapter 11 brings in 77 items (76 before): the owner wants “erk” for the class’s task; taken as feminine (erka malê), confirm"}
   ]
 }

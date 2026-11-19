@@ -2672,7 +2672,7 @@
       "level": 4,
       "title": {
         "en": "The empty honey jar",
-        "ku": "Şûşeya hingiv a vala",
+        "ku": "Kûpa hingiv a vala",
         "ckb": "شووشە هەنگوینە بەتاڵەکە",
         "de": "Das leere Honigglas",
         "es": "El tarro de miel vacío",
@@ -2683,7 +2683,7 @@
       },
       "intro": {
         "en": "Doctor Azad has given Hamo some advice, and the neighbours keep bringing him jars of honey. In the morning one jar is empty. Read the evidence, answer each question, then say who ate the honey.",
-        "ku": "Doktor Azad şîret da Hamo, û cîran her tim şûşeyên hingiv jê re tînin. Sibehê şûşeyek vala ye. Li delîlan binêre, bersiva her pirsê bide, paşê bibêje kê hingiv xwar.",
+        "ku": "Doktor Azad şîret da Hamo, û cîran her tim kûpên hingiv jê re tînin. Sibehê kûpek vala ye. Li delîlan binêre, bersiva her pirsê bide, paşê bibêje kê hingiv xwar.",
         "ckb": "دکتۆر ئازاد ئامۆژگاری حەمۆی کرد، و دراوسێکان بەردەوام شووشەی هەنگوینی بۆ دەهێنن. بەیانی شووشەیەک بەتاڵە. بەڵگەکان بخوێنەوە، وەڵامی هەر پرسیارێک بدەرەوە، پاشان بڵێ کێ هەنگوینەکەی خوارد.",
         "de": "Doktor Azad hat Hamo einen Rat gegeben, und die Nachbarn bringen ihm ständig Honiggläser. Am Morgen ist ein Glas leer. Lies die Beweise, beantworte jede Frage und sag dann, wer den Honig gegessen hat.",
         "es": "El doctor Azad le ha dado un consejo a Hamo, y los vecinos no paran de traerle tarros de miel. Por la mañana un tarro está vacío. Lee las pruebas, responde cada pregunta y di quién se comió la miel.",
@@ -2968,7 +2968,7 @@
           "options": [
             {
               "en": "A jar",
-              "ku": "Şûşeyek",
+              "ku": "Kûpek",
               "ckb": "شووشەیەک",
               "de": "Ein Glas",
               "es": "Un tarro",
@@ -3222,7 +3222,7 @@
       ],
       "solution": {
         "en": "The doctor forbade honey at night, and in the morning a jar was empty. Hevalo only eats apples, and Baran is honest. There was honey on Hamo’s moustache, though he says it is medicine, and he nearly says he takes honey with his medicine. Hamo ate the honey.",
-        "ku": "Doktor hingiv bi şev qedexe kir, û sibehê şûşeyek vala bû. Hevalo tenê sêvan dixwe, û Baran rastgo ye. Li ser simbêlê Hamo hingiv hebû, her çiqas ew dibêje ku derman e, û ew hema hema dibêje ku bi dermanê xwe re hingiv dixwe. Hamo hingiv xwar.",
+        "ku": "Doktor hingiv bi şev qedexe kir, û sibehê kûpek vala bû. Hevalo tenê sêvan dixwe, û Baran rastgo ye. Li ser simbêlê Hamo hingiv hebû, her çiqas ew dibêje ku derman e, û ew hema hema dibêje ku bi dermanê xwe re hingiv dixwe. Hamo hingiv xwar.",
         "ckb": "دکتۆر هەنگوینی بە شەو قەدەغە کرد، و بەیانی شووشەیەک بەتاڵ بوو. هەڤاڵۆ تەنیا سێو دەخوات، و باران ڕاستگۆیە. هەنگوین لەسەر سمێڵی حەمۆ بوو، هەرچەندە دەڵێت دەرمانە، و خەریکە دەڵێت لەگەڵ دەرمانەکەیدا هەنگوین دەخوات. حەمۆ هەنگوینەکەی خوارد.",
         "de": "Der Arzt hat Honig in der Nacht verboten, und am Morgen war ein Glas leer. Hevalo isst nur Äpfel, und Baran ist ehrlich. An Hamos Schnurrbart klebte Honig, obwohl er sagt, es sei Medizin, und beinahe sagt er, dass er Honig zu seiner Medizin nimmt. Hamo hat den Honig gegessen.",
         "es": "El médico prohibió la miel por la noche, y por la mañana un tarro estaba vacío. Hevalo solo come manzanas, y Baran es sincero. Hamo tenía miel en el bigote, aunque dice que es medicina, y casi dice que toma miel con su medicina. Hamo se comió la miel.",
