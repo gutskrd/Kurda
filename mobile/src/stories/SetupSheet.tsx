@@ -31,8 +31,6 @@ import { useStoryPrefs } from './prefs';
 import { availableLengths, changeSetup, createInput, initialSetup, questionCountsFor, type SetupState } from './setup';
 import { storyTextProps, storyTextStyle } from './storyText';
 import { ChoiceChips, Note, SectionLabel, Sheet } from './ui';
-import { RatedChoice } from '../ranks/Rated';
-import { useRatedChoice } from '../ranks/ratedPrefs';
 import { pressedDim } from '../theme/motion';
 
 /** What a refusal to create a game means, in the player's language. */
@@ -256,16 +254,11 @@ export function SetupSheet({
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // With others: Rated or Friendly, as the host left it (solo has nobody to rank against).
-  const [rated, setRated] = useRatedChoice('stories');
 
   const create = async (): Promise<void> => {
     setBusy(true);
     setError(null);
-    const res = await createGame(client, {
-      ...createInput(state, { skipReading: state.mode === 'solo' && skipReading, extraTime: prefs.extraTime }),
-      ...(state.mode === 'solo' ? {} : { rated }),
-    });
+    const res = await createGame(client, createInput(state, { skipReading: state.mode === 'solo' && skipReading, extraTime: prefs.extraTime }));
     setBusy(false);
     if (!res.ok) {
       setError(createErrorMessage(res.error, t));
@@ -315,12 +308,6 @@ export function SetupSheet({
           labelOf={(m) => t(MODE_KEY[m])}
         />
       </View>
-      {state.mode !== 'solo' ? (
-        <View style={styles.field}>
-          <SectionLabel>{t('ranks.gameType')}</SectionLabel>
-          <RatedChoice value={rated} onChange={setRated} />
-        </View>
-      ) : null}
       <StoryPresetFields state={state} onChange={setState} stories={stories} fixedStory={story} canHostOpen={canHostOpen} />
     </Sheet>
   );

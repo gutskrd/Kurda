@@ -22,7 +22,6 @@ export const REACH_CONTROLS = [
   '.chip',
   '.seg-btn',
   '.switch-btn',
-  '.rankings-tab',
   '.note-filter',
   '.story-chip',
   '.ffilter-period',
@@ -50,8 +49,6 @@ export const REACH_CONTROLS = [
   '.lp-callout',
   '.request-name.is-link',
   '.byline-who',
-  '.ranks-untouched-game',
-  '.rank-card-more',
   '.ab-sound',
   '.settings-search-clear',
   '.nav-search-clear',
@@ -114,10 +111,18 @@ export const LARGE_ENOUGH = [
   '.tile',
   // Who Am I's answers, 84px tall in a row of three (whoami/whoami.css).
   '.wa-answer-btn',
+  // Rankings' league card, a whole card wide and over 80px tall (styles/ranks.css).
+  '.league-card-mini',
   // Learn's practice tools, cards at least 64px tall in a row of two or three (styles/shell.css).
   '.learn-tool-link',
   // The event card on Learn, 64px tall across the column (events/events.css).
   '.event-card',
+  // The daily view's card on Home, its rows, its way back from the insights, and the profile figures that open a page
+  // or the daily view (daily/daily.css, styles/pages.css): each at least 48px tall and wider still.
+  '.daily-home',
+  '.daily-row',
+  '.daily-back',
+  '.mkp-fact--link',
 ] as const;
 
 /** Sideways-scrolling rows of controls, padded above and below for their reach. */
@@ -126,7 +131,6 @@ export const SCROLLERS = [
   '.mkp-tabs',
   '.story-shelf-row',
   '.league-ladder',
-  '.gp .ranks-grid',
   '.imp-cat-strip',
   '.pic-radio.is-strip .pic-radio-options',
   '.ll-cards',

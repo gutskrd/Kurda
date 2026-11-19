@@ -1,4 +1,3 @@
-import type { RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import { joined } from '../play/joining';
@@ -50,8 +49,6 @@ export interface BattleState {
   opponents: OpponentView[];
   /** Revealed only once the whole match is finished. */
   target: string | null;
-  /** Rated or Friendly (Game Ranks): the host's choice, and once started whether it counts. */
-  rated?: RatedState;
 }
 
 /** The post-match scoreboard: everyone's placement, the word, and XP awarded. */
@@ -82,9 +79,8 @@ export interface BattleResults {
  * layered on later without changes. An opponent's row carries only a guess count and how many letters are green,
  * never their guesses, which would give away the shared answer.
  */
-/** `rated`: the host's Rated/Friendly choice, which the server remembers for their next battle. */
-export const createBattle = (client: ApiClient, difficulty: Difficulty, rated?: boolean): Promise<ApiResult<BattleState>> =>
-  client.post('/wordle/battles', rated === undefined ? { difficulty } : { difficulty, rated });
+export const createBattle = (client: ApiClient, difficulty: Difficulty): Promise<ApiResult<BattleState>> =>
+  client.post('/wordle/battles', { difficulty });
 
 export const joinBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
   client.post(`/wordle/battles/${encodeURIComponent(id)}/join`);

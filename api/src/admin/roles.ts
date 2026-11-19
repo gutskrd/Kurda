@@ -14,10 +14,10 @@ export type AdminRole = (typeof ADMIN_ROLES)[number];
 export const LEGACY_ADMIN_ROLE = 'admin';
 
 /**
- * Who may use the Game Ranks, Seasons, Leagues and Badges tools under /admin (contract 4 §U): the legacy role and
- * `superadmin`. Guarded by a role list rather than a capability; the admin app's nav reads the same list (RANK_TOOLS).
+ * Who may use the Leagues and Badges tools under /admin: the legacy role and `superadmin`. Guarded by a role list
+ * rather than a capability; the admin app's nav reads the same list (PROGRESS_TOOLS).
  */
-export const RANK_TOOL_ROLES = [LEGACY_ADMIN_ROLE, 'superadmin'] as const;
+export const PROGRESS_TOOL_ROLES = [LEGACY_ADMIN_ROLE, 'superadmin'] as const;
 
 /**
  * Someone who only records for the course: the "Record by person" page and its uploads, for the voices a superadmin

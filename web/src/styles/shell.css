@@ -1201,7 +1201,6 @@
  * own rules.
  */
 .switch-btn.is-active,
-.rankings-tab.is-active,
 .rank-by-btn.is-active,
 .seg-btn.is-active,
 .mkp-tab.is-active,
@@ -2214,7 +2213,6 @@
  */
 .fcard-act,
 .seg-btn,
-.rankings-tab,
 .mkp-tab,
 .post-plus {
   transition: transform var(--dur) var(--ease-spring);
@@ -2222,7 +2220,6 @@
 .fcard-act:active:not(:disabled),
 .switch-btn:active,
 .seg-btn:active:not(:disabled),
-.rankings-tab:active:not(:disabled),
 .mkp-tab:active:not(:disabled),
 .post-plus:active:not(:disabled) {
   transform: scale(var(--press-scale));
@@ -2245,7 +2242,6 @@
   .fcard-act:active:not(:disabled),
   .switch-btn:active,
   .seg-btn:active:not(:disabled),
-  .rankings-tab:active:not(:disabled),
   .mkp-tab:active:not(:disabled),
   .post-plus:active:not(:disabled) {
     transform: none;
@@ -2253,15 +2249,11 @@
   .fcard-act:active:not(:disabled),
   .switch-btn:active:not(.is-active),
   .seg-btn:active:not(:disabled, .is-active),
-  .rankings-tab:active:not(:disabled, .is-active),
   .mkp-tab:active:not(:disabled, .is-active) {
     background: var(--surface-3);
   }
   .post-plus:active:not(:disabled) {
     background: var(--primary-hover);
-  }
-  .post-plus.is-secondary:active:not(:disabled) {
-    background: var(--surface-3);
   }
 }
 

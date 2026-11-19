@@ -1,8 +1,8 @@
 import type pg from 'pg';
 
 /**
- * Accounts for Game Ranks suites, written straight to the tables: by default one a rated game accepts (confirmed
- * email, birth month, adult, ten days old with three finished activities), with each condition removable to test it.
+ * Accounts written straight to the tables: by default a verified adult with a birth month, ten days old with three
+ * finished activities, with each condition removable to test it.
  */
 export interface RankedUserOptions {
   verified?: boolean;

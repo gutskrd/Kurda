@@ -49,7 +49,6 @@ const lobbySchema = z
     difficulty: z.enum(GAME_DIFFICULTIES).default('beginner'),
     maxPlayers: z.number().int().min(WHO_AM_I_TABLE_MIN_PLAYERS).max(WHO_AM_I_TABLE_MAX_PLAYERS).default(WHO_AM_I_TABLE_MAX_PLAYERS),
     access: z.enum(['friends', 'open']).default('friends'),
-    rated: z.boolean().optional(),
     answers: z.union([z.literal(2), z.literal(4)]).default(2),
   })
   .transform(
@@ -58,7 +57,6 @@ const lobbySchema = z
       dialect: s.dialect,
       maxPlayers: s.maxPlayers,
       access: s.access,
-      rated: s.rated,
     }),
   );
 

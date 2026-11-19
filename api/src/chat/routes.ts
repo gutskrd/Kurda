@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import type { ChatUnread } from '@kurda/shared';
 import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
@@ -7,6 +8,7 @@ import type { ChatService } from './service.js';
 import { MAX_MESSAGE_LEN } from './service.js';
 import type { TrustService } from '../trust/service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
+import type { GroupChatService } from '../groups/chat-service.js';
 
 const userParam = z.object({ userId: z.uuid() });
 
@@ -113,4 +115,15 @@ export function registerChatRoutes(
       return { ok: true };
     },
   );
+}
+
+/**
+ * `GET /chat/unread`: what the badges show, direct and group, without the conversation list. Only conversations with
+ * something unread are listed, a group's count stopping at GROUP_UNREAD_CAP (shared/src/chat-unread.ts).
+ */
+export function registerChatUnreadRoute(app: FastifyInstance, chat: ChatService, groupChat: GroupChatService): void {
+  app.get('/chat/unread', { preHandler: requireAccount }, async (req): Promise<ChatUnread> => {
+    const [direct, groups] = await Promise.all([chat.unread(req.user!.id), groupChat.unread(req.user!.id)]);
+    return { direct, groups: groups.filter((g) => g.unread > 0) };
+  });
 }

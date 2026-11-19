@@ -77,23 +77,17 @@ describe('InviteSheet', () => {
     await userEvent.click(within(sheet).getByRole('button', { name: 'Create and invite (1)' }));
 
     await waitFor(() =>
-      expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard', rated: false }, invite: ['u2'] }),
+      expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard' }, invite: ['u2'] }),
     );
     await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=new-1'));
   });
 
-  it('makes a Rated game when the host chooses Rated, and remembers it for next time', async () => {
-    const { calls } = api();
+  it('offers no Rated or Friendly choice: every game is friendly', async () => {
+    api();
     open({ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } });
     const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
-    // Friendly first, among friends.
-    expect(within(sheet).getByRole('radio', { name: /Friendly/ })).toBeChecked();
-    await userEvent.click(within(sheet).getByRole('radio', { name: /Rated/ }));
-    await userEvent.click(within(sheet).getByRole('button', { name: 'Create and invite (1)' }));
-
-    await waitFor(() => expect(posted(calls, '/play/lobbies')).toMatchObject({ settings: { rated: true } }));
-    expect(localStorage.getItem('hevalo.rated.wordle-battle')).toBe('1');
-    expect(calls.some((c) => c.method === 'PUT' && c.path === '/ranks/preferences/wordle-battle')).toBe(true);
+    expect(within(sheet).queryByRole('radio', { name: /Rated/ })).toBeNull();
+    expect(within(sheet).queryByRole('radio', { name: /Friendly/ })).toBeNull();
   });
 
   it('offers each game’s own presets, and Stories once a story is published', async () => {
@@ -185,7 +179,7 @@ describe('InviteSheet', () => {
     await waitFor(() => expect(calls.some((c) => c.path === '/rhyme/availability')).toBe(true));
     expect(screen.queryByRole('radiogroup', { name: 'Dialect' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
-    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'rhyme-match', settings: { dialect: 'kurmanci', rated: false } }));
+    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'rhyme-match', settings: { dialect: 'kurmanci' } }));
   });
 
   it('offers both varieties for a Rhyme Match once both have prompts, the learner’s own chosen first', async () => {
@@ -196,7 +190,7 @@ describe('InviteSheet', () => {
     open({ kind: 'new', game: 'rhyme-match' }, true);
     expect(await screen.findByRole('radio', { name: 'Soranî' })).toBeChecked();
     await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
-    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'rhyme-match', settings: { dialect: 'sorani', rated: false } }));
+    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'rhyme-match', settings: { dialect: 'sorani' } }));
   });
 
   it('points somewhere useful when there is nobody to ask yet', async () => {
@@ -215,7 +209,7 @@ describe('InviteSheet', () => {
     expect(await screen.findByRole('dialog', { name: 'Play in Hevalên Kurmancî' })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Who to invite' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Post to the group' }));
-    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'medium', rated: false }, chat: { groupId: 'g1' } }));
+    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'medium' }, chat: { groupId: 'g1' } }));
   });
 
   it('asks friends into an open lobby, leaving out the ones already in or asked', async () => {

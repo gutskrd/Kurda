@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { WhoAmIDeal, WhoAmIFactValue } from '@kurda/shared';
-import { jsonResponse } from '../test/utils';
+import { jsonResponse, withBothDialects } from '../test/utils';
 import { renderPlay, where } from '../play/testing';
 import { forgetMpAvailability } from '../games/mpAvailability';
 import { BackButton } from '../layouts/BackButton';
@@ -66,6 +66,7 @@ function serve(routes: Record<string, unknown> = {}, deals: WhoAmIDeal[] = DEALS
     'POST /games/who-am-i/report': { counted: true },
     ...routes,
   };
+  const answers = withBothDialects(all);
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
     'fetch',
@@ -73,12 +74,12 @@ function serve(routes: Record<string, unknown> = {}, deals: WhoAmIDeal[] = DEALS
       const method = init?.method ?? 'GET';
       const body: unknown = init?.body ? JSON.parse(init.body as string) : null;
       calls.push({ url, method, body });
-      const key = Object.keys(all).find((k) => {
+      const key = Object.keys(answers).find((k) => {
         const [m, path] = k.includes(' ') ? k.split(' ') : ['GET', k];
         return m === method && url.includes(path!);
       });
       if (key) {
-        const route = all[key];
+        const route = answers[key];
         const answer: unknown = typeof route === 'function' ? (route as (b: unknown) => unknown)(body) : route;
         if (answer && typeof answer === 'object' && 'status' in answer && 'body' in answer) return jsonResponse((answer as { status: number }).status, (answer as { body: unknown }).body);
         return jsonResponse(200, answer);
@@ -208,6 +209,8 @@ describe('Ez kî me? on one phone, the setup', () => {
     expect(deals(calls)[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'intermediate', players: 3, answers: 4 });
     expect(JSON.stringify(calls)).not.toContain('Azad');
     expect(JSON.stringify(calls)).not.toContain('Berfîn');
+    // where it is offered was asked once, for both varieties
+    expect(calls.filter((c) => c.method === 'GET' && c.url.endsWith('/games/who-am-i/couch'))).toHaveLength(1);
   });
 
   it('says so when the room cannot be dealt, and keeps what was typed', async () => {

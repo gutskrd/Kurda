@@ -1,10 +1,13 @@
 /** Playing with friends across every online game: names, lobby paths, joining and invite summaries (shared `play` shapes). */
 import {
+  batchedCardReads,
   invitePath,
   isMissingRoute,
   storyTextDirection,
   isStoryDialect,
+  type ChatGameRef,
   type InviteSummary,
+  type LobbyCard,
   type PlayGame,
   type StoryLength,
 } from '@kurda/shared';
@@ -41,6 +44,15 @@ const JOIN: Record<PlayGame, (lobbyId: string) => { path: string; body?: unknown
   impostor: (id) => ({ path: `/mp/impostor/${encodeURIComponent(id)}/join` }),
   'who-am-i': (id) => ({ path: `/mp/who-am-i/${encodeURIComponent(id)}/join` }),
 };
+
+const cardReads = new WeakMap<ApiClient, (ref: ChatGameRef) => Promise<ApiResult<LobbyCard>>>();
+
+/** A chat card's live state, read together with the other cards asked for in the same moment (GET /play/cards). */
+export function readCard(client: ApiClient, ref: ChatGameRef): Promise<ApiResult<LobbyCard>> {
+  let read = cardReads.get(client);
+  if (!read) cardReads.set(client, (read = batchedCardReads<ApiError>(client)));
+  return read(ref);
+}
 
 /** Joins a lobby through its game's own route; already being in it is not a failure. */
 export async function joinLobby(client: ApiClient, game: PlayGame, lobbyId: string): Promise<ApiResult<null>> {

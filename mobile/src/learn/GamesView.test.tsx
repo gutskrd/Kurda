@@ -26,7 +26,6 @@ import { GamesView, featuredCard } from './GamesView';
 patchReactNativeWeb({ reduceMotion: true });
 
 const base = {
-  'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
   'GET /play/invites': ok({ incoming: [], outgoing: [] }),
 };
 
@@ -96,14 +95,14 @@ describe('an invite on the Games screen', () => {
 
 describe('the games list', () => {
   /* Games reloads on pull to refresh, as Lessons and Stories do, so a fresh invite does not wait for a tab change. */
-  it('reads the rank and the invites again when pulled down, and shows an invite that has come since', async () => {
+  it('reads the invites again when pulled down, and shows an invite that has come since', async () => {
     let incoming: unknown[] = [];
     const client = fakeClient({ ...base, 'GET /play/invites': () => ok({ incoming, outgoing: [] }) } as never);
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
     const count = (path: string) => client.calls.filter((call) => call.path === path).length;
-    const before = [count('/ranks/me'), count('/play/invites')];
+    const before = count('/play/invites');
     expect(screen.queryByRole('button', { name: /azad/ })).toBeNull();
     incoming = [
       {
@@ -120,7 +119,8 @@ describe('the games list', () => {
     ];
     fireEvent.click(screen.getByTestId('pull-to-refresh'));
     expect(await screen.findByRole('button', { name: /azad/ })).toBeTruthy();
-    expect([count('/ranks/me'), count('/play/invites')]).toEqual([before[0]! + 1, before[1]! + 1]);
+    expect(count('/play/invites')).toBe(before + 1);
+    expect(count('/ranks/me')).toBe(0);
   });
 
   it('adds a learning game as a card like the others once it can be played, one tap to open', async () => {

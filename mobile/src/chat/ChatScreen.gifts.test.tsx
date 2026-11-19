@@ -12,7 +12,7 @@ vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, g
 // The thread's live events are not under test here.
 vi.mock('./useChatSocket', () => ({ useChatSocket: () => undefined }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import type { GiftCard } from '@kurda/shared';
+import { playCardsPath, type GiftCard } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -49,15 +49,10 @@ const msg = (over: Partial<ChatMessage>): ChatMessage => ({
   ...over,
 });
 
+// the chat's cards are read together (GET /play/cards)
+const WORDLE_CARD = `GET ${playCardsPath([{ game: 'wordle-battle', lobbyId: 'abc12345' }])}`;
 const wordleCard = ok({
-  game: 'wordle-battle',
-  lobbyId: 'abc12345',
-  status: 'open',
-  players: 1,
-  maxPlayers: 4,
-  summary: {},
-  canJoin: true,
-  isMember: false,
+  cards: [{ game: 'wordle-battle', lobbyId: 'abc12345', status: 'open', players: 1, maxPlayers: 4, summary: {}, canJoin: true, isMember: false }],
 });
 
 describe('ChatScreen', () => {
@@ -71,7 +66,7 @@ describe('ChatScreen', () => {
         ],
       }),
       // An old invite link is drawn as the game's live card (play/ChatGameCard).
-      'GET /play/cards/wordle-battle/abc12345': wordleCard,
+      [WORDLE_CARD]: wordleCard,
     });
     renderWithProviders(<ChatScreen userId="u2" username="" onExit={() => undefined} />);
     expect(await screen.findByText('silav')).toBeTruthy();
@@ -128,7 +123,7 @@ describe('ChatScreen reports', () => {
         ],
       }),
       'POST /chat/u2/read': ok({ ok: true }),
-      'GET /play/cards/wordle-battle/abc12345': wordleCard,
+      [WORDLE_CARD]: wordleCard,
     });
   /*
    * Open the thread inside act(), so it has loaded and drawn before a finger goes down: bubbles register for

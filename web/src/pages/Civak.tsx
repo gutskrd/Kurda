@@ -11,7 +11,7 @@ import { FeedCard } from '../feed/FeedCard';
 import { DEFAULT_FILTER, FeedFilter, isDefaultFilter, type FeedFilterValue } from '../feed/FeedFilter';
 import { PostButton } from '../feed/PostButton';
 import { asSection, kindWithin } from '../feed/postKinds';
-import { DailyReward } from '../components/DailyReward';
+import { DailyCard } from '../daily/DailyCard';
 import { HomeLeagueLine } from '../leagues/HomeLeagueLine';
 import { useT } from '../i18n/I18nProvider';
 import { useArrival } from '../lib/motion';
@@ -94,8 +94,6 @@ export function Civak(): React.JSX.Element {
   // Only a wall that arrives rises in, once per tab; one from memory is simply there.
   const arriving = useArrival(!!items && items.length > 0, 'civak');
   const [error, setError] = useState<string | null>(null);
-  // While today's reward waits, Claim is the page's one filled button and the + steps back.
-  const [claimWaiting, setClaimWaiting] = useState(false);
   const more = wall?.more ?? false;
   const [loadingMore, setLoadingMore] = useState(false);
   const fetchingMore = useRef(false);
@@ -190,8 +188,8 @@ export function Civak(): React.JSX.Element {
         <p className="page-sub">{t('civak.subtitle')}</p>
       </div>
 
-      {/* Today's reward; nothing for a visitor or once claimed. */}
-      <DailyReward onClaimWaiting={setClaimWaiting} />
+      {/* The streak and today's Zêr, opening the daily view; nothing for a visitor. */}
+      <DailyCard />
 
       {/* The week's league in one line with the goal ring, linking to it. */}
       <HomeLeagueLine />
@@ -199,7 +197,7 @@ export function Civak(): React.JSX.Element {
       {/* How the wall is sorted and narrowed, then the funnel and the +, which belongs with the wall it adds to. */}
       <div className="feed-filters" ref={row}>
         <FeedFilter value={value} onChange={choose} />
-        <PostButton onPosted={() => void load(0)} secondary={claimWaiting} />
+        <PostButton onPosted={() => void load(0)} />
       </div>
 
       {error && <ErrorState message={error} onRetry={() => void load(0)} />}

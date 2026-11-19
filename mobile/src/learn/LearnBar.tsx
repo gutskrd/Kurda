@@ -5,6 +5,8 @@ import { Pressable } from '../theme/Pressable';
 import { fireLevel } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useIntents } from '../api/optimistic';
+import { DailySheet } from '../daily/DailySheet';
+import { useToday } from '../daily/today';
 import { GoalPicker } from '../goals/GoalPicker';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
 import { formatNumber } from '../i18n/format';
@@ -14,7 +16,6 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { useTabFocusLoad } from '../navigation/tabFocusLoad';
 import { useDirection } from '../reports/direction';
 import { streakLabelKey, type Streak } from '../streak/format';
-import { StreakSheet } from '../streak/StreakSheet';
 import { BottomSheet } from '../theme/BottomSheet';
 import { Fire } from '../theme/Fire';
 import { Icon } from '../theme/Icon';
@@ -28,7 +29,7 @@ const RING = 24;
 
 /**
  * Today's status in Learn's top corner: the streak, the daily goal as a filling ring with its XP beside it, as on the
- * website, and the Zêr balance, each opening more (the streak sheet, the goal picker, the shop). The numbers are plain: nothing counts down or warns
+ * website, and the Zêr balance, each opening more (the daily view, the goal picker, the shop). The numbers are plain: nothing counts down or warns
  * of loss, and a zero streak shows a cold fire saying a lesson today starts one. Some readers are children.
  *
  * The streak it reads is passed on (`onStreak`) for Learn's own moments; a new `reloadKey` reloads all three
@@ -45,6 +46,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
   const [zer, setZer] = useState<number | null>(null);
   const [settled, setSettled] = useState(false);
   const [open, setOpen] = useState<'streak' | 'goal' | null>(null);
+  const today = useToday(open === 'streak');
 
   // Fresh each time Learn comes back from a lesson or any other page, since a lesson moves all three; a quick tab
   // switch keeps them (navigation/tabFocusLoad). The streak is only on GET /me.
@@ -150,11 +152,12 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
         </Pressable>
       ) : null}
 
-      <StreakSheet
-        streak={open === 'streak' ? streak : null}
+      <DailySheet
+        visible={open === 'streak'}
         onClose={() => setOpen(null)}
-        // A streak restored in the sheet is the streak everywhere: the bar's fire and Learn's own moments.
-        onRestored={(next) => {
+        today={today}
+        // A streak restored in the daily view is the streak everywhere: the bar's fire and Learn's own moments.
+        onStreak={(next) => {
           setStreak(next);
           onStreak?.(next);
         }}

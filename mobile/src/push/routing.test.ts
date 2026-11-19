@@ -38,10 +38,10 @@ describe('pushTarget: each push the API sends opens somewhere sensible', () => {
     expect(await landing({ kind: 'badge', day: '2026-10-21', category: 'progress' })).toEqual([['Badges', undefined]]);
   });
 
-  it('moving up a league, and a Pêla week, open the league', async () => {
-    expect(await landing({ kind: 'league_promotion', weekKey: '2026-10-19', tier: 'cem', category: 'progress' })).toEqual([['League', undefined]]);
-    expect(await landing({ kind: 'league_trophy', weekKey: '2026-10-19', tier: 'okyanus', category: 'progress' })).toEqual([['League', undefined]]);
-    expect(await landing({ kind: 'league_safe', weekKey: '2026-10-19', tier: 'cem', category: 'progress' })).toEqual([['League', undefined]]);
+  it('moving up a league, and a Pêla week, open the league on Rankings', async () => {
+    expect(await landing({ kind: 'league_promotion', weekKey: '2026-10-19', tier: 'cem', category: 'progress' })).toEqual([['Rankings', { board: 'xp', span: 'week' }]]);
+    expect(await landing({ kind: 'league_trophy', weekKey: '2026-10-19', tier: 'okyanus', category: 'progress' })).toEqual([['Rankings', { board: 'xp', span: 'week' }]]);
+    expect(await landing({ kind: 'league_safe', weekKey: '2026-10-19', tier: 'cem', category: 'progress' })).toEqual([['Rankings', { board: 'xp', span: 'week' }]]);
   });
 
   it('an invite to play is accepted on the way into its lobby', async () => {

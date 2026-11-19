@@ -365,9 +365,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       const xp = await pool.query(`SELECT count(*)::int AS n FROM xp_ledger WHERE ref_id LIKE $1`, [`mp:${id}:%`]);
       expect(xp.rows[0].n).toBe(0);
       expect(done.results!.every((r) => !r.xpAwarded)).toBe(true);
-      const rated = await pool.query<{ applied_at: Date | null; outcome: string | null }>(`SELECT applied_at, outcome FROM rated_games WHERE game = 'impostor' AND game_ref = $1`, [id]);
-      for (const r of rated.rows) expect(r).toMatchObject({ outcome: 'void', applied_at: expect.any(Date) });
-      expect((await pool.query(`SELECT 1 FROM rating_events WHERE game = 'impostor' AND game_ref = $1 AND kind = 'game'`, [id])).rowCount).toBe(0);
     });
 
     it('seats a minor only with their friends, either way round', async () => {
@@ -412,8 +409,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       expect(mine.board!.clues.filter((c) => c.seat === spoke).every((c) => c.text === null)).toBe(true);
       const theirs = (await call(bystander[1], 'GET', `/mp/impostor/${id}`)).body as ImpostorView;
       expect(theirs.board!.clues.find((c) => c.seat === spoke)?.text).toBe(CLUES[0]);
-      // and nobody is paid or rated for a seat taken out
-      expect((await pool.query(`SELECT 1 FROM rated_leaves WHERE game = 'impostor' AND game_ref = $1`, [id])).rowCount).toBe(0);
     });
 
     it('takes a report by seat only under the lobby’s own game', async () => {

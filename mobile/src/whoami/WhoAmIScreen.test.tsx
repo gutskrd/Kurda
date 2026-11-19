@@ -303,7 +303,6 @@ describe('the start', () => {
       difficulty: 'beginner',
       minutes: 10,
       answers: 4,
-      rated: false,
     });
   });
 

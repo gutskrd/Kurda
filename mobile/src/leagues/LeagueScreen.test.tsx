@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Alert } from 'react-native';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { LeagueView } from '@kurda/shared';
+import { PEEK_POP, type LeagueView } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
+import { characterLayers } from '../characters/layers';
 import { LeagueScreen } from './LeagueScreen';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -45,6 +46,9 @@ const week = (over: Partial<LeagueView> = {}): LeagueView => ({
   ...over,
 });
 
+/** The drawings on screen now. */
+const drawn = (): string[] => [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup') ?? '');
+
 afterEach(() => {
   cleanup();
   navigation.navigate.mockClear();
@@ -70,7 +74,18 @@ describe('the league page', () => {
     testAuth.client = fakeClient({ 'GET /me/league': ok(week({ joined: false, weeklyXp: 0, standings: [], groupSize: 0, rank: 0 })) });
     renderWithProviders(<LeagueScreen onExit={() => undefined} />);
     expect(await screen.findByText('Your week starts with a lesson')).toBeTruthy();
-    expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBeTruthy();
+    // His head through the page, not the whole of him, and asleep.
+    const peek = screen.getByTestId('hevalo-peek');
+    expect(within(peek).getByRole('img', { name: 'Hevalo is resting' })).toBeTruthy();
+    expect(screen.getAllByRole('img', { name: /^Hevalo/ })).toHaveLength(1);
+    const head = characterLayers('hevalo', 'head');
+    expect(drawn()).toContain(head.eyes.closed);
+    expect(drawn()).not.toContain(characterLayers('hevalo', 'full').body);
+    expect(within(peek).getAllByText('z').length).toBeGreaterThan(0);
+    // Past the moment a peek would cheer, he sleeps on.
+    await act(() => new Promise((r) => setTimeout(r, PEEK_POP.delayMs + PEEK_POP.ms + 200)));
+    expect(drawn()).toContain(head.eyes.closed);
+    expect(drawn()).not.toContain(head.eyes.happy);
     // And his own word on it.
     expect(screen.getByText('Do a lesson and I’ll wake up — then we take our place at this week’s table.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Start a lesson' }));

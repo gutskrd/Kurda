@@ -39,7 +39,8 @@ import { useSendErrorAlert } from '../reports/SendError';
 import { useI18n } from '../i18n/I18nContext';
 import { learningStats, type Streak } from '../streak/format';
 import { freezeSlots } from '../streak/kept';
-import { StreakSheet } from '../streak/StreakSheet';
+import { DailySheet } from '../daily/DailySheet';
+import { useToday } from '../daily/today';
 import { formatNumber } from '../i18n/format';
 import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
@@ -161,6 +162,7 @@ function AccountProfile() {
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [streakOpen, setStreakOpen] = useState(false);
+  const today = useToday(streakOpen);
   // Pull to refresh asks for everything below again.
   const [refreshing, setRefreshing] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -499,7 +501,7 @@ function AccountProfile() {
 
         {user?.id ? <ProfileActivity key={reloadKey} userId={user.id} own /> : null}
       </ScrollView>
-      <StreakSheet streak={streakOpen ? streak : null} onClose={() => setStreakOpen(false)} onRestored={setStreak} />
+      <DailySheet visible={streakOpen} onClose={() => setStreakOpen(false)} today={today} onStreak={setStreak} />
     </GradientBackground>
   );
 }

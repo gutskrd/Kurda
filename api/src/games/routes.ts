@@ -2,7 +2,8 @@
  * The learning games' routes: playing them, and writing their content.
  *
  * For learners (any signed-in learner, guests included, as for lessons and practice):
- *   GET  /games/availability?dialect=kmr|ckb          which games have enough approved content, per level (no account needed)
+ *   GET  /games/availability?dialect=kmr|ckb          which games have enough approved content, per level (no account needed);
+ *                                                     without a dialect, both varieties as `{ dialects }`
  *   GET  /games/build-sentence/ladder?dialect=         the ladder, how far this learner has climbed, a round to come back to
  *   GET  /games/solo/open?game=&dialect=               the round of a game left unfinished, if any
  *   POST /games/solo/sessions                          { game, dialect, difficulty }: a new round, without its answers, in place of the one left open (20 a minute)
@@ -12,9 +13,9 @@
  *   POST /games/solo/sessions/:id/hints                { evidence? }: spend a hint (Detective), answered with the board
  *   POST /games/solo/sessions/:id/begin                { index }: an item's study gives way to its gaps (The Memory Thief), answered with the item
  *   GET  /games/solo/sessions/:id/clips/:clip          a round's recording by its opaque handle (no token: the address is the permission)
- *   GET  /games/who-am-i/couch?dialect=                 Who Am I? on one phone: the difficulties it is offered at
+ *   GET  /games/who-am-i/couch?dialect=                 Who Am I? on one phone: the difficulties it is offered at (both without one)
  *   POST /games/who-am-i/couch/deal                     { dialect, difficulty, players }: a card for everyone in the room (10 a minute)
- *   GET  /games/impostor/couch?dialect=                Impostor on one phone: the difficulties and categories it is offered in
+ *   GET  /games/impostor/couch?dialect=                Impostor on one phone: the difficulties and categories it is offered in (both without one)
  *   POST /games/impostor/couch/deck                    { dialect, difficulty, category?, count? }: an evening's cards (10 a minute)
  *
  * The solo games (Build a Sentence, The Memory Thief, Hear It, Find It, Detective) are engines registered with the solo
@@ -88,6 +89,8 @@ import { registerCouchRoutes } from './couch.js';
 
 const absentIfEmpty = (v: unknown): unknown => (v === '' ? undefined : v);
 const dialectQuery = z.object({ dialect: z.enum(GAME_DIALECTS) });
+// without a dialect, both varieties' answers (shared `readEveryDialect`)
+const anyDialectQuery = z.object({ dialect: z.enum(GAME_DIALECTS).optional() });
 const openQuery = z.object({ game: z.enum(LEARN_GAME_IDS), dialect: z.enum(GAME_DIALECTS) });
 const idParam = z.object({ id: z.uuid() });
 const createBody = z.object({ game: z.enum(LEARN_GAME_IDS), dialect: z.enum(GAME_DIALECTS), difficulty: z.enum(GAME_DIFFICULTIES) });
@@ -218,9 +221,10 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
     clearInterval(sweeps);
   });
 
-  app.get('/games/availability', { schema: { querystring: dialectQuery } }, async (req) =>
-    availability.forDialect((req.query as z.infer<typeof dialectQuery>).dialect),
-  );
+  app.get('/games/availability', { schema: { querystring: anyDialectQuery } }, async (req) => {
+    const { dialect } = req.query as z.infer<typeof anyDialectQuery>;
+    return dialect ? availability.forDialect(dialect) : { dialects: await Promise.all(GAME_DIALECTS.map((d) => availability.forDialect(d))) };
+  });
 
   app.get('/games/build-sentence/ladder', { schema: { querystring: dialectQuery }, preHandler: requireAuth }, async (req) => {
     const { dialect } = req.query as z.infer<typeof dialectQuery>;

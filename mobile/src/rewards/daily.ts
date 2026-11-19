@@ -1,4 +1,4 @@
-/** What the daily Zêr card offers, from GET /rewards/daily. Pure, so the card's three states are pinned by tests. */
+/** What today's Zêr offers in the daily view (GET /me/today, as GET /rewards/daily says it). Pure, so its three states are pinned by tests. */
 
 export interface DailyStatus {
   canClaim: boolean;

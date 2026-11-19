@@ -47,17 +47,19 @@ describe('who sees which page — what the API allows, not a guess', () => {
     for (const id of ['users', 'lessons', 'audit']) expect(seen).not.toContain(id);
   });
 
-  it('opens the ranks, seasons, leagues and badges to the legacy admin role and superadmin their routes are guarded by, and to nobody else', () => {
-    const tools = ['ranks', 'seasons', 'leagues', 'badges'];
+  it('opens the leagues and badges to the legacy admin role and superadmin their routes are guarded by, and to nobody else', () => {
+    const tools = ['leagues', 'badges'];
     const superadminOnly: SessionAccess = { staffRoles: ['superadmin'], capabilities: ['moderation.act', 'users.view'] };
     for (const id of tools) expect(ids(LEGACY)).toContain(id);
     for (const id of tools) expect(ids(superadminOnly)).toContain(id);
     for (const s of [MODERATOR, EDITOR, SUPPORT, FOUNDER]) {
       for (const page of tools) expect(mayOpenPage(page, s)).toBe(false);
     }
-    expect(NAV.filter((n) => tools.includes(n.id)).every((n) => n.group === 'ranks')).toBe(true);
-    expect(searchNav(visibleNav(LEGACY), 'void').map((n) => n.id)).toEqual(['ranks']);
+    expect(NAV.filter((n) => tools.includes(n.id)).every((n) => n.group === 'progress')).toBe(true);
     expect(searchNav(visibleNav(LEGACY), 'settle').map((n) => n.id)).toEqual(['leagues']);
+    // Game ranks and seasons have ended, and their pages with them.
+    expect(NAV.map((n) => n.id)).not.toContain('ranks');
+    expect(NAV.map((n) => n.id)).not.toContain('seasons');
   });
 
   it('support sees the people, the support inbox and the feedback, a founder the tags', () => {

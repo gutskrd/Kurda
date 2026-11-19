@@ -1,10 +1,11 @@
 /**
- * The busiest reads use their indexes (migrations `dm-messages-either-side`, `exercises-by-review-item`,
- * `wallet-ledger-by-time`, `group-reads-by-member` and `wall-in-time-order`) on tables filled enough to plan like a
- * full database; everything, statistics included, is rolled back.
+ * The busiest reads use their indexes (migrations `dm-messages-either-side`, `dm-messages-unread-either-side`,
+ * `exercises-by-review-item`, `wallet-ledger-by-time`, `group-reads-by-member` and `wall-in-time-order`) on tables
+ * filled enough to plan like a full database; everything, statistics included, is rolled back.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
+import { ChatService } from '../chat/service.js';
 import { EconomyService } from '../economy/service.js';
 import { FeedService } from '../feed/service.js';
 import { ImagePostService } from '../images/service.js';
@@ -114,7 +115,19 @@ describe.skipIf(!DATABASE_URL)('indexes for the busiest reads (integration)', ()
         params: [pair.rows[0]!.user_lo, pair.rows[0]!.user_hi, me],
       };
     });
-    expect(plan).toContain('dm_messages_unread_idx');
+    // either partial index of unread messages: both are led by the pair
+    expect(plan).toMatch(/"Index Name":"dm_messages_unread(_hi)?_idx"/);
+  });
+
+  it('counts a person’s unread messages for the badges from the unread ones on each side of the pair', async () => {
+    // chat/service.ts `unread`, what GET /chat/unread answers with
+    const plan = await planAfter(fillMessages, ['users', 'dm_messages'], async (client) => {
+      const me = await someoneInTheMiddle(client);
+      return firstStatement(client, (pool) => new ChatService(pool, {} as never, {} as never).unread(me));
+    });
+    expect(plan).toMatch(/"Index Name":"dm_messages_unread_idx"[^}]*"Index Cond":"\(user_lo = /);
+    expect(plan).toMatch(/"Index Name":"dm_messages_unread_hi_idx"[^}]*"Index Cond":"\(user_hi = /);
+    expect(plan).not.toMatch(/"Node Type":"Seq Scan"[^}]*"Relation Name":"dm_messages"/);
   });
 
   it('finds the exercise behind each of a learner’s review items by its id', async () => {

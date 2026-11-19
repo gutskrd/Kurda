@@ -15,6 +15,7 @@ import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation, refocus } from '../play/testing/navigation';
 import { UnreadProvider } from '../messages/unread';
 import { CivakScreen } from './CivakScreen';
+import { TODAY_PATH, todayView } from '../daily/testing/today';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
@@ -82,22 +83,23 @@ describe('Home', () => {
     expect(screen.queryByTestId('top-bell-dot')).toBeNull();
   });
 
-  /* Laid out as the website's Home: the page's name and line, today's Zêr, the week, then the wall. */
-  it('leads with its name and line, today’s Zêr and the week’s league, as the website does', async () => {
+  /* Laid out as the website's Home: the page's name and line, the daily card, the week's league, then the wall. */
+  it('leads with its name and line, the daily card and the week’s league, as the website does', async () => {
     open({
       extra: {
-        'GET /rewards/daily': ok({ canClaim: false, claimableDay: 1, reward: 10, schedule: [10, 10, 15, 15, 20, 20, 30], alreadyClaimedToday: false, cycleDay: 1, learnedToday: false }),
+        [TODAY_PATH]: ok(todayView()),
         'GET /me/league': ok({ mode: 'personal', optedOut: false, joined: false, tier: null, weeklyXp: 40, goalXp: 200, goalMet: false, safe: false, rank: 0, groupSize: 0 }),
       },
     });
     expect(screen.getByRole('heading', { name: 'Community' })).toBeTruthy();
     expect(screen.getByText('Stories, poems and pictures from everyone.')).toBeTruthy();
+    // Nothing learned yet today: the card says so, and its view offers the way to Learn.
+    fireEvent.click(await screen.findByRole('button', { name: 'A lesson today starts a streak. +10 Zêr after today’s lesson' }));
     expect(await screen.findByText('Daily Zêr')).toBeTruthy();
-    // Nothing learned yet today: the card says so and offers the way to Learn.
     fireEvent.click(screen.getByRole('button', { name: 'Go to Learn' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Learn', { view: 'lessons' });
     fireEvent.click(await screen.findByRole('button', { name: /^Your week/ }));
-    expect(navigation.navigate).toHaveBeenCalledWith('League');
+    expect(navigation.navigate).toHaveBeenCalledWith('Rankings', { board: 'xp', span: 'week' });
   });
 
   /* The old Library and Memes pages are Home's two halves now: a link or the menu opens the wall on one. */

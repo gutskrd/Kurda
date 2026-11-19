@@ -16,7 +16,6 @@ import { FriendPicker, togglePick, useFriendsToAsk } from '../play/FriendPicker'
 import { inviteFriends } from '../play/api';
 import { showNotice } from '../theme/notice';
 import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
-import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { LobbyShare } from '../play/CodeTicket';
@@ -96,7 +95,7 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
   const create = async (): Promise<void> => {
     setBusy(true);
     setError(null);
-    const res = await createBattle(client, difficulty, false);
+    const res = await createBattle(client, difficulty);
     if (res.ok && asked.length > 0) {
       // The room exists whatever happens to the invites; one that did not go is said, and the room can ask again.
       const sent = await inviteFriends(client, 'wordle-battle', res.data.id, asked);
@@ -393,7 +392,6 @@ function BattleRoom({
         <View style={styles.card}>
           <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}</Verdict>
           {/* What this game did to your rank, with its one plain reason — before the table. */}
-          {battle.rated?.rated ? <RankResultPanel game="wordle-battle" gameRef={id} /> : null}
           {results ? (
             <>
               <Text style={[styles.blurb, { color: colors.textSecondary }]}>

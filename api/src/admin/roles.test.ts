@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capabilitiesFor, CAPABILITIES, hasCapability, isAdmin, isAdminRole, PRIVILEGED_ROLES, RANK_TOOL_ROLES, VOICE_ACTOR_ROLE } from './roles.js';
+import { capabilitiesFor, CAPABILITIES, hasCapability, isAdmin, isAdminRole, PRIVILEGED_ROLES, PROGRESS_TOOL_ROLES, VOICE_ACTOR_ROLE } from './roles.js';
 
 describe('admin roles', () => {
   it('recognizes admin roles', () => {
@@ -48,9 +48,9 @@ describe('admin roles', () => {
     expect(capabilitiesFor([VOICE_ACTOR_ROLE])).toEqual([]);
   });
 
-  it('opens the rank, league, season and badge tools to the legacy admin role and superadmin', () => {
-    expect([...RANK_TOOL_ROLES].sort()).toEqual(['admin', 'superadmin']);
+  it('opens the league and badge tools to the legacy admin role and superadmin', () => {
+    expect([...PROGRESS_TOOL_ROLES].sort()).toEqual(['admin', 'superadmin']);
     // every one of them is staff, so the 2FA gate covers the routes
-    for (const role of RANK_TOOL_ROLES) expect(PRIVILEGED_ROLES).toContain(role);
+    for (const role of PROGRESS_TOOL_ROLES) expect(PRIVILEGED_ROLES).toContain(role);
   });
 });

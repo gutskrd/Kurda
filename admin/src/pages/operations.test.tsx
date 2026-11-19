@@ -311,9 +311,9 @@ describe('Fraud', () => {
 describe('System', () => {
   const usage = { storedBytes: 9 * 1024 ** 3, storageLimitBytes: 10 * 1024 ** 3, objectCount: 1200, period: '2026-10', classAOps: 10, classALimit: 1_000_000, classBOps: 20, classBLimit: 10_000_000, note: '' };
 
-  // The league settle and season close are on the Leagues and Seasons pages (ranks.test.tsx), and the only board a
-  // rebuild reports is the weekly XP one.
-  it('runs the board rebuild straight away and points to where the league and season runs are', async () => {
+  // The league settle and merge are on the Leagues page (progressTools.test.tsx), and the only board a rebuild reports is
+  // the weekly XP one.
+  it('runs the board rebuild straight away and points to where the league runs are', async () => {
     const user = userEvent.setup();
     const { calls } = fakeApi(on('GET', '/admin/media/usage', json(usage)), on('POST', '/admin/leaderboards/rebuild', json({ weekly_xp: 4 })));
     renderUi(<System />);
@@ -325,7 +325,7 @@ describe('System', () => {
     expect(await screen.findAllByText('Rebuilt the weekly XP board: 4 learners.')).not.toHaveLength(0);
     expect(screen.queryByText(/by rating/)).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Leagues' })).toHaveAttribute('href', '#/leagues');
-    expect(screen.getByRole('link', { name: 'Seasons' })).toHaveAttribute('href', '#/seasons');
+    expect(screen.queryByRole('link', { name: 'Seasons' })).not.toBeInTheDocument();
   });
 
   it('marks storage that is nearly full', async () => {

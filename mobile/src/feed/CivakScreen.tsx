@@ -39,7 +39,7 @@ import { onPostDeleted, samePost, useDeleting } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
 import { FilterChip, FilterChips } from '../theme/FilterSheet';
 import { Loading } from '../theme/Loading';
-import { DailyRewardCard } from '../rewards/DailyRewardCard';
+import { DailyCard } from '../daily/DailyCard';
 import { LeagueLine } from '../leagues/LeagueLine';
 
 const PAGE = 20;
@@ -239,7 +239,7 @@ export function CivakScreen({
             <>
               <View style={styles.top}>
                 <Text style={[styles.subtitle, dir.text, { color: colors.textSecondary }]}>{t('civak.subtitle')}</Text>
-                <DailyRewardCard onLearn={() => navigation.navigate('Learn', { view: 'lessons' })} />
+                <DailyCard onLearn={() => navigation.navigate('Learn', { view: 'lessons' })} />
                 <LeagueLine />
               </View>
               <FriendsRow refreshKey={pulls} />

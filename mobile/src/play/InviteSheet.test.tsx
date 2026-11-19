@@ -5,7 +5,6 @@ import type { InviteLists, StoryListItem } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { resetPrefsCache } from '../stories/prefs';
-import { resetRatedChoices } from '../ranks/ratedPrefs';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
@@ -132,7 +131,6 @@ describe('InviteSheet', () => {
   beforeEach(() => {
     localStorage.clear();
     resetPrefsCache();
-    resetRatedChoices();
     resetCourseDialect();
     navigation.navigate.mockClear();
   });
@@ -220,10 +218,9 @@ describe('InviteSheet', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    // The host's Rated/Friendly choice goes with the presets (Friendly when never chosen).
     expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toEqual({
       game: 'wordle-battle',
-      settings: { difficulty: 'hard', rated: false },
+      settings: { difficulty: 'hard' },
       invite: undefined,
       chat: { groupId: 'grp-1' },
     });
@@ -310,7 +307,7 @@ describe('InviteSheet', () => {
     await waitFor(() => expect(screen.queryByRole('radiogroup', { name: 'Variety' })).toBeNull());
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
-    expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toMatchObject({ game: 'rhyme-match', settings: { dialect: 'kurmanci', rated: false } });
+    expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toMatchObject({ game: 'rhyme-match', settings: { dialect: 'kurmanci' } });
   });
 
   it('offers both varieties for a Rhyme Match once both have prompts, the learner’s own first', async () => {
@@ -332,17 +329,17 @@ describe('InviteSheet', () => {
     expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toMatchObject({ game: 'rhyme-match', settings: { dialect: 'sorani' } });
   });
 
-  it('asks no Rated or Friendly question, and makes every game friendly, since games are played for fun', async () => {
+  it('asks nothing about Rated or Friendly for a new game, and sends no such choice', async () => {
     const client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm1', invited: 0 }) }));
     testAuth.client = client;
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={() => undefined} />);
     fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Serwayan' }));
     expect(screen.queryByRole('radiogroup', { name: 'Game type' })).toBeNull();
-    expect(screen.queryByRole('radio', { name: /^Rated/ })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /^Rated\./ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(client.calls.some((c) => c.path === '/play/lobbies')).toBe(true));
     const sent = client.calls.find((c) => c.path === '/play/lobbies')?.body as { settings: Record<string, unknown> };
-    expect(sent.settings.rated).toBe(false);
+    expect(sent.settings).not.toHaveProperty('rated');
   });
 
   it('asks more friends into a lobby that exists and says how many were asked', async () => {
@@ -375,7 +372,6 @@ describe('InviteSheet, its tickets', () => {
   beforeEach(() => {
     localStorage.clear();
     resetPrefsCache();
-    resetRatedChoices();
     resetHaptics();
     navigation.navigate.mockClear();
     felt = [];

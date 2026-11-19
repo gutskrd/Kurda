@@ -37,22 +37,12 @@ describe('InviteBanner', () => {
     expect(document.activeElement).toBe(before);
   });
 
-  it('says Rated or Friendly before anyone joins, in the banner and in the phone’s chip', async () => {
+  it('says nothing of Rated or Friendly, even for an invite an older app sent as Rated', async () => {
     fakeApi({ 'GET /play/invites': lists([incoming({ summary: { difficulty: 'hard', rated: true } })]) });
-    const { unmount } = renderPlay(<InviteBanner />);
-    expect(within(await screen.findByRole('status')).getByText('Rated')).toBeInTheDocument();
-    unmount();
-
-    vi.stubGlobal('matchMedia', (query: string) => ({
-      matches: query.includes('max-width'),
-      media: query,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-    }));
-    fakeApi({ 'GET /play/invites': lists([incoming({ summary: { difficulty: 'hard', rated: false } })]) });
     renderPlay(<InviteBanner />);
-    // No room for the word on one line: the icon, with the word for a screen reader.
-    expect(within(await screen.findByRole('status')).getByText('Friendly')).toHaveClass('sr-only');
+    const banner = await screen.findByRole('status');
+    expect(within(banner).queryByText('Rated')).toBeNull();
+    expect(banner.querySelector('.rated-badge')).toBeNull();
   });
 
   it('marks a story’s title with the story’s language', async () => {

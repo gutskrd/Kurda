@@ -1,14 +1,8 @@
 /**
- * Game Ranks: one seasonal skill rating per online game, shown as points and the mountain tier they climb through, with
- * each game chosen as Rated or Friendly.
- *
- * The rating is a Weng-Lin Bayesian model (Plackett-Luce): a mean μ and an uncertainty σ per player and game. Players see
- * only `pointsOf(μ, σ)` = 40 × (μ − 3σ), never below 0: the cautious estimate, so a new player starts at 0 and climbs as
- * the rating grows sure, with no hidden second number.
- *
- * The API, both apps and the admin agree on everything here: the ranked games, the one tier table, the season calendar
- * and rewards, the reason codes and the API shapes. The Kurmancî tier names are canonical; every app translates them.
- * [native-speaker review]
+ * Game Ranks, which have ended: every game now plays as friendly and nothing is rated. What stays is what the stored
+ * history, the season frames people still wear and installed phone builds rely on: the ranked games, the tier table and
+ * its art, the season calendar, the reason codes and the API shapes, which the API now answers empty. The Kurmancî tier
+ * names are canonical; every app translates them. [native-speaker review]
  */
 import type { PlayGame } from './play.js';
 import { MULTI_GAMES } from './games/multi/games.js';
@@ -29,61 +23,13 @@ export function isRankedGame(v: unknown): v is RankedGame {
 }
 
 // ---------------------------------------------------------------------------
-// the model's constants
+// placing and the shield, as older results show them
 // ---------------------------------------------------------------------------
-
-/** The rating model's defaults: everyone starts at μ = 25, σ = 25/3, which is 0 points. */
-export const START_MU = 25;
-export const START_SIGMA = 25 / 3;
-/** Shown points per unit of (μ − 3σ). */
-export const POINTS_SCALE = 40;
 
 /** The first rated games of a game show "Placing 3/5" and no tier yet. */
 export const PLACEMENT_GAMES = 5;
-/** After placement, a "?" stays beside the points while σ is above this. */
-export const PROVISIONAL_SIGMA = 3;
 /** After reaching a new tier (not a division), this many rated games cannot drop you below its floor. */
 export const SHIELD_GAMES = 3;
-/** After this long without a rated game others see "Resting"; the owner still sees the rank. */
-export const RESTING_DAYS = 28;
-/** σ grows this much per idle week, capped at START_SIGMA, so only future gains move, never the points shown. */
-export const IDLE_SIGMA_PER_WEEK = 0.1;
-/** A new season raises σ to at least this, keeping μ: points dip a little and good players climb back fast. */
-export const SEASON_SIGMA_FLOOR = 4;
-
-/** The apex, Stêrk: Lûtke I and the top 1% of the game's active rated players (at least the top 20), with 30 rated games and one in the last 14 days. */
-export const STERK_RULE = { minPoints: 1400, topShare: 0.01, minTop: 20, minGames: 30, activeDays: 14 } as const;
-/** Below this many active rated players, percentiles, the Top board and Stêrk stay hidden, since a top 1% of a dozen means nothing. */
-export const FEW_PLAYERS = 50;
-
-/**
- * Repeat-opponent damping: the weight of the k-th rated game in 24 h between the same two players, then 0 (friendly).
- * A group game takes the smallest weight among its pairs.
- */
-export const REPEAT_WEIGHTS = [1, 1, 0.5, 0.25, 0] as const;
-export const REPEAT_WINDOW_HOURS = 24;
-
-/** A new account (under 3 days old, or under 3 finished lessons or games) may play rated but moves the others by at most half. */
-export const NEW_ACCOUNT_RULE = { days: 3, activities: 3, influence: 0.5 } as const;
-
-/**
- * Leaving a started rated game counts as last place. Each leave within 24 h of the last adds a rated-game cooldown: none
- * for the first, then 10 minutes, 30 minutes and 2 hours from then on. A day without a leave resets it.
- */
-export const LEAVE_COOLDOWN_MINUTES = [0, 10, 30, 120] as const;
-export const LEAVE_LADDER_HOURS = 24;
-
-/** The repeat-damping weight of the k-th rated game (k from 1) between a pair. */
-export function repeatWeight(k: number): number {
-  const i = Math.max(0, Math.min(REPEAT_WEIGHTS.length - 1, Math.floor(k) - 1));
-  return REPEAT_WEIGHTS[i]!;
-}
-
-/** The cooldown after the `step`-th leave of a ladder (step from 1), in minutes. */
-export function leaveCooldownMinutes(step: number): number {
-  const i = Math.max(0, Math.min(LEAVE_COOLDOWN_MINUTES.length - 1, Math.floor(step) - 1));
-  return LEAVE_COOLDOWN_MINUTES[i]!;
-}
 
 // ---------------------------------------------------------------------------
 // tiers: the one table, tuned here
@@ -104,19 +50,10 @@ export type RankTier = PointsTier | 'sterk';
 /** Every tier, lowest first, the apex last. */
 export const RANK_TIER_KEYS: readonly RankTier[] = [...RANK_TIERS.map((t) => t.key), APEX_TIER.key];
 
-export function isRankTier(v: unknown): v is RankTier {
-  return (RANK_TIER_KEYS as readonly unknown[]).includes(v);
-}
-
 /** Each tier has three divisions of this many points: III, II, I (I highest). */
-export const DIVISION_POINTS = 100;
+const DIVISION_POINTS = 100;
 /** 3 is III (lowest), 1 is I (highest). Lûtke I is open-ended (1400+). */
 export type Division = 1 | 2 | 3;
-
-/** The points a rating is shown as: 40 × (μ − 3σ), rounded, never below 0. */
-export function pointsOf(mu: number, sigma: number): number {
-  return Math.max(0, Math.round(POINTS_SCALE * (mu - 3 * sigma)));
-}
 
 /** The points tier for a score; Stêrk is decided on top of this, by standing. */
 export function tierOf(points: number): PointsTier {
@@ -125,9 +62,8 @@ export function tierOf(points: number): PointsTier {
   return tier;
 }
 
-/** The lowest score of a tier (Stêrk: Lûtke I's). */
-export function tierFloor(tier: RankTier): number {
-  if (tier === 'sterk') return STERK_RULE.minPoints;
+/** The lowest score of a points tier. */
+function tierFloor(tier: PointsTier): number {
   return RANK_TIERS.find((t) => t.key === tier)!.floor;
 }
 
@@ -137,7 +73,7 @@ export function tierIndex(tier: RankTier): number {
 }
 
 /** The division within the tier: 3 (III) for its first hundred points, then 2, then 1. */
-export function divisionOf(points: number): Division {
+function divisionOf(points: number): Division {
   const into = Math.max(0, points - tierFloor(tierOf(points)));
   const step = Math.floor(into / DIVISION_POINTS);
   return step >= 2 ? 1 : step === 1 ? 2 : 3;
@@ -207,12 +143,8 @@ export interface Season {
 
 const SEASON_ID = /^(\d{4})-Q([1-4])$/;
 
-export function isSeasonId(v: unknown): v is string {
-  return typeof v === 'string' && SEASON_ID.test(v);
-}
-
 /** The season with this id ('2026-Q4'). */
-export function seasonById(id: string): Season {
+function seasonById(id: string): Season {
   const m = SEASON_ID.exec(id);
   if (!m) throw new Error(`not a season id: ${id}`);
   const year = Number(m[1]);
@@ -232,39 +164,11 @@ export function seasonOf(at: Date): Season {
   return seasonById(`${at.getUTCFullYear()}-Q${q}`);
 }
 
-/** The season before this one. */
-export function previousSeasonId(id: string): string {
-  const s = seasonById(id);
-  return seasonOf(new Date(new Date(s.startsAt).getTime() - 1)).id;
-}
-
 /** Whole days left in a season at `now`, 0 on its last day. */
 export function seasonDaysLeft(season: Season, now: Date): number {
   const ms = new Date(season.endsAt).getTime() - now.getTime();
   return Math.max(0, Math.floor(ms / 86_400_000));
 }
-
-/** "Stêrkê Payîz 2026": the title a season's Stêrk players keep. */
-export function sterkTitle(seasonId: string): string {
-  const s = seasonById(seasonId);
-  return `Stêrkê ${SEASON_LABELS[s.name].ku} ${s.year}`;
-}
-
-/** At the end of a season, players with at least this many rated games in a game are rewarded for it. */
-export const SEASON_REWARD_MIN_GAMES = 10;
-
-/**
- * The season's Gems by the best peak tier across games, once per player per season, for accounts active that season and
- * in good standing. Small on purpose: the frame and the emblem are the reward, and Gems never buy a win.
- */
-export const SEASON_REWARD_GEMS: Readonly<Record<RankTier, number>> = {
-  dest: 10,
-  gir: 20,
-  zozan: 35,
-  ciya: 50,
-  lutke: 75,
-  sterk: 100,
-};
 
 /** The profile frame, a cosmetic kept forever, for a season's best peak tier; Lûtke and Stêrk are animated. */
 export function seasonFrameSku(tier: RankTier): string {
@@ -349,7 +253,7 @@ export interface RankCard {
   season: { id: string; ratedGames: number; wins: number; peakPoints: number; peakTier: PointsTier | null };
   /** the best points ever reached in this game */
   bestPoints: number;
-  /** no rated game for RESTING_DAYS: others see "Resting" */
+  /** no rated game for four weeks: others see "Resting" */
   resting: boolean;
   lastRatedAt: string | null;
 }
@@ -440,33 +344,6 @@ export interface ExpectedGains {
   last: number | null;
 }
 
-export type RankBoardScope = 'friends' | 'top';
-
-export interface RankBoardEntry {
-  position: number;
-  /** null shows as "Player" (on the Top board when the profile is not public) */
-  name: string | null;
-  /** the viewer's own row */
-  isMe: boolean;
-  points: number;
-  tier: RankTier | null;
-  division: Division | null;
-  placing: boolean;
-  resting: boolean;
-}
-
-/** `GET /ranks/boards/:game?scope=friends|top` */
-export interface RankBoard {
-  game: RankedGame;
-  scope: RankBoardScope;
-  entries: RankBoardEntry[];
-  /** your own place on this board, shown only to you; null when you are not on it */
-  me: { position: number; points: number } | null;
-  /** Top board only: hidden while the game has fewer than FEW_PLAYERS active rated players */
-  hidden: boolean;
-  activePlayers: number | null;
-}
-
 /** A season's result in one game, kept forever as the emblem. */
 export interface SeasonEmblem {
   seasonId: string;
@@ -503,88 +380,4 @@ export interface ProfileRank {
   /** the best tier this season and ever */
   seasonPeakTier: PointsTier | null;
   bestTier: PointsTier | null;
-}
-
-// ---------------------------------------------------------------------------
-// admin
-// ---------------------------------------------------------------------------
-
-export interface TierSpread {
-  game: RankedGame;
-  activePlayers: number;
-  placing: number;
-  tiers: Array<{ tier: RankTier; players: number; share: number }>;
-}
-
-/** A pair whose rated games together look unusual: signals only, never punished automatically. */
-export interface SuspiciousPair {
-  game: RankedGame;
-  a: { userId: string; username: string };
-  b: { userId: string; username: string };
-  games: number;
-  aWins: number;
-  bWins: number;
-  draws: number;
-  /** rated games together in the busiest 24 h */
-  peak24h: number;
-  sharedDevice: boolean;
-  sharedIp: boolean;
-  lastGameAt: string;
-  score: number;
-}
-
-/** One rated game as the admin sees it: enough to find it again and void it. */
-export interface AdminRatedGame {
-  game: RankedGame;
-  gameRef: string;
-  /** when its result was applied */
-  at: string;
-  /** players who were ranked in it */
-  players: number;
-  /** repeat-opponent damping (1: full) */
-  weight: number;
-  voided: boolean;
-  voidReason: string | null;
-}
-
-/** A player's rated game, with what it did to them (`GET /admin/ranks/players/:userId`). */
-export interface AdminPlayerGame extends AdminRatedGame {
-  place: number | null;
-  left: boolean;
-  pointsBefore: number | null;
-  pointsAfter: number | null;
-  /** the reason code shown with the change (RANK_REASONS) */
-  reason: string | null;
-}
-
-/** `GET /admin/ranks/players/:userId`: their rank in every game and their latest rated games. */
-export interface AdminPlayerRanks {
-  ranks: RankCard[];
-  games: AdminPlayerGame[];
-}
-
-/** A rated game a suspicious pair played together (`GET /admin/ranks/pairs/:game/:a/:b`). */
-export interface AdminPairGame extends AdminRatedGame {
-  aPlace: number | null;
-  bPlace: number | null;
-}
-
-/** A season reward, before it is handed out or as it was (`GET /admin/seasons/:id/rewards`). */
-export interface AdminSeasonReward {
-  userId: string;
-  username: string;
-  /** the game of their best peak tier */
-  game: RankedGame;
-  tier: RankTier;
-  gems: number;
-  frameSku: string | null;
-  title: string | null;
-}
-
-/** `GET /admin/seasons/:id/rewards` */
-export interface AdminSeasonRewards {
-  /** who would be rewarded if the season closed now; Stêrk is judged only at the close */
-  rewards: AdminSeasonReward[];
-  /** what was handed out already, with when */
-  given: Array<AdminSeasonReward & { grantedAt: string }>;
 }

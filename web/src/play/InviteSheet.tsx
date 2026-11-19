@@ -46,7 +46,6 @@ import { FriendPicker } from './FriendPicker';
 import { AdmitTray, SENT_MS, TicketsSent, flightMs, type Admit } from './InviteTickets';
 import { GAME_NAME_KEY, lobbyPath, playError, rememberFriends } from './playApi';
 import { usePlayInvites } from './PlayProvider';
-import { RatedChoice, useRatedChoice } from '../ranks/rated';
 import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
 import { usePartyOffer, type PartyGame } from '../party/offer';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
@@ -214,8 +213,6 @@ export function InviteForm({
     },
     [],
   );
-  // Rated or Friendly: the host's last choice for this game, else Friendly, since every game here is among friends.
-  const [rated, setRated] = useRatedChoice(game, false);
 
   // The lengths a story game can use: those with a published story.
   const { stories } = useStoryList(fixedStory?.dialect ?? dialect, game === 'stories' && !fixedStory);
@@ -285,15 +282,15 @@ export function InviteForm({
   function settings(): Record<string, unknown> {
     switch (game) {
       case 'wordle-battle':
-        return { difficulty, rated };
+        return { difficulty };
       case 'rhyme-match':
-        return { dialect: rhymeDialect, rated };
+        return { dialect: rhymeDialect };
       case 'last-letter':
-        return { dialect: letterDialect, turnSeconds, rated };
+        return { dialect: letterDialect, turnSeconds };
       case 'impostor':
-        return { dialect: partyHere?.dialect ?? wanted, difficulty: difficultyNow ?? 'beginner', clueSeconds, category: categoryNow || null, rated };
+        return { dialect: partyHere?.dialect ?? wanted, difficulty: difficultyNow ?? 'beginner', clueSeconds, category: categoryNow || null };
       case 'who-am-i':
-        return { ...(partySettings ?? {}), rated };
+        return { ...(partySettings ?? {}) };
       case 'stories':
         return {
           mode,
@@ -302,7 +299,6 @@ export function InviteForm({
           timerSeconds: timer,
           textDuring: text,
           access: 'friends',
-          rated,
         };
     }
   }
@@ -564,8 +560,6 @@ export function InviteForm({
           {text === 'hidden' && <p className="story-setup-note">{t('stories.setup.textHiddenHint')}</p>}
         </>
       )}
-
-      {target.kind !== 'lobby' && <RatedChoice value={rated} onChange={setRated} />}
 
       {target.kind === 'group' ? (
         <p className="story-setup-note">{t('play.invite.groupNote')}</p>

@@ -1,0 +1,745 @@
+/*
+ * The daily view (DailySheet.tsx) and its card on Home (DailyCard.tsx): one centred column with the fire's gold as its
+ * only accent, cards one step off the sheet, mirrored right to left with the page.
+ */
+.daily-sheet {
+  --daily-gold-ink: #3a2400;
+  /* The chart's two weeks: this one in gold, last one in grey; both 3:1 or more on the sheet. */
+  --chart-now: #e8b739;
+  --chart-then: #6f6c84;
+}
+:root[data-theme='light'] .daily-sheet {
+  --chart-now: #b98300;
+  --chart-then: #8f8da3;
+}
+.daily {
+  display: grid;
+  gap: 16px;
+}
+
+/* ---- the head: the fire, the number under it, one line ----------------------------------------------------------- */
+.daily-head {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding-top: 4px;
+  text-align: center;
+}
+.daily-fire {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+}
+.daily-title {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+}
+.daily-number {
+  font-family: var(--font-sans);
+  font-size: 3.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.daily-unit {
+  margin-top: 4px;
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.daily-restored-title {
+  margin: 0;
+  font-size: var(--text-section);
+  line-height: 1.2;
+}
+.daily-restored-title:focus {
+  outline: none;
+}
+.streak-restored {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  text-align: center;
+}
+
+/* ---- the week: an initial over a circle per day ------------------------------------------------------------------- */
+.week-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.week-day {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.week-day-name {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1;
+}
+.week-day.is-today .week-day-name {
+  color: var(--ink);
+  font-weight: 800;
+}
+.week-dot {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+}
+.week-dot.is-learned,
+.week-day.is-learned .week-dot {
+  background: var(--gold);
+  box-shadow: none;
+  color: var(--daily-gold-ink, #3a2400);
+}
+/* A kept day in the shared blue (`.hue-blue`), as the phone draws it. */
+.week-dot.is-frozen,
+.week-day.is-frozen .week-dot {
+  background: var(--hue-wash);
+  box-shadow: none;
+  color: var(--hue-deep);
+}
+.week-dot.is-missed,
+.week-day.is-missed .week-dot {
+  background: var(--surface-2);
+  box-shadow: none;
+}
+.week-dot.is-today,
+.week-day.is-today:not(.is-learned) .week-dot {
+  box-shadow: inset 0 0 0 2.5px var(--gold);
+}
+.week-row.is-mini {
+  display: inline-flex;
+  gap: 4px;
+}
+.week-row.is-mini .week-dot {
+  width: 9px;
+  height: 9px;
+}
+.week-row.is-mini .week-dot.is-today:not(.is-learned) {
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+
+/* ---- cards and rows: one step off the sheet ------------------------------------------------------------------------ */
+.daily-card,
+.daily-zer,
+.daily-row,
+.streak-repair {
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+.daily-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+.daily-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+/* Section titles in the sans, quieter than the number above them. */
+.daily-card-title,
+.daily-zer-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.daily-card-note {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.daily-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+/* The number over what it counts. */
+.daily-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  text-align: center;
+}
+.daily-stat dt {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  line-height: 1.25;
+}
+.daily-stat dd {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 750;
+  line-height: 1.15;
+}
+
+/* ---- today's Zêr ---------------------------------------------------------------------------------------------------- */
+.daily-zer {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'coin words action'
+    '. note note';
+  align-items: center;
+  gap: 4px 12px;
+  padding: 14px 16px;
+}
+/* A lesson first: the way to Learn goes under the words, which need the width. */
+.daily-zer.is-learnFirst {
+  grid-template-areas:
+    'coin words words'
+    '. action action'
+    '. note note';
+}
+.daily-zer-words {
+  grid-area: words;
+}
+.daily-zer-action {
+  grid-area: action;
+}
+.daily-zer.is-learnFirst .daily-zer-action {
+  justify-self: start;
+  margin-top: 6px;
+}
+.daily-zer .zer-coin {
+  grid-area: coin;
+  align-self: start;
+  position: relative;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+}
+.daily-zer-words {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.daily-zer-line {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+}
+.daily-zer-cycle {
+  display: inline-flex;
+  gap: 5px;
+  margin-top: 4px;
+}
+.daily-zer-day {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+}
+.daily-zer-day.is-taken {
+  background: var(--gold);
+  box-shadow: none;
+}
+.daily-zer-day.is-next {
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+.daily-zer-done {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: var(--daily-gold-ink, #3a2400);
+}
+.daily-zer-plus,
+.daily-zer-problem {
+  grid-area: note;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.daily-zer-problem {
+  color: var(--danger);
+}
+
+/* ---- a row that opens something: the insights, the latest badge --------------------------------------------------- */
+.daily-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 14px;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+.daily-row:hover {
+  background: var(--surface-3);
+}
+.daily-row-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.daily-row-words {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+  font-weight: 650;
+}
+.daily-row-go {
+  flex: none;
+  color: var(--ink-3);
+}
+[dir='rtl'] .daily-row-go,
+[dir='rtl'] .daily-home-go {
+  transform: scaleX(-1);
+}
+.daily-badge-art {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+.daily-badge-label {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.daily-badge-meaning {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 400;
+}
+
+/* ---- the quiet lines: freezes, the stage, the longest streak, a restore -------------------------------------------- */
+.daily-quiet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  text-align: center;
+}
+.daily-quiet svg {
+  flex: none;
+  color: var(--gems);
+}
+.streak-repair {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 14px 16px;
+}
+.streak-repair-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+}
+.streak-repair .btn {
+  gap: 6px;
+}
+.streak-repair-short {
+  display: grid;
+  gap: 2px;
+}
+.streak-repair-gems {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: 700;
+}
+.streak-repair-hint {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.streak-repair-problem {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-caption);
+}
+
+/* ---- the fire's stages in one row ----------------------------------------------------------------------------------- */
+.fire-steps {
+  display: grid;
+  gap: 10px;
+  padding-top: 4px;
+}
+.fire-steps .daily-card-title {
+  text-align: center;
+}
+.fire-steps-list {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fire-step {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.fire-step-art {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
+}
+.fire-step.is-now .fire-step-art {
+  background: var(--gold-soft);
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+/* Still to come: still and quieter, never grey. */
+.fire-step.is-ahead .fire-step-art {
+  opacity: 0.45;
+}
+.fire-step-day {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.fire-step.is-now .fire-step-day {
+  color: var(--ink);
+  font-weight: 800;
+}
+.fire-steps-name {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+.daily-longest {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.daily-longest strong {
+  color: var(--ink);
+}
+
+/* ---- the insights step ---------------------------------------------------------------------------------------------- */
+.daily-step {
+  gap: 12px;
+}
+.daily-back {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 48px;
+  margin: -8px 0 0 -6px;
+  padding: 0 10px 0 4px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--ink-2);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.daily-back:hover {
+  background: var(--surface-2);
+}
+.daily-back-icon {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .daily-back {
+  margin: -8px -6px 0 0;
+  padding: 0 4px 0 10px;
+}
+[dir='rtl'] .daily-back-icon {
+  transform: none;
+}
+.daily-step-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.insights {
+  display: grid;
+  gap: 18px;
+}
+.insights-said {
+  display: grid;
+  gap: 6px;
+}
+.insights-lead {
+  margin: 0;
+  font-size: var(--text-body);
+  font-weight: 700;
+  line-height: 1.35;
+}
+.insights-line {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+}
+.insights-chart {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.insights-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+.insights-title {
+  color: var(--ink-2);
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+.insights-legend {
+  display: inline-flex;
+  gap: 12px;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+/* A short stroke of each week's colour, as the lines are drawn. */
+.insights-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.insights-key::before {
+  content: '';
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--chart-now);
+}
+.insights-key.is-then::before {
+  background: var(--chart-then);
+}
+.insights-plot {
+  position: relative;
+  border-radius: var(--r-md);
+  outline-offset: 2px;
+  touch-action: pan-y;
+}
+.insights-plot svg {
+  display: block;
+  overflow: visible;
+}
+.insights-grid {
+  stroke: var(--separator);
+  stroke-width: 1;
+}
+.insights-tick,
+.insights-day {
+  fill: var(--ink-3);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.insights-day.is-today {
+  fill: var(--ink);
+  font-weight: 800;
+}
+.insights-cross {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+}
+.insights-then,
+.insights-now {
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.insights-then {
+  stroke: var(--chart-then);
+}
+.insights-now {
+  stroke: var(--chart-now);
+}
+.insights-area {
+  fill: var(--chart-now);
+  opacity: 0.1;
+}
+.insights-end {
+  fill: var(--chart-now);
+  stroke: var(--panel-bg);
+  stroke-width: 2;
+}
+.insights-value {
+  fill: var(--ink);
+  font-size: 12px;
+  font-weight: 750;
+}
+.insights-tip {
+  position: absolute;
+  top: 4px;
+  display: grid;
+  gap: 2px;
+  min-width: 120px;
+  padding: 8px 10px;
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-raised);
+  font-size: var(--text-caption);
+  pointer-events: none;
+  transform: translateX(12px);
+}
+.insights-tip.is-before {
+  transform: translateX(calc(-100% - 12px));
+}
+[dir='rtl'] .insights-tip {
+  transform: translateX(-12px);
+}
+[dir='rtl'] .insights-tip.is-before {
+  transform: translateX(calc(100% + 12px));
+}
+.insights-tip-day {
+  color: var(--ink-3);
+}
+.insights-tip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-3);
+}
+.insights-tip-row strong {
+  color: var(--ink);
+}
+.insights-tip-row::before {
+  content: '';
+  flex: none;
+  width: 10px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--chart-now);
+}
+.insights-tip-row.is-then::before {
+  background: var(--chart-then);
+}
+
+/* ---- the card on Home ----------------------------------------------------------------------------------------------- */
+/* Drawn as the league's line under it (styles/ranks.css `.home-league`), so the two read as one pair. */
+.daily-home {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--glass-rim);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out);
+}
+.daily-home:hover {
+  border-color: var(--border-strong);
+}
+.daily-home-skeleton {
+  margin-bottom: 12px;
+}
+.daily-home-fire {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+}
+.daily-home-words {
+  display: grid;
+  min-width: 0;
+}
+.daily-home-number {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.05;
+}
+.daily-home-unit {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.daily-home .week-row.is-mini {
+  margin-inline-start: auto;
+}
+.daily-home-zer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  min-height: 28px;
+  padding: 0 10px 0 6px;
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  color: var(--ink-2);
+  font-size: var(--text-caption);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+/* Today's Zêr waiting: the one warm mark on the card. */
+.daily-home-zer.is-claim {
+  background: var(--gold);
+  box-shadow: none;
+  color: #3a2400;
+}
+.daily-home-zer.is-claimed {
+  color: var(--success);
+}
+.daily-home-go {
+  flex: none;
+  color: var(--ink-3);
+}
+@media (max-width: 360px) {
+  .daily-home .week-row.is-mini {
+    display: none;
+  }
+  .daily-home-zer {
+    margin-inline-start: auto;
+  }
+}

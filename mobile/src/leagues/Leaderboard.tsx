@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { FlatList, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { FlatList, StyleSheet, Text, View, useWindowDimensions, type ViewToken } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { Segmented } from '../theme/glass';
+import { Chips } from '../theme/Chips';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -19,15 +20,19 @@ import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 
 /**
- * The league screen's Leaderboard tab: everyone ranked, a page at a time. What is ranked (this week's XP, or Zêr
- * or Gewher held now) and who you are compared with are two rows of segmented controls; the screen keeps both
- * choices, so returning from the League tab finds the board as it was.
+ * Rankings' boards: by XP (this week or all time), Zêr or Gewher, compared with everyone, friends or your country, a
+ * page at a time. What is ranked is the first choice, the span a quieter one under it for XP, and who you are compared
+ * with the last; the screen keeps all three. `header` goes above the rows, where XP this week puts your league.
  */
 
 /** What a board ranks; the ids are the API's (`GET /leaderboards/:type`). */
-export type BoardType = 'weekly_xp' | 'zer' | 'gewher';
+export type BoardType = 'weekly_xp' | 'all_time_xp' | 'zer' | 'gewher';
+/** What Rankings ranks by. */
+export type RankKind = 'xp' | 'zer' | 'gewher';
+/** Over what span the XP board counts. */
+export type XpSpan = 'week' | 'all';
 
-/** The weekly XP board's three scopes, as on the web. Game ranks and their boards live on the Ranks screen. */
+/** The three scopes, as on the web. */
 export type Scope = 'global' | 'friends' | 'country';
 const SCOPES: { key: Scope; labelKey: TranslationKey }[] = [
   { key: 'global', labelKey: 'rankings.scope.global' },
@@ -35,11 +40,32 @@ const SCOPES: { key: Scope; labelKey: TranslationKey }[] = [
   { key: 'country', labelKey: 'rankings.scope.country' },
 ];
 
-const KINDS: { key: BoardType; labelKey: TranslationKey; blurbKey: TranslationKey }[] = [
-  { key: 'weekly_xp', labelKey: 'rankings.board.weeklyXp', blurbKey: 'rankings.board.weeklyXpBlurb' },
-  { key: 'zer', labelKey: 'rankings.board.zer', blurbKey: 'rankings.board.zerBlurb' },
-  { key: 'gewher', labelKey: 'rankings.board.gewher', blurbKey: 'rankings.board.gewherBlurb' },
+const KINDS: { key: RankKind; labelKey: TranslationKey }[] = [
+  { key: 'xp', labelKey: 'rankings.board.xp' },
+  { key: 'zer', labelKey: 'rankings.board.zer' },
+  { key: 'gewher', labelKey: 'rankings.board.gewher' },
 ];
+
+const SPANS: { key: XpSpan; labelKey: TranslationKey }[] = [
+  { key: 'week', labelKey: 'rankings.span.week' },
+  { key: 'all', labelKey: 'rankings.span.all' },
+];
+
+/** Each board's line above its rows, saying what it ranks. */
+const BLURB: Record<BoardType, TranslationKey> = {
+  weekly_xp: 'rankings.board.weeklyXpBlurb',
+  all_time_xp: 'rankings.board.allTimeXpBlurb',
+  zer: 'rankings.board.zerBlurb',
+  gewher: 'rankings.board.gewherBlurb',
+};
+
+/** The board behind a choice: XP is this week's or all time's, the balances are their own. */
+function boardFor(kind: RankKind, span: XpSpan): BoardType {
+  if (kind === 'xp') return span === 'all' ? 'all_time_xp' : 'weekly_xp';
+  return kind;
+}
+
+const isXp = (type: BoardType): boolean => type === 'weekly_xp' || type === 'all_time_xp';
 
 export interface BoardEntry {
   userId: string;
@@ -55,7 +81,7 @@ interface Board {
   total: number;
   /** Your own place is null only below the cut of a board that stops at `depth`. */
   me: { rank: number | null; score: number } | null;
-  /** Zêr and Gewher: the board lists the top this many and no further. */
+  /** Every board but this week's lists the top this many and no further. */
   depth?: number;
   /** Country scope only; null when the profile has no country set. */
   country?: string | null;
@@ -65,18 +91,25 @@ interface Board {
 const PAGE = 25;
 
 export function Leaderboard({
-  type,
+  kind,
+  span,
   scope,
-  onType,
+  onKind,
+  onSpan,
   onScope,
+  header,
 }: {
-  type: BoardType;
+  kind: RankKind;
+  span: XpSpan;
   scope: Scope;
-  onType: (next: BoardType) => void;
+  onKind: (next: RankKind) => void;
+  onSpan: (next: XpSpan) => void;
   onScope: (next: Scope) => void;
+  header?: ReactNode;
 }): React.JSX.Element {
   const { client } = useAuth();
   const { t } = useI18n();
+  const type = boardFor(kind, span);
   const [board, setBoard] = useState<Board | null>(null);
   const [entries, setEntries] = useState<BoardEntry[]>([]);
   const [error, setError] = useState<ApiError | null>(null);
@@ -110,46 +143,55 @@ export function Leaderboard({
     setEntries([]);
     setError(null);
   };
+  const choose =
+    <T,>(now: T, set: (next: T) => void) =>
+    (next: T): void => {
+      if (next === now) return;
+      reset();
+      set(next);
+    };
 
   return (
     <>
       <View style={styles.choosers}>
-        <BoardSwitch
-          value={type}
-          onChange={(next) => {
-            if (next === type) return;
-            reset();
-            onType(next);
-          }}
-        />
-        <Segmented<Scope>
-          options={SCOPES.map((s) => s.key)}
-          value={scope}
-          onChange={(next) => {
-            if (next === scope) return;
-            reset();
-            onScope(next);
-          }}
-          labelOf={(key) => t(SCOPES.find((s) => s.key === key)!.labelKey)}
-          wrap
-        />
+        <BoardSwitch value={kind} onChange={choose(kind, onKind)} />
+        {kind === 'xp' ? (
+          <Chips<XpSpan> options={SPANS.map((s) => s.key)} value={span} onChange={choose(span, onSpan)} labelOf={(key) => t(SPANS.find((s) => s.key === key)!.labelKey)} />
+        ) : null}
       </View>
-      <AsyncBoundary loading={!board && !error} error={!board ? error : null} onRetry={() => load(0)} skeleton={<BoardSkeleton />}>
-        {board ? <BoardList board={board} type={type} entries={entries} scope={scope} loadingMore={loadingMore} onMore={() => load(entries.length)} /> : null}
-      </AsyncBoundary>
+      <BoardList
+        board={board}
+        error={error}
+        onRetry={() => load(0)}
+        type={type}
+        entries={entries}
+        scope={scope}
+        loadingMore={loadingMore}
+        onMore={() => load(entries.length)}
+        head={header}
+        scopes={
+          <Segmented<Scope>
+            options={SCOPES.map((s) => s.key)}
+            value={scope}
+            onChange={choose(scope, onScope)}
+            labelOf={(key) => t(SCOPES.find((s) => s.key === key)!.labelKey)}
+            groupLabel={t('rankings.compareWith')}
+            wrap
+          />
+        }
+      />
     </>
   );
 }
 
 /**
- * The switch between the three boards, a segmented control announced as one choice of three. It is all in view
- * because switching boards is the first thing anyone does here. A long name takes a second line on a narrow phone
- * rather than being cut. The coin and gem sit beside the amounts on every row of their boards.
+ * What is ranked, a segmented control announced as one choice of three. It is all in view because switching is the
+ * first thing anyone does here. A long name takes a second line on a narrow phone rather than being cut.
  */
-export function BoardSwitch({ value, onChange }: { value: BoardType; onChange: (next: BoardType) => void }): React.JSX.Element {
+export function BoardSwitch({ value, onChange }: { value: RankKind; onChange: (next: RankKind) => void }): React.JSX.Element {
   const { t } = useI18n();
   return (
-    <Segmented<BoardType>
+    <Segmented<RankKind>
       options={KINDS.map((k) => k.key)}
       value={value}
       onChange={onChange}
@@ -165,7 +207,7 @@ type I18n = ReturnType<typeof useI18n>;
 /** An amount, as a screen reader hears it: the number in full and what it counts. */
 export function amountLabel(t: I18n['t'], type: BoardType, amount: number, locale: I18n['locale']): string {
   const n = formatNumber(amount, locale);
-  if (type === 'weekly_xp') return t('leagues.xpCount', { xp: n });
+  if (isXp(type)) return t('leagues.xpCount', { xp: n });
   return `${n} ${t(type === 'zer' ? 'rankings.board.zer' : 'rankings.board.gewher')}`;
 }
 
@@ -177,7 +219,7 @@ export function BoardAmount({ type, amount }: { type: BoardType; amount: number 
   const { t, locale } = useI18n();
   const { colors } = useTheme();
   const short = formatCompact(amount, locale);
-  if (type === 'weekly_xp') return <Text style={[styles.score, { color: colors.textPrimary }]}>{t('leagues.xpCount', { xp: short })}</Text>;
+  if (isXp(type)) return <Text style={[styles.score, { color: colors.textPrimary }]}>{t('leagues.xpCount', { xp: short })}</Text>;
   return (
     <View style={styles.amount}>
       <Icon name={type === 'zer' ? 'coin' : 'gem'} size={16} color={type === 'zer' ? colors.gold : colors.primary} />
@@ -228,129 +270,162 @@ export function BoardRow({
   );
 }
 
+/** Where your own row is against the screen: on it, scrolled past, still below, or not on the page yet. */
+type MeAt = 'shown' | 'above' | 'below' | 'absent';
+
 /**
- * A board a page at a time, with your row pinned above until a page reaches you. The empty state names the scope
- * (nobody at all, none of your friends, nobody from your country), and a capped balance board's foot says it
- * shows the top.
+ * A board a page at a time under its header, which stays while the board loads or fails. Your row is picked out in
+ * place and kept at the foot of the screen while the page has not reached it or it is still further down. The empty
+ * state names the scope (nobody at all, none of your friends, nobody from your country), and a capped board's foot
+ * says it shows the top.
  */
 function BoardList({
   board,
+  error,
+  onRetry,
   type,
   entries,
   scope,
   loadingMore,
   onMore,
+  head,
+  scopes,
 }: {
-  board: Board;
+  board: Board | null;
+  error: ApiError | null;
+  onRetry: () => void;
   type: BoardType;
   entries: BoardEntry[];
   scope: Scope;
   loadingMore: boolean;
   onMore: () => void;
+  head: ReactNode;
+  scopes: ReactNode;
 }): React.JSX.Element {
   const { locale, t } = useI18n();
   const { colors } = useTheme();
   const { user } = useAuth();
-  if (scope === 'country' && board.country == null) {
-    return (
-      <View style={styles.centered}>
-        <Icon name="globe" size={48} tone="secondary" />
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('rankings.noCountry')}</Text>
-        <Text style={[styles.hint, styles.center, { color: colors.textSecondary }]}>{t('rankings.noCountryBody')}</Text>
-      </View>
-    );
-  }
-  const empty = emptyKeys(scope, type);
-  const kind = KINDS.find((k) => k.key === type)!;
-  // Your own row is picked out in place once a page reaches it, and pinned above the list until then.
   const myId = user?.id ?? null;
-  const meInList = entries.some((e) => e.userId === myId);
-  const more = Math.min(PAGE, board.total - entries.length);
-  const topOnly = entries.length > 0 && more <= 0 && board.depth !== undefined && board.total >= board.depth;
+  const mine = entries.findIndex((e) => e.userId === myId);
+  const [meAt, setMeAt] = useState<MeAt>(mine >= 0 ? 'shown' : 'absent');
+  useEffect(() => setMeAt(mine >= 0 ? 'shown' : 'absent'), [mine]);
+  // The rows on screen say where yours is; kept in a ref, since the list reads its handler once.
+  const mineRef = useRef(mine);
+  mineRef.current = mine;
+  const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const at = mineRef.current;
+    if (at < 0) return;
+    const seen = viewableItems.map((v) => v.index ?? -1).filter((i) => i >= 0);
+    if (seen.length === 0) return;
+    setMeAt(seen.includes(at) ? 'shown' : at > Math.max(...seen) ? 'below' : 'above');
+  }).current;
+
+  const top = (
+    <View style={styles.head}>
+      {head}
+      <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(BLURB[type])}</Text>
+      {scopes}
+    </View>
+  );
+  const empty = emptyKeys(scope, type);
+  const noCountry = scope === 'country' && board !== null && board.country == null;
+  const more = board ? Math.min(PAGE, board.total - entries.length) : 0;
+  const topOnly = board !== null && entries.length > 0 && more <= 0 && board.depth !== undefined && board.total >= board.depth;
+  const pinned = board?.me != null && !noCountry && (meAt === 'absent' || meAt === 'below');
   return (
-    <FlatList
-      data={entries}
-      keyExtractor={(e) => e.userId}
-      contentContainerStyle={styles.list}
-      ListHeaderComponent={
-        <View style={styles.head}>
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(kind.blurbKey)}</Text>
-          {board.me && !meInList ? (
-            <View style={styles.pinned}>
-              <BoardRow
-                entry={{
-                  userId: myId ?? 'me',
-                  username: user?.displayName ?? user?.username ?? t('games.you'),
-                  score: board.me.score,
-                  rank: board.me.rank,
-                  avatarUrl: ownAvatarUrl(user),
-                }}
-                type={type}
-                self
-                depth={board.depth}
-              />
-              {/* Said in words for everyone who reads the screen; the row already says it to a screen reader. */}
-              {board.me.rank === null && board.depth ? (
-                <Text
-                  style={[styles.hint, styles.note, { color: colors.textSecondary }]}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                >
-                  {t('rankings.notInTop', { count: formatNumber(board.depth, locale) })}
-                </Text>
-              ) : null}
+    <View style={styles.fill}>
+      <FlatList
+        data={noCountry ? [] : entries}
+        keyExtractor={(e) => e.userId}
+        contentContainerStyle={styles.list}
+        onViewableItemsChanged={onViewable}
+        ListHeaderComponent={top}
+        renderItem={({ item }) => <BoardRow entry={item} type={type} self={item.userId === myId} depth={board?.depth} />}
+        ListEmptyComponent={
+          !board ? (
+            <AsyncBoundary loading={!error} error={error} onRetry={onRetry} skeleton={<RowsSkeleton />}>
+              {null}
+            </AsyncBoundary>
+          ) : noCountry ? (
+            <View style={styles.centered}>
+              <Icon name="globe" size={48} tone="secondary" />
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{t('rankings.noCountry')}</Text>
+              <Text style={[styles.hint, styles.center, { color: colors.textSecondary }]}>{t('rankings.noCountryBody')}</Text>
             </View>
+          ) : (
+            <View style={styles.centered}>
+              <Text style={[styles.title, { color: colors.textPrimary }]}>{t(empty[0])}</Text>
+              <Text style={[styles.hint, styles.center, { color: colors.textSecondary }]}>{t(empty[1])}</Text>
+            </View>
+          )
+        }
+        ListFooterComponent={
+          more > 0 && entries.length > 0 ? (
+            <Pressable
+              onPress={onMore}
+              disabled={loadingMore}
+              accessibilityRole="button"
+              accessibilityState={{ busy: loadingMore, disabled: loadingMore }}
+              style={({ pressed }) => [styles.more, loadingMore && styles.busy, pressed && heldDim]}
+            >
+              <Text style={[styles.moreText, { color: colors.primary }]}>{t('rankings.showMore', { count: more })}</Text>
+            </Pressable>
+          ) : topOnly ? (
+            <Text style={[styles.hint, styles.center, styles.end, { color: colors.textSecondary }]}>
+              {t('rankings.topOnly', { count: formatNumber(board!.depth!, locale) })}
+            </Text>
+          ) : null
+        }
+      />
+      {/* Your standing, at the foot of the screen while the board above has not reached you. */}
+      {pinned && board?.me ? (
+        <View
+          style={[styles.pinned, { backgroundColor: colors.background, borderTopColor: colors.separator }]}
+          testID="rankings-pinned"
+          // On the board as well, further down: a screen reader finds it there.
+          {...(mine >= 0 ? { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const } : {})}
+        >
+          <BoardRow
+            entry={{
+              userId: myId ?? 'me',
+              username: user?.displayName ?? user?.username ?? t('games.you'),
+              score: board.me.score,
+              rank: board.me.rank,
+              avatarUrl: ownAvatarUrl(user),
+            }}
+            type={type}
+            self
+            depth={board.depth}
+          />
+          {/* Said in words for everyone who reads the screen; the row already says it to a screen reader. */}
+          {board.me.rank === null && board.depth ? (
+            <Text style={[styles.hint, styles.note, { color: colors.textSecondary }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              {t('rankings.notInTop', { count: formatNumber(board.depth, locale) })}
+            </Text>
           ) : null}
         </View>
-      }
-      renderItem={({ item }) => <BoardRow entry={item} type={type} self={item.userId === myId} depth={board.depth} />}
-      ListEmptyComponent={
-        <View style={styles.centered}>
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t(empty[0])}</Text>
-          <Text style={[styles.hint, styles.center, { color: colors.textSecondary }]}>{t(empty[1])}</Text>
-        </View>
-      }
-      ListFooterComponent={
-        more > 0 && entries.length > 0 ? (
-          <Pressable
-            onPress={onMore}
-            disabled={loadingMore}
-            accessibilityRole="button"
-            accessibilityState={{ busy: loadingMore, disabled: loadingMore }}
-            style={({ pressed }) => [styles.more, loadingMore && styles.busy, pressed && heldDim]}
-          >
-            <Text style={[styles.moreText, { color: colors.primary }]}>{t('rankings.showMore', { count: more })}</Text>
-          </Pressable>
-        ) : topOnly ? (
-          <Text style={[styles.hint, styles.center, styles.end, { color: colors.textSecondary }]}>
-            {t('rankings.topOnly', { count: formatNumber(board.depth!, locale) })}
-          </Text>
-        ) : null
-      }
-    />
+      ) : null}
+    </View>
   );
 }
 
-/** The weekly board's empty states talk about earning this week; a balance has no week. */
+/** This week's empty states talk about earning this week, the balances' about holding some; all time has neither. */
 function emptyKeys(scope: Scope, type: BoardType): readonly [TranslationKey, TranslationKey] {
   if (scope === 'friends') return ['rankings.empty.friends', 'rankings.empty.friendsBody'];
   if (scope === 'country') return ['rankings.empty.country', type === 'weekly_xp' ? 'rankings.empty.countryBody' : 'rankings.empty.balanceCountryBody'];
-  return ['rankings.empty.global', type === 'weekly_xp' ? 'rankings.empty.globalBody' : 'rankings.empty.balanceGlobalBody'];
+  return ['rankings.empty.global', isXp(type) ? 'rankings.empty.globalBody' : 'rankings.empty.balanceGlobalBody'];
 }
 
 /** The height of a row, for how many grey ones fill the screen while the board loads. */
 const ROW = MIN_TOUCH_TARGET + 4 + spacing.xs;
 
-/** The loading placeholder: the board's line, then rows of place, face, name and amount. */
-function BoardSkeleton(): React.JSX.Element {
+/** The rows while the board loads: place, face, name and amount, in grey. */
+function RowsSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const { height } = useWindowDimensions();
-  const rows = Math.max(10, Math.ceil((height - 320) / ROW));
+  const rows = Math.max(8, Math.ceil((height - 420) / ROW));
   return (
-    <View style={styles.list} accessibilityLabel={t('common.loading')}>
-      <View style={styles.head}>
-        <SkeletonText size={typography.sizes.sm} lineHeight={19} width="80%" />
-      </View>
+    <View style={styles.rows} accessibilityLabel={t('common.loading')}>
       {Array.from({ length: rows }, (_, i) => (
         <View key={i} style={styles.row}>
           <SkeletonText size={typography.sizes.sm} width={14} align="center" style={styles.rankSkeleton} />
@@ -364,10 +439,12 @@ function BoardSkeleton(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  choosers: { paddingHorizontal: layout.gutter, marginBottom: spacing.sm, gap: spacing.sm },
+  fill: { flex: 1 },
+  choosers: { paddingHorizontal: layout.gutter, marginBottom: spacing.xs, gap: spacing.xs },
   list: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingTop: spacing.sm, gap: spacing.xs, paddingBottom: spacing.xxl },
   head: { gap: spacing.sm, marginBottom: spacing.sm },
-  pinned: { gap: spacing.xs },
+  rows: { gap: spacing.xs },
+  pinned: { paddingHorizontal: layout.gutter, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: spacing.xs, borderTopWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.sm, minHeight: MIN_TOUCH_TARGET + 4 },
   rank: { width: 26, textAlign: 'center', fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   name: { flex: 1, fontSize: typography.sizes.md },

@@ -23,10 +23,8 @@ import { useLobbyUpdates } from '../play/usePlay';
 import { playError } from '../play/playApi';
 import { useQuietInvites } from '../play/quietInvites';
 import { PlayerReport } from '../reports/PlayerReport';
-import type { GameAccess, RatedState } from '@kurda/shared';
+import type { GameAccess } from '@kurda/shared';
 import { dialectDirection } from '@kurda/shared';
-import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
-import { RankResult } from '../ranks/RankResult';
 import { haptic } from '../lib/haptics';
 import { MissedRhymes, type RhymeHint } from '../components/WordAnswer';
 
@@ -57,8 +55,6 @@ interface MatchState {
   access?: GameAccess;
   /** The code a friend types while the lobby can be joined; null after. */
   code?: string | null;
-  /** Rated or Friendly, shown before anyone joins and decided at the start. */
-  rated?: RatedState;
   /** Everyone in it by seat, as this viewer may see them. */
   players: SeatPlayer[];
   me: { seat: number; score: number; accepted: number; usedWords: string[] } | null;
@@ -261,19 +257,6 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           invite={match.isHost ? <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} /> : undefined}
         />
         <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} game="rhyme-match" gameId={id} />
-        {/* Rated or Friendly: seen before joining, changed by the host here. */}
-        <LobbyRated
-          game="rhyme-match"
-          lobbyId={id}
-          state={match.rated}
-          isHost={match.isHost}
-          member={match.me != null}
-          playerCount={playerCount}
-          seatName={(seat) => {
-            const p = match.players.find((x) => x.seat === seat);
-            return p ? seatName(p, t) : t('stories.game.playerN', { seat });
-          }}
-        />
         {match.isHost && <InvitedList game="rhyme-match" lobbyId={id} room={room} headingLevel={2} />}
         {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {match.me == null ? (
@@ -301,9 +284,6 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           {mine?.rank === 1 && <TrophyIcon size={26} className="verdict-icon" />}
           {mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}
         </h2>
-        {match.rated && <RatedBadge rated={shownRated(match.rated)} size="sm" className="match-rated" />}
-        {/* What the game did to your rank, then the badges it earned. */}
-        {match.me != null && <RankResult game="rhyme-match" gameRef={id} />}
         {results && (
           <>
             <p className="muted">{t('games.rhymeMatch.promptWas', { word: results.prompt })}</p>
@@ -349,7 +329,6 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   // Active.
   return (
     <div className="match-play">
-      {match.rated && <RatedBadge rated={shownRated(match.rated)} size="sm" className="match-rated" />}
       <div className="rhyme-stage">
         <div className="rhyme-prompt-box">
           <span className="rhyme-label">{t('games.rhyme.rhymeWith')}</span>

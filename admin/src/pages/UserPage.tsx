@@ -43,8 +43,8 @@ import {
 import { AgeTag, LinkedVia, SanctionLine } from './CasePeople';
 import { PERSON_KINDS, SanctionFields, newSanctionDraft, sanctionDraftProblems, type SanctionDraft } from './SanctionParts';
 import { ItemsPanel, WalletPanel } from './UserEconomy';
-import { BadgesTab, RanksTab } from './UserProgress';
-import { holdsRankTools } from '../progress';
+import { BadgesTab } from './UserProgress';
+import { holdsProgressTools } from '../progress';
 import { usersListHref, type BanState } from './Users';
 
 /** `GET /admin/users/:id`: the moderation fields only for a reader who can moderate. */
@@ -69,13 +69,13 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; adminUsername?: string | null; createdAt: string }>;
 }
 
-type TabKey = 'profile' | 'standing' | 'reports' | 'wallet' | 'items' | 'ranks' | 'badges' | 'sessions' | 'audit';
+type TabKey = 'profile' | 'standing' | 'reports' | 'wallet' | 'items' | 'badges' | 'sessions' | 'audit';
 
 /**
  * One person (#/users/<id>/<tab>): who they are, their standing with sanctions to give and lift, reports about and
  * by them, wallet and items, sessions, and the account's admin history. Support staff see the page without what
  * moderation knows (the API leaves it out), so Standing and Reports are for moderators; balances change only for a
- * superadmin, and ranks and badges follow the rank tools' roles.
+ * superadmin, and badges follow the progress tools' roles.
  */
 export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.Element {
   const loaded = useLoad(() => api<UserDetail>(`/admin/users/${encodeURIComponent(id)}`), [id]);
@@ -83,7 +83,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
   const u = loaded.data;
   const canModerate = session.capabilities.includes('moderation.act');
   const canAdjust = session.staffRoles.includes('superadmin');
-  const rankTools = holdsRankTools(session.staffRoles);
+  const progressTools = holdsProgressTools(session.staffRoles);
   const moderation = !!u && u.sanctions !== undefined;
 
   const tabs: Array<{ key: TabKey; label: string; count?: number }> = [
@@ -96,7 +96,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
       : []),
     { key: 'wallet', label: 'Wallet & ledger' },
     { key: 'items', label: 'Items' },
-    ...(rankTools ? [{ key: 'ranks' as const, label: 'Ranks' }, { key: 'badges' as const, label: 'Badges' }] : []),
+    ...(progressTools ? [{ key: 'badges' as const, label: 'Badges' }] : []),
     { key: 'sessions', label: 'Sessions', count: u?.sessions.length || undefined },
     { key: 'audit', label: 'Audit' },
   ];
@@ -158,8 +158,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
         {current === 'reports' && moderation && <ReportsTab user={u} />}
         {current === 'wallet' && <WalletPanel user={u} canAdjust={canAdjust} onChanged={reload} />}
         {current === 'items' && <ItemsPanel user={u} canAdjust={canAdjust} />}
-        {current === 'ranks' && rankTools && <RanksTab user={u} />}
-        {current === 'badges' && rankTools && <BadgesTab user={u} />}
+        {current === 'badges' && progressTools && <BadgesTab user={u} />}
         {current === 'sessions' && <SessionsTab user={u} canModerate={canModerate} onChanged={reload} />}
         {current === 'audit' && <AuditTab user={u} />}
       </div>

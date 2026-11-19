@@ -1,11 +1,10 @@
 import type pg from 'pg';
-import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { foldDiacritics, handleName, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ShowcaseBadge } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
-import { RankService } from '../ranks/service.js';
 import { escapeLike } from '../db/like.js';
 import { inLeaguesSql } from '../leagues/service.js';
 import { profileShowcase } from '../badges/service.js';
@@ -63,8 +62,6 @@ export interface PublicProfile {
   /** Their league tier key (translated by the apps), or null when never in a league or not taking part. Same as `league?.tier`, for older apps. */
   tier?: LeagueTier | null;
   league?: ProfileLeague | null;
-  /** Their Game Ranks per game played: the current tier (or "Resting" to others after 28 days without a rated game), and the season's and all-time best. */
-  ranks?: ProfileRank[];
   /** The frame they wear around their avatar (an owned season or shop frame), or null. */
   frameSku?: string | null;
   /** That frame's picture when it is a shop frame; season frames are drawn by the apps. */
@@ -103,21 +100,16 @@ const FOLDED_NAME = `translate(lower(u.display_name), 'êîûçş', 'eiucs')`;
  * earlier.
  */
 export class SocialService {
-  private readonly ranks: Pick<RankService, 'profileRanks'>;
-
   constructor(
     private readonly pool: pg.Pool,
     private readonly friends: FriendService,
-    ranks?: Pick<RankService, 'profileRanks'>,
-  ) {
-    this.ranks = ranks ?? new RankService(pool);
-  }
+  ) {}
 
   /**
    * People by username or display name, excluding self, blocks and unsearchable users. Matches anywhere in a name
-   * ("serk" finds "berserker") and, from four letters with no match, the nearest names, diacritics folded. Ranked for
-   * finding a person: the exact username, then matching friends, then everyone else by match quality, near misses
-   * closest first. One query, with friendship read in the same pass.
+   * ("serk" finds "berserker") and, from four letters when no name holds the query, the nearest names, diacritics
+   * folded. Ranked for finding a person: the exact username, then matching friends, then everyone else by match quality,
+   * near misses closest first. One query, with friendship read in the same pass.
    */
   async search(viewerId: string, query: string, publicUrl: PublicUrl = () => null, limit = 20): Promise<SearchHit[]> {
     // "@hamo." copied from a sentence is a search for hamo (shared/src/username.ts).
@@ -127,22 +119,9 @@ export class SocialService {
     const startsOrWordStarts = `${FOLDED_USERNAME} LIKE $3 || '%' OR ${FOLDED_NAME} LIKE $3 || '%'
             OR ${FOLDED_NAME} LIKE '% ' || $3 || '%' OR ${FOLDED_USERNAME} LIKE '%\\_' || $3 || '%'`;
     const anywhere = `${FOLDED_USERNAME} LIKE '%' || $3 || '%' OR ${FOLDED_NAME} LIKE '%' || $3 || '%'`;
-    const nearly = `${FOLDED_USERNAME} % $2 OR $2 <% ${FOLDED_USERNAME} OR ${FOLDED_NAME} % $2 OR $2 <% ${FOLDED_NAME}`;
-    const matched = [folded.length >= MIN_ANYWHERE ? anywhere : startsOrWordStarts, ...(folded.length >= MIN_FUZZY ? [nearly] : [])].join(' OR ');
-    const rows = await this.pool.query<{
-      id: string;
-      username: string;
-      display_name: string | null;
-      profile_photo_key: string | null;
-      selected_avatar_key: string | null;
-      friend: boolean;
-    }>(
-      `SELECT * FROM (SELECT hit.*, count(*) FILTER (WHERE tier < 5) OVER () AS holding FROM (
-         SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key,
-                EXISTS (
-                  SELECT 1 FROM friendships f
-                   WHERE f.user_lo = LEAST($1::uuid, u.id) AND f.user_hi = GREATEST($1::uuid, u.id) AND f.status = 'accepted'
-                ) AS friend,
+    // Someone who may be found, with what ranks them; the caller adds how they match.
+    const person = `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key,
+                u.id IN (SELECT id FROM friends) AS friend,
                 CASE
                   WHEN ${FOLDED_USERNAME} = $2 THEN 0
                   WHEN ${FOLDED_USERNAME} LIKE $3 || '%' THEN 1
@@ -161,15 +140,43 @@ export class SocialService {
             AND NOT ${notKnownAdultSql('u')}
             -- a guest (auth/guest.ts) is nobody's to find until the account is claimed
             AND NOT u.guest
-            AND (${matched})
             AND NOT EXISTS (
               SELECT 1 FROM blocks b
                WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
-            )
-       ) hit) ranked
-       -- near misses only when no name holds what was typed: a list that has
-       -- the person asked for is not improved by names merely like theirs
-       WHERE tier < 5 OR holding = 0
+            )`;
+    // Each kind of near miss is its own index scan, gathered as ids. Tested in one OR, or joined back to the table, the
+    // planner takes the similarity tests for nearly free and reads every user.
+    const nearly = [`${FOLDED_USERNAME} % $2`, `$2 <% ${FOLDED_USERNAME}`, `${FOLDED_NAME} % $2`, `$2 <% ${FOLDED_NAME}`]
+      .map((test) => `SELECT u.id FROM users u WHERE u.deleted_at IS NULL AND ${test}`)
+      .join(' UNION ');
+    // Near misses only when no name holds what was typed: a list that has the person asked for is not improved by names
+    // merely like theirs.
+    const nearMisses =
+      folded.length >= MIN_FUZZY
+        ? `UNION ALL
+         ${person}
+            AND NOT EXISTS (SELECT 1 FROM held)
+            AND u.id = ANY (ARRAY(${nearly}))`
+        : '';
+    const rows = await this.pool.query<{
+      id: string;
+      username: string;
+      display_name: string | null;
+      profile_photo_key: string | null;
+      selected_avatar_key: string | null;
+      friend: boolean;
+    }>(
+      `WITH friends AS (
+         SELECT CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END AS id
+           FROM friendships f WHERE (f.user_lo = $1 OR f.user_hi = $1) AND f.status = 'accepted'
+       ), held AS (
+         ${person}
+            AND (${folded.length >= MIN_ANYWHERE ? anywhere : startsOrWordStarts})
+       )
+       SELECT * FROM (
+         SELECT * FROM held
+         ${nearMisses}
+       ) found
        ORDER BY (tier = 0) DESC, (friend AND tier < 5) DESC, tier, closeness DESC, length(username), username
        LIMIT $4`,
       [viewerId, folded, escapeLike(folded), limit],
@@ -202,9 +209,9 @@ export class SocialService {
   /**
    * Someone's public profile, gated by privacy and blocks. `viewerId` is null for a signed-out reader, the least
    * privileged case: no blocks, no friends, so friends-only and nobody profiles show what any stranger sees. Without
-   * `ranksAndBadges` the ranks and showcase are left unread, for callers that show neither.
+   * `badges` the showcase is left unread, for callers that do not show it.
    */
-  async profile(viewerId: string | null, targetId: string, opts: { ranksAndBadges?: boolean } = {}): Promise<PublicProfile> {
+  async profile(viewerId: string | null, targetId: string, opts: { badges?: boolean } = {}): Promise<PublicProfile> {
     const row = await this.pool.query<{
       username: string;
       display_name: string | null;
@@ -360,14 +367,8 @@ export class SocialService {
       u.favorite_story_id && u.fs_title != null
         ? { id: u.favorite_story_id, title: u.fs_title, type: u.fs_type ?? '', status: u.fs_status ?? '' }
         : null;
-    const [ranks, badges] =
-      opts.ranksAndBadges === false
-        ? [undefined, undefined]
-        : await Promise.all([
-            this.ranks.profileRanks(targetId, isSelf),
-            // a minor's showcase only to themselves and their friends
-            profileShowcase(this.pool, targetId, viewerId),
-          ]);
+    // a minor's showcase only to themselves and their friends
+    const badges = opts.badges === false ? undefined : await profileShowcase(this.pool, targetId, viewerId);
     return {
       ...base,
       bio: u.bio,
@@ -384,7 +385,6 @@ export class SocialService {
       streak: u.streak,
       tier: toLeagueTier(u.tier),
       league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
-      ranks,
       frameSku: u.frame_sku,
       frameAssetKey: u.frame_asset,
       achievements: u.achievements,

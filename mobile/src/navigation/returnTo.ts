@@ -12,8 +12,8 @@ export const ROOT_PLACES: ReadonlySet<keyof RootStackParamList> = new Set<keyof 
   'Search',
   'PracticeHub',
   'Shop',
-  'League',
-  'Season',
+  'Rankings',
+  'LeagueTable',
   'Badges',
   'Tree',
   'FriendRequests',
@@ -54,17 +54,34 @@ export function returningTo<Action extends NavigationAction>(action: Action, pla
   return { ...action, payload: { ...action.payload, pop: true } };
 }
 
-/** The stack's own router with `returningTo` in front of it, for a navigator's `UNSTABLE_router`. */
-function placesRouter<ParamList extends ParamListBase>(places: ReadonlySet<string>) {
+/**
+ * Screens that became Rankings, and what each opens on: the league's name opens XP this week, where the league is. Older
+ * notifications and links still name them.
+ */
+export const RENAMED: Readonly<Record<string, { name: keyof RootStackParamList; params?: object }>> = {
+  League: { name: 'Rankings', params: { board: 'xp', span: 'week' } },
+  Ranks: { name: 'Rankings' },
+  Season: { name: 'Rankings' },
+};
+
+/** A way to a screen under an older name goes to the screen it became. */
+export function renamed<Action extends NavigationAction>(action: Action, names: Readonly<Record<string, { name: string; params?: object }>>): Action {
+  if (!isNavigate(action) || !Object.hasOwn(names, action.payload.name)) return action;
+  const to = names[action.payload.name]!;
+  return { ...action, payload: { ...action.payload, name: to.name, params: to.params } };
+}
+
+/** The stack's own router with `renamed` and `returningTo` in front of it, for a navigator's `UNSTABLE_router`. */
+function placesRouter<ParamList extends ParamListBase>(places: ReadonlySet<string>, names: Readonly<Record<string, { name: string; params?: object }>> = {}) {
   return <Action extends NavigationAction>(
     original: Router<StackNavigationState<ParamList>, Action>,
   ): Partial<Router<StackNavigationState<ParamList>, Action>> => ({
-    getStateForAction: (state, action, options) => original.getStateForAction(state, returningTo(action, places), options),
+    getStateForAction: (state, action, options) => original.getStateForAction(state, returningTo(renamed(action, names), places), options),
   });
 }
 
 /** For the signed-in root stack. */
-export const rootRouter = placesRouter<RootStackParamList>(ROOT_PLACES);
+export const rootRouter = placesRouter<RootStackParamList>(ROOT_PLACES, RENAMED);
 
 /** For the screens before signing in, and the sign-in form a guest opens over the app. */
 export const authRouter = placesRouter<AuthStackParamList>(AUTH_PLACES);

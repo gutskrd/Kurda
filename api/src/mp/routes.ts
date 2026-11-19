@@ -7,7 +7,6 @@ import { gameNotFound } from '../play/errors.js';
 import { requireBirthMonth } from '../users/age.js';
 import type { RoomBus } from '../realtime/bus.js';
 import type { XpService } from '../xp/service.js';
-import type { RankService } from '../ranks/service.js';
 import type { LobbyChange } from '../play/types.js';
 import type { FriendService } from '../friends/service.js';
 import { StoryGameNotifier } from '../story-games/notifier.js';
@@ -40,7 +39,6 @@ export interface MultiplayerRouteDeps {
   /** the realtime room bus: wakes a game's long-polls on every instance */
   bus: RoomBus | null;
   xp: XpService;
-  ranks?: RankService;
   /** the chat pipeline, for the games that take free text, and the offense ladder */
   freeText?: Omit<FreeTextDeps, 'db'>;
   /** the play layer's `play_changed` */
@@ -69,7 +67,6 @@ export function registerMultiplayerRoutes(app: FastifyInstance, deps: Multiplaye
   const notifier = new StoryGameNotifier(deps.bus, app.log, { roomPrefix: MP_ROOM_PREFIX });
   const mp = new MultiplayerService(app.db, {
     xp: deps.xp,
-    ranks: deps.ranks,
     notifier,
     freeText: deps.freeText,
     onChange: deps.onChange,

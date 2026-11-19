@@ -93,7 +93,6 @@ const lobbySchema = z
     turnSeconds: turnSeconds.default(LAST_LETTER_DEFAULT_TURN_SECONDS),
     maxPlayers: z.number().int().min(LAST_LETTER_MIN_PLAYERS).max(LAST_LETTER_MAX_PLAYERS).default(LAST_LETTER_MAX_PLAYERS),
     access: z.enum(['friends', 'open']).default('friends'),
-    rated: z.boolean().optional(),
   })
   .transform(
     (s): LobbyChoices<LastLetterSettings> => ({
@@ -101,7 +100,6 @@ const lobbySchema = z
       dialect: s.dialect,
       maxPlayers: s.maxPlayers,
       access: s.access,
-      rated: s.rated,
     }),
   );
 

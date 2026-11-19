@@ -3,6 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Profile } from './Profile';
 import { renderApp, routedFetch } from '../test/utils';
+import { todayView } from '../test/today';
 import { en } from '../i18n/en';
 
 afterEach(() => {
@@ -82,6 +83,29 @@ describe('Profile view (full, read-only)', () => {
     expect(fact(en['profile.stat.daysLearned'])).toBe('41');
     expect(fact(en['profile.stat.freezes'])).toBe('1');
     expect(screen.getByText(en['profile.freezeHint'].replace('{count}', '5'))).toBeInTheDocument();
+  });
+
+  // Your streak is the way into the daily view, opened in place.
+  it('opens the daily view from your streak', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/me/today': todayView({ streak: { current: 5, longest: 9 } }),
+          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/friends': { friends: [], total: 0 },
+          '/me': { user: meUser },
+        }),
+      ),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+    await screen.findByText('Ada Lovelace');
+
+    const streak = screen.getByRole('button', { name: /Streak/ });
+    expect(streak).toHaveAttribute('aria-haspopup', 'dialog');
+    await userEvent.click(streak);
+    const sheet = screen.getByRole('dialog', { name: 'Streak' });
+    expect(await within(sheet).findByRole('heading', { name: '5-day streak' })).toBeInTheDocument();
   });
 
   // The numbers sit in the card with your name, ahead of the activity, in one column on any screen.

@@ -21,11 +21,11 @@ const range = (from: string, n: number): string[] =>
   Array.from({ length: n }, (_, i) => new Date(Date.parse(`${from}T00:00:00Z`) + i * 86_400_000).toISOString().slice(0, 10));
 
 describe('badge measures', () => {
-  it('has a measure for every badge in the catalogue, and every badge is moved by some event', () => {
+  it('has a measure for every badge in the catalogue, and every badge still awarded is moved by some event', () => {
     const triggered = new Set<string>(Object.values(BADGE_TRIGGERS).flat());
     for (const b of BADGES) {
       expect(MEASURES[b.measure], b.key).toBeDefined();
-      expect(triggered.has(b.key), b.key).toBe(true);
+      expect(triggered.has(b.key), b.key).toBe(!b.retired);
     }
   });
 

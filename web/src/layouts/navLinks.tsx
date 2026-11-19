@@ -27,10 +27,7 @@ export function publishedDictionary(locale: AppLocale): string {
  */
 export const OWNS: Record<'home' | 'learn' | 'messages' | 'profile', (pathname: string) => boolean> = {
   home: (p) => p === '/app' || p === '/app/' || under(p, '/app/library') || under(p, '/app/dimen') || under(p, '/app/civak'),
-  learn: (p) =>
-    ['/app/learn', '/app/games', '/app/alphabet', '/app/dictionary', '/app/rankings', '/app/leagues', '/app/season', '/app/ranks'].some(
-      (base) => under(p, base),
-    ),
+  learn: (p) => ['/app/learn', '/app/games', '/app/alphabet', '/app/dictionary', '/app/rankings'].some((base) => under(p, base)),
   messages: (p) => ['/app/messages', '/app/friends', '/app/letters'].some((base) => under(p, base)),
   profile: (p) =>
     ['/app/profile', '/app/settings', '/app/shop', '/app/saved', '/app/badges', '/app/tree'].some((base) => under(p, base)),

@@ -1,4 +1,4 @@
-import type { LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge } from '@kurda/shared';
+import type { LeagueTier, ProfileLeague, ShowcaseBadge } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
 import { cosmeticArtUrl, resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
 import type { PublicProfile } from './service.js';
@@ -34,8 +34,6 @@ export interface PublicProfileDto {
   /** league tier key, or null for someone not in the leagues (see `PublicProfile.tier`) */
   tier?: LeagueTier | null;
   league?: ProfileLeague | null;
-  /** Game Ranks per game played (shared `ProfileRank`); "Resting" ones carry no tier for others */
-  ranks?: ProfileRank[];
   /** The frame around the avatar: a season frame or a shop frame; null for none. */
   frameSku?: string | null;
   /** A shop frame's picture to lay round the avatar; null for a season frame, which the apps draw. */
@@ -88,7 +86,6 @@ export function toPublicProfileDto(
     streak: profile.streak,
     tier: profile.tier,
     league: profile.league,
-    ranks: profile.ranks,
     frameSku: profile.frameSku ?? null,
     frameUrl: profile.frameAssetKey ? cosmeticArtUrl(profile.frameAssetKey, publicUrl) : null,
     achievements: profile.achievements,

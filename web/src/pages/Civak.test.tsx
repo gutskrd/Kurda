@@ -6,6 +6,7 @@ import { useLocation } from 'react-router-dom';
 import { Civak, firstPage } from './Civak';
 import { AppGate } from '../components/AppGate';
 import { renderApp, jsonResponse } from '../test/utils';
+import { fourDayView } from '../test/today';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -697,57 +698,43 @@ describe('Civak', () => {
     expect(screen.getByText('axaftin')).toBeInTheDocument();
   });
 
-  // While today's reward waits, Claim is the one filled button and the + is drawn quietly until claimed.
-  it('has one filled button while today’s reward waits: Claim, with the + drawn quietly until it is claimed', async () => {
+  // The wall's + is its one filled button; today's Zêr waits in the daily card, which opens the daily view.
+  it('opens the daily view from the card above the wall, and keeps the + as the one filled button', async () => {
     signIn();
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
         if (url.includes('/feed')) return jsonResponse(200, { items: [item('library:s1')] });
-        if (url.includes('/rewards/daily/claim')) return jsonResponse(200, { claimed: true, cycleDay: 3, reward: 20, balance: 120 });
-        if (url.includes('/rewards/daily')) {
-          return jsonResponse(200, { canClaim: true, claimableDay: 3, reward: 20, schedule: [], alreadyClaimedToday: false, cycleDay: 2 });
-        }
-        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 100, gems: 0 }, history: [] });
+        if (url.includes('/me/today')) return jsonResponse(200, fourDayView());
         if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
         return jsonResponse(200, {});
       }),
     );
     renderApp(<Civak />, ['/app/civak']);
 
-    const claim = await screen.findByRole('button', { name: 'Claim daily Zêr' });
+    const card = await screen.findByRole('button', { name: '4-day streak. +20 Zêr to claim today' });
     const plus = await screen.findByRole('button', { name: 'Post something' });
-    expect(claim).toHaveClass('btn-primary');
-    await waitFor(() => expect(plus).toHaveClass('is-secondary'));
-
-    await userEvent.click(claim);
-    // Claimed: nothing competes with the + any more, and it is the wall's filled button again.
-    await waitFor(() => expect(plus).not.toHaveClass('is-secondary'));
-    // And the claim landed: the coin is marked for its pop, with its sparks beside it.
-    expect(document.querySelector('.zer-coin')).toHaveClass('is-landed');
-    expect(document.querySelector('.zer-burst')).not.toBeNull();
+    expect(plus).not.toHaveClass('is-secondary');
+    expect(document.querySelectorAll('.btn-primary')).toHaveLength(0);
+    await userEvent.click(card);
+    expect(screen.getByRole('dialog', { name: 'Streak' })).toBeInTheDocument();
   });
 
-  it('leaves the + filled on a day with nothing to claim', async () => {
+  it('shows nothing above the wall when the daily view cannot be had', async () => {
     signIn();
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
         if (url.includes('/feed')) return jsonResponse(200, { items: [item('library:s1')] });
-        if (url.includes('/rewards/daily')) {
-          return jsonResponse(200, { canClaim: false, claimableDay: 3, reward: 20, schedule: [], alreadyClaimedToday: true, cycleDay: 3 });
-        }
-        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 100, gems: 0 }, history: [] });
+        if (url.includes('/me/today')) return jsonResponse(404, { code: 'NOT_FOUND', message: 'not found' });
         if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
         return jsonResponse(200, {});
       }),
     );
     renderApp(<Civak />, ['/app/civak']);
 
-    const plus = await screen.findByRole('button', { name: 'Post something' });
-    // The day's reward is in: its card steps aside, and the + keeps its fill.
-    await waitFor(() => expect(document.querySelector('.zer-card')).toBeNull());
-    expect(plus).not.toHaveClass('is-secondary');
+    await screen.findByRole('button', { name: 'Post something' });
+    await waitFor(() => expect(document.querySelector('.daily-home, .daily-home-skeleton')).toBeNull());
   });
 
   describe('coming back to the wall', () => {

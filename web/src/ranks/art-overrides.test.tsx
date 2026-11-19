@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { SEASON_FRAME_INNER } from '@kurda/shared';
-import { BadgeMedal, FrameOverlay, LeagueEmblem, PlacementEmblem, RankEmblem, SeasonFrame } from './art';
+import { BadgeMedal, FrameOverlay, LeagueEmblem, SeasonFrame } from './art';
 import { ART_OVERRIDES_KEY, resetArtOverridesForTests } from '../art/overrides';
 
 /*
@@ -12,7 +12,6 @@ import { ART_OVERRIDES_KEY, resetArtOverridesForTests } from '../art/overrides';
 const AGIR = 'https://cdn.test/art/badge-agir.png';
 const AGIR_ZER = 'https://cdn.test/art/badge-agir-zer.png';
 const SECRET = 'https://cdn.test/art/badge-pisika-wane.png';
-const GIR = 'https://cdn.test/art/rank-gir.png';
 const KANI = 'https://cdn.test/art/league-kani.png';
 const LUTKE_RING = 'https://cdn.test/art/frame-lutke.png';
 
@@ -85,41 +84,6 @@ describe('a badge with an uploaded picture', () => {
     const locked = container.querySelector('.art.art-badge.is-locked');
     expect(pictureIn(locked)).toHaveAttribute('src', AGIR);
     expect(pictureIn(locked)).toHaveAttribute('alt', 'Agir · not earned yet');
-  });
-});
-
-describe('a rank emblem with an uploaded picture', () => {
-  it('draws one picture for the tier, whatever its division or season', () => {
-    replaced({ 'rank:gir': GIR });
-    const { container } = render(
-      <>
-        <RankEmblem tier="gir" division={3} size={56} title="Gir III" />
-        <RankEmblem tier="gir" season={{ name: 'payiz', year: 2026 }} size={44} title="Gir, autumn" className="extra" />
-        <RankEmblem tier="ciya" division={1} title="Çiya I" />
-      </>,
-    );
-    const [divided, seasonal] = screen.getAllByRole('img', { name: /^Gir/ }) as HTMLImageElement[];
-    expect(divided).toHaveAttribute('src', GIR);
-    expect(divided).toHaveAttribute('width', '56');
-    expect(divided!.closest('.art.art-rank.is-gir')).not.toBeNull();
-    expect(seasonal).toHaveAttribute('src', GIR);
-    expect(seasonal!.closest('.art-rank.extra')).not.toBeNull();
-    // A tier nobody replaced is still drawn.
-    expect(screen.getByRole('img', { name: 'Çiya I' }).tagName.toLowerCase()).toBe('svg');
-    expect(container.querySelectorAll('img')).toHaveLength(2);
-  });
-
-  it('leaves the placement emblem drawn', () => {
-    replaced({ 'rank:gir': GIR, 'rank:dest': 'https://cdn.test/art/rank-dest.png' });
-    const { container } = render(<PlacementEmblem done={2} title="Placing 2/5" />);
-    expect(container.querySelector('img')).toBeNull();
-    expect(screen.getByRole('img', { name: 'Placing 2/5' }).tagName.toLowerCase()).toBe('svg');
-  });
-
-  it('draws the art when nothing replaces it', () => {
-    const { container } = render(<RankEmblem tier="gir" division={2} title="Gir II" />);
-    expect(container.querySelector('img')).toBeNull();
-    expect(container.querySelector('.art-rank.is-gir svg')).not.toBeNull();
   });
 });
 

@@ -138,12 +138,11 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     expect(screen.getByRole('button', { name: 'Gir season frame' })).toBeTruthy();
   });
 
-  it('says how frames are earned when you have none, with the way to the season and to the shop that sells its own', async () => {
+  it('says where frames come from when you have none: the shop', async () => {
     open(BACKGROUNDS);
     fireEvent.click(await screen.findByRole('tab', { name: 'Frames, 0 items' }));
-    expect(screen.getByText('No frames yet. When a season ends, everyone who played enough rated games gets a profile frame.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'See this season' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Season');
+    expect(screen.getByText('No frames yet.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'See this season' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Open the Shop' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Shop');
   });

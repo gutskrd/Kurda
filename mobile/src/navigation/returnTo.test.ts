@@ -133,6 +133,34 @@ describe('opening a screen that is not open yet', () => {
   });
 });
 
+describe('a screen under its older name', () => {
+  const RANKED = [...ROOT, 'Rankings', 'LeagueTable'];
+
+  it('opens Rankings for the league, on XP this week, where the league is', () => {
+    const { go, names, top } = stack(RANKED);
+    go(CommonActions.navigate('League'));
+    expect(names()).toEqual(['Tabs', 'Rankings']);
+    expect(top()?.params).toEqual({ board: 'xp', span: 'week' });
+  });
+
+  it('opens Rankings as it is for the game ranks and the season, whatever game was named', () => {
+    const { go, names, top } = stack(RANKED);
+    go(CommonActions.navigate('Ranks', { game: 'wordle-battle' }));
+    expect(names()).toEqual(['Tabs', 'Rankings']);
+    expect(top()?.params).toBeUndefined();
+    go(CommonActions.navigate('Season'));
+    expect(names()).toEqual(['Tabs', 'Rankings']);
+  });
+
+  it('goes back to Rankings already open rather than stacking it again', () => {
+    const { go, names } = stack(RANKED);
+    go(CommonActions.navigate('Rankings'));
+    go(CommonActions.navigate('UserProfile', { userId: 'u1' }));
+    go(CommonActions.navigate('League'));
+    expect(names()).toEqual(['Tabs', 'Rankings']);
+  });
+});
+
 describe('the forms before signing in', () => {
   const AUTH = ['Welcome', 'Login', 'Register', 'ForgotPassword'];
 

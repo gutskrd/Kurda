@@ -109,7 +109,7 @@ describe('WordleBattleScreen', () => {
     expect(await screen.findByLabelText('Join code')).toBeTruthy();
   });
 
-  it('asks friends in the same step, as the website does, makes the battle friendly and invites them once it exists', async () => {
+  it('asks friends in the same step, as the website does, with no rated choice, and invites them once the battle exists', async () => {
     const client = fakeClient({
       'GET /friends?limit=500': ok({ total: 1, friends: [{ userId: 'u-azad', username: 'azad', displayName: 'Azad', online: false, avatarUrl: null }] }),
       'GET /play/invites': ok({ incoming: [], outgoing: [] }),
@@ -127,7 +127,7 @@ describe('WordleBattleScreen', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Create battle' }));
     });
     await waitFor(() => expect(client.calls.some((c) => c.path === '/play/invites' && c.method === 'POST')).toBe(true));
-    expect(client.calls.find((c) => c.path === '/wordle/battles')?.body).toEqual({ difficulty: 'medium', rated: false });
+    expect(client.calls.find((c) => c.path === '/wordle/battles')?.body).toEqual({ difficulty: 'medium' });
     expect(client.calls.find((c) => c.path === '/play/invites' && c.method === 'POST')?.body).toEqual({ game: 'wordle-battle', lobbyId: 'b1', userIds: ['u-azad'] });
   });
 

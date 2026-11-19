@@ -64,16 +64,15 @@ describe('the lobby', () => {
     expect(screen.getByText('Waiting for everyone to come back to the game.')).toBeInTheDocument();
   });
 
-  it('shows a game with others as Rated or Friendly before it starts, and lets the host change it', async () => {
-    const { calls } = fakeApi({
+  it('offers no Rated or Friendly choice in the lobby, even for a game an older app made', async () => {
+    fakeApi({
       'GET /story-games/g-1': (c: Call) =>
-        c.path.includes('?v=') ? new Promise(() => undefined) : gameView({ rated: { rated: false, counts: null, friendlyReason: null, damped: false } }),
-      'PUT /play/stories/g-1/rated': { ok: true, rated: true },
+        c.path.includes('?v=') ? new Promise(() => undefined) : gameView({ rated: { rated: true, counts: null, friendlyReason: null, damped: false } }),
     });
     game();
-    expect(await screen.findByText('Friendly', { selector: '.rated-badge' })).toBeInTheDocument();
-    await userEvent.click(await screen.findByRole('radio', { name: /Rated/ }));
-    await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/play/stories/g-1/rated')).toBe(true));
+    expect(await screen.findByRole('button', { name: 'Start' })).toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Rated/ })).toBeNull();
+    expect(document.querySelector('.rated-badge')).toBeNull();
   });
 
   it('starts the game, and removes a player by seat after asking twice', async () => {

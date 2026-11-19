@@ -85,7 +85,7 @@ export class CosmeticsService {
     return this.equipCosmetic(userId, 'equipped_icon_sku', 'icon', sku, now);
   }
   /**
-   * A frame around the avatar: a season frame, which the season job grants, or a shop frame bought or given. Only an
+   * A frame around the avatar: a season frame granted while game ranks ran, or a shop frame bought or given. Only an
    * owned frame can be worn; none is `premium_only`.
    */
   equipFrame(userId: string, sku: string | null, now: Date = new Date()): Promise<void> {

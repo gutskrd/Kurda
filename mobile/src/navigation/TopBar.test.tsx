@@ -31,8 +31,7 @@ afterEach(() => {
 
 function show(ui: React.JSX.Element, { unread = 0 } = {}) {
   testAuth.client = fakeClient({
-    'GET /chat/conversations': ok({ conversations: [] }),
-    'GET /me/groups/unread': ok({ unread: [] }),
+    'GET /chat/unread': ok({ direct: [], groups: [] }),
     'GET /friends/requests': ok({ requests: [] }),
     'GET /me/notifications/unread-count': ok({ count: unread }),
     'GET /me/gifts/unseen': ok({ unseen: 0 }),

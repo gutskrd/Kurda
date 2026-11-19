@@ -16,7 +16,7 @@ import {
   COUCH_TWO_IMPOSTORS_FROM,
   COUCH_VOTES,
   COUCH_WAYS,
-  GAME_DIALECTS,
+  readEveryDialect,
   IMPOSTOR_POINTS,
   couchCastVote,
   couchGuess,
@@ -52,6 +52,7 @@ import {
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useAuth } from '../auth/AuthContext';
+import type { ApiError } from '../api/types';
 import { newDeviceId } from '../auth/deviceId';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
@@ -199,8 +200,9 @@ export function CouchGame({ onLeave, ask }: { onLeave: () => void; ask?: CouchAs
 
   useEffect(() => {
     let alive = true;
-    void Promise.all(GAME_DIALECTS.map((d) => client.get<CouchOffer>(`/games/impostor/couch?dialect=${d}`))).then((all) => {
-      if (alive) setOffers(all.flatMap((r) => (r.ok && Array.isArray(r.data?.difficulties) && r.data.difficulties.length > 0 ? [r.data] : [])));
+    // both varieties in one read
+    void readEveryDialect<CouchOffer, ApiError>(client, '/games/impostor/couch').then((res) => {
+      if (alive) setOffers(res.ok ? res.data.filter((o) => Array.isArray(o?.difficulties) && o.difficulties.length > 0) : []);
     });
     return () => {
       alive = false;

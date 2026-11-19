@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { whoAmITableRules, type WhoAmIDeal, type WhoAmIFactValue, type WhoAmITableMove, type WhoAmITableState } from '@kurda/shared';
-import { jsonResponse } from '../test/utils';
+import { jsonResponse, withBothDialects } from '../test/utils';
 import { renderPlay, where } from '../play/testing';
 import { forgetMpAvailability } from '../games/mpAvailability';
 import { WhoAmI } from './WhoAmI';
@@ -27,18 +27,19 @@ type Route = unknown | ((body: unknown) => unknown);
 /** A signed-in reader, and a server that answers by method and a piece of the address; `{ status, body }` answers with that status. */
 function serve(routes: Record<string, Route>, calls: Call[] = []): Call[] {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+  const answers = withBothDialects(routes);
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
       const method = init?.method ?? 'GET';
       const body: unknown = init?.body ? JSON.parse(init.body as string) : null;
       calls.push({ url, method, body });
-      const key = Object.keys(routes).find((k) => {
+      const key = Object.keys(answers).find((k) => {
         const [m, path] = k.includes(' ') ? k.split(' ') : ['GET', k];
         return m === method && url.includes(path!);
       });
       if (key) {
-        const route = routes[key];
+        const route = answers[key];
         const answer: unknown = typeof route === 'function' ? (route as (b: unknown) => unknown)(body) : route;
         if (answer && typeof answer === 'object' && 'status' in answer && 'body' in answer) return jsonResponse((answer as { status: number }).status, (answer as { body: unknown }).body);
         return jsonResponse(200, answer);
@@ -108,7 +109,7 @@ describe('Ez kî me?, the start', () => {
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/play/lobbies'))?.body).toEqual({
         game: 'who-am-i',
-        settings: { dialect: 'kmr', difficulty: 'beginner', minutes: 15, answers: 4, rated: false },
+        settings: { dialect: 'kmr', difficulty: 'beginner', minutes: 15, answers: 4 },
       }),
     );
     await waitFor(() => expect(where()).toBe('/app/games/who-am-i?id=r9'));

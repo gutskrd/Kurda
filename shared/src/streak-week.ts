@@ -3,6 +3,7 @@
  * ahead. The server says which days were learned or frozen (`recent`) and what today is in the learner's timezone; this
  * lays them out alike on both apps.
  */
+import { wordIn, wordSet } from './word-sets/words.js';
 
 export type WeekDayState = 'learned' | 'frozen' | 'today' | 'missed' | 'ahead';
 
@@ -38,11 +39,21 @@ function fromDay(ms: number): string {
   return new Date(ms).toISOString().slice(0, 10);
 }
 
+/** The first day of the week `today` ('YYYY-MM-DD') falls in, for a week starting on `startsOn` (0 Sunday to 6 Saturday). */
+export function firstDayOfWeek(today: string, startsOn: number): string {
+  const now = toDay(today);
+  return fromDay(now - ((new Date(now).getUTCDay() - startsOn + 7) % 7) * DAY_MS);
+}
+
+/** The calendar date `days` after `date` (negative for before). */
+export function addDays(date: string, days: number): string {
+  return fromDay(toDay(date) + days * DAY_MS);
+}
+
 /** The seven days of the week `today` falls in, from `startsOn` (0 Sunday to 6 Saturday); a day both learned and frozen counts as learned. */
 export function streakWeek({ today, recent, startsOn }: { today: string; recent: readonly RecentDay[]; startsOn: number }): WeekDay[] {
   const now = toDay(today);
-  const intoWeek = (new Date(now).getUTCDay() - startsOn + 7) % 7;
-  const first = now - intoWeek * DAY_MS;
+  const first = toDay(firstDayOfWeek(today, startsOn));
   const kinds = new Map<string, RecentDay['kind']>();
   for (const day of recent) if (kinds.get(day.date) !== 'learned') kinds.set(day.date, day.kind);
   return Array.from({ length: 7 }, (_, i) => {
@@ -53,4 +64,19 @@ export function streakWeek({ today, recent, startsOn }: { today: string; recent:
       ms > now ? 'ahead' : kind === 'learned' ? 'learned' : ms === now ? 'today' : kind === 'frozen' ? 'frozen' : 'missed';
     return { date, weekday: new Date(ms).getUTCDay(), state, isToday: ms === now };
   });
+}
+
+/**
+ * A weekday's name in the reader's language (0 Sunday to 6 Saturday), whole or as the one letter a week row heads its
+ * column with. Kurdish uses the course's own day names, which browsers and phones may not have.
+ */
+export function weekdayName(weekday: number, locale: string, width: 'long' | 'narrow' = 'long'): string {
+  const dialect = locale === 'ku' ? 'kmr' : locale === 'ckb' ? 'ckb' : null;
+  if (dialect) {
+    // The course's set starts on Saturday.
+    const name = wordIn(wordSet('days')[(weekday + 1) % 7]!, dialect);
+    return width === 'long' ? name : ([...name][0] ?? '');
+  }
+  // 4 January 1970 was a Sunday.
+  return new Intl.DateTimeFormat(locale, { weekday: width, timeZone: 'UTC' }).format(new Date(Date.UTC(1970, 0, 4 + weekday)));
 }

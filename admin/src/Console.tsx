@@ -34,8 +34,6 @@ import { RecordByPerson } from './pages/RecordByPerson';
 import { Shop } from './pages/Shop';
 import { Stories } from './pages/Stories';
 import { Dashboard } from './pages/Dashboard';
-import { Ranks } from './pages/Ranks';
-import { Seasons } from './pages/Seasons';
 import { Leagues } from './pages/Leagues';
 import { Badges } from './pages/Badges';
 import { Email } from './pages/Email';
@@ -65,8 +63,6 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   rhyme: () => <Games section="rhyme" />,
   race: () => <Games section="race" />,
   'game-content': () => <GameContent />,
-  ranks: () => <Ranks />,
-  seasons: () => <Seasons />,
   leagues: () => <Leagues />,
   badges: () => <Badges />,
   economy: () => <Economy />,

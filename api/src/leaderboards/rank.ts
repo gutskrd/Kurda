@@ -4,15 +4,19 @@
  */
 
 /**
- * What a board ranks: this week's XP, starting afresh every Monday, or the Zêr or Gewher each person holds now,
- * which says something different and so has a board of its own. Per-game skill boards are Game Ranks'
- * (ranks/service.ts).
+ * What a board ranks: this week's XP, starting afresh every Monday; all the XP ever earned; or the Zêr or Gewher each
+ * person holds now, which says something different and so has a board of its own.
  */
-export const BOARD_TYPES = ['weekly_xp', 'zer', 'gewher'] as const;
+export const BOARD_TYPES = ['weekly_xp', 'all_time_xp', 'zer', 'gewher'] as const;
 export type BoardType = (typeof BOARD_TYPES)[number];
 
 export function isBoardType(value: string): value is BoardType {
   return (BOARD_TYPES as readonly string[]).includes(value);
+}
+
+/** The board that starts afresh every week; every other board has one key for all time and stops at a depth. */
+export function isWeeklyBoard(type: BoardType): type is 'weekly_xp' {
+  return type === 'weekly_xp';
 }
 
 /** The balance boards and the wallet currency behind each; the app's Gewher is 'gems' in the wallet. */

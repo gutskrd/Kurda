@@ -1,23 +1,11 @@
 /**
- * The names of every tier, season, badge and reason, as catalogue keys: a Kurdish name (in Soranî script for Soranî
- * readers) with its translated meaning, such as "Çiya · Mountain". Keys are written out literally rather than built
- * from templates, so the i18n check and the compiler can see each one.
+ * The names of every league, badge and season frame tier, as catalogue keys: a Kurdish name (in Soranî script for
+ * Soranî readers) with its translated meaning, such as "Çiya · Mountain". Keys are written out literally rather than
+ * built from templates, so the i18n check and the compiler can see each one.
  */
-import type {
-  BadgeFamily,
-  BadgeTierKey,
-  BadgeUnit,
-  Division,
-  FriendlyReason,
-  LeagueTier,
-  RankReason,
-  RankTier,
-  RankedGame,
-  SeasonName,
-} from '@kurda/shared';
+import type { BadgeFamily, BadgeTierKey, BadgeUnit, LeagueTier, RankTier } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 import type { Translate } from '../i18n/I18nProvider';
-import { GAME_NAME_KEY } from '../play/playApi';
 
 /** A name and what it means; the meaning is null where it would only repeat the name (Kurdish readers). */
 export interface Named {
@@ -36,7 +24,7 @@ export function withMeaning(t: Translate, n: Named): string {
   return n.meaning ? t('ranks.nameMeaning', { name: n.name, meaning: n.meaning }) : n.name;
 }
 
-// ---- Game ranks -----------------------------------------------------------------
+// ---- The tiers season frames were given for ----------------------------------------
 
 const RANK_TIER_NAME: Record<RankTier, MessageKey> = {
   dest: 'ranks.tier.dest',
@@ -58,88 +46,6 @@ const RANK_TIER_MEANING: Record<RankTier, MessageKey> = {
 
 export function rankTierNamed(t: Translate, tier: RankTier): Named {
   return named(t, RANK_TIER_NAME[tier], RANK_TIER_MEANING[tier]);
-}
-
-/** Divisions are Roman numerals in every language. */
-const ROMAN: Record<Division, string> = { 3: 'III', 2: 'II', 1: 'I' };
-
-/** "Gir II", or the tier alone for Stêrk (which has no divisions) or without a division. */
-export function rankLabel(t: Translate, tier: RankTier, division: Division | null | undefined): string {
-  const name = t(RANK_TIER_NAME[tier]);
-  if (tier === 'sterk' || !division) return name;
-  return t('ranks.tierDivision', { tier: name, division: ROMAN[division] });
-}
-
-/** The game's name, such as "Peyvok Battle", from the play layer's map; a retired game is named as no longer played. */
-export function gameName(t: Translate, game: RankedGame): string {
-  const key = GAME_NAME_KEY[game] as MessageKey | undefined;
-  return t(key ?? 'games.retired');
-}
-
-const REASON_KEY: Record<RankReason, MessageKey> = {
-  placement: 'rankResult.reason.placement',
-  'beat-stronger': 'rankResult.reason.beatStronger',
-  'expected-win': 'rankResult.reason.expectedWin',
-  won: 'rankResult.reason.won',
-  draw: 'rankResult.reason.draw',
-  'lost-to-stronger': 'rankResult.reason.lostToStronger',
-  'lost-to-weaker': 'rankResult.reason.lostToWeaker',
-  lost: 'rankResult.reason.lost',
-  left: 'rankResult.reason.left',
-  shield: 'rankResult.reason.shield',
-};
-
-/** The one reason a result is explained with; an unknown code gives null. */
-export function reasonLine(t: Translate, reason: string): string | null {
-  const key = REASON_KEY[reason as RankReason];
-  return key ? t(key) : null;
-}
-
-const FRIENDLY_KEY: Record<FriendlyReason, MessageKey> = {
-  chosen: 'rated.reason.chosen',
-  solo: 'rated.reason.solo',
-  'need-two': 'rated.reason.needTwo',
-  unverified: 'rated.reason.unverified',
-  'no-birth-month': 'rated.reason.noBirthMonth',
-  restricted: 'rated.reason.restricted',
-  cooldown: 'rated.reason.cooldown',
-  'repeat-opponent': 'rated.reason.repeatOpponent',
-};
-
-/** Reasons that concern the viewer, addressed to them with what they can do. */
-const FRIENDLY_SELF_KEY: Partial<Record<FriendlyReason, MessageKey>> = {
-  unverified: 'rated.reasonSelf.unverified',
-  'no-birth-month': 'rated.reasonSelf.noBirthMonth',
-  restricted: 'rated.reasonSelf.restricted',
-  cooldown: 'rated.reasonSelf.cooldown',
-};
-
-/** Why a game plays as friendly, in a clause that follows "This game is friendly:". */
-export function friendlyReason(t: Translate, reason: FriendlyReason | null, self = false): string | null {
-  if (!reason) return null;
-  const key = (self ? FRIENDLY_SELF_KEY[reason] : undefined) ?? FRIENDLY_KEY[reason];
-  return key ? t(key) : null;
-}
-
-// ---- Seasons ----------------------------------------------------------------------
-
-const SEASON_NAME: Record<SeasonName, MessageKey> = {
-  zivistan: 'seasons.name.zivistan',
-  bihar: 'seasons.name.bihar',
-  havin: 'seasons.name.havin',
-  payiz: 'seasons.name.payiz',
-};
-const SEASON_MEANING: Record<SeasonName, MessageKey> = {
-  zivistan: 'seasons.meaning.zivistan',
-  bihar: 'seasons.meaning.bihar',
-  havin: 'seasons.meaning.havin',
-  payiz: 'seasons.meaning.payiz',
-};
-
-/** A season such as "Payîz 2026", with "Autumn" as its meaning. */
-export function seasonNamed(t: Translate, season: { name: SeasonName; year: number }): Named {
-  const n = named(t, SEASON_NAME[season.name], SEASON_MEANING[season.name]);
-  return { name: t('seasons.label', { season: n.name, year: season.year }), meaning: n.meaning };
 }
 
 // ---- Leagues ----------------------------------------------------------------------
@@ -219,12 +125,6 @@ const UNIT_KEY: Record<BadgeUnit, MessageKey> = {
   answers: 'badges.unit.answers',
   letters: 'badges.unit.letters',
 };
-
-/** "12 days left", "One day left", or the season's last day. */
-export function seasonDaysLeft(t: Translate, days: number): string {
-  if (days <= 0) return t('seasons.lastDay');
-  return days === 1 ? t('seasons.oneDayLeft') : t('seasons.daysLeft', { days });
-}
 
 /** The same units for a count of one: "1 season", never "1 seasons". */
 const UNIT_ONE_KEY: Record<BadgeUnit, MessageKey> = {

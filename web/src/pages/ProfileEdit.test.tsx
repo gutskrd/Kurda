@@ -42,6 +42,10 @@ function editFetch(calls: Array<{ url: string; body: unknown }>, user: unknown =
         ],
       });
     }
+    if (url.includes('/users/1')) {
+      calls.push({ url: 'GET /users/1', body: null });
+      return jsonResponse(200, { userId: '1', username: 'ada', frameSku: null, sections: { posts: true, games: true, likes: true, saved: true, reposts: true } });
+    }
     if (url.includes('/me/inventory')) return jsonResponse(200, { items: [] });
     if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 0, gems: 0 } });
     if (url.includes('/shop')) return jsonResponse(200, { items: [] });
@@ -139,5 +143,23 @@ describe('Edit Profile page', () => {
     const target = document.getElementById('tags');
     expect(target).not.toBeNull();
     expect(within(target!).getByRole('heading', { name: 'Tags' })).toBeInTheDocument();
+  });
+
+  it('reads your own profile once, for the frame worn and the sections shown alike, even when you own a frame', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    const base = editFetch(calls);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/me/inventory')) {
+          return jsonResponse(200, { items: [{ sku: 'frame_rank_gir', name: 'Gir frame', category: 'frame', quantity: 1, premiumOnly: false, assetUrl: null }] });
+        }
+        return base(url, init);
+      }),
+    );
+    renderApp(<ProfileEdit />, ['/app/profile/edit']);
+    expect(await screen.findByRole('checkbox', { name: /^Posts/ })).toBeChecked();
+    await userEvent.click(await screen.findByRole('tab', { name: /Frames/ }));
+    expect(calls.filter((c) => c.url === 'GET /users/1')).toHaveLength(1);
   });
 });

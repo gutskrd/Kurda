@@ -74,19 +74,17 @@ import { UserMinus } from '@phosphor-icons/react/dist/icons/UserMinus';
 // Peyvok's delete key, the rating box's stars.
 import { Backspace } from '@phosphor-icons/react/dist/icons/Backspace';
 import { Star } from '@phosphor-icons/react/dist/icons/Star';
-// Game Ranks, leagues and badges: rated and friendly games, a zone moving up
-// or down, a tier's shield, a badge's medal.
+// Leagues and badges: a zone moving up or down, a safe week's shield, a badge's medal.
 import { ArrowDown } from '@phosphor-icons/react/dist/icons/ArrowDown';
 import { ArrowUp } from '@phosphor-icons/react/dist/icons/ArrowUp';
-import { Handshake } from '@phosphor-icons/react/dist/icons/Handshake';
 import { Medal } from '@phosphor-icons/react/dist/icons/Medal';
-import { Mountains } from '@phosphor-icons/react/dist/icons/Mountains';
 import { ShieldCheck } from '@phosphor-icons/react/dist/icons/ShieldCheck';
 import { HandHeart } from '@phosphor-icons/react/dist/icons/HandHeart';
 import { Checks } from '@phosphor-icons/react/dist/icons/Checks';
 import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
 // A lesson's results: XP earned, and how many were right first time.
 import { Lightning } from '@phosphor-icons/react/dist/icons/Lightning';
+import { Snowflake } from '@phosphor-icons/react/dist/icons/Snowflake';
 import { Target } from '@phosphor-icons/react/dist/icons/Target';
 // Shop items by kind: a tag, a frame, and the search over all of them.
 import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
@@ -182,6 +180,8 @@ export const UserIcon = named(User, 22);
 export const UsersIcon = named(Users, 22);
 /** A streak, drawn as a flame as on the phone. */
 export const FlameIcon = named(Flame, 22);
+/** A streak freeze, which keeps a missed day, as on the phone. */
+export const IceIcon = named(Snowflake, 22);
 /** Zêr: a gold coin with Hevalo's deer carved into it. */
 export const CoinIcon = currency(coinSvg, 22);
 export const TilesIcon = named(SquaresFour, 22);
@@ -272,10 +272,7 @@ export const CopyIcon = named(Copy, 20);
 export const TicketIcon = named(Ticket, 20);
 export const CaretDownIcon = named(CaretDown, 16);
 
-/* Game ranks, leagues and badges: a rated game climbs, a friendly one is a handshake, a league row moving up or down
-   shows an arrow as well as a word, a tier's shield, a badge. */
-export const RatedIcon = named(Mountains, 16, 'fill');
-export const FriendlyIcon = named(Handshake, 16, 'fill');
+/* Leagues and badges: a league row moving up or down shows an arrow as well as a word, a safe week a shield. */
 export const UpIcon = named(ArrowUp, 14, 'bold');
 export const DownIcon = named(ArrowDown, 14, 'bold');
 export const ShieldIcon = named(ShieldCheck, 14, 'fill');

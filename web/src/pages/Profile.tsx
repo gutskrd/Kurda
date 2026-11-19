@@ -14,6 +14,8 @@ import { ProfileMenu, ShareProfile } from '../profile/ProfileMenu';
 import { ErrorState } from '../components/states';
 import { FullProfileSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { DailySheet } from '../daily/DailySheet';
+import { useToday } from '../daily/today';
 import type { MessageKey } from '../i18n/en';
 
 /** Who can open a profile, in the words Settings says it in. */
@@ -43,10 +45,13 @@ export function Profile(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
+  // The streak opens the daily view; a streak restored there is the profile's from then on.
+  const [dailyOpen, setDailyOpen] = useState(false);
+  const today = useToday(dailyOpen);
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
-  // Badges, ranks, league and frame come from your public profile, not /me.
-  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements' | 'tree'> | null>(null);
+  // Badges, league and frame come from your public profile, not /me.
+  const [shown, setShown] = useState<Pick<PublicProfile, 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements' | 'tree'> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,7 +80,7 @@ export function Profile(): React.JSX.Element {
       if (cancelled) return;
       if (p?.ok) {
         setSections(p.data.sections ?? null);
-        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, achievements: p.data.achievements, tree: p.data.tree });
+        setShown({ badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, achievements: p.data.achievements, tree: p.data.tree });
       }
       setLoading(false);
     })();
@@ -115,55 +120,59 @@ export function Profile(): React.JSX.Element {
   const sessionsPerFreeze = me.streak.sessionsPerFreeze ?? 5;
 
   return (
-    <FullProfile
-      own
-      view={view}
-      // Everything yours that is not this page, behind the banner's corner menu.
-      corner={<ProfileMenu />}
-      // What to do with the page itself: change it, and send it to somebody.
-      headerAction={
-        <div className="pc-acts">
-          <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">
-            <EditIcon size={16} />
-            {t('profile.edit')}
-          </Link>
-          <ShareProfile userId={me.id} name={view.name} />
-        </div>
-      }
-      progress={
-        shown ? (
-          <>
-            <ProfileTree tree={shown.tree} own />
-            <ProfileProgress ranks={shown.ranks} badges={shown.badges} league={shown.league} own />
-          </>
-        ) : null
-      }
-      yours={
-        <OnlyYou title={t('profile.yourProgress')}>
-          <ProfileFacts
-            facts={[
-              { key: 'longest', label: t('profile.stat.longestStreak'), value: number(me.streak.longest) },
-              { key: 'days', label: t('profile.stat.daysLearned'), value: number(me.streak.daysLearned ?? 0) },
-              { key: 'freezes', label: t('profile.stat.freezes'), value: number(me.streak.freezes) },
-              // The coin leads to where it is spent.
-              { key: 'zer', label: 'Zêr', value: zer === null ? '—' : number(zer), icon: <CoinIcon size={15} />, to: '/app/shop' },
-            ]}
-          />
-          <p className="field-hint mkp-yours-hint">
-            {maxFreezes > 1 ? t('profile.freezeHintPlus', { count: sessionsPerFreeze, max: maxFreezes }) : t('profile.freezeHint', { count: sessionsPerFreeze })}
-          </p>
-          {icons.length > 0 && (
-            <div className="mkp-collection">
-              <div className="mkp-collection-head">
-                <span className="l">{t('profile.stat.icons')}</span>
-                <span className="n">{icons.length}</span>
+    <>
+      <FullProfile
+        own
+        view={view}
+        onStreak={() => setDailyOpen(true)}
+        // Everything yours that is not this page, behind the banner's corner menu.
+        corner={<ProfileMenu />}
+        // What to do with the page itself: change it, and send it to somebody.
+        headerAction={
+          <div className="pc-acts">
+            <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">
+              <EditIcon size={16} />
+              {t('profile.edit')}
+            </Link>
+            <ShareProfile userId={me.id} name={view.name} />
+          </div>
+        }
+        progress={
+          shown ? (
+            <>
+              <ProfileTree tree={shown.tree} own />
+              <ProfileProgress badges={shown.badges} league={shown.league} own />
+            </>
+          ) : null
+        }
+        yours={
+          <OnlyYou title={t('profile.yourProgress')}>
+            <ProfileFacts
+              facts={[
+                { key: 'longest', label: t('profile.stat.longestStreak'), value: number(me.streak.longest) },
+                { key: 'days', label: t('profile.stat.daysLearned'), value: number(me.streak.daysLearned ?? 0) },
+                { key: 'freezes', label: t('profile.stat.freezes'), value: number(me.streak.freezes) },
+                // The coin leads to where it is spent.
+                { key: 'zer', label: 'Zêr', value: zer === null ? '—' : number(zer), icon: <CoinIcon size={15} />, to: '/app/shop' },
+              ]}
+            />
+            <p className="field-hint mkp-yours-hint">
+              {maxFreezes > 1 ? t('profile.freezeHintPlus', { count: sessionsPerFreeze, max: maxFreezes }) : t('profile.freezeHint', { count: sessionsPerFreeze })}
+            </p>
+            {icons.length > 0 && (
+              <div className="mkp-collection">
+                <div className="mkp-collection-head">
+                  <span className="l">{t('profile.stat.icons')}</span>
+                  <span className="n">{icons.length}</span>
+                </div>
+                <AvatarStack urls={icons.map((i) => i.assetUrl)} total={icons.length} square emptyGlyph={false} />
               </div>
-              <AvatarStack urls={icons.map((i) => i.assetUrl)} total={icons.length} square emptyGlyph={false} />
-            </div>
-          )}
-        </OnlyYou>
-      }
-      activity={<ProfileActivity userId={me.id} sections={sections} own />}
-    />
+            )}
+          </OnlyYou>
+        }
+        activity={<ProfileActivity userId={me.id} sections={sections} own />}
+      />
+      <DailySheet open={dailyOpen} onClose={() => setDailyOpen(false)} today={today} onStreak={(streak) => setMe((m) => (m ? { ...m, streak } : m))} />
+    </>
   );
 }
