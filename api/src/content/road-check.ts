@@ -51,8 +51,11 @@ export const ROAD_RECORDER: RoadVoice = 'hamo';
 export const ROAD_VOICE_LINES_MAX: Readonly<Record<RoadVoice, number>> = { hamo: 1100, xezo: 85, hevalo: 70 };
 /** The most lines Xezo or Hevalo records in all: their road lines and their reaction lines. */
 export const CHARACTER_LINES_MAX = 100;
-/** A lesson brings at most this many new recordings: its few new words and lines, met in many ways. */
-export const ROAD_LESSON_LINES_MAX = 8;
+/**
+ * A lesson brings at most this many new recordings. Most bring five or six; the owner puts a line that is right and
+ * natural before a tight count, so this only stops a lesson growing far past that.
+ */
+export const ROAD_LESSON_LINES_MAX = 12;
 /** A conversation is made of lines its unit already has, and at most this many of its own. */
 export const ROAD_CONVERSATION_LINES_MAX = 2;
 

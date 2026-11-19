@@ -1369,10 +1369,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "One, two… two hens!",
+                    "prompt": "Those are two hens.",
                     "options": [
-                      "Yek, didu… du mirîşk!",
-                      "Yek, didu… didu mirîşk!",
+                      "Ew du mirîşk in.",
+                      "Ew didu mirîşk in.",
                       "Ew baş in, spas."
                     ],
                     "correctIndex": 0
@@ -1945,13 +1945,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Yek, didu… du mirîşk!",
+                    "say": "Ew du mirîşk in.",
                     "voice": "hamo",
-                    "prompt": "Yek, didu… du mirîşk!",
+                    "prompt": "Ew du mirîşk in.",
                     "options": [
-                      "One, two… two hens!",
-                      "One, two… two girls!",
-                      "One… one hen!"
+                      "Those are two hens.",
+                      "That’s one hen.",
+                      "Those are two apples."
                     ],
                     "correctIndex": 0
                   }

@@ -371,8 +371,7 @@ describe('the road’s check, on an example unit', () => {
     // Xezo says her own lines, in exercises and in her part of the conversation
     expect(check(undefined, forVoices).text).toEqual([
       'u01s1l1 #3: plays “Ez baş im.”, which exercise 4 asks the learner to hear, so it would play nothing here: hear another line there',
-      'u01s1l1: records 11 new lines (at most 8): work on fewer lines in more ways, or bring back earlier ones',
-      'u01s1l2: records 15 new lines (at most 8): work on fewer lines in more ways, or bring back earlier ones',
+      'u01s1l2: records 15 new lines (at most 12): work on fewer lines in more ways, or bring back earlier ones',
       'u01s1l2 #5: the conversation records 5 lines of its own (at most 2): build it from lines the lesson has, “Silav, Xezo!”, “Silav, Hamo! Tu çawa yî?”, “Ez baş im, spas. Tu çawa yî?”, “Ez jî baş im.”, “Erê, ez ji Amedê me.”',
     ]);
     // a review brings back lines already recorded, and one line is one person's
