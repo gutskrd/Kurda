@@ -3971,11 +3971,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
+                    "say": "Bi xatirê we, bi silametî bimînin! Ez ê dîsa bêm!",
                     "voice": "xezo",
-                    "prompt": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
+                    "prompt": "Bi xatirê we, bi silametî bimînin! Ez ê dîsa bêm!",
                     "options": [
-                      "Goodbye, stay well! Distance is nothing.",
+                      "Goodbye, stay well! I’ll come again!",
                       "Thanks, the tea is lovely. Goodbye!",
                       "Winning isn’t everything."
                     ],
@@ -3993,16 +3993,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
+                    "say": "Bi xatirê we, bi silametî bimînin! Ez ê dîsa bêm!",
                     "voice": "xezo",
-                    "prompt": "Bi xatirê we, bi silametî bimînin! Dûrî ne ___ e.",
+                    "prompt": "Bi xatirê we, bi silametî bimînin! Ez ê dîsa ___!",
                     "options": [
-                      "tiştek",
-                      "tişt",
-                      "tiştê"
+                      "bêm",
+                      "têm",
+                      "hatim"
                     ],
                     "correctIndex": 0,
-                    "cue": "Goodbye, stay well! Distance is nothing."
+                    "cue": "Goodbye, stay well! I’ll come again!"
                   }
                 },
                 {
@@ -4026,16 +4026,22 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hamo, simbêlê xwe baş biparêze!",
+                    "say": "Hamo, çaya xwe bi kêm şekir vexwe!",
                     "voice": "xezo",
-                    "prompt": "Hamo, simbêlê xwe baş ___!",
+                    "prompt": "Hamo, çaya xwe bi kêm şekir ___!",
                     "options": [
-                      "biparêze",
-                      "biparêzim",
+                      "vexwe",
+                      "vedixwe",
                       "dixeyide"
                     ],
                     "correctIndex": 0,
-                    "cue": "Hamo, take good care of your moustache!"
+                    "cue": "Hamo, drink your tea with less sugar!",
+                    "new": [
+                      {
+                        "ku": "kêm",
+                        "en": "less, little"
+                      }
+                    ]
                   }
                 },
                 {
@@ -4122,10 +4128,10 @@
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hevalo",
-                    "prompt": "The last apple is for me!",
+                    "voice": "xezo",
+                    "prompt": "Hamo, drink your tea with less sugar!",
                     "accepted": [
-                      "Sêva paşîn ji bo min e!"
+                      "Hamo, çaya xwe bi kêm şekir vexwe!"
                     ]
                   }
                 },
@@ -4135,8 +4141,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "xezo",
-                    "prompt": "Hamo, simbêlê xwe baş biparêze!",
-                    "reference": "Hamo, simbêlê xwe baş biparêze!"
+                    "prompt": "Hamo, çaya xwe bi kêm şekir vexwe!",
+                    "reference": "Hamo, çaya xwe bi kêm şekir vexwe!"
                   }
                 },
                 {
@@ -4172,18 +4178,18 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
-                        "en": "Goodbye, stay well! Distance is nothing."
+                        "text": "Bi xatirê we, bi silametî bimînin! Ez ê dîsa bêm!",
+                        "en": "Goodbye, stay well! I’ll come again!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Hamo, simbêlê xwe baş biparêze!",
-                        "en": "Hamo, take good care of your moustache!"
+                        "text": "Hamo, çaya xwe bi kêm şekir vexwe!",
+                        "en": "Hamo, drink your tea with less sugar!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Simbêlê min? Ez her roj wî diparêzim!",
-                        "en": "My moustache? I take care of it every day!"
+                        "text": "Bi kêm şekir? Ew ne çay e!",
+                        "en": "With less sugar? That’s not tea!"
                       },
                       {
                         "speaker": 2,
@@ -4193,7 +4199,7 @@
                     ],
                     "prompt": "Xezo ji Hamo re çi got?",
                     "options": [
-                      "Simbêlê xwe biparêze!",
+                      "Çaya xwe bi kêm şekir vexwe!",
                       "Sêvan bixwe!",
                       "Derî veke!"
                     ],
@@ -4206,9 +4212,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "xezo",
-                    "prompt": "Goodbye, stay well! Distance is nothing.",
+                    "prompt": "Goodbye, stay well! I’ll come again!",
                     "accepted": [
-                      "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e."
+                      "Bi xatirê we, bi silametî bimînin! Ez ê dîsa bêm!",
+                      "Bi xatirê we, bi silametî bimînin! Ez dê dîsa bêm!"
                     ]
                   }
                 },
@@ -4323,7 +4330,8 @@
                     "options": [
                       "Hevaltiya Sêvanê her û her di dilê min de ye.",
                       "Bavê min çîrokbêj bû, û niha ez jî çîrokbêj im.",
-                      "Ji Mijdarê ve şevbêrk neqediya, û kes naçe nivînan!"
+                      "Ji Mijdarê ve şevbêrk neqediya, û kes naçe nivînan!",
+                      "Hamo, çaya xwe bi kêm şekir vexwe!"
                     ],
                     "correctIndex": 0
                   }
@@ -4387,7 +4395,8 @@
                     "options": [
                       "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
                       "Bavê min pê hesiya ku dengbêj hatiye, û wî pirsî ka kilamek li ser wî heye.",
-                      "Me li ber sobeyê civînek çêkir, û rolên şanoyê parve kirin."
+                      "Me li ber sobeyê civînek çêkir, û rolên şanoyê parve kirin.",
+                      "Derfet mezin e, lê dûrî jî mezin e."
                     ],
                     "correctIndex": 0
                   }
@@ -4413,12 +4422,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
+                    "say": "Bi xatirê we, bi silametî bimînin! Ez ê dîsa bêm!",
                     "voice": "xezo",
-                    "prompt": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
+                    "prompt": "Bi xatirê we, bi silametî bimînin! Ez ê dîsa bêm!",
                     "options": [
-                      "Goodbye, stay well! Distance is nothing.",
-                      "Welcome, come in! Distance is nothing.",
+                      "Goodbye, stay well! I’ll come again!",
+                      "Welcome, come in! I’ll come again!",
                       "Thanks, the tea is lovely. Goodbye!"
                     ],
                     "correctIndex": 0

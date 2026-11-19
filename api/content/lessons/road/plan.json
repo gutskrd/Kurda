@@ -3442,6 +3442,7 @@
                 {"ku": "Rêya te vekirî be!", "en": "Safe journey! (may your road be open)", "pos": "phrase", "forms": ["rêya", "te", "vekirî", "be"]},
                 {"ku": "Oxir be!", "en": "Farewell! Good luck! (to someone setting off)", "pos": "phrase", "forms": ["oxir", "be"]},
                 {"ku": "bi silametî", "en": "safely", "pos": "phrase", "forms": ["bi", "silametî"]},
+                {"ku": "kêm", "en": "less, little", "pos": "adj", "forms": ["kêm"]},
                 {"ku": "dergeh", "en": "gate (a yard’s big door: Hamo’s blue gate is a dergeh)", "pos": "noun", "gender": "m", "forms": ["dergeh", "dergehên", "dergehan", "dergehek", "dergehê", "dergehekî", "dergehî"]}
               ]
             },
