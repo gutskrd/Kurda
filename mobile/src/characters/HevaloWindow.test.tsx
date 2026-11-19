@@ -4,8 +4,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', async () => {
   const { createElement } = await import('react');
+  const { sameIds } = await import('../reports/testing/sameIds');
   return {
-    SvgXml: ({ xml, width, height }: { xml: string; width: number; height: number }) => createElement('svg', { width, height, 'data-markup': xml }),
+    SvgXml: ({ xml, width, height }: { xml: string; width: number; height: number }) => createElement('svg', { width, height, 'data-markup': sameIds(xml) }),
   };
 });
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
@@ -24,6 +25,7 @@ import { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt } from '@kurda/shared'
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers } from './layers';
+import { sameIds } from '../reports/testing/sameIds';
 import { HevaloWindow } from './HevaloWindow';
 
 /*
@@ -32,7 +34,7 @@ import { HevaloWindow } from './HevaloWindow';
  * Reduce Motion), reacts as usual, and the whole scene is mirrored for right-to-left languages.
  */
 
-const NECK = characterLayers('hevalo', 'head');
+const NECK = sameIds(characterLayers('hevalo', 'head'));
 // The test's screen is dark, as the app is unless asked otherwise: the window at dusk.
 const DUSK = windowArt({ dark: true });
 
@@ -83,7 +85,7 @@ describe('HevaloWindow', () => {
     const body = drawing(NECK.body)!;
     // His head and neck, never the whole figure.
     expect(body).toBeTruthy();
-    expect(drawing(characterLayers('hevalo', 'full').body)).toBeUndefined();
+    expect(drawing(sameIds(characterLayers('hevalo', 'full').body))).toBeUndefined();
     // The outside and the wall behind him, him, our side of him, then his shadow on the sill.
     const order = [...document.querySelectorAll('svg[data-markup]')];
     expect(order.indexOf(back)).toBeGreaterThanOrEqual(0);

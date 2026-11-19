@@ -10,6 +10,7 @@ import { encodeLipsync, type RecordingVoice } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { characterLayers } from '../../characters/layers';
+import { sameIds } from '../../reports/testing/sameIds';
 import { FakeAudio, fakeFrames, type Frames } from '../../characters/testing/audio';
 import type { Exercise } from '../types';
 import { ListeningExercise } from './ListeningExercise';
@@ -51,7 +52,7 @@ function mouth(): string | undefined {
   const drawn = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
   // A lesson's stage shows as much of the figure as fits; the dictionary and stories show the bust.
   for (const crop of ['full', 'half', 'bust'] as const) {
-    const found = Object.entries(characterLayers('xezo', crop).mouths).find(([, xml]) => drawn.includes(xml))?.[0];
+    const found = Object.entries(sameIds(characterLayers('xezo', crop)).mouths).find(([, xml]) => drawn.includes(xml))?.[0];
     if (found) return found;
   }
   return undefined;
@@ -121,7 +122,7 @@ describe('the lesson’s speaking characters', () => {
     expect(within(scene).getByTestId('hevalo-window')).toBeTruthy();
     expect(within(scene).queryByTestId('character-stage')).toBeNull();
     // His head and neck, never the whole figure.
-    const neck = characterLayers('hevalo', 'head').body;
+    const neck = sameIds(characterLayers('hevalo', 'head')).body;
     expect([...scene.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === neck)).toBe(true);
   });
 
@@ -190,7 +191,7 @@ describe('the lesson’s speaking characters', () => {
     await settle();
     expect(within(screen.getByTestId('prompt-scene')).getByTestId('character-stage')).toBeTruthy();
     // Drawn whole, for the stage's bottom edge to cut at the waist, never only the head.
-    const body = characterLayers('xezo', 'full').body;
+    const body = sameIds(characterLayers('xezo', 'full')).body;
     expect([...document.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === body)).toBe(true);
     fireEvent.click(screen.getByRole('img', { name: 'Said by Xezo' }));
     await settle();

@@ -414,7 +414,7 @@
             "Çivîkek e"
           ],
           "correctIndex": 0,
-          "explanation": "Gûz mêweyek e, li ser dara gûzê ye.",
+          "explanation": "Gûz fêkiyek e, li ser dara gûzê ye.",
           "explanationEn": "A gûz is a walnut, a fruit that grows on the walnut tree.",
           "evidenceParagraph": 1,
           "evidenceSentence": 1
@@ -436,7 +436,7 @@
         },
         {
           "kind": "detail",
-          "prompt": "Nîvê wêneyê li ku ye?",
+          "prompt": "Nîvê wêne li ku ye?",
           "promptEn": "Where is the half of the photo?",
           "options": [
             "Li ser banî",
@@ -976,8 +976,8 @@
       "cover": null,
       "readingMinutes": null,
       "title": "Soza bavê me",
-      "summary": "Li Kobaniyê, bajarê Hamo, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyê heye, û soza bavê wan.",
-      "body": "Were, rûne! Çayê vexwe, germ e. Tu dizanî? Otobûs diçe, lê em jî diçin! Em bi Ferhad re diçin rêya mezin, û ji wir bi minîbûsê diçin Kobaniyê. Ajovan gelek zû diçe, û ez dibêjim: Hêdî, ji kerema xwe!\n\nKobanî bajarê min e, lê bajar mezin dibe. Kolan nû ne, mal bilind in, û bazar qelebalix e. Ez dixwînim: li rastê. Lê ez li çepê diçim, û ez winda dibim. Du caran, li bajarê xwe!\n\nDiya min, Edûl, derî vedike û dibêje: Werin hundir, rûnin! Çar xwarziyên min dibezin û li ser min in. Diya min dibêje: Bixwe! Ez dixwim. Ew dibêje: Dîsa bixwe! Ez dîsa dixwim. Kes nikare ji ber maseyê rabe. Ez pêncî salî me, lê li vê malê ez zarok im.\n\nPiştî şîvê, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyê me heye: bavê me, li ser Miştenûrê, li Newrozê. Çil sal in ku ew li cem Lorînê ye.\n\nLi pişt wêneyê soza du zarokan heye: Rojekê, li Newrozê, bavê me dîsa ji bo me bilûra xwe lêdixe. Ez û Lorîn li wêneyê dinêrin, û em dikenin. Ev soza me ye.\n\nBavê min, Ibrahîm, radibe. Ew bilûra xwe digire, li me dinêre û dibêje: Li Newrozê ez têm Sêvanê. Soza min soz e!\n\nSoza min soz e! Niha ez dizanim ev gotin ji ku tê. Lorîn dikene, ez dikenim, û diya min dibêje: Rûnin! Divê hûn dîsa bixwin!",
+      "summary": "Li Kobaniyê, bajarê Hamo, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêne heye, û soza bavê wan.",
+      "body": "Were, rûne! Çayê vexwe, germ e. Tu dizanî? Otobûs diçe, lê em jî diçin! Em bi Ferhad re diçin rêya mezin, û ji wir bi minîbûsê diçin Kobaniyê. Ajovan gelek zû diçe, û ez dibêjim: Hêdî, ji kerema xwe!\n\nKobanî bajarê min e, lê bajar mezin dibe. Kolan nû ne, mal bilind in, û bazar qelebalix e. Ez dixwînim: li rastê. Lê ez li çepê diçim, û ez winda dibim. Du caran, li bajarê xwe!\n\nDiya min, Edûl, derî vedike û dibêje: Werin hundir, rûnin! Çar xwarziyên min dibezin û li ser min in. Diya min dibêje: Bixwe! Ez dixwim. Ew dibêje: Dîsa bixwe! Ez dîsa dixwim. Kes nikare ji ber maseyê rabe. Ez pêncî salî me, lê li vê malê ez zarok im.\n\nPiştî şîvê, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyê me heye: bavê me, li ser Miştenûrê, li Newrozê. Çil sal in ku ew li cem Lorînê ye.\n\nLi pişt wêne soza du zarokan heye: Rojekê, li Newrozê, bavê me dîsa ji bo me bilûra xwe lêdixe. Ez û Lorîn li wêneyê dinêrin, û em dikenin. Ev soza me ye.\n\nBavê min, Ibrahîm, radibe. Ew bilûra xwe digire, li me dinêre û dibêje: Li Newrozê ez têm Sêvanê. Soza min soz e!\n\nSoza min soz e! Niha ez dizanim ev gotin ji ku tê. Lorîn dikene, ez dikenim, û diya min dibêje: Rûnin! Divê hûn dîsa bixwin!",
       "translations": {
         "en": "Come, sit down! Drink your tea, it is hot. You know what? The bus goes without us, but we go too! We go with Ferhad to the main road, and from there we go to Kobanî by minibus. The driver goes very fast, and I say: Slowly, please!\n\nKobanî is my town, but the town keeps growing. The streets are new, the houses are tall, and the market is crowded. I read: on the right. But I go left, and I get lost. Twice, in my own town!\n\nMy mother, Edûl, opens the door and says: Come in, sit down! My four nieces and nephews run up and climb all over me. My mother says: Eat! I eat. She says: Eat some more! I eat some more. Nobody can get up from the table. I am fifty years old, but in this house I am a child.\n\nAfter dinner, Lorîn comes with an old book. In the book is the other half of our photo: our father, on Miştenûr, at Newroz. For forty years it has been with Lorîn.\n\nOn the back of the photo is the promise of two children: One day, at Newroz, our father will play his flute for us again. Lorîn and I look at the photo, and we laugh. This is our promise.\n\nMy father, Ibrahîm, gets up. He takes his flute, looks at us and says: At Newroz I am coming to Sêvan. My promise is a promise!\n\nMy promise is a promise! Now I know where that saying comes from. Lorîn laughs, I laugh, and my mother says: Sit down! You must eat some more!"
       },
@@ -1148,7 +1148,7 @@
         },
         {
           "kind": "detail",
-          "prompt": "Li ser wêneyê kî heye?",
+          "prompt": "Li ser wêne kî heye?",
           "promptEn": "Who is in the photo?",
           "options": [
             "Bavê Hamo",
@@ -1201,7 +1201,7 @@
             "Demjimêra otobûsê"
           ],
           "correctIndex": 0,
-          "explanation": "Li pişt wêneyê soza du zarokan heye, û ew tê bîra Hamo.",
+          "explanation": "Li pişt wêne soza du zarokan heye, û ew tê bîra Hamo.",
           "explanationEn": "The other half of the photo and the children’s writing bring back their father’s promise.",
           "evidenceParagraph": null,
           "evidenceSentence": null
@@ -1227,7 +1227,14 @@
       "translations": {
         "en": "Winter is going, and the snow on the mountain is melting. Newroz is near! Baran gathers firewood, Nazê sews new clothes, and Dapîr bakes bread in the tenûr. And me? I keep an eye on the preparations, with a glass of tea.\n\nMy speech is ready: a great speech. But in the morning it isn’t on the table. Hevalo looks at me, and chews something white.\n\nOn the evening before Newroz the moon is big, and the sky is full of stars. There’s a light on the road, then two lights. They’re coming from Kobanî! My father and my mother are at the blue gate, and my mother asks: “Are you hungry?”\n\nIn the morning it rains, then the sun comes out. This rain is a blessing! The whole village goes up the hill. I put on the traditional suit and the green sash, and I lead the govend. My knees say no, but I say yes.\n\nIn the evening I light the fire, and the children jump over it. I jump too, with my hand on my moustache. Then my father takes his old flute and plays the song of Lorîn and me. He gives me the flute and says: “Keep the song going, my son.” There are tears in my mother’s eyes, but she says it’s the smoke. I say it’s the smoke too.\n\nI play the flute. Hevalo runs off, and everyone laughs and cries. This is life.\n\nIn the morning my mother and father go back to Kobanî. I want to get up, but my back hurts! My mother phones from the road and asks how my back is. I say it’s a little better. And that is a little bit true."
       },
-      "glossary": [],
+      "glossary": [
+        {
+          "term": "bidomîne",
+          "meanings": {
+            "en": "keep (it) going"
+          }
+        }
+      ],
       "questions": [
         {
           "kind": "detail",
@@ -1326,7 +1333,7 @@
           "options": [
             "Tiştekî baş",
             "Tiştekî sar",
-            "Tiştekî nebaş"
+            "Tiştekî dijwar"
           ],
           "correctIndex": 0,
           "explanation": "Baran dibare, û Hamo dilxweş e.",
@@ -1842,7 +1849,7 @@
           "prompt": "Bozo li ku bû?",
           "promptEn": "Where was Bozo?",
           "options": [
-            "Li malê, li ser banê",
+            "Li malê, li ser banî",
             "Li zozanan, li cem Bişar",
             "Li ber kaniyê, bi kera Ferhad re"
           ],
@@ -2222,7 +2229,7 @@
       "readingMinutes": null,
       "title": "Sêva bavê min",
       "summary": "Di şevbêrka yekem de, Hamo çîroka sêva bavê xwe vedibêje: here, lê rehên xwe ji bîr neke.",
-      "body": "Zivistan hat, û berf li ser hemû banan e. Ez sobeyê vêdixim, û zarok li dora min rûdinin. Ev şevbêrka yekem e. Baran dibêje: “Çîrokek, xalo!” Hevalo jî li ber sobeyê ye. Ew ji çîrokan hez dike, lê ji sêvan bêtir.\n\nSî sal berê ez xort bûm, û min dixwest ji Kobaniyê bêm Sêvanê. Wê demê simbêlê min tunebû. Erê, rast e! Sibeha ku ez çûm, bavê min li ber derî bû, û wî sêvek da min.\n\nMin got: “Sêvek? Li Sêvanê hemû dar darên sêvan in!” Ew kenî û got: “Here, lê rehên xwe ji bîr neke.”\n\nLi Sêvanê min ew sêv nexwar. Min ew li ber pencereyê danî. Zivistana min a yekem dirêj bû, û min bêriya malê dikir. Her sibeh min sêv didît. Lê gund hêz û dilgermî da min: Dapîrê nan anî, û cîranan çay anî.\n\nBihar hat, û sêv kevn bû. Wê demê ez li gotina bavê xwe tê gihîştim. Dar bê reh namîne, û em jî. Ez li Sêvanê mam, lê rehên min li Kobaniyê man.\n\nNiha Xezo jî dê biçe Hewlêrê, piştî zivistanê. Di civînê de wê got: “Ez ê biçim, lê ez ê vegerim.” Rehên wê jî li vir in, di dibistana me de.\n\nBaran pirsî: “Û sêv? Te çi kir?” Min got: “Di biharê de, min ew çand.” Ango dara sêvê ya kevn a baxçeyê me ji wê sêvê ye! Hevalo yekser rabû û çû ber darê. Ew bawer dike ku hemû sêvên wê ji bo wî ne.",
+      "body": "Zivistan hat, û berf li ser hemû banan e. Ez sobeyê vêdixim, û zarok li dora min rûdinin. Ev şevbêrka yekem e. Baran dibêje: “Çîrokek, xalo!” Hevalo jî li ber sobeyê ye. Ew ji çîrokan hez dike, lê ji sêvan bêtir.\n\nSî sal berê ez xort bûm, û min dixwest ji Kobaniyê bêm Sêvanê. Wê demê simbêlê min biçûk bû. Erê, rast e! Sibeha ku ez çûm, bavê min li ber derî bû, û wî sêvek da min.\n\nMin got: “Sêvek? Li Sêvanê hemû dar darên sêvan in!” Ew kenî û got: “Here, lê rehên xwe ji bîr neke.”\n\nLi Sêvanê min ew sêv nexwar. Min ew li ber pencereyê danî. Zivistana min a yekem dirêj bû, û min bêriya malê dikir. Her sibeh min sêv didît. Lê gund hêz û dilgermî da min: Dapîrê nan anî, û cîranan çay anî.\n\nBihar hat, û sêv kevn bû. Wê demê ez li gotina bavê xwe tê gihîştim. Dar bê reh namîne, û em jî. Ez li Sêvanê mam, lê rehên min li Kobaniyê man.\n\nNiha Xezo jî dê biçe Hewlêrê, piştî zivistanê. Di civînê de wê got: “Ez ê biçim, lê ez ê vegerim.” Rehên wê jî li vir in, di dibistana me de.\n\nBaran pirsî: “Û sêv? Te çi kir?” Min got: “Di biharê de, min ew çand.” Ango dara sêvê ya kevn a baxçeyê me ji wê sêvê ye! Hevalo yekser rabû û çû ber darê. Ew bawer dike ku hemû sêvên wê ji bo wî ne.",
       "translations": {
         "en": "Winter has come, and there is snow on every roof. I light the stove, and the children sit around me. This is the first evening of tales. Baran says: “A story, uncle!” Hevalo is by the stove too. He loves stories, but apples more.\n\nThirty years ago I was a young man, and I wanted to come from Kobanî to Sêvan. In those days I had no moustache. Yes, it’s true! The morning I left, my father was at the door, and he gave me an apple.\n\nI said: “An apple? In Sêvan all the trees are apple trees!” He laughed and said: “Go, but don’t forget your roots.”\n\nIn Sêvan I didn’t eat that apple. I put it by the window. My first winter was long, and I was homesick. Every morning I looked at the apple. But the village gave me strength and warmth: Dapîr brought bread, and the neighbours brought tea.\n\nSpring came, and the apple grew old. Then I understood my father’s words. A tree without roots does not last, and nor do we. I stayed in Sêvan, but my roots stayed in Kobanî.\n\nNow Xezo is going to Hewlêr too, after the winter. At the meeting she said: “I’ll go, but I’ll come back.” Her roots are here too, in our school.\n\nBaran asked: “And the apple? What did you do with it?” I said: “In the spring, I planted it.” That is, the old apple tree in our orchard comes from that apple! Hevalo got up at once and went to the tree. He believes all its apples are for him."
       },
@@ -2283,7 +2290,7 @@
             "Bavê wî"
           ],
           "correctIndex": 0,
-          "explanation": "Hamo dibêje: “Wê demê simbêlê min tunebû.”",
+          "explanation": "Hamo dibêje: “Wê demê simbêlê min biçûk bû.”",
           "explanationEn": "Hamo says: “In those days I had no moustache.”",
           "evidenceParagraph": 1,
           "evidenceSentence": 1
@@ -2444,7 +2451,14 @@
       "translations": {
         "en": "Our road was a long one, wasn’t it? All winter I told my father’s tales: the wolf and the kids, the fox and the bear. Today it’s my turn to tell one. It isn’t long, because my tea is hot.\n\nDo you remember when the call came from Kobanî? My father sang the last verse: “Keep the song going, and plant a new tree.” Dapîr sang along with him, and the whole village went quiet.\n\nAfter the bus left, I went to the orchard, under the old apple tree. You know, that tree comes from my father’s apple. There I planted a sapling, for you. Hevalo watched me with his ears pricked up. I said nothing. Even my moustache said nothing.\n\nNow Hevalo sits by your sapling every day and wants apples. I tell him that the apples will come in a few years. He doesn’t believe me. He sulks, and eats an old apple from the basket.\n\nYesterday a message came from Hewlêr. Xezo writes that her pupils are learning in their mother tongue, and she asks whether Hevalo is staying away from the apples. I’ll write back: no, Xezo, he isn’t!\n\nIf you come back to Sêvan one day, knock at the blue gate. I’ll open the door, because you are not the wolf. The tea will be hot, and your sapling will be bigger. Look, Hevalo wants to come with you too. No, Hevalo. You stay with the sapling. May your road be open!"
       },
-      "glossary": [],
+      "glossary": [
+        {
+          "term": "bidomînin",
+          "meanings": {
+            "en": "keep (it) going, all of you"
+          }
+        }
+      ],
       "questions": [
         {
           "kind": "detail",
@@ -2513,7 +2527,7 @@
           "options": [
             "Ji ber ku Hevalo birçî bû",
             "Wekî ku malika paşîn dibêje",
-            "Ji ber ku Xezo got"
+            "Ji ber ku Xezoyê got"
           ],
           "correctIndex": 1,
           "explanation": "Malika paşîn dibêje: “Dareke nû biçînin.”",

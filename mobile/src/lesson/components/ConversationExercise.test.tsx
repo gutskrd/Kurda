@@ -11,6 +11,7 @@ import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { FakeAudio, fakeFrames, type Frames } from '../../characters/testing/audio';
 import { characterLayers } from '../../characters/layers';
+import { sameIds } from '../../reports/testing/sameIds';
 import type { Exercise } from '../types';
 import { ConversationExercise } from './ConversationExercise';
 
@@ -80,19 +81,19 @@ function markups(): string[] {
 /** The mouth shape `who` shows now on the stage. */
 function mouth(who: SpeakerId): string | undefined {
   const drawn = markups();
-  return Object.entries(characterLayers(who, 'full').mouths).find(([, xml]) => drawn.includes(xml))?.[0];
+  return Object.entries(sameIds(characterLayers(who, 'full')).mouths).find(([, xml]) => drawn.includes(xml))?.[0];
 }
 
 /** How far a person's left iris is moved on the stage, in drawing units; 0 where drawn. */
 function irisShift(who: 'xezo' | 'hamo'): number {
-  const open = characterLayers(who, 'full').eyes.open;
+  const open = sameIds(characterLayers(who, 'full')).eyes.open;
   const eyes = markups().find((xml) => xml.replace(/ transform="translate\([^)]*\)"/g, '') === open);
   return Number(/data-iris="left" transform="translate\((-?[\d.]+) /.exec(eyes ?? '')?.[1] ?? 0);
 }
 
 /** Whether `who` is drawn mirrored on the stage. */
 function turnedRound(who: SpeakerId): boolean {
-  const body = characterLayers(who, 'full').body;
+  const body = sameIds(characterLayers(who, 'full')).body;
   const drawn = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === body);
   for (let el = drawn?.parentElement; el; el = el.parentElement) if (getComputedStyle(el).transform.includes('scaleX(-1)')) return true;
   return false;
@@ -138,7 +139,7 @@ describe('a conversation in a lesson', () => {
     expect(screen.getByRole('button', { name: 'Play line 1, said by Hamo' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /Play line 2/ })).toBeNull();
     // Hamo alone stands on the stage, facing the learner.
-    const bodies = markups().filter((xml) => xml === characterLayers('hamo', 'full').body);
+    const bodies = markups().filter((xml) => xml === sameIds(characterLayers('hamo', 'full')).body);
     expect(bodies).toHaveLength(1);
   });
 
@@ -213,7 +214,7 @@ describe('a conversation in a lesson', () => {
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
     expect(stage.compareDocumentPosition(screen.getByText('Silav, tu çawa yî?')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // Each drawn whole, for the stage's foot to cut at the waist.
-    for (const who of ['xezo', 'hamo'] as const) expect(markups()).toContain(characterLayers(who, 'full').body);
+    for (const who of ['xezo', 'hamo'] as const) expect(markups()).toContain(sameIds(characterLayers(who, 'full')).body);
     // The initials stay beside the lines.
     expect(screen.getAllByText('X')).toHaveLength(2);
     expect(screen.getAllByText('H')).toHaveLength(1);

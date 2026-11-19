@@ -63,8 +63,8 @@
                     "prompt": "bazar",
                     "options": [
                       "market",
-                      "to go",
-                      "to come"
+                      "thing",
+                      "road, way"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -124,8 +124,8 @@
                     "prompt": "rê",
                     "options": [
                       "road, way",
-                      "to go",
-                      "to come"
+                      "thing",
+                      "market"
                     ],
                     "correctIndex": 0
                   }
@@ -141,16 +141,10 @@
                     "options": [
                       "diçin",
                       "diçim",
-                      "hatin"
+                      "diçe"
                     ],
                     "correctIndex": 0,
-                    "cue": "We’re going to the market.",
-                    "new": [
-                      {
-                        "ku": "hatin",
-                        "en": "to come"
-                      }
-                    ]
+                    "cue": "We’re going to the market."
                   }
                 },
                 {
@@ -166,11 +160,53 @@
                       "Are you hungry too?",
                       "Are you from here too?"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "hatin",
+                        "en": "to come"
+                      }
+                    ]
                   }
                 },
                 {
                   "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Em diçin bazarê.",
+                    "reference": "Em diçin bazarê."
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Na. Bizin nexşe dixwaze, ne reng!"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Are you coming too?",
+                    "options": [
+                      "Tu jî têyî?",
+                      "Li ser rê gelek tiştên xweşik hene.",
+                      "Tu tî yî?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -183,7 +219,45 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Em diçin bazarê.",
+                    "voice": "hamo",
+                    "prompt": "Em diçin bazarê.",
+                    "accepted": [
+                      "We’re going to the market.",
+                      "We are going to the market."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Are you coming too?",
+                    "accepted": [
+                      "Tu jî têyî?"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "There are lots of pretty things along the road.",
+                    "accepted": [
+                      "Li ser rê gelek tiştên xweşik hene."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -199,59 +273,7 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "There are lots of pretty things along the road.",
-                    "accepted": [
-                      "Li ser rê gelek tiştên xweşik hene."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Em diçin bazarê.",
-                    "voice": "hamo",
-                    "prompt": "Em diçin bazarê.",
-                    "accepted": [
-                      "We’re going to the market.",
-                      "We are going to the market."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Are you coming too?",
-                    "options": [
-                      "Tu jî têyî?",
-                      "Li ser rê gelek tiştên xweşik hene.",
-                      "Tu tî yî?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Na. Bizin nexşe dixwaze, ne reng!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
+                  "position": 16,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -281,28 +303,6 @@
                       }
                     ],
                     "voice": "hamo"
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Em diçin bazarê.",
-                    "reference": "Em diçin bazarê."
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Are you coming too?",
-                    "accepted": [
-                      "Tu jî têyî?"
-                    ]
                   }
                 }
               ]
@@ -349,7 +349,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "çem",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "çem",
                     "options": [
                       "river",
@@ -462,19 +462,6 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Tu çi dikî?",
-                    "voice": "hamo",
-                    "prompt": "Tu çi dikî?",
-                    "accepted": [
-                      "What are you doing?"
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -489,7 +476,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -505,20 +492,7 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "I can see my moustache in the river!",
-                    "accepted": [
-                      "Ez simbêlê xwe di çem de dibînim!",
-                      "Ez di çem de simbêlê xwe dibînim!"
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
+                  "position": 10,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -528,30 +502,7 @@
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Li vir çar kursî hene."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "What are you doing?",
-                    "accepted": [
-                      "Tu çi dikî?"
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -568,7 +519,20 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I can see my moustache in the river!",
+                    "accepted": [
+                      "Ez simbêlê xwe di çem de dibînim!",
+                      "Ez di çem de simbêlê xwe dibînim!"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -576,6 +540,42 @@
                     "prompt": "I’m looking at my moustache.",
                     "accepted": [
                       "Ez li simbêlê xwe dinêrim."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Tu çi dikî?",
+                    "voice": "hamo",
+                    "prompt": "Tu çi dikî?",
+                    "accepted": [
+                      "What are you doing?"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "What are you doing?",
+                    "accepted": [
+                      "Tu çi dikî?"
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Li vir çar kursî hene."
                     ]
                   }
                 }
@@ -693,62 +693,52 @@
                 },
                 {
                   "position": 6,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Mîrza, ev heval kurdî dizane!",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Mîrza, ev heval kurdî dizane!",
-                    "options": [
-                      "Mîrza, this friend of ours knows Kurdish!",
-                      "This is water.",
-                      "This is tea."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Ev bazar e! Li vir gelek firoşkar hene.",
-                    "voice": "hamo",
-                    "prompt": "Ev bazar e! Li vir gelek firoşkar hene.",
                     "accepted": [
-                      "This is the market! There are lots of sellers here."
+                      "Îro roj xweş e. Çivîk li ser darên sêvan in."
                     ]
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
+                    "prompt": "This is the market! There are lots of sellers here.",
                     "options": [
-                      "Mîrza, ev heval kurdî dizane!",
-                      "Mîrza, ev hevalên kurdî dizane!",
-                      "Ev heşt çay in. Noşî can be!"
+                      "Ev bazar e! Li vir gelek firoşkar hene.",
+                      "Ev bazarên e! Li vir gelek firoşkar hene.",
+                      "Pisîk li wir e, li hewşê."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "multiple_choice",
+                  "position": 8,
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ez simbêlê xwe di çem de dibînim!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Ez simbêlê xwe di çem de dibînim!",
-                    "options": [
-                      "I can see my moustache in the river!",
-                      "I’m looking at my moustache.",
-                      "In this photo, Lorîn and I are children."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "A map? I know who sells what!",
+                    "accepted": [
+                      "Nexşe? Ez dizanim kî çi difiroşe!"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
+                    "accepted": [
+                      "Mîrza, ev heval kurdî dizane!"
+                    ]
                   }
                 },
                 {
@@ -829,18 +819,37 @@
                 },
                 {
                   "position": 11,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Ez simbêlê xwe di çem de dibînim!",
                     "voice": "hamo",
-                    "prompt": "A map? I know who sells what!",
-                    "accepted": [
-                      "Nexşe? Ez dizanim kî çi difiroşe!"
-                    ]
+                    "prompt": "Ez simbêlê xwe di çem de dibînim!",
+                    "options": [
+                      "I can see my moustache in the river!",
+                      "I’m looking at my moustache.",
+                      "In this photo, Lorîn and I are children."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
+                    "options": [
+                      "Mîrza, ev heval kurdî dizane!",
+                      "Mîrza, ev hevalên kurdî dizane!",
+                      "Ev heşt çay in. Noşî can be!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -850,41 +859,32 @@
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Îro roj xweş e. Çivîk li ser darên sêvan in."
-                    ]
-                  }
-                },
-                {
                   "position": 14,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-english",
+                    "say": "Ev bazar e! Li vir gelek firoşkar hene.",
                     "voice": "hamo",
-                    "prompt": "This is the market! There are lots of sellers here.",
-                    "options": [
-                      "Ev bazar e! Li vir gelek firoşkar hene.",
-                      "Ev bazarên e! Li vir gelek firoşkar hene.",
-                      "Pisîk li wir e, li hewşê."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Ev bazar e! Li vir gelek firoşkar hene.",
+                    "accepted": [
+                      "This is the market! There are lots of sellers here."
+                    ]
                   }
                 },
                 {
                   "position": 15,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Mîrza, ev heval kurdî dizane!",
                     "voice": "hamo",
-                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
-                    "accepted": [
-                      "Mîrza, ev heval kurdî dizane!"
-                    ]
+                    "prompt": "Mîrza, ev heval kurdî dizane!",
+                    "options": [
+                      "Mîrza, this friend of ours knows Kurdish!",
+                      "This is water.",
+                      "This is tea."
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -897,6 +897,17 @@
               "exercises": [
                 {
                   "position": 1,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Tu çi dibêjî?"
+                    ]
+                  }
+                },
+                {
+                  "position": 2,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -912,55 +923,7 @@
                   }
                 },
                 {
-                  "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Em diçin bazarê.",
-                    "voice": "hamo",
-                    "prompt": "Em ___ bazarê.",
-                    "options": [
-                      "diçin",
-                      "diçim",
-                      "gotin"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "We’re going to the market."
-                  }
-                },
-                {
                   "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "There are lots of pretty things along the road.",
-                    "options": [
-                      "Li ser rê gelek tiştên xweşik hene.",
-                      "Li serên rê gelek tiştên xweşik hene.",
-                      "Li ser rê tiştek heye."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Tu jî têyî?",
-                    "voice": "hamo",
-                    "prompt": "Tu jî têyî?",
-                    "options": [
-                      "Erê, ez jî têm!",
-                      "Erê, ez li vir im.",
-                      "Na, ez tî me."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -973,23 +936,22 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Tu çi dikî?",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Tu çi dikî?",
+                    "prompt": "There are lots of pretty things along the road.",
                     "options": [
-                      "What are you doing?",
-                      "What are you saying?",
-                      "What can you see?"
+                      "Li ser rê gelek tiştên xweşik hene.",
+                      "Li serên rê gelek tiştên xweşik hene.",
+                      "Li ser rê gelek tişt xweşik hene."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 5,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1022,30 +984,64 @@
                   }
                 },
                 {
+                  "position": 6,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
+                    "accepted": [
+                      "Mîrza, ev heval kurdî dizane!"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "ker",
+                    "voice": "hevalo",
+                    "prompt": "ker",
+                    "options": [
+                      "donkey",
+                      "horse",
+                      "dog",
+                      "cat"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Mîrza sells apples, and he talks a lot!",
+                    "prompt": "This is the market! There are lots of sellers here.",
                     "options": [
-                      "Mîrza sêvan difiroşe, û gelek diaxive!",
-                      "Mîrza sêvan difiroşim, û gelek diaxive!",
-                      "Mîrza firoşkar e, ew sêvan difiroşe."
+                      "Ev bazar e! Li vir gelek firoşkar hene.",
+                      "Ev bazarên e! Li vir gelek firoşkar hene.",
+                      "Ji vir dibistan, dikan û kanî li ber çavên me ne."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "missing",
+                    "say": "Em diçin bazarê.",
                     "voice": "hamo",
-                    "prompt": "I’m looking at my moustache.",
-                    "accepted": [
-                      "Ez li simbêlê xwe dinêrim."
-                    ]
+                    "prompt": "Em ___ bazarê.",
+                    "options": [
+                      "diçin",
+                      "diçim",
+                      "gotin"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "We’re going to the market."
                   }
                 },
                 {
@@ -1067,34 +1063,44 @@
                 },
                 {
                   "position": 11,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Li ber sêvên Mîrza ye, û li wan dinêre.",
-                    "reference": "Li ber sêvên Mîrza ye, û li wan dinêre."
+                    "prompt": "Mîrza sells apples, and he talks a lot!",
+                    "options": [
+                      "Mîrza sêvan difiroşe, û gelek diaxive!",
+                      "Mîrza sêvan difiroşim, û gelek diaxive!",
+                      "Mîrza firoşkar e, ew sêvan difiroşe."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
-                  "type": "listening",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "reply",
+                    "say": "Tu jî têyî?",
                     "voice": "hamo",
-                    "accepted": [
-                      "Tu çi dibêjî?"
-                    ]
+                    "prompt": "Tu jî têyî?",
+                    "options": [
+                      "Erê, ez jî têm!",
+                      "Erê, ez li vir im.",
+                      "Na, ez tî me."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
-                  "type": "writing",
+                  "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
+                    "prompt": "I’m looking at my moustache.",
                     "accepted": [
-                      "Mîrza, ev heval kurdî dizane!"
+                      "Ez li simbêlê xwe dinêrim."
                     ]
                   }
                 },
@@ -1102,15 +1108,26 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "meaning",
+                    "say": "Tu çi dikî?",
                     "voice": "hamo",
-                    "prompt": "This is the market! There are lots of sellers here.",
+                    "prompt": "Tu çi dikî?",
                     "options": [
-                      "Ev bazar e! Li vir gelek firoşkar hene.",
-                      "Ev bazarên e! Li vir gelek firoşkar hene.",
-                      "Ji vir dibistan, dikan û kanî li ber çavên me ne."
+                      "What are you doing?",
+                      "What are you saying?",
+                      "What can you see?"
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Li ber sêvên Mîrza ye, û li wan dinêre.",
+                    "reference": "Li ber sêvên Mîrza ye, û li wan dinêre."
                   }
                 }
               ]
@@ -1198,9 +1215,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez mêwe dixwazim.",
+                    "say": "Ez fêkî dixwazim.",
                     "voice": "hamo",
-                    "prompt": "Ez mêwe dixwazim.",
+                    "prompt": "Ez fêkî dixwazim.",
                     "options": [
                       "I’d like some fruit.",
                       "I’d like some bread.",
@@ -1213,7 +1230,7 @@
                         "en": "to want"
                       },
                       {
-                        "ku": "mêwe",
+                        "ku": "fêkî",
                         "en": "fruit"
                       }
                     ]
@@ -1241,12 +1258,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ez mêwe dixwazim.",
+                    "say": "Ez fêkî dixwazim.",
                     "voice": "hamo",
                     "prompt": "Ez ___ dixwazim.",
                     "options": [
-                      "mêwe",
-                      "mêweyên",
+                      "fêkî",
+                      "fêkiyên",
                       "kartol"
                     ],
                     "correctIndex": 0,
@@ -1277,88 +1294,16 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Ez sêvê dixwim.",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez sêvê dixwim.",
-                    "accepted": [
-                      "I’m eating the apple.",
-                      "I am eating the apple."
-                    ]
+                    "prompt": "Ez fêkî dixwazim.",
+                    "reference": "Ez fêkî dixwazim."
                   }
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Li ser rê gelek tiştên xweşik hene.",
-                    "voice": "hamo",
-                    "prompt": "Li ser rê gelek tiştên xweşik hene.",
-                    "options": [
-                      "There are lots of pretty things along the road.",
-                      "There are lots of pretty flowers at the market.",
-                      "There’s nothing pretty along the road."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Tomatoes and potatoes, please.",
-                    "accepted": [
-                      "Bacansor û kartol, ji kerema xwe."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Ez mêwe dixwazim.",
-                    "voice": "hamo",
-                    "prompt": "Ez mêwe dixwazim.",
-                    "accepted": [
-                      "I’d like some fruit.",
-                      "I would like some fruit."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "I’m eating the apple.",
-                    "options": [
-                      "Ez sêvê dixwim.",
-                      "Bacansor û kartol, ji kerema xwe.",
-                      "Niha ez diçim bajêr."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Pezê Bişar li çiyê ye."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1391,17 +1336,52 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "speaking",
+                  "position": 10,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Ez mêwe dixwazim.",
-                    "reference": "Ez mêwe dixwazim."
+                    "prompt": "I’m eating the apple.",
+                    "options": [
+                      "Ez sêvê dixwim.",
+                      "Bacansor û kartol, ji kerema xwe.",
+                      "Ez sêveke din dixwim."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Ez fêkî dixwazim.",
+                    "voice": "hamo",
+                    "prompt": "Ez fêkî dixwazim.",
+                    "accepted": [
+                      "I’d like some fruit.",
+                      "I would like some fruit."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Li ser rê gelek tiştên xweşik hene.",
+                    "voice": "hamo",
+                    "prompt": "Li ser rê gelek tiştên xweşik hene.",
+                    "options": [
+                      "There are lots of pretty things along the road.",
+                      "There are lots of pretty flowers at the market.",
+                      "There’s nothing pretty along the road."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1410,6 +1390,43 @@
                     "accepted": [
                       "Ez sêvê dixwim.",
                       "Ez sêv dixwim."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Pezê Bişar li çiyê ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Tomatoes and potatoes, please.",
+                    "accepted": [
+                      "Bacansor û kartol, ji kerema xwe."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Ez sêvê dixwim.",
+                    "voice": "hamo",
+                    "prompt": "Ez sêvê dixwim.",
+                    "accepted": [
+                      "I’m eating the apple.",
+                      "I am eating the apple."
                     ]
                   }
                 }
@@ -1496,6 +1513,22 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
+                    "say": "fêkî",
+                    "voice": "hevalo",
+                    "prompt": "fêkî",
+                    "options": [
+                      "fruit",
+                      "fish",
+                      "honey"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
                     "say": "Masî li min dinêre! Ez goşt dixwazim.",
                     "voice": "hamo",
                     "prompt": "Masî li min dinêre! Ez goşt dixwazim.",
@@ -1514,7 +1547,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1536,69 +1569,56 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Masî li min dinêre! Ez goşt dixwazim.",
-                    "voice": "hamo",
-                    "prompt": "Masî li min dinêre! Ez ___ dixwazim.",
-                    "options": [
-                      "goşt",
-                      "goştên",
-                      "kîlo"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "meat"
-                  }
-                },
-                {
                   "position": 7,
-                  "type": "translate",
+                  "type": "writing",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Ez çayê vedixwim.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Ez çayê vedixwim.",
+                    "prompt": "I’m drinking the tea.",
                     "accepted": [
-                      "I’m drinking the tea.",
-                      "I am drinking the tea."
+                      "Ez çayê vedixwim."
                     ]
                   }
                 },
                 {
                   "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Six kilos of honey? I can do it!",
+                    "accepted": [
+                      "Şeş kîlo hingiv? Ez dikarim!"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Bacansor û kartol, ji kerema xwe.",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Bacansor û kartol, ji kerema xwe.",
+                    "prompt": "I’m drinking the tea.",
                     "options": [
-                      "Tomatoes and potatoes, please.",
-                      "Tomatoes and onions, please.",
-                      "Potatoes and apples, please."
+                      "Ez çayê vedixwim.",
+                      "Ez çayê dixwim.",
+                      "Ez nan û penîr dixwim."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "translate",
+                  "position": 10,
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Şeş kîlo hingiv? Ez dikarim!",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Şeş kîlo hingiv? Ez dikarim!",
-                    "accepted": [
-                      "Six kilos of honey? I can do it!",
-                      "Six kilos of honey? I can!",
-                      "Six kilos of honey? I can manage!"
-                    ]
+                    "prompt": "Masî li min dinêre! Ez goşt dixwazim.",
+                    "reference": "Masî li min dinêre! Ez goşt dixwazim."
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1609,21 +1629,6 @@
                       "The fish is looking at me! I’d like meat.",
                       "The fish is looking at me! I would like meat."
                     ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "I’m drinking the tea.",
-                    "options": [
-                      "Ez çayê vedixwim.",
-                      "Ez çay vedixwim.",
-                      "Ez nan û penîr dixwim."
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -1641,34 +1646,62 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Ez çayê vedixwim.",
                     "voice": "hamo",
-                    "prompt": "Six kilos of honey? I can do it!",
+                    "prompt": "Ez çayê vedixwim.",
                     "accepted": [
-                      "Şeş kîlo hingiv? Ez dikarim!"
+                      "I’m drinking the tea.",
+                      "I am drinking the tea."
                     ]
                   }
                 },
                 {
                   "position": 14,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "missing",
+                    "say": "Masî li min dinêre! Ez goşt dixwazim.",
                     "voice": "hamo",
-                    "prompt": "Masî li min dinêre! Ez goşt dixwazim.",
-                    "reference": "Masî li min dinêre! Ez goşt dixwazim."
+                    "prompt": "Masî li min dinêre! Ez ___ dixwazim.",
+                    "options": [
+                      "goşt",
+                      "goştên",
+                      "kîlo"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "meat"
                   }
                 },
                 {
                   "position": 15,
-                  "type": "writing",
+                  "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Şeş kîlo hingiv? Ez dikarim!",
                     "voice": "hamo",
-                    "prompt": "I’m drinking the tea.",
+                    "prompt": "Şeş kîlo hingiv? Ez dikarim!",
                     "accepted": [
-                      "Ez çayê vedixwim."
+                      "Six kilos of honey? I can do it!",
+                      "Six kilos of honey? I can!",
+                      "Six kilos of honey? I can manage!"
                     ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bacansor û kartol, ji kerema xwe.",
+                    "voice": "hamo",
+                    "prompt": "Bacansor û kartol, ji kerema xwe.",
+                    "options": [
+                      "Tomatoes and potatoes, please.",
+                      "Tomatoes and onions, please.",
+                      "Potatoes and apples, please."
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -1771,6 +1804,37 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
+                    "say": "Çaya Mîrza germ e. Tu hinek şekir dixwazî?",
+                    "voice": "hamo",
+                    "prompt": "Çaya Mîrza germ e. Tu ___ şekir dixwazî?",
+                    "options": [
+                      "hinek",
+                      "îro",
+                      "sibe"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "a little, some"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Fermo, çaya te. Du kevçî şekir ji bo te!",
+                    "voice": "hamo",
+                    "prompt": "Fermo, çaya te. Du kevçî şekir ji bo te!",
+                    "accepted": [
+                      "Here’s your tea. Two spoonfuls of sugar for you!",
+                      "Here is your tea. Two spoonfuls of sugar for you!"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
                     "say": "Mîrza jî dibêje ku zêde ye.",
                     "voice": "hamo",
                     "prompt": "Mîrza jî ___ ku zêde ye.",
@@ -1781,35 +1845,6 @@
                     ],
                     "correctIndex": 0,
                     "cue": "Mîrza says it’s too much as well."
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Çaya Mîrza germ e. Tu hinek şekir dixwazî?",
-                    "voice": "hamo",
-                    "prompt": "Çaya Mîrza germ e. Tu hinek şekir dixwazî?",
-                    "accepted": [
-                      "Mîrza’s tea is hot. Would you like a little sugar?"
-                    ]
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Masî li min dinêre! Ez goşt dixwazim.",
-                    "voice": "hamo",
-                    "prompt": "Masî li min dinêre! Ez goşt dixwazim.",
-                    "options": [
-                      "The fish is looking at me! I’d like meat.",
-                      "The fish is looking at me! I’d like honey.",
-                      "The seller is looking at me! I’d like meat."
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -1885,34 +1920,16 @@
                 },
                 {
                   "position": 9,
-                  "type": "translate",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Fermo, çaya te. Du kevçî şekir ji bo te!",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Fermo, çaya te. Du kevçî şekir ji bo te!",
-                    "accepted": [
-                      "Here’s your tea. Two spoonfuls of sugar for you!",
-                      "Here is your tea. Two spoonfuls of sugar for you!"
-                    ]
+                    "prompt": "Mîrza jî dibêje ku zêde ye.",
+                    "reference": "Mîrza jî dibêje ku zêde ye."
                   }
                 },
                 {
                   "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Mîrza jî dibêje ku zêde ye.",
-                    "voice": "hamo",
-                    "prompt": "Mîrza jî dibêje ku zêde ye.",
-                    "accepted": [
-                      "Mîrza says it’s too much as well.",
-                      "Mîrza says it is too much as well."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1924,6 +1941,18 @@
                       "Ev nîvê wêneyekî kevn e!"
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Here’s your tea. Two spoonfuls of sugar for you!",
+                    "accepted": [
+                      "Fermo, çaya te. Du kevçî şekir ji bo te!"
+                    ]
                   }
                 },
                 {
@@ -1941,39 +1970,43 @@
                   "position": 13,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Mîrza jî dibêje ku zêde ye.",
                     "voice": "hamo",
-                    "prompt": "Here’s your tea. Two spoonfuls of sugar for you!",
+                    "prompt": "Mîrza jî dibêje ku zêde ye.",
                     "accepted": [
-                      "Fermo, çaya te. Du kevçî şekir ji bo te!"
+                      "Mîrza says it’s too much as well.",
+                      "Mîrza says it is too much as well."
                     ]
                   }
                 },
                 {
                   "position": 14,
-                  "type": "speaking",
+                  "type": "translate",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "to-english",
+                    "say": "Çaya Mîrza germ e. Tu hinek şekir dixwazî?",
                     "voice": "hamo",
-                    "prompt": "Mîrza jî dibêje ku zêde ye.",
-                    "reference": "Mîrza jî dibêje ku zêde ye."
+                    "prompt": "Çaya Mîrza germ e. Tu hinek şekir dixwazî?",
+                    "accepted": [
+                      "Mîrza’s tea is hot. Would you like a little sugar?"
+                    ]
                   }
                 },
                 {
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Çaya Mîrza germ e. Tu hinek şekir dixwazî?",
+                    "ask": "meaning",
+                    "say": "Masî li min dinêre! Ez goşt dixwazim.",
                     "voice": "hamo",
-                    "prompt": "Çaya Mîrza germ e. Tu ___ şekir dixwazî?",
+                    "prompt": "Masî li min dinêre! Ez goşt dixwazim.",
                     "options": [
-                      "hinek",
-                      "îro",
-                      "sibe"
+                      "The fish is looking at me! I’d like meat.",
+                      "The fish is looking at me! I’d like honey.",
+                      "The seller is looking at me! I’d like meat."
                     ],
-                    "correctIndex": 0,
-                    "cue": "a little, some"
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -1989,9 +2022,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez mêwe dixwazim.",
+                    "say": "Ez fêkî dixwazim.",
                     "voice": "hamo",
-                    "prompt": "Ez mêwe dixwazim.",
+                    "prompt": "Ez fêkî dixwazim.",
                     "options": [
                       "I’d like some fruit.",
                       "I’d like some bread.",
@@ -2002,38 +2035,6 @@
                 },
                 {
                   "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Fermo, çaya te. Du kevçî şekir ji bo te!",
-                    "voice": "hamo",
-                    "prompt": "Fermo, çaya te. Du ___ şekir ji bo te!",
-                    "options": [
-                      "kevçî",
-                      "kevçiyên",
-                      "bacansor"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "spoon"
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Six kilos of honey? I can do it!",
-                    "options": [
-                      "Şeş kîlo hingiv? Ez dikarim!",
-                      "Şeş kîloyek hingiv? Ez dikarim!",
-                      "Ez dikarim!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2046,23 +2047,7 @@
                   }
                 },
                 {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Masî li min dinêre! Ez goşt dixwazim.",
-                    "voice": "hamo",
-                    "prompt": "Masî li min dinêre! Ez goşt dixwazim.",
-                    "options": [
-                      "The fish is looking at me! I’d like meat.",
-                      "The fish is looking at me! I’d like honey.",
-                      "The seller is looking at me! I’d like meat."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2071,13 +2056,13 @@
                     "options": [
                       "Mîrza jî dibêje ku zêde ye.",
                       "Mîrza jî dibêjim ku zêde ye.",
-                      "Şekir zêde ye!"
+                      "Em li cem Mîrza ne."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 4,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -2110,7 +2095,65 @@
                   }
                 },
                 {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "One spoonful for you, and three for me.",
+                    "options": [
+                      "Kevçiyek ji bo te, û sê kevçî ji bo min.",
+                      "Kevçiyek ji bo te, û sisê kevçî ji bo min.",
+                      "Mamosteya zarokan ne ji vî gundî ye, ew ji Amedê ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Fermo, çaya te. Du kevçî şekir ji bo te!",
+                    "voice": "hamo",
+                    "prompt": "Fermo, çaya te. Du ___ şekir ji bo te!",
+                    "options": [
+                      "kevçî",
+                      "kevçiyên",
+                      "bacansor"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "spoon"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Erê! Çay bi şekir xweş e.",
+                    "reference": "Erê! Çay bi şekir xweş e."
+                  }
+                },
+                {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "fêkî",
+                    "voice": "hevalo",
+                    "prompt": "fêkî",
+                    "options": [
+                      "fruit",
+                      "meat",
+                      "honey"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2122,7 +2165,38 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Six kilos of honey? I can do it!",
+                    "options": [
+                      "Şeş kîlo hingiv? Ez dikarim!",
+                      "Şeş kîloyek hingiv? Ez dikarim!",
+                      "Şeş kîlo hingiv? Ez dikarî!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Binêre! Pozê Hevalo li pişt darê ye.",
+                    "voice": "hamo",
+                    "prompt": "Binêre! Pozê Hevalo li pişt darê ye.",
+                    "options": [
+                      "Look! Hevalo’s nose is behind the tree.",
+                      "Look! Hevalo’s nose is in the basket!",
+                      "Look! The goat is up the tree!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2138,17 +2212,7 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Erê! Çay bi şekir xweş e.",
-                    "reference": "Erê! Çay bi şekir xweş e."
-                  }
-                },
-                {
-                  "position": 11,
+                  "position": 13,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2160,7 +2224,23 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Masî li min dinêre! Ez goşt dixwazim.",
+                    "voice": "hamo",
+                    "prompt": "Masî li min dinêre! Ez goşt dixwazim.",
+                    "options": [
+                      "The fish is looking at me! I’d like meat.",
+                      "The fish is looking at me! I’d like honey.",
+                      "The seller is looking at me! I’d like meat."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2168,37 +2248,6 @@
                     "accepted": [
                       "Nexşe? Ez dizanim kî çi difiroşe!"
                     ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "One spoonful for you, and three for me.",
-                    "options": [
-                      "Kevçiyek ji bo te, û sê kevçî ji bo min.",
-                      "Kevçiyek ji bo te, û sisê kevçî ji bo min.",
-                      "Mamosteya zarokan ne ji vî gundî ye, ew ji Amedê ye."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Binêre! Pozê Hevalo li pişt darê ye.",
-                    "voice": "hamo",
-                    "prompt": "Binêre! Pozê Hevalo li pişt darê ye.",
-                    "options": [
-                      "Look! Hevalo’s nose is behind the tree.",
-                      "Hevalo’s nose is behind the tree!",
-                      "Look! The goat is up the tree!"
-                    ],
-                    "correctIndex": 0
                   }
                 }
               ]
@@ -2270,28 +2319,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Selik bi sî ye.",
-                    "voice": "hamo",
-                    "prompt": "Selik bi ___ ye.",
-                    "options": [
-                      "sî",
-                      "bîst",
-                      "deh"
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "bîst",
-                        "en": "twenty"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Kîloyek tirî bi bîst e!",
                     "voice": "hamo",
@@ -2306,8 +2333,29 @@
                       {
                         "ku": "tirî",
                         "en": "grapes"
+                      },
+                      {
+                        "ku": "bîst",
+                        "en": "twenty"
                       }
                     ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Selik bi sî ye.",
+                    "voice": "hamo",
+                    "prompt": "Selik bi ___ ye.",
+                    "options": [
+                      "sî",
+                      "bîst",
+                      "deh"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The basket is thirty."
                   }
                 },
                 {
@@ -2334,6 +2382,17 @@
                 },
                 {
                   "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Hevalo sê kulîlkên zer dixwe!"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2350,67 +2409,7 @@
                   }
                 },
                 {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Pereyên min di destê min de ne.",
-                    "voice": "hamo",
-                    "prompt": "Pereyên min di destê min de ne.",
-                    "options": [
-                      "My money is in my hand.",
-                      "My money is under my bed.",
-                      "My grapes are in my hand."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Hemû bi çend e?",
-                    "voice": "hamo",
-                    "prompt": "Hemû bi çend e?",
-                    "accepted": [
-                      "How much for all of it?"
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "My money is in my hand.",
-                    "options": [
-                      "Pereyên min di destê min de ne.",
-                      "Hemû bi çend e?",
-                      "Ne Hevalo ye. Hevalo sêv dixwaze, ne reng."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Bacansor û kartol, ji kerema xwe.",
-                    "voice": "hamo",
-                    "prompt": "Bacansor û kartol, ji kerema xwe.",
-                    "options": [
-                      "Tomatoes and potatoes, please.",
-                      "Tomatoes and onions, please.",
-                      "Potatoes and apples, please."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2422,28 +2421,7 @@
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Kîloyek tirî bi bîst e!",
-                    "reference": "Kîloyek tirî bi bîst e!"
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Hevalo sê kulîlkên zer dixwe!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
+                  "position": 9,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -2476,19 +2454,77 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "writing",
+                  "position": 10,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Bacansor û kartol, ji kerema xwe.",
                     "voice": "hamo",
-                    "prompt": "How much for all of it?",
+                    "prompt": "Bacansor û kartol, ji kerema xwe.",
+                    "options": [
+                      "Tomatoes and potatoes, please.",
+                      "Tomatoes and onions, please.",
+                      "Potatoes and apples, please."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Hemû bi çend e?",
+                    "voice": "hamo",
+                    "prompt": "Hemû bi çend e?",
                     "accepted": [
-                      "Hemû bi çend e?"
+                      "How much for all of it?"
                     ]
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Kîloyek tirî bi bîst e!",
+                    "reference": "Kîloyek tirî bi bîst e!"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "My money is in my hand.",
+                    "options": [
+                      "Pereyên min di destê min de ne.",
+                      "Hemû bi çend e?",
+                      "Pereyên min di destê min de in."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Pereyên min di destê min de ne.",
+                    "voice": "hamo",
+                    "prompt": "Pereyên min di destê min de ne.",
+                    "options": [
+                      "My money is in my hand.",
+                      "My money is under my bed.",
+                      "My grapes are in my hand."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2496,6 +2532,18 @@
                     "prompt": "My money is in my hand.",
                     "accepted": [
                       "Pereyên min di destê min de ne."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "How much for all of it?",
+                    "accepted": [
+                      "Hemû bi çend e?"
                     ]
                   }
                 }
@@ -2603,6 +2651,23 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "picture",
+                    "say": "tirî",
+                    "voice": "hevalo",
+                    "prompt": "tirî",
+                    "options": [
+                      "grapes",
+                      "apple",
+                      "basket",
+                      "money"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Bes e! Fermo, sêvek. Bixwe!",
                     "voice": "hamo",
@@ -2622,24 +2687,84 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Pîvaz erzan e.",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Pîvaz ___ e.",
+                    "prompt": "Enough! Here, have an apple. Eat!",
                     "options": [
-                      "erzan",
-                      "biha",
-                      "xweşik"
+                      "Bes e! Fermo, sêvek. Bixwe!",
+                      "Bes e! Fermo, sêvek. Vexwe!",
+                      "Bes ye! Fermo, sêvek. Bixwe!"
                     ],
-                    "correctIndex": 0,
-                    "cue": "Onions are cheap."
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Pîvaz erzan e.",
+                    "voice": "hamo",
+                    "prompt": "Pîvaz erzan e.",
+                    "accepted": [
+                      "Onions are cheap."
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Enough! Here, have an apple. Eat!",
+                    "accepted": [
+                      "Bes e! Fermo, sêvek. Bixwe!"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Biha ye! Çil, ne pêncî!",
+                    "voice": "hamo",
+                    "prompt": "Biha ye! Çil, ne pêncî!",
+                    "accepted": [
+                      "It’s expensive! Forty, not fifty!",
+                      "It is expensive! Forty, not fifty!"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Pereyên min di destê min de ne."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "It’s expensive! Forty, not fifty!",
+                    "accepted": [
+                      "Biha ye! Çil, ne pêncî!"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2652,7 +2777,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2668,72 +2793,7 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Biha ye! Çil, ne pêncî!",
-                    "voice": "hamo",
-                    "prompt": "Biha ye! Çil, ne pêncî!",
-                    "accepted": [
-                      "It’s expensive! Forty, not fifty!",
-                      "It is expensive! Forty, not fifty!"
-                    ]
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Pîvaz erzan e.",
-                    "voice": "hamo",
-                    "prompt": "Pîvaz erzan e.",
-                    "accepted": [
-                      "Onions are cheap."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Enough! Here, have an apple. Eat!",
-                    "options": [
-                      "Bes e! Fermo, sêvek. Bixwe!",
-                      "Bes e! Fermo, sêv. Bixwe!",
-                      "Mase li vir e, li ser banî."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Pereyên min di destê min de ne."
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "It’s expensive! Forty, not fifty!",
-                    "accepted": [
-                      "Biha ye! Çil, ne pêncî!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2743,15 +2803,20 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "writing",
+                  "position": 16,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "missing",
+                    "say": "Pîvaz erzan e.",
                     "voice": "hamo",
-                    "prompt": "Enough! Here, have an apple. Eat!",
-                    "accepted": [
-                      "Bes e! Fermo, sêvek. Bixwe!"
-                    ]
+                    "prompt": "Pîvaz ___ e.",
+                    "options": [
+                      "erzan",
+                      "biha",
+                      "xweşik"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Onions are cheap."
                   }
                 }
               ]
@@ -2817,16 +2882,10 @@
                     "options": [
                       "dibêje",
                       "dibêjim",
-                      "dide"
+                      "dibêjî"
                     ],
                     "correctIndex": 0,
-                    "cue": "A hundred and ten? What does Mîrza say?",
-                    "new": [
-                      {
-                        "ku": "dan",
-                        "en": "to give"
-                      }
-                    ]
+                    "cue": "A hundred and ten? What does Mîrza say?"
                   }
                 },
                 {
@@ -2842,7 +2901,13 @@
                       "I need money.",
                       "I’m selling."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "dan",
+                        "en": "to give"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2886,15 +2951,12 @@
                 },
                 {
                   "position": 7,
-                  "type": "translate",
+                  "type": "listening",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Ez pere didim.",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Ez pere didim.",
                     "accepted": [
-                      "I’m paying.",
-                      "I am paying."
+                      "Masî li min dinêre! Ez goşt dixwazim."
                     ]
                   }
                 },
@@ -2915,18 +2977,14 @@
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Selik bi sî ye!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Selik bi sî ye!",
-                    "options": [
-                      "The basket is thirty!",
-                      "The basket is twenty!",
-                      "The grapes are thirty!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "I’m paying.",
+                    "accepted": [
+                      "Ez pere didim."
+                    ]
                   }
                 },
                 {
@@ -2994,6 +3052,32 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
+                    "say": "Ez pere didim.",
+                    "voice": "hamo",
+                    "prompt": "Ez pere didim.",
+                    "accepted": [
+                      "I’m paying.",
+                      "I am paying."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I’m buying grapes and onions.",
+                    "accepted": [
+                      "Ez tirî û pîvaz dikirim."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
                     "prompt": "A hundred and ten? What does Mîrza say?",
@@ -3003,36 +3087,13 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 14,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
                     "prompt": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!",
                     "reference": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!"
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Masî li min dinêre! Ez goşt dixwazim."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "I’m paying.",
-                    "accepted": [
-                      "Ez pere didim."
-                    ]
                   }
                 },
                 {
@@ -3051,14 +3112,18 @@
                 },
                 {
                   "position": 16,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Selik bi sî ye!",
                     "voice": "hamo",
-                    "prompt": "I’m buying grapes and onions.",
-                    "accepted": [
-                      "Ez tirî û pîvaz dikirim."
-                    ]
+                    "prompt": "Selik bi sî ye!",
+                    "options": [
+                      "The basket is thirty!",
+                      "The basket is twenty!",
+                      "The grapes are thirty!"
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -3071,99 +3136,17 @@
               "exercises": [
                 {
                   "position": 1,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Biha ye! Çil, ne pêncî!",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Biha ye! Çil, ne pêncî!",
-                    "options": [
-                      "It’s expensive! Forty, not fifty!",
-                      "It’s cheap! Forty, not fifty!",
-                      "It’s expensive! Fourteen, not fifteen!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Ez tirî û pîvaz dikirim.",
-                    "voice": "hamo",
-                    "prompt": "Ez ___ û pîvaz dikirim.",
-                    "options": [
-                      "tirî",
-                      "tiriyên",
-                      "pere"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "I’m buying grapes and onions."
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The basket is thirty!",
-                    "options": [
-                      "Selik bi sî ye!",
-                      "Selik bi çil ye!",
-                      "Selika sêvan bi pêncî ye."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Hemû bi çend e?",
-                    "voice": "hamo",
-                    "prompt": "Hemû bi çend e?",
-                    "options": [
-                      "Bi sed û deh e.",
-                      "Hemû li vir e.",
-                      "Ez tirî dikirim."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Bes e! Fermo, sêvek. Bixwe!",
-                    "voice": "hamo",
-                    "prompt": "Bes e! Fermo, sêvek. Bixwe!",
                     "accepted": [
-                      "Enough! Here, have an apple. Eat!"
+                      "Wêneyê bapîrê min li ber pencereyê ye."
                     ]
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ez pere didim.",
-                    "voice": "hamo",
-                    "prompt": "Ez pere didim.",
-                    "options": [
-                      "I’m paying.",
-                      "I need money.",
-                      "I’m selling."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
+                  "position": 2,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3193,6 +3176,76 @@
                       }
                     ],
                     "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Pereyên min di destê min de ne.",
+                    "voice": "hamo",
+                    "prompt": "Pereyên min di ___ min de ne.",
+                    "options": [
+                      "destê",
+                      "dest",
+                      "destên"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "in my hand"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Bes e! Fermo, sêvek. Bixwe!",
+                    "voice": "hamo",
+                    "prompt": "Bes e! Fermo, sêvek. Bixwe!",
+                    "accepted": [
+                      "Enough! Here, have an apple. Eat!"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Biha ye! Çil, ne pêncî!",
+                    "voice": "hamo",
+                    "prompt": "Biha ye! Çil, ne pêncî!",
+                    "options": [
+                      "It’s expensive! Forty, not fifty!",
+                      "It’s cheap! Forty, not fifty!",
+                      "It’s expensive! Fourteen, not fifteen!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Onions are cheap.",
+                    "accepted": [
+                      "Pîvaz erzan e."
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "A hundred and ten? What does Mîrza say?",
+                    "accepted": [
+                      "Sed û deh? Mîrza çi dibêje?"
+                    ]
                   }
                 },
                 {
@@ -3272,6 +3325,37 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
+                    "prompt": "The cow is behind the house.",
+                    "options": [
+                      "Çêlek li pişt malê ye.",
+                      "Çêlek li pişt mal ye.",
+                      "Hingiv li ser kevçî ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Hemû bi çend e?",
+                    "voice": "hamo",
+                    "prompt": "Hemû bi çend e?",
+                    "options": [
+                      "Bi sed û deh e.",
+                      "Hemû li vir e.",
+                      "Ez tirî dikirim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
                     "prompt": "A kilo of grapes is twenty!",
                     "options": [
                       "Kîloyek tirî bi bîst e!",
@@ -3282,68 +3366,24 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Onions are cheap.",
-                    "accepted": [
-                      "Pîvaz erzan e."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Pereyên min di destê min de ne.",
+                    "say": "Ez tirî û pîvaz dikirim.",
                     "voice": "hamo",
-                    "prompt": "Pereyên min di ___ min de ne.",
+                    "prompt": "Ez ___ û pîvaz dikirim.",
                     "options": [
-                      "destê",
-                      "dest",
-                      "destên"
+                      "tirî",
+                      "tiriyên",
+                      "pere"
                     ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Erê, deh jî ji bo şekir!",
-                    "reference": "Erê, deh jî ji bo şekir!"
+                    "correctIndex": 0,
+                    "cue": "I’m buying grapes and onions."
                   }
                 },
                 {
                   "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Wêneyê bapîrê min li ber pencereyê ye."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "A hundred and ten? What does Mîrza say?",
-                    "accepted": [
-                      "Sed û deh? Mîrza çi dibêje?"
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3357,16 +3397,42 @@
                   }
                 },
                 {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Erê, deh jî ji bo şekir!",
+                    "reference": "Erê, deh jî ji bo şekir!"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez pere didim.",
+                    "voice": "hamo",
+                    "prompt": "Ez pere didim.",
+                    "options": [
+                      "I’m paying.",
+                      "I need money.",
+                      "I’m selling."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The cow is behind the house.",
+                    "prompt": "The basket is thirty!",
                     "options": [
-                      "Çêlek li pişt malê ye.",
-                      "Çêlek li pişt mal ye.",
-                      "Hingiv li ser kevçî ye."
+                      "Selik bi sî ye!",
+                      "Selik bi çil ye!",
+                      "Selika sêvan bi pêncî ye."
                     ],
                     "correctIndex": 0
                   }
@@ -3421,22 +3487,6 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "kes",
-                    "voice": "hamo",
-                    "prompt": "kes",
-                    "options": [
-                      "person",
-                      "not",
-                      "at all"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "missing",
                     "say": "Kes ji bo selikeke vala pere nade!",
                     "voice": "hamo",
@@ -3444,11 +3494,31 @@
                     "options": [
                       "nade",
                       "nadim",
-                      "nizane"
+                      "nadin"
                     ],
                     "correctIndex": 0,
-                    "cue": "Nobody pays for an empty basket!",
+                    "cue": "Nobody pays for an empty basket!"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez nizanim! Ez hîç nizanim!",
+                    "voice": "hevalo",
+                    "prompt": "Ez nizanim! Ez hîç nizanim!",
+                    "options": [
+                      "I don’t know! I have no idea at all!",
+                      "I know! I know it all!",
+                      "I don’t want it! Not at all!"
+                    ],
+                    "correctIndex": 0,
                     "new": [
+                      {
+                        "ku": "hîç",
+                        "en": "at all; ever"
+                      },
                       {
                         "ku": "ni- (nizane)",
                         "en": "not"
@@ -3461,46 +3531,24 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez nizanim! Ez hîç nizanim!",
-                    "voice": "hamo",
-                    "prompt": "Ez nizanim! Ez hîç nizanim!",
-                    "options": [
-                      "I don’t know! I have no idea at all!",
-                      "I know! I know it all!",
-                      "I don’t want it! Not at all!"
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "hîç",
-                        "en": "at all; ever"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
                     "say": "vala",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "vala",
                     "options": [
                       "empty",
-                      "not",
+                      "cheap",
                       "at all"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
                     "say": "Ez nizanim! Ez hîç nizanim!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Ez nizanim! Ez ___ nizanim!",
                     "options": [
                       "hîç",
@@ -3509,6 +3557,22 @@
                     ],
                     "correctIndex": 0,
                     "cue": "I don’t know! I have no idea at all!"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Kes nizane!",
+                    "voice": "hamo",
+                    "prompt": "Kes nizane!",
+                    "options": [
+                      "Nobody knows!",
+                      "Nobody pays!",
+                      "I don’t know!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -3535,63 +3599,6 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Çima selik vala ye?",
-                    "voice": "hamo",
-                    "prompt": "Çima selik vala ye?",
-                    "accepted": [
-                      "Why is the basket empty?"
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Kîloyek tirî bi bîst e!",
-                    "voice": "hamo",
-                    "prompt": "Kîloyek tirî bi bîst e!",
-                    "options": [
-                      "A kilo of grapes is twenty!",
-                      "A kilo of grapes is thirty!",
-                      "A kilo of apples is twenty!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Nobody pays for an empty basket!",
-                    "accepted": [
-                      "Kes ji bo selikeke vala pere nade!",
-                      "Kes pere nade ji bo selikeke vala!"
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Ez nizanim! Ez hîç nizanim!",
-                    "voice": "hamo",
-                    "prompt": "Ez nizanim! Ez hîç nizanim!",
-                    "accepted": [
-                      "I don’t know! I have no idea at all!",
-                      "I do not know! I have no idea at all!",
-                      "I don’t know! I’ve no idea at all!"
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3606,18 +3613,29 @@
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "listening",
+                  "position": 9,
+                  "type": "speaking",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "repeat",
+                    "voice": "hevalo",
+                    "prompt": "Ez nizanim! Ez hîç nizanim!",
+                    "reference": "Ez nizanim! Ez hîç nizanim!"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
                     "voice": "hamo",
+                    "prompt": "Why is the basket empty?",
                     "accepted": [
-                      "Bi xêr biçî!"
+                      "Çima selik vala ye?"
                     ]
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 11,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3650,24 +3668,70 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "speaking",
+                  "position": 12,
+                  "type": "translate",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "to-english",
+                    "say": "Çima selik vala ye?",
                     "voice": "hamo",
-                    "prompt": "Ez nizanim! Ez hîç nizanim!",
-                    "reference": "Ez nizanim! Ez hîç nizanim!"
+                    "prompt": "Çima selik vala ye?",
+                    "accepted": [
+                      "Why is the basket empty?"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Kîloyek tirî bi bîst e!",
+                    "voice": "hamo",
+                    "prompt": "Kîloyek tirî bi bîst e!",
+                    "options": [
+                      "A kilo of grapes is twenty!",
+                      "A kilo of grapes is thirty!",
+                      "A kilo of apples is twenty!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bi xêr biçî!"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Nobody pays for an empty basket!",
+                    "accepted": [
+                      "Kes ji bo selikeke vala pere nade!",
+                      "Kes pere nade ji bo selikeke vala!"
+                    ]
                   }
                 },
                 {
                   "position": 16,
-                  "type": "writing",
+                  "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Why is the basket empty?",
+                    "ask": "to-english",
+                    "say": "Ez nizanim! Ez hîç nizanim!",
+                    "voice": "hevalo",
+                    "prompt": "Ez nizanim! Ez hîç nizanim!",
                     "accepted": [
-                      "Çima selik vala ye?"
+                      "I don’t know! I have no idea at all!",
+                      "I do not know! I have no idea at all!",
+                      "I don’t know! I’ve no idea at all!"
                     ]
                   }
                 }
@@ -3715,12 +3779,12 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "zik",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "zik",
                     "options": [
                       "belly, stomach",
-                      "full",
-                      "to walk around"
+                      "person",
+                      "onion"
                     ],
                     "correctIndex": 0
                   }
@@ -3770,7 +3834,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "Na, ev şaş e!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Na, ev şaş e!",
                     "options": [
                       "No, that’s wrong!",
@@ -3827,20 +3891,6 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Na, ev şaş e!",
-                    "voice": "hamo",
-                    "prompt": "Na, ev şaş e!",
-                    "accepted": [
-                      "No, that’s wrong!",
-                      "No, that is wrong!"
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3849,13 +3899,84 @@
                     "options": [
                       "Niha em li sêvan digerin.",
                       "Ev rast e?",
-                      "Çima Bozo li dikanê dinêre?"
+                      "Niha em li sêvan digerî."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
+                  "position": 9,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ev rast e?",
+                    "reference": "Ev rast e?"
+                  }
+                },
+                {
                   "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hevalo",
+                    "accepted": [
+                      "Ez nizanim! Ez hîç nizanim!"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Now we’re looking for the apples.",
+                    "accepted": [
+                      "Niha em li sêvan digerin."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Na, ev şaş e!",
+                    "voice": "hevalo",
+                    "prompt": "Na, ev şaş e!",
+                    "accepted": [
+                      "No, that’s wrong!",
+                      "No, that is wrong!"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hevalo isn’t hungry, but his belly is full!",
+                    "accepted": [
+                      "Hevalo ne birçî ye, lê zikê wî tije ye!"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hevalo",
+                    "prompt": "No, that’s wrong!",
+                    "accepted": [
+                      "Na, ev şaş e!"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3869,52 +3990,7 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Hevalo isn’t hungry, but his belly is full!",
-                    "accepted": [
-                      "Hevalo ne birçî ye, lê zikê wî tije ye!"
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Ev rast e?",
-                    "reference": "Ev rast e?"
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Ez nizanim! Ez hîç nizanim!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "No, that’s wrong!",
-                    "accepted": [
-                      "Na, ev şaş e!"
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3924,18 +4000,6 @@
                     "accepted": [
                       "Hevalo isn’t hungry, but his belly is full!",
                       "Hevalo is not hungry, but his belly is full!"
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Now we’re looking for the apples.",
-                    "accepted": [
-                      "Niha em li sêvan digerin."
                     ]
                   }
                 }
@@ -4034,6 +4098,22 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
+                    "say": "Ez ji sêvan hez dikim!",
+                    "voice": "hevalo",
+                    "prompt": "Ez ji sêvan hez dikim!",
+                    "options": [
+                      "I love apples!",
+                      "I don’t like apples!",
+                      "I’m eating the apples!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "missing",
                     "say": "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
                     "voice": "hamo",
@@ -4048,7 +4128,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4070,20 +4150,6 @@
                   }
                 },
                 {
-                  "position": 7,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
-                    "voice": "hamo",
-                    "prompt": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
-                    "accepted": [
-                      "No! Hevalo never eats apples. He doesn’t even like apples!",
-                      "No! Hevalo never eats apples. He does not even like apples!"
-                    ]
-                  }
-                },
-                {
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
@@ -4093,29 +4159,35 @@
                     "options": [
                       "Telefona min li ku ye?",
                       "Telefona hemû li ku ye?",
-                      "Zikê min vala ye."
+                      "Telefon min li ku ye?"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Bi xatirê te!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Bi xatirê te!",
-                    "options": [
-                      "Bi xêr biçî!",
-                      "Bi xêr hatî!",
-                      "Ser çavan!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Where is my phone?",
+                    "accepted": [
+                      "Telefona min li ku ye?"
+                    ]
                   }
                 },
                 {
                   "position": 10,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hevalo",
+                    "prompt": "Ez ji sêvan hez dikim!",
+                    "reference": "Ez ji sêvan hez dikim!"
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu04s4l3a",
@@ -4186,7 +4258,23 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Bi xatirê te!",
+                    "voice": "hamo",
+                    "prompt": "Bi xatirê te!",
+                    "options": [
+                      "Bi xêr biçî!",
+                      "Bi xêr hatî!",
+                      "Xêra Xwedê li we bê!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4194,27 +4282,6 @@
                     "prompt": "Mîrza doesn’t believe it, and nor do the neighbours.",
                     "accepted": [
                       "Mîrza jî bawer nake, cîran jî bawer nakin."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
-                    "reference": "Baş e. Ez jî dikenim! Mîrza, ez pere didim."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Çêlek li pişt malê ye."
                     ]
                   }
                 },
@@ -4228,20 +4295,33 @@
                     "options": [
                       "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
                       "Na! Hevalo hîç sêvan naxivim. Ew ji sêvan hez nake!",
-                      "Û kes nizane kî sêvan dixwe. Hevalo? Na, hîç!"
+                      "Na! Hamo hîç sêvan naxwe. Ew ji sêvan hez nake!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 15,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Çêlek li pişt malê ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
                     "voice": "hamo",
-                    "prompt": "Where is my phone?",
+                    "prompt": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
                     "accepted": [
-                      "Telefona min li ku ye?"
+                      "No! Hevalo never eats apples. He doesn’t even like apples!",
+                      "No! Hevalo never eats apples. He does not even like apples!"
                     ]
                   }
                 }
@@ -4273,21 +4353,33 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Hevalo ne birçî ye, lê zikê wî tije ye!",
+                    "ask": "meaning",
+                    "say": "Mîrza jî bawer nake, cîran jî bawer nakin.",
                     "voice": "hamo",
-                    "prompt": "Hevalo ne birçî ye, lê ___ wî tije ye!",
+                    "prompt": "Mîrza jî bawer nake, cîran jî bawer nakin.",
                     "options": [
-                      "zikê",
-                      "zik",
-                      "telefonê"
+                      "Mîrza doesn’t believe it, and nor do the neighbours.",
+                      "Mîrza laughs, and I laugh too.",
+                      "Ferhad is laughing. He doesn’t believe it."
                     ],
-                    "correctIndex": 0,
-                    "cue": "belly, stomach"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 3,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Nobody pays for an empty basket!",
+                    "accepted": [
+                      "Kes ji bo selikeke vala pere nade!",
+                      "Kes pere nade ji bo selikeke vala!"
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -4297,22 +4389,6 @@
                       "Çima selik vala ye?",
                       "Çima selikên vala ye?",
                       "Selik vala ye!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "reply",
-                    "say": "Ev rast e?",
-                    "voice": "hamo",
-                    "prompt": "Ev rast e?",
-                    "options": [
-                      "Na, ev şaş e!",
-                      "Na, ew tije ye.",
-                      "Ez li vir im."
                     ],
                     "correctIndex": 0
                   }
@@ -4335,20 +4411,117 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Mîrza jî bawer nake, cîran jî bawer nakin.",
-                    "voice": "hamo",
-                    "prompt": "Mîrza jî bawer nake, cîran jî bawer nakin.",
+                    "ask": "picture",
+                    "say": "sêv",
+                    "voice": "hevalo",
+                    "prompt": "sêv",
                     "options": [
-                      "Mîrza doesn’t believe it, and nor do the neighbours.",
-                      "Mîrza laughs, and I laugh too.",
-                      "Ferhad is laughing. He doesn’t believe it."
+                      "apple",
+                      "grapes",
+                      "basket",
+                      "phone"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ez nizanim! Ez hîç nizanim!",
+                    "voice": "hevalo",
+                    "prompt": "Ez nizanim! Ez ___ nizanim!",
+                    "options": [
+                      "hîç",
+                      "hinek",
+                      "bes"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "I don’t know! I have no idea at all!"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hevalo",
+                    "prompt": "No, that’s wrong!",
+                    "accepted": [
+                      "Na, ev şaş e!"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "reply",
+                    "say": "Ev rast e?",
+                    "voice": "hamo",
+                    "prompt": "Ev rast e?",
+                    "options": [
+                      "Na, ev şaş e!",
+                      "Na, ew tije ye.",
+                      "Ez li vir im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "All right. Now I’m laughing too! Mîrza, I’ll pay.",
+                    "options": [
+                      "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
+                      "Baş e. Ez jî dikenî! Mîrza, ez pere didim.",
+                      "Mîrza dikene, ez jî dikenim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Telefona min li ku ye?",
+                    "reference": "Telefona min li ku ye?"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hello, Lorîn! How are you?",
+                    "options": [
+                      "Roj baş, Lorîn! Tu çawa yî?",
+                      "Roj şaş, Lorîn! Tu çawa yî?",
+                      "Tu jî têyî?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Mîrza dibêje ku selika wî vala ye. Çima?"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -4381,96 +4554,20 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "All right. Now I’m laughing too! Mîrza, I’ll pay.",
-                    "options": [
-                      "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
-                      "Baş e. Ez jî dikenî! Mîrza, ez pere didim.",
-                      "Mîrza dikene, ez jî dikenim."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Nobody pays for an empty basket!",
-                    "accepted": [
-                      "Kes ji bo selikeke vala pere nade!",
-                      "Kes pere nade ji bo selikeke vala!"
-                    ]
-                  }
-                },
-                {
-                  "position": 10,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ez nizanim! Ez hîç nizanim!",
+                    "say": "Hevalo ne birçî ye, lê zikê wî tije ye!",
                     "voice": "hamo",
-                    "prompt": "Ez nizanim! Ez ___ nizanim!",
+                    "prompt": "Hevalo ne birçî ye, lê ___ wî tije ye!",
                     "options": [
-                      "hîç",
-                      "hinek",
-                      "bes"
+                      "zikê",
+                      "zik",
+                      "telefonê"
                     ],
                     "correctIndex": 0,
-                    "cue": "I don’t know! I have no idea at all!"
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Telefona min li ku ye?",
-                    "reference": "Telefona min li ku ye?"
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Mîrza dibêje ku selika wî vala ye. Çima?"
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "No, that’s wrong!",
-                    "accepted": [
-                      "Na, ev şaş e!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Hello, Lorîn! How are you?",
-                    "options": [
-                      "Roj baş, Lorîn! Tu çawa yî?",
-                      "Roj şaş, Lorîn! Tu çawa yî?",
-                      "Tu jî têyî?"
-                    ],
-                    "correctIndex": 0
+                    "cue": "belly, stomach"
                   }
                 }
               ]

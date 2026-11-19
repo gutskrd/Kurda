@@ -47,6 +47,9 @@ export function useApiGet<T>(path: string | null, { fresh = false }: { fresh?: b
   // The memory owner when the question is asked; learning who is here is no reason to ask again.
   const memoryNow = useRef(memory);
   memoryNow.current = memory;
+  // Only a failure needs words, so the interface language finishing loading is no reason to ask again.
+  const tNow = useRef(t);
+  tNow.current = t;
 
   useEffect(() => {
     if (path === null) {
@@ -75,11 +78,11 @@ export function useApiGet<T>(path: string | null, { fresh = false }: { fresh?: b
       // A network or server failure is no reason to take away what is on screen.
       const stillThere = kept !== null && memory !== null && lastAnswer<T>(memory, path) !== null;
       if (stillThere) return;
-      setState({ data: null, error: describeError(res.error, t), loading: false });
+      setState({ data: null, error: describeError(res.error, tNow.current), loading: false });
     });
     return () => {
       cancelled = true;
     };
-  }, [client, path, nonce, t]);
+  }, [client, path, nonce]);
   return { ...state, reload };
 }

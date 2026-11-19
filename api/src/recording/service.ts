@@ -8,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
 import { REACTION_LINES, isSpeakerId, type SpeakerId } from '@kurda/shared';
 import { ROAD_DIR, readRoadFiles, roadSeedName } from '../content/road-seed.js';
-import { buildScript, peopleOf, ROAD_COURSE, type ExerciseInput, type LineStore, type Person, type PlanInput, type ScriptLine, type VoiceId } from './script.js';
+import { buildScript, peopleOf, ROAD_COURSE, type ExerciseInput, type LineStore, type Person, type PlanInput, type RecordedKeys, type ScriptLine, type VoiceId } from './script.js';
 import { voicesOf } from './links.js';
 
 /** How long a built script is kept. */
@@ -212,13 +212,14 @@ export class RecordingPeopleService {
     });
   }
 
-  /** Every key that has a take, in each store. */
-  async recordedKeys(): Promise<Record<LineStore, ReadonlySet<string>>> {
+  /** Every key that has a take, in each store, with the take's speaker. */
+  async recordedKeys(): Promise<RecordedKeys> {
+    type Row = { key: string; speaker: SpeakerId | null };
     const [lesson, alphabet] = await Promise.all([
-      this.pool.query<{ key: string }>(`SELECT key FROM lesson_audio`),
-      this.pool.query<{ key: string }>(`SELECT key FROM alphabet_audio`),
+      this.pool.query<Row>(`SELECT key, speaker FROM lesson_audio`),
+      this.pool.query<Row>(`SELECT key, speaker FROM alphabet_audio`),
     ]);
-    return { lesson: new Set(lesson.rows.map((r) => r.key)), alphabet: new Set(alphabet.rows.map((r) => r.key)) };
+    return { lesson: new Map(lesson.rows.map((r) => [r.key, r.speaker])), alphabet: new Map(alphabet.rows.map((r) => [r.key, r.speaker])) };
   }
 
   /** The takes of these lines, by line id, with who recorded each. */

@@ -2353,15 +2353,15 @@
           "kind": "statement",
           "line": {
             "conversation": "roadu07s4l3a",
-            "en": "Very bad. Please bring me a hot tea, and some honey.",
+            "en": "Very hard. Please bring me a hot tea, and some honey.",
             "meanings": {
-              "ckb": "زۆر خراپە. تکایە چایەکی گەرم و کەمێک هەنگوینم بۆ بهێنە.",
-              "de": "Sehr schlimm. Bring mir bitte einen heißen Tee und etwas Honig.",
-              "es": "Muy mal. Por favor, tráeme un té caliente y un poco de miel.",
-              "tr": "Çok kötü. Lütfen bana sıcak bir çay ve biraz bal getir.",
-              "ar": "سيئ جدًا. أحضر لي من فضلك شايًا ساخنًا وقليلًا من العسل.",
-              "fr": "Très mal. Apporte-moi un thé chaud, s’il te plaît, et un peu de miel.",
-              "nl": "Heel erg. Breng me alsjeblieft een hete thee en wat honing."
+              "ckb": "زۆر سەختە. تکایە چایەکی گەرم و کەمێک هەنگوینم بۆ بهێنە.",
+              "de": "Sehr schwer. Bring mir bitte einen heißen Tee und etwas Honig.",
+              "es": "Muy duro. Por favor, tráeme un té caliente y un poco de miel.",
+              "tr": "Çok zor. Lütfen bana sıcak bir çay ve biraz bal getir.",
+              "ar": "صعب جدًا. أحضر لي من فضلك شايًا ساخنًا وقليلًا من العسل.",
+              "fr": "Très dur. Apporte-moi un thé chaud, s’il te plaît, et un peu de miel.",
+              "nl": "Heel zwaar. Breng me alsjeblieft een hete thee en wat honing."
             }
           }
         }

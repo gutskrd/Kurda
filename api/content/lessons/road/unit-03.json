@@ -164,52 +164,17 @@
                       "The bread and tea are here, on the chair.",
                       "The cheese and tea are here, on the table."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "li ser",
+                        "en": "on, on top of"
+                      }
+                    ]
                   }
                 },
                 {
                   "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Nan û çay li vir in, li ser maseyê.",
-                    "voice": "hamo",
-                    "prompt": "Nan û çay li vir in, li ser maseyê.",
-                    "accepted": [
-                      "The bread and tea are here, on the table."
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ez heywan im!",
-                    "voice": "hevalo",
-                    "prompt": "Ez heywan im!",
-                    "options": [
-                      "I’m an animal!",
-                      "I’m fine.",
-                      "I am a guest."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The window is small, the room is big.",
-                    "accepted": [
-                      "Pencere biçûk e, ode mezin e."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -222,7 +187,20 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Nan û çay li vir in, li ser maseyê.",
+                    "voice": "hamo",
+                    "prompt": "Nan û çay li vir in, li ser maseyê.",
+                    "accepted": [
+                      "The bread and tea are here, on the table."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -237,18 +215,17 @@
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "listening",
+                  "position": 11,
+                  "type": "speaking",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "accepted": [
-                      "Tu mêvan î."
-                    ]
+                    "prompt": "Li vir çar kursî hene.",
+                    "reference": "Li vir çar kursî hene."
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 12,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -281,17 +258,34 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "speaking",
+                  "position": 13,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Li vir çar kursî hene.",
-                    "reference": "Li vir çar kursî hene."
+                    "ask": "meaning",
+                    "say": "Ez ajel im!",
+                    "voice": "hevalo",
+                    "prompt": "Ez ajel im!",
+                    "options": [
+                      "I’m an animal!",
+                      "I’m fine.",
+                      "I am a guest."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Tu mêvan î."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -305,6 +299,18 @@
                     ],
                     "correctIndex": 0,
                     "cue": "table"
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The window is small, the room is big.",
+                    "accepted": [
+                      "Pencere biçûk e, ode mezin e."
+                    ]
                   }
                 }
               ]
@@ -351,8 +357,8 @@
                     "prompt": "hewş",
                     "options": [
                       "yard, courtyard",
-                      "this, these",
-                      "that, those"
+                      "bed, bedding",
+                      "chair"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -445,6 +451,28 @@
                   "position": 7,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "That’s my brother’s bedding.",
+                    "accepted": [
+                      "Ew nivînên birayê min in."
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Pisîk li wir e, li hewşê.",
+                    "reference": "Pisîk li wir e, li hewşê."
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
                     "ask": "to-english",
                     "say": "Li vê odeyê mirîşkek heye!",
                     "voice": "hamo",
@@ -456,7 +484,19 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 10,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "There’s a hen in this room!",
+                    "accepted": [
+                      "Li vê odeyê mirîşkek heye!"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -472,21 +512,7 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Ew nivînên birayê min in.",
-                    "voice": "hamo",
-                    "prompt": "Ew nivînên birayê min in.",
-                    "accepted": [
-                      "That’s my brother’s bedding.",
-                      "That is my brother’s bedding."
-                    ]
-                  }
-                },
-                {
-                  "position": 10,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -499,22 +525,7 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "There’s a hen in this room!",
-                    "options": [
-                      "Li vê odeyê mirîşkek heye!",
-                      "Li vî odeyê mirîşkek heye!",
-                      "Li ser kursiyê sêvek heye! Aferîn, Hevalo!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -525,36 +536,31 @@
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "That’s my brother’s bedding.",
-                    "accepted": [
-                      "Ew nivînên birayê min in."
-                    ]
-                  }
-                },
-                {
                   "position": 14,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Pisîk li wir e, li hewşê.",
-                    "reference": "Pisîk li wir e, li hewşê."
+                    "prompt": "There’s a hen in this room!",
+                    "options": [
+                      "Li vê odeyê mirîşkek heye!",
+                      "Li vî odeyê mirîşkek heye!",
+                      "Li vê ode mirîşkek heye!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 15,
-                  "type": "writing",
+                  "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Ew nivînên birayê min in.",
                     "voice": "hamo",
-                    "prompt": "There’s a hen in this room!",
+                    "prompt": "Ew nivînên birayê min in.",
                     "accepted": [
-                      "Li vê odeyê mirîşkek heye!"
+                      "That’s my brother’s bedding.",
+                      "That is my brother’s bedding."
                     ]
                   }
                 }
@@ -696,17 +702,14 @@
                 },
                 {
                   "position": 8,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
                     "prompt": "The bread from the tenûr is warm.",
-                    "options": [
-                      "Nanê tenûrê germ e.",
-                      "Nanê tenûr germ e.",
-                      "Navê wî Ibrahîm e."
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Nanê tenûrê germ e."
+                    ]
                   }
                 },
                 {
@@ -793,39 +796,6 @@
                 },
                 {
                   "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Here, sit down here!",
-                    "accepted": [
-                      "Fermo, li vir rûne!"
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Nexşeya Sêvanê ye! Were!",
-                    "reference": "Nexşeya Sêvanê ye! Were!"
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Fermo, şîv! Kerem bikin!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -834,13 +804,28 @@
                     "options": [
                       "Erê! Odeyên me germ in, ban sar e.",
                       "Erê! Odeyên me germ in, banên sar e.",
-                      "Ew nivînên birayê min in."
+                      "Erê! Ode me germ in, ban sar e."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The bread from the tenûr is warm.",
+                    "options": [
+                      "Nanê tenûrê germ e.",
+                      "Nanê tenûr germ e.",
+                      "Navê wî Ibrahîm e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -853,14 +838,35 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Nexşeya Sêvanê ye! Were!",
+                    "reference": "Nexşeya Sêvanê ye! Were!"
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The bread from the tenûr is warm.",
+                    "prompt": "Here, sit down here!",
                     "accepted": [
-                      "Nanê tenûrê germ e."
+                      "Fermo, li vir rûne!"
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Fermo, şîv! Kerem bikin!"
                     ]
                   }
                 }
@@ -874,99 +880,17 @@
               "exercises": [
                 {
                   "position": 1,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Wey! Baran li odeya mêvanan e, û li wir nexşeyek heye!",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Wey! Baran li odeya mêvanan e, û li wir nexşeyek heye!",
-                    "options": [
-                      "Oh! Baran’s in the guest room, and there’s a map in there!",
-                      "The cat is over there, in the yard.",
-                      "Bozo’s over there, at the window!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Ew nivînên birayê min in.",
-                    "voice": "hamo",
-                    "prompt": "Ew ___ birayê min in.",
-                    "options": [
-                      "nivînên",
-                      "nivîn",
-                      "pencereyên"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "That’s my brother’s bedding."
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Here, sit down here!",
-                    "options": [
-                      "Fermo, li vir rûne!",
-                      "Fermo, li wir rûne!",
-                      "Heşt nivîn? Li vir?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Li vê odeyê mirîşkek heye!",
-                    "voice": "hamo",
-                    "prompt": "Li vê odeyê mirîşkek heye!",
                     "accepted": [
-                      "There’s a hen in this room!",
-                      "There is a hen in this room!"
+                      "Ez mêr im."
                     ]
                   }
                 },
                 {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Erê! Odeyên me germ in, ban sar e.",
-                    "voice": "hamo",
-                    "prompt": "Erê! Odeyên me germ in, ban sar e.",
-                    "options": [
-                      "Yes! The rooms are hot, and the roof is cool.",
-                      "Is dinner cold? No, it’s hot.",
-                      "Yes, please. Ooh, the tea is hot!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The bread from the tenûr is warm.",
-                    "options": [
-                      "Nanê tenûrê germ e.",
-                      "Nanê tenûr germ e.",
-                      "Nanê tenûrê li ser maseyê ye. Bixwe!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
+                  "position": 2,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -999,7 +923,36 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Yes. At night there are eight beds up here.",
+                    "options": [
+                      "Erê. Bi şev heşt nivîn li vir hene.",
+                      "Erê. Bi şev heştan nivîn li vir hene.",
+                      "Em heft in, û bi Hevalo re heşt!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Li vê odeyê mirîşkek heye!",
+                    "voice": "hamo",
+                    "prompt": "Li vê odeyê mirîşkek heye!",
+                    "accepted": [
+                      "There’s a hen in this room!",
+                      "There is a hen in this room!"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1009,6 +962,43 @@
                       "Li vir çar kursî hene.",
                       "Çar kursî li vir hene."
                     ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The bread from the tenûr is warm.",
+                    "options": [
+                      "Nanê tenûrê germ e.",
+                      "Nanê tenûr germ e.",
+                      "Nanê tenûrê li ser maseyê ye. Bixwe!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The window is small, the room is big.",
+                    "accepted": [
+                      "Pencere biçûk e, ode mezin e."
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Nexşeya Sêvanê ye! Were!",
+                    "reference": "Nexşeya Sêvanê ye! Were!"
                   }
                 },
                 {
@@ -1030,54 +1020,6 @@
                 },
                 {
                   "position": 10,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Nexşeya Sêvanê ye! Were!",
-                    "reference": "Nexşeya Sêvanê ye! Were!"
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The window is small, the room is big.",
-                    "accepted": [
-                      "Pencere biçûk e, ode mezin e."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Ez mêr im."
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Yes. At night there are eight beds up here.",
-                    "options": [
-                      "Erê. Bi şev heşt nivîn li vir hene.",
-                      "Erê. Bi şev heştan nivîn li vir hene.",
-                      "Em heft in, û bi Hevalo re heşt!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1090,6 +1032,70 @@
                       "The cheese and tea are here, on the table."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Wey! Baran li odeya mêvanan e, û li wir nexşeyek heye!",
+                    "voice": "hamo",
+                    "prompt": "Wey! Baran li odeya mêvanan e, û li wir nexşeyek heye!",
+                    "options": [
+                      "Oh! Baran’s in the guest room, and there’s a map in there!",
+                      "The cat is over there, in the yard.",
+                      "Bozo’s over there, at the window!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Here, sit down here!",
+                    "options": [
+                      "Fermo, li vir rûne!",
+                      "Fermo, li wir rûne!",
+                      "Heşt nivîn? Li vir?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Erê! Odeyên me germ in, ban sar e.",
+                    "voice": "hamo",
+                    "prompt": "Erê! Odeyên me germ in, ban sar e.",
+                    "options": [
+                      "Yes! The rooms are hot, and the roof is cool.",
+                      "Is dinner cold? No, it’s hot.",
+                      "Yes, please. Ooh, the tea is hot!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ew nivînên birayê min in.",
+                    "voice": "hamo",
+                    "prompt": "Ew ___ birayê min in.",
+                    "options": [
+                      "nivînên",
+                      "nivîn",
+                      "pencereyên"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "That’s my brother’s bedding."
                   }
                 }
               ]
@@ -1140,7 +1146,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "baxçe",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "baxçe",
                     "options": [
                       "orchard",
@@ -1159,29 +1165,6 @@
                 },
                 {
                   "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Li vê darê sêvên sor hene.",
-                    "voice": "hamo",
-                    "prompt": "Li vê ___ sêvên sor hene.",
-                    "options": [
-                      "darê",
-                      "dar",
-                      "rengê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "There are red apples on this tree.",
-                    "new": [
-                      {
-                        "ku": "reng",
-                        "en": "colour"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1203,7 +1186,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1215,11 +1198,135 @@
                       "Where is the apple?",
                       "Whose apple is it?"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "reng",
+                        "en": "colour"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "What colour is the apple?",
+                    "accepted": [
+                      "Rengê sêvê çi ye?"
+                    ]
                   }
                 },
                 {
                   "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "xezo",
+                    "accepted": [
+                      "Ez jin im."
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hêvî zarok e.",
+                    "voice": "hamo",
+                    "prompt": "Hêvî zarok e.",
+                    "options": [
+                      "Hêvî is a child.",
+                      "Hêvî is a guest.",
+                      "Hêvî is a grandmother."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "There are red apples on this tree.",
+                    "accepted": [
+                      "Li vê darê sêvên sor hene."
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "This is my grandfather’s tree, in our orchard.",
+                    "options": [
+                      "Ev dara bapîrê min e, li baxçeyê me.",
+                      "Ev dar bapîrê min e, li baxçeyê me.",
+                      "Ev darê bapîrê min e, li baxçeyê me."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Deriyê me şîn e.",
+                    "reference": "Deriyê me şîn e."
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Rengê sêvê çi ye?",
+                    "voice": "hamo",
+                    "prompt": "Rengê sêvê çi ye?",
+                    "accepted": [
+                      "What colour is the apple?"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Li vê darê sêvên sor hene.",
+                    "voice": "hamo",
+                    "prompt": "Li vê ___ sêvên sor hene.",
+                    "options": [
+                      "darê",
+                      "dar",
+                      "rengê"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "There are red apples on this tree."
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "This is my grandfather’s tree, in our orchard.",
+                    "accepted": [
+                      "Ev dara bapîrê min e, li baxçeyê me."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1236,7 +1343,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1252,84 +1359,7 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Rengê sêvê çi ye?",
-                    "voice": "hamo",
-                    "prompt": "Rengê sêvê çi ye?",
-                    "accepted": [
-                      "What colour is the apple?"
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "This is my grandfather’s tree, in our orchard.",
-                    "options": [
-                      "Ev dara bapîrê min e, li baxçeyê me.",
-                      "Ev dar bapîrê min e, li baxçeyê me.",
-                      "Mase li vir e, kursî li wir e."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Hêvî zarok e.",
-                    "voice": "hamo",
-                    "prompt": "Hêvî zarok e.",
-                    "options": [
-                      "Hêvî is a child.",
-                      "Hêvî is a guest.",
-                      "Hêvî is a grandmother."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "There are red apples on this tree.",
-                    "accepted": [
-                      "Li vê darê sêvên sor hene."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Deriyê me şîn e.",
-                    "reference": "Deriyê me şîn e."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "xezo",
-                    "accepted": [
-                      "Ez jin im."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
+                  "position": 16,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1359,30 +1389,6 @@
                       }
                     ],
                     "voice": "hamo"
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "What colour is the apple?",
-                    "accepted": [
-                      "Rengê sêvê çi ye?"
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "This is my grandfather’s tree, in our orchard.",
-                    "accepted": [
-                      "Ev dara bapîrê min e, li baxçeyê me."
-                    ]
                   }
                 }
               ]
@@ -1425,7 +1431,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "kulîlk",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "kulîlk",
                     "options": [
                       "flower",
@@ -1501,17 +1507,16 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ev derî kevn e.",
+                    "ask": "meaning",
+                    "say": "Sêv kesk e, ne sor e.",
                     "voice": "hamo",
-                    "prompt": "Ev derî ___ e.",
+                    "prompt": "Sêv kesk e, ne sor e.",
                     "options": [
-                      "kevn",
-                      "kesk",
-                      "zer"
+                      "The apple is green, not red.",
+                      "The apple is red, not green.",
+                      "The tree is green, not red."
                     ],
                     "correctIndex": 0,
-                    "cue": "This door is old.",
                     "new": [
                       {
                         "ku": "kesk",
@@ -1522,50 +1527,18 @@
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Sêv kesk e, ne sor e.",
-                    "voice": "hamo",
-                    "prompt": "Sêv kesk e, ne sor e.",
-                    "options": [
-                      "The apple is green, not red.",
-                      "The apple is red, not green.",
-                      "The tree is green, not red."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Deriyê me nû ye!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Deriyê me nû ye!",
+                    "prompt": "Hevalo is eating three yellow flowers!",
                     "accepted": [
-                      "Our door is new!"
+                      "Hevalo sê kulîlkên zer dixwe!"
                     ]
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The apple is green, not red.",
-                    "options": [
-                      "Sêv kesk e, ne sor e.",
-                      "Sêv kevn e, ne sor e.",
-                      "Sêv sor e."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1581,52 +1554,52 @@
                   }
                 },
                 {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ev derî kevn e.",
+                    "voice": "hamo",
+                    "prompt": "Ev derî ___ e.",
+                    "options": [
+                      "kevn",
+                      "kesk",
+                      "zer"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "This door is old."
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The apple is green, not red.",
+                    "options": [
+                      "Sêv kesk e, ne sor e.",
+                      "Sêv kevn e, ne sor e.",
+                      "Sêv sor e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 11,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Deriyê me nû ye!",
                     "voice": "hamo",
-                    "prompt": "Hevalo is eating three yellow flowers!",
+                    "prompt": "Deriyê me nû ye!",
                     "accepted": [
-                      "Hevalo sê kulîlkên zer dixwe!"
+                      "Our door is new!"
                     ]
                   }
                 },
                 {
                   "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Ev derî kevn e.",
-                    "reference": "Ev derî kevn e."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hevalo",
-                    "accepted": [
-                      "Ez heywan im!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Our door is new!",
-                    "accepted": [
-                      "Deriyê me nû ye!"
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1643,7 +1616,30 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 13,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Our door is new!",
+                    "accepted": [
+                      "Deriyê me nû ye!"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hevalo",
+                    "accepted": [
+                      "Ez ajel im!"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1652,6 +1648,16 @@
                     "accepted": [
                       "Sêv kesk e, ne sor e."
                     ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ev derî kevn e.",
+                    "reference": "Ev derî kevn e."
                   }
                 }
               ]
@@ -1714,23 +1720,17 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Bizina spî nan dixwe, ne nexşe.",
-                    "voice": "hamo",
-                    "prompt": "Bizina ___ nan dixwe, ne nexşe.",
+                    "ask": "picture",
+                    "say": "bizin",
+                    "voice": "hevalo",
+                    "prompt": "bizin",
                     "options": [
-                      "spî",
-                      "reş",
-                      "mezin"
+                      "goat",
+                      "dog",
+                      "donkey",
+                      "hen"
                     ],
-                    "correctIndex": 0,
-                    "cue": "The white goat eats bread, not maps.",
-                    "new": [
-                      {
-                        "ku": "reş",
-                        "en": "black"
-                      }
-                    ]
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1746,11 +1746,85 @@
                       "Şêro is a white dog.",
                       "Şêro is a big dog."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "reş",
+                        "en": "black"
+                      }
+                    ]
                   }
                 },
                 {
                   "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The white goat eats bread, not maps.",
+                    "accepted": [
+                      "Bizina spî nan dixwe, ne nexşe."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Oh no! The goat is eating the map!",
+                    "accepted": [
+                      "Wey! Bizin nexşeyê dixwe!"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hevalo sê kulîlkên zer dixwe!",
+                    "voice": "hamo",
+                    "prompt": "Hevalo sê kulîlkên zer dixwe!",
+                    "options": [
+                      "Hevalo is eating three yellow flowers!",
+                      "Hevalo is eating three red apples!",
+                      "Hevalo wants three yellow flowers!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Rengê sêvê çi ye?"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bizina spî nan dixwe, ne nexşe.",
+                    "voice": "hamo",
+                    "prompt": "Bizina ___ nan dixwe, ne nexşe.",
+                    "options": [
+                      "spî",
+                      "reş",
+                      "mezin"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The white goat eats bread, not maps."
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1767,67 +1841,7 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Wey! Bizin nexşeyê dixwe!",
-                    "voice": "hamo",
-                    "prompt": "Wey! Bizin nexşeyê dixwe!",
-                    "options": [
-                      "Oh no! The goat is eating the map!",
-                      "Hevalo is eating the bread!",
-                      "Hevalo is eating the apple!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Şêro kûçikekî reş e.",
-                    "voice": "hamo",
-                    "prompt": "Şêro kûçikekî reş e.",
-                    "accepted": [
-                      "Şêro is a black dog."
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Oh no! The goat is eating the map!",
-                    "options": [
-                      "Wey! Bizin nexşeyê dixwe!",
-                      "Wey! Bizin nexşe dixwe!",
-                      "Bozo kulîlkên şîn dixwe!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Hevalo sê kulîlkên zer dixwe!",
-                    "voice": "hamo",
-                    "prompt": "Hevalo sê kulîlkên zer dixwe!",
-                    "options": [
-                      "Hevalo is eating three yellow flowers!",
-                      "Hevalo is eating three red apples!",
-                      "Hevalo wants three yellow flowers!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu03s2l3a",
@@ -1898,40 +1912,22 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The white goat eats bread, not maps.",
-                    "accepted": [
-                      "Bizina spî nan dixwe, ne nexşe."
-                    ]
-                  }
-                },
-                {
                   "position": 12,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Binêre! Ev bizina Dapîr Şemsê ye.",
-                    "reference": "Binêre! Ev bizina Dapîr Şemsê ye."
+                    "prompt": "Oh no! The goat is eating the map!",
+                    "options": [
+                      "Wey! Bizin nexşeyê dixwe!",
+                      "Wey! Bizin nexşe dixwe!",
+                      "Wey! Bizin nexşeyê dixwim!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Rengê sêvê çi ye?"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1943,15 +1939,42 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 14,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Şêro kûçikekî reş e.",
                     "voice": "hamo",
-                    "prompt": "Oh no! The goat is eating the map!",
+                    "prompt": "Şêro kûçikekî reş e.",
                     "accepted": [
-                      "Wey! Bizin nexşeyê dixwe!"
+                      "Şêro is a black dog."
                     ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Binêre! Ev bizina Dapîr Şemsê ye.",
+                    "reference": "Binêre! Ev bizina Dapîr Şemsê ye."
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Wey! Bizin nexşeyê dixwe!",
+                    "voice": "hamo",
+                    "prompt": "Wey! Bizin nexşeyê dixwe!",
+                    "options": [
+                      "Oh no! The goat is eating the map!",
+                      "Hevalo is eating the bread!",
+                      "Hevalo is eating the apple!"
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -2001,50 +2024,6 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "This is my grandfather’s tree, in our orchard.",
-                    "options": [
-                      "Ev dara bapîrê min e, li baxçeyê me.",
-                      "Ev dar bapîrê min e, li baxçeyê me.",
-                      "Bizina spî li baxçeyê me ye!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Hevalo sê kulîlkên zer dixwe!",
-                    "voice": "hamo",
-                    "prompt": "Hevalo sê kulîlkên zer dixwe!",
-                    "accepted": [
-                      "Hevalo is eating three yellow flowers!"
-                    ]
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Deriyê me nû ye!",
-                    "voice": "hamo",
-                    "prompt": "Deriyê me nû ye!",
-                    "options": [
-                      "Our door is new!",
-                      "Our door is old!",
-                      "Our gate is blue!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
                     "prompt": "Şêro is a black dog.",
                     "options": [
                       "Şêro kûçikekî reş e.",
@@ -2055,36 +2034,60 @@
                   }
                 },
                 {
-                  "position": 7,
-                  "type": "match_pairs",
+                  "position": 4,
+                  "type": "multiple_choice",
                   "payload": {
-                    "pairs": [
-                      {
-                        "left": "kulîlk",
-                        "right": "flower"
-                      },
-                      {
-                        "left": "baxçe",
-                        "right": "garden, orchard"
-                      },
-                      {
-                        "left": "şîn",
-                        "right": "blue"
-                      },
-                      {
-                        "left": "hewş",
-                        "right": "yard"
-                      },
-                      {
-                        "left": "kur",
-                        "right": "boy"
-                      },
-                      {
-                        "left": "yek",
-                        "right": "one"
-                      }
+                    "ask": "picture",
+                    "say": "kulîlk",
+                    "voice": "hevalo",
+                    "prompt": "kulîlk",
+                    "options": [
+                      "flower",
+                      "tree",
+                      "orchard",
+                      "apple"
                     ],
-                    "voice": "hamo"
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Li vê darê sêvên sor hene.",
+                    "reference": "Li vê darê sêvên sor hene."
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "This is my grandfather’s tree, in our orchard.",
+                    "options": [
+                      "Ev dara bapîrê min e, li baxçeyê me.",
+                      "Ev dar bapîrê min e, li baxçeyê me.",
+                      "Ev darê bapîrê min e, li baxçeyê me."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Here you are, this bread is for you!",
+                    "options": [
+                      "Fermo, ev nan ji te re!",
+                      "Fermo, ev nanên ji te re!",
+                      "Fermo! Noşî can be!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2167,6 +2170,95 @@
                 },
                 {
                   "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Deriyê me şîn e."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Deriyê me nû ye!",
+                    "voice": "hamo",
+                    "prompt": "Deriyê me nû ye!",
+                    "options": [
+                      "Our door is new!",
+                      "Our door is old!",
+                      "Our gate is blue!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "kulîlk",
+                        "right": "flower"
+                      },
+                      {
+                        "left": "baxçe",
+                        "right": "garden, orchard"
+                      },
+                      {
+                        "left": "şîn",
+                        "right": "blue"
+                      },
+                      {
+                        "left": "hewş",
+                        "right": "yard"
+                      },
+                      {
+                        "left": "kur",
+                        "right": "boy"
+                      },
+                      {
+                        "left": "yek",
+                        "right": "one"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Wey! Bizin nexşeyê dixwe!",
+                    "voice": "hamo",
+                    "prompt": "Wey! Bizin nexşeyê dixwe!",
+                    "options": [
+                      "Oh no! The goat is eating the map!",
+                      "The goat is white.",
+                      "Hevalo is eating the bread!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Hevalo sê kulîlkên zer dixwe!",
+                    "voice": "hamo",
+                    "prompt": "Hevalo sê kulîlkên zer dixwe!",
+                    "accepted": [
+                      "Hevalo is eating three yellow flowers!"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2183,17 +2275,7 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Li vê darê sêvên sor hene.",
-                    "reference": "Li vê darê sêvên sor hene."
-                  }
-                },
-                {
-                  "position": 12,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2202,48 +2284,6 @@
                     "accepted": [
                       "Ev derî kevn e."
                     ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Deriyê me şîn e."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Here you are, this bread is for you!",
-                    "options": [
-                      "Fermo, ev nan ji te re!",
-                      "Fermo, ev nanên ji te re!",
-                      "Fermo! Noşî can be!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Wey! Bizin nexşeyê dixwe!",
-                    "voice": "hamo",
-                    "prompt": "Wey! Bizin nexşeyê dixwe!",
-                    "options": [
-                      "Oh no! The goat is eating the map!",
-                      "The goat is white.",
-                      "Hevalo is eating the bread!"
-                    ],
-                    "correctIndex": 0
                   }
                 }
               ]
@@ -2277,10 +2317,6 @@
                     ],
                     "correctIndex": 0,
                     "new": [
-                      {
-                        "ku": "li ser",
-                        "en": "on, on top of"
-                      },
                       {
                         "ku": "ser",
                         "en": "head; top"
@@ -2356,15 +2392,14 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "picture",
-                    "say": "gûz",
+                    "ask": "meaning",
+                    "say": "Serê min.",
                     "voice": "hamo",
-                    "prompt": "gûz",
+                    "prompt": "Serê min.",
                     "options": [
-                      "walnut",
-                      "apple",
-                      "tree",
-                      "flower"
+                      "My head.",
+                      "My hand.",
+                      "My house."
                     ],
                     "correctIndex": 0
                   }
@@ -2388,51 +2423,6 @@
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Serê min.",
-                    "voice": "hamo",
-                    "prompt": "Serê min.",
-                    "options": [
-                      "My head.",
-                      "My hand.",
-                      "My house."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Serê min.",
-                    "voice": "hamo",
-                    "prompt": "Serê min.",
-                    "accepted": [
-                      "My head."
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Şeş salî! Û Hevalo pênc salî ye.",
-                    "voice": "hamo",
-                    "prompt": "Şeş salî! Û Hevalo pênc salî ye.",
-                    "options": [
-                      "Six! And Hevalo is five.",
-                      "Hevalo is five years old.",
-                      "Hêvî is six years old."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2444,46 +2434,33 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
-                    "voice": "hamo",
-                    "prompt": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
-                    "accepted": [
-                      "There are flowers under the walnut tree. How lovely!"
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "meaning",
+                    "say": "Şeş salî! Û Hevalo pênc salî ye.",
                     "voice": "hamo",
-                    "prompt": "My head.",
+                    "prompt": "Şeş salî! Û Hevalo pênc salî ye.",
                     "options": [
-                      "Serê min.",
-                      "Destê Hêviyê li ser serê wê ye.",
-                      "Pisîkeke min tune."
+                      "Six! And Hevalo is five.",
+                      "Five! And Hevalo is six.",
+                      "Six! And Hevalo is hungry."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "listening",
+                  "position": 9,
+                  "type": "speaking",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "accepted": [
-                      "Baş e! Tu tî yî?"
-                    ]
+                    "prompt": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "reference": "Li bin dara gûzê kulîlk hene. Gelek xweş e!"
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 10,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -2516,13 +2493,72 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "speaking",
+                  "position": 11,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "picture",
+                    "say": "gûz",
+                    "voice": "hevalo",
+                    "prompt": "gûz",
+                    "options": [
+                      "walnut",
+                      "apple",
+                      "tree",
+                      "flower"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Baş e! Tu tî yî?"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Serê min.",
+                    "voice": "hamo",
+                    "prompt": "Serê min.",
+                    "accepted": [
+                      "My head."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "My head.",
+                    "options": [
+                      "Serê min.",
+                      "Destê Hêviyê li ser serê wê ye.",
+                      "Pisîkeke min tune."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
                     "voice": "hamo",
                     "prompt": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
-                    "reference": "Li bin dara gûzê kulîlk hene. Gelek xweş e!"
+                    "accepted": [
+                      "There are flowers under the walnut tree. How lovely!"
+                    ]
                   }
                 },
                 {
@@ -2577,7 +2613,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "guh",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "guh",
                     "options": [
                       "ear",
@@ -2609,6 +2645,23 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "picture",
+                    "say": "çav",
+                    "voice": "hevalo",
+                    "prompt": "çav",
+                    "options": [
+                      "eye",
+                      "ear",
+                      "hand",
+                      "nose"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Nan di tenûrê de ye.",
                     "voice": "hamo",
@@ -2628,7 +2681,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2650,7 +2703,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2667,7 +2720,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2689,19 +2742,6 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Destên xwe bişo! Xwarin germ e.",
-                    "voice": "hamo",
-                    "prompt": "Destên xwe bişo! Xwarin germ e.",
-                    "accepted": [
-                      "Wash your hands! The food is hot."
-                    ]
-                  }
-                },
-                {
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
@@ -2718,6 +2758,16 @@
                 },
                 {
                   "position": 10,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Nan di tenûrê de ye.",
+                    "reference": "Nan di tenûrê de ye."
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2730,7 +2780,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2742,17 +2792,32 @@
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "speaking",
+                  "position": 13,
+                  "type": "translate",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Nan di tenûrê de ye.",
-                    "reference": "Nan di tenûrê de ye."
+                    "prompt": "My grandfather’s photo is in front of the window.",
+                    "accepted": [
+                      "Wêneyê bapîrê min li ber pencereyê ye."
+                    ]
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Destên xwe bişo! Xwarin germ e.",
+                    "voice": "hamo",
+                    "prompt": "Destên xwe bişo! Xwarin germ e.",
+                    "accepted": [
+                      "Wash your hands! The food is hot."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2763,7 +2828,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2771,31 +2836,6 @@
                     "prompt": "Wash your hands! The food is hot.",
                     "accepted": [
                       "Destên xwe bişo! Xwarin germ e."
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Çavên Şêro reş in, guhên wî jî reş in.",
-                    "voice": "hamo",
-                    "prompt": "Çavên Şêro reş in, guhên wî jî reş in.",
-                    "accepted": [
-                      "Şêro’s eyes are black, and so are his ears."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "My grandfather’s photo is in front of the window.",
-                    "accepted": [
-                      "Wêneyê bapîrê min li ber pencereyê ye."
                     ]
                   }
                 }
@@ -2809,6 +2849,29 @@
               "exercises": [
                 {
                   "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "poz",
+                    "voice": "hevalo",
+                    "prompt": "poz",
+                    "options": [
+                      "nose",
+                      "eye",
+                      "ear",
+                      "hand"
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "poz",
+                        "en": "nose"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 2,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2825,24 +2888,20 @@
                       {
                         "ku": "li pişt",
                         "en": "behind"
-                      },
-                      {
-                        "ku": "poz",
-                        "en": "nose"
                       }
                     ]
                   }
                 },
                 {
-                  "position": 2,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nîvek li Kobaniyê ye, bi Lorînê re.",
+                    "say": "Nîvek li Kobaniyê ye, li cem Lorînê.",
                     "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, bi Lorînê re.",
+                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
                     "options": [
-                      "The other half is in Kobanî, with Lorîn.",
+                      "The other half is in Kobanî, at Lorîn’s.",
                       "My family is in Kobanî.",
                       "My father is in Kobanî. My mother too."
                     ],
@@ -2851,12 +2910,16 @@
                       {
                         "ku": "nîv",
                         "en": "half"
+                      },
+                      {
+                        "ku": "li cem",
+                        "en": "at (someone’s place), with"
                       }
                     ]
                   }
                 },
                 {
-                  "position": 3,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2866,20 +2929,14 @@
                     "options": [
                       "darê",
                       "dar",
-                      "devê"
+                      "dara"
                     ],
                     "correctIndex": 0,
-                    "cue": "Look! Hevalo’s nose is behind the tree.",
-                    "new": [
-                      {
-                        "ku": "dev",
-                        "en": "mouth"
-                      }
-                    ]
+                    "cue": "Look! Hevalo’s nose is behind the tree."
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2891,24 +2948,30 @@
                       "In her hand there’s an old photo.",
                       "My mother’s sister’s house is in Sêvan."
                     ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                    "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                    "accepted": [
-                      "The other half is in Kobanî, with Lorîn."
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "dev",
+                        "en": "mouth"
+                      }
                     ]
                   }
                 },
                 {
                   "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                    "voice": "hamo",
+                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                    "accepted": [
+                      "The other half is in Kobanî, at Lorîn’s."
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2922,23 +2985,29 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "say": "Nîvê din li ku ye?",
                     "voice": "hamo",
-                    "prompt": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "prompt": "Nîvê din li ku ye?",
                     "options": [
-                      "There are flowers under the walnut tree. How lovely!",
-                      "There are apples under the walnut tree. How lovely!",
-                      "There are flowers on the walnut tree. How lovely!"
+                      "Where is the other half?",
+                      "Where is the other photo?",
+                      "Here’s one half."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "din",
+                        "en": "other"
+                      }
+                    ]
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu03s3l3a",
@@ -2990,18 +3059,18 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Nîvek li vir e. Nîvek li ku ye?",
+                        "text": "Nîvek li vir e. Nîvê din li ku ye?",
                         "en": "Here’s one half. Where is the other half?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                        "en": "The other half is in Kobanî, with Lorîn."
+                        "text": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                        "en": "The other half is in Kobanî, at Lorîn’s."
                       }
                     ],
                     "prompt": "Where is the other half of the photo?",
                     "options": [
-                      "In Kobanî, with Lorîn",
+                      "In Kobanî, at Lorîn’s",
                       "Under the walnut tree",
                       "In Hevalo’s mouth"
                     ],
@@ -3009,35 +3078,43 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Binêre! Pozê Hevalo li pişt darê ye.",
-                    "voice": "hamo",
-                    "prompt": "Binêre! Pozê Hevalo li pişt darê ye.",
-                    "accepted": [
-                      "Look! Hevalo’s nose is behind the tree."
-                    ]
-                  }
-                },
-                {
                   "position": 10,
-                  "type": "multiple_choice",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "The other half is in Kobanî, with Lorîn.",
-                    "options": [
-                      "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                      "Baran neh salî ye, ne deh.",
-                      "Neh mirîşkên spî li ber derî ne."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                    "reference": "Nîvek li Kobaniyê ye, li cem Lorînê."
                   }
                 },
                 {
                   "position": 11,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Where is the other half?",
+                    "accepted": [
+                      "Nîvê din li ku ye?"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Nîvê din li ku ye?",
+                    "voice": "hamo",
+                    "prompt": "Nîvê din li ku ye?",
+                    "accepted": [
+                      "Where is the other half?",
+                      "Where’s the other half?"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3052,18 +3129,22 @@
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "listening",
+                  "position": 14,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "accepted": [
-                      "Çavên Şêro reş in, guhên wî jî reş in."
-                    ]
+                    "prompt": "The other half is in Kobanî, at Lorîn’s.",
+                    "options": [
+                      "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                      "Nîvek li Kobaniyê e, li cem Lorînê.",
+                      "Neh mirîşkên spî li ber derî ne."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3075,30 +3156,14 @@
                   }
                 },
                 {
-                  "position": 14,
-                  "type": "speaking",
+                  "position": 16,
+                  "type": "listening",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                    "reference": "Nîvek li Kobaniyê ye, bi Lorînê re."
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
-                    "voice": "hamo",
-                    "prompt": "Ew Lorîn e, xwişka min. Sêv di ___ wê de ye!",
-                    "options": [
-                      "devê",
-                      "dev",
-                      "nîvê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "mouth"
+                    "accepted": [
+                      "Çavên Şêro reş in, guhên wî jî reş in."
+                    ]
                   }
                 }
               ]
@@ -3111,22 +3176,43 @@
               "exercises": [
                 {
                   "position": 1,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Erê! Odeyên me germ in, ban sar e."
+                    ]
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Nan di tenûrê de ye.",
+                    "reference": "Nan di tenûrê de ye."
+                  }
+                },
+                {
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Destê Hêviyê li ser serê wê ye.",
+                    "say": "Ew ez im, li Sêvanê.",
                     "voice": "hamo",
-                    "prompt": "Destê Hêviyê li ser serê wê ye.",
+                    "prompt": "Ew ez im, li Sêvanê.",
                     "options": [
-                      "Hêvî’s hand is on her head.",
-                      "Hêvî’s hand is on her nose.",
-                      "Hêvî’s hat is on her head."
+                      "That’s me, here in Sêvan.",
+                      "They’re in Kobanî, and I’m in Sêvan.",
+                      "I’m fine."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 2,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3143,60 +3229,30 @@
                   }
                 },
                 {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "That’s Lorîn, my sister. She has an apple in her mouth!",
-                    "options": [
-                      "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
-                      "Ew Lorîn e, xwişk min. Sêv di devê wê de ye!",
-                      "Sêv di devê Lorînê de ye!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
+                  "position": 5,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "prompt": "Şêro’s eyes are black, and so are his ears.",
                     "accepted": [
-                      "There are flowers under the walnut tree. How lovely!"
+                      "Çavên Şêro reş in, guhên wî jî reş in."
                     ]
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Destên xwe bişo! Xwarin germ e.",
-                    "voice": "hamo",
-                    "prompt": "Destên xwe bişo! Xwarin germ e.",
-                    "options": [
-                      "Wash your hands! The food is hot.",
-                      "Wash your face! The food is hot.",
-                      "Sit down! The food is hot."
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The other half is in Kobanî, with Lorîn.",
+                    "ask": "picture",
+                    "say": "çav",
+                    "voice": "hevalo",
+                    "prompt": "çav",
                     "options": [
-                      "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                      "Nîvek li Kobaniyê ye, li mala Lorînê.",
-                      "Nîvek li Kobaniyê ye, li mala Lorînê."
+                      "eye",
+                      "nose",
+                      "ear",
+                      "walnut"
                     ],
                     "correctIndex": 0
                   }
@@ -3307,18 +3363,34 @@
                 },
                 {
                   "position": 9,
-                  "type": "translate",
+                  "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Şêro’s eyes are black, and so are his ears.",
+                    "prompt": "My head.",
                     "accepted": [
-                      "Çavên Şêro reş in, guhên wî jî reş in."
+                      "Serê min."
                     ]
                   }
                 },
                 {
                   "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Destê Hêviyê li ser serê wê ye.",
+                    "voice": "hamo",
+                    "prompt": "Destê Hêviyê li ser serê wê ye.",
+                    "options": [
+                      "Hêvî’s hand is on her head.",
+                      "Hêvî’s hand is on her nose.",
+                      "Hêvî’s hat is on her head."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3335,40 +3407,23 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Nan di tenûrê de ye.",
-                    "reference": "Nan di tenûrê de ye."
-                  }
-                },
-                {
                   "position": 12,
-                  "type": "writing",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Destên xwe bişo! Xwarin germ e.",
                     "voice": "hamo",
-                    "prompt": "My head.",
-                    "accepted": [
-                      "Serê min."
-                    ]
+                    "prompt": "Destên xwe bişo! Xwarin germ e.",
+                    "options": [
+                      "Wash your hands! The food is hot.",
+                      "Wash your face! The food is hot.",
+                      "Sit down! The food is hot."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Erê! Odeyên me germ in, ban sar e."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3377,7 +3432,22 @@
                     "options": [
                       "Na, ne sêv e. Ev nîvê wêneyekî kevn e!",
                       "Na, ne sêvên e. Ev nîvê wêneyekî kevn e!",
-                      "Hûn çend xwişk û bira ne?"
+                      "Na, ne sêv e. Ev nîv wêneyekî kevn e!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The other half is in Kobanî, at Lorîn’s.",
+                    "options": [
+                      "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                      "Nîvek li Kobaniyê e, li cem Lorînê.",
+                      "Nîvek li Sêvanê ye, li cem Lorînê."
                     ],
                     "correctIndex": 0
                   }
@@ -3386,16 +3456,28 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ew ez im, li Sêvanê.",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Ew ez im, li Sêvanê.",
+                    "prompt": "That’s Lorîn, my sister. She has an apple in her mouth!",
                     "options": [
-                      "That’s me, here in Sêvan.",
-                      "They’re in Kobanî, and I’m in Sêvan.",
-                      "I’m fine."
+                      "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
+                      "Ew Lorîn e, xwişk min. Sêv di devê wê de ye!",
+                      "Ew Lorîn e, xwişka din. Sêv di devê wê de ye!"
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "voice": "hamo",
+                    "prompt": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "accepted": [
+                      "There are flowers under the walnut tree. How lovely!"
+                    ]
                   }
                 }
               ]
@@ -3406,7 +3488,7 @@
           "position": 4,
           "titleKu": "Gundê me",
           "titleEn": "Our village",
-          "grammarMd": "**Malên spî.** White houses. A plural noun on its own has no ending (*du mal*, *gelek dar*); before another word it takes **-ên**, and after a word of place **-an**.\n\n- *zarokên gund* the village children · *sêvên sor* red apples\n- *li gundan* in villages · *ji zarokan re* for the children",
+          "grammarMd": "**Malên spî.** White houses. A plural noun on its own has no ending (*du mal*, *gelek dar*); before another word it takes **-ên**, and after a word of place **-an**.\n\n- *zarokên gund* the village children · *sêvên sor* red apples\n- *li gundan* in villages · *ji zarokan re* for the children\n- A few words change their last vowel after a word of place: *bajar* → *li bajêr* in town, *çiya* → *li çiyê* on the mountain.",
           "lessons": [
             {
               "key": "u03s4l1",
@@ -3442,7 +3524,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "dibistan",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "dibistan",
                     "options": [
                       "school",
@@ -3461,29 +3543,6 @@
                 },
                 {
                   "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Ez mamoste me.",
-                    "voice": "xezo",
-                    "prompt": "Ez ___ me.",
-                    "options": [
-                      "mamoste",
-                      "mamosteyên",
-                      "kanî"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "I’m a teacher.",
-                    "new": [
-                      {
-                        "ku": "kanî",
-                        "en": "spring"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3505,7 +3564,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3527,24 +3586,7 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Dikan li ber dibistanê ye.",
-                    "voice": "hamo",
-                    "prompt": "Dikan li ber ___ ye.",
-                    "options": [
-                      "dibistanê",
-                      "dibistan",
-                      "mamosteyê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "The shop is in front of the school."
-                  }
-                },
-                {
-                  "position": 7,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3556,11 +3598,54 @@
                       "The spring water is very hot!",
                       "The tea at the shop is very cold!"
                     ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "kanî",
+                        "en": "spring"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Em li vir in, li bin vê dara gûzê.",
+                    "voice": "hamo",
+                    "prompt": "Em li vir in, li bin vê dara gûzê.",
+                    "options": [
+                      "We’re right here, under this walnut tree.",
+                      "We’re up here, on the roof.",
+                      "There are flowers under the walnut tree. How lovely!"
+                    ],
                     "correctIndex": 0
                   }
                 },
                 {
+                  "position": 7,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Dikan li ber dibistanê ye.",
+                    "reference": "Dikan li ber dibistanê ye."
+                  }
+                },
+                {
                   "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Fermo, li vir rûne!"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3573,71 +3658,7 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The spring water is very cold!",
-                    "options": [
-                      "Ava kaniyê gelek sar e!",
-                      "Ava kanî gelek sar e!",
-                      "Mase li vir e, li ser banî."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Em li vir in, li bin vê dara gûzê.",
-                    "voice": "hamo",
-                    "prompt": "Em li vir in, li bin vê dara gûzê.",
-                    "options": [
-                      "We’re right here, under this walnut tree.",
-                      "Under the walnut tree",
-                      "There are flowers under the walnut tree. How lovely!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "xezo",
-                    "prompt": "I’m a teacher.",
-                    "accepted": [
-                      "Ez mamoste me."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Dikan li ber dibistanê ye.",
-                    "reference": "Dikan li ber dibistanê ye."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Fermo, li vir rûne!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3670,7 +3691,41 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ez mamoste me.",
+                    "voice": "xezo",
+                    "prompt": "Ez ___ me.",
+                    "options": [
+                      "mamoste",
+                      "mamosteyên",
+                      "kanî"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "I’m a teacher."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Dikan li ber dibistanê ye.",
+                    "voice": "hamo",
+                    "prompt": "Dikan li ber ___ ye.",
+                    "options": [
+                      "dibistanê",
+                      "dibistan",
+                      "mamosteyê"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The shop is in front of the school."
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3682,7 +3737,19 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "xezo",
+                    "prompt": "I’m a teacher.",
+                    "accepted": [
+                      "Ez mamoste me."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3691,6 +3758,21 @@
                     "accepted": [
                       "Ava kaniyê gelek sar e!"
                     ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The spring water is very cold!",
+                    "options": [
+                      "Ava kaniyê gelek sar e!",
+                      "Ava kanî gelek sar e!",
+                      "Mase li vir e, li ser banî."
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -3733,7 +3815,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "roj",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "roj",
                     "options": [
                       "sun",
@@ -3754,17 +3836,16 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Pezê Bişar li çiyê ye.",
+                    "ask": "meaning",
+                    "say": "Bajar mezin e, gundê me biçûk e.",
                     "voice": "hamo",
-                    "prompt": "Pezê Bişar li ___ ye.",
+                    "prompt": "Bajar mezin e, gundê me biçûk e.",
                     "options": [
-                      "çiyê",
-                      "bajar",
-                      "rojê"
+                      "The town is big, our village is small.",
+                      "The town is small, our village is big.",
+                      "The mountain is big, our village is small."
                     ],
                     "correctIndex": 0,
-                    "cue": "Bişar’s sheep are on the mountain.",
                     "new": [
                       {
                         "ku": "bajar",
@@ -3777,16 +3858,17 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Bajar mezin e, gundê me biçûk e.",
+                    "ask": "missing",
+                    "say": "Pezê Bişar li çiyê ye.",
                     "voice": "hamo",
-                    "prompt": "Bajar mezin e, gundê me biçûk e.",
+                    "prompt": "Pezê Bişar li ___ ye.",
                     "options": [
-                      "The town is big, our village is small.",
-                      "The town is small, our village is big.",
-                      "The mountain is big, our village is small."
+                      "çiyê",
+                      "bajar",
+                      "rojê"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "Bişar’s sheep are on the mountain."
                   }
                 },
                 {
@@ -3809,17 +3891,16 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Bajar mezin e, gundê me biçûk e.",
+                    "ask": "meaning",
+                    "say": "Çêlek li pişt malê ye.",
                     "voice": "hamo",
-                    "prompt": "Bajar mezin e, ___ me biçûk e.",
+                    "prompt": "Çêlek li pişt malê ye.",
                     "options": [
-                      "gundê",
-                      "gund",
-                      "çêlekê"
+                      "The cow is behind the house.",
+                      "The spring is behind the school.",
+                      "Hevalo’s nose is behind the tree!"
                     ],
                     "correctIndex": 0,
-                    "cue": "The town is big, our village is small.",
                     "new": [
                       {
                         "ku": "çêlek",
@@ -3830,78 +3911,6 @@
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Çêlek li pişt malê ye.",
-                    "voice": "hamo",
-                    "prompt": "Çêlek li pişt malê ye.",
-                    "options": [
-                      "The cow is behind the house.",
-                      "The spring is behind the school.",
-                      "Hevalo’s nose is behind the tree!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Binêre! Roj li pişt çiyê ye.",
-                    "voice": "hamo",
-                    "prompt": "Binêre! Roj li pişt çiyê ye.",
-                    "accepted": [
-                      "Look! The sun is behind the mountain."
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The cow is behind the house.",
-                    "options": [
-                      "Çêlek li pişt malê ye.",
-                      "Çêlek li pişt mal ye.",
-                      "Kanî li pişt dibistanê ye."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Dikan li ber dibistanê ye.",
-                    "voice": "hamo",
-                    "prompt": "Dikan li ber dibistanê ye.",
-                    "options": [
-                      "The shop is in front of the school.",
-                      "The shop is behind the school.",
-                      "The school is in front of the shop."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Bişar’s sheep are on the mountain.",
-                    "accepted": [
-                      "Pezê Bişar li çiyê ye."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3911,30 +3920,7 @@
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "xezo",
-                    "accepted": [
-                      "Ez mamoste me."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Look! The sun is behind the mountain.",
-                    "accepted": [
-                      "Binêre! Roj li pişt çiyê ye."
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3947,7 +3933,19 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Bişar’s sheep are on the mountain.",
+                    "accepted": [
+                      "Pezê Bişar li çiyê ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3956,6 +3954,93 @@
                     "accepted": [
                       "Çêlek li pişt malê ye."
                     ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "xezo",
+                    "accepted": [
+                      "Ez mamoste me."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Binêre! Roj li pişt çiyê ye.",
+                    "voice": "hamo",
+                    "prompt": "Binêre! Roj li pişt çiyê ye.",
+                    "accepted": [
+                      "Look! The sun is behind the mountain."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "çêlek",
+                    "voice": "hevalo",
+                    "prompt": "çêlek",
+                    "options": [
+                      "cow",
+                      "goat",
+                      "donkey",
+                      "dog"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bajar mezin e, gundê me biçûk e.",
+                    "voice": "hamo",
+                    "prompt": "Bajar mezin e, ___ me biçûk e.",
+                    "options": [
+                      "gundê",
+                      "gund",
+                      "çêlekê"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The town is big, our village is small."
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Look! The sun is behind the mountain.",
+                    "accepted": [
+                      "Binêre! Roj li pişt çiyê ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "çiya",
+                    "voice": "hevalo",
+                    "prompt": "çiya",
+                    "options": [
+                      "mountain",
+                      "river",
+                      "tree",
+                      "house"
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -3996,6 +4081,23 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "picture",
+                    "say": "çivîk",
+                    "voice": "hevalo",
+                    "prompt": "çivîk",
+                    "options": [
+                      "bird",
+                      "hen",
+                      "tree",
+                      "flower"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Niha çay heye. Kerem bike, rûne.",
                     "voice": "hamo",
@@ -4015,7 +4117,7 @@
                   }
                 },
                 {
-                  "position": 3,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4032,7 +4134,7 @@
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4054,7 +4156,60 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
+                    "voice": "hamo",
+                    "prompt": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
+                    "accepted": [
+                      "Tomorrow we’re off to town! You, me, Hevalo and Bozo.",
+                      "Tomorrow we are off to town! You, me, Hevalo and Bozo."
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Yes. Today we’re at home.",
+                    "options": [
+                      "Erê. Îro em li malê ne.",
+                      "Erê. Îro em li mal ne.",
+                      "Erê. Îro em li malê in."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Yes. Today we’re at home.",
+                    "accepted": [
+                      "Erê. Îro em li malê ne."
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "It’s a lovely day today. The birds are in the apple trees.",
+                    "accepted": [
+                      "Îro roj xweş e. Çivîk li ser darên sêvan in."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4071,68 +4226,7 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Erê. Îro em li malê ne.",
-                    "voice": "hamo",
-                    "prompt": "Erê. Îro em li malê ne.",
-                    "options": [
-                      "Yes. Today we’re at home.",
-                      "Well done, Bozo! We’re home.",
-                      "Look, the blue gate! We’re home."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
-                    "voice": "hamo",
-                    "prompt": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
-                    "accepted": [
-                      "Tomorrow we’re off to town! You, me, Hevalo and Bozo.",
-                      "Tomorrow we are off to town! You, me, Hevalo and Bozo."
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Yes. Today we’re at home.",
-                    "options": [
-                      "Erê. Îro em li malê ne.",
-                      "Erê. Îro em li mal ne.",
-                      "Çêlek li pişt malê ye."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Pezê Bişar li çiyê ye.",
-                    "voice": "hamo",
-                    "prompt": "Pezê Bişar li çiyê ye.",
-                    "options": [
-                      "Bişar’s sheep are on the mountain.",
-                      "Bişar’s cow is on the mountain.",
-                      "Bişar’s sheep are in the yard."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu03s4l3a",
@@ -4213,25 +4307,19 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "It’s a lovely day today. The birds are in the apple trees.",
-                    "accepted": [
-                      "Îro roj xweş e. Çivîk li ser darên sêvan in."
-                    ]
-                  }
-                },
-                {
                   "position": 12,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "meaning",
+                    "say": "Pezê Bişar li çiyê ye.",
                     "voice": "hamo",
-                    "prompt": "Niha çay heye. Kerem bike, rûne.",
-                    "reference": "Niha çay heye. Kerem bike, rûne."
+                    "prompt": "Pezê Bişar li çiyê ye.",
+                    "options": [
+                      "Bişar’s sheep are on the mountain.",
+                      "Bişar’s cow is on the mountain.",
+                      "Bişar’s sheep are in the yard."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -4262,14 +4350,28 @@
                 },
                 {
                   "position": 15,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Erê. Îro em li malê ne.",
                     "voice": "hamo",
-                    "prompt": "Yes. Today we’re at home.",
-                    "accepted": [
-                      "Erê. Îro em li malê ne."
-                    ]
+                    "prompt": "Erê. Îro em li malê ne.",
+                    "options": [
+                      "Yes. Today we’re at home.",
+                      "Well done, Bozo! We’re home.",
+                      "Look, the blue gate! We’re home."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Niha çay heye. Kerem bike, rûne.",
+                    "reference": "Niha çay heye. Kerem bike, rûne."
                   }
                 }
               ]
@@ -4290,7 +4392,7 @@
                     "prompt": "Îro roj xweş e. Çivîk li ser darên sêvan in.",
                     "options": [
                       "It’s a lovely day today. The birds are in the apple trees.",
-                      "The birds are in the apple trees.",
+                      "It’s cold today. The birds are on the roof.",
                       "The table is here, on the roof."
                     ],
                     "correctIndex": 0
@@ -4298,82 +4400,6 @@
                 },
                 {
                   "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
-                    "voice": "hamo",
-                    "prompt": "Sibe em li ___ in! Ez, tu, Hevalo û Bozo.",
-                    "options": [
-                      "bajêr",
-                      "bajar",
-                      "ser"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "city, town"
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Bişar’s sheep are on the mountain.",
-                    "options": [
-                      "Pezê Bişar li çiyê ye.",
-                      "Pezê Bişar li çiya ye.",
-                      "Pez li çiyê ye."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Dikan li ber dibistanê ye.",
-                    "voice": "hamo",
-                    "prompt": "Dikan li ber dibistanê ye.",
-                    "accepted": [
-                      "The shop is in front of the school."
-                    ]
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Niha çay heye. Kerem bike, rûne.",
-                    "voice": "hamo",
-                    "prompt": "Niha çay heye. Kerem bike, rûne.",
-                    "options": [
-                      "There’s tea now. Please, sit down.",
-                      "There’s tea now. Please, help yourself!",
-                      "Sit down, Grandma! There’s tea."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Our village is called Sêvan.",
-                    "options": [
-                      "Navê gundê me Sêvan e.",
-                      "Navê gund me Sêvan e.",
-                      "Gundê me biçûk e."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -4406,19 +4432,133 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
+                    "voice": "hamo",
+                    "prompt": "Sibe em li ___ in! Ez, tu, Hevalo û Bozo.",
+                    "options": [
+                      "bajêr",
+                      "bajar",
+                      "ser"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "city, town"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The cow is behind the house.",
+                    "prompt": "The town is big, our village is small.",
                     "accepted": [
-                      "Çêlek li pişt malê ye."
+                      "Bajar mezin e, gundê me biçûk e."
                     ]
                   }
                 },
                 {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Binêre! Roj li pişt çiyê ye.",
+                    "voice": "hamo",
+                    "prompt": "Binêre! Roj li pişt çiyê ye.",
+                    "options": [
+                      "Look! The sun is behind the mountain.",
+                      "Look! The sun is on the mountain.",
+                      "Look! The moon is behind the mountain."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The town is down below the mountain. There are lots of apples there.",
+                    "options": [
+                      "Bajar li bin çiyê ye. Li wir gelek sêv hene.",
+                      "Bajar li bin çiya ye. Li wir gelek sêv hene.",
+                      "Sêv li pişt darê ye, ne di devê min de."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Hevalo? Ew niha li ber derî ye!"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "dibistan",
+                    "voice": "xezo",
+                    "prompt": "dibistan",
+                    "options": [
+                      "school",
+                      "house",
+                      "spring",
+                      "mountain"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 9,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "xezo",
+                    "prompt": "Ez mamoste me.",
+                    "reference": "Ez mamoste me."
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Dikan li ber dibistanê ye.",
+                    "voice": "hamo",
+                    "prompt": "Dikan li ber dibistanê ye.",
+                    "accepted": [
+                      "The shop is in front of the school."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Our village is called Sêvan.",
+                    "options": [
+                      "Navê gundê me Sêvan e.",
+                      "Navê gund me Sêvan e.",
+                      "Gundê me biçûk e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4435,49 +4575,16 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "xezo",
-                    "prompt": "Ez mamoste me.",
-                    "reference": "Ez mamoste me."
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The town is big, our village is small.",
-                    "accepted": [
-                      "Bajar mezin e, gundê me biçûk e."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Hevalo? Ew niha li ber derî ye!"
-                    ]
-                  }
-                },
-                {
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The town is down below the mountain. There are lots of apples there.",
+                    "prompt": "Bişar’s sheep are on the mountain.",
                     "options": [
-                      "Bajar li bin çiyê ye. Li wir gelek sêv hene.",
-                      "Bajar li bin çiya ye. Li wir gelek sêv hene.",
-                      "Sêv li pişt darê ye, ne di devê min de."
+                      "Pezê Bişar li çiyê ye.",
+                      "Pezê Bişar li çiya ye.",
+                      "Çêleka Bişar li çiyê ye."
                     ],
                     "correctIndex": 0
                   }
@@ -4487,15 +4594,27 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Binêre! Roj li pişt çiyê ye.",
+                    "say": "Niha çay heye. Kerem bike, rûne.",
                     "voice": "hamo",
-                    "prompt": "Binêre! Roj li pişt çiyê ye.",
+                    "prompt": "Niha çay heye. Kerem bike, rûne.",
                     "options": [
-                      "Look! The sun is behind the mountain.",
-                      "Look! The sun is on the mountain.",
-                      "Look! The moon is behind the mountain."
+                      "There’s tea now. Please, sit down.",
+                      "There’s tea now. Please, help yourself!",
+                      "Sit down, Grandma! There’s tea."
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The cow is behind the house.",
+                    "accepted": [
+                      "Çêlek li pişt malê ye."
+                    ]
                   }
                 }
               ]

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useAuth } from '../auth/AuthProvider';
+import { useT } from '../i18n/I18nProvider';
 import { renderApp, jsonResponse } from '../test/utils';
 import { lastAnswer } from './apiMemory';
 import { useApiGet } from './useApi';
@@ -48,6 +49,12 @@ function List({ fresh }: { fresh: boolean }): React.JSX.Element {
   return <p data-testid="friends">{loading ? 'loading' : (data?.friends.join(', ') ?? 'none')}</p>;
 }
 
+/** A word of the interface, to see when its language has loaded. */
+function Label(): React.JSX.Element {
+  const t = useT();
+  return <p data-testid="label">{t('shop.searchLabel')}</p>;
+}
+
 describe('useApiGet', () => {
   it('shows the last answer at once on a second visit, and brings it up to date behind that', async () => {
     signIn();
@@ -83,6 +90,23 @@ describe('useApiGet', () => {
     await waitFor(() => expect(screen.getByTestId('friends')).toHaveTextContent('loading'));
     await waitFor(() => expect(screen.getByTestId('friends')).toHaveTextContent('rojda'));
     expect(server.asked()).toBe(2);
+  });
+
+  it('does not ask again when the interface language finishes loading', async () => {
+    signIn();
+    localStorage.setItem('hevalo_locale', 'de');
+    const server = serve({ id: 'u1' }, () => ['rojda']);
+    renderApp(
+      <>
+        <Label />
+        <Friends fresh />
+      </>,
+    );
+    await waitFor(() => expect(screen.getByTestId('friends')).toHaveTextContent('rojda'));
+    await waitFor(() => expect(screen.getByTestId('label')).toHaveTextContent('Im Shop suchen'));
+    expect(screen.getByTestId('friends')).toHaveTextContent('rojda');
+    expect(server.asked()).toBe(1);
+    localStorage.removeItem('hevalo_locale');
   });
 
   it('empties the memory on sign-out, so nothing one account loaded is left for the next', async () => {

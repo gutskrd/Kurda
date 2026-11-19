@@ -7,6 +7,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
 import { characterLayers } from '../characters/layers';
+import { sameIds } from '../reports/testing/sameIds';
 import { LeagueScreen } from './LeagueScreen';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -78,9 +79,9 @@ describe('the league page', () => {
     const peek = screen.getByTestId('hevalo-peek');
     expect(within(peek).getByRole('img', { name: 'Hevalo is resting' })).toBeTruthy();
     expect(screen.getAllByRole('img', { name: /^Hevalo/ })).toHaveLength(1);
-    const head = characterLayers('hevalo', 'head');
+    const head = sameIds(characterLayers('hevalo', 'head'));
     expect(drawn()).toContain(head.eyes.closed);
-    expect(drawn()).not.toContain(characterLayers('hevalo', 'full').body);
+    expect(drawn()).not.toContain(sameIds(characterLayers('hevalo', 'full')).body);
     expect(within(peek).getAllByText('z').length).toBeGreaterThan(0);
     // Past the moment a peek would cheer, he sleeps on.
     await act(() => new Promise((r) => setTimeout(r, PEEK_POP.delayMs + PEEK_POP.ms + 200)));

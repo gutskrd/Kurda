@@ -2,15 +2,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Every drawing the character asks react-native-svg for, in order.
-const drawn = vi.hoisted(() => ({ markups: [] as string[] }));
+const drawn = vi.hoisted(() => ({ markups: [] as string[], raw: [] as string[] }));
 
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', async () => {
   const { createElement } = await import('react');
+  const { sameIds } = await import('../reports/testing/sameIds');
   return {
     SvgXml: ({ xml, width, height }: { xml: string; width: number; height: number }) => {
-      drawn.markups.push(xml);
-      return createElement('svg', { width, height, 'data-markup': xml });
+      drawn.raw.push(xml);
+      drawn.markups.push(sameIds(xml));
+      return createElement('svg', { width, height, 'data-markup': sameIds(xml) });
     },
   };
 });
@@ -37,6 +39,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers, irisesMoved } from './layers';
 import { SpeakingCharacter, type PlaybackClock } from './SpeakingCharacter';
 import { fakeFrames, type Frames } from './testing/audio';
+import { sameIds } from '../reports/testing/sameIds';
 
 // A word said over a second: the lips pressed, then wide open, then rounded.
 const SAID: RecordingVoice = {
@@ -53,8 +56,8 @@ const SAID: RecordingVoice = {
   }),
 };
 
-const HAMO = characterLayers('hamo', 'bust');
-const XEZO = characterLayers('xezo', 'bust');
+const HAMO = sameIds(characterLayers('hamo', 'bust'));
+const XEZO = sameIds(characterLayers('xezo', 'bust'));
 
 function clock(at = 0, duration = 1, playing = true): PlaybackClock & { currentTime: number; duration: number; playing: boolean } {
   return { currentTime: at, duration, playing };
@@ -92,6 +95,7 @@ beforeEach(() => {
   patchReactNativeWeb({ reduceMotion: true });
   frames = fakeFrames();
   drawn.markups = [];
+  drawn.raw = [];
 });
 afterEach(() => {
   cleanup();
@@ -294,8 +298,27 @@ describe('SpeakingCharacter', () => {
     expect(still.turns.every((deg) => deg === 0)).toBe(true);
   });
 
+  it('gives each drawing in a browser ids of its own, so a second deer never takes the first one’s fur', async () => {
+    renderWithProviders(
+      <>
+        <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={300} />
+        <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="head" size={80} />
+      </>,
+    );
+    await settle();
+    // Each drawing once, however often it was drawn again.
+    const ids = [...new Set(drawn.raw)].flatMap((xml) => [...xml.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]!));
+    expect(ids.length).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
+    // Nothing refers to an id drawn somewhere else: each fill and clip finds its own.
+    for (const xml of drawn.raw) {
+      const own = new Set([...xml.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
+      for (const [, ref] of xml.matchAll(/url\(#([^)]+)\)/g)) expect(own.has(ref)).toBe(true);
+    }
+  });
+
   it('draws the deer’s ears, pupils and nose as parts of their own, so they can move', async () => {
-    const deer = characterLayers('hevalo', 'full');
+    const deer = sameIds(characterLayers('hevalo', 'full'));
     renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={300} />);
     await settle();
     const rig = deer.rig!;
@@ -311,7 +334,7 @@ describe('SpeakingCharacter', () => {
   });
 
   it('rests where there is nothing to do yet: eyes shut, said so, with z’s that a screen reader skips', async () => {
-    const deer = characterLayers('hevalo', 'full');
+    const deer = sameIds(characterLayers('hevalo', 'full'));
     renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={170} resting />);
     await settle();
     expect(drawn.markups).toContain(deer.eyes.closed);
@@ -484,7 +507,7 @@ describe('SpeakingCharacter', () => {
   });
 
   it('turns the deer’s pupils where it is told to look', async () => {
-    const deer = characterLayers('hevalo', 'full');
+    const deer = sameIds(characterLayers('hevalo', 'full'));
     const look = { x: 1, y: 0 };
     renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={300} gaze={look} />);
     await settle();

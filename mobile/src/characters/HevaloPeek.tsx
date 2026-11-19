@@ -5,6 +5,8 @@ import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, characterSvg, peekArt, type BrowState,
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDrawingIds } from './drawingIds';
+import { renameIds } from './layers';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import type { PlaybackClock } from './voice';
 
@@ -62,11 +64,16 @@ export function HevaloPeek({
 }): React.JSX.Element {
   const { scheme } = useTheme();
   const reduce = useReducedMotion();
-  const art = useMemo(() => peekArt({ dark: scheme === 'dark' }), [scheme]);
+  const ids = useDrawingIds('pk');
+  const art = useMemo(() => peekArt({ dark: scheme === 'dark', idPrefix: ids }), [scheme, ids]);
   const width = (size * PEEK_VIEW.w) / PEEK_VIEW.h;
   const { figure } = PEEK_PLACE;
   const figureWidth = figure.width * width;
-  const drawn = useMemo(() => (still ? characterSvg('hevalo', { crop: 'head', width: figureWidth, brows }) : null), [still, figureWidth, brows]);
+  const drawn = useMemo(() => {
+    if (!still) return null;
+    const xml = characterSvg('hevalo', { crop: 'head', width: figureWidth, brows });
+    return ids ? renameIds(xml, 'hvhevalo-', `${ids}h-`) : xml;
+  }, [still, figureWidth, brows, ids]);
   const drop = PEEK_PLACE.drop * size;
   const rise = useRef(new Animated.Value(pop && !reduce ? drop : 0)).current;
   // Through the page, he cheers as the spring settles, unless the screen has a reaction of its own for him; asleep, never.

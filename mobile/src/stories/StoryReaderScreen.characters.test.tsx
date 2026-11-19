@@ -5,6 +5,7 @@ import { encodeLipsync, lessonAudioKey, type StoryDetail } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { characterLayers } from '../characters/layers';
+import { sameIds } from '../reports/testing/sameIds';
 import { fakeFrames, type Frames } from '../characters/testing/audio';
 import { resetPrefsCache } from './prefs';
 import { NANE_GERM } from './testing/views';
@@ -135,7 +136,7 @@ describe('the story reader’s speaking characters', () => {
     player.currentTime = 0.4;
     act(() => frames.step());
     const drawn = () => [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
-    expect(drawn()).toContain(characterLayers('hevalo', 'bust').mouths.a);
+    expect(drawn()).toContain(sameIds(characterLayers('hevalo', 'bust')).mouths.a);
 
     // The first line ends; the second is said by someone else.
     act(() => player.status?.({ didJustFinish: true }));

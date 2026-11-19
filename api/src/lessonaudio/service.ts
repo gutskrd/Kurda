@@ -58,8 +58,9 @@ export interface LessonAudioItem {
   speaker: SpeakerId | null;
   /**
    * Who is to record it: a conversation line's character, else the `voice` of the first exercise in course order
-   * naming one. Null when nothing plans it (a story sentence, an unused recording, a lesson without voices). The
-   * recording's own `speaker` is who was heard; this is who was meant.
+   * naming one, a match-pairs item counting only where no other exercise does. Null when nothing plans it (a story
+   * sentence, an unused recording, a lesson without voices). The recording's own `speaker` is who was heard; this is
+   * who was meant.
    */
   plannedSpeaker: SpeakerId | null;
   /** it has a mouth timeline; PATCH /admin/audio/lesson sets one for a recording made without */
@@ -260,6 +261,8 @@ export class LessonAudioService {
     const items = new Map<string, LessonAudioItem>();
     // one usage per lesson slot, even when the draft and the live version both use the text
     const usageBySlot = new Map<string, LessonAudioUsage>();
+    // a match-pairs card replays a word met elsewhere: its item's voice plans only what no other exercise does
+    const cardPlans = new Map<string, SpeakerId>();
     for (const row of exercises.rows) {
       const clips =
         row.type === 'conversation'
@@ -278,7 +281,9 @@ export class LessonAudioService {
           items.set(key, item);
         }
         // rows come in course order: the first use that plans a voice decides it
-        item.plannedSpeaker ??= line ? line.character : voice;
+        if (row.type === 'match_pairs') {
+          if (voice && !cardPlans.has(key)) cardPlans.set(key, voice);
+        } else item.plannedSpeaker ??= line ? line.character : voice;
         const slot = `${key}\u0000${row.skill_id}\u0000${row.lesson_position}`;
         let usage = usageBySlot.get(slot);
         if (!usage) {
@@ -306,6 +311,10 @@ export class LessonAudioService {
         if (!usage.exerciseTypes.includes(row.type)) usage.exerciseTypes.push(row.type);
         if (row.type === 'listening' && playsWithoutClip(row.payload, key)) usage.listeningNeedsIt = true;
       }
+    }
+    for (const [key, voice] of cardPlans) {
+      const item = items.get(key)!;
+      item.plannedSpeaker ??= voice;
     }
     for (const story of stories.rows) {
       const usage: LessonAudioUsage = {

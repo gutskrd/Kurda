@@ -4,6 +4,7 @@
  * through.
  */
 import { createElement, type ReactNode } from 'react';
+import { sameIds } from './sameIds';
 
 type Props = Record<string, unknown> & { children?: ReactNode };
 
@@ -37,7 +38,10 @@ export const Stop = element('stop');
 export const ClipPath = element('clipPath');
 export const Pattern = element('pattern');
 
-/** An SVG drawn from a string (the art drawn by code): a box of its size, with the string kept for a test to read. */
+/**
+ * An SVG drawn from a string (the art drawn by code): a box of its size, with the string kept for a test to read, its
+ * character ids written alike (`sameIds`) since each drawing in a browser has ids of its own.
+ */
 export function SvgXml({ xml, width, height }: { xml: string; width?: number; height?: number }) {
-  return createElement('svg', { width, height, 'data-xml': xml.length > 0 ? 'drawn' : 'empty', 'data-markup': xml });
+  return createElement('svg', { width, height, 'data-xml': xml.length > 0 ? 'drawn' : 'empty', 'data-markup': sameIds(xml) });
 }
