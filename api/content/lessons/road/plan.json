@@ -6,9 +6,9 @@
     "titleEn": "The Kurmanji Road"
   },
   "characters": {
-    "hamo": "Hamo is the warm heart of Sêvan, a village of apple orchards under the mountains, and the voice of the whole road. He was born and grew up in Kobanî, where his father Ibrahîm, who plays the shepherd’s flute, and his mother Edûl still live, with his younger brother Evdila and his sisters Lorîn and Cîhan; as children he and Lorîn spent their summers in Sêvan with their aunt, and as a young man he came back to the village and stayed. He lives behind the blue gate with Hevalo, Bozo the donkey, Şêro the dog and the old apple orchard, and the village children call him Xalo Hamo. He speaks standard Kurmanji with the warmth and a few of the words of Kobanî. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the end of his full black moustache when he is pleased with you, and is prouder of that moustache than of anything he owns. A miss gets one raised eyebrow and a thoughtful look, never a cross word. He wears the traditional suit with a green piştên, keeps the orchard, drinks tea from dawn to dusk with far too much sugar, is never quite on time, and has a proverb or a tale for every moment. Every line of the road is his: he talks with you, and tells you about everyone else.",
-    "xezo": "Xezal is the young teacher at the village school. She comes from Amed and teaches the children of Sêvan their letters, and she lives in the village like any other neighbour. She is seen now and then, at the school with the children or at the market, and is mostly talked about rather than talked to: the road hears of her through what Hamo and the children say. Bright, quick and kind, she knows the city and the village alike. In the last chapters a school in Hewlêr, far away, offers her a post; she decides to go, says goodbye to the whole village, and leaves on the dawn bus from the blue gate.",
-    "hevalo": "Hevalo is a young male deer and the learner’s guide: he brings you to Hamo’s blue gate in the first lesson and walks the whole road beside you. His name means “O friend!” Curious about everything and quick on his feet, he hops when he is pleased, tilts his head when something puzzles him and pricks up his ears at anything new. He is always after apples and always the first suspect when apples go missing, cheeky in a sweet way and kind when you get something wrong. He does not talk: Hamo puts his thoughts into words, usually with a laugh. On the summer pastures he only has eyes for Zerê, a shy wild doe, and brings her every apple he can carry."
+    "hamo": "Hamo is the warm heart of Sêvan, a village of apple orchards under the mountains, and the voice of the whole road. He was born and grew up in Kobanî, where his father Ibrahîm, who plays the shepherd’s flute, and his mother Edûl still live, with his younger brother Evdila and his sisters Lorîn and Cîhan; as children he and Lorîn spent their summers in Sêvan with their aunt, and as a young man he came back to the village and stayed. He lives behind the blue gate with Hevalo, Bozo the donkey, Şêro the dog and the old apple orchard, and the village children call him Xalo Hamo. He speaks standard Kurmanji with the warmth and a few of the words of Kobanî. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the end of his full black moustache when he is pleased with you, and is prouder of that moustache than of anything he owns. A miss gets one raised eyebrow and a thoughtful look, never a cross word. He wears the traditional suit with a green piştên, keeps the orchard, drinks tea from dawn to dusk with far too much sugar, is never quite on time, and has a proverb or a tale for every moment. He says nearly every line of the road: he talks with you, and tells you about everyone else, while Xezal and Hevalo say their own few lines.",
+    "xezo": "Xezal is the young teacher at the village school. She comes from Amed and teaches the children of Sêvan their letters, and she lives in the village like any other neighbour. She is seen now and then, at the school with the children or at the market, and in her own scenes she speaks for herself, bright and kind: who she is, her lessons, her decision and her goodbye. Otherwise the road hears of her through what Hamo and the children say. Bright, quick and kind, she knows the city and the village alike. In the last chapters a school in Hewlêr, far away, offers her a post; she decides to go, says goodbye to the whole village, and leaves on the dawn bus from the blue gate.",
+    "hevalo": "Hevalo is a young male deer and the learner’s guide: he brings you to Hamo’s blue gate in the first lesson and walks the whole road beside you. His name means “O friend!” Curious about everything and quick on his feet, he hops when he is pleased, tilts his head when something puzzles him and pricks up his ears at anything new. He is always after apples and always the first suspect when apples go missing, cheeky in a sweet way and kind when you get something wrong. He talks a little, in a young voice: short, cheeky, warm lines (“Ez birçî me!”, “Sêva paşîn ji bo min e!”), never long sentences; anything longer Hamo tells for him, usually with a laugh. On the summer pastures he only has eyes for Zerê, a shy wild doe, and brings her every apple he can carry."
   },
   "core": ["û", "ji", "li", "bi", "jî", "an", "ku", "re", "ve", "wey", "lo", "îcar"],
   "names": [
@@ -370,7 +370,8 @@
                 {"ku": "xwişk", "en": "sister", "pos": "noun", "gender": "f", "forms": ["xwişk", "xwişkên", "xwişkan", "xwişkek", "xwişka", "xwişkê", "xwişkeke"]},
                 {"ku": "malbat", "en": "family", "pos": "noun", "gender": "f", "forms": ["malbat", "malbatên", "malbatan", "malbatek", "malbata", "malbatê", "malbateke"]},
                 {"ku": "em", "en": "we", "pos": "pron", "forms": ["em"]},
-                {"ku": "in / ne", "en": "are (with em, hûn, ew: in after a consonant, ne after a vowel)", "pos": "cop", "forms": ["in", "ne"]}
+                {"ku": "in / ne", "en": "are (with em, hûn, ew: in after a consonant, ne after a vowel)", "pos": "cop", "forms": ["in", "ne"]},
+                {"ku": "hûn", "en": "you (more than one; polite)", "pos": "pron", "forms": ["hûn"]}
               ]
             },
             {
@@ -379,12 +380,14 @@
               "titleKu": "Hûn cîran in!",
               "titleEn": "You’re neighbours!",
               "focus": "talk",
-              "beat": "A knock at the blue gate: the neighbours have come, Nazê with a plate of warm bread, Baran, and Hêvî hiding behind her mother’s skirt. Hamo explains who is who: they are neighbours, you are a guest, and Hevalo, he says, just lives in the orchard and eats it. Then he asks you about your own family.",
+              "beat": "A knock at the blue gate: the neighbours have come, Nazê with a plate of warm bread, Baran, and Hêvî hiding behind her mother’s skirt, and with them Xezal, the young teacher from Amed. Hêvî starts a game, “Ez kî me?”, and everyone says what they are: Hamo is a man, Xezal is a woman, and Hevalo, very proudly, is an animal. Hamo explains who is who: they are neighbours, you are the guest, and Hevalo just lives in the orchard and eats it.",
               "voice": "hamo",
               "new": [
-                {"ku": "hûn", "en": "you (more than one; polite)", "pos": "pron", "forms": ["hûn"]},
                 {"ku": "cîran", "en": "neighbour", "pos": "noun", "gender": "mf", "forms": ["cîran", "cîranên", "cîranan", "cîranek", "cîranê", "cîranekî", "cîranî", "cîrana", "cîraneke"]},
-                {"ku": "mêvan", "en": "guest", "pos": "noun", "gender": "mf", "forms": ["mêvan", "mêvanên", "mêvanan", "mêvanek", "mêvanê", "mêvanekî", "mêvanî", "mêvana", "mêvaneke"]}
+                {"ku": "mêvan", "en": "guest", "pos": "noun", "gender": "mf", "forms": ["mêvan", "mêvanên", "mêvanan", "mêvanek", "mêvanê", "mêvanekî", "mêvanî", "mêvana", "mêvaneke"]},
+                {"ku": "mêr", "en": "man; husband", "pos": "noun", "gender": "m", "forms": ["mêr", "mêrên", "mêran", "mêrek", "mêrê", "mêrekî", "mêrî"]},
+                {"ku": "jin", "en": "woman; wife", "pos": "noun", "gender": "f", "forms": ["jin", "jinên", "jinan", "jinek", "jina", "jinê", "jineke"]},
+                {"ku": "heywan", "en": "animal", "pos": "noun", "gender": "m", "forms": ["heywan", "heywanên", "heywanan", "heywanek", "heywanê", "heywanekî"]}
               ]
             },
             {
@@ -1616,8 +1619,7 @@
                 {"ku": "destûr", "en": "permission", "pos": "noun", "gender": "f", "forms": ["destûr", "destûrên", "destûran", "destûrek", "destûra", "destûrê", "destûreke"]},
                 {"ku": "dibe ku", "en": "maybe, it may be that", "pos": "phrase", "forms": ["dibe", "ku"]},
                 {"ku": "pirsîn", "en": "to ask", "pos": "verb", "forms": ["pirsîn", "dipirsim", "dipirsî", "dipirse", "dipirsin", "bipirsim", "bipirse"]},
-                {"ku": "jin", "en": "woman; wife", "pos": "noun", "gender": "f", "forms": ["jin", "jinên", "jinan", "jinek", "jina", "jinê", "jineke"]},
-                {"ku": "mêr", "en": "man; husband", "pos": "noun", "gender": "m", "forms": ["mêr", "mêrên", "mêran", "mêrek", "mêrê", "mêrekî", "mêrî"]}
+                {"ku": "firax", "en": "dishes", "pos": "noun", "forms": ["firax", "firaxan", "firaxên"]}
               ]
             },
             {
