@@ -396,14 +396,12 @@ export function SessionPlayer({
         const model = feedbackClip(ex, res.data);
         const stage = exerciseClips(ex).map((c) => c.voice.speaker);
         const alone = stage.length > 0 && stage.every((who) => who === stage[0]) ? stage[0]! : null;
-        const by = verdictVoice({
-          shown: hevalo ? 'hevalo' : (model?.voice.speaker ?? alone),
-          staged: stage.length > 0,
-          modelDue: !!res.data.modelAudioUrl && !spoken && autoplayOn(),
-        });
+        const by = verdictVoice({ shown: hevalo ? 'hevalo' : (model?.voice.speaker ?? alone), staged: stage.length > 0 });
+        // The answer's own recording, when it plays by itself, is heard first.
+        const modelDue = !!res.data.modelAudioUrl && !spoken && autoplayOn();
         reacting.current();
         if (said && by && !isSoraniDialect(exDialect)) {
-          reacting.current = sayReactionLater(reactionDelayMs('verdict', prefersReducedMotion()), { moment: said, ...by });
+          reacting.current = sayReactionLater(reactionDelayMs('verdict', prefersReducedMotion()), { moment: said, ...by }, modelDue);
         }
         dispatch({ type: 'ANSWERED', result: res.data, given });
         return;

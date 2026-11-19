@@ -488,7 +488,7 @@ function SessionPlayerBody({
     if (type === 'listening') setUnheard(true);
   };
 
-  // A line from whoever stands beside the verdict (shared reactions.ts), never over its own recording; going on stops it.
+  // A line from whoever stands beside the verdict (shared reactions.ts), after its own recording; going on stops it.
   useEffect(() => {
     const fb = state.feedback;
     if (!fb) return;
@@ -498,13 +498,11 @@ function SessionPlayerBody({
     const { staged, standIn } = beside.current;
     // Beside the verdict: Hevalo at his window, the model's speaker over "Hear it", or Hevalo's portrait; else whoever is on the stage.
     const model = fb.modelAudioUrl && !staged ? knownVoice(fb.modelAudioVoice) : null;
-    const by = verdictVoice({
-      shown: standIn ? 'hevalo' : model ? model.speaker : staged && ex ? stageSpeaker(ex) : 'hevalo',
-      staged,
-      modelDue: !!fb.modelAudioUrl && !spoken && autoplayOn(),
-    });
+    const by = verdictVoice({ shown: standIn ? 'hevalo' : model ? model.speaker : staged && ex ? stageSpeaker(ex) : 'hevalo', staged });
     if (!said || !by || isSoraniDialect(ex?.dialect ?? view.dialect)) return;
-    const cancel = sayReactionLater(reactionDelayMs('verdict', reduceMotion), { moment: said, ...by });
+    // The answer's own recording, when it plays by itself, is heard first.
+    const modelDue = !!fb.modelAudioUrl && !spoken && autoplayOn();
+    const cancel = sayReactionLater(reactionDelayMs('verdict', reduceMotion), { moment: said, ...by }, modelDue);
     return () => {
       cancel();
       stopReaction();

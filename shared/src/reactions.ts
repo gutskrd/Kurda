@@ -262,6 +262,13 @@ export function reactionDelayMs(at: 'verdict' | 'celebration', reduce: boolean):
 /** How long a caption stays after its line ends. */
 export const REACTION_CAPTION_AFTER_MS = 1200;
 
+/**
+ * A verdict's line waits for the answer's own recording to finish, then this beat, before it is said; it waits no
+ * longer than `REACTION_AUDIO_WAIT_MS` in all.
+ */
+export const REACTION_AFTER_AUDIO_MS = 300;
+export const REACTION_AUDIO_WAIT_MS = 8000;
+
 /** A verdict's moment: a miss, three in a row, or a run milestone (five, ten…); a spoken answer is the learner's own rating. */
 export function verdictMoment({ accepted, spoken, run, before }: { accepted: boolean; spoken: boolean; run: number; before: number }): ReactionMoment | null {
   if (spoken) return null;
@@ -273,22 +280,18 @@ export function verdictMoment({ accepted, spoken, run, before }: { accepted: boo
 
 /**
  * Who reacts to a verdict, and whether they are drawn there: the character beside it (Hamo has no reactions, so then
- * nobody), Hevalo when nobody is shown at all, and nobody while a model recording is due or another character is on the
- * exercise's stage. A voice never comes from a character other than the one on screen.
+ * nobody), Hevalo when nobody is shown at all, and nobody while another character is on the exercise's stage. A voice
+ * never comes from a character other than the one on screen.
  */
 export function verdictVoice({
   shown,
   staged,
-  modelDue,
 }: {
   /** the character drawn beside the verdict */
   shown: SpeakerId | null;
   /** a character is on the exercise's own stage above it */
   staged: boolean;
-  /** the answer's recording will play by itself */
-  modelDue: boolean;
 }): { character: ReactionCharacter; drawn: boolean } | null {
-  if (modelDue) return null;
   if (shown) return isReactionCharacter(shown) ? { character: shown, drawn: true } : null;
   return staged ? null : { character: 'hevalo', drawn: false };
 }

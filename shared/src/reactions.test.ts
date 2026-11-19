@@ -131,13 +131,12 @@ describe('when and who', () => {
     expect(verdictMoment({ accepted: true, spoken: false, run: 3, before: 3 })).toBeNull();
   });
 
-  it('lets only the character on screen speak, and nobody over a model recording', () => {
-    expect(verdictVoice({ shown: 'hevalo', staged: false, modelDue: false })).toEqual({ character: 'hevalo', drawn: true });
-    expect(verdictVoice({ shown: 'xezo', staged: true, modelDue: false })).toEqual({ character: 'xezo', drawn: true });
-    expect(verdictVoice({ shown: 'hamo', staged: false, modelDue: false })).toBeNull();
-    expect(verdictVoice({ shown: null, staged: true, modelDue: false })).toBeNull();
-    expect(verdictVoice({ shown: null, staged: false, modelDue: false })).toEqual({ character: 'hevalo', drawn: false });
-    expect(verdictVoice({ shown: 'hevalo', staged: false, modelDue: true })).toBeNull();
+  it('lets only the character on screen speak', () => {
+    expect(verdictVoice({ shown: 'hevalo', staged: false })).toEqual({ character: 'hevalo', drawn: true });
+    expect(verdictVoice({ shown: 'xezo', staged: true })).toEqual({ character: 'xezo', drawn: true });
+    expect(verdictVoice({ shown: 'hamo', staged: false })).toBeNull();
+    expect(verdictVoice({ shown: null, staged: true })).toBeNull();
+    expect(verdictVoice({ shown: null, staged: false })).toEqual({ character: 'hevalo', drawn: false });
   });
 
   it('names the lesson’s end and the streak card’s day', () => {

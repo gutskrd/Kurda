@@ -12,7 +12,7 @@ import { REACTION_VOLUME, hushReactions, resetReactions, sayReaction } from './r
 /* Hevalo’s and Xezal’s recorded reactions: when one is heard, who says it, and its caption. */
 
 const take = (character: 'hevalo' | 'xezo', id: string): ReactionTake => ({ character, id, src: `https://cdn.test/${character}-${id}.wav`, voice: { speaker: character } });
-const TAKES = [take('hevalo', 'miss-1'), take('hevalo', 'run-3-2'), take('xezo', 'daily-zer-1')];
+const TAKES = [take('hevalo', 'miss-1'), take('hevalo', 'run-3-2'), take('xezo', 'daily-zer-1'), take('xezo', 'miss-1')];
 
 beforeEach(() => {
   resetReactions(TAKES);
@@ -124,6 +124,23 @@ describe('in a lesson', () => {
     await screen.findByRole('button', { name: /Hevalo says “Ne xem e!”/ });
     expect(soundPlayer()?.src).toBe('https://cdn.test/hevalo-miss-1.wav');
     expect(document.querySelector('.reaction-caption-face')).toBeNull();
+  });
+
+  it('waits for the answer’s own recording, then comes from Xezal, who says it beside the verdict', async () => {
+    const MODEL = 'https://cdn.test/xezo-model.wav';
+    grade = () => ({ verdict: 'incorrect', accepted: false, duplicate: false, correction: 'sêv', modelAudioUrl: MODEL, modelAudioVoice: { speaker: 'xezo' } });
+    // The answer's recording sounds from the moment it is asked to play until it ends.
+    const paused = vi.spyOn(HTMLMediaElement.prototype, 'paused', 'get').mockReturnValue(false);
+    lesson([choice('a'), choice('b')]);
+    await answer();
+    await act(() => new Promise((r) => setTimeout(r, 900)));
+    expect(soundPlayer()?.src).toBe(MODEL);
+    expect(screen.queryByRole('button', { name: /says/ })).not.toBeInTheDocument();
+    paused.mockReturnValue(true);
+    act(() => void soundPlayer()!.dispatchEvent(new Event('ended')));
+    const caption = await screen.findByRole('button', { name: /Xezal says “Şaşî jî hînbûn e.”/ });
+    expect(soundPlayer()?.src).toBe('https://cdn.test/xezo-miss-1.wav');
+    expect(caption.querySelector('.reaction-caption-face')).toBeNull();
   });
 
   it('stays quiet when another character is on the exercise’s stage', async () => {

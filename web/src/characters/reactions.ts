@@ -6,6 +6,8 @@
  */
 import { useEffect, useState } from 'react';
 import {
+  REACTION_AFTER_AUDIO_MS,
+  REACTION_AUDIO_WAIT_MS,
   REACTION_VOICE,
   createReactionGate,
   pickReaction,
@@ -110,10 +112,38 @@ export function sayReaction({ moment, character = REACTION_VOICE[moment], drawn 
   return true;
 }
 
-/** `sayReaction` after `ms`; the returned function calls it off, as an effect's cleanup does. */
-export function sayReactionLater(ms: number, ask: ReactionAsk): () => void {
-  const id = window.setTimeout(() => sayReaction(ask), ms);
-  return () => window.clearTimeout(id);
+/**
+ * `sayReaction` after `ms`; with `afterAudio`, a beat later, and once the recording then playing (the answer's own) has
+ * finished. The returned function calls it off, as an effect's cleanup does.
+ */
+export function sayReactionLater(ms: number, ask: ReactionAsk, afterAudio = false): () => void {
+  let waiting: (() => void) | null = null;
+  let beat: number | undefined;
+  const at = window.setTimeout(
+    () => {
+      if (!afterAudio || !sounding()) {
+        sayReaction(ask);
+        return;
+      }
+      const quit = window.setTimeout(() => waiting?.(), REACTION_AUDIO_WAIT_MS);
+      const off = onPlaying((src) => {
+        if (src !== null) return;
+        waiting?.();
+        beat = window.setTimeout(() => sayReaction(ask), REACTION_AFTER_AUDIO_MS);
+      });
+      waiting = () => {
+        off();
+        window.clearTimeout(quit);
+        waiting = null;
+      };
+    },
+    ms + (afterAudio ? REACTION_AFTER_AUDIO_MS : 0),
+  );
+  return () => {
+    window.clearTimeout(at);
+    window.clearTimeout(beat);
+    waiting?.();
+  };
 }
 
 /** Hears each line as it starts, and null as it ends. */

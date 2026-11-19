@@ -20,7 +20,7 @@ vi.mock('@react-navigation/native', () => ({
     useEffect(() => run(), [run]);
   },
 }));
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import type { ReactionTake } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -36,12 +36,16 @@ import { resetReactions } from './reactions';
 patchReactNativeWeb({ reduceMotion: true });
 
 const MISS = 'https://cdn.test/hevalo-miss-1.wav';
-const TAKES: ReactionTake[] = [{ character: 'hevalo', id: 'miss-1', src: MISS, voice: { speaker: 'hevalo' } }];
+const HERS = 'https://cdn.test/xezo-miss-1.wav';
+const TAKES: ReactionTake[] = [
+  { character: 'hevalo', id: 'miss-1', src: MISS, voice: { speaker: 'hevalo' } },
+  { character: 'xezo', id: 'miss-1', src: HERS, voice: { speaker: 'xezo' } },
+];
 const paths = { answers: () => '/sessions/s1/answers', retry: () => '/sessions/s1/retry', complete: () => '/sessions/s1/complete' };
 const standing = { 'GET /me': ok({ user: { skipSpeaking: false } }), 'GET /me/daily-goal': ok({ completed: false }) };
 const miss = ok({ verdict: 'incorrect', accepted: false, duplicate: false, correction: 'av' });
 
-function lesson(over: Partial<SessionView['exercises'][number]> = {}, dialect = 'kurmanji'): void {
+function lesson(over: Partial<SessionView['exercises'][number]> = {}, dialect = 'kurmanji', graded: ReturnType<typeof ok> = miss): void {
   const view: SessionView = {
     sessionId: 's1',
     lessonId: 'l1',
@@ -51,7 +55,7 @@ function lesson(over: Partial<SessionView['exercises'][number]> = {}, dialect = 
     dialect,
     exercises: [{ id: 'mc', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'], position: 1, ...over }],
   } as SessionView;
-  testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': miss });
+  testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': graded });
   renderWithProviders(
     <>
       <SessionPlayer view={view} paths={paths} onExit={() => undefined} />
@@ -88,6 +92,22 @@ describe('a verdict’s reaction line', () => {
     expect(screen.queryByTestId('reaction-caption-face')).toBeNull();
     fireEvent.click(caption);
     expect(await screen.findByText('No worries!')).toBeTruthy();
+  });
+
+  it('waits for the answer’s own recording, then comes from Xezal, who says it', async () => {
+    const MODEL = 'https://cdn.test/xezo-model.wav';
+    lesson({ modelAudioUrl: MODEL, modelAudioVoice: { speaker: 'xezo' } }, 'kurmanji', ok({ verdict: 'incorrect', accepted: false, duplicate: false, correction: 'av', modelAudioUrl: MODEL, modelAudioVoice: { speaker: 'xezo' } }));
+    await answerWrong();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 900));
+    });
+    // Her recording of the answer is playing: nothing is said over it.
+    expect(FakeAudio.of(MODEL)?.paused).toBe(false);
+    expect(FakeAudio.of(HERS)).toBeUndefined();
+    act(() => FakeAudio.of(MODEL)!.finish());
+    expect(await screen.findByRole('button', { name: 'Xezal says “Şaşî jî hînbûn e.”' })).toBeTruthy();
+    expect(FakeAudio.of(HERS)?.paused).toBe(false);
+    expect(FakeAudio.of(MISS)).toBeUndefined();
   });
 
   it('is nobody’s while Hamo is the one on the stage', async () => {

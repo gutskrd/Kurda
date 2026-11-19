@@ -8,6 +8,8 @@
 import { useEffect, useState } from 'react';
 import { AppState, Platform } from 'react-native';
 import {
+  REACTION_AFTER_AUDIO_MS,
+  REACTION_AUDIO_WAIT_MS,
   REACTION_VOICE,
   createReactionGate,
   pickReaction,
@@ -20,7 +22,7 @@ import {
 import type { ApiClient } from '../api/client';
 import { soundsOn } from '../feedback/soundPref';
 import { characterVoicesOn, loadCharacterVoicesPref } from '../feedback/voicesPref';
-import { onRecordingSound, recordingSounding } from '../lesson/useAudio';
+import { onRecordingQuiet, onRecordingSound, recordingSounding } from '../lesson/useAudio';
 import type { PlaybackClock } from './voice';
 
 /** A little under lesson audio: a word in passing. */
@@ -181,10 +183,37 @@ export function sayReaction({ moment, character = REACTION_VOICE[moment], drawn 
   return true;
 }
 
-/** `sayReaction` after `ms`; the returned function calls it off, as an effect's cleanup does. */
-export function sayReactionLater(ms: number, ask: ReactionAsk): () => void {
-  const id = setTimeout(() => sayReaction(ask), ms);
-  return () => clearTimeout(id);
+/**
+ * `sayReaction` after `ms`; with `afterAudio`, a beat later, and once the recording then playing (the answer's own) has
+ * finished. The returned function calls it off, as an effect's cleanup does.
+ */
+export function sayReactionLater(ms: number, ask: ReactionAsk, afterAudio = false): () => void {
+  let waiting: (() => void) | null = null;
+  let beat: ReturnType<typeof setTimeout> | undefined;
+  const at = setTimeout(
+    () => {
+      if (!afterAudio || !recordingSounding()) {
+        sayReaction(ask);
+        return;
+      }
+      const quit = setTimeout(() => waiting?.(), REACTION_AUDIO_WAIT_MS);
+      const off = onRecordingQuiet(() => {
+        waiting?.();
+        beat = setTimeout(() => sayReaction(ask), REACTION_AFTER_AUDIO_MS);
+      });
+      waiting = () => {
+        off();
+        clearTimeout(quit);
+        waiting = null;
+      };
+    },
+    ms + (afterAudio ? REACTION_AFTER_AUDIO_MS : 0),
+  );
+  return () => {
+    clearTimeout(at);
+    clearTimeout(beat);
+    waiting?.();
+  };
 }
 
 /** Stops the line being said, as leaving its screen does. */
