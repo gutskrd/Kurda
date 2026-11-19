@@ -1584,7 +1584,7 @@
                     "prompt": "Îro em sêvan berhev dikin, û ez li ser ___ me!",
                     "options": [
                       "nêrdewanê",
-                      "nêrdewan",
+                      "nêrdewana",
                       "sindoqê"
                     ],
                     "correctIndex": 0,
@@ -2069,7 +2069,7 @@
                     "prompt": "Îro em sêvan berhev dikin, û ez li ser ___ me!",
                     "options": [
                       "nêrdewanê",
-                      "nêrdewan",
+                      "nêrdewana",
                       "sindoqê"
                     ],
                     "correctIndex": 0,

@@ -1799,7 +1799,7 @@
                     "prompt": "Kilamên berê. Awaza wan mîna ___ çiyê ye.",
                     "options": [
                       "rêya",
-                      "rêyên",
+                      "rê",
                       "awaza"
                     ],
                     "correctIndex": 0,

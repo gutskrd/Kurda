@@ -2330,7 +2330,7 @@
                     "prompt": "Êvar e, demjimêr ___ e.",
                     "options": [
                       "yazdeh",
-                      "yazdehan",
+                      "sed",
                       "deh"
                     ],
                     "correctIndex": 0,

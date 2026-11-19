@@ -1540,7 +1540,7 @@
                     "prompt": "Sê mirîşk in? Na, ___ in!",
                     "options": [
                       "çar",
-                      "çaran",
+                      "du",
                       "sê"
                     ],
                     "correctIndex": 0,
@@ -2138,7 +2138,7 @@
                     "prompt": "Sê mirîşk in? Na, ___ in!",
                     "options": [
                       "çar",
-                      "çaran",
+                      "du",
                       "pênc"
                     ],
                     "correctIndex": 0,
@@ -2403,7 +2403,7 @@
                     "prompt": "Em ___ in.",
                     "options": [
                       "heft",
-                      "heftan",
+                      "pênc",
                       "heşt"
                     ],
                     "correctIndex": 0,
@@ -3093,7 +3093,7 @@
                     "prompt": "Em ___ in.",
                     "options": [
                       "heft",
-                      "heftan",
+                      "pênc",
                       "heşt"
                     ],
                     "correctIndex": 0,
