@@ -1,7 +1,6 @@
-import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Platform,
   Easing,
   StyleSheet,
   View,
@@ -52,6 +51,7 @@ import { Rise } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii } from '../theme/tokens';
 import { useGaze } from './gaze';
+import { useDrawingIds } from './drawingIds';
 import { characterLayers, irisesMoved, type CharacterCrop, type Share } from './layers';
 import type { PlaybackClock } from './voice';
 
@@ -99,9 +99,6 @@ export interface SpeakingCharacterProps {
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }
-
-/** How many of each character are on screen now, for the web build's single document (see where it is read). */
-const onScreen = new Map<SpeakerId, number>();
 
 /** The widest head turn, with margin: Animated maps the angle onto a string. */
 const TURN_RANGE = 30;
@@ -172,22 +169,7 @@ export function SpeakingCharacter({
   const { t } = useI18n();
   const reduce = useReducedMotion();
   const finger = useGaze();
-  // In a browser every drawing shares one document, so a second Hevalo needs its own ids or it takes the first
-  // one's fills; the first keeps the cached layers, and phones scope ids per drawing. The seat is taken on
-  // commit, not during render: a replacing drawing renders before the old one releases, and taking it in render
-  // made it a second of itself.
-  const own = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const [seat, setSeat] = useState(0);
-  useEffect(() => {
-    if (Platform.OS !== 'web') return;
-    const taken = onScreen.get(speaker) ?? 0;
-    onScreen.set(speaker, taken + 1);
-    setSeat(taken);
-    return () => {
-      onScreen.set(speaker, Math.max(0, (onScreen.get(speaker) ?? 1) - 1));
-    };
-  }, [speaker]);
-  const idPrefix = Platform.OS === 'web' && seat > 0 ? `sc${own}` : undefined;
+  const idPrefix = useDrawingIds('sc');
   const layers = useMemo(() => characterLayers(speaker, crop, idPrefix), [speaker, crop, idPrefix]);
   const art = characterArt(speaker);
   const rig = layers.rig;

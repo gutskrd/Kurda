@@ -15,6 +15,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers } from '../characters/layers';
+import { sameIds } from '../reports/testing/sameIds';
 import { FakeAudio, fakeFrames, type Frames } from '../characters/testing/audio';
 import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
 import { PALETTES } from '../theme/palette';
@@ -77,7 +78,7 @@ describe('a dictionary entry’s pronunciations', () => {
       for (const clip of clips) clip.currentTime = 0.2;
       act(() => frames.step());
       const drawn = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
-      expect(drawn).toContain(characterLayers('hamo', 'bust').mouths.a);
+      expect(drawn).toContain(sameIds(characterLayers('hamo', 'bust')).mouths.a);
     });
   });
 

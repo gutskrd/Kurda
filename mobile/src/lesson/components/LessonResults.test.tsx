@@ -35,6 +35,7 @@ import { notificationsStub } from '../../reports/testing/stubs';
 import { deviceStore } from '../../keyboard/deviceStore';
 import { OFFER_KEY } from '../../push/permission';
 import { characterLayers } from '../../characters/layers';
+import { sameIds } from '../../reports/testing/sameIds';
 import { FakeAudio } from '../../characters/testing/audio';
 import { NO_MOMENTS } from '../moments';
 import type { SessionResults } from '../types';
@@ -125,8 +126,8 @@ describe('Hevalo', () => {
     show();
     expect(await screen.findByTestId('hevalo-window')).toBeTruthy();
     const drawn = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
-    expect(drawn).toContain(characterLayers('hevalo', 'head').body);
-    expect(drawn).not.toContain(characterLayers('hevalo', 'full').body);
+    expect(drawn).toContain(sameIds(characterLayers('hevalo', 'head')).body);
+    expect(drawn).not.toContain(sameIds(characterLayers('hevalo', 'full')).body);
   });
 });
 

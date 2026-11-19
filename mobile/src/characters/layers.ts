@@ -91,16 +91,34 @@ export function irisesMoved(open: string, shift: { left: CharacterPoint; right: 
 }
 
 /**
- * One character's layers for a crop, built on first use and cached. With `idPrefix`, the gradient and clip ids
- * carry it instead of the character's own, because in a browser all drawings share one document and duplicate ids
- * leave one Hevalo without fur; phones root each drawing separately. Prefixed layers belong to one mounted
- * character and are not cached.
+ * A drawing's markup, or every string in its layers, with its gradient and clip ids renamed from the `from` prefix to
+ * the `to` one (each with its trailing dash). The default prefixes (`hvhevalo-` and the like) are found nowhere but in
+ * ids and the references to them.
+ */
+export function renameIds<T>(value: T, from: string, to: string): T {
+  if (typeof value === 'string') return value.split(from).join(to) as T;
+  if (Array.isArray(value)) return value.map((v: unknown) => renameIds(v, from, to)) as T;
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, renameIds(v, from, to)])) as T;
+  return value;
+}
+
+/**
+ * One character's layers for a crop, built on first use and cached. With `idPrefix`, the gradient and clip ids carry
+ * it instead of the character's own: in a browser all drawings share one document, and a repeated id fills one drawing
+ * from another's, or from nothing while that one is hidden. The renamed copy belongs to one mounted drawing.
  */
 export function characterLayers(speaker: SpeakerId, crop: CharacterCrop, idPrefix?: string): CharacterLayers {
   const key = `${speaker}|${crop}`;
-  const kept = idPrefix ? undefined : made.get(key);
-  if (kept) return kept;
-  const art = characterArt(speaker, idPrefix);
+  let kept = made.get(key);
+  if (!kept) {
+    kept = drawLayers(speaker, crop);
+    made.set(key, kept);
+  }
+  return idPrefix ? renameIds(kept, `hv${speaker}-`, `${idPrefix}-`) : kept;
+}
+
+function drawLayers(speaker: SpeakerId, crop: CharacterCrop): CharacterLayers {
+  const art = characterArt(speaker);
   const frame = cropBox(art, crop);
   const svg = (inner: string): string => (inner ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box(frame)}">${inner}</svg>` : '');
   const share = (p: CharacterPoint): Share => ({ x: (p.x - frame.x) / frame.w, y: (p.y - frame.y) / frame.h });
@@ -151,6 +169,5 @@ export function characterLayers(speaker: SpeakerId, crop: CharacterCrop, idPrefi
         }
       : null,
   };
-  if (!idPrefix) made.set(key, layers);
   return layers;
 }
