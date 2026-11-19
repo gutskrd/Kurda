@@ -3963,7 +3963,7 @@
         "word": "şûşe",
         "category": "object",
         "level": 4,
-        "taught": true,
+        "taught": false,
         "meanings": {
           "en": "bottle, jar",
           "de": "Flasche",

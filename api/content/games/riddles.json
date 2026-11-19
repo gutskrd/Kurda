@@ -1592,18 +1592,12 @@
         "Li ser sêniyê, li tenişta şekirê rûdinêm.",
         "Çaydan min tijî dike, mêvan min vala dike."
       ],
-      "answer": "Îstîkana çayê",
+      "answer": "Piyana çayê",
       "accepted": [
-        "îstîkan",
-        "îstekan",
-        "stekan",
-        "îstîkana çayê",
-        "piyale",
-        "qedeh",
-        "piyala çayê",
-        "qedeha çayê"
+        "piyan",
+        "piyana çayê"
       ],
-      "explanation": "Îstîkana çayê ya kurdan navzirav e, wek gula lalê; dema çaya tarî û germ tê de ye, ew sor dibe — sor dibe, lê ne ji şerman. Çaydan wê tijî dike, mêvan wê vala dike.",
+      "explanation": "Piyana çayê ya kurdan navzirav e, wek gula lalê; dema çaya tarî û germ tê de ye, ew sor dibe — sor dibe, lê ne ji şerman. Çaydan wê tijî dike, mêvan wê vala dike.",
       "translations": {
         "ckb": {
           "question": "کەمەرم باریکە، دڵم گەرمە؛ سوور دەبمەوە، بەڵام نەک لە شەرمان. من چیم؟",
@@ -1611,8 +1605,8 @@
             "لەسەر سینییەکە، لە تەنیشت شەکرەکە دادەنیشم.",
             "قۆری پڕم دەکات، میوان بەتاڵم دەکات."
           ],
-          "answer": "ئیستیکانی چا",
-          "explanation": "ئیستیکانی چای کوردی کەمەرباریکە، وەک لاڵە؛ کە چای تۆخ و گەرمی تێدەکەن، سوور دەبێتەوە — سوور دەبێتەوە، بەڵام نەک لە شەرمان. قۆری پڕی دەکات، میوان بەتاڵی دەکات."
+          "answer": "پیاڵەی چا",
+          "explanation": "پیاڵەی چای کوردی کەمەرباریکە، وەک لاڵە؛ کە چای تۆخ و گەرمی تێدەکەن، سوور دەبێتەوە — سوور دەبێتەوە، بەڵام نەک لە شەرمان. قۆری پڕی دەکات، میوان بەتاڵی دەکات."
         },
         "en": {
           "question": "I have a slender waist and a warm heart; I turn red, but not from shame. What am I?",
@@ -1621,7 +1615,7 @@
             "The teapot fills me, and the guest empties me."
           ],
           "answer": "A tea glass",
-          "explanation": "The Kurdish tea glass, the îstîkan, is slim in the middle like a tulip; filled with strong, hot tea it glows red — red, but not from shame. The teapot fills it and the guest empties it, again and again."
+          "explanation": "The Kurdish tea glass, the piyan, is slim in the middle like a tulip; filled with strong, hot tea it glows red — red, but not from shame. The teapot fills it and the guest empties it, again and again."
         },
         "nl": {
           "question": "Ik heb een slanke taille en een warm hart; ik word rood, maar niet van schaamte. Wat ben ik?",
@@ -1630,7 +1624,7 @@
             "De theepot vult me, de gast drinkt me leeg."
           ],
           "answer": "Een theeglas",
-          "explanation": "Het Koerdische theeglaasje, de îstîkan, is in het midden smal als een tulp; gevuld met sterke, hete thee kleurt het rood – rood, maar niet van schaamte. De pot vult het, de gast drinkt het leeg, steeds opnieuw."
+          "explanation": "Het Koerdische theeglaasje, de piyan, is in het midden smal als een tulp; gevuld met sterke, hete thee kleurt het rood – rood, maar niet van schaamte. De pot vult het, de gast drinkt het leeg, steeds opnieuw."
         },
         "de": {
           "question": "Ich habe eine schmale Taille und ein warmes Herz; ich werde rot, aber nicht vor Scham. Was bin ich?",
@@ -1639,7 +1633,7 @@
             "Die Teekanne füllt mich, der Gast leert mich."
           ],
           "answer": "Ein Teeglas",
-          "explanation": "Das kurdische Teeglas, die îstîkan, ist in der Mitte schmal wie eine Tulpe; mit starkem, heißem Tee gefüllt, leuchtet es rot – rot, aber nicht vor Scham. Die Kanne füllt es, der Gast leert es, immer wieder."
+          "explanation": "Das kurdische Teeglas, die piyan, ist in der Mitte schmal wie eine Tulpe; mit starkem, heißem Tee gefüllt, leuchtet es rot – rot, aber nicht vor Scham. Die Kanne füllt es, der Gast leert es, immer wieder."
         },
         "es": {
           "question": "Tengo la cintura fina y el corazón caliente; me pongo rojo, pero no de vergüenza. ¿Qué soy?",
@@ -1648,7 +1642,7 @@
             "La tetera me llena y el invitado me vacía."
           ],
           "answer": "Un vaso de té",
-          "explanation": "El vasito de té kurdo, el îstîkan, es estrecho en el centro como un tulipán; lleno de té fuerte y caliente, se pone rojo… rojo, pero no de vergüenza. La tetera lo llena y el invitado lo vacía, una y otra vez."
+          "explanation": "El vasito de té kurdo, el piyan, es estrecho en el centro como un tulipán; lleno de té fuerte y caliente, se pone rojo… rojo, pero no de vergüenza. La tetera lo llena y el invitado lo vacía, una y otra vez."
         },
         "fr": {
           "question": "J’ai la taille fine et le cœur chaud ; je rougis, mais pas de honte. Que suis-je ?",
@@ -1657,7 +1651,7 @@
             "La théière me remplit, l’invité me vide."
           ],
           "answer": "Un verre à thé",
-          "explanation": "Le petit verre à thé kurde, l’îstîkan, est étroit au milieu comme une tulipe ; rempli de thé fort et brûlant, il devient rouge — rouge, mais pas de honte. La théière le remplit, l’invité le vide, encore et encore."
+          "explanation": "Le petit verre à thé kurde, le piyan, est étroit au milieu comme une tulipe ; rempli de thé fort et brûlant, il devient rouge — rouge, mais pas de honte. La théière le remplit, l’invité le vide, encore et encore."
         },
         "tr": {
           "question": "Belim ince, yüreğim sıcak; kızarırım ama utançtan değil. Ben neyim?",
@@ -1666,7 +1660,7 @@
             "Demlik beni doldurur, misafir boşaltır."
           ],
           "answer": "Çay bardağı",
-          "explanation": "Kürtlerin ince belli çay bardağı, îstîkan, lale gibidir; demli ve sıcak çayla dolunca kızarır — kızarır ama utançtan değil. Demlik onu doldurur, misafir boşaltır, yeniden ve yeniden."
+          "explanation": "Kürtlerin ince belli çay bardağı, piyan, lale gibidir; demli ve sıcak çayla dolunca kızarır — kızarır ama utançtan değil. Demlik onu doldurur, misafir boşaltır, yeniden ve yeniden."
         },
         "ar": {
           "question": "خصري نحيل وقلبي دافئ؛ أحمرّ، لكن ليس خجلًا. فما أنا؟",
@@ -1674,12 +1668,12 @@
             "أجلس على الصينية بجانب السكّر.",
             "يملؤني الإبريق ويفرغني الضيف."
           ],
-          "answer": "كأس الشاي (الإستكان)",
-          "explanation": "كأس الشاي الكردي، الإستكان، نحيل الخصر كزهرة التوليب؛ وحين يُملأ بالشاي الثقيل الساخن يحمرّ، يحمرّ لكن ليس خجلًا. يملؤه الإبريق ويفرغه الضيف، مرة بعد مرة."
+          "answer": "كأس الشاي",
+          "explanation": "كأس الشاي الكردي نحيل الخصر كزهرة التوليب؛ وحين يُملأ بالشاي الثقيل الساخن يحمرّ، يحمرّ لكن ليس خجلًا. يملؤه الإبريق ويفرغه الضيف، مرة بعد مرة."
         }
       },
       "sources": [],
-      "notes": "New. ‘navzirav’ (slim-waisted) for the tulip-shaped glass — check the word. Accepted names: îstîkan, îstekan, stekan, piyale, qedeh; add the local word if it is missing.",
+      "notes": "New. ‘navzirav’ (slim-waisted) for the tulip-shaped glass — check the word. Accepted names: piyan and piyana çayê, the course’s word for the tea glass.",
       "near": [
         "çay"
       ]

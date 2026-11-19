@@ -1735,9 +1735,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Em şûşeyên hingiv diparêzin.",
+                    "say": "Em kûpên hingiv diparêzin.",
                     "voice": "hevalo",
-                    "prompt": "Em şûşeyên hingiv diparêzin.",
+                    "prompt": "Em kûpên hingiv diparêzin.",
                     "options": [
                       "We’re guarding the jars of honey.",
                       "We’re eating the jars of honey.",
@@ -1750,8 +1750,8 @@
                         "en": "to guard, to protect"
                       },
                       {
-                        "ku": "şûşe",
-                        "en": "bottle, jar; glass"
+                        "ku": "kûp",
+                        "en": "jar, pot"
                       }
                     ]
                   }
@@ -1783,13 +1783,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Em şûşeyên hingiv diparêzin.",
+                    "say": "Em kûpên hingiv diparêzin.",
                     "voice": "hevalo",
                     "prompt": "Em ___ hingiv diparêzin.",
                     "options": [
-                      "şûşeyên",
-                      "şûşe",
-                      "şûşeyan"
+                      "kûpên",
+                      "kûp",
+                      "kûpan"
                     ],
                     "correctIndex": 0,
                     "cue": "We’re guarding the jars of honey."
@@ -1858,7 +1858,7 @@
                     "options": [
                       "Hevalo li te dinêre. Ew bawer nake.",
                       "Hevalo li te dinêrim. Ew bawer nake.",
-                      "Binêre, şûşeyek vala ye!"
+                      "Binêre, kûpek vala ye!"
                     ],
                     "correctIndex": 0
                   }
@@ -1911,7 +1911,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Binêre, şûşeyek vala ye!",
+                        "text": "Binêre, kûpek vala ye!",
                         "en": "Look, a jar is empty!"
                       },
                       {
@@ -1958,7 +1958,7 @@
                     "prompt": "Hingiv li ku ye?",
                     "options": [
                       "Li ser simbêlê Hamo.",
-                      "Di şûşeyê de.",
+                      "Di kûpê de.",
                       "Li cem Hevalo."
                     ],
                     "correctIndex": 0
@@ -1996,9 +1996,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Em şûşeyên hingiv diparêzin.",
+                    "say": "Em kûpên hingiv diparêzin.",
                     "voice": "hevalo",
-                    "prompt": "Em şûşeyên hingiv diparêzin.",
+                    "prompt": "Em kûpên hingiv diparêzin.",
                     "accepted": [
                       "We’re guarding the jars of honey.",
                       "We are guarding the jars of honey."
@@ -2046,7 +2046,7 @@
                     "voice": "hevalo",
                     "prompt": "We’re guarding the jars of honey.",
                     "accepted": [
-                      "Em şûşeyên hingiv diparêzin."
+                      "Em kûpên hingiv diparêzin."
                     ]
                   }
                 }
@@ -2095,8 +2095,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hevalo",
-                    "prompt": "Em şûşeyên hingiv diparêzin.",
-                    "reference": "Em şûşeyên hingiv diparêzin."
+                    "prompt": "Em kûpên hingiv diparêzin.",
+                    "reference": "Em kûpên hingiv diparêzin."
                   }
                 },
                 {
@@ -3245,7 +3245,7 @@
                     "options": [
                       "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
                       "Spas! Bi serên ketin xweş e, lê heval xweştir in.",
-                      "Em şûşeyên hingiv diparêzin."
+                      "Em kûpên hingiv diparêzin."
                     ],
                     "correctIndex": 0
                   }

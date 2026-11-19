@@ -83,6 +83,7 @@ describe('the cosmetic catalogue', () => {
     renames = [
       (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000179000_tea-glass-and-sun-seal.js')).href)) as Renames,
       (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000430000_tea-is-cay.js')).href)) as Renames,
+      (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000743000_tea-glass-is-piyan.js')).href)) as Renames,
     ];
     framesOnSale = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000431000_frames-to-buy.js')).href)) as FramesMigration;
   });

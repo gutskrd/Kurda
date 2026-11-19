@@ -640,8 +640,8 @@ export const ICONS = [
   },
   {
     key: 'caydan',
-    ku: 'Çay',
-    en: 'Tea',
+    ku: 'Piyan',
+    en: 'Tea glass',
     // a glass of tea on its saucer, seen from a little above, so the mouth of the glass is an open ring with the
     // tea lying in it: the glass widest at the lip, drawn in slowly to a waist four tenths of the way down,
     // swelling as slowly to a belly low on it and then quickly in to a small foot; the tea red, dark where the

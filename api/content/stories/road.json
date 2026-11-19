@@ -1477,8 +1477,8 @@
       "cover": null,
       "readingMinutes": null,
       "title": "Simbêlê şîrîn",
-      "summary": "Bi şev hingiv qedexe ye, lê sibehê şûşeyek vala ye. Êvarê Baran dereng tê, û Hamo guhdarî dike.",
-      "body": "Piştî Newrozê pişta min diêşe, lingên min diêşin, û stûyê min jî. Ez gelek nexweş im! Cîran tên serdana min, û Nazê xwarina germ tîne.\n\nDoktor Azad ji bajêr tê. Ew mêrekî mezin e, aram û jîr. Ew min kontrol dike û guhdariya dilê min dike. Piştre ew dikene û dibêje: «Tu sax î. Divê tu her roj bimeşî. Û bi şev hingiv qedexe ye!»\n\nLê her cîran bi şûşeyeke hingiv tê. Doktor Azad hemû şûşeyan ji wan digire, û Hevalo wan diparêze.\n\nBi şev hemû mal radize. Ez hêdî hêdî radibim, tenê ji bo avê. Hevalo li min dinêre. Ez sêveke sor didim wî, û ew li pencereyê dinêre. Tenê tiliyek hingiv, û piştre deh tilî!\n\nSibehê şûşeyek vala ye. Doktor Azad dipirse: «Diz kî ye?» Ez dibêjim: «Ez bêguneh im!» Lê ew li simbêlê min dinêre, û simbêlê min şîrîn e.\n\nPiştî hefteyekê ez çêtir im, û li qehwexaneyê pêşbirka simbêlan heye. Doktor Azad dadwer e. Simbêlê Ferhad ji yê min dirêjtir e, lê yê min herî xweşik e! Bi ser ketin ne her tişt e.\n\nÊvarê Baran dereng tê malê. Pêlavên wî bi herî ne, û ew tiştekî nabêje. Ez diçim ser ban û li cem wî rûdinim. Ez jî tiştekî nabêjim, ez tenê guhdarî dikim. Piştre ew dibêje: «Sibe ez ê bibêjim.» Hevalo sêva xwe ya tenê dide wî, û Baran dikene.",
+      "summary": "Bi şev hingiv qedexe ye, lê sibehê kûpek vala ye. Êvarê Baran dereng tê, û Hamo guhdarî dike.",
+      "body": "Piştî Newrozê pişta min diêşe, lingên min diêşin, û stûyê min jî. Ez gelek nexweş im! Cîran tên serdana min, û Nazê xwarina germ tîne.\n\nDoktor Azad ji bajêr tê. Ew mêrekî mezin e, aram û jîr. Ew min kontrol dike û guhdariya dilê min dike. Piştre ew dikene û dibêje: «Tu sax î. Divê tu her roj bimeşî. Û bi şev hingiv qedexe ye!»\n\nLê her cîran bi kûpeke hingiv tê. Doktor Azad hemû kûpan ji wan digire, û Hevalo wan diparêze.\n\nBi şev hemû mal radize. Ez hêdî hêdî radibim, tenê ji bo avê. Hevalo li min dinêre. Ez sêveke sor didim wî, û ew li pencereyê dinêre. Tenê tiliyek hingiv, û piştre deh tilî!\n\nSibehê kûpek vala ye. Doktor Azad dipirse: «Diz kî ye?» Ez dibêjim: «Ez bêguneh im!» Lê ew li simbêlê min dinêre, û simbêlê min şîrîn e.\n\nPiştî hefteyekê ez çêtir im, û li qehwexaneyê pêşbirka simbêlan heye. Doktor Azad dadwer e. Simbêlê Ferhad ji yê min dirêjtir e, lê yê min herî xweşik e! Bi ser ketin ne her tişt e.\n\nÊvarê Baran dereng tê malê. Pêlavên wî bi herî ne, û ew tiştekî nabêje. Ez diçim ser ban û li cem wî rûdinim. Ez jî tiştekî nabêjim, ez tenê guhdarî dikim. Piştre ew dibêje: «Sibe ez ê bibêjim.» Hevalo sêva xwe ya tenê dide wî, û Baran dikene.",
       "translations": {
         "en": "After Newroz my back hurts, my legs hurt, and my neck too. I’m very ill! The neighbours come to visit me, and Nazê brings hot food.\n\nDoctor Azad comes from town. He’s an older man, calm and wise. He examines me and listens to my heart. Then he laughs and says: “You’re healthy. You must walk every day. And honey at night is forbidden!”\n\nBut every neighbour comes with a jar of honey. Doctor Azad takes all the jars from them, and Hevalo guards them.\n\nAt night the whole house is asleep. Slowly, slowly I get up, just for some water. Hevalo looks at me. I give him a red apple, and he looks out of the window. Just one finger of honey, and then ten fingers!\n\nIn the morning a jar is empty. Doctor Azad asks: “Who is the thief?” I say: “I’m innocent!” But he looks at my moustache, and my moustache is sweet.\n\nA week later I’m better, and there’s a moustache contest at the tea house. Doctor Azad is the judge. Ferhad’s moustache is longer than mine, but mine is the most beautiful! Winning isn’t everything.\n\nIn the evening Baran comes home late. His shoes are covered in mud, and he doesn’t say a word. I go up onto the roof and sit beside him. I don’t say a word either; I just listen. Then he says: “Tomorrow I’ll tell.” Hevalo gives him his only apple, and Baran laughs."
       },
@@ -1553,12 +1553,12 @@
         },
         {
           "kind": "inference",
-          "prompt": "Çima Doktor Azad şûşeyan digire?",
+          "prompt": "Çima Doktor Azad kûpan digire?",
           "promptEn": "Why does Doctor Azad take the jars?",
           "options": [
             "Ji ber ku ew birçî ye",
             "Ji ber ku hingiv qedexe ye",
-            "Ji ber ku şûşe vala ne"
+            "Ji ber ku kûp vala ne"
           ],
           "correctIndex": 1,
           "explanation": "Bi şev hingiv ji bo Hamo qedexe ye.",
@@ -1603,7 +1603,7 @@
           "options": [
             "Êvara berî Newrozê",
             "Piştî hefteyekê",
-            "Bi şev, berî şûşeya vala"
+            "Bi şev, berî kûpa vala"
           ],
           "correctIndex": 1,
           "explanation": "“Piştî hefteyekê ez çêtir im, û li qehwexaneyê pêşbirka simbêlan heye.”",

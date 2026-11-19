@@ -135,8 +135,8 @@
     },
     {
       "sku": "icon-made-caydan",
-      "name": "Çay",
-      "description": "Tea",
+      "name": "Piyan",
+      "description": "Tea glass",
       "assetKey": "icons/made-08-caydan.png",
       "price": 900,
       "premiumOnly": true,
@@ -228,8 +228,8 @@
     },
     {
       "sku": "icon-accessoire-icon-04",
-      "name": "Çay",
-      "description": "Tea",
+      "name": "Piyan",
+      "description": "Tea glass",
       "assetKey": "icons/made-08-caydan.png",
       "price": 800,
       "premiumOnly": true,
