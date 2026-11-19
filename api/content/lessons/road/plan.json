@@ -406,7 +406,7 @@
           "titleKu": "Yek, du, sê",
           "titleEn": "One, two, three",
           "grammar": "numbers before the noun, which does not change (du sêv, sê mirîşk); çend? how many?; age with salî",
-          "grammarMd": "**Sê sêv.** Three apples. A number comes before the noun, and the noun stays as it is: *yek sêv*, *du mirîşk*, *çar zarok*.\n\n- **Çend?** How many? *Mirîşk çend in?* — *Sê mirîşk in.* Counting out loud, two and three are *didu* and *sisê*.\n- **Tu çend salî yî?** How old are you? — *Ez şeş salî me.*",
+          "grammarMd": "**Sê sêv.** Three apples. A number comes before the noun, and the noun stays as it is: *yek sêv*, *du mirîşk*, *çar zarok*.\n\n- **Çend?** How many? *Mirîşk çend in?* — *Sê mirîşk in.* Counting out loud, two and three are *didu* and *sisê*.\n- **Tu çend salî yî?** How old are you? — *Ez şeş salî me.*\n- As the object of a verb, or after **bi**, a counted noun still takes **-an**: *Hevalo pênc sêvan dixwe*, *bi pênc şekiran*.",
           "lessons": [
             {
               "key": "u02s2l1",
@@ -812,7 +812,7 @@
           "titleKu": "Gundê me",
           "titleEn": "Our village",
           "grammar": "plurals: no ending on its own (du mal), -ên before another word (malên spî), -an after a word of place (li gundan)",
-          "grammarMd": "**Malên spî.** White houses. A plural noun on its own has no ending (*du mal*, *gelek dar*); before another word it takes **-ên**, and after a word of place **-an**.\n\n- *zarokên gund* the village children · *sêvên sor* red apples\n- *li gundan* in villages · *ji zarokan re* for the children",
+          "grammarMd": "**Malên spî.** White houses. A plural noun on its own has no ending (*du mal*, *gelek dar*); before another word it takes **-ên**, and after a word of place **-an**.\n\n- *zarokên gund* the village children · *sêvên sor* red apples\n- *li gundan* in villages · *ji zarokan re* for the children\n- A few words change their last vowel after a word of place: *bajar* → *li bajêr* in town, *çiya* → *li çiyê* on the mountain.",
           "lessons": [
             {
               "key": "u03s4l1",
@@ -1306,7 +1306,7 @@
           "titleKu": "Demjimêr çend e?",
           "titleEn": "What time is it?",
           "grammar": "telling the time: Demjimêr çend e? Demjimêr sê ye. sê û nîv, heft û deh xulek; at a time: di demjimêr heftan de",
-          "grammarMd": "**Demjimêr çend e?** What time is it? — **Demjimêr sê ye.** It’s three o’clock. *Nîv* is half, and minutes past the hour follow **û**: *sê û nîv* half past three, *heft û deh xulek* ten past seven.\n\n- “At” a time is **di demjimêr … de**, with the number in **-an**: *di demjimêr heftan de* at seven, *di demjimêr diduyan de* at two.\n- *sibeh* morning · *nîvro* noon · *êvar* evening · *şev* night",
+          "grammarMd": "**Demjimêr çend e?** What time is it? — **Demjimêr sê ye.** It’s three o’clock. *Nîv* is half, and minutes past the hour follow **û**: *sê û nîv* half past three, *heft û deh xulek* ten past seven.\n\n- “At” a time is **di demjimêr … de**, with the number in **-an**: *di demjimêr heftan de* at seven, *di demjimêr diduyan de* at two; *yek* takes **-ê**: *di demjimêr yekê de* at one.\n- *sibeh* morning · *nîvro* noon · *êvar* evening · *şev* night",
           "lessons": [
             {
               "key": "u05s3l1",

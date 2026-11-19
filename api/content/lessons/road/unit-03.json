@@ -3486,7 +3486,7 @@
           "position": 4,
           "titleKu": "Gundê me",
           "titleEn": "Our village",
-          "grammarMd": "**Malên spî.** White houses. A plural noun on its own has no ending (*du mal*, *gelek dar*); before another word it takes **-ên**, and after a word of place **-an**.\n\n- *zarokên gund* the village children · *sêvên sor* red apples\n- *li gundan* in villages · *ji zarokan re* for the children",
+          "grammarMd": "**Malên spî.** White houses. A plural noun on its own has no ending (*du mal*, *gelek dar*); before another word it takes **-ên**, and after a word of place **-an**.\n\n- *zarokên gund* the village children · *sêvên sor* red apples\n- *li gundan* in villages · *ji zarokan re* for the children\n- A few words change their last vowel after a word of place: *bajar* → *li bajêr* in town, *çiya* → *li çiyê* on the mountain.",
           "lessons": [
             {
               "key": "u03s4l1",
@@ -4423,7 +4423,7 @@
                     "options": [
                       "Pezê Bişar li çiyê ye.",
                       "Pezê Bişar li çiya ye.",
-                      "Pez li çiyê ye."
+                      "Çêleka Bişar li çiyê ye."
                     ],
                     "correctIndex": 0
                   }

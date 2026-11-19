@@ -465,7 +465,7 @@
                     "prompt": "Par, roja sersalê, ez ketim çem û hefteyekê nexweş bûm.",
                     "options": [
                       "Last year, on New Year’s Day, I fell into the river and was ill for a week.",
-                      "Last year I fell into this river too!",
+                      "Last year, on New Year’s Day, I fell into the river and was ill for a month.",
                       "On Friday I drink tea and do nothing."
                     ],
                     "correctIndex": 0
@@ -1221,7 +1221,7 @@
                       "vegeriya"
                     ],
                     "correctIndex": 0,
-                    "cue": "to go out, to come out"
+                    "cue": "(they) came out"
                   }
                 },
                 {
@@ -2179,7 +2179,7 @@
                       "vegeriya"
                     ],
                     "correctIndex": 0,
-                    "cue": "to run away"
+                    "cue": "ran away"
                   }
                 },
                 {
@@ -3579,7 +3579,7 @@
                     "prompt": "Belê. Baran rastgo ye, û ez li wî tê digihîjim.",
                     "options": [
                       "Yes. Baran is honest, and I understand him.",
-                      "Baran is honest. I understand him, and I trust him.",
+                      "Yes. Baran is honest, but I don’t understand him.",
                       "The doctor is coming, the honey is under the bedding, and I’m happy."
                     ],
                     "correctIndex": 0

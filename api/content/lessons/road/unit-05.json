@@ -1799,7 +1799,7 @@
                     "options": [
                       "I don’t remember. My mother knows, but she’s in Kobanî.",
                       "My father is in Kobanî. My mother too.",
-                      "I don’t know when my birthday is, but my mother knows."
+                      "I don’t remember. My father knows, but he’s in Kobanî."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2235,7 +2235,7 @@
                     "prompt": "Thanks! Dapîr gives me an extra spoonful of honey.",
                     "options": [
                       "Spas! Dapîr kevçiyek hingiv zêde dide min.",
-                      "Spas! Dapîr kevçî hingiv zêde dide min.",
+                      "Spas! Dapîr kevçiyek hingiv zêde dide te.",
                       "Dapîr Şemiyê bi rengê sor dinivîse."
                     ],
                     "correctIndex": 0
@@ -2265,7 +2265,7 @@
           "position": 3,
           "titleKu": "Demjimêr çend e?",
           "titleEn": "What time is it?",
-          "grammarMd": "**Demjimêr çend e?** What time is it? — **Demjimêr sê ye.** It’s three o’clock. *Nîv* is half, and minutes past the hour follow **û**: *sê û nîv* half past three, *heft û deh xulek* ten past seven.\n\n- “At” a time is **di demjimêr … de**, with the number in **-an**: *di demjimêr heftan de* at seven, *di demjimêr diduyan de* at two.\n- *sibeh* morning · *nîvro* noon · *êvar* evening · *şev* night",
+          "grammarMd": "**Demjimêr çend e?** What time is it? — **Demjimêr sê ye.** It’s three o’clock. *Nîv* is half, and minutes past the hour follow **û**: *sê û nîv* half past three, *heft û deh xulek* ten past seven.\n\n- “At” a time is **di demjimêr … de**, with the number in **-an**: *di demjimêr heftan de* at seven, *di demjimêr diduyan de* at two; *yek* takes **-ê**: *di demjimêr yekê de* at one.\n- *sibeh* morning · *nîvro* noon · *êvar* evening · *şev* night",
           "lessons": [
             {
               "key": "u05s3l1",

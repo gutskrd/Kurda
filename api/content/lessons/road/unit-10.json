@@ -1615,7 +1615,7 @@
                       "pijand"
                     ],
                     "correctIndex": 0,
-                    "cue": "to burn"
+                    "cue": "(I) burned"
                   }
                 },
                 {
@@ -1916,7 +1916,7 @@
                     "prompt": "For fifty years nobody saw this lake, only the wild deer. And look, Hevalo and Zerê!",
                     "options": [
                       "Pêncî salan kesî ev gol nedît, tenê askên kûvî. Û binêre, Hevalo û Zerê!",
-                      "Pêncî sal kesî ev gol nedît, tenê askên kûvî. Û binêre, Hevalo û Zerê!",
+                      "Pêncî sal kesî ev gol dît, û askên kûvî jî. Û binêre, Hevalo û Zerê!",
                       "Pêncî salan kesî ev gol nedît, tenê ask kûvî. Û binêre, Hevalo û Zerê!"
                     ],
                     "correctIndex": 0
@@ -2111,7 +2111,7 @@
                       "pijand"
                     ],
                     "correctIndex": 0,
-                    "cue": "to burn"
+                    "cue": "(I) burned"
                   }
                 },
                 {
@@ -2249,7 +2249,7 @@
                       "dişewitînim"
                     ],
                     "correctIndex": 0,
-                    "cue": "to take out, to bring out"
+                    "cue": "(I) take out"
                   }
                 },
                 {
@@ -3946,7 +3946,7 @@
                     "options": [
                       "The neighbours asked what happened, and Baran told the adventure.",
                       "Then Baran came to me and told me everything.",
-                      "Baran told the story of the journey."
+                      "The neighbours told what happened, and Baran asked about the adventure."
                     ],
                     "correctIndex": 0
                   }
@@ -4362,7 +4362,7 @@
                     "options": [
                       "The neighbours asked what happened, and Baran told the adventure.",
                       "Then Baran came to me and told me everything.",
-                      "Baran told the story of the journey."
+                      "The neighbours told what happened, and Baran asked about the adventure."
                     ],
                     "correctIndex": 0
                   }

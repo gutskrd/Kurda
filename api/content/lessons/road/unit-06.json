@@ -1819,7 +1819,7 @@
                     "prompt": "Is the other half of the photo at Lorîn’s?",
                     "options": [
                       "Nîvê wêneyî li cem Lorînê ye?",
-                      "Nîvê wêne li cem Lorînê ye?",
+                      "Nîvê wêneyî li cem Hêviyê ye?",
                       "Çemê li ber dara gûzê dîsa tije av e."
                     ],
                     "correctIndex": 0
@@ -2204,7 +2204,7 @@
                     "prompt": "Nîvê ___ li cem Lorînê ye?",
                     "options": [
                       "wêneyî",
-                      "wêne",
+                      "wêneyê",
                       "xalekî"
                     ],
                     "correctIndex": 0,
@@ -2944,7 +2944,7 @@
                       "vekim"
                     ],
                     "correctIndex": 0,
-                    "cue": "to open"
+                    "cue": "open! (to one person)"
                   }
                 },
                 {
@@ -4063,7 +4063,7 @@
                       "rûdinin"
                     ],
                     "correctIndex": 0,
-                    "cue": "to go back, to return"
+                    "cue": "(we) go back"
                   }
                 },
                 {

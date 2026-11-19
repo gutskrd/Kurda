@@ -2635,7 +2635,7 @@
                       "dimeşî"
                     ],
                     "correctIndex": 0,
-                    "cue": "to choose"
+                    "cue": "(you) choose"
                   }
                 },
                 {
@@ -3227,7 +3227,7 @@
                     "prompt": "Which song do you choose? My favourite song is this one.",
                     "options": [
                       "Tu kîjan stranê hildibijêrî? Strana min a bijare ev e.",
-                      "Tu kîjan stran hildibijêrî? Strana min a bijare ev e.",
+                      "Tu kîjan stranê hildibijêrim? Strana min a bijare ev e.",
                       "Piyana min a çayê taybet e."
                     ],
                     "correctIndex": 0
@@ -4357,7 +4357,7 @@
                     "options": [
                       "Beran bi xwe tê malê, bi kelecan!",
                       "Beran bi xwe têm malê, bi kelecan!",
-                      "Û beran? Ew bi xwe tê malê!"
+                      "Beran bi xwe tê malê, westiyayî!"
                     ],
                     "correctIndex": 0
                   }

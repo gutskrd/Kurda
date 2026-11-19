@@ -217,7 +217,7 @@
                     "prompt": "Ez westiyayî me. Lingên min û milên min diêşin.",
                     "options": [
                       "I’m tired. My legs and my shoulders hurt.",
-                      "My legs hurt, and my shoulder too.",
+                      "I’m hungry. My legs and my shoulders hurt.",
                       "I lead the govend, and then my father plays the flute."
                     ],
                     "correctIndex": 0
@@ -1746,7 +1746,7 @@
                     "prompt": "Ez ê biçim Hewlêrê, lê her Newrozê ez ê vegerim.",
                     "options": [
                       "I’ll go to Hewlêr, but I’ll come back every Newroz.",
-                      "I’d go, but I’d come back.",
+                      "I’ll go to Hewlêr, and I’ll never come back.",
                       "On Tuesday I’ll go to the market."
                     ],
                     "correctIndex": 0
@@ -1788,7 +1788,7 @@
                       "diguherînim"
                     ],
                     "correctIndex": 0,
-                    "cue": "to go back, to return"
+                    "cue": "(I) come back"
                   }
                 },
                 {
@@ -2085,7 +2085,7 @@
                     "prompt": "I have an idea. This year I’m changing everything!",
                     "options": [
                       "Ramaneke min heye. Îsal ez her tiştî diguherînim!",
-                      "Ramaneke min heye. Îsal ez her tişt diguherînim!",
+                      "Ramaneke te heye. Îsal ez her tiştî diguherînim!",
                       "Hêrs an şerm? Ez nizanim, lê hestekî min heye."
                     ],
                     "correctIndex": 0
@@ -2795,7 +2795,7 @@
                     "options": [
                       "Biaxive, bêyî ku tiştekî ji bîr bikî!",
                       "Bi kurtî, tu yê hem hêdî hem jî baş biaxivî.",
-                      "Tu yê biaxivî bêyî ku tiştekî ji bîr bikî, wekî ku ez di gotarên xwe de dikim."
+                      "Biaxive, wekî ku tiştekî ji bîr bikî!"
                     ],
                     "correctIndex": 0
                   }
@@ -3254,7 +3254,7 @@
                     "options": [
                       "Bi kurtî, tu yê hem hêdî hem jî baş biaxivî.",
                       "Bi kurtî, tu ya hem hêdî hem jî baş biaxivî.",
-                      "Bi kurtî, sibe di waneyê de tu yê hem hêdî hem jî baş biaxivî."
+                      "Bi kurtî, tu yê hem bi lez hem jî baş biaxivî."
                     ],
                     "correctIndex": 0
                   }

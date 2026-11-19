@@ -196,7 +196,7 @@
                     "options": [
                       "Hewa sar e.",
                       "Berf dibare.",
-                      "Îro serma ye, lê tav heye."
+                      "Îro serma tune, lê tav heye."
                     ],
                     "correctIndex": 0
                   }
@@ -1168,9 +1168,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "say": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "voice": "hamo",
-                    "prompt": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "prompt": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "options": [
                       "Baran will gather firewood, and I’ll keep an eye on the preparations.",
                       "I get up and work in the orchard.",
@@ -1225,9 +1225,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "say": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "voice": "hamo",
-                    "prompt": "Baran dê êzing kom bike, û ez ê li ___ binêrim.",
+                    "prompt": "Baran dê êzing kom bike, û ez dê li ___ binêrim.",
                     "options": [
                       "amadekariyan",
                       "amadekarî",
@@ -1349,8 +1349,8 @@
                     "voice": "hamo",
                     "prompt": "Baran will gather firewood, and I’ll keep an eye on the preparations.",
                     "accepted": [
-                      "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
-                      "Baran dê êzing kom bike û ez ê li amadekariyan binêrim.",
+                      "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
+                      "Baran dê êzing kom bike û ez dê li amadekariyan binêrim.",
                       "Baran ê êzing kom bike, û ez ê li amadekariyan binêrim."
                     ]
                   }
@@ -1377,7 +1377,7 @@
                     "prompt": "Winter is going, and we need firewood for the Newroz fire.",
                     "options": [
                       "Zivistan diçe, û ji bo agirê Newrozê êzing pêwîst e.",
-                      "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                      "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                       "Asman şîn e, tav derdikeve, û berf dihele."
                     ],
                     "correctIndex": 0
@@ -1912,9 +1912,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "say": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "voice": "hamo",
-                    "prompt": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "prompt": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "options": [
                       "Baran will gather firewood, and I’ll keep an eye on the preparations.",
                       "There are lots of preparations! And me? I’ll keep an eye on the preparations, with tea.",
@@ -2077,9 +2077,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "say": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "voice": "hamo",
-                    "prompt": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "prompt": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "options": [
                       "Baran will gather firewood, and I’ll keep an eye on the preparations.",
                       "There are lots of preparations! And me? I’ll keep an eye on the preparations, with tea.",
@@ -2262,7 +2262,7 @@
                     "options": [
                       "Kawa li ser çiyayan agir çêdike, û bihar vedigere.",
                       "Kawa li serên çiyayan agir çêdike, û bihar vedigere.",
-                      "Di efsaneyê de, Kawayê hesinkar li ser çiyayan agir çêdike."
+                      "Kawayê hesinkar li ser çiyayan agir çêdike, û zivistan vedigere."
                     ],
                     "correctIndex": 0
                   }
@@ -2496,9 +2496,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "say": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "voice": "hamo",
-                    "prompt": "Baran dê êzing kom bike, û ez ê li amadekariyan binêrim.",
+                    "prompt": "Baran dê êzing kom bike, û ez dê li amadekariyan binêrim.",
                     "options": [
                       "Baran will gather firewood, and I’ll keep an eye on the preparations.",
                       "There are lots of preparations! And me? I’ll keep an eye on the preparations, with tea.",
@@ -2680,9 +2680,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez ê bibim serçopî, û çokên min dê bibêjin erê!",
+                    "say": "Ez dê bibim serçopî, û çokên min dê bibêjin erê!",
                     "voice": "hamo",
-                    "prompt": "Ez ê bibim serçopî, û çokên min dê bibêjin erê!",
+                    "prompt": "Ez dê bibim serçopî, û çokên min dê bibêjin erê!",
                     "options": [
                       "I’ll lead the govend, and my knees will say yes!",
                       "I’m writing a great speech, and afterwards I’ll learn it by heart.",
@@ -2762,9 +2762,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ez ê bibim serçopî, û çokên min dê bibêjin erê!",
+                    "say": "Ez dê bibim serçopî, û çokên min dê bibêjin erê!",
                     "voice": "hamo",
-                    "prompt": "Ez ê bibim serçopî, û çokên min dê bibêjin erê!",
+                    "prompt": "Ez dê bibim serçopî, û çokên min dê bibêjin erê!",
                     "accepted": [
                       "I’ll lead the govend, and my knees will say yes!",
                       "I will lead the govend, and my knees will say yes!"
@@ -2843,7 +2843,7 @@
                     "voice": "hamo",
                     "prompt": "I’ll lead the govend, and my knees will say yes!",
                     "options": [
-                      "Ez ê bibim serçopî, û çokên min dê bibêjin erê!",
+                      "Ez dê bibim serçopî, û çokên min dê bibêjin erê!",
                       "Ez ê bibînim serçopî, û çokên min dê bibêjin erê!",
                       "Ez gotareke mezin dinivîsim, û piştre ez ê wê fêr bibim."
                     ],
@@ -3205,9 +3205,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez ê bibim serçopî, û çokên min dê bibêjin erê!",
+                    "say": "Ez dê bibim serçopî, û çokên min dê bibêjin erê!",
                     "voice": "hamo",
-                    "prompt": "Ez ê bibim serçopî, û çokên min dê bibêjin erê!",
+                    "prompt": "Ez dê bibim serçopî, û çokên min dê bibêjin erê!",
                     "options": [
                       "I’ll lead the govend, and my knees will say yes!",
                       "My knees say no, but I say yes!",
@@ -3978,7 +3978,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ez ê bibim serçopî, û çokên min dê bibêjin erê!"
+                      "Ez dê bibim serçopî, û çokên min dê bibêjin erê!"
                     ]
                   }
                 },
@@ -4593,7 +4593,7 @@
                     "prompt": "Li her derê. Pişta min, çokên min, serê min…",
                     "options": [
                       "Everywhere. My back, my knees, my head…",
-                      "The pain is everywhere!",
+                      "The pain is only in my back.",
                       "My family is in Kobanî."
                     ],
                     "correctIndex": 0
