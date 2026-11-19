@@ -3813,16 +3813,16 @@
       "opens": "Lê her",
       "words": [
         {
-          "term": "cîran",
+          "term": "cîranek",
           "meanings": {
-            "en": "neighbour",
-            "de": "Nachbar",
-            "es": "vecino",
-            "fr": "voisin",
-            "nl": "buur",
-            "tr": "komşu",
+            "en": "a neighbour",
+            "de": "ein Nachbar",
+            "es": "un vecino",
+            "fr": "un voisin",
+            "nl": "een buur",
+            "tr": "bir komşu",
             "ar": "جار",
-            "ckb": "دراوسێ"
+            "ckb": "دراوسێیەک"
           }
         },
         {

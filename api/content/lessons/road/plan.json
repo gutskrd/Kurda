@@ -3423,8 +3423,7 @@
               "beat": "Xezo’s goodbye speech to everyone, and Hamo passes her words on to those at the back: thank you for everything, for every tale, for every glass of tea. “Ez ê bêriya we hemûyan bikim.” Then she turns to Hamo and cannot finish.",
               "voice": "hamo",
               "new": [
-                {"ku": "Heta dîtinê!", "en": "See you! (until we meet)", "pos": "phrase", "forms": ["heta", "dîtinê"]},
-                {"ku": "Bi hêviya dîtinê!", "en": "Hoping to see you again!", "pos": "phrase", "forms": ["bi", "hêviya", "dîtinê"]},
+                {"ku": "Bi xatirê we!", "en": "Goodbye, everyone! (said by the one leaving)", "pos": "phrase", "forms": ["bi", "xatirê", "we"]},
                 {"ku": "hezkirin", "en": "love", "pos": "noun", "gender": "f", "forms": ["hezkirin", "hezkirinên", "hezkirinan", "hezkirinek", "hezkirina", "hezkirinê", "hezkirineke"]},
                 {"ku": "her û her", "en": "for ever", "pos": "phrase", "forms": ["her", "û"]},
                 {"ku": "hevaltî", "en": "friendship", "pos": "noun", "gender": "f", "forms": ["hevaltî", "hevaltiyên", "hevaltiyan", "hevaltiyek", "hevaltiya", "hevaltiyê", "hevaltiyeke"]},
