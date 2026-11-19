@@ -1171,17 +1171,16 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Yek mirîşk heye.",
+                    "ask": "meaning",
+                    "say": "Ev keça Nazê ye.",
                     "voice": "hamo",
-                    "prompt": "Yek ___ heye.",
+                    "prompt": "Ev keça Nazê ye.",
                     "options": [
-                      "mirîşk",
-                      "mirîşkên",
-                      "keç"
+                      "This is Nazê’s daughter.",
+                      "This is Nazê’s son.",
+                      "This is Nazê’s sister."
                     ],
                     "correctIndex": 0,
-                    "cue": "There is one hen.",
                     "new": [
                       {
                         "ku": "keç",
@@ -1194,16 +1193,17 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ev keça Nazê ye.",
+                    "ask": "missing",
+                    "say": "Yek mirîşk heye.",
                     "voice": "hamo",
-                    "prompt": "Ev keça Nazê ye.",
+                    "prompt": "Yek ___ heye.",
                     "options": [
-                      "This is Nazê’s daughter.",
-                      "This is Nazê’s son.",
-                      "This is Nazê’s sister."
+                      "mirîşk",
+                      "mirîşkên",
+                      "keç"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "There is one hen."
                   }
                 },
                 {
@@ -2268,29 +2268,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Heşt hêk! Yek ji Hevalo re.",
-                    "voice": "hamo",
-                    "prompt": "Heşt ___! Yek ji Hevalo re.",
-                    "options": [
-                      "hêk",
-                      "hêkên",
-                      "penîr"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Eight eggs! One for Hevalo.",
-                    "new": [
-                      {
-                        "ku": "penîr",
-                        "en": "cheese"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Fermo, taştê!",
                     "voice": "hamo",
@@ -2310,7 +2287,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2332,7 +2309,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2346,7 +2323,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2358,7 +2335,30 @@
                       "There’s tea. Drink up!",
                       "There is one hen."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "penîr",
+                        "en": "cheese"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Heşt hêk! Yek ji Hevalo re.",
+                    "voice": "hamo",
+                    "prompt": "Heşt ___! Yek ji Hevalo re.",
+                    "options": [
+                      "hêk",
+                      "hêkên",
+                      "penîr"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Eight eggs! One for Hevalo."
                   }
                 },
                 {
@@ -3627,17 +3627,11 @@
                     "prompt": "Navê ___ Hevalo ye!",
                     "options": [
                       "min",
-                      "me",
+                      "ez",
                       "hûn"
                     ],
                     "correctIndex": 0,
-                    "cue": "My name is Hevalo!",
-                    "new": [
-                      {
-                        "ku": "me",
-                        "en": "our; us"
-                      }
-                    ]
+                    "cue": "My name is Hevalo!"
                   }
                 },
                 {
@@ -3658,6 +3652,10 @@
                       {
                         "ku": "xwarin",
                         "en": "food; meal"
+                      },
+                      {
+                        "ku": "me",
+                        "en": "our; us"
                       }
                     ]
                   }

@@ -1212,29 +1212,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Adar meha Newrozê ye.",
-                    "voice": "hamo",
-                    "prompt": "Adar ___ Newrozê ye.",
-                    "options": [
-                      "meha",
-                      "meh",
-                      "sala"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "March is the month of Newroz.",
-                    "new": [
-                      {
-                        "ku": "sal",
-                        "en": "year"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Îsal saleke baş e!",
                     "voice": "hamo",
@@ -1249,8 +1226,29 @@
                       {
                         "ku": "îsal",
                         "en": "this year"
+                      },
+                      {
+                        "ku": "sal",
+                        "en": "year"
                       }
                     ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Adar meha Newrozê ye.",
+                    "voice": "hamo",
+                    "prompt": "Adar ___ Newrozê ye.",
+                    "options": [
+                      "meha",
+                      "meh",
+                      "sala"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "March is the month of Newroz."
                   }
                 },
                 {
@@ -2332,16 +2330,10 @@
                     "options": [
                       "yazdeh",
                       "yazdehan",
-                      "diwanzdeh"
+                      "deh"
                     ],
                     "correctIndex": 0,
-                    "cue": "It’s evening, it’s eleven o’clock.",
-                    "new": [
-                      {
-                        "ku": "diwanzdeh",
-                        "en": "twelve"
-                      }
-                    ]
+                    "cue": "It’s evening, it’s eleven o’clock."
                   }
                 },
                 {
@@ -2362,6 +2354,10 @@
                       {
                         "ku": "xulek",
                         "en": "minute"
+                      },
+                      {
+                        "ku": "diwanzdeh",
+                        "en": "twelve"
                       }
                     ]
                   }
@@ -2621,29 +2617,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ez bi mirîşkan re şiyar dibim.",
-                    "voice": "hamo",
-                    "prompt": "Ez bi mirîşkan re şiyar ___.",
-                    "options": [
-                      "dibim",
-                      "dibî",
-                      "radibim"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "I wake up with the hens.",
-                    "new": [
-                      {
-                        "ku": "rabûn",
-                        "en": "to get up"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Piştî çayê ez radizim.",
                     "voice": "hamo",
@@ -2663,7 +2636,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2680,7 +2653,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2702,7 +2675,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2715,7 +2688,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2727,7 +2700,30 @@
                       "The tea gets cold, and I go to sleep.",
                       "The tea is hot, and I sit down."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "rabûn",
+                        "en": "to get up"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ez bi mirîşkan re şiyar dibim.",
+                    "voice": "hamo",
+                    "prompt": "Ez bi mirîşkan re şiyar ___.",
+                    "options": [
+                      "dibim",
+                      "dibî",
+                      "radibim"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "I wake up with the hens."
                   }
                 },
                 {
@@ -3460,16 +3456,10 @@
                     "options": [
                       "caran",
                       "car",
-                      "karan"
+                      "cara"
                     ],
                     "correctIndex": 0,
-                    "cue": "Sometimes I work, often I sleep!",
-                    "new": [
-                      {
-                        "ku": "kar",
-                        "en": "work, job"
-                      }
-                    ]
+                    "cue": "Sometimes I work, often I sleep!"
                   }
                 },
                 {
@@ -3511,7 +3501,13 @@
                       "every, each",
                       "time, occasion"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "kar",
+                        "en": "work, job"
+                      }
+                    ]
                   }
                 },
                 {

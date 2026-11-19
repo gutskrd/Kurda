@@ -141,16 +141,10 @@
                     "options": [
                       "diçin",
                       "diçim",
-                      "hatin"
+                      "diçe"
                     ],
                     "correctIndex": 0,
-                    "cue": "We’re going to the market.",
-                    "new": [
-                      {
-                        "ku": "hatin",
-                        "en": "to come"
-                      }
-                    ]
+                    "cue": "We’re going to the market."
                   }
                 },
                 {
@@ -166,7 +160,13 @@
                       "Are you hungry too?",
                       "Are you from here too?"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "hatin",
+                        "en": "to come"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2319,28 +2319,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Selik bi sî ye.",
-                    "voice": "hamo",
-                    "prompt": "Selik bi ___ ye.",
-                    "options": [
-                      "sî",
-                      "bîst",
-                      "deh"
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "bîst",
-                        "en": "twenty"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Kîloyek tirî bi bîst e!",
                     "voice": "hamo",
@@ -2355,8 +2333,29 @@
                       {
                         "ku": "tirî",
                         "en": "grapes"
+                      },
+                      {
+                        "ku": "bîst",
+                        "en": "twenty"
                       }
                     ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Selik bi sî ye.",
+                    "voice": "hamo",
+                    "prompt": "Selik bi ___ ye.",
+                    "options": [
+                      "sî",
+                      "bîst",
+                      "deh"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The basket is thirty."
                   }
                 },
                 {
@@ -2883,16 +2882,10 @@
                     "options": [
                       "dibêje",
                       "dibêjim",
-                      "dide"
+                      "dibêjî"
                     ],
                     "correctIndex": 0,
-                    "cue": "A hundred and ten? What does Mîrza say?",
-                    "new": [
-                      {
-                        "ku": "dan",
-                        "en": "to give"
-                      }
-                    ]
+                    "cue": "A hundred and ten? What does Mîrza say?"
                   }
                 },
                 {
@@ -2908,7 +2901,13 @@
                       "I need money.",
                       "I’m selling."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "dan",
+                        "en": "to give"
+                      }
+                    ]
                   }
                 },
                 {
@@ -3510,16 +3509,10 @@
                     "options": [
                       "nade",
                       "nadim",
-                      "nizane"
+                      "nadin"
                     ],
                     "correctIndex": 0,
-                    "cue": "Nobody pays for an empty basket!",
-                    "new": [
-                      {
-                        "ku": "ni- (nizane)",
-                        "en": "not"
-                      }
-                    ]
+                    "cue": "Nobody pays for an empty basket!"
                   }
                 },
                 {
@@ -3540,6 +3533,10 @@
                       {
                         "ku": "hîç",
                         "en": "at all; ever"
+                      },
+                      {
+                        "ku": "ni- (nizane)",
+                        "en": "not"
                       }
                     ]
                   }

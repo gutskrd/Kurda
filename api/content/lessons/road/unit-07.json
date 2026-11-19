@@ -138,17 +138,16 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Îro serma ye, lê tav heye.",
+                    "ask": "meaning",
+                    "say": "Hewa sar e.",
                     "voice": "hamo",
-                    "prompt": "Îro serma ye, lê ___ heye.",
+                    "prompt": "Hewa sar e.",
                     "options": [
-                      "tav",
-                      "baran",
-                      "hewa"
+                      "The weather is cold.",
+                      "The weather is nice.",
+                      "The water is cold."
                     ],
                     "correctIndex": 0,
-                    "cue": "It’s cold today, but the sun is out.",
                     "new": [
                       {
                         "ku": "hewa",
@@ -161,16 +160,17 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Hewa sar e.",
+                    "ask": "missing",
+                    "say": "Îro serma ye, lê tav heye.",
                     "voice": "hamo",
-                    "prompt": "Hewa sar e.",
+                    "prompt": "Îro serma ye, lê ___ heye.",
                     "options": [
-                      "The weather is cold.",
-                      "The weather is nice.",
-                      "The water is cold."
+                      "tav",
+                      "baran",
+                      "hewa"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "It’s cold today, but the sun is out."
                   }
                 },
                 {
@@ -368,29 +368,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Li asman ewr tune, îcar berf zû dihele.",
-                    "voice": "hamo",
-                    "prompt": "Li asman ___ tune, îcar berf zû dihele.",
-                    "options": [
-                      "ewr",
-                      "gul",
-                      "germahî"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "cloud",
-                    "new": [
-                      {
-                        "ku": "germahî",
-                        "en": "warmth"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Bihar piştî zivistanê tê.",
                     "voice": "hamo",
@@ -414,7 +391,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -426,7 +403,30 @@
                       "spring",
                       "winter"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "germahî",
+                        "en": "warmth"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Li asman ewr tune, îcar berf zû dihele.",
+                    "voice": "hamo",
+                    "prompt": "Li asman ___ tune, îcar berf zû dihele.",
+                    "options": [
+                      "ewr",
+                      "gul",
+                      "germahî"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "cloud"
                   }
                 },
                 {
@@ -658,16 +658,10 @@
                     "options": [
                       "payîz",
                       "payîzên",
-                      "havîn"
+                      "payîza"
                     ],
                     "correctIndex": 0,
-                    "cue": "And autumn? What’s yours like?",
-                    "new": [
-                      {
-                        "ku": "havîn",
-                        "en": "summer"
-                      }
-                    ]
+                    "cue": "And autumn? What’s yours like?"
                   }
                 },
                 {
@@ -683,7 +677,13 @@
                       "In winter the weather is hot.",
                       "In summer the tea is hot."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "havîn",
+                        "en": "summer"
+                      }
+                    ]
                   }
                 },
                 {
@@ -1231,16 +1231,10 @@
                     "options": [
                       "amadekariyan",
                       "amadekarî",
-                      "kincan"
+                      "amadekariya"
                     ],
                     "correctIndex": 0,
-                    "cue": "preparations",
-                    "new": [
-                      {
-                        "ku": "kinc",
-                        "en": "clothes, garment"
-                      }
-                    ]
+                    "cue": "preparations"
                   }
                 },
                 {
@@ -1261,6 +1255,10 @@
                       {
                         "ku": "dirûtin",
                         "en": "to sew"
+                      },
+                      {
+                        "ku": "kinc",
+                        "en": "clothes, garment"
                       }
                     ]
                   }
@@ -2361,17 +2359,16 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Hêvî destmalê digire, û Baran defê lêdixe.",
+                    "ask": "meaning",
+                    "say": "Piştî dibistanê, Xezo û zarok govendê digirin.",
                     "voice": "hamo",
-                    "prompt": "Hêvî destmalê digire, û Baran ___ lêdixe.",
+                    "prompt": "Piştî dibistanê, Xezo û zarok govendê digirin.",
                     "options": [
-                      "defê",
-                      "def",
-                      "govendê"
+                      "After school, Xezo and the children dance the govend.",
+                      "After school, Xezo and the children read books.",
+                      "After the market, Xezo and the children buy shoes."
                     ],
                     "correctIndex": 0,
-                    "cue": "frame drum",
                     "new": [
                       {
                         "ku": "govend",
@@ -2388,16 +2385,17 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Piştî dibistanê, Xezo û zarok govendê digirin.",
+                    "ask": "missing",
+                    "say": "Hêvî destmalê digire, û Baran defê lêdixe.",
                     "voice": "hamo",
-                    "prompt": "Piştî dibistanê, Xezo û zarok govendê digirin.",
+                    "prompt": "Hêvî destmalê digire, û Baran ___ lêdixe.",
                     "options": [
-                      "After school, Xezo and the children dance the govend.",
-                      "After school, Xezo and the children read books.",
-                      "After the market, Xezo and the children buy shoes."
+                      "defê",
+                      "def",
+                      "govendê"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "frame drum"
                   }
                 },
                 {
@@ -2426,17 +2424,16 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Piştî dibistanê, Xezo û zarok govendê digirin.",
+                    "ask": "meaning",
+                    "say": "Xalê Baran zirneyê lêdixe.",
                     "voice": "hamo",
-                    "prompt": "Piştî dibistanê, Xezo û zarok ___ digirin.",
+                    "prompt": "Xalê Baran zirneyê lêdixe.",
                     "options": [
-                      "govendê",
-                      "govend",
-                      "zirneyê"
+                      "Baran’s uncle is playing the zurna.",
+                      "Baran’s uncle is selling the zurna.",
+                      "Baran’s uncle is listening to the zurna."
                     ],
                     "correctIndex": 0,
-                    "cue": "govend, the circle dance",
                     "new": [
                       {
                         "ku": "zirne",
@@ -2449,16 +2446,17 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Xalê Baran zirneyê lêdixe.",
+                    "ask": "missing",
+                    "say": "Piştî dibistanê, Xezo û zarok govendê digirin.",
                     "voice": "hamo",
-                    "prompt": "Xalê Baran zirneyê lêdixe.",
+                    "prompt": "Piştî dibistanê, Xezo û zarok ___ digirin.",
                     "options": [
-                      "Baran’s uncle is playing the zurna.",
-                      "Baran’s uncle is selling the zurna.",
-                      "Baran’s uncle is listening to the zurna."
+                      "govendê",
+                      "govendên",
+                      "zirneyê"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "govend, the circle dance"
                   }
                 },
                 {
@@ -2651,33 +2649,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Baran pêlavên xwe yên nû li xwe dike.",
-                    "voice": "hamo",
-                    "prompt": "Baran ___ xwe yên nû li xwe dike.",
-                    "options": [
-                      "pêlavên",
-                      "kiras",
-                      "piştên"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Baran is putting on his new shoes.",
-                    "new": [
-                      {
-                        "ku": "piştên",
-                        "en": "sash"
-                      },
-                      {
-                        "ku": "kiras",
-                        "en": "dress; shirt"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Nazê ji bo min jî şal û şapik û piştênekî kesk didirû.",
                     "voice": "hamo",
@@ -2692,12 +2663,16 @@
                       {
                         "ku": "şal û şapik",
                         "en": "the traditional men’s suit"
+                      },
+                      {
+                        "ku": "piştên",
+                        "en": "sash"
                       }
                     ]
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2723,7 +2698,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2740,7 +2715,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2752,7 +2727,30 @@
                       "Nazê is buying a new dress for Hêvî.",
                       "Nazê is washing an old dress for Hêvî."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "kiras",
+                        "en": "dress; shirt"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Baran pêlavên xwe yên nû li xwe dike.",
+                    "voice": "hamo",
+                    "prompt": "Baran ___ xwe yên nû li xwe dike.",
+                    "options": [
+                      "pêlavên",
+                      "kiras",
+                      "pêlavan"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Baran is putting on his new shoes."
                   }
                 },
                 {
@@ -2936,16 +2934,10 @@
                     "options": [
                       "stêrkan",
                       "stêrk",
-                      "çirayan"
+                      "stêrka"
                     ],
                     "correctIndex": 0,
-                    "cue": "star",
-                    "new": [
-                      {
-                        "ku": "çira",
-                        "en": "lamp"
-                      }
-                    ]
+                    "cue": "star"
                   }
                 },
                 {
@@ -2991,6 +2983,28 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
+                    "say": "Ev çiraya kê ye?",
+                    "voice": "hamo",
+                    "prompt": "Ev çiraya kê ye?",
+                    "options": [
+                      "Whose lamp is this?",
+                      "Whose storybook is this?",
+                      "Who is this?"
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "çira",
+                        "en": "lamp"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "missing",
                     "say": "Xem neke. Ev baran bereket e.",
                     "voice": "hamo",
@@ -3002,22 +3016,6 @@
                     ],
                     "correctIndex": 0,
                     "cue": "Don’t worry. This rain is a blessing."
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ev çiraya kê ye?",
-                    "voice": "hamo",
-                    "prompt": "Ev çiraya kê ye?",
-                    "options": [
-                      "Whose lamp is this?",
-                      "Whose storybook is this?",
-                      "Who is this?"
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -3517,17 +3515,16 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Pîrozbahî li ser gir e, û germahiya agir xweş e.",
+                    "ask": "meaning",
+                    "say": "Îro hemû gund diçe seyranê.",
                     "voice": "hamo",
-                    "prompt": "Pîrozbahî li ser ___ e, û germahiya agir xweş e.",
+                    "prompt": "Îro hemû gund diçe seyranê.",
                     "options": [
-                      "gir",
-                      "girên",
-                      "seyran"
+                      "Today the whole village is going on a picnic.",
+                      "Today the whole village is going to the market.",
+                      "Today the whole village is staying at home."
                     ],
                     "correctIndex": 0,
-                    "cue": "hill",
                     "new": [
                       {
                         "ku": "seyran",
@@ -3540,16 +3537,17 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Îro hemû gund diçe seyranê.",
+                    "ask": "missing",
+                    "say": "Pîrozbahî li ser gir e, û germahiya agir xweş e.",
                     "voice": "hamo",
-                    "prompt": "Îro hemû gund diçe seyranê.",
+                    "prompt": "Pîrozbahî li ser ___ e, û germahiya agir xweş e.",
                     "options": [
-                      "Today the whole village is going on a picnic.",
-                      "Today the whole village is going to the market.",
-                      "Today the whole village is staying at home."
+                      "gir",
+                      "girên",
+                      "seyran"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "hill"
                   }
                 },
                 {

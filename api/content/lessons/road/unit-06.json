@@ -617,17 +617,11 @@
                     "prompt": "Rasterast. Lorîn li ___ dimîne.",
                     "options": [
                       "jor",
-                      "jêr",
-                      "carinan"
+                      "ser",
+                      "pişt"
                     ],
                     "correctIndex": 0,
-                    "cue": "Straight on. Lorîn lives upstairs.",
-                    "new": [
-                      {
-                        "ku": "jêr",
-                        "en": "down, downstairs"
-                      }
-                    ]
+                    "cue": "Straight on. Lorîn lives upstairs."
                   }
                 },
                 {
@@ -643,7 +637,13 @@
                       "No, I’m coming quickly!",
                       "Tea? I’m coming, straight away!"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "jêr",
+                        "en": "down, downstairs"
+                      }
+                    ]
                   }
                 },
                 {
@@ -1173,29 +1173,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Werin hundir, rûnin!",
-                    "voice": "hamo",
-                    "prompt": "Werin hundir, ___!",
-                    "options": [
-                      "rûnin",
-                      "rûniştin",
-                      "derketin"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Come in, sit down!",
-                    "new": [
-                      {
-                        "ku": "derketin",
-                        "en": "to go out, to come out"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Ez xalê wan im!",
                     "voice": "hamo",
@@ -1209,7 +1186,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1231,7 +1208,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1248,7 +1225,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1260,7 +1237,30 @@
                       "Lorîn’s children go into the house.",
                       "Lorîn’s children sit in the house."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "derketin",
+                        "en": "to go out, to come out"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Werin hundir, rûnin!",
+                    "voice": "hamo",
+                    "prompt": "Werin hundir, ___!",
+                    "options": [
+                      "rûnin",
+                      "rûniştin",
+                      "derketin"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Come in, sit down!"
                   }
                 },
                 {
@@ -2641,16 +2641,10 @@
                     "options": [
                       "firaxan",
                       "firax",
-                      "destûran"
+                      "firaxên"
                     ],
                     "correctIndex": 0,
-                    "cue": "Who washes the dishes?",
-                    "new": [
-                      {
-                        "ku": "destûr",
-                        "en": "permission"
-                      }
-                    ]
+                    "cue": "Who washes the dishes?"
                   }
                 },
                 {
@@ -2688,7 +2682,13 @@
                       "Mum, is there tea?",
                       "Mum, is there bread?"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "destûr",
+                        "en": "permission"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2945,16 +2945,10 @@
                     "options": [
                       "veke",
                       "vekirin",
-                      "digire"
+                      "vekim"
                     ],
                     "correctIndex": 0,
-                    "cue": "to open",
-                    "new": [
-                      {
-                        "ku": "girtin",
-                        "en": "to take, to hold; to close"
-                      }
-                    ]
+                    "cue": "to open"
                   }
                 },
                 {
@@ -2970,7 +2964,13 @@
                       "The seller is opening the door.",
                       "The seller is selling the door."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "girtin",
+                        "en": "to take, to hold; to close"
+                      }
+                    ]
                   }
                 },
                 {
@@ -4024,17 +4024,11 @@
                     "prompt": "Nûçe dibêjin ku sibe rêya çiyê ___ dibe.",
                     "options": [
                       "girtî",
-                      "Vekirî",
+                      "girtin",
                       "bilind"
                     ],
                     "correctIndex": 0,
-                    "cue": "closed",
-                    "new": [
-                      {
-                        "ku": "vekirî",
-                        "en": "open"
-                      }
-                    ]
+                    "cue": "closed"
                   }
                 },
                 {
@@ -4050,7 +4044,13 @@
                       "The road is closed now.",
                       "The shop is open now."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "vekirî",
+                        "en": "open"
+                      }
+                    ]
                   }
                 },
                 {

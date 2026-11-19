@@ -1161,29 +1161,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Li vê darê sêvên sor hene.",
-                    "voice": "hamo",
-                    "prompt": "Li vê ___ sêvên sor hene.",
-                    "options": [
-                      "darê",
-                      "dar",
-                      "rengê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "There are red apples on this tree.",
-                    "new": [
-                      {
-                        "ku": "reng",
-                        "en": "colour"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Deriyê me şîn e.",
                     "voice": "hamo",
@@ -1203,7 +1180,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1215,7 +1192,30 @@
                       "Where is the apple?",
                       "Whose apple is it?"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "reng",
+                        "en": "colour"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Li vê darê sêvên sor hene.",
+                    "voice": "hamo",
+                    "prompt": "Li vê ___ sêvên sor hene.",
+                    "options": [
+                      "darê",
+                      "dar",
+                      "rengê"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "There are red apples on this tree."
                   }
                 },
                 {
@@ -1501,17 +1501,16 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ev derî kevn e.",
+                    "ask": "meaning",
+                    "say": "Sêv kesk e, ne sor e.",
                     "voice": "hamo",
-                    "prompt": "Ev derî ___ e.",
+                    "prompt": "Sêv kesk e, ne sor e.",
                     "options": [
-                      "kevn",
-                      "kesk",
-                      "zer"
+                      "The apple is green, not red.",
+                      "The apple is red, not green.",
+                      "The tree is green, not red."
                     ],
                     "correctIndex": 0,
-                    "cue": "This door is old.",
                     "new": [
                       {
                         "ku": "kesk",
@@ -1524,16 +1523,17 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Sêv kesk e, ne sor e.",
+                    "ask": "missing",
+                    "say": "Ev derî kevn e.",
                     "voice": "hamo",
-                    "prompt": "Sêv kesk e, ne sor e.",
+                    "prompt": "Ev derî ___ e.",
                     "options": [
-                      "The apple is green, not red.",
-                      "The apple is red, not green.",
-                      "The tree is green, not red."
+                      "kevn",
+                      "kesk",
+                      "zer"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "This door is old."
                   }
                 },
                 {
@@ -1714,29 +1714,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Bizina spî nan dixwe, ne nexşe.",
-                    "voice": "hamo",
-                    "prompt": "Bizina ___ nan dixwe, ne nexşe.",
-                    "options": [
-                      "spî",
-                      "reş",
-                      "mezin"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "The white goat eats bread, not maps.",
-                    "new": [
-                      {
-                        "ku": "reş",
-                        "en": "black"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "picture",
                     "say": "bizin",
                     "voice": "hevalo",
@@ -1751,7 +1728,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1763,7 +1740,30 @@
                       "Şêro is a white dog.",
                       "Şêro is a big dog."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "reş",
+                        "en": "black"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bizina spî nan dixwe, ne nexşe.",
+                    "voice": "hamo",
+                    "prompt": "Bizina ___ nan dixwe, ne nexşe.",
+                    "options": [
+                      "spî",
+                      "reş",
+                      "mezin"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The white goat eats bread, not maps."
                   }
                 },
                 {
@@ -2921,16 +2921,10 @@
                     "options": [
                       "darê",
                       "dar",
-                      "devê"
+                      "dara"
                     ],
                     "correctIndex": 0,
-                    "cue": "Look! Hevalo’s nose is behind the tree.",
-                    "new": [
-                      {
-                        "ku": "dev",
-                        "en": "mouth"
-                      }
-                    ]
+                    "cue": "Look! Hevalo’s nose is behind the tree."
                   }
                 },
                 {
@@ -2946,7 +2940,13 @@
                       "In her hand there’s an old photo.",
                       "My mother’s sister’s house is in Sêvan."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "dev",
+                        "en": "mouth"
+                      }
+                    ]
                   }
                 },
                 {
@@ -3535,29 +3535,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ez mamoste me.",
-                    "voice": "xezo",
-                    "prompt": "Ez ___ me.",
-                    "options": [
-                      "mamoste",
-                      "mamosteyên",
-                      "kanî"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "I’m a teacher.",
-                    "new": [
-                      {
-                        "ku": "kanî",
-                        "en": "spring"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Dikan li ber dibistanê ye.",
                     "voice": "hamo",
@@ -3577,7 +3554,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3594,6 +3571,28 @@
                       {
                         "ku": "gund",
                         "en": "village"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ava kaniyê gelek sar e!",
+                    "voice": "hamo",
+                    "prompt": "Ava kaniyê gelek sar e!",
+                    "options": [
+                      "The spring water is very cold!",
+                      "The spring water is very hot!",
+                      "The tea at the shop is very cold!"
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "kanî",
+                        "en": "spring"
                       }
                     ]
                   }
@@ -3619,16 +3618,17 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ava kaniyê gelek sar e!",
-                    "voice": "hamo",
-                    "prompt": "Ava kaniyê gelek sar e!",
+                    "ask": "missing",
+                    "say": "Ez mamoste me.",
+                    "voice": "xezo",
+                    "prompt": "Ez ___ me.",
                     "options": [
-                      "The spring water is very cold!",
-                      "The spring water is very hot!",
-                      "The tea at the shop is very cold!"
+                      "mamoste",
+                      "mamosteyên",
+                      "kanî"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "I’m a teacher."
                   }
                 },
                 {
@@ -3826,17 +3826,16 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Pezê Bişar li çiyê ye.",
+                    "ask": "meaning",
+                    "say": "Bajar mezin e, gundê me biçûk e.",
                     "voice": "hamo",
-                    "prompt": "Pezê Bişar li ___ ye.",
+                    "prompt": "Bajar mezin e, gundê me biçûk e.",
                     "options": [
-                      "çiyê",
-                      "bajar",
-                      "rojê"
+                      "The town is big, our village is small.",
+                      "The town is small, our village is big.",
+                      "The mountain is big, our village is small."
                     ],
                     "correctIndex": 0,
-                    "cue": "Bişar’s sheep are on the mountain.",
                     "new": [
                       {
                         "ku": "bajar",
@@ -3849,16 +3848,17 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Bajar mezin e, gundê me biçûk e.",
+                    "ask": "missing",
+                    "say": "Pezê Bişar li çiyê ye.",
                     "voice": "hamo",
-                    "prompt": "Bajar mezin e, gundê me biçûk e.",
+                    "prompt": "Pezê Bişar li ___ ye.",
                     "options": [
-                      "The town is big, our village is small.",
-                      "The town is small, our village is big.",
-                      "The mountain is big, our village is small."
+                      "çiyê",
+                      "bajar",
+                      "rojê"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "Bişar’s sheep are on the mountain."
                   }
                 },
                 {
@@ -3881,17 +3881,16 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Bajar mezin e, gundê me biçûk e.",
+                    "ask": "meaning",
+                    "say": "Çêlek li pişt malê ye.",
                     "voice": "hamo",
-                    "prompt": "Bajar mezin e, ___ me biçûk e.",
+                    "prompt": "Çêlek li pişt malê ye.",
                     "options": [
-                      "gundê",
-                      "gund",
-                      "çêlekê"
+                      "The cow is behind the house.",
+                      "The spring is behind the school.",
+                      "Hevalo’s nose is behind the tree!"
                     ],
                     "correctIndex": 0,
-                    "cue": "The town is big, our village is small.",
                     "new": [
                       {
                         "ku": "çêlek",
@@ -3904,16 +3903,17 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Çêlek li pişt malê ye.",
+                    "ask": "missing",
+                    "say": "Bajar mezin e, gundê me biçûk e.",
                     "voice": "hamo",
-                    "prompt": "Çêlek li pişt malê ye.",
+                    "prompt": "Bajar mezin e, ___ me biçûk e.",
                     "options": [
-                      "The cow is behind the house.",
-                      "The spring is behind the school.",
-                      "Hevalo’s nose is behind the tree!"
+                      "gundê",
+                      "gund",
+                      "çêlekê"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "The town is big, our village is small."
                   }
                 },
                 {

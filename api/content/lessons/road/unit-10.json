@@ -79,29 +79,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Keriyê Bişar hat, û me ew dît.",
-                    "voice": "hamo",
-                    "prompt": "Keriyê Bişar hat, û me ew ___.",
-                    "options": [
-                      "dît",
-                      "dîtin",
-                      "hilgirtin"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Bişar’s flock came, and we saw it.",
-                    "new": [
-                      {
-                        "ku": "hilgirtin",
-                        "en": "to carry; to pick up"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Me çay vexwar, û Bişar selik hilgirt.",
                     "voice": "hamo",
@@ -116,8 +93,29 @@
                       {
                         "ku": "vexwar",
                         "en": "drank"
+                      },
+                      {
+                        "ku": "hilgirtin",
+                        "en": "to carry; to pick up"
                       }
                     ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Keriyê Bişar hat, û me ew dît.",
+                    "voice": "hamo",
+                    "prompt": "Keriyê Bişar hat, û me ew ___.",
+                    "options": [
+                      "dît",
+                      "dîtin",
+                      "hilgirtin"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Bişar’s flock came, and we saw it."
                   }
                 },
                 {
@@ -374,33 +372,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Min gazî Bozo kir, lê wî nebihîst: wî tenê giya xwest!",
-                    "voice": "hamo",
-                    "prompt": "Min gazî Bozo kir, lê wî nebihîst: wî tenê giya ___!",
-                    "options": [
-                      "xwest",
-                      "anî",
-                      "da"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "wanted",
-                    "new": [
-                      {
-                        "ku": "da",
-                        "en": "gave"
-                      },
-                      {
-                        "ku": "anî",
-                        "en": "brought"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Dapîrê sêvek da Hevalo, û Hevalo ew bir.",
                     "voice": "hamo",
@@ -415,12 +386,16 @@
                       {
                         "ku": "bir",
                         "en": "took"
+                      },
+                      {
+                        "ku": "da",
+                        "en": "gave"
                       }
                     ]
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -432,7 +407,30 @@
                       "Who ate the bread?",
                       "Who wanted the bread?"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "anî",
+                        "en": "brought"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Min gazî Bozo kir, lê wî nebihîst: wî tenê giya xwest!",
+                    "voice": "hamo",
+                    "prompt": "Min gazî Bozo kir, lê wî nebihîst: wî tenê giya ___!",
+                    "options": [
+                      "xwest",
+                      "anî",
+                      "xwestin"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "wanted"
                   }
                 },
                 {
@@ -1239,29 +1237,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Me ji ardê hevîr çêkir, û sêl li ser agir e.",
-                    "voice": "hamo",
-                    "prompt": "Me ji ardê hevîr ___, û sêl li ser agir e.",
-                    "options": [
-                      "çêkir",
-                      "çêkirin",
-                      "dotin"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "made",
-                    "new": [
-                      {
-                        "ku": "dotin",
-                        "en": "to milk"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Dayika Dapîrê li vir jiya, û di meşkê de nîvişk çêkir.",
                     "voice": "hamo",
@@ -1285,7 +1260,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1297,7 +1272,30 @@
                       "It was night, the moon came up, and I slept!",
                       "It was dawn, the sun came up, and I drank milk!"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "dotin",
+                        "en": "to milk"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Me ji ardê hevîr çêkir, û sêl li ser agir e.",
+                    "voice": "hamo",
+                    "prompt": "Me ji ardê hevîr ___, û sêl li ser agir e.",
+                    "options": [
+                      "çêkir",
+                      "çêkirin",
+                      "dotin"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "made"
                   }
                 },
                 {
@@ -1542,29 +1540,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
-                    "voice": "hamo",
-                    "prompt": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min ___.",
-                    "options": [
-                      "nivîsî",
-                      "nivîsîn",
-                      "kirî"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "wrote",
-                    "new": [
-                      {
-                        "ku": "kirî",
-                        "en": "bought"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Dapîrê hejdeh nan pijandin, û min yek şewitand!",
                     "voice": "hamo",
@@ -1588,7 +1563,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1600,7 +1575,30 @@
                       "I sold this saj at the market.",
                       "I found this saj by the lake."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "kirî",
+                        "en": "bought"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "voice": "hamo",
+                    "prompt": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min ___.",
+                    "options": [
+                      "nivîsî",
+                      "nivîsîn",
+                      "kirî"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "wrote"
                   }
                 },
                 {
@@ -1812,16 +1810,10 @@
                     "options": [
                       "sêv",
                       "sêvên",
-                      "gol"
+                      "sêva"
                     ],
                     "correctIndex": 0,
-                    "cue": "This apple is for you, Zerê!",
-                    "new": [
-                      {
-                        "ku": "gol",
-                        "en": "lake"
-                      }
-                    ]
+                    "cue": "This apple is for you, Zerê!"
                   }
                 },
                 {
@@ -1876,7 +1868,13 @@
                       "We saw two deer: Hevalo and Zerê! Hevalo gave Zerê an apple.",
                       "In the end only the ayran was left, and Hevalo wanted ayran too!"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "gol",
+                        "en": "lake"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2399,16 +2397,10 @@
                     "options": [
                       "keşk",
                       "keşkên",
-                      "avjenî"
+                      "keşkan"
                     ],
                     "correctIndex": 0,
-                    "cue": "dried curd",
-                    "new": [
-                      {
-                        "ku": "avjenî",
-                        "en": "swimming"
-                      }
-                    ]
+                    "cue": "dried curd"
                   }
                 },
                 {
@@ -2450,7 +2442,13 @@
                       "She used to fish in the lake every afternoon.",
                       "She swam in the lake once, at night."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "avjenî",
+                        "en": "swimming"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2685,33 +2683,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Nozdeh havînan dayika wê lorî jê re digot.",
-                    "voice": "hamo",
-                    "prompt": "Nozdeh havînan dayika wê ___ jê re digot.",
-                    "options": [
-                      "lorî",
-                      "keçik",
-                      "birûsk"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "lullaby",
-                    "new": [
-                      {
-                        "ku": "keçik",
-                        "en": "young girl"
-                      },
-                      {
-                        "ku": "birûsk",
-                        "en": "lightning"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Carinan birûsk diket, lê kes netirsiya.",
                     "voice": "hamo",
@@ -2721,11 +2692,17 @@
                       "Sometimes it snowed, and everyone was afraid.",
                       "Lightning never struck, and nobody slept."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "birûsk",
+                        "en": "lightning"
+                      }
+                    ]
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2742,7 +2719,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2754,7 +2731,30 @@
                       "When Dapîr was a girl, she came here once.",
                       "When Dapîr was old, she never came here."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "keçik",
+                        "en": "young girl"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Nozdeh havînan dayika wê lorî jê re digot.",
+                    "voice": "hamo",
+                    "prompt": "Nozdeh havînan dayika wê ___ jê re digot.",
+                    "options": [
+                      "lorî",
+                      "keçik",
+                      "birûsk"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "lullaby"
                   }
                 },
                 {
@@ -2985,16 +2985,10 @@
                     "options": [
                       "xatirxwestinê",
                       "xatirxwestin",
-                      "hevdîtinê"
+                      "xatirxwestina"
                     ],
                     "correctIndex": 0,
-                    "cue": "Today is the day of farewell.",
-                    "new": [
-                      {
-                        "ku": "hevdîtin",
-                        "en": "meeting"
-                      }
-                    ]
+                    "cue": "Today is the day of farewell."
                   }
                 },
                 {
@@ -3007,6 +3001,12 @@
                     "prompt": "Ew dibêje ku hevdîtina me havîna bê ye. Û tu yê bi me re bêyî?",
                     "accepted": [
                       "He says our next meeting is next summer. And will you come with us?"
+                    ],
+                    "new": [
+                      {
+                        "ku": "hevdîtin",
+                        "en": "meeting"
+                      }
                     ]
                   }
                 },
@@ -3834,21 +3834,11 @@
                     "prompt": "Hemû rê hêja bû, û em hemû ___ in, mîna zarokan!",
                     "options": [
                       "bextewar",
-                      "şaşmayî",
-                      "bêhempa"
+                      "xemgîn",
+                      "nexweş"
                     ],
                     "correctIndex": 0,
-                    "cue": "happy, fortunate",
-                    "new": [
-                      {
-                        "ku": "şaşmayî",
-                        "en": "astonished"
-                      },
-                      {
-                        "ku": "bêhempa",
-                        "en": "unique, unmatched"
-                      }
-                    ]
+                    "cue": "happy, fortunate"
                   }
                 },
                 {
@@ -3869,6 +3859,10 @@
                       {
                         "ku": "derbas kirin",
                         "en": "to spend"
+                      },
+                      {
+                        "ku": "bêhempa",
+                        "en": "unique, unmatched"
                       }
                     ]
                   }
@@ -3891,6 +3885,10 @@
                       {
                         "ku": "qîr kirin",
                         "en": "to shout, to scream"
+                      },
+                      {
+                        "ku": "şaşmayî",
+                        "en": "astonished"
                       }
                     ]
                   }
@@ -4091,16 +4089,10 @@
                     "options": [
                       "deftera",
                       "defter",
-                      "hêviya"
+                      "defterê"
                     ],
                     "correctIndex": 0,
-                    "cue": "notebook",
-                    "new": [
-                      {
-                        "ku": "hêvî",
-                        "en": "hope"
-                      }
-                    ]
+                    "cue": "notebook"
                   }
                 },
                 {
@@ -4155,7 +4147,13 @@
                       "My hope is this: a quiet year, and you going home.",
                       "My fear is this: a bad year, and nobody helping us."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "hêvî",
+                        "en": "hope"
+                      }
+                    ]
                   }
                 },
                 {

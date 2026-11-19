@@ -74,29 +74,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",
-                    "voice": "hamo",
-                    "prompt": "Bêhna xwe vede, ___ xwe bixwe, û sax bibe!",
-                    "options": [
-                      "dermanê",
-                      "derman",
-                      "lingê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Rest, take your medicine, and get well!",
-                    "new": [
-                      {
-                        "ku": "ling",
-                        "en": "leg, foot"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Lingên min diêşin, û milê min jî.",
                     "voice": "hamo",
@@ -111,8 +88,29 @@
                       {
                         "ku": "mil",
                         "en": "shoulder; upper arm"
+                      },
+                      {
+                        "ku": "ling",
+                        "en": "leg, foot"
                       }
                     ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",
+                    "voice": "hamo",
+                    "prompt": "Bêhna xwe vede, ___ xwe bixwe, û sax bibe!",
+                    "options": [
+                      "dermanê",
+                      "derman",
+                      "lingê"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Rest, take your medicine, and get well!"
                   }
                 },
                 {
@@ -372,29 +370,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Tiliya min û stûyê min diêşin.",
-                    "voice": "hamo",
-                    "prompt": "Tiliya min û ___ min diêşin.",
-                    "options": [
-                      "stûyê",
-                      "stû",
-                      "tayê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "My finger and my neck hurt.",
-                    "new": [
-                      {
-                        "ku": "ta",
-                        "en": "fever"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Doktor Duşemê tê, û ez ne xemgîn im.",
                     "voice": "hamo",
@@ -418,7 +393,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -440,7 +415,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -457,7 +432,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -469,7 +444,30 @@
                       "And now I have some tea too!",
                       "And now I have a horse too!"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "ta",
+                        "en": "fever"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Tiliya min û stûyê min diêşin.",
+                    "voice": "hamo",
+                    "prompt": "Tiliya min û ___ min diêşin.",
+                    "options": [
+                      "stûyê",
+                      "stû",
+                      "tayê"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "My finger and my neck hurt."
                   }
                 },
                 {
@@ -1790,16 +1788,10 @@
                     "options": [
                       "şûşeyên",
                       "şûşe",
-                      "dizên"
+                      "şûşeyan"
                     ],
                     "correctIndex": 0,
-                    "cue": "We’re guarding the jars of honey.",
-                    "new": [
-                      {
-                        "ku": "diz",
-                        "en": "thief"
-                      }
-                    ]
+                    "cue": "We’re guarding the jars of honey."
                   }
                 },
                 {
@@ -1815,7 +1807,13 @@
                       "My belly is empty, but Hevalo’s belly is full!",
                       "The apple basket is empty!"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "diz",
+                        "en": "thief"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2343,29 +2341,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Simbêlê min dirêj e, ne kin e.",
-                    "voice": "hamo",
-                    "prompt": "Simbêlê min dirêj e, ne ___ e.",
-                    "options": [
-                      "kin",
-                      "jîr",
-                      "dirêj"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "My moustache is long, not short.",
-                    "new": [
-                      {
-                        "ku": "jîr",
-                        "en": "clever, wise"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Baran ji Hêviyê mezintir e.",
                     "voice": "hamo",
@@ -2385,7 +2360,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2402,7 +2377,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2419,8 +2394,29 @@
                       {
                         "ku": "herî",
                         "en": "most"
+                      },
+                      {
+                        "ku": "jîr",
+                        "en": "clever, wise"
                       }
                     ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Simbêlê min dirêj e, ne kin e.",
+                    "voice": "hamo",
+                    "prompt": "Simbêlê min dirêj e, ne ___ e.",
+                    "options": [
+                      "kin",
+                      "jîr",
+                      "dirêj"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "My moustache is long, not short."
                   }
                 },
                 {
@@ -2919,17 +2915,16 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ferhad, sala bê pêşbirk ya te ye!",
+                    "ask": "meaning",
+                    "say": "Doktor Azad dadwer e.",
                     "voice": "hamo",
-                    "prompt": "Ferhad, sala bê ___ ya te ye!",
+                    "prompt": "Doktor Azad dadwer e.",
                     "options": [
-                      "pêşbirk",
-                      "pêşbirkên",
-                      "dadwer"
+                      "Doctor Azad is the judge.",
+                      "Doctor Azad is the thief.",
+                      "Doctor Azad is ill."
                     ],
                     "correctIndex": 0,
-                    "cue": "Ferhad, next year the contest is yours!",
                     "new": [
                       {
                         "ku": "dadwer",
@@ -2942,33 +2937,33 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Doktor Azad dadwer e.",
+                    "ask": "missing",
+                    "say": "Ferhad, sala bê pêşbirk ya te ye!",
                     "voice": "hamo",
-                    "prompt": "Doktor Azad dadwer e.",
+                    "prompt": "Ferhad, sala bê ___ ya te ye!",
                     "options": [
-                      "Doctor Azad is the judge.",
-                      "Doctor Azad is the thief.",
-                      "Doctor Azad is ill."
+                      "pêşbirk",
+                      "pêşbirkên",
+                      "dadwer"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "Ferhad, next year the contest is yours!"
                   }
                 },
                 {
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
+                    "ask": "meaning",
+                    "say": "Serma ye, lê qehwexane germ e.",
                     "voice": "hamo",
-                    "prompt": "Spas! Bi ser ketin xweş e, lê ___ xweştir in.",
+                    "prompt": "Serma ye, lê qehwexane germ e.",
                     "options": [
-                      "heval",
-                      "hevalên",
-                      "qehwexane"
+                      "It’s cold, but the tea house is warm.",
+                      "It’s warm, but the tea house is cold.",
+                      "It’s cold, and the school is closed."
                     ],
                     "correctIndex": 0,
-                    "cue": "friend",
                     "new": [
                       {
                         "ku": "qehwexane",
@@ -2981,16 +2976,17 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Serma ye, lê qehwexane germ e.",
+                    "ask": "missing",
+                    "say": "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
                     "voice": "hamo",
-                    "prompt": "Serma ye, lê qehwexane germ e.",
+                    "prompt": "Spas! Bi ser ketin xweş e, lê ___ xweştir in.",
                     "options": [
-                      "It’s cold, but the tea house is warm.",
-                      "It’s warm, but the tea house is cold.",
-                      "It’s cold, and the school is closed."
+                      "heval",
+                      "hevalên",
+                      "qehwexane"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "friend"
                   }
                 },
                 {
@@ -4100,17 +4096,11 @@
                     "prompt": "Ew dibêje ku ez rastgo me, û ez ___ im.",
                     "options": [
                       "wêrek",
-                      "tirsonek",
+                      "nexweş",
                       "kin"
                     ],
                     "correctIndex": 0,
-                    "cue": "He says I’m honest, and I’m brave.",
-                    "new": [
-                      {
-                        "ku": "tirsonek",
-                        "en": "cowardly; a coward"
-                      }
-                    ]
+                    "cue": "He says I’m honest, and I’m brave."
                   }
                 },
                 {
@@ -4126,7 +4116,13 @@
                       "I’m not a child!",
                       "I’m not late!"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "tirsonek",
+                        "en": "cowardly; a coward"
+                      }
+                    ]
                   }
                 },
                 {

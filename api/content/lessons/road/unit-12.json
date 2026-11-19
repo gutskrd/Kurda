@@ -369,33 +369,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Şengê bi zîrekiya xwe pê dihese: şopên gur li ser axê ne!",
-                    "voice": "hamo",
-                    "prompt": "Şengê bi ___ xwe pê dihese: şopên gur li ser axê ne!",
-                    "options": [
-                      "zîrekiya",
-                      "hiş",
-                      "deka"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "cleverness",
-                    "new": [
-                      {
-                        "ku": "dek",
-                        "en": "trick"
-                      },
-                      {
-                        "ku": "hiş",
-                        "en": "mind, good sense"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Hiş ji lingên bihêz çêtir e.",
                     "voice": "hamo",
@@ -405,11 +378,17 @@
                       "Strong legs are better than good sense.",
                       "A good heart is better than a big house."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "hiş",
+                        "en": "mind, good sense"
+                      }
+                    ]
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -426,7 +405,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -438,7 +417,30 @@
                       "Şengê says this is the wolf’s house.",
                       "Şengê says this is their mother’s song."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "dek",
+                        "en": "trick"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Şengê bi zîrekiya xwe pê dihese: şopên gur li ser axê ne!",
+                    "voice": "hamo",
+                    "prompt": "Şengê bi ___ xwe pê dihese: şopên gur li ser axê ne!",
+                    "options": [
+                      "zîrekiya",
+                      "hiş",
+                      "deka"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "cleverness"
                   }
                 },
                 {
@@ -1232,17 +1234,11 @@
                     "prompt": "Mala te ___! Xwedê ji te razî be!",
                     "options": [
                       "ava",
-                      "av",
-                      "sifreya"
+                      "avê",
+                      "avan"
                     ],
                     "correctIndex": 0,
-                    "cue": "water",
-                    "new": [
-                      {
-                        "ku": "sifre",
-                        "en": "the cloth a meal is laid on; a meal spread"
-                      }
-                    ]
+                    "cue": "may your house prosper"
                   }
                 },
                 {
@@ -1258,7 +1254,13 @@
                       "Their sack is full, so I close the door at once.",
                       "Their sack is empty, so I go to bed at once."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "sifre",
+                        "en": "the cloth a meal is laid on; a meal spread"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2328,16 +2330,10 @@
                     "options": [
                       "garisan",
                       "garis",
-                      "simbilan"
+                      "garisê"
                     ],
                     "correctIndex": 0,
-                    "cue": "maize, corn",
-                    "new": [
-                      {
-                        "ku": "simbil",
-                        "en": "ear"
-                      }
-                    ]
+                    "cue": "maize, corn"
                   }
                 },
                 {
@@ -2358,6 +2354,10 @@
                       {
                         "ku": "xeyidîn",
                         "en": "to sulk, to get angry"
+                      },
+                      {
+                        "ku": "simbil",
+                        "en": "ear"
                       }
                     ]
                   }
@@ -3442,29 +3442,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Îro daweta zava ye, û em li zeviyê govend digirin.",
-                    "voice": "hamo",
-                    "prompt": "Îro ___ zava ye, û em li zeviyê govend digirin.",
-                    "options": [
-                      "daweta",
-                      "dawet",
-                      "bûka"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "wedding",
-                    "new": [
-                      {
-                        "ku": "bûk",
-                        "en": "bride; daughter-in-law"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Jin tilîliyan dikin.",
                     "voice": "hamo",
@@ -3484,7 +3461,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3506,7 +3483,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3523,7 +3500,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3535,7 +3512,30 @@
                       "The bride comes on a black donkey, because it’s cheaper.",
                       "The bride comes by bus, because it’s far."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "bûk",
+                        "en": "bride; daughter-in-law"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Îro daweta zava ye, û em li zeviyê govend digirin.",
+                    "voice": "hamo",
+                    "prompt": "Îro ___ zava ye, û em li zeviyê govend digirin.",
+                    "options": [
+                      "daweta",
+                      "dawet",
+                      "bûka"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "wedding"
                   }
                 },
                 {
@@ -4013,16 +4013,10 @@
                     "options": [
                       "tiştek",
                       "tişt",
-                      "dergehek"
+                      "tiştê"
                     ],
                     "correctIndex": 0,
-                    "cue": "Goodbye, stay well! Distance is nothing.",
-                    "new": [
-                      {
-                        "ku": "dergeh",
-                        "en": "gate"
-                      }
-                    ]
+                    "cue": "Goodbye, stay well! Distance is nothing."
                   }
                 },
                 {
@@ -4110,7 +4104,13 @@
                       "And Hevalo? Hevalo is here, because he is Hevalo!",
                       "Hevalo is by the window, looking at the mountains."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "dergeh",
+                        "en": "gate"
+                      }
+                    ]
                   }
                 },
                 {

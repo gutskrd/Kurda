@@ -375,16 +375,10 @@
                     "options": [
                       "ma",
                       "mam",
-                      "revîn"
+                      "man"
                     ],
                     "correctIndex": 0,
-                    "cue": "Baran was left alone in the valley.",
-                    "new": [
-                      {
-                        "ku": "revîn",
-                        "en": "to run away"
-                      }
-                    ]
+                    "cue": "Baran was left alone in the valley."
                   }
                 },
                 {
@@ -427,6 +421,10 @@
                       {
                         "ku": "zinar",
                         "en": "cliff, big rock"
+                      },
+                      {
+                        "ku": "revîn",
+                        "en": "to run away"
                       }
                     ]
                   }
@@ -1471,16 +1469,10 @@
                     "options": [
                       "gur",
                       "gurên",
-                      "hirç"
+                      "gurê"
                     ],
                     "correctIndex": 0,
-                    "cue": "Then the wolf walks around me.",
-                    "new": [
-                      {
-                        "ku": "hirç",
-                        "en": "bear"
-                      }
-                    ]
+                    "cue": "Then the wolf walks around me."
                   }
                 },
                 {
@@ -1544,6 +1536,10 @@
                       {
                         "ku": "tarî",
                         "en": "dark"
+                      },
+                      {
+                        "ku": "hirç",
+                        "en": "bear"
                       }
                     ]
                   }
@@ -1769,16 +1765,10 @@
                     "options": [
                       "ask",
                       "askên",
-                      "peyam"
+                      "askê"
                     ],
                     "correctIndex": 0,
-                    "cue": "I’m a deer too!",
-                    "new": [
-                      {
-                        "ku": "peyam",
-                        "en": "message"
-                      }
-                    ]
+                    "cue": "I’m a deer too!"
                   }
                 },
                 {
@@ -1794,7 +1784,13 @@
                       "Bişar’s sheep are on the mountain.",
                       "A young boy in a red shirt came down from the mountain the day before yesterday and went back today."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "peyam",
+                        "en": "message"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2385,17 +2381,16 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
+                    "ask": "meaning",
+                    "say": "Paşê, ji nişka ve, Bozo li ser rê rûnişt!",
                     "voice": "hamo",
-                    "prompt": "Baran dixwaze çîrok kin be, û dawiyê ___ bizane.",
+                    "prompt": "Paşê, ji nişka ve, Bozo li ser rê rûnişt!",
                     "options": [
-                      "yekser",
-                      "pêşî",
-                      "paşê"
+                      "Then, suddenly, Bozo sat down in the road!",
+                      "Then, slowly, Bozo ran down the road!",
+                      "First, suddenly, Bozo fell into the river!"
                     ],
                     "correctIndex": 0,
-                    "cue": "at once, straight away",
                     "new": [
                       {
                         "ku": "paşê",
@@ -2408,16 +2403,17 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Paşê, ji nişka ve, Bozo li ser rê rûnişt!",
+                    "ask": "missing",
+                    "say": "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
                     "voice": "hamo",
-                    "prompt": "Paşê, ji nişka ve, Bozo li ser rê rûnişt!",
+                    "prompt": "Baran dixwaze çîrok kin be, û dawiyê ___ bizane.",
                     "options": [
-                      "Then, suddenly, Bozo sat down in the road!",
-                      "Then, slowly, Bozo ran down the road!",
-                      "First, suddenly, Bozo fell into the river!"
+                      "yekser",
+                      "pêşî",
+                      "paşê"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "at once, straight away"
                   }
                 },
                 {
@@ -2619,29 +2615,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Baran bi tena serê xwe meşiya.",
-                    "voice": "hamo",
-                    "prompt": "Baran bi tena serê xwe ___.",
-                    "options": [
-                      "meşiya",
-                      "geriya",
-                      "sekinî"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Baran walked all on his own.",
-                    "new": [
-                      {
-                        "ku": "geriya",
-                        "en": "wandered, walked around"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Dapîr hemû rojê xebitî.",
                     "voice": "hamo",
@@ -2661,30 +2634,7 @@
                   }
                 },
                 {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Ew sekinî, û bi xwe kenî.",
-                    "voice": "hamo",
-                    "prompt": "Ew ___, û bi xwe kenî.",
-                    "options": [
-                      "sekinî",
-                      "xebitî",
-                      "firiya"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "He stopped, and laughed at himself.",
-                    "new": [
-                      {
-                        "ku": "firiya",
-                        "en": "flew"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 6,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2696,11 +2646,34 @@
                       "Then he slept among the trees.",
                       "Then he sat among the stones."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "geriya",
+                        "en": "wandered, walked around"
+                      }
+                    ]
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Baran bi tena serê xwe meşiya.",
+                    "voice": "hamo",
+                    "prompt": "Baran bi tena serê xwe ___.",
+                    "options": [
+                      "meşiya",
+                      "geriya",
+                      "sekinî"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Baran walked all on his own."
+                  }
+                },
+                {
+                  "position": 6,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2713,7 +2686,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2725,7 +2698,30 @@
                       "A big wild bird sat on him.",
                       "A little bird flew into the river."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "firiya",
+                        "en": "flew"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ew sekinî, û bi xwe kenî.",
+                    "voice": "hamo",
+                    "prompt": "Ew ___, û bi xwe kenî.",
+                    "options": [
+                      "sekinî",
+                      "xebitî",
+                      "firiya"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "He stopped, and laughed at himself."
                   }
                 },
                 {
@@ -3747,29 +3743,6 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ew bi tevahî bi şaşî bû, çewtiyeke biçûk!",
-                    "voice": "hamo",
-                    "prompt": "Ew bi tevahî bi şaşî bû, ___ biçûk!",
-                    "options": [
-                      "çewtiyeke",
-                      "werîs",
-                      "berbangeke"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "mistake",
-                    "new": [
-                      {
-                        "ku": "werîs",
-                        "en": "rope"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "meaning",
                     "say": "Berbangê ez ê hişyar rabim!",
                     "voice": "hamo",
@@ -3789,7 +3762,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3811,7 +3784,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3828,7 +3801,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3840,7 +3813,30 @@
                       "I’m buying the tent ropes: they are cheap.",
                       "I’m checking the tents: they are old."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "werîs",
+                        "en": "rope"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Ew bi tevahî bi şaşî bû, çewtiyeke biçûk!",
+                    "voice": "hamo",
+                    "prompt": "Ew bi tevahî bi şaşî bû, ___ biçûk!",
+                    "options": [
+                      "çewtiyeke",
+                      "werîs",
+                      "berbangeke"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "mistake"
                   }
                 },
                 {
