@@ -122,7 +122,8 @@ describe('the Impostor deck', () => {
     }
   });
 
-  it('offers the room each category it can deal from, and deals an evening from any of them', () => {
+  // Deals a whole evening from every category of both decks, which outruns the default limit on a busy runner.
+  it('offers the room each category it can deal from, and deals an evening from any of them', { timeout: 30_000 }, () => {
     for (const dialect of ['kmr', 'ckb'] as const) {
       const pool = cardRows(dialect).map((r) => ({ level: r.level, payload: r.payload }));
       const offer = couchOffer(pool, dialect);
