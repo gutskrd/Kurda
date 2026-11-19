@@ -63,6 +63,9 @@ export const REACTION_MOMENT_CUE: Readonly<Record<ReactionMoment, { title: strin
   'welcome-back': { title: 'Welcome back', cue: 'The learner is back after some days away. Glad to see them, never reproachful.' },
 };
 
+/** What the learner knows each one as: the teacher is Xezal to everyone but her uncle. */
+export const REACTION_NAMES: Readonly<Record<ReactionCharacter, string>> = { hevalo: 'Hevalo', xezo: 'Xezal' };
+
 /** How each character says them, for the record page. */
 export const REACTION_TONE: Readonly<Record<ReactionCharacter, string>> = {
   hevalo: 'A young deer: short, cheeky and warm, always thinking of apples.',
