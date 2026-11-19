@@ -505,9 +505,11 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[], after
         const voice = c.character ?? castVoice(c.name);
         const own = lines[c.index];
         const prev = c.index > 0 ? lines[c.index - 1] : undefined;
+        // A road line is recorded once under its words, so a line the lesson taught is not recorded again for its scene.
+        const plain = onRoad && c.character !== null;
         builder.add({
           store: 'lesson',
-          key: c.key,
+          key: plain ? lessonAudioKey(c.text) : c.key,
           text: c.text,
           dialect,
           planned: voice,
@@ -521,7 +523,8 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[], after
           },
           section,
           sure: isRecord(own) ? str(own.en) : null,
-          conversation: { id: String(p.id), part: c.part, title, name: c.name },
+          cue: plain && title ? `In the conversation ‘${title}’.` : null,
+          conversation: plain ? null : { id: String(p.id), part: c.part, title, name: c.name },
           before:
             isRecord(prev) && typeof prev.text === 'string'
               ? { name: nameOf(prev.speaker), text: prev.text, meaning: str(prev.en) }
@@ -638,7 +641,9 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
       extra: Pick<Entry, 'sure' | 'cue'>,
     ): void => {
       if (typeof ku !== 'string' || !sayable(ku)) return;
-      const { key, conversation } = gameLineKey(ku, recording);
+      const found = gameLineKey(ku, recording);
+      // a road conversation's lines are recorded under their words (see addLessons), and so is a card copied from one
+      const { key, conversation } = found.conversation?.id.startsWith('road') ? { key: lessonAudioKey(ku), conversation: null } : found;
       const voice = planned ?? NARRATOR[dialect];
       builder.add({
         store: 'lesson',

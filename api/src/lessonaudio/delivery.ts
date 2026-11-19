@@ -39,8 +39,9 @@ export interface DeliveredAudio {
   /** Who says the cards' recordings, keyed by text, for cards whose recording has a character. */
   audioVoices?: Record<string, RecordingVoice>;
   /**
-   * A conversation's recordings, one per line by place, null where not recorded. The lines are on screen in full, and
-   * a line's recording is filed under its conversation and part, so its URL never matches another item's.
+   * A conversation's recordings, one per line by place, null where not recorded: the take filed under the line's
+   * conversation and part, else the take of its words when its part's character said it. The lines are on screen in
+   * full, so a URL a listening item in the same response plays is never sent here.
    */
   lineAudio?: Array<string | null>;
   /** Who says each line's recording, null where none: always the part's character, with the recording's own timeline. */
@@ -58,6 +59,8 @@ interface Plan {
   shown: Array<[string, string]>;
   /** a conversation's line keys, by the line's place ('' for a line with nothing to file) */
   lines: string[];
+  /** each line's words keyed as any recording's, whose take serves the line when its own place has none */
+  plainLines: string[];
   /** the character playing each line's part, by the line's place */
   cast: Array<SpeakerId | null>;
 }
@@ -117,6 +120,7 @@ function planFor(type: ExerciseType, payload: unknown): Plan {
     answerBearing: type === 'listening' ? [listening, primary].filter((k): k is string => k !== null) : [],
     shown,
     lines: type === 'conversation' ? lineKeys(p) : [],
+    plainLines: type === 'conversation' ? plainLineKeys(p) : [],
     cast: type === 'conversation' ? lineCast(p) : [],
   };
 }
@@ -126,6 +130,15 @@ function lineKeys(p: Record<string, unknown>): string[] {
   if (typeof p.id !== 'string' || !Array.isArray(p.lines)) return [];
   return (p.lines as Array<{ speaker?: unknown; text?: unknown }>).map((line) =>
     typeof line?.speaker === 'number' && typeof line.text === 'string' ? conversationLineKey(p.id as string, line.speaker, line.text) : '',
+  );
+}
+
+/** Each line's words keyed as a plain recording, by its place: '' for the learner's own lines and malformed ones. */
+function plainLineKeys(p: Record<string, unknown>): string[] {
+  if (!Array.isArray(p.lines)) return [];
+  const speakers = Array.isArray(p.speakers) ? (p.speakers as Array<{ learner?: unknown } | null>) : [];
+  return (p.lines as Array<{ speaker?: unknown; text?: unknown }>).map((line) =>
+    typeof line?.text === 'string' && typeof line.speaker === 'number' && speakers[line.speaker]?.learner !== true ? lessonAudioKey(line.text) : '',
   );
 }
 
@@ -165,6 +178,7 @@ export async function lessonAudioFor(
     if (model) keys.add(model);
     for (const [, key] of plan.shown) if (cardKey(key)) keys.add(key);
     for (const key of plan.lines) if (key) keys.add(key);
+    for (const key of plan.plainLines) if (key) keys.add(key);
   }
   if (keys.size === 0) return plans.map(() => ({}));
 
@@ -181,10 +195,22 @@ export async function lessonAudioFor(
     return url && !heardUrls.has(url) ? url : undefined;
   };
   const voices = new Map<string, RecordingVoice>();
+  const speakers = new Map<string, string | null>();
   for (const r of rows) {
     const voice = voiceOfRecording(r);
     if (voice) voices.set(r.key, voice);
+    speakers.set(r.key, r.speaker);
   }
+  // A line with no take of its own plays the take of its words, when that take is its part's character (or nobody's):
+  // a line the lesson already taught is recorded once.
+  const lineTake = (plan: Plan, i: number): string => {
+    const own = plan.lines[i] ?? '';
+    if (own && urls.has(own)) return own;
+    const plain = plan.plainLines[i] ?? '';
+    if (!plain || !urls.has(plain)) return own;
+    const said = speakers.get(plain) ?? null;
+    return said === null || said === plan.cast[i] ? plain : own;
+  };
 
   return plans.map((plan) => {
     const out: DeliveredAudio = {};
@@ -212,9 +238,10 @@ export async function lessonAudioFor(
     }
     if (Object.keys(audio).length > 0) out.audio = audio;
     if (Object.keys(audioVoices).length > 0) out.audioVoices = audioVoices;
-    if (plan.lines.some((key) => lineUrl(key))) {
-      out.lineAudio = plan.lines.map((key) => lineUrl(key) ?? null);
-      out.lineVoices = plan.lines.map((key, i) => {
+    const takes = plan.lines.map((_, i) => lineTake(plan, i));
+    if (takes.some((key) => lineUrl(key))) {
+      out.lineAudio = takes.map((key) => lineUrl(key) ?? null);
+      out.lineVoices = takes.map((key, i) => {
         if (!lineUrl(key)) return null;
         const voice = voices.get(key) ?? null;
         const who = plan.cast[i];

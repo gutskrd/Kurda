@@ -115,15 +115,27 @@ describe('the recording script', () => {
     });
     const keys = new Set(lines.filter((l) => l.store === 'lesson').map((l) => l.key));
     for (const text of [...lessonAudioTargets('multiple_choice', mc), ...lessonAudioTargets('match_pairs', pairs)]) expect(keys).toContain(lessonAudioKey(text));
-    for (const c of conversationClips(conversation)) expect(keys).toContain(conversationLineKey(conversation.id, c.part, c.text));
+    // a road conversation's line under its words, so a line its lesson taught is one recording
+    for (const c of conversationClips(conversation)) expect(keys).toContain(lessonAudioKey(c.text));
     for (const p of storyParagraphs(story.body)) for (const s of storyAudioSentences(p)) expect(keys).toContain(lessonAudioKey(s));
     // the letters and the word sets in the alphabet's store, under their clip keys
     const clips = new Set(lines.filter((l) => l.store === 'alphabet').map((l) => l.key));
     expect(clips).toEqual(new Set([...WORD_SET_CLIPS, ...LETTER_CLIPS].map((c) => c.key)));
-    // a conversation's line carries what the upload needs to file it under its part
-    const line = lines.find((l) => l.text === 'Sêv…')!;
-    expect(line.conversation).toEqual({ id: 'roadu01s1l3a', part: 1, title: 'Bi xêr hatî!', name: 'Hevalo' });
-    expect(line.id).toBe(`lesson|${conversationLineKey('roadu01s1l3a', 1, 'Sêv…')}`);
+    const line = lines.find((l) => l.text === 'Silav! Bi xêr hatî!')!;
+    expect(line).toMatchObject({ id: `lesson|${lessonAudioKey('Silav! Bi xêr hatî!')}`, conversation: null, voice: 'hamo', cue: 'In the conversation ‘Bi xêr hatî!’.' });
+    // a line said in a card and in a conversation is one recording, the part's character's
+    expect(lines.find((l) => l.key === lessonAudioKey('Sêv…'))).toMatchObject({ voice: 'hevalo', conversation: null });
+    // another course's conversation line carries what the upload needs to file it under its part
+    const other = buildScript({
+      exercises: [exercise({ courseSlug: 'kurmanji', courseTitle: 'Kurmancî for beginners', type: 'conversation', payload: { ...conversation, id: 'basics01a' } })],
+      stories: [],
+      games: [],
+      plan: PLAN,
+      letters: [],
+      words: [],
+    }).find((l) => l.text === 'Sêv…')!;
+    expect(other.conversation).toEqual({ id: 'basics01a', part: 1, title: 'Bi xêr hatî!', name: 'Hevalo' });
+    expect(other.id).toBe(`lesson|${conversationLineKey('basics01a', 1, 'Sêv…')}`);
   });
 
   it('lists a line said in several places once, with every place, published when any of them is', () => {
@@ -210,7 +222,7 @@ describe('the recording script', () => {
       exercises: [
         exercise({ exercisePosition: 1, type: 'match_pairs', payload: { pairs: [{ left: 'baş', right: 'good, well' }] } }),
         exercise({ exercisePosition: 2, type: 'translate', payload: { say: 'Ez baş im.', prompt: 'In English?', accepted: ['I am well.'] } }),
-        exercise({ exercisePosition: 3, type: 'conversation', payload: conversation }),
+        exercise({ courseSlug: 'kurmanji', courseTitle: 'Kurmancî for beginners', exercisePosition: 3, type: 'conversation', payload: conversation }),
         // a reply question: its options are Kurdish replies, not what the line means
         exercise({ exercisePosition: 4, type: 'multiple_choice', payload: { say: 'Tu çawa yî?', prompt: 'What do you answer?', options: ['Ez baş im.'], correctIndex: 0 } }),
         exercise({ exercisePosition: 5, type: 'multiple_choice', payload: { say: 'Tu birçî yî?', prompt: '“Tu birçî yî?” What is he asking?', options: ['Are you hungry?'], correctIndex: 0 } }),
@@ -281,7 +293,8 @@ describe('the recording script', () => {
       },
     ];
     const lines = buildScript({ exercises: [exercise({ type: 'conversation', payload: conversation })], stories: [], games, plan: PLAN, letters: [], words: [] });
-    const merged = lines.find((l) => l.key === lineKey)!;
+    // the card was copied from a road conversation, whose lines are recorded under their words
+    const merged = lines.find((l) => l.key === lessonAudioKey('Fermo, sêvek!'))!;
     expect(merged.places.map((p) => p.kind)).toEqual(['conversation', 'game']);
     expect(merged.places[1]!.label).toBe('Detektîf · case ‘The missing apples’ · overheard 1');
     // the case before the question, whatever order the rows came in
@@ -356,7 +369,7 @@ describe('the Kurmanji Road in the script', () => {
     const byKey = new Map(lines.map((l) => [l.key, l]));
     let asked = 0;
     for (const e of exercises) {
-      const keys = e.type === 'conversation' ? conversationClips(e.payload).map((c) => c.key) : lessonAudioTargets(e.type, e.payload).map(lessonAudioKey);
+      const keys = e.type === 'conversation' ? conversationClips(e.payload).map((c) => lessonAudioKey(c.text)) : lessonAudioTargets(e.type, e.payload).map(lessonAudioKey);
       for (const key of keys) {
         asked += 1;
         expect(byKey.has(key), key).toBe(true);
@@ -365,13 +378,17 @@ describe('the Kurmanji Road in the script', () => {
     expect(asked).toBeGreaterThan(lines.length);
     // every conversation line is its character's, and everything is a draft until it is published
     for (const e of exercises.filter((x) => x.type === 'conversation')) {
-      for (const c of conversationClips(e.payload)) expect(byKey.get(c.key)!.voice).toBe(c.character);
+      for (const c of conversationClips(e.payload)) expect(byKey.get(lessonAudioKey(c.text))!.voice).toBe(c.character);
     }
     expect(lines.every((l) => !l.live && l.places.every((p) => p.status === 'draft'))).toBe(true);
     expect(peopleOf(lines, plan).map((p) => p.id)).toEqual(['hamo', 'xezo', 'hevalo', 'narrator-kmr', 'narrator-ckb']);
-    // every chapter of the road is written for Hamo alone, so each goes online once he has recorded it
+    // Hamo says nearly everything; Xezal and Hevalo say a few lines of their own, each a person on the page
     const counts = new Map(peopleOf(lines, plan).map((p) => [p.id, lines.filter((l) => l.voice === p.id).length]));
-    expect(counts.get('hamo')!).toBe(lines.length);
+    expect(counts.get('hamo')! + counts.get('xezo')! + counts.get('hevalo')!).toBe(lines.length);
+    for (const who of ['xezo', 'hevalo']) {
+      expect(counts.get(who)!).toBeGreaterThan(0);
+      expect(counts.get(who)!).toBeLessThanOrEqual(40);
+    }
     expect(raw.units.every((u) => u.recorder === 'hamo')).toBe(true);
   });
 });
