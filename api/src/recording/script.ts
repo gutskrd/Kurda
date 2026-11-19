@@ -2,7 +2,7 @@
  * Everything the course asks someone to say aloud, as one script per voice, behind the "Record by person" page. Lines
  * come from lessons (drafts included), stories, word sets, the alphabet and the learning games, each keyed as the
  * studio keys it (`lessonAudioKey`, `conversationLineKey`, or an alphabet clip key), so a take from this script plays
- * everywhere the text is said and earlier studio takes show as done. Hevalo's and Xezal's reaction lines come last, each
+ * everywhere the text is said and earlier studio takes show as done. Hevalo's and Xezo's reaction lines come last, each
  * filed by `reactionKey`.
  *
  * A text said in several places is one line, filed where the course first says it, listing every place. It belongs
@@ -67,8 +67,6 @@ export function isVoiceId(v: unknown): v is VoiceId {
 /** The course the owner writes the voice plan for, first in every script. */
 export const ROAD_COURSE = 'kurmanji-road';
 
-/** Where the course's name for a character differs from the apps' label: the niece is Xezal, Xezo only to her uncle. */
-const PLAN_NAMES: Partial<Record<SpeakerId, string>> = { xezo: 'Xezal' };
 
 const DIALECT_NAME: Record<ScriptDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
 
@@ -148,7 +146,7 @@ export interface ScriptInput {
   /** the alphabet's and the word sets' sounds: every one, unless a test gives fewer */
   letters?: readonly AlphabetClip[];
   words?: readonly AlphabetClip[];
-  /** Hevalo's and Xezal's reaction lines, which the service gives (`REACTION_LINES`); none otherwise. */
+  /** Hevalo's and Xezo's reaction lines, which the service gives (`REACTION_LINES`); none otherwise. */
   reactions?: readonly ReactionLine[];
 }
 
@@ -269,9 +267,9 @@ export function castVoice(name: string): VoiceId {
   return `cast-${slug || 'part'}`;
 }
 
-/** What a character is called in the course: Hamo, Xezal, Hevalo. */
+/** What a character is called in the course: Hamo, Xezo, Hevalo. */
 export function characterName(id: SpeakerId): string {
-  return PLAN_NAMES[id] ?? CHARACTER_NAMES[id];
+  return CHARACTER_NAMES[id];
 }
 
 /** The quoted parts of a prompt (“…” or "…"), in order. */

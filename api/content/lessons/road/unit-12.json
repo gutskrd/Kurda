@@ -656,11 +656,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezal dê bêriya şanoyên me bike.",
+                    "say": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
                     "voice": "hamo",
-                    "prompt": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezal dê bêriya şanoyên me bike.",
+                    "prompt": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
                     "options": [
-                      "We spent a lovely evening, and Dapîr clapped. Xezal will miss our plays.",
+                      "We spent a lovely evening, and Dapîr clapped. Xezo will miss our plays.",
                       "We spent the whole evening on the talk, and Dapîr listened by the churn.",
                       "And Hevalo stayed quiet, and at the end he clapped!"
                     ],
@@ -711,11 +711,11 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezal dê bêriya şanoyên me bike.",
+                    "say": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
                     "voice": "hamo",
-                    "prompt": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezal dê bêriya şanoyên me bike.",
+                    "prompt": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
                     "accepted": [
-                      "We spent a lovely evening, and Dapîr clapped. Xezal will miss our plays."
+                      "We spent a lovely evening, and Dapîr clapped. Xezo will miss our plays."
                     ]
                   }
                 },
@@ -739,12 +739,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
+                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "voice": "hamo",
-                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
+                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "options": [
-                      "No. A big school in Hewlêr has made Xezal an offer.",
-                      "An offer came for Xezal from Hewlêr.",
+                      "No. A big school in Hewlêr has made Xezo an offer.",
+                      "An offer came for Xezo from Hewlêr.",
                       "It’s from the old shop, on the big street."
                     ],
                     "correctIndex": 0
@@ -813,8 +813,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezal dê bêriya şanoyên me bike.",
-                        "en": "We spent a lovely evening, and Dapîr clapped. Xezal will miss our plays."
+                        "text": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
+                        "en": "We spent a lovely evening, and Dapîr clapped. Xezo will miss our plays."
                       }
                     ],
                     "prompt": "Rola Hevalo çi ye?",
@@ -865,9 +865,9 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "We spent a lovely evening, and Dapîr clapped. Xezal will miss our plays.",
+                    "prompt": "We spent a lovely evening, and Dapîr clapped. Xezo will miss our plays.",
                     "options": [
-                      "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezal dê bêriya şanoyên me bike.",
+                      "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
                       "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
                       "Zarok li dora sobeyê berhev dibin, û ez dibêjim: bizinek hebû, û du karikên wê hebûn."
                     ],
@@ -2483,7 +2483,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Sibe waneya Xezalê heye, lêbelê Baran ditirse."
+                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse."
                     ]
                   }
                 },
@@ -2769,7 +2769,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Xezalê karek da pola Baran, û mijara wî Sêvan e."
+                      "Xezoyê karek da pola Baran, û mijara wî Sêvan e."
                     ]
                   }
                 },
@@ -2956,7 +2956,7 @@
                     "options": [
                       "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
                       "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
-                      "Sibe waneya Xezalê heye, lêbelê Baran ditirse."
+                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse."
                     ],
                     "correctIndex": 0
                   }
@@ -4064,11 +4064,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Otobûs li ber dergehê şîn e, û Xezal amade ye.",
+                    "say": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
                     "voice": "hamo",
-                    "prompt": "Otobûs li ber dergehê şîn e, û Xezal amade ye.",
+                    "prompt": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
                     "options": [
-                      "The bus is at the blue gate, and Xezal is ready.",
+                      "The bus is at the blue gate, and Xezo is ready.",
                       "And Hevalo? Hevalo is here, because he is Hevalo!",
                       "Hevalo is by the window, looking at the mountains."
                     ],
@@ -4095,9 +4095,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Otobûs li ber dergehê şîn e, û Xezal amade ye.",
+                    "say": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
                     "voice": "hamo",
-                    "prompt": "Otobûs li ber ___ şîn e, û Xezal amade ye.",
+                    "prompt": "Otobûs li ber ___ şîn e, û Xezo amade ye.",
                     "options": [
                       "dergehê",
                       "dergeh",
@@ -4119,7 +4119,7 @@
                         "character": "hamo"
                       },
                       {
-                        "name": "Xezal",
+                        "name": "Xezo",
                         "character": "xezo"
                       },
                       {
@@ -4130,8 +4130,8 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Otobûs li ber dergehê şîn e, û Xezal amade ye.",
-                        "en": "The bus is at the blue gate, and Xezal is ready."
+                        "text": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
+                        "en": "The bus is at the blue gate, and Xezo is ready."
                       },
                       {
                         "speaker": 0,
@@ -4159,7 +4159,7 @@
                         "en": "The last apple is for me!"
                       }
                     ],
-                    "prompt": "Xezal ji Hamo re çi got?",
+                    "prompt": "Xezo ji Hamo re çi got?",
                     "options": [
                       "Simbêlê xwe biparêze!",
                       "Sêvan bixwe!",
@@ -4220,8 +4220,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Otobûs li ber dergehê şîn e, û Xezal amade ye.",
-                    "reference": "Otobûs li ber dergehê şîn e, û Xezal amade ye."
+                    "prompt": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
+                    "reference": "Otobûs li ber dergehê şîn e, û Xezo amade ye."
                   }
                 }
               ]
@@ -4302,9 +4302,9 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The bus is at the blue gate, and Xezal is ready.",
+                    "prompt": "The bus is at the blue gate, and Xezo is ready.",
                     "options": [
-                      "Otobûs li ber dergehê şîn e, û Xezal amade ye.",
+                      "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
                       "Bavê min pê hesiya ku dengbêj hatiye, û wî pirsî ka kilamek li ser wî heye.",
                       "Me li ber sobeyê civînek çêkir, û rolên şanoyê parve kirin."
                     ],
@@ -4418,7 +4418,7 @@
                     "options": [
                       "Ez ê bêriya we hemûyan bikim.",
                       "Welatê te li ku ye?",
-                      "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye."
+                      "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye."
                     ],
                     "correctIndex": 0
                   }

@@ -6,15 +6,14 @@
     "titleEn": "The Kurmanji Road"
   },
   "characters": {
-    "hamo": "Hamo is the warm heart of Sêvan, a village of apple orchards under the mountains, and the voice of the whole road. He was born and grew up in Kobanî, where his father Ibrahîm, who plays the shepherd’s flute, and his mother Edûl still live, with his younger brother Evdila and his sisters Lorîn and Cîhan; as children he and Lorîn spent their summers in Sêvan with their aunt, and as a young man he came back to the village and stayed. He lives behind the blue gate with Hevalo, Bozo the donkey, Şêro the dog and the old apple orchard, and the village children call him Xalo Hamo. He speaks standard Kurmanji with the warmth and a few of the words of Kobanî. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the end of his full black moustache when he is pleased with you, and is prouder of that moustache than of anything he owns. A miss gets one raised eyebrow and a thoughtful look, never a cross word. He wears the traditional suit with a green piştên, keeps the orchard, drinks tea from dawn to dusk with far too much sugar, is never quite on time, and has a proverb or a tale for every moment. He says nearly every line of the road: he talks with you, and tells you about everyone else, while Xezal and Hevalo say their own few lines.",
-    "xezo": "Xezal is the young teacher at the village school. She comes from Amed and teaches the children of Sêvan their letters, and she lives in the village like any other neighbour. She is seen now and then, at the school with the children or at the market, and in her own scenes she speaks for herself, bright and kind: who she is, her lessons, her decision and her goodbye. Otherwise the road hears of her through what Hamo and the children say. Bright, quick and kind, she knows the city and the village alike. In the last chapters a school in Hewlêr, far away, offers her a post; she decides to go, says goodbye to the whole village, and leaves on the dawn bus from the blue gate.",
+    "hamo": "Hamo is the warm heart of Sêvan, a village of apple orchards under the mountains, and the voice of the whole road. He was born and grew up in Kobanî, where his father Ibrahîm, who plays the shepherd’s flute, and his mother Edûl still live, with his younger brother Evdila and his sisters Lorîn and Cîhan; as children he and Lorîn spent their summers in Sêvan with their aunt, and as a young man he came back to the village and stayed. He lives behind the blue gate with Hevalo, Bozo the donkey, Şêro the dog and the old apple orchard, and the village children call him Xalo Hamo. He speaks standard Kurmanji with the warmth and a few of the words of Kobanî. Steady, patient and easily pleased, he laughs at his own stories (often before the end of them), lifts the end of his full black moustache when he is pleased with you, and is prouder of that moustache than of anything he owns. A miss gets one raised eyebrow and a thoughtful look, never a cross word. He wears the traditional suit with a green piştên, keeps the orchard, drinks tea from dawn to dusk with far too much sugar, is never quite on time, and has a proverb or a tale for every moment. He says nearly every line of the road: he talks with you, and tells you about everyone else, while Xezo and Hevalo say their own few lines.",
+    "xezo": "Xezo is the young teacher at the village school. She comes from Amed and teaches the children of Sêvan their letters, and she lives in the village like any other neighbour. She is seen now and then, at the school with the children or at the market, and in her own scenes she speaks for herself, bright and kind: who she is, her lessons, her decision and her goodbye. Otherwise the road hears of her through what Hamo and the children say. Bright, quick and kind, she knows the city and the village alike. In the last chapters a school in Hewlêr, far away, offers her a post; she decides to go, says goodbye to the whole village, and leaves on the dawn bus from the blue gate.",
     "hevalo": "Hevalo is a young male deer and the learner’s guide: he brings you to Hamo’s blue gate in the first lesson and walks the whole road beside you. His name means “O friend!” Curious about everything and quick on his feet, he hops when he is pleased, tilts his head when something puzzles him and pricks up his ears at anything new. He is always after apples and always the first suspect when apples go missing, cheeky in a sweet way and kind when you get something wrong. He talks a little, in a young voice: short, cheeky, warm lines (“Ez birçî me!”, “Sêva paşîn ji bo min e!”), never long sentences; anything longer Hamo tells for him, usually with a laugh. On the summer pastures he only has eyes for Zerê, a shy wild doe, and brings her every apple he can carry."
   },
   "core": ["û", "ji", "li", "bi", "jî", "an", "ku", "re", "ve", "wey", "lo", "îcar"],
   "names": [
     {"name": "Hamo", "kind": "person", "en": "Hamo, from Kobanî, at home in Sêvan", "forms": ["Hamo"]},
-    {"name": "Xezal", "kind": "person", "en": "Xezal, from Amed, the young teacher at the village school", "forms": ["Xezal", "Xezalê"]},
-    {"name": "Xezo", "kind": "person", "en": "what Hamo calls Xezal when she leaves (the farewell scenes of chapter 12 only)", "forms": ["Xezo"]},
+    {"name": "Xezo", "kind": "person", "en": "Xezo, from Amed, the young teacher at the village school", "forms": ["Xezo", "Xezoyê"]},
     {"name": "Hevalo", "kind": "person", "en": "the young deer, the learner’s guide", "forms": ["Hevalo"]},
     {"name": "Nazê", "kind": "person", "en": "Hamo’s neighbour", "forms": ["Nazê"]},
     {"name": "Baran", "kind": "person", "en": "Nazê’s son, nine", "forms": ["Baran"]},
@@ -380,7 +379,7 @@
               "titleKu": "Hûn cîran in!",
               "titleEn": "You’re neighbours!",
               "focus": "talk",
-              "beat": "A knock at the blue gate: the neighbours have come, Nazê with a plate of warm bread, Baran, and Hêvî hiding behind her mother’s skirt, and with them Xezal, the young teacher from Amed. Hêvî starts a game, “Ez kî me?”, and everyone says what they are: Hamo is a man, Xezal is a woman, and Hevalo, very proudly, is an animal. Hamo explains who is who: they are neighbours, you are the guest, and Hevalo just lives in the orchard and eats it.",
+              "beat": "A knock at the blue gate: the neighbours have come, Nazê with a plate of warm bread, Baran, and Hêvî hiding behind her mother’s skirt, and with them Xezo, the young teacher from Amed. Hêvî starts a game, “Ez kî me?”, and everyone says what they are: Hamo is a man, Xezo is a woman, and Hevalo, very proudly, is an animal. Hamo explains who is who: they are neighbours, you are the guest, and Hevalo just lives in the orchard and eats it.",
               "voice": "hamo",
               "new": [
                 {"ku": "cîran", "en": "neighbour", "pos": "noun", "gender": "mf", "forms": ["cîran", "cîranên", "cîranan", "cîranek", "cîranê", "cîranekî", "cîranî", "cîrana", "cîraneke"]},
@@ -605,7 +604,7 @@
       "cefr": "A1",
       "titleKu": "Mal û gund",
       "titleEn": "House and village",
-      "story": "Hamo shows you his house, all the way up to the flat roof where everyone sleeps on summer nights, and the clay tenûr in the yard where Dapîr bakes bread. In an old box Baran finds a child’s map of Sêvan, drawn long ago by Hamo and his sister Lorîn when they spent their summers here with their aunt, with a big X on it. With the map you follow the colours of the village (the blue gate, the red apples, the green leaves, Dapîr’s white goat) and learn where things are: on, under, in, in front of and behind, while Hamo swears he knows nothing and Hevalo hides apples in every one of those places. A game of “touch your nose” goes wrong when Hevalo joins in. Under the walnut tree by the spring the treasure is found: a tin of marbles and half of an old photo of young Hamo and Lorîn. The other half is in Kobanî. Then Hamo walks you through the village: the school, where Xezal, the young teacher from Amed, teaches the children their letters, the shop, the spring and the hills. Tomorrow is market day in the town.",
+      "story": "Hamo shows you his house, all the way up to the flat roof where everyone sleeps on summer nights, and the clay tenûr in the yard where Dapîr bakes bread. In an old box Baran finds a child’s map of Sêvan, drawn long ago by Hamo and his sister Lorîn when they spent their summers here with their aunt, with a big X on it. With the map you follow the colours of the village (the blue gate, the red apples, the green leaves, Dapîr’s white goat) and learn where things are: on, under, in, in front of and behind, while Hamo swears he knows nothing and Hevalo hides apples in every one of those places. A game of “touch your nose” goes wrong when Hevalo joins in. Under the walnut tree by the spring the treasure is found: a tin of marbles and half of an old photo of young Hamo and Lorîn. The other half is in Kobanî. Then Hamo walks you through the village: the school, where Xezo, the young teacher from Amed, teaches the children their letters, the shop, the spring and the hills. Tomorrow is market day in the town.",
       "recorder": "hamo",
       "skills": [
         {
@@ -819,7 +818,7 @@
               "titleKu": "Dibistan û dikan",
               "titleEn": "School and shop",
               "focus": "meet",
-              "beat": "Hamo walks you through the village. Here is the school: through the open window you hear the children reading aloud with their teacher, Xezal, the young teacher from Amed. Here is the shop, which sells everything and is never open when you need it. And here is the spring, where the water is so cold that Hevalo drinks it with his eyes shut.",
+              "beat": "Hamo walks you through the village. Here is the school: through the open window you hear the children reading aloud with their teacher, Xezo, the young teacher from Amed. Here is the shop, which sells everything and is never open when you need it. And here is the spring, where the water is so cold that Hevalo drinks it with his eyes shut.",
               "voice": "hamo",
               "new": [
                 {"ku": "gund", "en": "village", "pos": "noun", "gender": "m", "forms": ["gund", "gundên", "gundan", "gundek", "gundê", "gundekî", "gundî"]},
@@ -1724,7 +1723,7 @@
       "cefr": "A2",
       "titleKu": "Hewa û Newroz",
       "titleEn": "Weather and Newroz",
-      "story": "The minibus climbs the pass in the first snow, and Sêvan waits out the end of winter by the stove. Then the sun comes back, the snow melts, the stream by the walnut tree sings again, and the whole village gets ready for Newroz: Nazê sews new clothes, Baran gathers firewood, Xezal teaches the schoolchildren the steps of the govend, and Hamo practises a speech that the hens will not stay to hear. The future is on everyone’s lips (ez ê …, em ê …), and so is what everyone wants to do. On Newroz eve a car comes up the road from Kobanî: Hamo’s parents, as promised. By the fire on the hill Ibrahîm plays his old shepherd’s flute and then puts it into his son’s hands: keep the song going. The next morning, after a whole night of govend, Hamo cannot get out of bed. His back!",
+      "story": "The minibus climbs the pass in the first snow, and Sêvan waits out the end of winter by the stove. Then the sun comes back, the snow melts, the stream by the walnut tree sings again, and the whole village gets ready for Newroz: Nazê sews new clothes, Baran gathers firewood, Xezo teaches the schoolchildren the steps of the govend, and Hamo practises a speech that the hens will not stay to hear. The future is on everyone’s lips (ez ê …, em ê …), and so is what everyone wants to do. On Newroz eve a car comes up the road from Kobanî: Hamo’s parents, as promised. By the fire on the hill Ibrahîm plays his old shepherd’s flute and then puts it into his son’s hands: keep the song going. The next morning, after a whole night of govend, Hamo cannot get out of bed. His back!",
       "recorder": "hamo",
       "skills": [
         {
@@ -1880,7 +1879,7 @@
               "titleKu": "Govend",
               "titleEn": "The govend",
               "focus": "meet",
-              "beat": "At the school Xezal is teaching the children the govend steps for Newroz, and Hamo, passing by, tells you everything about it: who plays the drum, who plays the zurna, who leads with the handkerchief at the head of the line. The children sing a song. Hamo cannot resist joining the end of the line; three steps later he is in the middle of it, and the hens in the yard are dancing too, in their way.",
+              "beat": "At the school Xezo is teaching the children the govend steps for Newroz, and Hamo, passing by, tells you everything about it: who plays the drum, who plays the zurna, who leads with the handkerchief at the head of the line. The children sing a song. Hamo cannot resist joining the end of the line; three steps later he is in the middle of it, and the hens in the yard are dancing too, in their way.",
               "voice": "hamo",
               "new": [
                 {"ku": "govend", "en": "govend, the circle dance", "pos": "noun", "gender": "f", "forms": ["govend", "govendên", "govendan", "govendek", "govenda", "govendê", "govendeke"]},
@@ -2888,7 +2887,7 @@
       "cefr": "B1",
       "titleKu": "Kar û xwendin",
       "titleEn": "Work and school",
-      "story": "Autumn in Sêvan: the apples are ripe, school has started, and everybody in the village has a trade, and an opinion about everyone else’s. Ferhad farms, Mîrza sells, Bişar keeps sheep, the builder mends the mill, and Hamo, of course, is in charge of tea. Then news comes: a school in Hewlêr, far away, has offered Xezal, the village teacher, a post. The whole village comes to help with the apple harvest behind the blue gate, and at the village meeting afterwards Xezal says she has decided: she will go after the winter, and come back for every Newroz. The present perfect says what has been done (me sêv berhev kirine, wê biryar daye) and the linking words say why (ji ber ku, loma, lê, hem … hem). Baran has to give a talk about Sêvan in front of the whole school and is terrified; Hamo helps him write it, and the hens hear it first. Everyone talks about plans and hopes, yours too: what you will do with your Kurdish, and who you will speak it with. As the first snow comes, Hamo promises a tale by the stove every winter night.",
+      "story": "Autumn in Sêvan: the apples are ripe, school has started, and everybody in the village has a trade, and an opinion about everyone else’s. Ferhad farms, Mîrza sells, Bişar keeps sheep, the builder mends the mill, and Hamo, of course, is in charge of tea. Then news comes: a school in Hewlêr, far away, has offered Xezo, the village teacher, a post. The whole village comes to help with the apple harvest behind the blue gate, and at the village meeting afterwards Xezo says she has decided: she will go after the winter, and come back for every Newroz. The present perfect says what has been done (me sêv berhev kirine, wê biryar daye) and the linking words say why (ji ber ku, loma, lê, hem … hem). Baran has to give a talk about Sêvan in front of the whole school and is terrified; Hamo helps him write it, and the hens hear it first. Everyone talks about plans and hopes, yours too: what you will do with your Kurdish, and who you will speak it with. As the first snow comes, Hamo promises a tale by the stove every winter night.",
       "recorder": "hamo",
       "skills": [
         {
@@ -2938,10 +2937,10 @@
             {
               "key": "u11s1l3",
               "position": 3,
-              "titleKu": "Xezal û pêşniyar",
-              "titleEn": "Xezal and the offer",
+              "titleKu": "Xezo û pêşniyar",
+              "titleEn": "Xezo and the offer",
               "focus": "talk",
-              "beat": "News in the village: a school in Hewlêr has offered Xezal, the village teacher, a post, a big school in a big city, far away. Hamo passes the news on to you over tea: “Ev derfeteke mezin e!” It is an honour for Sêvan, he says; but Hewlêr is far, and the children will miss their teacher. He asks you what you would do.",
+              "beat": "News in the village: a school in Hewlêr has offered Xezo, the village teacher, a post, a big school in a big city, far away. Hamo passes the news on to you over tea: “Ev derfeteke mezin e!” It is an honour for Sêvan, he says; but Hewlêr is far, and the children will miss their teacher. He asks you what you would do.",
               "voice": "hamo",
               "new": [
                 {"ku": "pêşniyar", "en": "proposal; offer", "pos": "noun", "gender": "f", "forms": ["pêşniyar", "pêşniyarên", "pêşniyaran", "pêşniyarek", "pêşniyara", "pêşniyarê", "pêşniyareke"]},
@@ -3012,7 +3011,7 @@
               "titleKu": "Civîna gund",
               "titleEn": "The village meeting",
               "focus": "talk",
-              "beat": "After the harvest, a meeting in the square: the apples are shared, a basket for every house and the first for the school. Then Xezal stands up and tells the village what she has decided: she will take the post in Hewlêr after the winter, and come back for every Newroz. Hamo tells you what everyone said: Dapîr, that a brave choice is never a wrong one; Baran, nothing at all. November is coming, and the first frost.",
+              "beat": "After the harvest, a meeting in the square: the apples are shared, a basket for every house and the first for the school. Then Xezo stands up and tells the village what she has decided: she will take the post in Hewlêr after the winter, and come back for every Newroz. Hamo tells you what everyone said: Dapîr, that a brave choice is never a wrong one; Baran, nothing at all. November is coming, and the first frost.",
               "voice": "hamo",
               "new": [
                 {"ku": "civîn", "en": "meeting, council", "pos": "noun", "gender": "f", "forms": ["civîn", "civînên", "civînan", "civînek", "civîna", "civînê", "civîneke"]},
@@ -3027,7 +3026,7 @@
               "titleKu": "Ez ê biçim, lê ez ê vegerim",
               "titleEn": "I’ll go, but I’ll come back",
               "focus": "review",
-              "beat": "Xezal has written to the school in Hewlêr: yes, she will come in the spring. The whole village knows by lunchtime, because Mîrza took the letter to the post. Then Baran comes to Hamo with a problem of his own: his teacher wants him to give a talk about the village in front of the whole school, and he is terrified.",
+              "beat": "Xezo has written to the school in Hewlêr: yes, she will come in the spring. The whole village knows by lunchtime, because Mîrza took the letter to the post. Then Baran comes to Hamo with a problem of his own: his teacher wants him to give a talk about the village in front of the whole school, and he is terrified.",
               "voice": "hamo",
               "new": []
             }
@@ -3046,7 +3045,7 @@
               "titleKu": "Loma",
               "titleEn": "That’s why",
               "focus": "meet",
-              "beat": "Xezal has given Baran’s class a task before she goes: each child will give a talk about their village in front of the whole school, and Baran’s subject is Sêvan. Baran explains to Hamo why he can’t: because he is shy, because his voice shakes, which is to say, he would rather not. That is why, says Hamo, they will practise, and also drink tea.",
+              "beat": "Xezo has given Baran’s class a task before she goes: each child will give a talk about their village in front of the whole school, and Baran’s subject is Sêvan. Baran explains to Hamo why he can’t: because he is shy, because his voice shakes, which is to say, he would rather not. That is why, says Hamo, they will practise, and also drink tea.",
               "voice": "hamo",
               "new": [
                 {"ku": "ji ber ku", "en": "because", "pos": "conj", "forms": ["ji", "ber", "ku"]},
@@ -3098,7 +3097,7 @@
               "titleKu": "Rojeke mezin",
               "titleEn": "A big day",
               "focus": "review",
-              "beat": "Baran gives his talk in the school hall: Sêvan, because it has the best apples; its people, because they help each other; and Hevalo, because he is Hevalo. The whole school claps. Xezal, his teacher, says it was the best talk of the year, and Baran is so happy that he gives it again at home, twice.",
+              "beat": "Baran gives his talk in the school hall: Sêvan, because it has the best apples; its people, because they help each other; and Hevalo, because he is Hevalo. The whole school claps. Xezo, his teacher, says it was the best talk of the year, and Baran is so happy that he gives it again at home, twice.",
               "voice": "hamo",
               "new": []
             }
@@ -3136,7 +3135,7 @@
               "titleKu": "Dema ku ez vegerim",
               "titleEn": "When I go back",
               "focus": "build",
-              "beat": "The children tell Hamo all about Xezal’s plans for Hewlêr: a small room near the school, a phone call home every Friday, and her mother tongue taught to children every day. Then Hamo asks about you: your country, your place in the world, who will hear your Kurdish first. Does a person forget their roots far away? His father told him, the day he left Kobanî: go, but don’t forget your roots. In his first winter here he was homesick, and the village gave him strength and warmth.",
+              "beat": "The children tell Hamo all about Xezo’s plans for Hewlêr: a small room near the school, a phone call home every Friday, and her mother tongue taught to children every day. Then Hamo asks about you: your country, your place in the world, who will hear your Kurdish first. Does a person forget their roots far away? His father told him, the day he left Kobanî: go, but don’t forget your roots. In his first winter here he was homesick, and the village gave him strength and warmth.",
               "voice": "hamo",
               "new": [
                 {"ku": "cih", "en": "place, spot", "pos": "noun", "gender": "m", "forms": ["cih", "cihên", "cihan", "cihek", "cihê", "cihekî", "cihî"]},
@@ -3169,7 +3168,7 @@
               "titleKu": "Zivistan hat",
               "titleEn": "Winter has come",
               "focus": "review",
-              "beat": "The last winter before Xezal leaves, and snow on every roof. Hamo sums up the autumn: what everyone has done, what everyone hopes, why it was a good year. Then he opens the stove door, puts the kettle on, and begins the first tale of the winter, for the children and for you: “Hebû tunebû…”",
+              "beat": "The last winter before Xezo leaves, and snow on every roof. Hamo sums up the autumn: what everyone has done, what everyone hopes, why it was a good year. Then he opens the stove door, puts the kettle on, and begins the first tale of the winter, for the children and for you: “Hebû tunebû…”",
               "voice": "hamo",
               "new": []
             }
@@ -3182,7 +3181,7 @@
       "cefr": "B1",
       "titleKu": "Çîrok û stran",
       "titleEn": "Stories and songs",
-      "story": "The last winter by the stove. Each night Hamo tells one of his father’s tales (Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear) while Dapîr answers every tale with a proverb and the children act them out; Hevalo makes a terrible wolf, far too friendly. One snowy night travellers knock: an old dengbêj and his grandson, who sing for their supper, and their kilam about a flute player from Kobanî is missing its last verse, until Hamo’s father sings it down the telephone line. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it Ferhad’s son’s wedding, which is also the village’s farewell to its teacher: Xezal thanks everyone for every tale and every glass of tea, and at dawn the bus takes her from the blue gate to Hewlêr. Then the village turns to you, at the blue gate where your road began: “Rêya te vekirî be!”",
+      "story": "The last winter by the stove. Each night Hamo tells one of his father’s tales (Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear) while Dapîr answers every tale with a proverb and the children act them out; Hevalo makes a terrible wolf, far too friendly. One snowy night travellers knock: an old dengbêj and his grandson, who sing for their supper, and their kilam about a flute player from Kobanî is missing its last verse, until Hamo’s father sings it down the telephone line. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it Ferhad’s son’s wedding, which is also the village’s farewell to its teacher: Xezo thanks everyone for every tale and every glass of tea, and at dawn the bus takes her from the blue gate to Hewlêr. Then the village turns to you, at the blue gate where your road began: “Rêya te vekirî be!”",
       "recorder": "hamo",
       "skills": [
         {
@@ -3419,7 +3418,7 @@
               "titleKu": "Ez ê bêriya we bikim",
               "titleEn": "I’ll miss you",
               "focus": "build",
-              "beat": "Xezal’s goodbye speech to everyone, and Hamo passes her words on to those at the back: thank you for everything, for every tale, for every glass of tea. “Ez ê bêriya we hemûyan bikim.” Then she turns to Hamo and cannot finish.",
+              "beat": "Xezo’s goodbye speech to everyone, and Hamo passes her words on to those at the back: thank you for everything, for every tale, for every glass of tea. “Ez ê bêriya we hemûyan bikim.” Then she turns to Hamo and cannot finish.",
               "voice": "hamo",
               "new": [
                 {"ku": "Heta dîtinê!", "en": "See you! (until we meet)", "pos": "phrase", "forms": ["heta", "dîtinê"]},
@@ -3436,7 +3435,7 @@
               "titleKu": "Li ber dergehê şîn",
               "titleEn": "At the blue gate",
               "focus": "talk",
-              "beat": "Dawn at the blue gate, where your road began, and the bus is waiting. Hamo, Hevalo and you say goodbye to Xezal. “Rêya te vekirî be, Xezo!” says Hamo; “Xwedê ji te razî be!” “Oxir be, bi silametî!” Then, outraged and proud, he tells you her parting order: he is to take care of his moustache. Hevalo gets the last apple.",
+              "beat": "Dawn at the blue gate, where your road began, and the bus is waiting. Hamo, Hevalo and you say goodbye to Xezo. “Rêya te vekirî be, Xezo!” says Hamo; “Xwedê ji te razî be!” “Oxir be, bi silametî!” Then, outraged and proud, he tells you her parting order: he is to take care of his moustache. Hevalo gets the last apple.",
               "voice": "hamo",
               "new": [
                 {"ku": "Rêya te vekirî be!", "en": "Safe journey! (may your road be open)", "pos": "phrase", "forms": ["rêya", "te", "vekirî", "be"]},
@@ -3488,7 +3487,7 @@
     {"ku": "berhev kirin", "reason": "to pick apples is taught as berhev kirin (gather); çinîn (to pick fruit) may be the more natural word for the harvest — confirm"},
     {"ku": "nêrdewan", "reason": "nêrdewan (ladder, feminine), also spelt nerdewan — confirm spelling and gender"},
     {"ku": "lorî", "reason": "lorî (lullaby, feminine: loriya) — confirm spelling and gender"},
-    {"ku": "Rêya te vekirî be, Xezo!", "reason": "the pet name Xezo comes back only in the farewell scenes of chapter 12, as the owner asked — confirm the line"},
+    {"ku": "Rêya te vekirî be, Xezo!", "reason": "the farewell to Xezo, the teacher’s name all along the road — confirm the line"},
     {"ku": "Dapîrê got … / Dapîrê dew çêkir", "reason": "Dapîr as the agent of a past transitive verb takes the oblique, Dapîrê, as unit 10’s own exercise teaches (“Dapîrê hevîr çêkir.”); chapters 11 and 12 now write it so — confirm, and whether “Dapîr rabû û got ku …” (one subject across û) may stay"},
     {"ku": "çepik lêxistin", "reason": "in the past the verb agrees with its object, and çepik (claps) is taken as plural everywhere: “guhdaran / Dapîrê / her kesî / wî çepik lêxistin”, “Kê … çepik lêxistin?”, as the present “çepikan lêdixe” — confirm"},
     {"ku": "Li ber dergehê şîn", "reason": "chapter 12 teaches dergeh, the proper word for a yard’s big gate, and its lesson is now titled with it, as its conversation and lines already were; chapters 3, 4 and 7 keep “deriyê şîn” for the same blue gate — confirm"},

@@ -55,7 +55,7 @@ describe('the road’s plan', () => {
     expect(bad).toEqual([]);
   });
 
-  it('gives Hamo most of the lessons, Xezal her scenes and Hevalo a few', () => {
+  it('gives Hamo most of the lessons, Xezo her scenes and Hevalo a few', () => {
     const count = (v: string): number => lessons.filter((l) => l.voice === v).length;
     expect(count('hamo') / lessons.length).toBeGreaterThanOrEqual(0.65);
     expect(count('hevalo') / lessons.length).toBeLessThanOrEqual(0.1);
@@ -124,11 +124,11 @@ const item = (ku: string, en: string, pos: string, forms: string[]): RoadPlan['u
 
 const PLAN: RoadPlan = {
   course: { ...ROAD_COURSE },
-  characters: { hamo: 'Hamo, the uncle.', xezo: 'Xezal, his niece.', hevalo: 'Hevalo, the deer.' },
+  characters: { hamo: 'Hamo, the uncle.', xezo: 'Xezo, his niece.', hevalo: 'Hevalo, the deer.' },
   core: ['û', 'ji', 'li', 'jî'],
   names: [
     { name: 'Hamo', kind: 'person', en: 'Hamo', forms: ['Hamo'] },
-    { name: 'Xezal', kind: 'person', en: 'Xezal', forms: ['Xezal'] },
+    { name: 'Xezo', kind: 'person', en: 'Xezo', forms: ['Xezo', 'Xezoyê'] },
     { name: 'Amed', kind: 'place', en: 'Amed', forms: ['Amed', 'Amedê'] },
   ],
   units: [
@@ -168,7 +168,7 @@ const PLAN: RoadPlan = {
               titleKu: 'Tu çawa yî?',
               titleEn: 'How are you?',
               focus: 'talk',
-              beat: 'Xezal arrives.',
+              beat: 'Xezo arrives.',
               voice: 'hamo',
               new: [
                 item('çawa', 'how', 'question', ['çawa']),
@@ -219,14 +219,14 @@ const CONVERSATION = {
       { name: 'Xezo', character: 'xezo' },
     ],
     lines: [
-      { speaker: 0, text: 'Silav, Xezal!', en: 'Hello, Xezal!' },
+      { speaker: 0, text: 'Silav, Xezo!', en: 'Hello, Xezo!' },
       { speaker: 1, text: 'Silav, Hamo! Tu çawa yî?', en: 'Hello, Hamo! How are you?' },
       { speaker: 0, text: 'Ez baş im, spas. Tu çawa yî?', en: 'I am well, thanks. How are you?' },
       { speaker: 1, text: 'Ez jî baş im.', en: 'I am well too.' },
       { speaker: 0, text: 'Tu ji Amedê yî?', en: 'Are you from Amed?' },
       { speaker: 1, text: 'Erê, ez ji Amedê me.', en: 'Yes, I am from Amed.' },
     ],
-    prompt: 'Where is Xezal from?',
+    prompt: 'Where is Xezo from?',
     options: ['From the village', 'From Amed', 'From the market'],
     correctIndex: 1,
   },
@@ -239,7 +239,7 @@ function exampleUnit(): { course: typeof ROAD_COURSE; units: unknown[] } {
     mc('meaning', 'Ez baş im.', ['I am from Amed.', 'I am well.', 'I am Hamo.'], 1, 'hamo', [['baş', 'good'], ['im', 'am']]),
     listen(['Ez baş im.', 'Ez baş im'], 'hamo'),
     toKurdish('I am well.', ['Ez baş im.', 'Ez baş im'], 'hamo'),
-    speak('Silav, ez Xezal im.', 'xezo'),
+    speak('Silav, ez Xezo me.', 'xezo'),
     mc('meaning', 'Û tu?', ['And you?', 'And me?', 'Hello!'], 0, 'hamo', [['tu', 'you']]),
     write('I am from Amed.', ['Ez ji Amedê me.', 'Ez ji Amedê me'], 'hamo'),
     toEnglish('Silav, Hamo!', ['Hello, Hamo!', 'Hello Hamo', 'Hi Hamo'], 'xezo'),
@@ -340,10 +340,10 @@ describe('the road’s check, on an example unit', () => {
 
   it('asks for a voice on whatever is recorded, and for Hamo’s share', () => {
     expect(check((doc) => delete lessonOf(doc, 0).exercises[0]!.payload.voice).text).toContain('u01s1l1 #1 payload.voice: has something to record but no voice');
-    const allXezal = check((doc) => {
+    const allXezo = check((doc) => {
       for (const li of [0, 1]) for (const ex of lessonOf(doc, li).exercises) if (ex.payload.voice) ex.payload.voice = 'xezo';
     });
-    expect(allXezal.text).toContain('unit 1: Hamo records 0 % of the unit’s sentences (at least 65 %)');
+    expect(allXezo.text).toContain('unit 1: Hamo records 0 % of the unit’s sentences (at least 65 %)');
   });
 
   it('never has Hamo record a line said to him, by his name or as uncle', () => {
@@ -363,12 +363,12 @@ describe('the road’s check, on an example unit', () => {
     const forVoices = (p: RoadPlan): void => {
       p.units[0]!.recorder = 'hamo';
     };
-    // Xezal says her own lines, in exercises and in her part of the conversation
+    // Xezo says her own lines, in exercises and in her part of the conversation
     expect(check(undefined, forVoices).text).toEqual([
       'u01s1l1 #3: plays “Ez baş im.”, which exercise 4 asks the learner to hear, so it would play nothing here: hear another line there',
       'u01s1l1: records 11 new lines (at most 8): work on fewer lines in more ways, or bring back earlier ones',
       'u01s1l2: records 15 new lines (at most 8): work on fewer lines in more ways, or bring back earlier ones',
-      'u01s1l2 #5: the conversation records 5 lines of its own (at most 2): build it from lines the lesson has, “Silav, Xezal!”, “Silav, Hamo! Tu çawa yî?”, “Ez baş im, spas. Tu çawa yî?”, “Ez jî baş im.”, “Erê, ez ji Amedê me.”',
+      'u01s1l2 #5: the conversation records 5 lines of its own (at most 2): build it from lines the lesson has, “Silav, Xezo!”, “Silav, Hamo! Tu çawa yî?”, “Ez baş im, spas. Tu çawa yî?”, “Ez jî baş im.”, “Erê, ez ji Amedê me.”',
     ]);
     // a review brings back lines already recorded, and one line is one person's
     const { text } = check(
@@ -386,7 +386,7 @@ describe('the road’s check, on an example unit', () => {
     expect(text.filter((t) => t.includes('the conversation records'))).toEqual([]);
     // the conversation's lines the lesson teaches are not its own
     const taught = check((doc) => {
-      const said = [speak('Silav, Xezal!', 'hamo'), speak('Ez jî baş im.', 'xezo'), speak('Erê, ez ji Amedê me.', 'xezo')];
+      const said = [speak('Silav, Xezo!', 'hamo'), speak('Ez jî baş im.', 'xezo'), speak('Erê, ez ji Amedê me.', 'xezo')];
       lessonOf(doc, 1).exercises.splice(1, 3, ...said.map((e, i) => ({ position: i + 2, ...e })));
     }, forVoices);
     expect(taught.text.filter((t) => t.includes('the conversation records'))).toEqual([]);
@@ -466,9 +466,9 @@ describe('the road’s check, on an example unit', () => {
   it('keeps out what the road never says, in any string of an item', () => {
     const text = check((doc) => {
       const first = lessonOf(doc, 0).exercises[0]!;
-      first.payload.options = ['Hello!', 'Xezal is my friend.', 'Goodbye!'];
+      first.payload.options = ['Hello!', 'Xezo is my friend.', 'Goodbye!'];
     }).text;
-    expect(text).toEqual(['u01s1l1 #1 payload.options[1]: ties Xezal to Hamo as friend, family or more: they are neighbours in the village, nothing else']);
+    expect(text).toEqual(['u01s1l1 #1 payload.options[1]: ties Xezo to Hamo as friend, family or more: they are neighbours in the village, nothing else']);
   });
 
   it('keeps conversation ids unique and their length in bounds', () => {
@@ -520,18 +520,18 @@ describe('who says a line', () => {
     expect(onlySaidBy('Ez Hamo me.')).toBe('hamo');
     expect(onlySaidBy('Ez mêr im.')).toBe('hamo');
     expect(onlySaidBy('Ez jin im.')).toBe('xezo');
-    expect(onlySaidBy('Silav! Ez Xezal im.')).toBe('xezo');
+    expect(onlySaidBy('Silav! Ez Xezo me.')).toBe('xezo');
     expect(onlySaidBy('Ez mamoste me.')).toBe('xezo');
     expect(onlySaidBy('Ez heywan im!')).toBe('hevalo');
     expect(onlySaidBy('Navê min Hevalo ye!')).toBe('hevalo');
-    for (const line of ['Ez birçî me!', 'Hevalo heywan e.', 'Xezal mamoste ye.', 'Ez baş im.']) expect(onlySaidBy(line), line).toBeNull();
+    for (const line of ['Ez birçî me!', 'Hevalo heywan e.', 'Xezo mamoste ye.', 'Ez baş im.']) expect(onlySaidBy(line), line).toBeNull();
   });
 
   it('keeps a line in the mouth it belongs to, and nobody calls their own name', () => {
-    expect(speakerProblems('Ez jin im.', 'hamo')).toEqual(['“Ez jin im.” is Xezal’s to say, not Hamo’s: give it xezo’s voice']);
-    expect(speakerProblems('Ez heywan im!', 'xezo')).toEqual(['“Ez heywan im!” is Hevalo’s to say, not Xezal’s: give it hevalo’s voice']);
+    expect(speakerProblems('Ez jin im.', 'hamo')).toEqual(['“Ez jin im.” is Xezo’s to say, not Hamo’s: give it xezo’s voice']);
+    expect(speakerProblems('Ez heywan im!', 'xezo')).toEqual(['“Ez heywan im!” is Hevalo’s to say, not Xezo’s: give it hevalo’s voice']);
     expect(speakerProblems('Hevalo, were!', 'hevalo')).toEqual(['Hevalo would say “Hevalo, were!” to himself: model it without the name (the learner says it)']);
-    expect(speakerProblems('Silav, Xezal!', 'xezo')).toHaveLength(1);
+    expect(speakerProblems('Silav, Xezo!', 'xezo')).toHaveLength(1);
     for (const [line, who] of [['Hevalo, were!', 'hamo'], ['Hamo, simbêlê xwe biparêze!', 'xezo'], ['Ez jin im.', 'xezo']] as const) expect(speakerProblems(line, who), line).toEqual([]);
   });
 });
@@ -553,11 +553,11 @@ describe('what the road never says', () => {
     expect(familyProblems('Mêr û jin li dawetê ne.')).toEqual([]);
   });
 
-  it('finds Xezal tied to Hamo as friend, family or more, and leaves a friend with no name alone', () => {
-    for (const line of ['Xezal hevala min e.', 'Ew keça min e, Xezo?', 'Hevala min Xezal ji Amedê ye.', 'Xezo is my friend.', 'My niece, Xezal!']) {
+  it('finds Xezo tied to Hamo as friend, family or more, and leaves a friend with no name alone', () => {
+    for (const line of ['Xezo hevala min e.', 'Ew keça min e, Xezo?', 'Hevala min Xezo ji Amedê ye.', 'Xezoyê ji jina min re got.', 'Xezo is my friend.', 'My niece, Xezo!']) {
       expect(familyProblems(line), line).toHaveLength(1);
     }
-    for (const line of ['Ew hevalê min e.', 'Ew hevala min e.', 'Xezal mamoste ye.', 'Keça min? Na! Ew cîrana me ye.', 'That is my friend.']) {
+    for (const line of ['Ew hevalê min e.', 'Ew hevala min e.', 'Xezo mamoste ye.', 'Keça min? Na! Ew cîrana me ye.', 'That is my friend.']) {
       expect(familyProblems(line), line).toEqual([]);
     }
   });
@@ -572,6 +572,6 @@ describe('what an exercise records', () => {
   });
 
   it('reads Kurdish words in lower case, with their letters and digits only', () => {
-    expect(kurdishWords('Silav, Xezal! Saet 7 e.')).toEqual(['silav', 'xezal', 'saet', '7', 'e']);
+    expect(kurdishWords('Silav, Xezo! Saet 7 e.')).toEqual(['silav', 'xezo', 'saet', '7', 'e']);
   });
 });

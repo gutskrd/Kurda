@@ -41,7 +41,7 @@ export const FRIENDS: Readonly<Record<CharacterId, string>> = {
     'Hamo was born in Kobanî and grew up with Kurdish roots, and later built his life in the Netherlands. Like many Kurds who grow up far from their homeland, he came to see how much a language holds: who a people are, their culture, and what passes from one generation to the next. So he created the Hevalo app, to make learning, practising and keeping Kurdish easier and more of a pleasure. On the road he is your host in Sêvan.',
   hevalo:
     'Hevalo brings you to Hamo’s blue gate in the first lesson and walks the whole road beside you. His name means “O\u00a0friend!” Curious about everything and quick on his feet, he hops when he is pleased, tilts his head when something puzzles him and pricks up his ears at anything new. When apples go missing, he is always the first suspect.',
-  xezo: 'Xezal is the young teacher at the village school. She comes from Amed and teaches the children of Sêvan their letters, and she lives in the village like any other neighbour. Bright, quick and kind, she knows the city and the village alike.',
+  xezo: 'Xezo is the young teacher at the village school. She comes from Amed and teaches the children of Sêvan their letters, and she lives in the village like any other neighbour. Bright, quick and kind, she knows the city and the village alike.',
 };
 
 /** The author's own note, printed on a page of its own and signed with their name. */

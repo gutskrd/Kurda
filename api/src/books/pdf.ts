@@ -52,7 +52,7 @@ function coverSheet(press: Press, chapters: readonly BookChapter[], site: string
       press.line('Rêya', TEXT.x, 62, title);
       press.line('Kurmancî', TEXT.x, 62 + 43, title);
       press.line('The Kurmanji Road', TEXT.x, 158, displayItalic(15.5, VIOLET.deep));
-      const about = press.para('Every lesson of the road with Hamo, Xezal and Hevalo, in words and pictures.', 168, { ...T.body, color: INK.soft });
+      const about = press.para('Every lesson of the road with Hamo, Xezo and Hevalo, in words and pictures.', 168, { ...T.body, color: INK.soft });
       press.set(about.lines, TEXT.x, 185, { ...T.body, color: INK.soft });
 
       // the stamp a letter from Sêvan would carry, a little askew, its postmark, and the bird that brought it
@@ -370,7 +370,7 @@ function alphabetSheets(press: Press, chapters: readonly BookChapter[]): Sheet[]
 export const isFamily = (p: BookName): boolean => p.kind === 'family' || /^Hamo’s (father|mother|(\p{L}+ )?(brother|sister))\b/u.test(p.en);
 
 /**
- * Bust width of each friend in an 80-point round portrait (Xezal slightly smaller so her hair and chin fit). Each bust
+ * Bust width of each friend in an 80-point round portrait (Xezo slightly smaller so her hair and chin fit). Each bust
  * stands on the round's foot and runs out of it, so it never ends in a cut.
  */
 const PORTRAIT: Readonly<Record<CharacterId, number>> = { hamo: 76, hevalo: 76, xezo: 68 };
@@ -380,9 +380,9 @@ function peopleSheets(press: Press, people: readonly BookName[]): Sheet[] {
   const friends: Array<[CharacterId, string, string, BookPose]> = [
     ['hamo', 'Hamo', FRIENDS.hamo, 'proud'],
     ['hevalo', 'Hevalo', FRIENDS.hevalo, 'caught'],
-    ['xezo', 'Xezal', FRIENDS.xezo, 'smiling'],
+    ['xezo', 'Xezo', FRIENDS.xezo, 'smiling'],
   ];
-  // a book that has not met Xezal yet does not introduce her
+  // a book that has not met Xezo yet does not introduce her
   const shown = friends.filter(([id, name]) => id !== 'xezo' || named.has(name) || people.length === 0);
   // Hamo's own family is his to speak of in the lessons, and is not introduced here
   const others = people.filter((p) => !friends.some(([, name]) => name === p.name) && !isFamily(p));

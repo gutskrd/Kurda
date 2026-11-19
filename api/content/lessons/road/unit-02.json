@@ -677,7 +677,7 @@
                         "character": "hamo"
                       },
                       {
-                        "name": "Xezal",
+                        "name": "Xezo",
                         "character": "xezo"
                       },
                       {
@@ -703,8 +703,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ez Xezal im. Ez ji Amedê me.",
-                        "en": "I’m Xezal. I’m from Amed."
+                        "text": "Ez Xezo me. Ez ji Amedê me.",
+                        "en": "I’m Xezo. I’m from Amed."
                       },
                       {
                         "speaker": 0,
@@ -720,7 +720,7 @@
                     "prompt": "Kî heywan e?",
                     "options": [
                       "Hevalo.",
-                      "Xezal.",
+                      "Xezo.",
                       "Hamo."
                     ],
                     "correctIndex": 0

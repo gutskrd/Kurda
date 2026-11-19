@@ -39,12 +39,12 @@ export const ROAD_VOICES = ['hamo', 'xezo', 'hevalo'] as const;
 export type RoadVoice = (typeof ROAD_VOICES)[number];
 /**
  * Who records the road: Hamo, nearly every line, so a chapter goes online once its few voices have recorded it
- * (road-chapters.ts). Xezal and Hevalo say a few lines of their own, and the learner's lines are recorded by nobody.
+ * (road-chapters.ts). Xezo and Hevalo say a few lines of their own, and the learner's lines are recorded by nobody.
  */
 export const ROAD_RECORDER: RoadVoice = 'hamo';
 
 /**
- * How many lines each voice records for the road's lessons and conversations. Xezal and Hevalo also have the apps'
+ * How many lines each voice records for the road's lessons and conversations. Xezo and Hevalo also have the apps'
  * reaction lines, so their lesson lines stay few.
  */
 export const ROAD_VOICE_LINES_MAX: Readonly<Record<RoadVoice, number>> = { hamo: 1100, xezo: 40, hevalo: 40 };
@@ -54,7 +54,7 @@ export const ROAD_LESSON_LINES_MAX = 8;
 export const ROAD_CONVERSATION_LINES_MAX = 2;
 
 /** What each voice is called in a line that names or calls them. */
-const CALLED: Readonly<Record<RoadVoice, string>> = { hamo: 'hamo|xalo|apo', xezo: 'xezal|xezalê|xezo', hevalo: 'hevalo' };
+const CALLED: Readonly<Record<RoadVoice, string>> = { hamo: 'hamo|xalo|apo', xezo: 'xezo|xezoyê', hevalo: 'hevalo' };
 
 /** A line that calls `who` by name (“Spas, Hamo!”, “Hevalo, were!”), which `who` cannot record without talking to themselves. */
 export function addresses(text: string, who: RoadVoice): boolean {
@@ -72,8 +72,8 @@ export function addressesHamo(text: string): boolean {
  */
 const ONLY: ReadonlyArray<{ who: RoadVoice; re: RegExp }> = [
   { who: 'hamo', re: /\b(ez\s+hamo\s+me|navê\s+min\s+hamo\s+ye|ez\s+mêr\s+im)\b/iu },
-  { who: 'xezo', re: /\b(ez\s+xezal\s+im|navê\s+min\s+xezal\s+e|ez\s+jin\s+im|ez\s+mamoste\s+me)\b/iu },
-  { who: 'hevalo', re: /\b(ez\s+hevalo\s+me|navê\s+min\s+hevalo\s+ye|ez\s+(heywan|ajal|ask|xezal)\s+im)\b/iu },
+  { who: 'xezo', re: /\b(ez\s+xezo\s+me|navê\s+min\s+xezo\s+ye|ez\s+jin\s+im|ez\s+mamoste\s+me)\b/iu },
+  { who: 'hevalo', re: /\b(ez\s+hevalo\s+me|navê\s+min\s+hevalo\s+ye|ez\s+(heywan|ajal|ask)\s+im)\b/iu },
 ];
 
 /** Who a line says it is in the first person, when that can only be one of the voices; null when anyone could say it. */
@@ -81,7 +81,7 @@ export function onlySaidBy(text: string): RoadVoice | null {
   return ONLY.find((o) => o.re.test(text))?.who ?? null;
 }
 
-const NAME: Readonly<Record<RoadVoice, string>> = { hamo: 'Hamo', xezo: 'Xezal', hevalo: 'Hevalo' };
+const NAME: Readonly<Record<RoadVoice, string>> = { hamo: 'Hamo', xezo: 'Xezo', hevalo: 'Hevalo' };
 const SELF: Readonly<Record<RoadVoice, string>> = { hamo: 'himself', xezo: 'herself', hevalo: 'himself' };
 
 /** What makes a line wrong in `voice`'s mouth: it is someone else's (“Ez jin im.” from Hamo), or it calls the speaker. */
@@ -131,7 +131,7 @@ export interface RoadUnit {
   titleEn: string;
   story: string;
   /**
-   * `hamo` once the chapter is written for the road's voices (`ROAD_RECORDER`): Hamo says nearly every line, Xezal and
+   * `hamo` once the chapter is written for the road's voices (`ROAD_RECORDER`): Hamo says nearly every line, Xezo and
    * Hevalo their own, within what each records (rule 13). A chapter not yet rewritten keeps its older split.
    */
   recorder?: RoadVoice;
@@ -190,7 +190,7 @@ export function formatProblem(p: RoadProblem): string {
 /*
  * The road is written for families across the Kurdish and wider Middle Eastern world, where a line one family hears as
  * warm another can hear otherwise. Two things are kept out of every line, in Kurdish and English: talk of what a
- * character is not as a man or a woman, and any tie between Hamo and Xezal beyond village neighbours (never friend,
+ * character is not as a man or a woman, and any tie between Hamo and Xezo beyond village neighbours (never friend,
  * daughter, niece, wife or love). Each pattern looks within one sentence.
  */
 const NEITHER_MAN_NOR_WOMAN: readonly RegExp[] = [
@@ -198,7 +198,8 @@ const NEITHER_MAN_NOR_WOMAN: readonly RegExp[] = [
   /\bne\s+jin\b[^.!?]*\bne\s+mêr\b/i,
   /\bneither\s+(a\s+)?(man|woman|boy|girl)\b[^.!?]*\bnor\b/i,
 ];
-const XEZAL = String.raw`\bxez(o|al|alê)\b`;
+// her name ends in a vowel, and its oblique in ê, which \b does not mark: the word is ended by a non-letter
+const XEZAL = String.raw`\bxezo(yê)?(?![a-zçêîşû])`;
 const TIES_KU = String.raw`\b(hevala|hevalê|keça|xwarziya|jina|dergistiya|evîndara|yara)\s+(min|te|wî)\b`;
 const TIES_EN = String.raw`\b(my|his)\s+(friend|best\s+friend|girlfriend|daughter|niece|wife|fiancée|love|sweetheart)\b`;
 const TIED_TO_XEZAL: readonly RegExp[] = [
@@ -220,7 +221,7 @@ function textsIn(v: unknown, path = ''): Array<{ path: string; text: string }> {
 export function familyProblems(text: string): string[] {
   const out: string[] = [];
   if (NEITHER_MAN_NOR_WOMAN.some((re) => re.test(text))) out.push('says what a character is not as a man or a woman: the road never talks about that');
-  if (TIED_TO_XEZAL.some((re) => re.test(text))) out.push('ties Xezal to Hamo as friend, family or more: they are neighbours in the village, nothing else');
+  if (TIED_TO_XEZAL.some((re) => re.test(text))) out.push('ties Xezo to Hamo as friend, family or more: they are neighbours in the village, nothing else');
   return out;
 }
 

@@ -296,10 +296,9 @@ describe('the Hevalo book', () => {
     expect(cast([1, 2])).toEqual(expect.arrayContaining(['Nazê', 'Baran', 'Hêvî', 'Şemsê', 'Ibrahîm', 'Edûl', 'Bozo', 'Şêro']));
     expect(cast([1, 2])).not.toContain('Zerê');
     const all = cast(ALL);
-    expect(all).toEqual(expect.arrayContaining(['Xezal', 'Lorîn', 'Mîrza', 'Azad', 'Bişar', 'Zerê']));
-    // places are not people, and what Hamo calls Xezal at the end is not another person
+    expect(all).toEqual(expect.arrayContaining(['Xezo', 'Lorîn', 'Mîrza', 'Azad', 'Bişar', 'Zerê']));
+    // places are not people
     expect(all).not.toContain('Kobanî');
-    expect(all).not.toContain('Xezo');
   });
 
   it('prints a PDF of the chapters asked for, and only those', async () => {

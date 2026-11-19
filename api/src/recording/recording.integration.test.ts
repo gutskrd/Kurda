@@ -164,9 +164,9 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
     const voice = await register('rpVoice', '10.97.0.3', '{}');
     actorId = voice.userId;
     learner = (await register('rpLearner', '10.97.0.4', '{}')).token;
-    // The owner gives the voice actor the role and Xezal's voice; the actor then signs in to the console with a code.
-    expect((await put(owner, `/admin/users/${actorId}/voice-actor`, { on: true, reason: 'Records Xezal' })).statusCode).toBe(200);
-    expect((await put(owner, `/admin/users/${actorId}/voices`, { voices: ['xezo'], reason: 'Records Xezal' })).statusCode).toBe(200);
+    // The owner gives the voice actor the role and Xezo's voice; the actor then signs in to the console with a code.
+    expect((await put(owner, `/admin/users/${actorId}/voice-actor`, { on: true, reason: 'Records Xezo' })).statusCode).toBe(200);
+    expect((await put(owner, `/admin/users/${actorId}/voices`, { voices: ['xezo'], reason: 'Records Xezo' })).statusCode).toBe(200);
     actor = voice.token;
     await pass2fa(app, actor);
   });
@@ -199,7 +199,7 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
     expect(people.map((p) => p.id).slice(0, 3)).toEqual(['hamo', 'xezo', 'hevalo']);
     expect(people.map((p) => p.id)).toEqual(expect.arrayContaining(['narrator-kmr', 'narrator-ckb']));
     const xezal = people.find((p) => p.id === 'xezo')!;
-    expect(xezal.name).toBe('Xezal');
+    expect(xezal.name).toBe('Xezo');
     expect(xezal.todo).toBeGreaterThan(0);
     expect(xezal.linked.map((l) => l.id)).toContain(actorId);
     expect(res.json().mine).toEqual([]);
@@ -290,7 +290,7 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
     expect((await record(editor, 'Aferîn!', `&reaction=hamo:run-3-1`, 7)).json().code).toBe('UNKNOWN_REACTION');
     expect((await record(editor, 'Aferîn!', `&reaction=hevalo:run-3-1&line=${id}:0`, 7)).json().code).toBe('INVALID_LINE');
 
-    // the voice actor records Xezal's, and never Hevalo's
+    // the voice actor records Xezo's, and never Hevalo's
     expect((await record(actor, kind.ku, `&reaction=xezo:miss-1&speaker=xezo`, 8)).statusCode).toBe(201);
     expect((await record(actor, 'Aferîn!', `&reaction=hevalo:run-3-1&speaker=xezo`, 9)).json().code).toBe('NOT_YOUR_LINE');
     expect((await allLines(actor, 'xezo', '&status=done')).find((l) => l.key === reactionKey(kind))?.take).toMatchObject({ speaker: 'xezo' });

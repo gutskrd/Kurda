@@ -70,7 +70,7 @@ const DRAWN: Readonly<Record<string, BookPicture>> = {
   bazar: landmark('bazaar'),
   dergeh: landmark('gate'),
   qehwexane: landmark('teahouse'),
-  // the teacher of the road is Xezal, and its friend is the deer whose name means "friend"
+  // the teacher of the road is Xezo, and its friend is the deer whose name means "friend"
   mamoste: cast('xezo', 'smiling'),
   heval: cast('hevalo', 'pleased'),
 };
@@ -101,7 +101,7 @@ export function pictureForWord(w: Pick<BookWord, 'ku' | 'en' | 'pos' | 'picture'
 /** What stands for each of the road's people and animals beside their name: themselves, or the thing the road knows them by. */
 const EMBLEMS: Readonly<Record<string, BookPicture>> = {
   Hamo: cast('hamo', 'proud'),
-  Xezal: cast('xezo', 'smiling'),
+  Xezo: cast('xezo', 'smiling'),
   Hevalo: cast('hevalo', 'caught'),
   Nazê: word('bread'),
   Baran: word('book'),
@@ -564,12 +564,12 @@ export function sceneFor(beat: string, words: ReadonlyArray<Pick<BookWord, 'ku' 
   const mood = <P extends string>(moods: ReadonlyArray<readonly [RegExp, P]>, text: string, fallback: P): P => moods.find(([test]) => test.test(text))?.[1] ?? fallback;
   const hevalo = beat.search(named('Hevalo|the deer'));
   if (hevalo >= 0) who.push({ who: 'hevalo', at: hevalo, pose: mood(HEVALO_MOODS, about(sentences, named('Hevalo|the deer')), 'plain') });
-  const xezal = beat.search(named('Xezal|Xezo|teacher'));
-  if (xezal >= 0) who.push({ who: 'xezo', at: xezal, pose: mood(XEZAL_MOODS, about(sentences, named('Xezal|Xezo|teacher')), 'smiling') });
+  const xezal = beat.search(named('Xezo|teacher'));
+  if (xezal >= 0) who.push({ who: 'xezo', at: xezal, pose: mood(XEZAL_MOODS, about(sentences, named('Xezo|teacher')), 'smiling') });
   // Hamo is the voice of the whole road: a beat that names him, or names none of the three, is his to tell
   const hamo = beat.search(named('Hamo|moustache'));
   if (hamo >= 0 || who.length === 0) who.push({ who: 'hamo', at: Math.max(hamo, 0), pose: mood(HAMO_MOODS, about(sentences, named('Hamo|moustache')) || beat, 'plain') });
-  // Hamo stands on the left, looking into the scene; the deer and Xezal face the reader from its right
+  // Hamo stands on the left, looking into the scene; the deer and Xezo face the reader from its right
   const cast = who
     .sort((a, b) => a.at - b.at)
     .slice(0, 2)
@@ -887,7 +887,7 @@ export function sceneLayout(scene: BookScene, side: 'left' | 'right'): SceneLayo
   // the back of the floor: where a room's wall meets it, or where the land outside begins
   const backFoot = (x: number): number => (scene.room ? (bookRidgeAt(0, 'room') + 1.5) * k : (bookRidgeAt(Math.max(0, Math.min(BOOK_BACKDROP.w, x / k)), 'floor') + 2.5) * k);
 
-  // the friends: where each stands, by default at the sides, the deer and Xezal on the right
+  // the friends: where each stands, by default at the sides, the deer and Xezo on the right
   const defaults = scene.cast.length === 1 ? [scene.cast[0]!.who === 'hamo' ? 0.28 : 0.72] : scene.cast.length === 2 ? [0.2, 0.8] : [0.16, 0.5, 0.84];
   const figures = scene.cast.map((c, i) => {
     const x = (c.x ?? defaults[i]!) * w;

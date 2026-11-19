@@ -170,7 +170,7 @@ describe('the recording script', () => {
   it('gives each line to the first place that plans a voice for it, and the rest to the narrator of its variety', () => {
     const lines = buildScript({
       exercises: [
-        // no voice here, Xezal's later: hers, as the studio's plannedSpeaker has it
+        // no voice here, Xezo's later: hers, as the studio's plannedSpeaker has it
         exercise({ exercisePosition: 1, type: 'listening', payload: { prompt: 'x', accepted: ['Ez birçî me!'] } }),
         exercise({ lessonPosition: 2, type: 'listening', payload: { prompt: 'x', accepted: ['Ez birçî me!'], voice: 'xezo' } }),
         exercise({ lessonPosition: 3, type: 'listening', payload: { prompt: 'x', accepted: ['Ez birçî me!'], voice: 'hamo' } }),
@@ -329,7 +329,7 @@ describe('the recording script', () => {
     const people = peopleOf(lines, PLAN);
     expect(people.map((p) => [p.id, p.name])).toEqual([
       ['hamo', 'Hamo'],
-      ['xezo', 'Xezal'],
+      ['xezo', 'Xezo'],
       ['hevalo', 'Hevalo'],
       ['cast-naze', 'Nazê'],
       ['narrator-kmr', 'Narrator · Kurmancî'],
@@ -388,7 +388,7 @@ describe('the Kurmanji Road in the script', () => {
     }
     expect(lines.every((l) => !l.live && l.places.every((p) => p.status === 'draft'))).toBe(true);
     expect(peopleOf(lines, plan).map((p) => p.id)).toEqual(['hamo', 'xezo', 'hevalo', 'narrator-kmr', 'narrator-ckb']);
-    // Hamo says nearly everything; Xezal and Hevalo say a few lines of their own, each a person on the page
+    // Hamo says nearly everything; Xezo and Hevalo say a few lines of their own, each a person on the page
     const counts = new Map(peopleOf(lines, plan).map((p) => [p.id, lines.filter((l) => l.voice === p.id).length]));
     expect(counts.get('hamo')! + counts.get('xezo')! + counts.get('hevalo')!).toBe(lines.length);
     for (const who of ['xezo', 'hevalo']) {

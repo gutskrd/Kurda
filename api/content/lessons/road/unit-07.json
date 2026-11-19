@@ -2355,13 +2355,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Piştî dibistanê, Xezal û zarok govendê digirin.",
+                    "say": "Piştî dibistanê, Xezo û zarok govendê digirin.",
                     "voice": "hamo",
-                    "prompt": "Piştî dibistanê, Xezal û zarok govendê digirin.",
+                    "prompt": "Piştî dibistanê, Xezo û zarok govendê digirin.",
                     "options": [
-                      "After school, Xezal and the children dance the govend.",
-                      "After school, Xezal and the children read books.",
-                      "After the market, Xezal and the children buy shoes."
+                      "After school, Xezo and the children dance the govend.",
+                      "After school, Xezo and the children read books.",
+                      "After the market, Xezo and the children buy shoes."
                     ],
                     "correctIndex": 0
                   }
@@ -2393,9 +2393,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Piştî dibistanê, Xezal û zarok govendê digirin.",
+                    "say": "Piştî dibistanê, Xezo û zarok govendê digirin.",
                     "voice": "hamo",
-                    "prompt": "Piştî dibistanê, Xezal û zarok ___ digirin.",
+                    "prompt": "Piştî dibistanê, Xezo û zarok ___ digirin.",
                     "options": [
                       "govendê",
                       "govend",
@@ -2490,8 +2490,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Piştî dibistanê, Xezal û zarok govendê digirin.",
-                    "reference": "Piştî dibistanê, Xezal û zarok govendê digirin."
+                    "prompt": "Piştî dibistanê, Xezo û zarok govendê digirin.",
+                    "reference": "Piştî dibistanê, Xezo û zarok govendê digirin."
                   }
                 },
                 {
@@ -3230,10 +3230,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "After school, Xezal and the children dance the govend.",
+                    "prompt": "After school, Xezo and the children dance the govend.",
                     "options": [
-                      "Piştî dibistanê, Xezal û zarok govendê digirin.",
-                      "Piştî dibistan, Xezal û zarok govendê digirin.",
+                      "Piştî dibistanê, Xezo û zarok govendê digirin.",
+                      "Piştî dibistan, Xezo û zarok govendê digirin.",
                       "Nîvro em firavînê dixwin, û piştî firavînê ez radizim."
                     ],
                     "correctIndex": 0

@@ -93,7 +93,7 @@ describe('a word’s picture', () => {
     expect(pictureForWord(word('bajar', 'town, city'))).toEqual({ kind: 'spot', spot: 'town' });
     expect(pictureForWord(word('bazar', 'market'))).toEqual({ kind: 'landmark', landmark: 'bazaar' });
     expect(pictureForWord(word('şitil', 'sapling'))).toEqual({ kind: 'sapling' });
-    // the road's teacher is Xezal, and its friend is the deer whose name means "friend"
+    // the road's teacher is Xezo, and its friend is the deer whose name means "friend"
     expect(pictureForWord(word('mamoste', 'teacher'))).toEqual({ kind: 'cast', who: 'xezo', pose: 'smiling' });
     expect(pictureForWord(word('heval', 'friend'))).toEqual({ kind: 'cast', who: 'hevalo', pose: 'pleased' });
   });
@@ -126,7 +126,7 @@ describe('a word’s picture', () => {
 describe('the people of the road', () => {
   it('shows the three friends as themselves, and the others by the thing the road knows them by', async () => {
     expect(pictureForName('Hamo')).toEqual({ kind: 'cast', who: 'hamo', pose: 'proud' });
-    expect(pictureForName('Xezal')).toEqual({ kind: 'cast', who: 'xezo', pose: 'smiling' });
+    expect(pictureForName('Xezo')).toEqual({ kind: 'cast', who: 'xezo', pose: 'smiling' });
     expect(pictureForName('Hevalo')).toEqual({ kind: 'cast', who: 'hevalo', pose: 'caught' });
     expect(pictureForName('Ibrahîm')).toEqual({ kind: 'spot', spot: 'flute' });
     expect(pictureForName('Bozo')).toEqual({ kind: 'word', id: 'donkey' });
@@ -304,16 +304,16 @@ describe('a lesson’s scene', () => {
     for (const setting of ['day', 'night', 'snow'] as const) expect(BOOK_SETTINGS).toContain(setting);
   });
 
-  it('puts in it who the beat names: Hamo on the left, the deer or Xezal on the right, and Hamo alone when it names nobody', () => {
+  it('puts in it who the beat names: Hamo on the left, the deer or Xezo on the right, and Hamo alone when it names nobody', () => {
     expect(sceneFor('Hevalo trots up the lane, and Hamo opens the gate.').cast.map((c) => c.who)).toEqual(['hamo', 'hevalo']);
-    expect(sceneFor('At the school Xezal is teaching the children a song, and Hamo listens at the window.').cast).toEqual([
+    expect(sceneFor('At the school Xezo is teaching the children a song, and Hamo listens at the window.').cast).toEqual([
       { who: 'hamo', pose: 'doubtful' },
       { who: 'xezo', pose: 'telling' },
     ]);
     expect(sceneFor('The hens are in the yard.').cast).toEqual([{ who: 'hamo', pose: 'plain' }]);
     expect(sceneFor('The deer drinks from the spring.').cast.map((c) => c.who)).toEqual(['hevalo']);
     // never more than two: the first two the beat names, as it names them
-    expect(sceneFor('Xezal waves to Hevalo, and then Hamo arrives.').cast.map((c) => c.who)).toEqual(['xezo', 'hevalo']);
+    expect(sceneFor('Xezo waves to Hevalo, and then Hamo arrives.').cast.map((c) => c.who)).toEqual(['xezo', 'hevalo']);
   });
 
   it('shows how each of them takes it', () => {

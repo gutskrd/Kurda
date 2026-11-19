@@ -602,8 +602,8 @@
             {
               "key": "u11s1l3",
               "position": 3,
-              "titleKu": "Xezal û pêşniyar",
-              "titleEn": "Xezal and the offer",
+              "titleKu": "Xezo û pêşniyar",
+              "titleEn": "Xezo and the offer",
               "exercises": [
                 {
                   "position": 1,
@@ -636,11 +636,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
+                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "voice": "hamo",
-                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
+                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "options": [
-                      "No. A big school in Hewlêr has made Xezal an offer.",
+                      "No. A big school in Hewlêr has made Xezo an offer.",
                       "It’s from the old shop, on the big street.",
                       "No! Love is a secret. We’re not telling Ferhad."
                     ],
@@ -697,9 +697,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
+                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "voice": "hamo",
-                    "prompt": "Na. Dibistaneke mezin li Hewlêrê ___ ji Xezalê re kir.",
+                    "prompt": "Na. Dibistaneke mezin li Hewlêrê ___ ji Xezoyê re kir.",
                     "options": [
                       "pêşniyarek",
                       "pêşniyar",
@@ -767,8 +767,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
-                        "en": "No. A big school in Hewlêr has made Xezal an offer."
+                        "text": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
+                        "en": "No. A big school in Hewlêr has made Xezo an offer."
                       },
                       {
                         "speaker": 0,
@@ -813,11 +813,11 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
+                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "voice": "hamo",
-                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
+                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "accepted": [
-                      "No. A big school in Hewlêr has made Xezal an offer."
+                      "No. A big school in Hewlêr has made Xezo an offer."
                     ]
                   }
                 },
@@ -865,8 +865,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
-                    "reference": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir."
+                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
+                    "reference": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir."
                   }
                 },
                 {
@@ -1039,9 +1039,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezalê re kir.",
+                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "voice": "hamo",
-                    "prompt": "Na. Dibistaneke mezin li Hewlêrê ___ ji Xezalê re kir.",
+                    "prompt": "Na. Dibistaneke mezin li Hewlêrê ___ ji Xezoyê re kir.",
                     "options": [
                       "pêşniyarek",
                       "pêşniyar",
@@ -1901,7 +1901,7 @@
                         "learner": true
                       },
                       {
-                        "name": "Xezal",
+                        "name": "Xezo",
                         "character": "xezo"
                       }
                     ],
@@ -1913,8 +1913,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Paşê Xezal rabû û got ku wê biryar daye.",
-                        "en": "Then Xezal stood up and said that she had decided."
+                        "text": "Paşê Xezo rabû û got ku wê biryar daye.",
+                        "en": "Then Xezo stood up and said that she had decided."
                       },
                       {
                         "speaker": 1,
@@ -1942,7 +1942,7 @@
                         "en": "November is coming, but the winter is long."
                       }
                     ],
-                    "prompt": "Xezal dê kengî vegere?",
+                    "prompt": "Xezo dê kengî vegere?",
                     "options": [
                       "Her Newrozê.",
                       "Di Mijdarê de.",
@@ -2238,11 +2238,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Paşê Xezal rabû û got ku wê biryar daye.",
+                    "say": "Paşê Xezo rabû û got ku wê biryar daye.",
                     "voice": "hamo",
-                    "prompt": "Paşê Xezal rabû û got ku wê biryar daye.",
+                    "prompt": "Paşê Xezo rabû û got ku wê biryar daye.",
                     "options": [
-                      "Then Xezal stood up and said that she had decided.",
+                      "Then Xezo stood up and said that she had decided.",
                       "Baran said that I climb the ladder and sing songs!",
                       "First Ferhad came, and said that without farmers and workers there is no bread."
                     ],
@@ -2404,13 +2404,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xezalê karek da pola Baran, û mijara wî Sêvan e.",
+                    "say": "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
                     "voice": "hamo",
-                    "prompt": "Xezalê karek da pola Baran, û mijara wî Sêvan e.",
+                    "prompt": "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
                     "options": [
-                      "Xezal gave Baran’s class a task, and his subject is Sêvan.",
-                      "Xezal gave Baran’s class a holiday, and he is going to Sêvan.",
-                      "Xezal gave Baran a book, and its subject is wolves."
+                      "Xezo gave Baran’s class a task, and his subject is Sêvan.",
+                      "Xezo gave Baran’s class a holiday, and he is going to Sêvan.",
+                      "Xezo gave Baran a book, and its subject is wolves."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2441,9 +2441,9 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Xezal gave Baran’s class a task, and his subject is Sêvan.",
+                    "prompt": "Xezo gave Baran’s class a task, and his subject is Sêvan.",
                     "options": [
-                      "Xezalê karek da pola Baran, û mijara wî Sêvan e.",
+                      "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
                       "Ji ber vê yekê em ê îro biaxivin, û herwiha çayê vexwin.",
                       "Beranê Bişar ji birûskê tirsiya û nexweş bû, lê niha lingên wî sax in."
                     ],
@@ -2553,9 +2553,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Xezal gave Baran’s class a task, and his subject is Sêvan.",
+                    "prompt": "Xezo gave Baran’s class a task, and his subject is Sêvan.",
                     "accepted": [
-                      "Xezalê karek da pola Baran, û mijara wî Sêvan e."
+                      "Xezoyê karek da pola Baran, û mijara wî Sêvan e."
                     ]
                   }
                 }
@@ -2572,11 +2572,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Sibe waneya Xezalê heye, lêbelê Baran ditirse.",
+                    "say": "Sibe waneya Xezoyê heye, lêbelê Baran ditirse.",
                     "voice": "hamo",
-                    "prompt": "Sibe waneya Xezalê heye, lêbelê Baran ditirse.",
+                    "prompt": "Sibe waneya Xezoyê heye, lêbelê Baran ditirse.",
                     "options": [
-                      "Tomorrow there’s Xezal’s lesson, but Baran is afraid.",
+                      "Tomorrow there’s Xezo’s lesson, but Baran is afraid.",
                       "Tomorrow there’s no school, so Baran is happy.",
                       "Tomorrow there’s a wedding, but Baran is ill."
                     ],
@@ -2624,9 +2624,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Sibe waneya Xezalê heye, lêbelê Baran ditirse.",
+                    "say": "Sibe waneya Xezoyê heye, lêbelê Baran ditirse.",
                     "voice": "hamo",
-                    "prompt": "Sibe ___ Xezalê heye, lêbelê Baran ditirse.",
+                    "prompt": "Sibe ___ Xezoyê heye, lêbelê Baran ditirse.",
                     "options": [
                       "waneya",
                       "wane",
@@ -2771,9 +2771,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Tomorrow there’s Xezal’s lesson, but Baran is afraid.",
+                    "prompt": "Tomorrow there’s Xezo’s lesson, but Baran is afraid.",
                     "accepted": [
-                      "Sibe waneya Xezalê heye, lêbelê Baran ditirse."
+                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse."
                     ]
                   }
                 },
@@ -2813,7 +2813,7 @@
                     "prompt": "I saw that you’re afraid, and it’s obvious.",
                     "options": [
                       "Min dît ku tu ditirsî, û ev eşkere ye.",
-                      "Sibe waneya Xezalê heye, lêbelê Baran ditirse.",
+                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse.",
                       "Bişar got ku şivan pez didoşin, û Dapîr bi meşkê nîvişk çêdike."
                     ],
                     "correctIndex": 0
@@ -3172,9 +3172,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Sibe waneya Xezalê heye, lêbelê Baran ditirse.",
+                    "say": "Sibe waneya Xezoyê heye, lêbelê Baran ditirse.",
                     "voice": "hamo",
-                    "prompt": "Sibe ___ Xezalê heye, lêbelê Baran ditirse.",
+                    "prompt": "Sibe ___ Xezoyê heye, lêbelê Baran ditirse.",
                     "options": [
                       "waneya",
                       "wane",
@@ -3389,13 +3389,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xezalê karek da pola Baran, û mijara wî Sêvan e.",
+                    "say": "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
                     "voice": "hamo",
-                    "prompt": "Xezalê karek da pola Baran, û mijara wî Sêvan e.",
+                    "prompt": "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
                     "options": [
-                      "Xezal gave Baran’s class a task, and his subject is Sêvan.",
-                      "Xezal gave Baran’s class a holiday, and he is going to Sêvan.",
-                      "Xezal gave Baran a book, and its subject is wolves."
+                      "Xezo gave Baran’s class a task, and his subject is Sêvan.",
+                      "Xezo gave Baran’s class a holiday, and he is going to Sêvan.",
+                      "Xezo gave Baran a book, and its subject is wolves."
                     ],
                     "correctIndex": 0
                   }
@@ -3794,13 +3794,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
+                    "say": "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                     "voice": "hamo",
-                    "prompt": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
+                    "prompt": "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                     "options": [
-                      "Xezal’s place in Hewlêr is small, but it’s near the school.",
-                      "Xezal’s house in Hewlêr is big, but it’s far from the school.",
-                      "Xezal’s school in Hewlêr is small, but it’s new."
+                      "Xezo’s place in Hewlêr is small, but it’s near the school.",
+                      "Xezo’s house in Hewlêr is big, but it’s far from the school.",
+                      "Xezo’s school in Hewlêr is small, but it’s new."
                     ],
                     "correctIndex": 0
                   }
@@ -3846,12 +3846,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
+                    "say": "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                     "voice": "hamo",
-                    "prompt": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
+                    "prompt": "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                     "accepted": [
-                      "Xezal’s place in Hewlêr is small, but it’s near the school.",
-                      "Xezal’s place in Hewlêr is small, but it is near the school."
+                      "Xezo’s place in Hewlêr is small, but it’s near the school.",
+                      "Xezo’s place in Hewlêr is small, but it is near the school."
                     ]
                   }
                 },
@@ -3952,11 +3952,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Xezal’s place in Hewlêr is small, but it’s near the school.",
+                    "prompt": "Xezo’s place in Hewlêr is small, but it’s near the school.",
                     "options": [
-                      "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
+                      "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                       "Hemşîreya me ya biçûk dibêje ku li wir zarok dê zimanê dayikê fêr bibin.",
-                      "Piştî vê zivistanê xatirxwestina Xezalê ye, loma her şev hêja ye."
+                      "Piştî vê zivistanê xatirxwestina Xezoyê ye, loma her şev hêja ye."
                     ],
                     "correctIndex": 0
                   }
@@ -4266,7 +4266,7 @@
                     "prompt": "A dengbêj has been wandering through the valleys. Maybe he’ll come to Sêvan too.",
                     "options": [
                       "Dengbêjek di nav geliyan de geriya. Dibe ku ew bê Sêvanê jî.",
-                      "Xezalê li ser pêşniyarê ji dibistana Hewlêrê re nivîsiye ku ew ê di biharê de bê.",
+                      "Xezoyê li ser pêşniyarê ji dibistana Hewlêrê re nivîsiye ku ew ê di biharê de bê.",
                       "Me masî di golê de dîtin, û Bişar dibêje ku wî hivdeh masî girtin!"
                     ],
                     "correctIndex": 0
@@ -4335,7 +4335,7 @@
                     "options": [
                       "Ez ê bernameya xwe pêk bînim, û ez ê serkeftî bibim!",
                       "Li mala xwe ya kevirî, Dapîrê ji bo mêvanan xwarin pijand, û Bişar pez dot.",
-                      "Xezal plana xwe pêk tîne. Armanca wê ev e ku zarok zimanê dayikê fêr bibin."
+                      "Xezo plana xwe pêk tîne. Armanca wê ev e ku zarok zimanê dayikê fêr bibin."
                     ],
                     "correctIndex": 0
                   }
@@ -4359,13 +4359,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
+                    "say": "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                     "voice": "hamo",
-                    "prompt": "Cihê Xezalê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
+                    "prompt": "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
                     "options": [
-                      "Xezal’s place in Hewlêr is small, but it’s near the school.",
-                      "Xezal’s house in Hewlêr is big, but it’s far from the school.",
-                      "Xezal’s school in Hewlêr is small, but it’s new."
+                      "Xezo’s place in Hewlêr is small, but it’s near the school.",
+                      "Xezo’s house in Hewlêr is big, but it’s far from the school.",
+                      "Xezo’s school in Hewlêr is small, but it’s new."
                     ],
                     "correctIndex": 0
                   }
