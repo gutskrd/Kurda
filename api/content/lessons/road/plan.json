@@ -547,7 +547,7 @@
               "beat": "Everyone says which animals they have. Nazê has a cat; Dapîr has hens, a goat and opinions about everything; Hamo has a dog, Şêro, who guards the orchard and sleeps through it, and a donkey, Bozo, who chooses that moment to put his big grey head over the wall. Bozo is big, says Hamo, in body and in stubbornness.",
               "voice": "hamo",
               "new": [
-                {"ku": "pisîk", "en": "cat", "pos": "noun", "gender": "f", "forms": ["pisîk", "pisîkên", "pisîkan", "pisîkek", "pisîka", "pisîkê", "pisîkeke"]},
+                {"ku": "pisîk", "en": "cat", "pos": "noun", "gender": "f", "forms": ["pisîk", "pisîkên", "pisîkan", "pisîkek", "pisîka", "pisîkê", "pisîkeke", "pisîkekê"]},
                 {"ku": "kûçik", "en": "dog", "pos": "noun", "gender": "m", "forms": ["kûçik", "kûçikên", "kûçikan", "kûçikek", "kûçikê", "kûçikekî", "kûçikî"]},
                 {"ku": "ker", "en": "donkey", "pos": "noun", "gender": "m", "forms": ["ker", "kerên", "keran", "kerek", "kerê", "kerekî", "kerî", "kera"]},
                 {"ku": "hene", "en": "there are; (someone) has (more than one)", "pos": "verb", "forms": ["hene"]},

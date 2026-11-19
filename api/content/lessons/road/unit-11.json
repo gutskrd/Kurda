@@ -3603,9 +3603,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "say": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "voice": "hamo",
-                    "prompt": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "prompt": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "options": [
                       "Hêvî’s plan is to get a cat.",
                       "Hêvî’s plan is to sell the hens.",
@@ -3645,9 +3645,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "say": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "voice": "hamo",
-                    "prompt": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "prompt": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "accepted": [
                       "Hêvî’s plan is to get a cat."
                     ]
@@ -3658,9 +3658,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "say": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "voice": "hamo",
-                    "prompt": "Plana Hêvî ev e ku pisîkek bi dest ___.",
+                    "prompt": "Plana Hêviyê ev e ku pisîkekê bi dest ___.",
                     "options": [
                       "bixe",
                       "bixim",
@@ -3756,7 +3756,7 @@
                     "voice": "hamo",
                     "prompt": "Hêvî’s plan is to get a cat.",
                     "options": [
-                      "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                      "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                       "Ez ê bernameya xwe pêk bînim, û ez ê serkeftî bibim!",
                       "Hevalo tûr bi şaşî bir? Na, ev ne çewtî ye, ev evîn e!"
                     ],
@@ -4350,9 +4350,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "say": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "voice": "hamo",
-                    "prompt": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "prompt": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "options": [
                       "Hêvî’s plan is to get a cat.",
                       "Hêvî’s plan is to sell the hens.",

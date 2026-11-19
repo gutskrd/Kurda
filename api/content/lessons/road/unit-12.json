@@ -93,9 +93,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bizin got: heke kesek li derî bixe, derî venekin!",
+                    "say": "Bizinê got: heke kesek li derî bixe, derî venekin!",
                     "voice": "hamo",
-                    "prompt": "Bizin got: heke kesek li derî bixe, derî venekin!",
+                    "prompt": "Bizinê got: heke kesek li derî bixe, derî venekin!",
                     "options": [
                       "The goat said: if anyone knocks at the door, don’t open it!",
                       "The goat said: if anyone knocks at the door, open it!",
@@ -154,9 +154,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Bizin got: heke kesek li derî bixe, derî venekin!",
+                    "say": "Bizinê got: heke kesek li derî bixe, derî venekin!",
                     "voice": "hamo",
-                    "prompt": "Bizin got: heke kesek li derî bixe, derî venekin!",
+                    "prompt": "Bizinê got: heke kesek li derî bixe, derî venekin!",
                     "accepted": [
                       "The goat said: if anyone knocks at the door, don’t open it!",
                       "The goat said: if anyone knocks at the door, do not open it!"
@@ -194,7 +194,7 @@
                     "prompt": "The night is dark, and the wolf speaks softly and sweetly.",
                     "options": [
                       "Şev tarî ye, û gur nerm û xweş diaxive.",
-                      "Bizin got: heke kesek li derî bixe, derî venekin!",
+                      "Bizinê got: heke kesek li derî bixe, derî venekin!",
                       "Eger kesek stranan bibêje, derî venekin!"
                     ],
                     "correctIndex": 0
@@ -247,7 +247,7 @@
                     "voice": "hamo",
                     "prompt": "The goat said: if anyone knocks at the door, don’t open it!",
                     "options": [
-                      "Bizin got: heke kesek li derî bixe, derî venekin!",
+                      "Bizinê got: heke kesek li derî bixe, derî venekin!",
                       "Baran got ku ez li nêrdewanê hildikişim û stranan dibêjim!",
                       "Bişar, xwediyê keriyê, li hespekî siwar bû û got: bi xêr hatin!"
                     ],
@@ -1149,9 +1149,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bizin got: heke kesek li derî bixe, derî venekin!",
+                    "say": "Bizinê got: heke kesek li derî bixe, derî venekin!",
                     "voice": "hamo",
-                    "prompt": "Bizin got: heke kesek li derî bixe, derî venekin!",
+                    "prompt": "Bizinê got: heke kesek li derî bixe, derî venekin!",
                     "options": [
                       "The goat said: if anyone knocks at the door, don’t open it!",
                       "The goat said: if anyone knocks at the door, open it!",
@@ -1690,7 +1690,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bizin got: heke kesek li derî bixe, derî venekin!"
+                      "Bizinê got: heke kesek li derî bixe, derî venekin!"
                     ]
                   }
                 },
@@ -4484,9 +4484,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "say": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "voice": "hamo",
-                    "prompt": "Plana Hêvî ev e ku pisîkek bi dest bixe.",
+                    "prompt": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "options": [
                       "Hêvî’s plan is to get a cat.",
                       "Hêvî’s plan is to sell the hens.",
