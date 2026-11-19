@@ -159,80 +159,6 @@
                 },
                 {
                   "position": 7,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Baran dibêje: Duh ez çûm çem.",
-                    "voice": "hamo",
-                    "prompt": "Baran dibêje: Duh ez çûm çem.",
-                    "accepted": [
-                      "Baran says: Yesterday I went to the river."
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Suddenly something happened.",
-                    "options": [
-                      "Ji nişka ve tiştek bû.",
-                      "Ji nişka ve tişt bû.",
-                      "Ji kerema xwe, here cem wê!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Ji nişka ve tiştek bû.",
-                    "voice": "hamo",
-                    "prompt": "Ji nişka ve tiştek bû.",
-                    "accepted": [
-                      "Suddenly something happened."
-                    ]
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Last year, on New Year’s Day, I fell into the river and was ill for a week.",
-                    "accepted": [
-                      "Par, roja sersalê, ez ketim çem û hefteyekê nexweş bûm."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Berê jî Bozo bi tenê hat malê.",
-                    "reference": "Berê jî Bozo bi tenê hat malê."
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Hêrs an şerm? Ez nizanim, lê hestekî min heye."
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -265,7 +191,56 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Suddenly something happened.",
+                    "accepted": [
+                      "Ji nişka ve tiştek bû."
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Last year, on New Year’s Day, I fell into the river and was ill for a week.",
+                    "accepted": [
+                      "Par, roja sersalê, ez ketim çem û hefteyekê nexweş bûm."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Suddenly something happened.",
+                    "options": [
+                      "Ji nişka ve tiştek bû.",
+                      "Ji nişka ve tişt bû.",
+                      "Ji kerema xwe, here cem wê!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Berê jî Bozo bi tenê hat malê.",
+                    "reference": "Berê jî Bozo bi tenê hat malê."
+                  }
+                },
+                {
+                  "position": 12,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -277,7 +252,44 @@
                   }
                 },
                 {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Hêrs an şerm? Ez nizanim, lê hestekî min heye."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran dibêje: Duh ez çûm çem.",
+                    "voice": "hamo",
+                    "prompt": "Baran dibêje: Duh ez çûm çem.",
+                    "accepted": [
+                      "Baran says: Yesterday I went to the river."
+                    ]
+                  }
+                },
+                {
                   "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Ji nişka ve tiştek bû.",
+                    "voice": "hamo",
+                    "prompt": "Ji nişka ve tiştek bû.",
+                    "accepted": [
+                      "Suddenly something happened."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -288,18 +300,6 @@
                       "Last year, on New Year’s Day, I fell into the river and was ill for a week.",
                       "Last year on New Year’s Day I fell into the river, and I was ill for a week.",
                       "Last year, on New Year’s Day, I fell in the river and was sick for a week."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Suddenly something happened.",
-                    "accepted": [
-                      "Ji nişka ve tiştek bû."
                     ]
                   }
                 }
@@ -429,17 +429,15 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran li ser ___ çû, lê negihîşt Bozo.",
+                    "prompt": "Bozo ran off towards the cliffs! Catch him!",
                     "options": [
-                      "keviran",
-                      "kevir",
-                      "geliyan"
+                      "Bozo ber bi zinaran ve reviya! Wî bigire!",
+                      "Bozo ber bi zinar ve reviya! Wî bigire!",
+                      "Em bi trênê naçin, bi balafirê jî naçin: em bi peyatî diçin!"
                     ],
-                    "correctIndex": 0,
-                    "cue": "stone"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -447,16 +445,58 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Bozo ber bi zinaran ve reviya! Wî bigire!",
+                    "say": "Baran di gelî de tenê ma.",
                     "voice": "hamo",
-                    "prompt": "Bozo ber bi zinaran ve reviya! Wî bigire!",
+                    "prompt": "Baran di gelî de tenê ma.",
                     "accepted": [
-                      "Bozo ran off towards the cliffs! Catch him!"
+                      "Baran was left alone in the valley."
                     ]
                   }
                 },
                 {
                   "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "voice": "hamo",
+                    "prompt": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "accepted": [
+                      "Baran went over the stones, but didn’t reach Bozo.",
+                      "Baran went over the stones, but did not reach Bozo."
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Bozo ber bi zinaran ve reviya! Wî bigire!",
+                    "voice": "hamo",
+                    "prompt": "Bozo ber bi ___ ve reviya! Wî bigire!",
+                    "options": [
+                      "zinaran",
+                      "zinar",
+                      "keviran"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "cliff, big rock"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Rasterast here, kolan li rastê ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -472,60 +512,34 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "translate",
+                  "position": 12,
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Baran di gelî de tenê ma.",
-                    "voice": "hamo",
-                    "prompt": "Baran di gelî de tenê ma.",
-                    "accepted": [
-                      "Baran was left alone in the valley."
-                    ]
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "ask": "repeat",
                     "voice": "hamo",
                     "prompt": "Baran li ser keviran çû, lê negihîşt Bozo.",
-                    "accepted": [
-                      "Baran went over the stones, but didn’t reach Bozo.",
-                      "Baran went over the stones, but did not reach Bozo."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Bozo ran off towards the cliffs! Catch him!",
-                    "options": [
-                      "Bozo ber bi zinaran ve reviya! Wî bigire!",
-                      "Bozo ber bi zinar ve reviya! Wî bigire!",
-                      "Em bi trênê naçin, bi balafirê jî naçin: em bi peyatî diçin!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Rasterast here, kolan li rastê ye."
-                    ]
+                    "reference": "Baran li ser keviran çû, lê negihîşt Bozo."
                   }
                 },
                 {
                   "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "voice": "hamo",
+                    "prompt": "Baran li ser ___ çû, lê negihîşt Bozo.",
+                    "options": [
+                      "keviran",
+                      "kevir",
+                      "geliyan"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "stone"
+                  }
+                },
+                {
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -537,30 +551,16 @@
                   }
                 },
                 {
-                  "position": 14,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Baran li ser keviran çû, lê negihîşt Bozo.",
-                    "reference": "Baran li ser keviran çû, lê negihîşt Bozo."
-                  }
-                },
-                {
                   "position": 15,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "missing",
+                    "ask": "to-english",
                     "say": "Bozo ber bi zinaran ve reviya! Wî bigire!",
                     "voice": "hamo",
-                    "prompt": "Bozo ber bi ___ ve reviya! Wî bigire!",
-                    "options": [
-                      "zinaran",
-                      "zinar",
-                      "keviran"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "cliff, big rock"
+                    "prompt": "Bozo ber bi zinaran ve reviya! Wî bigire!",
+                    "accepted": [
+                      "Bozo ran off towards the cliffs! Catch him!"
+                    ]
                   }
                 }
               ]
@@ -660,6 +660,29 @@
                 },
                 {
                   "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Dema ku ew rabû, şev bû.",
+                    "voice": "hamo",
+                    "prompt": "Dema ku ew rabû, şev bû.",
+                    "accepted": [
+                      "When he got up, it was night."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Baran hinek tirsiya.",
+                    "reference": "Baran hinek tirsiya."
+                  }
+                },
+                {
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -676,36 +699,19 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Li bin dara gûzê ya bilind, di gelî de.",
-                    "voice": "hamo",
-                    "prompt": "Li bin dara gûzê ya bilind, di gelî de.",
-                    "options": [
-                      "Under the tall walnut tree, in the valley.",
-                      "We’re right here, under this walnut tree.",
-                      "On the high rocks, by the river."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Dema ku ew rabû, şev bû.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Dema ku ew rabû, şev bû.",
+                    "prompt": "No. He sat down to think, but he fell asleep!",
                     "accepted": [
-                      "When he got up, it was night."
+                      "Na. Ew rûnişt ku bihizire, lê ew raza!"
                     ]
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
@@ -722,34 +728,15 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Under the tall walnut tree, in the valley.",
-                    "options": [
-                      "Li bin dara gûzê ya bilind, di gelî de.",
-                      "Li bin dar gûzê ya bilind, di gelî de.",
-                      "Hêvî dipirse, di efsaneyê de Kawayê hesinkar çi li xwe dike?"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 10,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Doktor min kontrol dike: ez çêtir im!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Doktor min kontrol dike: ez çêtir im!",
-                    "options": [
-                      "The doctor examines me: I’m better!",
-                      "The doctor examines me: I’m worse!",
-                      "The doctor listens to my heart."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "When he got up, it was night.",
+                    "accepted": [
+                      "Dema ku ew rabû, şev bû."
+                    ]
                   }
                 },
                 {
@@ -819,28 +806,50 @@
                 },
                 {
                   "position": 12,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Li bin dara gûzê ya bilind, di gelî de.",
                     "voice": "hamo",
-                    "prompt": "No. He sat down to think, but he fell asleep!",
-                    "accepted": [
-                      "Na. Ew rûnişt ku bihizire, lê ew raza!"
-                    ]
+                    "prompt": "Li bin dara gûzê ya bilind, di gelî de.",
+                    "options": [
+                      "Under the tall walnut tree, in the valley.",
+                      "We’re right here, under this walnut tree.",
+                      "On the high rocks, by the river."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "meaning",
+                    "say": "Doktor min kontrol dike: ez çêtir im!",
                     "voice": "hamo",
-                    "prompt": "Baran hinek tirsiya.",
-                    "reference": "Baran hinek tirsiya."
+                    "prompt": "Doktor min kontrol dike: ez çêtir im!",
+                    "options": [
+                      "The doctor examines me: I’m better!",
+                      "The doctor examines me: I’m worse!",
+                      "The doctor listens to my heart."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Under the tall walnut tree, in the valley.",
+                    "accepted": [
+                      "Li bin dara gûzê ya bilind, di gelî de."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -851,27 +860,18 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "When he got up, it was night.",
-                    "accepted": [
-                      "Dema ku ew rabû, şev bû."
-                    ]
-                  }
-                },
-                {
                   "position": 16,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
                     "prompt": "Under the tall walnut tree, in the valley.",
-                    "accepted": [
-                      "Li bin dara gûzê ya bilind, di gelî de."
-                    ]
+                    "options": [
+                      "Li bin dara gûzê ya bilind, di gelî de.",
+                      "Li bin dar gûzê ya bilind, di gelî de.",
+                      "Hêvî dipirse, di efsaneyê de Kawayê hesinkar çi li xwe dike?"
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -884,22 +884,32 @@
               "exercises": [
                 {
                   "position": 1,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Ew sax e. Ew wêrek e, ne tirsonek."
+                    ]
+                  }
+                },
+                {
+                  "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "prompt": "Last year, on New Year’s Day, I fell into the river and was ill for a week.",
                     "options": [
-                      "Baran went over the stones, but didn’t reach Bozo.",
-                      "Baran sat on the stones and waited for Bozo.",
-                      "Baran went over the stones and caught Bozo."
+                      "Par, roja sersalê, ez ketim çem û hefteyekê nexweş bûm.",
+                      "Par, roj sersalê, ez ketim çem û hefteyekê nexweş bûm.",
+                      "Par, rojê sersalê, ez ketim çem û hefteyekê nexweş bûm."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 2,
+                  "position": 3,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -916,7 +926,7 @@
                   }
                 },
                 {
-                  "position": 3,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -931,20 +941,22 @@
                   }
                 },
                 {
-                  "position": 4,
-                  "type": "translate",
+                  "position": 5,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Bozo ber bi zinaran ve reviya! Wî bigire!",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Bozo ber bi zinaran ve reviya! Wî bigire!",
-                    "accepted": [
-                      "Bozo ran off towards the cliffs! Catch him!"
-                    ]
+                    "prompt": "It was night. There was no crowd there, just Baran and the stars.",
+                    "options": [
+                      "Şev bû. Li wir qelebalix nebû, tenê Baran û stêrk.",
+                      "Şev bûm. Li wir qelebalix nebû, tenê Baran û stêrk.",
+                      "Êvarê, li qehwexaneyê çira hene, û li asman heyv û stêrk."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -960,22 +972,86 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "meaning",
+                    "say": "Li bin dara gûzê ya bilind, di gelî de.",
                     "voice": "hamo",
-                    "prompt": "Last year, on New Year’s Day, I fell into the river and was ill for a week.",
+                    "prompt": "Li bin dara gûzê ya bilind, di gelî de.",
                     "options": [
-                      "Par, roja sersalê, ez ketim çem û hefteyekê nexweş bûm.",
-                      "Par, roj sersalê, ez ketim çem û hefteyekê nexweş bûm.",
-                      "Par, rojê sersalê, ez ketim çem û hefteyekê nexweş bûm."
+                      "Under the tall walnut tree, in the valley.",
+                      "He sat down under the walnut tree.",
+                      "We’re right here, under this walnut tree."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Baran hinek tirsiya.",
+                    "reference": "Baran hinek tirsiya."
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Baran says: Yesterday I went to the river.",
+                    "accepted": [
+                      "Baran dibêje: Duh ez çûm çem."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "voice": "hamo",
+                    "prompt": "Baran li ser keviran çû, lê negihîşt Bozo.",
+                    "options": [
+                      "Baran went over the stones, but didn’t reach Bozo.",
+                      "Baran sat on the stones and waited for Bozo.",
+                      "Baran went over the stones and caught Bozo."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "No. He sat down to think, but he fell asleep!",
+                    "accepted": [
+                      "Na. Ew rûnişt ku bihizire, lê ew raza!"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Bozo ber bi zinaran ve reviya! Wî bigire!",
+                    "voice": "hamo",
+                    "prompt": "Bozo ber bi zinaran ve reviya! Wî bigire!",
+                    "accepted": [
+                      "Bozo ran off towards the cliffs! Catch him!"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1008,19 +1084,7 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "No. He sat down to think, but he fell asleep!",
-                    "accepted": [
-                      "Na. Ew rûnişt ku bihizire, lê ew raza!"
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1034,70 +1098,6 @@
                     ],
                     "correctIndex": 0,
                     "cue": "When he got up, it was night."
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Baran hinek tirsiya.",
-                    "reference": "Baran hinek tirsiya."
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Baran says: Yesterday I went to the river.",
-                    "accepted": [
-                      "Baran dibêje: Duh ez çûm çem."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Ew sax e. Ew wêrek e, ne tirsonek."
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "It was night. There was no crowd there, just Baran and the stars.",
-                    "options": [
-                      "Şev bû. Li wir qelebalix nebû, tenê Baran û stêrk.",
-                      "Şev bûm. Li wir qelebalix nebû, tenê Baran û stêrk.",
-                      "Êvarê, li qehwexaneyê çira hene, û li asman heyv û stêrk."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Li bin dara gûzê ya bilind, di gelî de.",
-                    "voice": "hamo",
-                    "prompt": "Li bin dara gûzê ya bilind, di gelî de.",
-                    "options": [
-                      "Under the tall walnut tree, in the valley.",
-                      "He sat down under the walnut tree.",
-                      "We’re right here, under this walnut tree."
-                    ],
-                    "correctIndex": 0
                   }
                 }
               ]
@@ -1283,17 +1283,14 @@
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
                     "prompt": "Last week Dapîr was ill; now she is better.",
-                    "options": [
-                      "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
-                      "Bi şev, dema ku stêrk derketin, em bi dilekî xweş vegeriyan malê.",
-                      "Ez xortekî ciwan bûm, bi şal û şapik û simbêlekî reş."
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Hefteya borî Dapîr nexweş bû; niha ew çêtir e."
+                    ]
                   }
                 },
                 {
@@ -1324,16 +1321,6 @@
                 },
                 {
                   "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Bi şev, dema ku stêrk derketin, em bi dilekî xweş vegeriyan malê.",
-                    "reference": "Bi şev, dema ku stêrk derketin, em bi dilekî xweş vegeriyan malê."
-                  }
-                },
-                {
-                  "position": 13,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1345,7 +1332,42 @@
                   }
                 },
                 {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Last week Dapîr was ill; now she is better.",
+                    "options": [
+                      "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
+                      "Bi şev, dema ku stêrk derketin, em bi dilekî xweş vegeriyan malê.",
+                      "Ez xortekî ciwan bûm, bi şal û şapik û simbêlekî reş."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ez niha li Sêvanê dijîm.",
+                    "reference": "Ez niha li Sêvanê dijîm."
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Bi şev, dema ku stêrk derketin, em bi dilekî xweş vegeriyan malê.",
+                    "reference": "Bi şev, dema ku stêrk derketin, em bi dilekî xweş vegeriyan malê."
+                  }
+                },
+                {
+                  "position": 16,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1375,28 +1397,6 @@
                       }
                     ],
                     "voice": "hamo"
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Last week Dapîr was ill; now she is better.",
-                    "accepted": [
-                      "Hefteya borî Dapîr nexweş bû; niha ew çêtir e."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Ez niha li Sêvanê dijîm.",
-                    "reference": "Ez niha li Sêvanê dijîm."
                   }
                 }
               ]
@@ -1544,52 +1544,6 @@
                   "position": 7,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Hingê rovî ji daristanê derket.",
-                    "voice": "hamo",
-                    "prompt": "Hingê ___ ji daristanê derket.",
-                    "options": [
-                      "rovî",
-                      "roviyên",
-                      "daristan"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Then the fox came out of the forest."
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Tarî bû, û hirç li dora min bû.",
-                    "voice": "hamo",
-                    "prompt": "Tarî bû, û hirç li dora min bû.",
-                    "accepted": [
-                      "It was dark, and the bear was around me."
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Li ber sêvên Mîrza ye, û li wan dinêre.",
-                    "voice": "hamo",
-                    "prompt": "Li ber sêvên Mîrza ye, û li wan dinêre.",
-                    "options": [
-                      "By Mîrza’s apples, looking at them.",
-                      "Hevalo is by the window, looking at the mountains.",
-                      "The shop is in front of the school."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "picture",
                     "say": "hirç",
                     "voice": "hevalo",
@@ -1604,7 +1558,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1614,6 +1568,52 @@
                     "accepted": [
                       "Then the fox came out of the forest."
                     ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Hingê rovî ji daristanê derket.",
+                    "voice": "hamo",
+                    "prompt": "Hingê ___ ji daristanê derket.",
+                    "options": [
+                      "rovî",
+                      "roviyên",
+                      "daristan"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Then the fox came out of the forest."
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Tarî bû, û hirç li dora min bû.",
+                    "voice": "hamo",
+                    "prompt": "Tarî bû, û hirç li dora min bû.",
+                    "accepted": [
+                      "It was dark, and the bear was around me."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Li ber sêvên Mîrza ye, û li wan dinêre.",
+                    "voice": "hamo",
+                    "prompt": "Li ber sêvên Mîrza ye, û li wan dinêre.",
+                    "options": [
+                      "By Mîrza’s apples, looking at them.",
+                      "Hevalo is by the window, looking at the mountains.",
+                      "The shop is in front of the school."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1633,13 +1633,12 @@
                 },
                 {
                   "position": 13,
-                  "type": "listening",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "accepted": [
-                      "Şîreta wî ev e, ku ez her roj hinek bimeşim."
-                    ]
+                    "prompt": "Hingê rovî ji daristanê derket.",
+                    "reference": "Hingê rovî ji daristanê derket."
                   }
                 },
                 {
@@ -1660,12 +1659,13 @@
                 },
                 {
                   "position": 15,
-                  "type": "speaking",
+                  "type": "listening",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Hingê rovî ji daristanê derket.",
-                    "reference": "Hingê rovî ji daristanê derket."
+                    "accepted": [
+                      "Şîreta wî ev e, ku ez her roj hinek bimeşim."
+                    ]
                   }
                 },
                 {
@@ -1834,46 +1834,40 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
-                    "voice": "hamo",
-                    "prompt": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
-                    "accepted": [
-                      "A message has come from Bişar, from the mountain. Listen!"
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Every night, when it gets dark, something wild comes to him.",
+                    "prompt": "A message has come from Bişar, from the mountain. Listen!",
                     "options": [
-                      "Her şev, dema ku tarî dibe, tiştekî kûvî tê cem wî.",
-                      "Her şev, dem ku tarî dibe, tiştekî kûvî tê cem wî.",
-                      "Dema ku em nehêniyê parve dikin, ew biçûk dibe."
+                      "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
+                      "Peyamek ji Bişar hatim, ji çiyê. Guhdarî bike!",
+                      "Kurekî ciwan, bi kirasekî sor, pêr ji çiyê hat û îro vegeriya."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "multiple_choice",
+                  "position": 9,
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Hingê gur li dora min dimeşe.",
+                    "ask": "to-kurdish",
+                    "voice": "hevalo",
+                    "prompt": "I’m a deer too!",
+                    "accepted": [
+                      "Ez jî ask im!"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Hingê gur li dora min dimeşe.",
-                    "options": [
-                      "Then the wolf walks around me.",
-                      "Then the wolf runs away from me.",
-                      "Then the wolf sleeps next to me."
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Ez ne lawaz im, ez bihêz im!"
+                    ]
                   }
                 },
                 {
@@ -1948,18 +1942,6 @@
                 },
                 {
                   "position": 12,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hevalo",
-                    "prompt": "I’m a deer too!",
-                    "accepted": [
-                      "Ez jî ask im!"
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -1969,14 +1951,31 @@
                   }
                 },
                 {
-                  "position": 14,
-                  "type": "listening",
+                  "position": 13,
+                  "type": "translate",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
+                    "prompt": "Every night, when it gets dark, something wild comes to him.",
                     "accepted": [
-                      "Ez ne lawaz im, ez bihêz im!"
+                      "Her şev, dema ku tarî dibe, tiştekî kûvî tê cem wî."
                     ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Hingê gur li dora min dimeşe.",
+                    "voice": "hamo",
+                    "prompt": "Hingê gur li dora min dimeşe.",
+                    "options": [
+                      "Then the wolf walks around me.",
+                      "Then the wolf runs away from me.",
+                      "Then the wolf sleeps next to me."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -1985,11 +1984,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "A message has come from Bişar, from the mountain. Listen!",
+                    "prompt": "Every night, when it gets dark, something wild comes to him.",
                     "options": [
-                      "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
-                      "Peyamek ji Bişar hatim, ji çiyê. Guhdarî bike!",
-                      "Kurekî ciwan, bi kirasekî sor, pêr ji çiyê hat û îro vegeriya."
+                      "Her şev, dema ku tarî dibe, tiştekî kûvî tê cem wî.",
+                      "Her şev, dem ku tarî dibe, tiştekî kûvî tê cem wî.",
+                      "Dema ku em nehêniyê parve dikin, ew biçûk dibe."
                     ],
                     "correctIndex": 0
                   }
@@ -1998,11 +1997,12 @@
                   "position": 16,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
                     "voice": "hamo",
-                    "prompt": "Every night, when it gets dark, something wild comes to him.",
+                    "prompt": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
                     "accepted": [
-                      "Her şev, dema ku tarî dibe, tiştekî kûvî tê cem wî."
+                      "A message has come from Bişar, from the mountain. Listen!"
                     ]
                   }
                 }
@@ -2032,6 +2032,44 @@
                 },
                 {
                   "position": 2,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Look, Hevalo’s ears have shot up!",
+                    "accepted": [
+                      "Binêre, guhên Hevalo rabûn!"
+                    ]
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Then the wolf walks around me.",
+                    "options": [
+                      "Hingê gur li dora min dimeşe.",
+                      "Hingê gurên li dora min dimeşe.",
+                      "Laşê wî dirêj bû, û ew li dora min bû!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Kurên Lorînê şanzdeh û hivdeh salî ne."
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2048,7 +2086,7 @@
                   }
                 },
                 {
-                  "position": 3,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2058,51 +2096,6 @@
                       "Ez xortekî ciwan bûm, bi şal û şapik û simbêlekî reş.",
                       "Ez xort ciwan bûm, bi şal û şapik û simbêlekî reş.",
                       "Şûşeyên hingiv vala ne!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
-                    "voice": "hamo",
-                    "prompt": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
-                    "accepted": [
-                      "Last week Dapîr was ill; now she is better.",
-                      "Last week Dapîr was ill; now she’s better."
-                    ]
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ez niha li Sêvanê dijîm.",
-                    "voice": "hamo",
-                    "prompt": "Ez niha li Sêvanê dijîm.",
-                    "options": [
-                      "I live in Sêvan now.",
-                      "That’s me, here in Sêvan.",
-                      "They’re in Kobanî, and I’m in Sêvan."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "He’s a well-known shepherd. He looks after the village’s sheep.",
-                    "options": [
-                      "Şivanekî navdar e. Ew pezê gund diparêze.",
-                      "Ev xweşiya gund e!",
-                      "Ew ne aram e."
                     ],
                     "correctIndex": 0
                   }
@@ -2144,6 +2137,22 @@
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "meaning",
+                    "say": "Ez niha li Sêvanê dijîm.",
+                    "voice": "hamo",
+                    "prompt": "Ez niha li Sêvanê dijîm.",
+                    "options": [
+                      "I live in Sêvan now.",
+                      "That’s me, here in Sêvan.",
+                      "They’re in Kobanî, and I’m in Sêvan."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "picture",
                     "say": "gur",
                     "voice": "hevalo",
@@ -2158,19 +2167,17 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "translate",
+                  "position": 10,
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Every night, when it gets dark, something wild comes to him.",
-                    "accepted": [
-                      "Her şev, dema ku tarî dibe, tiştekî kûvî tê cem wî."
-                    ]
+                    "prompt": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
+                    "reference": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!"
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2187,55 +2194,33 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
-                    "reference": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!"
-                  }
-                },
-                {
                   "position": 12,
-                  "type": "writing",
+                  "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Look, Hevalo’s ears have shot up!",
+                    "prompt": "Every night, when it gets dark, something wild comes to him.",
                     "accepted": [
-                      "Binêre, guhên Hevalo rabûn!"
+                      "Her şev, dema ku tarî dibe, tiştekî kûvî tê cem wî."
                     ]
                   }
                 },
                 {
                   "position": 13,
-                  "type": "listening",
+                  "type": "translate",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "to-english",
+                    "say": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
                     "voice": "hamo",
+                    "prompt": "Hefteya borî Dapîr nexweş bû; niha ew çêtir e.",
                     "accepted": [
-                      "Kurên Lorînê şanzdeh û hivdeh salî ne."
+                      "Last week Dapîr was ill; now she is better.",
+                      "Last week Dapîr was ill; now she’s better."
                     ]
                   }
                 },
                 {
                   "position": 14,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Then the wolf walks around me.",
-                    "options": [
-                      "Hingê gur li dora min dimeşe.",
-                      "Hingê gurên li dora min dimeşe.",
-                      "Laşê wî dirêj bû, û ew li dora min bû!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2246,6 +2231,21 @@
                       "I’m a deer too!",
                       "I’m innocent!",
                       "I am a guest."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "He’s a well-known shepherd. He looks after the village’s sheep.",
+                    "options": [
+                      "Şivanekî navdar e. Ew pezê gund diparêze.",
+                      "Ev xweşiya gund e!",
+                      "Ew ne aram e."
                     ],
                     "correctIndex": 0
                   }
@@ -2401,36 +2401,18 @@
                 },
                 {
                   "position": 7,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran dixwaze çîrok kin be, û dawiyê ___ bizane.",
-                    "options": [
-                      "yekser",
-                      "pêşî",
-                      "paşê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "at once, straight away"
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Pêşî, ez çûm bazarê, ji bo kerekî.",
-                    "voice": "hamo",
-                    "prompt": "Pêşî, ez çûm bazarê, ji bo kerekî.",
+                    "prompt": "First, I went to the market, for a donkey.",
                     "accepted": [
-                      "First, I went to the market, for a donkey."
+                      "Pêşî, ez çûm bazarê, ji bo kerekî."
                     ]
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2445,57 +2427,20 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Ew ji hemûyan mezintir e, ji bo bêtir şekir!",
-                    "voice": "hamo",
-                    "prompt": "Ew ji hemûyan mezintir e, ji bo bêtir şekir!",
-                    "options": [
-                      "It’s the biggest of all, for more sugar!",
-                      "It’s the smallest of all, for less sugar!",
-                      "It’s bigger than the teapot, for more tea!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 11,
+                  "position": 9,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Pêşî, ez çûm bazarê, ji bo kerekî.",
                     "voice": "hamo",
-                    "prompt": "Be patient: July went, August came!",
+                    "prompt": "Pêşî, ez çûm bazarê, ji bo kerekî.",
                     "accepted": [
-                      "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
-                      "Bêhnfireh be, Tîrmeh çû, Tebax hat!"
+                      "First, I went to the market, for a donkey."
                     ]
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
-                    "reference": "Baran dixwaze çîrok kin be, û dawiyê yekser bizane."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Tu kîjan stranê hildibijêrî? Strana min a bijare ev e."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
+                  "position": 10,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -2528,15 +2473,70 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "writing",
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ew ji hemûyan mezintir e, ji bo bêtir şekir!",
+                    "voice": "hamo",
+                    "prompt": "Ew ji hemûyan mezintir e, ji bo bêtir şekir!",
+                    "options": [
+                      "It’s the biggest of all, for more sugar!",
+                      "It’s the smallest of all, for less sugar!",
+                      "It’s bigger than the teapot, for more tea!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Tu kîjan stranê hildibijêrî? Strana min a bijare ev e."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "First, I went to the market, for a donkey.",
+                    "prompt": "Be patient: July went, August came!",
                     "accepted": [
-                      "Pêşî, ez çûm bazarê, ji bo kerekî."
+                      "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                      "Bêhnfireh be, Tîrmeh çû, Tebax hat!"
                     ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
+                    "voice": "hamo",
+                    "prompt": "Baran dixwaze çîrok kin be, û dawiyê ___ bizane.",
+                    "options": [
+                      "yekser",
+                      "pêşî",
+                      "paşê"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "at once, straight away"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
+                    "reference": "Baran dixwaze çîrok kin be, û dawiyê yekser bizane."
                   }
                 },
                 {
@@ -2709,6 +2709,16 @@
                 },
                 {
                   "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ew sekinî, û bi xwe kenî.",
+                    "reference": "Ew sekinî, û bi xwe kenî."
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2725,22 +2735,42 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "multiple_choice",
+                  "position": 10,
+                  "type": "translate",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
                     "prompt": "Then he wandered among the trees.",
-                    "options": [
-                      "Paşê ew di nav daran de geriya.",
-                      "Baran bi tena serê xwe meşiya.",
-                      "Dapîr dibêje ku ew di zarokatiya xwe de serçopiya govendê bû."
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Paşê ew di nav daran de geriya."
+                    ]
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bi destûra te, ez herî jîr im, û simbêlê min herî dirêj e!"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Dapîr worked all day.",
+                    "accepted": [
+                      "Dapîr hemû rojê xebitî."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2757,7 +2787,32 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Then he wandered among the trees.",
+                    "options": [
+                      "Paşê ew di nav daran de geriya.",
+                      "Baran bi tena serê xwe meşiya.",
+                      "Dapîr dibêje ku ew di zarokatiya xwe de serçopiya govendê bû."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Çivîkeke mezin û kûvî li ser wî firiya.",
+                    "reference": "Çivîkeke mezin û kûvî li ser wî firiya."
+                  }
+                },
+                {
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2766,61 +2821,6 @@
                     "accepted": [
                       "Baran bi tena serê xwe meşiya."
                     ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Ew sekinî, û bi xwe kenî.",
-                    "reference": "Ew sekinî, û bi xwe kenî."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Bi destûra te, ez herî jîr im, û simbêlê min herî dirêj e!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Dapîr worked all day.",
-                    "accepted": [
-                      "Dapîr hemû rojê xebitî."
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Then he wandered among the trees.",
-                    "accepted": [
-                      "Paşê ew di nav daran de geriya."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Çivîkeke mezin û kûvî li ser wî firiya.",
-                    "reference": "Çivîkeke mezin û kûvî li ser wî firiya."
                   }
                 }
               ]
@@ -2887,17 +2887,15 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Biryara min ev e: îsal em ê bar bikin zozanan!",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Biryara min ev e: îsal em ê bar bikin ___!",
+                    "prompt": "In July. First we have to get ready.",
                     "options": [
-                      "zozanan",
-                      "zozan",
-                      "konan"
+                      "Di Tîrmehê de. Pêşî divê em amade bibin.",
+                      "Di Tîrmeh de. Pêşî divê em amade bibin.",
+                      "Ev di Tîrmehê de bû."
                     ],
-                    "correctIndex": 0,
-                    "cue": "summer pasture in the mountains"
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2905,19 +2903,60 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Di payîzê de, dema ku sêv tên.",
+                    "say": "Di Tîrmehê de. Pêşî divê em amade bibin.",
                     "voice": "hamo",
-                    "prompt": "Di payîzê de, dema ku sêv tên.",
+                    "prompt": "Di Tîrmehê de. Pêşî divê em amade bibin.",
                     "options": [
-                      "In the autumn, when the apples come.",
-                      "There are forty apples in the basket.",
-                      "Lorîn has an apple in her mouth!"
+                      "In July. First we have to get ready.",
+                      "This was in July.",
+                      "In July we came up with the flock, and now it’s August."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 5,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "In the autumn, when the apples come.",
+                    "accepted": [
+                      "Di payîzê de, dema ku sêv tên."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Di payîzê de, dema ku sêv tên.",
+                    "voice": "hamo",
+                    "prompt": "Di payîzê de, dema ku sêv tên.",
+                    "accepted": [
+                      "In the autumn, when the apples come."
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
+                    "voice": "hamo",
+                    "prompt": "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
+                    "options": [
+                      "Thank you! Winning is nice, but friends are nicer.",
+                      "Thanks, the tea is lovely. Goodbye!",
+                      "Winning isn’t everything."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2934,63 +2973,20 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Di Tîrmehê de. Pêşî divê em amade bibin.",
-                    "voice": "hamo",
-                    "prompt": "Di Tîrmehê de. Pêşî divê em amade bibin.",
-                    "options": [
-                      "In July. First we have to get ready.",
-                      "This was in July.",
-                      "In July we came up with the flock, and now it’s August."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Di payîzê de, dema ku sêv tên.",
-                    "voice": "hamo",
-                    "prompt": "Di payîzê de, dema ku sêv tên.",
-                    "accepted": [
-                      "In the autumn, when the apples come."
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "In July. First we have to get ready.",
-                    "options": [
-                      "Di Tîrmehê de. Pêşî divê em amade bibin.",
-                      "Di Tîrmeh de. Pêşî divê em amade bibin.",
-                      "Ev di Tîrmehê de bû."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
+                    "ask": "missing",
+                    "say": "Biryara min ev e: îsal em ê bar bikin zozanan!",
                     "voice": "hamo",
-                    "prompt": "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
+                    "prompt": "Biryara min ev e: îsal em ê bar bikin ___!",
                     "options": [
-                      "Thank you! Winning is nice, but friends are nicer.",
-                      "Thanks, the tea is lovely. Goodbye!",
-                      "Winning isn’t everything."
+                      "zozanan",
+                      "zozan",
+                      "konan"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "summer pasture in the mountains"
                   }
                 },
                 {
@@ -3080,6 +3076,29 @@
                 },
                 {
                   "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Doktor Azad dadwer e."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "In July. First we have to get ready.",
+                    "accepted": [
+                      "Di Tîrmehê de. Pêşî divê em amade bibin."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3091,7 +3110,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 14,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3101,38 +3120,19 @@
                   }
                 },
                 {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Doktor Azad dadwer e."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "In the autumn, when the apples come.",
-                    "accepted": [
-                      "Di payîzê de, dema ku sêv tên."
-                    ]
-                  }
-                },
-                {
                   "position": 15,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Di payîzê de, dema ku sêv tên.",
                     "voice": "hamo",
-                    "prompt": "In July. First we have to get ready.",
-                    "accepted": [
-                      "Di Tîrmehê de. Pêşî divê em amade bibin."
-                    ]
+                    "prompt": "Di payîzê de, dema ku sêv tên.",
+                    "options": [
+                      "In the autumn, when the apples come.",
+                      "There are forty apples in the basket.",
+                      "Lorîn has an apple in her mouth!"
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -3145,22 +3145,47 @@
               "exercises": [
                 {
                   "position": 1,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bozo navê zozanan nas dike, û ew dîsa reviya!"
+                    ]
+                  }
+                },
+                {
+                  "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Biryara min ev e: îsal em ê bar bikin zozanan!",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Biryara min ev e: îsal em ê bar bikin zozanan!",
+                    "prompt": "Then he wandered among the trees.",
                     "options": [
-                      "I’ve made a decision: this year we’re moving up to the summer pastures!",
-                      "My decision is this: this year we’re staying in the village!",
-                      "This is my decision: we’ll come back in autumn."
+                      "Paşê ew di nav daran de geriya.",
+                      "Paşê ew di navên daran de geriya.",
+                      "Tu di gelî de tirsiyayî?"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 2,
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "For the story of the wild thing! We have to see it.",
+                    "options": [
+                      "Ji bo çîroka tiştê kûvî! Divê em wî bibînin.",
+                      "Ji bo çîrok tiştê kûvî! Divê em wî bibînin.",
+                      "Hingê rovî ji daristanê derket."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3177,62 +3202,31 @@
                   }
                 },
                 {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Baran wants the story to be short, and to know the end straight away.",
-                    "options": [
-                      "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
-                      "Baran guhdarî dike, û dibêje ku ew tê digihîje. Ew derewan nake.",
-                      "Baran taksiyê dixwaze."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Baran bi tena serê xwe meşiya.",
-                    "voice": "hamo",
-                    "prompt": "Baran bi tena serê xwe meşiya.",
-                    "accepted": [
-                      "Baran walked all on his own."
-                    ]
-                  }
-                },
-                {
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ew sekinî, û bi xwe kenî.",
+                    "say": "Biryara min ev e: îsal em ê bar bikin zozanan!",
                     "voice": "hamo",
-                    "prompt": "Ew sekinî, û bi xwe kenî.",
+                    "prompt": "Biryara min ev e: îsal em ê bar bikin zozanan!",
                     "options": [
-                      "He stopped, and laughed at himself.",
-                      "He stopped, and cried.",
-                      "He ran, and sang a song."
+                      "I’ve made a decision: this year we’re moving up to the summer pastures!",
+                      "My decision is this: this year we’re staying in the village!",
+                      "This is my decision: we’ll come back in autumn."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 6,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Then he wandered among the trees.",
-                    "options": [
-                      "Paşê ew di nav daran de geriya.",
-                      "Paşê ew di navên daran de geriya.",
-                      "Tu di gelî de tirsiyayî?"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "A big wild bird flew over him.",
+                    "accepted": [
+                      "Çivîkeke mezin û kûvî li ser wî firiya."
+                    ]
                   }
                 },
                 {
@@ -3270,6 +3264,88 @@
                 },
                 {
                   "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "First, I went to the market, for a donkey.",
+                    "accepted": [
+                      "Pêşî, ez çûm bazarê, ji bo kerekî."
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ew sekinî, û bi xwe kenî.",
+                    "voice": "hamo",
+                    "prompt": "Ew sekinî, û bi xwe kenî.",
+                    "options": [
+                      "He stopped, and laughed at himself.",
+                      "He stopped, and cried.",
+                      "He ran, and sang a song."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Baran wants the story to be short, and to know the end straight away.",
+                    "options": [
+                      "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
+                      "Baran guhdarî dike, û dibêje ku ew tê digihîje. Ew derewan nake.",
+                      "Baran taksiyê dixwaze."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Li çiyayên bilind, li cem konê Bişar.",
+                    "reference": "Li çiyayên bilind, li cem konê Bişar."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran bi tena serê xwe meşiya.",
+                    "voice": "hamo",
+                    "prompt": "Baran bi tena serê xwe meşiya.",
+                    "accepted": [
+                      "Baran walked all on his own."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Di Tîrmehê de. Pêşî divê em amade bibin.",
+                    "voice": "hamo",
+                    "prompt": "Di Tîrmehê de. Pêşî divê em amade bibin.",
+                    "options": [
+                      "In July. First we have to get ready.",
+                      "This was in July.",
+                      "In July we came up with the flock, and now it’s August."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
@@ -3286,19 +3362,7 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "A big wild bird flew over him.",
-                    "accepted": [
-                      "Çivîkeke mezin û kûvî li ser wî firiya."
-                    ]
-                  }
-                },
-                {
-                  "position": 10,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3312,70 +3376,6 @@
                     ],
                     "correctIndex": 0,
                     "cue": "Dapîr worked all day."
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Li çiyayên bilind, li cem konê Bişar.",
-                    "reference": "Li çiyayên bilind, li cem konê Bişar."
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "First, I went to the market, for a donkey.",
-                    "accepted": [
-                      "Pêşî, ez çûm bazarê, ji bo kerekî."
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Bozo navê zozanan nas dike, û ew dîsa reviya!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "For the story of the wild thing! We have to see it.",
-                    "options": [
-                      "Ji bo çîroka tiştê kûvî! Divê em wî bibînin.",
-                      "Ji bo çîrok tiştê kûvî! Divê em wî bibînin.",
-                      "Hingê rovî ji daristanê derket."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Di Tîrmehê de. Pêşî divê em amade bibin.",
-                    "voice": "hamo",
-                    "prompt": "Di Tîrmehê de. Pêşî divê em amade bibin.",
-                    "options": [
-                      "In July. First we have to get ready.",
-                      "This was in July.",
-                      "In July we came up with the flock, and now it’s August."
-                    ],
-                    "correctIndex": 0
                   }
                 }
               ]
@@ -3547,15 +3547,12 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Paşê ew bi stranan ji çiyê daket.",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Paşê ew bi stranan ji çiyê daket.",
-                    "accepted": [
-                      "Then she came down the mountain singing."
-                    ]
+                    "prompt": "Hespekî malbata Dapîrê hebû.",
+                    "reference": "Hespekî malbata Dapîrê hebû."
                   }
                 },
                 {
@@ -3593,22 +3590,25 @@
                   "position": 11,
                   "type": "translate",
                   "payload": {
+                    "ask": "to-english",
+                    "say": "Paşê ew bi stranan ji çiyê daket.",
+                    "voice": "hamo",
+                    "prompt": "Paşê ew bi stranan ji çiyê daket.",
+                    "accepted": [
+                      "Then she came down the mountain singing."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
                     "prompt": "When Dapîr was eighteen, she rode a horse and climbed this mountain.",
                     "accepted": [
                       "Dema ku Dapîr hejdeh salî bû, ew li hespekî siwar bû û hilkişiya vî çiyayî."
                     ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Hespekî malbata Dapîrê hebû.",
-                    "reference": "Hespekî malbata Dapîrê hebû."
                   }
                 },
                 {
@@ -3624,6 +3624,30 @@
                 },
                 {
                   "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "When she was fifteen, she roamed the mountain.",
+                    "accepted": [
+                      "Dema ku ew panzdeh salî bû, ew li çiyê geriya."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Then she came down the mountain singing.",
+                    "accepted": [
+                      "Paşê ew bi stranan ji çiyê daket."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3653,30 +3677,6 @@
                       }
                     ],
                     "voice": "hamo"
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Then she came down the mountain singing.",
-                    "accepted": [
-                      "Paşê ew bi stranan ji çiyê daket."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "When she was fifteen, she roamed the mountain.",
-                    "accepted": [
-                      "Dema ku ew panzdeh salî bû, ew li çiyê geriya."
-                    ]
                   }
                 }
               ]
@@ -3841,35 +3841,6 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Bozo şermok e; ew li pişt kevirekî ye.",
-                    "voice": "hamo",
-                    "prompt": "Bozo şermok e; ew li pişt kevirekî ye.",
-                    "accepted": [
-                      "Bozo is shy; he is behind a stone.",
-                      "Bozo is shy; he’s behind a stone."
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "I’m checking the tent ropes: they are strong.",
-                    "options": [
-                      "Ez werîsên konan kontrol dikim: ew bihêz in.",
-                      "Berbangê ez ê hişyar rabim!",
-                      "Ez telefonî Lorînê dikim."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3885,56 +3856,7 @@
                   }
                 },
                 {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "It was completely by mistake, a small mistake!",
-                    "accepted": [
-                      "Ew bi tevahî bi şaşî bû, çewtiyeke biçûk!",
-                      "Bi tevahî bi şaşî bû, çewtiyeke biçûk!"
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Berbangê ez ê hişyar rabim!",
-                    "reference": "Berbangê ez ê hişyar rabim!"
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Hespekî malbata Dapîrê hebû."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Bozo is shy; he is behind a stone.",
-                    "options": [
-                      "Bozo şermok e; ew li pişt kevirekî ye.",
-                      "Bozo şermok e; ew li piştên kevirekî ye.",
-                      "Dermanê herî baş hewaya çiyê ye, û ya duyem çay e, bi bêtir şekir!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 15,
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3947,7 +3869,46 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "It was completely by mistake, a small mistake!",
+                    "accepted": [
+                      "Ew bi tevahî bi şaşî bû, çewtiyeke biçûk!",
+                      "Bi tevahî bi şaşî bû, çewtiyeke biçûk!"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I’m checking the tent ropes: they are strong.",
+                    "options": [
+                      "Ez werîsên konan kontrol dikim: ew bihêz in.",
+                      "Berbangê ez ê hişyar rabim!",
+                      "Ez telefonî Lorînê dikim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Hespekî malbata Dapîrê hebû."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3956,6 +3917,45 @@
                     "accepted": [
                       "Ez werîsên konan kontrol dikim: ew bihêz in."
                     ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Berbangê ez ê hişyar rabim!",
+                    "reference": "Berbangê ez ê hişyar rabim!"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Bozo şermok e; ew li pişt kevirekî ye.",
+                    "voice": "hamo",
+                    "prompt": "Bozo şermok e; ew li pişt kevirekî ye.",
+                    "accepted": [
+                      "Bozo is shy; he is behind a stone.",
+                      "Bozo is shy; he’s behind a stone."
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Bozo is shy; he is behind a stone.",
+                    "options": [
+                      "Bozo şermok e; ew li pişt kevirekî ye.",
+                      "Bozo şermok e; ew li piştên kevirekî ye.",
+                      "Dermanê herî baş hewaya çiyê ye, û ya duyem çay e, bi bêtir şekir!"
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -4090,35 +4090,21 @@
                 },
                 {
                   "position": 7,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Ev ne şopên beranan in. Ev şopên Bozo ne!",
-                    "voice": "hamo",
-                    "prompt": "Ev ne şopên beranan in. Ev şopên Bozo ne!",
-                    "accepted": [
-                      "These aren’t rams’ tracks. These are Bozo’s tracks!",
-                      "These are not rams’ tracks. These are Bozo’s tracks!"
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Bozo has run away again! I’m calling him, but he isn’t coming.",
+                    "prompt": "These aren’t rams’ tracks. These are Bozo’s tracks!",
                     "options": [
-                      "Bozo dîsa reviya! Ez gazî wî dikim, lê ew nayê.",
-                      "Bozo dîsa revîn! Ez gazî wî dikim, lê ew nayê.",
-                      "Hinek. Lê ew dîsa jî raza, destên wî li ser singê wî."
+                      "Ev ne şopên beranan in. Ev şopên Bozo ne!",
+                      "Ev ne şop beranan in. Ev şopên Bozo ne!",
+                      "Bozo bihêz e, ew zû gihîşt zinaran."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -4131,6 +4117,16 @@
                       "It was partly by mistake, a big mistake!"
                     ],
                     "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Na! Evîn nehênî ye. Em ji Ferhad re nabêjin.",
+                    "reference": "Na! Evîn nehênî ye. Em ji Ferhad re nabêjin."
                   }
                 },
                 {
@@ -4215,24 +4211,32 @@
                 },
                 {
                   "position": 11,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
                     "voice": "hamo",
-                    "prompt": "No, today Bozo is brave. Bozo is in love!",
-                    "accepted": [
-                      "Na, îro Bozo wêrek e. Bozo evîndar e!"
-                    ]
+                    "prompt": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                    "options": [
+                      "Be patient: July went, August came!",
+                      "July went, August came, but Bozo didn’t come!",
+                      "Be patient, Baran: the story is long!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
-                  "type": "speaking",
+                  "type": "translate",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "to-english",
+                    "say": "Ev ne şopên beranan in. Ev şopên Bozo ne!",
                     "voice": "hamo",
-                    "prompt": "Na! Evîn nehênî ye. Em ji Ferhad re nabêjin.",
-                    "reference": "Na! Evîn nehênî ye. Em ji Ferhad re nabêjin."
+                    "prompt": "Ev ne şopên beranan in. Ev şopên Bozo ne!",
+                    "accepted": [
+                      "These aren’t rams’ tracks. These are Bozo’s tracks!",
+                      "These are not rams’ tracks. These are Bozo’s tracks!"
+                    ]
                   }
                 },
                 {
@@ -4252,29 +4256,25 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "These aren’t rams’ tracks. These are Bozo’s tracks!",
+                    "prompt": "Bozo has run away again! I’m calling him, but he isn’t coming.",
                     "options": [
-                      "Ev ne şopên beranan in. Ev şopên Bozo ne!",
-                      "Ev ne şop beranan in. Ev şopên Bozo ne!",
-                      "Bozo bihêz e, ew zû gihîşt zinaran."
+                      "Bozo dîsa reviya! Ez gazî wî dikim, lê ew nayê.",
+                      "Bozo dîsa revîn! Ez gazî wî dikim, lê ew nayê.",
+                      "Hinek. Lê ew dîsa jî raza, destên wî li ser singê wî."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
                   "position": 15,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
-                    "options": [
-                      "Be patient: July went, August came!",
-                      "July went, August came, but Bozo didn’t come!",
-                      "Be patient, Baran: the story is long!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "No, today Bozo is brave. Bozo is in love!",
+                    "accepted": [
+                      "Na, îro Bozo wêrek e. Bozo evîndar e!"
+                    ]
                   }
                 },
                 {
@@ -4315,19 +4315,14 @@
                 },
                 {
                   "position": 2,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Dema ku ew panzdeh salî bû, ew li çiyê geriya.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Dema ku ew ___ salî bû, ew li çiyê geriya.",
-                    "options": [
-                      "panzdeh",
-                      "sêzdeh",
-                      "hejdeh"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "fifteen"
+                    "prompt": "Spring comes after winter.",
+                    "accepted": [
+                      "Bihar piştî zivistanê tê."
+                    ]
                   }
                 },
                 {
@@ -4336,11 +4331,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "I’m checking the tent ropes: they are strong.",
+                    "prompt": "These aren’t rams’ tracks. These are Bozo’s tracks!",
                     "options": [
-                      "Ez werîsên konan kontrol dikim: ew bihêz in.",
-                      "Ez werîs konan kontrol dikim: ew bihêz in.",
-                      "Ez werîsên konan kontrol dikim: ew bihêz ne."
+                      "Ev ne şopên beranan in. Ev şopên Bozo ne!",
+                      "Ev ne şop beranan in. Ev şopên Bozo ne!",
+                      "Kera biçûk a Ferhad şermok e, lê îro Bozo ne tirsonek e!"
                     ],
                     "correctIndex": 0
                   }
@@ -4363,35 +4358,21 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Hespekî malbata Dapîrê hebû.",
+                    "ask": "missing",
+                    "say": "Dema ku ew panzdeh salî bû, ew li çiyê geriya.",
                     "voice": "hamo",
-                    "prompt": "Hespekî malbata Dapîrê hebû.",
+                    "prompt": "Dema ku ew ___ salî bû, ew li çiyê geriya.",
                     "options": [
-                      "Dapîr’s family had a horse.",
-                      "Dapîr’s family had a donkey.",
-                      "Dapîr’s family had no horse."
+                      "panzdeh",
+                      "sêzdeh",
+                      "hejdeh"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "fifteen"
                   }
                 },
                 {
                   "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "These aren’t rams’ tracks. These are Bozo’s tracks!",
-                    "options": [
-                      "Ev ne şopên beranan in. Ev şopên Bozo ne!",
-                      "Ev ne şop beranan in. Ev şopên Bozo ne!",
-                      "Kera biçûk a Ferhad şermok e, lê îro Bozo ne tirsonek e!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -4424,7 +4405,59 @@
                   }
                 },
                 {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Bozo dîsa reviya! Ez gazî wî dikim, lê ew nayê."
+                    ]
+                  }
+                },
+                {
                   "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Paşê ew bi stranan ji çiyê daket.",
+                    "reference": "Paşê ew bi stranan ji çiyê daket."
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Look, Bozo is looking at her, and she is looking at Bozo.",
+                    "options": [
+                      "Binêre, Bozo li wê dinêre, û ew jî li Bozo dinêre.",
+                      "Kincên xwe li xwe bike. Êzing kom neke, û gotar jî tune!",
+                      "Ev dara gûzê taybet e: par ez jî li bin wê razam!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Biryara min ev e: îsal em ê bar bikin zozanan!",
+                    "voice": "hamo",
+                    "prompt": "Biryara min ev e: îsal em ê bar bikin zozanan!",
+                    "options": [
+                      "I’ve made a decision: this year we’re moving up to the summer pastures!",
+                      "My decision is this: this year we’re staying in the village!",
+                      "My advice is this: we’ll go to town!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4436,66 +4469,32 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Na! Evîn nehênî ye. Em ji Ferhad re nabêjin.",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Na! Evîn ___ ye. Em ji Ferhad re nabêjin.",
+                    "prompt": "I’m checking the tent ropes: they are strong.",
                     "options": [
-                      "nehênî",
-                      "nehêniyên",
-                      "çewtî"
+                      "Ez werîsên konan kontrol dikim: ew bihêz in.",
+                      "Ez werîs konan kontrol dikim: ew bihêz in.",
+                      "Ez werîsên konan kontrol dikim: ew bihêz ne."
                     ],
-                    "correctIndex": 0,
-                    "cue": "secret"
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Paşê ew bi stranan ji çiyê daket.",
-                    "reference": "Paşê ew bi stranan ji çiyê daket."
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Spring comes after winter.",
-                    "accepted": [
-                      "Bihar piştî zivistanê tê."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Bozo dîsa reviya! Ez gazî wî dikim, lê ew nayê."
-                    ]
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "meaning",
+                    "say": "Hespekî malbata Dapîrê hebû.",
                     "voice": "hamo",
-                    "prompt": "Look, Bozo is looking at her, and she is looking at Bozo.",
+                    "prompt": "Hespekî malbata Dapîrê hebû.",
                     "options": [
-                      "Binêre, Bozo li wê dinêre, û ew jî li Bozo dinêre.",
-                      "Kincên xwe li xwe bike. Êzing kom neke, û gotar jî tune!",
-                      "Ev dara gûzê taybet e: par ez jî li bin wê razam!"
+                      "Dapîr’s family had a horse.",
+                      "Dapîr’s family had a donkey.",
+                      "Dapîr’s family had no horse."
                     ],
                     "correctIndex": 0
                   }
@@ -4517,16 +4516,17 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Biryara min ev e: îsal em ê bar bikin zozanan!",
+                    "ask": "missing",
+                    "say": "Na! Evîn nehênî ye. Em ji Ferhad re nabêjin.",
                     "voice": "hamo",
-                    "prompt": "Biryara min ev e: îsal em ê bar bikin zozanan!",
+                    "prompt": "Na! Evîn ___ ye. Em ji Ferhad re nabêjin.",
                     "options": [
-                      "I’ve made a decision: this year we’re moving up to the summer pastures!",
-                      "My decision is this: this year we’re staying in the village!",
-                      "My advice is this: we’ll go to town!"
+                      "nehênî",
+                      "nehêniyên",
+                      "çewtî"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "secret"
                   }
                 },
                 {

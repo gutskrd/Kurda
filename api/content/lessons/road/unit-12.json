@@ -202,60 +202,6 @@
                 },
                 {
                   "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Eger kesek stranan bibêje, derî venekin!",
-                    "voice": "hamo",
-                    "prompt": "Eger kesek stranan bibêje, derî ___!",
-                    "options": [
-                      "venekin",
-                      "venakim",
-                      "xapandin"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "If someone sings, don’t open the door!"
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The wolf wanted to trick the kids.",
-                    "accepted": [
-                      "Gur xwest karikan bixapîne."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Lê gur derewker e, û derî tenik e.",
-                    "reference": "Lê gur derewker e, û derî tenik e."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The goat said: if anyone knocks at the door, don’t open it!",
-                    "options": [
-                      "Bizinê got: heke kesek li derî bixe, derî venekin!",
-                      "Baran got ku ez li nêrdewanê hildikişim û stranan dibêjim!",
-                      "Bişar, xwediyê keriyê, li hespekî siwar bû û got: bi xêr hatin!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -288,7 +234,71 @@
                   }
                 },
                 {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Eger kesek stranan bibêje, derî venekin!",
+                    "voice": "hamo",
+                    "prompt": "Eger kesek stranan bibêje, derî ___!",
+                    "options": [
+                      "venekin",
+                      "venakim",
+                      "xapandin"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "If someone sings, don’t open the door!"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Eger kesek stranan bibêje, derî venekin!",
+                    "reference": "Eger kesek stranan bibêje, derî venekin!"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The wolf wanted to trick the kids.",
+                    "accepted": [
+                      "Gur xwest karikan bixapîne."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The goat said: if anyone knocks at the door, don’t open it!",
+                    "options": [
+                      "Bizinê got: heke kesek li derî bixe, derî venekin!",
+                      "Baran got ku ez li nêrdewanê hildikişim û stranan dibêjim!",
+                      "Bişar, xwediyê keriyê, li hespekî siwar bû û got: bi xêr hatin!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Lê gur derewker e, û derî tenik e.",
+                    "reference": "Lê gur derewker e, û derî tenik e."
+                  }
+                },
+                {
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -297,16 +307,6 @@
                     "accepted": [
                       "Şev tarî ye, û gur nerm û xweş diaxive."
                     ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Eger kesek stranan bibêje, derî venekin!",
-                    "reference": "Eger kesek stranan bibêje, derî venekin!"
                   }
                 }
               ]
@@ -480,6 +480,18 @@
                 },
                 {
                   "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Şengê notices it with her cleverness: the wolf’s tracks are on the ground!",
+                    "accepted": [
+                      "Şengê bi zîrekiya xwe pê dihese: şopên gur li ser axê ne!"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -494,32 +506,13 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Gur li derî dixe, û mîna bizinê stranan dibêje.",
-                    "voice": "hamo",
-                    "prompt": "Gur li derî dixe, û mîna bizinê stranan ___.",
-                    "options": [
-                      "dibêje",
-                      "dibêjim",
-                      "dixapîne"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "to say"
-                  }
-                },
-                {
                   "position": 11,
-                  "type": "translate",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Şengê notices it with her cleverness: the wolf’s tracks are on the ground!",
-                    "accepted": [
-                      "Şengê bi zîrekiya xwe pê dihese: şopên gur li ser axê ne!"
-                    ]
+                    "prompt": "Heke tu birçî bî, bixwe!",
+                    "reference": "Heke tu birçî bî, bixwe!"
                   }
                 },
                 {
@@ -528,8 +521,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Heke tu birçî bî, bixwe!",
-                    "reference": "Heke tu birçî bî, bixwe!"
+                    "prompt": "Gur li derî dixe, û mîna bizinê stranan dibêje.",
+                    "reference": "Gur li derî dixe, û mîna bizinê stranan dibêje."
                   }
                 },
                 {
@@ -547,6 +540,18 @@
                 },
                 {
                   "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Şengê says this is the wolf’s trick.",
+                    "accepted": [
+                      "Şengê dibêje ku ev dekeke gur e."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -559,25 +564,20 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Şengê says this is the wolf’s trick.",
-                    "accepted": [
-                      "Şengê dibêje ku ev dekeke gur e."
-                    ]
-                  }
-                },
-                {
                   "position": 16,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "missing",
+                    "say": "Gur li derî dixe, û mîna bizinê stranan dibêje.",
                     "voice": "hamo",
-                    "prompt": "Gur li derî dixe, û mîna bizinê stranan dibêje.",
-                    "reference": "Gur li derî dixe, û mîna bizinê stranan dibêje."
+                    "prompt": "Gur li derî dixe, û mîna bizinê stranan ___.",
+                    "options": [
+                      "dibêje",
+                      "dibêjim",
+                      "dixapîne"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "to say"
                   }
                 }
               ]
@@ -677,6 +677,63 @@
                 },
                 {
                   "position": 5,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Erê. Divê gur lepê xwe nîşan bide, lê Hevalo lingê xwe nîşan dide.",
+                    "reference": "Erê. Divê gur lepê xwe nîşan bide, lê Hevalo lingê xwe nîşan dide."
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Ez gur im! Hûn sêvan dixwazin?",
+                    "voice": "hevalo",
+                    "prompt": "Ez gur im! Hûn sêvan dixwazin?",
+                    "options": [
+                      "I’m the wolf! Would you like some apples?",
+                      "I’m the wolf! I want your apples!",
+                      "I’m a deer! Would you like some apples?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "We spent a lovely evening, and Dapîr clapped. Xezo will miss our plays.",
+                    "options": [
+                      "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
+                      "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
+                      "Zarok li dora sobeyê berhev dibin, û ez dibêjim: bizinek hebû, û du karikên wê hebûn."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
+                    "voice": "hamo",
+                    "prompt": "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
+                    "options": [
+                      "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
+                      "Baran is the first child, Hêvî is the second.",
+                      "Hêvî is holding the handkerchief, and Baran is playing the drum."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -693,80 +750,14 @@
                   }
                 },
                 {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
-                    "voice": "hamo",
-                    "prompt": "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
-                    "options": [
-                      "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
-                      "Baran is the first child, Hêvî is the second.",
-                      "Hêvî is holding the handkerchief, and Baran is playing the drum."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "picture",
-                    "say": "karik",
-                    "voice": "hevalo",
-                    "prompt": "karik",
-                    "options": [
-                      "kid",
-                      "goat",
-                      "lamb",
-                      "wolf"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
-                    "voice": "hamo",
-                    "prompt": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
-                    "accepted": [
-                      "We spent a lovely evening, and Dapîr clapped. Xezo will miss our plays."
-                    ]
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
-                    "options": [
-                      "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
-                      "Gur xwedî hêz e, lê ew nerm diaxive.",
-                      "Derfet mezin e, lê dûrî jî mezin e."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
                   "position": 10,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ez gur im! Hûn sêvan dixwazin?",
-                    "voice": "hevalo",
-                    "prompt": "Ez gur im! Hûn sêvan dixwazin?",
-                    "options": [
-                      "I’m the wolf! Would you like some apples?",
-                      "I’m the wolf! I want your apples!",
-                      "I’m a deer! Would you like some apples?"
-                    ],
-                    "correctIndex": 0
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Aşpêj qîr dike ku şîv amade ye, û hosta yekser tê."
+                    ]
                   }
                 },
                 {
@@ -849,46 +840,55 @@
                   "position": 12,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
                     "voice": "hamo",
-                    "prompt": "The children are turning the tale into a play, and everyone wants a part.",
+                    "prompt": "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
                     "accepted": [
-                      "Zarok çîrokê dikin lîstik, û her kes rolek dixwaze."
+                      "We spent a lovely evening, and Dapîr clapped. Xezo will miss our plays."
                     ]
                   }
                 },
                 {
                   "position": 13,
-                  "type": "speaking",
+                  "type": "translate",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Erê. Divê gur lepê xwe nîşan bide, lê Hevalo lingê xwe nîşan dide.",
-                    "reference": "Erê. Divê gur lepê xwe nîşan bide, lê Hevalo lingê xwe nîşan dide."
+                    "prompt": "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
+                    "accepted": [
+                      "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e."
+                    ]
                   }
                 },
                 {
                   "position": 14,
-                  "type": "listening",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "accepted": [
-                      "Aşpêj qîr dike ku şîv amade ye, û hosta yekser tê."
-                    ]
+                    "prompt": "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
+                    "options": [
+                      "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
+                      "Gur xwedî hêz e, lê ew nerm diaxive.",
+                      "Derfet mezin e, lê dûrî jî mezin e."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "We spent a lovely evening, and Dapîr clapped. Xezo will miss our plays.",
+                    "ask": "picture",
+                    "say": "karik",
+                    "voice": "hevalo",
+                    "prompt": "karik",
                     "options": [
-                      "Me êvareke xweş derbas kir, û Dapîrê çepik lêxistin. Xezo dê bêriya şanoyên me bike.",
-                      "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
-                      "Zarok li dora sobeyê berhev dibin, û ez dibêjim: bizinek hebû, û du karikên wê hebûn."
+                      "kid",
+                      "goat",
+                      "lamb",
+                      "wolf"
                     ],
                     "correctIndex": 0
                   }
@@ -899,9 +899,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
+                    "prompt": "The children are turning the tale into a play, and everyone wants a part.",
                     "accepted": [
-                      "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e."
+                      "Zarok çîrokê dikin lîstik, û her kes rolek dixwaze."
                     ]
                   }
                 }
@@ -915,68 +915,91 @@
               "exercises": [
                 {
                   "position": 1,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Zarok çîrokê dikin lîstik, û her kes rolek dixwaze.",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Zarok çîrokê dikin lîstik, û her kes rolek dixwaze.",
-                    "options": [
-                      "The children are turning the tale into a play, and everyone wants a part.",
-                      "In every country, children love this tale.",
-                      "Fourteen children are gathering firewood, and the preparations are going well."
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Dikandarê me dikanê dereng vedike. Ev çi pîşe ye?"
+                    ]
                   }
                 },
                 {
                   "position": 2,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Eger kesek stranan bibêje, derî venekin!",
+                    "ask": "to-english",
+                    "say": "Şengê bi zîrekiya xwe pê dihese: şopên gur li ser axê ne!",
                     "voice": "hamo",
-                    "prompt": "Eger kesek stranan bibêje, derî ___!",
-                    "options": [
-                      "venekin",
-                      "venakim",
-                      "xapandin"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "If someone sings, don’t open the door!"
+                    "prompt": "Şengê bi zîrekiya xwe pê dihese: şopên gur li ser axê ne!",
+                    "accepted": [
+                      "Şengê notices it with her cleverness: the wolf’s tracks are on the ground!"
+                    ]
                   }
                 },
                 {
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "missing",
+                    "say": "Gur xwest karikan bixapîne.",
                     "voice": "hamo",
-                    "prompt": "But the wolf is a liar, and the door is thin.",
+                    "prompt": "Gur xwest ___ bixapîne.",
                     "options": [
-                      "Lê gur derewker e, û derî tenik e.",
-                      "Nozdeh karker hatin dikanê, û dikandar şaşmayî ma.",
-                      "Nivîskarê me Baran hat, û got ku ew ê şitilan biçîne."
+                      "karikan",
+                      "karik",
+                      "hişan"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The wolf wanted to trick the kids."
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bizinê got: heke kesek li derî bixe, derî venekin!",
+                    "voice": "hamo",
+                    "prompt": "Bizinê got: heke kesek li derî bixe, derî venekin!",
+                    "options": [
+                      "The goat said: if anyone knocks at the door, don’t open it!",
+                      "The goat said: if anyone knocks at the door, open it!",
+                      "The goat said: if anyone is hungry, give them bread!"
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 4,
+                  "position": 5,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Heke tu birçî bî, bixwe!",
+                    "say": "Erê. Divê gur lepê xwe nîşan bide, lê Hevalo lingê xwe nîşan dide.",
                     "voice": "hamo",
-                    "prompt": "Heke tu birçî bî, bixwe!",
+                    "prompt": "Erê. Divê gur lepê xwe nîşan bide, lê Hevalo lingê xwe nîşan dide.",
                     "accepted": [
-                      "If you’re hungry, eat!",
-                      "If you are hungry, eat!"
+                      "Yes. The wolf has to show his paw, but Hevalo shows his leg."
                     ]
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The night is dark, and the wolf speaks softly and sweetly.",
+                    "options": [
+                      "Şev tarî ye, û gur nerm û xweş diaxive.",
+                      "Mala kevn a li ber golê wêran e, û hosta dê wê çêke.",
+                      "Cîranan pirsî çi qewimî, û Baran serpêhatî vegot."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -992,7 +1015,31 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Ji bo te ye. Ev derfeteke mezin e, hunermendê min!",
+                    "reference": "Ji bo te ye. Ev derfeteke mezin e, hunermendê min!"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Heke tu birçî bî, bixwe!",
+                    "voice": "hamo",
+                    "prompt": "Heke tu birçî bî, bixwe!",
+                    "accepted": [
+                      "If you’re hungry, eat!",
+                      "If you are hungry, eat!"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1007,7 +1054,20 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Good sense is better than strong legs.",
+                    "accepted": [
+                      "Hiş ji lingên bihêz çêtir e.",
+                      "Hiş ji lingên bihêz baştir e."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1040,47 +1100,55 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
+                  "position": 13,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Good sense is better than strong legs.",
-                    "accepted": [
-                      "Hiş ji lingên bihêz çêtir e.",
-                      "Hiş ji lingên bihêz baştir e."
-                    ]
+                    "prompt": "But the wolf is a liar, and the door is thin.",
+                    "options": [
+                      "Lê gur derewker e, û derî tenik e.",
+                      "Nozdeh karker hatin dikanê, û dikandar şaşmayî ma.",
+                      "Nivîskarê me Baran hat, û got ku ew ê şitilan biçîne."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Zarok çîrokê dikin lîstik, û her kes rolek dixwaze.",
+                    "voice": "hamo",
+                    "prompt": "Zarok çîrokê dikin lîstik, û her kes rolek dixwaze.",
+                    "options": [
+                      "The children are turning the tale into a play, and everyone wants a part.",
+                      "In every country, children love this tale.",
+                      "Fourteen children are gathering firewood, and the preparations are going well."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Gur xwest karikan bixapîne.",
+                    "say": "Eger kesek stranan bibêje, derî venekin!",
                     "voice": "hamo",
-                    "prompt": "Gur xwest ___ bixapîne.",
+                    "prompt": "Eger kesek stranan bibêje, derî ___!",
                     "options": [
-                      "karikan",
-                      "karik",
-                      "hişan"
+                      "venekin",
+                      "venakim",
+                      "xapandin"
                     ],
                     "correctIndex": 0,
-                    "cue": "The wolf wanted to trick the kids."
+                    "cue": "If someone sings, don’t open the door!"
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Ji bo te ye. Ev derfeteke mezin e, hunermendê min!",
-                    "reference": "Ji bo te ye. Ev derfeteke mezin e, hunermendê min!"
-                  }
-                },
-                {
-                  "position": 11,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1090,74 +1158,6 @@
                       "Bi lez! Êvarê hevdîtina gund heye.",
                       "Bi lez! Êvarê hevdîtineke gund heye."
                     ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Dikandarê me dikanê dereng vedike. Ev çi pîşe ye?"
-                    ]
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The night is dark, and the wolf speaks softly and sweetly.",
-                    "options": [
-                      "Şev tarî ye, û gur nerm û xweş diaxive.",
-                      "Mala kevn a li ber golê wêran e, û hosta dê wê çêke.",
-                      "Cîranan pirsî çi qewimî, û Baran serpêhatî vegot."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Şengê bi zîrekiya xwe pê dihese: şopên gur li ser axê ne!",
-                    "voice": "hamo",
-                    "prompt": "Şengê bi zîrekiya xwe pê dihese: şopên gur li ser axê ne!",
-                    "accepted": [
-                      "Şengê notices it with her cleverness: the wolf’s tracks are on the ground!"
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Erê. Divê gur lepê xwe nîşan bide, lê Hevalo lingê xwe nîşan dide.",
-                    "voice": "hamo",
-                    "prompt": "Erê. Divê gur lepê xwe nîşan bide, lê Hevalo lingê xwe nîşan dide.",
-                    "accepted": [
-                      "Yes. The wolf has to show his paw, but Hevalo shows his leg."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Bizinê got: heke kesek li derî bixe, derî venekin!",
-                    "voice": "hamo",
-                    "prompt": "Bizinê got: heke kesek li derî bixe, derî venekin!",
-                    "options": [
-                      "The goat said: if anyone knocks at the door, don’t open it!",
-                      "The goat said: if anyone knocks at the door, open it!",
-                      "The goat said: if anyone is hungry, give them bread!"
-                    ],
-                    "correctIndex": 0
                   }
                 }
               ]
@@ -1340,21 +1340,26 @@
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "The guests are completely worn out, and in Sêvan hospitality is a tradition.",
-                    "options": [
-                      "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e.",
-                      "Xezoyê erkek da pola Baran.",
-                      "Kanûna Pêşîn e, û ji nişka ve kesek bi dilekî giran li derî dixe."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Kanûna Pêşîn e, û ji nişka ve kesek bi dilekî giran li derî dixe.",
+                    "reference": "Kanûna Pêşîn e, û ji nişka ve kesek bi dilekî giran li derî dixe."
                   }
                 },
                 {
                   "position": 10,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Sêvan gundekî mêvanperwer e.",
+                    "reference": "Sêvan gundekî mêvanperwer e."
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1371,7 +1376,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1384,17 +1389,19 @@
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "speaking",
+                  "position": 13,
+                  "type": "translate",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Sêvan gundekî mêvanperwer e.",
-                    "reference": "Sêvan gundekî mêvanperwer e."
+                    "prompt": "The guests are completely worn out, and in Sêvan hospitality is a tradition.",
+                    "accepted": [
+                      "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e."
+                    ]
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1409,7 +1416,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -1442,25 +1449,18 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "translate",
+                  "position": 16,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
                     "prompt": "The guests are completely worn out, and in Sêvan hospitality is a tradition.",
-                    "accepted": [
-                      "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Kanûna Pêşîn e, û ji nişka ve kesek bi dilekî giran li derî dixe.",
-                    "reference": "Kanûna Pêşîn e, û ji nişka ve kesek bi dilekî giran li derî dixe."
+                    "options": [
+                      "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e.",
+                      "Xezoyê erkek da pola Baran.",
+                      "Kanûna Pêşîn e, û ji nişka ve kesek bi dilekî giran li derî dixe."
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -1621,31 +1621,27 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
+                  "type": "listening",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Baran gilî dike ku îro şano tune.",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Baran gilî dike ku îro şano tune.",
                     "accepted": [
-                      "Baran complains that there’s no play today.",
-                      "Baran complains that there is no play today."
+                      "Bizinê got: heke kesek li derî bixe, derî venekin!"
                     ]
                   }
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-english",
+                    "say": "Di Kanûna Paşîn de ez ê Bişar agahdar bikim.",
                     "voice": "hamo",
-                    "prompt": "Hêvî asks: I wonder, is this the wolf, and does he want to trick us?",
-                    "options": [
-                      "Hêvî dipirse: gelo ev gur e, û dixwaze me bixapîne?",
-                      "Wî pirsî ka ew ê di Sibatê de biçin.",
-                      "Baran gilî dike ku îro şano tune."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Di Kanûna Paşîn de ez ê Bişar agahdar bikim.",
+                    "accepted": [
+                      "In January I’ll let Bişar know.",
+                      "In January I will let Bişar know."
+                    ]
                   }
                 },
                 {
@@ -1663,6 +1659,54 @@
                 },
                 {
                   "position": 11,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Baran complains that there’s no play today.",
+                    "accepted": [
+                      "Baran gilî dike ku îro şano tune."
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Hêvî asks: I wonder, is this the wolf, and does he want to trick us?",
+                    "accepted": [
+                      "Hêvî dipirse: gelo ev gur e, û dixwaze me bixapîne?"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Wî pirsî ka ew ê di Sibatê de biçin.",
+                    "reference": "Wî pirsî ka ew ê di Sibatê de biçin."
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Baran gilî dike ku îro şano tune.",
+                    "voice": "hamo",
+                    "prompt": "Baran gilî dike ku îro şano tune.",
+                    "accepted": [
+                      "Baran complains that there’s no play today.",
+                      "Baran complains that there is no play today."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1675,62 +1719,18 @@
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Wî pirsî ka ew ê di Sibatê de biçin.",
-                    "reference": "Wî pirsî ka ew ê di Sibatê de biçin."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Bizinê got: heke kesek li derî bixe, derî venekin!"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Baran complains that there’s no play today.",
-                    "accepted": [
-                      "Baran gilî dike ku îro şano tune."
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Di Kanûna Paşîn de ez ê Bişar agahdar bikim.",
-                    "voice": "hamo",
-                    "prompt": "Di Kanûna Paşîn de ez ê Bişar agahdar bikim.",
-                    "accepted": [
-                      "In January I’ll let Bişar know.",
-                      "In January I will let Bişar know."
-                    ]
-                  }
-                },
-                {
                   "position": 16,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
                     "prompt": "Hêvî asks: I wonder, is this the wolf, and does he want to trick us?",
-                    "accepted": [
-                      "Hêvî dipirse: gelo ev gur e, û dixwaze me bixapîne?"
-                    ]
+                    "options": [
+                      "Hêvî dipirse: gelo ev gur e, û dixwaze me bixapîne?",
+                      "Wî pirsî ka ew ê di Sibatê de biçin.",
+                      "Baran gilî dike ku îro şano tune."
+                    ],
+                    "correctIndex": 0
                   }
                 }
               ]
@@ -1830,6 +1830,19 @@
                 },
                 {
                   "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Mêvanê me dengbêj e, û ew gelek dengxweş e.",
+                    "voice": "hamo",
+                    "prompt": "Mêvanê me dengbêj e, û ew gelek dengxweş e.",
+                    "accepted": [
+                      "Our guest is a dengbêj, and he has a very fine voice."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1846,7 +1859,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1859,20 +1872,17 @@
                   }
                 },
                 {
-                  "position": 7,
-                  "type": "translate",
+                  "position": 8,
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Mêvanê me dengbêj e, û ew gelek dengxweş e.",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Mêvanê me dengbêj e, û ew gelek dengxweş e.",
-                    "accepted": [
-                      "Our guest is a dengbêj, and he has a very fine voice."
-                    ]
+                    "prompt": "Malika paşîn winda ye. Tenê bavê min wê dizane.",
+                    "reference": "Malika paşîn winda ye. Tenê bavê min wê dizane."
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1884,23 +1894,6 @@
                       "Zarok çîrokê dikin lîstik."
                     ],
                     "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Mala te ava! Xwedê ji te razî be!",
-                    "voice": "hamo",
-                    "prompt": "Mala te ava! Xwedê ji te razî be!",
-                    "options": [
-                      "May your house prosper! May God be pleased with you!",
-                      "Welcome to our house! Please sit down!",
-                      "Goodbye! Go well!"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "what a guest says to the host"
                   }
                 },
                 {
@@ -1980,6 +1973,35 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
+                    "prompt": "Should I phone Kobanî, do you think?",
+                    "accepted": [
+                      "Gelo ez telefonî Kobaniyê bikim?"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Mala te ava! Xwedê ji te razî be!",
+                    "voice": "hamo",
+                    "prompt": "Mala te ava! Xwedê ji te razî be!",
+                    "options": [
+                      "May your house prosper! May God be pleased with you!",
+                      "Welcome to our house! Please sit down!",
+                      "Goodbye! Go well!"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "what a guest says to the host"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
                     "prompt": "Kilams of the old days. Their tune is like the mountain road.",
                     "accepted": [
                       "Kilamên berê. Awaza wan mîna rêya çiyê ye."
@@ -1987,17 +2009,7 @@
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Malika paşîn winda ye. Tenê bavê min wê dizane.",
-                    "reference": "Malika paşîn winda ye. Tenê bavê min wê dizane."
-                  }
-                },
-                {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2008,7 +2020,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2020,18 +2032,6 @@
                       "Ez li ser nêrdewanê me, û tav serê min dişewitîne."
                     ],
                     "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Should I phone Kobanî, do you think?",
-                    "accepted": [
-                      "Gelo ez telefonî Kobaniyê bikim?"
-                    ]
                   }
                 }
               ]
@@ -2060,38 +2060,6 @@
                 },
                 {
                   "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Wî pirsî ka ew ê di Sibatê de biçin.",
-                    "voice": "hamo",
-                    "prompt": "Wî pirsî ka ew ê di ___ de biçin.",
-                    "options": [
-                      "Sibatê",
-                      "Sibat",
-                      "malikê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "February"
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Kilams of the old days. Their tune is like the mountain road.",
-                    "options": [
-                      "Kilamên berê. Awaza wan mîna rêya çiyê ye.",
-                      "Rola bizinê ji bo te ye, çimkî kes naxwaze!",
-                      "Selik sivik in, lê Bozo dibêje ku ew giran in!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2105,23 +2073,19 @@
                   }
                 },
                 {
-                  "position": 5,
-                  "type": "multiple_choice",
+                  "position": 3,
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e.",
-                    "options": [
-                      "The guests are completely worn out, and in Sêvan hospitality is a tradition.",
-                      "The guests are very hungry, and in Sêvan nobody opens the door.",
-                      "The guests are completely lost, and in Sêvan there is no tea."
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Their sack is empty, so I lay the meal cloth at once.",
+                    "accepted": [
+                      "Tûrê wan vala ye, loma ez yekser sifreyê datînim."
+                    ]
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 4,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2136,7 +2100,17 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 5,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Hêvî dipirse: gelo ev gur e, û dixwaze me bixapîne?",
+                    "reference": "Hêvî dipirse: gelo ev gur e, û dixwaze me bixapîne?"
+                  }
+                },
+                {
+                  "position": 6,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -2169,19 +2143,54 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
+                  "position": 7,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e.",
                     "voice": "hamo",
-                    "prompt": "Their sack is empty, so I lay the meal cloth at once.",
-                    "accepted": [
-                      "Tûrê wan vala ye, loma ez yekser sifreyê datînim."
-                    ]
+                    "prompt": "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e.",
+                    "options": [
+                      "The guests are completely worn out, and in Sêvan hospitality is a tradition.",
+                      "The guests are very hungry, and in Sêvan nobody opens the door.",
+                      "The guests are completely lost, and in Sêvan there is no tea."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Malika paşîn winda ye. Tenê bavê min wê dizane.",
+                    "voice": "hamo",
+                    "prompt": "Malika paşîn winda ye. Tenê bavê min wê dizane.",
+                    "options": [
+                      "The last verse is lost. Only my father knows it.",
+                      "Then… I don’t know. Only my father knows the whole legend.",
+                      "My father knows the stories of the stars."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Kilams of the old days. Their tune is like the mountain road.",
+                    "options": [
+                      "Kilamên berê. Awaza wan mîna rêya çiyê ye.",
+                      "Rola bizinê ji bo te ye, çimkî kes naxwaze!",
+                      "Selik sivik in, lê Bozo dibêje ku ew giran in!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2198,26 +2207,18 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Hêvî dipirse: gelo ev gur e, û dixwaze me bixapîne?",
-                    "reference": "Hêvî dipirse: gelo ev gur e, û dixwaze me bixapîne?"
-                  }
-                },
-                {
                   "position": 11,
-                  "type": "writing",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "May your house prosper! May God be pleased with you!",
-                    "accepted": [
-                      "Mala te ava! Xwedê ji te razî be!",
-                      "Mala te ava, Xwedê ji te razî be!"
-                    ]
+                    "prompt": "Should I phone Kobanî, do you think?",
+                    "options": [
+                      "Gelo ez telefonî Kobaniyê bikim?",
+                      "Îro êvarê şevbêrka me ya yekem e.",
+                      "Ramaneke min heye. Îsal ez her tiştî diguherînim!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2233,33 +2234,32 @@
                 },
                 {
                   "position": 13,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Should I phone Kobanî, do you think?",
-                    "options": [
-                      "Gelo ez telefonî Kobaniyê bikim?",
-                      "Îro êvarê şevbêrka me ya yekem e.",
-                      "Ramaneke min heye. Îsal ez her tiştî diguherînim!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "May your house prosper! May God be pleased with you!",
+                    "accepted": [
+                      "Mala te ava! Xwedê ji te razî be!",
+                      "Mala te ava, Xwedê ji te razî be!"
+                    ]
                   }
                 },
                 {
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Malika paşîn winda ye. Tenê bavê min wê dizane.",
+                    "ask": "missing",
+                    "say": "Wî pirsî ka ew ê di Sibatê de biçin.",
                     "voice": "hamo",
-                    "prompt": "Malika paşîn winda ye. Tenê bavê min wê dizane.",
+                    "prompt": "Wî pirsî ka ew ê di ___ de biçin.",
                     "options": [
-                      "The last verse is lost. Only my father knows it.",
-                      "Then… I don’t know. Only my father knows the whole legend.",
-                      "My father knows the stories of the stars."
+                      "Sibatê",
+                      "Sibat",
+                      "malikê"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "February"
                   }
                 }
               ]
@@ -2426,15 +2426,17 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Plana rovî bi dadî ye, lê reh tal in.",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Plana rovî bi dadî ye, lê reh tal in.",
-                    "accepted": [
-                      "The fox’s plan is fair, but the roots are bitter."
-                    ]
+                    "prompt": "The fox’s plan is fair, but the roots are bitter.",
+                    "options": [
+                      "Plana rovî bi dadî ye, lê reh tal in.",
+                      "Gur li derî dixe, lê Şengê bi zîrekî pê dihese ku ev dek e.",
+                      "Mêvanê dengxweş got: mala we ava, ji bo mêvandarî û dilgermiya we!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2457,57 +2459,17 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Plana rovî bi dadî ye, lê reh tal in.",
                     "voice": "hamo",
-                    "prompt": "It’s obvious: the maize stalks are tasteless!",
+                    "prompt": "Plana rovî bi dadî ye, lê reh tal in.",
                     "accepted": [
-                      "Eşkere ye: darên garisan bêtam in!"
+                      "The fox’s plan is fair, but the roots are bitter."
                     ]
                   }
                 },
                 {
                   "position": 11,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Rovî simbilan berhev dike, û hirç dixeyide.",
-                    "voice": "hamo",
-                    "prompt": "Rovî simbilan berhev dike, û hirç dixeyide.",
-                    "accepted": [
-                      "The fox gathers the wheat, and the bear sulks.",
-                      "The fox picks the wheat, and the bear is sulking.",
-                      "The fox harvests the ears of wheat, and the bear sulks."
-                    ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The fox’s plan is fair, but the roots are bitter.",
-                    "options": [
-                      "Plana rovî bi dadî ye, lê reh tal in.",
-                      "Gur li derî dixe, lê Şengê bi zîrekî pê dihese ku ev dek e.",
-                      "Mêvanê dengxweş got: mala we ava, ji bo mêvandarî û dilgermiya we!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -2540,7 +2502,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 12,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2550,7 +2512,22 @@
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Rovî simbilan berhev dike, û hirç dixeyide.",
+                    "voice": "hamo",
+                    "prompt": "Rovî simbilan berhev dike, û hirç dixeyide.",
+                    "accepted": [
+                      "The fox gathers the wheat, and the bear sulks.",
+                      "The fox picks the wheat, and the bear is sulking.",
+                      "The fox harvests the ears of wheat, and the bear sulks."
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2559,6 +2536,29 @@
                     "accepted": [
                       "Plana rovî bi dadî ye, lê reh tal in.",
                       "Plana rovî bi dadî ye lê reh tal in."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "It’s obvious: the maize stalks are tasteless!",
+                    "accepted": [
+                      "Eşkere ye: darên garisan bêtam in!"
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse."
                     ]
                   }
                 }
@@ -2722,17 +2722,41 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Mêvan mêvanê Xwedê ye.",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Mêvan mêvanê Xwedê ye.",
+                    "prompt": "However high the mountain, a road will cross it.",
                     "accepted": [
-                      "The guest is God’s guest."
+                      "Çiya çiqas bilind be, wê rê pê keve."
                     ]
                   }
                 },
                 {
                   "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Zimanê şîrîn mar ji qulê derdixe.",
+                    "voice": "hamo",
+                    "prompt": "Zimanê şîrîn mar ji qulê derdixe.",
+                    "accepted": [
+                      "A sweet tongue brings the snake out of its hole."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Drop by drop, water becomes a lake.",
+                    "accepted": [
+                      "Av dilop dilop dibe gol."
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2747,38 +2771,15 @@
                   }
                 },
                 {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Çiya çiqas bilind be, wê rê pê keve.",
-                    "voice": "hamo",
-                    "prompt": "Çiya çiqas bilind be, wê rê pê keve.",
-                    "accepted": [
-                      "However high the mountain, a road will cross it."
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "translate",
+                  "position": 12,
+                  "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Drop by drop, water becomes a lake.",
+                    "prompt": "The guest is God’s guest.",
                     "accepted": [
-                      "Av dilop dilop dibe gol."
+                      "Mêvan mêvanê Xwedê ye."
                     ]
-                  }
-                },
-                {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Zimanê şîrîn mar ji qulê derdixe.",
-                    "reference": "Zimanê şîrîn mar ji qulê derdixe."
                   }
                 },
                 {
@@ -2794,13 +2795,14 @@
                 },
                 {
                   "position": 14,
-                  "type": "writing",
+                  "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Çiya çiqas bilind be, wê rê pê keve.",
                     "voice": "hamo",
-                    "prompt": "The guest is God’s guest.",
+                    "prompt": "Çiya çiqas bilind be, wê rê pê keve.",
                     "accepted": [
-                      "Mêvan mêvanê Xwedê ye."
+                      "However high the mountain, a road will cross it."
                     ]
                   }
                 },
@@ -2809,24 +2811,22 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Zimanê şîrîn mar ji qulê derdixe.",
+                    "say": "Mêvan mêvanê Xwedê ye.",
                     "voice": "hamo",
-                    "prompt": "Zimanê şîrîn mar ji qulê derdixe.",
+                    "prompt": "Mêvan mêvanê Xwedê ye.",
                     "accepted": [
-                      "A sweet tongue brings the snake out of its hole."
+                      "The guest is God’s guest."
                     ]
                   }
                 },
                 {
                   "position": 16,
-                  "type": "translate",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "However high the mountain, a road will cross it.",
-                    "accepted": [
-                      "Çiya çiqas bilind be, wê rê pê keve."
-                    ]
+                    "prompt": "Zimanê şîrîn mar ji qulê derdixe.",
+                    "reference": "Zimanê şîrîn mar ji qulê derdixe."
                   }
                 }
               ]
@@ -2890,17 +2890,16 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ez henekbaz im, lê Dapîr zana ye.",
+                    "ask": "meaning",
+                    "say": "Eşkere ye: darên garisan bêtam in!",
                     "voice": "hamo",
-                    "prompt": "Ez ___ im, lê Dapîr zana ye.",
+                    "prompt": "Eşkere ye: darên garisan bêtam in!",
                     "options": [
-                      "henekbaz",
-                      "zana",
-                      "tal"
+                      "It’s obvious: the maize stalks are tasteless!",
+                      "It’s obvious: the maize is very sweet!",
+                      "It’s obvious: the wheat is bitter!"
                     ],
-                    "correctIndex": 0,
-                    "cue": "I’m a joker, but Dapîr is wise."
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2924,6 +2923,60 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
+                    "say": "Ez henekbaz im, lê Dapîr zana ye.",
+                    "voice": "hamo",
+                    "prompt": "Ez ___ im, lê Dapîr zana ye.",
+                    "options": [
+                      "henekbaz",
+                      "zana",
+                      "tal"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "I’m a joker, but Dapîr is wise."
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Ez henekbaz im, lê Dapîr zana ye.",
+                    "voice": "hamo",
+                    "prompt": "Ez henekbaz im, lê Dapîr zana ye.",
+                    "accepted": [
+                      "I’m a joker, but Dapîr is wise.",
+                      "I am a joker, but Dapîr is wise."
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I’m a joker, but Dapîr is wise.",
+                    "accepted": [
+                      "Ez henekbaz im, lê Dapîr zana ye.",
+                      "Ez henekbaz im lê Dapîr zana ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
+                    "reference": "Pirsgirêk çi be, Dapîr çareseriyê dizane."
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
                     "say": "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
                     "voice": "hamo",
                     "prompt": "Pirsgirêk çi be, Dapîr ___ dizane.",
@@ -2934,66 +2987,6 @@
                     ],
                     "correctIndex": 0,
                     "cue": "solution"
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
-                    "voice": "hamo",
-                    "prompt": "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
-                    "options": [
-                      "The proverb duel begins! I’m the judge.",
-                      "Dapîr starts along with my father.",
-                      "I’m not a coward!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Dapîr dibêje: av dilop dilop dibe gol.",
-                    "voice": "hamo",
-                    "prompt": "Dapîr dibêje: av dilop dilop dibe gol.",
-                    "accepted": [
-                      "Dapîr says: drop by drop, water becomes a lake."
-                    ]
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The proverb duel begins! I’m the judge.",
-                    "options": [
-                      "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
-                      "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
-                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Eşkere ye: darên garisan bêtam in!",
-                    "voice": "hamo",
-                    "prompt": "Eşkere ye: darên garisan bêtam in!",
-                    "options": [
-                      "It’s obvious: the maize stalks are tasteless!",
-                      "It’s obvious: the maize is very sweet!",
-                      "It’s obvious: the wheat is bitter!"
-                    ],
-                    "correctIndex": 0
                   }
                 },
                 {
@@ -3063,25 +3056,58 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "I’m a joker, but Dapîr is wise.",
+                    "prompt": "The proverb duel begins! I’m the judge.",
                     "accepted": [
-                      "Ez henekbaz im, lê Dapîr zana ye.",
-                      "Ez henekbaz im lê Dapîr zana ye."
+                      "Pêşbirka gotinan dest pê dike! Ez dadwer im."
                     ]
                   }
                 },
                 {
                   "position": 12,
-                  "type": "speaking",
+                  "type": "translate",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "to-english",
+                    "say": "Dapîr dibêje: av dilop dilop dibe gol.",
                     "voice": "hamo",
-                    "prompt": "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
-                    "reference": "Pirsgirêk çi be, Dapîr çareseriyê dizane."
+                    "prompt": "Dapîr dibêje: av dilop dilop dibe gol.",
+                    "accepted": [
+                      "Dapîr says: drop by drop, water becomes a lake."
+                    ]
                   }
                 },
                 {
                   "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
+                    "voice": "hamo",
+                    "prompt": "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
+                    "options": [
+                      "The proverb duel begins! I’m the judge.",
+                      "Dapîr starts along with my father.",
+                      "I’m not a coward!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The proverb duel begins! I’m the judge.",
+                    "options": [
+                      "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
+                      "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
+                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3092,7 +3118,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3100,32 +3126,6 @@
                     "prompt": "Dapîr says: drop by drop, water becomes a lake.",
                     "accepted": [
                       "Dapîr dibêje: av dilop dilop dibe gol."
-                    ]
-                  }
-                },
-                {
-                  "position": 15,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Ez henekbaz im, lê Dapîr zana ye.",
-                    "voice": "hamo",
-                    "prompt": "Ez henekbaz im, lê Dapîr zana ye.",
-                    "accepted": [
-                      "I’m a joker, but Dapîr is wise.",
-                      "I am a joker, but Dapîr is wise."
-                    ]
-                  }
-                },
-                {
-                  "position": 16,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The proverb duel begins! I’m the judge.",
-                    "accepted": [
-                      "Pêşbirka gotinan dest pê dike! Ez dadwer im."
                     ]
                   }
                 }
@@ -3141,54 +3141,6 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Plana rovî bi dadî ye, lê reh tal in.",
-                    "voice": "hamo",
-                    "prompt": "Plana rovî bi dadî ye, lê reh tal in.",
-                    "options": [
-                      "The fox’s plan is fair, but the roots are bitter.",
-                      "The roots are bitter, and the bear is hungry.",
-                      "Thank you! Winning is nice, but friends are nicer."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 2,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "missing",
-                    "say": "Zimanê şîrîn mar ji qulê derdixe.",
-                    "voice": "hamo",
-                    "prompt": "Zimanê şîrîn ___ ji qulê derdixe.",
-                    "options": [
-                      "mar",
-                      "marên",
-                      "çareserî"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "snake"
-                  }
-                },
-                {
-                  "position": 3,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "I’m a joker, but Dapîr is wise.",
-                    "options": [
-                      "Ez henekbaz im, lê Dapîr zana ye.",
-                      "Bi kurtî, tu yê hem hêdî hem jî baş biaxivî.",
-                      "Nivîskarê me Baran malikan tîp bi tîp dinivîse."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 4,
-                  "type": "multiple_choice",
-                  "payload": {
                     "ask": "reply",
                     "say": "Çiya çiqas bilind be, wê rê pê keve.",
                     "voice": "hamo",
@@ -3202,38 +3154,64 @@
                   }
                 },
                 {
-                  "position": 5,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Rovî simbilan berhev dike, û hirç dixeyide.",
-                    "voice": "hamo",
-                    "prompt": "Rovî simbilan berhev dike, û hirç dixeyide.",
-                    "accepted": [
-                      "The fox gathers the wheat, and the bear sulks.",
-                      "The fox picks the wheat, and the bear is sulking.",
-                      "The fox harvests the ears of wheat, and the bear sulks."
-                    ]
-                  }
-                },
-                {
-                  "position": 6,
+                  "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Av dilop dilop dibe gol.",
+                    "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Av dilop dilop dibe gol.",
+                    "prompt": "It’s obvious: the maize stalks are tasteless!",
                     "options": [
-                      "Drop by drop, water becomes a lake.",
-                      "Water runs from the lake to the river.",
-                      "One drop of water is enough."
+                      "Eşkere ye: darên garisan bêtam in!",
+                      "Erê, û niha ez jî hewl didim ku bibim çîrokbêjekî baş.",
+                      "Baran gilî dike ku îro şano tune."
                     ],
                     "correctIndex": 0
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 3,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Dapîr says: drop by drop, water becomes a lake.",
+                    "accepted": [
+                      "Dapîr dibêje: av dilop dilop dibe gol."
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
+                    "voice": "hamo",
+                    "prompt": "Pêşbirka gotinan ___ pê dike! Ez dadwer im.",
+                    "options": [
+                      "dest",
+                      "destên",
+                      "pirsgirêk"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The proverb duel begins! I’m the judge."
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Whatever the problem, Dapîr knows the solution.",
+                    "accepted": [
+                      "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
+                      "Pirsgirêk çi dibe bila bibe, Dapîr çareseriyê dizane."
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3266,7 +3244,38 @@
                   }
                 },
                 {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "I’ll carry out my plan, and I’ll be successful!",
+                    "options": [
+                      "Ez ê bernameya xwe pêk bînim, û ez ê serkeftî bibim!",
+                      "Hevalo bi lingê xwe çepikan lêdixe!",
+                      "Mirîşk guhdarên pêşî ne, û herwiha Hevalo."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Plana rovî bi dadî ye, lê reh tal in.",
+                    "voice": "hamo",
+                    "prompt": "Plana rovî bi dadî ye, lê reh tal in.",
+                    "options": [
+                      "The fox’s plan is fair, but the roots are bitter.",
+                      "The roots are bitter, and the bear is hungry.",
+                      "Thank you! Winning is nice, but friends are nicer."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
@@ -3283,52 +3292,55 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "missing",
+                    "say": "Zimanê şîrîn mar ji qulê derdixe.",
                     "voice": "hamo",
-                    "prompt": "It’s obvious: the maize stalks are tasteless!",
+                    "prompt": "Zimanê şîrîn ___ ji qulê derdixe.",
                     "options": [
-                      "Eşkere ye: darên garisan bêtam in!",
-                      "Erê, û niha ez jî hewl didim ku bibim çîrokbêjekî baş.",
-                      "Baran gilî dike ku îro şano tune."
+                      "mar",
+                      "marên",
+                      "çareserî"
                     ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Whatever the problem, Dapîr knows the solution.",
-                    "accepted": [
-                      "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
-                      "Pirsgirêk çi dibe bila bibe, Dapîr çareseriyê dizane."
-                    ]
+                    "correctIndex": 0,
+                    "cue": "snake"
                   }
                 },
                 {
                   "position": 11,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Pêşbirka gotinan dest pê dike! Ez dadwer im.",
+                    "ask": "meaning",
+                    "say": "Av dilop dilop dibe gol.",
                     "voice": "hamo",
-                    "prompt": "Pêşbirka gotinan ___ pê dike! Ez dadwer im.",
+                    "prompt": "Av dilop dilop dibe gol.",
                     "options": [
-                      "dest",
-                      "destên",
-                      "pirsgirêk"
+                      "Drop by drop, water becomes a lake.",
+                      "Water runs from the lake to the river.",
+                      "One drop of water is enough."
                     ],
-                    "correctIndex": 0,
-                    "cue": "The proverb duel begins! I’m the judge."
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-english",
+                    "say": "Rovî simbilan berhev dike, û hirç dixeyide.",
+                    "voice": "hamo",
+                    "prompt": "Rovî simbilan berhev dike, û hirç dixeyide.",
+                    "accepted": [
+                      "The fox gathers the wheat, and the bear sulks.",
+                      "The fox picks the wheat, and the bear is sulking.",
+                      "The fox harvests the ears of wheat, and the bear sulks."
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3338,7 +3350,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3349,28 +3361,16 @@
                   }
                 },
                 {
-                  "position": 14,
-                  "type": "writing",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Dapîr says: drop by drop, water becomes a lake.",
-                    "accepted": [
-                      "Dapîr dibêje: av dilop dilop dibe gol."
-                    ]
-                  }
-                },
-                {
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "I’ll carry out my plan, and I’ll be successful!",
+                    "prompt": "I’m a joker, but Dapîr is wise.",
                     "options": [
-                      "Ez ê bernameya xwe pêk bînim, û ez ê serkeftî bibim!",
-                      "Hevalo bi lingê xwe çepikan lêdixe!",
-                      "Mirîşk guhdarên pêşî ne, û herwiha Hevalo."
+                      "Ez henekbaz im, lê Dapîr zana ye.",
+                      "Bi kurtî, tu yê hem hêdî hem jî baş biaxivî.",
+                      "Nivîskarê me Baran malikan tîp bi tîp dinivîse."
                     ],
                     "correctIndex": 0
                   }
@@ -3525,6 +3525,18 @@
                 },
                 {
                   "position": 7,
+                  "type": "writing",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "This is a big celebration!",
+                    "accepted": [
+                      "Ev şahiyeke mezin e!"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3541,47 +3553,7 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Ev şahiyeke mezin e!",
-                    "voice": "hamo",
-                    "prompt": "Ev şahiyeke mezin e!",
-                    "accepted": [
-                      "This is a big celebration!"
-                    ]
-                  }
-                },
-                {
                   "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The bride comes on a white horse, because it’s a tradition.",
-                    "options": [
-                      "Bûk li ser hespekî spî tê, çimkî ev nerîtek e.",
-                      "Îro daweta zava ye, û em li zeviyê govend digirin.",
-                      "Li Sêvanê hem mezin hem jî zarok alîkariyê dikin, loma berhem hevpar e."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "big drum",
-                    "accepted": [
-                      "dahol"
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3594,28 +3566,7 @@
                   }
                 },
                 {
-                  "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "hamo",
-                    "prompt": "Jin tilîliyan dikin.",
-                    "reference": "Jin tilîliyan dikin."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "listening",
-                  "payload": {
-                    "ask": "hear",
-                    "voice": "hamo",
-                    "accepted": [
-                      "Tu ji kîjan welatî yî?"
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
+                  "position": 10,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3648,19 +3599,45 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "writing",
+                  "position": 11,
+                  "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Ev şahiyeke mezin e!",
                     "voice": "hamo",
-                    "prompt": "This is a big celebration!",
+                    "prompt": "Ev şahiyeke mezin e!",
                     "accepted": [
-                      "Ev şahiyeke mezin e!"
+                      "This is a big celebration!"
                     ]
                   }
                 },
                 {
-                  "position": 16,
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The bride comes on a white horse, because it’s a tradition.",
+                    "options": [
+                      "Bûk li ser hespekî spî tê, çimkî ev nerîtek e.",
+                      "Îro daweta zava ye, û em li zeviyê govend digirin.",
+                      "Li Sêvanê hem mezin hem jî zarok alîkariyê dikin, loma berhem hevpar e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "hamo",
+                    "prompt": "Jin tilîliyan dikin.",
+                    "reference": "Jin tilîliyan dikin."
+                  }
+                },
+                {
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3668,6 +3645,29 @@
                     "prompt": "The bride comes on a white horse, because it’s a tradition.",
                     "accepted": [
                       "Bûk li ser hespekî spî tê, çimkî ev nerîtek e."
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "hamo",
+                    "prompt": "big drum",
+                    "accepted": [
+                      "dahol"
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "listening",
+                  "payload": {
+                    "ask": "hear",
+                    "voice": "hamo",
+                    "accepted": [
+                      "Tu ji kîjan welatî yî?"
                     ]
                   }
                 }
@@ -3825,6 +3825,33 @@
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Sêvan’s friendship is in my heart for ever.",
+                    "options": [
+                      "Hevaltiya Sêvanê her û her di dilê min de ye.",
+                      "Heta dîtinê!",
+                      "Hevaltiya Sêvanê her û her di hezkirinê min de ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "ask": "to-kurdish",
+                    "voice": "xezo",
+                    "prompt": "Sêvan’s friendship is in my heart for ever.",
+                    "accepted": [
+                      "Hevaltiya Sêvanê her û her di dilê min de ye."
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "reply",
                     "say": "Heta dîtinê!",
                     "voice": "xezo",
@@ -3838,73 +3865,19 @@
                   }
                 },
                 {
-                  "position": 9,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Sêvan’s friendship is in my heart for ever.",
-                    "options": [
-                      "Hevaltiya Sêvanê her û her di dilê min de ye.",
-                      "Heta dîtinê!",
-                      "Hevaltiya Sêvanê her û her di hezkirinê min de ye."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "translate",
+                  "position": 11,
+                  "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "love",
-                    "accepted": [
-                      "hezkirin"
-                    ]
-                  }
-                },
-                {
-                  "position": 11,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Bi hêviya dîtinê!",
                     "voice": "xezo",
-                    "prompt": "Bi hêviya dîtinê!",
-                    "options": [
-                      "Hoping to see you again!",
-                      "Welcome!",
-                      "Safe journey!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "See you!",
+                    "accepted": [
+                      "Heta dîtinê!"
+                    ]
                   }
                 },
                 {
                   "position": 12,
-                  "type": "speaking",
-                  "payload": {
-                    "ask": "repeat",
-                    "voice": "xezo",
-                    "prompt": "Ez ji we hemûyan re spasdar im.",
-                    "reference": "Ez ji we hemûyan re spasdar im."
-                  }
-                },
-                {
-                  "position": 13,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Hevaltiya Sêvanê her û her di dilê min de ye.",
-                    "voice": "xezo",
-                    "prompt": "Hevaltiya Sêvanê her û her di dilê min de ye.",
-                    "accepted": [
-                      "Sêvan’s friendship is in my heart for ever."
-                    ]
-                  }
-                },
-                {
-                  "position": 14,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3937,15 +3910,42 @@
                   }
                 },
                 {
-                  "position": 15,
-                  "type": "writing",
+                  "position": 13,
+                  "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Hevaltiya Sêvanê her û her di dilê min de ye.",
                     "voice": "xezo",
-                    "prompt": "See you!",
+                    "prompt": "Hevaltiya Sêvanê her û her di dilê min de ye.",
                     "accepted": [
-                      "Heta dîtinê!"
+                      "Sêvan’s friendship is in my heart for ever."
                     ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Bi hêviya dîtinê!",
+                    "voice": "xezo",
+                    "prompt": "Bi hêviya dîtinê!",
+                    "options": [
+                      "Hoping to see you again!",
+                      "Welcome!",
+                      "Safe journey!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "ask": "repeat",
+                    "voice": "xezo",
+                    "prompt": "Ez ji we hemûyan re spasdar im.",
+                    "reference": "Ez ji we hemûyan re spasdar im."
                   }
                 },
                 {
@@ -3953,10 +3953,10 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "xezo",
-                    "prompt": "Sêvan’s friendship is in my heart for ever.",
+                    "voice": "hamo",
+                    "prompt": "love",
                     "accepted": [
-                      "Hevaltiya Sêvanê her û her di dilê min de ye."
+                      "hezkirin"
                     ]
                   }
                 }
@@ -4121,34 +4121,24 @@
                 },
                 {
                   "position": 9,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Farewell, and see you!",
-                    "options": [
-                      "Oxir be, û heta dîtinê!",
-                      "Lê gund hêz û dilgermî da min.",
-                      "Zimanê şîrîn mar ji qulê derdixe."
-                    ],
-                    "correctIndex": 0
+                    "ask": "to-kurdish",
+                    "voice": "hevalo",
+                    "prompt": "The last apple is for me!",
+                    "accepted": [
+                      "Sêva paşîn ji bo min e!"
+                    ]
                   }
                 },
                 {
                   "position": 10,
-                  "type": "multiple_choice",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
-                    "voice": "hamo",
-                    "prompt": "Otobûs li ber ___ şîn e, û Xezo amade ye.",
-                    "options": [
-                      "dergehê",
-                      "dergeh",
-                      "dilopê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "gate"
+                    "ask": "repeat",
+                    "voice": "xezo",
+                    "prompt": "Hamo, simbêlê xwe baş biparêze!",
+                    "reference": "Hamo, simbêlê xwe baş biparêze!"
                   }
                 },
                 {
@@ -4229,21 +4219,24 @@
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
-                    "voice": "xezo",
-                    "prompt": "Hamo, simbêlê xwe baş biparêze!",
-                    "reference": "Hamo, simbêlê xwe baş biparêze!"
+                    "voice": "hamo",
+                    "prompt": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
+                    "reference": "Otobûs li ber dergehê şîn e, û Xezo amade ye."
                   }
                 },
                 {
                   "position": 14,
-                  "type": "writing",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hevalo",
-                    "prompt": "The last apple is for me!",
-                    "accepted": [
-                      "Sêva paşîn ji bo min e!"
-                    ]
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "Farewell, and see you!",
+                    "options": [
+                      "Oxir be, û heta dîtinê!",
+                      "Lê gund hêz û dilgermî da min.",
+                      "Zimanê şîrîn mar ji qulê derdixe."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -4260,12 +4253,19 @@
                 },
                 {
                   "position": 16,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "missing",
+                    "say": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
                     "voice": "hamo",
-                    "prompt": "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
-                    "reference": "Otobûs li ber dergehê şîn e, û Xezo amade ye."
+                    "prompt": "Otobûs li ber ___ şîn e, û Xezo amade ye.",
+                    "options": [
+                      "dergehê",
+                      "dergeh",
+                      "dilopê"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "gate"
                   }
                 }
               ]
@@ -4294,36 +4294,25 @@
                 },
                 {
                   "position": 2,
-                  "type": "multiple_choice",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Îro daweta zava ye, û em li zeviyê govend digirin.",
+                    "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Îro ___ zava ye, û em li zeviyê govend digirin.",
-                    "options": [
-                      "daweta",
-                      "dawet",
-                      "bûka"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "wedding"
+                    "prompt": "Rêya te vekirî be!",
+                    "reference": "Rêya te vekirî be!"
                   }
                 },
                 {
                   "position": 3,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "reply",
-                    "say": "Rêya te vekirî be!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Rêya te vekirî be!",
-                    "options": [
-                      "Xwedê ji te razî be!",
-                      "Bi xêr hatî!",
-                      "Noşî can be!"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "Hamo says it to you"
+                    "prompt": "The fox’s plan is fair, but the roots are bitter.",
+                    "accepted": [
+                      "Plana rovî bi dadî ye, lê reh tal in.",
+                      "Plana rovî bi dadî ye lê reh tal in."
+                    ]
                   }
                 },
                 {
@@ -4343,37 +4332,6 @@
                 },
                 {
                   "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
-                    "voice": "xezo",
-                    "prompt": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
-                    "options": [
-                      "Goodbye, stay well! Distance is nothing.",
-                      "Welcome, come in! Distance is nothing.",
-                      "Thanks, the tea is lovely. Goodbye!"
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 6,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "choose-kurdish",
-                    "voice": "hamo",
-                    "prompt": "The bus is at the blue gate, and Xezo is ready.",
-                    "options": [
-                      "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
-                      "Bavê min pê hesiya ku dengbêj hatiye, û wî pirsî ka kilamek li ser wî heye.",
-                      "Me li ber sobeyê civînek çêkir, û rolên şanoyê parve kirin."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 7,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -4406,44 +4364,83 @@
                   }
                 },
                 {
-                  "position": 8,
-                  "type": "translate",
+                  "position": 6,
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
                     "voice": "hamo",
-                    "prompt": "The fox’s plan is fair, but the roots are bitter.",
-                    "accepted": [
-                      "Plana rovî bi dadî ye, lê reh tal in.",
-                      "Plana rovî bi dadî ye lê reh tal in."
-                    ]
+                    "prompt": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
+                    "options": [
+                      "Hêvî’s plan is to get a cat.",
+                      "Hêvî’s plan is to sell the hens.",
+                      "Hêvî’s plan is to become a cat."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "choose-kurdish",
+                    "voice": "hamo",
+                    "prompt": "The bus is at the blue gate, and Xezo is ready.",
+                    "options": [
+                      "Otobûs li ber dergehê şîn e, û Xezo amade ye.",
+                      "Bavê min pê hesiya ku dengbêj hatiye, û wî pirsî ka kilamek li ser wî heye.",
+                      "Me li ber sobeyê civînek çêkir, û rolên şanoyê parve kirin."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
+                    "voice": "hamo",
+                    "prompt": "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
+                    "options": [
+                      "Whatever the problem, Dapîr knows the solution.",
+                      "Whatever the problem, Hamo knows the solution.",
+                      "Enjoy!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ez ê bernameya xwe pêk bînim, û ez ê serkeftî bibim!",
-                    "voice": "hamo",
-                    "prompt": "Ez ê ___ xwe pêk bînim, û ez ê serkeftî bibim!",
+                    "ask": "meaning",
+                    "say": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
+                    "voice": "xezo",
+                    "prompt": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
                     "options": [
-                      "bernameya",
-                      "bername",
-                      "zava"
+                      "Goodbye, stay well! Distance is nothing.",
+                      "Welcome, come in! Distance is nothing.",
+                      "Thanks, the tea is lovely. Goodbye!"
                     ],
-                    "correctIndex": 0,
-                    "cue": "programme, plan"
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 10,
-                  "type": "listening",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "reply",
+                    "say": "Rêya te vekirî be!",
                     "voice": "hamo",
-                    "accepted": [
-                      "Ez henekbaz im, lê Dapîr zana ye."
-                    ]
+                    "prompt": "Rêya te vekirî be!",
+                    "options": [
+                      "Xwedê ji te razî be!",
+                      "Bi xêr hatî!",
+                      "Noşî can be!"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "Hamo says it to you"
                   }
                 },
                 {
@@ -4465,32 +4462,28 @@
                   "position": 12,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
+                    "ask": "missing",
+                    "say": "Îro daweta zava ye, û em li zeviyê govend digirin.",
                     "voice": "hamo",
-                    "prompt": "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
+                    "prompt": "Îro ___ zava ye, û em li zeviyê govend digirin.",
                     "options": [
-                      "Whatever the problem, Dapîr knows the solution.",
-                      "Whatever the problem, Hamo knows the solution.",
-                      "Enjoy!"
+                      "daweta",
+                      "dawet",
+                      "bûka"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "wedding"
                   }
                 },
                 {
                   "position": 13,
-                  "type": "multiple_choice",
+                  "type": "listening",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
+                    "ask": "hear",
                     "voice": "hamo",
-                    "prompt": "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
-                    "options": [
-                      "Hêvî’s plan is to get a cat.",
-                      "Hêvî’s plan is to sell the hens.",
-                      "Hêvî’s plan is to become a cat."
-                    ],
-                    "correctIndex": 0
+                    "accepted": [
+                      "Ez henekbaz im, lê Dapîr zana ye."
+                    ]
                   }
                 },
                 {
@@ -4511,12 +4504,19 @@
                 },
                 {
                   "position": 15,
-                  "type": "speaking",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "repeat",
+                    "ask": "missing",
+                    "say": "Ez ê bernameya xwe pêk bînim, û ez ê serkeftî bibim!",
                     "voice": "hamo",
-                    "prompt": "Rêya te vekirî be!",
-                    "reference": "Rêya te vekirî be!"
+                    "prompt": "Ez ê ___ xwe pêk bînim, û ez ê serkeftî bibim!",
+                    "options": [
+                      "bernameya",
+                      "bername",
+                      "zava"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "programme, plan"
                   }
                 },
                 {
