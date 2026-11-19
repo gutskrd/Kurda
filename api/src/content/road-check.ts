@@ -3,6 +3,7 @@ import {
   ASKS_BY_TYPE,
   CONVERSATION_ID,
   GAP,
+  REACTION_LINES,
   WORD_PICTURES,
   conversationClips,
   lessonAudioKey,
@@ -44,10 +45,12 @@ export type RoadVoice = (typeof ROAD_VOICES)[number];
 export const ROAD_RECORDER: RoadVoice = 'hamo';
 
 /**
- * How many lines each voice records for the road's lessons and conversations. Xezo and Hevalo also have the apps'
- * reaction lines, so their lesson lines stay few.
+ * How many lines each voice records for the road's lessons and conversations. Xezo and Hevalo also record the apps'
+ * reaction lines (shared `REACTION_LINES`), and the two together stay within CHARACTER_LINES_MAX.
  */
-export const ROAD_VOICE_LINES_MAX: Readonly<Record<RoadVoice, number>> = { hamo: 1100, xezo: 40, hevalo: 40 };
+export const ROAD_VOICE_LINES_MAX: Readonly<Record<RoadVoice, number>> = { hamo: 1100, xezo: 85, hevalo: 70 };
+/** The most lines Xezo or Hevalo records in all: their road lines and their reaction lines. */
+export const CHARACTER_LINES_MAX = 100;
 /** A lesson brings at most this many new recordings: its few new words and lines, met in many ways. */
 export const ROAD_LESSON_LINES_MAX = 8;
 /** A conversation is made of lines its unit already has, and at most this many of its own. */
@@ -897,6 +900,8 @@ interface Said {
   voice: RoadVoice | 'unvoiced';
   exercise: number;
   conversation: boolean;
+  /** a match-pairs card, which plays the take of whoever says its line in an item of their own */
+  card: boolean;
 }
 
 /** Every line a lesson records, in order: its exercises' lines, then its conversations' (which come back to the lesson's own lines). */
@@ -907,27 +912,40 @@ function linesSaid(lesson: Record<string, unknown>): Said[] {
     if (ex.type === 'conversation') return;
     const v = isRecord(ex.payload) ? ex.payload.voice : undefined;
     const voice = ROAD_VOICES.includes(v as RoadVoice) ? (v as RoadVoice) : 'unvoiced';
-    for (const text of recordedTexts(String(ex.type), ex.payload)) out.push({ key: lessonAudioKey(text), text, voice, exercise: i + 1, conversation: false });
+    const card = ex.type === 'match_pairs';
+    for (const text of recordedTexts(String(ex.type), ex.payload)) out.push({ key: lessonAudioKey(text), text, voice, exercise: i + 1, conversation: false, card });
   });
   exercises.forEach((ex, i) => {
     if (ex.type !== 'conversation') return;
     for (const clip of conversationClips(ex.payload)) {
-      out.push({ key: lessonAudioKey(clip.text), text: clip.text, voice: clip.character ?? 'unvoiced', exercise: i + 1, conversation: true });
+      out.push({ key: lessonAudioKey(clip.text), text: clip.text, voice: clip.character ?? 'unvoiced', exercise: i + 1, conversation: true, card: false });
     }
   });
   return out;
 }
 
+/** A line's first place in the road and whose it is: the voice of the first item of its own, else of the first card. */
+interface FirstSaid {
+  voice: RoadVoice | 'unvoiced';
+  lesson: string;
+  unit: number;
+  conversation: boolean;
+  /** only match-pairs cards have said it so far */
+  card: boolean;
+}
+
 /**
  * Rule 13, what the owner records: a lesson brings at most ROAD_LESSON_LINES_MAX new lines and a review none, a
  * conversation at most ROAD_CONVERSATION_LINES_MAX of its own, one line has one voice, and each voice's lines stay within
- * ROAD_VOICE_LINES_MAX across the road. A line is one recording wherever it is said (conversations included), so every
- * unit file present is read in course order; only units written for the road's voices (`recorder`) are held to it.
+ * ROAD_VOICE_LINES_MAX across the road (CHARACTER_LINES_MAX with their reaction lines). A line is one recording wherever
+ * it is said (conversations included), so every unit file present is read in course order; only units written for the
+ * road's voices (`recorder`) are held to it. A match-pairs card replays a word met in an item of its own, so it is that
+ * item's voice that records it; the pairs item's own voice records only cards no other item says.
  */
 function recordingProblems(plan: RoadPlan, docs: ReadonlyMap<number, unknown>, wanted: readonly number[], stats: RoadStats): RoadProblem[] {
   const problems: RoadProblem[] = [];
-  const first = new Map<string, { voice: RoadVoice | 'unvoiced'; lesson: string }>();
-  const totals: Record<RoadVoice | 'unvoiced', number> = { hamo: 0, xezo: 0, hevalo: 0, unvoiced: 0 };
+  const first = new Map<string, FirstSaid>();
+  const cards: Array<{ said: Said; unit: number; lesson: string }> = [];
   for (const n of [...docs.keys()].sort((a, b) => a - b)) {
     const planUnit = plan.units.find((u) => u.number === n);
     const doc = docs.get(n);
@@ -943,18 +961,17 @@ function recordingProblems(plan: RoadPlan, docs: ReadonlyMap<number, unknown>, w
         const own = new Map<number, string[]>();
         for (const s of linesSaid(lesson)) {
           const before = first.get(s.key);
-          if (before && held && before.voice !== s.voice && before.voice !== 'unvoiced' && s.voice !== 'unvoiced') {
-            problems.push({ unit: n, lesson: key, exercise: s.exercise, message: `“${s.text}” is ${s.voice}’s here and ${before.voice}’s in ${before.lesson}: one recording is one person’s, so write the line for one of them` });
+          if (s.card && held) cards.push({ said: s, unit: n, lesson: key });
+          if (before && !s.card) {
+            if (before.card) Object.assign(before, { voice: s.voice, lesson: key, card: false });
+            else if (held && before.voice !== s.voice && before.voice !== 'unvoiced' && s.voice !== 'unvoiced') {
+              problems.push({ unit: n, lesson: key, exercise: s.exercise, message: `“${s.text}” is ${s.voice}’s here and ${before.voice}’s in ${before.lesson}: one recording is one person’s, so write the line for one of them` });
+            }
           }
           if (before) continue;
-          first.set(s.key, { voice: s.voice, lesson: key });
-          totals[s.voice] += 1;
+          first.set(s.key, { voice: s.voice, lesson: key, unit: n, conversation: s.conversation, card: s.card });
           fresh.set(s.key, s);
           if (s.conversation) own.set(s.exercise, [...(own.get(s.exercise) ?? []), s.text]);
-          if (wanted.includes(n)) {
-            stats.recordings[s.voice] += 1;
-            if (s.conversation && s.voice !== 'unvoiced') stats.conversationLines[s.voice] += 1;
-          }
         }
         if (!held) return;
         // a review may keep one scene of its chapter as a conversation; its exercises bring back what was recorded
@@ -973,8 +990,25 @@ function recordingProblems(plan: RoadPlan, docs: ReadonlyMap<number, unknown>, w
       });
     });
   }
+  // a card says its line in the voice of whoever records it, so it is that voice's line to say
+  for (const { said, unit, lesson } of cards) {
+    const voice = first.get(said.key)!.voice;
+    if (voice === 'unvoiced') continue;
+    for (const message of speakerProblems(said.text, voice)) problems.push({ unit, lesson, exercise: said.exercise, message });
+  }
+  const totals: Record<RoadVoice | 'unvoiced', number> = { hamo: 0, xezo: 0, hevalo: 0, unvoiced: 0 };
+  for (const f of first.values()) {
+    totals[f.voice] += 1;
+    if (!wanted.includes(f.unit)) continue;
+    stats.recordings[f.voice] += 1;
+    if (f.conversation && f.voice !== 'unvoiced') stats.conversationLines[f.voice] += 1;
+  }
   for (const v of ROAD_VOICES) {
     if (totals[v] > ROAD_VOICE_LINES_MAX[v]) problems.push({ message: `${NAME[v]} records ${totals[v]} lesson and conversation lines (at most ${ROAD_VOICE_LINES_MAX[v]})` });
+    const reactions = REACTION_LINES.filter((l) => l.character === v).length;
+    if (reactions > 0 && totals[v] + reactions > CHARACTER_LINES_MAX) {
+      problems.push({ message: `${NAME[v]} records ${totals[v]} road lines and ${reactions} reaction lines, ${totals[v] + reactions} in all (at most ${CHARACTER_LINES_MAX})` });
+    }
   }
   return problems;
 }
@@ -1125,7 +1159,9 @@ function checkUnit(
         if (voice !== undefined && !ROAD_VOICES.includes(voice as RoadVoice)) add(`voice “${String(voice)}” is not one of ${ROAD_VOICES.join(', ')}`, { ...eat, field: 'payload.voice' });
         if (texts.length > 0 && ex.type !== 'conversation' && voice === undefined) add('has something to record but no voice', { ...eat, field: 'payload.voice' });
         const v: RoadVoice | 'unvoiced' = ROAD_VOICES.includes(voice as RoadVoice) ? (voice as RoadVoice) : 'unvoiced';
-        if (v !== 'unvoiced') for (const t of texts) for (const m of speakerProblems(t, v)) add(m, eat);
+        // a card's voice is whoever records its line, known once the whole road is read (recordingProblems)
+        const card = hamoOnly && ex.type === 'match_pairs';
+        if (v !== 'unvoiced' && !card) for (const t of texts) for (const m of speakerProblems(t, v)) add(m, eat);
         for (const t of texts) {
           const k = lessonAudioKey(t);
           if (!singles.has(k)) singles.set(k, v);

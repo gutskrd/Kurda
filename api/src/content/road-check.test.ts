@@ -4,7 +4,9 @@
  * the one way each change should.
  */
 import { describe, expect, it } from 'vitest';
+import { REACTION_LINES } from '@kurda/shared';
 import {
+  CHARACTER_LINES_MAX,
   ROAD_COURSE,
   addressesHamo,
   checkRoad,
@@ -83,6 +85,9 @@ describe('the road’s unit files', () => {
     it('keeps every voice within what it records for the road', () => {
       const { recordings } = checkRoad({ plan }).stats;
       for (const v of ['hamo', 'xezo', 'hevalo'] as const) expect(recordings[v], v).toBeLessThanOrEqual(ROAD_VOICE_LINES_MAX[v]);
+      for (const v of ['xezo', 'hevalo'] as const) {
+        expect(recordings[v] + REACTION_LINES.filter((l) => l.character === v).length, v).toBeLessThanOrEqual(CHARACTER_LINES_MAX);
+      }
       expect(recordings.xezo).toBeGreaterThan(0);
       expect(recordings.hevalo).toBeGreaterThan(0);
       expect(recordings.unvoiced).toBe(0);
@@ -390,6 +395,51 @@ describe('the road’s check, on an example unit', () => {
       lessonOf(doc, 1).exercises.splice(1, 3, ...said.map((e, i) => ({ position: i + 2, ...e })));
     }, forVoices);
     expect(taught.text.filter((t) => t.includes('the conversation records'))).toEqual([]);
+  });
+
+  it('plays a match-pairs card in the voice of whoever says its line in an item of its own', () => {
+    const forVoices = (p: RoadPlan): void => {
+      p.units[0]!.recorder = 'hamo';
+    };
+    const run = (change: (doc: Unit) => void): ReturnType<typeof checkRoad> => {
+      const doc = exampleUnit();
+      change(doc);
+      const p = structuredClone(PLAN);
+      forVoices(p);
+      return checkRoad({ plan: p, docs: new Map([[1, doc]]) });
+    };
+    // “Spas!” is Xezo’s in both items of its own, so the card in Hamo’s pairs plays her take and the line is hers
+    const before = run(() => {});
+    const after = run((doc) => {
+      for (const i of [1, 11]) lessonOf(doc, 1).exercises[i]!.payload.voice = 'xezo';
+    });
+    expect(after.problems).toEqual(before.problems);
+    expect(after.stats.recordings.xezo).toBe(before.stats.recordings.xezo + 1);
+    expect(after.stats.recordings.hamo).toBe(before.stats.recordings.hamo - 1);
+    // a card no item of its own says is the pairs item’s voice to record, and its words must suit that voice
+    const card = (voice: string): string[] =>
+      check((doc) => {
+        const ex = lessonOf(doc, 0).exercises[11]!;
+        (ex.payload.pairs as Array<{ left: string; right: string }>).push({ left: 'Ez baş im, Hamo.', right: 'I am well, Hamo.' });
+        ex.payload.voice = voice;
+      }, forVoices).text.filter((t) => t.includes('Ez baş im, Hamo.') && !t.includes('new lines'));
+    expect(card('hamo')).toEqual(['u01s1l1 #12: Hamo would say “Ez baş im, Hamo.” to himself: model it without the name (the learner says it)']);
+    expect(card('xezo')).toEqual([]);
+  });
+
+  it('keeps Hevalo and Xezo within what each records in all, their reaction lines included', () => {
+    const reactions = REACTION_LINES.filter((l) => l.character === 'hevalo').length;
+    const lines = CHARACTER_LINES_MAX - reactions + 1;
+    const { text } = check(
+      (doc) => {
+        const ex = lessonOf(doc, 0).exercises;
+        for (let i = 0; i < lines; i++) ex.push({ position: ex.length + 1, ...listen([`Ez baş im ${i}.`], 'hevalo') });
+      },
+      (p) => {
+        p.units[0]!.recorder = 'hamo';
+      },
+    );
+    expect(text).toContain(`plan: Hevalo records ${lines} road lines and ${reactions} reaction lines, ${CHARACTER_LINES_MAX + 1} in all (at most ${CHARACTER_LINES_MAX})`);
   });
 
   it('asks for the Kurdish an item is about to be in its prompt, where the learner can read it and hear it', () => {

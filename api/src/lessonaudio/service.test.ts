@@ -66,6 +66,15 @@ describe('who each text is planned for', () => {
     expect(find(items, 'Spas')!.plannedSpeaker).toBeNull();
   });
 
+  it('is the voice of an exercise of its own before a match-pairs card’s, whichever comes first', async () => {
+    const items = await list([
+      row(road(1), 'match_pairs', { pairs: [{ left: 'sêv', right: 'apple' }, { left: 'nan', right: 'bread' }], voice: 'hamo' }),
+      row(road(2), 'multiple_choice', { ask: 'picture', say: 'sêv', prompt: 'sêv', options: ['apple', 'bread'], correctIndex: 0, voice: 'hevalo' }),
+    ]);
+    expect(find(items, 'sêv')!.plannedSpeaker).toBe('hevalo');
+    expect(find(items, 'nan')!.plannedSpeaker).toBe('hamo');
+  });
+
   it('is the first voice in course order, even when an earlier use names none', async () => {
     const items = await list([
       // the older course says nothing about who records it
