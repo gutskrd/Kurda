@@ -498,7 +498,7 @@ describe('who records an item (voice)', () => {
     ['match_pairs', { pairs: [{ left: 'av', right: 'water' }, { left: 'nan', right: 'bread' }] }],
     ['listening', { accepted: ['Ez baş im'] }],
     ['speaking', { prompt: 'Say: hello', reference: 'Silav' }],
-    ['writing', { prompt: 'Write: my name is Xezal', accepted: ['Navê min Xezal e'] }],
+    ['writing', { prompt: 'Write: my name is Xezo', accepted: ['Navê min Xezo ye'] }],
   ];
 
   it.each(items)('%s keeps a voice in its stored payload, and takes none as well', (type, payload) => {
@@ -532,7 +532,7 @@ describe('who records an item (voice)', () => {
         { speaker: 1, text: 'Silav, Hamo!' },
       ],
       prompt: 'Who speaks first?',
-      options: ['Hamo', 'Xezal'],
+      options: ['Hamo', 'Xezo'],
       correctIndex: 0,
     };
     expect(validateExercisePayload('conversation', { ...conversation, voice: 'hamo' })).not.toHaveProperty('voice');

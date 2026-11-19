@@ -637,7 +637,7 @@ export function SpeakingCharacter({
         : null,
     [rig, values],
   );
-  // The near end of Hamo's moustache, lifting about its root, and Xezal's loose hair, swinging about its parting.
+  // The near end of Hamo's moustache, lifting about its root, and Xezo's loose hair, swinging about its parting.
   const moving = useMemo(
     () => ({
       end: layers.moustache ? { transformOrigin: origin(layers.moustache.pivot), transform: [{ rotate: degrees(values.lift) }] } : null,

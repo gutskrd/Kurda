@@ -1,5 +1,5 @@
 /**
- * GET /reactions: Hevalo's and Xezal's recorded reaction lines (shared reactions.ts) for the apps, which play one when
+ * GET /reactions: Hevalo's and Xezo's recorded reaction lines (shared reactions.ts) for the apps, which play one when
  * its moment comes. Public and small: one indexed read of the catalogue's keys, cached for a few minutes in Redis and
  * at the edge, and dropped from the cache whenever a reaction take is saved or removed. A take is always sent in its
  * line's character's voice, with its mouth timeline or one made from its words.

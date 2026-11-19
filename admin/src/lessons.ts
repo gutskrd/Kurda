@@ -225,7 +225,7 @@ export function exerciseIssues(ex: Exercise): Issue[] {
   if (str(p.say).length > 300) out.push({ path: 'say', message: '“Say” is longer than 300 characters.' });
   askIssues(ex, out);
   if (ex.type !== 'conversation' && p.voice !== undefined && !isSpeakerId(p.voice)) {
-    out.push({ path: 'voice', message: 'Choose who records it: Hamo, Xezal, Hevalo or none.' });
+    out.push({ path: 'voice', message: 'Choose who records it: Hamo, Xezo, Hevalo or none.' });
   }
   switch (ex.type) {
     case 'multiple_choice': {

@@ -38,7 +38,7 @@ export interface Act {
   wiggle?: Keys;
   /** degrees the near end of a moustache lifts about its root (Hamo's; ignored without one) */
   lift?: Keys;
-  /** degrees a loose lock swings about where it parts (Xezal's wisp; ignored without one) */
+  /** degrees a loose lock swings about where it parts (Xezo's wisp; ignored without one) */
   hair?: Keys;
   eyes?: Hold<EyeState>;
   mouth?: Hold<MouthShape>;
@@ -69,7 +69,7 @@ export type ActName =
 
 /**
  * What a screen can ask a character to do about what it saw: a cheer for a right answer, a curious `hmm` for a miss, and
- * the rest for moments between. Each character plays them its way (`reactionAct`): only Hamo chuckles, only Xezal pouts.
+ * the rest for moments between. Each character plays them its way (`reactionAct`): only Hamo chuckles, only Xezo pouts.
  */
 export type CharacterReaction = 'cheer' | 'hmm' | 'wink' | 'surprised' | 'giggle' | 'chuckle' | 'pout' | 'tongue';
 
@@ -272,7 +272,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     mouth: [[0.2, 0.75, 'mbp']],
     eyes: blinkAt(0.78, 1700),
   },
-  /** A wink: the near eye shut in a smile, a grin, the head dipped a touch that way; Xezal blushes with it. */
+  /** A wink: the near eye shut in a smile, a grin, the head dipped a touch that way; Xezo blushes with it. */
   wink: {
     ms: 800,
     tilt: [
@@ -353,7 +353,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
       [0.8, 0.9, 'grin'],
     ],
   },
-  /** Xezal's pout: brows knitted, lips pushed out, head tilted, eyes down and aside, over with a blink. */
+  /** Xezo's pout: brows knitted, lips pushed out, head tilted, eyes down and aside, over with a blink. */
   pout: {
     ms: 1300,
     tilt: [
@@ -403,7 +403,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
     ],
     eyes: [[0.35, 0.8, 'happy']],
   },
-  /** Xezal's habit: tucking a wisp back as the head tilts, her eyes going aside and back smiling. */
+  /** Xezo's habit: tucking a wisp back as the head tilts, her eyes going aside and back smiling. */
   tuck: {
     ms: 1400,
     tilt: [
@@ -427,7 +427,7 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
 
 /**
  * What each character lays over the shared act: Hamo meets a miss with one raised brow and ends a cheer with brows up and
- * his moustache lifted; Xezal pouts at a miss and ends a cheer with a wink and a blush; the deer plays every act as shared.
+ * his moustache lifted; Xezo pouts at a miss and ends a cheer with a wink and a blush; the deer plays every act as shared.
  */
 const OWN_WAY: Readonly<Record<CharacterId, Partial<Record<ActName, Partial<Act>>>>> = {
   hevalo: {},
@@ -462,7 +462,7 @@ export function actFor(id: CharacterId, name: ActName): Act {
   return own ? { ...base, ...own } : base;
 }
 
-/** The act a character plays for a reaction: only Hamo chuckles (the others giggle), only Xezal pouts (the others go `hmm`). */
+/** The act a character plays for a reaction: only Hamo chuckles (the others giggle), only Xezo pouts (the others go `hmm`). */
 export function reactionAct(id: CharacterId, reaction: CharacterReaction): ActName {
   if (reaction === 'chuckle' && id !== 'hamo') return 'giggle';
   if (reaction === 'pout' && id !== 'xezo') return 'hmm';
@@ -554,7 +554,7 @@ export const HABITS = {
   tongue: [45000, 100000],
   /** Hamo's hand to his moustache */
   preen: [14000, 30000],
-  /** Xezal tucking her hair back */
+  /** Xezo tucking her hair back */
   tuck: [12000, 26000],
 } as const;
 
@@ -564,7 +564,7 @@ export interface Habit {
   every: readonly [number, number];
 }
 
-/** Each character's own habits and timing: the deer flicks an ear, sniffs and rarely shows his tongue; Hamo lifts his moustache; Xezal tucks a wisp back. */
+/** Each character's own habits and timing: the deer flicks an ear, sniffs and rarely shows his tongue; Hamo lifts his moustache; Xezo tucks a wisp back. */
 export const CHARACTER_HABITS: Readonly<Record<CharacterId, readonly Habit[]>> = {
   hevalo: [
     { acts: ['twitchLeft', 'twitchRight'], every: HABITS.twitch },

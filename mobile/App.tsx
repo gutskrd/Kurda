@@ -995,7 +995,7 @@ function ThemedNavigation() {
         <OfflineBanner />
         {/* Short notices, such as a change that did not save. */}
         <NoticeToasts />
-        {/* Hevalo's and Xezal's reaction lines, captioned wherever they are said. */}
+        {/* Hevalo's and Xezo's reaction lines, captioned wherever they are said. */}
         <ReactionVoices />
         {/* What every "⋯" opens on Android and the web (theme/actionSheet.ts). */}
         <ActionSheetHost />

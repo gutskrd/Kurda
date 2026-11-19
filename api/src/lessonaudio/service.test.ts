@@ -54,12 +54,12 @@ describe('who each text is planned for', () => {
   it('is the voice of the exercise that uses it', async () => {
     const items = await list([
       row(road(1), 'speaking', { prompt: 'Say: hello', reference: 'Silav', voice: 'hamo' }),
-      row(road(1), 'listening', { accepted: ['Ez Xezal im'], voice: 'xezo' }),
+      row(road(1), 'listening', { accepted: ['Ez Xezo me'], voice: 'xezo' }),
       row(road(1), 'match_pairs', { pairs: [{ left: 'sêv', right: 'apple' }, { left: 'nan', right: 'bread' }], voice: 'hevalo' }),
       row(road(1), 'translate', { prompt: 'Thank you', accepted: ['Spas'] }),
     ]);
     expect(find(items, 'Silav')!.plannedSpeaker).toBe('hamo');
-    expect(find(items, 'Ez Xezal im')!.plannedSpeaker).toBe('xezo');
+    expect(find(items, 'Ez Xezo me')!.plannedSpeaker).toBe('xezo');
     expect(find(items, 'sêv')!.plannedSpeaker).toBe('hevalo');
     expect(find(items, 'nan')!.plannedSpeaker).toBe('hevalo');
     // an exercise that names no voice plans nothing
@@ -104,7 +104,7 @@ describe('who each text is planned for', () => {
         { speaker: 1, text: 'Spas, apo.' },
       ],
       prompt: 'Who welcomes the guest?',
-      options: ['Hamo', 'Xezal'],
+      options: ['Hamo', 'Xezo'],
       correctIndex: 0,
     };
     const items = await list([row(road(3), 'conversation', { ...conversation, voice: 'hevalo' })]);

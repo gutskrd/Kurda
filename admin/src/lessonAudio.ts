@@ -360,7 +360,7 @@ export interface PlanLine {
 export interface CoursePlan {
   slug: string;
   title: string;
-  /** Hamo, Xezal and Hevalo in that order, then what is planned for nobody when there is any. */
+  /** Hamo, Xezo and Hevalo in that order, then what is planned for nobody when there is any. */
   lines: PlanLine[];
 }
 

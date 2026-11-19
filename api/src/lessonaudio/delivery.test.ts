@@ -209,7 +209,7 @@ describe('lessonAudioFor, a conversation', () => {
     type: 'conversation' as const,
     payload: {
       id: 'roadu01s2l3a',
-      speakers: [{ name: 'Hamo', character: 'hamo' }, { learner: true }, { name: 'Xezal', character: 'xezo' }],
+      speakers: [{ name: 'Hamo', character: 'hamo' }, { learner: true }, { name: 'Xezo', character: 'xezo' }],
       lines: [
         { speaker: 0, text: 'Bi xêr hatî!' },
         { speaker: 1, text: 'Ser çavan!' },
@@ -226,7 +226,7 @@ describe('lessonAudioFor, a conversation', () => {
       { 'ez jin im': { speaker: 'xezo' }, 'çay germ e': { speaker: 'xezo' }, 'ser çavan': { speaker: 'hamo' } },
     );
     const [out] = await lessonAudioFor(db as never, [talk]);
-    // the learner says their own line; Hamo does not say a line Xezal recorded
+    // the learner says their own line; Hamo does not say a line Xezo recorded
     expect(out!.lineAudio).toEqual([URL('own'), null, URL('jin'), null]);
     expect(out!.lineVoices?.[2]?.speaker).toBe('xezo');
   });

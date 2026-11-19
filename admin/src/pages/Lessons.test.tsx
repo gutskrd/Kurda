@@ -227,7 +227,7 @@ describe('the lesson editor', () => {
     renderUi(<Lessons />);
     const first = await screen.findByRole('article', { name: /1\s*Translate/ });
     const recordedBy = within(first).getByLabelText('Recorded by');
-    expect([...(recordedBy as HTMLSelectElement).options].map((o) => o.text)).toEqual(['Hamo', 'Xezal', 'Hevalo', 'None']);
+    expect([...(recordedBy as HTMLSelectElement).options].map((o) => o.text)).toEqual(['Hamo', 'Xezo', 'Hevalo', 'None']);
     expect(recordedBy).toHaveValue('xezo');
     const second = screen.getByRole('article', { name: /2\s*Multiple choice/ });
     expect(within(second).getByLabelText('Recorded by')).toHaveValue('');

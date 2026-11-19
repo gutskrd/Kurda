@@ -529,7 +529,7 @@ describe('the team that writes and records lessons', () => {
       OWNER,
       on('GET', `/admin/users/${SUBJECT_ID}`, () => json(person({ roles }))),
       on('GET', `/admin/users/${SUBJECT_ID}/voices`, () => json({ voices })),
-      on('GET', '/admin/recording/people', json({ people: [voice('hamo', 'Hamo'), voice('xezo', 'Xezal'), voice('narrator-kmr', 'Narrator · Kurmancî')], mine: [], ownVoicesOnly: false })),
+      on('GET', '/admin/recording/people', json({ people: [voice('hamo', 'Hamo'), voice('xezo', 'Xezo'), voice('narrator-kmr', 'Narrator · Kurmancî')], mine: [], ownVoicesOnly: false })),
       on('PUT', `/admin/users/${SUBJECT_ID}/voices`, (c) => {
         voices = (c.body as { voices: string[] }).voices;
         return json({ voices, changed: true });
@@ -541,20 +541,20 @@ describe('the team that writes and records lessons', () => {
     );
     const section = await screen.findByRole('region', { name: 'Voice recording' });
     expect(within(section).getByRole('button', { name: 'Save the voices' })).toBeDisabled();
-    await user.click(await within(section).findByLabelText('Xezal'));
+    await user.click(await within(section).findByLabelText('Xezo'));
     await user.click(within(section).getByRole('button', { name: 'Save the voices' }));
-    const linking = await screen.findByRole('dialog', { name: 'baran records Xezal?' });
-    await user.type(within(linking).getByLabelText('Why (kept in the audit log)'), 'Records Xezal for the Road');
+    const linking = await screen.findByRole('dialog', { name: 'baran records Xezo?' });
+    await user.type(within(linking).getByLabelText('Why (kept in the audit log)'), 'Records Xezo for the Road');
     await user.click(within(linking).getByRole('button', { name: 'Save the voices' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT' && c.path.endsWith('/voices'))).toBe(true));
-    expect(api.calls.find((c) => c.method === 'PUT' && c.path.endsWith('/voices'))!.body).toEqual({ voices: ['xezo'], reason: 'Records Xezal for the Road' });
+    expect(api.calls.find((c) => c.method === 'PUT' && c.path.endsWith('/voices'))!.body).toEqual({ voices: ['xezo'], reason: 'Records Xezo for the Road' });
 
     await user.click(within(section).getByRole('button', { name: 'Let them record their voices' }));
     const granting = await screen.findByRole('dialog', { name: 'Let baran record their voices?' });
-    await user.type(within(granting).getByLabelText('Why (kept in their history)'), 'Records Xezal');
+    await user.type(within(granting).getByLabelText('Why (kept in their history)'), 'Records Xezo');
     await user.click(within(granting).getByRole('button', { name: 'Give the role' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT' && c.path.endsWith('/voice-actor'))).toBe(true));
-    expect(api.calls.find((c) => c.method === 'PUT' && c.path.endsWith('/voice-actor'))!.body).toEqual({ on: true, reason: 'Records Xezal' });
+    expect(api.calls.find((c) => c.method === 'PUT' && c.path.endsWith('/voice-actor'))!.body).toEqual({ on: true, reason: 'Records Xezo' });
     expect(await within(section).findByRole('button', { name: 'Take recording away' })).toBeInTheDocument();
   });
 });

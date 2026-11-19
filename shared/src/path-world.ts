@@ -39,7 +39,7 @@ export interface PathLand {
   host: PathHost;
 }
 
-/** The twelve lands of the road in order. Hamo keeps the village and its stories; Xezal goes to town, the market, the pastures and school. */
+/** The twelve lands of the road in order. Hamo keeps the village and its stories; Xezo goes to town, the market, the pastures and school. */
 export const PATH_LANDS: readonly PathLand[] = [
   { landmark: 'gate', ground: 'orchard', host: 'hamo' },
   { landmark: 'teahouse', ground: 'meadow', host: 'hamo' },

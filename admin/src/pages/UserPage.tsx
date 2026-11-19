@@ -346,7 +346,7 @@ function VoiceRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => 
         ? 'They get the voice actor role: the Record by person page and the lines of the voices ticked here, with a sign-in code of their own. Nothing else in the console.'
         : 'They lose the voice actor role at once. Their recordings stay.',
       label: 'Why (kept in their history)',
-      placeholder: on ? 'Records Xezal’s lines' : undefined,
+      placeholder: on ? 'Records Xezo’s lines' : undefined,
       maxLength: 500,
       confirmLabel: on ? 'Give the role' : 'Take it away',
       tone: on ? 'default' : 'danger',

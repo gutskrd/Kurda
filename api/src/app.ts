@@ -644,7 +644,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // goes online by itself (content/road-chapters.ts), except under test, where no road is seeded.
     const roadChapters = new RoadChapterWatch(app.db, app.log);
     registerLessonAudioRoutes(app, config, config.NODE_ENV === 'test' ? undefined : () => void roadChapters.nudge());
-    // Hevalo's and Xezal's recorded reactions, which the apps play at moments anywhere.
+    // Hevalo's and Xezo's recorded reactions, which the apps play at moments anywhere.
     registerReactionRoutes(app);
     // And who says each of those recordings, set or changed after recording.
     registerRecordingVoiceRoutes(app, config, options.recordingFiles);
