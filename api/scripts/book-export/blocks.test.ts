@@ -84,7 +84,7 @@ describe('the words of each page', () => {
     // the contents: the chapter's number, its name, its English and its page
     expect(texts.some((t) => /^1 · Silav · Hello · \d+$/.test(t)), 'the contents').toBe(true);
     // an exercise's number before its sentence, and a gap to fill
-    expect(texts).toContain('1 · Hevalo is eating the apple!');
+    expect(texts).toContain('1 · Are you well?');
     expect(texts.some((t) => t.includes('Ez sêvê ….'))).toBe(true);
     // a word, its gender and its English
     expect(texts).toContain('sêv (f) · apple');
