@@ -809,8 +809,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas. Ba gelek sar e! Lê havînê hewa germ e.",
-                        "en": "Thanks. The wind is very cold! But in summer the weather is hot."
+                        "text": "Spas. Ba gelek sar e!",
+                        "en": "Thanks. The wind is very cold!"
                       },
                       {
                         "speaker": 0,
@@ -1112,7 +1112,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Ez mêwe dixwazim."
+                      "Ez fêkî dixwazim."
                     ]
                   }
                 },

@@ -697,9 +697,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran def lêdixe, ango birûsk e! Hêvî jî karik e.",
+                    "say": "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
                     "voice": "hamo",
-                    "prompt": "Baran def lêdixe, ango birûsk e! Hêvî jî karik e.",
+                    "prompt": "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
                     "options": [
                       "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
                       "Baran is the first child, Hêvî is the second.",
@@ -746,7 +746,7 @@
                     "voice": "hamo",
                     "prompt": "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
                     "options": [
-                      "Baran def lêdixe, ango birûsk e! Hêvî jî karik e.",
+                      "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
                       "Gur xwedî hêz e, lê ew nerm diaxive.",
                       "Derfet mezin e, lê dûrî jî mezin e."
                     ],
@@ -812,7 +812,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Baran def lêdixe, ango birûsk e! Hêvî jî karik e.",
+                        "text": "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e.",
                         "en": "Baran beats the drum, that’s the thunder! And Hêvî is a kid."
                       },
                       {
@@ -901,7 +901,7 @@
                     "voice": "hamo",
                     "prompt": "Baran beats the drum, that’s the thunder! And Hêvî is a kid.",
                     "accepted": [
-                      "Baran def lêdixe, ango birûsk e! Hêvî jî karik e."
+                      "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e."
                     ]
                   }
                 }
@@ -2241,7 +2241,7 @@
                     "options": [
                       "Gelo ez telefonî Kobaniyê bikim?",
                       "Îro êvarê şevbêrka me ya yekem e.",
-                      "Ramanek min heye. Îsal ez her tiştî diguherînim!"
+                      "Ramaneke min heye. Îsal ez her tiştî diguherînim!"
                     ],
                     "correctIndex": 0
                   }
@@ -2741,7 +2741,7 @@
                     "options": [
                       "Çiya çiqas bilind be, wê rê pê keve.",
                       "Mêvan mêvanê Xwedê ye.",
-                      "Baran def lêdixe, ango birûsk e! Hêvî jî karik e."
+                      "Baran defê lêdixe, ango birûsk e! Hêvî jî karik e."
                     ],
                     "correctIndex": 0
                   }
@@ -3610,7 +3610,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Welatê te li ku ye?"
+                      "Tu ji kîjan welatî yî?"
                     ]
                   }
                 },
@@ -4455,7 +4455,7 @@
                     "prompt": "I’ll miss you all.",
                     "options": [
                       "Ez ê bêriya we hemûyan bikim.",
-                      "Welatê te li ku ye?",
+                      "Tu ji kîjan welatî yî?",
                       "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye."
                     ],
                     "correctIndex": 0

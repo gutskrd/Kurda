@@ -1629,9 +1629,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ser çavan!",
+                    "say": "Xêra Xwedê li we bê!",
                     "voice": "hamo",
-                    "prompt": "Ser çavan!",
+                    "prompt": "Xêra Xwedê li we bê!",
                     "options": [
                       "Thank you, glad to be here!",
                       "Welcome to my home!",
@@ -1640,7 +1640,7 @@
                     "correctIndex": 0,
                     "new": [
                       {
-                        "ku": "Ser çavan!",
+                        "ku": "Xêra Xwedê li we bê!",
                         "en": "Thank you!"
                       }
                     ]
@@ -1655,7 +1655,7 @@
                     "voice": "hamo",
                     "prompt": "Bi xêr hatî!",
                     "options": [
-                      "Ser çavan!",
+                      "Xêra Xwedê li we bê!",
                       "Bi xêr hatî!",
                       "Ez baş im."
                     ],
@@ -1695,7 +1695,7 @@
                     "options": [
                       "hatî",
                       "spas",
-                      "çavan"
+                      "we"
                     ],
                     "correctIndex": 0
                   }
@@ -1745,7 +1745,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ser çavan!",
+                        "text": "Xêra Xwedê li we bê!",
                         "en": "Thank you, glad to be here!"
                       },
                       {
@@ -1842,12 +1842,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ser çavan!",
+                    "say": "Xêra Xwedê li we bê!",
                     "voice": "hamo",
-                    "prompt": "Ser ___!",
+                    "prompt": "Xêra Xwedê li we ___!",
                     "cue": "the answer to a welcome",
                     "options": [
-                      "çavan",
+                      "bê",
                       "hatî",
                       "germ"
                     ],
@@ -2062,7 +2062,7 @@
                         "right": "Welcome!"
                       },
                       {
-                        "left": "Ser çavan!",
+                        "left": "Xêra Xwedê li we bê!",
                         "right": "Glad to be here!"
                       }
                     ],
@@ -2144,8 +2144,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ser çavan!",
-                    "reference": "Ser çavan!"
+                    "prompt": "Xêra Xwedê li we bê!",
+                    "reference": "Xêra Xwedê li we bê!"
                   }
                 }
               ]
@@ -2519,7 +2519,7 @@
                     "voice": "hamo",
                     "prompt": "Bi xêr hatî!",
                     "options": [
-                      "Ser çavan!",
+                      "Xêra Xwedê li we bê!",
                       "Ew derî ye.",
                       "Navê te çi ye?"
                     ],
@@ -2711,7 +2711,7 @@
                     "options": [
                       "Derî.",
                       "Ez baş im.",
-                      "Ser çavan!"
+                      "Xêra Xwedê li we bê!"
                     ],
                     "correctIndex": 0
                   }
@@ -2880,7 +2880,7 @@
                     "options": [
                       "Ez nizanim.",
                       "Bi xêr hatî!",
-                      "Ser çavan!"
+                      "Xêra Xwedê li we bê!"
                     ],
                     "correctIndex": 0
                   }
@@ -3865,7 +3865,7 @@
                     "options": [
                       "Bi xêr biçî!",
                       "Bi xêr hatî!",
-                      "Ser çavan!"
+                      "Xêra Xwedê li we bê!"
                     ],
                     "correctIndex": 0
                   }

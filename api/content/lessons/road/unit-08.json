@@ -2669,9 +2669,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Kîjan mêwe herî şîrîn e?",
+                    "say": "Kîjan fêkî herî şîrîn e?",
                     "voice": "hamo",
-                    "prompt": "Kîjan mêwe herî şîrîn e?",
+                    "prompt": "Kîjan fêkî herî şîrîn e?",
                     "options": [
                       "Which fruit is the sweetest?",
                       "Which fruit is the biggest?",
@@ -2730,9 +2730,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Kîjan mêwe herî şîrîn e?",
+                    "say": "Kîjan fêkî herî şîrîn e?",
                     "voice": "hamo",
-                    "prompt": "Kîjan mêwe herî şîrîn e?",
+                    "prompt": "Kîjan fêkî herî şîrîn e?",
                     "options": [
                       "Sêv!",
                       "Şekir!",
@@ -2796,9 +2796,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Kîjan mêwe herî şîrîn e?",
+                    "say": "Kîjan fêkî herî şîrîn e?",
                     "voice": "hamo",
-                    "prompt": "Kîjan mêwe herî ___ e?",
+                    "prompt": "Kîjan fêkî herî ___ e?",
                     "options": [
                       "şîrîn",
                       "navdar",
@@ -2849,7 +2849,7 @@
                     "voice": "hamo",
                     "prompt": "Which fruit is the sweetest?",
                     "accepted": [
-                      "Kîjan mêwe herî şîrîn e?"
+                      "Kîjan fêkî herî şîrîn e?"
                     ]
                   }
                 },
@@ -3247,9 +3247,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Kîjan mêwe herî şîrîn e?",
+                    "say": "Kîjan fêkî herî şîrîn e?",
                     "voice": "hamo",
-                    "prompt": "Kîjan mêwe herî şîrîn e?",
+                    "prompt": "Kîjan fêkî herî şîrîn e?",
                     "options": [
                       "Which fruit is the sweetest?",
                       "Which fruit is the biggest?",

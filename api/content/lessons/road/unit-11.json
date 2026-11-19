@@ -1233,9 +1233,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ramanek min heye. Îsal ez her tiştî diguherînim!",
+                    "say": "Ramaneke min heye. Îsal ez her tiştî diguherînim!",
                     "voice": "hamo",
-                    "prompt": "Ramanek min heye. Îsal ez her tiştî diguherînim!",
+                    "prompt": "Ramaneke min heye. Îsal ez her tiştî diguherînim!",
                     "options": [
                       "I have an idea. This year I’m changing everything!",
                       "I have an idea. This year I’m selling everything!",
@@ -1281,9 +1281,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ramanek min heye. Îsal ez her tiştî diguherînim!",
+                    "say": "Ramaneke min heye. Îsal ez her tiştî diguherînim!",
                     "voice": "hamo",
-                    "prompt": "Ramanek min heye. Îsal ez her tiştî ___!",
+                    "prompt": "Ramaneke min heye. Îsal ez her tiştî ___!",
                     "options": [
                       "diguherînim",
                       "diguherînî",
@@ -1337,7 +1337,7 @@
                     "prompt": "It’s October, and we’ve begun!",
                     "options": [
                       "Cotmeh e, û me dest pê kiriye!",
-                      "Ramanek min heye. Îsal ez her tiştî diguherînim!",
+                      "Ramaneke min heye. Îsal ez her tiştî diguherînim!",
                       "Karker çûne zeviyê, û ez razî me."
                     ],
                     "correctIndex": 0
@@ -1377,8 +1377,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ramanek min heye. Îsal ez her tiştî diguherînim!",
-                    "reference": "Ramanek min heye. Îsal ez her tiştî diguherînim!"
+                    "prompt": "Ramaneke min heye. Îsal ez her tiştî diguherînim!",
+                    "reference": "Ramaneke min heye. Îsal ez her tiştî diguherînim!"
                   }
                 },
                 {
@@ -2084,8 +2084,8 @@
                     "voice": "hamo",
                     "prompt": "I have an idea. This year I’m changing everything!",
                     "options": [
-                      "Ramanek min heye. Îsal ez her tiştî diguherînim!",
-                      "Ramanek min heye. Îsal ez her tişt diguherînim!",
+                      "Ramaneke min heye. Îsal ez her tiştî diguherînim!",
+                      "Ramaneke min heye. Îsal ez her tişt diguherînim!",
                       "Hêrs an şerm? Ez nizanim, lê hestekî min heye."
                     ],
                     "correctIndex": 0
@@ -3802,11 +3802,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Welatê te li ku ye?",
+                    "say": "Tu ji kîjan welatî yî?",
                     "voice": "hamo",
-                    "prompt": "Welatê te li ku ye?",
+                    "prompt": "Tu ji kîjan welatî yî?",
                     "options": [
-                      "Where is your country?",
+                      "Which country are you from?",
                       "Where is your village?",
                       "What is your name?"
                     ],
@@ -3863,12 +3863,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Welatê te li ku ye?",
+                    "say": "Tu ji kîjan welatî yî?",
                     "voice": "hamo",
-                    "prompt": "Welatê te li ku ye?",
+                    "prompt": "Tu ji kîjan welatî yî?",
                     "accepted": [
-                      "Where is your country?",
-                      "Where’s your country?"
+                      "Which country are you from?",
+                      "Which country are you from?"
                     ]
                   }
                 },
@@ -3984,8 +3984,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Welatê te li ku ye?",
-                    "reference": "Welatê te li ku ye?"
+                    "prompt": "Tu ji kîjan welatî yî?",
+                    "reference": "Tu ji kîjan welatî yî?"
                   }
                 },
                 {
@@ -4429,9 +4429,9 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Where is your country?",
+                    "prompt": "Which country are you from?",
                     "options": [
-                      "Welatê te li ku ye?",
+                      "Tu ji kîjan welatî yî?",
                       "Me li dora sobeyê çay vexwar.",
                       "Doktor Azad dibêje ku hemşîre gelek girîng in."
                     ],

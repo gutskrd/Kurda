@@ -76,7 +76,7 @@ export function addressesHamo(text: string): boolean {
 const ONLY: ReadonlyArray<{ who: RoadVoice; re: RegExp }> = [
   { who: 'hamo', re: /\b(ez\s+hamo\s+me|navê\s+min\s+hamo\s+ye|ez\s+mêr\s+im)\b/iu },
   { who: 'xezo', re: /\b(ez\s+xezo\s+me|navê\s+min\s+xezo\s+ye|ez\s+jin\s+im|ez\s+mamoste\s+me)\b/iu },
-  { who: 'hevalo', re: /\b(ez\s+hevalo\s+me|navê\s+min\s+hevalo\s+ye|ez\s+(heywan|ajal|ask)\s+im)\b/iu },
+  { who: 'hevalo', re: /\b(ez\s+hevalo\s+me|navê\s+min\s+hevalo\s+ye|ez\s+(ajel|heywan|ajal|ask)\s+im)\b/iu },
 ];
 
 /** Who a line says it is in the first person, when that can only be one of the voices; null when anyone could say it. */

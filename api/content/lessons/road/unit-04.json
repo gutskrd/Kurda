@@ -1215,9 +1215,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez mêwe dixwazim.",
+                    "say": "Ez fêkî dixwazim.",
                     "voice": "hamo",
-                    "prompt": "Ez mêwe dixwazim.",
+                    "prompt": "Ez fêkî dixwazim.",
                     "options": [
                       "I’d like some fruit.",
                       "I’d like some bread.",
@@ -1230,7 +1230,7 @@
                         "en": "to want"
                       },
                       {
-                        "ku": "mêwe",
+                        "ku": "fêkî",
                         "en": "fruit"
                       }
                     ]
@@ -1258,12 +1258,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Ez mêwe dixwazim.",
+                    "say": "Ez fêkî dixwazim.",
                     "voice": "hamo",
                     "prompt": "Ez ___ dixwazim.",
                     "options": [
-                      "mêwe",
-                      "mêweyên",
+                      "fêkî",
+                      "fêkiyên",
                       "kartol"
                     ],
                     "correctIndex": 0,
@@ -1339,9 +1339,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ez mêwe dixwazim.",
+                    "say": "Ez fêkî dixwazim.",
                     "voice": "hamo",
-                    "prompt": "Ez mêwe dixwazim.",
+                    "prompt": "Ez fêkî dixwazim.",
                     "accepted": [
                       "I’d like some fruit.",
                       "I would like some fruit."
@@ -1413,8 +1413,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Ez mêwe dixwazim.",
-                    "reference": "Ez mêwe dixwazim."
+                    "prompt": "Ez fêkî dixwazim.",
+                    "reference": "Ez fêkî dixwazim."
                   }
                 },
                 {
@@ -1513,9 +1513,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "mêwe",
+                    "say": "fêkî",
                     "voice": "hevalo",
-                    "prompt": "mêwe",
+                    "prompt": "fêkî",
                     "options": [
                       "fruit",
                       "fish",
@@ -2022,9 +2022,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez mêwe dixwazim.",
+                    "say": "Ez fêkî dixwazim.",
                     "voice": "hamo",
-                    "prompt": "Ez mêwe dixwazim.",
+                    "prompt": "Ez fêkî dixwazim.",
                     "options": [
                       "I’d like some fruit.",
                       "I’d like some bread.",
@@ -2147,9 +2147,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "mêwe",
+                    "say": "fêkî",
                     "voice": "hevalo",
-                    "prompt": "mêwe",
+                    "prompt": "fêkî",
                     "options": [
                       "fruit",
                       "meat",
@@ -4189,7 +4189,7 @@
                     "options": [
                       "Bi xêr biçî!",
                       "Bi xêr hatî!",
-                      "Ser çavan!"
+                      "Xêra Xwedê li we bê!"
                     ],
                     "correctIndex": 0
                   }
@@ -4279,15 +4279,12 @@
                 },
                 {
                   "position": 13,
-                  "type": "writing",
+                  "type": "speaking",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "repeat",
                     "voice": "hevalo",
-                    "prompt": "I love apples!",
-                    "accepted": [
-                      "Ez ji sêvan hez dikim!",
-                      "Ez ji sêvan hez dikim"
-                    ]
+                    "prompt": "Ez ji sêvan hez dikim!",
+                    "reference": "Ez ji sêvan hez dikim!"
                   }
                 },
                 {

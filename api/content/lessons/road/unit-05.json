@@ -511,9 +511,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Em malbat in!",
+                    "say": "Em malbatek in.",
                     "voice": "hamo",
-                    "prompt": "Em malbat in!",
+                    "prompt": "Em malbatek in.",
                     "options": [
                       "We’re a family!",
                       "We’re fine!",
@@ -1129,7 +1129,7 @@
                     "options": [
                       "Ez tiştên xweş dinivîsim!",
                       "Ez tişt xweş dinivîsim!",
-                      "Ez mêwe dixwazim."
+                      "Ez fêkî dixwazim."
                     ],
                     "correctIndex": 0
                   }

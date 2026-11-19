@@ -383,9 +383,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Em malbat in!",
+                    "say": "Em malbatek in.",
                     "voice": "hamo",
-                    "prompt": "Em malbat in!",
+                    "prompt": "Em malbatek in.",
                     "options": [
                       "We’re a family!",
                       "We’re fine!",
@@ -427,13 +427,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Em malbat in!",
+                    "say": "Em malbatek in.",
                     "voice": "hamo",
-                    "prompt": "Em ___ in!",
+                    "prompt": "Em ___ in.",
                     "options": [
+                      "malbatek",
                       "malbat",
-                      "xwişk",
-                      "bira"
+                      "xwişk"
                     ],
                     "correctIndex": 0,
                     "cue": "We’re a family!"
@@ -477,7 +477,7 @@
                     "prompt": "This is my brother.",
                     "options": [
                       "Ev birayê min e.",
-                      "Em malbat in!",
+                      "Em malbatek in.",
                       "Ev mala min e."
                     ],
                     "correctIndex": 0
@@ -517,8 +517,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Em malbat in!",
-                    "reference": "Em malbat in!"
+                    "prompt": "Em malbatek in.",
+                    "reference": "Em malbatek in."
                   }
                 },
                 {
@@ -626,9 +626,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez heywan im!",
+                    "say": "Ez ajel im!",
                     "voice": "hevalo",
-                    "prompt": "Ez heywan im!",
+                    "prompt": "Ez ajel im!",
                     "options": [
                       "I’m an animal!",
                       "I’m a man!",
@@ -637,7 +637,7 @@
                     "correctIndex": 0,
                     "new": [
                       {
-                        "ku": "heywan",
+                        "ku": "ajel",
                         "en": "animal"
                       }
                     ]
@@ -698,7 +698,7 @@
                       },
                       {
                         "speaker": 2,
-                        "text": "Ez heywan im!",
+                        "text": "Ez ajel im!",
                         "en": "I’m an animal!"
                       },
                       {
@@ -717,7 +717,7 @@
                         "en": "I’m hungry!"
                       }
                     ],
-                    "prompt": "Kî heywan e?",
+                    "prompt": "Kî ajel e?",
                     "options": [
                       "Hevalo.",
                       "Xezo.",
@@ -785,9 +785,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ez heywan im!",
+                    "say": "Ez ajel im!",
                     "voice": "hevalo",
-                    "prompt": "Ez heywan im!",
+                    "prompt": "Ez ajel im!",
                     "accepted": [
                       "I’m an animal!",
                       "I am an animal!",
@@ -844,7 +844,7 @@
                     "options": [
                       "Erê, ez mêvan im.",
                       "Erê, tu mêvan î.",
-                      "Ez heywan im."
+                      "Ez ajel im."
                     ],
                     "correctIndex": 0
                   }
@@ -867,7 +867,7 @@
                     "voice": "hevalo",
                     "prompt": "I’m an animal!",
                     "accepted": [
-                      "Ez heywan im!"
+                      "Ez ajel im!"
                     ]
                   }
                 },
@@ -894,9 +894,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Em malbat in!",
+                    "say": "Em malbatek in.",
                     "voice": "hamo",
-                    "prompt": "Em malbat in!",
+                    "prompt": "Em malbatek in.",
                     "options": [
                       "We’re a family!",
                       "We’re fine!",
@@ -1089,7 +1089,7 @@
                     "voice": "hevalo",
                     "prompt": "I’m an animal!",
                     "accepted": [
-                      "Ez heywan im!"
+                      "Ez ajel im!"
                     ]
                   }
                 },
@@ -3150,6 +3150,22 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "reply",
+                    "say": "Bi xêr hatî!",
+                    "voice": "hamo",
+                    "prompt": "Bi xêr hatî!",
+                    "options": [
+                      "Xêra Xwedê li we bê!",
+                      "Bi xêr biçî!",
+                      "Noşî can be!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Fermo, av. Noşî can be!",
                     "voice": "hamo",
@@ -3163,7 +3179,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -3196,7 +3212,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3211,7 +3227,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3223,7 +3239,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3240,7 +3256,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3250,7 +3266,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3261,7 +3277,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3273,7 +3289,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",

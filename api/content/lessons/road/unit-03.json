@@ -185,9 +185,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ez heywan im!",
+                    "say": "Ez ajel im!",
                     "voice": "hevalo",
-                    "prompt": "Ez heywan im!",
+                    "prompt": "Ez ajel im!",
                     "options": [
                       "I’m an animal!",
                       "I’m fine.",
@@ -1609,7 +1609,7 @@
                     "ask": "hear",
                     "voice": "hevalo",
                     "accepted": [
-                      "Ez heywan im!"
+                      "Ez ajel im!"
                     ]
                   }
                 },
@@ -3045,7 +3045,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Nîvek li vir e. Nîvek li ku ye?",
+                        "text": "Nîvek li vir e. Nîvê din li ku ye?",
                         "en": "Here’s one half. Where is the other half?"
                       },
                       {

@@ -414,7 +414,7 @@
             "Çivîkek e"
           ],
           "correctIndex": 0,
-          "explanation": "Gûz mêweyek e, li ser dara gûzê ye.",
+          "explanation": "Gûz fêkiyek e, li ser dara gûzê ye.",
           "explanationEn": "A gûz is a walnut, a fruit that grows on the walnut tree.",
           "evidenceParagraph": 1,
           "evidenceSentence": 1
@@ -436,7 +436,7 @@
         },
         {
           "kind": "detail",
-          "prompt": "Nîvê wêneyî li ku ye?",
+          "prompt": "Nîvê wêne li ku ye?",
           "promptEn": "Where is the half of the photo?",
           "options": [
             "Li ser banî",
@@ -976,8 +976,8 @@
       "cover": null,
       "readingMinutes": null,
       "title": "Soza bavê me",
-      "summary": "Li Kobaniyê, bajarê Hamo, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyî heye, û soza bavê wan.",
-      "body": "Were, rûne! Çayê vexwe, germ e. Tu dizanî? Otobûs diçe, lê em jî diçin! Em bi Ferhad re diçin rêya mezin, û ji wir bi minîbûsê diçin Kobaniyê. Ajovan gelek zû diçe, û ez dibêjim: Hêdî, ji kerema xwe!\n\nKobanî bajarê min e, lê bajar mezin dibe. Kolan nû ne, mal bilind in, û bazar qelebalix e. Ez dixwînim: li rastê. Lê ez li çepê diçim, û ez winda dibim. Du caran, li bajarê xwe!\n\nDiya min, Edûl, derî vedike û dibêje: Werin hundir, rûnin! Çar xwarziyên min dibezin û li ser min in. Diya min dibêje: Bixwe! Ez dixwim. Ew dibêje: Dîsa bixwe! Ez dîsa dixwim. Kes nikare ji ber maseyê rabe. Ez pêncî salî me, lê li vê malê ez zarok im.\n\nPiştî şîvê, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyê me heye: bavê me, li ser Miştenûrê, li Newrozê. Çil sal in ku ew li cem Lorînê ye.\n\nLi pişt wêneyî soza du zarokan heye: Rojekê, li Newrozê, bavê me dîsa ji bo me bilûra xwe lêdixe. Ez û Lorîn li wêneyê dinêrin, û em dikenin. Ev soza me ye.\n\nBavê min, Ibrahîm, radibe. Ew bilûra xwe digire, li me dinêre û dibêje: Li Newrozê ez têm Sêvanê. Soza min soz e!\n\nSoza min soz e! Niha ez dizanim ev gotin ji ku tê. Lorîn dikene, ez dikenim, û diya min dibêje: Rûnin! Divê hûn dîsa bixwin!",
+      "summary": "Li Kobaniyê, bajarê Hamo, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêne heye, û soza bavê wan.",
+      "body": "Were, rûne! Çayê vexwe, germ e. Tu dizanî? Otobûs diçe, lê em jî diçin! Em bi Ferhad re diçin rêya mezin, û ji wir bi minîbûsê diçin Kobaniyê. Ajovan gelek zû diçe, û ez dibêjim: Hêdî, ji kerema xwe!\n\nKobanî bajarê min e, lê bajar mezin dibe. Kolan nû ne, mal bilind in, û bazar qelebalix e. Ez dixwînim: li rastê. Lê ez li çepê diçim, û ez winda dibim. Du caran, li bajarê xwe!\n\nDiya min, Edûl, derî vedike û dibêje: Werin hundir, rûnin! Çar xwarziyên min dibezin û li ser min in. Diya min dibêje: Bixwe! Ez dixwim. Ew dibêje: Dîsa bixwe! Ez dîsa dixwim. Kes nikare ji ber maseyê rabe. Ez pêncî salî me, lê li vê malê ez zarok im.\n\nPiştî şîvê, Lorîn bi pirtûkeke kevn tê. Di pirtûkê de nîvê wêneyê me heye: bavê me, li ser Miştenûrê, li Newrozê. Çil sal in ku ew li cem Lorînê ye.\n\nLi pişt wêne soza du zarokan heye: Rojekê, li Newrozê, bavê me dîsa ji bo me bilûra xwe lêdixe. Ez û Lorîn li wêneyê dinêrin, û em dikenin. Ev soza me ye.\n\nBavê min, Ibrahîm, radibe. Ew bilûra xwe digire, li me dinêre û dibêje: Li Newrozê ez têm Sêvanê. Soza min soz e!\n\nSoza min soz e! Niha ez dizanim ev gotin ji ku tê. Lorîn dikene, ez dikenim, û diya min dibêje: Rûnin! Divê hûn dîsa bixwin!",
       "translations": {
         "en": "Come, sit down! Drink your tea, it is hot. You know what? The bus goes without us, but we go too! We go with Ferhad to the main road, and from there we go to Kobanî by minibus. The driver goes very fast, and I say: Slowly, please!\n\nKobanî is my town, but the town keeps growing. The streets are new, the houses are tall, and the market is crowded. I read: on the right. But I go left, and I get lost. Twice, in my own town!\n\nMy mother, Edûl, opens the door and says: Come in, sit down! My four nieces and nephews run up and climb all over me. My mother says: Eat! I eat. She says: Eat some more! I eat some more. Nobody can get up from the table. I am fifty years old, but in this house I am a child.\n\nAfter dinner, Lorîn comes with an old book. In the book is the other half of our photo: our father, on Miştenûr, at Newroz. For forty years it has been with Lorîn.\n\nOn the back of the photo is the promise of two children: One day, at Newroz, our father will play his flute for us again. Lorîn and I look at the photo, and we laugh. This is our promise.\n\nMy father, Ibrahîm, gets up. He takes his flute, looks at us and says: At Newroz I am coming to Sêvan. My promise is a promise!\n\nMy promise is a promise! Now I know where that saying comes from. Lorîn laughs, I laugh, and my mother says: Sit down! You must eat some more!"
       },
@@ -1148,7 +1148,7 @@
         },
         {
           "kind": "detail",
-          "prompt": "Li ser wêneyî kî heye?",
+          "prompt": "Li ser wêne kî heye?",
           "promptEn": "Who is in the photo?",
           "options": [
             "Bavê Hamo",
@@ -1201,7 +1201,7 @@
             "Demjimêra otobûsê"
           ],
           "correctIndex": 0,
-          "explanation": "Li pişt wêneyî soza du zarokan heye, û ew tê bîra Hamo.",
+          "explanation": "Li pişt wêne soza du zarokan heye, û ew tê bîra Hamo.",
           "explanationEn": "The other half of the photo and the children’s writing bring back their father’s promise.",
           "evidenceParagraph": null,
           "evidenceSentence": null

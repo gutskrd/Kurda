@@ -572,14 +572,14 @@ describe('who says a line', () => {
     expect(onlySaidBy('Ez jin im.')).toBe('xezo');
     expect(onlySaidBy('Silav! Ez Xezo me.')).toBe('xezo');
     expect(onlySaidBy('Ez mamoste me.')).toBe('xezo');
-    expect(onlySaidBy('Ez heywan im!')).toBe('hevalo');
+    expect(onlySaidBy('Ez ajel im!')).toBe('hevalo');
     expect(onlySaidBy('Navê min Hevalo ye!')).toBe('hevalo');
     for (const line of ['Ez birçî me!', 'Hevalo heywan e.', 'Xezo mamoste ye.', 'Ez baş im.']) expect(onlySaidBy(line), line).toBeNull();
   });
 
   it('keeps a line in the mouth it belongs to, and nobody calls their own name', () => {
     expect(speakerProblems('Ez jin im.', 'hamo')).toEqual(['“Ez jin im.” is Xezo’s to say, not Hamo’s: give it xezo’s voice']);
-    expect(speakerProblems('Ez heywan im!', 'xezo')).toEqual(['“Ez heywan im!” is Hevalo’s to say, not Xezo’s: give it hevalo’s voice']);
+    expect(speakerProblems('Ez ajel im!', 'xezo')).toEqual(['“Ez ajel im!” is Hevalo’s to say, not Xezo’s: give it hevalo’s voice']);
     expect(speakerProblems('Hevalo, were!', 'hevalo')).toEqual(['Hevalo would say “Hevalo, were!” to himself: model it without the name (the learner says it)']);
     expect(speakerProblems('Silav, Xezo!', 'xezo')).toHaveLength(1);
     for (const [line, who] of [['Hevalo, were!', 'hamo'], ['Hamo, simbêlê xwe biparêze!', 'xezo'], ['Ez jin im.', 'xezo']] as const) expect(speakerProblems(line, who), line).toEqual([]);

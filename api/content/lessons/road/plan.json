@@ -175,11 +175,11 @@
               "titleKu": "Bi xêr hatî!",
               "titleEn": "Welcome!",
               "focus": "talk",
-              "beat": "Halfway through his tea Hamo jumps up: he forgot the most important thing! Back to the blue gate he goes, opens it again with a bow and says it properly, “Bi xêr hatî!”, and teaches you the answer every guest gives, “Ser çavan!”. Then “Fermo!”: a fresh glass of tea, very hot. Hamo blows on his glass, and Hevalo, helpfully, blows on the bread.",
+              "beat": "Halfway through his tea Hamo jumps up: he forgot the most important thing! Back to the blue gate he goes, opens it again with a bow and says it properly, “Bi xêr hatî!”, and teaches you the answer every guest gives, “Xêra Xwedê li we bê!”. Then “Fermo!”: a fresh glass of tea, very hot. Hamo blows on his glass, and Hevalo, helpfully, blows on the bread.",
               "voice": "hamo",
               "new": [
                 {"ku": "Bi xêr hatî!", "en": "Welcome! (to one person; Bi xêr hatin! to more than one)", "pos": "phrase", "forms": ["bi", "xêr", "hatî", "hatin"]},
-                {"ku": "Ser çavan!", "en": "Thank you! (the answer to a welcome; word for word “on the eyes”)", "pos": "phrase", "forms": ["ser", "çavan"]},
+                {"ku": "Xêra Xwedê li we bê!", "en": "Thank you! (the answer to a welcome; word for word “may God’s good be on you”)", "pos": "phrase", "forms": ["xêra", "xwedê", "we", "bê", "li", "ser"]},
                 {"ku": "germ", "en": "hot, warm", "pos": "adj", "forms": ["germ"]},
                 {"ku": "fermo", "en": "here you are; please, go ahead", "pos": "interj", "forms": ["fermo"]}
               ]
@@ -386,7 +386,7 @@
                 {"ku": "mêvan", "en": "guest", "pos": "noun", "gender": "mf", "forms": ["mêvan", "mêvanên", "mêvanan", "mêvanek", "mêvanê", "mêvanekî", "mêvanî", "mêvana", "mêvaneke"]},
                 {"ku": "mêr", "en": "man; husband", "pos": "noun", "gender": "m", "forms": ["mêr", "mêrên", "mêran", "mêrek", "mêrê", "mêrekî", "mêrî"]},
                 {"ku": "jin", "en": "woman; wife", "pos": "noun", "gender": "f", "forms": ["jin", "jinên", "jinan", "jinek", "jina", "jinê", "jineke"]},
-                {"ku": "heywan", "en": "animal", "pos": "noun", "gender": "m", "forms": ["heywan", "heywanên", "heywanan", "heywanek", "heywanê", "heywanekî"]}
+                {"ku": "ajel", "en": "animal", "pos": "noun", "gender": "m", "forms": ["ajel", "ajelên", "ajelan", "ajelek", "ajelê", "ajelekî"]}
               ]
             },
             {
@@ -790,7 +790,7 @@
                 {"ku": "li pişt", "en": "behind", "pos": "prep", "forms": ["li", "pişt"]},
                 {"ku": "poz", "en": "nose", "pos": "noun", "gender": "m", "forms": ["poz", "pozên", "pozan", "pozek", "pozê", "pozekî", "pozî"]},
                 {"ku": "dev", "en": "mouth", "pos": "noun", "gender": "m", "forms": ["dev", "devên", "devan", "devek", "devê", "devekî", "devî"]},
-                {"ku": "nîv", "en": "half", "pos": "noun", "gender": "m", "forms": ["nîv", "nîvên", "nîvan", "nîvek", "nîvê", "nîvekî", "nîvî"]}
+                {"ku": "nîv", "en": "half", "pos": "noun", "gender": "m", "forms": ["nîv", "nîvên", "nîvan", "nîvek", "nîvê", "nîvekî", "nîvî", "din"]}
               ]
             },
             {
@@ -967,7 +967,7 @@
               "new": [
                 {"ku": "xwestin", "en": "to want", "pos": "verb", "forms": ["xwestin", "dixwazim", "dixwazî", "dixwaze", "dixwazin"]},
                 {"ku": "xwarin", "en": "to eat", "pos": "verb", "forms": ["xwarin", "dixwim", "dixwî", "dixwe", "dixwin"]},
-                {"ku": "mêwe", "en": "fruit", "pos": "noun", "gender": "f", "forms": ["mêwe", "mêweyên", "mêweyan", "mêweyek", "mêweya", "mêweyê", "mêweyeke"]},
+                {"ku": "fêkî", "en": "fruit", "pos": "noun", "gender": "f", "forms": ["fêkî", "fêkiyên", "fêkiyan", "fêkiyek", "fêkiya", "fêkiyê", "fêkiyeke"]},
                 {"ku": "bacansor", "en": "tomato", "pos": "noun", "gender": "m", "forms": ["bacansor", "bacansorên", "bacansoran", "bacansorek", "bacansorê", "bacansorekî", "bacansorî"]},
                 {"ku": "kartol", "en": "potato", "pos": "noun", "gender": "f", "forms": ["kartol", "kartolên", "kartolan", "kartolek", "kartola", "kartolê", "kartoleke"]},
                 {"ku": "ji kerema xwe", "en": "please", "pos": "phrase", "forms": ["ji", "kerema", "xwe"]}
@@ -3460,7 +3460,7 @@
     }
   ],
   "doubts": [
-    {"ku": "Ser çavan!", "reason": "the answer to “Bi xêr hatî!”: the course teaches “Ser çavan!” (the dictionaries’ reply; a university course uses “Di nav xêrê de bî”) — confirm"},
+    {"ku": "Xêra Xwedê li we bê!", "reason": "the answer to “Bi xêr hatî!”: the owner chose “Xêra Xwedê li we bê!” over “Xêra Xwedê li we bê!”"},
     {"ku": "Bi xêr biçî!", "reason": "chapter 1 teaches “Bi xatirê te!” with “Bi xêr biçî!” as the stayer’s reply; “Oxir be!” waits for the farewells of chapter 12 — confirm the pair the owner wants first"},
     {"ku": "Bi xêr hatin!", "reason": "taught in chapter 1 as a form of “Bi xêr hatî!” for more than one person (hatin is a listed form) — confirm"},
     {"ku": "Bi kurdî çi ye?", "reason": "taught in chapter 1 as “What is it in Kurdish?”; “Bi kurdî jê re çi dibêjin?” is the fuller way — confirm the short one sounds natural"},
@@ -3479,7 +3479,7 @@
     {"ku": "piştên", "reason": "piştên (sash) is the only attested spelling; its gender (the course treats it as masculine) is not in the dictionaries — confirm"},
     {"ku": "Zimanê şîrîn mar ji qulê derdixe", "reason": "the proverbs take forms the collections attest: “Zimanê şîrîn mar ji qulê derdixe” (Wîkîferheng has “Gotina xweş mar ji qulê derdixe”), “Av dilop dilop dibe gol”, and “Çiya çiqas bilind be, wê rê pê keve” (the dictionary has “… wê rojekê rê pê bikeve”) — confirm, and whether the concessive wants jî (“çiqas bilind be jî”), which the chapter 12 grammar note now mentions beside it"},
     {"ku": "demjimêr", "reason": "demjimêr (hour, clock) replaces the Arabic loan saet, as Kurdish schools and broadcasters write it; saet is still what many people say — confirm"},
-    {"ku": "mêwe", "reason": "mêwe (fruit, feminine) replaces fêkî, from Arabic; fêkî is the commoner word in speech in the north — confirm"},
+    {"ku": "fêkî", "reason": "the owner chose fêkî over mêwe for fruit"},
     {"ku": "wane", "reason": "wane (lesson, class; feminine: waneya) replaces ders, from Arabic, as the schools in Rojava say it — confirm"},
     {"ku": "hiş", "reason": "hiş (mind, good sense) replaces aqil — confirm"},
     {"ku": "govend girtin", "reason": "to dance is govend girtin (in the past ketin govendê), replacing reqisîn, from Arabic — confirm"},
