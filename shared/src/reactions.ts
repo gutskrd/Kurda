@@ -91,21 +91,15 @@ function line(character: ReactionCharacter, moment: ReactionMoment, n: number, k
   return { id: `${moment}-${n}`, character, moment, ku, meaning };
 }
 
-const WELL_DONE: ReactionMeaning = { en: 'Well done!', ckb: 'ئافەرین!', nl: 'Goed zo!', de: 'Gut gemacht!', es: '¡Bien hecho!', fr: 'Bravo !', tr: 'Aferin!', ar: 'أحسنت!' };
-const NO_WORRIES: ReactionMeaning = { en: 'No worries!', ckb: 'خەم مەخۆ!', nl: 'Geeft niks!', de: 'Macht nichts!', es: '¡No pasa nada!', fr: 'Pas grave !', tr: 'Dert etme!', ar: 'لا بأس!' };
-const NEW_RECORD: ReactionMeaning = { en: 'A new record!', ckb: 'ڕیکۆردێکی نوێ!', nl: 'Een nieuw record!', de: 'Ein neuer Rekord!', es: '¡Un nuevo récord!', fr: 'Un nouveau record !', tr: 'Yeni bir rekor!', ar: 'رقم قياسي جديد!' };
-const WELCOME: ReactionMeaning = { en: 'Welcome!', ckb: 'بەخێربێیت!', nl: 'Welkom!', de: 'Willkommen!', es: '¡Te doy la bienvenida!', fr: 'Bienvenue !', tr: 'Hoş geldin!', ar: 'أهلًا وسهلًا!' };
-const WELCOME_BACK: ReactionMeaning = { en: 'Welcome back!', ckb: 'دیسان بەخێربێیتەوە!', nl: 'Welkom terug!', de: 'Willkommen zurück!', es: '¡Qué bien verte otra vez!', fr: 'Bon retour !', tr: 'Tekrar hoş geldin!', ar: 'أهلًا بعودتك!' };
-
 /** The whole catalogue, Hevalo's lines and then Xezal's, each moment's variants together. */
 export const REACTION_LINES: readonly ReactionLine[] = [
-  line('hevalo', 'run-3', 1, 'Aferîn!', WELL_DONE),
+  line('hevalo', 'run-3', 1, 'Aferîn!', { en: 'Well done!', ckb: 'ئافەرین!', nl: 'Goed zo!', de: 'Gut gemacht!', es: '¡Bien hecho!', fr: 'Bravo !', tr: 'Aferin!', ar: 'أحسنت!' }),
   line('hevalo', 'run-3', 2, 'Sê li pey hev!', { en: 'Three in a row!', ckb: 'سێ لە دوای یەک!', nl: 'Drie op een rij!', de: 'Drei hintereinander!', es: '¡Tres seguidas!', fr: 'Trois d’affilée !', tr: 'Üst üste üç!', ar: 'ثلاثة على التوالي!' }),
   line('hevalo', 'run-3', 3, 'Çi xweş e!', { en: 'How lovely!', ckb: 'چەند خۆشە!', nl: 'Wat fijn!', de: 'Wie schön!', es: '¡Qué bien!', fr: 'Que c’est bien !', tr: 'Ne güzel!', ar: 'ما أجمل هذا!' }),
   line('hevalo', 'run-5', 1, 'Pênc li pey hev!', { en: 'Five in a row!', ckb: 'پێنج لە دوای یەک!', nl: 'Vijf op een rij!', de: 'Fünf hintereinander!', es: '¡Cinco seguidas!', fr: 'Cinq d’affilée !', tr: 'Üst üste beş!', ar: 'خمسة على التوالي!' }),
   line('hevalo', 'run-5', 2, 'Tu çi zîrek î!', { en: 'How clever you are!', ckb: 'چەند زیرەکی!', nl: 'Wat ben jij slim!', de: 'Du bist so schlau!', es: '¡Qué inteligente eres!', fr: 'Quelle intelligence !', tr: 'Ne kadar zekisin!', ar: 'ما أروع ذكاءك!' }),
   line('hevalo', 'run-5', 3, 'Bijî!', { en: 'Hooray!', ckb: 'بژی!', nl: 'Hoera!', de: 'Hurra!', es: '¡Hurra!', fr: 'Hourra !', tr: 'Yaşasın!', ar: 'مرحى!' }),
-  line('hevalo', 'miss', 1, 'Ne xem e!', NO_WORRIES),
+  line('hevalo', 'miss', 1, 'Ne xem e!', { en: 'No worries!', ckb: 'خەم مەخۆ!', nl: 'Geeft niks!', de: 'Macht nichts!', es: '¡No pasa nada!', fr: 'Pas grave !', tr: 'Dert etme!', ar: 'لا بأس!' }),
   line('hevalo', 'miss', 2, 'Carek din!', { en: 'Once more!', ckb: 'جارێکی تر!', nl: 'Nog een keer!', de: 'Noch einmal!', es: '¡Otra vez!', fr: 'Encore une fois !', tr: 'Bir kez daha!', ar: 'مرة أخرى!' }),
   line('hevalo', 'miss', 3, 'Tu dikarî!', { en: 'You can do it!', ckb: 'تۆ دەتوانیت!', nl: 'Je kunt het!', de: 'Du schaffst das!', es: '¡Tú puedes!', fr: 'Tu peux le faire !', tr: 'Yapabilirsin!', ar: 'بإمكانك!' }),
   line('hevalo', 'miss', 4, 'Hêdî hêdî!', { en: 'Step by step!', ckb: 'هێدی هێدی!', nl: 'Stap voor stap!', de: 'Schritt für Schritt!', es: '¡Paso a paso!', fr: 'Pas à pas !', tr: 'Yavaş yavaş!', ar: 'خطوة خطوة!' }),
@@ -115,22 +109,18 @@ export const REACTION_LINES: readonly ReactionLine[] = [
   line('hevalo', 'perfect', 1, 'Bê şaşî!', { en: 'Not one mistake!', ckb: 'بێ هەڵە!', nl: 'Zonder één fout!', de: 'Ohne einen Fehler!', es: '¡Sin un solo error!', fr: 'Sans une seule faute !', tr: 'Hiç hatasız!', ar: 'بلا أي خطأ!' }),
   line('hevalo', 'perfect', 2, 'Bêkêmasî!', { en: 'Perfect!', ckb: 'بێ کەموکوڕی!', nl: 'Perfect!', de: 'Perfekt!', es: '¡Perfecto!', fr: 'Parfait !', tr: 'Mükemmel!', ar: 'مثالي!' }),
   line('hevalo', 'perfect', 3, 'Sêv! Sêva min ku ye?', { en: 'An apple! Where’s my apple?', ckb: 'سێو! سێوەکەم لە کوێیە؟', nl: 'Een appel! Waar is mijn appel?', de: 'Ein Apfel! Wo ist mein Apfel?', es: '¡Una manzana! ¿Dónde está mi manzana?', fr: 'Une pomme ! Où est ma pomme ?', tr: 'Elma! Elmam nerede?', ar: 'تفاحة! أين تفاحتي؟' }),
-  line('hevalo', 'daily-zer', 1, 'Zêr! Zêr!', { en: 'Gold! Gold!', ckb: 'زێڕ! زێڕ!', nl: 'Goud! Goud!', de: 'Gold! Gold!', es: '¡Oro! ¡Oro!', fr: 'De l’or ! De l’or !', tr: 'Altın! Altın!', ar: 'ذهب! ذهب!' }),
-  line('hevalo', 'daily-zer', 2, 'Zêr? Ez sêvekê dixwazim!', { en: 'Gold? I’d like an apple!', ckb: 'زێڕ؟ من سێوێکم دەوێت!', nl: 'Goud? Ik wil een appel!', de: 'Gold? Ich will einen Apfel!', es: '¿Oro? ¡Yo quiero una manzana!', fr: 'De l’or ? Moi, je veux une pomme !', tr: 'Altın mı? Ben elma istiyorum!', ar: 'ذهب؟ أريد تفاحة!' }),
   line('hevalo', 'streak-kept', 1, 'Îro jî!', { en: 'Today too!', ckb: 'ئەمڕۆش!', nl: 'Vandaag ook!', de: 'Heute auch!', es: '¡Hoy también!', fr: 'Aujourd’hui aussi !', tr: 'Bugün de!', ar: 'واليوم أيضًا!' }),
   line('hevalo', 'streak-kept', 2, 'Roj bi roj!', { en: 'Day by day!', ckb: 'ڕۆژ بە ڕۆژ!', nl: 'Dag na dag!', de: 'Tag für Tag!', es: '¡Día a día!', fr: 'Jour après jour !', tr: 'Gün be gün!', ar: 'يومًا بعد يوم!' }),
   line('hevalo', 'streak-kept', 3, 'Sibê jî were!', { en: 'Come tomorrow too!', ckb: 'سبەینێش وەرە!', nl: 'Kom morgen ook!', de: 'Komm morgen wieder!', es: '¡Vuelve mañana también!', fr: 'Reviens demain aussi !', tr: 'Yarın da gel!', ar: 'تعال غدًا أيضًا!' }),
-  line('hevalo', 'streak-best', 1, 'Rekoreke nû!', NEW_RECORD),
+  line('hevalo', 'streak-best', 1, 'Rekoreke nû!', { en: 'A new record!', ckb: 'ڕیکۆردێکی نوێ!', nl: 'Een nieuw record!', de: 'Ein neuer Rekord!', es: '¡Un nuevo récord!', fr: 'Un nouveau record !', tr: 'Yeni bir rekor!', ar: 'رقم قياسي جديد!' }),
   line('hevalo', 'streak-best', 2, 'Agir mezin dibe!', { en: 'The fire’s growing!', ckb: 'ئاگرەکە گەورە دەبێت!', nl: 'Het vuur groeit!', de: 'Das Feuer wächst!', es: '¡El fuego crece!', fr: 'Le feu grandit !', tr: 'Ateş büyüyor!', ar: 'النار تكبر!' }),
   line('hevalo', 'streak-best', 3, 'Ji berê dirêjtir!', { en: 'Longer than ever!', ckb: 'لە جاران درێژتر!', nl: 'Langer dan ooit!', de: 'Länger als je zuvor!', es: '¡Más larga que nunca!', fr: 'Plus longue que jamais !', tr: 'Hiç olmadığı kadar uzun!', ar: 'أطول من أي وقت مضى!' }),
-  line('hevalo', 'promoted', 1, 'Em diçin jor!', { en: 'We’re going up!', ckb: 'بەرەو سەرەوە دەچین!', nl: 'We gaan omhoog!', de: 'Es geht nach oben!', es: '¡Subimos!', fr: 'On monte !', tr: 'Yükseliyoruz!', ar: 'نحن نصعد!' }),
-  line('hevalo', 'promoted', 2, 'Lîga nû, sêvên nû!', { en: 'New league, new apples!', ckb: 'لیگی نوێ، سێوی نوێ!', nl: 'Nieuwe divisie, nieuwe appels!', de: 'Neue Liga, neue Äpfel!', es: '¡Nueva liga, nuevas manzanas!', fr: 'Nouvelle ligue, nouvelles pommes !', tr: 'Yeni lig, yeni elmalar!', ar: 'دوري جديد، تفاح جديد!' }),
-  line('hevalo', 'first-day', 1, 'Bi xêr hatî!', WELCOME),
+  line('hevalo', 'first-day', 1, 'Bi xêr hatî!', { en: 'Welcome!', ckb: 'بەخێربێیت!', nl: 'Welkom!', de: 'Willkommen!', es: '¡Te doy la bienvenida!', fr: 'Bienvenue !', tr: 'Hoş geldin!', ar: 'أهلًا وسهلًا!' }),
   line('hevalo', 'first-day', 2, 'Ez Hevalo me!', { en: 'I’m Hevalo!', ckb: 'من Hevalo ـم!', nl: 'Ik ben Hevalo!', de: 'Ich bin Hevalo!', es: '¡Soy Hevalo!', fr: 'Je suis Hevalo !', tr: 'Ben Hevalo!', ar: 'أنا Hevalo!' }),
   line('hevalo', 'first-day', 3, 'Were, em herin!', { en: 'Come on, let’s go!', ckb: 'وەرە، با بڕۆین!', nl: 'Kom, we gaan!', de: 'Komm, los geht’s!', es: '¡Ven, vamos!', fr: 'Viens, on y va !', tr: 'Gel, gidelim!', ar: 'هيا بنا!' }),
   line('hevalo', 'welcome-back', 1, 'Tu vegeriyayî!', { en: 'You’re back!', ckb: 'گەڕایتەوە!', nl: 'Je bent terug!', de: 'Du bist zurück!', es: '¡Has vuelto!', fr: 'Te revoilà !', tr: 'Geri döndün!', ar: 'لقد عدت!' }),
   line('hevalo', 'welcome-back', 2, 'Min bêriya te kiribû!', { en: 'I missed you!', ckb: 'بیرم کردبوویت!', nl: 'Ik heb je gemist!', de: 'Ich hab dich vermisst!', es: '¡Te eché de menos!', fr: 'Tu m’as manqué !', tr: 'Seni özledim!', ar: 'اشتقت إليك!' }),
-  line('hevalo', 'welcome-back', 3, 'Dîsa bi xêr hatî!', WELCOME_BACK),
+  line('hevalo', 'welcome-back', 3, 'Dîsa bi xêr hatî!', { en: 'Welcome back!', ckb: 'دیسان بەخێربێیتەوە!', nl: 'Welkom terug!', de: 'Willkommen zurück!', es: '¡Qué bien verte otra vez!', fr: 'Bon retour !', tr: 'Tekrar hoş geldin!', ar: 'أهلًا بعودتك!' }),
 
   line('xezo', 'run-3', 1, 'Pir baş e!', { en: 'Very good!', ckb: 'زۆر باشە!', nl: 'Heel goed!', de: 'Sehr gut!', es: '¡Muy bien!', fr: 'Très bien !', tr: 'Çok iyi!', ar: 'جيد جدًا!' }),
   line('xezo', 'run-3', 2, 'Berdewam be!', { en: 'Keep it up!', ckb: 'بەردەوام بە!', nl: 'Ga zo door!', de: 'Weiter so!', es: '¡Sigue así!', fr: 'Continue comme ça !', tr: 'Böyle devam!', ar: 'إلى الأمام!' }),
