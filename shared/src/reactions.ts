@@ -146,19 +146,11 @@ export const REACTION_LINES: readonly ReactionLine[] = [
   line('xezo', 'promoted', 3, 'Tu derketî jor!', { en: 'You’ve moved up!', ckb: 'چوویتە سەرەوە!', nl: 'Je bent gestegen!', de: 'Du bist aufgestiegen!', es: '¡Has subido!', fr: 'Tu passes au niveau supérieur !', tr: 'Yükseldin!', ar: 'لقد صعدت!' }),
 ];
 
-/** The most lines either character may have: each stays within what one person can record alongside their lessons. */
-export const REACTION_LINES_MAX = 60;
-
 const BY_KEY = new Map(REACTION_LINES.map((l) => [`${l.character}:${l.id}`, l]));
 
 /** One line of the catalogue, by its character and id. */
 export function reactionLine(character: string, id: string): ReactionLine | null {
   return BY_KEY.get(`${character}:${id}`) ?? null;
-}
-
-/** The lines a character says at a moment, in catalogue order. */
-export function reactionLines(character: ReactionCharacter, moment: ReactionMoment): ReactionLine[] {
-  return REACTION_LINES.filter((l) => l.character === character && l.moment === moment);
 }
 
 /** What a line means to a reader of `locale`: Kurmancî readers have the line itself. */

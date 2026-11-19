@@ -10,4 +10,3 @@ export const characterVoicesOn = voices.isOn;
 export const loadCharacterVoicesPref = voices.load;
 export const setCharacterVoices = voices.set;
 export const useCharacterVoicesPref = voices.use;
-export const resetCharacterVoicesPref = voices.reset;

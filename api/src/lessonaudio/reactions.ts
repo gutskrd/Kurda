@@ -13,12 +13,12 @@ import { voiceOf } from '../speakers/voice.js';
 const DOMAIN = 'reactions';
 const ID = 'takes';
 /** How long the list is kept; a new take also drops it at once. */
-export const REACTIONS_TTL_SECONDS = 300;
+const TTL_SECONDS = 300;
 
 const BY_KEY = new Map(REACTION_LINES.map((l) => [reactionKey(l), l]));
 
 /** Every recorded line of the catalogue as it stands now. */
-export async function reactionTakes(db: Pick<pg.Pool, 'query'>): Promise<ReactionTakes> {
+async function reactionTakes(db: Pick<pg.Pool, 'query'>): Promise<ReactionTakes> {
   const res = await db.query<{ key: string; url: string; text: string; duration_ms: number | null; lipsync: unknown }>(
     `SELECT key, url, text, duration_ms, lipsync FROM lesson_audio WHERE key = ANY($1::text[]) ORDER BY key`,
     [[...BY_KEY.keys()]],
@@ -38,6 +38,6 @@ export async function bustReactions(cache: Cache | null | undefined): Promise<vo
 
 export function registerReactionRoutes(app: FastifyInstance): void {
   app.get('/reactions', { config: { skipValidation: true } }, async () =>
-    app.cache.withCache(DOMAIN, ID, REACTIONS_TTL_SECONDS, () => reactionTakes(app.db)),
+    app.cache.withCache(DOMAIN, ID, TTL_SECONDS, () => reactionTakes(app.db)),
   );
 }

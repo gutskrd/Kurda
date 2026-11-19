@@ -6,7 +6,6 @@ import {
   REACTION_CHARACTERS,
   REACTION_GAP_MS,
   REACTION_LINES,
-  REACTION_LINES_MAX,
   REACTION_MOMENTS,
   REACTION_REST_MS,
   REACTION_VOICE,
@@ -17,7 +16,6 @@ import {
   reactionDelayMs,
   reactionKey,
   reactionLine,
-  reactionLines,
   reactionMeaning,
   streakMoment,
   verdictMoment,
@@ -25,12 +23,15 @@ import {
   type ReactionTake,
 } from './reactions.js';
 
+/** The most reaction lines one person records, so each stays within the owner's limit alongside their lessons. */
+const MOST_EACH = 60;
+
 describe('the reaction catalogue', () => {
   it('keeps each character within the limit, every id once, and every line short enough to record', () => {
     for (const c of REACTION_CHARACTERS) {
       const theirs = REACTION_LINES.filter((l) => l.character === c);
       expect(theirs.length).toBeGreaterThan(0);
-      expect(theirs.length).toBeLessThanOrEqual(REACTION_LINES_MAX);
+      expect(theirs.length).toBeLessThanOrEqual(MOST_EACH);
       expect(new Set(theirs.map((l) => l.id)).size).toBe(theirs.length);
     }
     for (const l of REACTION_LINES) {
@@ -44,7 +45,7 @@ describe('the reaction catalogue', () => {
 
   it('gives every moment two to five variants from whoever speaks it when nobody is on screen', () => {
     for (const m of REACTION_MOMENTS) {
-      const n = reactionLines(REACTION_VOICE[m], m).length;
+      const n = REACTION_LINES.filter((l) => l.character === REACTION_VOICE[m] && l.moment === m).length;
       expect(n, m).toBeGreaterThanOrEqual(2);
       expect(n, m).toBeLessThanOrEqual(5);
     }
