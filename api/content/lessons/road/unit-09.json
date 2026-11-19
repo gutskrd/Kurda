@@ -1644,14 +1644,18 @@
                 },
                 {
                   "position": 14,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Kûçikê cîranan bû!",
                     "voice": "hamo",
-                    "prompt": "Then the wolf walks around me.",
-                    "accepted": [
-                      "Hingê gur li dora min dimeşe."
-                    ]
+                    "prompt": "Kûçikê cîranan bû!",
+                    "options": [
+                      "It was the neighbours’ dog!",
+                      "It was the neighbours’ wolf!",
+                      "It was our dog!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {

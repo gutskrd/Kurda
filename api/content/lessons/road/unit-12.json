@@ -758,13 +758,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
-                    "voice": "hamo",
-                    "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
+                    "say": "Ez gur im! Hûn sêvan dixwazin?",
+                    "voice": "hevalo",
+                    "prompt": "Ez gur im! Hûn sêvan dixwazin?",
                     "options": [
-                      "No. A big school in Hewlêr has made Xezo an offer.",
-                      "No. Xezo has made a big school in Hewlêr an offer.",
-                      "It’s from the old shop, on the big street."
+                      "I’m the wolf! Would you like some apples?",
+                      "I’m the wolf! I want your apples!",
+                      "I’m a deer! Would you like some apples?"
                     ],
                     "correctIndex": 0
                   }
