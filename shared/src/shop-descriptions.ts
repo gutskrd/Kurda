@@ -107,7 +107,10 @@ const DESCRIPTIONS: Record<string, Record<Exclude<AppLocale, 'en'>, string>> = {
     ku: 'Mohra Rojê', ckb: 'مۆری خۆر', de: 'Sonnensiegel', es: 'Sello del sol',
     fr: 'Sceau du soleil', nl: 'Zonnezegel', tr: 'Güneş mührü', ar: 'ختم الشمس',
   },
-  'Tea': { ku: 'Çay', ckb: 'چا', de: 'Tee', es: 'Té', fr: 'Thé', nl: 'Thee', tr: 'Çay', ar: 'شاي' },
+  'Tea glass': {
+    ku: 'Piyana çayê', ckb: 'پیاڵەی چا', de: 'Teeglas', es: 'Vaso de té',
+    fr: 'Verre à thé', nl: 'Theeglas', tr: 'Çay bardağı', ar: 'كأس شاي',
+  },
   'Saz': { ku: 'Saz', ckb: 'ساز', de: 'Saz', es: 'Saz', fr: 'Saz', nl: 'Saz', tr: 'Saz', ar: 'ساز' },
   'Dove': { ku: 'Kevok', ckb: 'کۆتر', de: 'Taube', es: 'Paloma', fr: 'Colombe', nl: 'Duif', tr: 'Güvercin', ar: 'حمامة' },
   'Wheat': { ku: 'Genim', ckb: 'گەنم', de: 'Weizen', es: 'Trigo', fr: 'Blé', nl: 'Tarwe', tr: 'Buğday', ar: 'قمح' },
