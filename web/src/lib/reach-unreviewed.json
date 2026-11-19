@@ -41,7 +41,7 @@
   "gifts/GiftFlight.tsx": 1,
   "gifts/GiftPicker.tsx": 3,
   "gifts/GiftReveal.tsx": 3,
-  "gifts/GiftSoundSetting.tsx": 3,
+  "gifts/GiftSoundSetting.tsx": 4,
   "gifts/useChatGifts.tsx": 2,
   "groups/BanSheet.tsx": 2,
   "groups/GroupInfo.tsx": 6,

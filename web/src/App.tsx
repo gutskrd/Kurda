@@ -105,6 +105,7 @@ import { MessagesProvider } from './chat/MessagesProvider';
 import { RailProvider } from './social/RailProvider';
 import { PlayProvider } from './play/PlayProvider';
 import { I18nProvider } from './i18n/I18nProvider';
+import { ReactionVoices } from './characters/ReactionCaption';
 import { AccountLocale } from './i18n/AccountLocale';
 
 /** Keeps signed-in users out of the sign-in and sign-up pages, except for the moment the page holds to see them in (auth/arrival). */
@@ -383,6 +384,8 @@ export function App(): React.JSX.Element {
         <GiftArrivals />
         {/* A badge earned, celebrated wherever you are, after a game's own result. */}
         <BadgeCelebrations />
+        {/* Hevalo's and Xezal's reaction lines, captioned wherever they are said. */}
+        <ReactionVoices />
         {/* Outermost: while Hevalo is offline nothing below can load, a suspension's reasons included. */}
         <MaintenanceGate>
         <SuspensionGate>

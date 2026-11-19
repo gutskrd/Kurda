@@ -8,14 +8,18 @@ import {
   currentExercise,
   initPlayer,
   isReask,
+  isSoraniDialect,
   lessonMoments,
   nextLaunch,
   nextRun,
   pairKey,
   praiseFor,
   progress,
+  reactionDelayMs,
   reduce,
   runMilestone,
+  verdictMoment,
+  verdictVoice,
   type DeliveredExercise,
   type ExerciseAsk,
   type ExerciseType,
@@ -28,6 +32,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import type { CharacterReaction } from '../characters/SpeakingCharacter';
+import { hushReactions, sayReactionLater } from '../characters/reactions';
 import { Button } from '../components/Button';
 import { CloseIcon, SparkleIcon } from '../components/icons';
 import { Modal } from '../components/Modal';
@@ -37,7 +42,7 @@ import { forgetAnswers } from '../lib/apiMemory';
 import { prefersReducedMotion } from '../lib/motion';
 import { play as playSound, stop } from '../lib/sound';
 import { haptic } from '../lib/haptics';
-import { playLessonSound } from '../lib/sounds';
+import { autoplayOn, playLessonSound } from '../lib/sounds';
 import type { ApiClient } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import { ActionBar, BarRow } from './ActionBar';
@@ -312,6 +317,14 @@ export function SessionPlayer({
   const [moment, setMoment] = useState<number | null>(null);
   // "No more listening in this lesson", briefly, with Undo.
   const [awayNote, setAwayNote] = useState<PutAwayType | null>(null);
+  // Listening put off: the characters' reaction lines stay quiet too, as they do through a Soranî lesson.
+  const [unheard, setUnheard] = useState(false);
+  const hushed = unheard || isSoraniDialect(dialect);
+  useEffect(() => hushReactions(hushed), [hushed]);
+  useEffect(() => () => hushReactions(false), []);
+  // A verdict's reaction line waiting for its moment, called off when the learner goes on first.
+  const reacting = useRef<() => void>(() => undefined);
+  useEffect(() => () => reacting.current(), []);
   // What a finished lesson is compared with: level, streak and today's goal as the lesson opened.
   const before = useRef<LessonStanding | null>(null);
   const [moments, setMoments] = useState<LessonMoments>(NO_LESSON_MOMENTS);
@@ -378,6 +391,20 @@ export function SessionPlayer({
         if (praise) lastPraise.current = praise;
         setRun(now);
         setExtras({ run: accepted && !spoken ? { count: now, milestone: milestone !== null } : null, hevalo, praise });
+        // A line from whoever stands beside the verdict, or from Hevalo where nobody does (shared reactions.ts).
+        const said = verdictMoment({ accepted, spoken, run: now, before: was });
+        const model = feedbackClip(ex, res.data);
+        const stage = exerciseClips(ex).map((c) => c.voice.speaker);
+        const alone = stage.length > 0 && stage.every((who) => who === stage[0]) ? stage[0]! : null;
+        const by = verdictVoice({
+          shown: hevalo ? 'hevalo' : (model?.voice.speaker ?? alone),
+          staged: stage.length > 0,
+          modelDue: !!res.data.modelAudioUrl && !spoken && autoplayOn(),
+        });
+        reacting.current();
+        if (said && by && !isSoraniDialect(exDialect)) {
+          reacting.current = sayReactionLater(reactionDelayMs('verdict', prefersReducedMotion()), { moment: said, ...by });
+        }
         dispatch({ type: 'ANSWERED', result: res.data, given });
         return;
       }
@@ -409,9 +436,11 @@ export function SessionPlayer({
     stop();
     dispatch({ type: 'SKIP', all: type });
     setAwayNote(type);
+    if (type === 'listening') setUnheard(true);
   };
   const undoPutAway = (): void => {
     dispatch({ type: 'UNSKIP' });
+    if (awayNote === 'listening') setUnheard(false);
     setAwayNote(null);
   };
   useEffect(() => {
@@ -422,7 +451,8 @@ export function SessionPlayer({
 
   const next = useCallback(() => {
     if (moment !== null) return;
-    // A recording heard after the verdict ends with it.
+    // A recording heard after the verdict ends with it, and a reaction line not yet said is not said.
+    reacting.current();
     stop();
     if (extras.run?.milestone) setMoment(extras.run.count);
     else dispatch({ type: 'CONTINUE' });

@@ -69,13 +69,14 @@ function placeAt(el: HTMLAudioElement, src: string, ms: number): void {
   el.addEventListener('loadedmetadata', again, { once: true });
 }
 
-/** Play `src` from its start, or from `fromMs` into it, at `rate`. */
-export function play(src: string, rate = 1, fromMs = 0): void {
+/** Play `src` from its start, or from `fromMs` into it, at `rate` and `volume` (0–1). */
+export function play(src: string, rate = 1, fromMs = 0, volume = 1): void {
   const el = made();
   el.pause();
   current = src;
   currentRate = rate;
   el.src = src;
+  el.volume = volume;
   // Loading a source resets the rate to the default, so both are set.
   el.defaultPlaybackRate = rate;
   el.playbackRate = rate;
@@ -110,6 +111,11 @@ export function stop(): void {
 export function seek(ms: number): void {
   if (!player || !current) return;
   placeAt(player, current, Math.max(0, ms));
+}
+
+/** Whether a clip is sounding now, or about to: from the moment `play` is called until it pauses, ends or fails. */
+export function sounding(): boolean {
+  return !!player && !player.paused && !player.ended;
 }
 
 /** Which clip is loaded, and how far into it the player is. */

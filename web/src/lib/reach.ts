@@ -109,6 +109,8 @@ export const LARGE_ENOUGH = [
   '.chat-game-action',
   // A lesson's tile (learn/Tile.tsx).
   '.tile',
+  // A character's reaction caption, a pill 48px tall (characters/characters.css).
+  '.reaction-caption',
   // Who Am I's answers, 84px tall in a row of three (whoami/whoami.css).
   '.wa-answer-btn',
   // Rankings' league card, a whole card wide and over 80px tall (styles/ranks.css).
