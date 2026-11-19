@@ -55,7 +55,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "baran",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "baran",
                     "options": [
                       "rain",
@@ -206,7 +206,7 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "rain",
                     "accepted": [
                       "baran"
@@ -347,7 +347,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "gul",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "gul",
                     "options": [
                       "rose",
@@ -452,7 +452,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "ewr",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "ewr",
                     "options": [
                       "cloud",
@@ -484,7 +484,7 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "rose",
                     "accepted": [
                       "gul"
@@ -727,6 +727,23 @@
                 },
                 {
                   "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "berf",
+                    "voice": "hevalo",
+                    "prompt": "berf",
+                    "options": [
+                      "snow",
+                      "cloud",
+                      "rain",
+                      "rose"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -739,7 +756,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -754,7 +771,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -770,7 +787,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu07s1l3a",
@@ -831,7 +848,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -843,7 +860,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -853,7 +870,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -864,7 +881,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -876,7 +893,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1022,6 +1039,23 @@
                 },
                 {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "gul",
+                    "voice": "hevalo",
+                    "prompt": "gul",
+                    "options": [
+                      "rose",
+                      "flower",
+                      "cloud",
+                      "tree"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1033,7 +1067,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1050,7 +1084,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -1060,7 +1094,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1072,7 +1106,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -1083,7 +1117,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1098,7 +1132,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2313,7 +2347,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "def",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "def",
                     "options": [
                       "frame drum",
@@ -2940,6 +2974,23 @@
                   "position": 5,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "picture",
+                    "say": "heyv",
+                    "voice": "hevalo",
+                    "prompt": "heyv",
+                    "options": [
+                      "moon",
+                      "star",
+                      "sun",
+                      "cloud"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "missing",
                     "say": "Xem neke. Ev baran bereket e.",
                     "voice": "hamo",
@@ -2954,7 +3005,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2970,7 +3021,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2983,7 +3034,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2998,7 +3049,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3014,7 +3065,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu07s3l3a",
@@ -3080,7 +3131,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3092,7 +3143,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3102,7 +3153,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3113,7 +3164,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3128,7 +3179,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3274,6 +3325,22 @@
                 },
                 {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "def",
+                    "voice": "xezo",
+                    "prompt": "def",
+                    "options": [
+                      "frame drum",
+                      "song",
+                      "handkerchief"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3285,7 +3352,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3302,7 +3369,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3312,7 +3379,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3324,7 +3391,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3335,7 +3402,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3350,7 +3417,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3363,7 +3430,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",

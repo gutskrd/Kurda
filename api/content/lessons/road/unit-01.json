@@ -51,7 +51,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "sêv",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "sêv",
                     "options": [
                       "apple",
@@ -310,7 +310,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "Erê, spas!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Erê, spas!",
                     "options": [
                       "Yes, please!",
@@ -384,6 +384,23 @@
                   "position": 6,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "picture",
+                    "say": "sêv",
+                    "voice": "hevalo",
+                    "prompt": "sêv",
+                    "options": [
+                      "apple",
+                      "house",
+                      "bread",
+                      "water"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Ez baş im.",
                     "voice": "hamo",
@@ -403,7 +420,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -418,7 +435,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -429,7 +446,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -445,7 +462,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -457,7 +474,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -472,11 +489,11 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Yes, please!",
                     "accepted": [
                       "Erê, spas!"
@@ -484,7 +501,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -918,6 +935,23 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "picture",
+                    "say": "sêv",
+                    "voice": "hevalo",
+                    "prompt": "sêv",
+                    "options": [
+                      "apple",
+                      "bread",
+                      "tea",
+                      "house"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "missing",
                     "say": "Ez sêvê dixwim.",
                     "voice": "hamo",
@@ -931,7 +965,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -947,7 +981,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -960,7 +994,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -972,7 +1006,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -987,11 +1021,11 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Erê, spas!",
                     "reference": "Erê, spas!"
                   }
@@ -4136,6 +4170,22 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
+                    "say": "Erê, spas!",
+                    "voice": "hevalo",
+                    "prompt": "Erê, spas!",
+                    "options": [
+                      "Yes, please!",
+                      "No, thanks!",
+                      "Go well!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
                     "say": "Hevalo sêvekê dixwaze.",
                     "voice": "hamo",
                     "prompt": "Hevalo sêvekê dixwaze.",
@@ -4148,7 +4198,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4161,7 +4211,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
@@ -4177,7 +4227,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4189,7 +4239,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -4203,7 +4253,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4220,7 +4270,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",

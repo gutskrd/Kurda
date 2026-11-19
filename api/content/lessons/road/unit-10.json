@@ -360,7 +360,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "giya",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "giya",
                     "options": [
                       "grass",
@@ -717,6 +717,23 @@
                 },
                 {
                   "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "ask",
+                    "voice": "hevalo",
+                    "prompt": "ask",
+                    "options": [
+                      "deer",
+                      "goat",
+                      "lamb",
+                      "horse"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -729,7 +746,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -744,7 +761,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -760,7 +777,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu10s1l3a",
@@ -840,7 +857,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -852,7 +869,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -862,7 +879,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -873,7 +890,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -885,7 +902,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1031,6 +1048,22 @@
                 },
                 {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "giya",
+                    "voice": "hevalo",
+                    "prompt": "giya",
+                    "options": [
+                      "grass",
+                      "salt",
+                      "flock"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1042,7 +1075,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1059,7 +1092,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -1069,7 +1102,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1081,7 +1114,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -1092,7 +1125,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1107,7 +1140,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1121,7 +1154,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2161,6 +2194,23 @@
                 },
                 {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "ask",
+                    "voice": "hevalo",
+                    "prompt": "ask",
+                    "options": [
+                      "deer",
+                      "fish",
+                      "goat",
+                      "horse"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2172,7 +2222,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2189,7 +2239,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2199,7 +2249,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2211,7 +2261,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2222,7 +2272,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2237,7 +2287,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2250,7 +2300,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2321,7 +2371,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "berx",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "berx",
                     "options": [
                       "lamb",
@@ -3292,6 +3342,23 @@
                 },
                 {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "berx",
+                    "voice": "hevalo",
+                    "prompt": "berx",
+                    "options": [
+                      "lamb",
+                      "goat",
+                      "kid",
+                      "cow"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3303,7 +3370,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3320,7 +3387,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3330,7 +3397,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3342,7 +3409,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3353,7 +3420,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3368,7 +3435,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3381,7 +3448,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",

@@ -1156,7 +1156,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "mirîşk",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "mirîşk",
                     "options": [
                       "hen",
@@ -1475,6 +1475,23 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "picture",
+                    "say": "mirîşk",
+                    "voice": "hevalo",
+                    "prompt": "mirîşk",
+                    "options": [
+                      "hen",
+                      "egg",
+                      "bread",
+                      "house"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "meaning",
                     "say": "Sê mirîşk in? Na, çar in!",
                     "voice": "hamo",
@@ -1498,7 +1515,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1514,7 +1531,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -1531,7 +1548,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1544,7 +1561,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -1560,7 +1577,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1573,7 +1590,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -1588,7 +1605,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -1603,7 +1620,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -1614,7 +1631,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -1626,7 +1643,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -1636,7 +1653,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2080,6 +2097,23 @@
                 },
                 {
                   "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "mirîşk",
+                    "voice": "hevalo",
+                    "prompt": "mirîşk",
+                    "options": [
+                      "hen",
+                      "dog",
+                      "apple",
+                      "water"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2091,7 +2125,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2108,7 +2142,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2118,7 +2152,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2130,7 +2164,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2141,7 +2175,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2156,7 +2190,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3285,7 +3319,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "ker",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "ker",
                     "options": [
                       "donkey",
@@ -3300,17 +3334,17 @@
                   "position": 3,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Kûçik mezin e, ker gelek mezin e.",
-                    "voice": "hamo",
-                    "prompt": "Kûçik mezin e, ___ gelek mezin e.",
+                    "ask": "picture",
+                    "say": "pisîk",
+                    "voice": "hevalo",
+                    "prompt": "pisîk",
                     "options": [
-                      "ker",
-                      "kerên",
-                      "pisîk"
+                      "cat",
+                      "dog",
+                      "donkey",
+                      "hen"
                     ],
                     "correctIndex": 0,
-                    "cue": "The dog is big, the donkey is very big.",
                     "new": [
                       {
                         "ku": "pisîk",
@@ -3321,6 +3355,23 @@
                 },
                 {
                   "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "missing",
+                    "say": "Kûçik mezin e, ker gelek mezin e.",
+                    "voice": "hamo",
+                    "prompt": "Kûçik mezin e, ___ gelek mezin e.",
+                    "options": [
+                      "ker",
+                      "kerên",
+                      "pisîk"
+                    ],
+                    "correctIndex": 0,
+                    "cue": "The dog is big, the donkey is very big."
+                  }
+                },
+                {
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3342,12 +3393,12 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "picture",
                     "say": "kûçik",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "kûçik",
                     "options": [
                       "dog",
@@ -3359,7 +3410,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3376,7 +3427,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3389,19 +3440,6 @@
                       "Nazê has a dog."
                     ],
                     "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 8,
-                  "type": "translate",
-                  "payload": {
-                    "ask": "to-english",
-                    "say": "Pisîkeke Nazê heye.",
-                    "voice": "hamo",
-                    "prompt": "Pisîkeke Nazê heye.",
-                    "accepted": [
-                      "Nazê has a cat."
-                    ]
                   }
                 },
                 {
@@ -3629,6 +3667,22 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
+                    "say": "heval",
+                    "voice": "hevalo",
+                    "prompt": "heval",
+                    "options": [
+                      "friend",
+                      "neighbour",
+                      "guest"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
                     "say": "Hêvî biçûk e.",
                     "voice": "hamo",
                     "prompt": "Hêvî biçûk e.",
@@ -3647,7 +3701,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3664,7 +3718,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -3680,7 +3734,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -3693,7 +3747,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3703,22 +3757,6 @@
                       "Ez çayê bi pênc şekiran vedixwim.",
                       "Xwarina Nazê xweş e. Ew cîrana me ye.",
                       "Hêvî biçûk e."
-                    ],
-                    "correctIndex": 0
-                  }
-                },
-                {
-                  "position": 10,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Kûçik mezin e, ker gelek mezin e.",
-                    "voice": "hamo",
-                    "prompt": "Kûçik mezin e, ker gelek mezin e.",
-                    "options": [
-                      "The dog is big, the donkey is very big.",
-                      "Sêvan is really lovely!",
-                      "The water is very cold."
                     ],
                     "correctIndex": 0
                   }
@@ -4250,6 +4288,23 @@
                 },
                 {
                   "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "ker",
+                    "voice": "hevalo",
+                    "prompt": "ker",
+                    "options": [
+                      "donkey",
+                      "dog",
+                      "cat",
+                      "hen"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4261,7 +4316,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -4278,7 +4333,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -4288,7 +4343,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -4299,7 +4354,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -4311,7 +4366,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",

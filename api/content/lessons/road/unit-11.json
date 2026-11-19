@@ -681,6 +681,22 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
+                    "say": "dûrî",
+                    "voice": "xezo",
+                    "prompt": "dûrî",
+                    "options": [
+                      "distance, being far away",
+                      "honour",
+                      "opportunity, chance"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
                     "say": "Ji bo Sêvanê jî rûmet e. Li qehwexaneyê karker û hosta tenê li ser vê diaxivin.",
                     "voice": "hamo",
                     "prompt": "Ji bo Sêvanê jî rûmet e. Li qehwexaneyê karker û hosta tenê li ser vê diaxivin.",
@@ -693,7 +709,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -710,7 +726,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -724,7 +740,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -740,7 +756,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu11s1l3a",
@@ -796,7 +812,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -809,7 +825,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -822,7 +838,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -837,7 +853,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -848,7 +864,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -860,7 +876,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -870,7 +886,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2079,6 +2095,23 @@
                 },
                 {
                   "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "sêv",
+                    "voice": "hevalo",
+                    "prompt": "sêv",
+                    "options": [
+                      "apple",
+                      "chest",
+                      "basket",
+                      "tree"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -2092,7 +2125,7 @@
                   }
                 },
                 {
-                  "position": 5,
+                  "position": 6,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2108,7 +2141,7 @@
                   }
                 },
                 {
-                  "position": 6,
+                  "position": 7,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2123,7 +2156,7 @@
                   }
                 },
                 {
-                  "position": 7,
+                  "position": 8,
                   "type": "match_pairs",
                   "payload": {
                     "pairs": [
@@ -2156,7 +2189,24 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "dibistan",
+                    "voice": "xezo",
+                    "prompt": "dibistan",
+                    "options": [
+                      "school",
+                      "house",
+                      "tent",
+                      "mill"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2168,7 +2218,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -2185,7 +2235,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 12,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -2195,7 +2245,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 13,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2208,7 +2258,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -2219,7 +2269,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -2234,7 +2284,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 16,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2297,7 +2347,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "mijar",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "mijar",
                     "options": [
                       "subject, topic",
@@ -2821,15 +2871,18 @@
                 },
                 {
                   "position": 15,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
-                    "voice": "hamo",
-                    "prompt": "Speak without forgetting anything!",
-                    "accepted": [
-                      "Biaxive, bêyî ku tiştekî ji bîr bikî!",
-                      "Bêyî ku tiştekî ji bîr bikî biaxive!"
-                    ]
+                    "ask": "meaning",
+                    "say": "wane",
+                    "voice": "xezo",
+                    "prompt": "wane",
+                    "options": [
+                      "lesson, class",
+                      "both … and",
+                      "clear, obvious"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2959,15 +3012,18 @@
                 },
                 {
                   "position": 7,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Baran gotara xwe li ber mirîşkan xwend. Te jî guhdarî kir?",
-                    "voice": "hamo",
-                    "prompt": "Baran gotara xwe li ber mirîşkan xwend. Te jî guhdarî kir?",
-                    "accepted": [
-                      "Baran gave his talk in front of the hens. Did you listen too?"
-                    ]
+                    "ask": "meaning",
+                    "say": "tîp",
+                    "voice": "xezo",
+                    "prompt": "tîp",
+                    "options": [
+                      "letter (of the alphabet)",
+                      "listener",
+                      "clapping, applause"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -3577,7 +3633,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "fêrbûn",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "fêrbûn",
                     "options": [
                       "learning",

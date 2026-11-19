@@ -708,6 +708,23 @@
                 },
                 {
                   "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "picture",
+                    "say": "karik",
+                    "voice": "hevalo",
+                    "prompt": "karik",
+                    "options": [
+                      "kid",
+                      "goat",
+                      "lamb",
+                      "wolf"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
@@ -720,7 +737,7 @@
                   }
                 },
                 {
-                  "position": 8,
+                  "position": 9,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -735,7 +752,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -751,7 +768,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "conversation",
                   "payload": {
                     "id": "roadu12s1l3a",
@@ -827,7 +844,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -839,7 +856,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -849,7 +866,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -860,7 +877,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -875,7 +892,7 @@
                   }
                 },
                 {
-                  "position": 15,
+                  "position": 16,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -2289,7 +2306,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "garis",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "garis",
                     "options": [
                       "corn",
@@ -2351,7 +2368,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "simbil",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "simbil",
                     "options": [
                       "wheat",
@@ -2583,7 +2600,7 @@
                   "payload": {
                     "ask": "picture",
                     "say": "mar",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "mar",
                     "options": [
                       "snake",
@@ -3250,6 +3267,23 @@
                   "position": 8,
                   "type": "multiple_choice",
                   "payload": {
+                    "ask": "picture",
+                    "say": "mar",
+                    "voice": "hevalo",
+                    "prompt": "mar",
+                    "options": [
+                      "snake",
+                      "fox",
+                      "bear",
+                      "wheat"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
                     "prompt": "It’s obvious: the maize stalks are tasteless!",
@@ -3262,7 +3296,7 @@
                   }
                 },
                 {
-                  "position": 9,
+                  "position": 10,
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3275,7 +3309,7 @@
                   }
                 },
                 {
-                  "position": 10,
+                  "position": 11,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
@@ -3292,7 +3326,7 @@
                   }
                 },
                 {
-                  "position": 11,
+                  "position": 12,
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
@@ -3302,7 +3336,7 @@
                   }
                 },
                 {
-                  "position": 12,
+                  "position": 13,
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
@@ -3313,7 +3347,7 @@
                   }
                 },
                 {
-                  "position": 13,
+                  "position": 14,
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
@@ -3325,7 +3359,7 @@
                   }
                 },
                 {
-                  "position": 14,
+                  "position": 15,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "choose-kurdish",
@@ -3726,7 +3760,7 @@
                   "payload": {
                     "ask": "to-english",
                     "say": "Heta dîtinê!",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Heta dîtinê!",
                     "accepted": [
                       "See you!"
@@ -3792,7 +3826,7 @@
                   "payload": {
                     "ask": "to-english",
                     "say": "Heta dîtinê!",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Heta dîtinê!",
                     "accepted": [
                       "See you!"
@@ -3828,14 +3862,18 @@
                 },
                 {
                   "position": 11,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Bi hêviya dîtinê!",
                     "voice": "xezo",
-                    "prompt": "I’ll miss you all.",
-                    "accepted": [
-                      "Ez ê bêriya we hemûyan bikim."
-                    ]
+                    "prompt": "Bi hêviya dîtinê!",
+                    "options": [
+                      "Hoping to see you again!",
+                      "Welcome!",
+                      "Safe journey!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -3899,7 +3937,7 @@
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "See you!",
                     "accepted": [
                       "Heta dîtinê!"
