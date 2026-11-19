@@ -311,9 +311,12 @@ export function exerciseMeaning(type: string, payload: unknown, text: string): {
       return { sure: null, guess: other(m ? unquoted(m[1]!) : prompt ? (quotedIn(prompt).at(-1) ?? null) : null) };
     }
     case 'multiple_choice': {
-      if (!say || lessonAudioKey(say) !== key || !prompt || !ASKS_WHAT_IT_SAYS.test(prompt)) return { sure: null, guess: null };
+      if (!say || lessonAudioKey(say) !== key) return { sure: null, guess: null };
       const options = Array.isArray(p.options) ? p.options : [];
       const right = typeof p.correctIndex === 'number' ? str(options[p.correctIndex]) : null;
+      // an item that asks what its line means says so in its right option
+      if (p.ask === 'meaning') return { sure: other(right), guess: null };
+      if (!prompt || !ASKS_WHAT_IT_SAYS.test(prompt)) return { sure: null, guess: null };
       return { sure: null, guess: other(right) };
     }
     default:

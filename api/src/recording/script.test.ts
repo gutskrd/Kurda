@@ -256,6 +256,9 @@ describe('the recording script', () => {
     expect(exerciseMeaning('multiple_choice', { say: 'Ez Hamo me.', prompt: '“Ez Hamo me.” What does he tell you?', options: ['I am Hamo.'], correctIndex: 0 }, 'Ez Hamo me.').guess).toBe('I am Hamo.');
     expect(exerciseMeaning('writing', { prompt: 'Write: “I am well too.”', accepted: ['Ez jî baş im.'] }, 'Ez jî baş im.').guess).toBe('I am well too.');
     expect(exerciseMeaning('translate', { prompt: 'Answer Hamo: “I am well.”', accepted: ['Ez baş im.'] }, 'Ez baş im.').guess).toBe('I am well.');
+    // an item asking what its line means states it outright
+    expect(exerciseMeaning('multiple_choice', { ask: 'meaning', say: 'Ez jin im.', prompt: 'Ez jin im.', options: ['I’m a woman.', 'I’m a man.'], correctIndex: 0 }, 'Ez jin im.')).toEqual({ sure: 'I’m a woman.', guess: null });
+    expect(exerciseMeaning('multiple_choice', { ask: 'reply', say: 'Tu çawa yî?', prompt: 'Tu çawa yî?', options: ['Ez baş im.'], correctIndex: 0 }, 'Tu çawa yî?')).toEqual({ sure: null, guess: null });
   });
 
   it('lists the games’ spoken lines last, a case’s card under the conversation line it was copied from', () => {
