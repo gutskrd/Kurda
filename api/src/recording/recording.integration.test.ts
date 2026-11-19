@@ -231,6 +231,13 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
     expect(todo.some((l) => l.key === hamoLine)).toBe(false);
   });
 
+  it('keeps a line its own voice’s to record while its take is another character’s', async () => {
+    // Xezo's line with a take saved as Hamo's, as when a line moves to her after he recorded it
+    expect((await record(editor, conversation.lines[1]!.text, `&line=${id}:1&speaker=hamo`, 10)).statusCode).toBe(201);
+    const todo = await allLines(editor, 'xezo', '&status=todo');
+    expect(todo.find((l) => l.key === xezoLine)?.take).toMatchObject({ speaker: 'hamo' });
+  });
+
   it('opens the console to a voice actor on their own voice, and nothing else', async () => {
     const session = await get(actor, '/admin/session');
     expect(session.json()).toMatchObject({ voices: ['xezo'], staffRoles: ['voice_actor'], capabilities: [] });

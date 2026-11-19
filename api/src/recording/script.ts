@@ -7,7 +7,8 @@
  *
  * A text said in several places is one line, filed where the course first says it, listing every place. It belongs
  * to the voice of the first place in course order that plans a character for it (a conversation part, an exercise's
- * `voice`, a game line's speaker), as `plannedSpeaker` decides, else to its variety's narrator. Pure: the service
+ * `voice`, a game line's speaker), as `plannedSpeaker` decides, else to its variety's narrator. A match-pairs card
+ * replays a word met elsewhere, so its item's `voice` counts only for a line no other place plans. Pure: the service
  * supplies tables and files, so order, keys and merging are tested without a database.
  */
 import {
@@ -353,6 +354,8 @@ export function gameLineKey(ku: string, recording: unknown): { key: string; conv
 
 interface Draft extends Omit<ScriptLine, 'voice' | 'speaker' | 'meaning' | 'seq' | 'live'> {
   planned: VoiceId | null;
+  /** the voice a match-pairs card plans, which records the line only when no item of its own plans one */
+  cardPlanned: VoiceId | null;
   fallback: VoiceId;
   /** a part's character, kept even when the part's voice is a name of its own */
   partSpeaker: SpeakerId | null | undefined;
@@ -366,6 +369,8 @@ interface Entry {
   text: string;
   dialect: ScriptDialect;
   planned: VoiceId | null;
+  /** a match-pairs card, which replays the take of the line's own item */
+  card?: boolean;
   place: LinePlace;
   section: { id: string; label: string };
   sure?: string | null;
@@ -394,7 +399,8 @@ class Builder {
       } else {
         found.places.push(e.place);
       }
-      found.planned ??= e.planned;
+      if (e.card) found.cardPlanned ??= e.planned;
+      else found.planned ??= e.planned;
       found.sure ??= e.sure ?? null;
       if (e.guess) found.guesses.push(e.guess);
       found.conversation ??= e.conversation ?? null;
@@ -414,7 +420,8 @@ class Builder {
       before: e.before ?? null,
       section: e.section,
       places: [e.place],
-      planned: e.planned,
+      planned: e.card ? null : e.planned,
+      cardPlanned: e.card ? e.planned : null,
       fallback: NARRATOR[e.dialect],
       partSpeaker: e.partSpeaker,
       sure: e.sure ?? null,
@@ -434,7 +441,7 @@ class Builder {
       if (d.sure && !stated.has(k)) stated.set(k, d.sure);
     }
     return this.order.map((d, seq) => {
-      const voice = d.planned ?? d.fallback;
+      const voice = d.planned ?? d.cardPlanned ?? d.fallback;
       const speaker = d.partSpeaker !== undefined ? d.partSpeaker : isSpeakerId(voice) ? voice : null;
       const guess = d.guesses.find((g) => !kurdish.has(lessonAudioKey(g))) ?? null;
       return {
@@ -559,6 +566,7 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[], after
         text,
         dialect,
         planned,
+        card: ex.type === 'match_pairs',
         place: {
           kind: 'lesson',
           label: `${lesson} · exercise ${ex.exercisePosition} (${TYPE_LABEL[ex.type] ?? ex.type})`,
@@ -791,6 +799,19 @@ export function tally(lines: readonly ScriptLine[], done: (line: ScriptLine) => 
     return t ? [{ dialect, ...t }] : [];
   });
   return { total, done: recorded, todo: total - recorded, dialects };
+}
+
+/** Every key with a take, in each store, and the character the take is saved as said by. */
+export type RecordedKeys = Record<LineStore, ReadonlyMap<string, SpeakerId | null>>;
+
+/**
+ * Whether a line is recorded: it has a take, and the take is not another character's. A line given to another
+ * character after it was recorded (a word that is now Hevalo's, recorded by Hamo) is the new voice's to record.
+ */
+export function isRecorded(line: Pick<ScriptLine, 'store' | 'key' | 'speaker'>, recorded: RecordedKeys): boolean {
+  const said = recorded[line.store].get(line.key);
+  if (said === undefined) return false;
+  return said === null || line.speaker === null || said === line.speaker;
 }
 
 export interface LineFilter {

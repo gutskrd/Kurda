@@ -15,6 +15,7 @@ import {
 } from '@kurda/shared';
 import { ALPHABET_AUDIO_ROLES } from '../alphabet/routes.js';
 import { LESSON_AUDIO_ROLES } from '../lessonaudio/routes.js';
+import { ROAD_VOICE_LINES_MAX, checkRoad, loadRoadPlan } from '../content/road-check.js';
 import { ROAD_DIR, readRoadFiles } from '../content/road-seed.js';
 import { STUDIO_ROLES, recordsOwnVoicesOnly } from './access.js';
 import {
@@ -23,6 +24,7 @@ import {
   castVoice,
   exerciseMeaning,
   gameLineKey,
+  isRecorded,
   linesFor,
   pageAfter,
   peopleOf,
@@ -31,6 +33,7 @@ import {
   type ExerciseInput,
   type GameInput,
   type PlanInput,
+  type RecordedKeys,
   type ScriptLine,
   type StoryInput,
 } from './script.js';
@@ -194,6 +197,27 @@ describe('the recording script', () => {
     expect(lines.find((l) => l.text === 'Sêv sor e.')!.before).toEqual({ name: null, text: 'Ez birçî me!', meaning: null });
   });
 
+  it('gives a match-pairs card’s line to the voice of an item of its own, wherever that comes', () => {
+    const pairs = (voice: string) => ({ voice, pairs: [{ left: 'sêv', right: 'apple' }, { left: 'nan', right: 'bread' }] });
+    const lines = buildScript({
+      exercises: [
+        // Hamo's pairs come first, but Hevalo's own picture item says the word
+        exercise({ exercisePosition: 1, type: 'match_pairs', payload: pairs('hamo') }),
+        exercise({ lessonPosition: 2, type: 'multiple_choice', payload: { ask: 'picture', say: 'sêv', prompt: 'sêv', options: ['apple', 'bread'], correctIndex: 0, voice: 'hevalo' } }),
+        exercise({ lessonPosition: 3, type: 'match_pairs', payload: pairs('xezo') }),
+      ],
+      stories: [],
+      games: [],
+      plan: PLAN,
+      letters: [],
+      words: [],
+    });
+    const voice = (text: string): string => lines.find((l) => l.text === text)!.voice;
+    expect(voice('sêv')).toBe('hevalo');
+    // a card no item of its own says is the first pairs item's
+    expect(voice('nan')).toBe('hamo');
+  });
+
   it('gives a chapter’s story to Hamo and lists it right after the chapter’s lessons, under the chapter', () => {
     const tale: StoryInput = { id: 'st-road', slug: 'road-01-mevan-cay-u-sev', dialect: 'kurmanci', title: 'Mêvan, çay û sêv', status: 'draft', body: 'Ez Hamo me. Sêv li wir in.' };
     const lines = buildScript({
@@ -338,6 +362,18 @@ describe('the recording script', () => {
     expect(people[0]!.about).toBe('The warm uncle.');
   });
 
+  it('counts a line as recorded only by a take of its own character, or of none', () => {
+    const recorded: RecordedKeys = { lesson: new Map([['sêv', 'hamo'], ['nan', 'hamo'], ['av', null]]), alphabet: new Map() };
+    const line = (key: string, speaker: ScriptLine['speaker']) => ({ store: 'lesson' as const, key, speaker });
+    // a word given to Hevalo after Hamo recorded it is Hevalo’s to record again
+    expect(isRecorded(line('sêv', 'hevalo'), recorded)).toBe(false);
+    expect(isRecorded(line('nan', 'hamo'), recorded)).toBe(true);
+    // a take with no character serves anyone, and a narrator’s line takes any take
+    expect(isRecorded(line('av', 'xezo'), recorded)).toBe(true);
+    expect(isRecorded(line('nan', null), recorded)).toBe(true);
+    expect(isRecorded(line('çay', 'hamo'), recorded)).toBe(false);
+  });
+
   it('counts, narrows and pages one voice’s lines in script order', () => {
     const lines = buildScript({ exercises: [], stories: [], games: [], plan: PLAN, letters: LETTER_CLIPS.slice(0, 5), words: WORD_SET_CLIPS.filter((c) => c.group === 'colours') });
     const recorded = new Set(['kmr:sound:a', 'words:colours:kmr:red']);
@@ -391,9 +427,12 @@ describe('the Kurmanji Road in the script', () => {
     // Hamo says nearly everything; Xezo and Hevalo say a few lines of their own, each a person on the page
     const counts = new Map(peopleOf(lines, plan).map((p) => [p.id, lines.filter((l) => l.voice === p.id).length]));
     expect(counts.get('hamo')! + counts.get('xezo')! + counts.get('hevalo')!).toBe(lines.length);
-    for (const who of ['xezo', 'hevalo']) {
+    // each as the road's check counts them, within what each records
+    const { recordings } = checkRoad({ plan: loadRoadPlan() }).stats;
+    for (const who of ['xezo', 'hevalo'] as const) {
       expect(counts.get(who)!).toBeGreaterThan(0);
-      expect(counts.get(who)!).toBeLessThanOrEqual(40);
+      expect(counts.get(who), who).toBe(recordings[who]);
+      expect(counts.get(who)!).toBeLessThanOrEqual(ROAD_VOICE_LINES_MAX[who]);
     }
     expect(raw.units.every((u) => u.recorder === 'hamo')).toBe(true);
   });

@@ -19,7 +19,7 @@ import { AppError } from '../plugins/errors.js';
 import { roadChapters } from '../content/road-chapters.js';
 import { RECORDING_ROLES, recordingPeople, recordsOwnVoicesOnly } from './access.js';
 import { voiceLinks } from './links.js';
-import { VOICE_ID, linesFor, pageAfter, sectionsOf, tally, type ScriptLine } from './script.js';
+import { VOICE_ID, isRecorded, linesFor, pageAfter, sectionsOf, tally, type ScriptLine } from './script.js';
 import type { RecordingPeopleOptions } from './service.js';
 
 /** The most lines one page holds: a voice's whole script is a few pages of this. */
@@ -49,7 +49,7 @@ export function registerRecordingRoutes(app: FastifyInstance, options: Recording
       // the road's chapters, each going online by itself once its last line is recorded
       roadChapters(app.db),
     ]);
-    const done = (l: ScriptLine): boolean => recorded[l.store].has(l.key);
+    const done = (l: ScriptLine): boolean => isRecorded(l, recorded);
     const byVoice = new Map<string, ScriptLine[]>();
     for (const l of built.lines) {
       const list = byVoice.get(l.voice);
@@ -79,7 +79,7 @@ export function registerRecordingRoutes(app: FastifyInstance, options: Recording
       if (recordsOwnVoicesOnly(req.user!.roles) && !(await service.voicesOf(req.user!.id)).includes(voice)) {
         throw new AppError('NOT_YOUR_VOICE', 403, 'that voice is not linked to your account');
       }
-      const done = (l: ScriptLine): boolean => recorded[l.store].has(l.key);
+      const done = (l: ScriptLine): boolean => isRecorded(l, recorded);
       const theirs = linesFor(built.lines, { voice, dialect: q.dialect ?? null }, done);
       const matching = q.status && q.status !== 'all' ? linesFor(theirs, { voice, status: q.status }, done) : theirs;
       const page = pageAfter(matching, q.cursor === undefined ? null : Number(q.cursor), q.limit ?? LINES_PAGE_DEFAULT);
