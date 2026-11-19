@@ -855,13 +855,18 @@
                 },
                 {
                   "position": 13,
-                  "type": "listening",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "reply",
+                    "say": "Erê! Û tu? Tu çend rojan li Sêvanê dimînî?",
                     "voice": "hamo",
-                    "accepted": [
-                      "Roja Yekşemê betlane ye."
-                    ]
+                    "prompt": "Erê! Û tu? Tu çend rojan li Sêvanê dimînî?",
+                    "options": [
+                      "Ez nizanim. Hevalo dizane?",
+                      "Ez nizanim. Hevalo dizanim?",
+                      "Diya te jî dikene."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {

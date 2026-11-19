@@ -1933,13 +1933,18 @@
                 },
                 {
                   "position": 13,
-                  "type": "listening",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "reply",
+                    "say": "Hêvî, tu çend salî yî?",
                     "voice": "hamo",
-                    "accepted": [
-                      "Yek mirîşk heye."
-                    ]
+                    "prompt": "Hêvî, tu çend salî yî?",
+                    "options": [
+                      "Ew şeş salî ye!",
+                      "Ew şeş salî e!",
+                      "Pênc salî? Û ew pênc sêvan dixwe!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2987,16 +2992,18 @@
                 },
                 {
                   "position": 10,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Erê! Destê wê sax be!",
+                    "ask": "reply",
+                    "say": "Baş e! Tu tî yî?",
                     "voice": "hamo",
-                    "prompt": "Erê! Destê wê sax be!",
-                    "accepted": [
-                      "Yes! Bless her hands!",
-                      "Yes, bless her hands!"
-                    ]
+                    "prompt": "Baş e! Tu tî yî?",
+                    "options": [
+                      "Erê, ez tî me.",
+                      "Erê, ez tî im.",
+                      "Spas! Nan gelek xweş e."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -4144,13 +4151,18 @@
                 },
                 {
                   "position": 13,
-                  "type": "listening",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "reply",
+                    "say": "Hêvî, sêv çend in?",
                     "voice": "hamo",
-                    "accepted": [
-                      "Mirîşkên Dapîrê hene."
-                    ]
+                    "prompt": "Hêvî, sêv çend in?",
+                    "options": [
+                      "Deh in!",
+                      "Deh ne!",
+                      "Spas! Şîv gelek xweş e."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {

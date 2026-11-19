@@ -1995,13 +1995,18 @@
                 },
                 {
                   "position": 13,
-                  "type": "listening",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "hear",
+                    "ask": "reply",
+                    "say": "Ez bêguneh im! Tu ji min bawer dikî?",
                     "voice": "hamo",
-                    "accepted": [
-                      "Ji kerema xwe, heb, ne derzî!"
-                    ]
+                    "prompt": "Ez bêguneh im! Tu ji min bawer dikî?",
+                    "options": [
+                      "Hevalo li te dinêre. Ew bawer nake.",
+                      "Hevalo li te dinêrim. Ew bawer nake.",
+                      "Binêre, şûşeyek vala ye!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
