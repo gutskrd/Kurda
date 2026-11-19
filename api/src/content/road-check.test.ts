@@ -16,7 +16,10 @@ import {
   kurdishWords,
   loadRoadPlan,
   loadRoadStories,
+  onlySaidBy,
   recordedTexts,
+  speakerProblems,
+  ROAD_VOICE_LINES_MAX,
   roadUnitNumbers,
   type RoadPlan,
   type RoadProblem,
@@ -75,6 +78,14 @@ describe('the road’s unit files', () => {
   } else {
     it.each(written)('unit %i passes every check', (n) => {
       expect(checkRoad({ plan, units: [n] }).problems.map(formatProblem)).toEqual([]);
+    });
+
+    it('keeps every voice within what it records for the road', () => {
+      const { recordings } = checkRoad({ plan }).stats;
+      for (const v of ['hamo', 'xezo', 'hevalo'] as const) expect(recordings[v], v).toBeLessThanOrEqual(ROAD_VOICE_LINES_MAX[v]);
+      expect(recordings.xezo).toBeGreaterThan(0);
+      expect(recordings.hevalo).toBeGreaterThan(0);
+      expect(recordings.unvoiced).toBe(0);
     });
   }
 });
@@ -295,9 +306,10 @@ describe('the road’s check, on an example unit', () => {
   it('counts lessons, exercises, minutes and who records what', () => {
     const { stats } = checkRoad({ plan: PLAN, docs: new Map([[1, exampleUnit()]]) });
     expect(stats).toMatchObject({ units: [1], lessons: 2, exercises: 24, minutes: 6, newItems: 9 });
-    expect(stats.conversationLines).toEqual({ hamo: 3, xezo: 3, hevalo: 0 });
-    expect(stats.recordings.hamo).toBe(15);
-    expect(stats.recordings.xezo).toBe(6);
+    // a line is one recording wherever it is said; of them, the lines only a conversation says
+    expect(stats.conversationLines).toEqual({ hamo: 2, xezo: 3, hevalo: 0 });
+    expect(stats.recordings.hamo).toBe(17);
+    expect(stats.recordings.xezo).toBe(9);
     expect(stats.recordings.unvoiced).toBe(0);
   });
 
@@ -339,31 +351,45 @@ describe('the road’s check, on an example unit', () => {
       lessonOf(doc, 1).exercises[6]!.payload.voice = 'hamo';
       lessonOf(doc, 0).exercises[9]!.payload.accepted = ['Silav, xalo!', 'Silav xalo'];
     });
-    expect(text).toContain('u01s1l2 #7: Hamo would say “Spas, Hamo!” to himself: model it without his name (the learner says it to him)');
-    expect(text).toContain('u01s1l1 #10: Hamo would say “Silav, xalo!” to himself: model it without his name (the learner says it to him)');
+    expect(text).toContain('u01s1l2 #7: Hamo would say “Spas, Hamo!” to himself: model it without the name (the learner says it)');
+    expect(text).toContain('u01s1l1 #10: Hamo would say “Silav, xalo!” to himself: model it without the name (the learner says it)');
     // his own name in a sentence about himself is no greeting to himself
     expect(addressesHamo('Ez Hamo me.')).toBe(false);
     expect(addressesHamo('Navê min Hamo ye.')).toBe(false);
     expect(addressesHamo('Xalo! Xalo!')).toBe(true);
   });
 
-  it('holds a chapter written for Hamo alone to his voice: every recording his, and every conversation him and the learner', () => {
-    const { text } = check(undefined, (p) => {
+  it('holds a chapter written for the road’s voices to what they record: a few new lines a lesson, two of its own a conversation', () => {
+    const forVoices = (p: RoadPlan): void => {
       p.units[0]!.recorder = 'hamo';
-    });
-    expect(text).toContain('u01s1l1 #6 payload.voice: is recorded by xezo: Hamo records every line of the road, so tell it through him, or show it written');
-    expect(text).toContain('u01s1l2 #5 payload.speakers[1]: part 2 is xezo: a conversation is Hamo talking with the learner (a part with learner: true)');
-    // the same conversation with the learner in Xezal's part passes, whatever the learner says to him
-    const withYou = check(
+    };
+    // Xezal says her own lines, in exercises and in her part of the conversation
+    expect(check(undefined, forVoices).text).toEqual([
+      'u01s1l1 #3: plays “Ez baş im.”, which exercise 4 asks the learner to hear, so it would play nothing here: hear another line there',
+      'u01s1l1: records 11 new lines (at most 8): work on fewer lines in more ways, or bring back earlier ones',
+      'u01s1l2: records 15 new lines (at most 8): work on fewer lines in more ways, or bring back earlier ones',
+      'u01s1l2 #5: the conversation records 5 lines of its own (at most 2): build it from lines the lesson has, “Silav, Xezal!”, “Silav, Hamo! Tu çawa yî?”, “Ez baş im, spas. Tu çawa yî?”, “Ez jî baş im.”, “Erê, ez ji Amedê me.”',
+    ]);
+    // a review brings back lines already recorded, and one line is one person's
+    const { text } = check(
       (doc) => {
-        for (const li of [0, 1]) for (const ex of lessonOf(doc, li).exercises) if (ex.payload.voice === 'xezo') ex.payload.voice = 'hamo';
-        (lessonOf(doc, 1).exercises[4]!.payload.speakers as unknown[])[1] = { learner: true };
+        lessonOf(doc, 1).exercises[11]!.payload.voice = 'xezo';
       },
       (p) => {
-        p.units[0]!.recorder = 'hamo';
+        forVoices(p);
+        p.units[0]!.skills[0]!.lessons[1]!.focus = 'review';
       },
     );
-    expect(withYou.text.filter((t) => /recorded by|part 2|lines\[/.test(t))).toEqual([]);
+    expect(text).toContain('u01s1l2 #12: “Spas!” is xezo’s here and hamo’s in u01s1l2: one recording is one person’s, so write the line for one of them');
+    // its exercises' lines, that is: a review may keep a scene of its chapter as a conversation
+    expect(text.find((t) => t.startsWith('u01s1l2: a review lesson brings back lines the road has recorded'))).toMatch(/records 10 new: “Tu çawa yî\?”/);
+    expect(text.filter((t) => t.includes('the conversation records'))).toEqual([]);
+    // the conversation's lines the lesson teaches are not its own
+    const taught = check((doc) => {
+      const said = [speak('Silav, Xezal!', 'hamo'), speak('Ez jî baş im.', 'xezo'), speak('Erê, ez ji Amedê me.', 'xezo')];
+      lessonOf(doc, 1).exercises.splice(1, 3, ...said.map((e, i) => ({ position: i + 2, ...e })));
+    }, forVoices);
+    expect(taught.text.filter((t) => t.includes('the conversation records'))).toEqual([]);
   });
 
   it('asks for the Kurdish an item is about to be in its prompt, where the learner can read it and hear it', () => {
@@ -486,6 +512,27 @@ describe('the road’s check, on an example unit', () => {
     expect(text).toContain('u01s1l1 key: key should be u01s1l1');
     expect(text).toContain('u01s1l1 #3 position: position should be 3');
     expect(text).toContain('u01s1l1 #1 payload.correctIndex: correctIndex must point at an option');
+  });
+});
+
+describe('who says a line', () => {
+  it('knows the lines only one voice can say in the first person', () => {
+    expect(onlySaidBy('Ez Hamo me.')).toBe('hamo');
+    expect(onlySaidBy('Ez mêr im.')).toBe('hamo');
+    expect(onlySaidBy('Ez jin im.')).toBe('xezo');
+    expect(onlySaidBy('Silav! Ez Xezal im.')).toBe('xezo');
+    expect(onlySaidBy('Ez mamoste me.')).toBe('xezo');
+    expect(onlySaidBy('Ez heywan im!')).toBe('hevalo');
+    expect(onlySaidBy('Navê min Hevalo ye!')).toBe('hevalo');
+    for (const line of ['Ez birçî me!', 'Hevalo heywan e.', 'Xezal mamoste ye.', 'Ez baş im.']) expect(onlySaidBy(line), line).toBeNull();
+  });
+
+  it('keeps a line in the mouth it belongs to, and nobody calls their own name', () => {
+    expect(speakerProblems('Ez jin im.', 'hamo')).toEqual(['“Ez jin im.” is Xezal’s to say, not Hamo’s: give it xezo’s voice']);
+    expect(speakerProblems('Ez heywan im!', 'xezo')).toEqual(['“Ez heywan im!” is Hevalo’s to say, not Xezal’s: give it hevalo’s voice']);
+    expect(speakerProblems('Hevalo, were!', 'hevalo')).toEqual(['Hevalo would say “Hevalo, were!” to himself: model it without the name (the learner says it)']);
+    expect(speakerProblems('Silav, Xezal!', 'xezo')).toHaveLength(1);
+    for (const [line, who] of [['Hevalo, were!', 'hamo'], ['Hamo, simbêlê xwe biparêze!', 'xezo'], ['Ez jin im.', 'xezo']] as const) expect(speakerProblems(line, who), line).toEqual([]);
   });
 });
 

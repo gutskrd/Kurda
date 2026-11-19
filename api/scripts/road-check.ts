@@ -5,7 +5,7 @@
  *   tsx scripts/road-check.ts            the plan and every unit file written so far
  *   tsx scripts/road-check.ts 3          the plan and unit 3
  *   tsx scripts/road-check.ts 3 4        the plan and units 3 and 4
- *   tsx scripts/road-check.ts --hamo 3   unit 3 as if already marked as written for Hamo alone
+ *   tsx scripts/road-check.ts --hamo 3   unit 3 as if already marked as written for the road’s voices
  *   tsx scripts/road-check.ts --stories draft.json 3
  *                                        unit 3 with the stories of a draft file in the same shape
  *
@@ -30,7 +30,7 @@ function main(): void {
   const file = storiesFile ? resolve(storiesFile) : ROAD_STORIES_FILE;
 
   const plan = loadRoadPlan();
-  // checked as if marked for Hamo alone: the chapter and every lesson in it his
+  // checked as if marked for the road's voices, every lesson led by Hamo
   if (asHamo) {
     for (const unit of plan.units) {
       if (!units.includes(unit.number)) continue;
@@ -63,8 +63,8 @@ function main(): void {
   console.log(stats.units.length > 0 ? `units checked: ${stats.units.join(', ')}` : 'no unit files written yet: only the plan was checked');
   if (stats.units.length > 0) {
     console.log(`lessons ${stats.lessons}, exercises ${stats.exercises}, about ${stats.minutes} minutes, new items ${stats.newItems}`);
-    console.log(`sentences to record: ${per(stats.recordings)}`);
-    console.log(`conversation lines: ${per(stats.conversationLines)}`);
+    console.log(`lines to record, conversations included: ${per(stats.recordings)}`);
+    console.log(`of them, said only in a conversation: ${per(stats.conversationLines)}`);
   }
   console.log(all.length === 0 ? '✓ no problems' : `✗ ${all.length} problem(s)`);
   process.exit(all.length === 0 ? 0 : 1);

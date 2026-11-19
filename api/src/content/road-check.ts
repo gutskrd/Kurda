@@ -20,9 +20,9 @@ import type { ExerciseType } from './repository.js';
  * The check for the Kurmanji Road (api/content/lessons/road): the plan and every unit file written against it.
  *
  * The road is 192 lessons by several writers, and what makes it a course is that each lesson uses only Kurdish the
- * learner has met, repeats its new words enough to learn them, and is recorded mostly by Hamo. None of that is visible
- * in one lesson, so it is checked here, in CI and from scripts/road-check.ts, with every problem located by unit,
- * lesson, exercise and field.
+ * learner has met, repeats its new words enough to learn them, works on a few lines met in many ways, and is recorded
+ * mostly by Hamo, every line by the person it belongs to. None of that is visible in one lesson, so it is checked here,
+ * in CI and from scripts/road-check.ts, with every problem located by unit, lesson, exercise and field.
  *
  * Exercise `voice` is read from the raw JSON because the payload schemas do not carry it yet.
  */
@@ -38,18 +38,59 @@ export const ROAD_COURSE = { slug: 'kurmanji-road', dialect: 'kurmanji', titleKu
 export const ROAD_VOICES = ['hamo', 'xezo', 'hevalo'] as const;
 export type RoadVoice = (typeof ROAD_VOICES)[number];
 /**
- * Who records the road: Hamo, every line, so one person can finish a chapter and see it go online (road-chapters.ts).
- * Xezal and Hevalo still appear in scenes and in what Hamo tells, but what is heard is Hamo, and a conversation is Hamo
- * talking with the learner, whose lines nobody records.
+ * Who records the road: Hamo, nearly every line, so a chapter goes online once its few voices have recorded it
+ * (road-chapters.ts). Xezal and Hevalo say a few lines of their own, and the learner's lines are recorded by nobody.
  */
 export const ROAD_RECORDER: RoadVoice = 'hamo';
 
 /**
- * A line that addresses Hamo by name or as uncle (“Spas, Hamo!”, “Xalo, tu baş î?”). Hamo cannot record it without
- * talking to himself, so a line he models for the learner leaves the name out, and one only the learner says is theirs.
+ * How many lines each voice records for the road's lessons and conversations. Xezal and Hevalo also have the apps'
+ * reaction lines, so their lesson lines stay few.
  */
+export const ROAD_VOICE_LINES_MAX: Readonly<Record<RoadVoice, number>> = { hamo: 1100, xezo: 40, hevalo: 40 };
+/** A lesson brings at most this many new recordings: its few new words and lines, met in many ways. */
+export const ROAD_LESSON_LINES_MAX = 8;
+/** A conversation is made of lines its unit already has, and at most this many of its own. */
+export const ROAD_CONVERSATION_LINES_MAX = 2;
+
+/** What each voice is called in a line that names or calls them. */
+const CALLED: Readonly<Record<RoadVoice, string>> = { hamo: 'hamo|xalo|apo', xezo: 'xezal|xezalê|xezo', hevalo: 'hevalo' };
+
+/** A line that calls `who` by name (“Spas, Hamo!”, “Hevalo, were!”), which `who` cannot record without talking to themselves. */
+export function addresses(text: string, who: RoadVoice): boolean {
+  return new RegExp(`(^|[,.!?…:;«“]\\s*)(${CALLED[who]})\\s*([,.!?…;»”]|$)`, 'iu').test(text.trim());
+}
+
+/** A line that addresses Hamo by name or as uncle (“Spas, Hamo!”, “Xalo, tu baş î?”). */
 export function addressesHamo(text: string): boolean {
-  return /(^|[,.!?…:;«“]\s*)(hamo|xalo|apo)\s*([,.!?…;»”]|$)/iu.test(text.trim());
+  return addresses(text, 'hamo');
+}
+
+/**
+ * Lines only one of the voices can say in the first person: their name, or what they are (a man, a woman, a deer, the
+ * teacher). Each pattern looks within one sentence.
+ */
+const ONLY: ReadonlyArray<{ who: RoadVoice; re: RegExp }> = [
+  { who: 'hamo', re: /\b(ez\s+hamo\s+me|navê\s+min\s+hamo\s+ye|ez\s+mêr\s+im)\b/iu },
+  { who: 'xezo', re: /\b(ez\s+xezal\s+im|navê\s+min\s+xezal\s+e|ez\s+jin\s+im|ez\s+mamoste\s+me)\b/iu },
+  { who: 'hevalo', re: /\b(ez\s+hevalo\s+me|navê\s+min\s+hevalo\s+ye|ez\s+(heywan|ajal|ask|xezal)\s+im)\b/iu },
+];
+
+/** Who a line says it is in the first person, when that can only be one of the voices; null when anyone could say it. */
+export function onlySaidBy(text: string): RoadVoice | null {
+  return ONLY.find((o) => o.re.test(text))?.who ?? null;
+}
+
+const NAME: Readonly<Record<RoadVoice, string>> = { hamo: 'Hamo', xezo: 'Xezal', hevalo: 'Hevalo' };
+const SELF: Readonly<Record<RoadVoice, string>> = { hamo: 'himself', xezo: 'herself', hevalo: 'himself' };
+
+/** What makes a line wrong in `voice`'s mouth: it is someone else's (“Ez jin im.” from Hamo), or it calls the speaker. */
+export function speakerProblems(text: string, voice: RoadVoice): string[] {
+  const out: string[] = [];
+  const own = onlySaidBy(text);
+  if (own && own !== voice) out.push(`“${text}” is ${NAME[own]}’s to say, not ${NAME[voice]}’s: give it ${own}’s voice`);
+  if (addresses(text, voice)) out.push(`${NAME[voice]} would say “${text}” to ${SELF[voice]}: model it without the name (the learner says it)`);
+  return out;
 }
 export const ROAD_FOCUS = ['meet', 'build', 'talk', 'review'] as const;
 export type RoadFocus = (typeof ROAD_FOCUS)[number];
@@ -90,8 +131,8 @@ export interface RoadUnit {
   titleEn: string;
   story: string;
   /**
-   * `hamo` once the chapter is written for Hamo alone (`ROAD_RECORDER`): every line is his and none has him address
-   * himself. A chapter not yet rewritten keeps its older split between characters.
+   * `hamo` once the chapter is written for the road's voices (`ROAD_RECORDER`): Hamo says nearly every line, Xezal and
+   * Hevalo their own, within what each records (rule 13). A chapter not yet rewritten keeps its older split.
    */
   recorder?: RoadVoice;
   skills: RoadSkill[];
@@ -126,9 +167,9 @@ export interface RoadStats {
   minutes: number;
   /** the plan’s new items in the units checked */
   newItems: number;
-  /** distinct single-sentence recordings, by the voice of their first use */
+  /** distinct recordings first said in these units, conversation lines included, by the voice of their first use */
   recordings: Record<RoadVoice | 'unvoiced', number>;
-  /** conversation lines to record, by the character who says them */
+  /** of them, lines only a conversation says, by the character who says them */
   conversationLines: Record<RoadVoice, number>;
 }
 
@@ -385,7 +426,7 @@ export const GRAMMAR_MD_MAX = 1200;
  */
 export const ROAD_BUDGET: Record<number, { meet: number; build: number; cap: number }> = {
   1: { meet: 4, build: 4, cap: 48 },
-  2: { meet: 5, build: 5, cap: 54 },
+  2: { meet: 5, build: 5, cap: 57 },
   3: { meet: 5, build: 5, cap: 56 },
   4: { meet: 6, build: 6, cap: 64 },
   5: { meet: 6, build: 6, cap: 64 },
@@ -635,7 +676,6 @@ export function checkRoad(options: RoadCheckOptions = {}): RoadCheck {
     recordings: { hamo: 0, xezo: 0, hevalo: 0, unvoiced: 0 },
     conversationLines: { hamo: 0, xezo: 0, hevalo: 0 },
   };
-  const courseRecordings = new Map<string, RoadVoice | 'unvoiced'>();
   const idsHere = new Map<string, string>();
   // the lessons each item is met in, for rule 10
   const metIn = new Map<number, Set<number>>();
@@ -659,10 +699,18 @@ export function checkRoad(options: RoadCheckOptions = {}): RoadCheck {
     }
     stats.units.push(n);
     stats.newItems += planUnit.skills.reduce((s, sk) => s + sk.lessons.reduce((t, l) => t + l.new.length, 0), 0);
-    checkUnit(n, planUnit, raw, plan, lex, problems, stats, courseRecordings, idsHere, idsElsewhere, metIn);
+    checkUnit(n, planUnit, raw, plan, lex, problems, stats, idsHere, idsElsewhere, metIn);
   }
   problems.push(...returnProblems(lex, stats.units, metIn));
-  for (const voice of courseRecordings.values()) stats.recordings[voice] += 1;
+  const docs = new Map<number, unknown>();
+  for (const n of available) {
+    try {
+      docs.set(n, docOf(n));
+    } catch {
+      // reported above for the units asked about
+    }
+  }
+  problems.push(...recordingProblems(plan, docs, stats.units, stats));
   stats.minutes = Math.round((stats.exercises * 15) / 60);
   return { problems, stats };
 }
@@ -811,6 +859,125 @@ function conversationIds(doc: unknown): string[] {
   return out;
 }
 
+/** The keys whose recording an exercise sends with it before it is answered: a shown line, a card, a conversation line. */
+function playedBefore(ex: RawExercise): Set<string> {
+  const p = ex.payload;
+  const out = new Set<string>();
+  if (ex.type === 'match_pairs' && Array.isArray(p.pairs)) for (const pair of p.pairs) if (isRecord(pair) && typeof pair.left === 'string') out.add(lessonAudioKey(pair.left));
+  if (ex.type === 'conversation') for (const clip of conversationClips(p)) out.add(lessonAudioKey(clip.text));
+  if (ex.type === 'speaking' && typeof p.reference === 'string') out.add(lessonAudioKey(p.reference));
+  if ((ex.type === 'multiple_choice' || ex.type === 'translate') && typeof p.say === 'string' && shownInPrompt(p.prompt, p.say)) out.add(lessonAudioKey(p.say));
+  return out;
+}
+
+/**
+ * Items that play the line a listening item of the same lesson asks the learner to hear. The apps never send that
+ * recording before the answer (it would give the transcription away), so the item would stand silent.
+ */
+function heardElsewhere(exercises: readonly RawExercise[]): Array<{ exercise: number; message: string }> {
+  const out: Array<{ exercise: number; message: string }> = [];
+  exercises.forEach((ex, i) => {
+    if (ex.type !== 'listening') return;
+    const heard = strings(ex.payload.accepted)[0];
+    if (!heard) return;
+    const key = lessonAudioKey(heard);
+    exercises.forEach((other, j) => {
+      if (j !== i && playedBefore(other).has(key)) {
+        out.push({ exercise: j + 1, message: `plays “${heard}”, which exercise ${i + 1} asks the learner to hear, so it would play nothing here: hear another line there` });
+      }
+    });
+  });
+  return out;
+}
+
+interface Said {
+  key: string;
+  text: string;
+  voice: RoadVoice | 'unvoiced';
+  exercise: number;
+  conversation: boolean;
+}
+
+/** Every line a lesson records, in order: its exercises' lines, then its conversations' (which come back to the lesson's own lines). */
+function linesSaid(lesson: Record<string, unknown>): Said[] {
+  const out: Said[] = [];
+  const exercises = Array.isArray(lesson.exercises) ? (lesson.exercises as unknown[]).filter(isRecord) : [];
+  exercises.forEach((ex, i) => {
+    if (ex.type === 'conversation') return;
+    const v = isRecord(ex.payload) ? ex.payload.voice : undefined;
+    const voice = ROAD_VOICES.includes(v as RoadVoice) ? (v as RoadVoice) : 'unvoiced';
+    for (const text of recordedTexts(String(ex.type), ex.payload)) out.push({ key: lessonAudioKey(text), text, voice, exercise: i + 1, conversation: false });
+  });
+  exercises.forEach((ex, i) => {
+    if (ex.type !== 'conversation') return;
+    for (const clip of conversationClips(ex.payload)) {
+      out.push({ key: lessonAudioKey(clip.text), text: clip.text, voice: clip.character ?? 'unvoiced', exercise: i + 1, conversation: true });
+    }
+  });
+  return out;
+}
+
+/**
+ * Rule 13, what the owner records: a lesson brings at most ROAD_LESSON_LINES_MAX new lines and a review none, a
+ * conversation at most ROAD_CONVERSATION_LINES_MAX of its own, one line has one voice, and each voice's lines stay within
+ * ROAD_VOICE_LINES_MAX across the road. A line is one recording wherever it is said (conversations included), so every
+ * unit file present is read in course order; only units written for the road's voices (`recorder`) are held to it.
+ */
+function recordingProblems(plan: RoadPlan, docs: ReadonlyMap<number, unknown>, wanted: readonly number[], stats: RoadStats): RoadProblem[] {
+  const problems: RoadProblem[] = [];
+  const first = new Map<string, { voice: RoadVoice | 'unvoiced'; lesson: string }>();
+  const totals: Record<RoadVoice | 'unvoiced', number> = { hamo: 0, xezo: 0, hevalo: 0, unvoiced: 0 };
+  for (const n of [...docs.keys()].sort((a, b) => a - b)) {
+    const planUnit = plan.units.find((u) => u.number === n);
+    const doc = docs.get(n);
+    const held = planUnit?.recorder === ROAD_RECORDER && wanted.includes(n);
+    const units = isRecord(doc) && Array.isArray(doc.units) ? doc.units : [];
+    const skills = isRecord(units[0]) && Array.isArray(units[0].skills) ? (units[0].skills as unknown[]).filter(isRecord) : [];
+    skills.forEach((skill, si) => {
+      const lessons = Array.isArray(skill.lessons) ? (skill.lessons as unknown[]).filter(isRecord) : [];
+      lessons.forEach((lesson, li) => {
+        const planLesson = planUnit?.skills[si]?.lessons[li];
+        const key = planLesson?.key ?? String(lesson.key);
+        const fresh = new Map<string, Said>();
+        const own = new Map<number, string[]>();
+        for (const s of linesSaid(lesson)) {
+          const before = first.get(s.key);
+          if (before && held && before.voice !== s.voice && before.voice !== 'unvoiced' && s.voice !== 'unvoiced') {
+            problems.push({ unit: n, lesson: key, exercise: s.exercise, message: `“${s.text}” is ${s.voice}’s here and ${before.voice}’s in ${before.lesson}: one recording is one person’s, so write the line for one of them` });
+          }
+          if (before) continue;
+          first.set(s.key, { voice: s.voice, lesson: key });
+          totals[s.voice] += 1;
+          fresh.set(s.key, s);
+          if (s.conversation) own.set(s.exercise, [...(own.get(s.exercise) ?? []), s.text]);
+          if (wanted.includes(n)) {
+            stats.recordings[s.voice] += 1;
+            if (s.conversation && s.voice !== 'unvoiced') stats.conversationLines[s.voice] += 1;
+          }
+        }
+        if (!held) return;
+        // a review may keep one scene of its chapter as a conversation; its exercises bring back what was recorded
+        const review = planLesson?.focus === 'review';
+        const taught = [...fresh.values()].filter((s) => !s.conversation);
+        if (review && taught.length > 0) {
+          problems.push({ unit: n, lesson: key, message: `a review lesson brings back lines the road has recorded, but this one records ${taught.length} new: ${taught.map((s) => `“${s.text}”`).join(', ')}` });
+        } else if (fresh.size > ROAD_LESSON_LINES_MAX) {
+          problems.push({ unit: n, lesson: key, message: `records ${fresh.size} new lines (at most ${ROAD_LESSON_LINES_MAX}): work on fewer lines in more ways, or bring back earlier ones` });
+        }
+        for (const [exercise, texts] of review ? [] : own) {
+          if (texts.length > ROAD_CONVERSATION_LINES_MAX) {
+            problems.push({ unit: n, lesson: key, exercise, message: `the conversation records ${texts.length} lines of its own (at most ${ROAD_CONVERSATION_LINES_MAX}): build it from lines the lesson has, ${texts.map((t) => `“${t}”`).join(', ')}` });
+          }
+        }
+      });
+    });
+  }
+  for (const v of ROAD_VOICES) {
+    if (totals[v] > ROAD_VOICE_LINES_MAX[v]) problems.push({ message: `${NAME[v]} records ${totals[v]} lesson and conversation lines (at most ${ROAD_VOICE_LINES_MAX[v]})` });
+  }
+  return problems;
+}
+
 function checkUnit(
   n: number,
   planUnit: RoadUnit,
@@ -819,7 +986,6 @@ function checkUnit(
   lex: Lexicon,
   problems: RoadProblem[],
   stats: RoadStats,
-  courseRecordings: Map<string, RoadVoice | 'unvoiced'>,
   idsHere: Map<string, string>,
   idsElsewhere: Map<string, number>,
   metIn: Map<number, Set<number>>,
@@ -848,7 +1014,7 @@ function checkUnit(
 
   const singles = new Map<string, RoadVoice | 'unvoiced'>();
   const lines: Record<RoadVoice, number> = { hamo: 0, xezo: 0, hevalo: 0 };
-  // a chapter written for Hamo alone is held to it; one not rewritten yet to the older split
+  // a chapter written for the road's voices is held to their budgets; one not rewritten yet to the older split
   const hamoOnly = planUnit.recorder === ROAD_RECORDER;
   const limit = n <= 4 ? 12 : 18;
 
@@ -952,22 +1118,16 @@ function checkUnit(
         }
         for (const f of kurdishFields(ex, n)) for (const w of kurdishWords(f.text)) if (!firstMet.has(w)) firstMet.set(w, ei);
 
-        // 5: who records it — Hamo, every line, and never one said to him
+        // 5: who says it — a voice for whatever is recorded, and every line in the mouth of the one it belongs to
         const texts = recordedTexts(ex.type, ex.payload);
         const voice = ex.payload.voice;
         if (voice !== undefined && !ROAD_VOICES.includes(voice as RoadVoice)) add(`voice “${String(voice)}” is not one of ${ROAD_VOICES.join(', ')}`, { ...eat, field: 'payload.voice' });
         if (texts.length > 0 && ex.type !== 'conversation' && voice === undefined) add('has something to record but no voice', { ...eat, field: 'payload.voice' });
-        else if (hamoOnly && texts.length > 0 && ex.type !== 'conversation' && voice !== ROAD_RECORDER) {
-          add(`is recorded by ${String(voice)}: Hamo records every line of the road, so tell it through him, or show it written`, { ...eat, field: 'payload.voice' });
-        }
-        for (const t of voice === ROAD_RECORDER ? texts : []) {
-          if (addressesHamo(t)) add(`Hamo would say “${t}” to himself: model it without his name (the learner says it to him)`, eat);
-        }
         const v: RoadVoice | 'unvoiced' = ROAD_VOICES.includes(voice as RoadVoice) ? (voice as RoadVoice) : 'unvoiced';
+        if (v !== 'unvoiced') for (const t of texts) for (const m of speakerProblems(t, v)) add(m, eat);
         for (const t of texts) {
           const k = lessonAudioKey(t);
           if (!singles.has(k)) singles.set(k, v);
-          if (!courseRecordings.has(k)) courseRecordings.set(k, v);
         }
         if (ex.type === 'conversation') {
           const id = typeof ex.payload.id === 'string' ? ex.payload.id : '';
@@ -979,18 +1139,22 @@ function checkUnit(
           if (id && !twin) idsHere.set(id, `${key} #${ei + 1}`);
           const count = Array.isArray(ex.payload.lines) ? ex.payload.lines.length : 0;
           if (count < 6 || count > 12) add(`a conversation has 6–12 lines, not ${count}`, { ...eat, field: 'payload.lines' });
-          // Hamo talking with the learner: he says his lines, the learner says theirs
+          // the learner and the characters: every other part is a character's, who says their own lines
           const parts = Array.isArray(ex.payload.speakers) ? ex.payload.speakers : [];
           parts.forEach((part, pi) => {
-            if (!hamoOnly || !isRecord(part) || part.learner === true || part.character === ROAD_RECORDER) return;
-            add(`part ${pi + 1} is ${String(part.character)}: a conversation is Hamo talking with the learner (a part with learner: true)`, { ...eat, field: `payload.speakers[${pi}]` });
+            if (!isRecord(part) || part.learner === true || ROAD_VOICES.includes(part.character as RoadVoice)) return;
+            add(`part ${pi + 1} is neither the learner nor one of ${ROAD_VOICES.join(', ')}`, { ...eat, field: `payload.speakers[${pi}]` });
           });
           for (const clip of conversationClips(ex.payload)) {
-            if (clip.character) lines[clip.character] += 1;
-            if (clip.character === ROAD_RECORDER && addressesHamo(clip.text)) add(`Hamo would say “${clip.text}” to himself: give the line to the learner`, { ...eat, field: `payload.lines[${clip.index}].text` });
+            if (!clip.character) continue;
+            lines[clip.character] += 1;
+            for (const m of speakerProblems(clip.text, clip.character)) add(m, { ...eat, field: `payload.lines[${clip.index}].text` });
           }
         }
       });
+
+      // 12: a line the learner is to hear plays nowhere else in the lesson, or that item would lose its recording
+      if (hamoOnly) for (const p of heardElsewhere(exercises)) add(p.message, { ...at, exercise: p.exercise });
 
       // 4: the lesson’s recipe
       const types = new Set(exercises.map((e) => e.type));
@@ -1019,8 +1183,7 @@ function checkUnit(
     });
   });
 
-  // 5: a chapter for Hamo alone has every recording his, which the exercises above hold each one to; one not rewritten
-  // yet keeps the older split of its sentences and conversation lines between the characters
+  // 5: a chapter not rewritten for the road's voices keeps the older split of its sentences and conversation lines
   if (!hamoOnly) {
     const counts: Record<RoadVoice | 'unvoiced', number> = { hamo: 0, xezo: 0, hevalo: 0, unvoiced: 0 };
     for (const v of singles.values()) counts[v] += 1;
@@ -1031,5 +1194,4 @@ function checkUnit(
     if (lineTotal > 0 && share(lines.hamo, lineTotal) < 0.45) add(`Hamo says ${pct(share(lines.hamo, lineTotal))} of the unit’s conversation lines (at least 45 %)`);
     if (lineTotal > 0 && share(lines.hevalo, lineTotal) > 0.1) add(`Hevalo says ${pct(share(lines.hevalo, lineTotal))} of the unit’s conversation lines (at most 10 %)`);
   }
-  for (const v of ROAD_VOICES) stats.conversationLines[v] += lines[v];
 }
