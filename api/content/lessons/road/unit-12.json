@@ -3760,20 +3760,18 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Heta dîtinê!",
+                    "say": "Bi xatirê we!",
                     "voice": "xezo",
-                    "prompt": "Heta dîtinê!",
+                    "prompt": "Bi xatirê we!",
                     "accepted": [
-                      "See you!"
+                      "Goodbye, everyone!",
+                      "Goodbye!",
+                      "Bye, everyone!"
                     ],
                     "new": [
                       {
-                        "ku": "Heta dîtinê!",
-                        "en": "See you!"
-                      },
-                      {
-                        "ku": "Bi hêviya dîtinê!",
-                        "en": "Hoping to see you again!"
+                        "ku": "Bi xatirê we!",
+                        "en": "Goodbye, everyone! (said by the one leaving)"
                       }
                     ]
                   }
@@ -3830,7 +3828,7 @@
                     "prompt": "Sêvan’s friendship is in my heart for ever.",
                     "options": [
                       "Hevaltiya Sêvanê her û her di dilê min de ye.",
-                      "Heta dîtinê!",
+                      "Bi xatirê we!",
                       "Hevaltiya Sêvanê her û her di hezkirinê min de ye."
                     ],
                     "correctIndex": 0
@@ -3853,11 +3851,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Heta dîtinê!",
+                    "say": "Bi xatirê we!",
                     "voice": "xezo",
-                    "prompt": "Heta dîtinê!",
+                    "prompt": "Bi xatirê we!",
                     "options": [
-                      "Bi hêviya dîtinê!",
+                      "Bi xêr biçî!",
                       "Bi xêr hatî!",
                       "Noşî can be!"
                     ],
@@ -3870,9 +3868,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "xezo",
-                    "prompt": "See you!",
+                    "prompt": "Goodbye, everyone!",
                     "accepted": [
-                      "Heta dîtinê!"
+                      "Bi xatirê we!"
                     ]
                   }
                 },
@@ -3927,13 +3925,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bi hêviya dîtinê!",
+                    "say": "Bi xatirê we!",
                     "voice": "xezo",
-                    "prompt": "Bi hêviya dîtinê!",
+                    "prompt": "Bi xatirê we!",
                     "options": [
-                      "Hoping to see you again!",
-                      "Welcome!",
-                      "Safe journey!"
+                      "Goodbye, everyone!",
+                      "Welcome, everyone!",
+                      "Good night, everyone!"
                     ],
                     "correctIndex": 0
                   }
@@ -4045,11 +4043,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Oxir be, û heta dîtinê!",
+                    "say": "Oxir be, bi xêr biçî!",
                     "voice": "hamo",
-                    "prompt": "Oxir be, û heta dîtinê!",
+                    "prompt": "Oxir be, bi xêr biçî!",
                     "options": [
-                      "Farewell, and see you!",
+                      "Good luck, and safe travels!",
                       "Welcome, come in!",
                       "Good night, sleep well!"
                     ],
@@ -4230,9 +4228,9 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Farewell, and see you!",
+                    "prompt": "Good luck, and safe travels!",
                     "options": [
-                      "Oxir be, û heta dîtinê!",
+                      "Oxir be, bi xêr biçî!",
                       "Lê gund hêz û dilgermî da min.",
                       "Zimanê şîrîn mar ji qulê derdixe."
                     ],
@@ -4245,9 +4243,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Farewell, and see you!",
+                    "prompt": "Good luck, and safe travels!",
                     "accepted": [
-                      "Oxir be, û heta dîtinê!"
+                      "Oxir be, bi xêr biçî!"
                     ]
                   }
                 },
@@ -4281,11 +4279,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Oxir be, û heta dîtinê!",
+                    "say": "Oxir be, bi xêr biçî!",
                     "voice": "hamo",
-                    "prompt": "Oxir be, û heta dîtinê!",
+                    "prompt": "Oxir be, bi xêr biçî!",
                     "options": [
-                      "Farewell, and see you!",
+                      "Good luck, and safe travels!",
                       "Welcome, come in!",
                       "Good night, sleep well!"
                     ],
