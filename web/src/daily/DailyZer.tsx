@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { reactionDelayMs } from '@kurda/shared';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
@@ -6,13 +7,16 @@ import { CheckIcon, CoinIcon, GemIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
 import { haptic } from '../lib/haptics';
+import { prefersReducedMotion } from '../lib/motion';
+import { sayReactionLater } from '../characters/reactions';
 import type { ClaimResult, DailyRewardStatus } from '../lib/types';
 import { dailyAction } from './today';
 
 /**
  * Today's Zêr inside the daily view: the day's reward with a claim button (POST /rewards/daily/claim, the server sets
  * the amount), a lesson first until one is finished today, or tomorrow once taken, and the week's cycle as a quiet row of
- * coins. A claim pops the coin with its sparks (styles/motion.css) once. A Hevalo+ member sees the gems a claim adds.
+ * coins. A claim pops the coin with its sparks (styles/motion.css) once, and Xezal says a word for it. A Hevalo+ member
+ * sees the gems a claim adds.
  */
 export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onClaimed: (daily: DailyRewardStatus) => void }): React.JSX.Element {
   const t = useT();
@@ -24,6 +28,7 @@ export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onCla
   // The claim made here, which the coin's pop and the line under it are keyed to.
   const [landed, setLanded] = useState<ClaimResult | null>(null);
   const action = dailyAction(daily);
+  useEffect(() => (landed ? sayReactionLater(reactionDelayMs('celebration', prefersReducedMotion()), { moment: 'daily-zer' }) : undefined), [landed]);
 
   async function claim(): Promise<void> {
     setBusy(true);

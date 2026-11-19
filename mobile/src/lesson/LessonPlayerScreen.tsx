@@ -1,7 +1,22 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable, ReachReset } from '../theme/Pressable';
-import { feedbackKind, nextLaunch, pairKey, praiseFor, practisableMistakes, typedHint, type NewWord, type ResumeMemory, type TypedHint } from '@kurda/shared';
+import {
+  feedbackKind,
+  isSoraniDialect,
+  nextLaunch,
+  pairKey,
+  praiseFor,
+  practisableMistakes,
+  reactionDelayMs,
+  typedHint,
+  verdictMoment,
+  verdictVoice,
+  type NewWord,
+  type ResumeMemory,
+  type SpeakerId,
+  type TypedHint,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { GrammarTips } from '../grammar/GrammarTips';
@@ -15,13 +30,15 @@ import { SlideSwap } from '../theme/SlideSwap';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { useHardwareBack } from '../navigation/hardwareBack';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { useModalSlide } from '../a11y/useReducedMotion';
+import { useModalSlide, useReducedMotion } from '../a11y/useReducedMotion';
 import { encodeAnswer } from './answers';
 import { BADGE, NewWordBadge } from './components/AskParts';
 import { ExerciseSlide } from './components/ExerciseSlide';
 import { FeedbackFooter } from './components/FeedbackFooter';
 import { knownVoice, type CharacterReaction } from '../characters/SpeakingCharacter';
 import { conversationCast } from '../characters/ConversationStage';
+import { hushReactions, sayReactionLater, stopReaction } from '../characters/reactions';
+import { autoplayOn } from '../feedback/autoplayPref';
 import { LessonResults } from './components/LessonResults';
 import { ProgressBar } from './components/ProgressBar';
 import { RunLabel, RunMoment } from './components/RunCount';
@@ -31,7 +48,7 @@ import { NO_MOMENTS, lessonMoments, type LessonMoments, type Standing, type Stre
 import { haptic } from '../feedback/haptics';
 import { playSound } from '../feedback/sounds';
 import { AnswerQueue } from './queue';
-import type { AnswerResult, RetryResult, SelfRating, SessionResults, SessionView } from './types';
+import type { AnswerResult, Exercise, RetryResult, SelfRating, SessionResults, SessionView } from './types';
 import type { ApiClient } from '../api/client';
 import type { CourseMap } from '../coursemap/types';
 import { useI18n } from '../i18n/I18nContext';
@@ -280,6 +297,10 @@ function SessionPlayerBody({
   // this time (when Hevalo reacts where nobody else is on screen).
   const answers = useRef(0);
   const [reacting, setReacting] = useState<{ milestone: number | null; first: boolean }>({ milestone: null, first: false });
+  // The run either side of the last verdict, and who stood beside it, for its reaction line.
+  const verdictRun = useRef({ before: 0, after: 0 });
+  const beside = useRef<{ staged: boolean; standIn: boolean }>({ staged: false, standIn: false });
+  const reduceMotion = useReducedMotion();
   // The last Kurdish praise used, so the next right answer gets a different one.
   const praised = useRef<string | null>(null);
   const [praise, setPraise] = useState<string | null>(null);
@@ -326,6 +347,11 @@ function SessionPlayerBody({
   const [goalDone, setGoalDone] = useState(false);
   // "No more listening in this lesson", shown with its Undo for a few seconds after it was chosen.
   const [awayAt, setAwayAt] = useState<number | null>(null);
+  // Listening put off: the characters' reaction lines stay quiet too, as they do through a Soranî lesson.
+  const [unheard, setUnheard] = useState(false);
+  const hushed = unheard || isSoraniDialect(view.dialect);
+  useEffect(() => hushReactions(hushed), [hushed]);
+  useEffect(() => () => hushReactions(false), []);
 
   // The second tries asked so far, kept on the phone until the lesson is finished.
   useEffect(() => {
@@ -443,7 +469,9 @@ function SessionPlayerBody({
   // A verdict arriving: haptic and sound (`feelAnswer`), the run updated, and its reaction chosen: a run milestone,
   // Hevalo on the first answer, or Kurdish praise for a right one.
   const heard = (feedback: Pick<Feedback, 'exerciseType' | 'accepted' | 'verdict'>): void => {
+    const before = run.current;
     feelAnswer(feedback, run);
+    verdictRun.current = { before, after: run.current };
     setInARow(run.current);
     const right = feedbackKind(feedback) === 'correct';
     setReacting({ milestone: right ? runMilestone(run.current) : null, first: answers.current === 0 });
@@ -457,7 +485,30 @@ function SessionPlayerBody({
   const putOff = (type: PutAwayType): void => {
     dispatch({ type: 'SKIP', all: type });
     setAwayAt(Date.now());
+    if (type === 'listening') setUnheard(true);
   };
+
+  // A line from whoever stands beside the verdict (shared reactions.ts), after its own recording; going on stops it.
+  useEffect(() => {
+    const fb = state.feedback;
+    if (!fb) return;
+    const { before, after } = verdictRun.current;
+    const spoken = fb.exerciseType === 'speaking';
+    const said = verdictMoment({ accepted: fb.accepted, spoken, run: after, before });
+    const { staged, standIn } = beside.current;
+    // Beside the verdict: Hevalo at his window, the model's speaker over "Hear it", or Hevalo's portrait; else whoever is on the stage.
+    const model = fb.modelAudioUrl && !staged ? knownVoice(fb.modelAudioVoice) : null;
+    const by = verdictVoice({ shown: standIn ? 'hevalo' : model ? model.speaker : staged && ex ? stageSpeaker(ex) : 'hevalo', staged });
+    if (!said || !by || isSoraniDialect(ex?.dialect ?? view.dialect)) return;
+    // The answer's own recording, when it plays by itself, is heard first.
+    const modelDue = !!fb.modelAudioUrl && !spoken && autoplayOn();
+    const cancel = sayReactionLater(reactionDelayMs('verdict', reduceMotion), { moment: said, ...by }, modelDue);
+    return () => {
+      cancel();
+      stopReaction();
+    };
+    // Once per verdict.
+  }, [state.feedback]);
 
   const check = useCallback(async () => {
     if (!ex || !draft || submitting) return;
@@ -611,6 +662,7 @@ function SessionPlayerBody({
         : reacting.first || reacting.milestone !== null
           ? 'cheer'
           : null;
+  beside.current = { staged, standIn: standIn !== null };
   // The kind of slip a typed answer was, when it was a single one (shared `typedHint`).
   const typed = fb?.exerciseType === 'translate' || fb?.exerciseType === 'writing' || fb?.exerciseType === 'listening';
   const hint =
@@ -745,6 +797,7 @@ function SessionPlayerBody({
                     label: t(state.putAway.type === 'listening' ? 'lesson.skipAll.listening' : 'lesson.skipAll.speaking'),
                     onUndo: () => {
                       dispatch({ type: 'UNSKIP' });
+                      if (state.putAway?.type === 'listening') setUnheard(false);
                       setAwayAt(null);
                     },
                   }
@@ -794,6 +847,16 @@ function Stuck({ title, detail, onRetry, onExit }: { title: string; detail?: str
  * climbs a step per answer in a row (`run`, via shared `nextRun`); a miss resets the run, and a spoken answer leaves
  * it unchanged.
  */
+/**
+ * Who stands on an exercise's own stage (PromptScene in components/SpeechBubble.tsx, the listening and speaking
+ * stages): its recording's character, else Hevalo at his window; a conversation has a cast, so nobody alone.
+ */
+function stageSpeaker(ex: Exercise): SpeakerId | null {
+  if (ex.type === 'conversation') return null;
+  if (ex.type === 'translate') return 'hevalo';
+  return knownVoice(ex.type === 'listening' ? ex.audioVoice : ex.modelAudioVoice)?.speaker ?? 'hevalo';
+}
+
 function feelAnswer(feedback: Pick<Feedback, 'exerciseType' | 'accepted'>, run: { current: number }): void {
   const feel = answerFeel(feedback.exerciseType, feedback.accepted);
   if (feel) haptic(feel);

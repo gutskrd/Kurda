@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Modal, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { leagueWin, tierAbove, tierBelow, type LeagueTier, type LeagueWeekResult } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { sayReactionLater } from '../characters/reactions';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
@@ -101,6 +102,12 @@ export function LeagueCeremony({
     };
     // Plays as the stage opens; the Reduce Motion answer can arrive a moment late, and then it replays that way.
   }, [plan, burstKind, slide, words, ring, burst]);
+
+  // Moving up, Xezal says a word for it once the words have landed (shared reactions.ts).
+  useEffect(
+    () => (burstKind ? sayReactionLater((plan.travel ? LAND_MS + 120 : 0) + plan.detailsMs, { moment: 'promoted' }) : undefined),
+    [burstKind, plan],
+  );
 
   const line = ceremonyLine(t, week, ceremony);
   const title = t('leagues.ceremony.inLeague', { tier: leagueName(t, now) });

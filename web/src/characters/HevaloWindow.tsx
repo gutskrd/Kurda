@@ -1,14 +1,17 @@
 import { useId, useMemo, useState } from 'react';
 import { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt } from '@kurda/shared';
 import { prefersReducedMotion } from '../lib/motion';
+import { soundPlayer } from '../lib/sound';
+import { useDrawnReaction } from './reactions';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import './characters.css';
 
 /**
  * Hevalo putting his head and neck in over a window sill, as on the phone (shared `windowArt`). As the window appears
  * he rises over the sill on a spring with his shadow (stylesheet animations), or is simply there under Reduce Motion.
- * He blinks, glances, follows the pointer and reacts to `reaction`. The window is drawn for light and dark and
- * mirrored on a right-to-left page. Decorative, since the words beside him say everything.
+ * He blinks, glances, follows the pointer, reacts to `reaction` and says his reaction lines (characters/reactions.ts).
+ * The window is drawn for light and dark and mirrored on a right-to-left page. Decorative, since the words beside him
+ * say everything.
  */
 export function HevaloWindow({
   size,
@@ -24,6 +27,7 @@ export function HevaloWindow({
   className?: string;
 }): React.JSX.Element {
   const id = `hw${useId().replace(/[^A-Za-z0-9]/g, '')}`;
+  const said = useDrawnReaction('hevalo');
   // Under Reduce Motion at mount he is simply there; the stylesheet keeps him still if it is turned on later.
   const [still] = useState(prefersReducedMotion);
   const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
@@ -66,7 +70,17 @@ export function HevaloWindow({
             transformOrigin: `${through.x * 100}% ${through.y * 100}%`,
           }}
         >
-          <SpeakingCharacter speaker="hevalo" audio={null} crop="head" size={figure.height * size} decorative reaction={reaction} />
+          <SpeakingCharacter
+            speaker="hevalo"
+            audio={said ? soundPlayer : null}
+            src={said?.src ?? null}
+            voice={said?.voice ?? null}
+            text={said?.line.ku ?? null}
+            crop="head"
+            size={figure.height * size}
+            decorative
+            reaction={reaction}
+          />
         </span>
       </span>
       {layer('front')}

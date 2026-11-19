@@ -6,7 +6,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { conversationLineKey, lessonAudioKey } from '@kurda/shared';
+import { conversationLineKey, lessonAudioKey, reactionKey, reactionLine } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
@@ -46,6 +46,8 @@ interface Line {
   voice: string;
   meaning: string | null;
   conversation: { id: string; part: number } | null;
+  reaction: { character: string; id: string; moment: string } | null;
+  cue: string | null;
   before: { name: string | null; text: string } | null;
   places: Array<{ label: string; status: string }>;
   take: { url: string; speaker: string | null; by: string | null } | null;
@@ -89,7 +91,9 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
   const hamoLine = conversationLineKey(id, 0, conversation.lines[0]!.text);
   const xezoLine = conversationLineKey(id, 1, conversation.lines[1]!.text);
   const narrated = `Baran ${s} li baxçe dilîze.`;
-  const ourKeys = [hamoLine, xezoLine, lessonAudioKey(narrated)];
+  const cheer = reactionLine('hevalo', 'run-3-1')!;
+  const kind = reactionLine('xezo', 'miss-1')!;
+  const ourKeys = [hamoLine, xezoLine, lessonAudioKey(narrated), reactionKey(cheer), reactionKey(kind)];
 
   async function register(name: string, ip: string, roles: string): Promise<{ token: string; userId: string }> {
     const res = await app.inject({
@@ -265,6 +269,43 @@ describe.skipIf(!DATABASE_URL)('recording by person (integration)', () => {
     expect(letter.json().code).toBe('NOT_YOUR_LINE');
     const done = await allLines(actor, 'xezo', '&status=done');
     expect(done.find((l) => l.key === xezoLine)?.take).toMatchObject({ speaker: 'xezo' });
+  });
+
+  it('records the characters’ reactions under their own voices and hands the recorded ones to the apps', async () => {
+    const heard = async () => (await app.inject({ method: 'GET', url: '/reactions' })).json().takes as Array<{ character: string; id: string; src: string; voice: { speaker: string } | null }>;
+    const before = await heard();
+    expect(before.some((t) => t.id === cheer.id && t.character === 'hevalo')).toBe(false);
+
+    const his = (await allLines(editor, 'hevalo')).find((l) => l.key === reactionKey(cheer))!;
+    expect(his).toMatchObject({ text: 'Aferîn!', meaning: 'Well done!', reaction: { character: 'hevalo', id: 'run-3-1', moment: 'run-3' }, take: null });
+    expect(his.cue).toMatch(/three answers right/);
+    // an editor records it, naming any speaker: it is still Hevalo’s
+    const saved = await record(editor, 'Aferîn!', `&reaction=hevalo:run-3-1&speaker=hamo`, 6);
+    expect(saved.statusCode, saved.body).toBe(201);
+    expect(saved.json()).toMatchObject({ key: reactionKey(cheer), speaker: 'hevalo' });
+    // the same words without the reaction are a plain text's take, which nothing here touches
+    expect((await pool.query(`SELECT 1 FROM lesson_audio WHERE key = $1`, [lessonAudioKey('Aferîn!')])).rowCount).toBe(0);
+    // only the catalogue's words, for a line it has
+    expect((await record(editor, 'Pir baş e!', `&reaction=hevalo:run-3-1`, 7)).json().code).toBe('REACTION_TEXT');
+    expect((await record(editor, 'Aferîn!', `&reaction=hamo:run-3-1`, 7)).json().code).toBe('UNKNOWN_REACTION');
+    expect((await record(editor, 'Aferîn!', `&reaction=hevalo:run-3-1&line=${id}:0`, 7)).json().code).toBe('INVALID_LINE');
+
+    // the voice actor records Xezal's, and never Hevalo's
+    expect((await record(actor, kind.ku, `&reaction=xezo:miss-1&speaker=xezo`, 8)).statusCode).toBe(201);
+    expect((await record(actor, 'Aferîn!', `&reaction=hevalo:run-3-1&speaker=xezo`, 9)).json().code).toBe('NOT_YOUR_LINE');
+    expect((await allLines(actor, 'xezo', '&status=done')).find((l) => l.key === reactionKey(kind))?.take).toMatchObject({ speaker: 'xezo' });
+
+    // the apps hear both at once, each in its own character's voice
+    const after = await heard();
+    expect(after.find((t) => t.character === 'hevalo' && t.id === 'run-3-1')).toMatchObject({ src: saved.json().url, voice: { speaker: 'hevalo' } });
+    expect(after.find((t) => t.character === 'xezo' && t.id === 'miss-1')).toMatchObject({ voice: { speaker: 'xezo' } });
+    // the studio does not list them as recordings no lesson uses
+    const studio = (await get(editor, '/admin/lesson-audio')).json().items as Array<{ key: string }>;
+    expect(studio.some((i) => i.key === reactionKey(cheer))).toBe(false);
+    // and a removal is heard at once too
+    const gone = await app.inject({ method: 'DELETE', url: `/admin/lesson-audio?key=${encodeURIComponent(reactionKey(cheer))}`, headers: { authorization: `Bearer ${editor}` } });
+    expect(gone.statusCode, gone.body).toBe(200);
+    expect((await heard()).some((t) => t.character === 'hevalo' && t.id === 'run-3-1')).toBe(false);
   });
 
   it('keeps the people page and the links to the team', async () => {

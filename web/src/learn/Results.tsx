@@ -6,10 +6,12 @@ import {
   RESULTS_TIMING,
   STREAK_LEAVE_MS,
   celebrationPlan,
+  endMoment,
   flameMoment,
   justDone,
   practisableMistakes,
   questRows,
+  reactionDelayMs,
   resultsActions,
   resultsGrade,
   resultsOutcome,
@@ -25,6 +27,7 @@ import {
   type ResultsOutcome,
 } from '@kurda/shared';
 import { HevaloWindow } from '../characters/HevaloWindow';
+import { sayReactionLater } from '../characters/reactions';
 import { Button } from '../components/Button';
 import { AccuracyIcon, CheckIcon, StarIcon, TimerIcon, UpIcon, XpIcon } from '../components/icons';
 import { WaterDrop } from '../tree/TreeArt';
@@ -134,8 +137,10 @@ export function Results({
     const id = window.setTimeout(() => setCheer(true), celebrationPlan(prefersReducedMotion()).hapticAtMs);
     return () => window.clearTimeout(id);
   }, []);
-  // Heard as it opens: four notes rising to the octave (lib/sounds.ts).
+  // Heard as it opens: four notes rising to the octave (lib/sounds.ts), then Hevalo's word once the title has landed.
   useEffect(() => playLessonSound('complete'), []);
+  const [perfect] = useState(moments.perfect === true);
+  useEffect(() => sayReactionLater(reactionDelayMs('celebration', prefersReducedMotion()), { moment: endMoment(perfect), character: 'hevalo', drawn: true }), [perfect]);
 
   const mistakes = results.mistakes ?? [];
   const practise = practisableMistakes(mistakes, exercises);

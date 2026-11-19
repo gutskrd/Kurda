@@ -16,6 +16,8 @@ import {
   smoothPoses,
   streakMilestone,
   streakReveal,
+  reactionDelayMs,
+  streakMoment,
   streakSpeech,
   streakWeek,
   weekStartsOn,
@@ -28,6 +30,7 @@ import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
 import { haptic } from '../../feedback/haptics';
 import { playSound } from '../../feedback/sounds';
+import { sayReactionLater } from '../../characters/reactions';
 import { useI18n } from '../../i18n/I18nContext';
 import { formatNumber } from '../../i18n/format';
 import type { TranslationKey } from '../../i18n/translations';
@@ -507,6 +510,10 @@ function StreakWeekScreen({
     if (!afterFlame) AccessibilityInfo.announceForAccessibility?.(title);
     // Only once, as it opens.
   }, []);
+
+  // Hevalo says the day's word aloud after the medal's chime (shared reactions.ts): a first day, a return, a best, a day kept.
+  const [mood] = useState(speech.mood);
+  useEffect(() => sayReactionLater(plan.burstAtMs + reactionDelayMs('verdict', reduce), { moment: streakMoment(mood), character: 'hevalo' }), [plan, mood, reduce]);
 
   useEffect(() => {
     clock.setValue(0);

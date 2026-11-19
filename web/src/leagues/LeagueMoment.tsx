@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { ART_LEAGUE_METAL, BURST, isLeagueTier, leagueWin, type LeagueWeekResult } from '@kurda/shared';
+import { useEffect, useState } from 'react';
+import { ART_LEAGUE_METAL, BURST, isLeagueTier, leagueWin, reactionDelayMs, type LeagueWeekResult } from '@kurda/shared';
+import { sayReactionLater } from '../characters/reactions';
+import { prefersReducedMotion } from '../lib/motion';
 import { useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
 import { Celebration, useCelebrationHold } from '../ranks/Celebration';
@@ -24,14 +26,16 @@ function seenWeek(): string | null {
 
 /**
  * Moving up a league, celebrated once per week in this browser the first time the league is opened after the week
- * closes (Monday 00:00 UTC). Staying or going down gets no celebration. The Share button (shared `leagueWin`) names
- * the league and place and nothing of the others in the group.
+ * closes (Monday 00:00 UTC), with a word from Xezal. Staying or going down gets no celebration. The Share button (shared
+ * `leagueWin`) names the league and place and nothing of the others in the group.
  */
 export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefined }): React.JSX.Element | null {
   const t = useT();
   const promoted = isPromotion(week);
   const [open, setOpen] = useState(() => promoted && seenWeek() !== week.weekKey);
   useCelebrationHold(open);
+  const cheered = promoted && open;
+  useEffect(() => (cheered ? sayReactionLater(reactionDelayMs('celebration', prefersReducedMotion()), { moment: 'promoted' }) : undefined), [cheered]);
   if (!promoted || !open) return null;
   const tier = (week.tierAfter ?? week.tier)!;
   const metal = ART_LEAGUE_METAL[tier];
