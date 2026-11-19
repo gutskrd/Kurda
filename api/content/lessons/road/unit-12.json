@@ -1199,7 +1199,8 @@
                         "ku": "Mala te ava!",
                         "en": "Thank you!"
                       }
-                    ]
+                    ],
+                    "cue": "what a guest says to the host"
                   }
                 },
                 {
@@ -1324,7 +1325,7 @@
                     "voice": "hamo",
                     "prompt": "Kanûna Pêşîn e, û ji nişka ve kesek bi dilekî giran li derî dixe.",
                     "options": [
-                      "It’s December, and suddenly someone knocks hesitantly at the door.",
+                      "It’s December, and suddenly someone knocks at the door, heavy-hearted.",
                       "It’s December, and suddenly the wolf comes in through the window.",
                       "It’s January, and suddenly someone opens the door."
                     ],
@@ -1898,7 +1899,8 @@
                       "Welcome to our house! Please sit down!",
                       "Goodbye! Go well!"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "what a guest says to the host"
                   }
                 },
                 {
@@ -3799,7 +3801,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "Hevaltiya Sêvanê her û her di dilê min de ye.",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Hevaltiya Sêvanê her û her di dilê min de ye.",
                     "options": [
                       "Sêvan’s friendship is in my heart for ever.",
@@ -3894,7 +3896,7 @@
                   "payload": {
                     "ask": "to-english",
                     "say": "Hevaltiya Sêvanê her û her di dilê min de ye.",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Hevaltiya Sêvanê her û her di dilê min de ye.",
                     "accepted": [
                       "Sêvan’s friendship is in my heart for ever."
@@ -3951,7 +3953,7 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Sêvan’s friendship is in my heart for ever.",
                     "accepted": [
                       "Hevaltiya Sêvanê her û her di dilê min de ye."

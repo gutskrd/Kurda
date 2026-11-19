@@ -2408,13 +2408,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Em ji deştê dihatin vê mala kevirî.",
+                    "say": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
                     "voice": "hamo",
-                    "prompt": "Em ji deştê dihatin vê mala kevirî.",
+                    "prompt": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
                     "options": [
-                      "We used to come up from the plain to this stone house.",
-                      "We used to go down to the plain from this house.",
-                      "We came from the town to this wooden house."
+                      "Dapîr says: We used to come up from the plain to this stone house.",
+                      "Dapîr says: We used to go down to the plain from this house.",
+                      "Dapîr says: We came from the town to this wooden house."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2456,9 +2456,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Em ji deştê dihatin vê mala kevirî.",
+                    "say": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
                     "voice": "hamo",
-                    "prompt": "Em ji ___ dihatin vê mala kevirî.",
+                    "prompt": "Dapîr dibêje: Em ji ___ dihatin vê mala kevirî.",
                     "options": [
                       "deştê",
                       "deşt",
@@ -2506,7 +2506,7 @@
                     "prompt": "She worked all the time, and stayed with the lambs all day.",
                     "options": [
                       "Ew berdewam dixebitî, û hemû rojê bi berxan re dima.",
-                      "Em ji deştê dihatin vê mala kevirî.",
+                      "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
                       "Nerîtek bû: wê berdewam li ser banî keşk çêdikir."
                     ],
                     "correctIndex": 0
@@ -2547,8 +2547,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Em ji deştê dihatin vê mala kevirî.",
-                    "reference": "Em ji deştê dihatin vê mala kevirî."
+                    "prompt": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
+                    "reference": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî."
                   }
                 },
                 {
@@ -3236,9 +3236,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Em ji deştê dihatin vê mala kevirî.",
+                    "say": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
                     "voice": "hamo",
-                    "prompt": "Em ji ___ dihatin vê mala kevirî.",
+                    "prompt": "Dapîr dibêje: Em ji ___ dihatin vê mala kevirî.",
                     "options": [
                       "deştê",
                       "deşt",
@@ -4509,7 +4509,7 @@
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Rest, take your medicine, and get well!",
                     "accepted": [
                       "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",

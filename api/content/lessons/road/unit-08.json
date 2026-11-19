@@ -29,7 +29,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",
                     "options": [
                       "Rest, take your medicine, and get well!",
@@ -102,7 +102,7 @@
                   "payload": {
                     "ask": "missing",
                     "say": "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Bêhna xwe vede, ___ xwe bixwe, û sax bibe!",
                     "options": [
                       "dermanê",
@@ -224,7 +224,7 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Rest, take your medicine, and get well!",
                     "accepted": [
                       "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",
@@ -539,7 +539,7 @@
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "accepted": [
                       "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!"
                     ]
@@ -797,8 +797,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e. Tu dizanî, rojeke havînê li Kobaniyê diranê min gelek diêşe.",
-                        "en": "Good. You know, one summer’s day in Kobanî my tooth hurts terribly."
+                        "text": "Na! Ez gelek baş im! Tu dizanî, rojeke havînê li Kobaniyê diranê min gelek diêşe.",
+                        "en": "No! I’m very well! You know, one summer’s day in Kobanî my tooth hurts terribly."
                       },
                       {
                         "speaker": 0,
@@ -943,7 +943,7 @@
                   "payload": {
                     "ask": "missing",
                     "say": "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Bêhna xwe vede, ___ xwe bixwe, û sax bibe!",
                     "options": [
                       "dermanê",
@@ -1736,7 +1736,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "Em şûşeyên hingiv diparêzin.",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Em şûşeyên hingiv diparêzin.",
                     "options": [
                       "We’re guarding the jars of honey.",
@@ -1784,7 +1784,7 @@
                   "payload": {
                     "ask": "missing",
                     "say": "Em şûşeyên hingiv diparêzin.",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Em ___ hingiv diparêzin.",
                     "options": [
                       "şûşeyên",
@@ -1976,7 +1976,7 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "We’re guarding the jars of honey.",
                     "accepted": [
                       "Em şûşeyên hingiv diparêzin."
@@ -2025,7 +2025,7 @@
                   "payload": {
                     "ask": "to-english",
                     "say": "Em şûşeyên hingiv diparêzin.",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Em şûşeyên hingiv diparêzin.",
                     "accepted": [
                       "We’re guarding the jars of honey.",
@@ -2212,7 +2212,7 @@
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Em şûşeyên hingiv diparêzin.",
                     "reference": "Em şûşeyên hingiv diparêzin."
                   }
@@ -4200,8 +4200,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Tu çi dikî?",
-                        "en": "What do you do?"
+                        "text": "Û bavê te çi dibêje?",
+                        "en": "And what does your father say?"
                       },
                       {
                         "speaker": 0,
@@ -4485,8 +4485,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Sibe em ê bi minîbûsê biçin bajêr. Bilêt li cem min in!",
-                        "en": "Tomorrow we’ll take the minibus into town. I have the tickets!"
+                        "text": "Baran dibêje: Sibe ez ê bibêjim.",
+                        "en": "Baran says: I’ll tell you tomorrow."
                       },
                       {
                         "speaker": 1,
@@ -4526,7 +4526,7 @@
                   "payload": {
                     "ask": "missing",
                     "say": "Bêhna xwe vede, dermanê xwe bixwe, û sax bibe!",
-                    "voice": "hamo",
+                    "voice": "xezo",
                     "prompt": "Bêhna xwe vede, ___ xwe bixwe, û sax bibe!",
                     "options": [
                       "dermanê",

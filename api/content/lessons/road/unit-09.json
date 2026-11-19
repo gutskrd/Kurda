@@ -101,13 +101,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Duh ez çûm çem.",
+                    "say": "Baran dibêje: Duh ez çûm çem.",
                     "voice": "hamo",
-                    "prompt": "Duh ez çûm çem.",
+                    "prompt": "Baran dibêje: Duh ez çûm çem.",
                     "options": [
-                      "Yesterday I went to the river.",
-                      "Yesterday I came back from the river.",
-                      "Tomorrow I’m going to the river."
+                      "Baran says: Yesterday I went to the river.",
+                      "Baran says: Yesterday I came back from the river.",
+                      "Baran says: Tomorrow I’m going to the river."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -162,11 +162,11 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Duh ez çûm çem.",
+                    "say": "Baran dibêje: Duh ez çûm çem.",
                     "voice": "hamo",
-                    "prompt": "Duh ez çûm çem.",
+                    "prompt": "Baran dibêje: Duh ez çûm çem.",
                     "accepted": [
-                      "Yesterday I went to the river."
+                      "Baran says: Yesterday I went to the river."
                     ]
                   }
                 },
@@ -270,9 +270,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Yesterday I went to the river.",
+                    "prompt": "Baran says: Yesterday I went to the river.",
                     "accepted": [
-                      "Duh ez çûm çem."
+                      "Baran dibêje: Duh ez çûm çem."
                     ]
                   }
                 },
@@ -1056,9 +1056,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Yesterday I went to the river.",
+                    "prompt": "Baran says: Yesterday I went to the river.",
                     "accepted": [
-                      "Duh ez çûm çem."
+                      "Baran dibêje: Duh ez çûm çem."
                     ]
                   }
                 },

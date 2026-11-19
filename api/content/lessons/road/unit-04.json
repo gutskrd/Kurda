@@ -3522,7 +3522,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "Ez nizanim! Ez hîç nizanim!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Ez nizanim! Ez hîç nizanim!",
                     "options": [
                       "I don’t know! I have no idea at all!",
@@ -3564,7 +3564,7 @@
                   "payload": {
                     "ask": "missing",
                     "say": "Ez nizanim! Ez hîç nizanim!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Ez nizanim! Ez ___ nizanim!",
                     "options": [
                       "hîç",
@@ -3645,7 +3645,7 @@
                   "payload": {
                     "ask": "to-english",
                     "say": "Ez nizanim! Ez hîç nizanim!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Ez nizanim! Ez hîç nizanim!",
                     "accepted": [
                       "I don’t know! I have no idea at all!",
@@ -3718,7 +3718,7 @@
                   "type": "speaking",
                   "payload": {
                     "ask": "repeat",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Ez nizanim! Ez hîç nizanim!",
                     "reference": "Ez nizanim! Ez hîç nizanim!"
                   }
@@ -3834,7 +3834,7 @@
                   "payload": {
                     "ask": "meaning",
                     "say": "Na, ev şaş e!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Na, ev şaş e!",
                     "options": [
                       "No, that’s wrong!",
@@ -3895,7 +3895,7 @@
                   "payload": {
                     "ask": "to-english",
                     "say": "Na, ev şaş e!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Na, ev şaş e!",
                     "accepted": [
                       "No, that’s wrong!",
@@ -3959,7 +3959,7 @@
                   "type": "listening",
                   "payload": {
                     "ask": "hear",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "accepted": [
                       "Ez nizanim! Ez hîç nizanim!"
                     ]
@@ -3970,7 +3970,7 @@
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "No, that’s wrong!",
                     "accepted": [
                       "Na, ev şaş e!"
@@ -4511,7 +4511,7 @@
                   "payload": {
                     "ask": "missing",
                     "say": "Ez nizanim! Ez hîç nizanim!",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "Ez nizanim! Ez ___ nizanim!",
                     "options": [
                       "hîç",
@@ -4548,7 +4548,7 @@
                   "type": "writing",
                   "payload": {
                     "ask": "to-kurdish",
-                    "voice": "hamo",
+                    "voice": "hevalo",
                     "prompt": "No, that’s wrong!",
                     "accepted": [
                       "Na, ev şaş e!"
