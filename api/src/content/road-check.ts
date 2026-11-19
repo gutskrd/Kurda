@@ -426,27 +426,28 @@ export const GRAMMAR_MD_MAX = 1200;
  */
 /**
  * How many new items a lesson introduces, growing along the road: a meet or build lesson brings its chapter's number,
- * give or take one; a talk lesson three to five; a review lesson none.
+ * give or take one; a talk lesson three to five (`talk` raises that most); a review lesson none. Where a cap or `talk`
+ * is above the road's pattern, the plan's doubts say which of the owner's choices needed it.
  */
-export const ROAD_BUDGET: Record<number, { meet: number; build: number; cap: number }> = {
+export const ROAD_BUDGET: Record<number, { meet: number; build: number; cap: number; talk?: number }> = {
   1: { meet: 4, build: 4, cap: 48 },
   2: { meet: 5, build: 5, cap: 57 },
-  3: { meet: 5, build: 5, cap: 56 },
+  3: { meet: 5, build: 5, cap: 58, talk: 6 },
   4: { meet: 6, build: 6, cap: 64 },
   5: { meet: 6, build: 6, cap: 64 },
   6: { meet: 6, build: 6, cap: 64 },
-  7: { meet: 7, build: 7, cap: 72 },
-  8: { meet: 7, build: 7, cap: 72 },
+  7: { meet: 7, build: 7, cap: 73 },
+  8: { meet: 7, build: 7, cap: 73 },
   9: { meet: 7, build: 7, cap: 72 },
   10: { meet: 8, build: 7, cap: 76 },
-  11: { meet: 8, build: 7, cap: 76 },
+  11: { meet: 8, build: 7, cap: 77 },
   12: { meet: 6, build: 6, cap: 64 },
 };
 
 function newItemsAllowed(unit: number, focus: RoadFocus): [number, number] {
   const b = ROAD_BUDGET[unit];
   if (focus === 'review') return [0, 0];
-  if (focus === 'talk' || !b) return [3, 5];
+  if (focus === 'talk' || !b) return [3, b?.talk ?? 5];
   const n = b[focus];
   return [n - 1, n + 1];
 }

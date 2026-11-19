@@ -1489,9 +1489,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "say": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "voice": "hamo",
-                    "prompt": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "prompt": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "options": [
                       "Hêvî read her book, Baran washed the glasses, and I wrote.",
                       "Baran washed the glasses and put them on a stone; Bozo only wanted grass.",
@@ -1589,9 +1589,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "say": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "voice": "hamo",
-                    "prompt": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min ___.",
+                    "prompt": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min ___.",
                     "options": [
                       "nivîsî",
                       "nivîsîn",
@@ -1657,7 +1657,7 @@
                     "options": [
                       "Nan gelek tenik e! Nazê ew ji ser sêlê girt.",
                       "Dapîrê hejdeh nan pijandin, û min yek şewitand!",
-                      "Gelek nebaş e. Ji kerema xwe, çayeke germ bîne, û hinek hingiv."
+                      "Gelek dijwar e. Ji kerema xwe, çayeke germ bîne, û hinek hingiv."
                     ],
                     "correctIndex": 0
                   }
@@ -1686,8 +1686,8 @@
                     "voice": "hamo",
                     "prompt": "Hêvî read her book, Baran washed the glasses, and I wrote.",
                     "accepted": [
-                      "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
-                      "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin û min nivîsî."
+                      "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
+                      "Hêviyê pirtûka xwe xwend, Baran piyan şûştin û min nivîsî."
                     ]
                   }
                 },
@@ -1729,9 +1729,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "say": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "voice": "hamo",
-                    "prompt": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "prompt": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "accepted": [
                       "Hêvî read her book, Baran washed the glasses, and I wrote."
                     ]
@@ -1927,9 +1927,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "say": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "voice": "hamo",
-                    "prompt": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "prompt": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "options": [
                       "Hêvî read her book, Baran washed the glasses, and I wrote.",
                       "I wrote in my book: today I made thin bread, and my hand hurts.",
@@ -2134,9 +2134,9 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "say": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "voice": "hamo",
-                    "prompt": "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                    "prompt": "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                     "accepted": [
                       "Hêvî read her book, Baran washed the glasses, and I wrote."
                     ]
@@ -2367,10 +2367,6 @@
                       {
                         "ku": "nerît",
                         "en": "custom, tradition"
-                      },
-                      {
-                        "ku": "berdewam",
-                        "en": "continuously; all the time"
                       },
                       {
                         "ku": "keşk",
@@ -3725,7 +3721,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bavê min dibêje ku ev jiyan e, û jiyan didomîne."
+                      "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike."
                     ]
                   }
                 },

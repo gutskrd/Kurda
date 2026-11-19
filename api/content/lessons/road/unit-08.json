@@ -2095,7 +2095,7 @@
                     "prompt": "His advice is that I walk a little every day.",
                     "options": [
                       "Şîreta wî ev e, ku ez her roj hinek bimeşim.",
-                      "Bavê min dibêje ku ev jiyan e, û jiyan didomîne.",
+                      "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike.",
                       "Ev gir e. Li Newrozê, em li vir seyranê dikin û agir vêdixin."
                     ],
                     "correctIndex": 0
@@ -2708,9 +2708,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Şûşeya min a çayê taybet e.",
+                    "say": "Piyana min a çayê taybet e.",
                     "voice": "hamo",
-                    "prompt": "Şûşeya min a çayê taybet e.",
+                    "prompt": "Piyana min a çayê taybet e.",
                     "options": [
                       "My tea glass is special.",
                       "My tea glass is broken.",
@@ -2721,6 +2721,10 @@
                       {
                         "ku": "taybet",
                         "en": "special"
+                      },
+                      {
+                        "ku": "piyan",
+                        "en": "glass (for tea)"
                       }
                     ]
                   }
@@ -2736,7 +2740,7 @@
                     "options": [
                       "Sêv!",
                       "Şekir!",
-                      "Penîr!"
+                      "Piyan!"
                     ],
                     "correctIndex": 0,
                     "cue": "answer for Hevalo"
@@ -2750,7 +2754,7 @@
                     "voice": "hamo",
                     "prompt": "My tea glass is special.",
                     "options": [
-                      "Şûşeya min a çayê taybet e.",
+                      "Piyana min a çayê taybet e.",
                       "Ew ji hemûyan mezintir e, ji bo bêtir şekir!",
                       "Tu kîjan stranê hildibijêrî? Strana min a bijare ev e."
                     ],
@@ -2861,7 +2865,7 @@
                     "voice": "hamo",
                     "prompt": "My tea glass is special.",
                     "accepted": [
-                      "Şûşeya min a çayê taybet e."
+                      "Piyana min a çayê taybet e."
                     ]
                   }
                 }
@@ -3224,7 +3228,7 @@
                     "options": [
                       "Tu kîjan stranê hildibijêrî? Strana min a bijare ev e.",
                       "Tu kîjan stran hildibijêrî? Strana min a bijare ev e.",
-                      "Şûşeya min a çayê taybet e."
+                      "Piyana min a çayê taybet e."
                     ],
                     "correctIndex": 0
                   }
@@ -3268,7 +3272,7 @@
                     "options": [
                       "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
                       "Spas! Bi serên ketin xweş e, lê heval xweştir in.",
-                      "Bi ser ketin ne her tişt e."
+                      "Em şûşeyên hingiv diparêzin."
                     ],
                     "correctIndex": 0
                   }
@@ -3953,7 +3957,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Şûşeya min a çayê taybet e."
+                      "Piyana min a çayê taybet e."
                     ]
                   }
                 },
@@ -4271,7 +4275,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Êş gelek nebaş e."
+                      "Êş gelek dijwar e."
                     ]
                   }
                 },

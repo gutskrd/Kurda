@@ -1227,7 +1227,14 @@
       "translations": {
         "en": "Winter is going, and the snow on the mountain is melting. Newroz is near! Baran gathers firewood, Nazê sews new clothes, and Dapîr bakes bread in the tenûr. And me? I keep an eye on the preparations, with a glass of tea.\n\nMy speech is ready: a great speech. But in the morning it isn’t on the table. Hevalo looks at me, and chews something white.\n\nOn the evening before Newroz the moon is big, and the sky is full of stars. There’s a light on the road, then two lights. They’re coming from Kobanî! My father and my mother are at the blue gate, and my mother asks: “Are you hungry?”\n\nIn the morning it rains, then the sun comes out. This rain is a blessing! The whole village goes up the hill. I put on the traditional suit and the green sash, and I lead the govend. My knees say no, but I say yes.\n\nIn the evening I light the fire, and the children jump over it. I jump too, with my hand on my moustache. Then my father takes his old flute and plays the song of Lorîn and me. He gives me the flute and says: “Keep the song going, my son.” There are tears in my mother’s eyes, but she says it’s the smoke. I say it’s the smoke too.\n\nI play the flute. Hevalo runs off, and everyone laughs and cries. This is life.\n\nIn the morning my mother and father go back to Kobanî. I want to get up, but my back hurts! My mother phones from the road and asks how my back is. I say it’s a little better. And that is a little bit true."
       },
-      "glossary": [],
+      "glossary": [
+        {
+          "term": "bidomîne",
+          "meanings": {
+            "en": "keep (it) going"
+          }
+        }
+      ],
       "questions": [
         {
           "kind": "detail",
@@ -1326,7 +1333,7 @@
           "options": [
             "Tiştekî baş",
             "Tiştekî sar",
-            "Tiştekî nebaş"
+            "Tiştekî dijwar"
           ],
           "correctIndex": 0,
           "explanation": "Baran dibare, û Hamo dilxweş e.",
@@ -2444,7 +2451,14 @@
       "translations": {
         "en": "Our road was a long one, wasn’t it? All winter I told my father’s tales: the wolf and the kids, the fox and the bear. Today it’s my turn to tell one. It isn’t long, because my tea is hot.\n\nDo you remember when the call came from Kobanî? My father sang the last verse: “Keep the song going, and plant a new tree.” Dapîr sang along with him, and the whole village went quiet.\n\nAfter the bus left, I went to the orchard, under the old apple tree. You know, that tree comes from my father’s apple. There I planted a sapling, for you. Hevalo watched me with his ears pricked up. I said nothing. Even my moustache said nothing.\n\nNow Hevalo sits by your sapling every day and wants apples. I tell him that the apples will come in a few years. He doesn’t believe me. He sulks, and eats an old apple from the basket.\n\nYesterday a message came from Hewlêr. Xezo writes that her pupils are learning in their mother tongue, and she asks whether Hevalo is staying away from the apples. I’ll write back: no, Xezo, he isn’t!\n\nIf you come back to Sêvan one day, knock at the blue gate. I’ll open the door, because you are not the wolf. The tea will be hot, and your sapling will be bigger. Look, Hevalo wants to come with you too. No, Hevalo. You stay with the sapling. May your road be open!"
       },
-      "glossary": [],
+      "glossary": [
+        {
+          "term": "bidomînin",
+          "meanings": {
+            "en": "keep (it) going, all of you"
+          }
+        }
+      ],
       "questions": [
         {
           "kind": "detail",

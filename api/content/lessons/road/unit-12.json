@@ -1347,7 +1347,7 @@
                     "prompt": "The guests are completely worn out, and in Sêvan hospitality is a tradition.",
                     "options": [
                       "Mêvan bi tevahî westiyayî ne, û li Sêvanê mêvandarî nerîtek e.",
-                      "Mala te ava! Xwedê ji te razî be!",
+                      "Xezoyê erkek da pola Baran.",
                       "Kanûna Pêşîn e, û ji nişka ve kesek bi dilekî giran li derî dixe."
                     ],
                     "correctIndex": 0
@@ -2788,7 +2788,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Xezoyê karek da pola Baran, û mijara wî Sêvan e."
+                      "Xezoyê erkek da pola Baran, û mijara wî Sêvan e."
                     ]
                   }
                 },

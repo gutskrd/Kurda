@@ -164,7 +164,13 @@
                       "The bread and tea are here, on the chair.",
                       "The cheese and tea are here, on the table."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "li ser",
+                        "en": "on, on top of"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2312,10 +2318,6 @@
                     "correctIndex": 0,
                     "new": [
                       {
-                        "ku": "li ser",
-                        "en": "on, on top of"
-                      },
-                      {
                         "ku": "ser",
                         "en": "head; top"
                       },
@@ -2893,11 +2895,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nîvek li Kobaniyê ye, bi Lorînê re.",
+                    "say": "Nîvek li Kobaniyê ye, li cem Lorînê.",
                     "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, bi Lorînê re.",
+                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
                     "options": [
-                      "The other half is in Kobanî, with Lorîn.",
+                      "The other half is in Kobanî, at Lorîn’s.",
                       "My family is in Kobanî.",
                       "My father is in Kobanî. My mother too."
                     ],
@@ -2906,6 +2908,10 @@
                       {
                         "ku": "nîv",
                         "en": "half"
+                      },
+                      {
+                        "ku": "li cem",
+                        "en": "at (someone’s place), with"
                       }
                     ]
                   }
@@ -2954,11 +2960,11 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Nîvek li Kobaniyê ye, bi Lorînê re.",
+                    "say": "Nîvek li Kobaniyê ye, li cem Lorînê.",
                     "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, bi Lorînê re.",
+                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
                     "accepted": [
-                      "The other half is in Kobanî, with Lorîn."
+                      "The other half is in Kobanî, at Lorîn’s."
                     ]
                   }
                 },
@@ -2981,15 +2987,21 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "say": "Nîvê din li ku ye?",
                     "voice": "hamo",
-                    "prompt": "Li bin dara gûzê kulîlk hene. Gelek xweş e!",
+                    "prompt": "Nîvê din li ku ye?",
                     "options": [
-                      "There are flowers under the walnut tree. How lovely!",
-                      "There are apples under the walnut tree. How lovely!",
-                      "There are flowers on the walnut tree. How lovely!"
+                      "Where is the other half?",
+                      "Where is the other photo?",
+                      "Here’s one half."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "din",
+                        "en": "other"
+                      }
+                    ]
                   }
                 },
                 {
@@ -3050,13 +3062,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                        "en": "The other half is in Kobanî, with Lorîn."
+                        "text": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                        "en": "The other half is in Kobanî, at Lorîn’s."
                       }
                     ],
                     "prompt": "Where is the other half of the photo?",
                     "options": [
-                      "In Kobanî, with Lorîn",
+                      "In Kobanî, at Lorîn’s",
                       "Under the walnut tree",
                       "In Hevalo’s mouth"
                     ],
@@ -3068,11 +3080,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Binêre! Pozê Hevalo li pişt darê ye.",
+                    "say": "Nîvê din li ku ye?",
                     "voice": "hamo",
-                    "prompt": "Binêre! Pozê Hevalo li pişt darê ye.",
+                    "prompt": "Nîvê din li ku ye?",
                     "accepted": [
-                      "Look! Hevalo’s nose is behind the tree."
+                      "Where is the other half?",
+                      "Where’s the other half?"
                     ]
                   }
                 },
@@ -3082,9 +3095,9 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The other half is in Kobanî, with Lorîn.",
+                    "prompt": "The other half is in Kobanî, at Lorîn’s.",
                     "options": [
-                      "Nîvek li Kobaniyê ye, bi Lorînê re.",
+                      "Nîvek li Kobaniyê ye, li cem Lorînê.",
                       "Baran neh salî ye, ne deh.",
                       "Neh mirîşkên spî li ber derî ne."
                     ],
@@ -3135,25 +3148,20 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                    "reference": "Nîvek li Kobaniyê ye, bi Lorînê re."
+                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                    "reference": "Nîvek li Kobaniyê ye, li cem Lorînê."
                   }
                 },
                 {
                   "position": 16,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "missing",
-                    "say": "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Ew Lorîn e, xwişka min. Sêv di ___ wê de ye!",
-                    "options": [
-                      "devê",
-                      "dev",
-                      "nîvê"
-                    ],
-                    "correctIndex": 0,
-                    "cue": "mouth"
+                    "prompt": "Where is the other half?",
+                    "accepted": [
+                      "Nîvê din li ku ye?"
+                    ]
                   }
                 }
               ]
@@ -3207,7 +3215,7 @@
                     "options": [
                       "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
                       "Ew Lorîn e, xwişk min. Sêv di devê wê de ye!",
-                      "Sêv di devê Lorînê de ye!"
+                      "Ew Lorîn e, xwişka din. Sêv di devê wê de ye!"
                     ],
                     "correctIndex": 0
                   }
@@ -3247,11 +3255,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The other half is in Kobanî, with Lorîn.",
+                    "prompt": "The other half is in Kobanî, at Lorîn’s.",
                     "options": [
-                      "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                      "Nîvek li Kobaniyê e, bi Lorînê re.",
-                      "Nîvek li Sêvanê ye, bi Lorînê re."
+                      "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                      "Nîvek li Kobaniyê e, li cem Lorînê.",
+                      "Nîvek li Sêvanê ye, li cem Lorînê."
                     ],
                     "correctIndex": 0
                   }

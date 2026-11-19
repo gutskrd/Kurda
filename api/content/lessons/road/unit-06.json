@@ -1793,13 +1793,7 @@
                       "Is the photo on the table?",
                       "Is Lorîn at the market?"
                     ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "li cem",
-                        "en": "at, with"
-                      }
-                    ]
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2068,7 +2062,7 @@
                     "options": [
                       "Bibêje, çay an av?",
                       "Bibêje, çayên an av?",
-                      "Bibêje, tu çi dixwazî?"
+                      "Bibêje, çayeke din an av?"
                     ],
                     "correctIndex": 0
                   }

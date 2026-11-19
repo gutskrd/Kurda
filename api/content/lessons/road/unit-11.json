@@ -1095,7 +1095,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî."
+                      "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî."
                     ]
                   }
                 },
@@ -2452,9 +2452,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
+                    "say": "Xezoyê erkek da pola Baran, û mijara wî Sêvan e.",
                     "voice": "hamo",
-                    "prompt": "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
+                    "prompt": "Xezoyê erkek da pola Baran, û mijara wî Sêvan e.",
                     "options": [
                       "Xezo gave Baran’s class a task, and his subject is Sêvan.",
                       "Xezo gave Baran’s class a holiday, and he is going to Sêvan.",
@@ -2465,6 +2465,10 @@
                       {
                         "ku": "pol",
                         "en": "class"
+                      },
+                      {
+                        "ku": "erk",
+                        "en": "task, duty"
                       }
                     ]
                   }
@@ -2491,7 +2495,7 @@
                     "voice": "hamo",
                     "prompt": "Xezo gave Baran’s class a task, and his subject is Sêvan.",
                     "options": [
-                      "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
+                      "Xezoyê erkek da pola Baran, û mijara wî Sêvan e.",
                       "Ji ber vê yekê em ê îro biaxivin, û herwiha çayê vexwin.",
                       "Beranê Bişar ji birûskê tirsiya û nexweş bû, lê niha lingên wî sax in."
                     ],
@@ -2565,8 +2569,8 @@
                         "right": "experience"
                       },
                       {
-                        "left": "ard",
-                        "right": "flour"
+                        "left": "erk",
+                        "right": "task, duty"
                       },
                       {
                         "left": "tenik",
@@ -2603,7 +2607,7 @@
                     "voice": "hamo",
                     "prompt": "Xezo gave Baran’s class a task, and his subject is Sêvan.",
                     "accepted": [
-                      "Xezoyê karek da pola Baran, û mijara wî Sêvan e."
+                      "Xezoyê erkek da pola Baran, û mijara wî Sêvan e."
                     ]
                   }
                 }
@@ -3294,7 +3298,7 @@
                     "prompt": "Baran gave his talk in front of the hens. Did you listen too?",
                     "options": [
                       "Baran gotara xwe li ber mirîşkan xwend. Te jî guhdarî kir?",
-                      "Hêviyê pirtûka xwe xwend, Baran şûşe şûştin, û min nivîsî.",
+                      "Hêviyê pirtûka xwe xwend, Baran piyan şûştin, û min nivîsî.",
                       "Êvarê civîna gund heye, li ber dibistanê."
                     ],
                     "correctIndex": 0
@@ -3444,9 +3448,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
+                    "say": "Xezoyê erkek da pola Baran, û mijara wî Sêvan e.",
                     "voice": "hamo",
-                    "prompt": "Xezoyê karek da pola Baran, û mijara wî Sêvan e.",
+                    "prompt": "Xezoyê erkek da pola Baran, û mijara wî Sêvan e.",
                     "options": [
                       "Xezo gave Baran’s class a task, and his subject is Sêvan.",
                       "Xezo gave Baran’s class a holiday, and he is going to Sêvan.",
