@@ -94,7 +94,7 @@ describe('a verdict’s reaction line', () => {
     expect(await screen.findByText('No worries!')).toBeTruthy();
   });
 
-  it('waits for the answer’s own recording, then comes from Xezal, who says it', async () => {
+  it('waits for the answer’s own recording, then comes from Xezo, who says it', async () => {
     const MODEL = 'https://cdn.test/xezo-model.wav';
     lesson({ modelAudioUrl: MODEL, modelAudioVoice: { speaker: 'xezo' } }, 'kurmanji', ok({ verdict: 'incorrect', accepted: false, duplicate: false, correction: 'av', modelAudioUrl: MODEL, modelAudioVoice: { speaker: 'xezo' } }));
     await answerWrong();
@@ -105,7 +105,7 @@ describe('a verdict’s reaction line', () => {
     expect(FakeAudio.of(MODEL)?.paused).toBe(false);
     expect(FakeAudio.of(HERS)).toBeUndefined();
     act(() => FakeAudio.of(MODEL)!.finish());
-    expect(await screen.findByRole('button', { name: 'Xezal says “Şaşî jî hînbûn e.”' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Xezo says “Şaşî jî hînbûn e.”' })).toBeTruthy();
     expect(FakeAudio.of(HERS)?.paused).toBe(false);
     expect(FakeAudio.of(MISS)).toBeUndefined();
   });

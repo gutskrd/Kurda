@@ -1183,7 +1183,7 @@ export const de: Catalogue = {
   'settings.sounds.autoplay': 'Aussprache automatisch abspielen',
   'settings.sounds.autoplayHint': 'Nach jeder Antwort hörst du, wie sie gesagt wird.',
   'settings.sounds.characterVoices': 'Stimmen der Figuren',
-  'settings.sounds.characterVoicesHint': 'Hevalo und Xezal sagen in besonderen Momenten ein kurzes Wort auf Kurmancî, nie über den Ton der Lektion hinweg. Still, solange der Klang aus ist.',
+  'settings.sounds.characterVoicesHint': 'Hevalo und Xezo sagen in besonderen Momenten ein kurzes Wort auf Kurmancî, nie über den Ton der Lektion hinweg. Still, solange der Klang aus ist.',
   'reactions.says': '{name} sagt „{line}“',
   'settings.vibration.title': 'Vibration',
   'settings.vibration.toggle': 'Bei richtigen Antworten und besonderen Momenten vibrieren',

@@ -1178,7 +1178,7 @@ export const tr: Catalogue = {
   'settings.sounds.autoplay': 'Telaffuzları otomatik oynat',
   'settings.sounds.autoplayHint': 'Her yanıttan sonra nasıl söylendiğini dinle.',
   'settings.sounds.characterVoices': 'Karakter sesleri',
-  'settings.sounds.characterVoicesHint': 'Hevalo ve Xezal önemli anlarda Kurmancî kısa bir söz söyler, asla dersin kendi sesinin üstüne değil. Yumuşak ses kapalıyken sessizdir.',
+  'settings.sounds.characterVoicesHint': 'Hevalo ve Xezo önemli anlarda Kurmancî kısa bir söz söyler, asla dersin kendi sesinin üstüne değil. Yumuşak ses kapalıyken sessizdir.',
   'reactions.says': '{name} diyor ki: “{line}”',
   'settings.vibration.title': 'Titreşim',
   'settings.vibration.toggle': 'Doğru yanıtlarda ve özel anlarda titret',

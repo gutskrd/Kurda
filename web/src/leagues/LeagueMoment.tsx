@@ -26,7 +26,7 @@ function seenWeek(): string | null {
 
 /**
  * Moving up a league, celebrated once per week in this browser the first time the league is opened after the week
- * closes (Monday 00:00 UTC), with a word from Xezal. Staying or going down gets no celebration. The Share button (shared
+ * closes (Monday 00:00 UTC), with a word from Xezo. Staying or going down gets no celebration. The Share button (shared
  * `leagueWin`) names the league and place and nothing of the others in the group.
  */
 export function LeagueMoment({ week }: { week: LeagueWeekResult | null | undefined }): React.JSX.Element | null {

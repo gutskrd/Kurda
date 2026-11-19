@@ -147,7 +147,7 @@ function ThemeList(): React.JSX.Element {
 /**
  * The app's sounds and haptics. Turning either on plays it once; turning it off does nothing noticeable. Spoken
  * Kurdish in lessons always plays when asked; the third switch sets whether it also plays after each answer, the
- * fourth whether Hevalo and Xezal say their short lines.
+ * fourth whether Hevalo and Xezo say their short lines.
  */
 function SoundsList(): React.JSX.Element {
   const { t } = useI18n();

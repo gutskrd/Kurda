@@ -15,7 +15,7 @@ import { dailyAction } from './today';
 /**
  * Today's Zêr inside the daily view: the day's reward with a claim button (POST /rewards/daily/claim, the server sets
  * the amount), a lesson first until one is finished today, or tomorrow once taken, and the week's cycle as a quiet row of
- * coins. A claim pops the coin with its sparks (styles/motion.css) once, and Xezal says a word for it. A Hevalo+ member
+ * coins. A claim pops the coin with its sparks (styles/motion.css) once, and Xezo says a word for it. A Hevalo+ member
  * sees the gems a claim adds.
  */
 export function DailyZer({ daily, onClaimed }: { daily: DailyRewardStatus; onClaimed: (daily: DailyRewardStatus) => void }): React.JSX.Element {

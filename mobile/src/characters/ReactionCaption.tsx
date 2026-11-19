@@ -22,7 +22,7 @@ const READ_MS = 4000;
 const FACE = 36;
 
 /**
- * Hevalo's and Xezal's reaction lines (characters/reactions.ts) where they are read in the app, and the recorded takes
+ * Hevalo's and Xezo's reaction lines (characters/reactions.ts) where they are read in the app, and the recorded takes
  * read for them. Mounted once at the root, over every screen.
  */
 export function ReactionVoices(): React.JSX.Element | null {
