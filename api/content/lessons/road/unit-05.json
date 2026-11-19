@@ -1002,7 +1002,7 @@
                     "options": [
                       "Berî şîvê jî ew dixwîne.",
                       "Berî şîv jî ew dixwîne.",
-                      "Bozo jî nanivîse, ew ker e!"
+                      "Berî şîvê jî ew dixwînim."
                     ],
                     "correctIndex": 0
                   }
@@ -2013,7 +2013,7 @@
                     "options": [
                       "Bîra min nayê. Diya min dizane, lê ew li Kobaniyê ye.",
                       "Bîra min nayêm. Diya min dizane, lê ew li Kobaniyê ye.",
-                      "Masî li min dinêre! Ez goşt dixwazim."
+                      "Bîr min nayê. Diya min dizane, lê ew li Kobaniyê ye."
                     ],
                     "correctIndex": 0
                   }
@@ -2487,7 +2487,7 @@
                     "options": [
                       "Sibehê ez çay vedixwim, êvarê jî.",
                       "Sibehê ez çayên vedixwim, êvarê jî.",
-                      "Berî şîvê jî ew dixwîne."
+                      "Sibehê ez çay vedixwî, êvarê jî."
                     ],
                     "correctIndex": 0
                   }
@@ -3202,7 +3202,7 @@
                     "options": [
                       "Em nîvro firavînê dixwin.",
                       "Em nîvro firavînê dixwim.",
-                      "Nîvro ye, firavîn heye!"
+                      "Em nîvro firavînê dixwî."
                     ],
                     "correctIndex": 0
                   }

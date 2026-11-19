@@ -962,7 +962,7 @@
                     "options": [
                       "Bişar. Ew her şev xwê datîne.",
                       "Bişar. Ew her şev xwêyên datîne.",
-                      "Erê, askeke kûvî ye. Ew xwê dixwe."
+                      "Hamo. Ew her şev xwê datîne."
                     ],
                     "correctIndex": 0
                   }
@@ -1917,7 +1917,7 @@
                     "options": [
                       "Pêncî salan kesî ev gol nedît, tenê askên kûvî. Û binêre, Hevalo û Zerê!",
                       "Pêncî sal kesî ev gol nedît, tenê askên kûvî. Û binêre, Hevalo û Zerê!",
-                      "Di dawiyê de tenê dew ma, û Hevalo jî dew xwest!"
+                      "Pêncî salan kesî ev gol nedît, tenê ask kûvî. Û binêre, Hevalo û Zerê!"
                     ],
                     "correctIndex": 0
                   }
@@ -3192,7 +3192,7 @@
                     "options": [
                       "Sibe, berbangê. Em hemû bi dilekî giran bar dikin.",
                       "Sibe, berbang. Em hemû bi dilekî giran bar dikin.",
-                      "Ew berdewam dixebitî, û hemû rojê bi berxan re dima."
+                      "Sibe, berbangê. Em hemû bi dilekî giran bar dikim."
                     ],
                     "correctIndex": 0
                   }

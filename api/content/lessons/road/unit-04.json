@@ -938,7 +938,7 @@
                     "options": [
                       "Li ser rê gelek tiştên xweşik hene.",
                       "Li serên rê gelek tiştên xweşik hene.",
-                      "Li ser rê tiştek heye."
+                      "Li ser rê gelek tişt xweşik hene."
                     ],
                     "correctIndex": 0
                   }
@@ -2436,7 +2436,7 @@
                     "options": [
                       "Pereyên min di destê min de ne.",
                       "Hemû bi çend e?",
-                      "Ne Hevalo ye. Hevalo sêv dixwaze, ne reng."
+                      "Pereyên min di destê min de in."
                     ],
                     "correctIndex": 0
                   }
@@ -2769,7 +2769,7 @@
                     "options": [
                       "Bes e! Fermo, sêvek. Bixwe!",
                       "Bes e! Fermo, sêvek. Vexwe!",
-                      "Mase li vir e, li ser banî."
+                      "Bes ye! Fermo, sêvek. Bixwe!"
                     ],
                     "correctIndex": 0
                   }
@@ -3913,7 +3913,7 @@
                     "options": [
                       "Niha em li sêvan digerin.",
                       "Ev rast e?",
-                      "Çima Bozo li dikanê dinêre?"
+                      "Niha em li sêvan digerî."
                     ],
                     "correctIndex": 0
                   }
@@ -4173,7 +4173,7 @@
                     "options": [
                       "Telefona min li ku ye?",
                       "Telefona hemû li ku ye?",
-                      "Zikê min vala ye."
+                      "Telefon min li ku ye?"
                     ],
                     "correctIndex": 0
                   }
@@ -4308,7 +4308,7 @@
                     "options": [
                       "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
                       "Na! Hevalo hîç sêvan naxivim. Ew ji sêvan hez nake!",
-                      "Û kes nizane kî sêvan dixwe. Hevalo? Na, hîç!"
+                      "Na! Hamo hîç sêvan naxwe. Ew ji sêvan hez nake!"
                     ],
                     "correctIndex": 0
                   }

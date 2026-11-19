@@ -2865,7 +2865,7 @@
                     "prompt": "I saw that you’re afraid, and it’s obvious.",
                     "options": [
                       "Min dît ku tu ditirsî, û ev eşkere ye.",
-                      "Sibe waneya Xezoyê heye, lêbelê Baran ditirse.",
+                      "Min dît ku tu ditirsî, û ev eşkere e.",
                       "Bişar got ku şivan pez didoşin, û Dapîr bi meşkê nîvişk çêdike."
                     ],
                     "correctIndex": 0
@@ -3062,7 +3062,7 @@
                     "options": [
                       "Em gotarê tîp bi tîp dinivîsin.",
                       "Berhem hevpar e: ji bo her malê selikek.",
-                      "Vê hefteyê em diçin Kobaniyê!"
+                      "Em gotara tîp bi tîp dinivîsin."
                     ],
                     "correctIndex": 0
                   }

@@ -514,7 +514,7 @@
                     "options": [
                       "Li vê odeyê mirîşkek heye!",
                       "Li vî odeyê mirîşkek heye!",
-                      "Li ser kursiyê sêvek heye! Aferîn, Hevalo!"
+                      "Li vê ode mirîşkek heye!"
                     ],
                     "correctIndex": 0
                   }
@@ -840,7 +840,7 @@
                     "options": [
                       "Erê! Odeyên me germ in, ban sar e.",
                       "Erê! Odeyên me germ in, banên sar e.",
-                      "Ew nivînên birayê min in."
+                      "Erê! Ode me germ in, ban sar e."
                     ],
                     "correctIndex": 0
                   }
@@ -1280,7 +1280,7 @@
                     "options": [
                       "Ev dara bapîrê min e, li baxçeyê me.",
                       "Ev dar bapîrê min e, li baxçeyê me.",
-                      "Mase li vir e, kursî li wir e."
+                      "Ev darê bapîrê min e, li baxçeyê me."
                     ],
                     "correctIndex": 0
                   }
@@ -1828,7 +1828,7 @@
                     "options": [
                       "Wey! Bizin nexşeyê dixwe!",
                       "Wey! Bizin nexşe dixwe!",
-                      "Bozo kulîlkên şîn dixwe!"
+                      "Wey! Bizin nexşeyê dixwim!"
                     ],
                     "correctIndex": 0
                   }
@@ -2028,7 +2028,7 @@
                     "options": [
                       "Ev dara bapîrê min e, li baxçeyê me.",
                       "Ev dar bapîrê min e, li baxçeyê me.",
-                      "Bizina spî li baxçeyê me ye!"
+                      "Ev darê bapîrê min e, li baxçeyê me."
                     ],
                     "correctIndex": 0
                   }
@@ -3098,7 +3098,7 @@
                     "prompt": "The other half is in Kobanî, at Lorîn’s.",
                     "options": [
                       "Nîvek li Kobaniyê ye, li cem Lorînê.",
-                      "Baran neh salî ye, ne deh.",
+                      "Nîvek li Kobaniyê e, li cem Lorînê.",
                       "Neh mirîşkên spî li ber derî ne."
                     ],
                     "correctIndex": 0
@@ -3457,7 +3457,7 @@
                     "options": [
                       "Na, ne sêv e. Ev nîvê wêneyekî kevn e!",
                       "Na, ne sêvên e. Ev nîvê wêneyekî kevn e!",
-                      "Hûn çend xwişk û bira ne?"
+                      "Na, ne sêv e. Ev nîv wêneyekî kevn e!"
                     ],
                     "correctIndex": 0
                   }
@@ -4210,7 +4210,7 @@
                     "options": [
                       "Erê. Îro em li malê ne.",
                       "Erê. Îro em li mal ne.",
-                      "Çêlek li pişt malê ye."
+                      "Erê. Îro em li malê in."
                     ],
                     "correctIndex": 0
                   }

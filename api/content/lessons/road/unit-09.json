@@ -969,7 +969,7 @@
                     "options": [
                       "Par, roja sersalê, ez ketim çem û hefteyekê nexweş bûm.",
                       "Par, roj sersalê, ez ketim çem û hefteyekê nexweş bûm.",
-                      "Par ez jî ketim vî çemî!"
+                      "Par, rojê sersalê, ez ketim çem û hefteyekê nexweş bûm."
                     ],
                     "correctIndex": 0
                   }
@@ -4336,7 +4336,7 @@
                     "options": [
                       "Ez werîsên konan kontrol dikim: ew bihêz in.",
                       "Ez werîs konan kontrol dikim: ew bihêz in.",
-                      "Bozo dîsa reviya! Ez gazî wî dikim, lê ew nayê."
+                      "Ez werîsên konan kontrol dikim: ew bihêz ne."
                     ],
                     "correctIndex": 0
                   }
