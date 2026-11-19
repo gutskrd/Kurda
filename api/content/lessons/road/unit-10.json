@@ -362,8 +362,8 @@
                     "prompt": "giya",
                     "options": [
                       "grass",
-                      "gave",
-                      "brought"
+                      "meadow",
+                      "flock"
                     ],
                     "correctIndex": 0
                   }
@@ -1227,7 +1227,7 @@
                     "prompt": "ard",
                     "options": [
                       "flour",
-                      "to milk",
+                      "dough",
                       "butter"
                     ],
                     "correctIndex": 0
@@ -1524,8 +1524,8 @@
                     "prompt": "tenik",
                     "options": [
                       "thin",
-                      "wrote",
-                      "read"
+                      "quiet, silent",
+                      "in love"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3539,7 +3539,7 @@
                     "prompt": "bûyer",
                     "options": [
                       "event",
-                      "to happen",
+                      "journey",
                       "adventure"
                     ],
                     "correctIndex": 0,
@@ -3835,7 +3835,7 @@
                     "options": [
                       "happy, fortunate",
                       "astonished",
-                      "to shout, to scream"
+                      "unique, unmatched"
                     ],
                     "correctIndex": 0
                   }

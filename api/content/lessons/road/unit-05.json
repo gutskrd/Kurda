@@ -351,7 +351,7 @@
                     "options": [
                       "Monday",
                       "Tuesday",
-                      "the day after tomorrow"
+                      "holiday, vacation"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3441,8 +3441,8 @@
                     "prompt": "car",
                     "options": [
                       "time, occasion",
-                      "every, each",
-                      "sometimes"
+                      "work, job",
+                      "noon"
                     ],
                     "correctIndex": 0
                   }
@@ -3500,7 +3500,7 @@
                     "prompt": "kar",
                     "options": [
                       "work, job",
-                      "every, each",
+                      "noon",
                       "time, occasion"
                     ],
                     "correctIndex": 0,

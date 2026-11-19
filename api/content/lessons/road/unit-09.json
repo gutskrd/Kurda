@@ -2306,8 +2306,8 @@
                     "prompt": "Tebax",
                     "options": [
                       "August",
-                      "in the end, finally",
-                      "first"
+                      "July",
+                      "deer"
                     ],
                     "correctIndex": 0
                   }
@@ -3727,7 +3727,7 @@
                     "prompt": "berbang",
                     "options": [
                       "dawn",
-                      "awake, alert",
+                      "rope",
                       "mistake"
                     ],
                     "correctIndex": 0,

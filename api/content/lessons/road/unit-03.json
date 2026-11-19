@@ -351,8 +351,8 @@
                     "prompt": "hewş",
                     "options": [
                       "yard, courtyard",
-                      "this, these",
-                      "that, those"
+                      "bed, bedding",
+                      "chair"
                     ],
                     "correctIndex": 0,
                     "new": [

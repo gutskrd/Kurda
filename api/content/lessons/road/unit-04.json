@@ -63,8 +63,8 @@
                     "prompt": "bazar",
                     "options": [
                       "market",
-                      "to go",
-                      "to come"
+                      "thing",
+                      "road, way"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -124,8 +124,8 @@
                     "prompt": "rê",
                     "options": [
                       "road, way",
-                      "to go",
-                      "to come"
+                      "thing",
+                      "market"
                     ],
                     "correctIndex": 0
                   }
@@ -3536,7 +3536,7 @@
                     "prompt": "vala",
                     "options": [
                       "empty",
-                      "not",
+                      "cheap",
                       "at all"
                     ],
                     "correctIndex": 0
@@ -3783,8 +3783,8 @@
                     "prompt": "zik",
                     "options": [
                       "belly, stomach",
-                      "full",
-                      "to walk around"
+                      "person",
+                      "onion"
                     ],
                     "correctIndex": 0
                   }

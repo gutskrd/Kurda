@@ -1273,7 +1273,7 @@
                     "prompt": "amadekarî",
                     "options": [
                       "preparations",
-                      "will",
+                      "clothes, garment",
                       "fire"
                     ],
                     "correctIndex": 0
@@ -1502,8 +1502,8 @@
                     "prompt": "xewn",
                     "options": [
                       "dream",
-                      "afterwards, later",
-                      "thirteen"
+                      "speech",
+                      "preparations"
                     ],
                     "correctIndex": 0,
                     "new": [

@@ -1507,8 +1507,8 @@
                     "prompt": "Sibat",
                     "options": [
                       "February",
-                      "whether, if",
-                      "I wonder"
+                      "January",
+                      "December"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3705,8 +3705,8 @@
                     "prompt": "hezkirin",
                     "options": [
                       "love",
-                      "See you!",
-                      "Hoping to see you again!"
+                      "friendship",
+                      "celebration, joy"
                     ],
                     "correctIndex": 0,
                     "new": [

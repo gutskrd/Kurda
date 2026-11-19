@@ -1199,8 +1199,8 @@
                     "prompt": "ezmûn",
                     "options": [
                       "experience",
-                      "has …ed",
-                      "to change"
+                      "field",
+                      "thought, idea"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2349,8 +2349,8 @@
                     "prompt": "mijar",
                     "options": [
                       "subject, topic",
-                      "because",
-                      "so, that is why"
+                      "class",
+                      "teacher"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2877,8 +2877,8 @@
                     "prompt": "wane",
                     "options": [
                       "lesson, class",
-                      "both … and",
-                      "clear, obvious"
+                      "subject, topic",
+                      "teacher"
                     ],
                     "correctIndex": 0
                   }
@@ -3511,8 +3511,8 @@
                     "prompt": "armanc",
                     "options": [
                       "goal, aim",
-                      "to obtain, to achieve",
-                      "to carry out, to achieve"
+                      "plan",
+                      "learning"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3577,7 +3577,7 @@
                     "options": [
                       "programme, plan",
                       "goal, aim",
-                      "to obtain, to achieve"
+                      "step"
                     ],
                     "correctIndex": 0
                   }
@@ -3635,7 +3635,7 @@
                     "options": [
                       "learning",
                       "goal, aim",
-                      "to obtain, to achieve"
+                      "plan"
                     ],
                     "correctIndex": 0
                   }

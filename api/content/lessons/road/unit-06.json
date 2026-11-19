@@ -59,8 +59,8 @@
                     "prompt": "nêzîk",
                     "options": [
                       "near, close",
-                      "minibus",
-                      "driver"
+                      "far",
+                      "slow"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -353,8 +353,8 @@
                     "prompt": "kolan",
                     "options": [
                       "street",
-                      "on the right",
-                      "on the left"
+                      "ticket",
+                      "driver"
                     ],
                     "correctIndex": 0
                   }
@@ -1159,8 +1159,8 @@
                     "prompt": "xal",
                     "options": [
                       "uncle",
-                      "come!",
-                      "inside, in"
+                      "niece, nephew",
+                      "street"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1444,8 +1444,8 @@
                     "prompt": "mam",
                     "options": [
                       "uncle",
-                      "give!",
-                      "say! tell!"
+                      "aunt",
+                      "niece, nephew"
                     ],
                     "correctIndex": 0
                   }
@@ -2621,7 +2621,7 @@
                     "options": [
                       "help",
                       "permission",
-                      "maybe, it may be that"
+                      "dishes"
                     ],
                     "correctIndex": 0,
                     "new": [

@@ -354,8 +354,8 @@
                     "prompt": "dilxweş",
                     "options": [
                       "glad, pleased, happy",
-                      "neck",
-                      "finger"
+                      "sad",
+                      "healthy, well"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1488,8 +1488,8 @@
                     "prompt": "serdan",
                     "options": [
                       "visit",
-                      "from him, from her, from it",
-                      "to walk"
+                      "advice",
+                      "needle"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2609,8 +2609,8 @@
                     "prompt": "navdar",
                     "options": [
                       "famous",
-                      "of all",
-                      "more"
+                      "sweet",
+                      "special"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3472,7 +3472,7 @@
                     "prompt": "hest",
                     "options": [
                       "feeling",
-                      "to think",
+                      "shame, shyness",
                       "anger"
                     ],
                     "correctIndex": 0
@@ -3765,8 +3765,8 @@
                     "prompt": "bawerî",
                     "options": [
                       "trust",
-                      "to understand",
-                      "to share"
+                      "lie",
+                      "truth"
                     ],
                     "correctIndex": 0,
                     "new": [
