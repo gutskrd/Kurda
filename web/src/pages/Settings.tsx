@@ -312,7 +312,7 @@ function SettingsIndex({ me, current }: { me: MeState; current?: SettingsPage })
           key: 'sounds',
           icon: <SpeakerIcon />,
           title: t('settings.soundsVibration'),
-          terms: [t('settings.sounds.title'), t('settings.sounds.giftChime'), t('settings.sounds.lesson'), t('settings.vibration.title')],
+          terms: [t('settings.sounds.title'), t('settings.sounds.giftChime'), t('settings.sounds.lesson'), t('settings.sounds.characterVoices'), t('settings.vibration.title')],
           ...go('sounds'),
         },
         {

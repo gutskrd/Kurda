@@ -5,6 +5,7 @@ import { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt } from '@kurda/shared'
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
+import { useDrawnReaction } from './reactions';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import type { PlaybackClock } from './voice';
 
@@ -25,7 +26,7 @@ export interface WindowSpeech {
  * cheers or tilts his head at a `reaction`.
  *
  * Given `speech` and a line's `text`, he lip-syncs to the speech's clock (auth/guide/speech.ts), with no
- * recording. Decorative: screen readers skip him. `flip` mirrors him and the window, swapping the pot and view
+ * recording; otherwise he says his reaction lines as they play (characters/reactions.ts). Decorative: screen readers skip him. `flip` mirrors him and the window, swapping the pot and view
  * sides.
  */
 export function HevaloWindow({
@@ -50,6 +51,7 @@ export function HevaloWindow({
 }): React.JSX.Element {
   const { scheme } = useTheme();
   const reduce = useReducedMotion();
+  const said = useDrawnReaction('hevalo');
   const art = useMemo(() => windowArt({ dark: scheme === 'dark' }), [scheme]);
   const width = (size * WINDOW_VIEW.w) / WINDOW_VIEW.h;
   const drop = WINDOW_PLACE.drop * size;
@@ -106,10 +108,11 @@ export function HevaloWindow({
         >
           <SpeakingCharacter
             speaker="hevalo"
-            player={speech?.player ?? null}
-            playing={speech?.playing ?? false}
-            source={speech?.source ?? null}
-            text={text}
+            player={speech?.player ?? said?.player ?? null}
+            playing={speech?.playing ?? said?.playing ?? false}
+            source={speech?.source ?? said?.source ?? null}
+            voice={speech ? null : (said?.clip.voice ?? null)}
+            text={speech ? text : (said?.text ?? text)}
             crop="head"
             size={figure.width * width}
             flip={flip}

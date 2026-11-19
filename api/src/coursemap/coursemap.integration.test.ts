@@ -193,13 +193,13 @@ describe.skipIf(!DATABASE_URL)('course map (integration)', () => {
     await repo.addExercise(await repo.createLesson(twelve, 1, 'Çîrok', 'Stories'), 1, 'translate', { prompt: 'tale', accepted: ['çîrok'] });
     await pool.query(
       `INSERT INTO stories (slug, dialect, level, title, body, word_count, length, status, review_status, published_at, source)
-       VALUES ($1, 'kurmanci', 3, 'Xezal diçe', 'Xezal diçe Hewlêrê.', 70, 'short', 'published', 'approved', now(), 'starter')`,
+       VALUES ($1, 'kurmanci', 3, 'Xezo diçe', 'Xezo diçe Hewlêrê.', 70, 'short', 'published', 'approved', now(), 'starter')`,
       [story],
     );
     try {
       const maps = new CourseMapService(pool, road);
       const map = (await maps.forUser(userId, roadId))!;
-      expect(map.units.map((u) => [u.title, u.story])).toEqual([['Work and school', { slug: story, title: 'Xezal diçe' }]]);
+      expect(map.units.map((u) => [u.title, u.story])).toEqual([['Work and school', { slug: story, title: 'Xezo diçe' }]]);
       expect(map.upcoming).toEqual({ number: 12, title: 'Stories and songs', recordedBy: 'hamo' });
       // a story taken back to a draft is not offered
       await pool.query(`UPDATE stories SET status = 'draft' WHERE slug = $1`, [story]);

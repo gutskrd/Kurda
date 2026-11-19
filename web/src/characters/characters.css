@@ -348,3 +348,91 @@
     opacity: 0;
   }
 }
+
+/* A character's reaction line at the top of the page (ReactionCaption.tsx): small and quiet, gone a moment after it is said. */
+.reaction-caption-place {
+  position: fixed;
+  inset-inline: 0;
+  top: calc(env(safe-area-inset-top, 0px) + var(--space-3));
+  z-index: 150;
+  display: flex;
+  justify-content: center;
+  padding-inline: var(--space-4);
+  pointer-events: none;
+}
+/* Under the app bar where there is one; a lesson has none, so there it sits at the top. */
+body:has(.nav) .reaction-caption-place {
+  top: calc(var(--nav-bottom) + var(--space-3));
+}
+.reaction-caption {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: min(420px, 100%);
+  min-height: 48px;
+  margin: 0;
+  padding: var(--space-1) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--panel-bg);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm);
+  font: inherit;
+  text-align: start;
+  pointer-events: auto;
+}
+.reaction-caption:has(.reaction-caption-face) {
+  padding-inline-start: var(--space-1);
+}
+.reaction-caption.is-pressable {
+  cursor: pointer;
+}
+.reaction-caption.is-pressable:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.reaction-caption-face {
+  display: flex;
+  flex: none;
+  align-items: flex-end;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.reaction-caption-words {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.reaction-caption-ku {
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  line-height: 1.3;
+}
+.reaction-caption-means {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  line-height: 1.3;
+}
+.reaction-caption {
+  animation: reaction-caption-fade 160ms ease-out both;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reaction-caption {
+    animation: reaction-caption-in 220ms var(--ease-out) both;
+  }
+}
+@keyframes reaction-caption-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes reaction-caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}

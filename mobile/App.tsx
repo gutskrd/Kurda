@@ -66,6 +66,7 @@ import { NextLessonScreen } from './src/learn/NextLessonScreen';
 import { takeFirstLesson } from './src/learn/firstLesson';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
+import { ReactionVoices } from './src/characters/ReactionCaption';
 import { ActionSheetHost } from './src/theme/ActionSheetHost';
 import { RefreshedNotice } from './src/shop/RefreshedItems';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
@@ -994,6 +995,8 @@ function ThemedNavigation() {
         <OfflineBanner />
         {/* Short notices, such as a change that did not save. */}
         <NoticeToasts />
+        {/* Hevalo's and Xezo's reaction lines, captioned wherever they are said. */}
+        <ReactionVoices />
         {/* What every "⋯" opens on Android and the web (theme/actionSheet.ts). */}
         <ActionSheetHost />
       </View>

@@ -1,12 +1,12 @@
 /**
  * Reads what the recording script is built from (every reachable lesson version, stories, the games' spoken lines, the
- * voice plan, and Road lessons still only in files) and what is recorded, for the "Record by person" page. The script
+ * voice plan, Road lessons still only in files, and the characters' reaction lines) and what is recorded, for the "Record by person" page. The script
  * changes only with content and walks every lesson, so it is cached for a minute and built by one request at a time;
  * takes are read fresh, so a new take shows at once. Read-only.
  */
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
-import { isSpeakerId, type SpeakerId } from '@kurda/shared';
+import { REACTION_LINES, isSpeakerId, type SpeakerId } from '@kurda/shared';
 import { ROAD_DIR, readRoadFiles, roadSeedName } from '../content/road-seed.js';
 import { buildScript, peopleOf, ROAD_COURSE, type ExerciseInput, type LineStore, type Person, type PlanInput, type ScriptLine, type VoiceId } from './script.js';
 import { voicesOf } from './links.js';
@@ -170,6 +170,7 @@ export class RecordingPeopleService {
       stories: stories.rows,
       games: games.rows,
       plan,
+      reactions: REACTION_LINES,
     });
     return { lines, people: peopleOf(lines, plan), byId: new Map(lines.map((l) => [l.id, l])) };
   }

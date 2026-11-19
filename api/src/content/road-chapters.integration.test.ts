@@ -97,7 +97,8 @@ describe.skipIf(!DATABASE_URL)('road chapters going online (integration)', () =>
     await record('çay');
     await record('sêv');
     await record('Bi xêr bimînî!');
-    await record('Fermo, sêvek!', conversationLineKey(conversation, 0, 'Fermo, sêvek!'));
+    // a conversation line counts recorded under its words, or (below) under its conversation and part
+    await record('Fermo, sêvek!');
     await record('Hevalo birçî ye.');
     await record('Sêv xweş e.');
     expect(await publishRecordedChapters(pool, quiet, course, true)).toEqual([]);

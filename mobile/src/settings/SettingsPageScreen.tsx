@@ -5,6 +5,7 @@ import { haptic } from '../feedback/haptics';
 import { playSound } from '../feedback/sounds';
 import { useSoundPref } from '../feedback/soundPref';
 import { useAutoplayPref } from '../feedback/autoplayPref';
+import { useCharacterVoicesPref } from '../feedback/voicesPref';
 import { useVibrationPref } from '../feedback/vibrationPref';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
@@ -145,13 +146,15 @@ function ThemeList(): React.JSX.Element {
 
 /**
  * The app's sounds and haptics. Turning either on plays it once; turning it off does nothing noticeable. Spoken
- * Kurdish in lessons always plays when asked; the third switch sets whether it also plays after each answer.
+ * Kurdish in lessons always plays when asked; the third switch sets whether it also plays after each answer, the
+ * fourth whether Hevalo and Xezo say their short lines.
  */
 function SoundsList(): React.JSX.Element {
   const { t } = useI18n();
   const [vibration, setVibration] = useVibrationPref();
   const [sounds, setSounds] = useSoundPref();
   const [autoplay, setAutoplay] = useAutoplayPref();
+  const [voices, setVoices] = useCharacterVoicesPref();
   return (
     <SettingsSection first>
       <SettingsSwitch
@@ -180,6 +183,13 @@ function SoundsList(): React.JSX.Element {
         subtitle={t('settings.sounds.autoplayHint')}
         value={autoplay}
         onValueChange={setAutoplay}
+      />
+      <SettingsSwitch
+        icon="chat"
+        title={t('settings.sounds.characterVoices')}
+        subtitle={t('settings.sounds.characterVoicesHint')}
+        value={voices}
+        onValueChange={setVoices}
       />
     </SettingsSection>
   );

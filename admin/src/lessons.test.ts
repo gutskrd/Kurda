@@ -65,7 +65,7 @@ describe('who records an exercise', () => {
   it('must be one of the characters', () => {
     expect(exerciseIssues(ex('listening', { accepted: ['Silav'], voice: 'hamo' }))).toEqual([]);
     expect(exerciseIssues(ex('listening', { accepted: ['Silav'], voice: 'kawa' }))).toEqual([
-      { path: 'voice', message: 'Choose who records it: Hamo, Xezal, Hevalo or none.' },
+      { path: 'voice', message: 'Choose who records it: Hamo, Xezo, Hevalo or none.' },
     ]);
   });
 });

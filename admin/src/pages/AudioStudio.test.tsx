@@ -401,10 +401,10 @@ describe('the recording plan', () => {
     items: [
       { ...item('Spas', [usage({ courseSlug: 'kurmanji-basics' })]) },
       planned('Silav, ez Hamo me', 1, 'Welcome', 'hamo'),
-      planned('Ez Xezal im', 1, 'Welcome', 'xezo'),
+      planned('Ez Xezo me', 1, 'Welcome', 'xezo'),
       planned('Bi xêr hatî', 1, 'Welcome', 'hamo', 'hamo'),
       planned('Sêv', 2, 'The family', 'hevalo'),
-      // Planned for Hamo, and Xezal made the take.
+      // Planned for Hamo, and Xezo made the take.
       planned('Spas dikim', 2, 'The family', 'hamo', 'xezo'),
       planned('Nan', 2, 'The family', 'hamo'),
     ],
@@ -419,16 +419,16 @@ describe('the recording plan', () => {
     renderUi(<AudioStudio />);
     await waitFor(() => expect(rowTexts()).toContain('Silav, ez Hamo me'));
     expect(rowOf('Silav, ez Hamo me')).toHaveTextContent('For Hamo');
-    expect(rowOf('Ez Xezal im')).toHaveTextContent('For Xezal');
+    expect(rowOf('Ez Xezo me')).toHaveTextContent('For Xezo');
     expect(rowOf('Sêv')).toHaveTextContent('For Hevalo');
     // A text nothing plans says nothing of the kind.
     expect(rowOf('Spas')).not.toHaveTextContent(/For /);
 
     // The picker opens on the plan's character, not the last one picked (Hevalo, until someone is picked).
-    await user.click(within(rowOf('Ez Xezal im')).getByRole('button', { name: /Ez Xezal im/ }));
+    await user.click(within(rowOf('Ez Xezo me')).getByRole('button', { name: /Ez Xezo me/ }));
     let picker = screen.getByRole('radiogroup', { name: 'Who says it' });
     expect(within(picker).getByRole('radio', { name: 'Xezo' })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByText('The lesson plans it for Xezal. Saved with the recording.')).toBeInTheDocument();
+    expect(screen.getByText('The lesson plans it for Xezo. Saved with the recording.')).toBeInTheDocument();
     // Another choice is this row's alone, and not kept for the next new recording.
     await user.click(within(picker).getByRole('radio', { name: 'Hamo' }));
     expect(within(picker).getByRole('radio', { name: 'Hamo' })).toHaveAttribute('aria-checked', 'true');
@@ -458,7 +458,7 @@ describe('the recording plan', () => {
     location.hash = '#/audio/lessons';
     renderUi(<AudioStudio />);
     const voices = await screen.findByRole('tablist', { name: 'Voice' });
-    expect(within(voices).getAllByRole('tab').map((t) => t.textContent)).toEqual(['All5', 'Hamo2', 'Xezal1', 'Hevalo1']);
+    expect(within(voices).getAllByRole('tab').map((t) => t.textContent)).toEqual(['All5', 'Hamo2', 'Xezo1', 'Hevalo1']);
     await user.click(within(voices).getByRole('tab', { name: /Hamo/ }));
     expect(rowTexts()).toEqual(['Silav, ez Hamo me', 'Nan']);
     expect(screen.getByText('2 of 4 recorded')).toBeInTheDocument();
@@ -493,7 +493,7 @@ describe('the recording plan', () => {
     // Nothing in the older course is planned for anyone: it has no plan to show.
     expect(within(plan).queryByRole('heading', { name: 'Kurmancî for beginners' })).toBeNull();
     const lines = within(plan).getAllByRole('listitem').map((li) => li.textContent);
-    expect(lines).toEqual(['Hamo2 / 4 recordedScript', 'Xezal0 / 1 recordedScript', 'Hevalo0 / 1 recordedScript']);
+    expect(lines).toEqual(['Hamo2 / 4 recordedScript', 'Xezo0 / 1 recordedScript', 'Hevalo0 / 1 recordedScript']);
     expect(within(plan).getByRole('link', { name: 'Hamo’s script for The Kurmanji Road' })).toHaveAttribute('href', '#/audio/lessons?voice=hamo&course=kurmanji-road');
   });
 
@@ -514,7 +514,7 @@ describe('the recording plan', () => {
       ['The family', 2],
     ]);
     expect(screen.getByText('2 of 4 recorded')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Xezal’s script' })).toHaveAttribute('href', '#/audio/lessons?voice=xezo&course=kurmanji-road');
+    expect(screen.getByRole('link', { name: 'Xezo’s script' })).toHaveAttribute('href', '#/audio/lessons?voice=xezo&course=kurmanji-road');
     expect(screen.getByRole('link', { name: 'Every sentence' })).toHaveAttribute('href', '#/audio/lessons?course=kurmanji-road');
     // A script has no row for the plan to name: every line is Hamo's.
     expect(document.querySelector('.la-for')).toBeNull();

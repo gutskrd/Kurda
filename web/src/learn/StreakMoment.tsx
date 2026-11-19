@@ -12,7 +12,9 @@ import {
   flameMoment,
   freezeLine,
   nextFireStage,
+  reactionDelayMs,
   streakMood,
+  streakMoment,
   streakReveal,
   streakWeek,
   weekStartsOn,
@@ -25,6 +27,7 @@ import { DayMedalArt, StreakMedal } from '../ranks/art';
 import { CelebrationArt } from '../ranks/Celebration';
 import { prefersReducedMotion, useCelebrationMoment } from '../lib/motion';
 import { playLessonSound } from '../lib/sounds';
+import { sayReactionLater } from '../characters/reactions';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { DAY_WORDS } from '../daily/WeekRow';
@@ -241,6 +244,10 @@ export function StreakWeek({
       window.clearTimeout(over);
     };
   }, [plan, hear, settle]);
+
+  // Hevalo says the day's word aloud after the medal's chime (shared reactions.ts): a first day, a return, a best, a day kept.
+  const [mood] = useState(() => streakMood(streak));
+  useEffect(() => sayReactionLater(plan.burstAtMs + reactionDelayMs('verdict', reduce), { moment: streakMoment(mood), character: 'hevalo' }), [plan, mood, reduce]);
 
   // The medal gathers, hops and lands, on the shared plan's poses about its foot.
   useEffect(() => {

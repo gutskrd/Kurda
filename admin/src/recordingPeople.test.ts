@@ -86,6 +86,10 @@ describe('one person’s lines', () => {
     expect(uploadPath(said)).toBe('/admin/lesson-audio?text=S%C3%AAv%E2%80%A6&line=roadu01s1l3a%3A1');
     const letter = line({ id: 'z', store: 'alphabet', key: 'ckb:sound:ḧe', text: 'حا', dialect: 'ckb', voice: 'narrator-ckb', speaker: null });
     expect(uploadPath(letter)).toBe(`/admin/alphabet/audio?key=${encodeURIComponent('ckb:sound:ḧe')}`);
+    // A reaction goes by its character and id, so the same words from another character stay a take of their own.
+    const cheer = line({ id: 'r', text: 'Aferîn!', voice: 'hevalo', speaker: 'hevalo', reaction: { character: 'hevalo', id: 'run-3-1', moment: 'run-3' } });
+    expect(uploadPath(cheer)).toBe('/admin/lesson-audio?text=Afer%C3%AEn!&reaction=hevalo%3Arun-3-1');
+    expect(uploadVoice(cheer, { kind: 'character' })).toEqual({ speaker: 'hevalo', text: 'Aferîn!' });
     expect(uploadVoice(said, { kind: 'character' })).toEqual({ speaker: 'hamo', text: 'Sêv…' });
     // A narrator's take leaves whoever is drawn for it as it was.
     expect(uploadVoice(letter, { kind: 'narrator' })).toEqual({ speaker: undefined, text: 'حا', script: 'arabic' });

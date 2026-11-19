@@ -30,7 +30,7 @@ import {
 describe('meaningOfPrompt', () => {
   it('takes the quoted English out of a prompt that sets a scene', () => {
     expect(meaningOfPrompt('Your turn to be the guide. Say: “This is a wall.”')).toBe('This is a wall.');
-    expect(meaningOfPrompt('Tell Xezal what Hamo just said about the roof: “The roof is old.”')).toBe('The roof is old.');
+    expect(meaningOfPrompt('Tell Xezo what Hamo just said about the roof: “The roof is old.”')).toBe('The roof is old.');
   });
 
   it('takes the text after a label, or a short prompt as it is', () => {

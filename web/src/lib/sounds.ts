@@ -54,6 +54,29 @@ export function setAutoplay(on: boolean): void {
   }
 }
 
+const VOICES_KEY = 'hevalo_character_voices';
+
+/**
+ * Settings → Sounds → Character voices: Hevalo and Xezo say a short recorded line at moments (characters/reactions.ts).
+ * On unless turned off on this device; with lesson sounds off they are quiet too.
+ */
+export function characterVoicesOn(): boolean {
+  try {
+    return localStorage.getItem(VOICES_KEY) !== 'off';
+  } catch {
+    return true;
+  }
+}
+
+export function setCharacterVoices(on: boolean): void {
+  try {
+    if (on) localStorage.removeItem(VOICES_KEY);
+    else localStorage.setItem(VOICES_KEY, 'off');
+  } catch {
+    // Private browsing without storage: the choice lasts as long as the page.
+  }
+}
+
 /** Semitones from A4 to Hz. */
 const hz = (n: number): number => 440 * 2 ** (n / 12);
 

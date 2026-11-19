@@ -56,7 +56,7 @@ describe('the road’s Kurdish usage', () => {
     expect(found(/\bdefterê xwe\b/u)).toEqual([]);
   });
 
-  it('gives Xezal, who is the one leaving, the leaver’s goodbye', () => {
+  it('gives Xezo, who is the one leaving, the leaver’s goodbye', () => {
     expect(found(/\bew dibêje: oxir be\b/iu)).toEqual([]);
   });
 });

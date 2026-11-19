@@ -472,6 +472,8 @@ export {
 } from './lesson-audio.js';
 /** Conversations in lessons: their shape, limits, and the keys each part's recordings are filed under. */
 export * from './conversation.js';
+/** Hevalo's and Xezo's reaction lines: the catalogue, the key each take is filed under, and which plays when. */
+export * from './reactions.js';
 
 /** Age from a birth month and year: the API decides who is a minor, and both sign-up forms ask and refuse alike. */
 export {

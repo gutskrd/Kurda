@@ -28,7 +28,7 @@ export function roadExercises(n: number): Array<{ position: number; type: string
           { speaker: 1, text: 'Silav, apo!', en: 'Hello, uncle!' },
         ],
         prompt: 'Who says hello first?',
-        options: ['Hamo', 'Xezal'],
+        options: ['Hamo', 'Xezo'],
         correctIndex: 0,
       },
     },

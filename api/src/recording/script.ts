@@ -2,7 +2,8 @@
  * Everything the course asks someone to say aloud, as one script per voice, behind the "Record by person" page. Lines
  * come from lessons (drafts included), stories, word sets, the alphabet and the learning games, each keyed as the
  * studio keys it (`lessonAudioKey`, `conversationLineKey`, or an alphabet clip key), so a take from this script plays
- * everywhere the text is said and earlier studio takes show as done.
+ * everywhere the text is said and earlier studio takes show as done. Hevalo's and Xezo's reaction lines come last, each
+ * filed by `reactionKey`.
  *
  * A text said in several places is one line, filed where the course first says it, listing every place. It belongs
  * to the voice of the first place in course order that plans a character for it (a conversation part, an exercise's
@@ -16,6 +17,8 @@ import {
   CONVERSATION_ID,
   LESSON_AUDIO_TEXT_MAX,
   LETTER_CLIPS,
+  REACTION_MOMENT_CUE,
+  REACTION_TONE,
   SPEAKERS,
   WORD_SET_CLIPS,
   conversationClips,
@@ -25,12 +28,16 @@ import {
   lessonAudioKey,
   lessonAudioTargets,
   normalizeKurdish,
+  reactionKey,
   roadStoryChapter,
   storyAudioSentences,
   storyParagraphs,
   toDialect,
   type AlphabetClip,
   type AlphabetClipGroup,
+  type ReactionCharacter,
+  type ReactionLine,
+  type ReactionMoment,
   type SpeakerId,
 } from '@kurda/shared';
 
@@ -60,8 +67,6 @@ export function isVoiceId(v: unknown): v is VoiceId {
 /** The course the owner writes the voice plan for, first in every script. */
 export const ROAD_COURSE = 'kurmanji-road';
 
-/** Where the course's name for a character differs from the apps' label: the niece is Xezal, Xezo only to her uncle. */
-const PLAN_NAMES: Partial<Record<SpeakerId, string>> = { xezo: 'Xezal' };
 
 const DIALECT_NAME: Record<ScriptDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
 
@@ -141,13 +146,15 @@ export interface ScriptInput {
   /** the alphabet's and the word sets' sounds: every one, unless a test gives fewer */
   letters?: readonly AlphabetClip[];
   words?: readonly AlphabetClip[];
+  /** Hevalo's and Xezo's reaction lines, which the service gives (`REACTION_LINES`); none otherwise. */
+  reactions?: readonly ReactionLine[];
 }
 
 // ---------- what comes out ----------
 
 /** One place a line is said. */
 export interface LinePlace {
-  kind: 'lesson' | 'conversation' | 'story' | 'words' | 'alphabet' | 'game';
+  kind: 'lesson' | 'conversation' | 'story' | 'words' | 'alphabet' | 'game' | 'reaction';
   /** "Unit 3 · Lesson 2 · conversation ‘Nexşeya kevn’, line 4" */
   label: string;
   status: SourceStatus;
@@ -179,6 +186,8 @@ export interface ScriptLine {
   cue: string | null;
   /** A conversation line is recorded with its conversation and part (`&line=`); `name` is the part's as written. */
   conversation: { id: string; part: number; title: string | null; name: string | null } | null;
+  /** A reaction line is recorded with its character and id (`&reaction=`). */
+  reaction: { character: ReactionCharacter; id: string; moment: ReactionMoment } | null;
   /** the line before it, to act from */
   before: { name: string | null; text: string; meaning: string | null } | null;
   /** the heading it is listed under: a unit, a story, a word set, a game */
@@ -258,9 +267,9 @@ export function castVoice(name: string): VoiceId {
   return `cast-${slug || 'part'}`;
 }
 
-/** What a character is called in the course: Hamo, Xezal, Hevalo. */
+/** What a character is called in the course: Hamo, Xezo, Hevalo. */
 export function characterName(id: SpeakerId): string {
-  return PLAN_NAMES[id] ?? CHARACTER_NAMES[id];
+  return CHARACTER_NAMES[id];
 }
 
 /** The quoted parts of a prompt (“…” or "…"), in order. */
@@ -311,9 +320,12 @@ export function exerciseMeaning(type: string, payload: unknown, text: string): {
       return { sure: null, guess: other(m ? unquoted(m[1]!) : prompt ? (quotedIn(prompt).at(-1) ?? null) : null) };
     }
     case 'multiple_choice': {
-      if (!say || lessonAudioKey(say) !== key || !prompt || !ASKS_WHAT_IT_SAYS.test(prompt)) return { sure: null, guess: null };
+      if (!say || lessonAudioKey(say) !== key) return { sure: null, guess: null };
       const options = Array.isArray(p.options) ? p.options : [];
       const right = typeof p.correctIndex === 'number' ? str(options[p.correctIndex]) : null;
+      // an item that asks what its line means says so in its right option
+      if (p.ask === 'meaning') return { sure: other(right), guess: null };
+      if (!prompt || !ASKS_WHAT_IT_SAYS.test(prompt)) return { sure: null, guess: null };
       return { sure: null, guess: other(right) };
     }
     default:
@@ -361,6 +373,7 @@ interface Entry {
   hint?: string | null;
   cue?: string | null;
   conversation?: ScriptLine['conversation'];
+  reaction?: ScriptLine['reaction'];
   before?: ScriptLine['before'];
   partSpeaker?: SpeakerId | null;
 }
@@ -397,6 +410,7 @@ class Builder {
       hint: e.hint ?? null,
       cue: e.cue ?? null,
       conversation: e.conversation ?? null,
+      reaction: e.reaction ?? null,
       before: e.before ?? null,
       section: e.section,
       places: [e.place],
@@ -436,6 +450,7 @@ class Builder {
         hint: d.hint,
         cue: d.cue,
         conversation: d.conversation,
+        reaction: d.reaction,
         before: d.before,
         section: d.section,
         places: d.places,
@@ -505,9 +520,11 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[], after
         const voice = c.character ?? castVoice(c.name);
         const own = lines[c.index];
         const prev = c.index > 0 ? lines[c.index - 1] : undefined;
+        // A road line is recorded once under its words, so a line the lesson taught is not recorded again for its scene.
+        const plain = onRoad && c.character !== null;
         builder.add({
           store: 'lesson',
-          key: c.key,
+          key: plain ? lessonAudioKey(c.text) : c.key,
           text: c.text,
           dialect,
           planned: voice,
@@ -521,7 +538,8 @@ function addLessons(builder: Builder, exercises: readonly ExerciseInput[], after
           },
           section,
           sure: isRecord(own) ? str(own.en) : null,
-          conversation: { id: String(p.id), part: c.part, title, name: c.name },
+          cue: plain && title ? `In the conversation ‘${title}’.` : null,
+          conversation: plain ? null : { id: String(p.id), part: c.part, title, name: c.name },
           before:
             isRecord(prev) && typeof prev.text === 'string'
               ? { name: nameOf(prev.speaker), text: prev.text, meaning: str(prev.en) }
@@ -638,7 +656,9 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
       extra: Pick<Entry, 'sure' | 'cue'>,
     ): void => {
       if (typeof ku !== 'string' || !sayable(ku)) return;
-      const { key, conversation } = gameLineKey(ku, recording);
+      const found = gameLineKey(ku, recording);
+      // a road conversation's lines are recorded under their words (see addLessons), and so is a card copied from one
+      const { key, conversation } = found.conversation?.id.startsWith('road') ? { key: lessonAudioKey(ku), conversation: null } : found;
       const voice = planned ?? NARRATOR[dialect];
       builder.add({
         store: 'lesson',
@@ -671,9 +691,31 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
   }
 }
 
+/** Every reaction line under its character, heard all over the app as soon as it is recorded. */
+function addReactions(builder: Builder, reactions: readonly ReactionLine[]): void {
+  const section = { id: 'reactions', label: 'Reactions · heard all over the app' };
+  for (const r of reactions) {
+    const moment = REACTION_MOMENT_CUE[r.moment];
+    builder.add({
+      store: 'lesson',
+      key: reactionKey(r),
+      text: r.ku,
+      dialect: 'kmr',
+      planned: r.character,
+      partSpeaker: r.character,
+      place: { kind: 'reaction', label: `Reaction · ${moment.title}`, status: 'published', voice: r.character, ref: null },
+      section,
+      sure: r.meaning.en,
+      cue: moment.cue,
+      hint: REACTION_TONE[r.character],
+      reaction: { character: r.character, id: r.id, moment: r.moment },
+    });
+  }
+}
+
 /**
  * The whole script, every voice's lines in course order: lessons unit by unit (the Kurmanji Road first, conversations
- * line by line), then stories by paragraph and sentence, word sets, the alphabet and the learning games.
+ * line by line), then stories by paragraph and sentence, word sets, the alphabet, the learning games and the reactions.
  */
 export function buildScript(input: ScriptInput): ScriptLine[] {
   const builder = new Builder();
@@ -692,6 +734,7 @@ export function buildScript(input: ScriptInput): ScriptLine[] {
   addClips(builder, input.words ?? WORD_SET_CLIPS, 'words');
   addClips(builder, input.letters ?? LETTER_CLIPS, 'alphabet');
   addGames(builder, input.games);
+  addReactions(builder, input.reactions ?? []);
   const glossary = new Map<string, string>();
   for (const w of input.plan.words) {
     const key = lessonAudioKey(w.ku);

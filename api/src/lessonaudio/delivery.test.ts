@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lessonAudioKey, type RecordingVoice } from '@kurda/shared';
+import { conversationLineKey, lessonAudioKey, type RecordingVoice } from '@kurda/shared';
 import { lessonAudioFor, modelAudioAfterAnswer } from './delivery.js';
 
 /**
@@ -201,6 +201,40 @@ describe('lessonAudioFor', () => {
       { type: 'translate', payload: { accepted: 'Spas' } },
     ]);
     expect(out).toEqual([{}, {}, {}]);
+  });
+});
+
+describe('lessonAudioFor, a conversation', () => {
+  const talk = {
+    type: 'conversation' as const,
+    payload: {
+      id: 'roadu01s2l3a',
+      speakers: [{ name: 'Hamo', character: 'hamo' }, { learner: true }, { name: 'Xezo', character: 'xezo' }],
+      lines: [
+        { speaker: 0, text: 'Bi xêr hatî!' },
+        { speaker: 1, text: 'Ser çavan!' },
+        { speaker: 2, text: 'Ez jin im.' },
+        { speaker: 0, text: 'Çay germ e!' },
+      ],
+    },
+  };
+  const hamo = (text: string) => conversationLineKey('roadu01s2l3a', 0, text);
+
+  it('plays a line’s own take, else the take of its words when its part’s character said them', async () => {
+    const db = fakeDb(
+      { [hamo('Bi xêr hatî!')]: URL('own'), 'bi xêr hatî': URL('plain'), 'ser çavan': URL('ser'), 'ez jin im': URL('jin'), 'çay germ e': URL('germ') },
+      { 'ez jin im': { speaker: 'xezo' }, 'çay germ e': { speaker: 'xezo' }, 'ser çavan': { speaker: 'hamo' } },
+    );
+    const [out] = await lessonAudioFor(db as never, [talk]);
+    // the learner says their own line; Hamo does not say a line Xezo recorded
+    expect(out!.lineAudio).toEqual([URL('own'), null, URL('jin'), null]);
+    expect(out!.lineVoices?.[2]?.speaker).toBe('xezo');
+  });
+
+  it('holds a line’s take back when a listening item in the same response plays it', async () => {
+    const db = fakeDb({ 'çay germ e': URL('germ'), 'ez jin im': URL('jin') }, { 'çay germ e': { speaker: 'hamo' }, 'ez jin im': { speaker: 'xezo' } });
+    const [conversation] = await lessonAudioFor(db as never, [talk, { type: 'listening', payload: { accepted: ['Çay germ e!'] } }]);
+    expect(conversation!.lineAudio).toEqual([null, null, URL('jin'), null]);
   });
 });
 

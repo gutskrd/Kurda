@@ -16,14 +16,14 @@ import { monthProgress } from './model';
 /** When the count starts climbing and the bar filling after the screen appears, and how long they take. */
 const FILL_AT_MS = 350;
 const FILL_MS = 700;
-/** Xezal on the card, head to waist. */
+/** Xezo on the card, head to waist. */
 const CHARACTER_HEIGHT = 108;
 
 /**
  * The month's quests as a card: the count done of the month's possible so far, counting up on open over a bar of
  * the same (model.ts `monthProgress`), with "this month" said once in the corner. In a rare chest's saffron, with
- * Xezal at its end cheering when a chest waits. The bar fills with the count (a native-driver translate; the
- * count by frames, as `useCountUp` does); under Reduce Motion both are static. The text says everything Xezal
+ * Xezo at its end cheering when a chest waits. The bar fills with the count (a native-driver translate; the
+ * count by frames, as `useCountUp` does); under Reduce Motion both are static. The text says everything Xezo
  * would, so screen readers skip her.
  */
 export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean }): React.JSX.Element {

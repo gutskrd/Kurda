@@ -6,7 +6,7 @@
  * framing her face go with the head, the hair behind her shoulders and the two locks over her chest with the body, and
  * the head's hair reaches over both and under her face, so a small turn never opens a gap.
  *
- * Character: Xezal is bright, quick, a little cheeky and easily delighted. She giggles with her shoulders, tilts her head
+ * Character: Xezo is bright, quick, a little cheeky and easily delighted. She giggles with her shoulders, tilts her head
  * to listen, winks at a right answer, blushes when pleased or teased, and now and then tucks back her near wisp of hair. A
  * miss gets a short pout that is gone in a moment, because she is on your side.
  */

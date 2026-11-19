@@ -10,6 +10,7 @@
 import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey } from './lesson-audio.js';
 import { CHARACTER_NAMES } from './characters/types.js';
 import { SPEAKERS, isSpeakerId, type RecordingVoice, type SpeakerId } from './lipsync/speakers.js';
+import { isReactionKey } from './reactions.js';
 import { isRecord } from './sanitize.js';
 
 export const CONVERSATION_LIMITS = {
@@ -102,9 +103,9 @@ export function conversationLineKey(conversationId: string, part: number, text: 
   return `${conversationId}${JOIN}${part}${JOIN}${said}`;
 }
 
-/** Whether a recording's key is a conversation line's rather than a plain text's. */
+/** Whether a recording's key is a conversation line's rather than a plain text's or a reaction's (reactions.ts). */
 export function isConversationLineKey(key: string): boolean {
-  return key.includes(JOIN);
+  return key.includes(JOIN) && !isReactionKey(key);
 }
 
 /** One line to record, as the studio and the delivery read it. */

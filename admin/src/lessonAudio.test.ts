@@ -305,9 +305,9 @@ describe('the recording plan', () => {
   const items = [
     item('Silav', { usedIn: [basics, road(1)], plannedSpeaker: 'hamo' }),
     item('Bi xêr hatî', { usedIn: [road(1)], plannedSpeaker: 'hamo', ...recorded, speaker: 'hamo' }),
-    item('Ez Xezal im', { usedIn: [road(2)], plannedSpeaker: 'xezo' }),
+    item('Ez Xezo me', { usedIn: [road(2)], plannedSpeaker: 'xezo' }),
     item('Sêv', { usedIn: [road(2)], plannedSpeaker: 'hevalo', ...recorded, speaker: 'hevalo' }),
-    // Planned for Hamo, though Xezal made the take.
+    // Planned for Hamo, though Xezo made the take.
     item('Spas', { usedIn: [road(3)], plannedSpeaker: 'hamo', ...recorded, speaker: 'xezo' }),
     // Nothing plans it: once recorded, it is whoever was heard.
     item('Erê', { usedIn: [basics], ...recorded, speaker: 'xezo' }),
@@ -319,7 +319,7 @@ describe('the recording plan', () => {
     expect(items.map((i) => [i.text, voiceOf(i)])).toEqual([
       ['Silav', 'hamo'],
       ['Bi xêr hatî', 'hamo'],
-      ['Ez Xezal im', 'xezo'],
+      ['Ez Xezo me', 'xezo'],
       ['Sêv', 'hevalo'],
       ['Spas', 'hamo'],
       ['Erê', 'xezo'],

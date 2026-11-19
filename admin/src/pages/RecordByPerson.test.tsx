@@ -32,7 +32,7 @@ function person(over: Partial<Person> & Pick<Person, 'id' | 'name'>): Person {
   return { kind: 'character', speaker: null, about: null, dialect: null, total: 0, done: 0, todo: 0, dialects: [], linked: [], ...over };
 }
 
-const XEZAL = person({ id: 'xezo', name: 'Xezal', speaker: 'xezo', about: 'Hamo’s niece, who studies in Amed.', total: 3, done: 1, todo: 2, dialects: [{ dialect: 'kmr', total: 3, done: 1, todo: 2 }] });
+const XEZO = person({ id: 'xezo', name: 'Xezo', speaker: 'xezo', about: 'Hamo’s niece, who studies in Amed.', total: 3, done: 1, todo: 2, dialects: [{ dialect: 'kmr', total: 3, done: 1, todo: 2 }] });
 const HAMO = person({ id: 'hamo', name: 'Hamo', speaker: 'hamo', total: 4, done: 0, todo: 4, dialects: [{ dialect: 'kmr', total: 4, done: 0, todo: 4 }], linked: [{ id: 'u-9', username: 'dilan' }] });
 const NARRATOR = person({ id: 'narrator-kmr', kind: 'narrator', name: 'Narrator · Kurmancî', dialect: 'kmr', total: 1, done: 0, todo: 1, dialects: [{ dialect: 'kmr', total: 1, done: 0, todo: 1 }] });
 
@@ -105,9 +105,9 @@ function page(who: Person, lines: Line[], next: string | null = null): LinesPage
   return { person: who, lines, next, total: lines.length, sections: [] };
 }
 
-/** Xezal's lines in two pages, as the API pages them. */
+/** Xezo's lines in two pages, as the API pages them. */
 const xezalLines: Route = on('GET', /^\/admin\/recording\/people\/xezo\?/, (c) =>
-  json(c.path.includes('cursor=11') ? page(XEZAL, LINES.slice(2)) : page(XEZAL, LINES.slice(0, 2), '11')),
+  json(c.path.includes('cursor=11') ? page(XEZO, LINES.slice(2)) : page(XEZO, LINES.slice(0, 2), '11')),
 );
 const me: Route = on('GET', '/me', json({ user: { id: 'u-1', username: 'gulistan', roles: ['voice_actor'] } }));
 
@@ -141,13 +141,13 @@ afterEach(() => {
 
 describe('the people', () => {
   it('shows a card for each voice, the account’s own first, with what is left for each', async () => {
-    const listing: PeopleListing = { people: [HAMO, XEZAL, NARRATOR], mine: ['xezo'], ownVoicesOnly: false };
+    const listing: PeopleListing = { people: [HAMO, XEZO, NARRATOR], mine: ['xezo'], ownVoicesOnly: false };
     show(null, on('GET', '/admin/recording/people', json(listing)));
     const yours = await screen.findByRole('region', { name: 'Your voice' });
-    expect(within(yours).getByRole('heading', { name: 'Xezal' })).toBeInTheDocument();
+    expect(within(yours).getByRole('heading', { name: 'Xezo' })).toBeInTheDocument();
     expect(within(yours).getByText('2 lines left of 3')).toBeInTheDocument();
     expect(within(yours).getByRole('img', { name: '1 of 3 recorded' })).toBeInTheDocument();
-    expect(within(yours).getByRole('link', { name: 'Record Xezal’s lines' })).toHaveAttribute('href', '#/record/xezo');
+    expect(within(yours).getByRole('link', { name: 'Record Xezo’s lines' })).toHaveAttribute('href', '#/record/xezo');
     const others = screen.getByRole('region', { name: 'Everyone else' });
     expect(within(others).getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Hamo', 'Narrator · Kurmancî']);
     expect(within(others).getByText('Recorded by @dilan')).toBeInTheDocument();
@@ -200,7 +200,7 @@ describe('the people', () => {
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: (b: Blob) => (saved.push(b), 'blob:script'), revokeObjectURL: () => {} }));
     // The browser saves the file; here the link is only clicked.
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
-    show(null, on('GET', '/admin/recording/people', json({ people: [XEZAL], mine: ['xezo'], ownVoicesOnly: true })), xezalLines);
+    show(null, on('GET', '/admin/recording/people', json({ people: [XEZO], mine: ['xezo'], ownVoicesOnly: true })), xezalLines);
     await user.click(await screen.findByRole('button', { name: 'Download script' }));
     await user.click(await screen.findByRole('menuitem', { name: 'To read and rehearse (Markdown)' }));
     await waitFor(() => expect(saved).toHaveLength(1));
@@ -211,7 +211,7 @@ describe('the people', () => {
       reader.onload = () => resolve(String(reader.result));
       reader.readAsText(saved[0]!);
     });
-    expect(text).toContain('# Xezal: lines to record');
+    expect(text).toContain('# Xezo: lines to record');
     expect(text.indexOf('Silav, xalo!')).toBeLessThan(text.indexOf('Ez li malê me.'));
     expect(text).toContain('   - Before it: Hamo: “Xezo, binêre!” (Xezo, look!)');
     expect(text).toContain('   - Unit 4 · Lesson 1 · exercise 2 (listening) — draft');
@@ -239,7 +239,7 @@ describe('recording one person’s lines', () => {
     const ez = line({ id: 'lesson|ez', seq: 1, text: 'ez', meaning: 'I' });
     const blank = line({ id: 'lesson|xalo', seq: 2, text: 'xalo', meaning: '   ' });
     const none = line({ id: 'lesson|silav', seq: 3, text: 'silav' });
-    show('xezo', on('GET', /^\/admin\/recording\/people\/xezo\?/, json(page(XEZAL, [ez, blank, none]))));
+    show('xezo', on('GET', /^\/admin\/recording\/people\/xezo\?/, json(page(XEZO, [ez, blank, none]))));
     const here = await screen.findByRole('article', { name: 'ez' });
     expect(within(here).getByText('Means')).toBeInTheDocument();
     const means = within(here).getByText('I');
@@ -274,6 +274,39 @@ describe('recording one person’s lines', () => {
     expect(within(stage()).getByText('Draft')).toBeInTheDocument();
     // What is left counts the take kept.
     expect(screen.getByText('1 line left of 3')).toBeInTheDocument();
+  });
+
+  it('records a reaction as its character, with the moment and how to say it, filed by character and id', async () => {
+    const user = userEvent.setup();
+    const cheer = line({
+      id: 'lesson|reaction:xezo:run-3-1',
+      seq: 5000,
+      key: `reaction:xezo:run-3-1${WJ}pir baş e`,
+      text: 'Pir baş e!',
+      meaning: 'Very good!',
+      cue: 'The learner has just got three answers right in a row. A quick, happy cheer.',
+      hint: 'The village teacher: bright and kind, pleased with her pupil.',
+      reaction: { character: 'xezo', id: 'run-3-1', moment: 'run-3' },
+      section: { id: 'reactions', label: 'Reactions · heard all over the app' },
+      places: [{ kind: 'reaction', label: 'Reaction · Three right in a row', status: 'published', voice: 'xezo', ref: null }],
+    });
+    const api = show(
+      'xezo',
+      on('GET', /^\/admin\/recording\/people\/xezo\?/, json(page(XEZO, [cheer]))),
+      on('PUT', /^\/admin\/lesson-audio\?/, json({ key: cheer.key, text: 'Pir baş e!', url: 'https://cdn.test/pir.wav', durationMs: 700, speaker: 'xezo' }, 201)),
+    );
+    const here = await screen.findByRole('article', { name: 'Pir baş e!' });
+    expect(within(here).getByText('Reaction · Three right in a row')).toBeInTheDocument();
+    expect(within(here).getByText(cheer.cue!)).toBeInTheDocument();
+    expect(within(here).getByText('Very good!')).toBeInTheDocument();
+    expect(within(here).getByText(`How: ${cheer.hint}`)).toBeInTheDocument();
+    await user.click(within(here).getByRole('button', { name: 'Record' }));
+    await user.click(await within(stage()).findByRole('button', { name: 'Stop' }));
+    await user.click(await within(stage()).findByRole('button', { name: 'Keep' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(api.calls.find((c) => c.method === 'PUT')!.path).toBe(
+      `/admin/lesson-audio?text=${encodeURIComponent('Pir baş e!')}&reaction=${encodeURIComponent('xezo:run-3-1')}&speaker=xezo`,
+    );
   });
 
   it('works from a laptop’s keys: Space records and stops, Enter keeps, the arrows move', async () => {

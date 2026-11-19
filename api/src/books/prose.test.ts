@@ -26,14 +26,14 @@ describe('the book’s own words', () => {
     }
   });
 
-  it('says nothing of Xezal being talked about rather than talked to, and nothing the reader is told elsewhere', () => {
+  it('says nothing of Xezo being talked about rather than talked to, and nothing the reader is told elsewhere', () => {
     for (const text of Object.values(FRIENDS)) expect(text).not.toMatch(/talked (about|to)/);
     // the letter has already said who the young deer is, so his page does not say it again
     expect(letter).toContain('your guide');
     expect(FRIENDS.hevalo).not.toMatch(/guide|young (male )?deer/);
     // his name’s meaning ends its sentence by itself, and the “O” is never left alone at a line’s end
     expect(FRIENDS.hevalo).toContain('His name means “O\u00a0friend!” Curious');
-    expect(FRIENDS.xezo).toMatch(/^Xezal is the young teacher at the village school\./);
+    expect(FRIENDS.xezo).toMatch(/^Xezo is the young teacher at the village school\./);
   });
 
   it('prints the author’s note in the author’s own words, signed with the author’s name', () => {

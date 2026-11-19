@@ -66,7 +66,7 @@ export function chapterState(c: Pick<RoadChapter, 'online' | 'lines' | 'recorded
 export type SourceStatus = 'draft' | 'in_review' | 'published';
 
 export interface LinePlace {
-  kind: 'lesson' | 'conversation' | 'story' | 'words' | 'alphabet' | 'game';
+  kind: 'lesson' | 'conversation' | 'story' | 'words' | 'alphabet' | 'game' | 'reaction';
   label: string;
   status: SourceStatus;
   voice: VoiceId;
@@ -94,6 +94,8 @@ export interface Line {
   hint: string | null;
   cue: string | null;
   conversation: { id: string; part: number; title: string | null; name: string | null } | null;
+  /** A reaction heard all over the app, recorded by its character and id; absent from an older server. */
+  reaction?: { character: SpeakerId; id: string; moment: string } | null;
   before: { name: string | null; text: string; meaning: string | null } | null;
   section: { id: string; label: string };
   places: LinePlace[];
@@ -211,9 +213,13 @@ export function savePlace(voice: VoiceId, lineId: string): void {
 }
 
 /** Where a take of a line is sent: the store the studio files it in, under the same key. */
-export function uploadPath(line: Pick<Line, 'store' | 'key' | 'text' | 'conversation'>): string {
+export function uploadPath(line: Pick<Line, 'store' | 'key' | 'text' | 'conversation' | 'reaction'>): string {
   if (line.store === 'alphabet') return `/admin/alphabet/audio?key=${encodeURIComponent(line.key)}`;
-  const part = line.conversation ? `&line=${encodeURIComponent(`${line.conversation.id}:${line.conversation.part}`)}` : '';
+  const part = line.reaction
+    ? `&reaction=${encodeURIComponent(`${line.reaction.character}:${line.reaction.id}`)}`
+    : line.conversation
+      ? `&line=${encodeURIComponent(`${line.conversation.id}:${line.conversation.part}`)}`
+      : '';
   return `/admin/lesson-audio?text=${encodeURIComponent(line.text)}${part}`;
 }
 

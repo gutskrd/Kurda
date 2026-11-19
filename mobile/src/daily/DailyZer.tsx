@@ -1,6 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import { reactionDelayMs } from '@kurda/shared';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useAuth } from '../auth/AuthContext';
+import { sayReactionLater } from '../characters/reactions';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -17,8 +20,8 @@ const COIN_STAGE = 44;
 /**
  * Today's Zêr inside the daily view, as on the website: the day's reward with a claim button (the server sets the
  * amount), a lesson first until one is finished today, or tomorrow once taken, and the cycle as a quiet row of coins.
- * A claim plays the app's celebration around the coin once and tells the rest of the app (`dailyClaimed`), so Learn's
- * purse shows the new Zêr. A Hevalo+ member sees the gems a claim adds.
+ * A claim plays the app's celebration around the coin once, with a word from Xezo, and tells the rest of the app
+ * (`dailyClaimed`), so Learn's purse shows the new Zêr. A Hevalo+ member sees the gems a claim adds.
  */
 export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; onClaimed: (daily: DailyStatus) => void; onLearn?: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -29,6 +32,8 @@ export function DailyZer({ daily, onClaimed, onLearn }: { daily: DailyStatus; on
   const [landed, setLanded] = useState<DailyClaim | null>(null);
   const action = dailyAction(daily);
   const n = (v: number) => formatNumber(v, locale);
+  const reduce = useReducedMotion();
+  useEffect(() => (landed ? sayReactionLater(reactionDelayMs('celebration', reduce), { moment: 'daily-zer' }) : undefined), [landed, reduce]);
 
   const claim = useCallback(async () => {
     setBusy(true);

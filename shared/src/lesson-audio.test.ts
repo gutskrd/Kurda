@@ -197,7 +197,7 @@ describe('primaryAudioTarget', () => {
 describe('shownInPrompt', () => {
   it('finds a Kurdish sentence quoted in a prompt, whatever its quotes, case and final stop', () => {
     expect(shownInPrompt('Hamo scratches his head. What does he say? “Nayê bîra min.”', 'Nayê bîra min.')).toBe(true);
-    expect(shownInPrompt('What does Xezal whisper? «Hêvî dipirse: “Gur dê wan bixapîne?”»', 'Hêvî dipirse: “Gur dê wan bixapîne?”')).toBe(true);
+    expect(shownInPrompt('What does Xezo whisper? «Hêvî dipirse: “Gur dê wan bixapîne?”»', 'Hêvî dipirse: “Gur dê wan bixapîne?”')).toBe(true);
     expect(shownInPrompt('Hamo opens the gate: "silav!" What does it mean?', 'Silav!')).toBe(true);
   });
 

@@ -4,7 +4,8 @@
  * A chapter is one unit of the road's course (four parts of four lessons, seeded as drafts by road-seed.ts). It goes
  * online whole the moment the last recording it needs is made, so learners never meet half a chapter or silent lines.
  * It needs every recording its lessons play: each exercise's model (`lessonAudioTargets`) and each conversation's lines
- * (`conversationClips`), keyed as the studio files them.
+ * (`conversationClips`). A line is recorded under its words, as the script files it; a take under its conversation and
+ * part counts too.
  *
  * Only a chapter not yet online goes online this way, and only lessons still at their first version (draft or in
  * review) are published; a lesson an editor is reworking (a later version) goes through the usual review. A chapter
@@ -56,12 +57,12 @@ interface PlaceRow {
   exercises: Array<{ type: string; payload: unknown }>;
 }
 
-/** Every recording these exercises play, as the studio keys them. */
+/** Every recording these exercises play, each under its words. */
 export function chapterKeys(exercises: ReadonlyArray<{ type: string; payload: unknown }>): Set<string> {
   const keys = new Set<string>();
   for (const ex of exercises) {
     if (ex.type === 'conversation') {
-      for (const clip of conversationClips(ex.payload)) keys.add(clip.key);
+      for (const clip of conversationClips(ex.payload)) keys.add(lessonAudioKey(clip.text));
       continue;
     }
     for (const text of lessonAudioTargets(ex.type, ex.payload)) {
@@ -130,11 +131,30 @@ async function chapterStories(db: Pick<pg.Pool, 'query'>, unit: number | null = 
   return out;
 }
 
-/** Which of `keys` have a take; `lock` share-locks them, so none can go before the caller commits. */
-async function recorded(db: Pick<pg.Pool, 'query'>, keys: readonly string[], lock: boolean): Promise<Set<string>> {
-  if (keys.length === 0) return new Set();
-  const { rows } = await db.query<{ key: string }>(`SELECT key FROM lesson_audio WHERE key = ANY($1::text[])${lock ? ' FOR SHARE' : ''}`, [keys]);
-  return new Set(rows.map((r) => r.key));
+/** Each conversation line's own key (its conversation and part) to the key of its words: a take under either serves it. */
+export function lineAliases(exercises: ReadonlyArray<{ type: string; payload: unknown }>): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const ex of exercises) {
+    if (ex.type === 'conversation') for (const clip of conversationClips(ex.payload)) out.set(clip.key, lessonAudioKey(clip.text));
+  }
+  return out;
+}
+
+/**
+ * Which of `keys` have a take, counting a conversation line's own take for its words (`aliases`); `lock` share-locks
+ * them, so none can go before the caller commits.
+ */
+async function recorded(db: Pick<pg.Pool, 'query'>, keys: readonly string[], lock: boolean, aliases: ReadonlyMap<string, string> = new Map()): Promise<Set<string>> {
+  const asked = [...new Set([...keys, ...aliases.keys()])];
+  if (asked.length === 0) return new Set();
+  const { rows } = await db.query<{ key: string }>(`SELECT key FROM lesson_audio WHERE key = ANY($1::text[])${lock ? ' FOR SHARE' : ''}`, [asked]);
+  const made = new Set(rows.map((r) => r.key));
+  for (const [own, words] of aliases) if (made.has(own)) made.add(words);
+  return made;
+}
+
+function aliasesOf(list: readonly PlaceRow[]): Map<string, string> {
+  return new Map(list.flatMap((p) => [...lineAliases(p.exercises)]));
 }
 
 type Summary = RoadChapter & { keys: string[]; waiting: PlaceRow[]; waitingStory: StoryRow | null };
@@ -174,7 +194,8 @@ async function survey(
 ): Promise<{ byUnit: Map<number, PlaceRow[]>; stories: Map<number, StoryRow>; made: Set<string> }> {
   const [byUnit, stories] = await Promise.all([places(db, course), withStories ? chapterStories(db) : Promise.resolve(new Map<number, StoryRow>())]);
   const all = [...new Set([...byUnit].flatMap(([n, list]) => [...keysOf(list, stories.get(n))]))];
-  return { byUnit, stories, made: await recorded(db, all, false) };
+  const aliases = new Map([...byUnit.values()].flatMap((list) => [...aliasesOf(list)]));
+  return { byUnit, stories, made: await recorded(db, all, false, aliases) };
 }
 
 /**
@@ -226,7 +247,7 @@ export async function publishRecordedChapters(pool: pg.Pool, log: Log, course: s
       await client.query('BEGIN');
       const now = (await places(client, course, n, true)).get(n);
       const story = withStories ? (await chapterStories(client, n, true)).get(n) : undefined;
-      const chapter = now ? summarize(n, now, story, await recorded(client, [...keysOf(now, story)], true)) : null;
+      const chapter = now ? summarize(n, now, story, await recorded(client, [...keysOf(now, story)], true, aliasesOf(now))) : null;
       if (!chapter || !ready(chapter)) {
         await client.query('ROLLBACK');
         continue;

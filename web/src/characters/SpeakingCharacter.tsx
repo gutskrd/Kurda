@@ -82,7 +82,7 @@ function ground(art: CharacterArt, frame: CharacterBox, crop: CharacterCrop): { 
 /**
  * One inline SVG with every layer: the body, then the head with every eye state, brow, blush and all twelve mouths,
  * all hidden but the shown one, so speech and expressions only flip attributes. The deer's ears, pupils and nose,
- * Xezal's loose hair and the near end of Hamo's moustache are separate groups so they can move. Resting adds three
+ * Xezo's loose hair and the near end of Hamo's moustache are separate groups so they can move. Resting adds three
  * "z"s for the stylesheet to float.
  */
 function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop, resting: boolean, mirrored: boolean): string {

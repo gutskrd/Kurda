@@ -10,6 +10,7 @@ const EDGE_CACHEABLE: Record<string, number> = {
   '/dictionary/word-of-day': 3_600, // rotates daily; short edge TTL is safe
   '/dictionary/search': 300, // query results; brief edge cache
   '/art/overrides': 300, // pictures put in place of the built-in art; a change shows within minutes
+  '/reactions': 300, // the characters' recorded reaction lines; a new take shows within minutes
 };
 
 export interface CachePolicy {
