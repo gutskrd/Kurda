@@ -1653,7 +1653,7 @@
                     "prompt": "I’m drinking the tea.",
                     "options": [
                       "Ez çayê vedixwim.",
-                      "Ez çay vedixwim.",
+                      "Ez çayê dixwim.",
                       "Ez nan û penîr dixwim."
                     ],
                     "correctIndex": 0
@@ -2060,7 +2060,7 @@
                     "options": [
                       "Şeş kîlo hingiv? Ez dikarim!",
                       "Şeş kîloyek hingiv? Ez dikarim!",
-                      "Ez dikarim!"
+                      "Şeş kîlo hingiv? Ez dikarî!"
                     ],
                     "correctIndex": 0
                   }
@@ -2244,7 +2244,7 @@
                     "prompt": "Binêre! Pozê Hevalo li pişt darê ye.",
                     "options": [
                       "Look! Hevalo’s nose is behind the tree.",
-                      "Hevalo’s nose is behind the tree!",
+                      "Look! Hevalo’s nose is in the basket!",
                       "Look! The goat is up the tree!"
                     ],
                     "correctIndex": 0
@@ -2768,7 +2768,7 @@
                     "prompt": "Enough! Here, have an apple. Eat!",
                     "options": [
                       "Bes e! Fermo, sêvek. Bixwe!",
-                      "Bes e! Fermo, sêv. Bixwe!",
+                      "Bes e! Fermo, sêvek. Vexwe!",
                       "Mase li vir e, li ser banî."
                     ],
                     "correctIndex": 0
@@ -3371,7 +3371,8 @@
                       "dest",
                       "destên"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "in my hand"
                   }
                 },
                 {

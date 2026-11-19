@@ -690,7 +690,7 @@
                     "options": [
                       "Under the tall walnut tree, in the valley.",
                       "We’re right here, under this walnut tree.",
-                      "Under the walnut tree"
+                      "On the high rocks, by the river."
                     ],
                     "correctIndex": 0
                   }
@@ -750,7 +750,7 @@
                     "prompt": "Doktor min kontrol dike: ez çêtir im!",
                     "options": [
                       "The doctor examines me: I’m better!",
-                      "Doctor Azad examines me.",
+                      "The doctor examines me: I’m worse!",
                       "The doctor listens to my heart."
                     ],
                     "correctIndex": 0
@@ -2665,7 +2665,7 @@
                     "prompt": "Baran bi tena serê xwe ___.",
                     "options": [
                       "meşiya",
-                      "geriya",
+                      "geriyam",
                       "sekinî"
                     ],
                     "correctIndex": 0,
@@ -3153,7 +3153,7 @@
                     "prompt": "Biryara min ev e: îsal em ê bar bikin zozanan!",
                     "options": [
                       "I’ve made a decision: this year we’re moving up to the summer pastures!",
-                      "My decision is this: we’re going up to the summer pastures!",
+                      "My decision is this: this year we’re staying in the village!",
                       "This is my decision: we’ll come back in autumn."
                     ],
                     "correctIndex": 0
@@ -4523,8 +4523,8 @@
                     "prompt": "Biryara min ev e: îsal em ê bar bikin zozanan!",
                     "options": [
                       "I’ve made a decision: this year we’re moving up to the summer pastures!",
-                      "My decision is this: we’re going up to the summer pastures!",
-                      "This year we’ll move up to the pastures at dawn."
+                      "My decision is this: this year we’re staying in the village!",
+                      "My advice is this: we’ll go to town!"
                     ],
                     "correctIndex": 0
                   }

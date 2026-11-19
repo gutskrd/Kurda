@@ -763,7 +763,7 @@
                     "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "options": [
                       "No. A big school in Hewlêr has made Xezo an offer.",
-                      "An offer came for Xezo from Hewlêr.",
+                      "No. Xezo has made a big school in Hewlêr an offer.",
                       "It’s from the old shop, on the big street."
                     ],
                     "correctIndex": 0
@@ -2211,7 +2211,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Thank you! May God be pleased with you!",
+                    "prompt": "May your house prosper! May God be pleased with you!",
                     "accepted": [
                       "Mala te ava! Xwedê ji te razî be!",
                       "Mala te ava, Xwedê ji te razî be!"
@@ -2911,7 +2911,7 @@
                     "prompt": "Dapîr dibêje: av dilop dilop dibe gol.",
                     "options": [
                       "Dapîr says: drop by drop, water becomes a lake.",
-                      "Drop by drop, water becomes a lake.",
+                      "Hamo says: drop by drop, water becomes a lake.",
                       "Lorîn says: The tea is getting cold!"
                     ],
                     "correctIndex": 0
@@ -3653,8 +3653,7 @@
                     "voice": "hamo",
                     "prompt": "This is a big celebration!",
                     "accepted": [
-                      "Ev şahiyeke mezin e!",
-                      "Ev şahiyek mezin e!"
+                      "Ev şahiyeke mezin e!"
                     ]
                   }
                 },
@@ -3822,15 +3821,18 @@
                 },
                 {
                   "position": 8,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
+                    "ask": "reply",
                     "say": "Heta dîtinê!",
                     "voice": "xezo",
                     "prompt": "Heta dîtinê!",
-                    "accepted": [
-                      "See you!"
-                    ]
+                    "options": [
+                      "Bi hêviya dîtinê!",
+                      "Bi xêr hatî!",
+                      "Noşî can be!"
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -3996,7 +3998,7 @@
                     "prompt": "Hamo, simbêlê xwe baş biparêze!",
                     "options": [
                       "Hamo, take good care of your moustache!",
-                      "She said: take good care of your moustache!",
+                      "Hamo, take good care of Hevalo!",
                       "I’m looking at my moustache."
                     ],
                     "correctIndex": 0
@@ -4328,7 +4330,7 @@
                     "prompt": "Bi xatirê we, bi silametî bimînin! Dûrî ne tiştek e.",
                     "options": [
                       "Goodbye, stay well! Distance is nothing.",
-                      "And she says: goodbye, stay well! Distance is nothing.",
+                      "Welcome, come in! Distance is nothing.",
                       "Thanks, the tea is lovely. Goodbye!"
                     ],
                     "correctIndex": 0
@@ -4471,7 +4473,7 @@
                     "prompt": "Pirsgirêk çi be, Dapîr çareseriyê dizane.",
                     "options": [
                       "Whatever the problem, Dapîr knows the solution.",
-                      "Dapîr knows the solution.",
+                      "Whatever the problem, Hamo knows the solution.",
                       "Enjoy!"
                     ],
                     "correctIndex": 0

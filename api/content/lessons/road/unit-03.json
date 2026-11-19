@@ -2459,8 +2459,8 @@
                     "prompt": "Şeş salî! Û Hevalo pênc salî ye.",
                     "options": [
                       "Six! And Hevalo is five.",
-                      "Hevalo is five years old.",
-                      "Hêvî is six years old."
+                      "Five! And Hevalo is six.",
+                      "Six! And Hevalo is hungry."
                     ],
                     "correctIndex": 0
                   }
@@ -3250,8 +3250,8 @@
                     "prompt": "The other half is in Kobanî, with Lorîn.",
                     "options": [
                       "Nîvek li Kobaniyê ye, bi Lorînê re.",
-                      "Nîvek li Kobaniyê ye, li mala Lorînê.",
-                      "Nîvek li Kobaniyê ye, li mala Lorînê."
+                      "Nîvek li Kobaniyê e, bi Lorînê re.",
+                      "Nîvek li Sêvanê ye, bi Lorînê re."
                     ],
                     "correctIndex": 0
                   }
@@ -3669,7 +3669,7 @@
                     "prompt": "Em li vir in, li bin vê dara gûzê.",
                     "options": [
                       "We’re right here, under this walnut tree.",
-                      "Under the walnut tree",
+                      "We’re up here, on the roof.",
                       "There are flowers under the walnut tree. How lovely!"
                     ],
                     "correctIndex": 0
@@ -4382,7 +4382,7 @@
                     "prompt": "Îro roj xweş e. Çivîk li ser darên sêvan in.",
                     "options": [
                       "It’s a lovely day today. The birds are in the apple trees.",
-                      "The birds are in the apple trees.",
+                      "It’s cold today. The birds are on the roof.",
                       "The table is here, on the roof."
                     ],
                     "correctIndex": 0

@@ -1125,7 +1125,7 @@
                     "prompt": "The weather is cold.",
                     "options": [
                       "Hewa sar e.",
-                      "Hewa Vekirî e.",
+                      "Hewa vekirî ye.",
                       "Hêvî xwişka Baran e."
                     ],
                     "correctIndex": 0
@@ -1141,8 +1141,8 @@
                     "prompt": "Tu dizanî Hevalo li ku ye?",
                     "options": [
                       "Do you know where Hevalo is?",
-                      "Where’s Hevalo?",
-                      "Where is Hevalo, xalo?"
+                      "Do you know what Hevalo is eating?",
+                      "Do you know where Bozo is?"
                     ],
                     "correctIndex": 0
                   }
@@ -1868,7 +1868,7 @@
                     "prompt": "Kawa li ser çiyayan agir çêdike, û bihar vedigere.",
                     "options": [
                       "Kawa makes fires on the mountains, and spring comes back.",
-                      "on the chair",
+                      "Kawa makes fires in the village, and winter comes back.",
                       "Hevalo is by the window, looking at the mountains."
                     ],
                     "correctIndex": 0
@@ -2481,7 +2481,7 @@
                     "prompt": "Baran’s uncle is playing the zurna.",
                     "options": [
                       "Xalê Baran zirneyê lêdixe.",
-                      "Xalê Baran zirne lêdixe.",
+                      "Xalê Baran zirneyê lêdixin.",
                       "Baran taksiyê dixwaze."
                     ],
                     "correctIndex": 0
@@ -3056,8 +3056,8 @@
                     "prompt": "Dereng? Na! Pênc xulek, ji kerema xwe, derî veke!",
                     "options": [
                       "Late? No! Five minutes, please, open the door!",
-                      "Please open the door!",
-                      "Open the door, please!"
+                      "Late? Yes! Close the door, please!",
+                      "Early? No! Five minutes, please, close the shop!"
                     ],
                     "correctIndex": 0
                   }
@@ -3893,7 +3893,7 @@
                     "prompt": "Ez ji we re tenduristiyê û serkeftinê dixwazim.",
                     "options": [
                       "I wish you all health and success.",
-                      "I wish you good health!",
+                      "I want tea and sugar from you all.",
                       "I’m not afraid of you!"
                     ],
                     "correctIndex": 0,

@@ -373,7 +373,7 @@
                       "razan"
                     ],
                     "correctIndex": 0,
-                    "cue": "go!"
+                    "cue": "go! (to one person)"
                   }
                 },
                 {
@@ -597,7 +597,7 @@
                     "prompt": "Ew Miştenûr e. Bilind e, ne?",
                     "accepted": [
                       "That’s Miştenûr. It’s high, isn’t it?",
-                      "That is Miştenûr. It is high, is not it?"
+                      "That is Miştenûr. It is high, isn’t it?"
                     ],
                     "new": [
                       {
@@ -648,16 +648,18 @@
                 },
                 {
                   "position": 5,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
+                    "ask": "reply",
                     "say": "Ew Miştenûr e. Bilind e, ne?",
                     "voice": "hamo",
                     "prompt": "Ew Miştenûr e. Bilind e, ne?",
-                    "accepted": [
-                      "That’s Miştenûr. It’s high, isn’t it?",
-                      "That is Miştenûr. It is high, is not it?"
-                    ]
+                    "options": [
+                      "Erê, gelek bilind e!",
+                      "Erê, gelek bilind im!",
+                      "Ez Miştenûr im."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -858,7 +860,7 @@
                     "prompt": "Piştî taştê em dixwînin.",
                     "options": [
                       "After breakfast we study.",
-                      "The teacher says: After breakfast we study.",
+                      "Before breakfast we study.",
                       "Here’s breakfast!"
                     ],
                     "correctIndex": 0
@@ -1527,7 +1529,7 @@
                       "şûştin"
                     ],
                     "correctIndex": 0,
-                    "cue": "Give them bread!"
+                    "cue": "Give them bread! (to one person)"
                   }
                 },
                 {
@@ -1839,8 +1841,8 @@
                     "prompt": "Werin hundir, rûnin!",
                     "options": [
                       "Come in, sit down!",
-                      "Come in and sit down!",
-                      "Come in!"
+                      "Go out, sit down!",
+                      "Come in, eat!"
                     ],
                     "correctIndex": 0
                   }
@@ -2009,7 +2011,7 @@
                       "rûniştin"
                     ],
                     "correctIndex": 0,
-                    "cue": "Give them bread!"
+                    "cue": "Give them bread! (to one person)"
                   }
                 },
                 {
@@ -4317,8 +4319,8 @@
                     "prompt": "on foot",
                     "options": [
                       "Bi peyatî!",
-                      "Çavên Hevalo dibêjin: Bi peyatî!",
-                      "Çavên Hevalo dibêjin: Bi peyatî!"
+                      "Bi otobûsê!",
+                      "Bi trênê!"
                     ],
                     "correctIndex": 0
                   }
@@ -4422,7 +4424,7 @@
                     "prompt": "Nûçe dibêjin ku sibe rêya çiyê ___ dibe.",
                     "options": [
                       "girtî",
-                      "Vekirî",
+                      "vekirî",
                       "pêwîst"
                     ],
                     "correctIndex": 0,

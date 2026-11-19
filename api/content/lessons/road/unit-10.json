@@ -990,7 +990,7 @@
                     "prompt": "Bêdeng! Min tiştek bihîst. Binêre, li ber mêrgê!",
                     "options": [
                       "Quiet! I heard something. Look, at the edge of the meadow!",
-                      "Be quiet! Look, at the edge of the meadow.",
+                      "Quiet! I saw nothing. Look, by the tent!",
                       "My grandfather’s photo is in front of the window."
                     ],
                     "correctIndex": 0
@@ -2911,8 +2911,8 @@
                     "prompt": "Bi xatirê te, Zerê!",
                     "options": [
                       "Goodbye, Zerê!",
-                      "Goodbye!",
-                      "Dapîr is going home"
+                      "Welcome, Zerê!",
+                      "Thank you, Zerê!"
                     ],
                     "correctIndex": 0
                   }
@@ -2962,7 +2962,7 @@
                     "prompt": "Sibe, berbangê. Em hemû bi dilekî giran bar dikin.",
                     "options": [
                       "Tomorrow, at dawn. We’re all moving with a heavy heart.",
-                      "We are moving with a heavy heart.",
+                      "Tomorrow night. We’re all staying, happily.",
                       "This year we’ll move up to the pastures at dawn."
                     ],
                     "correctIndex": 0,
@@ -3286,7 +3286,7 @@
                     "prompt": "Sibe, berbangê. Em hemû bi dilekî giran bar dikin.",
                     "options": [
                       "Tomorrow, at dawn. We’re all moving with a heavy heart.",
-                      "We are moving with a heavy heart.",
+                      "Tomorrow night. We’re all staying, happily.",
                       "This year we’ll move up to the pastures at dawn."
                     ],
                     "correctIndex": 0
@@ -3326,7 +3326,7 @@
                       },
                       {
                         "left": "derî",
-                        "right": "A door."
+                        "right": "door"
                       },
                       {
                         "left": "ard",

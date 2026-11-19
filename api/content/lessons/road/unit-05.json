@@ -986,7 +986,7 @@
                     "prompt": "Piştî taştê em dixwînin.",
                     "options": [
                       "After breakfast we study.",
-                      "The teacher says: After breakfast we study.",
+                      "Before breakfast we study.",
                       "Here’s breakfast!"
                     ],
                     "correctIndex": 0
@@ -1144,7 +1144,7 @@
                     "prompt": "Li çavên wî binêre. Sêv hene, em dimînin!",
                     "options": [
                       "Look at his eyes. There are apples, we’re staying!",
-                      "Hevalo’s eyes say: There are apples, we’re staying!",
+                      "Look at his eyes. There are no apples, we’re going!",
                       "Look, the blue gate! We’re home."
                     ],
                     "correctIndex": 0
@@ -1519,7 +1519,8 @@
                       "Gulan",
                       "Adarê"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "in May"
                   }
                 },
                 {
@@ -2793,7 +2794,8 @@
                       "radize",
                       "dişom"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "I go to sleep"
                   }
                 },
                 {
@@ -2998,7 +3000,7 @@
                     "options": [
                       "It’s five past twelve.",
                       "It’s five past one.",
-                      "twelve"
+                      "It’s five to twelve."
                     ],
                     "correctIndex": 0
                   }
@@ -3133,8 +3135,7 @@
                     "voice": "hamo",
                     "prompt": "Em nîvro firavînê dixwin.",
                     "accepted": [
-                      "We have lunch at noon.",
-                      "We’ve lunch at noon."
+                      "We have lunch at noon."
                     ]
                   }
                 },
@@ -3200,7 +3201,7 @@
                     "prompt": "We have lunch at noon.",
                     "options": [
                       "Em nîvro firavînê dixwin.",
-                      "Em nîvroyê firavînê dixwin.",
+                      "Em nîvro firavînê dixwim.",
                       "Nîvro ye, firavîn heye!"
                     ],
                     "correctIndex": 0
@@ -3312,7 +3313,8 @@
                       "radize",
                       "dişom"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "I go to sleep"
                   }
                 },
                 {
@@ -3567,7 +3569,7 @@
                     "options": [
                       "It’s five past twelve.",
                       "It’s five past one.",
-                      "twelve"
+                      "It’s five to twelve."
                     ],
                     "correctIndex": 0
                   }
@@ -4312,7 +4314,7 @@
                     "options": [
                       "Nasekine? Ez dibezim! Ez û Hevalo, em dibezin.",
                       "Nasekine? Ez dibezî! Ez û Hevalo, em dibezin.",
-                      "Otobûs nasekine? Ez dibezim!"
+                      "Nasekine? Ez dibezin! Ez û Hevalo, em dibezin."
                     ],
                     "correctIndex": 0
                   }
@@ -4357,7 +4359,7 @@
                     "options": [
                       "Carinan? Na! Bawer bike, soza min soz e!",
                       "Carinan? Na! Bawer bikin, soza min soz e!",
-                      "Soza min soz e!"
+                      "Carinan? Na! Bawer bike, soza te soz e!"
                     ],
                     "correctIndex": 0
                   }

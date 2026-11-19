@@ -964,7 +964,7 @@
                     "options": [
                       "Ez gelek westiyayî me.",
                       "Ez gelek dilxweş me.",
-                      "Ez westiyayî me."
+                      "Ez gelek westiyayî im."
                     ],
                     "correctIndex": 0
                   }
@@ -1513,7 +1513,8 @@
                       "nexweş",
                       "lawaz"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "strong"
                   }
                 },
                 {
@@ -1888,7 +1889,7 @@
                     "prompt": "Doktor min kontrol dike: ez çêtir im!",
                     "options": [
                       "The doctor examines me: I’m better!",
-                      "Doctor Azad examines me.",
+                      "The doctor examines me: I’m worse!",
                       "The doctor listens to my heart."
                     ],
                     "correctIndex": 0
@@ -2081,7 +2082,8 @@
                       "nexweş",
                       "lawaz"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "strong"
                   }
                 },
                 {
@@ -2122,7 +2124,7 @@
                     "prompt": "Doktor min kontrol dike: ez çêtir im!",
                     "options": [
                       "The doctor examines me: I’m better!",
-                      "Doctor Azad examines me.",
+                      "The doctor examines me: I’m worse!",
                       "The doctor listens to my heart."
                     ],
                     "correctIndex": 0
@@ -3976,11 +3978,11 @@
                     "prompt": "Baran guhdarî dike, û dibêje ku ew tê digihîje. Ew ___ nake.",
                     "options": [
                       "derewan",
-                      "derew",
+                      "çayê",
                       "rastiyan"
                     ],
                     "correctIndex": 0,
-                    "cue": "lie"
+                    "cue": "lies"
                   }
                 },
                 {

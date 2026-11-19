@@ -3265,8 +3265,7 @@
                     "prompt": "Baran şermok e, loma ew nikare. Ango, ew naxwaze!",
                     "accepted": [
                       "Baran is shy, so he can’t. That is, he doesn’t want to!",
-                      "Baran is shy, so he cannot. That is, he does not want to!",
-                      "Baran is shy, so he can’t. That’s, he doesn’t want to!"
+                      "Baran is shy, so he cannot. That is, he does not want to!"
                     ]
                   }
                 },

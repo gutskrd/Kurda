@@ -318,7 +318,7 @@
                     "options": [
                       "How are you all?",
                       "How is Baran?",
-                      "How are you?"
+                      "Where are you all?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1026,7 +1026,7 @@
                     "options": [
                       "Ev birayê min e.",
                       "Ev bira min e.",
-                      "Na, ev birayê min e!"
+                      "Ev birayê min in."
                     ],
                     "correctIndex": 0
                   }
@@ -1054,7 +1054,7 @@
                     "options": [
                       "cîranên",
                       "cîran",
-                      "jinên"
+                      "cîrana"
                     ],
                     "correctIndex": 0,
                     "cue": "These are my neighbours."
@@ -1578,15 +1578,19 @@
                 },
                 {
                   "position": 10,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
+                    "ask": "reply",
                     "say": "Dapîr, mirîşk çend in?",
                     "voice": "hamo",
                     "prompt": "Dapîr, mirîşk çend in?",
-                    "accepted": [
-                      "Grandma, how many hens are there?"
-                    ]
+                    "options": [
+                      "Sê mirîşk in.",
+                      "Sê mirîşk e.",
+                      "Mirîşk baş in."
+                    ],
+                    "correctIndex": 0,
+                    "cue": "answer for Dapîr"
                   }
                 },
                 {
@@ -1783,9 +1787,9 @@
                     "voice": "hamo",
                     "prompt": "Em çar xwişk û bira ne.",
                     "options": [
-                      "There are four of us.",
-                      "My father and my mother are in Kobanî.",
-                      "And what’s this? It isn’t at the house."
+                      "We are four brothers and sisters.",
+                      "We are three brothers and sisters.",
+                      "We are four sisters."
                     ],
                     "correctIndex": 0
                   }
@@ -1809,7 +1813,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "There are four of us.",
+                    "prompt": "We are four brothers and sisters.",
                     "options": [
                       "Em çar xwişk û bira ne.",
                       "Em çaran xwişk û bira ne.",
@@ -1956,7 +1960,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "There are four of us.",
+                    "prompt": "We are four brothers and sisters.",
                     "accepted": [
                       "Em çar xwişk û bira ne."
                     ]
@@ -2013,7 +2017,7 @@
                     "options": [
                       "Baran, bapîrê te çawa ye?",
                       "Baran, bapîr te çawa ye?",
-                      "Bapîrê te çawa ye?"
+                      "Baran, bapîrê te kî ye?"
                     ],
                     "correctIndex": 0
                   }
@@ -2180,7 +2184,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "He does! How many brothers and sisters do you have?",
+                    "prompt": "Yes! How many brothers and sisters do you have?",
                     "options": [
                       "Erê! Hûn çend xwişk û bira ne?",
                       "Erê! Hûn çend xwişkên û bira ne?",
@@ -2514,8 +2518,8 @@
                     "prompt": "Baran neh salî ye, ne deh.",
                     "options": [
                       "Baran is nine, not ten.",
-                      "How old is Baran’s grandfather? I don’t know!",
-                      "Hêvî is six years old."
+                      "Baran is ten, not nine.",
+                      "Hêvî is nine, not ten."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2599,8 +2603,8 @@
                     "prompt": "Ev bi kurdî çi ye?",
                     "options": [
                       "What’s this in Kurdish?",
-                      "What is it in Kurdish?",
-                      "I don’t know. What’s this in Kurdish?"
+                      "What’s this in English?",
+                      "Is this Kurdish bread?"
                     ],
                     "correctIndex": 0
                   }
@@ -2779,7 +2783,7 @@
                     "voice": "hamo",
                     "prompt": "Erê! Destê wê sax be!",
                     "options": [
-                      "It is! Bless her hands!",
+                      "Yes! Bless her hands!",
                       "Yes, please!",
                       "Yes, it’s eight…"
                     ],
@@ -2801,8 +2805,7 @@
                     "voice": "hamo",
                     "prompt": "Fermo! Noşî can be!",
                     "accepted": [
-                      "Here you are! Enjoy!",
-                      "Here you’re! Enjoy!"
+                      "Here you are! Enjoy!"
                     ]
                   }
                 },
@@ -2842,7 +2845,7 @@
                       "em"
                     ],
                     "correctIndex": 0,
-                    "cue": "It is! Bless her hands!"
+                    "cue": "Yes! Bless her hands!"
                   }
                 },
                 {
@@ -2868,8 +2871,8 @@
                     "prompt": "Baran neh salî ye, ne deh.",
                     "options": [
                       "Baran is nine, not ten.",
-                      "Baran is not ten.",
-                      "Baran is nine years old."
+                      "Baran is ten, not nine.",
+                      "Hêvî is nine, not ten."
                     ],
                     "correctIndex": 0
                   }
@@ -2960,7 +2963,7 @@
                     "options": [
                       "Fermo! Noşî can be!",
                       "Fermo, taştê!",
-                      "Fermo, taştê!"
+                      "Fermo, av!"
                     ],
                     "correctIndex": 0
                   }
@@ -2974,8 +2977,8 @@
                     "voice": "hamo",
                     "prompt": "Erê! Destê wê sax be!",
                     "accepted": [
-                      "It is! Bless her hands!",
-                      "It’s! Bless her hands!"
+                      "Yes! Bless her hands!",
+                      "Yes, bless her hands!"
                     ]
                   }
                 },
@@ -3057,8 +3060,8 @@
                     "prompt": "Baran neh salî ye, ne deh.",
                     "options": [
                       "Baran is nine, not ten.",
-                      "Baran is not ten.",
-                      "Baran is nine years old."
+                      "Baran is ten, not nine.",
+                      "Hêvî is nine, not ten."
                     ],
                     "correctIndex": 0
                   }
@@ -3090,7 +3093,7 @@
                     "options": [
                       "Penîr heye.",
                       "Ez nan û penîr dixwim.",
-                      "Ez nan û penîr dixwim."
+                      "Penîr tune."
                     ],
                     "correctIndex": 0
                   }
@@ -3136,8 +3139,8 @@
                     "prompt": "Fermo, av. Noşî can be!",
                     "options": [
                       "Here you are, water. Enjoy!",
-                      "Here you are! Enjoy!",
-                      "Enjoy!"
+                      "Here’s some tea. Enjoy!",
+                      "Is the water cold?"
                     ],
                     "correctIndex": 0
                   }
@@ -3161,7 +3164,7 @@
                       },
                       {
                         "left": "derî",
-                        "right": "A door."
+                        "right": "door"
                       },
                       {
                         "left": "mal",
@@ -3185,7 +3188,7 @@
                     "options": [
                       "Baş e! Tu tî yî?",
                       "Baş e! Tu salî yî?",
-                      "Tu tî yî?"
+                      "Baş e! Tu tî î?"
                     ],
                     "correctIndex": 0
                   }
@@ -3912,7 +3915,7 @@
                     "prompt": "Deh! Aferîn, Hêvî!",
                     "options": [
                       "Ten! Well done, Hêvî!",
-                      "Ten!",
+                      "Ten! Sorry, Hêvî!",
                       "Hello, Hêvî!"
                     ],
                     "correctIndex": 0,
@@ -4153,7 +4156,7 @@
                     "prompt": "Fermo, şîv! Kerem bikin!",
                     "options": [
                       "Supper’s ready! Come on, everyone, help yourselves!",
-                      "Here’s dinner!",
+                      "Here’s breakfast! Help yourselves!",
                       "Help yourselves! Supper is lovely."
                     ],
                     "correctIndex": 0
