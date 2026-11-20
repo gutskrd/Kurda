@@ -44,9 +44,10 @@ import {
   removedKeys,
   removeMedia,
   restoreContent,
+  withdrawnKeys,
   type RemovalRecord,
 } from './content-removal.js';
-import { readStoredPicture, runPicturePublishing } from './picture-release.js';
+import { readStoredPicture, runHoldMoves, runPicturePublishing } from './picture-release.js';
 import { mediaWhereabouts, requestQuarantine, runQuarantine } from './quarantine.js';
 import { caringMessage, reportOutcomeNotice, sanctionNotice, type Notice } from './notices.js';
 import { isZeroTolerance, permanentBanMode, slaDueAt } from './rules.js';
@@ -182,6 +183,8 @@ function originFor(source: CaseSource, evidence?: Record<string, unknown> | null
 export interface CasesOptions {
   /** the bucket, or how to find it when it is set after the services are built (an app's tests do) */
   storage?: MediaStorage | null | (() => MediaStorage | null | undefined);
+  /** after pictures are released: readers of letters that waited for them are told (pictures-service.ts) */
+  afterRelease?: () => Promise<void>;
   log?: { warn: (obj: unknown, msg: string) => void };
 }
 
@@ -219,9 +222,11 @@ export class CasesService {
    * After a decision commits: pictures it took down leave the public bucket, and pictures it (or an appeal, or a lifted
    * removal) put back are copied to it. Whatever fails here, the five-minute sweep finishes.
    */
-  async afterPictureDecision(quarantined: string[] = []): Promise<void> {
+  async afterPictureDecision(quarantined: string[] = [], withdrawn: string[] = []): Promise<void> {
     await runQuarantine(this.pool, this.storage, { keys: quarantined, log: this.opts.log });
+    await runHoldMoves(this.pool, this.storage, { keys: withdrawn, log: this.opts.log });
     await runPicturePublishing(this.pool, this.storage, { log: this.opts.log });
+    await this.opts.afterRelease?.().catch((err) => this.opts.log?.warn({ err }, 'telling readers of released letters failed; the sweep will retry'));
   }
 
   /**
@@ -340,6 +345,7 @@ export class CasesService {
    */
   async decide(caseId: string, adminId: string, req: DecideRequest): Promise<DecideResult> {
     const quarantined: string[] = [];
+    const withdrawn: string[] = [];
     const result = await inTransaction(this.pool, async (client) => {
       const c = await this.lockOpen(client, caseId, adminId);
       if (c.resolution === 'csam') throw new AppError('ALREADY_DECIDED', 409, 'the CSAM action already decided this case');
@@ -439,6 +445,8 @@ export class CasesService {
       // every picture a removal takes down leaves the public bucket
       quarantined.push(...mediaRemovals(removed).flatMap(removedKeys));
       await requestQuarantine(client, quarantined);
+      // a removed post's own picture copies leave the public bucket too, without blocking the picture anywhere else
+      withdrawn.push(...withdrawnKeys(removed));
 
       const status: CaseStatus = needsApproval ? 'needs_second_approval' : outcome;
       if (!needsApproval) await this.finalize(client, c, outcome, adminId, req.notifyReporters, removed !== null);
@@ -454,6 +462,7 @@ export class CasesService {
         [c.id, status, needsApproval, outcome, adminId, outcome === 'actioned' ? policy : req.policy ?? null, req.note?.trim() || null,
           req.notifyReporters, removed ? JSON.stringify(removed) : null],
       );
+      if (!needsApproval) await this.closeLinked(client, c, outcome, adminId, removed !== null, policy);
       if (req.note?.trim()) {
         await client.query(`INSERT INTO moderation_case_notes (case_id, author_id, body) VALUES ($1, $2, $3)`, [
           c.id,
@@ -475,7 +484,7 @@ export class CasesService {
       });
       return { preview: false, status, messages, sanctions: applied, permanentBans };
     });
-    if (!result.preview) await this.afterPictureDecision(quarantined);
+    if (!result.preview) await this.afterPictureDecision(quarantined, withdrawn);
     return result;
   }
 
@@ -648,6 +657,61 @@ export class CasesService {
       await deliverNotices(db, reporters.map((userId) => ({ userId, notice: reportOutcomeNotice(outcome, []) })));
     }
     await closeSource(db, c, outcome, adminId, removed);
+  }
+
+  /**
+   * A reported picture is decided once. Deciding its picture case decides the report case about the same thing (with
+   * the usual notices to reporters, once no other of its pictures still waits for a yes), and deciding the report case
+   * decides its picture cases, in the same transaction. A report case actioned without taking anything down leaves its
+   * pictures waiting, since nobody has decided them.
+   */
+  private async closeLinked(db: Executor, c: CaseRow, outcome: Outcome, adminId: string, removedSomething: boolean, policy: ReportCategory): Promise<void> {
+    const open = `status IN ('open','in_review','escalated') AND resolution IS DISTINCT FROM 'csam'`;
+    if (c.source === 'report') {
+      if (outcome === 'actioned' && !removedSomething) return;
+      const pictures = await db.query<CaseRow>(
+        `SELECT * FROM moderation_cases WHERE source = 'image_flag' AND evidence->>'reportCaseId' = $1 AND ${open} ORDER BY id FOR UPDATE`,
+        [c.id],
+      );
+      for (const p of pictures.rows) await this.closeWith(db, p, outcome, adminId, policy, `decided with its report case ${c.id}`, false);
+      return;
+    }
+    const reportCaseId = c.source === 'image_flag' ? (c.evidence as { reportCaseId?: unknown }).reportCaseId : null;
+    if (typeof reportCaseId !== 'string') return;
+    const report = await this.find(db, reportCaseId, true);
+    if (!report || report.source !== 'report' || !(['open', 'in_review', 'escalated'] as string[]).includes(report.status)) return;
+    if (outcome === 'no_violation') {
+      const others = await db.query(
+        `SELECT 1 FROM moderation_cases WHERE source = 'image_flag' AND evidence->>'reportCaseId' = $1 AND id <> $2 AND ${open} LIMIT 1`,
+        [reportCaseId, c.id],
+      );
+      if (others.rowCount) return;
+    }
+    // nobody decides a report they made, whichever page they decide it from
+    await this.assertNotParty(db, report, adminId);
+    await this.closeWith(db, report, outcome, adminId, policy, `decided with its picture case ${c.id}`, true);
+  }
+
+  /** Close a case that another decision decided: its reports and source closed, reporters told, nothing else applied. */
+  private async closeWith(db: Executor, row: CaseRow, outcome: Outcome, adminId: string, policy: ReportCategory, why: string, notifyReporters: boolean): Promise<void> {
+    await this.finalize(db, row, outcome, adminId, notifyReporters, false);
+    await db.query(
+      `UPDATE moderation_cases SET status = $2, resolution = $2, resolved_by = $3, resolved_at = now(),
+              policy = CASE WHEN $2 = 'actioned' THEN $4 ELSE policy END, resolution_note = COALESCE(resolution_note, $5),
+              notify_reporters = $6, claimed_by = NULL, lease_until = NULL, updated_at = now()
+        WHERE id = $1`,
+      [row.id, outcome, adminId, policy, why, notifyReporters],
+    );
+    await logAdminAction(db, {
+      targetUserId: row.subject_user_id,
+      adminId,
+      action: 'case_decision',
+      reason: why,
+      caseId: row.id,
+      policy,
+      before: { status: row.status },
+      after: { status: outcome, decidedWith: true },
+    });
   }
 
   /** Lock an open case for a decision, enforcing the lease and the conflict-of-interest rule. */

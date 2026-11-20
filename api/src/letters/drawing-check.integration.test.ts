@@ -102,8 +102,13 @@ describe.skipIf(!DATABASE_URL)('letter drawings are checked before they fly (int
     expect(approved.statusCode, approved.body).toBe(200);
     expect((await thread(b, met.threadId)).letters.at(-1)).toMatchObject({ body: 'Binêre!' });
     expect((await thread(a, met.threadId)).letters.at(-1)).not.toHaveProperty('review');
+    // told once, by the same notification and push any letter brings
     const told = await pool.query(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'kind' = 'letter' AND data->>'letterId' = $2`, [b.id, letterId]);
     expect(told.rowCount).toBe(1);
+    expect((await pool.query(`SELECT released_at FROM letters WHERE id = $1`, [letterId])).rows[0]).toEqual({ released_at: null });
+    expect(await app.pictures.afterRelease().then(() => pool.query(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'letterId' = $2`, [b.id, letterId]))).toMatchObject({
+      rowCount: 1,
+    });
     const owner = await pool.query<{ data: Record<string, unknown> }>(`SELECT data FROM notifications WHERE user_id = $1 AND data->>'kind' = 'picture_review'`, [a.id]);
     expect(owner.rows[0]!.data).toMatchObject({ outcome: 'approved', surface: 'letter', target: { type: 'letter_thread', id: met.threadId } });
   });

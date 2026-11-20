@@ -8,15 +8,28 @@ import type { Executor } from './tx.js';
  * Removing reported content, and putting it back. A removal hides content everywhere the way an author's delete does (a
  * post or picture becomes `removed`, a comment a tombstone, a chat message "Removed by Hevalo" for both people) and
  * records exactly what it changed on the case, so an overturning appeal can restore it. The report's snapshot keeps the
- * original either way. A removed post takes its pictures down with it: blocked by their bytes on every kind, and moved
- * off the public bucket by the caller (quarantine.ts). Putting a picture back makes it public again
+ * original either way.
+ *
+ * A removed post takes its own copies of its pictures off the public bucket too (`withdrawn`, moved private by the
+ * caller and kept for the appeal window), but that is no verdict on the pictures: a meme under a hateful caption stays
+ * postable by others. Only a removal about the picture itself (a picture case, a reported profile or group photo, the
+ * CSAM action) blocks its bytes on every kind (`removeMedia`). Putting a picture back makes it public again
  * (picture-release.ts), rather than restoring whatever hold it was under.
  */
 
 /** What a removal changed: enough to undo it. Stored on the case as `removed_content`. */
 export type RemovalRecord =
-  /** `media`: the post's pictures, taken down with it; absent from removals recorded before they were */
-  | { type: 'library_post' | 'image_post'; id: string; previousStatus: string; media?: MediaRemoval[] }
+  /**
+   * `withdrawn`: the post's own picture copies, off the public bucket with it; `media`: pictures blocked with it, as an
+   * earlier version did. Absent from removals recorded before either.
+   */
+  | {
+      type: 'library_post' | 'image_post';
+      id: string;
+      previousStatus: string;
+      withdrawn?: Array<{ key: string; previousScanStatus: string }>;
+      media?: MediaRemoval[];
+    }
   | {
       type: 'library_comment' | 'image_comment';
       id: string;
@@ -89,9 +102,17 @@ export async function removableTarget(
 ): Promise<{ type: ReportTargetType | 'media'; id: string } | null> {
   switch (c.source) {
     case 'report':
-    case 'copyright':
+    case 'copyright': {
       if (!c.target_type || !c.target_id) return null;
+      // A reported person or group is removed as the picture they were reported with (the report's snapshot), a removal
+      // about the picture itself. A copyright notice about a profile has no picture to take down.
+      if (c.source === 'report' && (c.target_type === 'user' || c.target_type === 'group')) {
+        const keys = (c.evidence as { mediaKeys?: unknown }).mediaKeys;
+        const key = Array.isArray(keys) && typeof keys[0] === 'string' ? keys[0] : null;
+        return key ? { type: 'media', id: key } : null;
+      }
       return ['user', 'group', 'game_player'].includes(c.target_type) ? null : { type: c.target_type, id: c.target_id };
+    }
     case 'library_report':
     case 'image_report': {
       const t = parseTargetRef(c.source_ref);
@@ -138,12 +159,8 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
       const r = await db.query<{ status: string }>(`SELECT status FROM ${table} WHERE id = $1::uuid FOR UPDATE`, [target.id]);
       const previousStatus = r.rows[0]?.status ?? 'removed';
       await db.query(`UPDATE ${table} SET status = 'removed', updated_at = now() WHERE id = $1::uuid`, [target.id]);
-      const media: MediaRemoval[] = [];
-      for (const key of await picturesOfPost(db, target.type, target.id)) {
-        if (media.some((m) => removedKeys(m).includes(key))) continue;
-        media.push(await removeMedia(db, key));
-      }
-      return { type: target.type, id: target.id, previousStatus, ...(media.length > 0 ? { media } : {}) };
+      const withdrawn = await withdrawPictures(db, await picturesOfPost(db, target.type, target.id));
+      return { type: target.type, id: target.id, previousStatus, ...(withdrawn.length > 0 ? { withdrawn } : {}) };
     }
     case 'library_comment':
     case 'image_comment': {
@@ -203,6 +220,32 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
     default:
       throw new AppError('NOTHING_TO_REMOVE', 422, 'this case is not about a piece of content');
   }
+}
+
+/**
+ * A removed post's own copies of its pictures, off the public bucket with it (the caller moves them private:
+ * picture-release.ts `runHoldMoves`). The bytes are not blocked anywhere else; a picture already blocked or refused is
+ * left as it is.
+ */
+async function withdrawPictures(db: Executor, keys: string[]): Promise<Array<{ key: string; previousScanStatus: string }>> {
+  if (keys.length === 0) return [];
+  const r = await db.query<{ key: string; previous: string }>(
+    `UPDATE media_uploads m SET scan_status = 'withdrawn', withdrawn_at = now(), publish_state = NULL
+       FROM (SELECT key, scan_status FROM media_uploads WHERE key = ANY($1::text[]) AND scan_status IN ('cleared','held','gated')
+              ORDER BY key FOR UPDATE) o
+      WHERE m.key = o.key
+      RETURNING m.key, o.scan_status AS previous`,
+    [keys],
+  );
+  return r.rows.map((w) => ({ key: w.key, previousScanStatus: w.previous }));
+}
+
+/** Every picture a removal withdrew with its post, however it is nested. */
+export function withdrawnKeys(rec: RemovalRecord | null | undefined): string[] {
+  if (!rec) return [];
+  if (rec.type === 'library_post' || rec.type === 'image_post') return (rec.withdrawn ?? []).map((w) => w.key);
+  if (rec.type === 'csam') return rec.parts.flatMap(withdrawnKeys);
+  return [];
 }
 
 /** The pictures a post shows: a picture post's one, a written post's up to four. */
@@ -351,6 +394,15 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
       const table = rec.type === 'library_post' ? 'library_posts' : 'image_posts';
       if (rec.previousStatus !== 'removed') {
         await db.query(`UPDATE ${table} SET status = $2, updated_at = now() WHERE id = $1::uuid AND status = 'removed'`, [rec.id, rec.previousStatus]);
+      }
+      for (const w of rec.withdrawn ?? []) {
+        // a picture still waiting for a person waits again; any other is public again
+        if (w.previousScanStatus === 'held') {
+          await db.query(`UPDATE media_uploads SET scan_status = 'held', withdrawn_at = NULL WHERE key = $1 AND scan_status = 'withdrawn'`, [w.key]);
+        } else {
+          const still = await db.query(`SELECT 1 FROM media_uploads WHERE key = $1 AND scan_status = 'withdrawn'`, [w.key]);
+          if (still.rowCount) await releasePicture(db, w.key);
+        }
       }
       for (const media of rec.media ?? []) await restoreContent(db, media);
       return;

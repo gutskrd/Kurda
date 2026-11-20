@@ -9,12 +9,12 @@ const UNPOSTED_AUDIO = `NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_
           AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = m.key)`;
 
 /**
- * Upload `m` is no picture moderation still needs: not waiting for a person, not a refusal still kept for its owner to
- * ask about or appeal (its private copy goes after the window: moderation/pictures-service.ts `expireRefused`), and in
- * no open picture case.
+ * Upload `m` is no picture moderation still needs: not waiting for a person, not a refusal or a removed post's picture
+ * still kept for its owner to ask about or appeal (its private copy goes after the window:
+ * moderation/pictures-service.ts `expireRefused`), and in no open picture case.
  */
 const NOT_UNDER_REVIEW = `m.scan_status <> 'held'
-          AND NOT (m.scan_status = 'refused' AND m.private_key IS NOT NULL)
+          AND NOT (m.scan_status IN ('refused','withdrawn') AND m.private_key IS NOT NULL)
           AND NOT EXISTS (SELECT 1 FROM moderation_cases pc
                            WHERE pc.source = 'image_flag' AND pc.evidence->>'mediaKey' = m.key
                              AND pc.status IN ('open','in_review','needs_second_approval','escalated'))`;

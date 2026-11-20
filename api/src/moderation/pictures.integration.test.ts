@@ -358,6 +358,72 @@ describe.skipIf(!DATABASE_URL)('pictures are checked before anyone else sees the
     await kit.call('POST', `/admin/pictures/${item.caseId}/decide`, admin.token, { decision: 'approve' });
     expect((await pool.query<{ status: string }>(`SELECT status FROM image_posts WHERE id = $1`, [postId])).rows[0]!.status).toBe('published');
     expect(storage.objects.has(key)).toBe(true);
+    // decided once: the report case about the same picture closes with it, and its reporters hear the outcome
+    const report = await pool.query<{ status: string }>(
+      `SELECT status FROM moderation_cases WHERE source = 'report' AND target_type = 'image_post' AND target_id = $1`,
+      [postId],
+    );
+    expect(report.rows.map((r) => r.status)).toEqual(['no_violation']);
+    for (const r of reporters) expect((await notices(r.id)).some((n) => n.kind === 'report_outcome' && n.outcome === 'no_violation')).toBe(true);
+  });
+
+  it('closes a reported picture’s own case when its report case is decided first', async () => {
+    const author = await person('linked');
+    const key = (await upload(author.token, await photo())).json().imageMediaId as string;
+    const postId = (await kit.call('POST', '/images', author.token, { imageMediaId: key, category: 'image' })).json().id as string;
+    const reporter = await person('linkedrep');
+    // one child-safety report hides it at once
+    await kit.call('POST', '/reports', reporter.token, { targetType: 'image_post', targetId: postId, category: 'child_safety' });
+    const picture = await caseOf(key);
+    expect(picture).toMatchObject({ status: 'open', priority: 0 });
+    const report = (
+      await pool.query<{ id: string }>(`SELECT id FROM moderation_cases WHERE source = 'report' AND target_id = $1`, [postId])
+    ).rows[0]!;
+    const decided = await kit.call('POST', `/admin/moderation/cases/${report.id}/decide`, admin.token, { outcome: 'no_violation', notifyReporters: true });
+    expect(decided.statusCode, decided.body).toBe(200);
+    expect((await caseOf(key)).status).toBe('no_violation');
+    expect(await media(key)).toMatchObject({ scan_status: 'cleared' });
+    expect((await pool.query<{ status: string }>(`SELECT status FROM image_posts WHERE id = $1`, [postId])).rows[0]!.status).toBe('published');
+  });
+
+  it('takes a post removed for its words off the public bucket without blocking its picture anywhere else', async () => {
+    const author = await person('words');
+    const other = await person('wordsother');
+    const reporter = await person('wordsrep');
+    const original = await photo();
+    const key = (await upload(author.token, original)).json().imageMediaId as string;
+    const post = await kit.call('POST', '/images', author.token, { imageMediaId: key, caption: 'hateful words', category: 'meme' });
+    const postId = post.json().id as string;
+    await kit.call('POST', '/reports', reporter.token, { targetType: 'image_post', targetId: postId, category: 'hate' });
+    const report = (
+      await pool.query<{ id: string }>(`SELECT id FROM moderation_cases WHERE source = 'report' AND target_id = $1`, [postId])
+    ).rows[0]!;
+    const removed = await kit.call('POST', `/admin/moderation/cases/${report.id}/decide`, admin.token, {
+      outcome: 'actioned',
+      policy: 'hate',
+      removeContent: true,
+      actions: [{ target: 'subject', kind: 'content_removal', statement: 'Your caption was hateful.' }],
+    });
+    expect(removed.statusCode, removed.body).toBe(200);
+    // off the public bucket and kept privately for the appeal, but no verdict on the picture
+    const row = await media(key);
+    expect(row).toMatchObject({ scan_status: 'withdrawn' });
+    expect(storage.objects.has(key)).toBe(false);
+    expect(storage.evidence.has(row!.private_key!)).toBe(true);
+    // the same meme stays postable by others, and by its author under better words
+    const again = await upload(other.token, original);
+    expect([again.statusCode, again.json().review]).toEqual([201, 'clear']);
+    expect((await upload(author.token, original)).json().review).toBe('clear');
+
+    // an overturned removal puts the post and its picture back
+    const sanction = (await pool.query<{ id: string }>(`SELECT id FROM sanctions WHERE user_id = $1 AND kind = 'content_removal'`, [author.id])).rows[0]!;
+    const appeal = await kit.call('POST', '/me/appeals', author.token, { sanctionId: sanction.id, text: 'It was a joke.' });
+    const overturned = await kit.call('POST', `/admin/appeals/${appeal.json().id}/decide`, second.token, { outcome: 'overturned', note: 'Fine.' });
+    expect(overturned.statusCode, overturned.body).toBe(200);
+    // public again; the report still holds its private copy as evidence until its retention ends
+    expect(await media(key)).toMatchObject({ scan_status: 'cleared', preserve_evidence: true });
+    expect(storage.objects.has(key)).toBe(true);
+    expect((await pool.query<{ status: string }>(`SELECT status FROM image_posts WHERE id = $1`, [postId])).rows[0]!.status).toBe('published');
   });
 
   it('takes a picture down through the same removal when staff delete someone else’s post', async () => {
@@ -374,9 +440,11 @@ describe.skipIf(!DATABASE_URL)('pictures are checked before anyone else sees the
     expect(await media(key)).toMatchObject({ scan_status: 'blocked', preserve_evidence: true });
     expect(storage.objects.has(key)).toBe(false);
     expect((await pool.query(`SELECT 1 FROM sanctions WHERE user_id = $1 AND kind = 'content_removal'`, [author.id])).rowCount).toBe(1);
-    // and the same bytes cannot come back under a new upload
+    // and the same bytes cannot come back under a new upload, from anyone, as any kind
+    const other = await person('staffdelother');
     expect((await upload(author.token, original)).json()).toMatchObject({ code: 'IMAGE_REJECTED', reviewId: null });
-    expect((await raw('/me/profile-picture', author.token, original)).json()).toMatchObject({ code: 'PHOTO_REJECTED', reviewId: null });
+    expect((await upload(other.token, original)).json()).toMatchObject({ code: 'IMAGE_REJECTED', reviewId: null });
+    expect((await raw('/me/profile-picture', other.token, original)).json()).toMatchObject({ code: 'PHOTO_REJECTED', reviewId: null });
   });
 
   it('never pays twice for the same picture: what the check found is reused on every kind', async () => {
@@ -394,6 +462,37 @@ describe.skipIf(!DATABASE_URL)('pictures are checked before anyone else sees the
       [me.id],
     );
     expect(reused.rows[0]!.model_version).toMatch(/\(reused\)$/);
+  });
+
+  it('takes a closing account’s waiting pictures with it, private copies included, and leaves its group’s picture', async () => {
+    const me = await person('closing');
+    const made = await kit.call('POST', '/groups', me.token, { name: `Closing ${kit.suffix}` });
+    const gid = made.json().id as string;
+    const live = await raw(`/groups/${gid}/photo`, me.token, await photo());
+    expect(live.json().review).toBe('clear');
+    const groupKey = (await pool.query<{ k: string }>(`SELECT photo_key AS k FROM groups WHERE id = $1`, [gid])).rows[0]!.k;
+    stub.queue({ suggestive: 'possible' }, { violence: 'possible' });
+    await raw('/me/profile-picture', me.token, await photo());
+    await raw(`/groups/${gid}/photo`, me.token, await photo());
+    const waiting = (await pool.query<{ p: string; g: string }>(
+      `SELECT u.pending_profile_photo_key AS p, g.pending_photo_key AS g FROM users u, groups g WHERE u.id = $1 AND g.id = $2`,
+      [me.id, gid],
+    )).rows[0]!;
+    const copies = [(await media(waiting.p))!.private_key!, (await media(waiting.g))!.private_key!];
+    expect(copies.every((c) => storage.evidence.has(c))).toBe(true);
+
+    const { GdprService } = await import('../gdpr/service.js');
+    await new GdprService(pool, { storage }).closeNow(me.id, 'guest_left');
+    expect(copies.some((c) => storage.evidence.has(c))).toBe(false);
+    expect((await pool.query(`SELECT 1 FROM users WHERE id = $1 AND pending_profile_photo_key IS NOT NULL`, [me.id])).rowCount).toBe(0);
+    expect((await pool.query<{ k: string | null; by: string | null }>(`SELECT pending_photo_key AS k, pending_photo_set_by AS by FROM groups WHERE id = $1`, [gid])).rows[0]).toEqual({
+      k: null,
+      by: null,
+    });
+    expect((await caseOf(waiting.p)).status).toBe('no_violation');
+    // the group's picture is the group's, and stays
+    expect(storage.objects.has(groupKey)).toBe(true);
+    expect((await pool.query(`SELECT 1 FROM image_scans WHERE uploader_id = $1 AND status = 'clear'`, [me.id])).rowCount).toBe(0);
   });
 
   it('never lets the orphan sweep take a picture waiting for a person', async () => {

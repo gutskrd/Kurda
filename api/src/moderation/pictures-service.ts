@@ -191,6 +191,7 @@ function decodeCursor(cursor: string | undefined): { at: string; id: string } | 
 
 export class PictureReviewService {
   private cases: CasesService | null = null;
+  private letters: { announceReleased(): Promise<number> } | null = null;
 
   constructor(
     private readonly pool: pg.Pool,
@@ -200,6 +201,16 @@ export class PictureReviewService {
   /** The case service decisions go through; set once both exist (each needs the other). */
   useCases(cases: CasesService): void {
     this.cases = cases;
+  }
+
+  /** The letters service that tells a reader of a letter held for its drawing, once it is approved. */
+  useLetters(letters: { announceReleased(): Promise<number> }): void {
+    this.letters = letters;
+  }
+
+  /** After pictures are released: letters that waited for them are announced to their readers as any letter is. */
+  async afterRelease(): Promise<void> {
+    await this.letters?.announceReleased();
   }
 
   get checks(): ImageModerationService {
@@ -1065,20 +1076,25 @@ export class PictureReviewService {
       if (check.outcome.state === 'clear') released++;
       if (urgent) await this.alertUrgent(scan.case_id);
     }
-    if (released > 0) await runPicturePublishing(this.pool, storage, { log: this.opts.log });
+    if (released > 0) {
+      await runPicturePublishing(this.pool, storage, { log: this.opts.log });
+      await this.afterRelease().catch((err) => this.opts.log?.warn({ err }, 'telling readers of released letters failed; the sweep will retry'));
+    }
     return released;
   }
 
   /**
-   * Refused pictures nobody asked about, past the window to ask and appeal: their private bytes are deleted and the
-   * row handed to the orphan sweep. A child-safety hit is evidence, kept by its own retention.
+   * Refused pictures nobody asked about, and pictures withdrawn with a removed post, past the window to ask and appeal:
+   * their private bytes are deleted and the row handed to the orphan sweep. A child-safety hit or a report's evidence is
+   * kept by its own retention.
    */
   async expireRefused(limit = 200): Promise<number> {
     const storage = this.storage;
     const due = await this.pool.query<{ key: string; private_key: string | null }>(
       `SELECT m.key, m.private_key FROM media_uploads m
-        WHERE m.scan_status = 'refused' AND NOT m.preserve_evidence
-          AND m.created_at < now() - make_interval(days => $1::int)
+        WHERE ((m.scan_status = 'refused' AND m.created_at < now() - make_interval(days => $1::int))
+               OR (m.scan_status = 'withdrawn' AND m.withdrawn_at < now() - make_interval(days => $1::int)))
+          AND NOT m.preserve_evidence
           AND NOT EXISTS (SELECT 1 FROM moderation_cases c
                            WHERE c.source = 'image_flag' AND c.evidence->>'mediaKey' = m.key AND ${OPEN_CASE_PREDICATE})
         LIMIT $2`,
@@ -1088,7 +1104,10 @@ export class PictureReviewService {
     for (const row of due.rows) {
       try {
         if (row.private_key && storage) await storage.deleteEvidence(row.private_key);
-        await this.pool.query(`UPDATE media_uploads SET private_key = NULL, confirmed_at = NULL WHERE key = $1 AND scan_status = 'refused'`, [row.key]);
+        await this.pool.query(
+          `UPDATE media_uploads SET private_key = NULL, confirmed_at = NULL WHERE key = $1 AND scan_status IN ('refused','withdrawn')`,
+          [row.key],
+        );
         n++;
       } catch (err) {
         this.opts.log?.warn({ err, key: row.key }, 'could not delete a refused picture past its window yet');
@@ -1097,11 +1116,15 @@ export class PictureReviewService {
     return n;
   }
 
-  /** The five-minute sweep's picture work: approved pictures published, hidden ones moved private. */
+  /**
+   * The five-minute sweep's picture work: approved pictures published, hidden and withdrawn ones moved private, and any
+   * released letter whose reader was not told yet.
+   */
   async sweep(): Promise<void> {
     const storage = this.storage;
     await runPicturePublishing(this.pool, storage, { log: this.opts.log });
     await runHoldMoves(this.pool, storage, { log: this.opts.log });
+    await this.afterRelease();
   }
 }
 

@@ -10,9 +10,12 @@
  *
  * - `media_uploads.scan_status` gains `held` (waiting for a person) and
  *   `refused` (refused at upload), and new rows start `pending` rather than
- *   `cleared`. `private_key` is where the bytes are kept while they are not
- *   public, and `publish_state` marks a picture a person approved whose bytes
- *   are still being copied to the public bucket (the sweep retries).
+ *   `cleared`; `withdrawn` is a picture that went off the public bucket with
+ *   a post removed for its words, kept privately for the appeal window but no
+ *   verdict on the picture itself. `private_key` is where the bytes are kept
+ *   while they are not public, and `publish_state` marks a picture a person
+ *   approved whose bytes are still being copied to the public bucket (the
+ *   sweep retries).
  * - `image_scans` keeps what the check found per category (`levels`), how the
  *   picture came to be held (`checked_by`), the outcome and the reason shown
  *   to the owner, who uploaded it, the owner asking a person to look again
@@ -30,7 +33,7 @@
  */
 
 const SCAN_STATUSES_OLD = ['pending', 'cleared', 'gated', 'blocked'];
-const SCAN_STATUSES_NEW = ['pending', 'cleared', 'gated', 'held', 'refused', 'blocked'];
+const SCAN_STATUSES_NEW = ['pending', 'cleared', 'gated', 'held', 'refused', 'withdrawn', 'blocked'];
 const SURFACES_OLD = ['feed', 'profile'];
 const SURFACES_NEW = [...SURFACES_OLD, 'post', 'profile_photo', 'group_photo', 'letter'];
 const SCAN_ROW_STATUSES_OLD = ['pending', 'actioned', 'reversed'];
@@ -59,6 +62,8 @@ export const up = (pgm) => {
     publish_state: { type: 'text', check: "publish_state = 'pending'" },
     // the hash of the file as it was sent, before it was resized for its kind, so the same file is known on every kind
     source_sha256: { type: 'text' },
+    // when a removed post took this picture off the public bucket with it (`withdrawn`), for the appeal window
+    withdrawn_at: { type: 'timestamptz' },
   });
   pgm.createIndex('media_uploads', 'source_sha256', { name: 'media_uploads_source_sha256', where: 'source_sha256 IS NOT NULL' });
   pgm.createIndex('media_uploads', 'key', { name: 'media_uploads_publish_pending', where: "publish_state = 'pending'" });
@@ -118,7 +123,11 @@ export const up = (pgm) => {
     pending_photo_set_by: { type: 'uuid', references: 'users', onDelete: 'SET NULL' },
   });
   for (const [table, name, , statuses] of POST_STATUSES) setCheck(pgm, table, name, 'status', statuses);
-  pgm.addColumns('letters', { drawing_key: { type: 'text' } });
+  pgm.addColumns('letters', {
+    drawing_key: { type: 'text' },
+    // a held letter just approved, whose reader is still to be told the way any letter's reader is
+    released_at: { type: 'timestamptz' },
+  });
   pgm.createIndex('letters', 'drawing_key', { name: 'letters_drawing_key', where: 'drawing_key IS NOT NULL' });
 
   // the Pictures page reads picture cases by status, oldest first
@@ -135,7 +144,7 @@ export const down = (pgm) => {
   pgm.dropIndex('moderation_cases', ['status', 'first_reported_at'], { name: 'moderation_cases_pictures_idx' });
 
   pgm.dropIndex('letters', 'drawing_key', { name: 'letters_drawing_key' });
-  pgm.dropColumns('letters', ['drawing_key']);
+  pgm.dropColumns('letters', ['drawing_key', 'released_at']);
   // what waited for a person is let go: a held post or letter is taken down, a held drawing's letter too
   pgm.sql(`UPDATE image_posts SET status = 'removed' WHERE status = 'held'`);
   pgm.sql(`UPDATE library_posts SET status = 'removed' WHERE status = 'held'`);
@@ -158,9 +167,9 @@ export const down = (pgm) => {
   pgm.dropIndex('media_uploads', 'key', { name: 'media_uploads_hold_move_pending' });
   pgm.dropIndex('media_uploads', 'key', { name: 'media_uploads_publish_pending' });
   pgm.dropIndex('media_uploads', 'source_sha256', { name: 'media_uploads_source_sha256' });
-  pgm.dropColumns('media_uploads', ['private_key', 'publish_state', 'source_sha256']);
+  pgm.dropColumns('media_uploads', ['private_key', 'publish_state', 'source_sha256', 'withdrawn_at']);
   pgm.alterColumn('media_uploads', 'scan_status', { default: 'cleared' });
-  // held and refused bytes are not public, so the old schema calls them gated
-  pgm.sql(`UPDATE media_uploads SET scan_status = 'gated' WHERE scan_status IN ('held','refused')`);
+  // held, refused and withdrawn bytes are not public, so the old schema calls them gated
+  pgm.sql(`UPDATE media_uploads SET scan_status = 'gated' WHERE scan_status IN ('held','refused','withdrawn')`);
   setCheck(pgm, 'media_uploads', 'media_uploads_scan_status_check', 'scan_status', SCAN_STATUSES_OLD);
 };
