@@ -324,3 +324,37 @@ describe('FeedCard', () => {
     expect(document.querySelector('.reaction, .reactions')).toBeNull();
   });
 });
+
+describe('a post whose picture is still being checked', () => {
+  const mine = { id: ME.id, username: ME.username, avatarUrl: null };
+
+  it('tells its author calmly that only they can see it, and offers no way to pass it on', async () => {
+    signIn();
+    serve();
+    renderApp(<FeedCard item={picture({ author: mine, review: 'held' })} />);
+
+    expect(await screen.findByText('Being checked')).toBeInTheDocument();
+    expect(screen.getByText('Only you can see this until it’s checked. It usually takes a few hours.')).toBeInTheDocument();
+    // Nobody else can open it yet, so it is neither reposted nor shared.
+    expect(screen.queryByRole('button', { name: 'Share this post' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /repost/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Like' })).toBeInTheDocument();
+  });
+
+  it('says nothing of it to anyone but the author', async () => {
+    signIn();
+    serve();
+    renderApp(<FeedCard item={picture({ review: 'held' })} />);
+    await screen.findByRole('button', { name: 'More about this post' });
+    expect(screen.queryByText('Being checked')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Only you can see this/)).not.toBeInTheDocument();
+  });
+
+  it('shares as usual once it is clear', async () => {
+    signIn();
+    serve();
+    renderApp(<FeedCard item={picture({ author: mine })} />);
+    expect(await screen.findByRole('button', { name: 'Share this post' })).toBeInTheDocument();
+    expect(screen.queryByText('Being checked')).not.toBeInTheDocument();
+  });
+});

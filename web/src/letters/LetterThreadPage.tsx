@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { LETTERS_CHANGED, freshLetters, letterThreadPath, withEarlierLetters, type LetterItem, type LetterThread } from '@kurda/shared';
+import { LETTERS_CHANGED, freshLetters, letterThreadPath, withEarlierLetters, type LetterItem, type LetterThread, type PictureRejection } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useMemoryOwner } from '../lib/useApi';
 import { describeError } from '../lib/api';
@@ -11,7 +11,8 @@ import { ChevronIcon } from '../components/icons';
 import { UserActions } from '../profile/UserActions';
 import { ReportSheet } from '../reports/ReportSheet';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
-import { BirdBadge, LetterSheet } from './LetterParts';
+import { PictureRefusal } from '../pictures/PictureCheck';
+import { BirdBadge, LetterSheet, drawingHeld } from './LetterParts';
 import { LetterComposer, type LetterToSend } from './LetterComposer';
 import { letterErrorText } from './errors';
 import { rememberedPaper } from './paper';
@@ -74,7 +75,8 @@ function useCorrespondence(threadId: string): CorrespondenceRead {
  * the paper to reply on when theirs is last, or a line saying the reader's bird is with them. The pen pal's ⋯ offers
  * report, block and goodbye (confirmed twice), which ends the letters for both; a single letter can be reported from
  * under it. It refetches when the server reports a change and when the tab is shown again. A reply in progress is kept
- * as a draft (letters/drafts.ts).
+ * as a draft (letters/drafts.ts). A reply whose drawing waits for a person to check it is not delivered yet, and the
+ * page says so in place of "with them"; a refused drawing says why.
  */
 export function LetterThreadPage(): React.JSX.Element {
   const { threadId = '' } = useParams();
@@ -102,6 +104,7 @@ function Correspondence({ threadId }: { threadId: string }): React.JSX.Element {
   }, [thread.reload]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [refusal, setRefusal] = useState<PictureRejection | null>(null);
   const [sent, setSent] = useState<LetterItem | null>(null);
   const [reporting, setReporting] = useState<string | null>(null);
   // a letter sent is shown at once; the paper only comes back with their answer
@@ -116,16 +119,20 @@ function Correspondence({ threadId }: { threadId: string }): React.JSX.Element {
   const letters = pending ? [...data.letters, pending] : data.letters;
   const yourTurn = data.yourTurn && !pending;
   const name = data.person.name;
+  const last = letters[letters.length - 1];
   // you write back on the paper you last wrote to them on, or else the one you last wrote on anywhere
   const lastOwn = [...letters].reverse().find((l) => l.mine && !l.removed && l.decor);
 
   async function reply(letter: LetterToSend): Promise<void> {
     setBusy(true);
     setError(null);
+    setRefusal(null);
     const res = await client.post<{ letter: LetterItem }>(`/letters/threads/${encodeURIComponent(threadId)}`, letter);
     setBusy(false);
     if (!res.ok) {
-      setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
+      // a refused drawing says why under the paper, which keeps the letter to send without it
+      if (res.error.rejection) setRefusal(res.error.rejection);
+      else setError(letterErrorText(res.error, t) ?? describeError(res.error, t));
       // refused because their letter is not the last any more, or the letters ended meanwhile: the page read again
       // says so, and what is on the paper is kept for when it is your turn
       if (res.error.kind === 'client') thread.reload();
@@ -194,9 +201,10 @@ function Correspondence({ threadId }: { threadId: string }): React.JSX.Element {
         />
       ) : (
         <p className="letters-note" role="status">
-          {t('letters.thread.waiting', { name })}
+          {last && drawingHeld(last) ? t('pictureCheck.held.letter') : t('letters.thread.waiting', { name })}
         </p>
       )}
+      {refusal && yourTurn && <PictureRefusal rejection={refusal} className="letters-refused" />}
 
       <ReportSheet
         open={reporting !== null}

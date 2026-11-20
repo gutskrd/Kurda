@@ -1,14 +1,22 @@
 import { useRef, useState } from 'react';
-import { GROUP_DESCRIPTION_MAX, GROUP_NAME_MAX, GROUP_NAME_MIN } from '@kurda/shared';
+import { GROUP_DESCRIPTION_MAX, GROUP_NAME_MAX, GROUP_NAME_MIN, type PendingPicture, type PictureRejection, type PictureReviewState } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, GroupDetail } from '../lib/types';
 import { Button } from '../components/Button';
 import { composerErrorText } from '../composer/errors';
 import { SendError } from '../reports/SendError';
+import { PendingPhoto, PictureRefusal } from '../pictures/PictureCheck';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { GroupAvatar } from './GroupAvatar';
+
+/** What `POST /groups/:id/photo` answers: a held picture keeps the old one showing to members until a person checks it. */
+interface PhotoSaved {
+  photoUrl: string | null;
+  review?: PictureReviewState;
+  photoPending?: PendingPicture | null;
+}
 
 /** What the server says about a change it refused, in the reader's words. */
 const REFUSED: Record<string, MessageKey> = {
@@ -29,8 +37,9 @@ export function pictureBlob(file: File): Blob {
 
 /**
  * Editing a group's picture, name and description as its owner or an admin. The picture uploads or is removed at
- * once, with the server's profile-photo checks; the name and description wait for Save, which sends only what changed
- * and is enabled only once something has and the name is 2–60 characters. The limits are the shared ones.
+ * once, with the server's profile-photo checks: one held for a person shows small while members still see the old
+ * one, and a refused one says why. The name and description wait for Save, which sends only what changed and is
+ * enabled only once something has and the name is 2–60 characters. The limits are the shared ones.
  */
 export function GroupEdit({
   detail,
@@ -51,6 +60,10 @@ export function GroupEdit({
   const [about, setAbout] = useState(detail.description ?? '');
   const [busy, setBusy] = useState<null | 'photo' | 'save'>(null);
   const [photoErr, setPhotoErr] = useState<ApiError | string | null>(null);
+  const [refusal, setRefusal] = useState<PictureRejection | null>(null);
+  /** A picture just held, shown until the group read again says so itself. */
+  const [justHeld, setJustHeld] = useState<PendingPicture | null>(null);
+  const pending = detail.photoPending ?? justHeld;
   const [saveErr, setSaveErr] = useState<ApiError | null>(null);
 
   const trimmed = name.trim();
@@ -66,21 +79,26 @@ export function GroupEdit({
     if (!file) return;
     setBusy('photo');
     setPhotoErr(null);
-    const res = await client.uploadBytes<{ photoUrl: string }>(`/groups/${detail.id}/photo`, pictureBlob(file));
+    setRefusal(null);
+    const res = await client.uploadBytes<PhotoSaved>(`/groups/${detail.id}/photo`, pictureBlob(file));
     setBusy(null);
     if (res.ok) {
       setPhoto(res.data.photoUrl);
+      setJustHeld(res.data.review === 'held' ? (res.data.photoPending ?? null) : null);
       await onChanged();
-    } else setPhotoErr(res.error);
+    } else if (res.error.rejection) setRefusal(res.error.rejection);
+    else setPhotoErr(res.error);
   }
 
   async function removePhoto(): Promise<void> {
     setBusy('photo');
     setPhotoErr(null);
+    setRefusal(null);
     const res = await client.delete(`/groups/${detail.id}/photo`);
     setBusy(null);
     if (res.ok) {
       setPhoto(null);
+      setJustHeld(null);
       await onChanged();
     } else setPhotoErr(res.error);
   }
@@ -126,6 +144,8 @@ export function GroupEdit({
           )}
         </span>
       </div>
+      {pending && <PendingPhoto pending={pending} words="pictureCheck.held.group" />}
+      {refusal && <PictureRefusal rejection={refusal} className="gedit-refused" />}
       <SendError error={photoErr} describe={pictureRefused} />
 
       <div className="field">

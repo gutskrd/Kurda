@@ -114,4 +114,14 @@ describe('LibraryPostPage', () => {
     await screen.findByText('Dar bi berê xwe tê naskirin.');
     expect(screen.queryByRole('button', { name: 'Edit' })).toBeNull();
   });
+
+  it('tells the author a post whose picture is being checked is theirs alone for now, with nothing to share it by', async () => {
+    const media = [{ mediaKey: 'image-post/h.webp', url: 'https://private.test/h.webp?sig=1', altText: null, width: 800, height: 600 }];
+    serve(post({ media, review: 'held' }), { id: AUTHOR.id, username: AUTHOR.username });
+    show();
+    expect(await screen.findByText('Being checked')).toBeInTheDocument();
+    expect(screen.getByText('Only you can see this until it’s checked. It usually takes a few hours.')).toBeInTheDocument();
+    await screen.findByRole('button', { name: 'Like' });
+    expect(screen.queryByRole('button', { name: 'Share this post' })).toBeNull();
+  });
 });

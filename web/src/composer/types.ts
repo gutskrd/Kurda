@@ -1,4 +1,4 @@
-import type { PostMediaView, WrittenPostType } from '@kurda/shared';
+import type { PictureReviewState, PostMediaView, WrittenPostType } from '@kurda/shared';
 
 /**
  * A written post as `GET`/`POST`/`PATCH /library/posts` return it: words, up to four pictures, or both. The older
@@ -23,6 +23,8 @@ export interface ComposedPost {
   createdAt: string;
   updatedAt?: string;
   publishedAt: string | null;
+  /** Only on the author's own copy, while a picture on it waits for a person to check it; nobody else is sent it. */
+  review?: PictureReviewState;
 }
 
 /** What `POST /images/upload` answers. */
@@ -32,4 +34,6 @@ export interface UploadedPicture {
   width: number | null;
   height: number | null;
   signed?: boolean;
+  /** `held`: only its owner can open `url` (a short-lived private link), and a post made with it waits for a person. */
+  review?: PictureReviewState;
 }

@@ -227,6 +227,18 @@ describe('letters by bird', () => {
     expect(screen.getByRole('link', { name: 'Open your letters with Baran' })).toHaveAttribute('href', `/app/letters/${T}`);
   });
 
+  it('says an answer whose drawing is being checked waits before the bird can fly', async () => {
+    const answered: VisitorAnswer = { threadId: T, person: baran, letter: { ...visitor.letter, id: 'l2', mine: true, body: 'Silav', review: 'held' } as VisitorAnswer['letter'] };
+    const answers: Record<string, unknown> = { 'GET /letters': home({ birdsOut: 1, sky: [4], visitor }), 'POST /letters/visitor': answered };
+    signIn(answers);
+    renderApp(<LettersPage />, ['/app/letters']);
+    await userEvent.type(await screen.findByLabelText('Your answer to Baran'), 'Silav');
+    answers['GET /letters'] = home({ penPals: [{ ...pal(), yourTurn: false, unread: 0 }] });
+    await userEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
+    expect(await screen.findByText('You and Baran are pen pals now')).toBeInTheDocument();
+    expect(screen.getByText('Your drawing is being checked before the bird can fly.')).toBeInTheDocument();
+  });
+
   it('asks once before sending a visiting bird on its way', async () => {
     const calls = signIn({ 'GET /letters': home({ visitor }) });
     renderApp(<LettersPage />, ['/app/letters']);
@@ -698,6 +710,47 @@ describe('letters by bird', () => {
       expect(await screen.findByText('Name 21')).toBeInTheDocument();
       expect(screen.getAllByText(/^Name \d+$/).map((el) => el.textContent)).toEqual(page(1, 21).map((l) => l.body));
       expect(screen.queryByRole('button', { name: 'Show earlier letters' })).toBeNull();
+    });
+
+    it('says a reply whose drawing is being checked has not flown yet, in place of being with them', async () => {
+      const base = thread();
+      const held = { id: 'l3', mine: true, body: 'Min ji te re çiyayek xêz kir.', decor: null, removed: false, sentAt: '2026-11-14T10:00:00.000Z', readAt: null, review: 'held' as const };
+      at(thread({ letters: [...base.letters, held], yourTurn: false }));
+      expect(await screen.findByText('Your drawing is being checked before the bird can fly.')).toBeInTheDocument();
+      expect(screen.queryByText(/Your letter is with Baran/)).toBeNull();
+      // the letter itself is marked, and only yours could be
+      const sheet = screen.getByText('Min ji te re çiyayek xêz kir.').closest('article')!;
+      expect(sheet.querySelector('.pcheck-chip')).toHaveTextContent('Being checked');
+      expect(document.querySelectorAll('.pcheck-chip')).toHaveLength(1);
+    });
+
+    it('marks the reply just sent as being checked when the server holds its drawing', async () => {
+      const open = at(thread());
+      open.answers['POST /letters/threads/t1'] = {
+        letter: { id: 'l3', mine: true, body: 'Ez baş im', decor: null, removed: false, sentAt: '2026-11-14T10:00:00.000Z', readAt: null, review: 'held' },
+      };
+      await userEvent.type(await screen.findByLabelText('Write back to Baran'), 'Ez baş im');
+      await userEvent.click(screen.getByRole('button', { name: /Send/ }));
+      expect(await screen.findByText('Your drawing is being checked before the bird can fly.')).toBeInTheDocument();
+    });
+
+    it('says a refused drawing in the reader’s words, with nobody to ask when the refusal allows none', async () => {
+      const open = at(thread());
+      await userEvent.type(await screen.findByLabelText('Write back to Baran'), 'Ez baş im');
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string, init?: RequestInit) =>
+          init?.method === 'POST'
+            ? jsonResponse(422, { code: 'IMAGE_REJECTED', message: 'image rejected', reason: 'other', reviewId: null })
+            : (open.calls.push({ method: 'GET', url, body: null }), jsonResponse(200, thread())),
+        ),
+      );
+      await userEvent.click(screen.getByRole('button', { name: /Send/ }));
+      expect(await screen.findByText('This picture can’t be shared on Hevalo.')).toBeInTheDocument();
+      expect(screen.queryByText('image rejected')).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Ask a person to check' })).toBeNull();
+      // what was written stays on the paper
+      expect(screen.getByLabelText('Write back to Baran')).toHaveValue('Ez baş im');
     });
 
     it('reads the correspondence again when a reply is refused because it is not your turn any more', async () => {

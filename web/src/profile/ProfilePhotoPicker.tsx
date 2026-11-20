@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import type { PendingPicture, PictureRejection, PictureReviewState } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, MeProfile } from '../lib/types';
@@ -11,15 +12,24 @@ import { WHOLE_PICTURE, type Frame } from '../images/frame';
 import { UNTOUCHED, compose, forgetGraded } from '../images/composition';
 import { useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
+import { PendingPhoto, PictureRefusal } from '../pictures/PictureCheck';
 import { useAvatarSrc } from '../art/overrides';
 
 /** An avatar never shows larger than a hero portrait, so it is exported smaller than feed pictures. */
 const AVATAR_MAX_EDGE = 768;
 
+/** What `POST /me/profile-picture` answers: a held photo keeps the old one showing, with the new one only for you. */
+interface PhotoSaved {
+  profilePhotoUrl: string | null;
+  review?: PictureReviewState;
+  profilePhotoPending?: PendingPicture | null;
+}
+
 /**
  * The profile picture and its framing: the composer's cropper locked to a square and shown through a circle, so the
  * stored crop matches the screen. A file the browser cannot decode, such as HEIC, uploads unframed for the server to
- * read.
+ * read. Every photo is checked before others see it: one held for a person shows small beside the old one, and a
+ * refused one says why, with the way to ask a person to look (pictures/PictureCheck).
  */
 export function ProfilePhotoPicker({
   me,
@@ -39,6 +49,10 @@ export function ProfilePhotoPicker({
   const [busy, setBusy] = useState<null | 'upload' | 'remove'>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [uploadErr, setUploadErr] = useState<ApiError | null>(null);
+  const [refusal, setRefusal] = useState<PictureRejection | null>(null);
+  /** A photo just held, shown until the profile read again says so itself. */
+  const [justHeld, setJustHeld] = useState<PendingPicture | null>(null);
+  const pending = me.profilePhotoPending ?? justHeld;
   /** the browser could not read it, so it goes up untouched */
   const [rawOnly, setRawOnly] = useState(false);
 
@@ -83,6 +97,7 @@ export function ProfilePhotoPicker({
     if (!picked) return;
     setMsg(null);
     setUploadErr(null);
+    setRefusal(null);
     setFrame(WHOLE_PICTURE);
     forgetGraded();
     setFile(picked);
@@ -92,6 +107,7 @@ export function ProfilePhotoPicker({
     setFile(null);
     setMsg(null);
     setUploadErr(null);
+    setRefusal(null);
   }
 
   async function save(): Promise<void> {
@@ -99,6 +115,7 @@ export function ProfilePhotoPicker({
     setBusy('upload');
     setMsg(null);
     setUploadErr(null);
+    setRefusal(null);
 
     let out: File | null = file;
     if (!rawOnly && imageRef.current && source) {
@@ -113,11 +130,16 @@ export function ProfilePhotoPicker({
       return;
     }
 
-    const res = await client.uploadBytes<{ profilePhotoUrl: string }>('/me/profile-picture', out);
+    const res = await client.uploadBytes<PhotoSaved>('/me/profile-picture', out);
     setBusy(null);
     if (res.ok) {
       setFile(null);
+      setJustHeld(res.data.review === 'held' ? (res.data.profilePhotoPending ?? null) : null);
       onChanged();
+    } else if (res.error.rejection) {
+      // The same picture would be refused again, so it is put away with the reason.
+      setFile(null);
+      setRefusal(res.error.rejection);
     } else if (res.error.code === 'MEDIA_UNAVAILABLE') {
       setMsg({ kind: 'err', text: t('edit.photo.storageOff') });
     } else {
@@ -130,6 +152,7 @@ export function ProfilePhotoPicker({
     setBusy('remove');
     setMsg(null);
     setUploadErr(null);
+    setRefusal(null);
     const res = await client.delete('/me/profile-picture');
     setBusy(null);
     if (res.ok) onChanged();
@@ -204,6 +227,8 @@ export function ProfilePhotoPicker({
         </div>
       )}
 
+      {pending && !file && <PendingPhoto pending={pending} words="pictureCheck.held.profile" round />}
+      {refusal && <PictureRefusal rejection={refusal} className="edit-photo-refused" />}
       {msg && (
         <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`} role="status" style={{ marginTop: 12 }}>
           {msg.text}

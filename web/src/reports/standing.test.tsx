@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { AccountStanding as Standing, MyReport, StandingSanction, SuspendedErrorDetails } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -173,6 +173,28 @@ describe('Account standing', () => {
     await userEvent.type(screen.getByLabelText('Why do you think we got it wrong?'), 'Please.');
     await userEvent.click(screen.getByRole('button', { name: 'Send' }));
     expect(await screen.findByText('The time to ask us to look at this again has passed.')).toBeInTheDocument();
+  });
+
+  it('shows the picture a removal is about, small, so its owner knows which one to ask about', async () => {
+    const removal = { ...sanction({ id: 's2', kind: 'content_removal', policy: 'sexual', endsAt: null }), picture: { url: 'https://private.test/removed.webp?sig=1' } };
+    stub({ '/me/standing': standing({ status: 'good', active: [], past: [removal], restrictions: {} }) });
+    renderApp(<AccountStanding />);
+    const card = (await screen.findByText('The picture this is about')).closest('article')!;
+    const img = card.querySelector('.sanction-picture img')!;
+    expect(img).toHaveAttribute('src', 'https://private.test/removed.webp?sig=1');
+    expect(within(card).getByRole('button', { name: 'Ask for a review' })).toBeInTheDocument();
+    // The private link may have run out by the time the page is read: a plain tile, never a broken image.
+    fireEvent.error(img);
+    expect(card.querySelector('.sanction-picture img')).toBeNull();
+    expect(card.querySelector('.sanction-picture-frame svg')).not.toBeNull();
+    expect(within(card).getByText('The picture this is about')).toBeInTheDocument();
+  });
+
+  it('shows no picture for a decision that is not about one', async () => {
+    stub({ '/me/standing': standing() });
+    renderApp(<AccountStanding />);
+    await screen.findByRole('heading', { name: 'Messages paused' });
+    expect(screen.queryByText('The picture this is about')).not.toBeInTheDocument();
   });
 
   it('says so plainly when the account is in good standing', async () => {

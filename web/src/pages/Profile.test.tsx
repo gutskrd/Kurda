@@ -156,6 +156,22 @@ describe('Profile view (full, read-only)', () => {
     expect(screen.queryByText('Online')).toBeNull();
   });
 
+  it('shows a new photo still being checked small, under the card, saying others see the old one', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/friends': { friends: [], total: 0 },
+          '/me': { user: { ...meUser, profilePhotoUrl: 'https://cdn.test/old.webp', profilePhotoPending: { url: 'https://private.test/new.webp' } } },
+        }),
+      ),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+    expect(await screen.findByText('Your new photo is being checked. Others see your old one until then.')).toBeInTheDocument();
+    expect(document.querySelector('.pcheck-pending img')).toHaveAttribute('src', 'https://private.test/new.webp');
+  });
+
   it('offers to write a bio where there is none, instead of saying there is none', async () => {
     vi.stubGlobal(
       'fetch',

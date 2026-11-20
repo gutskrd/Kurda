@@ -2,6 +2,7 @@ import { HELPLINE_URL, isSanctionKind, letterNoticeOf, type SanctionKind } from 
 import type { Translate } from '../i18n/I18nProvider';
 import { SANCTION_LABEL } from './labels';
 import { formatUntil, MY_REPORTS_PATH, STANDING_PATH } from './restriction';
+import { pictureReviewNotification } from '../pictures/notifications';
 
 /** A notification as the rail holds it: the server's English and the data it was made from. */
 export interface InboxNote {
@@ -36,8 +37,8 @@ export function giftChatPath(chat: string | null, giftId: string | null, name?: 
 }
 
 /**
- * Wording and links for report outcomes, account decisions, answered reviews, caring messages, gifts and letters,
- * from `data` in the reader's language rather than the server's English. Anything else is null and shown as the server
+ * Wording and links for report outcomes, account decisions, answered reviews, checked pictures, caring messages, gifts
+ * and letters, from `data` in the reader's language rather than the server's English. Anything else is null and shown as the server
  * wrote it. `locale` formats a decision's end date; without it, the page's language.
  */
 export function socialNotification(note: InboxNote, t: Translate, locale?: string): NoteView | null {
@@ -67,6 +68,8 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
       return { title: t('notify.sanctionLifted.title'), body: null, to: STANDING_PATH };
     case 'appeal_decided':
       return { title: t('notify.appealDecided.title'), body: null, to: STANDING_PATH };
+    case 'picture_review':
+      return pictureReviewNotification(data, t);
     case 'caring_message': {
       // The moderator's own words come first as written; the rest is in the reader's language.
       const personal = str(data.message);

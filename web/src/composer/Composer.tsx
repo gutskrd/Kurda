@@ -23,7 +23,7 @@ import { PictureEditor } from '../images/PostPicture';
 import { useT } from '../i18n/I18nProvider';
 import { ComposerDialog } from './ComposerDialog';
 import { OldDrafts } from './OldDrafts';
-import { PictureDetails, PictureTiles, type ComposerPicture } from './PictureTiles';
+import { PictureDetails, PictureRefusals, PictureTiles, type ComposerPicture } from './PictureTiles';
 import { clearDraft, loadDraft, saveDraft } from './draftStore';
 import { accountLimitOf, composerErrorText, problemText } from './errors';
 import { SendError } from '../reports/SendError';
@@ -44,7 +44,8 @@ const localId = (): string => `p${Date.now().toString(36)}${(seq++).toString(36)
  * post-composer), so the Post button and the server agree.
  *
  * - Pictures upload as soon as they are added, each with its own progress and error. "I made this" (on by default)
- *   adds the Hevalo signature at upload, so switching it uploads the picture again.
+ *   adds the Hevalo signature at upload, so switching it uploads the picture again. A picture the check holds for a
+ *   person can still be posted, and only its author sees the post until then; a refused one says why (pictures/).
  * - The draft is kept on this device as you write (draftStore.ts); closing with something written asks to keep it.
  * - The counter counts as the server does and shows only near the limit.
  * - Ctrl/Cmd+Enter posts. Fields are at least 16px so iOS does not zoom on focus.
@@ -126,7 +127,7 @@ export function Composer({
 
   const upload = useCallback(
     async (id: string, file: File, ownWork: boolean): Promise<void> => {
-      patchPicture(id, { status: 'uploading', progress: 0, error: null, mediaKey: null, serverUrl: null });
+      patchPicture(id, { status: 'uploading', progress: 0, error: null, mediaKey: null, serverUrl: null, review: null, rejection: null });
       const res = await client.uploadWithProgress<UploadedPicture>(pictureUploadPath(ownWork), file, (progress) =>
         patchPicture(id, { progress }),
       );
@@ -135,8 +136,8 @@ export function Composer({
         list.map((p) => {
           if (p.id !== id || p.file !== file || p.ownWork !== ownWork) return p;
           return res.ok
-            ? { ...p, status: 'ready', progress: 1, mediaKey: res.data.imageMediaId, serverUrl: res.data.url ?? null }
-            : { ...p, status: 'failed', error: composerErrorText(res.error, t) };
+            ? { ...p, status: 'ready', progress: 1, mediaKey: res.data.imageMediaId, serverUrl: res.data.url ?? null, review: res.data.review ?? 'clear' }
+            : { ...p, status: 'failed', error: composerErrorText(res.error, t), rejection: res.error.rejection ?? null };
         }),
       );
     },
@@ -163,6 +164,8 @@ export function Composer({
       status: 'uploading',
       progress: 0,
       error: null,
+      review: null,
+      rejection: null,
       existing: false,
     }));
     setPictures((list) => [...list, ...added]);
@@ -216,6 +219,7 @@ export function Composer({
   const verdict = canPost(content);
   const uploading = pictures.some((p) => p.status === 'uploading');
   const failed = pictures.some((p) => p.status === 'failed');
+  const refused = pictures.some((p) => p.rejection);
   const empty = !postTextLength(body) && !postTextLength(title) && !postTextLength(source) && pictures.length === 0;
   const blocker = !verdict.ok
     ? empty
@@ -223,9 +227,11 @@ export function Composer({
       : problemText(verdict.problem, t)
     : uploading
       ? t('composer.waitUploads')
-      : failed
-        ? t('composer.fixFailed')
-        : null;
+      : refused
+        ? t('composer.removeRefused')
+        : failed
+          ? t('composer.fixFailed')
+          : null;
   const ready = verdict.ok && !uploading && !failed && !busy;
 
   const bodyUsed = postTextLength(body);
@@ -564,6 +570,7 @@ export function Composer({
               if (p?.file) void upload(id, p.file, p.ownWork);
             }}
           />
+          <PictureRefusals pictures={pictures} />
 
           {openIndex >= 0 && (
             <PictureDetails
@@ -721,6 +728,9 @@ function initialPictures(post: ComposedPost | null | undefined, draft: PostDraft
       status: 'ready',
       progress: 1,
       error: null,
+      // A held post says so on its own page, so the tiles need not.
+      review: null,
+      rejection: null,
       existing: true,
     }));
   }
@@ -735,6 +745,9 @@ function initialPictures(post: ComposedPost | null | undefined, draft: PostDraft
     status: 'ready',
     progress: 1,
     error: null,
+    // A draft does not keep whether its picture was held; the post says so once posted.
+    review: null,
+    rejection: null,
     existing: false,
   }));
 }
