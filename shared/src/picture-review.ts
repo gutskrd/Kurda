@@ -100,6 +100,8 @@ export interface PictureCaseItem {
   /** the owner's own words when they asked for a person to look */
   note: string | null;
   reportCount: number;
+  /** the rule reporters chose most often, for a reported picture; null otherwise */
+  reportCategory: ReportCategory | null;
   /** a child-safety hit: the console asks before showing it, and it can only be decided through its case */
   sensitive: boolean;
   status: CaseStatus;
@@ -112,13 +114,17 @@ export interface PictureCaseList {
   counts: Record<Exclude<PictureCaseView, 'decided'>, number>;
 }
 
-/** `POST /admin/pictures/:caseId/view`: a link valid for a few minutes; every view is written to the audit log. */
-export interface PictureView {
-  url: string;
-  expiresAt: string;
-}
+/**
+ * `GET /admin/pictures/:caseId/image` answers the picture's bytes (never cached, every fetch written to the audit log).
+ * The console fetches them with the moderator's own session and shows a local copy, so no storage address reaches the
+ * browser and the console's image policy stays closed to other hosts.
+ */
+export const PICTURE_IMAGE_PATH = (caseId: string): string => `/admin/pictures/${encodeURIComponent(caseId)}/image`;
 
-/** `POST /admin/pictures/:caseId/decide`. A removal names the rule, which the owner is told along with how to appeal. */
+/**
+ * `POST /admin/pictures/:caseId/decide`. A removal names the rule, which the owner is told along with how to appeal. The
+ * note stays on the case for staff (at most 1000 characters); the owner is told the rule, not the note.
+ */
 export type PictureDecision =
   | { decision: 'approve'; note?: string }
   | { decision: 'remove'; policy: ReportCategory; note?: string };
