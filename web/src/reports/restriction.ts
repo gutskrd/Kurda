@@ -1,4 +1,4 @@
-import type { MutedErrorDetails, SuspendedErrorDetails } from '@kurda/shared';
+import { ACCOUNT_HELD, type MutedErrorDetails, type SuspendedErrorDetails } from '@kurda/shared';
 import type { ApiError } from '../lib/types';
 import type { Translate } from '../i18n/I18nProvider';
 
@@ -11,12 +11,14 @@ import type { Translate } from '../i18n/I18nProvider';
  * - `chatMuted`: 403 CHAT_MUTED, the automatic pause after flagged messages, with no reasons or end date to show.
  * - `suspended`: ACCOUNT_SUSPENDED. Other requests from a suspended account answer ACCOUNT_DISABLED, which lib/api.ts
  *   turns into the suspension screen.
+ * - `held`: 403 ACCOUNT_HELD, an account a person is checking before it may post or message (reports/HeldNotice.tsx).
  */
 export type Restriction =
   | { kind: 'muted'; scope: MutedErrorDetails['scope']; until: string | null }
   | { kind: 'groupMuted' }
   | { kind: 'chatMuted' }
-  | { kind: 'suspended'; until: string | null };
+  | { kind: 'suspended'; until: string | null }
+  | { kind: 'held' };
 
 const SCOPES: ReadonlySet<string> = new Set<MutedErrorDetails['scope']>(['chat', 'post', 'media']);
 
@@ -45,6 +47,8 @@ export function restrictionOf(error: ApiError | null | undefined): Restriction |
       return { kind: 'chatMuted' };
     case 'ACCOUNT_SUSPENDED':
       return { kind: 'suspended', until: untilOf(error.details) };
+    case ACCOUNT_HELD:
+      return { kind: 'held' };
     default:
       return null;
   }
@@ -116,12 +120,14 @@ export function restrictionText(r: Restriction, t: Translate, locale: string, no
       return t('restriction.chatMuted');
     case 'suspended':
       return r.until ? t('restriction.suspendedUntil', { time: formatUntil(r.until, locale, now) }) : t('restriction.suspended');
+    case 'held':
+      return t('hold.title');
   }
 }
 
-/** Whether Account standing has the reasons for this limit; only Hevalo's own sanctions do. */
+/** Whether Account standing has the reasons for this limit; only Hevalo's own sanctions and checks do. */
 export function standingExplains(r: Restriction): boolean {
-  return r.kind === 'muted' || r.kind === 'suspended';
+  return r.kind === 'muted' || r.kind === 'suspended' || r.kind === 'held';
 }
 
 /** Where Account standing lives. */

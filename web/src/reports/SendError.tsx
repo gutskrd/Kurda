@@ -15,6 +15,7 @@ export function SendError({
   describe,
   className,
   role = 'alert',
+  heldShownBeside = false,
 }: {
   /** What the API answered, or a sentence the caller already has from a local check. */
   error: ApiError | string | null | undefined;
@@ -22,6 +23,8 @@ export function SendError({
   describe?: (error: ApiError) => string;
   className?: string;
   role?: 'alert' | 'status';
+  /** The box this answers turns into the held notice (reports/HeldNotice.tsx), so saying it here too would repeat it. */
+  heldShownBeside?: boolean;
 }): React.JSX.Element | null {
   const t = useT();
   const locale = useLocale();
@@ -34,6 +37,7 @@ export function SendError({
     );
   }
   const restriction = restrictionOf(error);
+  if (heldShownBeside && restriction?.kind === 'held') return null;
   const text = restriction
     ? restrictionText(restriction, t, locale)
     : describe

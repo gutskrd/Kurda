@@ -853,6 +853,11 @@ export const en = {
   'restriction.suspended': 'Your account is suspended.',
   'restriction.suspendedUntil': 'Your account is suspended until {time}.',
   'restriction.seeStanding': 'See your account standing',
+  // an account a person is checking before it may post or message (reports/HeldNotice.tsx)
+  'hold.title': 'Your account is being checked before you can post or message. Learning works as usual.',
+  'hold.why': 'Why?',
+  'hold.whyBody':
+    'A person at Hevalo is checking your account to keep the community safe. Until then you can’t post, comment, send messages or letters, add pictures or join groups. We’ll let you know in Hevalo as soon as it’s done.',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': 'Report {name}',
   'report.title.message': 'Report this message',
@@ -1179,6 +1184,18 @@ export const en = {
   'suspension.answerHere': 'If you ask for a review, sign in again any time to see our answer here.',
   'suspension.rules': 'Read the community rules',
   'suspension.close': 'Close',
+  // a copy of your data and deleting the account, from the suspension screen
+  'suspension.data.help': 'You can still download a copy of your data or delete your account.',
+  'suspension.data.download': 'Download a copy of my data',
+  'suspension.data.preparing': 'Your copy is being prepared. Sign in again later to download it here.',
+  'suspension.delete.button': 'Delete my account',
+  'suspension.delete.warning':
+    'Your account and all your data will be permanently deleted after 14 days. Records of moderation decisions are kept, as the privacy policy explains.',
+  'suspension.delete.scheduled': 'Your account is set to be deleted. It will be gone for good in {days} days.',
+  'suspension.signInAgain': 'This page has been open too long. Sign in again to continue.',
+  'suspension.data.ready': 'Your copy from {date} is ready.',
+  'suspension.data.again': 'Prepare a new copy',
+  'suspension.delete.deleted': 'Your account has been deleted.',
   // Hevalo offline for a while (maintenance/): the app's own words, where an admin wrote none
   'maintenance.title': 'Hevalo is taking a short break',
   'maintenance.message': 'We’re working on Hevalo and will be back soon. Your progress, streak and Zêr are safe.',
@@ -3629,6 +3646,8 @@ export const en = {
   'privacy.safety.title': 'Keeping it safe',
   'privacy.safety.body':
     'Posts and pictures may be checked automatically and by moderators to keep out abuse and illegal content. Every picture is checked before anyone else sees it: automatically, by an AI service that works for us and is sent only the picture, never who you are; and by a person whenever the check is unsure. A refused picture is kept privately for up to six months, so you can ask for it to be looked at again, and is then deleted. Anything that may harm a child is kept as evidence for as long as the law requires.',
+  'privacy.safety.returns':
+    'To stop people who were banned from simply coming back, Hevalo keeps scrambled (hashed) details of a banned or suspended person’s account, sign-in and devices, and compares new accounts and sign-ins with them. An internet address alone is never enough, since many people can share one, and whenever a match is unclear, a person decides. These details are kept only while the ban or suspension lasts, even if the account is deleted; the sign-in and device records they come from are kept for the times given under “Your choices”. While your account is suspended or banned, you can still download a copy of your data or delete your account from the screen you see when you sign in.',
   'privacy.permissions.title': 'Permissions',
   'privacy.permissions.body': 'On a phone, Hevalo asks for your microphone only when you record something, and for your photos only when you choose one. It asks whether it may send you notifications after a lesson or from Settings, and everything else works the same if you say no. It never asks for your location, your contacts or your camera.',
   'privacy.payments.title': 'Payments',

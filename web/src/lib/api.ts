@@ -3,6 +3,7 @@ import type { ApiError, ApiResult, TokenPair } from './types';
 import { createTokenStorage, persistTokens, type TokenStorage } from './tokenStorage';
 import type { MessageKey } from '../i18n/en';
 import {
+  ACCOUNT_HELD,
   isMissingRoute,
   isPictureRejection,
   isPlainPath,
@@ -70,6 +71,8 @@ export class ApiClient {
      * (maintenance/MaintenanceGate.tsx).
      */
     private readonly onMaintenance: (notice: MaintenanceNotice) => void = () => undefined,
+    /** A refusal said the account is held, so every place that posts or messages can show it before the next try. */
+    private readonly onHeld: () => void = () => undefined,
   ) {}
 
   get isAuthenticated(): boolean {
@@ -299,6 +302,7 @@ export class ApiClient {
       const notice = maintenanceNoticeOf(envelope);
       if (notice) this.onMaintenance(notice);
     }
+    if (res.status === 403 && envelope.code === ACCOUNT_HELD) this.onHeld();
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get('retry-after'));
       return {
@@ -473,7 +477,8 @@ export function createApiClient(
   onLogout: () => void,
   onSuspended?: (details: SuspendedErrorDetails) => void,
   onMaintenance?: (notice: MaintenanceNotice) => void,
+  onHeld?: () => void,
 ): { client: ApiClient; storage: TokenStorage } {
   const storage = createTokenStorage();
-  return { client: new ApiClient(API_URL, storage, onLogout, onSuspended, onMaintenance), storage };
+  return { client: new ApiClient(API_URL, storage, onLogout, onSuspended, onMaintenance, onHeld), storage };
 }

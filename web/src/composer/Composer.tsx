@@ -27,6 +27,7 @@ import { PictureDetails, PictureRefusals, PictureTiles, type ComposerPicture } f
 import { clearDraft, loadDraft, saveDraft } from './draftStore';
 import { accountLimitOf, composerErrorText, problemText } from './errors';
 import { SendError } from '../reports/SendError';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import { textDir } from './textDir';
 import type { ComposedPost, UploadedPicture } from './types';
 import type { ApiError } from '../lib/types';
@@ -37,6 +38,14 @@ const SAVE_DELAY_MS = 400;
 
 let seq = 0;
 const localId = (): string => `p${Date.now().toString(36)}${(seq++).toString(36)}`;
+
+interface ComposerProps {
+  onClose: () => void;
+  /** Called with the post as the server now has it. */
+  onPosted: (post: ComposedPost) => void;
+  /** A post to edit or a server draft to finish; omitted to write a new one. */
+  editing?: ComposedPost | null;
+}
 
 /**
  * Writing a post: one box for words and up to four pictures. A title is optional and makes the post a çîrok (or a
@@ -53,19 +62,11 @@ const localId = (): string => `p${Date.now().toString(36)}${(seq++).toString(36)
  * With `editing`, the box edits that post (words, title, alt text and pictures) and saves with PATCH; a draft saved by
  * the old phone app is finished the same way and then published.
  */
-export function Composer({
-  onClose,
-  onPosted,
-  editing = null,
-}: {
-  onClose: () => void;
-  /** Called with the post as the server now has it. */
-  onPosted: (post: ComposedPost) => void;
-  /** A post to edit or a server draft to finish; omitted to write a new one. */
-  editing?: ComposedPost | null;
-}): React.JSX.Element {
+export function Composer({ onClose, onPosted, editing = null }: ComposerProps): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
+  // A held account is told before writing anything, rather than when Post is refused.
+  const held = useAccountHeld();
   const titleId = useId();
   const titleFieldId = useId();
   const sourceFieldId = useId();
@@ -232,7 +233,7 @@ export function Composer({
         : failed
           ? t('composer.fixFailed')
           : null;
-  const ready = verdict.ok && !uploading && !failed && !busy;
+  const ready = verdict.ok && !uploading && !failed && !busy && !held;
 
   const bodyUsed = postTextLength(body);
   const bodyLeft = POST_BODY_MAX - bodyUsed;
@@ -454,6 +455,10 @@ export function Composer({
             </button>
           </div>
         </div>
+      ) : held ? (
+        <div className="cmp-scroll">
+          <HeldNotice />
+        </div>
       ) : view === 'drafts' ? (
         <div className="cmp-scroll">
           <OldDrafts drafts={oldDrafts} onChoose={finishOldDraft} onBack={() => setView('write')} />
@@ -622,7 +627,7 @@ export function Composer({
         </div>
       )}
 
-      {!pictureEditing && !confirmClose && view === 'write' && (
+      {!held && !pictureEditing && !confirmClose && view === 'write' && (
         <footer className="cmp-foot">
           <div className="cmp-tools" role="toolbar" aria-label={t('composer.tools')}>
             <button

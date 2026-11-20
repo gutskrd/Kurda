@@ -17,6 +17,7 @@ import { useT } from '../i18n/I18nProvider';
 import { useArrival } from '../lib/motion';
 import { lastAnswer, remember } from '../lib/apiMemory';
 import { useMemoryOwner } from '../lib/useApi';
+import { HeldBanner } from '../reports/HeldNotice';
 
 const PAGE = 20;
 
@@ -187,6 +188,9 @@ export function Civak(): React.JSX.Element {
         <h1 className="page-title">{t('civak.title')}</h1>
         <p className="page-sub">{t('civak.subtitle')}</p>
       </div>
+
+      {/* Where a held account lands: what waits and that learning does not. */}
+      <HeldBanner />
 
       {/* The streak and today's Zêr, opening the daily view; nothing for a visitor. */}
       <DailyCard />

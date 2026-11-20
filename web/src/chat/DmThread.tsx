@@ -336,7 +336,7 @@ export function DmThread({
       </div>
 
       {gifts.notice}
-      <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
+      <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" heldShownBeside />
       <ReportSheet
         open={reporting !== null}
         onClose={() => {

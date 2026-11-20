@@ -9,6 +9,7 @@ import { VoicePlayer } from '../components/VoicePlayer';
 import { PostAuthor, type Author } from './PostAuthor';
 import { useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import type { ApiError } from '../lib/types';
 import { ReportAction } from '../reports/ReportAction';
 import { useOutbox, type Unsent } from '../chat/useOutbox';
@@ -234,6 +235,8 @@ function CommentNode({
 }): React.JSX.Element {
   const t = useT();
   const { client, user, status } = useAuth();
+  // The box at the top already says why a held account cannot answer, so no Reply opens a second notice.
+  const held = useAccountHeld();
   const sendShown = useOptimisticSend();
   const [replying, setReplying] = useState(false);
   const [replies, setReplies] = useState<Comment[] | null>(null);
@@ -317,7 +320,7 @@ function CommentNode({
         </p>
       ) : (
         <div className="comment-actions">
-          {status === 'signedIn' && !removed && (
+          {status === 'signedIn' && !removed && !held && (
             <button type="button" className="link-button" onClick={() => setReplying((v) => !v)}>
               {replying ? t('common.cancel') : t('comments.reply')}
             </button>
@@ -385,6 +388,7 @@ function CommentNode({
 /** Write a comment, or a reply when its box is a reply's. */
 function CommentForm({ box, placeholder, onSent }: { box: CommentBox; placeholder: string; onSent?: () => void }): React.JSX.Element {
   const t = useT();
+  const held = useAccountHeld();
   const reply = Boolean(onSent);
 
   function submit(e: React.FormEvent): void {
@@ -393,6 +397,8 @@ function CommentForm({ box, placeholder, onSent }: { box: CommentBox; placeholde
     box.send();
     onSent?.();
   }
+
+  if (held) return <HeldNotice className="comment-form" />;
 
   return (
     <form className="comment-form" onSubmit={submit}>

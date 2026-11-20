@@ -12,6 +12,7 @@ import type { MessageKey } from '../i18n/en';
 import { SCOPE_LABEL } from './labels';
 import { formatUntil } from './restriction';
 import { AppealState, SanctionCard } from './SanctionCard';
+import { HeldBanner } from './HeldNotice';
 
 const STATUS_TITLE: Record<StandingStatus, MessageKey> = {
   good: 'standing.status.good',
@@ -49,6 +50,9 @@ export function AccountStanding(): React.JSX.Element {
         <h1 className="page-title">{t('standing.title')}</h1>
         <p className="page-sub">{t('standing.intro')}</p>
       </div>
+
+      {/* A check on the account is not a decision, so it is said here rather than listed with them. */}
+      <HeldBanner standing={false} />
 
       {loading ? (
         <CardStackSkeleton count={2} label="standing.title" />

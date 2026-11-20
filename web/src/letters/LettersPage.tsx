@@ -36,6 +36,7 @@ import type { MessageKey } from '../i18n/en';
 import { ErrorState } from '../components/states';
 import { ChevronIcon, HelpIcon, PaletteIcon } from '../components/icons';
 import { ReportSheet } from '../reports/ReportSheet';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import { LetterWindow, type WindowScene } from './LetterWindow';
 import { PictureRefusal } from '../pictures/PictureCheck';
 import { BirdBadge, LetterSheet, drawingHeld } from './LetterParts';
@@ -80,6 +81,7 @@ type Kept = { name: string; threadId: string } | { name: null; threadId: null };
 export function LettersPage(): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
+  const accountHeld = useAccountHeld();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const home = useLettersHome();
@@ -438,7 +440,7 @@ export function LettersPage(): React.JSX.Element {
   }
 
   const room = data.roomForMore;
-  const canWrite = data.refusal === null && !out && !here && room && scene.own.kind !== 'leaving';
+  const canWrite = data.refusal === null && !accountHeld && !out && !here && room && scene.own.kind !== 'leaving';
   const canCall = data.refusal === null && !here && room && data.birdsOut > 0 && data.callsLeft > 0;
   const visitorName = visitor?.person.name ?? '';
 
@@ -468,7 +470,10 @@ export function LettersPage(): React.JSX.Element {
     ) : null;
   // your own bird can be changed while it is home and nothing else is happening at the window: the button sits on the window itself
   const canChange = data.refusal === null && data.birdChosen && !out && !here && !choosing && (calm || moment.kind === 'writing');
-  const writeButton = (
+  // A held account sees why there is no Write where the button would be.
+  const writeButton = accountHeld ? (
+    <HeldNotice />
+  ) : (
     <button type="button" className="btn btn-primary letters-write" onClick={write}>
       {t('letters.write')}
     </button>
@@ -545,7 +550,7 @@ export function LettersPage(): React.JSX.Element {
       <>
         <p className="letters-status letters-status--strong">{t('letters.returned.title')}</p>
         <p className="letters-status">{t(RETURNED[moment.why], { days: BIRD_OUT_DAYS, max: PEN_PALS_MAX })}</p>
-        {choosing ? null : canWrite ? writeButton : !room ? <p className="letters-status">{t('letters.full', { max: PEN_PALS_MAX })}</p> : null}
+        {choosing ? null : canWrite || accountHeld ? writeButton : !room ? <p className="letters-status">{t('letters.full', { max: PEN_PALS_MAX })}</p> : null}
         {!choosing && sky}
       </>
     );
@@ -562,7 +567,8 @@ export function LettersPage(): React.JSX.Element {
       </>
     );
   // the picker is the one thing under the window while a bird is chosen, as the paper is while a letter is written
-  else if (choosing || moment.kind === 'writing') status = null;
+  // a letter refused because the account is held puts the paper away, and the notice takes its place
+  else if (choosing || (moment.kind === 'writing' && !accountHeld)) status = null;
   else if (!room) status = <p className="letters-status">{t('letters.full', { max: PEN_PALS_MAX })}</p>;
   else
     status = (

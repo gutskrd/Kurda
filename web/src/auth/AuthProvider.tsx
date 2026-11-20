@@ -92,6 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
           setSuspension(details);
         },
         setMaintenance,
+        // A refusal can arrive before /me is read again, so the account shows as held from then on.
+        () => setUser((u) => (u && !u.accountHold ? { ...u, accountHold: { reason: 'possible_return', since: new Date().toISOString() } } : u)),
       ),
     [setMaintenance],
   );

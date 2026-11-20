@@ -30,7 +30,7 @@ function stub(routes: Record<string, unknown>): Call[] {
       calls.push({ url, method: init?.method ?? 'GET', body: init?.body ? JSON.parse(init.body as string) : null, auth: headers.authorization });
       const key = Object.keys(routes).find((k) => url.endsWith(k));
       const value = key ? routes[key] : {};
-      return typeof value === 'function' ? (value as () => Response)() : jsonResponse(200, value);
+      return typeof value === 'function' ? (value as (init?: RequestInit) => Response)(init) : jsonResponse(200, value);
     }),
   );
   return calls;
@@ -276,6 +276,81 @@ describe('the suspension screen', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByRole('heading', { name: 'Your account is permanently suspended' })).toBeInTheDocument();
     expect(await screen.findByText('Slurs against another dialect.')).toBeInTheDocument();
+  });
+
+  const banned = (): Standing =>
+    standing({
+      status: 'banned',
+      active: [sanction({ id: 'ban1', kind: 'permanent_ban', policy: 'hate', statement: 'Slurs against another dialect.', endsAt: null })],
+      restrictions: { account: { until: null } },
+    });
+
+  it('asks for a copy of the data with the appeal token, and says it is being prepared', async () => {
+    let asked = false;
+    const calls = stub({
+      '/me/standing': banned(),
+      '/me/export': (init?: RequestInit) => {
+        if (init?.method !== 'POST') return jsonResponse(200, asked ? { status: 'pending', requestedAt: '2026-11-20T10:00:00.000Z' } : { status: 'none' });
+        asked = true;
+        return jsonResponse(202, { requested: true });
+      },
+    });
+    renderApp(<SuspensionScreen details={details} onClose={() => undefined} />);
+    const data = within(await screen.findByRole('region', { name: 'Your data' }));
+    await userEvent.click(await data.findByRole('button', { name: 'Download a copy of my data' }));
+    expect(await data.findByText('Your copy is being prepared. Sign in again later to download it here.')).toBeInTheDocument();
+    expect(calls.filter((c) => c.url.endsWith('/me/export')).map((c) => c.method)).toContain('POST');
+    for (const c of calls) expect(c.auth).toBe('Bearer appeal-token');
+  });
+
+  it('offers a copy that is ready as a download, by its fresh link', async () => {
+    stub({
+      '/me/standing': banned(),
+      '/me/export': { status: 'ready', downloadUrl: 'https://files.test/export.json?sig=1', requestedAt: '2026-11-18T10:00:00.000Z' },
+    });
+    renderApp(<SuspensionScreen details={details} onClose={() => undefined} />);
+    const data = within(await screen.findByRole('region', { name: 'Your data' }));
+    expect(await data.findByRole('link', { name: 'Download a copy of my data' })).toHaveAttribute('href', 'https://files.test/export.json?sig=1');
+    expect(data.getByText(/Your copy from .* is ready\./)).toBeInTheDocument();
+    expect(data.getByRole('button', { name: 'Prepare a new copy' })).toBeInTheDocument();
+  });
+
+  it('deletes the account with the appeal token only after asking, and says when it goes', async () => {
+    const calls = stub({
+      '/me/standing': banned(),
+      '/me/export': { status: 'none' },
+      '/me': (init?: RequestInit) => (init?.method === 'DELETE' ? jsonResponse(200, { deletionScheduled: true, graceDays: 14 }) : jsonResponse(404, {})),
+    });
+    renderApp(<SuspensionScreen details={details} onClose={() => undefined} />);
+    const data = within(await screen.findByRole('region', { name: 'Your data' }));
+    await userEvent.click(data.getByRole('button', { name: 'Delete my account' }));
+    expect(data.getByText(/permanently deleted after 14 days\. Records of moderation decisions are kept/)).toBeInTheDocument();
+    // Cancel takes it back without asking the server anything.
+    await userEvent.click(data.getByRole('button', { name: 'Cancel' }));
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+
+    await userEvent.click(data.getByRole('button', { name: 'Delete my account' }));
+    await userEvent.click(data.getByRole('button', { name: 'Yes, delete my account' }));
+    expect(await data.findByText('Your account is set to be deleted. It will be gone for good in 14 days.')).toBeInTheDocument();
+    const deleted = calls.filter((c) => c.method === 'DELETE');
+    expect(deleted).toHaveLength(1);
+    expect(deleted[0]!.url).toMatch(/\/me$/);
+    expect(deleted[0]!.auth).toBe('Bearer appeal-token');
+    expect(data.queryByRole('button', { name: 'Download a copy of my data' })).not.toBeInTheDocument();
+  });
+
+  it('asks to sign in again when the token has run out before deleting', async () => {
+    stub({
+      '/me/standing': banned(),
+      '/me/export': { status: 'none' },
+      '/me': () => jsonResponse(401, { code: 'UNAUTHORIZED', message: 'authentication required' }),
+    });
+    renderApp(<SuspensionScreen details={details} onClose={() => undefined} />);
+    const data = within(await screen.findByRole('region', { name: 'Your data' }));
+    await userEvent.click(data.getByRole('button', { name: 'Delete my account' }));
+    await userEvent.click(data.getByRole('button', { name: 'Yes, delete my account' }));
+    expect(await data.findByText('This page has been open too long. Sign in again to continue.')).toBeInTheDocument();
+    expect(screen.queryByText('authentication required')).not.toBeInTheDocument();
   });
 
   it('still gives the reasons when the decisions cannot be read', async () => {

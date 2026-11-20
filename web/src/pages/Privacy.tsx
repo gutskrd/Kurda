@@ -6,7 +6,8 @@ import { useT } from '../i18n/I18nProvider';
  * What Hevalo keeps, in plain words. Each sentence matches something the product does, and must change with it: data and
  * permissions (docs/app-store/privacy.md), what the age decides (api/src/users/age.ts), visibility and blocking
  * (Settings), the hashed phone number (phone verification), how pictures are checked and how long a refused one is
- * kept (shared picture-review.ts, api/src/moderation), the security log's retention (api/src/security/log.ts),
+ * kept (shared picture-review.ts, api/src/moderation), how a banned person is kept from returning and what the
+ * suspension screen still offers (shared account-hold.ts), the security log's retention (api/src/security/log.ts),
  * export and deletion with its 14-day grace (api/src/gdpr), and re-consent (api/src/gdpr/consent.ts). It
  * opens with the controller and how to reach them, as the GDPR requires, from the same record as Terms and About.
  */
@@ -14,12 +15,23 @@ const SECTIONS: ReadonlyArray<DocSection> = [
   { title: 'privacy.collect.title', body: 'privacy.collect.body' },
   { title: 'privacy.why.title', body: 'privacy.why.body' },
   { title: 'privacy.visibility.title', body: 'privacy.visibility.body' },
-  { title: 'privacy.safety.title', body: 'privacy.safety.body' },
+  { title: 'privacy.safety.title', body: <Safety /> },
   { title: 'privacy.permissions.title', body: 'privacy.permissions.body' },
   { title: 'privacy.payments.title', body: 'privacy.payments.body' },
   { title: 'privacy.control.title', body: 'privacy.control.body' },
   { title: 'privacy.changes.title', body: 'privacy.changes.body' },
 ];
+
+/** Keeping content safe, then keeping a banned person from coming back. */
+function Safety(): React.JSX.Element {
+  const t = useT();
+  return (
+    <>
+      <p>{t('privacy.safety.body')}</p>
+      <p>{t('privacy.safety.returns')}</p>
+    </>
+  );
+}
 
 function Controller(): React.JSX.Element {
   const t = useT();
