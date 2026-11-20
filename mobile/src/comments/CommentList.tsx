@@ -22,6 +22,7 @@ import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 import { useDirection } from '../reports/direction';
 import { UnsentNote } from '../chat/UnsentNote';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 
 /**
  * A post's comments with one level of replies and the composer for both, matching the web thread
@@ -83,6 +84,8 @@ function CommentRow({
   const { user } = useAuth();
   // A guest may read a thread; answering in it is the account's.
   const { require } = useAccountGate();
+  // The box under the thread already says why a held account cannot answer, so no Reply leads to it again.
+  const held = useAccountHeld();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   // In Soranî and Arabic a comment starts on the right; what somebody wrote keeps its own direction.
@@ -115,31 +118,42 @@ function CommentRow({
 
   return (
     <View style={[styles.comment, { flexDirection: dir.row }, c.pending && !c.failed ? styles.pending : null]}>
-      {/* The picture also opens the profile, for a thumb; screen readers get the name alone, not the same button twice. */}
-      <Pressable
-        onPress={openProfile}
-        disabled={c.pending}
-        hitSlop={faceSlop}
-        {...decorative()}
-        testID={`comment-face-${c.id}`}
-        style={({ pressed }) => pressed && heldDim}
-      >
-        <Avatar name={author.username} size={size} photoUrl={author.avatarUrl} />
-      </Pressable>
+      {author.unavailable ? (
+        // Kept words of a suspended or banned account: no face, no name, nothing to open.
+        <Avatar name="" size={size} photoUrl={null} />
+      ) : (
+        // The picture also opens the profile, for a thumb; screen readers get the name alone, not the same button twice.
+        <Pressable
+          onPress={openProfile}
+          disabled={c.pending}
+          hitSlop={faceSlop}
+          {...decorative()}
+          testID={`comment-face-${c.id}`}
+          style={({ pressed }) => pressed && heldDim}
+        >
+          <Avatar name={author.username} size={size} photoUrl={author.avatarUrl} />
+        </Pressable>
+      )}
       <View style={styles.main}>
         <View style={[styles.byline, { flexDirection: dir.row }]}>
-          <Pressable
-            onPress={openProfile}
-            disabled={c.pending}
-            hitSlop={BYLINE_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel={t('friends.openProfile', { username: author.username })}
-            style={({ pressed }) => [styles.who, pressed && heldDim]}
-          >
-            <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
-              {author.username}
+          {author.unavailable ? (
+            <Text style={[styles.name, styles.who, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+              {t('account.unavailableByline')}
             </Text>
-          </Pressable>
+          ) : (
+            <Pressable
+              onPress={openProfile}
+              disabled={c.pending}
+              hitSlop={BYLINE_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel={t('friends.openProfile', { username: author.username })}
+              style={({ pressed }) => [styles.who, pressed && heldDim]}
+            >
+              <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                {author.username}
+              </Text>
+            </Pressable>
+          )}
           <Text style={[styles.age, { color: colors.textSecondary }]} numberOfLines={1}>
             {c.failed ? '' : c.pending ? t('comments.posting') : noticeTime(c.createdAt, t, locale)}
           </Text>
@@ -160,15 +174,17 @@ function CommentRow({
         {/* Nothing to answer or take back until the server has it. */}
         {!c.pending && !removed ? (
           <View style={[styles.actions, { flexDirection: dir.row }]}>
-            <Pressable
-              onPress={() => require('comment') && thread.reply(c)}
-              hitSlop={replySlop}
-              accessibilityRole="button"
-              testID={`comment-reply-${c.id}`}
-              style={({ pressed }) => [styles.action, pressed && heldDim]}
-            >
-              <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('comments.reply')}</Text>
-            </Pressable>
+            {held ? null : (
+              <Pressable
+                onPress={() => require('comment') && thread.reply(c)}
+                hitSlop={replySlop}
+                accessibilityRole="button"
+                testID={`comment-reply-${c.id}`}
+                style={({ pressed }) => [styles.action, pressed && heldDim]}
+              >
+                <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('comments.reply')}</Text>
+              </Pressable>
+            )}
             {mine ? (
               // At the far end of the line from Reply, so their reaches do not touch.
               <Pressable
@@ -252,6 +268,7 @@ export function CommentComposer({
   const dir = useDirection();
   const bottom = useScreenBottomInset(spacing.md);
   const { isGuest, require } = useAccountGate();
+  const held = useAccountHeld();
   const target = thread.replyingTo;
   /* A guest sees where a comment would go, and tapping it offers an account rather than a field that would be refused. */
   if (isGuest) {
@@ -271,6 +288,14 @@ export function CommentComposer({
             <Icon name="lock" size={20} color={colors.textSecondary} />
           </View>
         </Pressable>
+      </View>
+    );
+  }
+  // A held account reads the thread as usual; the box waits until a person has checked the account.
+  if (held) {
+    return (
+      <View style={[styles.composerWrap, { paddingBottom: bottom }]}>
+        <HeldNotice style={styles.held} />
       </View>
     );
   }
@@ -367,6 +392,7 @@ const styles = StyleSheet.create({
   replies: { marginLeft: AVATAR + spacing.sm },
   repliesRight: { marginRight: AVATAR + spacing.sm },
   composerWrap: { gap: spacing.sm, paddingTop: spacing.sm },
+  held: { marginHorizontal: spacing.md },
   replying: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md },
   replyingText: { flex: 1, fontSize: typography.sizes.sm },
   cancel: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },

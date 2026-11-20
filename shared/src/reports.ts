@@ -269,6 +269,8 @@ export interface SuspendedErrorDetails {
   statement: string;
   appealable: boolean;
   appealToken: string;
+  /** when the account is set to be erased, if the person asked for that; the screen then offers to keep it */
+  deletionScheduledFor?: string | null;
 }
 
 /** The appeal token's lifetime; signing in again gives a fresh one. */
@@ -327,6 +329,11 @@ export interface StandingSanction {
   };
   /** the picture a removal took down, as a short-lived link only you can open; absent when it was not about a picture */
   picture?: PendingPicture | null;
+  /**
+   * Present (true) on the hold while a person checks the account (account-hold.ts): no rule was found broken, so the
+   * apps say so instead of naming one. It limits messages, posts and media until a person decides.
+   */
+  hold?: true;
 }
 
 export type StandingStatus = 'good' | 'limited' | 'suspended' | 'banned';
@@ -364,6 +371,8 @@ export type ModerationNotificationData =
       sanction: SanctionKind;
       policy: ReportCategory;
       until: string | null;
+      /** present (true) when it is the hold while a person checks the account, which names no rule */
+      hold?: true;
     }
   | { kind: 'sanction_lifted'; sanctionId: string }
   | { kind: 'appeal_decided'; appealId: string; outcome: AppealOutcome }

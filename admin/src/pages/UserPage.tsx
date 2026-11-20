@@ -40,8 +40,11 @@ import {
   type Column,
   type Tone,
 } from '../ui';
-import { AgeTag, LinkedVia, SanctionLine } from './CasePeople';
+import { AgeTag, SanctionLine } from './CasePeople';
 import { PERSON_KINDS, SanctionFields, newSanctionDraft, sanctionDraftProblems, type SanctionDraft } from './SanctionParts';
+import { BanSummaryText, ContentChoiceFields, useContentSummary, type ContentChoiceValue } from './BanContent';
+import { SamePersonPanel } from './SamePersonPanel';
+import { banSummary, takesContent } from '../bans';
 import { ItemsPanel, WalletPanel } from './UserEconomy';
 import { BadgesTab } from './UserProgress';
 import { holdsProgressTools } from '../progress';
@@ -152,6 +155,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
       {loaded.error != null && <ErrorState error={loaded.error} onRetry={reload} what="people" compact />}
       <div role="tabpanel" id="user-panel" aria-labelledby={`user-tab-${current}`}>
         {current === 'profile' && <ProfileTab user={u} />}
+        {current === 'profile' && moderation && canModerate && <SamePersonPanel user={u} />}
         {current === 'profile' && canAdjust && <TeamRole user={u} onChanged={reload} />}
         {current === 'profile' && canAdjust && <VoiceRole user={u} onChanged={reload} />}
         {current === 'standing' && moderation && <StandingTab user={u} canModerate={canModerate} onChanged={reload} />}
@@ -218,22 +222,6 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
           </div>
         </dl>
       </Section>
-      {u.linkedAccounts && u.linkedAccounts.length > 0 && (
-        <Section
-          title="Accounts on the same device or network"
-          description="A shared network means seen there within two days of each other while few others used it — often a family. A shared device says more."
-        >
-          <ul className="link-list">
-            {u.linkedAccounts.map((a) => (
-              <li key={a.id}>
-                <UserLink user={a} />
-                <LinkedVia link={a} />
-                {a.banned && <Badge tone="bad">Banned</Badge>}
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
     </>
   );
 }
@@ -638,6 +626,9 @@ function CaseLink({ id }: { id: string | null }): React.JSX.Element | null {
  */
 function SanctionDrawer({ user: u, onClose, onDone }: { user: UserDetail; onClose: () => void; onDone: () => void }): React.JSX.Element {
   const [draft, setDraft] = useState<SanctionDraft>(() => newSanctionDraft('warning'));
+  const [content, setContent] = useState<ContentChoiceValue>({ choice: 'keep', includeMessages: false });
+  const banning = takesContent(draft.kind);
+  const summary = useContentSummary(banning ? u.id : null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tried, setTried] = useState(false);
@@ -651,16 +642,20 @@ function SanctionDrawer({ user: u, onClose, onDone }: { user: UserDetail; onClos
     setTried(true);
     if (problems.length > 0) return;
     let confirmUsername: string | undefined;
+    const lines = banning
+      ? banSummary({ username: u.username, kind: draft.kind, durationHours: draft.durationHours, choice: content.choice, includeMessages: content.includeMessages, summary })
+      : [];
     if (draft.kind === 'permanent_ban') {
       const yes = await dialogs.confirm({
         title: `Ban ${who} for good?`,
         body: (
           <div className="dialog-text">
+            <BanSummaryText lines={lines} />
             <p>
               When there is another moderator, the ban waits up to 72 hours for them to approve it and the account is suspended meanwhile. A child-safety
               ban applies at once.
             </p>
-            <p>They are signed out everywhere, and their email can’t be used to sign up again. They can ask for a review.</p>
+            <p>They are signed out everywhere, and their email, sign-ins and devices are kept from signing up again. They can ask for a review.</p>
           </div>
         ),
         confirmLabel: 'Ban for good',
@@ -672,7 +667,12 @@ function SanctionDrawer({ user: u, onClose, onDone }: { user: UserDetail; onClos
     } else if (draft.kind === 'suspension') {
       const yes = await dialogs.confirm({
         title: `Suspend ${who}?`,
-        body: 'They are signed out everywhere and can’t sign in until it ends. They are told why, and can ask for a review.',
+        body: (
+          <div className="dialog-text">
+            <BanSummaryText lines={lines} />
+            <p>They are signed out everywhere and can’t sign in until it ends. They can ask for a review.</p>
+          </div>
+        ),
         confirmLabel: 'Suspend',
         tone: 'danger',
       });
@@ -680,13 +680,14 @@ function SanctionDrawer({ user: u, onClose, onDone }: { user: UserDetail; onClos
     }
     setBusy(true);
     setError(null);
-    const body: ApplySanctionRequest = {
+    const body: ApplySanctionRequest & { content?: ContentChoiceValue } = {
       kind: draft.kind,
       policy: draft.policy as ApplySanctionRequest['policy'],
       statement: draft.statement.trim(),
       ...(draft.kind === 'warning' || draft.kind === 'permanent_ban' ? {} : { durationHours: draft.durationHours }),
       ...(draft.internalNote.trim() ? { internalNote: draft.internalNote.trim() } : {}),
       ...(confirmUsername ? { confirmUsername } : {}),
+      ...(banning ? { content } : {}),
     };
     try {
       const res = await api<ApplySanctionResult>(`/admin/users/${u.id}/sanctions`, { method: 'POST', body });
@@ -722,6 +723,12 @@ function SanctionDrawer({ user: u, onClose, onDone }: { user: UserDetail; onClos
       <form id="user-sanction" className="form" noValidate onSubmit={(e) => void send(e)}>
         <p className="section-text">For something a case doesn’t cover. When a report is about it, decide it on the case instead: the reporters are told the outcome there.</p>
         <SanctionFields draft={draft} onChange={setDraft} who={who} kinds={PERSON_KINDS} />
+        {banning && <ContentChoiceFields value={content} onChange={setContent} summary={summary} who={who} />}
+        {banning && (
+          <BanSummaryText
+            lines={banSummary({ username: u.username, kind: draft.kind, durationHours: draft.durationHours, choice: content.choice, includeMessages: content.includeMessages, summary })}
+          />
+        )}
         {tried && problems.length > 0 && (
           <ul className="decision-problems" aria-live="polite">
             {problems.map((p) => (

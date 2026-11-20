@@ -13,7 +13,7 @@ import { createDeviceIdStore, createTokenStorage } from './storage';
 import { loadDeviceId } from './deviceId';
 import { deviceName } from './deviceName';
 import type { AgeStopKind } from './birthMonth';
-import type { SuspendedErrorDetails } from '@kurda/shared';
+import type { AccountHold, SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
 import { onMaintenanceOver, showMaintenance } from '../maintenance/maintenance';
 import { notifyGuestRefused } from './guestRefused';
@@ -48,6 +48,8 @@ export interface SessionUser {
   guest?: boolean;
   /** The IANA zone the server counts this account's days in (auth/timeZone.ts); absent on an older server. */
   timezone?: string;
+  /** Set while a person checks the account before it may post or message (/me only); null or absent for nearly everyone. */
+  accountHold?: AccountHold | null;
 }
 
 /** A failed request, with the server's code when it sent one. */
@@ -282,6 +284,8 @@ export function AuthProvider({
         onMaintenance: showMaintenance,
         // A guest refused something only an account may do: the offer to make one (auth/AccountGate).
         onGuestRefused: notifyGuestRefused,
+        // A refusal can come before /me is read again, so the account shows as held from then on (reports/HeldNotice).
+        onHeld: () => setUser((u) => (u && !u.accountHold ? { ...u, accountHold: { reason: 'possible_return', since: new Date().toISOString() } } : u)),
         deviceId: () => loadDeviceId(deviceStore),
       }),
     [baseUrl, storage, deviceStore],

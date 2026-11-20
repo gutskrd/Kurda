@@ -21,6 +21,54 @@
   color: var(--ink);
 }
 
+/* an account a person is checking (reports/HeldNotice.tsx): the same calm tone as a limit, never error red */
+.held-notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border-strong);
+  border-inline-start: 3px solid var(--gold);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  text-align: start;
+}
+.held-notice-icon {
+  flex: none;
+  display: inline-flex;
+  margin-top: 2px;
+  color: var(--gold-ink);
+}
+.held-notice-body {
+  min-width: 0;
+}
+.held-notice-ways {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  margin-top: 6px;
+}
+.held-notice .held-notice-why {
+  font-size: inherit;
+  color: var(--gold-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.held-notice-more {
+  margin-top: 8px;
+  color: var(--ink-2);
+}
+/* in place of a message box, it sits where the box was */
+.held-notice.is-inline {
+  flex: 1;
+  margin: 0;
+}
+
 /* ---- the sheet (components/Sheet.tsx) ------------------------------------ */
 /* Above a modal (100), since a report can open from a profile dialog. */
 .sheet-overlay {
@@ -460,6 +508,12 @@
 .sanction-statement {
   margin: 12px 0 0;
 }
+/* a hold's own words, plain rather than quoted: nobody wrote them about something the person did */
+.sanction-hold {
+  margin: 12px 0 0;
+  color: var(--ink);
+  line-height: 1.5;
+}
 .sanction-statement figcaption {
   font-size: 0.8rem;
   font-weight: 600;
@@ -570,6 +624,26 @@
 }
 .suspension-actions .btn {
   min-height: 44px;
+}
+/* what a ban leaves the person: a copy of their data, and deleting the account */
+.suspension-data {
+  margin-top: 20px;
+  padding: 18px 20px;
+}
+.suspension-data .friend-heading {
+  margin-top: 0;
+}
+.suspension-data-row {
+  margin-top: 14px;
+}
+.suspension-data-row .msg {
+  margin: 10px 0 0;
+}
+.suspension-delete p {
+  margin: 0;
+}
+.suspension-data-error {
+  margin: 10px 0 0;
 }
 
 /* ---- the ⋯ beside something reportable (reports/MessageMenu.tsx) --------- */

@@ -16,7 +16,7 @@ import { railEdits } from '../social/useSocialRail';
 import { useUnfriend } from '../social/unfriend';
 import { useOptimisticSend } from '../lib/optimistic';
 import { countryName } from '../lib/countries';
-import { ErrorState } from '../components/states';
+import { EmptyState, ErrorState } from '../components/states';
 import { LockIcon, SendIcon } from '../components/icons';
 import { ProfileCard } from '../ui/ProfileCard';
 import { FullProfileSkeleton } from '../components/skeletons';
@@ -32,6 +32,8 @@ export function UserProfile(): React.JSX.Element {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [friends, setFriends] = useState<{ friends: UserSummary[]; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // A suspended or banned account: said calmly, with nothing to try again.
+  const [unavailable, setUnavailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
   // What you are to each other: the buttons change it and the corner menu reads it.
@@ -43,6 +45,7 @@ export function UserProfile(): React.JSX.Element {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setUnavailable(false);
     void (async () => {
       // Their friends with their profile, so the page is drawn once, whole.
       const [r, f] = await Promise.all([
@@ -55,7 +58,8 @@ export function UserProfile(): React.JSX.Element {
       if (r.ok && r.data?.username) {
         setProfile(r.data);
         setStatus(r.data.friendStatus);
-      } else setError(r.ok ? t('profile.notLoaded') : describeError(r.error, t));
+      } else if (!r.ok && r.error.code === 'ACCOUNT_UNAVAILABLE') setUnavailable(true);
+      else setError(r.ok ? t('profile.notLoaded') : describeError(r.error, t));
       setLoading(false);
     })();
     return () => {
@@ -64,6 +68,7 @@ export function UserProfile(): React.JSX.Element {
   }, [client, id, attempt, t]);
 
   if (loading) return <FullProfileSkeleton />;
+  if (unavailable) return <EmptyState title={t('account.unavailable')} />;
   if (error || !profile) return <ErrorState title={t('profile.loadFailed')} message={error ?? t('profile.unavailable')} onRetry={() => setAttempt((n) => n + 1)} />;
 
   const name = profile.displayName || profile.username;

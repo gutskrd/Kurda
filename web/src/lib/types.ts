@@ -1,5 +1,5 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
-import type { FeedImage, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
+import type { AccountHold, FeedImage, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
@@ -45,6 +45,8 @@ export interface SessionUser {
   minor?: boolean;
   /** Takes part in the weekly leagues (/me only). */
   leaguesEnabled?: boolean;
+  /** Set while a person checks the account before it may post or message (/me only); null or absent for nearly everyone. */
+  accountHold?: AccountHold | null;
 }
 
 export interface AuthPayload {
@@ -202,6 +204,8 @@ export interface PostAuthorRef {
   id: string;
   username: string;
   avatarUrl: string | null;
+  /** Set while the account is suspended or banned and what it shared was kept: the byline says so and opens nothing. */
+  unavailable?: true;
 }
 
 /** A picture or meme posted to Dîmen (GET /images). */
@@ -511,7 +515,7 @@ export interface LibraryPost {
   authorId: string;
   authorRole: string;
   /** Resolved on the read paths, so a post shows who wrote it. */
-  author: { id: string; username: string; avatarUrl: string | null };
+  author: PostAuthorRef;
   type: 'story' | 'poem';
   title: string;
   body: string;

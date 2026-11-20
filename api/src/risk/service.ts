@@ -7,6 +7,9 @@ import { safeLookup, type IpReputationProvider } from './ip-reputation.js';
 import { networkHashOf } from '../net/network-key.js';
 import { networkIsBusy } from '../net/evidence.js';
 import { deleteInBatches } from '../db/batches.js';
+import { DEVICE_SIGHTING_RETENTION_DAYS } from '../net/device-sightings.js';
+import { availableSql } from '../moderation/availability.js';
+import { isTrustedNetwork } from '../net/trusted-networks.js';
 
 export type RiskEvent = 'signup' | 'login';
 
@@ -63,11 +66,19 @@ export class RiskService {
     return this.assess('login', input);
   }
 
-  /** Attaches the created or signed-in user to a logged decision and records a sighting on its network, in one statement. */
+  /**
+   * Attaches the created or signed-in user to a logged decision and records a sighting on its network and of its device
+   * (net/device-sightings.ts), in one statement.
+   */
   async attachUser(decisionId: string, userId: string): Promise<void> {
     await this.pool.query(
       `WITH d AS (
-         UPDATE risk_decisions SET user_id = $2 WHERE id = $1 RETURNING net_hash, created_at
+         UPDATE risk_decisions SET user_id = $2 WHERE id = $1 RETURNING net_hash, device_hash, created_at
+       ), device AS (
+         INSERT INTO device_sightings (user_id, device_hash, day, first_at, last_at)
+         SELECT $2, d.device_hash, (d.created_at AT TIME ZONE 'UTC')::date, d.created_at, d.created_at
+           FROM d WHERE d.device_hash IS NOT NULL
+         ON CONFLICT (user_id, device_hash, day) DO UPDATE SET last_at = GREATEST(device_sightings.last_at, EXCLUDED.last_at)
        )
        INSERT INTO network_sightings (user_id, net_hash, day, first_at, last_at)
        SELECT $2, d.net_hash, (d.created_at AT TIME ZONE 'UTC')::date, d.created_at, d.created_at
@@ -79,16 +90,23 @@ export class RiskService {
     );
   }
 
-  /** Retention prune: drops decisions older than the bound, and the network sightings with them. */
+  /**
+   * Retention prune: decisions and network sightings past 90 days, device sightings past 180, and known devices that
+   * have lapsed, an inactive account's included (a sign-in only prunes its own).
+   */
   async prune(
     olderThanDays: number = RISK_RETENTION_DAYS,
     sightingsOlderThanDays: number = SIGHTING_RETENTION_DAYS,
-  ): Promise<{ decisions: number; sightings: number }> {
+  ): Promise<{ decisions: number; sightings: number; devices: number; knownDevices: number }> {
     const decisions = await deleteInBatches(this.pool, 'risk_decisions', `created_at < now() - make_interval(days => $1::int)`, [olderThanDays]);
     const sightings = await deleteInBatches(this.pool, 'network_sightings', `day < (now() AT TIME ZONE 'UTC')::date - $1::int`, [
       sightingsOlderThanDays,
     ]);
-    return { decisions, sightings };
+    const devices = await deleteInBatches(this.pool, 'device_sightings', `day < (now() AT TIME ZONE 'UTC')::date - $1::int`, [
+      DEVICE_SIGHTING_RETENTION_DAYS,
+    ]);
+    const knownDevices = await deleteInBatches(this.pool, 'known_devices', `expires_at < now()`);
+    return { decisions, sightings, devices, knownDevices };
   }
 
   private async assess(event: RiskEvent, input: AssessInput): Promise<AssessResult> {
@@ -106,6 +124,8 @@ export class RiskService {
       event === 'signup' ? (netHash ? await this.countRecentSignups('net_hash', netHash, now) : 0) + 1 : 0;
     // A network many established accounts use (a carrier NAT, a campus) gets the shared cap even without a reputation provider.
     const busy = event === 'signup' && netHash && !rep.sharedNetwork ? await networkIsBusy(this.pool, netHash, now) : false;
+    // and one a superadmin vouched for (a school) has no network cap at all
+    const trusted = event === 'signup' && netHash ? await isTrustedNetwork(this.pool, netHash) : false;
 
     const signals: RiskSignals = {
       ipReputation: rep.reputation,
@@ -115,7 +135,8 @@ export class RiskService {
       disposableEmail: input.email ? isDisposableEmail(input.email) : false,
       velocityPerMin: await this.bumpVelocity(event, netHash ?? 'unknown', now),
       geoMismatch: false, // computed once login-history geo lands (follow-up)
-      sharedNetwork: rep.sharedNetwork || busy,
+      sharedNetwork: rep.sharedNetwork || busy || trusted,
+      trustedNetwork: trusted,
     };
 
     const assessment = assessRisk(signals);
@@ -152,13 +173,17 @@ export class RiskService {
     return Number(res.rows[0]?.n ?? 0);
   }
 
-  /** A device is known good if a verified account was created from it; guests are marked verified but prove nothing, so they do not count. */
+  /**
+   * A device is known good if a verified account was created from it; guests are marked verified but prove nothing, so
+   * they do not count, and neither does an account suspended or banned now, nor one held as a possible return.
+   */
   private async deviceHasGoodAccount(deviceHash: string): Promise<boolean> {
     const res = await this.pool.query<{ ok: boolean }>(
       `SELECT EXISTS (
          SELECT 1 FROM risk_decisions rd
          JOIN users u ON u.id = rd.user_id
          WHERE rd.device_hash = $1 AND u.email_verified_at IS NOT NULL AND NOT u.guest
+           AND ${availableSql('u')} AND u.held_at IS NULL
        ) AS ok`,
       [deviceHash],
     );

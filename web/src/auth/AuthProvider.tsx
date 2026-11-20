@@ -92,6 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
           setSuspension(details);
         },
         setMaintenance,
+        // A refusal can arrive before /me is read again, so the account shows as held from then on.
+        () => setUser((u) => (u && !u.accountHold ? { ...u, accountHold: { reason: 'possible_return', since: new Date().toISOString() } } : u)),
       ),
     [setMaintenance],
   );
@@ -194,4 +196,9 @@ export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
+}
+
+/** The signed-in user, or null outside the provider, for small parts that also render on their own (reports/SendError). */
+export function useSessionUser(): SessionUser | null {
+  return useContext(AuthContext)?.user ?? null;
 }

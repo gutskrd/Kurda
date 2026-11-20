@@ -791,6 +791,20 @@ export const es: Catalogue = {
   'restriction.suspended': 'Tu cuenta está suspendida.',
   'restriction.suspendedUntil': 'Tu cuenta está suspendida hasta el {time}.',
   'restriction.seeStanding': 'Ver el estado de tu cuenta',
+  'hold.title': 'Estamos revisando tu cuenta antes de que puedas publicar o enviar mensajes. Puedes seguir aprendiendo como siempre.',
+  'hold.why': '¿Por qué?',
+  'hold.whyBody':
+    'Una persona de Hevalo está revisando tu cuenta para que la comunidad siga siendo segura. Hasta entonces no puedes publicar, comentar, enviar mensajes ni cartas, añadir imágenes ni unirte a grupos. Te avisaremos en Hevalo en cuanto termine.',
+  'hold.heading': 'Estamos revisando tu cuenta',
+  'hold.statement':
+    'Una persona está revisando tu cuenta antes de que puedas publicar, comentar, enviar mensajes, compartir imágenes, escribir cartas o unirte a grupos. Puedes seguir aprendiendo como siempre. Esto no significa que hayas incumplido ninguna norma.',
+  'account.unavailable': 'Esta cuenta no está disponible.',
+  'account.unavailableByline': 'Cuenta no disponible',
+  'error.code.cannotJoinYet': 'Esta persona no puede unirse a grupos ahora mismo.',
+  'error.code.exportNotAvailable': 'Ahora mismo no se pueden preparar copias. Inténtalo de nuevo más tarde.',
+  'suspension.delete.keep': 'Conservar mi cuenta',
+  'suspension.delete.kept': 'Tu cuenta se queda. No se ha eliminado nada.',
+  'hold.since': 'Desde el {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': 'Denunciar a {name}',
   'report.title.message': 'Denunciar este mensaje',
@@ -1116,6 +1130,17 @@ export const es: Catalogue = {
   'suspension.answerHere': 'Si pides una revisión, vuelve a iniciar sesión cuando quieras para ver aquí nuestra respuesta.',
   'suspension.rules': 'Leer las normas de la comunidad',
   'suspension.close': 'Cerrar',
+  'suspension.data.help': 'Aún puedes descargar una copia de tus datos o eliminar tu cuenta.',
+  'suspension.data.download': 'Descargar una copia de mis datos',
+  'suspension.data.preparing': 'Estamos preparando tu copia. Vuelve a iniciar sesión más tarde para descargarla aquí.',
+  'suspension.delete.button': 'Eliminar mi cuenta',
+  'suspension.delete.warning':
+    'Tu cuenta y todos tus datos se eliminarán definitivamente después de 14 días; hasta entonces puedes conservar tu cuenta desde esta pantalla. Los registros de las decisiones de moderación se conservan, como explica la política de privacidad.',
+  'suspension.delete.scheduled': 'Tu cuenta se va a eliminar. Desaparecerá definitivamente dentro de {days} días.',
+  'suspension.signInAgain': 'Esta página lleva demasiado tiempo abierta. Vuelve a iniciar sesión para continuar.',
+  'suspension.data.ready': 'Tu copia del {date} está lista.',
+  'suspension.data.again': 'Preparar una copia nueva',
+  'suspension.delete.deleted': 'Tu cuenta se ha eliminado.',
   'maintenance.title': 'Hevalo se está tomando un breve descanso',
   'maintenance.message': 'Estamos trabajando en Hevalo y volveremos pronto. Tu progreso, tu racha y tus Zêr están a salvo.',
   'maintenance.backBy': 'Vuelta prevista: {time}',
@@ -3521,6 +3546,8 @@ export const es: Catalogue = {
   'privacy.safety.title': 'Seguridad',
   'privacy.safety.body':
     'Las publicaciones y las imágenes pueden revisarse de forma automática y por moderadores para evitar abusos y contenido ilegal. Cada imagen se revisa antes de que nadie más la vea: de forma automática, mediante un servicio de IA que trabaja para nosotros y que solo recibe la imagen, nunca quién eres; y por una persona cuando la revisión no está segura. Una imagen rechazada se guarda en privado hasta seis meses, para que puedas pedir que se revise de nuevo, y después se borra. Lo que pueda dañar a un menor se guarda como prueba durante el tiempo que exija la ley.',
+  'privacy.safety.returns':
+    'Para que quienes han sido expulsados no puedan volver sin más, Hevalo guarda datos cifrados con hash de la cuenta, el inicio de sesión y los dispositivos de una persona expulsada o suspendida, y compara con ellos las cuentas y los inicios de sesión nuevos. Una dirección de internet por sí sola nunca basta, porque muchas personas pueden compartir una, y cuando una coincidencia no está clara, decide una persona. Estos datos se guardan solo mientras dura la expulsión o la suspensión, aunque se elimine la cuenta; los registros de inicio de sesión y de dispositivos de los que proceden se guardan durante los plazos indicados en «Tus opciones». Aunque tu cuenta esté suspendida, puedes descargar una copia de tus datos o eliminar tu cuenta desde la pantalla que ves al iniciar sesión.',
   'privacy.permissions.title': 'Permisos',
   'privacy.permissions.body': 'En el teléfono, Hevalo solo pide el micrófono cuando grabas algo, y tus fotos solo cuando eliges una. Pregunta si puede enviarte notificaciones después de una lección o desde Ajustes, y todo lo demás funciona igual si dices que no. Nunca pide tu ubicación, tus contactos ni tu cámara.',
   'privacy.payments.title': 'Pagos',

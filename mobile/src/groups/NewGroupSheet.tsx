@@ -3,11 +3,15 @@ import { StyleSheet, Text, TextInput } from 'react-native';
 import type { LimitDetails } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { describeError } from '../api/errors';
+import type { ApiError } from '../api/types';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { limitText } from '../limits/limitCopy';
 import { useDirection } from '../reports/direction';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
+import { SendErrorNotice } from '../reports/SendError';
+import { restrictionOf } from '../reports/sendErrors';
 import { BottomSheet } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
@@ -37,9 +41,11 @@ export function NewGroupSheet({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
+  // Starting a group is joining one, which a held account waits for.
+  const held = useAccountHeld();
 
-  const ready = name.trim().length >= 2 && !limit;
+  const ready = name.trim().length >= 2 && !limit && !held;
 
   const submit = async (): Promise<void> => {
     const trimmed = name.trim();
@@ -50,7 +56,7 @@ export function NewGroupSheet({
     setBusy(false);
     if (!res.ok) {
       haptic('wrong');
-      setError(describeError(res.error, t));
+      setError(res.error);
       return;
     }
     haptic('correct');
@@ -61,7 +67,11 @@ export function NewGroupSheet({
 
   return (
     <BottomSheet visible={open} onClose={onClose} title={t('groups.new')} dismissible={!busy}>
-      {limit ? <Text style={[styles.notice, dir.text, { color: colors.textSecondary }]}>{limitText(limit, t)}</Text> : null}
+      {held ? (
+        <HeldNotice onNavigate={onClose} style={styles.held} />
+      ) : limit ? (
+        <Text style={[styles.notice, dir.text, { color: colors.textSecondary }]}>{limitText(limit, t)}</Text>
+      ) : null}
       <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{t('groups.name')}</Text>
       <TextInput
         style={[styles.input, dir.free, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
@@ -86,9 +96,12 @@ export function NewGroupSheet({
       />
       <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('groups.privateHint')}</Text>
 
-      {error ? (
+      {/* A limit on the account is said calmly, with the way to Account standing; anything else as before. */}
+      {error && restrictionOf(error) ? (
+        <SendErrorNotice error={error} onNavigate={onClose} style={styles.limit} heldShownBeside />
+      ) : error ? (
         <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
-          {error}
+          {describeError(error, t)}
         </Text>
       ) : null}
 
@@ -110,4 +123,7 @@ const styles = StyleSheet.create({
   multiline: { minHeight: 70, textAlignVertical: 'top' },
   hint: { fontSize: typography.sizes.xs, lineHeight: 18 },
   error: { textAlign: 'center', fontSize: typography.sizes.sm },
+  held: { marginBottom: spacing.xs },
+  // The sheet already has its own margins.
+  limit: { marginHorizontal: 0, marginBottom: 0 },
 });

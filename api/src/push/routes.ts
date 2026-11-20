@@ -39,6 +39,8 @@ export function registerPushRoutes(
       const { platform, token } = req.body as z.infer<typeof registerBody>;
       // Under the session it was registered from, so it ends when that session does.
       await tokens.register(req.user!.id, platform, token, req.user!.familyId ?? null);
+      // a phone a banned person's account had is a strong sign it is theirs again (moderation/returns.ts)
+      if (app.hasDecorator('returns')) await app.returns.assess({ userId: req.user!.id, event: 'push', pushToken: token });
       return reply.code(201).send({ ok: true });
     },
   );

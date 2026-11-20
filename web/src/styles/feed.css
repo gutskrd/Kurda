@@ -391,3 +391,15 @@
 .post-full .fcard-actions {
   margin-top: 14px;
 }
+
+/* the byline of what a suspended or banned account shared and was kept: quieter, and not a link (library/PostAuthor) */
+.fcard-who.is-unavailable,
+.byline-who.is-unavailable {
+  cursor: default;
+}
+.fcard-who.is-unavailable .fcard-name,
+.byline-who.is-unavailable .byline-name {
+  color: var(--ink-3);
+  font-weight: 500;
+  text-decoration: none;
+}

@@ -20,6 +20,7 @@ import { Button } from '../components/Button';
 import { ArrowIcon, LockIcon, PersonGlyph } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
+import { HeldBanner } from '../reports/HeldNotice';
 
 /** Edit Profile (/app/profile/edit): all profile customisation, equipping what you own and editing your details; buying is in the Shop. */
 export function ProfileEdit(): React.JSX.Element {
@@ -86,6 +87,8 @@ export function ProfileEdit(): React.JSX.Element {
     <div className="container container-narrow">
       {header}
 
+      {/* A held account can change its look but not put up a new picture or published words yet. */}
+      <HeldBanner />
       {/* The one-time notice about refreshed backgrounds and icons. */}
       <RefreshedNoticeLoader />
       <ProfilePhotoPicker me={me} onChanged={changed} />

@@ -59,6 +59,7 @@ import { NEW_LETTER, keepDraft, moveDraft, strayAnswers, threadDraft, useLetterD
 import { useLettersHome } from './useLettersHome';
 import { LetterWidgetButton } from '../widget/LetterWidgetButton';
 import { HeldNote, PictureRefusal } from '../pictures/PictureReview';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import { isHeld, rejectionOf } from '../pictures/review';
 
 /** The window's maximum width; below it, the screen's width decides. */
@@ -104,6 +105,7 @@ type Kept = { name: string; threadId: string } | { name: null; threadId: null };
  */
 export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void; bird?: string; onBirdUsed?: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
+  const accountHeld = useAccountHeld();
   const navigation = useNavigation<RootNavigation>();
   const { t } = useI18n();
   const { colors } = useTheme();
@@ -528,7 +530,7 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
 
   const visitorName = visitor?.person.name ?? '';
   const room = data?.roomForMore ?? false;
-  const canWrite = data !== null && scene !== null && data.refusal === null && !out && !here && room && scene.own.kind !== 'leaving';
+  const canWrite = data !== null && scene !== null && data.refusal === null && !accountHeld && !out && !here && room && scene.own.kind !== 'leaving';
   const quiet = [styles.status, { color: colors.textSecondary }];
   const strong = [styles.status, styles.strong, { color: colors.textPrimary }];
 
@@ -570,7 +572,12 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
           ) : null}
         </View>
       ) : null;
-    const writeButton = <ClayButton label={t('letters.write')} onPress={write} tone="primary" style={styles.wide} testID="letters-write" />;
+    // A held account sees why there is no Write where the button would be.
+    const writeButton = accountHeld ? (
+      <HeldNotice style={styles.wide} />
+    ) : (
+      <ClayButton label={t('letters.write')} onPress={write} tone="primary" style={styles.wide} testID="letters-write" />
+    );
 
     if (data.refusal === 'birth_month')
       status = (
@@ -641,7 +648,7 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
           <Text style={quiet} testID="letters-returned">
             {t(RETURNED[moment.why], { days: BIRD_OUT_DAYS, max: PEN_PALS_MAX })}
           </Text>
-          {choosing ? null : canWrite ? writeButton : !room ? <Text style={quiet}>{t('letters.full', { max: PEN_PALS_MAX })}</Text> : null}
+          {choosing ? null : canWrite || accountHeld ? writeButton : !room ? <Text style={quiet}>{t('letters.full', { max: PEN_PALS_MAX })}</Text> : null}
           {choosing ? null : sky}
         </>
       );
@@ -659,7 +666,8 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
         </>
       );
     // The picker is the only thing under the window while choosing, as the paper is while writing.
-    else if (choosing || moment.kind === 'writing') status = null;
+    // A letter refused because the account is held puts the paper away, and the notice takes its place.
+    else if (choosing || (moment.kind === 'writing' && !accountHeld)) status = null;
     else if (!room) status = <Text style={quiet}>{t('letters.full', { max: PEN_PALS_MAX })}</Text>;
     else
       status = (

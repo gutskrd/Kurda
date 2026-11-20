@@ -793,6 +793,20 @@ export const de: Catalogue = {
   'restriction.suspended': 'Dein Konto ist gesperrt.',
   'restriction.suspendedUntil': 'Dein Konto ist bis {time} gesperrt.',
   'restriction.seeStanding': 'Deinen Kontostatus ansehen',
+  'hold.title': 'Dein Konto wird geprüft, bevor du posten oder Nachrichten senden kannst. Lernen geht ganz normal weiter.',
+  'hold.why': 'Warum?',
+  'hold.whyBody':
+    'Eine Person bei Hevalo prüft dein Konto, damit die Community sicher bleibt. Bis dahin kannst du nichts posten oder kommentieren, keine Nachrichten oder Briefe senden, keine Bilder hinzufügen und keinen Gruppen beitreten. Sobald die Prüfung fertig ist, sagen wir dir in Hevalo Bescheid.',
+  'hold.heading': 'Dein Konto wird geprüft',
+  'hold.statement':
+    'Eine Person prüft dein Konto, bevor du posten, kommentieren, Nachrichten senden, Bilder teilen, Briefe schreiben oder Gruppen beitreten kannst. Lernen geht ganz normal weiter. Das heißt nicht, dass du gegen eine Regel verstoßen hast.',
+  'account.unavailable': 'Dieses Konto ist nicht verfügbar.',
+  'account.unavailableByline': 'Konto nicht verfügbar',
+  'error.code.cannotJoinYet': 'Diese Person kann gerade keinen Gruppen beitreten.',
+  'error.code.exportNotAvailable': 'Kopien können gerade nicht erstellt werden. Bitte versuch es später noch einmal.',
+  'suspension.delete.keep': 'Mein Konto behalten',
+  'suspension.delete.kept': 'Dein Konto bleibt. Es wurde nichts gelöscht.',
+  'hold.since': 'Seit {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': '{name} melden',
   'report.title.message': 'Diese Nachricht melden',
@@ -1118,6 +1132,17 @@ export const de: Catalogue = {
   'suspension.answerHere': 'Wenn du eine Überprüfung beantragst, kannst du dich jederzeit wieder anmelden, um unsere Antwort hier zu sehen.',
   'suspension.rules': 'Community-Regeln lesen',
   'suspension.close': 'Schließen',
+  'suspension.data.help': 'Du kannst trotzdem eine Kopie deiner Daten herunterladen oder dein Konto löschen.',
+  'suspension.data.download': 'Kopie meiner Daten herunterladen',
+  'suspension.data.preparing': 'Deine Kopie wird vorbereitet. Melde dich später wieder an, um sie hier herunterzuladen.',
+  'suspension.delete.button': 'Mein Konto löschen',
+  'suspension.delete.warning':
+    'Dein Konto und alle deine Daten werden nach 14 Tagen endgültig gelöscht; bis dahin kannst du dein Konto auf diesem Bildschirm behalten. Moderationsakten bleiben erhalten, wie es die Datenschutzerklärung beschreibt.',
+  'suspension.delete.scheduled': 'Dein Konto wird gelöscht. In {days} Tagen ist es endgültig weg.',
+  'suspension.signInAgain': 'Diese Seite war zu lange offen. Melde dich erneut an, um weiterzumachen.',
+  'suspension.data.ready': 'Deine Kopie vom {date} ist fertig.',
+  'suspension.data.again': 'Neue Kopie vorbereiten',
+  'suspension.delete.deleted': 'Dein Konto wurde gelöscht.',
   'maintenance.title': 'Hevalo macht eine kurze Pause',
   'maintenance.message': 'Wir arbeiten an Hevalo und sind bald wieder da. Dein Fortschritt, deine Serie und dein Zêr sind sicher.',
   'maintenance.backBy': 'Bis {time} wieder da',
@@ -3524,6 +3549,8 @@ export const de: Catalogue = {
   'privacy.safety.title': 'Sicherheit',
   'privacy.safety.body':
     'Beiträge und Bilder können automatisch und von Moderatorinnen und Moderatoren geprüft werden, um Missbrauch und illegale Inhalte fernzuhalten. Jedes Bild wird geprüft, bevor andere es sehen: automatisch, von einem KI-Dienst, der für uns arbeitet und nur das Bild bekommt, nie, wer du bist; und von einem Menschen, wenn die Prüfung unsicher ist. Ein abgelehntes Bild bewahren wir bis zu sechs Monate vertraulich auf, damit du es noch einmal prüfen lassen kannst, danach wird es gelöscht. Alles, was einem Kind schaden könnte, bewahren wir als Beweis so lange auf, wie es das Gesetz verlangt.',
+  'privacy.safety.returns':
+    'Damit gesperrte Personen nicht einfach zurückkommen, speichert Hevalo unkenntlich gemachte Angaben (Hashes) zum Konto, zur Anmeldung und zu den Geräten einer gesperrten Person und vergleicht neue Konten und Anmeldungen damit. Eine Internetadresse allein reicht dafür nie, weil sich viele Menschen eine teilen können, und wenn ein Treffer nicht eindeutig ist, entscheidet ein Mensch. Diese Angaben bleiben nur so lange gespeichert, wie die Sperre dauert, auch wenn das Konto gelöscht wird; die Anmelde- und Geräteprotokolle, aus denen sie stammen, werden so lange aufbewahrt, wie unter „Deine Wahl“ steht. Ist dein Konto gesperrt, kannst du trotzdem auf dem Bildschirm, den du bei der Anmeldung siehst, eine Kopie deiner Daten herunterladen oder dein Konto löschen.',
   'privacy.permissions.title': 'Berechtigungen',
   'privacy.permissions.body': 'Auf dem Handy fragt Hevalo nur dann nach deinem Mikrofon, wenn du etwas aufnimmst, und nur dann nach deinen Fotos, wenn du eines auswählst. Ob es dir Mitteilungen schicken darf, fragt es nach einer Lektion oder in den Einstellungen, und alles andere funktioniert genauso, wenn du Nein sagst. Nach deinem Standort, deinen Kontakten oder deiner Kamera fragt es nie.',
   'privacy.payments.title': 'Zahlungen',

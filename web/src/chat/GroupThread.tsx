@@ -532,7 +532,7 @@ export function GroupThread({
       </p>
 
       {!outside && gifts.notice}
-      {!outside && <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />}
+      {!outside && <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" heldShownBeside />}
       <ReportSheet
         open={reporting !== null}
         onClose={() => setReporting(null)}

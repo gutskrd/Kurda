@@ -12,7 +12,7 @@ vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, g
 // The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { AppState } from 'react-native';
+import { Alert, AppState, Linking } from 'react-native';
 import type { AccountStanding, MyReport, StandingSanction } from '@kurda/shared';
 import { renderWithProviders } from './testing/harness';
 import { patchReactNativeWeb } from './testing/rnWebPatches';
@@ -21,7 +21,7 @@ import { MyReportsScreen } from './MyReportsScreen';
 import { AccountStandingScreen } from './AccountStandingScreen';
 import { WarningDialog } from './WarningDialog';
 import { SendErrorNotice } from './SendError';
-import { SuspensionScreen, accountSanction } from './SuspensionScreen';
+import { SuspensionScreen, accountSanction, scheduledDeletion } from './SuspensionScreen';
 
 patchReactNativeWeb();
 
@@ -318,7 +318,9 @@ describe('SuspensionScreen', () => {
 
   it('says when the standing could not be loaded, and loads it again on Try again', async () => {
     let answers = 0;
-    vi.stubGlobal('fetch', async () => {
+    vi.stubGlobal('fetch', async (url: string) => {
+      // The copy of the data is read beside the standing; only the standing fails here.
+      if (url.endsWith('/me/export')) return new Response(JSON.stringify({ status: 'none' }), { status: 200, headers: { 'content-type': 'application/json' } });
       answers += 1;
       return answers === 1
         ? new Response(JSON.stringify({ code: 'INTERNAL', message: 'x' }), { status: 500 })
@@ -332,6 +334,157 @@ describe('SuspensionScreen', () => {
     const ask = await screen.findByRole('button', { name: 'Ask for a review' });
     await waitFor(() => expect(ask.getAttribute('aria-disabled')).not.toBe('true'));
     expect(answers).toBe(2);
+  });
+});
+
+describe('SuspensionScreen: a copy of the data and deleting the account', () => {
+  const details = {
+    until: null,
+    policy: 'harassment' as const,
+    statement: 'Threats in group chat.',
+    appealable: true,
+    appealToken: 'appeal-tok',
+  };
+  type Answer = { status: number; body: unknown };
+
+  /** The API answering by method and path, with every call recorded with its token. */
+  function serve(answer: (method: string, path: string) => Answer | undefined) {
+    const calls: Array<{ method: string; path: string; auth: string | null }> = [];
+    vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
+      const method = init.method ?? 'GET';
+      const path = new URL(url).pathname;
+      calls.push({ method, path, auth: (init.headers as Record<string, string>).authorization ?? null });
+      const got =
+        path === '/me/standing'
+          ? { status: 200, body: standing({ status: 'banned', active: [sanction({ id: 'ban', kind: 'permanent_ban', endsAt: null })] }) }
+          : (answer(method, path) ?? { status: 404, body: { code: 'NOT_FOUND', message: 'x' } });
+      return new Response(JSON.stringify(got.body), { status: got.status, headers: { 'content-type': 'application/json' } });
+    });
+    return calls;
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('asks for a copy with the appeal token, and says it is being prepared', async () => {
+    let asked = false;
+    const calls = serve((method, path) => {
+      if (path !== '/me/export') return undefined;
+      if (method === 'POST') {
+        asked = true;
+        return { status: 202, body: { requested: true } };
+      }
+      return { status: 200, body: asked ? { status: 'pending' } : { status: 'none' } };
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    expect(screen.getByText('You can still download a copy of your data or delete your account.')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Download a copy of my data' }));
+    expect(await screen.findByText('Your copy is being prepared. Sign in again later to download it here.')).toBeTruthy();
+    expect(calls.some((c) => c.method === 'POST' && c.path === '/me/export')).toBe(true);
+    expect(calls.every((c) => c.auth === 'Bearer appeal-tok')).toBe(true);
+  });
+
+  it('opens a copy that is ready by a fresh link, as Settings does', async () => {
+    const url = 'https://files.test/export.json?sig=fresh';
+    serve((method, path) => (path === '/me/export' ? { status: 200, body: { status: 'ready', downloadUrl: url, requestedAt: '2026-11-18T10:00:00.000Z' } } : undefined));
+    const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
+      buttons?.find((b) => b.text === 'Download your data')?.onPress?.();
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    expect(await screen.findByText(/^Your copy from .* is ready\.$/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Download a copy of my data' }));
+    await waitFor(() => expect(open).toHaveBeenCalledWith(url));
+  });
+
+  it('deletes the account with the appeal token only once it is confirmed, and says when it goes', async () => {
+    const calls = serve((method, path) => {
+      if (path === '/me/export') return { status: 200, body: { status: 'none' } };
+      if (method === 'DELETE' && path === '/me') return { status: 200, body: { deletionScheduled: true, graceDays: 14 } };
+      return undefined;
+    });
+    let confirm: (() => void) | undefined;
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
+      confirm = buttons?.find((b) => b.text === 'Yes, delete my account')?.onPress;
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+    expect(alert).toHaveBeenCalledWith(
+      'Delete account?',
+      expect.stringMatching(/permanently deleted after 14 days; until then you can keep your account from this screen\. Records of moderation decisions are kept/),
+      expect.any(Array),
+    );
+    // Asking is not deleting.
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+    await act(async () => confirm?.());
+    expect(await screen.findByText('Your account is set to be deleted. It will be gone for good in 14 days.')).toBeTruthy();
+    const deleted = calls.filter((c) => c.method === 'DELETE');
+    expect(deleted).toEqual([{ method: 'DELETE', path: '/me', auth: 'Bearer appeal-tok' }]);
+    expect(screen.queryByRole('button', { name: 'Delete my account' })).toBeNull();
+  });
+
+  it('keeps the account from this screen while its deletion waits, and goes back to the usual view', async () => {
+    const calls = serve((method, path) => {
+      if (path === '/me/export') return { status: 200, body: { status: 'none' } };
+      if (method === 'DELETE' && path === '/me') return { status: 200, body: { deletionScheduled: true, graceDays: 14 } };
+      if (method === 'POST' && path === '/me/deletion/cancel') return { status: 200, body: { cancelled: true } };
+      return undefined;
+    });
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
+      buttons?.find((b) => b.text === 'Yes, delete my account')?.onPress?.();
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Keep my account' }));
+    expect(await screen.findByText('Your account will stay. Nothing has been deleted.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download a copy of my data' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete my account' })).toBeTruthy();
+    expect(calls.find((c) => c.path === '/me/deletion/cancel')).toEqual({ method: 'POST', path: '/me/deletion/cancel', auth: 'Bearer appeal-tok' });
+  });
+
+  it('offers to keep the account on a later visit, when its deletion was asked for before', async () => {
+    serve((method, path) => {
+      if (path === '/me/export') return { status: 200, body: { status: 'none' } };
+      if (method === 'POST' && path === '/me/deletion/cancel') return { status: 200, body: { cancelled: true } };
+      return undefined;
+    });
+    const at = new Date(Date.now() + 3 * 86_400_000 - 60_000).toISOString();
+    renderWithProviders(<SuspensionScreen details={{ ...details, deletionScheduledFor: at }} baseUrl="http://api.test" onBack={() => undefined} />);
+    expect(await screen.findByText('Your account is set to be deleted. It will be gone for good in 3 days.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep my account' }));
+    expect(await screen.findByText('Your account will stay. Nothing has been deleted.')).toBeTruthy();
+  });
+
+  it('counts a waiting deletion in whole days, and forgets one already past', () => {
+    const now = Date.parse('2026-11-20T12:00:00.000Z');
+    expect(scheduledDeletion('2026-11-21T11:00:00.000Z', now)).toEqual({ kind: 'scheduled', days: 1 });
+    expect(scheduledDeletion('2026-11-19T12:00:00.000Z', now)).toBeNull();
+    expect(scheduledDeletion(null, now)).toBeNull();
+  });
+
+  it('says plainly when no copy can be made right now', async () => {
+    serve((method, path) => {
+      if (path !== '/me/export') return undefined;
+      return method === 'POST'
+        ? { status: 503, body: { code: 'EXPORT_NOT_AVAILABLE', message: 'data export is not available right now' } }
+        : { status: 200, body: { status: 'none' } };
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Download a copy of my data' }));
+    expect(await screen.findByText('Copies can’t be made right now. Please try again later.')).toBeTruthy();
+    expect(screen.queryByText('data export is not available right now')).toBeNull();
+  });
+
+  it('asks to sign in again when the token has run out before deleting', async () => {
+    serve((method, path) => {
+      if (path === '/me/export') return { status: 200, body: { status: 'none' } };
+      return { status: 401, body: { code: 'UNAUTHORIZED', message: 'authentication required' } };
+    });
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
+      buttons?.find((b) => b.text === 'Yes, delete my account')?.onPress?.();
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+    await waitFor(() => expect(alert).toHaveBeenCalledWith('Could not delete account', 'This page has been open too long. Sign in again to continue.'));
   });
 });
 

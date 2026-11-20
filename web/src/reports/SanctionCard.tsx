@@ -6,6 +6,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { CATEGORY_LABEL, SANCTION_LABEL } from './labels';
 import { formatDay, formatUntil } from './restriction';
+import { isHoldSanction } from './hold';
 
 /** The answer to a review, once there is one; an open one says when it was asked. */
 const APPEAL_OUTCOME: Record<AppealOutcome, MessageKey> = {
@@ -102,6 +103,8 @@ export function SanctionCard({
   }
 
   const picture = (sanction as WithPicture).picture ?? null;
+  // A hold is a check, not a finding: it says so in the reader's language, with no rule and no "found by" line.
+  const hold = isHoldSanction(sanction);
   const start = formatDay(sanction.startsAt, locale);
   const when = !sanction.endsAt
     ? sanction.kind === 'warning' || sanction.kind === 'content_removal'
@@ -112,24 +115,26 @@ export function SanctionCard({
   return (
     <article className={`card sanction${sanction.active ? ' is-active' : ''}`}>
       <header className="sanction-head">
-        <h3 className="sanction-kind">{t(SANCTION_LABEL[sanction.kind])}</h3>
+        <h3 className="sanction-kind">{hold ? t('hold.heading') : t(SANCTION_LABEL[sanction.kind])}</h3>
         {sanction.revokedAt ? (
           <span className="sanction-tag">{t('standing.lifted', { date: formatDay(sanction.revokedAt, locale) })}</span>
         ) : (
           sanction.active && <span className="sanction-tag is-active">{t('standing.inForce')}</span>
         )}
       </header>
-      <p className="sanction-rule">{t('standing.rule', { rule: t(CATEGORY_LABEL[sanction.policy]) })}</p>
-      <p className="sanction-when">{when}</p>
+      {!hold && <p className="sanction-rule">{t('standing.rule', { rule: t(CATEGORY_LABEL[sanction.policy]) })}</p>}
+      <p className="sanction-when">{hold ? t('hold.since', { date: start }) : when}</p>
       {picture && <SanctionPicture picture={picture} />}
-      {sanction.statement && (
+      {hold ? (
+        <p className="sanction-hold">{t('hold.statement')}</p>
+      ) : sanction.statement && (
         <figure className="sanction-statement">
           <figcaption>{t('standing.statement')}</figcaption>
           {/* What a person wrote, in its own language and direction. */}
           <blockquote dir="auto">{sanction.statement}</blockquote>
         </figure>
       )}
-      <p className="sanction-origin">{t(originKey(sanction))}</p>
+      {!hold && <p className="sanction-origin">{t(originKey(sanction))}</p>}
 
       {current ? (
         <AppealState appeal={current} />

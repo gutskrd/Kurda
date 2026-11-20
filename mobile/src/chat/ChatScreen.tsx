@@ -38,6 +38,7 @@ import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet } from '../reports/ReportSheet';
 import { SendErrorNotice } from '../reports/SendError';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import { ChatGameButton } from '../play/ChatGameButton';
 import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
 import { restoredDraft, useOutgoing } from './sending';
@@ -80,6 +81,8 @@ export function ChatScreen({
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   const bottom = useScreenBottomInset(spacing.md);
+  // A held account reads the chat as usual; the field waits until a person has checked the account.
+  const held = useAccountHeld();
   const me = user?.id ?? '';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -407,20 +410,26 @@ export function ChatScreen({
           </View>
         )}
 
-        <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} />
+        <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} heldShownBeside />
 
-        <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
-          <Pressable
-            onPress={() => setPicking(true)}
-            accessibilityRole="button"
-            accessibilityLabel={t('gift.button')}
-            style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
-          >
-            <Icon name="gift" size={22} color={colors.goldText} />
-          </Pressable>
-          <ChatGameButton target={{ kind: 'dm', friendId: userId }} />
-          <MessageField value={draft} onChangeText={onType} onSend={() => void send()} maxLength={MAX_LEN} />
-        </View>
+        {held ? (
+          <View style={[styles.heldRow, { paddingBottom: bottom, borderTopColor: colors.separator }]}>
+            <HeldNotice />
+          </View>
+        ) : (
+          <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
+            <Pressable
+              onPress={() => setPicking(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('gift.button')}
+              style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
+            >
+              <Icon name="gift" size={22} color={colors.goldText} />
+            </Pressable>
+            <ChatGameButton target={{ kind: 'dm', friendId: userId }} />
+            <MessageField value={draft} onChangeText={onType} onSend={() => void send()} maxLength={MAX_LEN} />
+          </View>
+        )}
       </KeyboardAvoidingView>
 
       {flying ? <GiftSendAnimation key={flying.key} tier={flying.tier} announce={t('gift.sent', { name })} onDone={() => setFlying(null)} /> : null}
@@ -531,6 +540,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  // In place of the composer for a held account: the notice where the field was, over the same divider.
+  heldRow: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
   // A plain glyph beside the field, as the tools by a message field are; the touch is still 44pt.
   giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 });

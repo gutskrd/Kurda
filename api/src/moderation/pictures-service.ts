@@ -1097,6 +1097,8 @@ export class PictureReviewService {
           AND NOT m.preserve_evidence
           AND NOT EXISTS (SELECT 1 FROM moderation_cases c
                            WHERE c.source = 'image_flag' AND c.evidence->>'mediaKey' = m.key AND ${OPEN_CASE_PREDICATE})
+          -- a ban's removal keeps its pictures until its own window passes with no appeal open (takedown.ts)
+          AND NOT EXISTS (SELECT 1 FROM ban_takedown_items i WHERE i.item_type = 'picture' AND i.item_id = m.key)
         LIMIT $2`,
       [REFUSED_KEPT_DAYS, limit],
     );

@@ -73,6 +73,7 @@ import type { PaperHost } from './usePaperScroll';
 import { DECOR_PROBLEM } from './errors';
 import { draftOf, keepDraft } from './drafts';
 import { useAuth } from '../auth/AuthContext';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 
 /**
  * Writing a letter on its own sheet of paper, as on the website. Four tools sit above the sheet, where a drawing hand
@@ -152,20 +153,7 @@ interface Placed {
 
 const hasWords = (p: Placed): boolean => p.note.text.trim().length > 0;
 
-export function LetterComposer({
-  label,
-  sendLabel,
-  busy,
-  onSend,
-  onCancel,
-  error,
-  autoFocus = false,
-  canDraw,
-  paper: firstPaper,
-  host,
-  draft: place,
-  testID,
-}: {
+interface LetterComposerProps {
   label: string;
   /** The send button's label, when it is not your own bird that carries the letter. */
   sendLabel?: string;
@@ -186,7 +174,28 @@ export function LetterComposer({
   /** The draft key for where this letter is written from (letters/drafts.ts); the screen drops it once sent. */
   draft?: string;
   testID?: string;
-}): React.JSX.Element {
+}
+
+export function LetterComposer(props: LetterComposerProps): React.JSX.Element {
+  const held = useAccountHeld();
+  // A held account reads its letters as usual; the paper waits until a person has checked the account.
+  return held ? <HeldNotice /> : <LetterPaperComposer {...props} />;
+}
+
+function LetterPaperComposer({
+  label,
+  sendLabel,
+  busy,
+  onSend,
+  onCancel,
+  error,
+  autoFocus = false,
+  canDraw,
+  paper: firstPaper,
+  host,
+  draft: place,
+  testID,
+}: LetterComposerProps): React.JSX.Element {
   const { t, rtl } = useI18n();
   const { colors } = useTheme();
   const dir = useDirection();

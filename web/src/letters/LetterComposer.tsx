@@ -27,6 +27,7 @@ import type { MessageKey } from '../i18n/en';
 import { useHistory } from '../images/useHistory';
 import { prefersReducedMotion } from '../lib/motion';
 import { useMemoryOwner } from '../lib/useApi';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import { BaselineProbe, PaperArt, noteStyle, sheetStyle, useBaseline, useScheme, useUnitsTall } from './PaperSheet';
 import { DrawPanel, PaperPanel, TextPanel, ToolSwitch, type Tool } from './PaperTools';
 import { DECOR_PROBLEM, NO_DRAWING, PAGE_FOOT, START_WIDTH, onPage, pagePoint, pointsLeft, rememberPaper, rememberedPaper, roomForNote, turnFor, widthFor, type Drawing } from './paper';
@@ -89,18 +90,7 @@ function useUnit(sheet: React.RefObject<HTMLElement | null>): number {
   return unit;
 }
 
-export function LetterComposer({
-  label,
-  sendLabel,
-  busy,
-  onSend,
-  onCancel,
-  error,
-  autoFocus = false,
-  paper: startPaper,
-  canDraw,
-  draft: place,
-}: {
+interface LetterComposerProps {
   label: string;
   /** what sending it is called, when it is not your own bird that takes it */
   sendLabel?: string;
@@ -118,7 +108,26 @@ export function LetterComposer({
   canDraw: boolean;
   /** The draft key (letters/drafts.ts), where the paper's content is kept while writing and restored on reopening. */
   draft?: string;
-}): React.JSX.Element {
+}
+
+export function LetterComposer(props: LetterComposerProps): React.JSX.Element {
+  const held = useAccountHeld();
+  // A held account reads its letters as usual; the paper waits until a person has checked the account.
+  return held ? <HeldNotice /> : <LetterPaperComposer {...props} />;
+}
+
+function LetterPaperComposer({
+  label,
+  sendLabel,
+  busy,
+  onSend,
+  onCancel,
+  error,
+  autoFocus = false,
+  paper: startPaper,
+  canDraw,
+  draft: place,
+}: LetterComposerProps): React.JSX.Element {
   const t = useT();
   const id = useId();
   const scheme = useScheme();

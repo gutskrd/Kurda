@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Redis } from 'ioredis';
 import { ROUTE_NOT_FOUND_MESSAGE, isScannerProbe } from '@kurda/shared';
 import { networkHashOf } from '../net/network-key.js';
+import { isTrustedNetwork } from '../net/trusted-networks.js';
 
 /** How many probes from one network, within the window, shut it out. */
 export const SHIELD = { windowSeconds: 10 * 60, probes: 20, blockSeconds: 60 * 60 } as const;
@@ -9,11 +10,12 @@ export const SHIELD = { windowSeconds: 10 * 60, probes: 20, blockSeconds: 60 * 6
 const EXEMPT = new Set(['/health', '/metrics']);
 
 /**
- * Requests that keep an existing sign-in without a session of their own: refreshing the access token and signing out.
- * The block is for strangers on a probing network; signed-in users on it (a school, a carrier's shared address) carry
- * on. Each still has its own rate limit, and the refresh token is the credential either way.
+ * Signing in, signing up and keeping a sign-in (refreshing, signing out, resetting a password) are never blocked. The
+ * block is for strangers probing from a network; everyone else on it (a school's class behind one address, a
+ * carrier's shared address) still signs in and carries on. Each of these has its own rate limits, lockouts and
+ * CAPTCHA, which judge the person rather than their network.
  */
-const SESSION_KEEPING = new Set(['/auth/refresh', '/auth/logout']);
+const SIGN_IN_PREFIX = '/auth/';
 
 /** Where the counts are kept: Redis when available, so every instance sees them, else this process's memory. */
 interface ShieldStore {
@@ -72,9 +74,9 @@ function memoryStore(): ShieldStore {
  * The scanner shield against bots that try every server for PHP scripts, CMS admin pages and secrets files
  * (@kurda/shared scanner-paths.ts). A probe gets "not found" before anything else runs (no route, session lookup or
  * database) and is logged once an hour per network. A network sending SHIELD.probes within SHIELD.windowSeconds is
- * shut out for SHIELD.blockSeconds for requests without a session, so signed-in users on it carry on; the block is
- * logged as a warning. Installed after the session is read and before the rate limiter, so blocked scanners use no
- * one's limits.
+ * shut out for SHIELD.blockSeconds for requests without a session other than signing in, so everyone else on it carries
+ * on; the block is logged as a warning. Installed after the session is read and before the rate limiter, so blocked
+ * scanners use no one's limits.
  */
 export function installScannerShield(app: FastifyInstance, options: { redis?: Redis } = {}): void {
   const store = options.redis ? redisStore(options.redis) : memoryStore();
@@ -108,8 +110,10 @@ export function installScannerShield(app: FastifyInstance, options: { redis?: Re
       return reply.code(404).send({ code: 'NOT_FOUND', message: ROUTE_NOT_FOUND_MESSAGE, requestId: req.id });
     }
 
-    if (req.user || !network || SESSION_KEEPING.has(path)) return;
+    if (req.user || !network || path.startsWith(SIGN_IN_PREFIX)) return;
     const seconds = await safely((s) => s.blockedFor(network));
+    // a network a superadmin vouched for (a school) is never shut out; asked only of a network that is blocked
+    if (seconds > 0 && app.hasDecorator('db') && (await isTrustedNetwork(app.db, network).catch(() => false))) return;
     if (seconds > 0) {
       return reply
         .code(403)

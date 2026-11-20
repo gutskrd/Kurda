@@ -72,8 +72,8 @@ asking; the last column is where each app says it.
 | Profile or group picture | the system photo picker | the profile, the group; checked first (see "Pictures are checked" below) | no | as the profile, or the group’s members; only the person while it is being checked | until removed or deletion; a refused one 182 days, privately | the iOS photo sentence in `mobile/app.json` |
 | Identity tags (age, gender, ethnicity) | Tags | shown on the profile when the person chooses; a sensitive one needs a ticked consent | no | profile viewers, only while shown | until removed or deletion | "I consent to showing this sensitive tag. It’s optional and can be removed anytime." |
 | Time zone | taken from the phone or browser | when a streak day ends, when reminders may arrive | automatic | nobody | until deletion | — |
-| Device id | a random id the app keeps per install (`X-Device-Id`) | names sessions in Settings → Devices, a guest’s way back in, per-device sign-in limits, abuse checks | automatic | the person (Devices), staff | stored as a keyed hash; a known device 180 days after its last sign-in; a session 90 days at most | — |
-| Push token | after "Continue" and the system’s notifications question | reminders, word of a letter, word of a badge | only if allowed | nobody | until that session ends | the screen before the prompt (`ReminderOffer.tsx`) |
+| Device id | a random id the app keeps per install (`X-Device-Id`) | names sessions in Settings → Devices, a guest’s way back in, per-device sign-in limits, abuse checks, and keeping people who were banned from coming back on the same phone (`api/src/moderation/returns.ts`) | automatic | the person (Devices), staff | stored as a hash; which phones an account used, 180 days (`device_sightings`); a known device 180 days after its last sign-in; a session 90 days at most; a banned person’s, as a keyed hash on the ban registry while the ban stands | — |
+| Push token | after "Continue" and the system’s notifications question | reminders, word of a letter, word of a badge; a banned person’s, kept as a keyed hash while the ban stands, recognises their phone if they come back | only if allowed | nobody | until that session ends; a banned person’s hash until the ban ends | the screen before the prompt (`ReminderOffer.tsx`) |
 | Network address and its country | every request | rate limits, sign-in protection, the security log (`api/src/security/log.ts`, `api/src/net/sightings.ts`) | automatic | security staff; the address is sealed and opened only by a superadmin with a reason | network sightings (hashed) 90 days; security log 90 days, a year for warnings; the address in it 30 days | the privacy policy |
 | Voice notes | the record button (microphone) | a voice note on a post or comment | no | as the post | until deleted | the iOS microphone sentence |
 | Speaking-exercise recordings | the record button (microphone) | played back to the learner | no | nobody: they never leave the phone | not kept | the iOS microphone sentence |
@@ -105,6 +105,32 @@ any words with it (`api/src/moderation/vision-scanner.ts`).
 The privacy policy (`web/src/pages/Privacy.tsx`) needs to say this too; that
 wording is with the website's catalogues.
 
+### Keeping banned people from coming back
+
+When someone is suspended or banned, Hevalo keeps scrambled (keyed-hash)
+copies of what identifies them: their email address (with `+tags` and Gmail's
+dots taken out), their Apple or Google sign-in, a verified phone number, the
+install ids of the phones they used in the last 180 days (at most 50) and
+their push tokens (`api/src/moderation/ban-registry.ts`). Networks are never
+on that list. A new account or a sign-in is compared with it
+(`api/src/moderation/return-score.ts` has the rules):
+
+- the same address, sign-in or phone number is refused as any sign-up refusal;
+- the same phone (install id or push token) holds the new account: it can
+  learn, but not post, message, upload, write letters or join groups, until a
+  person on the moderation team decides; the hold is shown in Account
+  standing with its reasons and can be appealed;
+- a shared quiet network around the time of the ban, with the same time zone
+  and language, only asks a person to look; a network on its own, or a busy or
+  shared one (a school, a carrier, a VPN), does nothing at all.
+
+The scrambled copies are kept while the ban stands (a suspension's until it
+ends) and deleted when it is lifted or overturned; they stay if the banned
+person deletes their account, as moderation records do. Which phones an
+account used is kept 180 days, the networks it was seen on 90 days. This is
+fraud prevention within App Functionality, not tracking: nothing leaves
+Hevalo and nothing is matched with other companies' data.
+
 Terms and the privacy policy are one tap from sign-up (the agreement line on
 the phone’s first sign-in screen and on its last sign-up step, and under the
 website’s sign-up form) and from Settings on both (Terms of Use, Privacy
@@ -131,7 +157,7 @@ two agree). The name in the first column is the one App Store Connect shows.
 | User Content → Customer Support | `CustomerSupport` | yes | no | App Functionality | feedback sent from the app, reports and appeals |
 | User Content → Other User Content | `OtherUserContent` | yes | no | App Functionality | posts, comments, captions, bio, saved words |
 | Identifiers → User ID | `UserID` | yes | no | App Functionality | the account's id |
-| Identifiers → Device ID | `DeviceID` | yes | no | App Functionality | the random per-install id that names a signed-in device, and the push token |
+| Identifiers → Device ID | `DeviceID` | yes | no | App Functionality | the random per-install id that names a signed-in device, and the push token; both also keep people who were banned from coming back on the same phone (fraud prevention, never tracking) |
 | Purchases → Purchase History | `PurchaseHistory` | yes | no | App Functionality | what was bought in the shop with Zêr and Gewher; receipts of in-app purchases once those open (none are sold today) |
 | Usage Data → Product Interaction | `ProductInteraction` | yes | no | Analytics, App Functionality | lessons done, streak, XP, and the owner's first-party counts of active learners; never for ads |
 | Diagnostics → Crash Data | `CrashData` | **no** | no | App Functionality | crash reports, sent first-party without the account |

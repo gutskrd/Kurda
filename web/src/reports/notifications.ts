@@ -3,6 +3,7 @@ import type { Translate } from '../i18n/I18nProvider';
 import { SANCTION_LABEL } from './labels';
 import { formatUntil, MY_REPORTS_PATH, STANDING_PATH } from './restriction';
 import { pictureReviewNotification } from '../pictures/notifications';
+import { isHoldNotice } from './hold';
 
 /** A notification as the rail holds it: the server's English and the data it was made from. */
 export interface InboxNote {
@@ -52,6 +53,8 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
         to: MY_REPORTS_PATH,
       };
     case 'sanction': {
+      // A hold is a check rather than a penalty, and is said as one.
+      if (isHoldNotice(note)) return { title: t('hold.heading'), body: t('hold.statement'), to: STANDING_PATH };
       const kind = isSanctionKind(data.sanction) ? (data.sanction as SanctionKind) : null;
       // What is limited and until when.
       const until = str(data.until);

@@ -12,6 +12,7 @@ import { WHOLE_PICTURE, type Frame } from '../images/frame';
 import { UNTOUCHED, compose, forgetGraded } from '../images/composition';
 import { useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
+import { useAccountHeld } from '../reports/HeldNotice';
 import { PendingPhoto, PictureRefusal } from '../pictures/PictureCheck';
 import { useAvatarSrc } from '../art/overrides';
 
@@ -40,6 +41,8 @@ export function ProfilePhotoPicker({
 }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
+  // The page's banner says why; a held account cannot put up a new picture until it is checked.
+  const held = useAccountHeld();
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<CanvasImageSource | null>(null);
 
@@ -215,7 +218,7 @@ export function ProfilePhotoPicker({
             )}
           </span>
           <div className="edit-photo-actions">
-            <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={busy !== null}>
+            <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={busy !== null || held}>
               {t('edit.photo.uploadOwn')}
             </Button>
             {hasPhoto && (

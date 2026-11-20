@@ -106,6 +106,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'picture-checks', label: 'Picture checks', group: 'moderation', icon: 'image', page: 'picture-checks', access: MODERATORS, keywords: 'pictures photos images held uploads nudity gore refused asked reported review approve remove' },
   { id: 'appeals', label: 'Appeals', group: 'moderation', icon: 'scale', page: 'appeals', access: MODERATORS, keywords: 'review standing sanctions' },
   { id: 'ban-approvals', label: 'Ban approvals', group: 'moderation', icon: 'approve', page: 'ban-approvals', access: MODERATORS, keywords: 'permanent ban second admin' },
+  { id: 'possible-returns', label: 'Possible returns', group: 'moderation', icon: 'users', page: 'possible-returns', access: MODERATORS, keywords: 'same person evasion new account held hold device returning' },
   { id: 'aimod', label: 'Automated flags', group: 'moderation', icon: 'shield', page: 'aimod', access: MODERATORS, keywords: 'ai text image flags' },
   { id: 'antibot', label: 'Bot flags', group: 'moderation', icon: 'bot', page: 'antibot', access: LEGACY_ADMIN, keywords: 'antibot spam bots' },
   { id: 'feedback', label: 'Feedback', group: 'moderation', icon: 'star', page: 'feedback', access: FEEDBACK_READERS, keywords: 'ratings stars reviews inbox' },
@@ -137,6 +138,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'offline', label: 'Offline mode', group: 'settings', icon: 'pause', page: 'offline', access: SUPERADMINS, keywords: 'maintenance downtime take down closed outage pause message' },
   { id: 'security-log', label: 'Security log', group: 'settings', icon: 'shield', page: 'security-log', access: SUPERADMINS, keywords: 'hacks attacks sign-ins failed logins lockouts alerts intruders suspicious' },
   { id: 'audit', label: 'Audit log', group: 'settings', icon: 'list', page: 'audit', access: SUPERADMINS, keywords: 'history trail admin changes' },
+  { id: 'trusted-networks', label: 'Trusted networks', group: 'settings', icon: 'server', page: 'trusted-networks', access: SUPERADMINS, keywords: 'school class shared address sign-up limit allow list' },
   { id: 'security', label: 'My security', group: 'settings', icon: 'lock', page: 'security', access: { anyone: true }, keywords: '2fa two-factor authenticator' },
   { id: 'system', label: 'System', group: 'settings', icon: 'server', page: 'system', access: LEGACY_ADMIN, keywords: 'jobs leaderboards push media storage' },
 ];

@@ -146,9 +146,10 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
   });
 
   it('temp-ban sets a ban with expiry and bumps token_version; unban clears it', async () => {
+    const ban = { policy: 'harassment' as const, statement: 'You kept sending hurtful messages.', content: null };
     const before = await pool.query<{ token_version: number }>(`SELECT token_version FROM users WHERE id = $1`, [targetId]);
     const until = new Date(Date.now() + 24 * 3_600_000);
-    expect(await svc.tempBan(adminId, targetId, 'harassment', until)).toEqual({ ok: true });
+    expect(await svc.tempBan(adminId, targetId, 'harassment', until, ban)).toEqual({ ok: true });
 
     const after = await pool.query<{ token_version: number; banned_at: Date | null }>(
       `SELECT token_version, banned_at FROM users WHERE id = $1`,
@@ -159,10 +160,10 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect((await svc.detail(targetId))!.ban).toBe('temp_banned');
 
     // the only moderator types the username to confirm a permanent ban, on this page too
-    await expect(svc.permBan(adminId, targetId, 'repeat offender')).rejects.toMatchObject({ code: 'CONFIRM_USERNAME_REQUIRED' });
+    await expect(svc.permBan(adminId, targetId, 'repeat offender', undefined, ban)).rejects.toMatchObject({ code: 'CONFIRM_USERNAME_REQUIRED' });
     expect((await svc.detail(targetId))!.ban).toBe('temp_banned');
     // typed as the handle is written, "@" and all, it is the same name
-    expect(await svc.permBan(adminId, targetId, 'repeat offender', `@${username.toUpperCase()}`)).toEqual({ ok: true });
+    expect(await svc.permBan(adminId, targetId, 'repeat offender', `@${username.toUpperCase()}`, ban)).toEqual({ ok: true });
     expect((await svc.detail(targetId))!.ban).toBe('perm_banned');
 
     expect(await svc.unban(adminId, targetId, 'appeal granted')).toEqual({ ok: true });
@@ -176,7 +177,8 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     const muted = await reg(`${prefix}_mute`, '10.101.0.4');
     const staff = await reg(`${prefix}_staff`, '10.101.0.5');
     const ended = await reg(`${prefix}_ended`, '10.101.0.6');
-    expect(await svc.tempBan(adminId, banned, 'spam', new Date(Date.now() + 24 * 3_600_000))).toEqual({ ok: true });
+    const spamBan = { policy: 'spam' as const, statement: 'You posted the same thing again and again.', content: null };
+    expect(await svc.tempBan(adminId, banned, 'spam', new Date(Date.now() + 24 * 3_600_000), spamBan)).toEqual({ ok: true });
     expect(await svc.mute(adminId, muted, 'insults', new Date(Date.now() + 24 * 3_600_000))).toEqual({ ok: true });
     await pool.query(`UPDATE users SET roles = array_append(roles, 'moderator') WHERE id = $1`, [staff]);
     await pool.query(`UPDATE users SET banned_at = now() - interval '2 days', banned_until = now() - interval '1 day' WHERE id = $1`, [ended]);

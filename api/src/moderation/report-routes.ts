@@ -4,7 +4,7 @@ import { MAX_APPEAL_LEN, PLAY_GAMES, REPORT_TARGET_TYPES, reportCategoryFrom } f
 import type { AppConfig } from '../config/env.js';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import { verifyAppealToken } from './appeal-token.js';
+import { requireAccountCaller } from './appeal-token.js';
 import type { AppealsService } from './appeals-service.js';
 import type { ReportsService } from './reports-service.js';
 import type { PictureReviewService } from './pictures-service.js';
@@ -31,25 +31,10 @@ const appealBody = z.object({
 
 /**
  * Who is asking for their standing: a signed-in user, or a suspended one with the appeal token from login. That token
- * reaches only these two routes and is refused once anything ends the account's sessions.
+ * reaches only the routes `accountCaller` lists and is refused once anything ends the account's sessions.
  */
 async function standingUserId(config: AppConfig, req: FastifyRequest): Promise<string> {
-  if (req.user) return req.user.id;
-  const header = req.headers.authorization;
-  if (header?.startsWith('Bearer ')) {
-    const claims = await verifyAppealToken(config, header.slice('Bearer '.length));
-    if (claims) {
-      const u = await req.server.db.query<{ token_version: number }>(
-        `SELECT token_version FROM users WHERE id = $1 AND deleted_at IS NULL`,
-        [claims.userId],
-      );
-      if (u.rows[0] && u.rows[0].token_version === claims.tokenVersion) return claims.userId;
-    }
-  }
-  if (req.authFailure === 'account_disabled') {
-    throw new AppError('ACCOUNT_DISABLED', 403, 'this account is disabled — sign in again to see why');
-  }
-  throw new AppError('UNAUTHORIZED', 401, 'authentication required');
+  return (await requireAccountCaller(config, req)).id;
 }
 
 /**
@@ -58,7 +43,7 @@ async function standingUserId(config: AppConfig, req: FastifyRequest): Promise<s
  *   and for "someone may hurt themselves" with where to find help at once.
  * - `GET /me/reports`: your reports and their outcomes.
  * - `GET /me/standing`, `POST /me/standing/ack`: your sanctions with reasons, what is limited and until when; warnings
- *   shown once.
+ *   shown once. A hold while a person checks the account is one of them (moderation/returns.ts).
  * - `POST /me/appeals`: appeal once per decision, within six months.
  */
 export function registerReportRoutes(
@@ -66,6 +51,7 @@ export function registerReportRoutes(
   config: AppConfig,
   deps: { reports: ReportsService; sanctions: SanctionsService; appeals: AppealsService; pictures?: PictureReviewService },
 ): void {
+
   app.post(
     '/reports',
     {

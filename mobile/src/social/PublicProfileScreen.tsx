@@ -105,7 +105,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const dir = useDirection();
   const { width: windowWidth } = useWindowDimensions();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [notFound, setNotFound] = useState(false);
+  // Gone or hidden from you, or an account that is suspended or banned, which is said as that.
+  const [notFound, setNotFound] = useState<false | 'profile' | 'account'>(false);
   const [reporting, setReporting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const { announce, region } = useAnnouncer();
@@ -119,7 +120,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         setProfile(res.data);
         setError(null);
       } else if (res.error.kind === 'client' && res.error.status === 404) {
-        setNotFound(true); // Genuinely unavailable, as distinct from offline or a server error.
+        // Genuinely unavailable, as distinct from offline or a server error.
+        setNotFound(res.error.code === 'ACCOUNT_UNAVAILABLE' ? 'account' : 'profile');
       } else {
         setError(res.error);
       }
@@ -249,7 +251,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       <GradientBackground>
         <View style={styles.screen}>
           <Header onExit={onExit} />
-          <View style={styles.centered}><Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.unavailable')}</Text></View>
+          <View style={styles.centered}><Text style={[styles.dim, { color: colors.textSecondary }]}>{t(notFound === 'account' ? 'account.unavailable' : 'profile.unavailable')}</Text></View>
         </View>
       </GradientBackground>
     );

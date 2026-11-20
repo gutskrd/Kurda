@@ -795,6 +795,20 @@ export const ku: Catalogue = {
   'restriction.suspended': 'Hesabê te hatiye rawestandin.',
   'restriction.suspendedUntil': 'Hesabê te heta {time} hatiye rawestandin.',
   'restriction.seeStanding': 'Rewşa hesabê xwe bibîne',
+  'hold.title': 'Hesabê te tê kontrolkirin, berî ku tu bikarî tiştekî biweşînî an peyaman bişînî. Fêrbûn wek her car didome.',
+  'hold.why': 'Çima?',
+  'hold.whyBody':
+    'Kesek ji Hevalo hesabê te kontrol dike, da ku civak ewle bimîne. Heta wê demê tu nikarî tiştekî biweşînî, şîrove bikî, peyam an name bişînî, wêne zêde bikî an tevlî koman bibî. Gava kontrol biqede, em ê li Hevalo ji te re bibêjin.',
+  'hold.heading': 'Hesabê te tê kontrolkirin',
+  'hold.statement':
+    'Kesek hesabê te kontrol dike, berî ku tu bikarî tiştekî biweşînî, şîrove bikî, peyaman bişînî, wêneyan parve bikî, nameyan binivîsî an tevlî koman bibî. Fêrbûn wek her car didome. Ev nayê wê wateyê ku te rêzikek şikandiye.',
+  'account.unavailable': 'Ev hesab ne berdest e.',
+  'account.unavailableByline': 'Hesab ne berdest e',
+  'error.code.cannotJoinYet': 'Ev kes niha nikare tevlî koman bibe.',
+  'error.code.exportNotAvailable': 'Niha kopî nayên amadekirin. Ji kerema xwe paşê dîsa biceribîne.',
+  'suspension.delete.keep': 'Hesabê min bihêle',
+  'suspension.delete.kept': 'Hesabê te dimîne. Tiştek nehatiye jêbirin.',
+  'hold.since': 'Ji {date} ve',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': '{name} ragihîne',
   'report.title.message': 'Vê peyamê ragihîne',
@@ -1120,6 +1134,17 @@ export const ku: Catalogue = {
   'suspension.answerHere': 'Heke tu daxwaza nirxandinê bikî, her dem dîsa têkeve da ku bersiva me li vir bibînî.',
   'suspension.rules': 'Rêzikên civakê bixwîne',
   'suspension.close': 'Bigire',
+  'suspension.data.help': 'Tu hîn jî dikarî kopiyeke daneyên xwe daxî an hesabê xwe jê bibî.',
+  'suspension.data.download': 'Kopiyeke daneyên min daxe',
+  'suspension.data.preparing': 'Kopiya te tê amadekirin. Paşê dîsa têkeve da ku li vir daxî.',
+  'suspension.delete.button': 'Hesabê min jê bibe',
+  'suspension.delete.warning':
+    'Hesabê te û hemû daneyên te piştî 14 rojan bi tevahî tên jêbirin; heta wê demê tu dikarî ji vê ekranê hesabê xwe bihêlî. Tomarên biryarên çavdêriyê tên parastin, wek ku polîtîkaya nihêniyê rave dike.',
+  'suspension.delete.scheduled': 'Hesabê te dê were jêbirin. Piştî {days} rojan ew ê bi tevahî nemîne.',
+  'suspension.signInAgain': 'Ev rûpel pir dirêj vekirî ma. Ji bo berdewamkirinê dîsa têkeve.',
+  'suspension.data.ready': 'Kopiya te ya {date} amade ye.',
+  'suspension.data.again': 'Kopiyeke nû amade bike',
+  'suspension.delete.deleted': 'Hesabê te hate jêbirin.',
   'maintenance.title': 'Hevalo bêhnvedaneke kurt digire',
   'maintenance.message': 'Em li ser Hevalo dixebitin û em ê zû vegerin. Pêşketina te, rêzeya te û Zêrê te ewle ne.',
   'maintenance.backBy': 'Heta {time} vedigere',
@@ -3531,6 +3556,8 @@ export const ku: Catalogue = {
   'privacy.safety.title': 'Ewlehî',
   'privacy.safety.body':
     'Şandî û wêne dikarin bi awayekî otomatîk û ji aliyê moderatoran ve werin kontrolkirin, da ku destdirêjî û naveroka neqanûnî dûr bimîne. Her wêne berî ku kesekî din wî bibîne tê kontrolkirin: bi awayekî otomatîk, ji aliyê xizmeteke zekaya çêkirî ya ku ji bo me dixebite û tenê wêne jê re tê şandin, tu caran ne ku tu kî yî; û ji aliyê mirovekî ve, gava kontrol ne bawer be. Wêneyekî ku hat redkirin heta şeş mehan bi taybetî tê hilanîn, da ku tu bikarî bixwazî ku dîsa lê were nêrîn, paşê tê jêbirin. Tiştê ku dikare zirarê bide zarokekî, heta ku qanûn dixwaze wek delîl tê hilanîn.',
+  'privacy.safety.returns':
+    'Da ku kesên hatine qedexekirin bi hêsanî venegerin, Hevalo agahiyên heşkirî (hash) yên hesab, têketin û amûrên kesekî qedexekirî an rawestandî diparêze, û hesab û têketinên nû bi wan re dide ber hev. Navnîşaneke înternetê bi tena serê xwe qet têr nake, ji ber ku gelek kes dikarin yek navnîşanê bi hev re bi kar bînin, û gava hevhatinek ne zelal be, mirovek biryarê dide. Ev agahî tenê heta ku qedexe an rawestandin didome tên parastin, heke hesab were jêbirin jî; tomarên têketin û amûrên ku ew jê tên, ji bo demên di bin “Bijartinên te” de tên parastin. Dema ku hesabê te hatiye rawestandin an qedexekirin, tu dîsa jî dikarî ji wê ekrana ku dema têdikevî dibînî, kopiyeke daneyên xwe daxî an hesabê xwe jê bibî.',
   'privacy.permissions.title': 'Destûr',
   'privacy.permissions.body': 'Li ser telefonê, Hevalo tenê gava tu tiştekî tomar dikî mîkrofona te dixwaze, û tenê gava tu wêneyekî hildibijêrî wêneyên te. Piştî dersekê an ji Mîhengan dipirse ka dikare agahdariyan ji te re bişîne, û heke tu bibêjî na, her tiştê din wekî xwe dixebite. Ew tu caran cihê te, lîsteya têkiliyên te an kameraya te naxwaze.',
   'privacy.payments.title': 'Dayîn',

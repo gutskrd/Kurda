@@ -37,6 +37,7 @@ import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftUnwrap, type UnwrapTarget } from '../gifts/GiftUnwrap';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
 import { SendErrorNotice } from '../reports/SendError';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import { restrictionOf } from '../reports/sendErrors';
 import { ChatGameButton } from '../play/ChatGameButton';
 import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
@@ -106,6 +107,8 @@ export function GroupThreadScreen({
   const bottom = useScreenBottomInset(spacing.md);
   const { t, locale } = useI18n();
   const reduce = useReducedMotion();
+  // A held account reads the group as usual; the field waits until a person has checked the account.
+  const accountHeld = useAccountHeld();
   const me = user?.id ?? '';
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -642,10 +645,14 @@ export function GroupThreadScreen({
             {giftNote}
           </Text>
         ) : null}
-        <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} />
+        <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} heldShownBeside />
 
         {/* Out of the group there is nothing to send: the card says where they stand. */}
-        {outside || missing ? null : (
+        {outside || missing ? null : accountHeld ? (
+          <View style={[styles.heldRow, { paddingBottom: bottom, borderTopColor: colors.separator }]}>
+            <HeldNotice />
+          </View>
+        ) : (
           <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
             <Pressable
               onPress={openPicker}
@@ -796,6 +803,8 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
+  // In place of the composer for a held account: the notice where the field was, over the same divider.
+  heldRow: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm, borderTopWidth: StyleSheet.hairlineWidth },
   // A plain glyph beside the field, as the tools by a message field are; the touch target is still 44pt.
   giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   picking: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },

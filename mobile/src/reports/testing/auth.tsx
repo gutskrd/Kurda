@@ -4,6 +4,7 @@
  */
 import type { ReactNode } from 'react';
 import { vi } from 'vitest';
+import type { AccountHold } from '@kurda/shared';
 import type { ApiClient } from '../../api/client';
 import type { ApiError, ApiResult } from '../../api/types';
 
@@ -59,7 +60,17 @@ export const fail = (error: Partial<ApiError> & { code?: string; details?: unkno
 export const testAuth: {
   client: ApiClient;
   /** `guest: true` for a test of what a guest sees; the stand-in's `isGuest` follows it. */
-  user: { id: string; username: string; email: string; displayName: string | null; profilePhotoUrl: string | null; emailVerified: boolean; guest?: boolean };
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    displayName: string | null;
+    profilePhotoUrl: string | null;
+    emailVerified: boolean;
+    guest?: boolean;
+    /** Set for a test of what a held account sees (reports/HeldNotice). */
+    accountHold?: AccountHold | null;
+  };
   baseUrl: string;
   /** Reading the account again after something changed; a test can ask whether it was. */
   refreshUser: () => Promise<void>;

@@ -793,6 +793,20 @@ export const nl: Catalogue = {
   'restriction.suspended': 'Je account is geschorst.',
   'restriction.suspendedUntil': 'Je account is geschorst tot {time}.',
   'restriction.seeStanding': 'Bekijk de status van je account',
+  'hold.title': 'Je account wordt gecontroleerd voordat je iets kunt plaatsen of berichten kunt sturen. Leren gaat gewoon door.',
+  'hold.why': 'Waarom?',
+  'hold.whyBody':
+    'Iemand van Hevalo controleert je account, zodat de community veilig blijft. Tot die tijd kun je niets plaatsen of reageren, geen berichten of brieven sturen, geen afbeeldingen toevoegen en geen lid worden van groepen. We laten het je in Hevalo weten zodra het klaar is.',
+  'hold.heading': 'Je account wordt gecontroleerd',
+  'hold.statement':
+    'Iemand controleert je account voordat je iets kunt plaatsen, reageren, berichten sturen, afbeeldingen delen, brieven schrijven of lid worden van groepen. Leren gaat gewoon door. Dit betekent niet dat je een regel hebt overtreden.',
+  'account.unavailable': 'Dit account is niet beschikbaar.',
+  'account.unavailableByline': 'Account niet beschikbaar',
+  'error.code.cannotJoinYet': 'Deze persoon kan nu geen lid worden van groepen.',
+  'error.code.exportNotAvailable': 'Er kunnen nu geen kopieën worden gemaakt. Probeer het later opnieuw.',
+  'suspension.delete.keep': 'Mijn account houden',
+  'suspension.delete.kept': 'Je account blijft. Er is niets verwijderd.',
+  'hold.since': 'Sinds {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': '{name} melden',
   'report.title.message': 'Dit bericht melden',
@@ -1118,6 +1132,17 @@ export const nl: Catalogue = {
   'suspension.answerHere': 'Vraag je om een herbeoordeling, log dan op elk moment opnieuw in om ons antwoord hier te zien.',
   'suspension.rules': 'Lees de communityregels',
   'suspension.close': 'Sluiten',
+  'suspension.data.help': 'Je kunt nog steeds een kopie van je gegevens downloaden of je account verwijderen.',
+  'suspension.data.download': 'Een kopie van mijn gegevens downloaden',
+  'suspension.data.preparing': 'Je kopie wordt klaargemaakt. Log later opnieuw in om haar hier te downloaden.',
+  'suspension.delete.button': 'Mijn account verwijderen',
+  'suspension.delete.warning':
+    'Je account en al je gegevens worden na 14 dagen definitief verwijderd; tot die tijd kun je je account via dit scherm houden. Moderatiedossiers blijven bewaard, zoals het privacybeleid uitlegt.',
+  'suspension.delete.scheduled': 'Je account wordt verwijderd. Over {days} dagen is het definitief weg.',
+  'suspension.signInAgain': 'Deze pagina stond te lang open. Log opnieuw in om verder te gaan.',
+  'suspension.data.ready': 'Je kopie van {date} staat klaar.',
+  'suspension.data.again': 'Nieuwe kopie klaarmaken',
+  'suspension.delete.deleted': 'Je account is verwijderd.',
   'maintenance.title': 'Hevalo neemt even pauze',
   'maintenance.message': 'We werken aan Hevalo en zijn snel weer terug. Je voortgang, je reeks en je Zêr zijn veilig.',
   'maintenance.backBy': 'Uiterlijk {time} terug',
@@ -3523,6 +3548,8 @@ export const nl: Catalogue = {
   'privacy.safety.title': 'Veiligheid',
   'privacy.safety.body':
     'Berichten en afbeeldingen kunnen automatisch en door moderators worden gecontroleerd om misbruik en illegale inhoud te weren. Elke afbeelding wordt gecontroleerd voordat iemand anders haar ziet: automatisch, door een AI-dienst die voor ons werkt en alleen de afbeelding krijgt, nooit wie je bent; en door een mens als de controle twijfelt. Een geweigerde afbeelding bewaren we tot zes maanden privé, zodat je kunt vragen om haar opnieuw te bekijken, en daarna wordt ze verwijderd. Wat een kind kan schaden, bewaren we als bewijs zolang de wet dat vereist.',
+  'privacy.safety.returns':
+    'Om te voorkomen dat verbannen mensen zomaar terugkomen, bewaart Hevalo onherkenbaar gemaakte (gehashte) gegevens van het account, de inlog en de apparaten van iemand die verbannen of geschorst is, en vergelijkt nieuwe accounts en inlogs daarmee. Een internetadres alleen is nooit genoeg, omdat veel mensen er een kunnen delen, en als een overeenkomst niet duidelijk is, beslist een mens. Deze gegevens worden alleen bewaard zolang de verbanning of schorsing duurt, ook als het account wordt verwijderd; de inlog- en apparaatgegevens waar ze uit komen, worden bewaard voor de termijnen onder ‘Jouw keuzes’. Is je account geschorst of verbannen, dan kun je via het scherm dat je bij het inloggen ziet nog steeds een kopie van je gegevens downloaden of je account verwijderen.',
   'privacy.permissions.title': 'Toestemmingen',
   'privacy.permissions.body': 'Op een telefoon vraagt Hevalo alleen om je microfoon als je iets opneemt, en alleen om je foto’s als je er een kiest. Of het je meldingen mag sturen, vraagt het na een les of vanuit Instellingen, en al het andere werkt hetzelfde als je nee zegt. Het vraagt nooit om je locatie, je contacten of je camera.',
   'privacy.payments.title': 'Betalingen',

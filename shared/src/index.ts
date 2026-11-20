@@ -604,6 +604,8 @@ export * from './deer.js';
 export * from './reports.js';
 /** How a shared picture is checked before others see it: held, refused with a reason, or asked about again. */
 export * from './picture-review.js';
+/** Accounts held while a person checks a possible return of a banned person, and what a ban does to content. */
+export * from './account-hold.js';
 /** Copyright notices from the public form, counter-notices and strikes. */
 export * from './copyright.js';
 /** Game Ranks: the ranked games, the tier table, seasons and rewards, Rated or Friendly, and the API shapes. */

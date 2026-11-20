@@ -48,6 +48,7 @@ import {
 import { clearDraft, dropPicture, keepPicture, loadDraft, pictureExists, saveDraft } from './drafts';
 import { accountLimitOf, describePostError } from './errors';
 import { SendErrorNotice } from '../reports/SendError';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import type { ApiError } from '../api/types';
 import { postSaved } from './postSaved';
 import {
@@ -131,6 +132,8 @@ export function ComposeScreen({
   store?: DeviceStore;
 }): React.JSX.Element {
   const { client, user } = useAuth();
+  // A held account is told before writing anything, rather than when Post is refused.
+  const held = useAccountHeld();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   // In right-to-left languages the rows start on the right and typing runs right to left, as on every other screen.
@@ -340,7 +343,7 @@ export function ComposeScreen({
   const kind = derivePostType(state.draft);
   const hasContent = !!state.draft.body.trim() || !!state.draft.title.trim() || state.pictures.length > 0;
   const postable =
-    check.ok && !uploading && !failedPicture && !posting && (mode === 'new' ? true : mode === 'finish' || hasChanges(patch));
+    !held && check.ok && !uploading && !failedPicture && !posting && (mode === 'new' ? true : mode === 'finish' || hasChanges(patch));
 
   const setDraftField = (field: 'title' | 'body' | 'sourceCredit', value: string) =>
     setState((s) => ({ ...s, draft: { ...s.draft, [field]: value } }));
@@ -461,7 +464,7 @@ export function ComposeScreen({
           <ClayButton label={postLabel} tone="primary" busy={posting} disabled={!postable} onPress={() => void submit()} style={styles.post} />
         </View>
 
-        <SendErrorNotice error={refusal} onDismiss={() => setRefusal(null)} style={styles.column} />
+        <SendErrorNotice error={refusal} onDismiss={() => setRefusal(null)} style={styles.column} heldShownBeside />
         {error ? (
           <View style={[styles.banner, styles.column, { flexDirection: dir.row, backgroundColor: colors.dangerFill }]} accessibilityLiveRegion="assertive" accessibilityRole="alert">
             <Icon name="alert" size={18} color={colors.danger} />
@@ -477,6 +480,10 @@ export function ComposeScreen({
           <View style={styles.loading} accessibilityLabel={t('common.loading')}>
             <Skeleton width="40%" height={20} />
             <SkeletonLines count={3} />
+          </View>
+        ) : held ? (
+          <View style={[styles.body, styles.column]}>
+            <HeldNotice />
           </View>
         ) : (
           <ScrollView contentContainerStyle={[styles.body, styles.column]} keyboardShouldPersistTaps="handled">
@@ -615,7 +622,7 @@ export function ComposeScreen({
           </ScrollView>
         )}
 
-        {ready ? (
+        {ready && !held ? (
           <View style={[styles.toolbarWrap, { borderTopColor: colors.separator }]}>
             <Text style={[styles.copyHint, styles.column, { color: colors.textSecondary }]}>{t('composer.copyHint')}</Text>
             <View style={[styles.toolbar, styles.column, { flexDirection: dir.row }]}>

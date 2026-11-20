@@ -788,6 +788,20 @@ export const tr: Catalogue = {
   'restriction.suspended': 'Hesabın askıya alındı.',
   'restriction.suspendedUntil': 'Hesabın {time} tarihine kadar askıya alındı.',
   'restriction.seeStanding': 'Hesap durumuna bak',
+  'hold.title': 'Hesabın kontrol ediliyor; bu bitene kadar paylaşım yapamaz ve mesaj gönderemezsin. Öğrenmeye her zamanki gibi devam edebilirsin.',
+  'hold.why': 'Neden?',
+  'hold.whyBody':
+    'Topluluğun güvende kalması için Hevalo’dan bir kişi hesabını inceliyor. O zamana kadar paylaşım yapamaz, yorum yazamaz, mesaj ya da mektup gönderemez, resim ekleyemez ve gruplara katılamazsın. İnceleme biter bitmez sana Hevalo’da haber vereceğiz.',
+  'hold.heading': 'Hesabın kontrol ediliyor',
+  'hold.statement':
+    'Bir kişi hesabını inceliyor; bu bitene kadar paylaşım yapamaz, yorum yazamaz, mesaj gönderemez, resim paylaşamaz, mektup yazamaz ve gruplara katılamazsın. Öğrenmeye her zamanki gibi devam edebilirsin. Bu, bir kuralı çiğnediğin anlamına gelmez.',
+  'account.unavailable': 'Bu hesap kullanılamıyor.',
+  'account.unavailableByline': 'Hesap kullanılamıyor',
+  'error.code.cannotJoinYet': 'Bu kişi şu anda gruplara katılamıyor.',
+  'error.code.exportNotAvailable': 'Şu anda kopya hazırlanamıyor. Lütfen daha sonra tekrar dene.',
+  'suspension.delete.keep': 'Hesabımı koru',
+  'suspension.delete.kept': 'Hesabın kalıyor. Hiçbir şey silinmedi.',
+  'hold.since': '{date} tarihinden beri',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': '{name} kişisini bildir',
   'report.title.message': 'Bu mesajı bildir',
@@ -1113,6 +1127,17 @@ export const tr: Catalogue = {
   'suspension.answerHere': 'İnceleme istersen, yanıtımızı burada görmek için istediğin zaman yeniden giriş yap.',
   'suspension.rules': 'Topluluk kurallarını oku',
   'suspension.close': 'Kapat',
+  'suspension.data.help': 'Yine de verilerinin bir kopyasını indirebilir ya da hesabını silebilirsin.',
+  'suspension.data.download': 'Verilerimin bir kopyasını indir',
+  'suspension.data.preparing': 'Kopyan hazırlanıyor. Buradan indirmek için daha sonra yeniden giriş yap.',
+  'suspension.delete.button': 'Hesabımı sil',
+  'suspension.delete.warning':
+    'Hesabın ve tüm verilerin 14 gün sonra kalıcı olarak silinecek; o zamana kadar bu ekrandan hesabını koruyabilirsin. Moderasyon kararlarının kayıtları, gizlilik politikasında açıklandığı gibi saklanır.',
+  'suspension.delete.scheduled': 'Hesabın silinecek. {days} gün sonra tamamen kaldırılacak.',
+  'suspension.signInAgain': 'Bu sayfa çok uzun süre açık kaldı. Devam etmek için yeniden giriş yap.',
+  'suspension.data.ready': '{date} tarihli kopyan hazır.',
+  'suspension.data.again': 'Yeni kopya hazırla',
+  'suspension.delete.deleted': 'Hesabın silindi.',
   'maintenance.title': 'Hevalo kısa bir mola veriyor',
   'maintenance.message': 'Hevalo üzerinde çalışıyoruz ve yakında geri döneceğiz. İlerlemen, serin ve Zêr’in güvende.',
   'maintenance.backBy': 'Tahmini dönüş: {time}',
@@ -3519,6 +3544,8 @@ export const tr: Catalogue = {
   'privacy.safety.title': 'Güvenlik',
   'privacy.safety.body':
     'Gönderiler ve fotoğraflar, kötüye kullanımı ve yasa dışı içeriği uzak tutmak için otomatik olarak ve moderatörler tarafından incelenebilir. Her fotoğraf başkaları görmeden önce kontrol edilir: otomatik olarak, bizim için çalışan ve kim olduğunu değil yalnızca fotoğrafı alan bir yapay zekâ hizmetiyle; kontrol emin olamadığında da bir kişi tarafından. Reddedilen bir fotoğraf, yeniden bakılmasını isteyebilmen için altı aya kadar gizli tutulur, sonra silinir. Bir çocuğa zarar verebilecek her şey, yasanın gerektirdiği süre boyunca kanıt olarak saklanır.',
+  'privacy.safety.returns':
+    'Yasaklanan kişilerin kolayca geri dönmesini önlemek için Hevalo, yasaklanan ya da askıya alınan bir kişinin hesabına, girişine ve cihazlarına ait karıştırılmış (hash’lenmiş) bilgileri saklar ve yeni hesapları ve girişleri bunlarla karşılaştırır. Bir internet adresi tek başına asla yeterli değildir, çünkü birçok kişi aynı adresi paylaşabilir; bir eşleşme net olmadığında da kararı bir kişi verir. Bu bilgiler hesap silinse bile yalnızca yasak ya da askıya alma sürdüğü sürece saklanır; alındıkları giriş ve cihaz kayıtları ise “Senin seçimlerin” bölümündeki sürelerce tutulur. Hesabın askıya alınmış ya da yasaklanmış olsa bile, giriş yaparken gördüğün ekrandan verilerinin bir kopyasını indirebilir ya da hesabını silebilirsin.',
   'privacy.permissions.title': 'İzinler',
   'privacy.permissions.body': 'Telefonda Hevalo mikrofonunu yalnızca bir şey kaydederken, fotoğraflarını da yalnızca birini seçerken ister. Sana bildirim gönderip gönderemeyeceğini bir dersten sonra ya da Ayarlar’dan sorar; hayır dersen geri kalan her şey aynı şekilde çalışır. Konumunu, rehberini ya da kameranı asla istemez.',
   'privacy.payments.title': 'Ödemeler',

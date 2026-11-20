@@ -17,6 +17,7 @@ import {
   type ScoreRow,
 } from './rank.js';
 import { economyBlockedSql } from '../economy/standing.js';
+import { availableSql } from '../moderation/availability.js';
 
 export interface BoardEntry extends RankedEntry {
   /** already resolved: an uploaded photo, else the chosen avatar */
@@ -172,7 +173,8 @@ export class LeaderboardService {
     const balance = isBalanceBoard(type);
     // Public boards name adults only and balance boards leave out staff; in every scope a balance board also leaves out
     // anyone the economy does not pay (economy/standing.ts), whose holdings are under review.
-    const notFlagged = `NOT EXISTS (SELECT 1 FROM cheat_reviews cr WHERE cr.user_id = u.id AND cr.shadow_flagged = true)${
+    // a suspended or banned account is off every board while it lasts (moderation/availability.ts)
+    const notFlagged = `${availableSql('u')} AND NOT EXISTS (SELECT 1 FROM cheat_reviews cr WHERE cr.user_id = u.id AND cr.shadow_flagged = true)${
       balance ? ` AND NOT ${economyBlockedSql('u')}` : ''
     }${filter?.ids ? '' : ` AND NOT ${notKnownAdultSql('u')}${balance ? ` AND ${notStaffSql('u')}` : ''}`}`;
     // an empty allow-list means "no such people", not "everyone"

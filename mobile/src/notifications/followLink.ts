@@ -10,6 +10,7 @@ import { knownTier, leagueName } from '../leagues/format';
 import { formatDay } from '../reports/sendErrors';
 import { isGroupNotice, type DeepLink, type InboxItem } from './inbox';
 import { pictureReviewOf, pictureReviewText } from '../pictures/review';
+import { isHoldNotice } from '../reports/hold';
 
 /**
  * Where a tapped notification goes, for both the inbox and the notification centre. An invite is accepted on the way
@@ -62,6 +63,8 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
   // was being checked.
   const picture = pictureReviewOf(item.data);
   if (picture) return pictureReviewText(picture, t);
+  // A hold is a check rather than a penalty, and is said as one.
+  if (isHoldNotice(item)) return { title: t('hold.heading'), body: t('hold.statement') };
   if (locale === 'en') return { title: item.title, body: item.body };
   if (item.data.kind === 'play_invite' && isPlayGame(item.data.game)) {
     return { title: t('play.notification.inviteTitle'), body: t('play.notification.inviteBody', { game: t(GAME_NAME_KEY[item.data.game]) }) };

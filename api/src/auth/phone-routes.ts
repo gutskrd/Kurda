@@ -41,6 +41,9 @@ export function registerPhoneVerificationRoutes(
             .send({ code: 'RESEND_COOLDOWN', message: 'please wait before requesting another code', retryAfterMs: res.retryAfterMs });
         case 'max-sends':
           return reply.code(429).send({ code: 'MAX_SENDS', message: 'too many codes sent — try again later' });
+        // a number a suspended or banned account holds (auth/phone-verification-service.ts); no code is sent
+        case 'unavailable':
+          return reply.code(422).send({ code: 'NUMBER_UNAVAILABLE', message: 'this number can’t be used on Hevalo' });
       }
     },
   );
@@ -57,6 +60,7 @@ export function registerPhoneVerificationRoutes(
       const { phone: raw, code } = req.body as z.infer<typeof verifyBody>;
       const res = await phone.verify(req.user!.id, raw, code);
       if (res.ok) return { verified: true, masked: res.masked };
+      if (res.reason === 'unavailable') return reply.code(422).send({ code: 'NUMBER_UNAVAILABLE', message: 'this number can’t be used on Hevalo' });
       const status = res.reason === 'too-many-attempts' ? 429 : res.reason === 'no-session' ? 404 : 422;
       return reply.code(status).send({ code: res.reason.toUpperCase().replace(/-/g, '_'), message: 'verification failed', remaining: res.remaining });
     },

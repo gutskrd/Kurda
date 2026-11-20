@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { AccountStanding, AppealView, StandingSanction, SuspendedErrorDetails } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import { describeError } from '../lib/api';
+import { pollWhileVisible } from '../lib/pollWhileVisible';
+import type { ApiError } from '../lib/types';
 import { appealError } from './appealError';
 import { Brand } from '../components/Brand';
 import { Button } from '../components/Button';
@@ -9,7 +12,7 @@ import { Loading } from '../components/states';
 import { LockIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { CATEGORY_LABEL } from './labels';
-import { formatUntil } from './restriction';
+import { formatDay, formatUntil } from './restriction';
 import { SanctionCard } from './SanctionCard';
 
 /** Pages a suspended person can still read, including the rules. */
@@ -36,8 +39,9 @@ export function SuspensionGate({ children }: { children: ReactNode }): React.JSX
 }
 
 /**
- * The suspension screen: what happened and until when, then each decision with its reasons, read with the appeal token
- * (which can only read the standing and file the appeal), and "Ask for a review" where still possible.
+ * The suspension screen: what happened and until when, then each decision with its reasons, read with the appeal token,
+ * "Ask for a review" where still possible, and a copy of one's data or deleting the account, which a ban does not take
+ * away. The token reaches only the standing, appeals, the export and deletion (shared APPEAL_TOKEN_EXTRA_PATHS).
  */
 export function SuspensionScreen({
   details,
@@ -128,6 +132,8 @@ export function SuspensionScreen({
           )
         )}
 
+        <YourData appealToken={details.appealToken} scheduledFor={details.deletionScheduledFor ?? null} />
+
         <div className="suspension-actions">
           <Link to="/terms" className="btn btn-ghost">
             {t('suspension.rules')}
@@ -138,5 +144,199 @@ export function SuspensionScreen({
         </div>
       </main>
     </>
+  );
+}
+
+/** The data export as `GET /me/export` reports it; a ready one comes with a fresh link that lasts minutes. */
+interface ExportStatus {
+  status: 'none' | 'pending' | 'ready';
+  downloadUrl?: string;
+  requestedAt?: string;
+}
+
+/** How often the export is read again while the screen is open: soon while it is prepared, and before a link runs out. */
+const PREPARING_POLL_MS = 60_000;
+const READY_POLL_MS = 10 * 60_000;
+
+/** Where deleting the account stands on this screen: waiting out its grace period, or closed at once. */
+export type Deletion = { kind: 'scheduled'; days: number } | { kind: 'gone' };
+
+/** A deletion asked for on an earlier visit, as whole days left, so the screen can offer to keep the account again. */
+export function scheduledDeletion(at: string | null, now = Date.now()): Deletion | null {
+  if (!at) return null;
+  const left = Date.parse(at) - now;
+  return Number.isFinite(left) && left > 0 ? { kind: 'scheduled', days: Math.ceil(left / 86_400_000) } : null;
+}
+
+/**
+ * A copy of one's data and deleting the account, both sent with the appeal token. The copy is prepared in the background
+ * as in Settings, so this asks for one and offers the download once it is ready; deleting asks first, in the words
+ * Settings uses, and says which records are kept. A suspended person cannot sign in to change their mind, so a deletion
+ * waiting out its grace period can be undone here (`POST /me/deletion/cancel`).
+ */
+function YourData({ appealToken, scheduledFor }: { appealToken: string; scheduledFor: string | null }): React.JSX.Element {
+  const { client } = useAuth();
+  const t = useT();
+  const locale = useLocale();
+  const auth = useMemo(() => ({ headers: { authorization: `Bearer ${appealToken}` } }), [appealToken]);
+  const [exported, setExported] = useState<ExportStatus | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletion, setDeletion] = useState<Deletion | null>(() => scheduledDeletion(scheduledFor));
+  const [keeping, setKeeping] = useState(false);
+  const [kept, setKept] = useState(false);
+  const deleted = deletion !== null;
+
+  // The token lasts a day; past that only signing in again gives a new one.
+  const said = useCallback(
+    (error: ApiError, otherwise: string): string => (error.kind === 'unauthorized' || error.status === 401 ? t('suspension.signInAgain') : otherwise),
+    [t],
+  );
+
+  const read = useCallback(async (): Promise<void> => {
+    const res = await client.get<ExportStatus>('/me/export', auth);
+    if (res.ok && res.data && typeof res.data.status === 'string') setExported(res.data);
+  }, [client, auth]);
+
+  useEffect(() => {
+    void read();
+  }, [read]);
+  useEffect(() => {
+    if (deleted) return;
+    return pollWhileVisible(() => void read(), exported?.status === 'pending' ? PREPARING_POLL_MS : READY_POLL_MS);
+  }, [read, deleted, exported?.status]);
+
+  async function prepare(): Promise<void> {
+    setAsking(true);
+    setExportError(null);
+    const res = await client.post('/me/export', undefined, auth);
+    setAsking(false);
+    if (res.ok) setExported({ status: 'pending' });
+    // With nowhere private to keep a copy the server makes none, which is said as that rather than as a failure.
+    else setExportError(said(res.error, res.error.code === 'EXPORT_NOT_AVAILABLE' ? t('error.code.exportNotAvailable') : t('settings.data.failed')));
+  }
+
+  async function remove(): Promise<void> {
+    setDeleting(true);
+    setDeleteError(null);
+    setKept(false);
+    const res = await client.delete<{ deletionScheduled?: boolean; deleted?: boolean; graceDays?: number }>('/me', auth);
+    setDeleting(false);
+    if (!res.ok) {
+      setDeleteError(said(res.error, describeError(res.error, t, locale)));
+      return;
+    }
+    const days = res.data?.deletionScheduled ? (res.data.graceDays ?? 0) : 0;
+    setConfirming(false);
+    setDeletion(days > 0 ? { kind: 'scheduled', days } : { kind: 'gone' });
+  }
+
+  async function keep(): Promise<void> {
+    setKeeping(true);
+    setDeleteError(null);
+    const res = await client.post<{ cancelled: boolean }>('/me/deletion/cancel', undefined, auth);
+    setKeeping(false);
+    if (!res.ok) {
+      setDeleteError(said(res.error, describeError(res.error, t, locale)));
+      return;
+    }
+    setDeletion(null);
+    setKept(true);
+  }
+
+  const ready = exported?.status === 'ready' && exported.downloadUrl ? exported : null;
+
+  return (
+    <section className="card suspension-data" aria-labelledby="suspension-data">
+      <h2 id="suspension-data" className="friend-heading">
+        {t('settings.data.title')}
+      </h2>
+      {deletion?.kind === 'gone' ? (
+        <div className="msg msg-success" role="status">
+          {t('suspension.delete.deleted')}
+        </div>
+      ) : deletion?.kind === 'scheduled' ? (
+        <>
+          <div className="msg" role="status">
+            {t('suspension.delete.scheduled', { days: deletion.days })}
+          </div>
+          <div className="msg-actions">
+            <Button variant="secondary" onClick={() => void keep()} disabled={keeping}>
+              {t('suspension.delete.keep')}
+            </Button>
+          </div>
+          {deleteError && (
+            <div className="msg msg-error suspension-data-error" role="alert">
+              {deleteError}
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {kept && (
+            <div className="msg msg-success" role="status">
+              {t('suspension.delete.kept')}
+            </div>
+          )}
+          <p className="muted">{t('suspension.data.help')}</p>
+          <div className="suspension-data-row">
+            {ready ? (
+              <>
+                {ready.requestedAt && <p className="suspension-note">{t('suspension.data.ready', { date: formatDay(ready.requestedAt, locale) })}</p>}
+                <div className="msg-actions">
+                  <a className="btn btn-secondary" href={ready.downloadUrl} target="_blank" rel="noreferrer noopener">
+                    {t('suspension.data.download')}
+                  </a>
+                  <Button variant="ghost" size="sm" onClick={() => void prepare()} disabled={asking}>
+                    {asking ? t('settings.data.requesting') : t('suspension.data.again')}
+                  </Button>
+                </div>
+              </>
+            ) : exported?.status === 'pending' ? (
+              <p className="suspension-note" role="status">
+                {t('suspension.data.preparing')}
+              </p>
+            ) : (
+              <Button variant="secondary" onClick={() => void prepare()} disabled={asking}>
+                {asking ? t('settings.data.requesting') : t('suspension.data.download')}
+              </Button>
+            )}
+            {exportError && (
+              <div className="msg msg-error" role="alert">
+                {exportError}
+              </div>
+            )}
+          </div>
+
+          <div className="suspension-data-row">
+            {confirming ? (
+              <div className="suspension-delete" role="group" aria-labelledby="suspension-delete-warning">
+                <p id="suspension-delete-warning">{t('suspension.delete.warning')}</p>
+                <div className="msg-actions">
+                  <Button variant="secondary" size="sm" onClick={() => setConfirming(false)} disabled={deleting}>
+                    {t('common.cancel')}
+                  </Button>
+                  <button type="button" className="btn btn-danger btn-sm" onClick={() => void remove()} disabled={deleting}>
+                    {deleting ? t('settings.delete.deleting') : t('settings.delete.confirm')}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={() => setConfirming(true)}>
+                {t('suspension.delete.button')}
+              </button>
+            )}
+            {deleteError && (
+              <div className="msg msg-error" role="alert">
+                {deleteError}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </section>
   );
 }

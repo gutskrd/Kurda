@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { InsufficientFundsError, WalletService, type Currency } from '../wallet/service.js';
-import { handleName, normalizeUsername, type AdminUserModeration, type AgeBadge, type ReportCategory, type ReportStatus, type ReportTargetType } from '@kurda/shared';
+import { handleName, normalizeUsername, type AdminUserModeration, type AgeBadge, type BanContentChoice, type ReportCategory, type ReportStatus, type ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
 import { PRIVILEGED_ROLES, VOICE_ACTOR_ROLE } from './roles.js';
 
@@ -81,6 +81,13 @@ const LEGACY_STATEMENT = {
   suspension: "A moderator found that your account broke Hevalo's rules, so it is suspended for a while.",
   permanent_ban: DEFAULT_STATEMENTS.permanent_ban,
 } as const;
+
+/** What a ban from the older route must say: the rule, the statement, and what happens to the content. */
+export interface BanDetails {
+  policy: ReportCategory;
+  statement: string;
+  content: { choice: BanContentChoice; includeMessages: boolean } | null;
+}
 
 type ActionOk = { ok: true; balance?: number; duplicate?: boolean };
 type ActionResult = ActionOk | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' | 'SELF_ADJUST' };
@@ -331,13 +338,14 @@ export class UserAdminService {
     return this.sanction(adminId, userId, reason, 'chat_mute', until, 'mute');
   }
 
-  tempBan(adminId: string, userId: string, reason: string, until: Date): Promise<ActionResult> {
-    return this.sanction(adminId, userId, reason, 'suspension', until, 'temp_ban');
+  /** A suspension, with the rule, the statement and the content choice the ban dialog asks for. */
+  tempBan(adminId: string, userId: string, reason: string, until: Date, ban: BanDetails): Promise<ActionResult> {
+    return this.sanction(adminId, userId, reason, 'suspension', until, 'temp_ban', undefined, ban);
   }
 
   /** With a single moderator, `confirmUsername` must be the person's username (409 CONFIRM_USERNAME_REQUIRED). */
-  permBan(adminId: string, userId: string, reason: string, confirmUsername?: string): Promise<ActionResult> {
-    return this.sanction(adminId, userId, reason, 'permanent_ban', null, 'perm_ban', confirmUsername);
+  permBan(adminId: string, userId: string, reason: string, confirmUsername: string | undefined, ban: BanDetails): Promise<ActionResult> {
+    return this.sanction(adminId, userId, reason, 'permanent_ban', null, 'perm_ban', confirmUsername, ban);
   }
 
   async unban(adminId: string, userId: string, reason: string): Promise<ActionResult> {
@@ -354,6 +362,7 @@ export class UserAdminService {
     until: Date | null,
     auditAction: string,
     confirmUsername?: string,
+    ban?: BanDetails,
   ): Promise<ActionResult> {
     if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
     const hours = until ? Math.max(1, Math.round((until.getTime() - Date.now()) / 3_600_000)) : null;
@@ -361,7 +370,16 @@ export class UserAdminService {
       await this.cases.sanctionUser(
         adminId,
         userId,
-        { kind, policy: 'other', statement: LEGACY_STATEMENT[kind], internalNote: reason, durationHours: hours, confirmUsername },
+        {
+          kind,
+          // a ban names its rule and says why; a warning or mute from here keeps the plain wording
+          policy: ban?.policy ?? 'other',
+          statement: ban?.statement ?? LEGACY_STATEMENT[kind],
+          internalNote: reason,
+          durationHours: hours,
+          confirmUsername,
+          content: ban?.content ?? null,
+        },
         { auditAction },
       );
       return { ok: true };

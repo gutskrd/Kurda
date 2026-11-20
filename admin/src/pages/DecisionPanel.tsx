@@ -13,6 +13,7 @@ import {
   ACTION_KINDS,
   SANCTION_EFFECT,
   banModeText,
+  bansSubject,
   categoryName,
   contentTarget,
   removalLabel,
@@ -35,6 +36,8 @@ import {
 } from '../moderation';
 import { Badge, Banner, Button, Checkbox, Dialog, Icon, Select, Textarea, Time, errorLine, useDebounced, useDialogs, useToast } from '../ui';
 import { DurationChips } from './SanctionParts';
+import { BanSummaryText, ContentChoiceFields, useContentSummary } from './BanContent';
+import { banSummary } from '../bans';
 
 export type SetDraft = (change: (d: DecisionDraft) => DecisionDraft) => void;
 
@@ -75,6 +78,22 @@ export function DecisionPanel({
   // A copyright notice about a post still up is upheld only by taking it down (CONTENT_REMOVAL_REQUIRED).
   const problems = draftProblems(draft, names, { takedown: needsTakedown(c, canRemove) });
   const preview = usePreview(c.id, draft, decidable && !locked && problems.length === 0);
+  // what a suspension or ban of the reported person does to their content, with what they have now
+  const banning = bansSubject(draft);
+  const subjectBan = draft.actions.find((a) => a.target === 'subject' && (a.kind === 'suspension' || a.kind === 'permanent_ban'));
+  const contentNow = useContentSummary(banning && detail.subject ? detail.subject.id : null);
+  const content = draft.banContent ?? { choice: 'keep' as const, includeMessages: false };
+  const summaryLines =
+    banning && subjectBan && detail.subject
+      ? banSummary({
+          username: detail.subject.username,
+          kind: subjectBan.kind as 'suspension' | 'permanent_ban',
+          durationHours: subjectBan.durationHours,
+          choice: content.choice,
+          includeMessages: content.includeMessages,
+          summary: contentNow,
+        })
+      : [];
   const reporters = useMemo(() => {
     const seen = new Map<string, string>();
     for (const r of detail.reports) if (r.reporter && !seen.has(r.reporter.id)) seen.set(r.reporter.id, r.reporter.username);
@@ -106,8 +125,9 @@ export function DecisionPanel({
           title: `Ban @${ban.username} for good?`,
           body: (
             <div className="dialog-text">
+              {ban.target === 'subject' && <BanSummaryText lines={summaryLines} />}
               <p>{banModeText(ban.mode)}</p>
-              <p>They are signed out everywhere, and their email can’t be used to sign up again. They can ask for a review.</p>
+              <p>They are signed out everywhere, and their email, sign-ins and devices are kept from signing up again. They can ask for a review.</p>
             </div>
           ),
           confirmLabel: ban.mode === 'second_approval' ? 'Ask for the ban' : 'Ban for good',
@@ -120,7 +140,12 @@ export function DecisionPanel({
       if (check.permanentBans.length === 0) {
         const yes = await dialogs.confirm({
           title: actioned ? 'Apply this decision?' : 'Close the case: no rule broken?',
-          body: <DecisionSummary draft={draft} names={names} reporters={reporters.length} canRemove={canRemove} removal={removalLabel(c.targetType)} />,
+          body: (
+            <>
+              {summaryLines.length > 0 && <BanSummaryText lines={summaryLines} />}
+              <DecisionSummary draft={draft} names={names} reporters={reporters.length} canRemove={canRemove} removal={removalLabel(c.targetType)} />
+            </>
+          ),
           confirmLabel: actioned ? 'Apply' : 'Close the case',
           tone: actioned && draft.actions.some((a) => a.kind === 'suspension') ? 'danger' : 'default',
         });
@@ -284,6 +309,18 @@ export function DecisionPanel({
             <ReporterPicker reporters={reporters} taken={draft.actions.map((a) => a.target)} onPick={addReporter} />
           )}
         </div>
+
+        {banning && detail.subject && (
+          <>
+            <ContentChoiceFields
+              value={content}
+              onChange={(next) => setDraft((d) => ({ ...d, banContent: next }))}
+              summary={contentNow}
+              who={names('subject')}
+            />
+            <BanSummaryText lines={summaryLines} />
+          </>
+        )}
 
         {canRemove && actioned && (
           <Checkbox

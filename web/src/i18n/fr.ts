@@ -792,6 +792,20 @@ export const fr: Catalogue = {
   'restriction.suspended': 'Ton compte est suspendu.',
   'restriction.suspendedUntil': 'Ton compte est suspendu jusqu’au {time}.',
   'restriction.seeStanding': 'Voir l’état de ton compte',
+  'hold.title': 'Ton compte est en cours de vérification avant que tu puisses publier ou envoyer des messages. Tu peux continuer à apprendre comme d’habitude.',
+  'hold.why': 'Pourquoi ?',
+  'hold.whyBody':
+    'Une personne de Hevalo vérifie ton compte pour que la communauté reste sûre. D’ici là, tu ne peux pas publier, commenter, envoyer de messages ni de lettres, ajouter d’images ni rejoindre de groupes. On te prévient dans Hevalo dès que c’est terminé.',
+  'hold.heading': 'Ton compte est en cours de vérification',
+  'hold.statement':
+    'Une personne vérifie ton compte avant que tu puisses publier, commenter, envoyer des messages, partager des images, écrire des lettres ou rejoindre des groupes. Tu peux continuer à apprendre comme d’habitude. Cela ne veut pas dire que tu as enfreint une règle.',
+  'account.unavailable': 'Ce compte n’est pas disponible.',
+  'account.unavailableByline': 'Compte indisponible',
+  'error.code.cannotJoinYet': 'Cette personne ne peut pas rejoindre de groupes pour le moment.',
+  'error.code.exportNotAvailable': 'Impossible de préparer une copie pour le moment. Réessaie plus tard.',
+  'suspension.delete.keep': 'Garder mon compte',
+  'suspension.delete.kept': 'Ton compte est conservé. Rien n’a été supprimé.',
+  'hold.since': 'Depuis le {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': 'Signaler {name}',
   'report.title.message': 'Signaler ce message',
@@ -1117,6 +1131,17 @@ export const fr: Catalogue = {
   'suspension.answerHere': 'Si tu demandes un réexamen, reconnecte-toi quand tu veux pour voir notre réponse ici.',
   'suspension.rules': 'Lire les règles de la communauté',
   'suspension.close': 'Fermer',
+  'suspension.data.help': 'Tu peux toujours télécharger une copie de tes données ou supprimer ton compte.',
+  'suspension.data.download': 'Télécharger une copie de mes données',
+  'suspension.data.preparing': 'Ta copie est en cours de préparation. Reconnecte-toi plus tard pour la télécharger ici.',
+  'suspension.delete.button': 'Supprimer mon compte',
+  'suspension.delete.warning':
+    'Ton compte et toutes tes données seront définitivement supprimés après 14 jours ; d’ici là, tu peux garder ton compte depuis cet écran. Les dossiers des décisions de modération sont conservés, comme l’explique la politique de confidentialité.',
+  'suspension.delete.scheduled': 'Ton compte va être supprimé. Il aura définitivement disparu dans {days} jours.',
+  'suspension.signInAgain': 'Cette page est restée ouverte trop longtemps. Reconnecte-toi pour continuer.',
+  'suspension.data.ready': 'Ta copie du {date} est prête.',
+  'suspension.data.again': 'Préparer une nouvelle copie',
+  'suspension.delete.deleted': 'Ton compte a été supprimé.',
   'maintenance.title': 'Hevalo fait une petite pause',
   'maintenance.message': 'Nous travaillons sur Hevalo et serons bientôt de retour. Ta progression, ta série et tes Zêr sont en sécurité.',
   'maintenance.backBy': 'De retour d’ici {time}',
@@ -3523,6 +3548,8 @@ export const fr: Catalogue = {
   'privacy.safety.title': 'Sécurité',
   'privacy.safety.body':
     'Les publications et les images peuvent être vérifiées automatiquement et par des modérateurs pour écarter les abus et les contenus illégaux. Chaque image est vérifiée avant que quiconque d’autre la voie : automatiquement, par un service d’IA qui travaille pour nous et ne reçoit que l’image, jamais votre identité ; et par une personne quand la vérification a un doute. Une image refusée est conservée de façon privée jusqu’à six mois, pour que vous puissiez demander un nouvel examen, puis elle est supprimée. Ce qui pourrait nuire à un enfant est conservé comme preuve aussi longtemps que la loi l’exige.',
+  'privacy.safety.returns':
+    'Pour empêcher les personnes bannies de revenir tout simplement, Hevalo conserve des données brouillées (hachées) sur le compte, la connexion et les appareils d’une personne bannie ou suspendue, et y compare les nouveaux comptes et les nouvelles connexions. Une adresse internet seule ne suffit jamais, car beaucoup de personnes peuvent partager la même, et dès qu’une correspondance n’est pas claire, c’est une personne qui décide. Ces données ne sont conservées que tant que dure le bannissement ou la suspension, même si le compte est supprimé ; les journaux de connexion et d’appareils dont elles proviennent sont conservés pendant les durées indiquées dans « Vos choix ». Si votre compte est suspendu ou banni, vous pouvez toujours télécharger une copie de vos données ou supprimer votre compte depuis l’écran qui s’affiche à la connexion.',
   'privacy.permissions.title': 'Autorisations',
   'privacy.permissions.body': 'Sur téléphone, Hevalo ne demande votre micro que lorsque vous enregistrez quelque chose, et vos photos que lorsque vous en choisissez une. Il demande s’il peut vous envoyer des notifications après une leçon ou depuis les Réglages, et tout le reste fonctionne de la même façon si vous refusez. Il ne demande jamais votre position, vos contacts ni votre appareil photo.',
   'privacy.payments.title': 'Paiements',

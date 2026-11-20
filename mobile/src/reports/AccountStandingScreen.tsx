@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { useNavigation } from '@react-navigation/native';
-import type { AccountStanding, AppealView, PendingPicture, RestrictionScope, StandingSanction } from '@kurda/shared';
+import { ACCOUNT_CHANGED, type AccountStanding, type AppealView, type PendingPicture, type RestrictionScope, type StandingSanction } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiClient } from '../api/client';
 import type { ApiError } from '../api/types';
@@ -30,6 +30,8 @@ import {
 import { formatDay, formatUntil } from './sendErrors';
 import { heldDim } from '../theme/MotionParts';
 import { pendingOf } from '../pictures/review';
+import { useUserEvents } from '../realtime/useUserEvents';
+import { isHoldSanction } from './hold';
 
 const SCOPES: readonly RestrictionScope[] = ['account', 'chat', 'post', 'media'];
 
@@ -60,6 +62,8 @@ export function AccountStandingScreen({ onExit }: { onExit: () => void }): React
   }, [client]);
 
   useEffect(load, [load]);
+  // A decision given or lifted while the screen is open shows at once.
+  useUserEvents(useCallback((event) => event.type === ACCOUNT_CHANGED && load(), [load]));
 
   return (
     <GradientBackground>
@@ -180,16 +184,22 @@ function SanctionCard({
   const [asking, setAsking] = useState(false);
   const [filed, setFiled] = useState<AppealView | null>(null);
   const appeal = filed ?? sanction.appeal.current;
+  // A hold is a check, not a finding: it says so in the reader's language, with no rule and no "found by" line.
+  const hold = isHoldSanction(sanction);
 
   return (
     <GlassCard>
       <Text style={[styles.kind, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
-        {t(SANCTION_LABEL[sanction.kind])}
+        {hold ? t('hold.heading') : t(SANCTION_LABEL[sanction.kind])}
       </Text>
-      <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
-        {t('standing.rule', { rule: t(CATEGORY_LABEL[sanction.policy]) })}
-      </Text>
-      {sanction.statement ? (
+      {hold ? null : (
+        <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
+          {t('standing.rule', { rule: t(CATEGORY_LABEL[sanction.policy]) })}
+        </Text>
+      )}
+      {hold ? (
+        <Text style={[styles.holdText, dir.text, { color: colors.textPrimary }]}>{t('hold.statement')}</Text>
+      ) : sanction.statement ? (
         <View style={[styles.statement, { borderColor: colors.separator }, dir.rtl ? styles.statementRtl : styles.statementLtr]}>
           <Text style={[styles.statementText, dir.free, { color: colors.textPrimary }]}>{sanction.statement}</Text>
         </View>
@@ -202,16 +212,18 @@ function SanctionCard({
             ? t('standing.lifted', { when: formatDay(sanction.revokedAt, locale) })
             : sanction.endsAt
               ? t('standing.until', { when: formatUntil(sanction.endsAt, locale) })
-              : sanction.kind === 'warning' || sanction.kind === 'content_removal'
+              : hold || sanction.kind === 'warning' || sanction.kind === 'content_removal'
                 ? null
                 : t('standing.noEnd'),
         ]
           .filter(Boolean)
           .join(' · ')}
       </Text>
-      <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
-        {t(originKey(sanction))}
-      </Text>
+      {hold ? null : (
+        <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
+          {t(originKey(sanction))}
+        </Text>
+      )}
 
       {appeal ? (
         <AppealStatusLine appeal={appeal} />
@@ -305,6 +317,8 @@ const styles = StyleSheet.create({
   statementLtr: { borderLeftWidth: 3, paddingLeft: spacing.md },
   statementRtl: { borderRightWidth: 3, paddingRight: spacing.md },
   statementText: { fontSize: typography.sizes.md, lineHeight: 22 },
+  // A hold's own words, plain rather than quoted: nobody wrote them about something the person did.
+  holdText: { fontSize: typography.sizes.md, lineHeight: 22, marginTop: spacing.xs },
   picture: { gap: spacing.xs },
   pictureImage: { width: 96, height: 96, borderRadius: radii.md, marginTop: spacing.xs },
   askWrap: { marginTop: spacing.xs },

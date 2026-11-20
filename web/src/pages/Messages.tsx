@@ -28,6 +28,7 @@ import { announceGroupsChanged, useGroupsChanged } from '../groups/groupsChanged
 import { pollWhileVisible } from '../lib/pollWhileVisible';
 import { BirdBadge } from '../letters/LetterParts';
 import { LETTERS_HOME_PATH } from '../letters/useLettersHome';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 
 // With the realtime socket live, polling is only a slow safety net; without it a brisk poll keeps chat live. Neither
 // runs while the tab is hidden.
@@ -577,6 +578,8 @@ function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): Re
   const navigate = useNavigate();
   const { data: mine } = useApiGet<{ groups: MyGroup[] }>('/me/groups');
   const limit: LimitDetails | null = groupLimits(mine?.groups ?? []).create;
+  // Starting a group is joining one, which a held account waits for.
+  const held = useAccountHeld();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [busy, setBusy] = useState(false);
@@ -584,7 +587,7 @@ function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): Re
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    if (busy || name.trim().length < 2 || limit) return;
+    if (busy || name.trim().length < 2 || limit || held) return;
     setBusy(true);
     setErr(null);
     const res = await client.post<{ id: string }>('/groups', {
@@ -603,10 +606,14 @@ function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): Re
   return (
     <form className="compose" onSubmit={submit}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('groups.new')}</h2>
-      {limit && (
-        <div className="msg" role="status" id="g-limit">
-          {limitText(limit, t)}
-        </div>
+      {held ? (
+        <HeldNotice />
+      ) : (
+        limit && (
+          <div className="msg" role="status" id="g-limit">
+            {limitText(limit, t)}
+          </div>
+        )
       )}
       <SendError error={err} />
       <div className="field">
@@ -618,7 +625,7 @@ function CreateGroupForm({ onCreated }: { onCreated: (id: string) => void }): Re
         <input id="g-desc" className="input" value={description} maxLength={300} onChange={(e) => setDescription(e.target.value)} placeholder={t('groups.descriptionPlaceholder')} />
       </div>
       <p className="field-hint">{t('groups.privateHint')}</p>
-      <Button type="submit" disabled={busy || name.trim().length < 2 || limit !== null} aria-describedby={limit ? 'g-limit' : undefined}>
+      <Button type="submit" disabled={busy || held || name.trim().length < 2 || limit !== null} aria-describedby={limit && !held ? 'g-limit' : undefined}>
         {busy ? t('groups.creating') : t('groups.create')}
       </Button>
     </form>

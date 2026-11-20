@@ -42,6 +42,7 @@ import { breachCheckEnabled, isBreachedPassword } from './breached-password.js';
 import { emailRegistryHash, userHash } from '../moderation/pseudonym.js';
 import { currentBan } from '../moderation/sanctions-service.js';
 import { suspendedError, suspensionError } from '../moderation/suspension.js';
+import { recordRefusedSignIn, writeDeviceSighting } from '../net/device-sightings.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -820,7 +821,11 @@ export class AuthService {
     // only ask for a review — instead of being handed a session the next request
     // refuses. After the password, so the answer reveals nothing to a guesser.
     const suspended = await suspensionError(this.config, this.pool, user);
-    if (suspended) throw suspended;
+    if (suspended) {
+      // where a banned person tried from, under their own account, so a new account there is recognised
+      await recordRefusedSignIn(this.pool, user.id, { deviceId, ip: input.ip });
+      throw suspended;
+    }
 
     // a returning user keeps their account: logging in during the
     // deletion grace period cancels the deletion
@@ -875,7 +880,7 @@ export class AuthService {
    * The session keeps its device, name and lifetime. A session whose app sent neither takes them from this request
    * (`x-device-id`, and a name from the User-Agent).
    */
-  async refresh(rawToken: string, from: { deviceId?: string | null; deviceName?: string } = {}): Promise<IssuedTokens> {
+  async refresh(rawToken: string, from: { deviceId?: string | null; deviceName?: string; ip?: string } = {}): Promise<IssuedTokens> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -913,7 +918,8 @@ export class AuthService {
         if (unexpired && (row.revoked_at === null || endedByBan)) {
           await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [row.user_id]);
           await client.query('COMMIT');
-          throw await suspendedError(this.config, owner, ban);
+          await recordRefusedSignIn(this.pool, owner.id, { deviceId: from.deviceId, ip: from.ip });
+          throw await suspendedError(this.config, owner, ban, this.pool);
         }
       }
 
@@ -957,6 +963,8 @@ export class AuthService {
         [row.id, tokens.refreshTokenId],
       );
       await client.query('COMMIT');
+      // the install id refreshing this session, as evidence for 180 days (net/device-sightings.ts); never fails the refresh
+      if (from.deviceId) await writeDeviceSighting(this.pool, user.id, from.deviceId).catch(() => undefined);
       return tokens;
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);

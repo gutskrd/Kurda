@@ -2,6 +2,7 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import { SendIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 
 /**
  * The message box shared by the direct and group threads: a textarea that grows with its content, joined with a round
@@ -16,14 +17,7 @@ const MAX_ROWS = 5;
 /** A finger is the main pointer: there is no Shift+Enter to be had. */
 const TOUCH = '(pointer: coarse)';
 
-export function Composer({
-  value,
-  onChange,
-  onSubmit,
-  placeholder,
-  maxLength = 2000,
-  tools,
-}: {
+interface ComposerProps {
   value: string;
   onChange: (next: string) => void;
   onSubmit: () => void;
@@ -31,7 +25,22 @@ export function Composer({
   maxLength?: number;
   /** Buttons before the box, such as gifts and games, kept outside the form so pressing one never submits it. */
   tools?: ReactNode;
-}): React.JSX.Element {
+}
+
+export function Composer(props: ComposerProps): React.JSX.Element {
+  const held = useAccountHeld();
+  // A held account can read the thread but not write in it, so the box gives way to what is happening.
+  if (held) {
+    return (
+      <div className="chat-compose">
+        <HeldNotice className="is-inline" />
+      </div>
+    );
+  }
+  return <MessageBox {...props} />;
+}
+
+function MessageBox({ value, onChange, onSubmit, placeholder, maxLength = 2000, tools }: ComposerProps): React.JSX.Element {
   const t = useT();
   const ref = useRef<HTMLTextAreaElement>(null);
   const touch = useMediaQuery(TOUCH);
