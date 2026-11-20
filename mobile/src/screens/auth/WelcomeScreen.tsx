@@ -13,7 +13,7 @@ import { spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { AUTH_HEAD_ROWS, AuthScreenShell } from './AuthForm';
 import { GuestStartFlow } from './GuestStartFlow';
-import { AppleButton, GoogleButton, MethodButton, useSocialSignIn } from './SocialSignIn';
+import { AppleButton, GoogleButton, MethodButton, ProviderNote, useSocialSignIn } from './SocialSignIn';
 import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
@@ -87,6 +87,11 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
             foreground={colors.textOnPrimary}
           />
         </Rise>
+        {appleAvailable || isGoogleConfigured ? (
+          <Rise delay={row(2)}>
+            <ProviderNote />
+          </Rise>
+        ) : null}
       </View>
 
       <Rise delay={row(3)}>

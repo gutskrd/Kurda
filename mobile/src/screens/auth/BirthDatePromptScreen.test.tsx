@@ -69,11 +69,11 @@ afterEach(() => {
 });
 
 describe('the birth month an account came in without', () => {
-  it('is asked the way sign-up asks it: how old, in Hevalo’s words, with no age chosen for anybody', async () => {
+  it('is asked the way sign-up asks it: how old, what the age decides, and no age chosen for anybody', async () => {
     const session = held();
     renderWithProviders(<BirthDatePromptScreen />);
     expect(screen.getByRole('heading', { name: 'How old are you?' })).toBeTruthy();
-    expect(screen.getByText('We ask everyone. Only the month and year are kept, promise.')).toBeTruthy();
+    expect(screen.getByText('Your age decides who can find and message you, and who your letters go to.')).toBeTruthy();
     // Tapping on answers nothing.
     await press('Continue');
     expect(screen.getByText('Pick your age on the ruler to go on.')).toBeTruthy();

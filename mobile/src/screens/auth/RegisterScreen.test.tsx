@@ -89,6 +89,20 @@ describe('signing up', () => {
     });
   });
 
+  it('says why it asks each thing about the person, and who will see the name', async () => {
+    renderRegister();
+    const says = () => screen.getByTestId('speech-bubble').textContent;
+    expect(says()).toBe('Silav! I’m Hevalo. Other learners will see the name you pick.');
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda_k' } });
+    await press(en['common.continue']);
+    await screen.findByRole('slider');
+    expect(says()).toBe('Your age decides who can find and message you, and who your letters go to.');
+    chooseAge(34);
+    await press(en['common.continue']);
+    await screen.findByRole('radio', { name: 'March' });
+    expect(says()).toBe('The month you were born in, so your age is always right. Only the month and year are kept.');
+  });
+
   // A keyboard that ends a word with a full stop still leaves the address as typed.
   it('writes the name in lowercase as it is typed, and sends it so', async () => {
     auth.register.mockResolvedValue(null);

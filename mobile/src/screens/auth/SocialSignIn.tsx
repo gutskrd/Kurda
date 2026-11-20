@@ -116,6 +116,13 @@ export function AppleButton({ onPress }: { onPress: () => void }): React.JSX.Ele
   );
 }
 
+/** What Apple or Google hands Hevalo and who sees it, under their buttons: the name becomes the profile's display name. */
+export function ProviderNote(): React.JSX.Element {
+  const { t } = useI18n();
+  const { colors } = useTheme();
+  return <Text style={[styles.note, { color: colors.textSecondary }]}>{t('welcome.providerShares')}</Text>;
+}
+
 /** Continue with Google, on Google's own surface. */
 export function GoogleButton({ onPress }: { onPress: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -171,4 +178,5 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   methodText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  note: { fontSize: typography.sizes.xs, lineHeight: 18, textAlign: 'center' },
 });
