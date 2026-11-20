@@ -153,17 +153,43 @@ describe('the list', () => {
 describe('a person', () => {
   const at = `#/users/${SUBJECT_ID}`;
 
-  it('opens on the profile, with their age, standing and the accounts that share their device', async () => {
-    show(at, MODERATOR, detailRoute(person()));
+  it('opens on the profile, with their age, standing and who may be the same person', async () => {
+    const matches = {
+      items: [
+        {
+          other: { id: 'u-alt', username: 'baran2', createdAt: ago(24 * 3), unavailable: true, held: false },
+          relation: 'may_be_return_of',
+          entryId: 'pr-1',
+          status: 'open',
+          strength: 'strong',
+          signals: [{ kind: 'device', strength: 'strong', at: ago(24 * 3), event: 'signup' }],
+          lastSeenAt: ago(24 * 3),
+        },
+        {
+          other: { id: 'u-flat', username: 'rojda7', createdAt: ago(24 * 200), unavailable: false, held: false },
+          relation: 'shares_evidence',
+          entryId: null,
+          status: null,
+          strength: 'medium',
+          signals: [{ kind: 'network_repeated', strength: 'medium', at: ago(30), event: 'sweep', days: 3 }],
+          lastSeenAt: ago(30),
+        },
+      ],
+      total: 2,
+      nextOffset: null,
+    };
+    show(at, MODERATOR, detailRoute(person()), on('GET', `/admin/users/${SUBJECT_ID}/possible-matches?offset=0&limit=20`, json(matches)));
     expect(await screen.findByRole('heading', { name: '@baran' })).toBeInTheDocument();
     expect(screen.getByText('baran@example.org')).toBeInTheDocument();
     expect(screen.getByText('18 or over')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '@baran2' })).toBeInTheDocument();
-    expect(screen.getByText('same device')).toHaveAttribute('title', expect.stringMatching(/same device/));
-    // A network says on how many days, and on hover what that means.
-    const flat = screen.getByText('same network · 3 days');
-    expect(flat).toHaveAttribute('title', expect.stringMatching(/within 48 hours of each other on 3 days.*Busy networks/));
-    expect(screen.getByText('same network · 1 day')).toBeInTheDocument();
+    const panel = await screen.findByRole('list', { name: 'Accounts that may be the same person as @baran' });
+    expect(within(panel).getByRole('link', { name: '@baran2' })).toBeInTheDocument();
+    expect(within(panel).getByText('The same phone or tablet', { exact: false })).toBeInTheDocument();
+    expect(within(panel).getByText('Banned or suspended')).toBeInTheDocument();
+    // a network says on how many days, and is never more than medium on its own
+    expect(within(panel).getByText(/Their home network, on separate days · 3 days/)).toBeInTheDocument();
+    expect(within(panel).getByRole('link', { name: 'Decide on Possible returns' })).toHaveAttribute('href', '#/possible-returns');
+    expect(screen.getByText('1–2 of 2')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: /Standing/ })).toHaveAttribute('href', `${at}/standing`);
     expect(screen.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '#/users');
@@ -249,6 +275,40 @@ describe('a person', () => {
     expect(body).toMatchObject({ kind: 'permanent_ban', policy: 'hate', confirmUsername: 'baran' });
     expect(body).not.toHaveProperty('durationHours');
     expect(await screen.findByText(/The ban waits for a second moderator/)).toBeInTheDocument();
+  });
+
+  it('asks what happens to their content, lists what each choice covers, and sums up before suspending', async () => {
+    const user = userEvent.setup();
+    const content = { posts: 23, pictures: 4, comments: 2, groupMessages: 0, directMessages: 5, lettersInFlight: 0, profile: true, groupPhotos: 0 };
+    const { calls } = show(
+      `${at}/standing`,
+      MODERATOR,
+      detailRoute(person()),
+      on('GET', `/admin/users/${SUBJECT_ID}/content-summary`, json({ summary: content })),
+      on('POST', `/admin/users/${SUBJECT_ID}/sanctions`, json({ sanctions: [], pendingApproval: false, takedown: null }, 201)),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Sanction…' }));
+    const drawer = await screen.findByRole('dialog', { name: 'Sanction @baran' });
+    await user.selectOptions(within(drawer).getByLabelText('Action'), 'suspension');
+    await user.selectOptions(within(drawer).getByLabelText(/^Rule broken/), 'harassment');
+    const choice = within(drawer).getByRole('group', { name: 'What happens to what @baran shared' });
+    expect(await within(choice).findByText(/Up now: 23 posts, 4 pictures, 2 comments, 5 private messages and their profile/)).toBeInTheDocument();
+    expect(within(choice).getByText('Letters still on their way')).toBeInTheDocument();
+    // the messages tick rides on Hide and Remove
+    expect(within(choice).getByRole('checkbox', { name: /Also their private messages/ })).toBeDisabled();
+    await user.click(within(choice).getByRole('radio', { name: /^Hide/ }));
+    await user.click(within(choice).getByRole('checkbox', { name: /Also their private messages/ }));
+    expect(within(drawer).getByText(/Their 23 posts, 4 pictures, 2 comments, 5 private messages and profile will be hidden from everyone until the suspension ends\./)).toBeInTheDocument();
+    await user.click(within(drawer).getByRole('button', { name: 'Give the suspension' }));
+    const ask = await screen.findByRole('alertdialog', { name: 'Suspend @baran?' });
+    expect(within(ask).getByText('They will get an email with the reason and how to appeal.')).toBeInTheDocument();
+    await user.click(within(ask).getByRole('button', { name: 'Suspend' }));
+    await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/sanctions`)).toHaveLength(1));
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/sanctions`)[0]!.body).toMatchObject({
+      kind: 'suspension',
+      policy: 'harassment',
+      content: { choice: 'hide', includeMessages: true },
+    });
   });
 
   it('lifts a sanction with a reason', async () => {

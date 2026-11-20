@@ -18,6 +18,7 @@ import {
   checkLetterDecor,
   isSanctionKind,
   sanctionHasDuration,
+  type BanContentChoice,
   type CaseMediaItem,
   type CaseSanctionView,
   type CaseSource,
@@ -462,6 +463,13 @@ export interface DecisionDraft {
   notifyReporters: boolean;
   /** For the case record, not the person. */
   note: string;
+  /** What a suspension or ban of the reported person does to their content (Keep when absent). */
+  banContent?: { choice: BanContentChoice; includeMessages: boolean };
+}
+
+/** Whether the decision suspends or bans the reported person, so the content choice applies. */
+export function bansSubject(d: DecisionDraft): boolean {
+  return d.outcome === 'actioned' && d.actions.some((a) => a.target === 'subject' && (a.kind === 'suspension' || a.kind === 'permanent_ban'));
 }
 
 let nextKey = 1;
@@ -510,7 +518,10 @@ export function withKind(a: ActionDraft, kind: DecisionActionKind, policy: strin
 }
 
 /** The request the draft is: what the preview asks about and what the decision sends. */
-export function decisionRequest(d: DecisionDraft, extra: { preview?: boolean; confirmUsernames?: string[] } = {}): DecideRequest {
+export function decisionRequest(
+  d: DecisionDraft,
+  extra: { preview?: boolean; confirmUsernames?: string[] } = {},
+): DecideRequest & { banContent?: { choice: BanContentChoice; includeMessages: boolean } } {
   // One name typed goes as confirmUsername; a decision that bans two people for good sends both.
   const typed = extra.confirmUsernames ?? [];
   const actioned = d.outcome === 'actioned';
@@ -528,6 +539,7 @@ export function decisionRequest(d: DecisionDraft, extra: { preview?: boolean; co
     ...(d.note.trim() ? { note: d.note.trim() } : {}),
     ...(extra.preview ? { preview: true } : {}),
     ...(typed.length === 1 ? { confirmUsername: typed[0] } : typed.length > 1 ? { confirmUsernames: typed } : {}),
+    ...(bansSubject(d) ? { banContent: d.banContent ?? { choice: 'keep', includeMessages: false } } : {}),
   };
 }
 
