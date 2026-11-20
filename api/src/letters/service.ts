@@ -331,6 +331,29 @@ export class LetterService {
     return checked.state === 'held' ? checked.key : null;
   }
 
+  /**
+   * Letters a person approved after their drawing waited: their readers are told now, by the same notification and push
+   * any letter brings, once each (the claim on `released_at` is one statement, so two sweeps never tell twice).
+   */
+  async announceReleased(limit = 100): Promise<number> {
+    const claimed = await this.pool.query<{ id: string; sender_id: string; recipient_id: string; thread_id: string; name: string; answer: boolean }>(
+      `WITH due AS (
+         SELECT id FROM letters WHERE released_at IS NOT NULL AND status = 'delivered' ORDER BY released_at LIMIT $1 FOR UPDATE SKIP LOCKED
+       )
+       UPDATE letters l SET released_at = NULL FROM due, users u
+        WHERE l.id = due.id AND u.id = l.sender_id AND l.recipient_id IS NOT NULL AND l.thread_id IS NOT NULL
+        RETURNING l.id, l.sender_id, l.recipient_id, l.thread_id, ${NAME_SQL('u')} AS name,
+                  EXISTS (SELECT 1 FROM letter_visits v WHERE v.answer_id = l.id) AS answer`,
+      [limit],
+    );
+    for (const letter of claimed.rows) {
+      this.ping(letter.sender_id, letter.recipient_id);
+      // an answer flies home to the one who wrote first; a letter in a correspondence comes to its reader's window
+      await this.tell(letter.recipient_id, letter.thread_id, letter.sender_id, letter.name, letter.answer ? 'home' : 'window', letter.id);
+    }
+    return claimed.rows.length;
+  }
+
   /** Remembers the paper somebody wrote on, so the composer opens on it next time. */
   private async rememberPaper(db: Pick<pg.Pool, 'query'>, me: string, paper: LetterPaper | null): Promise<void> {
     if (!paper) return;

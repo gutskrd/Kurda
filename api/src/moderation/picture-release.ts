@@ -1,6 +1,5 @@
 import type { PictureReviewTarget, PictureSurface } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
-import { letterNoticeText, type LetterNoticeHow } from '../letters/notice.js';
 import { surfaceOfKind } from './image-scan.js';
 import { pictureReviewNotice } from './notices.js';
 import { evidenceObjectKey } from './pseudonym.js';
@@ -44,7 +43,7 @@ export async function releasePicture(db: Executor, key: string, opts: ReleaseOpt
   // Where the bytes are now: a private copy (held, refused, or quarantined) is published after the commit. A move to
   // quarantine still on its way may delete the public object after this, so its private copy is published too.
   await db.query(
-    `UPDATE media_uploads m SET scan_status = 'cleared',
+    `UPDATE media_uploads m SET scan_status = 'cleared', withdrawn_at = NULL,
             private_key = COALESCE(m.private_key, m.quarantine_key, CASE WHEN m.quarantine_state = 'pending' THEN t.target END),
             publish_state = CASE WHEN COALESCE(m.private_key, m.quarantine_key) IS NOT NULL OR m.quarantine_state = 'pending'
                                  THEN 'pending' END,
@@ -133,40 +132,20 @@ export async function releasePicture(db: Executor, key: string, opts: ReleaseOpt
 }
 
 /**
- * Letters whose drawing waited for a person: delivered now, and their reader told as a letter's arrival always is.
+ * Letters whose drawing waited for a person: delivered now. Their readers are told after the commit by the letters'
+ * own delivery path, as for any letter (letters/service.ts `announceReleased`), so `released_at` marks them until then.
  * Returns the correspondences they were in.
  */
 async function deliverHeldLetters(db: Executor, keys: string[]): Promise<string[]> {
-  const sent = await db.query<{ id: string; sender_id: string; recipient_id: string | null; thread_id: string | null; answer: boolean }>(
-    `UPDATE letters l SET status = 'delivered', delivered_at = now()
-      WHERE l.drawing_key = ANY($1::text[]) AND l.status = 'held' AND l.recipient_id IS NOT NULL
-      RETURNING l.id, l.sender_id, l.recipient_id, l.thread_id,
-                EXISTS (SELECT 1 FROM letter_visits v WHERE v.answer_id = l.id) AS answer`,
+  const sent = await db.query<{ thread_id: string | null }>(
+    `UPDATE letters SET status = 'delivered', delivered_at = now(), released_at = now()
+      WHERE drawing_key = ANY($1::text[]) AND status = 'held' AND recipient_id IS NOT NULL
+      RETURNING thread_id`,
     [keys],
   );
-  for (const letter of sent.rows) {
-    if (letter.thread_id) await db.query(`UPDATE letter_threads SET last_letter_at = now() WHERE id = $1`, [letter.thread_id]);
-    if (!letter.recipient_id) continue;
-    const people = await db.query<{ id: string; name: string; locale: string | null }>(
-      `SELECT id, COALESCE(NULLIF(btrim(display_name), ''), username) AS name, locale FROM users WHERE id = ANY($1::uuid[])`,
-      [[letter.sender_id, letter.recipient_id]],
-    );
-    const sender = people.rows.find((p) => p.id === letter.sender_id);
-    const reader = people.rows.find((p) => p.id === letter.recipient_id);
-    if (!sender || !reader) continue;
-    const how: LetterNoticeHow = letter.answer ? 'home' : 'window';
-    const words = letterNoticeText(how, sender.name, reader.locale);
-    await db.query(
-      `INSERT INTO notifications (user_id, category, title, body, data) VALUES ($1, 'letters', $2, $3, $4::jsonb)`,
-      [
-        reader.id,
-        words.title,
-        words.body,
-        JSON.stringify({ kind: 'letter', threadId: letter.thread_id, fromUserId: letter.sender_id, how, letterId: letter.id }),
-      ],
-    );
-  }
-  return sent.rows.map((l) => l.thread_id).filter((id): id is string => id !== null);
+  const threads = sent.rows.map((l) => l.thread_id).filter((id): id is string => id !== null);
+  if (threads.length > 0) await db.query(`UPDATE letter_threads SET last_letter_at = now() WHERE id = ANY($1::uuid[])`, [threads]);
+  return threads;
 }
 
 interface Log {
@@ -212,8 +191,8 @@ export async function runPicturePublishing(
 }
 
 /**
- * Move pictures hidden by reports off the public bucket: copied to private storage, the public object deleted and the
- * CDN asked to forget it. Never throws; what fails is retried by the sweep.
+ * Move pictures hidden by reports, or withdrawn with a removed post, off the public bucket: copied to private storage,
+ * the public object deleted and the CDN asked to forget it. Never throws; what fails is retried by the sweep.
  */
 export async function runHoldMoves(
   db: Executor,
@@ -224,7 +203,7 @@ export async function runHoldMoves(
   if (opts.keys && opts.keys.length === 0) return 0;
   const due = await db.query<{ key: string; content_type: string }>(
     `SELECT key, content_type FROM media_uploads
-      WHERE scan_status = 'held' AND private_key IS NULL AND ($1::text[] IS NULL OR key = ANY($1::text[]))
+      WHERE scan_status IN ('held','withdrawn') AND private_key IS NULL AND ($1::text[] IS NULL OR key = ANY($1::text[]))
       ORDER BY key LIMIT $2`,
     [opts.keys ?? null, opts.limit ?? 100],
   );
@@ -238,7 +217,10 @@ export async function runHoldMoves(
         await storage.purgePublic([row.key]);
       }
       if (await storage.evidenceExists(target)) {
-        await db.query(`UPDATE media_uploads SET private_key = $2 WHERE key = $1 AND scan_status = 'held' AND private_key IS NULL`, [row.key, target]);
+        await db.query(
+          `UPDATE media_uploads SET private_key = $2 WHERE key = $1 AND scan_status IN ('held','withdrawn') AND private_key IS NULL`,
+          [row.key, target],
+        );
         done++;
       }
     } catch (err) {

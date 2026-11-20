@@ -114,7 +114,7 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
       await pictures.afterReport(filed).catch((err) => app.log.warn({ err, caseId: filed.reportCaseId }, 'checking a reported picture failed'));
     },
   });
-  const cases = new CasesService(app.db, sanctions, { storage, log: app.log });
+  const cases = new CasesService(app.db, sanctions, { storage, log: app.log, afterRelease: () => pictures.afterRelease() });
   pictures.useCases(cases);
   const queue = new ModerationQueueService(app.db, { cases, sanctions, log: app.log });
   const appeals = new AppealsService(app.db, sanctions, cases);

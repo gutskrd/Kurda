@@ -794,20 +794,20 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerChatRoutes(app, chat, trust, aiMod);
 
     // Letters by bird: pen pals in Kurdish, met by sending a bird out, within an age band (letters/service.ts).
-    registerLetterRoutes(
-      app,
-      new LetterService(app.db, {
-        moderation,
-        inbox,
-        push: pushRecorded(pushService, app.jobs),
-        // an open window or correspondence hears of every change as it happens, and reads the page again
-        realtime: { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) },
-        log: app.log,
-        wallet: new WalletService(app.db),
-        // a drawing is checked as any picture is before the letter is delivered
-        pictures: moderationKit.pictures,
-      }),
-    );
+    const letterService = new LetterService(app.db, {
+      moderation,
+      inbox,
+      push: pushRecorded(pushService, app.jobs),
+      // an open window or correspondence hears of every change as it happens, and reads the page again
+      realtime: { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) },
+      log: app.log,
+      wallet: new WalletService(app.db),
+      // a drawing is checked as any picture is before the letter is delivered
+      pictures: moderationKit.pictures,
+    });
+    registerLetterRoutes(app, letterService);
+    // and once a person approves it, its reader hears of it the way any letter's reader does
+    moderationKit.pictures.useLetters(letterService);
 
     // Group chat: per-group room fan-out over the bus, with moderation.
     const groupChat = new GroupChatService(
