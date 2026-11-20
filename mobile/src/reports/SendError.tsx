@@ -13,6 +13,7 @@ import { MIN_TOUCH_TARGET, reachSlop } from '../a11y/a11y';
 import { sendErrorOf, standingExplains } from './sendErrors';
 import { useDirection } from './direction';
 import { heldDim } from '../theme/MotionParts';
+import { useAccountHeld } from './HeldNotice';
 
 /** The icon's width and the gap after it: the link lines up with the words. */
 const LINK_INSET = 26;
@@ -29,6 +30,7 @@ export function SendErrorNotice({
   onDismiss,
   onNavigate,
   style,
+  heldShownBeside = false,
 }: {
   error: ApiError | null;
   onDismiss?: () => void;
@@ -36,13 +38,17 @@ export function SendErrorNotice({
   onNavigate?: () => void;
   /** Where it sits: by default inset above a composer; a card's column passes its own. */
   style?: StyleProp<ViewStyle>;
+  /** The composer this answers turns into the held notice once the account is known held, so saying it here would repeat it. */
+  heldShownBeside?: boolean;
 }): React.JSX.Element | null {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
   const navigation = useNavigation<RootNavigation>();
   const dir = useDirection();
+  const held = useAccountHeld();
   if (!error) return null;
   const { message, restriction } = sendErrorOf(error, t, locale);
+  if (heldShownBeside && held && restriction?.kind === 'held') return null;
   const tone = restriction ? colors.textPrimary : colors.danger;
   return (
     <View

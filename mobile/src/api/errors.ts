@@ -7,7 +7,7 @@
  * The translator is a parameter because this module has no React, and it matches the web app's `describeError`,
  * so both apps give the same sentence for the same failure.
  */
-import { isMissingRoute, MAINTENANCE_CODE } from '@kurda/shared';
+import { ACCOUNT_HELD, isMissingRoute, MAINTENANCE_CODE } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { ApiError } from './types';
 import { FIELD_ERROR_VARS, PASSWORD_RULES_KEY } from '../auth/validators';
@@ -79,6 +79,8 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   LEARN_FIRST: 'error.code.learnFirst',
   // A guest at something only an account may do; the gate's sheet says it first, and this is the text under it.
   [GUEST_ACCOUNT_CODE]: 'error.code.guestAccount',
+  // An account a person is checking before it may post or message: the same sentence as its notice (reports/HeldNotice).
+  [ACCOUNT_HELD]: 'hold.title',
   // Hevalo offline for a while: the screen over the app says the rest (maintenance/).
   MAINTENANCE: 'maintenance.title',
 };

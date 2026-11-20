@@ -47,6 +47,7 @@ import { uploadProfilePhoto } from '../profile/photoUpload';
 import { PendingPhoto, PictureRefusal } from '../pictures/PictureReview';
 import { pendingOf } from '../pictures/review';
 import { useSendErrorAlert } from '../reports/SendError';
+import { useAccountHeld } from '../reports/HeldNotice';
 import { useI18n } from '../i18n/I18nContext';
 import { learningStats, type Streak } from '../streak/format';
 import { freezeSlots } from '../streak/kept';
@@ -184,6 +185,8 @@ function AccountProfile() {
   const [reloadKey, setReloadKey] = useState(0);
   const { t, locale } = useI18n();
   const showSendError = useSendErrorAlert();
+  // A held account cannot put up a new picture until it is checked; the tap says so instead of opening the picker.
+  const held = useAccountHeld();
   // Badges earned since the app opened wear a "New" chip in the showcase.
   const fresh = useFreshBadges();
 
@@ -251,6 +254,10 @@ function AccountProfile() {
 
   const changePhoto = useCallback(async () => {
     if (uploading) return;
+    if (held) {
+      showSendError(t('profile.changePhoto'), { message: t('hold.title'), limited: true });
+      return;
+    }
     // The system picker returns only the chosen picture, so no permission is needed.
     const picked = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
@@ -275,7 +282,7 @@ function AccountProfile() {
       void refreshUser();
     } else if (res.rejection) setRefusal(res.rejection);
     else showSendError(t('profile.photoFailed'), { message: res.error, limited: res.limited });
-  }, [client, uploading, showSendError, t, locale, refreshUser]);
+  }, [client, uploading, held, showSendError, t, locale, refreshUser]);
 
   /*
    * Shares your profile's address. The app does not claim hevalo.app links until the association files exist (see

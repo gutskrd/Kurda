@@ -1,4 +1,4 @@
-import type { MutedErrorDetails } from '@kurda/shared';
+import { ACCOUNT_HELD, type MutedErrorDetails } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import { describeError, type Translate } from '../api/errors';
 import type { TranslationKey } from '../i18n/translations';
@@ -10,13 +10,14 @@ import { mutedDetails } from './suspension';
  * browser says the same (web/src/reports/restriction.ts). `muted` is a Hevalo sanction (403 MUTED with
  * `MutedErrorDetails`); `groupMuted` is 403 MUTED with no details, a group's own mute; `chatMuted` is 403 CHAT_MUTED,
  * the automatic pause with no reasons or known end; `suspended` is ACCOUNT_SUSPENDED, which mid-session goes to the
- * suspension screen (`ApiClient.onSuspended`).
+ * suspension screen (`ApiClient.onSuspended`); `held` is ACCOUNT_HELD, an account a person is checking (HeldNotice).
  */
 export type Restriction =
   | { kind: 'muted'; scope: MutedErrorDetails['scope']; until: string | null }
   | { kind: 'groupMuted' }
   | { kind: 'chatMuted' }
-  | { kind: 'suspended'; until: string | null };
+  | { kind: 'suspended'; until: string | null }
+  | { kind: 'held' };
 
 /** What limit, if any, an error from the API is about. */
 export function restrictionOf(error: ApiError | null | undefined): Restriction | null {
@@ -32,6 +33,8 @@ export function restrictionOf(error: ApiError | null | undefined): Restriction |
       const d = error.details as { until?: unknown } | undefined;
       return { kind: 'suspended', until: typeof d?.until === 'string' ? d.until : null };
     }
+    case ACCOUNT_HELD:
+      return { kind: 'held' };
     default:
       return null;
   }
@@ -96,12 +99,14 @@ export function restrictionText(r: Restriction, t: Translate, locale: string | u
       return r.until
         ? t('restriction.suspendedUntil', { time: formatUntil(r.until, locale, now) })
         : t('restriction.suspended');
+    case 'held':
+      return t('hold.title');
   }
 }
 
-/** Whether Account standing has the reasons for this limit: only Hevalo's own sanctions do. */
+/** Whether Account standing has the reasons for this limit: only Hevalo's own sanctions and checks do. */
 export function standingExplains(r: Restriction): boolean {
-  return r.kind === 'muted' || r.kind === 'suspended';
+  return r.kind === 'muted' || r.kind === 'suspended' || r.kind === 'held';
 }
 
 /**

@@ -340,6 +340,25 @@ describe('ApiClient', () => {
     expect(await storage.get()).toEqual({ accessToken: 'acc-1', refreshToken: 'ref-1' });
   });
 
+  /* An account a person is checking (403 ACCOUNT_HELD) is reported at once, so the app shows it before /me is read again. */
+  it('passes a held account’s refusal to onHeld, and keeps the refusal, and no other 403', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'ACCOUNT_HELD', message: 'this account is held' }))
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'FORBIDDEN', message: 'not yours' }));
+    const storage = new MemoryTokenStorage();
+    await storage.set({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+    const onHeld = vi.fn();
+    const client = new ApiClient({ baseUrl: 'https://api.test', storage, onLogout: () => undefined, onHeld, fetchFn: fetchFn as never });
+    const first = await client.post('/chat/u2/messages', { body: 'Silav' });
+    expect(first).toMatchObject({ ok: false, error: { kind: 'client', code: 'ACCOUNT_HELD', status: 403 } });
+    expect(onHeld).toHaveBeenCalledTimes(1);
+    await client.delete('/library/posts/p1');
+    expect(onHeld).toHaveBeenCalledTimes(1);
+    // Still signed in: a held account learns as usual.
+    expect(await storage.get()).toEqual({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+  });
+
   it('ends the session on the server with the stored refresh token', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
     const { client, storage, ready } = makeClient(fetchFn);

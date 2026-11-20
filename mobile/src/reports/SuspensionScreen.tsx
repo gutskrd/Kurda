@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { AccountStanding, AppealView, StandingSanction, SuspendedErrorDetails } from '@kurda/shared';
 import { ApiClient } from '../api/client';
 import type { ApiError, TokenPair, TokenStorage } from '../api/types';
 import { describeError } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
+import { formatDay } from '../i18n/format';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -20,9 +21,9 @@ import { CATEGORY_LABEL } from './labels';
 import { formatUntil } from './sendErrors';
 
 /**
- * A client that speaks only with the appeal token, which can read `GET /me/standing` and file `POST /me/appeals` and
- * nothing else. It cannot be refreshed: when it expires (a day) the answer is 401, the screen says to sign in again,
- * and nothing is stored.
+ * A client that speaks only with the appeal token, which reaches the standing, appeals, the data export and deleting the
+ * account, and nothing else (shared APPEAL_TOKEN_EXTRA_PATHS). It cannot be refreshed: when it expires (a day) the
+ * answer is 401, the screen says to sign in again, and nothing is stored.
  */
 function appealClient(baseUrl: string, appealToken: string): ApiClient {
   const storage: TokenStorage = {
@@ -54,7 +55,8 @@ export function accountSanction(standing: AccountStanding | null): StandingSanct
 
 /**
  * Signing in to a suspended or banned account: why (the rule and the reviewer's note), until when in the person's own
- * time or that it is permanent, and "Ask for a review" while open, sent with the appeal token from sign-in.
+ * time or that it is permanent, "Ask for a review" while open, and a copy of one's data or deleting the account, which
+ * a ban does not take away, all sent with the appeal token from sign-in.
  */
 export function SuspensionScreen({
   details,
@@ -158,6 +160,8 @@ export function SuspensionScreen({
           )}
         </GlassCard>
 
+        <YourData client={client} />
+
         <ClayButton label={t('suspension.back')} variant="outline" onPress={onBack} style={styles.back} />
       </ScrollView>
     </GradientBackground>
@@ -177,4 +181,135 @@ const styles = StyleSheet.create({
   note: { fontSize: typography.sizes.sm, lineHeight: 20, marginTop: spacing.sm },
   ask: { marginTop: spacing.md },
   back: { marginTop: spacing.sm },
+  action: { marginTop: spacing.sm },
 });
+
+/** The data export as `GET /me/export` reports it; a ready one comes with a fresh link that lasts minutes. */
+interface ExportStatus {
+  status: 'none' | 'pending' | 'ready';
+  downloadUrl?: string;
+  requestedAt?: string;
+}
+
+/**
+ * A copy of one's data and deleting the account, sent with the appeal token. The copy is asked for and fetched as in
+ * Settings, with a fresh link each time it is opened; deleting asks first, in the words Settings uses, and says which
+ * records are kept.
+ */
+function YourData({ client }: { client: ApiClient }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
+  const [exported, setExported] = useState<ExportStatus | null>(null);
+  const [asking, setAsking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+  const [deleted, setDeleted] = useState<string | null>(null);
+
+  // The token lasts a day; past that only signing in again gives a new one.
+  const said = useCallback(
+    (error: ApiError, otherwise: string): string => (error.status === 401 || error.kind === 'unauthorized' ? t('suspension.signInAgain') : otherwise),
+    [t],
+  );
+
+  const read = useCallback(async (): Promise<ExportStatus | null> => {
+    const res = await client.get<ExportStatus>('/me/export');
+    if (!res.ok || typeof res.data?.status !== 'string') return null;
+    setExported(res.data);
+    return res.data;
+  }, [client]);
+  useEffect(() => {
+    void read();
+  }, [read]);
+
+  const prepare = async (): Promise<void> => {
+    if (asking) return;
+    setAsking(true);
+    setNote(null);
+    const res = await client.post('/me/export');
+    setAsking(false);
+    if (res.ok) setExported({ status: 'pending' });
+    else setNote(said(res.error, t('settings.data.failed')));
+  };
+
+  const download = async (): Promise<void> => {
+    setNote(null);
+    const status = await read();
+    if (status?.status === 'ready' && status.downloadUrl) {
+      const url = status.downloadUrl;
+      Alert.alert(t('settings.data.title'), readyText(status), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('settings.data.again'), onPress: () => void prepare() },
+        { text: t('settings.data.download'), onPress: () => void Linking.openURL(url) },
+      ]);
+    } else if (status?.status !== 'pending') await prepare();
+  };
+
+  const remove = async (): Promise<void> => {
+    setDeleting(true);
+    const res = await client.delete<{ deletionScheduled?: boolean; graceDays?: number }>('/me');
+    setDeleting(false);
+    if (!res.ok) {
+      Alert.alert(t('settings.delete.failed'), said(res.error, describeError(res.error, t)));
+      return;
+    }
+    const days = res.data?.deletionScheduled ? (res.data.graceDays ?? 0) : 0;
+    setDeleted(days > 0 ? t('suspension.delete.scheduled', { days }) : t('settings.delete.doneNow'));
+  };
+
+  const confirmDelete = (): void => {
+    Alert.alert(t('settings.delete.confirmTitle'), t('suspension.delete.warning'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('settings.delete.confirm'), style: 'destructive', onPress: () => void remove() },
+    ]);
+  };
+
+  const readyText = (status: ExportStatus): string =>
+    t('settings.data.ready', { date: status.requestedAt ? formatDay(new Date(status.requestedAt), locale) : '' });
+
+  return (
+    <GlassCard style={styles.card}>
+      <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+        {t('settings.data.title')}
+      </Text>
+      {deleted ? (
+        <Text style={[styles.note, dir.text, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">
+          {deleted}
+        </Text>
+      ) : (
+        <>
+          <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('suspension.data.help')}</Text>
+          {exported?.status === 'pending' ? (
+            <Text style={[styles.note, dir.text, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">
+              {t('suspension.data.preparing')}
+            </Text>
+          ) : (
+            <>
+              {exported?.status === 'ready' ? <Text style={[styles.note, dir.text, { color: colors.textPrimary }]}>{readyText(exported)}</Text> : null}
+              <ClayButton
+                label={asking ? t('settings.data.requesting') : t('suspension.data.download')}
+                variant="outline"
+                busy={asking}
+                onPress={() => void download()}
+                style={styles.ask}
+              />
+            </>
+          )}
+          {note ? (
+            <Text style={[styles.note, dir.text, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+              {note}
+            </Text>
+          ) : null}
+          <ClayButton
+            label={t('suspension.delete.button')}
+            tone="danger"
+            variant="outline"
+            busy={deleting}
+            onPress={confirmDelete}
+            style={styles.action}
+          />
+        </>
+      )}
+    </GlassCard>
+  );
+}

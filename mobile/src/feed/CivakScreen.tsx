@@ -41,6 +41,7 @@ import { FilterChip, FilterChips } from '../theme/FilterSheet';
 import { Loading } from '../theme/Loading';
 import { DailyCard } from '../daily/DailyCard';
 import { LeagueLine } from '../leagues/LeagueLine';
+import { HeldBanner } from '../reports/HeldNotice';
 
 const PAGE = 20;
 
@@ -239,6 +240,8 @@ export function CivakScreen({
             <>
               <View style={styles.top}>
                 <Text style={[styles.subtitle, dir.text, { color: colors.textSecondary }]}>{t('civak.subtitle')}</Text>
+                {/* Where a held account lands: what waits and that learning does not. */}
+                <HeldBanner />
                 <DailyCard onLearn={() => navigation.navigate('Learn', { view: 'lessons' })} />
                 <LeagueLine />
               </View>

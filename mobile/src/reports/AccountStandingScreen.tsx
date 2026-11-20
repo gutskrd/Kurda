@@ -30,6 +30,7 @@ import {
 import { formatDay, formatUntil } from './sendErrors';
 import { heldDim } from '../theme/MotionParts';
 import { pendingOf } from '../pictures/review';
+import { HeldNotice, useAccountHeld } from './HeldNotice';
 
 const SCOPES: readonly RestrictionScope[] = ['account', 'chat', 'post', 'media'];
 
@@ -59,6 +60,7 @@ export function AccountStandingScreen({ onExit }: { onExit: () => void }): React
     });
   }, [client]);
 
+  const held = useAccountHeld();
   useEffect(load, [load]);
 
   return (
@@ -67,6 +69,8 @@ export function AccountStandingScreen({ onExit }: { onExit: () => void }): React
       <AsyncBoundary loading={loading && !standing} error={standing ? null : error} onRetry={load}>
         {standing ? (
           <ScrollView contentContainerStyle={styles.body}>
+            {/* A check on the account is not a decision, so it is said here rather than listed with them. */}
+            {held ? <HeldNotice standing={false} /> : null}
             <StandingSummary standing={standing} />
             <StandingDecisions standing={standing} client={client} onChanged={load} />
             <GlassCard padding="tight">
