@@ -795,6 +795,16 @@ export const es: Catalogue = {
   'hold.why': '¿Por qué?',
   'hold.whyBody':
     'Una persona de Hevalo está revisando tu cuenta para que la comunidad siga siendo segura. Hasta entonces no puedes publicar, comentar, enviar mensajes ni cartas, añadir imágenes ni unirte a grupos. Te avisaremos en Hevalo en cuanto termine.',
+  'hold.heading': 'Estamos revisando tu cuenta',
+  'hold.statement':
+    'Una persona está revisando tu cuenta antes de que puedas publicar, comentar, enviar mensajes, compartir imágenes, escribir cartas o unirte a grupos. Puedes seguir aprendiendo como siempre. Esto no significa que hayas incumplido ninguna norma.',
+  'account.unavailable': 'Esta cuenta no está disponible.',
+  'account.unavailableByline': 'Cuenta no disponible',
+  'error.code.cannotJoinYet': 'Esta persona no puede unirse a grupos ahora mismo.',
+  'error.code.exportNotAvailable': 'Ahora mismo no se pueden preparar copias. Inténtalo de nuevo más tarde.',
+  'suspension.delete.keep': 'Conservar mi cuenta',
+  'suspension.delete.kept': 'Tu cuenta se queda. No se ha eliminado nada.',
+  'hold.since': 'Desde el {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': 'Denunciar a {name}',
   'report.title.message': 'Denunciar este mensaje',
@@ -1125,7 +1135,7 @@ export const es: Catalogue = {
   'suspension.data.preparing': 'Estamos preparando tu copia. Vuelve a iniciar sesión más tarde para descargarla aquí.',
   'suspension.delete.button': 'Eliminar mi cuenta',
   'suspension.delete.warning':
-    'Tu cuenta y todos tus datos se eliminarán definitivamente después de 14 días. Los registros de las decisiones de moderación se conservan, como explica la política de privacidad.',
+    'Tu cuenta y todos tus datos se eliminarán definitivamente después de 14 días; hasta entonces puedes conservar tu cuenta desde esta pantalla. Los registros de las decisiones de moderación se conservan, como explica la política de privacidad.',
   'suspension.delete.scheduled': 'Tu cuenta se va a eliminar. Desaparecerá definitivamente dentro de {days} días.',
   'suspension.signInAgain': 'Esta página lleva demasiado tiempo abierta. Vuelve a iniciar sesión para continuar.',
   'suspension.data.ready': 'Tu copia del {date} está lista.',

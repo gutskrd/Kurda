@@ -324,7 +324,7 @@ describe('the suspension screen', () => {
     renderApp(<SuspensionScreen details={details} onClose={() => undefined} />);
     const data = within(await screen.findByRole('region', { name: 'Your data' }));
     await userEvent.click(data.getByRole('button', { name: 'Delete my account' }));
-    expect(data.getByText(/permanently deleted after 14 days\. Records of moderation decisions are kept/)).toBeInTheDocument();
+    expect(data.getByText(/permanently deleted after 14 days; until then you can keep your account from this screen\. Records of moderation decisions are kept/)).toBeInTheDocument();
     // Cancel takes it back without asking the server anything.
     await userEvent.click(data.getByRole('button', { name: 'Cancel' }));
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
@@ -337,6 +337,39 @@ describe('the suspension screen', () => {
     expect(deleted[0]!.url).toMatch(/\/me$/);
     expect(deleted[0]!.auth).toBe('Bearer appeal-token');
     expect(data.queryByRole('button', { name: 'Download a copy of my data' })).not.toBeInTheDocument();
+  });
+
+  it('keeps the account from this screen while its deletion waits, and goes back to the usual view', async () => {
+    const calls = stub({
+      '/me/standing': banned(),
+      '/me/export': { status: 'none' },
+      '/me': (init?: RequestInit) => (init?.method === 'DELETE' ? jsonResponse(200, { deletionScheduled: true, graceDays: 14 }) : jsonResponse(404, {})),
+      '/me/deletion/cancel': () => jsonResponse(200, { cancelled: true }),
+    });
+    renderApp(<SuspensionScreen details={details} onClose={() => undefined} />);
+    const data = within(await screen.findByRole('region', { name: 'Your data' }));
+    await userEvent.click(data.getByRole('button', { name: 'Delete my account' }));
+    expect(data.getByText(/until then you can keep your account from this screen/)).toBeInTheDocument();
+    await userEvent.click(data.getByRole('button', { name: 'Yes, delete my account' }));
+    await userEvent.click(await data.findByRole('button', { name: 'Keep my account' }));
+    expect(await data.findByText('Your account will stay. Nothing has been deleted.')).toBeInTheDocument();
+    expect(data.getByRole('button', { name: 'Download a copy of my data' })).toBeInTheDocument();
+    expect(data.getByRole('button', { name: 'Delete my account' })).toBeInTheDocument();
+    const cancel = calls.find((c) => c.url.endsWith('/me/deletion/cancel'));
+    expect(cancel).toMatchObject({ method: 'POST', auth: 'Bearer appeal-token' });
+  });
+
+  it('says plainly when no copy can be made right now', async () => {
+    stub({
+      '/me/standing': banned(),
+      '/me/export': (init?: RequestInit) =>
+        init?.method === 'POST' ? jsonResponse(503, { code: 'EXPORT_NOT_AVAILABLE', message: 'data export is not available right now' }) : jsonResponse(200, { status: 'none' }),
+    });
+    renderApp(<SuspensionScreen details={details} onClose={() => undefined} />);
+    const data = within(await screen.findByRole('region', { name: 'Your data' }));
+    await userEvent.click(await data.findByRole('button', { name: 'Download a copy of my data' }));
+    expect(await data.findByText('Copies can’t be made right now. Please try again later.')).toBeInTheDocument();
+    expect(screen.queryByText('data export is not available right now')).not.toBeInTheDocument();
   });
 
   it('asks to sign in again when the token has run out before deleting', async () => {

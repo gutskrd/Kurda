@@ -376,6 +376,12 @@ export const CODE_COPY: Record<string, MessageKey> = {
   SESSION_NOT_FOUND: 'error.code.sessionNotFound',
   // The maintenance screen says the rest, so no generic server error is shown beside it.
   [MAINTENANCE_CODE]: 'maintenance.title',
+  // Messaging, inviting or opening the profile of an account that is suspended or banned: the same calm words everywhere.
+  ACCOUNT_UNAVAILABLE: 'account.unavailable',
+  // Adding a held account to a group, which waits until a person has checked it.
+  CANNOT_JOIN_YET: 'error.code.cannotJoinYet',
+  // A copy of one's data, while there is nowhere private to keep it.
+  EXPORT_NOT_AVAILABLE: 'error.code.exportNotAvailable',
 };
 /** Sentences for `WEAK_PASSWORD`'s `details.reason` (api/src/auth/password-policy.ts); the numbers are the policy's. */
 const PASSWORD_REASON: Record<string, [MessageKey, Record<string, number>?]> = {

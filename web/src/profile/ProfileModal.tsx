@@ -13,7 +13,7 @@ import type {
 } from '../lib/types';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
-import { ErrorState } from '../components/states';
+import { EmptyState, ErrorState } from '../components/states';
 import { ProfileCardSkeleton } from '../components/skeletons';
 import { GiftedNote } from './cosmetic-parts';
 import { ProfileCard } from '../ui/ProfileCard';
@@ -94,6 +94,8 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   const [me, setMe] = useState<MeProfile | null>(null);
   const [other, setOther] = useState<PublicProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // A suspended or banned account: said calmly, with nothing to try again.
+  const [notAvailable, setNotAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0); // bump to retry
   /** Held here because blocking replaces the whole card: afterwards the profile answers 404, so the card says so. */
@@ -106,6 +108,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setNotAvailable(false);
     setMe(null);
     setOther(null);
 
@@ -122,7 +125,8 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         if (r.ok && r.data?.username) {
           setOther(r.data);
           setStatus(r.data.friendStatus);
-        } else setError(failureReason(`/users/${target.userId}`, r, t));
+        } else if (!r.ok && r.error.code === 'ACCOUNT_UNAVAILABLE') setNotAvailable(true);
+        else setError(failureReason(`/users/${target.userId}`, r, t));
       }
       if (!cancelled) setLoading(false);
     })();
@@ -133,6 +137,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   }, [client, target, attempt]);
 
   if (loading) return <ProfileCardSkeleton />;
+  if (notAvailable) return <EmptyState title={t('account.unavailable')} />;
   if (error) return <ErrorState title={t('profile.loadFailed')} message={error} onRetry={() => setAttempt((n) => n + 1)} />;
 
   // One normalized view drives a shared card shell for both own + others.

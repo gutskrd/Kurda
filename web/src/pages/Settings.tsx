@@ -741,7 +741,7 @@ function Privacy({ current, minor, onChanged }: { current: Visibility; minor: bo
 function ExportData(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
+  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error' | 'unavailable'>('idle');
 
   return (
     <>
@@ -754,13 +754,15 @@ function ExportData(): React.JSX.Element {
           disabled={state === 'sending'}
           onClick={() => {
             setState('sending');
-            void client.post('/me/export').then((r) => setState(r.ok ? 'done' : 'error'));
+            // With nowhere private to keep a copy the server makes none, which is said as that rather than as a failure.
+            void client.post('/me/export').then((r) => setState(r.ok ? 'done' : r.error.code === 'EXPORT_NOT_AVAILABLE' ? 'unavailable' : 'error'));
           }}
         >
           {state === 'sending' ? t('settings.data.requesting') : t('settings.data.request')}
         </Button>
       )}
       {state === 'error' && <div className="msg msg-error" style={{ marginTop: 10 }}>{t('settings.data.failed')}</div>}
+      {state === 'unavailable' && <div className="msg" style={{ marginTop: 10 }}>{t('error.code.exportNotAvailable')}</div>}
     </>
   );
 }

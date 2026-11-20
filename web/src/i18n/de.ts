@@ -797,6 +797,16 @@ export const de: Catalogue = {
   'hold.why': 'Warum?',
   'hold.whyBody':
     'Eine Person bei Hevalo prüft dein Konto, damit die Community sicher bleibt. Bis dahin kannst du nichts posten oder kommentieren, keine Nachrichten oder Briefe senden, keine Bilder hinzufügen und keinen Gruppen beitreten. Sobald die Prüfung fertig ist, sagen wir dir in Hevalo Bescheid.',
+  'hold.heading': 'Dein Konto wird geprüft',
+  'hold.statement':
+    'Eine Person prüft dein Konto, bevor du posten, kommentieren, Nachrichten senden, Bilder teilen, Briefe schreiben oder Gruppen beitreten kannst. Lernen geht ganz normal weiter. Das heißt nicht, dass du gegen eine Regel verstoßen hast.',
+  'account.unavailable': 'Dieses Konto ist nicht verfügbar.',
+  'account.unavailableByline': 'Konto nicht verfügbar',
+  'error.code.cannotJoinYet': 'Diese Person kann gerade keinen Gruppen beitreten.',
+  'error.code.exportNotAvailable': 'Kopien können gerade nicht erstellt werden. Bitte versuch es später noch einmal.',
+  'suspension.delete.keep': 'Mein Konto behalten',
+  'suspension.delete.kept': 'Dein Konto bleibt. Es wurde nichts gelöscht.',
+  'hold.since': 'Seit {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': '{name} melden',
   'report.title.message': 'Diese Nachricht melden',
@@ -1127,7 +1137,7 @@ export const de: Catalogue = {
   'suspension.data.preparing': 'Deine Kopie wird vorbereitet. Melde dich später wieder an, um sie hier herunterzuladen.',
   'suspension.delete.button': 'Mein Konto löschen',
   'suspension.delete.warning':
-    'Dein Konto und alle deine Daten werden nach 14 Tagen endgültig gelöscht. Moderationsakten bleiben erhalten, wie es die Datenschutzerklärung beschreibt.',
+    'Dein Konto und alle deine Daten werden nach 14 Tagen endgültig gelöscht; bis dahin kannst du dein Konto auf diesem Bildschirm behalten. Moderationsakten bleiben erhalten, wie es die Datenschutzerklärung beschreibt.',
   'suspension.delete.scheduled': 'Dein Konto wird gelöscht. In {days} Tagen ist es endgültig weg.',
   'suspension.signInAgain': 'Diese Seite war zu lange offen. Melde dich erneut an, um weiterzumachen.',
   'suspension.data.ready': 'Deine Kopie vom {date} ist fertig.',

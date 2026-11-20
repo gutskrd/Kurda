@@ -94,6 +94,7 @@ const HowHevaloTeaches = lazy(() =>
 const MyReports = lazy(() => import('./reports/MyReports').then((m) => ({ default: m.MyReports })));
 const AccountStanding = lazy(() => import('./reports/AccountStanding').then((m) => ({ default: m.AccountStanding })));
 import { SuspensionGate } from './reports/SuspensionGate';
+import { AccountWatch } from './reports/AccountWatch';
 // The screen shown in place of the app while Hevalo is taken offline from the admin console.
 import { MaintenanceGate } from './maintenance/MaintenanceGate';
 import { StandingWarnings } from './reports/StandingWarnings';
@@ -391,6 +392,8 @@ export function App(): React.JSX.Element {
         <SuspensionGate>
         {/* The social column's data and game invites, held once for every shell, so moving between a lesson and the app keeps the bar's counts. */}
         <RailProvider>
+        {/* A limit given or lifted, a hold included, shows as soon as the server says so. */}
+        <AccountWatch />
         <PlayProvider>
         <AppRoutes />
         </PlayProvider>

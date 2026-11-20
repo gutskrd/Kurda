@@ -799,6 +799,16 @@ export const ku: Catalogue = {
   'hold.why': 'Çima?',
   'hold.whyBody':
     'Kesek ji Hevalo hesabê te kontrol dike, da ku civak ewle bimîne. Heta wê demê tu nikarî tiştekî biweşînî, şîrove bikî, peyam an name bişînî, wêne zêde bikî an tevlî koman bibî. Gava kontrol biqede, em ê li Hevalo ji te re bibêjin.',
+  'hold.heading': 'Hesabê te tê kontrolkirin',
+  'hold.statement':
+    'Kesek hesabê te kontrol dike, berî ku tu bikarî tiştekî biweşînî, şîrove bikî, peyaman bişînî, wêneyan parve bikî, nameyan binivîsî an tevlî koman bibî. Fêrbûn wek her car didome. Ev nayê wê wateyê ku te rêzikek şikandiye.',
+  'account.unavailable': 'Ev hesab ne berdest e.',
+  'account.unavailableByline': 'Hesab ne berdest e',
+  'error.code.cannotJoinYet': 'Ev kes niha nikare tevlî koman bibe.',
+  'error.code.exportNotAvailable': 'Niha kopî nayên amadekirin. Ji kerema xwe paşê dîsa biceribîne.',
+  'suspension.delete.keep': 'Hesabê min bihêle',
+  'suspension.delete.kept': 'Hesabê te dimîne. Tiştek nehatiye jêbirin.',
+  'hold.since': 'Ji {date} ve',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': '{name} ragihîne',
   'report.title.message': 'Vê peyamê ragihîne',
@@ -1129,7 +1139,7 @@ export const ku: Catalogue = {
   'suspension.data.preparing': 'Kopiya te tê amadekirin. Paşê dîsa têkeve da ku li vir daxî.',
   'suspension.delete.button': 'Hesabê min jê bibe',
   'suspension.delete.warning':
-    'Hesabê te û hemû daneyên te piştî 14 rojan bi tevahî tên jêbirin. Tomarên biryarên çavdêriyê tên parastin, wek ku polîtîkaya nihêniyê rave dike.',
+    'Hesabê te û hemû daneyên te piştî 14 rojan bi tevahî tên jêbirin; heta wê demê tu dikarî ji vê ekranê hesabê xwe bihêlî. Tomarên biryarên çavdêriyê tên parastin, wek ku polîtîkaya nihêniyê rave dike.',
   'suspension.delete.scheduled': 'Hesabê te dê were jêbirin. Piştî {days} rojan ew ê bi tevahî nemîne.',
   'suspension.signInAgain': 'Ev rûpel pir dirêj vekirî ma. Ji bo berdewamkirinê dîsa têkeve.',
   'suspension.data.ready': 'Kopiya te ya {date} amade ye.',

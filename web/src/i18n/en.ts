@@ -858,6 +858,16 @@ export const en = {
   'hold.why': 'Why?',
   'hold.whyBody':
     'A person at Hevalo is checking your account to keep the community safe. Until then you can’t post, comment, send messages or letters, add pictures or join groups. We’ll let you know in Hevalo as soon as it’s done.',
+  'hold.heading': 'Your account is being checked',
+  'hold.statement':
+    'A person is checking your account before you can post, comment, send messages, share pictures, write letters or join groups. Learning works as usual. This is not a finding that you broke a rule.',
+  'account.unavailable': 'This account isn’t available.',
+  'account.unavailableByline': 'Account unavailable',
+  'error.code.cannotJoinYet': 'This person can’t join groups right now.',
+  'error.code.exportNotAvailable': 'Copies can’t be made right now. Please try again later.',
+  'suspension.delete.keep': 'Keep my account',
+  'suspension.delete.kept': 'Your account will stay. Nothing has been deleted.',
+  'hold.since': 'Since {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': 'Report {name}',
   'report.title.message': 'Report this message',
@@ -1190,7 +1200,7 @@ export const en = {
   'suspension.data.preparing': 'Your copy is being prepared. Sign in again later to download it here.',
   'suspension.delete.button': 'Delete my account',
   'suspension.delete.warning':
-    'Your account and all your data will be permanently deleted after 14 days. Records of moderation decisions are kept, as the privacy policy explains.',
+    'Your account and all your data will be permanently deleted after 14 days; until then you can keep your account from this screen. Records of moderation decisions are kept, as the privacy policy explains.',
   'suspension.delete.scheduled': 'Your account is set to be deleted. It will be gone for good in {days} days.',
   'suspension.signInAgain': 'This page has been open too long. Sign in again to continue.',
   'suspension.data.ready': 'Your copy from {date} is ready.',

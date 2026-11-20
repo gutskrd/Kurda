@@ -792,6 +792,16 @@ export const tr: Catalogue = {
   'hold.why': 'Neden?',
   'hold.whyBody':
     'Topluluğun güvende kalması için Hevalo’dan bir kişi hesabını inceliyor. O zamana kadar paylaşım yapamaz, yorum yazamaz, mesaj ya da mektup gönderemez, resim ekleyemez ve gruplara katılamazsın. İnceleme biter bitmez sana Hevalo’da haber vereceğiz.',
+  'hold.heading': 'Hesabın kontrol ediliyor',
+  'hold.statement':
+    'Bir kişi hesabını inceliyor; bu bitene kadar paylaşım yapamaz, yorum yazamaz, mesaj gönderemez, resim paylaşamaz, mektup yazamaz ve gruplara katılamazsın. Öğrenmeye her zamanki gibi devam edebilirsin. Bu, bir kuralı çiğnediğin anlamına gelmez.',
+  'account.unavailable': 'Bu hesap kullanılamıyor.',
+  'account.unavailableByline': 'Hesap kullanılamıyor',
+  'error.code.cannotJoinYet': 'Bu kişi şu anda gruplara katılamıyor.',
+  'error.code.exportNotAvailable': 'Şu anda kopya hazırlanamıyor. Lütfen daha sonra tekrar dene.',
+  'suspension.delete.keep': 'Hesabımı koru',
+  'suspension.delete.kept': 'Hesabın kalıyor. Hiçbir şey silinmedi.',
+  'hold.since': '{date} tarihinden beri',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': '{name} kişisini bildir',
   'report.title.message': 'Bu mesajı bildir',
@@ -1122,7 +1132,7 @@ export const tr: Catalogue = {
   'suspension.data.preparing': 'Kopyan hazırlanıyor. Buradan indirmek için daha sonra yeniden giriş yap.',
   'suspension.delete.button': 'Hesabımı sil',
   'suspension.delete.warning':
-    'Hesabın ve tüm verilerin 14 gün sonra kalıcı olarak silinecek. Moderasyon kararlarının kayıtları, gizlilik politikasında açıklandığı gibi saklanır.',
+    'Hesabın ve tüm verilerin 14 gün sonra kalıcı olarak silinecek; o zamana kadar bu ekrandan hesabını koruyabilirsin. Moderasyon kararlarının kayıtları, gizlilik politikasında açıklandığı gibi saklanır.',
   'suspension.delete.scheduled': 'Hesabın silinecek. {days} gün sonra tamamen kaldırılacak.',
   'suspension.signInAgain': 'Bu sayfa çok uzun süre açık kaldı. Devam etmek için yeniden giriş yap.',
   'suspension.data.ready': '{date} tarihli kopyan hazır.',

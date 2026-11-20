@@ -790,6 +790,16 @@ export const ar: Catalogue = {
   'hold.why': 'لماذا؟',
   'hold.whyBody':
     'يراجع شخصٌ من فريق Hevalo حسابك حفاظًا على أمان المجتمع. وحتى ذلك الحين لا يمكنك النشر أو التعليق أو إرسال الرسائل أو إضافة الصور أو الانضمام إلى المجموعات. سنُعلمك في Hevalo فور الانتهاء.',
+  'hold.heading': 'نراجع حسابك',
+  'hold.statement':
+    'يراجع شخصٌ حسابك قبل أن تتمكن من النشر أو التعليق أو إرسال الرسائل وكتابتها أو مشاركة الصور أو الانضمام إلى المجموعات. يمكنك مواصلة التعلّم كالمعتاد. وهذا لا يعني أنك خالفت أي قاعدة.',
+  'account.unavailable': 'هذا الحساب غير متاح.',
+  'account.unavailableByline': 'حساب غير متاح',
+  'error.code.cannotJoinYet': 'لا يمكن لهذا الشخص الانضمام إلى المجموعات الآن.',
+  'error.code.exportNotAvailable': 'لا يمكن تجهيز نسخ الآن. حاول مجددًا لاحقًا.',
+  'suspension.delete.keep': 'احتفظ بحسابي',
+  'suspension.delete.kept': 'سيبقى حسابك. لم يُحذف أي شيء.',
+  'hold.since': 'منذ {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': 'الإبلاغ عن {name}',
   'report.title.message': 'الإبلاغ عن هذه الرسالة',
@@ -1119,7 +1129,8 @@ export const ar: Catalogue = {
   'suspension.data.download': 'نزّل نسخة من بياناتي',
   'suspension.data.preparing': 'يجري تجهيز نسختك. سجّل الدخول مجددًا لاحقًا لتنزيلها من هنا.',
   'suspension.delete.button': 'احذف حسابي',
-  'suspension.delete.warning': 'سيُحذف حسابك وكل بياناتك نهائيًا بعد 14 يومًا. أمّا سجلات قرارات الإشراف فتُحفظ، كما توضّح سياسة الخصوصية.',
+  'suspension.delete.warning':
+    'سيُحذف حسابك وكل بياناتك نهائيًا بعد 14 يومًا، ويمكنك حتى ذلك الحين الاحتفاظ بحسابك من هذه الشاشة. أمّا سجلات قرارات الإشراف فتُحفظ، كما توضّح سياسة الخصوصية.',
   'suspension.delete.scheduled': 'سيُحذف حسابك. سيختفي نهائيًا بعد {days} يومًا.',
   'suspension.signInAgain': 'بقيت هذه الصفحة مفتوحة طويلًا. سجّل الدخول مجددًا للمتابعة.',
   'suspension.data.ready': 'نسختك من {date} جاهزة.',

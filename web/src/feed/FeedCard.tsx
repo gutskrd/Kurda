@@ -99,14 +99,22 @@ export function FeedCard({
     <article ref={onPage ? intoPage : fromWall} className={`fcard fcard-${item.kind}${pictures.length > 0 ? ' has-pics' : ''}${onPage ? ' is-page' : ''}`}>
       {/* One line: the author (linking to their profile), the kind and age, and the ⋯ menu. */}
       <header className="fcard-head">
-        <button
-          type="button"
-          className="fcard-who"
-          onClick={() => openProfile({ kind: 'user', userId: item.author.id, username: item.author.username })}
-        >
-          <Avatar url={item.author.avatarUrl} glyphSize={18} />
-          <span className="fcard-name">{item.author.username}</span>
-        </button>
+        {item.author.unavailable ? (
+          // Kept content of a suspended or banned account: no face, no name, nothing to open.
+          <span className="fcard-who is-unavailable">
+            <Avatar url={null} glyphSize={18} />
+            <span className="fcard-name">{t('account.unavailableByline')}</span>
+          </span>
+        ) : (
+          <button
+            type="button"
+            className="fcard-who"
+            onClick={() => openProfile({ kind: 'user', userId: item.author.id, username: item.author.username })}
+          >
+            <Avatar url={item.author.avatarUrl} glyphSize={18} />
+            <span className="fcard-name">{item.author.username}</span>
+          </button>
+        )}
         <span className="fcard-meta">
           {/* The post's kind, quietly beside the name, since the wall mixes kinds. */}
           <span className="fcard-kind">{CARD_LABEL_KEY[badge] ? t(CARD_LABEL_KEY[badge]!) : badge}</span>

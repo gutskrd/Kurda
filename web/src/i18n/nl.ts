@@ -797,6 +797,16 @@ export const nl: Catalogue = {
   'hold.why': 'Waarom?',
   'hold.whyBody':
     'Iemand van Hevalo controleert je account, zodat de community veilig blijft. Tot die tijd kun je niets plaatsen of reageren, geen berichten of brieven sturen, geen afbeeldingen toevoegen en geen lid worden van groepen. We laten het je in Hevalo weten zodra het klaar is.',
+  'hold.heading': 'Je account wordt gecontroleerd',
+  'hold.statement':
+    'Iemand controleert je account voordat je iets kunt plaatsen, reageren, berichten sturen, afbeeldingen delen, brieven schrijven of lid worden van groepen. Leren gaat gewoon door. Dit betekent niet dat je een regel hebt overtreden.',
+  'account.unavailable': 'Dit account is niet beschikbaar.',
+  'account.unavailableByline': 'Account niet beschikbaar',
+  'error.code.cannotJoinYet': 'Deze persoon kan nu geen lid worden van groepen.',
+  'error.code.exportNotAvailable': 'Er kunnen nu geen kopieën worden gemaakt. Probeer het later opnieuw.',
+  'suspension.delete.keep': 'Mijn account houden',
+  'suspension.delete.kept': 'Je account blijft. Er is niets verwijderd.',
+  'hold.since': 'Sinds {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': '{name} melden',
   'report.title.message': 'Dit bericht melden',
@@ -1127,7 +1137,7 @@ export const nl: Catalogue = {
   'suspension.data.preparing': 'Je kopie wordt klaargemaakt. Log later opnieuw in om haar hier te downloaden.',
   'suspension.delete.button': 'Mijn account verwijderen',
   'suspension.delete.warning':
-    'Je account en al je gegevens worden na 14 dagen definitief verwijderd. Moderatiedossiers blijven bewaard, zoals het privacybeleid uitlegt.',
+    'Je account en al je gegevens worden na 14 dagen definitief verwijderd; tot die tijd kun je je account via dit scherm houden. Moderatiedossiers blijven bewaard, zoals het privacybeleid uitlegt.',
   'suspension.delete.scheduled': 'Je account wordt verwijderd. Over {days} dagen is het definitief weg.',
   'suspension.signInAgain': 'Deze pagina stond te lang open. Log opnieuw in om verder te gaan.',
   'suspension.data.ready': 'Je kopie van {date} staat klaar.',

@@ -796,6 +796,16 @@ export const fr: Catalogue = {
   'hold.why': 'Pourquoi ?',
   'hold.whyBody':
     'Une personne de Hevalo vérifie ton compte pour que la communauté reste sûre. D’ici là, tu ne peux pas publier, commenter, envoyer de messages ni de lettres, ajouter d’images ni rejoindre de groupes. On te prévient dans Hevalo dès que c’est terminé.',
+  'hold.heading': 'Ton compte est en cours de vérification',
+  'hold.statement':
+    'Une personne vérifie ton compte avant que tu puisses publier, commenter, envoyer des messages, partager des images, écrire des lettres ou rejoindre des groupes. Tu peux continuer à apprendre comme d’habitude. Cela ne veut pas dire que tu as enfreint une règle.',
+  'account.unavailable': 'Ce compte n’est pas disponible.',
+  'account.unavailableByline': 'Compte indisponible',
+  'error.code.cannotJoinYet': 'Cette personne ne peut pas rejoindre de groupes pour le moment.',
+  'error.code.exportNotAvailable': 'Impossible de préparer une copie pour le moment. Réessaie plus tard.',
+  'suspension.delete.keep': 'Garder mon compte',
+  'suspension.delete.kept': 'Ton compte est conservé. Rien n’a été supprimé.',
+  'hold.since': 'Depuis le {date}',
   // the report sheet (reports/ReportSheet.tsx)
   'report.title.named': 'Signaler {name}',
   'report.title.message': 'Signaler ce message',
@@ -1126,7 +1136,7 @@ export const fr: Catalogue = {
   'suspension.data.preparing': 'Ta copie est en cours de préparation. Reconnecte-toi plus tard pour la télécharger ici.',
   'suspension.delete.button': 'Supprimer mon compte',
   'suspension.delete.warning':
-    'Ton compte et toutes tes données seront définitivement supprimés après 14 jours. Les dossiers des décisions de modération sont conservés, comme l’explique la politique de confidentialité.',
+    'Ton compte et toutes tes données seront définitivement supprimés après 14 jours ; d’ici là, tu peux garder ton compte depuis cet écran. Les dossiers des décisions de modération sont conservés, comme l’explique la politique de confidentialité.',
   'suspension.delete.scheduled': 'Ton compte va être supprimé. Il aura définitivement disparu dans {days} jours.',
   'suspension.signInAgain': 'Cette page est restée ouverte trop longtemps. Reconnecte-toi pour continuer.',
   'suspension.data.ready': 'Ta copie du {date} est prête.',

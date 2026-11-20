@@ -204,6 +204,8 @@ export interface PostAuthorRef {
   id: string;
   username: string;
   avatarUrl: string | null;
+  /** Set while the account is suspended or banned and what it shared was kept: the byline says so and opens nothing. */
+  unavailable?: true;
 }
 
 /** A picture or meme posted to Dîmen (GET /images). */
@@ -513,7 +515,7 @@ export interface LibraryPost {
   authorId: string;
   authorRole: string;
   /** Resolved on the read paths, so a post shows who wrote it. */
-  author: { id: string; username: string; avatarUrl: string | null };
+  author: PostAuthorRef;
   type: 'story' | 'poem';
   title: string;
   body: string;

@@ -508,6 +508,12 @@
 .sanction-statement {
   margin: 12px 0 0;
 }
+/* a hold's own words, plain rather than quoted: nobody wrote them about something the person did */
+.sanction-hold {
+  margin: 12px 0 0;
+  color: var(--ink);
+  line-height: 1.5;
+}
 .sanction-statement figcaption {
   font-size: 0.8rem;
   font-weight: 600;
@@ -635,6 +641,9 @@
 }
 .suspension-delete p {
   margin: 0;
+}
+.suspension-data-error {
+  margin: 10px 0 0;
 }
 
 /* ---- the ⋯ beside something reportable (reports/MessageMenu.tsx) --------- */

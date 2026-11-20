@@ -158,10 +158,14 @@ interface ExportStatus {
 const PREPARING_POLL_MS = 60_000;
 const READY_POLL_MS = 10 * 60_000;
 
+/** Where deleting the account stands on this screen: waiting out its grace period, or closed at once. */
+type Deletion = { kind: 'scheduled'; days: number } | { kind: 'gone' };
+
 /**
  * A copy of one's data and deleting the account, both sent with the appeal token. The copy is prepared in the background
  * as in Settings, so this asks for one and offers the download once it is ready; deleting asks first, in the words
- * Settings uses, and says which records are kept.
+ * Settings uses, and says which records are kept. A suspended person cannot sign in to change their mind, so a deletion
+ * waiting out its grace period can be undone here (`POST /me/deletion/cancel`).
  */
 function YourData({ appealToken }: { appealToken: string }): React.JSX.Element {
   const { client } = useAuth();
@@ -174,7 +178,10 @@ function YourData({ appealToken }: { appealToken: string }): React.JSX.Element {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleted, setDeleted] = useState<string | null>(null);
+  const [deletion, setDeletion] = useState<Deletion | null>(null);
+  const [keeping, setKeeping] = useState(false);
+  const [kept, setKept] = useState(false);
+  const deleted = deletion !== null;
 
   // The token lasts a day; past that only signing in again gives a new one.
   const said = useCallback(
@@ -201,12 +208,14 @@ function YourData({ appealToken }: { appealToken: string }): React.JSX.Element {
     const res = await client.post('/me/export', undefined, auth);
     setAsking(false);
     if (res.ok) setExported({ status: 'pending' });
-    else setExportError(said(res.error, t('settings.data.failed')));
+    // With nowhere private to keep a copy the server makes none, which is said as that rather than as a failure.
+    else setExportError(said(res.error, res.error.code === 'EXPORT_NOT_AVAILABLE' ? t('error.code.exportNotAvailable') : t('settings.data.failed')));
   }
 
   async function remove(): Promise<void> {
     setDeleting(true);
     setDeleteError(null);
+    setKept(false);
     const res = await client.delete<{ deletionScheduled?: boolean; deleted?: boolean; graceDays?: number }>('/me', auth);
     setDeleting(false);
     if (!res.ok) {
@@ -215,7 +224,20 @@ function YourData({ appealToken }: { appealToken: string }): React.JSX.Element {
     }
     const days = res.data?.deletionScheduled ? (res.data.graceDays ?? 0) : 0;
     setConfirming(false);
-    setDeleted(days > 0 ? t('suspension.delete.scheduled', { days }) : t('suspension.delete.deleted'));
+    setDeletion(days > 0 ? { kind: 'scheduled', days } : { kind: 'gone' });
+  }
+
+  async function keep(): Promise<void> {
+    setKeeping(true);
+    setDeleteError(null);
+    const res = await client.post<{ cancelled: boolean }>('/me/deletion/cancel', undefined, auth);
+    setKeeping(false);
+    if (!res.ok) {
+      setDeleteError(said(res.error, describeError(res.error, t, locale)));
+      return;
+    }
+    setDeletion(null);
+    setKept(true);
   }
 
   const ready = exported?.status === 'ready' && exported.downloadUrl ? exported : null;
@@ -225,12 +247,33 @@ function YourData({ appealToken }: { appealToken: string }): React.JSX.Element {
       <h2 id="suspension-data" className="friend-heading">
         {t('settings.data.title')}
       </h2>
-      {deleted ? (
+      {deletion?.kind === 'gone' ? (
         <div className="msg msg-success" role="status">
-          {deleted}
+          {t('suspension.delete.deleted')}
         </div>
+      ) : deletion?.kind === 'scheduled' ? (
+        <>
+          <div className="msg" role="status">
+            {t('suspension.delete.scheduled', { days: deletion.days })}
+          </div>
+          <div className="msg-actions">
+            <Button variant="secondary" onClick={() => void keep()} disabled={keeping}>
+              {t('suspension.delete.keep')}
+            </Button>
+          </div>
+          {deleteError && (
+            <div className="msg msg-error suspension-data-error" role="alert">
+              {deleteError}
+            </div>
+          )}
+        </>
       ) : (
         <>
+          {kept && (
+            <div className="msg msg-success" role="status">
+              {t('suspension.delete.kept')}
+            </div>
+          )}
           <p className="muted">{t('suspension.data.help')}</p>
           <div className="suspension-data-row">
             {ready ? (

@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import type { AccountStanding as Standing, AppealView, RestrictionScope, StandingStatus } from '@kurda/shared';
+import { ACCOUNT_CHANGED, type AccountStanding as Standing, type AppealView, type RestrictionScope, type StandingStatus } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { appealError } from './appealError';
 import { useApiGet } from '../lib/useApi';
@@ -12,7 +12,7 @@ import type { MessageKey } from '../i18n/en';
 import { SCOPE_LABEL } from './labels';
 import { formatUntil } from './restriction';
 import { AppealState, SanctionCard } from './SanctionCard';
-import { HeldBanner } from './HeldNotice';
+import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 
 const STATUS_TITLE: Record<StandingStatus, MessageKey> = {
   good: 'standing.status.good',
@@ -32,6 +32,8 @@ export function AccountStanding(): React.JSX.Element {
   const { client } = useAuth();
   // Fetched fresh every time, so a limit lifted or added shows at once.
   const { data, loading, error, reload } = useApiGet<Standing>('/me/standing', { fresh: true });
+  // A decision given or lifted while the page is open shows at once.
+  useRealtimeEvent(ACCOUNT_CHANGED, reload);
 
   const appeal = useCallback(
     async (sanctionId: string, text: string): Promise<AppealView | string> => {
@@ -50,9 +52,6 @@ export function AccountStanding(): React.JSX.Element {
         <h1 className="page-title">{t('standing.title')}</h1>
         <p className="page-sub">{t('standing.intro')}</p>
       </div>
-
-      {/* A check on the account is not a decision, so it is said here rather than listed with them. */}
-      <HeldBanner standing={false} />
 
       {loading ? (
         <CardStackSkeleton count={2} label="standing.title" />
