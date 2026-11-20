@@ -42,13 +42,21 @@ export interface PendingPicture {
 export const PICTURE_REVIEW_OUTCOMES = ['approved', 'upheld'] as const;
 export type PictureReviewOutcome = (typeof PICTURE_REVIEW_OUTCOMES)[number];
 
+/** Where a checked picture can be opened: a written post, a Dîmen picture post, a group, or a letter's correspondence. */
+export interface PictureReviewTarget {
+  type: 'library_post' | 'image_post' | 'group' | 'letter_thread';
+  id: string;
+}
+
 /** What the owner's inbox gets when a person has checked their picture; a removal comes as a sanction notice instead. */
 export interface PictureReviewNotificationData {
   kind: 'picture_review';
   outcome: PictureReviewOutcome;
   surface: PictureSurface;
-  /** the post, group or letter the picture belongs to, when there is one to open */
-  target: string | null;
+  /** true when the owner asked about a refused picture: approved means they may share it again, nothing was applied */
+  asked: boolean;
+  /** what to open; null for a profile photo (the owner's own profile) and for an asked-about refusal */
+  target: PictureReviewTarget | null;
 }
 
 /** The most a person may write when asking for a picture to be checked again. */
