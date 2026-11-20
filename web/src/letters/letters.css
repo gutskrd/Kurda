@@ -627,6 +627,13 @@
 .letter-sheet.is-removed .letter-sheet-from {
   color: var(--paper-ink);
 }
+.letter-sheet-held {
+  justify-self: start;
+}
+/* a refused drawing, said under the paper that still holds it */
+.letters-refused {
+  margin-top: var(--space-3);
+}
 .letter-sheet-removed {
   margin: 0;
   color: var(--paper-soft);

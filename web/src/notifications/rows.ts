@@ -5,7 +5,23 @@ import type { Translate } from '../i18n/I18nProvider';
  * What a notification is about, as one of a few kinds, each with its own glyph. Invitations wear the ticket colours
  * (ui/Ticket.tsx). The data's `kind` decides first, then the category, and anything else is a plain notice.
  */
-export type NoteKind = 'invite' | 'friendRequest' | 'game' | 'gift' | 'badge' | 'league' | 'streak' | 'safety' | 'care' | 'friends' | 'group' | 'groupOut' | 'groupBan' | 'groupAsk' | 'notice';
+export type NoteKind =
+  | 'invite'
+  | 'friendRequest'
+  | 'game'
+  | 'gift'
+  | 'badge'
+  | 'league'
+  | 'streak'
+  | 'safety'
+  | 'care'
+  | 'picture'
+  | 'friends'
+  | 'group'
+  | 'groupOut'
+  | 'groupBan'
+  | 'groupAsk'
+  | 'notice';
 
 const BY_DATA: Record<string, NoteKind> = {
   play_invite: 'invite',
@@ -19,6 +35,7 @@ const BY_DATA: Record<string, NoteKind> = {
   sanction: 'safety',
   sanction_lifted: 'safety',
   appeal_decided: 'safety',
+  picture_review: 'picture',
   caring_message: 'care',
   group_removed: 'groupOut',
   group_banned: 'groupBan',

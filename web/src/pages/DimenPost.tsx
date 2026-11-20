@@ -86,6 +86,7 @@ export function DimenPost(): React.JSX.Element {
     commentCount: post.commentCount,
     engagement: engagement ?? NO_ENGAGEMENT,
     at: post.createdAt,
+    ...(post.review ? { review: post.review } : {}),
   };
 
   return (

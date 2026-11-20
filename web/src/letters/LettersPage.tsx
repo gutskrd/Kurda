@@ -22,6 +22,7 @@ import {
   type LetterReturnReason,
   type LetterVisitor,
   type LettersHome,
+  type PictureRejection,
   type VisitorAnswer,
   type WindowLook,
   type WindowMoment,
@@ -36,7 +37,8 @@ import { ErrorState } from '../components/states';
 import { ChevronIcon, HelpIcon, PaletteIcon } from '../components/icons';
 import { ReportSheet } from '../reports/ReportSheet';
 import { LetterWindow, type WindowScene } from './LetterWindow';
-import { BirdBadge, LetterSheet } from './LetterParts';
+import { PictureRefusal } from '../pictures/PictureCheck';
+import { BirdBadge, LetterSheet, drawingHeld } from './LetterParts';
 import { LetterComposer, type LetterToSend } from './LetterComposer';
 import { BirdPicker } from './BirdPicker';
 import { letterErrorText } from './errors';
@@ -72,7 +74,8 @@ type Kept = { name: string; threadId: string } | { name: null; threadId: null };
  * (shared/src/letter-window.ts) decides what to act out from the server's state and local actions; the page refetches
  * whenever the server reports a change. One letter plays at a time, with a note when another waits. A notification's
  * `?bird=` lands that bird first, or opens its correspondence when nothing can land. A line says where the reader's
- * bird is, and why if it came home unanswered. Below are the pen pals, most recent first, and a short how-to.
+ * bird is, and why if it came home unanswered. Below are the pen pals, most recent first, and a short how-to. An answer
+ * whose drawing waits for a person to check it is said to be checked before it goes.
  */
 export function LettersPage(): React.JSX.Element {
   const t = useT();
@@ -84,6 +87,9 @@ export function LettersPage(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [kept, setKept] = useState<Kept | null>(null);
+  // an answer's drawing refused, said under the paper; and the correspondence whose answer is held for a person
+  const [refusal, setRefusal] = useState<PictureRejection | null>(null);
+  const [heldIn, setHeldIn] = useState<string | null>(null);
   const [askingOn, setAskingOn] = useState(false);
   const [reporting, setReporting] = useState(false);
   // choosing a new bird after the first, and the one picked while choosing, which the window shows on the sill
@@ -271,6 +277,7 @@ export function LettersPage(): React.JSX.Element {
     setBusy(true);
     setError(null);
     setKept(null);
+    setRefusal(null);
     const res = await client.post<{ visitor: LetterVisitor }>('/letters/call', {});
     setBusy(false);
     if (!res.ok) {
@@ -290,8 +297,13 @@ export function LettersPage(): React.JSX.Element {
     home.drop();
     setBusy(true);
     setError(null);
+    setRefusal(null);
     const res = await client.post<VisitorAnswer>('/letters/visitor', letter);
     setBusy(false);
+    if (!res.ok && res.error.rejection) {
+      setRefusal(res.error.rejection);
+      return;
+    }
     if (!res.ok) {
       const gone = res.error.code === 'NO_VISITOR' || res.error.code === 'BIRD_GONE';
       if (gone) {
@@ -305,6 +317,7 @@ export function LettersPage(): React.JSX.Element {
       return;
     }
     keepDraft(who, visitorDraft(came.letter.id), null);
+    setHeldIn(drawingHeld(res.data.letter) ? res.data.threadId : null);
     // your letter drops onto the sill, their bird takes it home, and the two birds chirp to each other
     apply((l) => lookAfterAnswer(l, res.data));
     home.reload();
@@ -479,6 +492,7 @@ export function LettersPage(): React.JSX.Element {
       ) : (
         <>
           <p className="letters-status letters-status--strong">{t('letters.pals.now', { name: moment.person.name })}</p>
+          {heldIn === moment.threadId && <p className="letters-status">{t('pictureCheck.held.letter')}</p>}
           <Link to={`/app/letters/${moment.threadId}`} className="btn btn-secondary">
             {t('letters.pals.open', { name: moment.person.name })}
           </Link>
@@ -659,6 +673,7 @@ export function LettersPage(): React.JSX.Element {
             onSend={(letter) => void answer(letter)}
             error={error}
           />
+          {refusal && <PictureRefusal rejection={refusal} className="letters-refused" />}
           <p className="letters-status letters-status--quiet">{t('letters.visitor.ownWaits', { name: visitorName })}</p>
           {askingOn ? (
             <div className="letters-ask" role="group" aria-label={t('letters.visitor.sendOn')}>

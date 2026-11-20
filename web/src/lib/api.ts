@@ -2,12 +2,21 @@ import { API_URL } from './config';
 import type { ApiError, ApiResult, TokenPair } from './types';
 import { createTokenStorage, persistTokens, type TokenStorage } from './tokenStorage';
 import type { MessageKey } from '../i18n/en';
-import { isMissingRoute, isPlainPath, MAINTENANCE_CODE, maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
+import {
+  isMissingRoute,
+  isPictureRejection,
+  isPlainPath,
+  MAINTENANCE_CODE,
+  maintenanceNoticeOf,
+  type MaintenanceNotice,
+  type SuspendedErrorDetails,
+} from '@kurda/shared';
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
 import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
 import { durationInWords } from './timeWords';
 import { usernameRefusalText } from './usernameText';
+import { rejectionText } from '../pictures/words';
 import type { Translate } from '../i18n/I18nProvider';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
@@ -280,7 +289,7 @@ export class ApiClient {
       const data = res.status === 204 ? (undefined as T) : ((await res.json()) as T);
       return { ok: true, data };
     }
-    let envelope: { code?: string; message?: string; requestId?: string; details?: unknown } = {};
+    let envelope: { code?: string; message?: string; requestId?: string; details?: unknown; reason?: unknown; reviewId?: unknown } = {};
     try {
       envelope = (await res.json()) as typeof envelope;
     } catch {
@@ -316,6 +325,10 @@ export class ApiClient {
         requestId: envelope.requestId,
         status: res.status,
         ...(envelope.details !== undefined ? { details: envelope.details } : {}),
+        // A refused picture's reason and review sit beside the code rather than in `details`.
+        ...(isPictureRejection(envelope)
+          ? { rejection: { code: envelope.code, message: envelope.message ?? '', reason: envelope.reason, reviewId: envelope.reviewId } }
+          : {}),
       },
     };
   }
@@ -409,6 +422,10 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
   // An account restriction says what is limited and until when (reports/restriction.ts).
   const restriction = restrictionOf(error);
   if (restriction) return restrictionText(restriction, t, lang);
+
+  // A refused picture says why in the owner's words (pictures/words.ts), never the server's English.
+  const refused = rejectionText(error, t);
+  if (refused) return refused;
 
   // A count limit (lib/limits.ts) comes before any countdown: a full list of drafts does not empty by waiting.
   const limit = limitErrorText(error, t);

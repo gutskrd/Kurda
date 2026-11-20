@@ -1,0 +1,131 @@
+/* A picture's check as its owner sees it (pictures/PictureCheck.tsx): calm, never alarming, in the theme's own colours. */
+
+.pcheck-refused {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+}
+.pcheck-refused-why {
+  margin: 0;
+}
+.pcheck-help {
+  color: var(--primary);
+  font-weight: 600;
+}
+.pcheck-ask {
+  min-height: 40px;
+}
+.pcheck-asked {
+  margin: 0;
+  color: var(--ink-2);
+  outline: none;
+}
+.pcheck-asked:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+.pcheck-sheet .field-label {
+  display: block;
+  margin-top: 12px;
+}
+.pcheck-note {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  font-size: 16px;
+}
+
+.pcheck-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: var(--primary-soft);
+  color: var(--ink);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.pcheck-chip svg {
+  color: var(--primary);
+  flex: none;
+}
+
+.pcheck-held {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 8px 0;
+}
+.pcheck-held-text {
+  margin: 0;
+  flex: 1 1 14rem;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
+
+.pcheck-pending {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.pcheck-pending-pic {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  background: var(--surface-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-3);
+}
+.pcheck-pending-pic.is-round {
+  border-radius: 50%;
+}
+.pcheck-pending-pic img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pcheck-pending-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  color: var(--ink-2);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+  min-width: 0;
+}
+
+/* A group's header is centred; the note under it reads from the start like the others. */
+.ginfo-head .pcheck-pending {
+  text-align: start;
+}
+
+/* Under a photo's own controls: Profile picture in Edit profile, and a group's picture. */
+.edit-photo-refused,
+.gedit-refused {
+  margin-top: 12px;
+}

@@ -205,6 +205,61 @@ describe('the composer', () => {
     await waitFor(() => expect(postButton()).toBeEnabled());
   });
 
+  it('posts a picture the check holds for a person, saying it is checked before others see it', async () => {
+    answers['POST /library/posts'] = () => jsonResponse(201, posted({ review: 'held' }));
+    uploadAnswer = () => ({
+      ok: true,
+      data: { imageMediaId: 'image-post/held.webp', url: 'https://private.test/held.webp?sig=1', width: 800, height: 600, review: 'held' },
+    });
+    const { onPosted } = await open();
+    await addPictures(aPicture());
+
+    const note = await screen.findByText('Checked before others see it');
+    // The picture still shows to its author, from the private link, and its tile is tied to the note.
+    expect(screen.getByRole('img', { name: 'Picture 1' })).toHaveAttribute('src', expect.stringMatching(/^blob:|private\.test/));
+    expect(screen.getByRole('listitem')).toHaveAttribute('aria-describedby', note.id);
+    expect(postButton()).toBeEnabled();
+    await userEvent.click(postButton());
+    await waitFor(() => expect(onPosted).toHaveBeenCalled());
+    expect(sent('POST', '/library/posts')[0]!.body).toMatchObject({ media: [{ mediaKey: 'image-post/held.webp' }] });
+  });
+
+  it('says nothing of a check for a picture that is clear', async () => {
+    uploadAnswer = () => ({ ok: true, data: { imageMediaId: 'image-post/ok.webp', url: 'https://cdn.test/ok.webp', width: 1, height: 1, review: 'clear' } });
+    await open();
+    await addPictures(aPicture());
+    await waitFor(() => expect(postButton()).toBeEnabled());
+    expect(screen.queryByText('Checked before others see it')).not.toBeInTheDocument();
+  });
+
+  it('says why a picture was refused, offers a person to ask, and keeps Post off until it is taken out', async () => {
+    uploadAnswer = () => ({
+      ok: false,
+      error: {
+        kind: 'client',
+        code: 'IMAGE_REJECTED',
+        message: 'image rejected',
+        status: 422,
+        rejection: { code: 'IMAGE_REJECTED', message: 'image rejected', reason: 'violence', reviewId: 'rv-7' },
+      },
+    });
+    await open();
+    await userEvent.type(box(), 'Ji şer');
+    await addPictures(aPicture());
+
+    expect(await screen.findByText('This picture looks violent or gory, which isn’t allowed on Hevalo.')).toBeInTheDocument();
+    expect(screen.queryByText('image rejected')).not.toBeInTheDocument();
+    // Trying the same picture again cannot help, so there is no Try again; asking a person can.
+    expect(screen.queryByRole('button', { name: 'Try again' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask a person to check' })).toBeInTheDocument();
+    expect(postButton()).toBeDisabled();
+    expect(screen.getByText('Remove the picture that can’t be shared, then post.')).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Remove picture 1' }));
+    expect(screen.queryByText(/looks violent/)).not.toBeInTheDocument();
+    expect(postButton()).toBeEnabled();
+  });
+
   it('counts the way the server does, only near the end, and stops at the limit', async () => {
     await open();
     // 45,000 is not near the 50,000 limit; 49,990 is.

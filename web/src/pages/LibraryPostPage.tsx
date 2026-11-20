@@ -16,13 +16,15 @@ import { useT } from '../i18n/I18nProvider';
 import type { FeedItem, PostEngagement } from '../lib/types';
 import { useGrowsInto } from '../lib/viewTransition';
 import { ReportAction } from '../reports/ReportAction';
+import { HeldPost } from '../pictures/PictureCheck';
 
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
 
 /**
  * One written post in full (a gotin, çîrok or helbest): its pictures, laid out as on the wall and opening full size, its
  * author, source and comments, and editing for the author. Under it, the wall's action row with counts fetched for the
- * reader, since the post itself is public and cached for everyone.
+ * reader, since the post itself is public and cached for everyone. A post held while its picture is checked tells its
+ * author that only they can see it.
  */
 export function LibraryPostPage(): React.JSX.Element {
   const t = useT();
@@ -97,6 +99,7 @@ export function LibraryPostPage(): React.JSX.Element {
             {post.title}
           </h1>
         )}
+        {mine && post.review === 'held' && <HeldPost />}
         <PostAuthor
           author={post.author}
           at={post.publishedAt ?? post.createdAt}
@@ -149,6 +152,7 @@ export function LibraryPostPage(): React.JSX.Element {
             commentCount: post.commentCount,
             engagement: (counts?.id === post.id ? counts.engagement : null) ?? NO_ENGAGEMENT,
             at: post.publishedAt ?? post.createdAt,
+            ...(post.review ? { review: post.review } : {}),
           }}
           pending={counts?.id !== post.id}
           onChanged={(next) => setCounts({ id: post.id, engagement: next.engagement })}

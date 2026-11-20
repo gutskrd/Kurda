@@ -1,5 +1,5 @@
 /** API contract types for the web client, matching the phone's (mobile/src/api/types.ts). */
-import type { FeedImage, LeagueTier, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
+import type { FeedImage, LeagueTier, PendingPicture, PictureRejection, PictureReviewState, ProfileLeague, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
@@ -19,6 +19,8 @@ export interface ApiError {
    * suspended (`SuspendedErrorDetails`). Unknown on purpose: check the shape before trusting it.
    */
   details?: unknown;
+  /** A refused picture's reason and the way to ask a person to look (shared `PictureRejection`), from a 422's body. */
+  rejection?: PictureRejection;
 }
 
 export interface TokenPair {
@@ -142,6 +144,8 @@ export interface MeProfile extends SessionUser, ProfileCosmetics {
   /** 'everyone' is the public web; 'members' is everyone signed in. */
   profileVisibility: 'everyone' | 'members' | 'friends' | 'nobody';
   profilePhotoUrl: string | null;
+  /** A new photo waiting for a person to check it, which only you see; others see `profilePhotoUrl` until then. */
+  profilePhotoPending?: PendingPicture | null;
   createdAt: string;
   /** Self-only equip state, for the cosmetic pickers. */
   selectedAvatarKey?: string | null;
@@ -213,6 +217,8 @@ export interface ImagePost {
   viewCount: number;
   commentCount: number;
   createdAt: string;
+  /** Only on the author's own copy, while its picture waits for a person to check it. */
+  review?: PictureReviewState;
 }
 
 /** How a post has been received, and whether you took part. */
@@ -248,6 +254,8 @@ export interface FeedItem {
   commentCount: number;
   engagement: PostEngagement;
   at: string;
+  /** Only on the author's own copy, while a picture on it waits for a person to check it; nobody else is sent it. */
+  review?: PictureReviewState;
 }
 
 /** The activity sections a profile can show, in the order they appear. */
@@ -419,6 +427,8 @@ export interface GroupDetail extends Group {
   standing?: GroupStanding;
   /** Requests to rejoin waiting, for the owner and admins. */
   pendingRequests?: number;
+  /** A new picture waiting for a person to check it, for admins and whoever set it; members see `photoUrl` until then. */
+  photoPending?: PendingPicture | null;
 }
 /** A group chat message (GET/POST /groups/:id/chat). */
 export interface GroupMessage extends ChatExtras {

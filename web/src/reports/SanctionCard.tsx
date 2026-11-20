@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { MAX_APPEAL_LEN, type AppealOutcome, type AppealView, type StandingSanction } from '@kurda/shared';
+import { MAX_APPEAL_LEN, type AppealOutcome, type AppealView, type PendingPicture, type StandingSanction } from '@kurda/shared';
 import { Button } from '../components/Button';
+import { PhotoIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { CATEGORY_LABEL, SANCTION_LABEL } from './labels';
@@ -18,6 +19,30 @@ function originKey(s: StandingSanction): MessageKey {
   if (s.origin === 'report') return 'standing.origin.report';
   if (s.origin === 'moderator') return 'standing.origin.moderator';
   return s.reviewedByPerson ? 'standing.origin.automaticReviewed' : 'standing.origin.automatic';
+}
+
+/** A removal about a picture carries it, by a link only its owner can open for a short while. */
+type WithPicture = StandingSanction & { picture?: PendingPicture | null };
+
+/**
+ * The picture a removal is about, small, so its owner knows which one they are asking about. The link may have
+ * expired by the time the page is read, so a broken one shows a plain tile rather than a broken image.
+ */
+function SanctionPicture({ picture }: { picture: PendingPicture }): React.JSX.Element {
+  const t = useT();
+  const [broken, setBroken] = useState<string | null>(null);
+  return (
+    <figure className="sanction-picture">
+      <figcaption>{t('standing.picture')}</figcaption>
+      <span className="sanction-picture-frame">
+        {broken === picture.url ? (
+          <PhotoIcon size={22} />
+        ) : (
+          <img src={picture.url} alt="" loading="lazy" onError={() => setBroken(picture.url)} />
+        )}
+      </span>
+    </figure>
+  );
 }
 
 /** An appeal's answer, as its author sees it. */
@@ -41,8 +66,8 @@ export function AppealState({ appeal }: { appeal: AppealView }): React.JSX.Eleme
 }
 
 /**
- * One decision about the account with its statement of reasons: what it is, the rule, the reviewer's note, its dates,
- * how it came about, and the one allowed review. Shared by Account standing and the suspension screen, which has no
+ * One decision about the account with its statement of reasons: what it is, the rule, the picture it is about, the
+ * reviewer's note, its dates, how it came about, and the one allowed review. Shared by Account standing and the suspension screen, which has no
  * session, hence `appeal` for sending the request.
  */
 export function SanctionCard({
@@ -76,6 +101,7 @@ export function SanctionCard({
     setAsking(false);
   }
 
+  const picture = (sanction as WithPicture).picture ?? null;
   const start = formatDay(sanction.startsAt, locale);
   const when = !sanction.endsAt
     ? sanction.kind === 'warning' || sanction.kind === 'content_removal'
@@ -95,6 +121,7 @@ export function SanctionCard({
       </header>
       <p className="sanction-rule">{t('standing.rule', { rule: t(CATEGORY_LABEL[sanction.policy]) })}</p>
       <p className="sanction-when">{when}</p>
+      {picture && <SanctionPicture picture={picture} />}
       {sanction.statement && (
         <figure className="sanction-statement">
           <figcaption>{t('standing.statement')}</figcaption>

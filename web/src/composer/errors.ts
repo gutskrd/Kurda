@@ -25,7 +25,6 @@ const CODE_KEY: Record<string, MessageKey> = {
   INVALID_IMAGE: 'composer.upload.notPicture',
   MALFORMED_IMAGE: 'composer.upload.notPicture',
   EMPTY_UPLOAD: 'composer.upload.notPicture',
-  IMAGE_REJECTED: 'composer.upload.rejected',
   MEDIA_UNAVAILABLE: 'picture.storageOff',
   MEDIA_STORAGE_LIMIT_REACHED: 'composer.upload.paused',
   MEDIA_OP_LIMIT_REACHED: 'composer.upload.paused',
@@ -42,8 +41,8 @@ export function accountLimitOf(error: ApiError): Restriction | null {
 }
 
 export function composerErrorText(error: ApiError, t: Translate): string {
-  // An account limit says what it stops and until when.
-  if (accountLimitOf(error)) return describeError(error, t);
+  // An account limit says what it stops and until when, and a refused picture why (pictures/words.ts).
+  if (accountLimitOf(error) || error.code === 'IMAGE_REJECTED') return describeError(error, t);
   const key = error.code ? CODE_KEY[error.code] : undefined;
   // A rate limit with a countdown goes to describeError, which shows it.
   if (key && !(error.kind === 'rate_limited' && error.retryAfterSec)) return t(key);
