@@ -1,9 +1,18 @@
 /**
  * Guards the iOS privacy configuration against silent regressions: no tracking, honest permission strings, only
- * permissions the app uses, and a complete Privacy Manifest. Reads mobile/app.json directly.
+ * permissions the app uses, a complete Privacy Manifest, and App Store Connect answers that match it. Reads
+ * mobile/app.json and docs/app-store/privacy.md directly.
  */
 import { describe, expect, it } from 'vitest';
 import rawAppJson from '../app.json';
+
+/** Node's file system, which this workspace's types do not describe: the answers to App Store Connect are read from the docs. */
+interface Files {
+  readFileSync(path: string, encoding: 'utf8'): string;
+}
+const FILES = 'node:fs';
+const { readFileSync } = (await import(/* @vite-ignore */ FILES)) as Files;
+const PRIVACY_DOC = new URL('../../docs/app-store/privacy.md', import.meta.url).pathname;
 
 const appJson = rawAppJson as unknown as {
   expo: {
@@ -69,9 +78,11 @@ describe('iOS privacy config (KUR-277)', () => {
 
   /*
    * What the app and its server keep, exactly: the manifest and the App Store privacy label must match what is
-   * collected. Messages, game results, feedback, the install's random device id, birth month and self-chosen
-   * identity tags are kept; no phone number is ever asked for. Crash reports are sent (errors/crashReporting.ts)
-   * without an account or device id, so they are declared as not linked.
+   * collected. Messages, game results, feedback, the install's random device id and push token, birth month, time zone
+   * and self-chosen identity tags (an ethnicity among them) are kept; the country a sign-in came from is kept in the
+   * security log (api/src/security/log.ts), and a country can be put on the profile. No phone number is ever asked for
+   * and no precise location read. Crash reports are sent (errors/crashReporting.ts) without an account or device id, so
+   * they are declared as not linked.
    */
   it('declares exactly the data the app collects', () => {
     const types = new Set(privacyManifests.NSPrivacyCollectedDataTypes.map((d) => d.NSPrivacyCollectedDataType));
@@ -88,6 +99,7 @@ describe('iOS privacy config (KUR-277)', () => {
       'DeviceID',
       'SensitiveInfo',
       'OtherDataTypes',
+      'CoarseLocation',
       'CrashData',
     ]) {
       expect(types.has(`NSPrivacyCollectedDataType${t}`), t).toBe(true);
@@ -97,6 +109,20 @@ describe('iOS privacy config (KUR-277)', () => {
     }
     const crash = privacyManifests.NSPrivacyCollectedDataTypes.find((d) => d.NSPrivacyCollectedDataType === 'NSPrivacyCollectedDataTypeCrashData');
     expect(crash?.NSPrivacyCollectedDataTypeLinked).toBe(false);
+  });
+});
+
+describe('the App Store Connect answers in docs/app-store/privacy.md', () => {
+  it('list the manifest’s data types one for one, in its order, linked as it says', () => {
+    const rows = [...readFileSync(PRIVACY_DOC, 'utf8').matchAll(/^\| [^|]+ \| `(\w+)` \| (yes|\*\*no\*\*) \| no \|/gm)].map((m) => ({
+      type: m[1],
+      linked: m[2] === 'yes',
+    }));
+    const declared = privacyManifests.NSPrivacyCollectedDataTypes.map((d) => ({
+      type: d.NSPrivacyCollectedDataType.replace('NSPrivacyCollectedDataType', ''),
+      linked: d.NSPrivacyCollectedDataTypeLinked,
+    }));
+    expect(rows).toEqual(declared);
   });
 });
 
