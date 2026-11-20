@@ -14,6 +14,8 @@ export interface ImagePost {
   author?: { id: string; username: string; avatarUrl: string | null } | null;
   imageMediaId: string;
   imageUrl: string | null;
+  /** Your own post while its picture waits for a person: nobody else sees it until then. */
+  review?: 'held';
   caption: string | null;
   category: Category;
   language: string | null;

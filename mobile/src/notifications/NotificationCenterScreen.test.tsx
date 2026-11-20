@@ -379,3 +379,55 @@ describe('the notification list’s filters and pictures', () => {
     expect(screen.getByTestId('notice-picture-gift')).toBeTruthy();
   });
 });
+
+describe('a person’s decision on your picture', () => {
+  const POST = '3f1c2a10-0000-4000-8000-000000000001';
+  const row = (start: string) => screen.getAllByRole('button').find((b) => (b.getAttribute('aria-label') ?? '').startsWith(start))!;
+
+  afterEach(() => localStorage.clear());
+
+  it('says a held post is fine now, in the app’s own words, and opens it', async () => {
+    serve([notice('n1', { category: 'moderation', title: 'Picture approved', body: 'x', data: { kind: 'picture_review', outcome: 'approved', surface: 'post', asked: false, target: { type: 'library_post', id: POST } } })]);
+    renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Your picture was checked and it’s fine.')).toBeTruthy();
+    expect(screen.getByText('Your post is now visible.')).toBeTruthy();
+    await settle();
+    fireEvent.click(row('Unread. Your picture was checked'));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('LibraryPost', { postId: POST }));
+  });
+
+  it('says a refusal a person upheld, and stays in the list when tapped', async () => {
+    serve([notice('n1', { category: 'moderation', title: 'Picture checked', body: 'x', data: { kind: 'picture_review', outcome: 'upheld', surface: 'profile_photo', asked: true, target: null } })]);
+    renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
+    expect(await screen.findByText('A person checked your picture.')).toBeTruthy();
+    expect(screen.getByText('It can’t be shared on Hevalo.')).toBeTruthy();
+    await settle();
+    fireEvent.click(row('Unread. A person checked your picture.'));
+    await settle();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('opens Account standing from a picture’s removal, where it can be appealed', async () => {
+    serve([
+      notice('n1', {
+        category: 'moderation',
+        title: 'A picture of yours was removed',
+        body: 'It broke the rule on sexual content. You can ask for a review.',
+        data: { kind: 'sanction', sanctionId: 's1', sanction: 'content_removal', policy: 'sexual' },
+      }),
+    ]);
+    renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
+    expect(await screen.findByText('A picture of yours was removed')).toBeTruthy();
+    await settle();
+    fireEvent.click(row('Unread. A picture of yours was removed'));
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith('AccountStanding', undefined));
+  });
+
+  it('says it in Soranî too, from the data rather than the English line', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    serve([notice('n1', { category: 'moderation', title: 'Picture approved', body: 'x', data: { kind: 'picture_review', outcome: 'approved', surface: 'group_photo', asked: false, target: { type: 'group', id: POST } } })]);
+    renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
+    expect(await screen.findByText('وێنەکەت پشکنرا و هیچ کێشەیەکی نییە.')).toBeTruthy();
+    expect(screen.getByText('وێنە نوێیەکەی گرووپ ئێستا دەردەکەوێت.')).toBeTruthy();
+  });
+});

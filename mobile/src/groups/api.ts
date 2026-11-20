@@ -13,6 +13,7 @@ import type {
   GroupRejoinRequest,
   GroupRequestState,
   GroupStanding,
+  PendingPicture,
   Role,
 } from '@kurda/shared';
 
@@ -125,6 +126,8 @@ export interface GroupDetail extends Omit<Group, 'myRole'> {
   standing?: GroupStanding;
   /** Requests to come back awaiting an answer, for the owner and admins. */
   pendingRequests?: number;
+  /** A new picture waiting for a person, for its admins and whoever set it; members see the one before. */
+  photoPending?: PendingPicture | null;
 }
 
 export interface GroupMember {

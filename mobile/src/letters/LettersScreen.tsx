@@ -24,6 +24,7 @@ import {
   type LetterReturnReason,
   type LetterVisitor,
   type LettersHome,
+  type PictureRejection,
   type VisitorAnswer,
   type WindowLook,
   type WindowMoment,
@@ -57,6 +58,8 @@ import { BirdPicker } from './BirdPicker';
 import { NEW_LETTER, keepDraft, moveDraft, strayAnswers, threadDraft, useLetterDrafts, visitorDraft } from './drafts';
 import { useLettersHome } from './useLettersHome';
 import { LetterWidgetButton } from '../widget/LetterWidgetButton';
+import { HeldNote, PictureRefusal } from '../pictures/PictureReview';
+import { isHeld, rejectionOf } from '../pictures/review';
 
 /** The window's maximum width; below it, the screen's width decides. */
 const WINDOW_MAX = 300;
@@ -95,7 +98,9 @@ type Kept = { name: string; threadId: string } | { name: null; threadId: null };
  *
  * Letters are written on your own paper (LetterComposer.tsx). A first letter to someone new carries no drawing; an
  * answer to a visitor may. Drafts are kept (drafts.ts), and an answer whose bird flew on is kept for that person's
- * correspondence or your own bird. Pen pals are listed below, most recent first, with whose turn it is.
+ * correspondence or your own bird. Pen pals are listed below, most recent first, with whose turn it is. An answer whose
+ * drawing waits for a person says so, since their bird cannot take it home until then; a drawing the check refuses says
+ * why under the paper.
  */
 export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void; bird?: string; onBirdUsed?: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -114,6 +119,9 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
   const [busy, setBusy] = useState(false);
   const [calling, setCalling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Your answer's drawing waits for a person; a refused one says why.
+  const [heldSent, setHeldSent] = useState(false);
+  const [refusal, setRefusal] = useState<PictureRejection | null>(null);
   const [kept, setKept] = useState<Kept | null>(null);
   const [howOpen, setHowOpen] = useState(false);
   // Changing bird after the first, and the bird picked meanwhile, which the window shows on the sill.
@@ -285,6 +293,7 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
     home.drop();
     setBusy(true);
     setError(null);
+    setRefusal(null);
     const res = await client.post<BirdOutResult>('/letters/out', letter);
     setBusy(false);
     if (!res.ok) {
@@ -337,10 +346,17 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
     home.drop();
     setBusy(true);
     setError(null);
+    setRefusal(null);
     const res = await client.post<VisitorAnswer>('/letters/visitor', letter);
     setBusy(false);
     if (!res.ok) {
       haptic('error');
+      // A drawing the check refused: the paper stays, with why under it.
+      const rejection = rejectionOf(res.error);
+      if (rejection) {
+        setRefusal(rejection);
+        return;
+      }
       const gone = res.error.code === 'NO_VISITOR' || res.error.code === 'BIRD_GONE';
       if (gone) {
         // The bird flew on before the answer reached it, so the answer is kept for another way.
@@ -353,6 +369,7 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
     }
     haptic('celebrate');
     keepDraft(who, visitorDraft(came.letter.id), null);
+    setHeldSent(isHeld(res.data.letter));
     // Your letter drops onto the sill, their bird takes it home, and the birds chirp to each other.
     apply((l) => lookAfterAnswer(l, res.data));
     home.reload();
@@ -504,6 +521,7 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
 
   const write = (): void => {
     setError(null);
+    setRefusal(null);
     setKept(null);
     apply((l) => lookWithMoment(l, { kind: 'writing' }));
   };
@@ -571,11 +589,13 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
     else if (moment.kind === 'answered') {
       const { person, threadId } = moment;
       status =
-        scene.visitor.kind === 'leaving' ? (
+        // Held, the answer stays until a person has looked, so the bird is not said to take it.
+        scene.visitor.kind === 'leaving' && !heldSent ? (
           <Text style={strong}>{t('letters.visitor.leaving', { name: person.name })}</Text>
         ) : (
           <>
             <Text style={strong}>{t('letters.pals.now', { name: person.name })}</Text>
+            {heldSent ? <HeldNote body="picture.held.letter" testID="letters-held" /> : null}
             <ClayButton label={t('letters.pals.open', { name: person.name })} onPress={() => openThread(threadId)} variant="outline" testID="letters-pals-open" />
             {canWrite ? <ClayButton label={t('letters.write')} onPress={write} variant="outline" testID="letters-write" /> : null}
             {sky}
@@ -784,6 +804,7 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
                       draft={visitorDraft(visitor.letter.id)}
                       testID="letters-visitor-answer"
                     />
+                    {refusal ? <PictureRefusal rejection={refusal} testID="letters-refused" /> : null}
                     <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('letters.visitor.ownWaits', { name: visitorName })}</Text>
                     {askingOn ? (
                       <View style={styles.ask}>

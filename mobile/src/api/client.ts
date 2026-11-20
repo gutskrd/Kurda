@@ -1,4 +1,4 @@
-import { isPlainPath, maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
+import { isPictureRejection, isPlainPath, maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
 import { GUEST_ACCOUNT_CODE } from './errors';
 import type { ApiError, ApiResult, TokenPair, TokenStorage } from './types';
@@ -324,6 +324,10 @@ export class ApiClient {
         requestId: envelope.requestId,
         status: res.status,
         ...(envelope.details !== undefined ? { details: envelope.details } : {}),
+        // A refused picture's reason and review sit beside the code rather than in details.
+        ...(res.status === 422 && isPictureRejection(envelope)
+          ? { rejection: { code: envelope.code, message: envelope.message, reason: envelope.reason, reviewId: envelope.reviewId } }
+          : {}),
       },
     };
   }

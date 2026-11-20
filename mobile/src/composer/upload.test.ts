@@ -28,7 +28,7 @@ describe('uploadPicture', () => {
     const send = vi.fn(answer(201, { imageMediaId: 'images/x.webp', url: 'https://cdn/x.webp', width: 640, height: 480 }));
     const progress: number[] = [];
     const res = await uploadPicture(client(), { uri: 'file:///x.jpg', contentType: 'image/jpeg', ownWork: true }, t, (f) => progress.push(f), { send });
-    expect(res).toEqual({ ok: true, mediaKey: 'images/x.webp', url: 'https://cdn/x.webp', width: 640, height: 480 });
+    expect(res).toEqual({ ok: true, mediaKey: 'images/x.webp', url: 'https://cdn/x.webp', width: 640, height: 480, review: 'clear' });
     expect(send.mock.calls[0]![0]).toBe('http://api.test/images/upload');
     expect(send.mock.calls[0]![2]).toEqual({ authorization: 'Bearer old', 'content-type': 'image/jpeg' });
     expect(progress).toEqual([0.5, 1]);
@@ -74,6 +74,28 @@ describe('uploadPicture', () => {
     expect(until).toMatchObject({ ok: false, error: expect.stringMatching(/^restriction\.mediaUntil .*Okt/) });
     expect(await run(429, { code: 'RATE_LIMITED' })).toEqual({ ok: false, error: 'composer.picture.tooMany' });
     expect(await run(500, 'oops')).toEqual({ ok: false, error: 'picture.uploadFailed' });
+  });
+
+  it('says when a picture waits for a person, with its owner-only link', async () => {
+    const send = vi.fn(answer(201, { imageMediaId: 'images/h.webp', url: 'https://media.test/private/h.webp?sig=1', width: 640, height: 480, review: 'held' }));
+    const res = await uploadPicture(client(), { uri: 'file:///x.jpg', contentType: 'image/jpeg', ownWork: true }, t, () => undefined, { send });
+    expect(res).toMatchObject({ ok: true, mediaKey: 'images/h.webp', url: 'https://media.test/private/h.webp?sig=1', review: 'held' });
+  });
+
+  it('says why the check refused a picture, and keeps what asking a person needs', async () => {
+    const run = (reason: string, reviewId: string | null) =>
+      uploadPicture(client(), { uri: 'file:///x.jpg', contentType: 'image/jpeg', ownWork: true }, t, () => undefined, {
+        send: answer(422, { code: 'IMAGE_REJECTED', message: 'rejected', reason, reviewId }),
+      });
+    expect(await run('sexual', 'rv1')).toEqual({
+      ok: false,
+      error: 'picture.refused.sexual',
+      rejection: { code: 'IMAGE_REJECTED', message: 'rejected', reason: 'sexual', reviewId: 'rv1' },
+    });
+    expect(await run('violence', 'rv2')).toMatchObject({ error: 'picture.refused.violence' });
+    expect(await run('self_harm', 'rv3')).toMatchObject({ error: 'picture.refused.selfHarm' });
+    expect(await run('hate', 'rv4')).toMatchObject({ error: 'picture.refused.hate' });
+    expect(await run('other', null)).toMatchObject({ error: 'picture.refused.other', rejection: { reviewId: null } });
   });
 
   it('is offline when the request never arrives', async () => {

@@ -8,6 +8,8 @@ import {
   emptyPostDraft,
   postTextLength,
   type PostDraft,
+  type PictureRejection,
+  type PictureReviewState,
   type PostPictureDraft,
   type PostTextField,
   type UpdatePostRequest,
@@ -33,6 +35,10 @@ export interface ComposerPicture extends PostPictureDraft {
   error: string | null;
   /** Already on the post being edited: its "I made this" was settled when it went up. */
   existing: boolean;
+  /** Uploaded and waiting for a person before others see it; never saved with the draft. */
+  review?: PictureReviewState;
+  /** Refused by the check: why, and whether a person can be asked to look. */
+  rejection?: PictureRejection | null;
 }
 
 export interface ComposerState {

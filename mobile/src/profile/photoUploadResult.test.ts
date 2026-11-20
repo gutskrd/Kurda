@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeUploadFailure, normalizeContentType } from './photoUploadResult';
+import { describeUploadFailure, normalizeContentType, readPhotoUpload } from './photoUploadResult';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
@@ -67,6 +67,19 @@ describe('describeUploadFailure', () => {
     expect(describeUploadFailure(401, '', t).toLowerCase()).toContain('sign in');
   });
 
+  it('says why the check refused a photo, by its reason', () => {
+    const refused = (reason: string) => JSON.stringify({ code: 'PHOTO_REJECTED', message: 'rejected', reason, reviewId: 'rv1' });
+    expect(describeUploadFailure(422, refused('sexual'), t)).toBe(TRANSLATIONS.en['picture.refused.sexual']);
+    expect(describeUploadFailure(422, refused('hate'), t, undefined, 'group')).toBe(TRANSLATIONS.en['picture.refused.hate']);
+  });
+
+  it('never calls a group’s picture a profile photo', () => {
+    expect(describeUploadFailure(422, body('PHOTO_REJECTED'), t)).toBe('That image can’t be used as a profile photo.');
+    const group = describeUploadFailure(422, body('PHOTO_REJECTED'), t, undefined, 'group');
+    expect(group).toBe('This picture can’t be shared on Hevalo.');
+    expect(group).not.toMatch(/profile/i);
+  });
+
   it('falls back to the server message for an unknown code', () => {
     expect(describeUploadFailure(400, JSON.stringify({ code: 'WAT', message: 'specific detail' }), t)).toBe('specific detail');
   });
@@ -79,5 +92,40 @@ describe('describeUploadFailure', () => {
     expect(describeUploadFailure(502, '<html>Bad Gateway</html>', tr('ku'))).toBe(
       interpolate(TRANSLATIONS.ku['upload.failedWithStatus'], { status: 502 }),
     );
+  });
+});
+
+describe('readPhotoUpload', () => {
+  it('shows a cleared photo at once', () => {
+    expect(readPhotoUpload(JSON.stringify({ profilePhotoUrl: 'https://cdn.test/me.webp', review: 'clear' }), 'profile')).toEqual({
+      ok: true,
+      url: 'https://cdn.test/me.webp',
+      review: 'clear',
+      pending: null,
+    });
+    // An older server says nothing about a check.
+    expect(readPhotoUpload(JSON.stringify({ photoUrl: 'https://cdn.test/g.webp' }), 'group')).toMatchObject({ url: 'https://cdn.test/g.webp', review: 'clear' });
+  });
+
+  it('keeps the old photo for others while the new one waits for a person', () => {
+    const held = { profilePhotoUrl: 'https://cdn.test/old.webp', review: 'held', profilePhotoPending: { url: 'https://media.test/private/new.webp' } };
+    expect(readPhotoUpload(JSON.stringify(held), 'profile')).toEqual({
+      ok: true,
+      url: 'https://cdn.test/old.webp',
+      review: 'held',
+      pending: { url: 'https://media.test/private/new.webp' },
+    });
+    // With no photo before, others see the initials meanwhile.
+    expect(readPhotoUpload(JSON.stringify({ photoUrl: null, review: 'held', photoPending: { url: 'https://media.test/private/g.webp' } }), 'group')).toEqual({
+      ok: true,
+      url: null,
+      review: 'held',
+      pending: { url: 'https://media.test/private/g.webp' },
+    });
+  });
+
+  it('is nothing when the answer names no photo', () => {
+    expect(readPhotoUpload(JSON.stringify({ review: 'clear' }), 'profile')).toBeNull();
+    expect(readPhotoUpload('<html>', 'profile')).toBeNull();
   });
 });

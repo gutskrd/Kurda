@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { useNavigation } from '@react-navigation/native';
-import type { AccountStanding, AppealView, RestrictionScope, StandingSanction } from '@kurda/shared';
+import type { AccountStanding, AppealView, PendingPicture, RestrictionScope, StandingSanction } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiClient } from '../api/client';
 import type { ApiError } from '../api/types';
@@ -29,6 +29,7 @@ import {
 } from './labels';
 import { formatDay, formatUntil } from './sendErrors';
 import { heldDim } from '../theme/MotionParts';
+import { pendingOf } from '../pictures/review';
 
 const SCOPES: readonly RestrictionScope[] = ['account', 'chat', 'post', 'media'];
 
@@ -36,7 +37,8 @@ const SCOPES: readonly RestrictionScope[] = ['account', 'chat', 'post', 'media']
  * Account standing: what is limited on your account, why, until when, and a way to ask for a review. Each decision
  * carries its statement of reasons (the rule, the reviewer's note, from and until when in your own time, whether it
  * came from a report or was automatic, and whether a person reviewed it), as Art. 17 of the DSA requires, said plainly
- * enough for a child. A review can be asked for once per decision, within six months.
+ * enough for a child. A review can be asked for once per decision, within six months. A picture taken down is shown
+ * to its owner, small, so they know which one a review would be about.
  */
 export function AccountStandingScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -192,6 +194,7 @@ function SanctionCard({
           <Text style={[styles.statementText, dir.free, { color: colors.textPrimary }]}>{sanction.statement}</Text>
         </View>
       ) : null}
+      {sanction.kind === 'content_removal' ? <RemovedPicture picture={pendingOf((sanction as StandingSanction & { picture?: unknown }).picture)} /> : null}
       <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>
         {[
           t('standing.from', { when: formatUntil(sanction.startsAt, locale) }),
@@ -237,6 +240,39 @@ function SanctionCard({
   );
 }
 
+/**
+ * The picture a removal is about, small, from a private link only its owner can open. The link lasts minutes, so one
+ * that no longer opens says so rather than leaving an empty box.
+ */
+function RemovedPicture({ picture }: { picture: PendingPicture | null }): React.JSX.Element | null {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const [broken, setBroken] = useState(false);
+  if (!picture) return null;
+  return (
+    <View style={[styles.picture, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]} testID="standing-picture">
+      <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>{t('standing.picture')}</Text>
+      {broken ? (
+        <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]} testID="standing-picture-gone">
+          {t('standing.pictureUnavailable')}
+        </Text>
+      ) : (
+        <Image
+          source={{ uri: picture.url }}
+          onError={() => setBroken(true)}
+          style={[styles.pictureImage, { backgroundColor: colors.controlTrack }]}
+          resizeMode="cover"
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={t('standing.picture')}
+          accessibilityIgnoresInvertColors
+        />
+      )}
+    </View>
+  );
+}
+
 /** Where a request for a review stands, with the reviewer's answer once there is one. */
 export function AppealStatusLine({ appeal }: { appeal: AppealView }): React.JSX.Element {
   const { colors } = useTheme();
@@ -269,6 +305,8 @@ const styles = StyleSheet.create({
   statementLtr: { borderLeftWidth: 3, paddingLeft: spacing.md },
   statementRtl: { borderRightWidth: 3, paddingRight: spacing.md },
   statementText: { fontSize: typography.sizes.md, lineHeight: 22 },
+  picture: { gap: spacing.xs },
+  pictureImage: { width: 96, height: 96, borderRadius: radii.md, marginTop: spacing.xs },
   askWrap: { marginTop: spacing.xs },
   ask: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   askText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
