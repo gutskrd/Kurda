@@ -197,3 +197,8 @@ export function useAuth(): AuthContextValue {
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 }
+
+/** The signed-in user, or null outside the provider, for small parts that also render on their own (reports/SendError). */
+export function useSessionUser(): SessionUser | null {
+  return useContext(AuthContext)?.user ?? null;
+}

@@ -1,14 +1,13 @@
 import { useId, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../auth/AuthProvider';
+import { useSessionUser } from '../auth/AuthProvider';
 import { ShieldIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { STANDING_PATH } from './restriction';
 
 /** Whether a person is checking this account before it may post or message (shared account-hold.ts). */
 export function useAccountHeld(): boolean {
-  const { user } = useAuth();
-  return Boolean(user?.accountHold);
+  return Boolean(useSessionUser()?.accountHold);
 }
 
 /**
