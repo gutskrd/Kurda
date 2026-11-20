@@ -4,8 +4,9 @@ import { useT } from '../i18n/I18nProvider';
 
 /*
  * What Hevalo keeps, in plain words. Each sentence matches something the product does, and must change with it: data and
- * permissions (docs/app-store/privacy.md), visibility and blocking (Settings), the hashed phone number (phone
- * verification), export and deletion with its 14-day grace (api/src/gdpr), and re-consent (api/src/gdpr/consent.ts). It
+ * permissions (docs/app-store/privacy.md), what the age decides (api/src/users/age.ts), visibility and blocking
+ * (Settings), the hashed phone number (phone verification), the security log's retention (api/src/security/log.ts),
+ * export and deletion with its 14-day grace (api/src/gdpr), and re-consent (api/src/gdpr/consent.ts). It
  * opens with the controller and how to reach them, as the GDPR requires, from the same record as Terms and About.
  */
 const SECTIONS: ReadonlyArray<DocSection> = [

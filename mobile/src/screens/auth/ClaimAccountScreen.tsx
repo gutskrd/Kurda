@@ -16,7 +16,7 @@ import { birthYearFrom } from '../../auth/guide/age';
 import { checkUsername } from '../../username/validate';
 import { UsernameStepField } from '../../username/UsernameStepField';
 import { LinkText } from './AuthForm';
-import { AppleButton, GoogleButton, useSocialSignIn } from './SocialSignIn';
+import { AppleButton, GoogleButton, ProviderNote, useSocialSignIn } from './SocialSignIn';
 import { useI18n } from '../../i18n/I18nContext';
 import { AgreeLine } from '../../legal/links';
 import { useDirection } from '../../reports/direction';
@@ -87,6 +87,7 @@ export function ClaimAccountScreen({
       <View style={styles.methods}>
         {appleAvailable ? <AppleButton onPress={() => void onApple()} /> : null}
         {isGoogleConfigured ? <GoogleButton onPress={() => void onGoogle()} /> : null}
+        {appleAvailable || isGoogleConfigured ? <ProviderNote /> : null}
       </View>
     ),
     footer: haveAccount,

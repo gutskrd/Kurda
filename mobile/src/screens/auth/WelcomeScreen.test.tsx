@@ -123,6 +123,12 @@ describe('the sign-in choice', () => {
     expect(screen.getByTestId('hevalo-window')).toBeTruthy();
     expect(screen.getByTestId('speech-bubble').textContent).toBe(en['guide.welcome.says']);
   });
+
+  it('says what Apple or Google hands over, and who sees it, under their buttons', async () => {
+    renderWelcome();
+    await screen.findByRole('button', { name: 'Continue with Apple' });
+    expect(screen.getByText('Apple or Google shares your name and email with Hevalo. Others see the name on your profile, never the email.')).toBeTruthy();
+  });
 });
 
 describe('trying Hevalo first', () => {

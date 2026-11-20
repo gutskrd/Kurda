@@ -64,6 +64,10 @@ describe('Edit Profile page', () => {
 
     expect(await screen.findByLabelText('Display name')).toHaveValue('Ada Lovelace');
     expect(screen.getByLabelText('Bio')).toHaveValue('Learning Kurdish.');
+    // Each detail says it is optional and who sees it.
+    expect(screen.getByLabelText('Display name')).toHaveAccessibleDescription('Optional. Others see it and can search for you by it.');
+    expect(screen.getByLabelText('Bio')).toHaveAccessibleDescription(expect.stringContaining('Optional. Shown on your profile.'));
+    expect(screen.getByLabelText('Country')).toHaveAccessibleDescription('Optional. Shown on your profile, and it puts you on your country’s rankings.');
     expect(screen.getByRole('button', { name: /upload your own/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /back to your profile/i })).toHaveAttribute('href', '/app/profile');
   });

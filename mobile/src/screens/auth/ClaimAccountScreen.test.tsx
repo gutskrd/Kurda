@@ -110,7 +110,7 @@ describe('claiming the guest account', () => {
     auth.claimAccount.mockResolvedValue(null);
     renderClaim();
     expect((screen.getByTestId('username') as HTMLInputElement).value).toBe('heval4821930');
-    expect(screen.getByTestId('speech-bubble').textContent).toBe('You’ve been heval4821930 so far. Keep it, or pick a new one.');
+    expect(screen.getByTestId('speech-bubble').textContent).toBe('You’ve been heval4821930 so far, and others see that name. Keep it, or pick a new one.');
     await claim('rojda@example.com');
     await waitFor(() => expect(auth.claimAccount).toHaveBeenCalledTimes(1));
     expect(auth.claimAccount).toHaveBeenCalledWith({
@@ -181,6 +181,8 @@ describe('claiming the guest account with Apple or Google', () => {
     renderClaim();
     expect(screen.getByText(en['guide.claim.method.question'])).toBeTruthy();
     expect(screen.getByTestId('speech-bubble').textContent).toBe(en['guide.claim.method.says']);
+    // What the provider hands over, and who sees it, before either button is pressed.
+    expect(screen.getByText('Apple or Google shares your name and email with Hevalo. Others see the name on your profile, never the email.')).toBeTruthy();
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: en['welcome.google'] }));
     });
@@ -228,5 +230,6 @@ describe('claiming the guest account with Apple or Google', () => {
     renderClaim();
     expect(screen.queryByText(en['guide.claim.method.question'])).toBeNull();
     expect(screen.getByText(en['guide.claim.name.question'])).toBeTruthy();
+    expect(screen.queryByText(en['welcome.providerShares'])).toBeNull();
   });
 });

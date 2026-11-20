@@ -21,6 +21,7 @@ export function UsernameField({
   problem = null,
   ok = null,
   placeholder,
+  about,
   autoFocus = false,
   disabled = false,
   urgent = false,
@@ -33,6 +34,8 @@ export function UsernameField({
   problem?: string | null;
   ok?: string | null;
   placeholder?: string;
+  /** Said before the rules, such as who will see the name. */
+  about?: string;
   autoFocus?: boolean;
   disabled?: boolean;
   /** `problem` refuses the form just sent and is announced at once. */
@@ -76,7 +79,7 @@ export function UsernameField({
   const refusal = value.trim() === '' ? null : left ? checkUsername(value) : usernameProblemWhileTyping(value);
   const own = refusal && !refusal.ok ? usernameRefusalText(refusal.reason, refusal.reason === 'invalid-chars' ? refusal.chars : undefined, t) : null;
   const said = problem ?? own;
-  const describedBy = [`${id}-hint`, said ? `${id}-error` : '', !said && ok ? `${id}-ok` : ''].filter(Boolean).join(' ');
+  const describedBy = [about ? `${id}-about` : '', `${id}-hint`, said ? `${id}-error` : '', !said && ok ? `${id}-ok` : ''].filter(Boolean).join(' ');
   const wrapper = said && !className.split(' ').includes('has-problem') ? `${className} has-problem` : className;
 
   return (
@@ -108,6 +111,11 @@ export function UsernameField({
       <div className="username-keys">
         <KeyBar keys={USERNAME_KURDISH_LETTERS} onKey={typeKey} disabled={disabled} lang="ku" dir="ltr" />
       </div>
+      {about ? (
+        <span className="field-hint" id={`${id}-about`}>
+          {about}
+        </span>
+      ) : null}
       <span className="field-hint" id={`${id}-hint`}>
         {usernameRuleText(t)}
       </span>

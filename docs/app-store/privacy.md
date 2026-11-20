@@ -53,37 +53,79 @@ app is turned away for steering the answer there. What the code holds to:
   it uploads the photos chosen, it records when record is tapped, and what
   for. Never "… is needed for a better experience", never "Turn on …".
 
+## Where the apps ask for personal information, and why
+
+Every point where the phone app or the website asks for something about the
+person, or takes it from the device, with the reason the server code gives
+for it. App Review guideline 5.1.1 wants the reason said at the moment of
+asking; the last column is where each app says it.
+
+| What | Where it is asked or taken | Why, from the code | Required? | Who sees it | How long it is kept | Said at the point of asking |
+|---|---|---|---|---|---|---|
+| Email address | sign-up and claiming a guest account, both apps; handed over by Apple or Google on a provider sign-in | the 6-digit confirmation code, signing in, password reset, the deletion notice (`api/src/auth`, `api/src/gdpr/service.ts`) | for an account; a guest has none | the person and Hevalo staff, never other members | until the account is deleted | phone: "I’ll send a code there to check it’s really you."; website: the same under the field |
+| Username | the sign-up name step, Settings → Username | the name others know you by: profile, search, friends, rankings, letters | yes; a guest gets a generated one | other members, and the public web when the profile is set to Everyone | until deletion; an old one is held for the account 60 days after a change | phone: "Other learners will see the name you pick."; website: the same under the field |
+| Password | sign-up, claiming, changing it | signing in; checked against known leaks; stored only as a hash | for an email account | nobody | until deletion | — |
+| Birth month and year | sign-up’s age and month steps; the one-time question after an Apple or Google sign-up (`BirthDatePromptScreen`, `web/src/auth/BirthDatePrompt.tsx`); the website’s sign-up | under 13 no account is made (`assertOldEnough`); under 18 the profile is never public, strangers cannot find, list or reach them, friend requests from others never reach them, leagues are off by default (`api/src/users/age.ts`, `applyMinorDefaults`); under 16 analytics consent stays off; letters go only within 13–15, 16–17 or 18+ (`letterBandSql`); a report involving a minor is raised in priority. The month makes the age exact to the month; the day is never asked | yes, before anything social | nobody else; moderators see only adult, minor or unknown | until deletion; only support can correct it | age step: "Your age decides who can find and message you, and who your letters go to."; month step: "… so your age is always right. Only the month and year are kept."; website: both under the fields. The minimum age is deliberately not named, so the question does not hint at which answer gets in |
+| Display name | Edit profile; the name Apple or Google shares on a first sign-in | shown with the profile, in lists and letters, and searchable | no | other members | until cleared or deletion | "Optional. Others see it and can search for you by it."; under Apple and Google: "Apple or Google shares your name and email with Hevalo. Others see the name on your profile, never the email." |
+| Bio | Edit profile | the profile | no | whoever the profile visibility allows | until cleared or deletion | "Optional. Shown on your profile." |
+| Country | Edit profile | the profile and the "My country" rankings | no | profile viewers; that country’s board | until cleared or deletion | "Optional. Shown on your profile, and it puts you on your country’s rankings." |
+| Profile or group picture | the system photo picker | the profile, the group | no | as the profile, or the group’s members | until removed or deletion | the iOS photo sentence in `mobile/app.json` |
+| Identity tags (age, gender, ethnicity) | Tags | shown on the profile when the person chooses; a sensitive one needs a ticked consent | no | profile viewers, only while shown | until removed or deletion | "I consent to showing this sensitive tag. It’s optional and can be removed anytime." |
+| Time zone | taken from the phone or browser | when a streak day ends, when reminders may arrive | automatic | nobody | until deletion | — |
+| Device id | a random id the app keeps per install (`X-Device-Id`) | names sessions in Settings → Devices, a guest’s way back in, per-device sign-in limits, abuse checks | automatic | the person (Devices), staff | stored as a keyed hash; a known device 180 days after its last sign-in; a session 90 days at most | — |
+| Push token | after "Continue" and the system’s notifications question | reminders, word of a letter, word of a badge | only if allowed | nobody | until that session ends | the screen before the prompt (`ReminderOffer.tsx`) |
+| Network address and its country | every request | rate limits, sign-in protection, the security log (`api/src/security/log.ts`, `api/src/net/sightings.ts`) | automatic | security staff; the address is sealed and opened only by a superadmin with a reason | network sightings (hashed) 90 days; security log 90 days, a year for warnings; the address in it 30 days | the privacy policy |
+| Voice notes | the record button (microphone) | a voice note on a post or comment | no | as the post | until deleted | the iOS microphone sentence |
+| Speaking-exercise recordings | the record button (microphone) | played back to the learner | no | nobody: they never leave the phone | not kept | the iOS microphone sentence |
+| Posts, comments, messages, letters, group posts | their composers | the feature itself | no | the people it is written to | until deleted, or deletion of the account | — |
+| Feedback (stars, choices, comment, app version, platform, language) | the rating box, Settings → Send feedback | improving the app | no; the comment says "(optional)" | the team | deleted with the account | — |
+| Reports and appeals | report sheets, Account standing | moderation | no | moderators | kept as moderation records after deletion | — |
+| Purchases | Shop (Zêr and Gewher); store receipts once in-app purchases open | what was bought | — | the person | until deletion | — |
+| Friend search | Friends | finding people | — | nobody; not stored | not kept | — |
+| Crash reports | release builds, on their own | fixing crashes | automatic | the team | in server logs, with no account or device id | — |
+| Phone number | neither app asks; the API keeps an optional, unused route (`api/src/auth/phone-routes.ts`) | — | — | — | — | — |
+
+Terms and the privacy policy are one tap from sign-up (the agreement line on
+the phone’s first sign-in screen and on its last sign-up step, and under the
+website’s sign-up form) and from Settings on both (Terms of Use, Privacy
+Policy). Settings on both also has the data export and account deletion.
+
 ## App Privacy — data collected (App Store Connect answers)
 
 All linked to the user's account except crash data, **none used for tracking**.
 Purpose is *App Functionality* unless noted. The rows are the Privacy Manifest's
-`NSPrivacyCollectedDataTypes`, one for one and in its order: answer App Store
-Connect from this table, and change the two together. The name in the first
-column is the one App Store Connect shows.
+`NSPrivacyCollectedDataTypes`, one for one and in its order, which is the order
+App Store Connect lists them in (`mobile/src/privacy-config.test.ts` checks the
+two agree). The name in the first column is the one App Store Connect shows.
 
 | Data type (App Store Connect) | Manifest type | Linked | Tracking | Purpose | What it is here |
 |---|---|---|---|---|---|
+| Contact Info → Name | `Name` | yes | no | App Functionality | username and display name on profiles; the name Apple or Google shares on a first sign-in |
 | Contact Info → Email Address | `EmailAddress` | yes | no | App Functionality | sign-up and sign-in, the emailed code, password reset |
-| Contact Info → Name | `Name` | yes | no | App Functionality | username and display name on profiles |
-| Identifiers → User ID | `UserID` | yes | no | App Functionality | the account's id |
+| Location → Coarse Location | `CoarseLocation` | yes | no | App Functionality | the country a sign-in came from, kept in the security log; the country a member may put on their profile. No precise location is ever read |
+| Sensitive Info → Sensitive Info | `SensitiveInfo` | yes | no | App Functionality | the ethnicity, gender or age tag a member chooses to show on their profile; optional, consented, and removable |
+| User Content → Emails or Text Messages | `EmailsOrTextMessages` | yes | no | App Functionality | direct and group messages, letters |
 | User Content → Photos or Videos | `PhotosorVideos` | yes | no | App Functionality | profile picture, a group's picture, image and meme posts |
-| User Content → Audio Data | `AudioData` | yes | no | App Functionality | voice notes on posts and comments, speaking exercises |
-| User Content → Other User Content | `OtherUserContent` | yes | no | App Functionality | posts, comments, captions, saved words |
-| Purchases → Purchase History | `PurchaseHistory` | yes | no | App Functionality | what was bought in the shop with Zêr and Gewher; receipts of in-app purchases once those open (none are sold today) |
-| Usage Data → Product Interaction | `ProductInteraction` | yes | no | Analytics, App Functionality | lessons done, streak, XP; first-party only, never for ads |
-| User Content → Emails or Text Messages | `EmailsOrTextMessages` | yes | no | App Functionality | direct and group messages |
+| User Content → Audio Data | `AudioData` | yes | no | App Functionality | voice notes on posts and comments; speaking-exercise recordings stay on the phone |
 | User Content → Gameplay Content | `GameplayContent` | yes | no | App Functionality | game rounds, scores, ranks, the village |
 | User Content → Customer Support | `CustomerSupport` | yes | no | App Functionality | feedback sent from the app, reports and appeals |
-| Identifiers → Device ID | `DeviceID` | yes | no | App Functionality | the push token and a per-install id that names a signed-in device |
-| Sensitive Info | `SensitiveInfo` | yes | no | App Functionality | the identity tags a member chooses to show on their profile; optional, visible to them, and removable |
-| Other Data → Other Data Types | `OtherDataTypes` | yes | no | App Functionality | the birth month and year asked at sign-up for the age check |
+| User Content → Other User Content | `OtherUserContent` | yes | no | App Functionality | posts, comments, captions, bio, saved words |
+| Identifiers → User ID | `UserID` | yes | no | App Functionality | the account's id |
+| Identifiers → Device ID | `DeviceID` | yes | no | App Functionality | the random per-install id that names a signed-in device, and the push token |
+| Purchases → Purchase History | `PurchaseHistory` | yes | no | App Functionality | what was bought in the shop with Zêr and Gewher; receipts of in-app purchases once those open (none are sold today) |
+| Usage Data → Product Interaction | `ProductInteraction` | yes | no | Analytics, App Functionality | lessons done, streak, XP, and the owner's first-party counts of active learners; never for ads |
 | Diagnostics → Crash Data | `CrashData` | **no** | no | App Functionality | crash reports, sent first-party without the account |
+| Other Data → Other Data Types | `OtherDataTypes` | yes | no | App Functionality | the birth month and year asked at sign-up, and the phone's time zone for streak days |
 
-Not collected: **phone number** (the app never asks for one), precise or coarse
-**location**, contacts, health and fitness, financial or payment information
+Not collected: **phone number** (neither app asks for one), **precise
+location**, contacts, health and fitness, financial or payment information
 (any purchase goes through the store, which keeps the card), browsing history,
-search history, advertising data. No third-party analytics or advertising SDK
-is in the build, so there is no App Tracking Transparency prompt.
+search history (searches are answered and not kept), advertising data. No
+third-party analytics or advertising SDK is in the build, so there is no App
+Tracking Transparency prompt.
+
+Google Play's Data safety form takes the same answers: approximate location
+for the sign-in country, and the rest as above.
 
 ## Required-reason APIs (`NSPrivacyAccessedAPITypes`)
 
@@ -91,7 +133,7 @@ Declared with Apple's approved reason codes (used by the RN/Expo runtime + our c
 
 | API category | Reason | Why |
 |---|---|---|
-| `UserDefaults` | `CA92.1` | app's own settings/state (this app only) |
+| `UserDefaults` | `CA92.1`, `1C8F.1` | the app's own settings and state; `1C8F.1` for the letter widget, which reads the app group `group.app.hevalo.mobile` |
 | `FileTimestamp` | `C617.1` | timestamps of files the app itself created (media cache) |
 | `SystemBootTime` | `35F9.1` | measure elapsed time for in-app timers (games) |
 | `DiskSpace` | `E174.1` | check free space before writing a download/cache |
@@ -105,8 +147,10 @@ whenever a native dependency is added or bumped.
 - [ ] Every declared collected-data type has a real code path; remove any that don't.
 - [ ] Every permission string matches the actual in-context use.
 - [ ] App Store Connect answers match this table and the Privacy Manifest.
-- [ ] Cross-checked against the privacy policy surfaced in-app (#109) and the
-      export/delete guarantees (#24).
+- [ ] The privacy policy (`web/src/pages/Privacy.tsx`, `privacy.*` in the
+      website's catalogues) names everything in the table above, and how long
+      it is kept.
+- [ ] Each question in the table "Where the apps ask" still says its reason.
 - [ ] No permission requested that the code never triggers.
 
 ## Device QA (needs a real device — not automatable here)
@@ -120,5 +164,42 @@ whenever a native dependency is added or bumped.
       never shows before the prompt has been answered; after a "Don't Allow"
       it may show (a week after this screen, and no more than twice in all,
       this screen counted), and its button opens the phone's settings.
+- [ ] On the first sign-in screen of an iPhone, the line under the Apple and
+      Google buttons says what they share and who sees it.
 - [ ] Validate the generated `PrivacyInfo.xcprivacy` in the build; App Store Connect
       privacy answers match reality.
+
+## Entering it in App Store Connect, step by step
+
+1. **App Information**: Privacy Policy URL `https://hevalo.app/privacy`.
+   User Privacy Choices URL (optional) `https://hevalo.app/privacy`, whose
+   "Your choices" part says how to export and delete.
+2. **App Privacy → Get Started**: "Do you or your third-party partners
+   collect data from this app?" → **Yes, we collect data from this app**.
+3. Tick exactly these, and nothing else:
+   - Contact Info: **Name**, **Email Address**
+   - Location: **Coarse Location**
+   - Sensitive Info: **Sensitive Info**
+   - User Content: **Emails or Text Messages**, **Photos or Videos**,
+     **Audio Data**, **Gameplay Content**, **Customer Support**,
+     **Other User Content**
+   - Identifiers: **User ID**, **Device ID**
+   - Purchases: **Purchase History**
+   - Usage Data: **Product Interaction**
+   - Diagnostics: **Crash Data**
+   - Other Data: **Other Data Types**
+
+   Then **Save**.
+4. For each ticked type App Store Connect asks three questions. Answer every
+   one the same way except where the table says otherwise:
+   - "How is this data used?" → **App Functionality** only. Product
+     Interaction alone: **App Functionality** and **Analytics**.
+   - "Is this data linked to the user's identity?" → **Yes**. Crash Data
+     alone: **No**.
+   - "Is this data used for tracking purposes?" → **No**, for every type.
+5. Check the preview reads "Data Linked to You" with the fifteen linked types,
+   "Data Not Linked to You" with Crash Data, and no "Data Used to Track You".
+   Then **Publish**.
+6. In **App Review Information → Notes**, say that a guest can try the app
+   without an account (the "Try Hevalo first" link), that an account can be
+   deleted in Settings → Delete account, and give a demo account.
