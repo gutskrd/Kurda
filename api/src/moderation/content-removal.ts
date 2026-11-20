@@ -278,6 +278,21 @@ export async function removeMedia(db: Executor, key: string): Promise<MediaRemov
     `UPDATE letters SET status = 'removed' WHERE drawing_key = ANY($1::text[]) AND status = 'held' RETURNING id`,
     [keys],
   );
+  // A picture taken down is decided wherever else it waited for a person (a report's case taking it down while it waits
+  // on the Picture checks page), so nobody approves it there afterwards. The deciding case itself is written by its caller.
+  const waiting = await db.query<{ source_ref: string }>(
+    `UPDATE moderation_cases SET status = 'actioned', resolution = 'actioned', resolved_at = now(), claimed_by = NULL, lease_until = NULL,
+            resolution_note = COALESCE(resolution_note, 'taken down by another decision'), updated_at = now()
+      WHERE source = 'image_flag' AND evidence->>'mediaKey' = ANY($1::text[])
+        AND status IN ('open','in_review','escalated') AND resolution IS DISTINCT FROM 'csam'
+      RETURNING source_ref`,
+    [keys],
+  );
+  if (waiting.rows.length > 0) {
+    await db.query(`UPDATE image_scans SET status = 'actioned', resolved_at = now() WHERE id::text = ANY($1::text[]) AND status = 'pending'`, [
+      waiting.rows.map((w) => w.source_ref),
+    ]);
+  }
   return {
     type: 'media',
     key,

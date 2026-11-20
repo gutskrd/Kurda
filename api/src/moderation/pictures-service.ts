@@ -323,6 +323,10 @@ export class PictureReviewService {
         if (storage) await usage?.recordOps('A');
       } catch (err) {
         this.opts.log?.error({ err, key: input.key }, 'picture storage write failed');
+        // nothing was stored, so nothing is held or refused: the row is left to the orphan sweep
+        await this.pool.query(`UPDATE media_uploads SET scan_status = 'pending', private_key = NULL WHERE key = $1 AND confirmed_at IS NULL`, [
+          input.key,
+        ]);
         return { state: 'failed' };
       }
     }
@@ -449,8 +453,8 @@ export class PictureReviewService {
     if (intake.state === 'held') return { state: 'held', key };
     if (intake.state === 'clear') return { state: 'clear' };
     if (intake.state === 'limited') return intake;
-    // a failed private write still keeps the letter back: unchecked, it is not delivered
-    if (intake.state === 'failed') return { state: 'held', key };
+    // nothing could be kept for a person to look at, so the letter is not sent; the writer can try again
+    if (intake.state === 'failed') throw new AppError('MEDIA_UPLOAD_FAILED', 502, 'could not send the drawing; please try again');
     return { state: 'refused' };
   }
 
