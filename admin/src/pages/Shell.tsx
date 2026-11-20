@@ -102,14 +102,19 @@ function Brand(): React.JSX.Element {
   );
 }
 
-interface NavCounts {
-  /** Open moderation cases, and whether any is urgent or overdue. */
-  moderation?: { open: number; urgent: boolean };
+interface NavCount {
+  count: number;
+  urgent: boolean;
+  /** What the number counts, for a screen reader: "open", "waiting". */
+  what: string;
 }
 
+/** The numbers beside nav links, by the link's id: open cases, pictures waiting for a person. */
+type NavCounts = Partial<Record<'moderation' | 'picture-checks', NavCount>>;
+
 /**
- * The queue's size beside its link, so a waiting report is seen from every
- * page. Asked again every two minutes; a failure only means no number.
+ * The queue's size beside its link, and the pictures waiting beside theirs, so a waiting report or a held picture is
+ * seen from every page. Asked again every two minutes; a failure only means no number.
  */
 function useNavCounts(moderator: boolean): NavCounts {
   const [counts, setCounts] = useState<NavCounts>({});
@@ -119,7 +124,13 @@ function useNavCounts(moderator: boolean): NavCounts {
     const load = (): void => {
       void api<ModerationSummary>('/admin/moderation/summary')
         .then((s) => {
-          if (alive) setCounts({ moderation: { open: s.open, urgent: s.slaBreaches > 0 || s.byPriority[0] > 0 } });
+          if (!alive) return;
+          setCounts({
+            moderation: { count: s.open, urgent: s.slaBreaches > 0 || s.byPriority[0] > 0, what: 'open' },
+            // A child-safety hit among them makes the number urgent, as an urgent case does the queue's. An API from
+            // before pictures were counted sends neither.
+            'picture-checks': { count: s.picturesWaiting ?? 0, urgent: (s.picturesUrgent ?? 0) > 0, what: 'waiting' },
+          });
         })
         .catch(() => undefined);
     };
@@ -213,12 +224,7 @@ function NavPanel({
                     <a className="navlink" href={linkTo(n)} aria-current={n.id === active?.id ? 'page' : undefined} onClick={() => onPick?.()}>
                       <Icon name={n.icon} />
                       <span className="navlink-label">{n.label}</span>
-                      {n.id === 'moderation' && counts.moderation && counts.moderation.open > 0 && (
-                        <span className={`nav-count${counts.moderation.urgent ? ' is-urgent' : ''}`}>
-                          <span aria-hidden="true">{counts.moderation.open}</span>
-                          <span className="sr-only">, {counts.moderation.open} open{counts.moderation.urgent ? ', urgent' : ''}</span>
-                        </span>
-                      )}
+                      <NavCountBadge count={counts[n.id as keyof NavCounts]} />
                     </a>
                   </li>
                 ))}
@@ -228,6 +234,19 @@ function NavPanel({
         })}
       </div>
     </nav>
+  );
+}
+
+function NavCountBadge({ count }: { count: NavCount | undefined }): React.JSX.Element | null {
+  if (!count || count.count <= 0) return null;
+  return (
+    <span className={`nav-count${count.urgent ? ' is-urgent' : ''}`}>
+      <span aria-hidden="true">{count.count}</span>
+      <span className="sr-only">
+        , {count.count} {count.what}
+        {count.urgent ? ', urgent' : ''}
+      </span>
+    </span>
   );
 }
 

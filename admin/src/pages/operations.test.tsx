@@ -403,4 +403,20 @@ describe('Automated flags', () => {
     expect(within(row).getByRole('button', { name: 'Uphold' })).toBeEnabled();
     expect(screen.getByText('No text flags are waiting.')).toBeInTheDocument();
   });
+
+  it('links each picture flag to where the picture can be seen, rather than showing its storage key', async () => {
+    const base = {
+      mediaKey: 'posts/2026/10/a.webp', surface: 'post', action: 'flag', reasons: ['nudity'], nsfwScore: 0.7, violenceScore: 0,
+      csamMatch: false, preserveEvidence: false, modelVersion: 'img', createdAt: '2026-10-13T10:00:00.000Z',
+    };
+    fakeApi(
+      on('GET', '/admin/moderation/flags', json({ flags: [] })),
+      on('GET', '/admin/moderation/image-flags', json({ flags: [{ ...base, id: 'i-1', caseId: 'c-9' }, { ...base, id: 'i-2', surface: 'profile_photo' }] })),
+    );
+    renderUi(<AiModeration />);
+    expect(await screen.findByRole('link', { name: 'See it on its case' })).toHaveAttribute('href', '#/moderation/c-9');
+    expect(screen.getByRole('link', { name: 'See it in Picture checks' })).toHaveAttribute('href', '#/picture-checks');
+    expect(screen.getByText('Profile photo')).toBeInTheDocument();
+    expect(screen.queryByText('posts/20')).not.toBeInTheDocument();
+  });
 });

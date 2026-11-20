@@ -16,6 +16,11 @@ export function json(body: unknown, status = 200): Reply {
   return { status, body };
 }
 
+/** A file the API sends as bytes (a picture), with its type. */
+export function bytes(data: Uint8Array, contentType = 'image/png'): Reply {
+  return { status: 200, body: data, headers: { 'content-type': contentType } };
+}
+
 /** An API error envelope, as the server sends it. */
 export function failure(status: number, code: string, message: string, details?: unknown): Reply {
   return { status, body: { code, message, ...(details !== undefined ? { details } : {}), requestId: 'req-1' } };
@@ -38,7 +43,8 @@ export function fakeApi(...routes: Route[]): { calls: Call[]; use: (...more: Rou
       calls.push(call);
       // Newest routes first, so a test can override what it set up.
       const reply = [...all].reverse().reduce<Reply | undefined>((found, route) => found ?? route(call), undefined) ?? failure(404, 'NOT_FOUND', 'route not found');
-      return new Response(reply.body === undefined ? null : JSON.stringify(reply.body), {
+      const raw = reply.body instanceof Uint8Array;
+      return new Response(reply.body === undefined ? null : raw ? (reply.body as Uint8Array<ArrayBuffer>) : JSON.stringify(reply.body), {
         status: reply.status ?? 200,
         headers: { 'content-type': 'application/json', ...reply.headers },
       });
