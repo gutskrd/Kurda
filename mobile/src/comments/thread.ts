@@ -12,6 +12,8 @@ export interface CommentAuthor {
   id: string;
   username: string;
   avatarUrl: string | null;
+  /** Set while the account is suspended or banned and what it shared was kept: the byline says so and opens nothing. */
+  unavailable?: true;
 }
 
 /** A comment as the thread draws it; a library comment and a picture's comment both fit. */

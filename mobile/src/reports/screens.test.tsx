@@ -408,7 +408,11 @@ describe('SuspensionScreen: a copy of the data and deleting the account', () => 
     });
     renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
-    expect(alert).toHaveBeenCalledWith('Delete account?', expect.stringMatching(/permanently deleted after 14 days\. Records of moderation decisions are kept/), expect.any(Array));
+    expect(alert).toHaveBeenCalledWith(
+      'Delete account?',
+      expect.stringMatching(/permanently deleted after 14 days; until then you can keep your account from this screen\. Records of moderation decisions are kept/),
+      expect.any(Array),
+    );
     // Asking is not deleting.
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
     await act(async () => confirm?.());
@@ -416,6 +420,38 @@ describe('SuspensionScreen: a copy of the data and deleting the account', () => 
     const deleted = calls.filter((c) => c.method === 'DELETE');
     expect(deleted).toEqual([{ method: 'DELETE', path: '/me', auth: 'Bearer appeal-tok' }]);
     expect(screen.queryByRole('button', { name: 'Delete my account' })).toBeNull();
+  });
+
+  it('keeps the account from this screen while its deletion waits, and goes back to the usual view', async () => {
+    const calls = serve((method, path) => {
+      if (path === '/me/export') return { status: 200, body: { status: 'none' } };
+      if (method === 'DELETE' && path === '/me') return { status: 200, body: { deletionScheduled: true, graceDays: 14 } };
+      if (method === 'POST' && path === '/me/deletion/cancel') return { status: 200, body: { cancelled: true } };
+      return undefined;
+    });
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
+      buttons?.find((b) => b.text === 'Yes, delete my account')?.onPress?.();
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Delete my account' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Keep my account' }));
+    expect(await screen.findByText('Your account will stay. Nothing has been deleted.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download a copy of my data' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Delete my account' })).toBeTruthy();
+    expect(calls.find((c) => c.path === '/me/deletion/cancel')).toEqual({ method: 'POST', path: '/me/deletion/cancel', auth: 'Bearer appeal-tok' });
+  });
+
+  it('says plainly when no copy can be made right now', async () => {
+    serve((method, path) => {
+      if (path !== '/me/export') return undefined;
+      return method === 'POST'
+        ? { status: 503, body: { code: 'EXPORT_NOT_AVAILABLE', message: 'data export is not available right now' } }
+        : { status: 200, body: { status: 'none' } };
+    });
+    renderWithProviders(<SuspensionScreen details={details} baseUrl="http://api.test" onBack={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Download a copy of my data' }));
+    expect(await screen.findByText('Copies can’t be made right now. Please try again later.')).toBeTruthy();
+    expect(screen.queryByText('data export is not available right now')).toBeNull();
   });
 
   it('asks to sign in again when the token has run out before deleting', async () => {

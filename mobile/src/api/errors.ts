@@ -81,6 +81,12 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   [GUEST_ACCOUNT_CODE]: 'error.code.guestAccount',
   // An account a person is checking before it may post or message: the same sentence as its notice (reports/HeldNotice).
   [ACCOUNT_HELD]: 'hold.title',
+  // Messaging, inviting or opening the profile of an account that is suspended or banned: the same calm words everywhere.
+  ACCOUNT_UNAVAILABLE: 'account.unavailable',
+  // Adding a held account to a group, which waits until a person has checked it.
+  CANNOT_JOIN_YET: 'error.code.cannotJoinYet',
+  // A copy of one's data, while there is nowhere private to keep it.
+  EXPORT_NOT_AVAILABLE: 'error.code.exportNotAvailable',
   // Hevalo offline for a while: the screen over the app says the rest (maintenance/).
   MAINTENANCE: 'maintenance.title',
 };

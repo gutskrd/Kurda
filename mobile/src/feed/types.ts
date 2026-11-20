@@ -81,6 +81,8 @@ export interface FeedAuthor {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
+  /** Set while the account is suspended or banned and what it shared was kept: the byline says so and opens nothing. */
+  unavailable?: true;
 }
 
 /** What the wall has done with a post, and whether you are one of them. */

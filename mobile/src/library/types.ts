@@ -32,7 +32,7 @@ export interface LibraryPost {
   /** "Source / credit", shown under the post. */
   sourceCredit?: string | null;
   /** Who wrote it: a face and a name, as the wall shows them; an older API leaves it out. */
-  author?: { id: string; username: string; avatarUrl: string | null } | null;
+  author?: { id: string; username: string; avatarUrl: string | null; unavailable?: true } | null;
   /** Your own post while its pictures wait for a person: nobody else sees it until then. */
   review?: 'held';
 }

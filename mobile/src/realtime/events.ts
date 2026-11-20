@@ -1,4 +1,4 @@
-import type { BadgeUnlockedEvent, GiftUserEvent, LettersChangedEvent, PlayUserEvent } from '@kurda/shared';
+import type { ACCOUNT_CHANGED, BadgeUnlockedEvent, GiftUserEvent, LettersChangedEvent, PlayUserEvent } from '@kurda/shared';
 import type { RealtimeEvent } from './RealtimeClient';
 
 /**
@@ -6,10 +6,10 @@ import type { RealtimeEvent } from './RealtimeClient';
  * game state changes, rematch offers, gifts, badge unlocks, and `letters_changed`, which carries nothing and only
  * says to reload the letters.
  */
-export type UserEvent = PlayUserEvent | GiftUserEvent | BadgeUnlockedEvent | LettersChangedEvent;
+export type UserEvent = PlayUserEvent | GiftUserEvent | BadgeUnlockedEvent | LettersChangedEvent | { type: typeof ACCOUNT_CHANGED };
 
 /** The event prefixes `useUserEvents` carries; a new kind of user event adds its prefix here. */
-const MINE = ['play_', 'rematch_', 'gift_', 'badge_', 'letters_'];
+const MINE = ['play_', 'rematch_', 'gift_', 'badge_', 'letters_', 'account_'];
 
 /** Is this an event meant for the person, rather than a room's traffic or a DM? */
 export function isUserEvent(type: unknown): type is UserEvent['type'] {

@@ -2228,6 +2228,14 @@ export type TranslationKey =
   | 'hold.title'
   | 'hold.why'
   | 'hold.whyBody'
+  | 'hold.heading'
+  | 'hold.statement'
+  | 'account.unavailable'
+  | 'account.unavailableByline'
+  | 'error.code.cannotJoinYet'
+  | 'error.code.exportNotAvailable'
+  | 'suspension.delete.keep'
+  | 'suspension.delete.kept'
   | 'social.close'
   | 'sheet.expand'
   | 'sheet.collapse'
@@ -5671,6 +5679,15 @@ const en: Catalog = {
   'hold.why': 'Why?',
   'hold.whyBody':
     'A person at Hevalo is checking your account to keep the community safe. Until then you can’t post, comment, send messages or letters, add pictures or join groups. We’ll let you know in Hevalo as soon as it’s done.',
+  'hold.heading': 'Your account is being checked',
+  'hold.statement':
+    'A person is checking your account before you can post, comment, send messages, share pictures, write letters or join groups. Learning works as usual. This is not a finding that you broke a rule.',
+  'account.unavailable': 'This account isn’t available.',
+  'account.unavailableByline': 'Account unavailable',
+  'error.code.cannotJoinYet': 'This person can’t join groups right now.',
+  'error.code.exportNotAvailable': 'Copies can’t be made right now. Please try again later.',
+  'suspension.delete.keep': 'Keep my account',
+  'suspension.delete.kept': 'Your account will stay. Nothing has been deleted.',
   'social.close': 'Close',
   'sheet.expand': 'Expand',
   'sheet.collapse': 'Collapse',
@@ -5965,7 +5982,7 @@ const en: Catalog = {
   'suspension.data.preparing': 'Your copy is being prepared. Sign in again later to download it here.',
   'suspension.delete.button': 'Delete my account',
   'suspension.delete.warning':
-    'Your account and all your data will be permanently deleted after 14 days. Records of moderation decisions are kept, as the privacy policy explains.',
+    'Your account and all your data will be permanently deleted after 14 days; until then you can keep your account from this screen. Records of moderation decisions are kept, as the privacy policy explains.',
   'suspension.delete.scheduled': 'Your account is set to be deleted. It will be gone for good in {days} days.',
   'suspension.signInAgain': 'This page has been open too long. Sign in again to continue.',
   'report.done.blockThem': 'Block this person',
@@ -9567,6 +9584,15 @@ const ku: Catalog = {
   'hold.why': 'Çima?',
   'hold.whyBody':
     'Kesek ji Hevalo hesabê te kontrol dike, da ku civak ewle bimîne. Heta wê demê tu nikarî tiştekî biweşînî, şîrove bikî, peyam an name bişînî, wêne zêde bikî an tevlî koman bibî. Gava kontrol biqede, em ê li Hevalo ji te re bibêjin.',
+  'hold.heading': 'Hesabê te tê kontrolkirin',
+  'hold.statement':
+    'Kesek hesabê te kontrol dike, berî ku tu bikarî tiştekî biweşînî, şîrove bikî, peyaman bişînî, wêneyan parve bikî, nameyan binivîsî an tevlî koman bibî. Fêrbûn wek her car didome. Ev nayê wê wateyê ku te rêzikek şikandiye.',
+  'account.unavailable': 'Ev hesab ne berdest e.',
+  'account.unavailableByline': 'Hesab ne berdest e',
+  'error.code.cannotJoinYet': 'Ev kes niha nikare tevlî koman bibe.',
+  'error.code.exportNotAvailable': 'Niha kopî nayên amadekirin. Ji kerema xwe paşê dîsa biceribîne.',
+  'suspension.delete.keep': 'Hesabê min bihêle',
+  'suspension.delete.kept': 'Hesabê te dimîne. Tiştek nehatiye jêbirin.',
   'social.close': 'Bigire',
   'sheet.expand': 'Mezin bike',
   'sheet.collapse': 'Biçûk bike',
@@ -9861,7 +9887,7 @@ const ku: Catalog = {
   'suspension.data.preparing': 'Kopiya te tê amadekirin. Paşê dîsa têkeve da ku li vir daxî.',
   'suspension.delete.button': 'Hesabê min jê bibe',
   'suspension.delete.warning':
-    'Hesabê te û hemû daneyên te piştî 14 rojan bi tevahî tên jêbirin. Tomarên biryarên çavdêriyê tên parastin, wek ku polîtîkaya nihêniyê rave dike.',
+    'Hesabê te û hemû daneyên te piştî 14 rojan bi tevahî tên jêbirin; heta wê demê tu dikarî ji vê ekranê hesabê xwe bihêlî. Tomarên biryarên çavdêriyê tên parastin, wek ku polîtîkaya nihêniyê rave dike.',
   'suspension.delete.scheduled': 'Hesabê te dê were jêbirin. Piştî {days} rojan ew ê bi tevahî nemîne.',
   'suspension.signInAgain': 'Ev rûpel pir dirêj vekirî ma. Ji bo berdewamkirinê dîsa têkeve.',
   'report.done.blockThem': 'Vî kesî asteng bike',
@@ -13463,6 +13489,15 @@ const de: Catalog = {
   'hold.why': 'Warum?',
   'hold.whyBody':
     'Eine Person bei Hevalo prüft dein Konto, damit die Community sicher bleibt. Bis dahin kannst du nichts posten oder kommentieren, keine Nachrichten oder Briefe senden, keine Bilder hinzufügen und keinen Gruppen beitreten. Sobald die Prüfung fertig ist, sagen wir dir in Hevalo Bescheid.',
+  'hold.heading': 'Dein Konto wird geprüft',
+  'hold.statement':
+    'Eine Person prüft dein Konto, bevor du posten, kommentieren, Nachrichten senden, Bilder teilen, Briefe schreiben oder Gruppen beitreten kannst. Lernen geht ganz normal weiter. Das heißt nicht, dass du gegen eine Regel verstoßen hast.',
+  'account.unavailable': 'Dieses Konto ist nicht verfügbar.',
+  'account.unavailableByline': 'Konto nicht verfügbar',
+  'error.code.cannotJoinYet': 'Diese Person kann gerade keinen Gruppen beitreten.',
+  'error.code.exportNotAvailable': 'Kopien können gerade nicht erstellt werden. Bitte versuch es später noch einmal.',
+  'suspension.delete.keep': 'Mein Konto behalten',
+  'suspension.delete.kept': 'Dein Konto bleibt. Es wurde nichts gelöscht.',
   'social.close': 'Schließen',
   'sheet.expand': 'Vergrößern',
   'sheet.collapse': 'Verkleinern',
@@ -13757,7 +13792,7 @@ const de: Catalog = {
   'suspension.data.preparing': 'Deine Kopie wird vorbereitet. Melde dich später wieder an, um sie hier herunterzuladen.',
   'suspension.delete.button': 'Mein Konto löschen',
   'suspension.delete.warning':
-    'Dein Konto und alle deine Daten werden nach 14 Tagen endgültig gelöscht. Moderationsakten bleiben erhalten, wie es die Datenschutzerklärung beschreibt.',
+    'Dein Konto und alle deine Daten werden nach 14 Tagen endgültig gelöscht; bis dahin kannst du dein Konto auf diesem Bildschirm behalten. Moderationsakten bleiben erhalten, wie es die Datenschutzerklärung beschreibt.',
   'suspension.delete.scheduled': 'Dein Konto wird gelöscht. In {days} Tagen ist es endgültig weg.',
   'suspension.signInAgain': 'Diese Seite war zu lange offen. Melde dich erneut an, um weiterzumachen.',
   'report.done.blockThem': 'Diese Person blockieren',
@@ -17359,6 +17394,15 @@ const es: Catalog = {
   'hold.why': '¿Por qué?',
   'hold.whyBody':
     'Una persona de Hevalo está revisando tu cuenta para que la comunidad siga siendo segura. Hasta entonces no puedes publicar, comentar, enviar mensajes ni cartas, añadir imágenes ni unirte a grupos. Te avisaremos en Hevalo en cuanto termine.',
+  'hold.heading': 'Estamos revisando tu cuenta',
+  'hold.statement':
+    'Una persona está revisando tu cuenta antes de que puedas publicar, comentar, enviar mensajes, compartir imágenes, escribir cartas o unirte a grupos. Puedes seguir aprendiendo como siempre. Esto no significa que hayas incumplido ninguna norma.',
+  'account.unavailable': 'Esta cuenta no está disponible.',
+  'account.unavailableByline': 'Cuenta no disponible',
+  'error.code.cannotJoinYet': 'Esta persona no puede unirse a grupos ahora mismo.',
+  'error.code.exportNotAvailable': 'Ahora mismo no se pueden preparar copias. Inténtalo de nuevo más tarde.',
+  'suspension.delete.keep': 'Conservar mi cuenta',
+  'suspension.delete.kept': 'Tu cuenta se queda. No se ha eliminado nada.',
   'social.close': 'Cerrar',
   'sheet.expand': 'Ampliar',
   'sheet.collapse': 'Reducir',
@@ -17653,7 +17697,7 @@ const es: Catalog = {
   'suspension.data.preparing': 'Estamos preparando tu copia. Vuelve a iniciar sesión más tarde para descargarla aquí.',
   'suspension.delete.button': 'Eliminar mi cuenta',
   'suspension.delete.warning':
-    'Tu cuenta y todos tus datos se eliminarán definitivamente después de 14 días. Los registros de las decisiones de moderación se conservan, como explica la política de privacidad.',
+    'Tu cuenta y todos tus datos se eliminarán definitivamente después de 14 días; hasta entonces puedes conservar tu cuenta desde esta pantalla. Los registros de las decisiones de moderación se conservan, como explica la política de privacidad.',
   'suspension.delete.scheduled': 'Tu cuenta se va a eliminar. Desaparecerá definitivamente dentro de {days} días.',
   'suspension.signInAgain': 'Esta página lleva demasiado tiempo abierta. Vuelve a iniciar sesión para continuar.',
   'report.done.blockThem': 'Bloquear a esta persona',
@@ -21255,6 +21299,15 @@ const tr: Catalog = {
   'hold.why': 'Neden?',
   'hold.whyBody':
     'Topluluğun güvende kalması için Hevalo’dan bir kişi hesabını inceliyor. O zamana kadar paylaşım yapamaz, yorum yazamaz, mesaj ya da mektup gönderemez, resim ekleyemez ve gruplara katılamazsın. İnceleme biter bitmez sana Hevalo’da haber vereceğiz.',
+  'hold.heading': 'Hesabın kontrol ediliyor',
+  'hold.statement':
+    'Bir kişi hesabını inceliyor; bu bitene kadar paylaşım yapamaz, yorum yazamaz, mesaj gönderemez, resim paylaşamaz, mektup yazamaz ve gruplara katılamazsın. Öğrenmeye her zamanki gibi devam edebilirsin. Bu, bir kuralı çiğnediğin anlamına gelmez.',
+  'account.unavailable': 'Bu hesap kullanılamıyor.',
+  'account.unavailableByline': 'Hesap kullanılamıyor',
+  'error.code.cannotJoinYet': 'Bu kişi şu anda gruplara katılamıyor.',
+  'error.code.exportNotAvailable': 'Şu anda kopya hazırlanamıyor. Lütfen daha sonra tekrar dene.',
+  'suspension.delete.keep': 'Hesabımı koru',
+  'suspension.delete.kept': 'Hesabın kalıyor. Hiçbir şey silinmedi.',
   'social.close': 'Kapat',
   'sheet.expand': 'Genişlet',
   'sheet.collapse': 'Daralt',
@@ -21549,7 +21602,7 @@ const tr: Catalog = {
   'suspension.data.preparing': 'Kopyan hazırlanıyor. Buradan indirmek için daha sonra yeniden giriş yap.',
   'suspension.delete.button': 'Hesabımı sil',
   'suspension.delete.warning':
-    'Hesabın ve tüm verilerin 14 gün sonra kalıcı olarak silinecek. Moderasyon kararlarının kayıtları, gizlilik politikasında açıklandığı gibi saklanır.',
+    'Hesabın ve tüm verilerin 14 gün sonra kalıcı olarak silinecek; o zamana kadar bu ekrandan hesabını koruyabilirsin. Moderasyon kararlarının kayıtları, gizlilik politikasında açıklandığı gibi saklanır.',
   'suspension.delete.scheduled': 'Hesabın silinecek. {days} gün sonra tamamen kaldırılacak.',
   'suspension.signInAgain': 'Bu sayfa çok uzun süre açık kaldı. Devam etmek için yeniden giriş yap.',
   'report.done.blockThem': 'Bu kişiyi engelle',
@@ -25151,6 +25204,15 @@ const ar: Catalog = {
   'hold.why': 'لماذا؟',
   'hold.whyBody':
     'يراجع شخصٌ من فريق Hevalo حسابك حفاظًا على أمان المجتمع. وحتى ذلك الحين لا يمكنك النشر أو التعليق أو إرسال الرسائل أو إضافة الصور أو الانضمام إلى المجموعات. سنُعلمك في Hevalo فور الانتهاء.',
+  'hold.heading': 'نراجع حسابك',
+  'hold.statement':
+    'يراجع شخصٌ حسابك قبل أن تتمكن من النشر أو التعليق أو إرسال الرسائل وكتابتها أو مشاركة الصور أو الانضمام إلى المجموعات. يمكنك مواصلة التعلّم كالمعتاد. وهذا لا يعني أنك خالفت أي قاعدة.',
+  'account.unavailable': 'هذا الحساب غير متاح.',
+  'account.unavailableByline': 'حساب غير متاح',
+  'error.code.cannotJoinYet': 'لا يمكن لهذا الشخص الانضمام إلى المجموعات الآن.',
+  'error.code.exportNotAvailable': 'لا يمكن تجهيز نسخ الآن. حاول مجددًا لاحقًا.',
+  'suspension.delete.keep': 'احتفظ بحسابي',
+  'suspension.delete.kept': 'سيبقى حسابك. لم يُحذف أي شيء.',
   'social.close': 'إغلاق',
   'sheet.expand': 'توسيع',
   'sheet.collapse': 'تصغير',
@@ -25444,7 +25506,8 @@ const ar: Catalog = {
   'suspension.data.download': 'نزّل نسخة من بياناتي',
   'suspension.data.preparing': 'يجري تجهيز نسختك. سجّل الدخول مجددًا لاحقًا لتنزيلها من هنا.',
   'suspension.delete.button': 'احذف حسابي',
-  'suspension.delete.warning': 'سيُحذف حسابك وكل بياناتك نهائيًا بعد 14 يومًا. أمّا سجلات قرارات الإشراف فتُحفظ، كما توضّح سياسة الخصوصية.',
+  'suspension.delete.warning':
+    'سيُحذف حسابك وكل بياناتك نهائيًا بعد 14 يومًا، ويمكنك حتى ذلك الحين الاحتفاظ بحسابك من هذه الشاشة. أمّا سجلات قرارات الإشراف فتُحفظ، كما توضّح سياسة الخصوصية.',
   'suspension.delete.scheduled': 'سيُحذف حسابك. سيختفي نهائيًا بعد {days} يومًا.',
   'suspension.signInAgain': 'بقيت هذه الصفحة مفتوحة طويلًا. سجّل الدخول مجددًا للمتابعة.',
   'report.done.blockThem': 'حظر هذا الشخص',
@@ -29046,6 +29109,15 @@ const fr: Catalog = {
   'hold.why': 'Pourquoi ?',
   'hold.whyBody':
     'Une personne de Hevalo vérifie ton compte pour que la communauté reste sûre. D’ici là, tu ne peux pas publier, commenter, envoyer de messages ni de lettres, ajouter d’images ni rejoindre de groupes. On te prévient dans Hevalo dès que c’est terminé.',
+  'hold.heading': 'Ton compte est en cours de vérification',
+  'hold.statement':
+    'Une personne vérifie ton compte avant que tu puisses publier, commenter, envoyer des messages, partager des images, écrire des lettres ou rejoindre des groupes. Tu peux continuer à apprendre comme d’habitude. Cela ne veut pas dire que tu as enfreint une règle.',
+  'account.unavailable': 'Ce compte n’est pas disponible.',
+  'account.unavailableByline': 'Compte indisponible',
+  'error.code.cannotJoinYet': 'Cette personne ne peut pas rejoindre de groupes pour le moment.',
+  'error.code.exportNotAvailable': 'Impossible de préparer une copie pour le moment. Réessaie plus tard.',
+  'suspension.delete.keep': 'Garder mon compte',
+  'suspension.delete.kept': 'Ton compte est conservé. Rien n’a été supprimé.',
   'social.close': 'Fermer',
   'sheet.expand': 'Agrandir',
   'sheet.collapse': 'Réduire',
@@ -29340,7 +29412,7 @@ const fr: Catalog = {
   'suspension.data.preparing': 'Ta copie est en cours de préparation. Reconnecte-toi plus tard pour la télécharger ici.',
   'suspension.delete.button': 'Supprimer mon compte',
   'suspension.delete.warning':
-    'Ton compte et toutes tes données seront définitivement supprimés après 14 jours. Les dossiers des décisions de modération sont conservés, comme l’explique la politique de confidentialité.',
+    'Ton compte et toutes tes données seront définitivement supprimés après 14 jours ; d’ici là, tu peux garder ton compte depuis cet écran. Les dossiers des décisions de modération sont conservés, comme l’explique la politique de confidentialité.',
   'suspension.delete.scheduled': 'Ton compte va être supprimé. Il aura définitivement disparu dans {days} jours.',
   'suspension.signInAgain': 'Cette page est restée ouverte trop longtemps. Reconnecte-toi pour continuer.',
   'report.done.blockThem': 'Bloquer cette personne',
@@ -32942,6 +33014,15 @@ const nl: Catalog = {
   'hold.why': 'Waarom?',
   'hold.whyBody':
     'Iemand van Hevalo controleert je account, zodat de community veilig blijft. Tot die tijd kun je niets plaatsen of reageren, geen berichten of brieven sturen, geen afbeeldingen toevoegen en geen lid worden van groepen. We laten het je in Hevalo weten zodra het klaar is.',
+  'hold.heading': 'Je account wordt gecontroleerd',
+  'hold.statement':
+    'Iemand controleert je account voordat je iets kunt plaatsen, reageren, berichten sturen, afbeeldingen delen, brieven schrijven of lid worden van groepen. Leren gaat gewoon door. Dit betekent niet dat je een regel hebt overtreden.',
+  'account.unavailable': 'Dit account is niet beschikbaar.',
+  'account.unavailableByline': 'Account niet beschikbaar',
+  'error.code.cannotJoinYet': 'Deze persoon kan nu geen lid worden van groepen.',
+  'error.code.exportNotAvailable': 'Er kunnen nu geen kopieën worden gemaakt. Probeer het later opnieuw.',
+  'suspension.delete.keep': 'Mijn account houden',
+  'suspension.delete.kept': 'Je account blijft. Er is niets verwijderd.',
   'social.close': 'Sluiten',
   'sheet.expand': 'Vergroten',
   'sheet.collapse': 'Verkleinen',
@@ -33236,7 +33317,7 @@ const nl: Catalog = {
   'suspension.data.preparing': 'Je kopie wordt klaargemaakt. Log later opnieuw in om haar hier te downloaden.',
   'suspension.delete.button': 'Mijn account verwijderen',
   'suspension.delete.warning':
-    'Je account en al je gegevens worden na 14 dagen definitief verwijderd. Moderatiedossiers blijven bewaard, zoals het privacybeleid uitlegt.',
+    'Je account en al je gegevens worden na 14 dagen definitief verwijderd; tot die tijd kun je je account via dit scherm houden. Moderatiedossiers blijven bewaard, zoals het privacybeleid uitlegt.',
   'suspension.delete.scheduled': 'Je account wordt verwijderd. Over {days} dagen is het definitief weg.',
   'suspension.signInAgain': 'Deze pagina stond te lang open. Log opnieuw in om verder te gaan.',
   'report.done.blockThem': 'Deze persoon blokkeren',
@@ -36839,6 +36920,15 @@ const ckb: Catalog = {
   'hold.why': 'بۆچی؟',
   'hold.whyBody':
     'کەسێک لە Hevalo هەژمارەکەت دەپشکنێت بۆ ئەوەی کۆمەڵگاکە پارێزراو بمێنێت. تا ئەو کاتە ناتوانیت شت بڵاو بکەیتەوە، لێدوان بنووسیت، نامە بنێریت یان بنووسیت، وێنە زیاد بکەیت یان بچیتە ناو گرووپەوە. هەر کە پشکنینەکە تەواو بوو، لە Hevalo ئاگادارت دەکەینەوە.',
+  'hold.heading': 'هەژمارەکەت دەپشکنرێت',
+  'hold.statement':
+    'کەسێک هەژمارەکەت دەپشکنێت پێش ئەوەی بتوانیت شت بڵاو بکەیتەوە، لێدوان بنووسیت، نامە بنێریت، وێنە هاوبەش بکەیت، نامە بنووسیت یان بچیتە ناو گرووپەوە. فێربوون وەک هەمیشە بەردەوامە. ئەمە بەو مانایە نییە کە یاسایەکت شکاندووە.',
+  'account.unavailable': 'ئەم هەژمارە بەردەست نییە.',
+  'account.unavailableByline': 'هەژمار بەردەست نییە',
+  'error.code.cannotJoinYet': 'ئەم کەسە ئێستا ناتوانێت بچێتە ناو گرووپەوە.',
+  'error.code.exportNotAvailable': 'ئێستا ناتوانرێت کۆپی ئامادە بکرێت. تکایە دواتر دووبارە هەوڵ بدەرەوە.',
+  'suspension.delete.keep': 'هەژمارەکەم بهێڵەرەوە',
+  'suspension.delete.kept': 'هەژمارەکەت دەمێنێتەوە. هیچ شتێک نەسڕاوەتەوە.',
   'social.close': 'داخستن',
   'sheet.expand': 'گەورەی بکە',
   'sheet.collapse': 'بچووکی بکەرەوە',
@@ -37133,7 +37223,7 @@ const ckb: Catalog = {
   'suspension.data.preparing': 'کۆپییەکەت ئامادە دەکرێت. دواتر دووبارە بچۆ ژوورەوە بۆ ئەوەی لێرە دایبگریت.',
   'suspension.delete.button': 'هەژمارەکەم بسڕەوە',
   'suspension.delete.warning':
-    'هەژمارەکەت و هەموو داتاکانت دوای 14 ڕۆژ بە یەکجاری دەسڕدرێنەوە. تۆمارەکانی بڕیارەکانی چاودێری دەمێننەوە، وەک سیاسەتی تایبەتێتی ڕوونی دەکاتەوە.',
+    'هەژمارەکەت و هەموو داتاکانت دوای 14 ڕۆژ بە یەکجاری دەسڕدرێنەوە؛ تا ئەو کاتە دەتوانیت لەم شاشەیەوە هەژمارەکەت بهێڵیتەوە. تۆمارەکانی بڕیارەکانی چاودێری دەمێننەوە، وەک سیاسەتی تایبەتێتی ڕوونی دەکاتەوە.',
   'suspension.delete.scheduled': 'هەژمارەکەت دەسڕدرێتەوە. دوای {days} ڕۆژ بە یەکجاری نامێنێت.',
   'suspension.signInAgain': 'ئەم پەڕەیە زۆر کراوە ماوەتەوە. بۆ بەردەوامبوون دووبارە بچۆرە ژوورەوە.',
   'report.done.blockThem': 'ئەم کەسە بلۆک بکە',

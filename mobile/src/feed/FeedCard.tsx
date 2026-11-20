@@ -243,7 +243,9 @@ export const FeedCard = memo(function FeedCard({
   // An unfamiliar kind prints itself rather than an empty word.
   const badgeKey = CARD_LABEL_KEY[item.kind];
   const badge = badgeKey ? t(badgeKey) : item.kind;
-  const who = item.author.displayName || item.author.username;
+  // Kept content of a suspended or banned account names nobody and opens nothing.
+  const gone = item.author.unavailable === true;
+  const who = gone ? t('account.unavailableByline') : item.author.displayName || item.author.username;
   const pictures = feedImages(item);
   const when = noticeTime(item.at, t, locale);
   // A picture's words are its caption, under it; a written post's words are the post.
@@ -257,28 +259,38 @@ export const FeedCard = memo(function FeedCard({
       */}
       <View style={[styles.head, { flexDirection: dir.row }]}>
         <ReachGroup gap={spacing.sm}>
-          <Pressable
-            onPress={openAuthor}
-            accessibilityRole="button"
-            accessibilityLabel={who}
-            reachSize={{ width: AUTHOR, height: AUTHOR }}
-            style={({ pressed }) => pressed && heldDim}
-          >
-            <Avatar name={who} size={AUTHOR} photoUrl={item.author.avatarUrl} />
-          </Pressable>
-          <View style={[styles.byline, { flexDirection: dir.row }]}>
-            {/* A control of its own, since a pressable run of text cannot reach past its letters. */}
+          {gone ? (
+            <Avatar name="" size={AUTHOR} photoUrl={null} />
+          ) : (
             <Pressable
               onPress={openAuthor}
-              accessibilityRole="link"
-              reachSize={{ height: NAME_LINE }}
-              testID="post-author"
-              style={({ pressed }) => [styles.whoLink, pressed && heldDim]}
+              accessibilityRole="button"
+              accessibilityLabel={who}
+              reachSize={{ width: AUTHOR, height: AUTHOR }}
+              style={({ pressed }) => pressed && heldDim}
             >
-              <Text style={[styles.who, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+              <Avatar name={who} size={AUTHOR} photoUrl={item.author.avatarUrl} />
+            </Pressable>
+          )}
+          <View style={[styles.byline, { flexDirection: dir.row }]}>
+            {gone ? (
+              <Text style={[styles.who, styles.whoLink, dir.text, { color: colors.textSecondary }]} numberOfLines={1} testID="post-author">
                 {who}
               </Text>
-            </Pressable>
+            ) : (
+              // A control of its own, since a pressable run of text cannot reach past its letters.
+              <Pressable
+                onPress={openAuthor}
+                accessibilityRole="link"
+                reachSize={{ height: NAME_LINE }}
+                testID="post-author"
+                style={({ pressed }) => [styles.whoLink, pressed && heldDim]}
+              >
+                <Text style={[styles.who, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {who}
+                </Text>
+              </Pressable>
+            )}
             <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
               {`${badge} · ${when}`}
             </Text>

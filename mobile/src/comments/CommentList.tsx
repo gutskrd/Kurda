@@ -118,31 +118,42 @@ function CommentRow({
 
   return (
     <View style={[styles.comment, { flexDirection: dir.row }, c.pending && !c.failed ? styles.pending : null]}>
-      {/* The picture also opens the profile, for a thumb; screen readers get the name alone, not the same button twice. */}
-      <Pressable
-        onPress={openProfile}
-        disabled={c.pending}
-        hitSlop={faceSlop}
-        {...decorative()}
-        testID={`comment-face-${c.id}`}
-        style={({ pressed }) => pressed && heldDim}
-      >
-        <Avatar name={author.username} size={size} photoUrl={author.avatarUrl} />
-      </Pressable>
+      {author.unavailable ? (
+        // Kept words of a suspended or banned account: no face, no name, nothing to open.
+        <Avatar name="" size={size} photoUrl={null} />
+      ) : (
+        // The picture also opens the profile, for a thumb; screen readers get the name alone, not the same button twice.
+        <Pressable
+          onPress={openProfile}
+          disabled={c.pending}
+          hitSlop={faceSlop}
+          {...decorative()}
+          testID={`comment-face-${c.id}`}
+          style={({ pressed }) => pressed && heldDim}
+        >
+          <Avatar name={author.username} size={size} photoUrl={author.avatarUrl} />
+        </Pressable>
+      )}
       <View style={styles.main}>
         <View style={[styles.byline, { flexDirection: dir.row }]}>
-          <Pressable
-            onPress={openProfile}
-            disabled={c.pending}
-            hitSlop={BYLINE_SLOP}
-            accessibilityRole="button"
-            accessibilityLabel={t('friends.openProfile', { username: author.username })}
-            style={({ pressed }) => [styles.who, pressed && heldDim]}
-          >
-            <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
-              {author.username}
+          {author.unavailable ? (
+            <Text style={[styles.name, styles.who, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+              {t('account.unavailableByline')}
             </Text>
-          </Pressable>
+          ) : (
+            <Pressable
+              onPress={openProfile}
+              disabled={c.pending}
+              hitSlop={BYLINE_SLOP}
+              accessibilityRole="button"
+              accessibilityLabel={t('friends.openProfile', { username: author.username })}
+              style={({ pressed }) => [styles.who, pressed && heldDim]}
+            >
+              <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
+                {author.username}
+              </Text>
+            </Pressable>
+          )}
           <Text style={[styles.age, { color: colors.textSecondary }]} numberOfLines={1}>
             {c.failed ? '' : c.pending ? t('comments.posting') : noticeTime(c.createdAt, t, locale)}
           </Text>

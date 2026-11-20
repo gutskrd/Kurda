@@ -146,6 +146,7 @@ import { leaveLinked } from './src/navigation/leaveLinked';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
+import { AccountWatch } from './src/reports/AccountWatch';
 import { InviteBanner } from './src/play/InviteBanner';
 import { GazeArea } from './src/characters/gaze';
 import { ArtOverridesLoader } from './src/art/ArtOverridesLoader';
@@ -831,6 +832,8 @@ function SignedInRoot() {
       </RootStack.Navigator>
       {/* Push notifications shown while the app is open, and tapped ones routed where they belong. */}
       <PushHost />
+      {/* A limit given or lifted, a hold included, shows as soon as the server says so. */}
+      <AccountWatch />
       {/* Over every screen: an invite to play waits here until answered. */}
       <InviteBanner />
       {/* Over every screen: an arriving gift, a warning to read once. */}

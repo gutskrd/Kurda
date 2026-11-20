@@ -191,10 +191,14 @@ interface ExportStatus {
   requestedAt?: string;
 }
 
+/** Where deleting the account stands on this screen: waiting out its grace period, or closed at once. */
+type Deletion = { kind: 'scheduled'; days: number } | { kind: 'gone' };
+
 /**
  * A copy of one's data and deleting the account, sent with the appeal token. The copy is asked for and fetched as in
  * Settings, with a fresh link each time it is opened; deleting asks first, in the words Settings uses, and says which
- * records are kept.
+ * records are kept. A suspended person cannot sign in to change their mind, so a deletion waiting out its grace period
+ * can be undone here (`POST /me/deletion/cancel`).
  */
 function YourData({ client }: { client: ApiClient }): React.JSX.Element {
   const { colors } = useTheme();
@@ -204,7 +208,9 @@ function YourData({ client }: { client: ApiClient }): React.JSX.Element {
   const [asking, setAsking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-  const [deleted, setDeleted] = useState<string | null>(null);
+  const [deletion, setDeletion] = useState<Deletion | null>(null);
+  const [keeping, setKeeping] = useState(false);
+  const [kept, setKept] = useState(false);
 
   // The token lasts a day; past that only signing in again gives a new one.
   const said = useCallback(
@@ -229,7 +235,8 @@ function YourData({ client }: { client: ApiClient }): React.JSX.Element {
     const res = await client.post('/me/export');
     setAsking(false);
     if (res.ok) setExported({ status: 'pending' });
-    else setNote(said(res.error, t('settings.data.failed')));
+    // With nowhere private to keep a copy the server makes none, which is said as that rather than as a failure.
+    else setNote(said(res.error, res.error.code === 'EXPORT_NOT_AVAILABLE' ? t('error.code.exportNotAvailable') : t('settings.data.failed')));
   };
 
   const download = async (): Promise<void> => {
@@ -247,6 +254,7 @@ function YourData({ client }: { client: ApiClient }): React.JSX.Element {
 
   const remove = async (): Promise<void> => {
     setDeleting(true);
+    setKept(false);
     const res = await client.delete<{ deletionScheduled?: boolean; graceDays?: number }>('/me');
     setDeleting(false);
     if (!res.ok) {
@@ -254,7 +262,19 @@ function YourData({ client }: { client: ApiClient }): React.JSX.Element {
       return;
     }
     const days = res.data?.deletionScheduled ? (res.data.graceDays ?? 0) : 0;
-    setDeleted(days > 0 ? t('suspension.delete.scheduled', { days }) : t('settings.delete.doneNow'));
+    setDeletion(days > 0 ? { kind: 'scheduled', days } : { kind: 'gone' });
+  };
+
+  const keep = async (): Promise<void> => {
+    setKeeping(true);
+    const res = await client.post<{ cancelled: boolean }>('/me/deletion/cancel');
+    setKeeping(false);
+    if (!res.ok) {
+      Alert.alert(t('settings.delete.failed'), said(res.error, describeError(res.error, t)));
+      return;
+    }
+    setDeletion(null);
+    setKept(true);
   };
 
   const confirmDelete = (): void => {
@@ -272,12 +292,24 @@ function YourData({ client }: { client: ApiClient }): React.JSX.Element {
       <Text style={[styles.label, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
         {t('settings.data.title')}
       </Text>
-      {deleted ? (
+      {deletion?.kind === 'gone' ? (
         <Text style={[styles.note, dir.text, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">
-          {deleted}
+          {t('settings.delete.doneNow')}
         </Text>
+      ) : deletion?.kind === 'scheduled' ? (
+        <>
+          <Text style={[styles.note, dir.text, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">
+            {t('suspension.delete.scheduled', { days: deletion.days })}
+          </Text>
+          <ClayButton label={t('suspension.delete.keep')} tone="primary" busy={keeping} onPress={() => void keep()} style={styles.ask} />
+        </>
       ) : (
         <>
+          {kept ? (
+            <Text style={[styles.note, dir.text, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">
+              {t('suspension.delete.kept')}
+            </Text>
+          ) : null}
           <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{t('suspension.data.help')}</Text>
           {exported?.status === 'pending' ? (
             <Text style={[styles.note, dir.text, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">

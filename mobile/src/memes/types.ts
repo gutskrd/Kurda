@@ -11,7 +11,7 @@ export interface ImagePost {
   authorId: string;
   authorRole: AuthorRole;
   /** Who posted it: a face and a name; older APIs leave it out. */
-  author?: { id: string; username: string; avatarUrl: string | null } | null;
+  author?: { id: string; username: string; avatarUrl: string | null; unavailable?: true } | null;
   imageMediaId: string;
   imageUrl: string | null;
   /** Your own post while its picture waits for a person: nobody else sees it until then. */

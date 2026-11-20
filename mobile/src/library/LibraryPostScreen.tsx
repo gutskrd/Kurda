@@ -169,7 +169,18 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               {/* A gotin has no title; its pictures come first on its own page, words under them. */}
               {post.title ? <Text style={[styles.title, dir.free, { color: colors.textPrimary }]}>{post.title}</Text> : null}
               {/* Who wrote it and when, as the wall says it: a tap opens their profile. */}
-              {post.author ? (
+              {post.author?.unavailable ? (
+                // Kept words of a suspended or banned account: no face, no name, nothing to open.
+                <View style={[styles.byline, { flexDirection: dir.row, alignSelf: edge }]} testID="library-post-author">
+                  <Avatar name="" size={BYLINE_FACE} photoUrl={null} />
+                  <Text style={[styles.author, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {t('account.unavailableByline')}
+                  </Text>
+                  <Text style={[styles.when, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {noticeTime(post.publishedAt ?? post.createdAt, t, locale)}
+                  </Text>
+                </View>
+              ) : post.author ? (
                 <Pressable
                   onPress={() => post.author && navigation.navigate('UserProfile', { userId: post.author.id })}
                   accessibilityRole="button"
@@ -274,7 +285,13 @@ function asFeedItem(post: LibraryPost, engagement: PostEngagement): FeedItem {
     targetType: 'library',
     id: post.id,
     kind: post.meme ? 'meme' : post.type,
-    author: { id: post.author?.id ?? post.authorId, username: post.author?.username ?? '', displayName: null, avatarUrl: post.author?.avatarUrl ?? null },
+    author: {
+      id: post.author?.id ?? post.authorId,
+      username: post.author?.username ?? '',
+      displayName: null,
+      avatarUrl: post.author?.avatarUrl ?? null,
+      ...(post.author?.unavailable ? { unavailable: true as const } : {}),
+    },
     title: post.title,
     excerpt: post.body || null,
     imageUrl: images[0]?.url ?? null,
