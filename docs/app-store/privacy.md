@@ -69,7 +69,7 @@ asking; the last column is where each app says it.
 | Display name | Edit profile; the name Apple or Google shares on a first sign-in | shown with the profile, in lists and letters, and searchable | no | other members | until cleared or deletion | "Optional. Others see it and can search for you by it."; under Apple and Google: "Apple or Google shares your name and email with Hevalo. Others see the name on your profile, never the email." |
 | Bio | Edit profile | the profile | no | whoever the profile visibility allows | until cleared or deletion | "Optional. Shown on your profile." |
 | Country | Edit profile | the profile and the "My country" rankings | no | profile viewers; that country’s board | until cleared or deletion | "Optional. Shown on your profile, and it puts you on your country’s rankings." |
-| Profile or group picture | the system photo picker | the profile, the group | no | as the profile, or the group’s members | until removed or deletion | the iOS photo sentence in `mobile/app.json` |
+| Profile or group picture | the system photo picker | the profile, the group; checked first (see "Pictures are checked" below) | no | as the profile, or the group’s members; only the person while it is being checked | until removed or deletion; a refused one 182 days, privately | the iOS photo sentence in `mobile/app.json` |
 | Identity tags (age, gender, ethnicity) | Tags | shown on the profile when the person chooses; a sensitive one needs a ticked consent | no | profile viewers, only while shown | until removed or deletion | "I consent to showing this sensitive tag. It’s optional and can be removed anytime." |
 | Time zone | taken from the phone or browser | when a streak day ends, when reminders may arrive | automatic | nobody | until deletion | — |
 | Device id | a random id the app keeps per install (`X-Device-Id`) | names sessions in Settings → Devices, a guest’s way back in, per-device sign-in limits, abuse checks | automatic | the person (Devices), staff | stored as a keyed hash; a known device 180 days after its last sign-in; a session 90 days at most | — |
@@ -84,6 +84,26 @@ asking; the last column is where each app says it.
 | Friend search | Friends | finding people | — | nobody; not stored | not kept | — |
 | Crash reports | release builds, on their own | fixing crashes | automatic | the team | in server logs, with no account or device id | — |
 | Phone number | neither app asks; the API keeps an optional, unused route (`api/src/auth/phone-routes.ts`) | — | — | — | — | — |
+
+### Pictures are checked before others see them
+
+Every picture someone shares (a post picture, a profile or group picture, a
+drawing on a letter) is checked before anyone else can see it: automatically,
+by an AI service working for us, and by people on our moderation team. Only the
+picture is sent to the AI service, made smaller; never the account, the name or
+any words with it (`api/src/moderation/vision-scanner.ts`).
+
+- A clear picture is shown at once.
+- An uncertain one is kept privately and only its owner sees it ("Being
+  checked") until a person decides.
+- A refused picture is not shown; its owner can ask a person to look. It is
+  kept privately for up to **182 days**, for that review and for an appeal,
+  then deleted.
+- A possible child-safety hit is kept privately as evidence for **365 days**
+  after it is decided, as other moderation evidence is.
+
+The privacy policy (`web/src/pages/Privacy.tsx`) needs to say this too; that
+wording is with the website's catalogues.
 
 Terms and the privacy policy are one tap from sign-up (the agreement line on
 the phone’s first sign-in screen and on its last sign-up step, and under the

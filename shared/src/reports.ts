@@ -9,7 +9,7 @@ import { stripControlChars } from './sanitize.js';
 import type { CopyrightCaseInfo } from './copyright.js';
 import type { PlayGame } from './play.js';
 import type { LetterDecor } from './letter-paper.js';
-import type { PictureReviewNotificationData } from './picture-review.js';
+import type { PendingPicture, PictureReviewNotificationData } from './picture-review.js';
 
 // ---------------------------------------------------------------------------
 // Categories and priority
@@ -325,6 +325,8 @@ export interface StandingSanction {
     /** your appeal, if you filed one */
     current: AppealView | null;
   };
+  /** the picture a removal took down, as a short-lived link only you can open; absent when it was not about a picture */
+  picture?: PendingPicture | null;
 }
 
 export type StandingStatus = 'good' | 'limited' | 'suspended' | 'banned';

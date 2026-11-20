@@ -10,6 +10,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { GroupService } from './service.js';
 import { addFriendsToGroup } from '../test/groups.js';
+import { testPictures } from '../test/media.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import type { MediaStorage } from '../media/storage.js';
@@ -39,8 +40,8 @@ describe.skipIf(!DATABASE_URL)('group name, description and picture (integration
     pool,
     storage,
     usage: new MediaUsageService(pool, null),
-    // the scan's own rules are tested with it; here every picture is cleared
-    moderation: { scan: async (key: string) => (await pool.query(`UPDATE media_uploads SET scan_status = 'cleared' WHERE key = $1`, [key]), { scanStatus: 'cleared' }) },
+    // the check's own rules are tested with it; here the stub finds nothing in any picture
+    pictures: testPictures(pool, storage),
     limits: mediaLimits(config),
     log: { warn: () => undefined, error: () => undefined },
   });

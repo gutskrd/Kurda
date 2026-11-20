@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HELPLINE_URL } from '@kurda/shared';
-import { appealDecidedNotice, caringMessage, formatUtc, reportOutcomeNotice, sanctionLiftedNotice, sanctionNotice } from './notices.js';
+import { appealDecidedNotice, caringMessage, formatUtc, pictureReviewNotice, reportOutcomeNotice, sanctionLiftedNotice, sanctionNotice } from './notices.js';
 
 describe('sanction notices (the statement of reasons)', () => {
   const base = {
@@ -91,5 +91,25 @@ describe('other notices', () => {
 
   it('formats a time without depending on the server’s zone', () => {
     expect(formatUtc(new Date('2026-01-05T07:03:00Z'))).toBe('5 Jan 2026, 07:03 UTC');
+  });
+});
+
+describe('picture review notices', () => {
+  it('tells the owner an approved picture is showing, by where it is shown', () => {
+    const post = pictureReviewNotice('approved', 'post', { type: 'image_post', id: 'p1' });
+    expect(post.body).toBe('Your picture was checked and it’s fine. Your post is now visible.');
+    expect(post.data).toEqual({ kind: 'picture_review', outcome: 'approved', surface: 'post', asked: false, target: { type: 'image_post', id: 'p1' } });
+    expect(pictureReviewNotice('approved', 'profile_photo', null).body).toContain('Your new photo is now on your profile.');
+    expect(pictureReviewNotice('approved', 'group_photo', { type: 'group', id: 'g1' }).body).toContain('The new group photo is now showing.');
+    expect(pictureReviewNotice('approved', 'letter', { type: 'letter_thread', id: 't1' }).body).toContain('Your letter is on its way.');
+  });
+
+  it('says a refusal its owner asked about can be shared now, or that it stays', () => {
+    const asked = pictureReviewNotice('approved', 'post', null, true);
+    expect(asked.body).toContain('You can share it now.');
+    expect(asked.data).toMatchObject({ asked: true, target: null });
+    // a post picture that never made it onto a post can be shared too
+    expect(pictureReviewNotice('approved', 'post', null).body).toContain('You can share it now.');
+    expect(pictureReviewNotice('upheld', 'post', null, true).body).toBe('A person checked your picture. It can’t be shared on Hevalo.');
   });
 });

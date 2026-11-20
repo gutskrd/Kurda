@@ -14,7 +14,7 @@ import { createStorage, type MediaStorage } from '../media/storage.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { imagePostLimits, type MediaLimits } from '../media/mediaLimits.js';
 import { storeImageMedia, type ImageMediaDeps } from '../media/imageMedia.js';
-import { ImageModerationService } from '../moderation/image-moderation-service.js';
+import { testPictures } from '../test/media.js';
 import { activate } from '../test/activate.js';
 
 const ready = Boolean(process.env.DATABASE_URL && process.env.S3_ENDPOINT);
@@ -35,7 +35,7 @@ describe.skipIf(!ready)('image/meme upload cost-safety (integration)', () => {
     pool,
     storage: over.storage ?? storage,
     usage: new MediaUsageService(pool, null),
-    moderation: new ImageModerationService(pool),
+    pictures: testPictures(pool, over.storage ?? storage),
     limits: over.limits ?? imagePostLimits(config),
     log,
   });

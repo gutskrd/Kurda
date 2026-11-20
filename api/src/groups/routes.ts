@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
+  canEditGroup,
   GROUP_BAN_DURATIONS,
   GROUP_BAN_REASON_MAX,
   GROUP_DESCRIPTION_MAX,
@@ -13,7 +14,6 @@ import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
-import { ImageModerationService } from '../moderation/image-moderation-service.js';
 import type { AppConfig } from '../config/env.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
@@ -88,9 +88,18 @@ export function registerGroupRoutes(
    * A group with its roster, for a member. Someone banned gets its name, picture and their standing; anyone else gets
    * 404 GROUP_NOT_FOUND, as for an unknown id.
    */
-  app.get('/groups/:id', { schema: { params: idParam }, preHandler: requireAccount }, async (req) =>
-    groups.get((req.params as { id: string }).id, req.user!.id, publicUrl),
-  );
+  app.get('/groups/:id', { schema: { params: idParam }, preHandler: requireAccount }, async (req) => {
+    const id = (req.params as { id: string }).id;
+    const detail = await groups.get(id, req.user!.id, publicUrl);
+    // The new picture a person is still checking: for the group's owner and admins and whoever put it up, never for others.
+    const waiting = await app.db.query<{ k: string | null; set_by: string | null }>(
+      `SELECT pending_photo_key AS k, pending_photo_set_by AS set_by FROM groups WHERE id = $1`,
+      [id],
+    );
+    const row = waiting.rows[0];
+    if (!detail.myRole || !(canEditGroup(detail.myRole) || row?.set_by === req.user!.id)) return detail;
+    return { ...detail, photoPending: app.hasDecorator('pictures') ? await app.pictures.ownerLink(row?.k) : null };
+  });
 
   /**
    * Changes the group's name or description, as owner or admin, with the same gates as creating a group and a limit
@@ -146,16 +155,19 @@ export function registerGroupRoutes(
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
       if (!raw) return reply.code(415).send({ code: 'INVALID_IMAGE', message: 'send raw image bytes with an image/* content-type' });
       const res = await setGroupPhoto(
-        { pool: app.db, storage: app.storage, usage, moderation: new ImageModerationService(app.db), limits, log: app.log },
+        { pool: app.db, storage: app.storage, usage, pictures: app.pictures, limits, log: app.log },
         (req.params as { id: string }).id,
         req.user!.id,
         raw,
       );
       if (!res.ok) {
         req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'group picture upload refused');
-        return reply.code(res.status).send({ code: res.code, message: res.message });
+        // a refusal by the picture check says why, and how to ask a person (PictureRejection)
+        if (res.retryAfterSec) reply.header('retry-after', String(res.retryAfterSec));
+        return reply.code(res.status).send({ code: res.code, message: res.message, ...(res.refusal ?? {}) });
       }
-      return { photoUrl: res.photoUrl };
+      // held: members keep seeing the old picture until a person checks the new one
+      return { photoUrl: res.photoUrl, review: res.review, ...(res.review === 'held' ? { photoPending: res.photoPending ?? null } : {}) };
     },
   );
   app.delete(

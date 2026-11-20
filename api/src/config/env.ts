@@ -94,6 +94,31 @@ const envSchema = z.object({
   /** Per-user image-post upload rate limit. */
   MEDIA_IMAGE_UPLOAD_RATE_MAX: z.coerce.number().int().positive().default(20),
   MEDIA_IMAGE_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
+  /**
+   * The key for the vision service that checks every picture before others see it (moderation/vision-scanner.ts).
+   * Optional: without it in production every picture waits for a person on the admin Pictures page, and the boot log
+   * says so; outside production a stub that finds nothing stands in.
+   */
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  /** The model that checks pictures. */
+  IMAGE_SCAN_MODEL: z.string().min(1).default('claude-opus-5-5'),
+  /**
+   * `auto`: clear pictures are shown at once and only uncertain ones wait for a person. `people`: every picture waits
+   * for a person, whatever the check would say.
+   */
+  IMAGE_REVIEW_MODE: z.enum(['auto', 'people']).default('auto'),
+  /**
+   * Automatic checks a day at most for the whole service, a cost ceiling, counted in Redis (in Postgres while Redis is
+   * down). Past it pictures wait for a person until the next day (UTC), and moderators are told once that day.
+   */
+  IMAGE_SCAN_DAILY_LIMIT: z.coerce.number().int().min(0).default(1000),
+  /**
+   * Automatic checks a day at most for one account. Past it that account's new pictures are refused with a 429 until the
+   * next day (UTC), so one account can neither run up the cost nor fill the review queue.
+   */
+  IMAGE_SCAN_PER_USER_DAILY: z.coerce.number().int().min(0).default(30),
+  /** Distinct reporters (accounts over a day old) within a day that hide a picture from others until a person decides. */
+  PICTURE_REPORT_HIDE_THRESHOLD: z.coerce.number().int().min(1).default(3),
   /** Voice notes are stored as uploaded, so their cost is capped by upload size and a rate limit. */
   MEDIA_AUDIO_MAX_UPLOAD_MB: z.coerce.number().positive().default(3),
   /** Longest recording, seconds, read from the file's own container (media/audioCheck.ts). */

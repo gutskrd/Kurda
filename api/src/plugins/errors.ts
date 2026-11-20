@@ -16,6 +16,18 @@ export class AppError extends Error {
   }
 }
 
+/** An error whose extra fields stand beside `code` and `message`, as a shared shape has them (`PictureRejection`). */
+export class ShapedError extends AppError {
+  constructor(
+    code: string,
+    statusCode: number,
+    message: string,
+    readonly fields: Readonly<Record<string, unknown>>,
+  ) {
+    super(code, statusCode, message);
+  }
+}
+
 /** Retry-After for a 429 that does not know how long the wait is (a daily cap, a velocity gate). */
 export const DEFAULT_RETRY_AFTER_SEC = 60;
 
@@ -82,6 +94,7 @@ export function setupErrorHandling(app: FastifyInstance, config: AppConfig): voi
       const retryAfterSec = retryAfterOf(err.details);
       if (retryAfterSec !== null) reply.header('retry-after', String(retryAfterSec));
       return reply.code(err.statusCode).send({
+        ...(err instanceof ShapedError ? err.fields : {}),
         code: err.code,
         message: err.message,
         ...(err.details !== undefined ? { details: err.details } : {}),

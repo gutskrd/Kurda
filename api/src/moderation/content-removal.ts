@@ -1,18 +1,22 @@
 import { MODERATED_MESSAGE_BODY, type ReportTargetType } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { parseTargetRef, type CaseSourceRow } from './sources.js';
+import { releasePicture } from './picture-release.js';
 import type { Executor } from './tx.js';
 
 /**
  * Removing reported content, and putting it back. A removal hides content everywhere the way an author's delete does (a
  * post or picture becomes `removed`, a comment a tombstone, a chat message "Removed by Hevalo" for both people) and
  * records exactly what it changed on the case, so an overturning appeal can restore it. The report's snapshot keeps the
- * original either way.
+ * original either way. A removed post takes its pictures down with it: blocked by their bytes on every kind, and moved
+ * off the public bucket by the caller (quarantine.ts). Putting a picture back makes it public again
+ * (picture-release.ts), rather than restoring whatever hold it was under.
  */
 
 /** What a removal changed: enough to undo it. Stored on the case as `removed_content`. */
 export type RemovalRecord =
-  | { type: 'library_post' | 'image_post'; id: string; previousStatus: string }
+  /** `media`: the post's pictures, taken down with it; absent from removals recorded before they were */
+  | { type: 'library_post' | 'image_post'; id: string; previousStatus: string; media?: MediaRemoval[] }
   | {
       type: 'library_comment' | 'image_comment';
       id: string;
@@ -49,11 +53,33 @@ export interface MediaRemoval {
    * `posts` and `libraryPosts`. Absent from older removals.
    */
   copies?: Array<{ key: string; previousScanStatus: string }>;
+  /** whose new profile photo, waiting for a person, it was; and the groups whose picture it was, live or waiting */
+  pendingProfilePhotoOf?: string[];
+  groupPhotoOf?: Array<{ id: string; setBy: string | null }>;
+  pendingGroupPhotoOf?: Array<{ id: string; setBy: string | null }>;
+  /** the letters whose drawing it was, held until it was checked */
+  letters?: Array<{ id: string; previousStatus: string }>;
 }
 
 /** Every key a removal blocked: the file's own and its copies'. */
 export function removedKeys(rec: MediaRemoval): string[] {
   return [rec.key, ...(rec.copies ?? []).map((c) => c.key)];
+}
+
+/** Every picture a removal took down, however it is nested (a post's pictures, the parts of the CSAM action). */
+export function mediaRemovals(rec: RemovalRecord | null | undefined): MediaRemoval[] {
+  if (!rec) return [];
+  switch (rec.type) {
+    case 'media':
+      return [rec];
+    case 'library_post':
+    case 'image_post':
+      return rec.media ?? [];
+    case 'csam':
+      return rec.parts.flatMap(mediaRemovals);
+    default:
+      return [];
+  }
 }
 
 /** The content a case is about, when it is content at all. */
@@ -112,7 +138,12 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
       const r = await db.query<{ status: string }>(`SELECT status FROM ${table} WHERE id = $1::uuid FOR UPDATE`, [target.id]);
       const previousStatus = r.rows[0]?.status ?? 'removed';
       await db.query(`UPDATE ${table} SET status = 'removed', updated_at = now() WHERE id = $1::uuid`, [target.id]);
-      return { type: target.type, id: target.id, previousStatus };
+      const media: MediaRemoval[] = [];
+      for (const key of await picturesOfPost(db, target.type, target.id)) {
+        if (media.some((m) => removedKeys(m).includes(key))) continue;
+        media.push(await removeMedia(db, key));
+      }
+      return { type: target.type, id: target.id, previousStatus, ...(media.length > 0 ? { media } : {}) };
     }
     case 'library_comment':
     case 'image_comment': {
@@ -174,23 +205,35 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
   }
 }
 
+/** The pictures a post shows: a picture post's one, a written post's up to four. */
+async function picturesOfPost(db: Executor, type: 'library_post' | 'image_post', id: string): Promise<string[]> {
+  const r =
+    type === 'image_post'
+      ? await db.query<{ k: string }>(`SELECT image_media_id AS k FROM image_posts WHERE id = $1::uuid`, [id])
+      : await db.query<{ k: string }>(`SELECT media_key AS k FROM library_post_media WHERE post_id = $1::uuid ORDER BY position`, [id]);
+  return r.rows.map((x) => x.k);
+}
+
 /**
  * Hide one file everywhere it is used. A key is usually a hash of the bytes, but post uploads include the owner and get
- * a new key on each repost, so copies are matched by `content_sha256` too. Every picture post and written post using
- * any copy is removed whole, the file comes off every profile it is the photo of (chat, comments and leaderboards draw
- * avatars from there), and every copy is blocked from being served or accepted again.
+ * a new key on each repost, and each kind resizes a file its own way, so copies are matched by `content_sha256` and by
+ * the hash of the file as it was sent (`source_sha256`) too. Every picture post and written post using
+ * any copy is removed whole, the file comes off every profile and group it is the photo of (live or waiting for a
+ * person; chat, comments and leaderboards draw avatars from there), a letter held for it is not delivered, and every
+ * copy is blocked from being served or accepted again. The caller moves the bytes off the public bucket.
  */
 export async function removeMedia(db: Executor, key: string): Promise<MediaRemoval> {
   const media = await db.query<{ scan_status: string }>(`SELECT scan_status FROM media_uploads WHERE key = $1 FOR UPDATE`, [key]);
   const copies = await db.query<{ key: string; scan_status: string }>(
     `SELECT c.key, c.scan_status
-       FROM media_uploads m JOIN media_uploads c ON c.content_sha256 = m.content_sha256 AND c.key <> m.key
+       FROM media_uploads m
+       JOIN media_uploads c ON (c.content_sha256 = m.content_sha256 OR c.source_sha256 = m.source_sha256) AND c.key <> m.key
       WHERE m.key = $1
       ORDER BY c.key FOR UPDATE OF c`,
     [key],
   );
   const keys = [key, ...copies.rows.map((c) => c.key)];
-  await db.query(`UPDATE media_uploads SET scan_status = 'blocked' WHERE key = ANY($1::text[])`, [keys]);
+  await db.query(`UPDATE media_uploads SET scan_status = 'blocked', publish_state = NULL WHERE key = ANY($1::text[])`, [keys]);
   const posts = await db.query<{ id: string; status: string }>(
     `SELECT id, status FROM image_posts WHERE image_media_id = ANY($1::text[]) AND status <> 'removed' FOR UPDATE`,
     [keys],
@@ -211,7 +254,45 @@ export async function removeMedia(db: Executor, key: string): Promise<MediaRemov
       written.rows.map((p) => p.id),
     ]);
   }
-  const photos = await db.query<{ id: string }>(`UPDATE users SET profile_photo_key = NULL WHERE profile_photo_key = $1 RETURNING id`, [key]);
+  const photos = await db.query<{ id: string }>(
+    `UPDATE users SET profile_photo_key = NULL WHERE profile_photo_key = ANY($1::text[]) RETURNING id`,
+    [keys],
+  );
+  const pendingPhotos = await db.query<{ id: string }>(
+    `UPDATE users SET pending_profile_photo_key = NULL WHERE pending_profile_photo_key = ANY($1::text[]) RETURNING id`,
+    [keys],
+  );
+  const groups = await db.query<{ id: string; set_by: string | null }>(
+    `UPDATE groups g SET photo_key = NULL
+       FROM (SELECT id, photo_set_by FROM groups WHERE photo_key = ANY($1::text[]) FOR UPDATE) o
+      WHERE g.id = o.id RETURNING g.id, o.photo_set_by AS set_by`,
+    [keys],
+  );
+  const pendingGroups = await db.query<{ id: string; set_by: string | null }>(
+    `UPDATE groups g SET pending_photo_key = NULL, pending_photo_set_by = NULL
+       FROM (SELECT id, pending_photo_set_by FROM groups WHERE pending_photo_key = ANY($1::text[]) FOR UPDATE) o
+      WHERE g.id = o.id RETURNING g.id, o.pending_photo_set_by AS set_by`,
+    [keys],
+  );
+  const letters = await db.query<{ id: string }>(
+    `UPDATE letters SET status = 'removed' WHERE drawing_key = ANY($1::text[]) AND status = 'held' RETURNING id`,
+    [keys],
+  );
+  // A picture taken down is decided wherever else it waited for a person (a report's case taking it down while it waits
+  // on the Picture checks page), so nobody approves it there afterwards. The deciding case itself is written by its caller.
+  const waiting = await db.query<{ source_ref: string }>(
+    `UPDATE moderation_cases SET status = 'actioned', resolution = 'actioned', resolved_at = now(), claimed_by = NULL, lease_until = NULL,
+            resolution_note = COALESCE(resolution_note, 'taken down by another decision'), updated_at = now()
+      WHERE source = 'image_flag' AND evidence->>'mediaKey' = ANY($1::text[])
+        AND status IN ('open','in_review','escalated') AND resolution IS DISTINCT FROM 'csam'
+      RETURNING source_ref`,
+    [keys],
+  );
+  if (waiting.rows.length > 0) {
+    await db.query(`UPDATE image_scans SET status = 'actioned', resolved_at = now() WHERE id::text = ANY($1::text[]) AND status = 'pending'`, [
+      waiting.rows.map((w) => w.source_ref),
+    ]);
+  }
   return {
     type: 'media',
     key,
@@ -220,6 +301,10 @@ export async function removeMedia(db: Executor, key: string): Promise<MediaRemov
     libraryPosts: written.rows.map((p) => ({ id: p.id, previousStatus: p.status })),
     profilePhotoOf: photos.rows.map((p) => p.id),
     copies: copies.rows.map((c) => ({ key: c.key, previousScanStatus: c.scan_status })),
+    pendingProfilePhotoOf: pendingPhotos.rows.map((p) => p.id),
+    groupPhotoOf: groups.rows.map((g) => ({ id: g.id, setBy: g.set_by })),
+    pendingGroupPhotoOf: pendingGroups.rows.map((g) => ({ id: g.id, setBy: g.set_by })),
+    letters: letters.rows.map((l) => ({ id: l.id, previousStatus: 'held' })),
   };
 }
 
@@ -231,7 +316,7 @@ export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<
   switch (rec.type) {
     case 'image_post': {
       const r = await db.query<{ k: string }>(`SELECT image_media_id AS k FROM image_posts WHERE id = $1::uuid`, [rec.id]);
-      return r.rows.map((x) => x.k);
+      return [...new Set([...r.rows.map((x) => x.k), ...(rec.media ?? []).flatMap(removedKeys)])];
     }
     case 'library_post': {
       const r = await db.query<{ k: string | null }>(
@@ -239,7 +324,8 @@ export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<
          UNION ALL SELECT audio_media_id FROM library_posts WHERE id = $1::uuid`,
         [rec.id],
       );
-      return r.rows.map((x) => x.k).filter((k): k is string => k !== null);
+      const keys = r.rows.map((x) => x.k).filter((k): k is string => k !== null);
+      return [...new Set([...keys, ...(rec.media ?? []).flatMap(removedKeys)])];
     }
     case 'library_comment':
       return rec.previousAudio ? [rec.previousAudio] : [];
@@ -253,16 +339,20 @@ export async function mediaOfRemoval(db: Executor, rec: RemovalRecord): Promise<
 }
 
 /**
- * Undo a removal after an overturned decision. Only what the removal changed is restored, and only where nobody changed
- * it since (an author who deleted their post meanwhile keeps it deleted).
+ * Undo a removal after an overturned decision or a lifted removal. Only what the removal changed is restored, and only
+ * where nobody changed it since (an author who deleted their post meanwhile keeps it deleted). A picture comes back
+ * public, whatever hold it was under before, since a person has now looked at it; its bytes are copied back to the
+ * public bucket after the commit (picture-release.ts `runPicturePublishing`).
  */
 export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<void> {
   switch (rec.type) {
     case 'library_post':
     case 'image_post': {
       const table = rec.type === 'library_post' ? 'library_posts' : 'image_posts';
-      if (rec.previousStatus === 'removed') return;
-      await db.query(`UPDATE ${table} SET status = $2, updated_at = now() WHERE id = $1::uuid AND status = 'removed'`, [rec.id, rec.previousStatus]);
+      if (rec.previousStatus !== 'removed') {
+        await db.query(`UPDATE ${table} SET status = $2, updated_at = now() WHERE id = $1::uuid AND status = 'removed'`, [rec.id, rec.previousStatus]);
+      }
+      for (const media of rec.media ?? []) await restoreContent(db, media);
       return;
     }
     case 'library_comment':
@@ -319,24 +409,12 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
       return;
     }
     case 'media': {
-      if (rec.previousScanStatus) {
-        await db.query(`UPDATE media_uploads SET scan_status = $2 WHERE key = $1 AND scan_status = 'blocked'`, [rec.key, rec.previousScanStatus]);
-      }
-      // the copies, the pictures and the posts that used it: one statement for each kind, not one per row
-      const copies = rec.copies ?? [];
-      if (copies.length > 0) {
-        await db.query(
-          `UPDATE media_uploads m SET scan_status = c.previous
-             FROM unnest($1::text[], $2::text[]) AS c(key, previous)
-            WHERE m.key = c.key AND m.scan_status = 'blocked'`,
-          [copies.map((c) => c.key), copies.map((c) => c.previousScanStatus)],
-        );
-      }
+      // the posts, letters and photo places it was taken from, as they were: one statement for each kind, not one per row
       if (rec.posts.length > 0) {
         await db.query(
           `UPDATE image_posts t SET status = p.previous, updated_at = now()
              FROM unnest($1::uuid[], $2::text[]) AS p(id, previous)
-            WHERE t.id = p.id AND t.status = 'removed'`,
+            WHERE t.id = p.id AND t.status = 'removed' AND p.previous <> 'removed'`,
           [rec.posts.map((p) => p.id), rec.posts.map((p) => p.previousStatus)],
         );
       }
@@ -345,13 +423,38 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
         await db.query(
           `UPDATE library_posts t SET status = p.previous, updated_at = now()
              FROM unnest($1::uuid[], $2::text[]) AS p(id, previous)
-            WHERE t.id = p.id AND t.status = 'removed'`,
+            WHERE t.id = p.id AND t.status = 'removed' AND p.previous <> 'removed'`,
           [libraryPosts.map((p) => p.id), libraryPosts.map((p) => p.previousStatus)],
         );
+      }
+      const letters = rec.letters ?? [];
+      if (letters.length > 0) {
+        await db.query(`UPDATE letters SET status = 'held' WHERE id = ANY($1::uuid[]) AND status = 'removed'`, [letters.map((l) => l.id)]);
       }
       if (rec.profilePhotoOf.length > 0) {
         await db.query(`UPDATE users SET profile_photo_key = $1 WHERE id = ANY($2::uuid[]) AND profile_photo_key IS NULL`, [rec.key, rec.profilePhotoOf]);
       }
+      if ((rec.pendingProfilePhotoOf ?? []).length > 0) {
+        await db.query(`UPDATE users SET pending_profile_photo_key = $1 WHERE id = ANY($2::uuid[]) AND pending_profile_photo_key IS NULL`, [
+          rec.key,
+          rec.pendingProfilePhotoOf,
+        ]);
+      }
+      for (const g of rec.groupPhotoOf ?? []) {
+        await db.query(`UPDATE groups SET photo_key = $2, photo_set_by = COALESCE($3, photo_set_by) WHERE id = $1 AND photo_key IS NULL`, [
+          g.id,
+          rec.key,
+          g.setBy,
+        ]);
+      }
+      for (const g of rec.pendingGroupPhotoOf ?? []) {
+        await db.query(
+          `UPDATE groups SET pending_photo_key = $2, pending_photo_set_by = $3 WHERE id = $1 AND pending_photo_key IS NULL AND archived_at IS NULL`,
+          [g.id, rec.key, g.setBy],
+        );
+      }
+      // then the picture itself is public again, which publishes whatever waited for it
+      await releasePicture(db, rec.key, { copies: (rec.copies ?? []).map((c) => c.key) });
       return;
     }
     case 'csam':

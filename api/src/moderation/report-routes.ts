@@ -7,6 +7,7 @@ import { AppError } from '../plugins/errors.js';
 import { verifyAppealToken } from './appeal-token.js';
 import type { AppealsService } from './appeals-service.js';
 import type { ReportsService } from './reports-service.js';
+import type { PictureReviewService } from './pictures-service.js';
 import type { SanctionsService } from './sanctions-service.js';
 
 const fileBody = z.object({
@@ -63,7 +64,7 @@ async function standingUserId(config: AppConfig, req: FastifyRequest): Promise<s
 export function registerReportRoutes(
   app: FastifyInstance,
   config: AppConfig,
-  deps: { reports: ReportsService; sanctions: SanctionsService; appeals: AppealsService },
+  deps: { reports: ReportsService; sanctions: SanctionsService; appeals: AppealsService; pictures?: PictureReviewService },
 ): void {
   app.post(
     '/reports',
@@ -100,7 +101,9 @@ export function registerReportRoutes(
 
   app.get('/me/standing', { config: { skipValidation: true } }, async (req) => {
     const userId = await standingUserId(config, req);
-    return deps.sanctions.standing(userId);
+    const standing = await deps.sanctions.standing(userId);
+    // a removed picture's owner sees which picture, through a link only they get
+    return deps.pictures ? deps.pictures.withPictures(standing) : standing;
   });
 
   app.post('/me/standing/ack', { schema: { body: ackBody }, preHandler: requireAuth }, async (req) => {

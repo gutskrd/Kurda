@@ -140,12 +140,14 @@ describe.skipIf(!DATABASE_URL)('the CSAM action (integration)', () => {
       { key, url: `https://signed.test/evidence/${evidenceObjectKey(key)}?ttl=300`, contentType: 'image/webp', quarantine: 'done' },
     ]);
     expect(detail!.escalations[0]!.media[0]!.quarantine).toBe('done');
-    const removed = await pool.query<{ removed_content: { type: string; parts: Array<{ type: string }> } }>(
+    const removed = await pool.query<{ removed_content: { type: string; parts: Array<{ type: string; media?: Array<{ type: string; key: string }> }> } }>(
       `SELECT removed_content FROM moderation_cases WHERE id = $1`,
       [caseId],
     );
     expect(removed.rows[0]!.removed_content.type).toBe('csam');
-    expect(removed.rows[0]!.removed_content.parts.map((p) => p.type)).toEqual(['image_post', 'media']);
+    // the post, with its picture taken down as part of it
+    expect(removed.rows[0]!.removed_content.parts.map((p) => p.type)).toEqual(['image_post']);
+    expect(removed.rows[0]!.removed_content.parts[0]!.media?.map((m) => [m.type, m.key])).toEqual([['media', key]]);
   });
 
   it('takes down a written post with a CSAM picture on it, and every picture on it off the public bucket', async () => {

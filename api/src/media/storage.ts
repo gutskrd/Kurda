@@ -228,6 +228,51 @@ export class MediaStorage {
     );
   }
 
+  /**
+   * Stores a picture nobody but its owner and a moderator may see yet (held for a person, or refused) straight to
+   * evidence storage, never to the public bucket: the private bucket, or an unguessable `private, no-store` key in the
+   * public one without it.
+   */
+  async putEvidence(target: string, body: Buffer, contentType: string): Promise<void> {
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.privateBucket,
+        Key: target,
+        Body: body,
+        ContentType: contentType,
+        ContentLength: body.length,
+        CacheControl: PRIVATE_CACHE_CONTROL,
+      }),
+    );
+  }
+
+  /** Copies a private picture a person approved to its public key, cached like any upload; the caller deletes the private copy after. */
+  async publishFromEvidence(target: string, key: string, contentType: string): Promise<void> {
+    await this.s3.send(
+      new CopyObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        CopySource: `${await this.bucketOfPrivate(target)}/${target}`,
+        MetadataDirective: 'REPLACE',
+        CacheControl: IMMUTABLE_CACHE_CONTROL,
+        ContentType: contentType,
+      }),
+    );
+  }
+
+  /** A private picture's bytes (a held one checked again); null when absent. */
+  async readEvidence(target: string): Promise<Buffer | null> {
+    try {
+      const res = await this.s3.send(new GetObjectCommand({ Bucket: await this.bucketOfPrivate(target), Key: target }));
+      if (!res.Body) return null;
+      return Buffer.from(await res.Body.transformToByteArray());
+    } catch (err) {
+      const e = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+      if (e.name === 'NoSuchKey' || e.$metadata?.httpStatusCode === 404) return null;
+      throw err;
+    }
+  }
+
   async evidenceExists(target: string): Promise<boolean> {
     if (await this.inBucket(this.privateBucket, target)) return true;
     // Kept before there was a private bucket, and not moved yet.

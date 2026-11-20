@@ -1,5 +1,17 @@
+import { Readable } from 'node:stream';
 import type pg from 'pg';
 import type { MediaStorage } from '../media/storage.js';
+import { ImageModerationService } from '../moderation/image-moderation-service.js';
+import { StubImageScanner, type ImageScanner } from '../moderation/image-scanner.js';
+import { PictureReviewService } from '../moderation/pictures-service.js';
+
+/**
+ * The picture checks an upload function is given when a suite calls it directly rather than through a route: a stub
+ * checker (finding nothing unless told) and the suite's bucket.
+ */
+export function testPictures(pool: pg.Pool, storage?: MediaStorage | null, scanner: ImageScanner | null = new StubImageScanner()): PictureReviewService {
+  return new PictureReviewService(pool, { checks: new ImageModerationService(pool, { scanner }), storage: () => storage });
+}
 
 /**
  * A picture upload as `POST /images/upload` leaves it: owned by the uploader, scanned, and unconfirmed until a post
@@ -25,13 +37,17 @@ export async function seedPictureUpload(
 
 /**
  * An in-memory bucket for routes that need storage to run (`POST /images/upload` answers 503 without it). Decorate an
- * app built without S3 settings before `ready()`: `app.decorate('storage', memoryStorage())`. Real-bucket behaviour is
+ * app built without S3 settings before `ready()`: `app.decorate('storage', memoryStorage())`. `objects` is the public
+ * bucket and `evidence` the private one (held and refused pictures, quarantined evidence). Real-bucket behaviour is
  * covered by suites run against a real bucket.
  */
-export function memoryStorage(base = 'https://cdn.test'): MediaStorage & { objects: Map<string, Buffer> } {
+export function memoryStorage(base = 'https://cdn.test'): MediaStorage & { objects: Map<string, Buffer>; evidence: Map<string, Buffer> } {
   const objects = new Map<string, Buffer>();
+  const evidence = new Map<string, Buffer>();
   const storage = {
     objects,
+    evidence,
+    hasPrivateBucket: true,
     publicUrl: (key: string) => `${base}/${key}`,
     put: async (key: string, body: Buffer) => {
       objects.set(key, body);
@@ -43,6 +59,28 @@ export function memoryStorage(base = 'https://cdn.test'): MediaStorage & { objec
       objects.delete(key);
     },
     exists: async (key: string) => objects.has(key),
+    read: async (key: string) => (objects.has(key) ? { body: Readable.from([objects.get(key)!]), contentType: 'image/webp' } : null),
+    putEvidence: async (target: string, body: Buffer) => {
+      evidence.set(target, body);
+    },
+    copyToEvidence: async (key: string, target: string) => {
+      const body = objects.get(key);
+      if (!body) throw new Error('NoSuchKey');
+      evidence.set(target, body);
+    },
+    publishFromEvidence: async (target: string, key: string) => {
+      const body = evidence.get(target);
+      if (!body) throw new Error('NoSuchKey');
+      objects.set(key, body);
+    },
+    readEvidence: async (target: string) => evidence.get(target) ?? null,
+    evidenceExists: async (target: string) => evidence.has(target),
+    deleteEvidence: async (target: string) => {
+      evidence.delete(target);
+    },
+    createDownloadUrl: async (key: string, ttl = 900) => `https://signed.test/public/${key}?ttl=${ttl}`,
+    createEvidenceDownloadUrl: async (target: string, ttl = 300) => `https://signed.test/evidence/${target}?ttl=${ttl}`,
+    purgePublic: async () => null,
   };
-  return storage as unknown as MediaStorage & { objects: Map<string, Buffer> };
+  return storage as unknown as MediaStorage & { objects: Map<string, Buffer>; evidence: Map<string, Buffer> };
 }

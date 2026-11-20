@@ -1,5 +1,6 @@
 import type { CaseSource, ReportTargetType } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { releasePicture } from './picture-release.js';
 import type { Executor } from './tx.js';
 
 /**
@@ -30,12 +31,16 @@ export function parseTargetRef(ref: string): { type: string; id: string } | null
 
 /**
  * A CSAM hash match is never cleared by "no violation": the image stays blocked with its record preserved (as on the
- * image-flag page), so the decision is refused before anything is applied.
+ * image-flag page), so the decision is refused before anything is applied. A possible child-safety hit from the picture
+ * check (it has findings, where a hash match has none) can be found innocent by a moderator in its case.
  */
 export async function assertDismissible(db: Executor, c: CaseSourceRow, outcome: Outcome): Promise<void> {
   if (outcome !== 'no_violation' || c.source !== 'image_flag') return;
-  const r = await db.query<{ preserve_evidence: boolean }>(`SELECT preserve_evidence FROM image_scans WHERE id = $1::uuid`, [c.source_ref]);
-  if (r.rows[0]?.preserve_evidence) {
+  const r = await db.query<{ preserve_evidence: boolean; levels: unknown }>(
+    `SELECT preserve_evidence, levels FROM image_scans WHERE id = $1::uuid`,
+    [c.source_ref],
+  );
+  if (r.rows[0]?.preserve_evidence && r.rows[0].levels === null) {
     throw new AppError('PRESERVED_EVIDENCE', 409, 'a CSAM match cannot be dismissed — it stays blocked and preserved');
   }
 }
@@ -85,9 +90,20 @@ export async function closeSource(
           WHERE id = $1::uuid AND status = 'pending' RETURNING media_key`,
         [c.source_ref, actioned ? 'actioned' : 'reversed', adminId],
       );
-      // a false positive goes back to being served, as on the image-flag page
+      // A false positive is released: public again, with whatever waited for it, and its owner told when it was a picture
+      // they were waiting on. A live photo reports hid comes back too, unless another took its place meanwhile.
       if (!actioned && r.rows[0]) {
-        await db.query(`UPDATE media_uploads SET scan_status = 'cleared' WHERE key = $1`, [r.rows[0].media_key]);
+        const key = r.rows[0].media_key;
+        const origin = typeof c.evidence?.origin === 'string' ? c.evidence.origin : null;
+        await releasePicture(db, key, { notify: origin === null ? false : origin === 'asked' ? 'asked' : 'held' });
+        const profileOf = c.evidence?.hiddenProfileOf;
+        if (typeof profileOf === 'string') {
+          await db.query(`UPDATE users SET profile_photo_key = $2 WHERE id = $1 AND profile_photo_key IS NULL`, [profileOf, key]);
+        }
+        const groupOf = c.evidence?.hiddenGroupOf;
+        if (typeof groupOf === 'string') {
+          await db.query(`UPDATE groups SET photo_key = $2 WHERE id = $1 AND photo_key IS NULL AND archived_at IS NULL`, [groupOf, key]);
+        }
       }
       return;
     }

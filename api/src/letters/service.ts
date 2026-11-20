@@ -35,8 +35,10 @@ import {
   type PenPal,
   type VisitorAnswer,
 } from '@kurda/shared';
-import { AppError } from '../plugins/errors.js';
+import { AppError, ShapedError } from '../plugins/errors.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { REFUSAL_MESSAGES, type PictureReviewService } from '../moderation/pictures-service.js';
+import { letterDrawingPng } from './widget-image.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { Notification } from '../push/service.js';
 import { activeRestriction, IN_FORCE_SQL } from '../moderation/sanctions-service.js';
@@ -92,6 +94,8 @@ export interface LetterDeps {
   push?: (userId: string, notification: Notification) => Promise<void>;
   /** tells a person's open windows and correspondences that something changed (`LETTERS_CHANGED`) */
   realtime?: { notifyUser(userId: string, event: { type: string }): Promise<void> };
+  /** checks a letter's drawing before it is delivered (moderation/pictures-service.ts) */
+  pictures?: Pick<PictureReviewService, 'checkDrawing' | 'attachLetter'>;
   log?: { warn(obj: unknown, msg: string): void };
   /** pays for a new bird; without it a bird can be chosen once and not changed */
   wallet?: Pick<WalletService, 'debitWithin' | 'balances'>;
@@ -170,6 +174,8 @@ const toItem = (row: LetterRow, me: string): LetterItem => ({
   removed: row.status === 'removed',
   sentAt: row.created_at.toISOString(),
   readAt: row.read_at ? row.read_at.toISOString() : null,
+  // only its writer is ever shown a letter whose drawing a person is checking
+  ...(row.status === 'held' ? { review: 'held' as const } : {}),
 });
 
 /** A letter as it will be sent: its words, and its paper, drawing and notes (null for the default paper with nothing on it). */
@@ -220,7 +226,7 @@ const visitorItem = (row: LetterRow & { called_at: Date; name: string; bird: num
 export const YOUR_TURN_SQL = (thread: string, me: string): string => `(
   EXISTS (SELECT 1 FROM letters written WHERE written.thread_id = ${thread} AND written.sender_id <> ${me} AND written.status IN ('delivered','removed'))
   AND NOT EXISTS (
-    SELECT 1 FROM letters mine WHERE mine.thread_id = ${thread} AND mine.sender_id = ${me} AND mine.status IN ('delivered','removed')
+    SELECT 1 FROM letters mine WHERE mine.thread_id = ${thread} AND mine.sender_id = ${me} AND mine.status IN ('delivered','removed','held')
        AND mine.delivered_at > (SELECT max(theirs.delivered_at) FROM letters theirs WHERE theirs.thread_id = ${thread} AND theirs.sender_id <> ${me} AND theirs.status IN ('delivered','removed'))))`;
 
 /** The name a pen pal is shown by: their display name, or their username. */
@@ -306,6 +312,23 @@ export class LetterService {
       return { text: filtered.masked, decor: decor && !isPlainDecor(decor) ? decor : null, paper };
     }
     return { text, decor: decor && !isPlainDecor(decor) ? decor : null, paper };
+  }
+
+  /**
+   * A letter's drawing checked before it is delivered: the key of the picture a person must check first, or null when
+   * it is clear or there is none. A child-safety hit refuses the letter (422 IMAGE_REJECTED, nothing to ask about).
+   */
+  private async checkDrawing(userId: string, decor: LetterDecor | null, words: string): Promise<string | null> {
+    const pictures = this.deps.pictures;
+    if (!decor || decor.strokes.length === 0 || !pictures) return null;
+    const checked = await pictures.checkDrawing(userId, await letterDrawingPng(decor), words);
+    if (checked.state === 'refused') {
+      throw new ShapedError('IMAGE_REJECTED', 422, REFUSAL_MESSAGES.other, { reason: 'other', reviewId: null });
+    }
+    if (checked.state === 'limited') {
+      throw new AppError('RATE_LIMITED', 429, 'you have sent as many drawings as can be checked today', { retryAfterSec: checked.retryAfterSec });
+    }
+    return checked.state === 'held' ? checked.key : null;
   }
 
   /** Remembers the paper somebody wrote on, so the composer opens on it next time. */
@@ -816,6 +839,7 @@ export class LetterService {
    */
   async answer(userId: string, raw: string, rawDecor?: unknown, opts: { key?: string | null } = {}): Promise<VisitorAnswer> {
     const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: true });
+    const drawing = await this.checkDrawing(userId, decor, text);
     const key = keyed('answer', opts.key);
     const client = await this.pool.connect();
     let refusal: Refusal = null;
@@ -895,12 +919,13 @@ export class LetterService {
               [visit.letter_id, userId, threadId, visit.called_at],
             );
             const ins = await client.query<LetterRow>(
-              `INSERT INTO letters (sender_id, recipient_id, thread_id, body, decor, age_band, status, delivered_at, idempotency_key)
-               VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'delivered', now(), $7)
+              `INSERT INTO letters (sender_id, recipient_id, thread_id, body, decor, age_band, status, delivered_at, idempotency_key, drawing_key)
+               VALUES ($1, $2, $3, $4, $5::jsonb, $6, $8, now(), $7, $9)
                RETURNING ${LETTER_COLUMNS()}`,
-              [userId, visit.sender_id, threadId, text, decor ? JSON.stringify(decor) : null, band, key],
+              [userId, visit.sender_id, threadId, text, decor ? JSON.stringify(decor) : null, band, key, drawing ? 'held' : 'delivered', drawing],
             );
             const letter = ins.rows[0]!;
+            if (drawing) await this.deps.pictures?.attachLetter(client, drawing, letter.id);
             await this.rememberPaper(client, userId, paper);
             await client.query(`UPDATE letter_visits SET ended_at = now(), outcome = 'answered', thread_id = $2, answer_id = $3 WHERE id = $1`, [
               visit.id,
@@ -909,7 +934,8 @@ export class LetterService {
             ]);
             await client.query(`UPDATE letter_threads SET last_letter_at = now() WHERE id = $1`, [threadId]);
             answered = { threadId, person: personOf(visit.sender_id, visit.name, visit.bird), letter: toItem(letter, userId) };
-            told = { threadId, letterId: letter.id, name: me.name };
+            // a drawing a person is checking keeps the bird home: its writer is told once it is approved
+            if (!drawing) told = { threadId, letterId: letter.id, name: me.name };
           }
         }
       }
@@ -994,12 +1020,13 @@ export class LetterService {
       paged
         ? `SELECT * FROM (
              SELECT ${LETTER_COLUMNS()}, recipient_id, ${YOUR_TURN_SQL('$1::uuid', '$2::uuid')} AS your_turn FROM letters
-              WHERE thread_id = $1 AND status IN ('delivered','removed')
+              WHERE thread_id = $1 AND (status IN ('delivered','removed') OR (status = 'held' AND sender_id = $2::uuid))
                 AND ($3::uuid IS NULL OR (created_at, id) < (SELECT b.created_at, b.id FROM letters b WHERE b.id = $3 AND b.thread_id = $1))
               ORDER BY created_at DESC, id DESC LIMIT $4
            ) page ORDER BY created_at, id`
         : `SELECT ${LETTER_COLUMNS()}, recipient_id, ${YOUR_TURN_SQL('$1::uuid', '$2::uuid')} AS your_turn FROM letters
-            WHERE thread_id = $1 AND status IN ('delivered','removed') ORDER BY created_at, id`,
+            WHERE thread_id = $1 AND (status IN ('delivered','removed') OR (status = 'held' AND sender_id = $2::uuid))
+            ORDER BY created_at, id`,
       paged ? [threadId, userId, page.before ?? null, limit + 1] : [threadId, userId],
     );
     const earlier = paged && rows.rows.length > limit;
@@ -1058,6 +1085,7 @@ export class LetterService {
    */
   async reply(userId: string, threadId: string, raw: string, rawDecor?: unknown, opts: { key?: string | null } = {}): Promise<LetterItem> {
     const { text, decor, paper } = await this.cleaned(userId, raw, rawDecor, { strokes: true });
+    const drawing = await this.checkDrawing(userId, decor, text);
     let key = keyed('reply', opts.key);
     // `told` is who to notify for a newly sent letter; none when the letter already sent was found again.
     const { sent, told } = await inTransaction(this.pool, async (client): Promise<{ sent: LetterItem; told: { other: string; name: string } | null }> => {
@@ -1080,7 +1108,7 @@ export class LetterService {
         // the same letter again, its reply lost on the way: that is the letter already sent
         const last = await client.query<LetterRow>(
           `SELECT ${LETTER_COLUMNS()} FROM letters
-            WHERE thread_id = $1 AND sender_id = $2 AND status = 'delivered' AND created_at > now() - make_interval(mins => $3)
+            WHERE thread_id = $1 AND sender_id = $2 AND status IN ('delivered','held') AND created_at > now() - make_interval(mins => $3)
             ORDER BY delivered_at DESC, id DESC LIMIT 1`,
           [threadId, userId, AGAIN_MINUTES],
         );
@@ -1089,12 +1117,17 @@ export class LetterService {
       }
       await this.withinDay(client, userId);
       const ins = await client.query<LetterRow>(
-        `INSERT INTO letters (sender_id, recipient_id, thread_id, body, decor, age_band, status, delivered_at, idempotency_key)
-         VALUES ($1, $2, $3, $4, $5::jsonb, $6, 'delivered', now(), $7)
+        `INSERT INTO letters (sender_id, recipient_id, thread_id, body, decor, age_band, status, delivered_at, idempotency_key, drawing_key)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6, $8, now(), $7, $9)
          RETURNING ${LETTER_COLUMNS()}`,
-        [userId, t.other, threadId, text, decor ? JSON.stringify(decor) : null, band, key],
+        [userId, t.other, threadId, text, decor ? JSON.stringify(decor) : null, band, key, drawing ? 'held' : 'delivered', drawing],
       );
       await this.rememberPaper(client, userId, paper);
+      if (drawing) {
+        // it waits for a person: their pen pal hears of it once it is approved, and the bird flies then
+        await this.deps.pictures?.attachLetter(client, drawing, ins.rows[0]!.id);
+        return { sent: toItem(ins.rows[0]!, userId), told: null };
+      }
       await client.query(`UPDATE letter_threads SET last_letter_at = now() WHERE id = $1`, [threadId]);
       return { sent: toItem(ins.rows[0]!, userId), told: { other: t.other, name: me.name } };
     });

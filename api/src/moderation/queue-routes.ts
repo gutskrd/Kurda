@@ -223,7 +223,8 @@ export function registerModerationQueueRoutes(
   app.post('/admin/sanctions/:id/revoke', { schema: { params: idParam, body: reasonBody }, preHandler: guard }, async (req) => {
     const { id } = req.params as { id: string };
     const { reason } = req.body as { reason: string };
-    return { sanction: await inTransaction(app.db, (client) => sanctions.revoke(client, id, req.user!.id, reason)) };
+    // lifting a content removal puts the content back (cases-service.ts `revokeSanction`)
+    return { sanction: await cases.revokeSanction(id, req.user!.id, reason) };
   });
 
   app.post('/admin/users/:id/unmute', { schema: { params: idParam, body: reasonBody }, preHandler: guard }, async (req) => ({
