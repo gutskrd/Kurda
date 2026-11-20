@@ -361,6 +361,50 @@ Scanning Tool**, enable it with a notification address you read. It matches
 what is served from the zone against known CSAM hashes, a second layer beside
 the vision check; it is configured on the zone, not in the app.
 
+## Bans that hold — `IDENTITY_HASH_SECRET` and trusted networks
+
+A suspension or ban puts the person's email, Apple or Google sign-in, phone,
+recent install ids and push tokens on the **ban registry** as keyed hashes
+(`api/src/moderation/ban-registry.ts`), so a new account from them is refused
+or held for a moderator (the console's **Possible returns** page). Networks are
+never on it.
+
+**Set `IDENTITY_HASH_SECRET`** on the API service: a random value of at least
+32 characters, different from `JWT_SECRET` (`openssl rand -base64 48`). Until
+it is set, the registry is keyed from `JWT_SECRET` as before, so nothing breaks
+— but rotating `JWT_SECRET` would then make every entry unrecognisable at once.
+With it set:
+
+- new entries and phone numbers are written under it (key version 2), and every
+  lookup tries both versions, so setting it loses nothing;
+- the daily retention sweep re-registers each ban still in force under the new
+  key while the banned account can still be read (`rekeyRegistry`); entries of
+  accounts erased since keep matching through the old key for as long as
+  `JWT_SECRET` stays the same. So set `IDENTITY_HASH_SECRET` first, let one
+  daily sweep run, and only then rotate `JWT_SECRET` if you need to;
+- never change `IDENTITY_HASH_SECRET` itself: there is no version 3, and the
+  registry would forget every ban.
+
+Phone numbers stored before this change are plain SHA-256 hashes, which can be
+reversed by trying every number. The number itself was never kept, so they
+cannot be re-hashed in a migration: each is matched as it is and rewritten
+keyed the next time the number is verified. Network sightings stay keyed from
+`JWT_SECRET`; rotating it starts network evidence afresh (it is evidence only,
+kept 90 days, and never bans anyone).
+
+**Trusted networks** (console → Settings → Trusted networks, superadmins): a
+school or other place where many people share one address. While an entry
+stands, sign-ups from that network are not capped per network (the per-device
+cap still applies), the scanner shield never shuts it out, and it never counts
+as a "quiet" network when deciding whether two accounts are one person. Each
+entry needs a reason and ends within a year; at most 100 stand at once; adding
+and removing are in the audit log. Only a keyed hash of the network and a hint
+with its last part hidden are stored.
+
+Nothing else needs configuring. The ban email (templates `account-suspended`
+and `account-closed`) goes through the same email provider as sign-up codes,
+from an outbox the five-minute moderation sweep retries.
+
 ## Rollback
 
 Every merge to `main` also publishes an image to GHCR. To redeploy a previous

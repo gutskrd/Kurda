@@ -16,6 +16,8 @@ import { networkHashOf } from '../net/network-key.js';
 import { memoryStorage, seedPictureUpload } from '../test/media.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
 import { befriend } from '../test/social.js';
+import { closeReturnsOf, returnsToClose } from './returns.js';
+import { SanctionsService } from './sanctions-service.js';
 import { purgeDue, settleTakedowns, takedownsToSettle } from './takedown.js';
 import { inTransaction } from './tx.js';
 
@@ -253,9 +255,18 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
     // the hold is a decision they can read in Account standing, without what matched or whose account, and appeal
     const standing = (await call('GET', '/me/standing', heldToken)).json();
     const hold = standing.active.find((x: { kind: string }) => x.kind === 'post_mute');
-    expect(hold).toMatchObject({ policy: 'other', endsAt: null, origin: 'automatic', reviewedByPerson: false, appeal: { allowed: true } });
+    expect(hold).toMatchObject({ hold: true, policy: 'other', endsAt: null, origin: 'automatic', reviewedByPerson: false, appeal: { allowed: true } });
     expect(hold.statement).toContain('A person is checking your account');
     expect(JSON.stringify(standing)).not.toContain(bannedId);
+    // marked as the hold in its notice too, whose words name no rule
+    const told = await one<{ title: string; body: string; data: Record<string, unknown> }>(
+      `SELECT title, body, data FROM notifications WHERE user_id = $1 AND data->>'sanctionId' = $2`,
+      [heldId, hold.id],
+    );
+    expect(told.data).toEqual({ kind: 'sanction', sanctionId: hold.id, sanction: 'post_mute', policy: 'other', until: null, hold: true });
+    expect(`${told.title} ${told.body}`).not.toMatch(/rule/i);
+    // and nothing else on their standing is marked so
+    expect(standing.active.filter((x: { hold?: boolean }) => x.hold)).toHaveLength(1);
     expect(standing.restrictions).toEqual({ chat: { until: null }, post: { until: null }, media: { until: null } });
     const appealed = await call('POST', '/me/appeals', heldToken, { sanctionId: hold.id, text: 'This is my sister’s tablet.' });
     expect(appealed.statusCode, appealed.body).toBe(201);
@@ -304,8 +315,35 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
     expect(open.rowCount).toBe(0);
   });
 
+  it('a hold ends with the suspension it was about, when that runs out by itself', async () => {
+    const device = `install-${kit.suffix}-b`;
+    const reg = (email: string) =>
+      app.inject({
+        method: 'POST',
+        url: '/auth/register',
+        headers: { 'x-device-id': device },
+        payload: { email, username: `bn${Math.random().toString(36).slice(2, 9)}`, password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
+        remoteAddress: kit.ip(),
+      });
+    const first = await reg(`bn_runout1_${kit.suffix}@it.kurda.app`);
+    const firstId = first.json().user.id as string;
+    created.push(firstId);
+    expect((await ban({ id: firstId } as Person, { kind: 'suspension', durationHours: 2 })).statusCode).toBe(201);
+    const second = await reg(`bn_runout2_${kit.suffix}@it.kurda.app`);
+    const secondId = second.json().user.id as string;
+    created.push(secondId);
+    expect((await one<{ held_at: Date | null }>(`SELECT held_at FROM users WHERE id = $1`, [secondId])).held_at).not.toBeNull();
+
+    await pool.query(`UPDATE sanctions SET starts_at = now() - interval '3 hours', ends_at = now() - interval '1 second' WHERE user_id = $1`, [firstId]);
+    await pool.query(`UPDATE users SET banned_until = now() - interval '1 second' WHERE id = $1`, [firstId]);
+    for (const bannedId of await returnsToClose(pool)) await inTransaction(pool, (c) => closeReturnsOf(c, new SanctionsService(pool), bannedId));
+    expect((await one<{ held_at: Date | null }>(`SELECT held_at FROM users WHERE id = $1`, [secondId])).held_at).toBeNull();
+    expect((await one<{ status: string }>(`SELECT status FROM possible_returns WHERE user_id = $1`, [secondId])).status).toBe('closed');
+  });
+
   it('a network alone never holds anyone', async () => {
-    const shared = '10.163.250.7';
+    // a network of its own each run: sign-up caps count accounts per network for a day
+    const shared = `10.164.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250) + 1}`;
     const first = await app.inject({
       method: 'POST',
       url: '/auth/register',

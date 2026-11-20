@@ -9,6 +9,8 @@ import { Moderation } from './pages/Moderation';
 import { PictureChecks } from './pages/PictureChecks';
 import { Appeals } from './pages/Appeals';
 import { BanApprovals } from './pages/BanApprovals';
+import { PossibleReturns } from './pages/PossibleReturns';
+import { TrustedNetworks } from './pages/TrustedNetworks';
 import { Feedback } from './pages/Feedback';
 import { Playbook } from './pages/Playbook';
 import { Approvals } from './pages/Approvals';
@@ -52,6 +54,8 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   'picture-checks': () => <PictureChecks />,
   appeals: () => <Appeals />,
   'ban-approvals': () => <BanApprovals />,
+  'possible-returns': () => <PossibleReturns />,
+  'trusted-networks': () => <TrustedNetworks />,
   feedback: () => <Feedback />,
   playbook: () => <Playbook />,
   aimod: () => <AiModeration />,
