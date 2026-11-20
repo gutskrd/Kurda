@@ -498,6 +498,10 @@ export interface ModerationSummary {
   appealsWaiting: number;
   pendingApprovals: number;
   openEscalations: number;
+  /** pictures waiting for a person on the Picture checks page (held, asked about or reported) */
+  picturesWaiting: number;
+  /** of those, child-safety hits, which need a person first */
+  picturesUrgent: number;
 }
 
 /** A chat message inside an evidence snapshot. */
@@ -803,6 +807,8 @@ export interface AdminAppealItem extends AppealView {
   sanction: CaseSanctionView | null;
   /** who made the decision being appealed; another admin should review it */
   originalDeciderId: string | null;
+  /** the picture a picture removal took down, shown through `GET /admin/pictures/:caseId/image`; `sensitive` asks before showing */
+  picture: { caseId: string; sensitive: boolean } | null;
 }
 
 /** `POST /admin/users/:id/sanctions`, under the same rules as a case decision: a permanent ban waits for a second admin or needs `confirmUsername`. */
