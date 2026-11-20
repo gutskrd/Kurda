@@ -16,6 +16,8 @@ import { networkHashOf } from '../net/network-key.js';
 import { memoryStorage, seedPictureUpload } from '../test/media.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
 import { befriend } from '../test/social.js';
+import { closeReturnsOf, returnsToClose } from './returns.js';
+import { SanctionsService } from './sanctions-service.js';
 import { purgeDue, settleTakedowns, takedownsToSettle } from './takedown.js';
 import { inTransaction } from './tx.js';
 
@@ -302,6 +304,32 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
     expect((await call('POST', `/admin/users/${bannedId}/unban`, mod.token, { reason: 'overturned' })).statusCode).toBe(200);
     const open = await pool.query(`SELECT 1 FROM possible_returns WHERE banned_user_id = $1 AND status = 'open'`, [bannedId]);
     expect(open.rowCount).toBe(0);
+  });
+
+  it('a hold ends with the suspension it was about, when that runs out by itself', async () => {
+    const device = `install-${kit.suffix}-b`;
+    const reg = (email: string) =>
+      app.inject({
+        method: 'POST',
+        url: '/auth/register',
+        headers: { 'x-device-id': device },
+        payload: { email, username: `bn${Math.random().toString(36).slice(2, 9)}`, password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
+        remoteAddress: kit.ip(),
+      });
+    const first = await reg(`bn_runout1_${kit.suffix}@it.kurda.app`);
+    const firstId = first.json().user.id as string;
+    created.push(firstId);
+    expect((await ban({ id: firstId } as Person, { kind: 'suspension', durationHours: 2 })).statusCode).toBe(201);
+    const second = await reg(`bn_runout2_${kit.suffix}@it.kurda.app`);
+    const secondId = second.json().user.id as string;
+    created.push(secondId);
+    expect((await one<{ held_at: Date | null }>(`SELECT held_at FROM users WHERE id = $1`, [secondId])).held_at).not.toBeNull();
+
+    await pool.query(`UPDATE sanctions SET starts_at = now() - interval '3 hours', ends_at = now() - interval '1 second' WHERE user_id = $1`, [firstId]);
+    await pool.query(`UPDATE users SET banned_until = now() - interval '1 second' WHERE id = $1`, [firstId]);
+    for (const bannedId of await returnsToClose(pool)) await inTransaction(pool, (c) => closeReturnsOf(c, new SanctionsService(pool), bannedId));
+    expect((await one<{ held_at: Date | null }>(`SELECT held_at FROM users WHERE id = $1`, [secondId])).held_at).toBeNull();
+    expect((await one<{ status: string }>(`SELECT status FROM possible_returns WHERE user_id = $1`, [secondId])).status).toBe('closed');
   });
 
   it('a network alone never holds anyone', async () => {

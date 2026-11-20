@@ -21,7 +21,7 @@ import { ModerationQueueService } from './queue-service.js';
 import { registerModerationQueueRoutes } from './queue-routes.js';
 import { registerReportRoutes } from './report-routes.js';
 import { ReportsService } from './reports-service.js';
-import { PossibleReturnsService } from './returns.js';
+import { closeReturnsOf, PossibleReturnsService, returnsToClose } from './returns.js';
 import { SanctionsService } from './sanctions-service.js';
 import { purgeDue, settleTakedowns, takedownsToSettle } from './takedown.js';
 import { inTransaction } from './tx.js';
@@ -179,6 +179,10 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
         await sanctions.lockPerson(client, userId);
         await settleTakedowns(client, userId);
       });
+    }
+    // a suspension that simply ran out ends the holds it caused, as lifting it would
+    for (const bannedId of await returnsToClose(app.db)) {
+      await inTransaction(app.db, (client) => closeReturnsOf(client, sanctions, bannedId));
     }
   };
 

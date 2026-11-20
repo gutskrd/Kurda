@@ -323,6 +323,22 @@ export async function closeReturnsOf(db: Executor, sanctions: SanctionsService, 
   return closed.rowCount ?? 0;
 }
 
+/**
+ * Banned people whose ban ended by itself (a suspension running out is no revoke) while entries about them are still
+ * open: the five-minute sweep closes those, and the holds with them. Bounded.
+ */
+export async function returnsToClose(db: Executor, limit = 200): Promise<string[]> {
+  const r = await db.query<{ banned_user_id: string }>(
+    `SELECT DISTINCT p.banned_user_id FROM possible_returns p
+      WHERE p.status = 'open' AND p.banned_user_id IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM sanctions s WHERE s.user_id = p.banned_user_id AND s.kind IN ('suspension','permanent_ban')
+                          AND s.revoked_at IS NULL AND (s.ends_at IS NULL OR s.ends_at > now()))
+      LIMIT $1`,
+    [limit],
+  );
+  return r.rows.map((x) => x.banned_user_id);
+}
+
 /** What GET /me says of a hold. */
 export function accountHoldOf(row: { held_at: Date | null; hold_reason: string | null }): AccountHold | null {
   return row.held_at && row.hold_reason === 'possible_return' ? { reason: 'possible_return', since: row.held_at.toISOString() } : null;
