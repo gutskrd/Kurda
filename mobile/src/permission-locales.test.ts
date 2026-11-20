@@ -97,7 +97,7 @@ describe('the permission prompts in every language', () => {
     const english = localeFile('en').ios;
     expect(english.NSPhotoLibraryUsageDescription).toMatch(/^Hevalo uploads the photos you choose /);
     expect(english.NSMicrophoneUsageDescription).toMatch(/^Hevalo records your voice when you tap record, /);
-    expect(english.NSMotionUsageDescription).toMatch(/^Hevalo reads how you tilt your phone /);
+    expect(english.NSMotionUsageDescription).toMatch(/^Hevalo reads how you tilt and turn your phone /);
     for (const key of PROMPTS) expect(english[key], key).not.toMatch(/allow|access|need|turn on|better experience|would like|please/i);
   });
 });

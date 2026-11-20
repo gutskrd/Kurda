@@ -57,9 +57,9 @@ describe('iOS privacy config (KUR-277)', () => {
     // the key out.
     expect(pluginConfig('expo-image-picker')?.cameraPermission).toBe(false);
     expect(pluginConfig('expo-secure-store')?.faceIDPermission).toBe(false);
-    // Hevalo leans with the phone's tilt, which needs no prompt; the motion sensor's package also holds step counting,
+    // Hevalo leans and turns with the phone, which needs no prompt; the motion sensor's package also holds step counting,
     // so its sentence is declared, saying plainly what the motion is used for.
-    expect(pluginConfig('expo-sensors')?.motionPermission).toMatch(/^Hevalo reads how you tilt your phone .*keeps none of it\.$/);
+    expect(pluginConfig('expo-sensors')?.motionPermission).toMatch(/^Hevalo reads how you tilt and turn your phone .*keeps none of it\.$/);
   });
 
   /* Nothing plays in the background, so the app does not claim the background audio mode, which App Review checks is used. */

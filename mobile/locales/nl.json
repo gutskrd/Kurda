@@ -2,6 +2,6 @@
   "ios": {
     "NSPhotoLibraryUsageDescription": "Hevalo uploadt de foto’s die je kiest als je profielfoto, de foto van een groep, een meme of een bericht.",
     "NSMicrophoneUsageDescription": "Hevalo neemt je stem op als je op opnemen tikt, om een spraaknotitie te plaatsen of je spreekoefening aan je terug te laten horen.",
-    "NSMotionUsageDescription": "Hevalo leest hoe je je telefoon kantelt, zodat het hert op het scherm met je meebuigt, en bewaart daar niets van."
+    "NSMotionUsageDescription": "Hevalo leest hoe je je telefoon kantelt en draait, zodat het hert op het scherm met je meebeweegt, en bewaart daar niets van."
   }
 }

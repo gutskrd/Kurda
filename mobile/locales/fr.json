@@ -2,6 +2,6 @@
   "ios": {
     "NSPhotoLibraryUsageDescription": "Hevalo met en ligne les photos que tu choisis pour ta photo de profil, la photo d’un groupe, un mème ou une publication.",
     "NSMicrophoneUsageDescription": "Hevalo enregistre ta voix quand tu touches le bouton d’enregistrement, pour publier une note vocale ou te faire réécouter ton exercice oral.",
-    "NSMotionUsageDescription": "Hevalo lit comment tu inclines ton téléphone pour que le cerf à l’écran se penche avec toi, et n’en garde rien."
+    "NSMotionUsageDescription": "Hevalo lit comment tu inclines et tournes ton téléphone pour que le cerf à l’écran bouge avec toi, et n’en garde rien."
   }
 }

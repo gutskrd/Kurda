@@ -46,15 +46,23 @@ export function usePeekMotion(ref: RefObject<HTMLElement | null>, active: boolea
     let frame: number | null = null;
     let last = 0;
     let heard = 0;
-    // The paths of his turned head as drawn facing us, each with what it is drawn on, read once.
-    const round = [...el.querySelectorAll<SVGPathElement>('[data-round] path')].map((path) => ({
-      path,
-      front: path.getAttribute('d') ?? '',
-      layer: (path.closest('[data-round]')?.getAttribute('data-round') ?? 'fur') as RoundLayer,
-    }));
+    // The paths of his turned head as drawn facing us, each with what it is drawn on: read once, and again should the
+    // drawing be replaced (he dozes off, say), whose fresh paths face us.
+    const read = () =>
+      [...el.querySelectorAll<SVGPathElement>('[data-round] path')].map((path) => ({
+        path,
+        front: path.getAttribute('d') ?? '',
+        layer: (path.closest('[data-round]')?.getAttribute('data-round') ?? 'fur') as RoundLayer,
+      }));
+    let round = read();
     const drawn = new Map<number, string[]>();
     let shownStep = 0;
     const redraw = (step: number): void => {
+      if (round.length > 0 && !round[0]!.path.isConnected) {
+        round = read();
+        drawn.clear();
+        shownStep = 0;
+      }
       let ds = drawn.get(step);
       if (!ds) {
         ds = round.map(({ front, layer }) => (step === 0 ? front : mapPath(front, roundMap(step, layer))));
@@ -73,7 +81,7 @@ export function usePeekMotion(ref: RefObject<HTMLElement | null>, active: boolea
         if (transforms[name]) group.setAttribute('transform', transforms[name]);
       }
       const step = turnStep(share);
-      if (step !== shownStep) redraw(step);
+      if (step !== shownStep || (round.length > 0 && !round[0]!.path.isConnected)) redraw(step);
     };
     const tick = (now: number): void => {
       const seconds = last ? (now - last) / 1000 : 1 / 60;

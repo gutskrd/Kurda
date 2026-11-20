@@ -253,7 +253,7 @@
       [
         "expo-sensors",
         {
-          "motionPermission": "Hevalo reads how you tilt your phone so that the deer on the screen leans with you, and keeps none of it."
+          "motionPermission": "Hevalo reads how you tilt and turn your phone so that the deer on the screen moves with you, and keeps none of it."
         }
       ],
       [

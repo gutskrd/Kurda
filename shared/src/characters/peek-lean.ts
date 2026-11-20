@@ -1,10 +1,11 @@
 /**
- * Hevalo moving with the phone. Tilting the phone to the right leans him to the right, through the page, and to the
- * left the same way; swinging it round, one side going back, turns his head toward that side as a head in the round
- * would (head-turn.ts), and swinging it back faces him to us again. He follows both on soft springs, so he swings
- * over and settles rather than tracking every tremor of the hand. The tilt is read from gravity, so it means the same
- * whether the phone is held upright or lies nearly flat; the swing from how fast the phone turns about its own upright
- * line. Both apps share this file: the phone reads the motion sensor, the website the browser's motion events.
+ * Hevalo moving with the phone. Tilting the phone to the right leans him to the right, through the page, and turns his
+ * head toward that side, and to the left the same way; swinging it round, one side going back, turns his head toward
+ * that side as a solid head would (head-round.ts), and swinging it back faces him to us again. He follows both on
+ * soft springs, so he swings over and settles rather than tracking every tremor of the hand. The tilt is read from
+ * gravity, so it means the same whether the phone is held upright or lies nearly flat; the swing from how fast the
+ * phone turns about its own upright line. Both apps share this file: the phone reads the motion sensor, the website
+ * the browser's motion events.
  */
 
 /** How far he leans and how he gets there. */

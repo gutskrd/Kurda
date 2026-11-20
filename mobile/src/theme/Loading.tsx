@@ -1,11 +1,13 @@
 import { ActivityIndicator, type StyleProp, type ViewStyle } from 'react-native';
+import { ChaseLoader } from './ChaseLoader';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from './ThemeProvider';
 
 /**
- * Something is on its way: the platform spinner, centred in its width, always in the quiet grey skeletons use (the
- * ink is kept for what can be pressed) and always labelled ("Loading…", or `label`). For a waiting page, list or row;
- * a spinner replacing a button label or over a photo is drawn by that surface in its own ink.
+ * Something is on its way, always labelled ("Loading…", or `label`). A whole page waiting on one thing (`large`) gets
+ * Hevalo galloping after his winged apple; a list or row gets the platform spinner, centred in its width, in the quiet
+ * grey skeletons use (the ink is kept for what can be pressed). A spinner replacing a button label or over a photo is
+ * drawn by that surface in its own ink.
  */
 export function Loading({
   label,
@@ -21,5 +23,6 @@ export function Loading({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  if (size === 'large') return <ChaseLoader label={label ?? t('common.loading')} style={style} />;
   return <ActivityIndicator size={size} color={colors.textSecondary} accessibilityLabel={label ?? t('common.loading')} style={style} />;
 }

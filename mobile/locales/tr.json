@@ -2,6 +2,6 @@
   "ios": {
     "NSPhotoLibraryUsageDescription": "Hevalo, seçtiğin fotoğrafları profil fotoğrafın, bir grubun fotoğrafı, bir caps ya da bir gönderi olarak yükler.",
     "NSMicrophoneUsageDescription": "Kayıt düğmesine dokunduğunda Hevalo sesini kaydeder; böylece sesli not paylaşabilir ya da konuşma alıştırmanı yeniden dinleyebilirsin.",
-    "NSMotionUsageDescription": "Hevalo, ekrandaki geyik seninle birlikte eğilsin diye telefonunu nasıl eğdiğini algılar ve bundan hiçbir şey saklamaz."
+    "NSMotionUsageDescription": "Hevalo, ekrandaki geyik seninle birlikte hareket etsin diye telefonunu nasıl eğip döndürdüğünü algılar ve bundan hiçbir şey saklamaz."
   }
 }

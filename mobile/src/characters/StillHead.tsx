@@ -8,9 +8,9 @@ import { characterLayers } from './layers';
 import { TurnedHead } from './TurnedHead';
 
 /**
- * Hevalo's head and neck as a still picture that can still turn aside in the round (`turn`, shared head-turn.ts): no
- * blinks, looks, speech or taps, the same drawing as `characterSvg`'s head crop, laid in the pieces a turn moves. For a
- * picture that only decorates but answers the phone swinging round.
+ * Hevalo's head and neck as a still picture that can still turn aside in the round (`turn`, shared head-round.ts): no
+ * blinks, looks, speech or taps, the same drawing as `characterSvg`'s head crop, drawn turned as the phone tilts or
+ * swings round. For a picture that only decorates but answers the phone.
  */
 export function StillHead({ width, turn, brows = 'neutral', flip = false }: { width: number; turn: Turn; brows?: BrowState; flip?: boolean }): React.JSX.Element {
   const ids = useDrawingIds('sh');
