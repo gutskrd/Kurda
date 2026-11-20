@@ -398,6 +398,9 @@ export const tr: Catalogue = {
   'terms.law.title': 'Hangi yasa geçerli',
   'terms.law.body':
     'Bu koşullar Hollanda hukukuna tabidir. Avrupa Birliği’nin başka bir ülkesinde yaşıyorsan, kendi ülkenin tüketici hukukunun sağladığı koruma da senin için geçerli kalır.',
+  'terms.responsibility.title': 'Nelerden sorumluyuz',
+  'terms.responsibility.body':
+    'Hevalo üyelerin paylaştıklarını gösterir, ancak her şeyi görünmeden önce kontrol etmeyiz ve her üye paylaştığından kendisi sorumludur. Bir şeyin yasaya ya da bu koşullara aykırı olduğunu öğrendiğimizde hızla harekete geçeriz. Hevalo’nun iyi çalışması için çabalarız, ancak her zaman erişilebilir ya da hatasız olacağına söz veremeyiz. Kasten ya da ağır ihmalle verdiğimiz zarardan ve yasanın bizi sorumlu tuttuğu diğer her şeyden sorumluyuz. Buradaki hiçbir şey yasanın sana tanıdığı hakları elinden almaz.',
   'about.providerTitle': 'Hevalo’yu kim sunuyor',
   'about.copyrightNote': 'Buradaki bir şey eserini mi kopyalıyor?',
   'civak.title': 'Topluluk',

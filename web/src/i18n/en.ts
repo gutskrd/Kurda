@@ -441,6 +441,9 @@ export const en = {
   'terms.law.title': 'Which law applies',
   'terms.law.body':
     'These terms are under Dutch law. If you live in another country of the European Union, you also keep the protection your own country’s consumer law gives you.',
+  'terms.responsibility.title': 'What we are responsible for',
+  'terms.responsibility.body':
+    'Hevalo shows what members post, but we do not check everything before it appears, and each member is responsible for what they post. When we learn that something breaks the law or these terms, we act quickly. We work to keep Hevalo running well, but we cannot promise it is always available or free of mistakes. We are responsible for harm we cause on purpose or through serious carelessness, and for anything else the law makes us responsible for. Nothing here takes away rights the law gives you.',
   'about.providerTitle': 'Who provides Hevalo',
   'about.copyrightNote': 'Something here copies your work?',
 

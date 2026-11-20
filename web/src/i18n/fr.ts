@@ -402,6 +402,9 @@ export const fr: Catalogue = {
   'terms.law.title': 'Droit applicable',
   'terms.law.body':
     'Ces conditions sont soumises au droit néerlandais. Si vous vivez dans un autre pays de l’Union européenne, vous gardez aussi la protection que vous donne le droit de la consommation de votre pays.',
+  'terms.responsibility.title': 'Ce dont nous sommes responsables',
+  'terms.responsibility.body':
+    'Hevalo affiche ce que publient ses membres, mais nous ne vérifions pas tout avant que cela apparaisse, et chaque membre est responsable de ce qu’il publie. Quand nous apprenons que quelque chose enfreint la loi ou ces conditions, nous agissons vite. Nous faisons en sorte que Hevalo fonctionne bien, mais nous ne pouvons pas promettre qu’il soit toujours disponible ni sans erreur. Nous sommes responsables des dommages que nous causons volontairement ou par négligence grave, et de tout ce dont la loi nous rend par ailleurs responsables. Rien ici ne vous retire les droits que la loi vous donne.',
   'about.providerTitle': 'Qui fournit Hevalo',
   'about.copyrightNote': 'Quelque chose ici copie ton œuvre ?',
   'civak.title': 'Communauté',

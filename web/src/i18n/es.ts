@@ -401,6 +401,9 @@ export const es: Catalogue = {
   'terms.law.title': 'Qué ley se aplica',
   'terms.law.body':
     'Estos términos se rigen por la ley neerlandesa. Si vives en otro país de la Unión Europea, también conservas la protección que te da la ley de consumo de tu país.',
+  'terms.responsibility.title': 'De qué somos responsables',
+  'terms.responsibility.body':
+    'Hevalo muestra lo que publican sus miembros, pero no revisamos todo antes de que aparezca, y cada miembro es responsable de lo que publica. Cuando sabemos que algo va contra la ley o contra estos términos, actuamos con rapidez. Trabajamos para que Hevalo funcione bien, pero no podemos prometer que esté siempre disponible ni libre de errores. Respondemos de los daños que causemos a propósito o por negligencia grave, y de todo lo demás de lo que la ley nos haga responsables. Nada de esto te quita los derechos que te da la ley.',
   'about.providerTitle': 'Quién ofrece Hevalo',
   'about.copyrightNote': '¿Algo aquí copia tu obra?',
   'civak.title': 'Comunidad',

@@ -403,6 +403,9 @@ export const nl: Catalogue = {
   'terms.law.title': 'Welk recht geldt',
   'terms.law.body':
     'Op deze voorwaarden is Nederlands recht van toepassing. Woon je in een ander land van de Europese Unie, dan houd je ook de bescherming die het consumentenrecht van je eigen land je geeft.',
+  'terms.responsibility.title': 'Waarvoor wij verantwoordelijk zijn',
+  'terms.responsibility.body':
+    'Hevalo laat zien wat leden plaatsen, maar we controleren niet alles voordat het verschijnt, en iedereen is zelf verantwoordelijk voor wat hij of zij plaatst. Horen we dat iets in strijd is met de wet of met deze voorwaarden, dan grijpen we snel in. We doen ons best om Hevalo goed te laten werken, maar we kunnen niet beloven dat het altijd beschikbaar of foutloos is. We zijn aansprakelijk voor schade die we opzettelijk of door grove nalatigheid veroorzaken, en voor alles waarvoor de wet ons verder aansprakelijk stelt. Niets hierin neemt je rechten af die de wet je geeft.',
   'about.providerTitle': 'Wie Hevalo aanbiedt',
   'about.copyrightNote': 'Wordt hier jouw werk gekopieerd?',
   'civak.title': 'Community',
