@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { decidable, defaultRule, excerpt, findings, picturesPath, viewFrom, viewHref } from './pictureChecks';
+import type { PictureCaseItem } from '@kurda/shared';
+import { decidable, defaultRule, excerpt, findings, picturesPath, ruleSource, viewFrom, viewHref } from './pictureChecks';
 
 describe('what the check found', () => {
   it('lists only possible and above, surest first', () => {
@@ -13,11 +14,21 @@ describe('what the check found', () => {
   });
 
   it('starts a removal on the surest finding’s rule, never on child safety, and on “something else” without one', () => {
-    expect(defaultRule({ shocking: 'likely', sexual: 'possible' })).toBe('violence');
-    expect(defaultRule({ suggestive: 'certain' })).toBe('sexual');
-    expect(defaultRule({ minor_safety: 'certain', self_harm: 'possible' })).toBe('self_harm');
-    expect(defaultRule({ minor_safety: 'certain' })).toBe('other');
-    expect(defaultRule(null)).toBe('other');
+    const found = (levels: PictureCaseItem['levels']) => ({ levels, reportCategory: null });
+    expect(defaultRule(found({ shocking: 'likely', sexual: 'possible' }))).toBe('violence');
+    expect(defaultRule(found({ suggestive: 'certain' }))).toBe('sexual');
+    expect(defaultRule(found({ minor_safety: 'certain', self_harm: 'possible' }))).toBe('self_harm');
+    expect(defaultRule(found({ minor_safety: 'certain' }))).toBe('other');
+    expect(defaultRule(found(null))).toBe('other');
+    expect(ruleSource(found(null))).toBeNull();
+    expect(ruleSource(found({ minor_safety: 'certain' }))).toBeNull();
+  });
+
+  it('starts a reported picture’s removal on the rule reporters chose, unless that is child safety', () => {
+    expect(defaultRule({ levels: { sexual: 'likely' }, reportCategory: 'harassment' })).toBe('harassment');
+    expect(ruleSource({ levels: { sexual: 'likely' }, reportCategory: 'harassment' })).toBe('reports');
+    expect(defaultRule({ levels: { sexual: 'likely' }, reportCategory: 'child_safety' })).toBe('sexual');
+    expect(ruleSource({ levels: { sexual: 'likely' }, reportCategory: 'child_safety' })).toBe('check');
   });
 });
 

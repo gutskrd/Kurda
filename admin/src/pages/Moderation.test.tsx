@@ -30,6 +30,8 @@ const summary: ModerationSummary = {
   appealsWaiting: 2,
   pendingApprovals: 1,
   openEscalations: 0,
+  picturesWaiting: 0,
+  picturesUrgent: 0,
 };
 
 const me: Route = on('GET', '/me', json({ user: { id: ME_ID, username: 'rojda' } }));

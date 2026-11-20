@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { ModerationSummary, PictureCaseList } from '@kurda/shared';
+import type { ModerationSummary } from '@kurda/shared';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { NAV_GROUPS, ROLE_NAME, activeEntry, href, searchNav, visibleNav, type NavEntry, type Route } from '../navigation';
@@ -121,16 +121,17 @@ function useNavCounts(moderator: boolean): NavCounts {
   useEffect(() => {
     if (!moderator) return;
     let alive = true;
-    const set = (key: keyof NavCounts, value: NavCount): void => {
-      if (alive) setCounts((c) => ({ ...c, [key]: value }));
-    };
     const load = (): void => {
       void api<ModerationSummary>('/admin/moderation/summary')
-        .then((s) => set('moderation', { count: s.open, urgent: s.slaBreaches > 0 || s.byPriority[0] > 0, what: 'open' }))
-        .catch(() => undefined);
-      // A child-safety hit among them makes the number urgent, as an urgent case does the queue's.
-      void api<PictureCaseList>('/admin/pictures?view=waiting')
-        .then((p) => set('picture-checks', { count: p.counts.waiting, urgent: p.items.some((i) => i.sensitive), what: 'waiting' }))
+        .then((s) => {
+          if (!alive) return;
+          setCounts({
+            moderation: { count: s.open, urgent: s.slaBreaches > 0 || s.byPriority[0] > 0, what: 'open' },
+            // A child-safety hit among them makes the number urgent, as an urgent case does the queue's. An API from
+            // before pictures were counted sends neither.
+            'picture-checks': { count: s.picturesWaiting ?? 0, urgent: (s.picturesUrgent ?? 0) > 0, what: 'waiting' },
+          });
+        })
         .catch(() => undefined);
     };
     load();

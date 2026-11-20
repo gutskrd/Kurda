@@ -9,19 +9,20 @@ import {
 } from '@kurda/shared';
 import { ApiError, api } from '../api';
 import { useRoute } from '../nav';
-import { policyOptions, statusName, statusTone } from '../moderation';
+import { categoryName, policyOptions, statusName, statusTone } from '../moderation';
 import {
   CHECKED_BY_TEXT,
   ORIGIN_NAME,
   SURFACE_NAME,
   VIEW_NAME,
   decidable,
+  decidePath,
   decidedText,
   defaultRule,
   excerpt,
   findings,
-  picturePath,
   picturesPath,
+  ruleSource,
   viewFrom,
   viewHref,
 } from '../pictureChecks';
@@ -127,7 +128,7 @@ function Board({ view }: { view: PictureCaseView }): React.JSX.Element {
     setGone((g) => new Set(g).add(item.caseId));
     setNotice(null);
     try {
-      await api<{ ok: true }>(picturePath(item.caseId, 'decide'), { method: 'POST', body: decision });
+      await api<{ ok: true }>(decidePath(item.caseId), { method: 'POST', body: decision });
       toast.success(decidedText(item.origin, decision.decision));
     } catch (err) {
       if (err instanceof ApiError && err.status === 409 && err.code === 'ALREADY_DECIDED') {
@@ -359,6 +360,7 @@ function PictureTile({
           {item.reportCount > 0 && (
             <span>
               {item.reportCount} {item.reportCount === 1 ? 'report' : 'reports'}
+              {item.reportCategory && `: ${categoryName(item.reportCategory).toLowerCase()}`}
             </span>
           )}
           {item.decided ? (
@@ -441,7 +443,9 @@ function RemoveDialog({
   onClose: () => void;
   onRemove: (policy: ReportCategory, note: string) => void;
 }): React.JSX.Element {
-  const [policy, setPolicy] = useState<ReportCategory>(() => defaultRule(item.levels));
+  const [policy, setPolicy] = useState<ReportCategory>(() => defaultRule(item));
+  const source = ruleSource(item);
+  const picked = source === 'reports' ? 'Picked from what reporters chose. ' : source === 'check' ? 'Picked from what the check found. ' : '';
   const [note, setNote] = useState('');
   const formId = useId();
   return (
@@ -476,7 +480,7 @@ function RemoveDialog({
         </p>
         <Select
           label="The rule it breaks"
-          hint={`${findings(item.levels).length > 0 ? 'Picked from what the check found. ' : ''}Child sexual abuse material is handled on its case instead.`}
+          hint={`${picked}Child sexual abuse material is handled on its case instead.`}
           options={REMOVE_RULES}
           value={policy}
           data-autofocus

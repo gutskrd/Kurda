@@ -1,14 +1,14 @@
 // @vitest-environment jsdom
 /**
- * Picture checks, against a fake API: what a moderator reads on each tab, that nothing of a picture is fetched until it
- * is shown, and exactly what approving and removing send.
+ * Picture checks, against a fake API: what a moderator reads on each tab, that a picture is fetched once through the
+ * API only when shown and its local copy given back when hidden, and exactly what approving and removing send.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, screen, waitFor, within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
-import type { PictureCaseItem, PictureCaseList, PictureView } from '@kurda/shared';
+import type { PictureCaseItem, PictureCaseList } from '@kurda/shared';
 import { setToken } from '../api';
-import { failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
+import { bytes, failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
 import { SUBJECT_ID } from '../test/moderation';
 import { renderUi } from '../test/render';
 import { PictureChecks } from './PictureChecks';
@@ -17,7 +17,10 @@ const HOUR = 3_600_000;
 const ago = (h: number): string => new Date(Date.now() - h * HOUR).toISOString();
 const posts = (calls: Call[], path: string | RegExp): Call[] =>
   calls.filter((c) => c.method === 'POST' && (typeof path === 'string' ? c.path === path : path.test(c.path)));
-const lists = (calls: Call[]): Call[] => calls.filter((c) => c.method === 'GET' && c.path.startsWith('/admin/pictures'));
+const lists = (calls: Call[]): Call[] => calls.filter((c) => c.method === 'GET' && c.path.startsWith('/admin/pictures?'));
+/** The fetches of pictures' bytes, of one case or of any. */
+const fetched = (calls: Call[], caseId?: string): Call[] =>
+  calls.filter((c) => c.method === 'GET' && (caseId ? c.path === `/admin/pictures/${caseId}/image` : /\/image$/.test(c.path)));
 
 function picture(over: Partial<PictureCaseItem> = {}): PictureCaseItem {
   return {
@@ -31,6 +34,7 @@ function picture(over: Partial<PictureCaseItem> = {}): PictureCaseItem {
     context: { text: 'Our trip to the lake, with the whole family on the last day of summer.', groupName: null },
     note: null,
     reportCount: 0,
+    reportCategory: null,
     sensitive: false,
     status: 'open',
     decided: null,
@@ -42,16 +46,29 @@ function page(items: PictureCaseItem[], over: Partial<PictureCaseList> = {}): Pi
   return { items, nextCursor: null, counts: { waiting: items.length, asked: 1, reported: 2 }, ...over };
 }
 
-const view = (caseId: string): PictureView => ({ url: `https://media.test/${caseId}.webp?sig=1`, expiresAt: new Date(Date.now() + 5 * 60_000).toISOString() });
-const viewRoute: Route = on('POST', /^\/admin\/pictures\/[^/]+\/view$/, (c) => json(view(c.path.split('/')[3]!)));
+const imageRoute: Route = on('GET', /^\/admin\/pictures\/[^/]+\/image$/, bytes(new Uint8Array([137, 80, 78, 71])));
 
+let unmount: () => void = () => undefined;
 function show(hash: string, ...routes: Route[]): ReturnType<typeof fakeApi> {
   setToken('tok');
   location.hash = hash;
-  const api = fakeApi(viewRoute, ...routes);
-  renderUi(<PictureChecks />);
+  const api = fakeApi(imageRoute, ...routes);
+  unmount = renderUi(<PictureChecks />).unmount;
   return api;
 }
+
+// jsdom keeps no local copies of files: each one is a numbered address, and giving one back is recorded.
+let made: string[] = [];
+let revoked: string[] = [];
+beforeEach(() => {
+  made = [];
+  revoked = [];
+  URL.createObjectURL = vi.fn(() => {
+    made.push(`blob:copy/${made.length + 1}`);
+    return made[made.length - 1]!;
+  });
+  URL.revokeObjectURL = vi.fn((address: string) => void revoked.push(address));
+});
 
 const tile = (name: string): HTMLElement => screen.getAllByRole('article').find((a) => a.dataset.case === name)!;
 const tab = (label: string): HTMLElement => screen.getByRole('tab', { name: new RegExp(`^${label}`) });
@@ -114,7 +131,7 @@ describe('the waiting list', () => {
     expect(tab('Reported')).toHaveAttribute('href', '#/picture-checks?view=reported');
     expect(countOn('Decided')).toBeNull();
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
-    expect(posts(calls, /\/view$/)).toHaveLength(0);
+    expect(fetched(calls)).toHaveLength(0);
   });
 
   it('says plainly when nothing is waiting', async () => {
@@ -164,10 +181,10 @@ describe('the other tabs', () => {
   });
 
   it('counts the reports on a reported picture', async () => {
-    const reported = picture({ origin: 'reported', reportCount: 3, levels: { sexual: 'none' } });
+    const reported = picture({ origin: 'reported', reportCount: 3, reportCategory: 'harassment', levels: { sexual: 'none' } });
     show('#/picture-checks?view=reported', on('GET', '/admin/pictures?view=reported', json(page([reported]))));
     const at = await screen.findByRole('article', { name: 'Post' });
-    expect(within(at).getByText('3 reports')).toBeInTheDocument();
+    expect(within(at).getByText('3 reports: bullying or harassment')).toBeInTheDocument();
     expect(within(at).getByText('The check found nothing to name.')).toBeInTheDocument();
   });
 
@@ -200,24 +217,31 @@ describe('the other tabs', () => {
 });
 
 describe('looking at a picture', () => {
-  it('asks for a link only when shown, hides it again, and uses the same link while it lasts', async () => {
+  it('fetches it through the API only when shown, gives the copy back when hidden, and fetches it once', async () => {
     const user = userEvent.setup();
     const { calls } = show('#/picture-checks', on('GET', '/admin/pictures?view=waiting', json(page([picture(), picture({ caseId: 'pc-2' })]))));
     await screen.findAllByRole('article');
     const at = tile('pc-1');
     await user.click(within(at).getByRole('button', { name: 'Show picture' }));
     const img = await within(at).findByRole('img');
-    expect(img).toHaveAttribute('src', 'https://media.test/pc-1.webp?sig=1');
-    expect(img).toHaveAttribute('referrerpolicy', 'no-referrer');
-    expect(posts(calls, '/admin/pictures/pc-1/view')).toHaveLength(1);
+    // A local copy: no storage address reaches the page.
+    expect(img).toHaveAttribute('src', 'blob:copy/1');
+    expect(fetched(calls, 'pc-1')).toHaveLength(1);
+    expect(fetched(calls, 'pc-1')[0]!.headers.authorization).toBe('Bearer tok');
     // The other tile is still not fetched.
     expect(within(tile('pc-2')).queryByRole('img')).not.toBeInTheDocument();
+    expect(fetched(calls)).toHaveLength(1);
 
     await user.click(within(at).getByRole('button', { name: 'Hide' }));
     expect(within(at).queryByRole('img')).not.toBeInTheDocument();
+    expect(revoked).toEqual(['blob:copy/1']);
     await user.click(within(at).getByRole('button', { name: 'Show picture' }));
-    expect(await within(at).findByRole('img')).toBeInTheDocument();
-    expect(posts(calls, /\/view$/)).toHaveLength(1);
+    expect(await within(at).findByRole('img')).toHaveAttribute('src', 'blob:copy/2');
+    expect(fetched(calls)).toHaveLength(1);
+
+    // Leaving the page gives back the copy on screen.
+    unmount();
+    expect(revoked).toEqual(['blob:copy/1', 'blob:copy/2']);
   });
 
   it('asks before showing a child-safety hit, and offers only its case', async () => {
@@ -235,27 +259,50 @@ describe('looking at a picture', () => {
     await user.click(within(at).getByRole('button', { name: 'Show picture' }));
     const ask = await screen.findByRole('alertdialog', { name: 'Show this picture?' });
     await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
-    expect(posts(calls, /\/view$/)).toHaveLength(0);
+    expect(fetched(calls)).toHaveLength(0);
     expect(within(at).queryByRole('img')).not.toBeInTheDocument();
 
     await user.click(within(at).getByRole('button', { name: 'Show picture' }));
     await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Show it' }));
     expect(await within(at).findByRole('img')).toBeInTheDocument();
-    expect(posts(calls, '/admin/pictures/pc-1/view')).toHaveLength(1);
+    expect(fetched(calls, 'pc-1')).toHaveLength(1);
+
+    // Hidden and shown again, it asks again, and uses the copy it has.
+    await user.click(within(at).getByRole('button', { name: 'Hide' }));
+    await user.click(within(at).getByRole('button', { name: 'Show picture' }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Show it' }));
+    expect(await within(at).findByRole('img')).toBeInTheDocument();
+    expect(fetched(calls)).toHaveLength(1);
   });
 
-  it('says when the picture can’t be fetched, and asks for a new link after one fails to load', async () => {
+  it('says when the picture can’t be fetched, and keeps approving shut', async () => {
     const user = userEvent.setup();
     const { calls } = show(
       '#/picture-checks',
       on('GET', '/admin/pictures?view=waiting', json(page([picture()]))),
-      on('POST', '/admin/pictures/pc-1/view', failure(404, 'NOT_FOUND', 'the picture is no longer stored')),
+      on('GET', '/admin/pictures/pc-1/image', failure(404, 'NOT_FOUND', 'the picture is no longer stored')),
     );
     const at = await screen.findByRole('article', { name: 'Post' });
     await user.click(within(at).getByRole('button', { name: 'Show picture' }));
     expect(await within(at).findByRole('alert')).toHaveTextContent('The picture is no longer stored.');
     expect(within(at).getByRole('button', { name: 'Approve' })).toBeDisabled();
-    expect(posts(calls, /\/view$/)).toHaveLength(1);
+    expect(fetched(calls)).toHaveLength(1);
+    expect(made).toEqual([]);
+  });
+
+  it('fetches a picture again when its copy would not show', async () => {
+    const user = userEvent.setup();
+    const { calls } = show('#/picture-checks', on('GET', '/admin/pictures?view=waiting', json(page([picture()]))));
+    const at = await screen.findByRole('article', { name: 'Post' });
+    await user.click(within(at).getByRole('button', { name: 'Show picture' }));
+    fireEvent.error(await within(at).findByRole('img'));
+    expect(await within(at).findByRole('alert')).toHaveTextContent('The picture didn’t load.');
+    expect(revoked).toEqual(['blob:copy/1']);
+    expect(within(at).getByRole('button', { name: 'Approve' })).toBeDisabled();
+    await user.click(within(at).getByRole('button', { name: 'Show picture' }));
+    fireEvent.load(await within(at).findByRole('img'));
+    expect(fetched(calls)).toHaveLength(2);
+    expect(within(at).getByRole('button', { name: 'Approve' })).toBeEnabled();
   });
 });
 
@@ -308,6 +355,34 @@ describe('deciding', () => {
     expect(posts(calls, '/admin/pictures/pc-1/decide')[0]!.body).toEqual({ decision: 'remove', policy: 'sexual', note: 'Nude, posted in a public group.' });
     expect(screen.queryByRole('article')).not.toBeInTheDocument();
     expect(await screen.findByText('Removed. The owner is told which rule it breaks and how to appeal.')).toBeInTheDocument();
+  });
+
+  it('starts a removal on the rule reporters chose, unless that is child safety', async () => {
+    const user = userEvent.setup();
+    show(
+      '#/picture-checks?view=reported',
+      on(
+        'GET',
+        '/admin/pictures?view=reported',
+        json(
+          page([
+            picture({ origin: 'reported', reportCount: 2, reportCategory: 'hate', levels: { sexual: 'likely' } }),
+            picture({ caseId: 'pc-2', origin: 'reported', reportCount: 1, reportCategory: 'child_safety', levels: { violence: 'likely' } }),
+          ]),
+        ),
+      ),
+    );
+    await screen.findAllByRole('article');
+    await user.click(within(tile('pc-1')).getByRole('button', { name: 'Remove' }));
+    let ask = await screen.findByRole('alertdialog');
+    expect(within(ask).getByLabelText('The rule it breaks')).toHaveValue('hate');
+    expect(within(ask).getByText(/^Picked from what reporters chose\./)).toBeInTheDocument();
+    await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
+
+    await user.click(within(tile('pc-2')).getByRole('button', { name: 'Remove' }));
+    ask = await screen.findByRole('alertdialog');
+    expect(within(ask).getByLabelText('The rule it breaks')).toHaveValue('violence');
+    expect(within(ask).getByText(/^Picked from what the check found\./)).toBeInTheDocument();
   });
 
   it('starts a removal on “something else” when the check found nothing, and sends no empty note', async () => {
@@ -380,7 +455,7 @@ describe('the keyboard', () => {
 
     await user.keyboard(' ');
     fireEvent.load(await within(tile('pc-2')).findByRole('img'));
-    expect(posts(calls, '/admin/pictures/pc-2/view')).toHaveLength(1);
+    expect(fetched(calls, 'pc-2')).toHaveLength(1);
     tile('pc-2').focus();
     await user.keyboard('a');
     await waitFor(() => expect(posts(calls, '/admin/pictures/pc-2/decide')).toHaveLength(1));

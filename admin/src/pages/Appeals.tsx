@@ -28,9 +28,6 @@ import { SanctionLine } from './CasePeople';
 import { PictureReveal } from './PictureReveal';
 import { SanctionFields, newSanctionDraft, sanctionDraftProblems, type SanctionDraft } from './SanctionParts';
 
-/** An appeal about a removed picture names its case, so the picture can be shown here before anyone answers. */
-type AppealItem = AdminAppealItem & { picture?: { caseId: string; sensitive?: boolean } | null };
-
 type Filter = 'open' | 'upheld' | 'overturned' | 'modified' | 'all';
 const FILTERS: ReadonlyArray<{ key: Filter; label: string }> = [
   { key: 'open', label: 'Waiting' },
@@ -58,8 +55,8 @@ export function Appeals(): React.JSX.Element {
   const route = useRoute();
   const raw = route.query.get('status');
   const filter: Filter = FILTERS.some((f) => f.key === raw) ? (raw as Filter) : 'open';
-  const list = useLoad(() => api<{ appeals: AppealItem[] }>(`/admin/appeals?status=${filter}`).then((r) => r.appeals), [filter]);
-  const [answering, setAnswering] = useState<AppealItem | null>(null);
+  const list = useLoad(() => api<{ appeals: AdminAppealItem[] }>(`/admin/appeals?status=${filter}`).then((r) => r.appeals), [filter]);
+  const [answering, setAnswering] = useState<AdminAppealItem | null>(null);
   const { me } = useAuth();
 
   return (
@@ -111,10 +108,10 @@ export function Appeals(): React.JSX.Element {
   );
 }
 
-function AppealCard({ appeal: a, mine, onAnswer }: { appeal: AppealItem; mine: boolean; onAnswer: () => void }): React.JSX.Element {
+function AppealCard({ appeal: a, mine, onAnswer }: { appeal: AdminAppealItem; mine: boolean; onAnswer: () => void }): React.JSX.Element {
   const status = STATUS[a.status];
   const caseId = a.sanction?.caseId ?? a.caseId;
-  // A removal under the child-safety rule asks before showing, as its case does.
+  // A removal under the child-safety rule asks before showing too, whatever the picture's own case says.
   const sensitive = a.picture?.sensitive === true || a.sanction?.policy === 'child_safety';
   return (
     <li className="card section appeal">
@@ -188,7 +185,7 @@ function AnswerDrawer({
   onClose,
   onDone,
 }: {
-  appeal: AppealItem;
+  appeal: AdminAppealItem;
   mine: boolean;
   onClose: () => void;
   onDone: () => void;

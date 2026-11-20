@@ -19,6 +19,8 @@ const SUMMARY: ModerationSummary = {
   appealsWaiting: 2,
   pendingApprovals: 1,
   openEscalations: 0,
+  picturesWaiting: 4,
+  picturesUrgent: 0,
 };
 
 function session(staffRoles: string[], capabilities: string[]) {
@@ -61,7 +63,6 @@ describe('the admin’s navigation', () => {
       session(['moderator'], ['users.view', 'users.moderate', 'moderation.act']),
       me('rojda'),
       on('GET', '/admin/moderation/summary', json(SUMMARY)),
-      on('GET', '/admin/pictures?view=waiting', json({ items: [], nextCursor: null, counts: { waiting: 4, asked: 1, reported: 0 } })),
       on('GET', '/admin/moderation/sla', json({ medianSeconds: 5400, resolved: 12 })),
       on('GET', '/admin/feedback/summary', json({ total: { count: 0, averageStars: null, distribution: [0, 0, 0, 0, 0] }, last30Days: { count: 3, averageStars: 4.3, distribution: [0, 0, 1, 0, 2] }, daily: [], byStatus: { new: 3, read: 0, archived: 0 }, byCategory: {} })),
     );

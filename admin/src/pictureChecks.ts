@@ -39,8 +39,8 @@ export function picturesPath(view: PictureCaseView, cursor?: string | null): str
   return `/admin/pictures?view=${view}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ''}`;
 }
 
-export function picturePath(caseId: string, action: 'view' | 'decide'): string {
-  return `/admin/pictures/${encodeURIComponent(caseId)}/${action}`;
+export function decidePath(caseId: string): string {
+  return `/admin/pictures/${encodeURIComponent(caseId)}/decide`;
 }
 
 export const SURFACE_NAME: Readonly<Record<PictureSurface, string>> = {
@@ -103,10 +103,20 @@ const RULE_OF: Readonly<Record<PictureScanCategory, ReportCategory>> = {
   shocking: 'violence',
 };
 
-/** The rule a removal starts on: the surest finding's, never child safety, which is decided on its case. */
-export function defaultRule(levels: PictureCaseItem['levels']): ReportCategory {
-  const rule = findings(levels).map((f) => RULE_OF[f.category]).find((r) => r !== 'child_safety');
+/**
+ * The rule a removal starts on: the one reporters chose most for a reported picture, else the surest finding's, never
+ * child safety, which is decided on its case.
+ */
+export function defaultRule(item: Pick<PictureCaseItem, 'levels' | 'reportCategory'>): ReportCategory {
+  if (item.reportCategory && item.reportCategory !== 'child_safety') return item.reportCategory;
+  const rule = findings(item.levels).map((f) => RULE_OF[f.category]).find((r) => r !== 'child_safety');
   return rule ?? 'other';
+}
+
+/** What the removal rule was picked from, for the hint under it; null when nothing suggested one. */
+export function ruleSource(item: Pick<PictureCaseItem, 'levels' | 'reportCategory'>): 'reports' | 'check' | null {
+  if (item.reportCategory && item.reportCategory !== 'child_safety') return 'reports';
+  return findings(item.levels).some((f) => RULE_OF[f.category] !== 'child_safety') ? 'check' : null;
 }
 
 /** Whether a picture can be decided on this page: still open, and not a child-safety hit. */

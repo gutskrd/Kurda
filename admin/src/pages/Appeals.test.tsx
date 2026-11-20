@@ -3,14 +3,14 @@
  * Appeals and ban approvals, against a fake API: what a moderator reads, and
  * exactly what each answer sends.
  */
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import type { AdminAppealItem, PendingApproval } from '@kurda/shared';
 import type { ReactNode } from 'react';
 import { setToken } from '../api';
 import { AuthProvider } from '../auth';
-import { failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
+import { bytes, failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
 import { CASE_ID, ME_ID, SUBJECT_ID, sanction } from '../test/moderation';
 import { renderUi } from '../test/render';
 import { Appeals } from './Appeals';
@@ -19,6 +19,7 @@ import { BanApprovals } from './BanApprovals';
 const HOUR = 3_600_000;
 const me: Route = on('GET', '/me', json({ user: { id: ME_ID, username: 'rojda', roles: ['moderator'] } }));
 const posts = (calls: Call[], path: string): Call[] => calls.filter((c) => c.method === 'POST' && c.path === path);
+const gets = (calls: Call[], path: string): Call[] => calls.filter((c) => c.method === 'GET' && c.path === path);
 
 function appeal(over: Partial<AdminAppealItem> = {}): AdminAppealItem {
   return {
@@ -33,6 +34,7 @@ function appeal(over: Partial<AdminAppealItem> = {}): AdminAppealItem {
     user: { id: SUBJECT_ID, username: 'baran' },
     sanction: sanction({ id: 's-1', kind: 'chat_mute', active: true, endsAt: new Date(Date.now() + 48 * HOUR).toISOString(), caseId: CASE_ID, createdBy: 'other-mod' }),
     originalDeciderId: 'other-mod',
+    picture: null,
     ...over,
   };
 }
@@ -44,6 +46,12 @@ function show(hash: string, page: ReactNode, ...routes: Route[]): ReturnType<typ
   renderUi(<AuthProvider>{page}</AuthProvider>);
   return api;
 }
+
+// jsdom keeps no local copies of files.
+beforeEach(() => {
+  URL.createObjectURL = vi.fn(() => 'blob:copy');
+  URL.revokeObjectURL = vi.fn();
+});
 
 afterEach(() => {
   setToken(null);
@@ -147,27 +155,28 @@ describe('appeals', () => {
     expect(await within(drawer).findByRole('alert')).toHaveTextContent('Another admin has to review your own decision.');
   });
 
-  it('shows the removed picture of a picture appeal only when asked, through its short-lived link', async () => {
+  it('shows the removed picture of a picture appeal only when asked, fetched through the API', async () => {
     const user = userEvent.setup();
     const { calls } = show(
       '#/appeals',
       <Appeals />,
-      on('GET', /^\/admin\/appeals/, json({ appeals: [{ ...appeal(), picture: { caseId: 'pc-7' } }, appeal({ id: 'ap-2', picture: null } as Partial<AdminAppealItem>)] })),
-      on('POST', '/admin/pictures/pc-7/view', json({ url: 'https://media.test/pc-7.webp?sig=1', expiresAt: new Date(Date.now() + 300_000).toISOString() })),
+      on('GET', /^\/admin\/appeals/, json({ appeals: [appeal({ picture: { caseId: 'pc-7', sensitive: false } }), appeal({ id: 'ap-2' })] })),
+      on('GET', '/admin/pictures/pc-7/image', bytes(new Uint8Array([137, 80, 78, 71]))),
     );
     expect(await screen.findByText('The picture that was removed')).toBeInTheDocument();
     // One appeal is about a picture, the other is not; nothing is fetched yet.
     expect(screen.getAllByRole('button', { name: 'Show picture' })).toHaveLength(1);
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
-    expect(posts(calls, '/admin/pictures/pc-7/view')).toHaveLength(0);
+    expect(gets(calls, '/admin/pictures/pc-7/image')).toHaveLength(0);
     await user.click(screen.getByRole('button', { name: 'Show picture' }));
-    expect(await screen.findByRole('img', { name: 'The removed picture by @baran' })).toHaveAttribute('src', 'https://media.test/pc-7.webp?sig=1');
-    expect(posts(calls, '/admin/pictures/pc-7/view')).toHaveLength(1);
+    expect(await screen.findByRole('img', { name: 'The removed picture by @baran' })).toHaveAttribute('src', 'blob:copy');
+    expect(gets(calls, '/admin/pictures/pc-7/image')).toHaveLength(1);
     await user.click(screen.getByRole('button', { name: 'Hide' }));
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:copy');
   });
 
-  it('asks before showing a picture removed under the child-safety rule', async () => {
+  it('asks before showing a child-safety picture, by the picture’s own flag or the rule it was removed under', async () => {
     const user = userEvent.setup();
     const { calls } = show(
       '#/appeals',
@@ -175,14 +184,20 @@ describe('appeals', () => {
       on(
         'GET',
         /^\/admin\/appeals/,
-        json({ appeals: [{ ...appeal({ sanction: sanction({ id: 's-1', kind: 'content_removal', policy: 'child_safety' }) }), picture: { caseId: 'pc-7' } }] }),
+        json({
+          appeals: [
+            appeal({ picture: { caseId: 'pc-7', sensitive: true } }),
+            appeal({ id: 'ap-2', sanction: sanction({ id: 's-2', kind: 'content_removal', policy: 'child_safety' }), picture: { caseId: 'pc-8', sensitive: false } }),
+          ],
+        }),
       ),
-      on('POST', '/admin/pictures/pc-7/view', json({ url: 'https://media.test/pc-7.webp?sig=1', expiresAt: new Date(Date.now() + 300_000).toISOString() })),
     );
-    await user.click(await screen.findByRole('button', { name: 'Show picture' }));
-    const ask = await screen.findByRole('alertdialog', { name: 'Show this picture?' });
-    await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
-    expect(posts(calls, '/admin/pictures/pc-7/view')).toHaveLength(0);
+    for (const button of await screen.findAllByRole('button', { name: 'Show picture' })) {
+      await user.click(button);
+      const ask = await screen.findByRole('alertdialog', { name: 'Show this picture?' });
+      await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
+    }
+    expect(calls.filter((c) => c.path.endsWith('/image'))).toHaveLength(0);
   });
 
   it('offers no "change it" for a report’s appeal, which has no sanction', async () => {

@@ -1,13 +1,12 @@
 /**
  * A picture waiting for a decision, hidden until a moderator chooses to look: nothing is requested before then, and
- * each look asks the server for a link that lasts a few minutes and is written to the audit log. A child-safety hit
- * asks first and warns not to share it.
+ * the first look fetches it once through the API, which writes the fetch to the audit log. A child-safety hit asks
+ * first and warns not to share it.
  */
 import { useCallback, useRef, useState } from 'react';
-import type { PictureView } from '@kurda/shared';
-import { api } from '../api';
-import { picturePath } from '../pictureChecks';
-import { Icon, errorLine, useDialogs } from '../ui';
+import { PICTURE_IMAGE_PATH } from '@kurda/shared';
+import { useApiImage } from '../apiImage';
+import { Icon, useDialogs } from '../ui';
 
 export interface Reveal {
   shown: boolean;
@@ -20,21 +19,16 @@ export interface Reveal {
   hide: () => void;
   toggle: () => void;
   loaded: () => void;
-  /** The file did not load: the link ran out, or storage refused it. */
+  /** The copy did not decode. */
   failed: () => void;
 }
 
-/** A link this close to running out is asked for again, rather than shown and lost mid-load. */
-const FRESH_FOR_MS = 15_000;
-
 export function usePictureReveal(caseId: string, sensitive: boolean): Reveal {
   const dialogs = useDialogs();
-  const [view, setView] = useState<PictureView | null>(null);
-  const [shown, setShown] = useState(false);
+  const image = useApiImage(PICTURE_IMAGE_PATH(caseId), 'picture checks');
   const [seen, setSeen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const asking = useRef(false);
+  const { show: fetchAndShow, hide, failed: forget } = image;
 
   const show = useCallback(async (): Promise<void> => {
     if (asking.current) return;
@@ -51,45 +45,27 @@ export function usePictureReveal(caseId: string, sensitive: boolean): Reveal {
         });
         if (!yes) return;
       }
-      // A link still good is used again: hiding and showing is one look, not another entry in the audit log.
-      if (view && Date.parse(view.expiresAt) - Date.now() > FRESH_FOR_MS) {
-        setShown(true);
-        return;
-      }
-      setBusy(true);
-      setError(null);
-      try {
-        const next = await api<PictureView>(picturePath(caseId, 'view'), { method: 'POST' });
-        setView(next);
-        setShown(true);
-      } catch (err) {
-        setError(errorLine(err, 'picture checks'));
-      } finally {
-        setBusy(false);
-      }
+      await fetchAndShow();
     } finally {
       asking.current = false;
     }
-  }, [caseId, sensitive, dialogs, view]);
+  }, [sensitive, dialogs, fetchAndShow]);
 
-  const hide = useCallback(() => setShown(false), []);
   const loaded = useCallback(() => setSeen(true), []);
   const failed = useCallback(() => {
-    setShown(false);
     setSeen(false);
-    setView(null);
-    setError('The picture didn’t load. Its link may have run out; show it again for a new one.');
-  }, []);
+    forget('The picture didn’t load. Show it again to fetch it once more.');
+  }, [forget]);
 
   return {
-    shown,
+    shown: image.src !== null,
     seen,
-    busy,
-    error,
-    url: shown ? (view?.url ?? null) : null,
+    busy: image.busy,
+    error: image.error,
+    url: image.src,
     show,
     hide,
-    toggle: () => (shown ? hide() : void show()),
+    toggle: () => (image.src ? hide() : void show()),
     loaded,
     failed,
   };
@@ -112,8 +88,7 @@ export function PictureFrame({
     <div className={`media-frame pcheck-frame${reveal.url ? ' is-shown' : ''}`}>
       {reveal.url ? (
         <>
-          {/* Only now is the file requested: before the reveal it is not on this device at all, not even in the cache. */}
-          <img src={reveal.url} alt={alt} draggable={false} referrerPolicy="no-referrer" onLoad={reveal.loaded} onError={reveal.failed} />
+          <img src={reveal.url} alt={alt} draggable={false} onLoad={reveal.loaded} onError={reveal.failed} />
           <button type="button" className="pcheck-hide" onClick={reveal.hide}>
             <Icon name="eyeOff" size={16} />
             Hide

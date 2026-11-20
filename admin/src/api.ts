@@ -218,6 +218,13 @@ export async function apiFile(path: string, opts: { signal?: AbortSignal } = {})
   return res.arrayBuffer();
 }
 
+/** Read a file the API sends as a Blob that keeps its type (a picture shown as a local copy), with the same auth and errors as `api`. */
+export async function apiBlob(path: string, opts: { signal?: AbortSignal } = {}): Promise<Blob> {
+  const res = await send(path, opts.signal ? { signal: opts.signal } : {});
+  if (!res.ok) return read<never>(path, res);
+  return res.blob();
+}
+
 /** Send raw bytes (a recording) instead of JSON, with the same auth and errors as `api`. */
 export async function apiUpload<T>(path: string, body: Uint8Array, contentType: string, method = 'PUT'): Promise<T> {
   const res = await send(path, {
