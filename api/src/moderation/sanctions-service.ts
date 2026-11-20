@@ -322,7 +322,7 @@ export const HOLD_META = 'possible_return';
  * account it may be.
  */
 export const HOLD_STATEMENT =
-  'A person is checking your account before you can post, comment, send messages, share pictures, write letters or join groups. Learning works as usual. This is not a finding that you broke a rule.';
+  'A person is checking your account before you can post, comment, send messages, share pictures, write letters or join groups. Learning works as usual meanwhile.';
 
 /** Whether a sanction row stands for a hold (returns.ts). */
 export function isHoldSanction(row: { meta: Record<string, unknown> | null }): boolean {
@@ -525,10 +525,11 @@ export class SanctionsService {
       auditAction: 'possible_return_hold',
       meta: { hold: HOLD_META, event },
     });
+    // its own words, naming no rule: nobody has found one broken
     await deliverNotice(db, userId, {
       title: 'Your account is being checked',
-      body: `${HOLD_STATEMENT}\n\nThink we got it wrong? You can ask for a review from Account standing within six months.`,
-      data: { kind: 'sanction', sanctionId: out.sanction.id, sanction: 'post_mute', policy: 'other', until: null },
+      body: `${HOLD_STATEMENT}\n\nThink this is a mistake? You can ask for a review from Account standing within six months.`,
+      data: { kind: 'sanction', sanctionId: out.sanction.id, sanction: 'post_mute', policy: 'other', until: null, hold: true },
     });
     return out.sanction.id;
   }
@@ -904,6 +905,8 @@ export class SanctionsService {
           deadline: deadline.toISOString(),
           current: appeal,
         },
+        // the hold names no rule: the apps say a person is checking the account
+        ...(isHoldSanction(row) ? { hold: true as const } : {}),
       };
       // what limits them now is "active"; warnings and removals are a record, not a limit
       if (view.active) active.push(view);

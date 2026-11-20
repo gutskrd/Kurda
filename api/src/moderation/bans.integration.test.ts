@@ -255,9 +255,18 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
     // the hold is a decision they can read in Account standing, without what matched or whose account, and appeal
     const standing = (await call('GET', '/me/standing', heldToken)).json();
     const hold = standing.active.find((x: { kind: string }) => x.kind === 'post_mute');
-    expect(hold).toMatchObject({ policy: 'other', endsAt: null, origin: 'automatic', reviewedByPerson: false, appeal: { allowed: true } });
+    expect(hold).toMatchObject({ hold: true, policy: 'other', endsAt: null, origin: 'automatic', reviewedByPerson: false, appeal: { allowed: true } });
     expect(hold.statement).toContain('A person is checking your account');
     expect(JSON.stringify(standing)).not.toContain(bannedId);
+    // marked as the hold in its notice too, whose words name no rule
+    const told = await one<{ title: string; body: string; data: Record<string, unknown> }>(
+      `SELECT title, body, data FROM notifications WHERE user_id = $1 AND data->>'sanctionId' = $2`,
+      [heldId, hold.id],
+    );
+    expect(told.data).toEqual({ kind: 'sanction', sanctionId: hold.id, sanction: 'post_mute', policy: 'other', until: null, hold: true });
+    expect(`${told.title} ${told.body}`).not.toMatch(/rule/i);
+    // and nothing else on their standing is marked so
+    expect(standing.active.filter((x: { hold?: boolean }) => x.hold)).toHaveLength(1);
     expect(standing.restrictions).toEqual({ chat: { until: null }, post: { until: null }, media: { until: null } });
     const appealed = await call('POST', '/me/appeals', heldToken, { sanctionId: hold.id, text: 'This is my sister’s tablet.' });
     expect(appealed.statusCode, appealed.body).toBe(201);
@@ -333,7 +342,8 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
   });
 
   it('a network alone never holds anyone', async () => {
-    const shared = '10.163.250.7';
+    // a network of its own each run: sign-up caps count accounts per network for a day
+    const shared = `10.164.${Math.floor(Math.random() * 250)}.${Math.floor(Math.random() * 250) + 1}`;
     const first = await app.inject({
       method: 'POST',
       url: '/auth/register',
