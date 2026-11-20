@@ -59,6 +59,14 @@ describe('Register', () => {
     expect(within(month).getByRole('option', { name: 'January' })).toBeInTheDocument();
   });
 
+  it('says beside each field about the person why it is asked, or who will see it', () => {
+    renderRegister();
+    expect(screen.getByLabelText('Email')).toHaveAccessibleDescription('We’ll send a code there to check it’s really you.');
+    expect(screen.getByLabelText('Username')).toHaveAccessibleDescription(expect.stringContaining('Other learners will see this name.'));
+    const birth = screen.getByRole('group', { name: en['age.label'] });
+    expect(within(birth).getByText('Your age decides who can find and message you, and who your letters go to. Only the month and year are kept.')).toHaveClass('field-hint');
+  });
+
   it('will not send the form until the month and year are chosen', async () => {
     const fetchMock = vi.fn(async () => jsonResponse(201, {}));
     vi.stubGlobal('fetch', fetchMock);
@@ -86,8 +94,8 @@ describe('Register', () => {
     );
     renderRegister();
     const username = screen.getByLabelText('Username');
-    // The rule is a hint that stays, and the field is typed as it is meant.
-    expect(username).toHaveAccessibleDescription(USERNAME_RULE);
+    // Who sees the name and the rule are hints that stay, and the field is typed as it is meant.
+    expect(username).toHaveAccessibleDescription(`${en['auth.register.usernameSeen']} ${USERNAME_RULE}`);
     expect(username).toHaveAttribute('autocapitalize', 'none');
     expect(username).toHaveAttribute('spellcheck', 'false');
 

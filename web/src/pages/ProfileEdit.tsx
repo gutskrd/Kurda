@@ -144,16 +144,17 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
       <SendError error={saveErr} />
       <div className="field">
         <label className="field-label" htmlFor="displayName">{t('edit.displayName')}</label>
-        <input id="displayName" className="input" value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} placeholder={me.username} />
+        <input id="displayName" className="input" value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} placeholder={me.username} aria-describedby="displayName-hint" />
+        <span className="field-hint" id="displayName-hint">{t('edit.displayNameHint')}</span>
       </div>
       <div className="field">
         <label className="field-label" htmlFor="bio">{t('edit.bio')}</label>
-        <textarea id="bio" className="input" style={{ height: 96, padding: '10px 14px', resize: 'vertical' }} value={bio} maxLength={1000} onChange={(e) => setBio(e.target.value)} placeholder={t('edit.bioPlaceholder')} />
-        <span className="field-hint">{bio.length}/1000</span>
+        <textarea id="bio" className="input" style={{ height: 96, padding: '10px 14px', resize: 'vertical' }} value={bio} maxLength={1000} onChange={(e) => setBio(e.target.value)} placeholder={t('edit.bioPlaceholder')} aria-describedby="bio-hint" />
+        <span className="field-hint" id="bio-hint">{t('edit.bioHint')} {bio.length}/1000</span>
       </div>
       <div className="field">
         <label className="field-label" htmlFor="country">{t('edit.country')}</label>
-        <select id="country" className="input" value={country} onChange={(e) => setCountry(e.target.value)}>
+        <select id="country" className="input" value={country} onChange={(e) => setCountry(e.target.value)} aria-describedby="country-hint">
           <option value="">{t('edit.noCountry')}</option>
           {countriesIn(locale).map((c) => (
             <option key={c.code} value={c.code}>
@@ -161,6 +162,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
             </option>
           ))}
         </select>
+        <span className="field-hint" id="country-hint">{t('edit.countryHint')}</span>
       </div>
       <Button type="submit" disabled={busy || !dirty}>{busy ? t('edit.saving') : t('edit.saveChanges')}</Button>
     </form>

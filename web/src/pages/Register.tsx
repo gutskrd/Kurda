@@ -144,8 +144,11 @@ export function Register(): React.JSX.Element {
               required
               autoFocus
               aria-invalid={emailProblem ? true : undefined}
-              aria-describedby={emailProblem ? 'email-error' : undefined}
+              aria-describedby={emailProblem ? 'email-hint email-error' : 'email-hint'}
             />
+            <span className="field-hint" id="email-hint">
+              {t('auth.register.emailHint')}
+            </span>
             {emailProblem && (
               <span className="field-problem" id="email-error" role="alert">
                 {emailProblem}
@@ -164,6 +167,7 @@ export function Register(): React.JSX.Element {
             problem={usernameProblem}
             urgent
             placeholder={t('auth.register.usernameHelp')}
+            about={t('auth.register.usernameSeen')}
             className={problems.fieldClass('username')}
           />
 
