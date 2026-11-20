@@ -9,6 +9,7 @@ import { stripControlChars } from './sanitize.js';
 import type { CopyrightCaseInfo } from './copyright.js';
 import type { PlayGame } from './play.js';
 import type { LetterDecor } from './letter-paper.js';
+import type { PictureReviewNotificationData } from './picture-review.js';
 
 // ---------------------------------------------------------------------------
 // Categories and priority
@@ -364,6 +365,7 @@ export type ModerationNotificationData =
     }
   | { kind: 'sanction_lifted'; sanctionId: string }
   | { kind: 'appeal_decided'; appealId: string; outcome: AppealOutcome }
+  | PictureReviewNotificationData
   | {
       kind: 'caring_message';
       helplineUrl: string;
