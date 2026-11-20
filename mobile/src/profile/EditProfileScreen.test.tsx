@@ -69,6 +69,15 @@ async function openEdit(): Promise<void> {
   await screen.findByDisplayValue('Rojda');
 }
 
+describe('the details', () => {
+  it('say under each field that it is optional and who sees it', async () => {
+    await openEdit();
+    expect(screen.getByText('Optional. Others see it and can search for you by it.')).toBeTruthy();
+    expect(screen.getByText('Optional. Shown on your profile.')).toBeTruthy();
+    expect(screen.getByText('Optional. Shown on your profile, and it puts you on your country’s rankings.')).toBeTruthy();
+  });
+});
+
 describe('leaving Edit profile', () => {
   it('leaves at once when nothing was changed', async () => {
     await openEdit();

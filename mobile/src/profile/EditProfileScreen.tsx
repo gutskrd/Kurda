@@ -219,6 +219,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
     if (notice?.at === 'details') setNotice(null);
   };
   const input = [styles.input, mirrored && styles.inputMirrored, { backgroundColor: colors.controlTrack, color: colors.textPrimary }];
+  // Under each field: whether it is optional and who sees it.
+  const hint = [styles.hint, dir.text, { color: colors.textSecondary }];
   const shownAvatars = avatars.filter((a) => !a.requiresPremium || me?.premium);
 
   return (
@@ -242,6 +244,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               accessibilityLabel={t('edit.displayName')}
               style={input}
             />
+            <Text style={hint}>{t('edit.displayNameHint')}</Text>
 
             <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{t('edit.bio')}</Text>
             <TextInput
@@ -254,6 +257,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               accessibilityLabel={t('edit.bio')}
               style={[input, styles.bio]}
             />
+            <Text style={hint}>{t('edit.bioHint')}</Text>
 
             <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{t('edit.country')}</Text>
             <View style={[styles.countries, { flexDirection: dir.row }]}>
@@ -269,6 +273,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                 />
               ) : null}
             </View>
+            <Text style={hint}>{t('edit.countryHint')}</Text>
             <View onLayout={(e) => (countryY.current = e.nativeEvent.layout.y)}>
               <SearchField value={countryQuery} onChangeText={setCountryQuery} label={t('edit.countrySearch')} returnKeyType="done" />
             </View>
@@ -427,6 +432,7 @@ const styles = StyleSheet.create({
   firstSection: { marginTop: spacing.md },
   section: { marginTop: spacing.lg },
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
+  hint: { fontSize: typography.sizes.xs, lineHeight: 18 },
   input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   // Right to left, what is typed starts at the right.
   inputMirrored: { textAlign: 'right' },
