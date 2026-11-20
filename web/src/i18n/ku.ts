@@ -405,6 +405,9 @@ export const ku: Catalogue = {
   'terms.law.title': 'Kîjan qanûn derbas dibe',
   'terms.law.body':
     'Ev merc di bin qanûna Holendayê de ne. Heke tu li welatekî din ê Yekîtiya Ewropayê dijî, parastina ku qanûna xerîdarên welatê te dide jî ji te re dimîne.',
+  'terms.responsibility.title': 'Em ji çi berpirsiyar in',
+  'terms.responsibility.body':
+    'Hevalo tiştên ku endam parve dikin nîşan dide, lê em berî ku ew xuya bibin her tiştî kontrol nakin, û her endam ji tiştên ku parve dike berpirsiyar e. Dema ku em pê dihesin ku tiştek li dijî qanûnê an van mercan e, em zû tevdigerin. Em dixebitin ku Hevalo baş bixebite, lê em nikarin soz bidin ku ew her tim amade an bê şaşî be. Em ji zirara ku em bi qestî an bi xemsariyeke giran didin berpirsiyar in, û ji her tiştê din ê ku qanûn me jê berpirsiyar dike. Tiştek li vir mafên ku qanûn dide te ji te nastîne.',
   'about.providerTitle': 'Kî Hevalo pêşkêş dike',
   'about.copyrightNote': 'Tiştek li vir karê te kopî dike?',
   'civak.title': 'Civak',

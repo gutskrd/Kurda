@@ -69,6 +69,8 @@ export function Terms(): React.JSX.Element {
     // What is bought stays bought; the shop and both apps say the same.
     { id: 'purchases-final', title: 'terms.final.title', body: 'terms.final.body' },
     { id: 'shop-items', title: 'terms.shopArt.title', body: 'terms.shopArt.body' },
+    // A host acts on notices but does not check every post first; liability stays where the law puts it.
+    { id: 'responsibility', title: 'terms.responsibility.title', body: 'terms.responsibility.body' },
     {
       id: 'contact',
       title: 'terms.contact.title',

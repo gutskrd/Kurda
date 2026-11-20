@@ -403,6 +403,9 @@ export const de: Catalogue = {
   'terms.law.title': 'Welches Recht gilt',
   'terms.law.body':
     'Für diese Bedingungen gilt niederländisches Recht. Wenn du in einem anderen Land der Europäischen Union lebst, behältst du auch den Schutz, den dir das Verbraucherrecht deines Landes gibt.',
+  'terms.responsibility.title': 'Wofür wir verantwortlich sind',
+  'terms.responsibility.body':
+    'Hevalo zeigt, was Mitglieder posten, aber wir prüfen nicht alles, bevor es erscheint, und jedes Mitglied ist für seine Beiträge selbst verantwortlich. Erfahren wir, dass etwas gegen das Gesetz oder diese Bedingungen verstößt, handeln wir schnell. Wir sorgen dafür, dass Hevalo gut läuft, können aber nicht versprechen, dass es immer verfügbar oder fehlerfrei ist. Wir haften für Schäden, die wir vorsätzlich oder grob fahrlässig verursachen, und für alles, wofür uns das Gesetz sonst haften lässt. Nichts hier nimmt dir Rechte, die dir das Gesetz gibt.',
   'about.providerTitle': 'Wer Hevalo anbietet',
   'about.copyrightNote': 'Kopiert hier etwas dein Werk?',
   'civak.title': 'Community',
