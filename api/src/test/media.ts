@@ -1,6 +1,17 @@
 import { Readable } from 'node:stream';
 import type pg from 'pg';
 import type { MediaStorage } from '../media/storage.js';
+import { ImageModerationService } from '../moderation/image-moderation-service.js';
+import { StubImageScanner, type ImageScanner } from '../moderation/image-scanner.js';
+import { PictureReviewService } from '../moderation/pictures-service.js';
+
+/**
+ * The picture checks an upload function is given when a suite calls it directly rather than through a route: a stub
+ * checker (finding nothing unless told) and the suite's bucket.
+ */
+export function testPictures(pool: pg.Pool, storage?: MediaStorage | null, scanner: ImageScanner | null = new StubImageScanner()): PictureReviewService {
+  return new PictureReviewService(pool, { checks: new ImageModerationService(pool, { scanner }), storage: () => storage });
+}
 
 /**
  * A picture upload as `POST /images/upload` leaves it: owned by the uploader, scanned, and unconfirmed until a post

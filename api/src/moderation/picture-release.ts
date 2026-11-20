@@ -1,4 +1,4 @@
-import type { PictureSurface } from '@kurda/shared';
+import type { PictureReviewTarget, PictureSurface } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
 import { letterNoticeText, type LetterNoticeHow } from '../letters/notice.js';
 import { surfaceOfKind } from './image-scan.js';
@@ -18,8 +18,8 @@ import type { Executor } from './tx.js';
 export interface ReleasedPicture {
   ownerId: string | null;
   surface: PictureSurface;
-  /** the post, group or letter it belongs to, when there is one */
-  target: string | null;
+  /** the post, group or correspondence it belongs to, when there is one to open */
+  target: PictureReviewTarget | null;
 }
 
 export interface ReleaseOptions {
@@ -54,13 +54,14 @@ export async function releasePicture(db: Executor, key: string, opts: ReleaseOpt
     [keys, keys.map(evidenceObjectKey)],
   );
 
-  let target: string | null = null;
+  let target: PictureReviewTarget | null = null;
+  const at = (type: PictureReviewTarget['type'], id: string | null | undefined): PictureReviewTarget | null => (id ? { type, id } : null);
   const picturePosts = await db.query<{ id: string }>(
     `UPDATE image_posts SET status = 'published', updated_at = now()
       WHERE image_media_id = ANY($1::text[]) AND status = 'held' RETURNING id`,
     [keys],
   );
-  target ??= picturePosts.rows[0]?.id ?? null;
+  target ??= at('image_post', picturePosts.rows[0]?.id);
   // a written post waits for every one of its pictures
   const written = await db.query<{ id: string }>(
     `UPDATE library_posts p SET status = 'published', published_at = COALESCE(p.published_at, now()), updated_at = now()
@@ -71,17 +72,17 @@ export async function releasePicture(db: Executor, key: string, opts: ReleaseOpt
       RETURNING p.id`,
     [keys],
   );
-  target ??= written.rows[0]?.id ?? null;
+  target ??= at('library_post', written.rows[0]?.id);
   if (!target) {
     // still the post it belongs to, when it waits on another picture or is live already
-    const post = await db.query<{ id: string }>(
-      `SELECT id FROM image_posts WHERE image_media_id = $1 AND status <> 'removed'
-       UNION ALL SELECT pm.post_id FROM library_post_media pm JOIN library_posts p ON p.id = pm.post_id
+    const post = await db.query<{ id: string; type: 'image_post' | 'library_post' }>(
+      `SELECT id, 'image_post' AS type FROM image_posts WHERE image_media_id = $1 AND status <> 'removed'
+       UNION ALL SELECT pm.post_id, 'library_post' FROM library_post_media pm JOIN library_posts p ON p.id = pm.post_id
                   WHERE pm.media_key = $1 AND p.status <> 'removed'
        LIMIT 1`,
       [key],
     );
-    target = post.rows[0]?.id ?? null;
+    target = post.rows[0] ? at(post.rows[0].type, post.rows[0].id) : null;
   }
 
   // a profile photo that waited is swapped in, and the one it replaces goes to the orphan sweep unless still used
@@ -111,23 +112,30 @@ export async function releasePicture(db: Executor, key: string, opts: ReleaseOpt
       );
     }
   }
-  target ??= groups.rows[0]?.id ?? null;
+  target ??= at('group', groups.rows[0]?.id);
   if (!target && surfaceOfKind(own.kind) === 'group_photo') {
     const g = await db.query<{ id: string }>(`SELECT id FROM groups WHERE photo_key = $1 LIMIT 1`, [key]);
-    target = g.rows[0]?.id ?? null;
+    target = at('group', g.rows[0]?.id);
   }
 
-  const letters = await deliverHeldLetters(db, keys);
-  target ??= letters[0] ?? null;
+  const threads = await deliverHeldLetters(db, keys);
+  target ??= at('letter_thread', threads[0]);
+  // a profile photo opens on its owner's own profile, which needs no target
+  if (surfaceOfKind(own.kind) === 'profile_photo') target = null;
 
   const released: ReleasedPicture = { ownerId: own.uploader_id, surface: surfaceOfKind(own.kind), target };
   if (opts.notify && released.ownerId) {
-    await deliverNotice(db, released.ownerId, pictureReviewNotice('approved', released.surface, released.target, opts.notify === 'asked'));
+    const asked = opts.notify === 'asked';
+    // an asked-about refusal was never on anything: approved, it may be shared again
+    await deliverNotice(db, released.ownerId, pictureReviewNotice('approved', released.surface, asked ? null : released.target, asked));
   }
   return released;
 }
 
-/** Letters whose drawing waited for a person: delivered now, and their reader told as a letter's arrival always is. */
+/**
+ * Letters whose drawing waited for a person: delivered now, and their reader told as a letter's arrival always is.
+ * Returns the correspondences they were in.
+ */
 async function deliverHeldLetters(db: Executor, keys: string[]): Promise<string[]> {
   const sent = await db.query<{ id: string; sender_id: string; recipient_id: string | null; thread_id: string | null; answer: boolean }>(
     `UPDATE letters l SET status = 'delivered', delivered_at = now()
@@ -158,7 +166,7 @@ async function deliverHeldLetters(db: Executor, keys: string[]): Promise<string[
       ],
     );
   }
-  return sent.rows.map((l) => l.id);
+  return sent.rows.map((l) => l.thread_id).filter((id): id is string => id !== null);
 }
 
 interface Log {

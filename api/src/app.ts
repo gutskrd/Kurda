@@ -804,6 +804,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
         realtime: { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) },
         log: app.log,
         wallet: new WalletService(app.db),
+        // a drawing is checked as any picture is before the letter is delivered
+        pictures: moderationKit.pictures,
       }),
     );
 

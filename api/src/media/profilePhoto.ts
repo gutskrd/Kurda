@@ -116,7 +116,8 @@ export async function storeScannedPhoto(
   }
 
   // 5) Bytes moderation refused or took down are never written back, whoever uploads them and as whatever kind.
-  const before = await pictures.refusedBefore(contentHash, key);
+  const sourceHash = createHash('sha256').update(raw).digest('hex');
+  const before = await pictures.refusedBefore(contentHash, key, sourceHash);
   if (before) return photoRefusal(before, null);
 
   // already this exact picture → idempotent no-op (retry-safe, no R2 write)
@@ -134,6 +135,7 @@ export async function storeScannedPhoto(
     bytes: proc.webp,
     contentType: 'image/webp',
     contentHash,
+    sourceHash,
     kind,
     uploaderId,
     width: proc.width,

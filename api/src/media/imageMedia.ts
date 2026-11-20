@@ -156,7 +156,8 @@ export async function storeImageMedia(
 
   // Bytes moderation refused or took down are refused again under any key, since owned keys include the owner and a
   // posted picture gets a fresh key below; otherwise the same bytes could return under another key.
-  const before = await pictures.refusedBefore(contentHash, key);
+  const sourceHash = createHash('sha256').update(raw).digest('hex');
+  const before = await pictures.refusedBefore(contentHash, key, sourceHash);
   if (before) return refusal(before, null);
 
   const existing = await pool.query<{ scan_status: string; confirmed: boolean }>(
@@ -181,6 +182,7 @@ export async function storeImageMedia(
     bytes: stored,
     contentType: 'image/webp',
     contentHash,
+    sourceHash,
     kind,
     uploaderId: options.ownerId ?? null,
     width: proc.width,

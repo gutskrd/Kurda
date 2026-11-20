@@ -216,7 +216,8 @@ async function picturesOfPost(db: Executor, type: 'library_post' | 'image_post',
 
 /**
  * Hide one file everywhere it is used. A key is usually a hash of the bytes, but post uploads include the owner and get
- * a new key on each repost, so copies are matched by `content_sha256` too. Every picture post and written post using
+ * a new key on each repost, and each kind resizes a file its own way, so copies are matched by `content_sha256` and by
+ * the hash of the file as it was sent (`source_sha256`) too. Every picture post and written post using
  * any copy is removed whole, the file comes off every profile and group it is the photo of (live or waiting for a
  * person; chat, comments and leaderboards draw avatars from there), a letter held for it is not delivered, and every
  * copy is blocked from being served or accepted again. The caller moves the bytes off the public bucket.
@@ -225,7 +226,8 @@ export async function removeMedia(db: Executor, key: string): Promise<MediaRemov
   const media = await db.query<{ scan_status: string }>(`SELECT scan_status FROM media_uploads WHERE key = $1 FOR UPDATE`, [key]);
   const copies = await db.query<{ key: string; scan_status: string }>(
     `SELECT c.key, c.scan_status
-       FROM media_uploads m JOIN media_uploads c ON c.content_sha256 = m.content_sha256 AND c.key <> m.key
+       FROM media_uploads m
+       JOIN media_uploads c ON (c.content_sha256 = m.content_sha256 OR c.source_sha256 = m.source_sha256) AND c.key <> m.key
       WHERE m.key = $1
       ORDER BY c.key FOR UPDATE OF c`,
     [key],

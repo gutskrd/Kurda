@@ -4,6 +4,7 @@ import {
   type AppealOutcome,
   type ModerationNotificationData,
   type PictureReviewOutcome,
+  type PictureReviewTarget,
   type PictureSurface,
   type ReportCategory,
   type SanctionKind,
@@ -177,8 +178,13 @@ const APPROVED_NEXT: Readonly<Record<PictureSurface, string>> = {
  * A person checked a picture: approved (a held picture is shown now; a refusal its owner asked about can be shared),
  * or upheld (a refusal its owner asked about stays). A removal is a sanction notice instead.
  */
-export function pictureReviewNotice(outcome: PictureReviewOutcome, surface: PictureSurface, target: string | null, asked = false): Notice {
-  const data = { kind: 'picture_review' as const, outcome, surface, target };
+export function pictureReviewNotice(
+  outcome: PictureReviewOutcome,
+  surface: PictureSurface,
+  target: PictureReviewTarget | null,
+  asked = false,
+): Notice {
+  const data = { kind: 'picture_review' as const, outcome, surface, asked, target };
   if (outcome === 'upheld') {
     return { title: 'Your picture was checked', body: 'A person checked your picture. It can’t be shared on Hevalo.', data };
   }

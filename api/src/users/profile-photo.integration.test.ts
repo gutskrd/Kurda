@@ -14,7 +14,7 @@ import { createStorage, type MediaStorage } from '../media/storage.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { mediaLimits, type MediaLimits } from '../media/mediaLimits.js';
 import { setProfilePhoto, type ProfilePhotoDeps } from '../media/profilePhoto.js';
-import { ImageModerationService } from '../moderation/image-moderation-service.js';
+import { testPictures } from '../test/media.js';
 
 const ready = Boolean(process.env.DATABASE_URL && process.env.S3_ENDPOINT);
 
@@ -44,7 +44,7 @@ describe.skipIf(!ready)('profile photo cost-safety (integration)', () => {
     pool,
     storage: over.storage ?? storage,
     usage: new MediaUsageService(pool, null),
-    moderation: new ImageModerationService(pool),
+    pictures: testPictures(pool, over.storage ?? storage),
     limits: over.limits ?? mediaLimits(config),
     log,
   });

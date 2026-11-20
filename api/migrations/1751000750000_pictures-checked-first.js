@@ -55,7 +55,10 @@ export const up = (pgm) => {
   pgm.addColumns('media_uploads', {
     private_key: { type: 'text' },
     publish_state: { type: 'text', check: "publish_state = 'pending'" },
+    // the hash of the file as it was sent, before it was resized for its kind, so the same file is known on every kind
+    source_sha256: { type: 'text' },
   });
+  pgm.createIndex('media_uploads', 'source_sha256', { name: 'media_uploads_source_sha256', where: 'source_sha256 IS NOT NULL' });
   pgm.createIndex('media_uploads', 'key', { name: 'media_uploads_publish_pending', where: "publish_state = 'pending'" });
   // a picture hidden by reports whose bytes are still on the public bucket
   pgm.createIndex('media_uploads', 'key', { name: 'media_uploads_hold_move_pending', where: "scan_status = 'held' AND private_key IS NULL" });
@@ -142,7 +145,8 @@ export const down = (pgm) => {
 
   pgm.dropIndex('media_uploads', 'key', { name: 'media_uploads_hold_move_pending' });
   pgm.dropIndex('media_uploads', 'key', { name: 'media_uploads_publish_pending' });
-  pgm.dropColumns('media_uploads', ['private_key', 'publish_state']);
+  pgm.dropIndex('media_uploads', 'source_sha256', { name: 'media_uploads_source_sha256' });
+  pgm.dropColumns('media_uploads', ['private_key', 'publish_state', 'source_sha256']);
   pgm.alterColumn('media_uploads', 'scan_status', { default: 'cleared' });
   // held and refused bytes are not public, so the old schema calls them gated
   pgm.sql(`UPDATE media_uploads SET scan_status = 'gated' WHERE scan_status IN ('held','refused')`);

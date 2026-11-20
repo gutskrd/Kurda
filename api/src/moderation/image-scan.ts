@@ -138,11 +138,6 @@ export function ruleFor(levels: PictureLevels | null, outcome?: PictureOutcome):
   return top ? RULE_OF[top] : 'other';
 }
 
-/** The report category a refusal reason stands for. */
-export function ruleOfReason(reason: PictureRejectReason): ReportCategory {
-  return reason;
-}
-
 /** Where a picture is shown, from the kind its upload was stored under. */
 export const SURFACE_OF_KIND: Readonly<Record<string, PictureSurface>> = {
   'image-post': 'post',

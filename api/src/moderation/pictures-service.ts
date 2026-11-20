@@ -65,6 +65,8 @@ export interface IntakeInput {
   bytes: Buffer;
   contentType: string;
   contentHash: string;
+  /** the hash of the file as it was sent, before it was resized for its kind */
+  sourceHash?: string | null;
   kind: string;
   uploaderId: string | null;
   width?: number | null;
@@ -210,10 +212,11 @@ export class PictureReviewService {
   // ---------------------------------------------------------------------------
 
   /**
-   * Bytes moderation refused or removed before, under any key and kind: refused again, with the reason they were refused
-   * for (or the rule they were removed under), and nothing to ask about.
+   * Bytes moderation refused or removed before, under any key and kind (the stored bytes, or the file as it was sent,
+   * which each kind resizes differently): refused again, with the reason they were refused for (or the rule they were
+   * removed under), and nothing to ask about.
    */
-  async refusedBefore(contentHash: string, key: string): Promise<PictureRejectReason | null> {
+  async refusedBefore(contentHash: string, key: string, sourceHash?: string | null): Promise<PictureRejectReason | null> {
     const r = await this.pool.query<{ reason: PictureRejectReason | null; rule: string | null; child: boolean | null }>(
       `SELECT (SELECT s.reason FROM image_scans s WHERE s.media_key = m.key AND s.reason IS NOT NULL ORDER BY s.created_at DESC LIMIT 1) AS reason,
               (SELECT c.policy FROM moderation_cases c
@@ -221,10 +224,10 @@ export class PictureReviewService {
                 ORDER BY c.resolved_at DESC NULLS LAST LIMIT 1) AS rule,
               (SELECT bool_or(s.outcome = 'child_safety' OR s.csam_match) FROM image_scans s WHERE s.media_key = m.key) AS child
          FROM media_uploads m
-        WHERE (m.content_sha256 = $1 OR m.key = $2)
+        WHERE (m.content_sha256 = $1 OR m.key = $2 OR m.source_sha256 = $3)
           AND (m.scan_status IN ('blocked','refused') OR m.quarantine_state IS NOT NULL)
         ORDER BY m.created_at DESC LIMIT 1`,
-      [contentHash, key],
+      [contentHash, key, sourceHash ?? null],
     );
     const row = r.rows[0];
     if (!row) return null;
@@ -249,7 +252,7 @@ export class PictureReviewService {
    */
   async intake(storage: MediaStorage | null | undefined, usage: Pick<MediaUsageService, 'recordOps'> | null, input: IntakeInput): Promise<Intake> {
     const surface = surfaceOfKind(input.kind);
-    const before = await this.refusedBefore(input.contentHash, input.key);
+    const before = await this.refusedBefore(input.contentHash, input.key, input.sourceHash);
     if (before) return { state: 'refused', reason: before, reviewId: null };
 
     const check: PictureCheck = (await this.clearedBefore(input.contentHash))
@@ -263,16 +266,17 @@ export class PictureReviewService {
     if (state !== 'clear' || storesPublic) {
       await this.pool.query(
         `INSERT INTO media_uploads (key, content_type, content_length, scan_status, uploader_id, kind, width, height, content_sha256,
-                                    private_key, preserve_evidence)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                                    private_key, preserve_evidence, source_sha256)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
          ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length, scan_status = EXCLUDED.scan_status,
+           source_sha256 = COALESCE(EXCLUDED.source_sha256, media_uploads.source_sha256),
            uploader_id = COALESCE(media_uploads.uploader_id, EXCLUDED.uploader_id), kind = EXCLUDED.kind,
            width = EXCLUDED.width, height = EXCLUDED.height, content_sha256 = EXCLUDED.content_sha256,
            private_key = EXCLUDED.private_key, publish_state = NULL,
            preserve_evidence = media_uploads.preserve_evidence OR EXCLUDED.preserve_evidence`,
         [
           input.key, input.contentType, input.bytes.length, status, input.uploaderId, input.kind, input.width ?? null,
-          input.height ?? null, input.contentHash, privateKey, state === 'child_safety',
+          input.height ?? null, input.contentHash, privateKey, state === 'child_safety', input.sourceHash ?? null,
         ],
       );
       try {
@@ -614,7 +618,7 @@ export class PictureReviewService {
         adminId,
       ]);
       if (c.subject_user_id) {
-        await deliverNotice(client, c.subject_user_id, pictureReviewNotice('upheld', c.evidence.surface ?? 'post', null));
+        await deliverNotice(client, c.subject_user_id, pictureReviewNotice('upheld', c.evidence.surface ?? 'post', null, true));
       }
       await logAdminAction(client, {
         targetUserId: c.subject_user_id,
