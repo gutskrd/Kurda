@@ -428,6 +428,6 @@ describe('a person’s decision on your picture', () => {
     serve([notice('n1', { category: 'moderation', title: 'Picture approved', body: 'x', data: { kind: 'picture_review', outcome: 'approved', surface: 'group_photo', asked: false, target: { type: 'group', id: POST } } })]);
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     expect(await screen.findByText('وێنەکەت پشکنرا و هیچ کێشەیەکی نییە.')).toBeTruthy();
-    expect(screen.getByText('وێنە نوێیەکەی گرووپ ئێستا دەردەکەوێت.')).toBeTruthy();
+    expect(screen.getByText('وێنە نوێیەکەی گرووپ ئێستا پیشان دەدرێت.')).toBeTruthy();
   });
 });

@@ -62,7 +62,7 @@ export function PictureRefusal({ rejection, className }: { rejection: PictureRej
         {t(REFUSED[rejection.reason])}
       </p>
       {rejection.reason === 'self_harm' && (
-        <a className="pcheck-help" href={HELPLINE_URL} target="_blank" rel="noopener noreferrer">
+        <a className="pcheck-help reach-line" href={HELPLINE_URL} target="_blank" rel="noopener noreferrer">
           {t('report.help.link')}
         </a>
       )}
