@@ -6,6 +6,7 @@ import {
   type PictureRejection,
   type PictureReviewNotificationData,
   type PictureReviewState,
+  type PictureReviewTarget,
   type PictureSurface,
 } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
@@ -77,17 +78,24 @@ export function askOutcome(res: ApiResult<unknown>, t: Translate): { done: boole
   return { done: false, text: describeError(res.error, t) };
 }
 
-/** A notification's data read as a picture's check, or null; only the outcomes and surfaces this app knows. */
+/** A notification's data read as a picture's check, or null; only the outcomes, surfaces and targets this app knows. */
 export function pictureReviewOf(data: Record<string, unknown>): PictureReviewNotificationData | null {
   if (data.kind !== 'picture_review') return null;
   if (data.outcome !== 'approved' && data.outcome !== 'upheld') return null;
   const surface = data.surface;
   if (surface !== 'post' && surface !== 'profile_photo' && surface !== 'group_photo' && surface !== 'letter') return null;
-  const target = typeof data.target === 'string' && UUIDISH.test(data.target) ? data.target : null;
-  return { kind: 'picture_review', outcome: data.outcome, surface, target };
+  return { kind: 'picture_review', outcome: data.outcome, surface, asked: data.asked === true, target: targetOf(data.target) };
 }
 
+const TARGET_TYPES: readonly PictureReviewTarget['type'][] = ['library_post', 'image_post', 'group', 'letter_thread'];
 const UUIDISH = /^[0-9a-f-]{8,64}$/i;
+
+/** A target this app can open; an unknown kind or an id that is not an id is never followed. */
+function targetOf(value: unknown): PictureReviewTarget | null {
+  const t = value as { type?: unknown; id?: unknown } | null | undefined;
+  if (!t || !TARGET_TYPES.includes(t.type as PictureReviewTarget['type'])) return null;
+  return typeof t.id === 'string' && UUIDISH.test(t.id) ? { type: t.type as PictureReviewTarget['type'], id: t.id } : null;
+}
 
 const APPROVED_KEY: Readonly<Record<PictureSurface, TranslationKey>> = {
   post: 'notifications.picture.approvedPost',
@@ -97,33 +105,33 @@ const APPROVED_KEY: Readonly<Record<PictureSurface, TranslationKey>> = {
 };
 
 /**
- * The inbox's words for a person's decision, in the reader's language. A held post or letter always names what it
- * belongs to, so an approval without one is a refused upload its owner asked about, which can now be shared.
+ * The inbox's words for a person's decision, in the reader's language: where an approved picture now shows, or for a
+ * refused one its owner asked about, that it may be shared again, since nothing was put back for them.
  */
 export function pictureReviewText(review: PictureReviewNotificationData, t: Translate): { title: string; body: string } {
   if (review.outcome === 'upheld') return { title: t('notifications.picture.upheldTitle'), body: t('notifications.picture.upheldBody') };
-  const asked = review.target === null && (review.surface === 'post' || review.surface === 'letter');
-  return { title: t('notifications.picture.approvedTitle'), body: t(asked ? 'notifications.picture.approvedAsked' : APPROVED_KEY[review.surface]) };
+  return { title: t('notifications.picture.approvedTitle'), body: t(review.asked ? 'notifications.picture.approvedAsked' : APPROVED_KEY[review.surface]) };
 }
 
-/** Where a tap on an approval goes: the post, the group or the letters window; nothing to open otherwise. */
+/** Where a tap goes: what the picture belongs to, your own profile for a profile photo, else nowhere. */
 export type PictureReviewLink =
   | { screen: 'LibraryPost'; params: { postId: string } }
+  | { screen: 'MemeDetail'; params: { postId: string } }
   | { screen: 'GroupThread'; params: { groupId: string; name: string } }
-  | { screen: 'Letters' };
+  | { screen: 'LetterThread'; params: { threadId: string } }
+  | { screen: 'Tabs'; params: { screen: 'Profile' } };
 
 export function pictureReviewLink(review: PictureReviewNotificationData): PictureReviewLink | null {
-  if (review.outcome !== 'approved' || !review.target) return null;
-  switch (review.surface) {
-    // The phone's composer makes written posts, the only kind a held picture can be on.
-    case 'post':
-      return { screen: 'LibraryPost', params: { postId: review.target } };
-    case 'group_photo':
-      return { screen: 'GroupThread', params: { groupId: review.target, name: '' } };
-    // A letter's id is not its correspondence's: the window, where it is on its way.
-    case 'letter':
-      return { screen: 'Letters' };
-    default:
-      return null;
+  const target = review.target;
+  if (!target) return review.outcome === 'approved' && review.surface === 'profile_photo' && !review.asked ? { screen: 'Tabs', params: { screen: 'Profile' } } : null;
+  switch (target.type) {
+    case 'library_post':
+      return { screen: 'LibraryPost', params: { postId: target.id } };
+    case 'image_post':
+      return { screen: 'MemeDetail', params: { postId: target.id } };
+    case 'group':
+      return { screen: 'GroupThread', params: { groupId: target.id, name: '' } };
+    case 'letter_thread':
+      return { screen: 'LetterThread', params: { threadId: target.id } };
   }
 }

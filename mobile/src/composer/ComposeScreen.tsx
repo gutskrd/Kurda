@@ -847,7 +847,7 @@ function PictureTile({
       ) : null}
       {refused ? (
         <View style={[styles.tileShade, styles.tileRefused, { backgroundColor: colors.scrim }]} pointerEvents="none" testID="composer-tile-refused">
-          <Icon name="shield" size={28} color={colors.textOnScrim} />
+          <Icon name="eye-off" size={28} color={colors.textOnScrim} />
         </View>
       ) : null}
       {held ? (

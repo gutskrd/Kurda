@@ -43,6 +43,7 @@ export function PictureRefusal({
   const [asking, setAsking] = useState(false);
   const [answered, setAnswered] = useState<string | null>(null);
   const start = dir.rtl ? 'flex-end' : 'flex-start';
+  const helpline = rejection.reason === 'self_harm';
   return (
     <View style={[styles.refusal, { backgroundColor: colors.controlTrack }, style]} accessibilityLiveRegion="polite" testID={testID}>
       <View style={[styles.row, { flexDirection: dir.row }]}>
@@ -52,23 +53,28 @@ export function PictureRefusal({
           <Text style={[styles.text, dir.text, { color: colors.textPrimary }]}>{t(REFUSAL_KEY[rejection.reason])}</Text>
         </View>
       </View>
-      {rejection.reason === 'self_harm' ? (
-        <PressableScale
-          onPress={() => void Linking.openURL(HELPLINE_URL)}
-          accessibilityRole="link"
-          style={[styles.help, { flexDirection: dir.row, alignSelf: start, backgroundColor: colors.successFill }]}
-          testID="picture-helpline"
-        >
-          <Icon name="lifebuoy" size={18} color={colors.success} />
-          <Text style={[styles.helpText, { color: colors.textPrimary }]}>{t('report.help.find')}</Text>
-        </PressableScale>
-      ) : null}
-      {answered ? (
-        <Text style={[styles.text, dir.text, { color: colors.textSecondary }]} testID="picture-asked">
-          {answered}
-        </Text>
-      ) : rejection.reviewId ? (
-        <ClayButton label={t('picture.ask.button')} variant="outline" tone="primary" onPress={() => setAsking(true)} style={{ alignSelf: start }} testID="picture-ask" />
+      {helpline || answered || rejection.reviewId ? (
+        // Under the words, past the icon, on the side they start from.
+        <View style={[styles.next, { alignItems: start }, dir.rtl ? { paddingRight: TEXT_INSET } : { paddingLeft: TEXT_INSET }]}>
+          {helpline ? (
+            <PressableScale
+              onPress={() => void Linking.openURL(HELPLINE_URL)}
+              accessibilityRole="link"
+              style={[styles.help, { flexDirection: dir.row, backgroundColor: colors.successFill }]}
+              testID="picture-helpline"
+            >
+              <Icon name="lifebuoy" size={18} color={colors.success} />
+              <Text style={[styles.helpText, { color: colors.textPrimary }]}>{t('report.help.find')}</Text>
+            </PressableScale>
+          ) : null}
+          {answered ? (
+            <Text style={[styles.text, dir.text, { color: colors.textSecondary }]} testID="picture-asked">
+              {answered}
+            </Text>
+          ) : rejection.reviewId ? (
+            <ClayButton label={t('picture.ask.button')} variant="outline" tone="primary" onPress={() => setAsking(true)} testID="picture-ask" />
+          ) : null}
+        </View>
       ) : null}
       {asking && rejection.reviewId ? (
         <AskPersonSheet
@@ -184,6 +190,8 @@ export function PendingPhoto({ pending, body, testID }: { pending: PendingPictur
 }
 
 const PENDING = 48;
+/** The icon's width and the gap after it: what follows the words lines up with them. */
+const TEXT_INSET = 18 + spacing.sm;
 
 const styles = StyleSheet.create({
   flex: { flex: 1, gap: spacing.xs },
@@ -191,6 +199,7 @@ const styles = StyleSheet.create({
   row: { alignItems: 'flex-start', gap: spacing.sm },
   label: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   text: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  next: { gap: spacing.sm },
   help: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderRadius: radii.pill },
   helpText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   // The ScrollView keeps the gutter, so the note scrolls edge to edge while the keyboard is up.

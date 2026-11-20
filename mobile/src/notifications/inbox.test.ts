@@ -51,8 +51,11 @@ describe('resolveDeepLink', () => {
 describe('a person’s decision on a picture', () => {
   const POST = '3f1c2a10-0000-4000-8000-000000000001';
   it('opens what an approval shows, wears a picture, and leaves a removal to Account standing', () => {
-    expect(resolveDeepLink({ kind: 'picture_review', outcome: 'approved', surface: 'post', target: POST })).toEqual({ screen: 'LibraryPost', params: { postId: POST } });
-    expect(resolveDeepLink({ kind: 'picture_review', outcome: 'upheld', surface: 'post', target: null })).toBeNull();
+    expect(resolveDeepLink({ kind: 'picture_review', outcome: 'approved', surface: 'post', asked: false, target: { type: 'library_post', id: POST } })).toEqual({
+      screen: 'LibraryPost',
+      params: { postId: POST },
+    });
+    expect(resolveDeepLink({ kind: 'picture_review', outcome: 'upheld', surface: 'post', asked: true, target: null })).toBeNull();
     expect(noticeKind({ category: 'moderation', data: { kind: 'picture_review' } })).toEqual({ icon: 'image', reward: false });
     expect(resolveDeepLink({ kind: 'sanction', sanctionId: 's1', sanction: 'content_removal', policy: 'violence' })).toEqual({ screen: 'AccountStanding' });
   });

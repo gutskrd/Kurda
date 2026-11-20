@@ -387,7 +387,7 @@ describe('a person’s decision on your picture', () => {
   afterEach(() => localStorage.clear());
 
   it('says a held post is fine now, in the app’s own words, and opens it', async () => {
-    serve([notice('n1', { category: 'moderation', title: 'Picture approved', body: 'x', data: { kind: 'picture_review', outcome: 'approved', surface: 'post', target: POST } })]);
+    serve([notice('n1', { category: 'moderation', title: 'Picture approved', body: 'x', data: { kind: 'picture_review', outcome: 'approved', surface: 'post', asked: false, target: { type: 'library_post', id: POST } } })]);
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     expect(await screen.findByText('Your picture was checked and it’s fine.')).toBeTruthy();
     expect(screen.getByText('Your post is now visible.')).toBeTruthy();
@@ -397,7 +397,7 @@ describe('a person’s decision on your picture', () => {
   });
 
   it('says a refusal a person upheld, and stays in the list when tapped', async () => {
-    serve([notice('n1', { category: 'moderation', title: 'Picture checked', body: 'x', data: { kind: 'picture_review', outcome: 'upheld', surface: 'profile_photo', target: null } })]);
+    serve([notice('n1', { category: 'moderation', title: 'Picture checked', body: 'x', data: { kind: 'picture_review', outcome: 'upheld', surface: 'profile_photo', asked: true, target: null } })]);
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     expect(await screen.findByText('A person checked your picture.')).toBeTruthy();
     expect(screen.getByText('It can’t be shared on Hevalo.')).toBeTruthy();
@@ -425,7 +425,7 @@ describe('a person’s decision on your picture', () => {
 
   it('says it in Soranî too, from the data rather than the English line', async () => {
     localStorage.setItem('kurda_locale_v1', 'ckb');
-    serve([notice('n1', { category: 'moderation', title: 'Picture approved', body: 'x', data: { kind: 'picture_review', outcome: 'approved', surface: 'group_photo', target: POST } })]);
+    serve([notice('n1', { category: 'moderation', title: 'Picture approved', body: 'x', data: { kind: 'picture_review', outcome: 'approved', surface: 'group_photo', asked: false, target: { type: 'group', id: POST } } })]);
     renderWithProviders(<NotificationCenterScreen onExit={() => undefined} />);
     expect(await screen.findByText('وێنەکەت پشکنرا و هیچ کێشەیەکی نییە.')).toBeTruthy();
     expect(screen.getByText('وێنە نوێیەکەی گرووپ ئێستا دەردەکەوێت.')).toBeTruthy();

@@ -3,7 +3,7 @@ import { isPlayGame, letterNoticeOf, type IncomingInvite, type PlayGame } from '
 import type { Translate } from '../api/errors';
 import type { IconName } from '../theme/icon-paths';
 import { socialDeepLink, str, type SocialDeepLink } from '../reports/deepLinks';
-import { pictureReviewLink, pictureReviewOf } from '../pictures/review';
+import { pictureReviewLink, pictureReviewOf, type PictureReviewLink } from '../pictures/review';
 
 export interface InboxItem {
   id: string;
@@ -35,8 +35,8 @@ export type DeepLink =
    * land. Without a correspondence, just the window.
    */
   | { screen: 'Letters'; params?: { bird: string } }
-  /** A held post a person has approved: the post itself, now shown to everyone. */
-  | { screen: 'LibraryPost'; params: { postId: string } }
+  /** A person's decision on a picture: the post, group or correspondence it belongs to, or your own profile. */
+  | PictureReviewLink
   // Gifts, report outcomes and decisions on your account (reports/deepLinks.ts).
   | SocialDeepLink;
 

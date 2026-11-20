@@ -87,40 +87,50 @@ describe('a held picture', () => {
 describe('a person’s decision in the inbox', () => {
   const POST = '3f1c2a10-0000-4000-8000-000000000001';
   const GROUP = '3f1c2a10-0000-4000-8000-000000000002';
-  const LETTER = '3f1c2a10-0000-4000-8000-000000000003';
+  const THREAD = '3f1c2a10-0000-4000-8000-000000000003';
   const said = (data: Record<string, unknown>) => {
     const review = pictureReviewOf({ kind: 'picture_review', ...data });
     return review ? { ...pictureReviewText(review, t), link: pictureReviewLink(review) } : null;
   };
 
   it('says what an approval means where it was, and opens it', () => {
-    expect(said({ outcome: 'approved', surface: 'post', target: POST })).toEqual({
+    expect(said({ outcome: 'approved', surface: 'post', asked: false, target: { type: 'library_post', id: POST } })).toEqual({
       title: 'Your picture was checked and it’s fine.',
       body: 'Your post is now visible.',
       link: { screen: 'LibraryPost', params: { postId: POST } },
     });
-    expect(said({ outcome: 'approved', surface: 'profile_photo', target: null })).toEqual({
+    expect(said({ outcome: 'approved', surface: 'post', asked: false, target: { type: 'image_post', id: POST } })?.link).toEqual({
+      screen: 'MemeDetail',
+      params: { postId: POST },
+    });
+    // A profile photo has nothing else to open: your own profile, wearing it.
+    expect(said({ outcome: 'approved', surface: 'profile_photo', asked: false, target: null })).toEqual({
       title: 'Your picture was checked and it’s fine.',
       body: 'Your new photo is now on your profile.',
-      link: null,
+      link: { screen: 'Tabs', params: { screen: 'Profile' } },
     });
-    expect(said({ outcome: 'approved', surface: 'group_photo', target: GROUP })).toMatchObject({
+    expect(said({ outcome: 'approved', surface: 'group_photo', asked: false, target: { type: 'group', id: GROUP } })).toMatchObject({
       body: 'The new group photo is now showing.',
       link: { screen: 'GroupThread', params: { groupId: GROUP, name: '' } },
     });
-    expect(said({ outcome: 'approved', surface: 'letter', target: LETTER })).toMatchObject({ body: 'Your letter is on its way.', link: { screen: 'Letters' } });
-  });
-
-  it('tells the owner of a refused picture they asked about that it can be shared now', () => {
-    expect(said({ outcome: 'approved', surface: 'post', target: null })).toEqual({
-      title: 'Your picture was checked and it’s fine.',
-      body: 'You can share it now.',
-      link: null,
+    expect(said({ outcome: 'approved', surface: 'letter', asked: false, target: { type: 'letter_thread', id: THREAD } })).toMatchObject({
+      body: 'Your letter is on its way.',
+      link: { screen: 'LetterThread', params: { threadId: THREAD } },
     });
   });
 
+  it('tells the owner of a refused picture they asked about that it can be shared now, wherever it was', () => {
+    for (const surface of ['post', 'profile_photo', 'group_photo', 'letter']) {
+      expect(said({ outcome: 'approved', surface, asked: true, target: null })).toEqual({
+        title: 'Your picture was checked and it’s fine.',
+        body: 'You can share it now.',
+        link: null,
+      });
+    }
+  });
+
   it('says a refusal a person upheld, and opens nothing', () => {
-    expect(said({ outcome: 'upheld', surface: 'post', target: null })).toEqual({
+    expect(said({ outcome: 'upheld', surface: 'profile_photo', asked: true, target: null })).toEqual({
       title: 'A person checked your picture.',
       body: 'It can’t be shared on Hevalo.',
       link: null,
@@ -128,8 +138,11 @@ describe('a person’s decision in the inbox', () => {
   });
 
   it('ignores what it does not know, and never follows a target that is not an id', () => {
-    expect(said({ outcome: 'maybe', surface: 'post', target: POST })).toBeNull();
-    expect(said({ outcome: 'approved', surface: 'banner', target: POST })).toBeNull();
-    expect(said({ outcome: 'approved', surface: 'post', target: '../admin' })?.link).toBeNull();
+    expect(said({ outcome: 'maybe', surface: 'post', asked: false, target: null })).toBeNull();
+    expect(said({ outcome: 'approved', surface: 'banner', asked: false, target: null })).toBeNull();
+    expect(said({ outcome: 'approved', surface: 'post', asked: false, target: { type: 'library_post', id: '../admin' } })?.link).toBeNull();
+    expect(said({ outcome: 'approved', surface: 'post', asked: false, target: { type: 'settings', id: POST } })?.link).toBeNull();
+    // An older notice's bare id is no target this app reads.
+    expect(said({ outcome: 'approved', surface: 'post', asked: false, target: POST })?.link).toBeNull();
   });
 });

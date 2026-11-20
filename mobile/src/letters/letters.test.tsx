@@ -181,6 +181,20 @@ describe('the letters screen', () => {
     expect(screen.queryByText('Baran’s bird is taking your letter home.')).toBeNull();
   });
 
+  it('says why an answer’s drawing was refused under the paper, with the way to ask a person when there is one', async () => {
+    testAuth.client = fakeClient({
+      'GET /letters?landings=1': ok(home({ visitor })),
+      'POST /letters/visitor': fail({ status: 422, code: 'IMAGE_REJECTED', rejection: { code: 'IMAGE_REJECTED', message: 'rejected', reason: 'violence', reviewId: 'rv3' } }),
+    });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.change(await screen.findByTestId('letters-visitor-answer-input'), { target: { value: 'Silav' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
+    expect(await screen.findByText('This picture looks violent or gory, which isn’t allowed on Hevalo.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ask a person to check' })).toBeTruthy();
+    // The bird is still at the window with the answer on the paper.
+    expect((screen.getByTestId('letters-visitor-answer-input') as HTMLTextAreaElement).value).toBe('Silav');
+  });
+
   it('asks once before sending a visiting bird on its way', async () => {
     const client = fakeClient({ 'GET /letters?landings=1': ok(home({ visitor })), 'DELETE /letters/visitor': ok(null) });
     testAuth.client = client;
