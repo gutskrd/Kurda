@@ -429,6 +429,12 @@ const MUZZLE: Knot[] = symmetric(
   AXIS,
 );
 
+/** His head's and resting ears' outlines, for shadows he throws on what is behind him (peek.ts). */
+export const HEVALO_SILHOUETTE: { head: string; ears: readonly [string, string] } = {
+  head: curve(HEAD),
+  ears: [curve(EAR), curve(mirror(EAR, AXIS))],
+};
+
 /** Light freckles on each cheek, as on the icon. */
 const FRECKLES: readonly (readonly [number, number, number, number, number])[] = [
   [130.4, 345, 7.4, 5.4, -28],

@@ -1,6 +1,7 @@
 {
   "ios": {
     "NSPhotoLibraryUsageDescription": "Hevalo wêneyên ku tu hildibijêrî wekî wêneyê profîla te, wêneyê komekê, mîmek an postek bar dike.",
-    "NSMicrophoneUsageDescription": "Gava tu li tomarkirinê ditikînî, Hevalo dengê te tomar dike, da ku tu nîşeyeke dengî biweşînî an rahênana xwe ya axaftinê dîsa bibihîzî."
+    "NSMicrophoneUsageDescription": "Gava tu li tomarkirinê ditikînî, Hevalo dengê te tomar dike, da ku tu nîşeyeke dengî biweşînî an rahênana xwe ya axaftinê dîsa bibihîzî.",
+    "NSMotionUsageDescription": "Hevalo dibîne ka tu telefona xwe çawa xwar dikî, da ku ask li ser ekranê bi te re xwar bibe, û tiştekî ji vê hilnagire."
   }
 }

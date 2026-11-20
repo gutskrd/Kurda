@@ -323,24 +323,70 @@
   inset: 0;
   clip-path: inset(-30% -30% calc(100% - var(--peek-cut, 70%)) -30%);
 }
+/* He and his shadows turn with the phone's tilt (usePeekLean), each about its own point: he where his neck meets the
+   tear, his shadows that same point as far down the page as each falls. */
 .hevalo-peek-place {
   position: absolute;
+  rotate: var(--peek-lean, 0deg);
+}
+.hevalo-peek-art.is-cast {
+  transform-origin: var(--peek-cast-at);
+  rotate: var(--peek-lean, 0deg);
+}
+.hevalo-peek-art.is-cast-ears {
+  transform-origin: var(--peek-ears-at);
+  rotate: var(--peek-lean, 0deg);
+}
+.hevalo-peek-art:is(.is-back, .is-front) {
+  transform-origin: var(--peek-tear-at);
 }
 .hevalo-peek .speaking-character > svg {
   overflow: visible;
 }
 @media (prefers-reduced-motion: no-preference) {
-  .hevalo-peek.is-popping .hevalo-peek-place {
-    animation: hevalo-peek-rise var(--peek-pop-ms, 620ms) var(--ease-spring) var(--peek-pop-delay, 220ms) both;
+  .hevalo-peek.is-popping .hevalo-peek-art:is(.is-back, .is-front) {
+    animation: hevalo-peek-tear var(--peek-tear-ms, 280ms) var(--ease-spring) var(--peek-pop-delay, 220ms) both;
   }
-  .hevalo-peek.is-popping :is(.hevalo-peek-art.is-cast, .hevalo-peek-art.is-shadow) {
+  .hevalo-peek.is-popping .hevalo-peek-place {
+    animation: hevalo-peek-come var(--peek-pop-ms, 620ms) var(--ease-spring) var(--peek-pop-delay, 220ms) both;
+  }
+  .hevalo-peek.is-popping .hevalo-peek-art.is-cast {
+    animation: hevalo-peek-fall var(--peek-pop-ms, 620ms) var(--ease-spring) var(--peek-pop-delay, 220ms) both;
+  }
+  .hevalo-peek.is-popping .hevalo-peek-art:is(.is-cast-ears, .is-shadow) {
     animation: hevalo-peek-shade var(--peek-pop-ms, 620ms) var(--ease-out) var(--peek-pop-delay, 220ms) both;
   }
 }
-/* Up through the tear from behind the page, all of him under its foot before he comes. */
-@keyframes hevalo-peek-rise {
+@media (prefers-reduced-motion: reduce) {
+  .hevalo-peek :is(.hevalo-peek-place, .hevalo-peek-art) {
+    rotate: none;
+  }
+}
+/* The page bursts open where he pushes through it. */
+@keyframes hevalo-peek-tear {
   from {
-    transform: translateY(var(--peek-drop, 120px));
+    scale: var(--peek-tear-from, 0.62);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+}
+/* Out of the dark behind the page, toward us. */
+@keyframes hevalo-peek-come {
+  from {
+    scale: var(--peek-from, 0.8);
+    opacity: 0;
+  }
+  35% {
+    opacity: 1;
+  }
+}
+/* The nearer he comes, the further down the page his shadow falls. */
+@keyframes hevalo-peek-fall {
+  from {
+    translate: 0 calc(-1 * var(--peek-fall, 40px));
+    opacity: 0;
   }
 }
 @keyframes hevalo-peek-shade {

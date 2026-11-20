@@ -212,7 +212,8 @@
       },
       "package": "app.hevalo.mobile",
       "blockedPermissions": [
-        "android.permission.SYSTEM_ALERT_WINDOW"
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.ACTIVITY_RECOGNITION"
       ],
       "playStoreUrl": "",
       "adaptiveIcon": {
@@ -247,6 +248,12 @@
         {
           "microphonePermission": "Hevalo records your voice when you tap record, to post a voice note or to play your speaking exercise back to you.",
           "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Hevalo reads how you tilt your phone so that the deer on the screen leans with you, and keeps none of it."
         }
       ],
       [

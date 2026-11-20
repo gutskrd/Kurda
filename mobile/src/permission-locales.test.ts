@@ -1,7 +1,9 @@
 /**
  * Guards the permission prompts iOS shows in each app language. iOS asks for the photo library and microphone in
  * the phone's language using the text the app ships for it (app.json `locales`, one file per language under
- * mobile/locales); without a file the prompt is English and the store does not list the language.
+ * mobile/locales); without a file the prompt is English and the store does not list the language. The motion
+ * sentence is there because the motion sensor's package declares it; Hevalo never asks, since the tilt he leans with
+ * needs no permission.
  */
 import { APP_LOCALES } from '@kurda/shared';
 import { describe, expect, it } from 'vitest';
@@ -20,7 +22,7 @@ const appJson = rawAppJson as unknown as {
   expo: { locales: Record<string, string>; plugins: Array<string | [string, Record<string, unknown>]> };
 };
 
-const PROMPTS = ['NSPhotoLibraryUsageDescription', 'NSMicrophoneUsageDescription'] as const;
+const PROMPTS = ['NSPhotoLibraryUsageDescription', 'NSMicrophoneUsageDescription', 'NSMotionUsageDescription'] as const;
 
 const pluginConfig = (name: string): Record<string, unknown> | undefined => {
   const entry = appJson.expo.plugins.find((p) => (Array.isArray(p) ? p[0] === name : p === name));
@@ -66,6 +68,7 @@ describe('the permission prompts in every language', () => {
     const english = localeFile('en').ios;
     expect(english.NSPhotoLibraryUsageDescription).toBe(pluginConfig('expo-image-picker')?.photosPermission);
     expect(english.NSMicrophoneUsageDescription).toBe(pluginConfig('expo-audio')?.microphonePermission);
+    expect(english.NSMotionUsageDescription).toBe(pluginConfig('expo-sensors')?.motionPermission);
   });
 
   /*
@@ -94,6 +97,7 @@ describe('the permission prompts in every language', () => {
     const english = localeFile('en').ios;
     expect(english.NSPhotoLibraryUsageDescription).toMatch(/^Hevalo uploads the photos you choose /);
     expect(english.NSMicrophoneUsageDescription).toMatch(/^Hevalo records your voice when you tap record, /);
+    expect(english.NSMotionUsageDescription).toMatch(/^Hevalo reads how you tilt your phone /);
     for (const key of PROMPTS) expect(english[key], key).not.toMatch(/allow|access|need|turn on|better experience|would like|please/i);
   });
 });

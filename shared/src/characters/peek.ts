@@ -1,34 +1,28 @@
 import type { Pt } from '../art/svg.js';
 import { linearAt, n, prefixFor, radialAt } from '../art/svg.js';
-import { NECK_BOX } from './hevalo.js';
+import { HEVALO_SILHOUETTE, NECK_BOX } from './hevalo.js';
 import { alpha, clipDef, clipped, ellipse, fill, part } from './pen.js';
 import type { CharacterBox } from './types.js';
 
 /**
- * Hevalo poking his head through the screen: the page is torn open, its
- * ragged edge showing the white of the torn paper and a few flaps of it
- * curling back where he pushed through, and his head and the top of his neck
- * come out of the dark behind it, the way he greets someone at the top of the
- * first screens. Cut off at the waist and floating beside his words, he read
- * as half a deer; through a hole in the page, he is all there is of him to
- * see, and the page is all the scenery there is.
+ * Hevalo poking his head through the screen. He stands upright behind the page and has pushed his head through it
+ * toward us: the page is torn open, its ragged edge showing the white of the torn paper and a few flaps of it curling
+ * out where he pushed, and his head and the top of his neck come out of the dark behind it. The light is above the
+ * page, so every shadow falls straight down it: the flaps', the scraps', the torn lip's, and his own, which lands on
+ * the page under the tear in the shape of his head and ears, further for the parts that stand further out.
  *
- * Drawn in his own units, as the window is (window.ts), so the tear and the
- * `head` crop line up without measuring: what lies behind him (`back`: the
- * shadow of the lifted torn lip on the page, the hairline cracks the push ran
- * into it, the dark behind the page with the page's own thickness shading its
- * top, the whole torn edge, and the flaps above, which his head comes out in
- * front of), the shadow his head throws on the page (`cast`), then him, cut off at the tear's lower edge
- * (`cut`), then what is on our side of him (`front`: the lower torn edge, the
- * flaps beside and under his neck, and a few scraps flung out), and last the soft shade his chin
- * throws into the dark below it (`shadow`), which comes as he does. Each app
- * lays them in one box of the picture's shape (`PEEK_VIEW`); he comes up
- * through the tear on a spring (`PEEK_POP`).
+ * Drawn in his own units, as the window is (window.ts), so the tear and the `head` crop line up without measuring.
+ * Layers, from the page up: his head's and ears' shadows on the page (`cast`, `castEars`), what lies behind him (`back`: the torn lip's shadow, the
+ * cracks the push ran into the page, the dark behind it, the whole torn edge and the flaps above, which his head is in
+ * front of; it hides his shadow inside the tear), him, cut off at the tear's lower edge (`cut`), what is on our side
+ * of him (`front`: the lower torn edge, the flaps beside and under his neck, and a few scraps flung out), and last the
+ * soft shade his chin throws into the dark below it (`shadow`). Each app lays them in one box of the picture's shape
+ * (`PEEK_VIEW`); the tear opens and he comes through it toward us on a spring (`PEEK_POP`), and he leans with the
+ * phone (peek-lean.ts) about the point where his neck meets the tear (`PEEK_PLACE.pivot`).
  *
- * The tear's lower edge runs almost level under his neck, where it crosses
- * him, and is ragged everywhere else: a level cut and the torn paper's white
- * edge drawn over it are what hide where he ends. Turned round for a page
- * read from the right, the picture is mirrored whole, and so is he.
+ * The tear's lower edge runs almost level under his neck, where it crosses him, and is ragged everywhere else: a
+ * level cut and the torn paper's white edge drawn over it are what hide where he ends. Turned round for a page read
+ * from the right, the picture is mirrored whole, and so is he.
  */
 
 /** His middle, in his own units: the tear is centred on it. */
@@ -151,8 +145,8 @@ function flap(c: Palette, from: number, to: number, out: number, lean: number): 
   const face = `M${n(a[0])},${n(a[1])}Q${n(bend[0])},${n(bend[1])} ${n(tip[0])},${n(tip[1])}L${n(b[0])},${n(b[1])}z`;
   const fold = `M${n(a[0])},${n(a[1])}L${n(b[0])},${n(b[1])}L${n(b[0] + (tip[0] - b[0]) * 0.22)},${n(b[1] + (tip[1] - b[1]) * 0.22)}L${n(a[0] + (tip[0] - a[0]) * 0.22)},${n(a[1] + (tip[1] - a[1]) * 0.22)}z`;
   return (
-    // the flap's own shadow on the page under it, down and to the right of it: the light is up and to the left
-    fill(face, c.shade, ` transform="translate(6 10)"${alpha(c.cast * 1.3)}`) +
+    // the flap's own shadow on the page, straight down from it: the light is above the page
+    fill(face, c.shade, ` transform="translate(1 13)"${alpha(c.cast * 1.3)}`) +
     fill(face, c.flap) +
     fill(fold, c.flapLo, alpha(0.9))
   );
@@ -185,7 +179,7 @@ function scrap(c: Palette, x: number, y: number, r: number, deg: number): string
   const d = `M${n(x - r)},${n(y + r * 0.5)}L${n(x + r * 0.2)},${n(y - r)}L${n(x + r)},${n(y + r * 0.7)}z`;
   const turn = ` transform="rotate(${deg} ${n(x)} ${n(y)})"`;
   return (
-    fill(d, c.shade, ` transform="translate(5 9) rotate(${deg} ${n(x)} ${n(y)})"${alpha(c.cast * 1.2)}`) +
+    fill(d, c.shade, ` transform="translate(1 12) rotate(${deg} ${n(x)} ${n(y)})"${alpha(c.cast * 1.2)}`) +
     fill(d, c.flap, turn) +
     fill(`M${n(x - r)},${n(y + r * 0.5)}L${n(x + r)},${n(y + r * 0.7)}L${n(x)},${n(y + r * 0.2)}z`, c.flapLo, turn)
   );
@@ -205,8 +199,8 @@ function back(c: Palette, p: string): string {
       clipDef(id('rim'), opening()),
     ],
     [
-      // the page is lifted a little round the tear where he pushed: its torn lip throws a shadow on the page, down and to the right
-      fill(opening(), c.shade, ` transform="translate(7 12)"${alpha(c.cast)}`),
+      // the page is pushed out a little round the tear: its torn lip throws a shadow straight down the page
+      fill(opening(), c.shade, ` transform="translate(0 13)"${alpha(c.cast)}`),
       // the cracks the push ran into the page
       crack(c, 31, 64),
       crack(c, 39, 48),
@@ -242,16 +236,45 @@ function front(c: Palette): string {
   );
 }
 
+/** How far down the page his shadow falls: his ears stand close to the page, his face well out of it. */
+const FALL = { ears: 30, head: 124 } as const;
+
+/** Where his head's and left ear's shadows are centred, for their softer, wider edges, and where his chin ends. */
+const HEAD_MIDDLE = { x: AXIS, y: 300 } as const;
+const EAR_MIDDLE = { x: 70, y: 172 } as const;
+const CHIN = 461;
+
+/** A shape grown `by` about (`x`, `y`) and moved `fall` down the page: a shadow's softer, wider edge. */
+const wider = (x: number, y: number, by: number, fall: number): string =>
+  `translate(${n(x * (1 - by))} ${n(y * (1 - by) + fall)}) scale(${by})`;
+
 /**
- * The shadow his head throws on the page behind him, down and to the right of
- * him, the light being up and to the left: it shows round his right cheek and
- * ear and under his chin, and comes as he does.
+ * The shadow his head throws on the page, straight down: its outline where it falls below the tear, darkest by the
+ * torn lip and fading as it falls, with a softer, wider edge round it. The tear hides the rest of it.
  */
 function cast(c: Palette, p: string): string {
   const id = (name: string): string => `${p}${name}`;
+  const { head } = HEVALO_SILHOUETTE;
   return part(
-    [radialAt(id('head'), [[0, c.shade, c.cast * 1.6], [0.7, c.shade, c.cast * 0.9], [1, c.shade, 0]], AXIS + 34, 286, 196)],
-    [ellipse(AXIS + 34, 286, 196, 186, `url(#${id('head')})`)],
+    [linearAt(id('fall'), [[0, c.shade, c.cast * 1.15], [1, c.shade, c.cast * 0.55]], 0, CUT, 0, CHIN + FALL.head)],
+    [
+      fill(head, c.shade, ` transform="${wider(HEAD_MIDDLE.x, HEAD_MIDDLE.y, 1.06, FALL.head + 6)}"${alpha(c.cast * 0.45)}`),
+      fill(head, `url(#${id('fall')})`, ` transform="translate(0 ${FALL.head})"`),
+    ],
+  );
+}
+
+/** His ears' shadows, just under them, soft-edged the same way: a layer of their own, since they fall less far and so swing less as he leans. */
+function castEars(c: Palette): string {
+  return part(
+    [],
+    HEVALO_SILHOUETTE.ears.flatMap((ear, i) => {
+      const x = i === 0 ? EAR_MIDDLE.x : 2 * AXIS - EAR_MIDDLE.x;
+      return [
+        fill(ear, c.shade, ` transform="${wider(x, EAR_MIDDLE.y, 1.08, FALL.ears + 4)}"${alpha(c.cast * 0.4)}`),
+        fill(ear, c.shade, ` transform="translate(0 ${FALL.ears})"${alpha(c.cast * 0.6)}`),
+      ];
+    }),
   );
 }
 
@@ -265,10 +288,12 @@ function shadow(c: Palette, p: string): string {
 }
 
 export interface PeekArt {
+  /** his head's shadow on the page under the tear, laid first, under `back`; drawn once he is through */
+  cast: string;
+  /** his ears' shadows on the page, laid with `cast` */
+  castEars: string;
   /** behind him: the dark behind the page, the torn edge and the upper flaps */
   back: string;
-  /** the shadow his head throws on the page, between the page and him, drawn once he is through */
-  cast: string;
   /** on our side of him: the torn edge's foot and the lower flaps */
   front: string;
   /** the shade he throws into the dark below his chin, drawn once he is through */
@@ -280,29 +305,32 @@ const svg = (inner: string): string =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box(PEEK_VIEW)}" aria-hidden="true" focusable="false">${inner}</svg>`;
 
 /**
- * The tear, as four standalone drawings in `PEEK_VIEW`: what lies behind
- * him, the shadow he throws on the page, what is on our side of him, and his
- * shade under his chin. Decorative: whatever he
- * says, the words beside him say. `dark` for a dark page; ids start with
- * `idPrefix`.
+ * The tear, as standalone drawings in `PEEK_VIEW`, in the order they are laid: his head's and ears' shadows on the
+ * page, what lies behind him, what is on our side of him, and his shade under his chin. Decorative: whatever he says, the words beside
+ * him say. `dark` for a dark page; ids start with `idPrefix`.
  */
 export function peekArt(options: { dark?: boolean; idPrefix?: string } = {}): PeekArt {
   const dark = options.dark === true;
   const p = `${prefixFor(options.idPrefix ?? `hvpeek${dark ? 'd' : 'l'}`)}-`;
   const c = dark ? DARK : LIGHT;
-  return { back: svg(back(c, p)), cast: svg(cast(c, p)), front: svg(front(c)), shadow: svg(shadow(c, p)) };
+  return { cast: svg(cast(c, p)), castEars: svg(castEars(c)), back: svg(back(c, p)), front: svg(front(c)), shadow: svg(shadow(c, p)) };
 }
 
 /**
- * Where he goes in the picture, as shares of its box: the `head` crop's box
- * (`figure`), and the line he is cut off at (`cut`, from the top). Before he
- * comes through he waits behind the page, all of him under the cut, `drop`
- * below his place.
+ * Where things are in the picture, as shares of its box: the `head` crop's box (`figure`), the line he is cut off at
+ * (`cut`, from the top), the middle of the tear it bursts open from (`tear`), the point he leans about, where his neck
+ * meets the tear's foot (`pivot`, as shares of `figure`), the points his head's and ears' shadows turn about as he
+ * leans, that same point as far down the page as each shadow falls (`castPivot`, `earsPivot`), and how far his
+ * shadow slides down the page as he comes through (`fall`, of the picture's height).
  */
 export const PEEK_PLACE: {
   figure: { left: number; top: number; width: number; height: number };
   cut: number;
-  drop: number;
+  tear: { x: number; y: number };
+  pivot: { x: number; y: number };
+  castPivot: { x: number; y: number };
+  earsPivot: { x: number; y: number };
+  fall: number;
 } = {
   figure: {
     left: (NECK_BOX.x - PEEK_VIEW.x) / PEEK_VIEW.w,
@@ -311,13 +339,17 @@ export const PEEK_PLACE: {
     height: NECK_BOX.h / PEEK_VIEW.h,
   },
   cut: (CUT - PEEK_VIEW.y) / PEEK_VIEW.h,
-  drop: (CUT - NECK_BOX.y) / PEEK_VIEW.h,
+  tear: { x: (AXIS - PEEK_VIEW.x) / PEEK_VIEW.w, y: (TEAR.cy - PEEK_VIEW.y) / PEEK_VIEW.h },
+  pivot: { x: (AXIS - NECK_BOX.x) / NECK_BOX.w, y: (CUT - NECK_BOX.y) / NECK_BOX.h },
+  castPivot: { x: (AXIS - PEEK_VIEW.x) / PEEK_VIEW.w, y: (CUT + FALL.head - PEEK_VIEW.y) / PEEK_VIEW.h },
+  earsPivot: { x: (AXIS - PEEK_VIEW.x) / PEEK_VIEW.w, y: (CUT + FALL.ears - PEEK_VIEW.y) / PEEK_VIEW.h },
+  fall: FALL.head / PEEK_VIEW.h,
 };
 
 /**
- * His coming through the page: how long after the picture appears he starts,
- * and how long the spring takes to bring him up and settle him (the phone's
- * `bouncy` spring, a little joy; the website's `--ease-spring`). Under Reduce
- * Motion he is simply there.
+ * His coming through the page: how long after the picture appears it starts; how long the tear takes to burst open
+ * from `tearFrom` of its size; and how long the spring takes to bring him out of the dark toward us from `from` of his
+ * size and settle him (the phone's `bouncy` spring, a little joy; the website's `--ease-spring`), his shadow sliding
+ * down the page as he comes. Under Reduce Motion he is simply there.
  */
-export const PEEK_POP = { delayMs: 220, ms: 620 } as const;
+export const PEEK_POP = { delayMs: 220, tearMs: 280, tearFrom: 0.62, ms: 620, from: 0.8 } as const;

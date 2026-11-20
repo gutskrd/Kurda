@@ -67,6 +67,7 @@ export { LEAN_DEGREES, eyeShift, gazeTargets, leanToward, lookAcross, standToget
 export { BLINK_MS, NOD_DEGREES, eyesAt, speakingFrame, voiceTimeline, type SpeakingFrame, type SpeakingInput } from './speaking.js';
 export { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt, type WindowArt, type WindowShare } from './window.js';
 export { PEEK_PLACE, PEEK_POP, PEEK_VIEW, peekArt, type PeekArt } from './peek.js';
+export { PEEK_LEAN, leanFor, stepLean, tiltFromGravity, tiltFromOrientation, type LeanState } from './peek-lean.js';
 export {
   COMPANION_DOZE_MS,
   COMPANION_EDGE,
