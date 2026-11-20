@@ -40,6 +40,7 @@ import { getEngagement } from '../feed/api';
 import { PostActions, usePostEngagement } from '../feed/FeedCard';
 import type { FeedItem, PostEngagement } from '../feed/types';
 import { formatNumber } from '../i18n/format';
+import { HeldNote } from '../pictures/PictureReview';
 
 const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
 
@@ -185,6 +186,8 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                   </Text>
                 </Pressable>
               ) : null}
+              {/* Your own post while its pictures wait for a person: only you see it meanwhile. */}
+              {post.review === 'held' ? <HeldNote testID="post-held" /> : null}
               <PostPictures images={postImages(post)} />
               {post.audioUrl ? <AudioPlayer url={post.audioUrl} /> : null}
               {post.body ? <Text style={[styles.postBody, dir.free, { color: colors.textPrimary }]}>{post.body}</Text> : null}
@@ -282,6 +285,7 @@ function asFeedItem(post: LibraryPost, engagement: PostEngagement): FeedItem {
     commentCount: post.commentCount,
     engagement,
     at: post.publishedAt ?? post.createdAt,
+    ...(post.review === 'held' ? { review: 'held' as const } : {}),
   };
 }
 

@@ -3,6 +3,7 @@ import { isPlayGame, letterNoticeOf, type IncomingInvite, type PlayGame } from '
 import type { Translate } from '../api/errors';
 import type { IconName } from '../theme/icon-paths';
 import { socialDeepLink, str, type SocialDeepLink } from '../reports/deepLinks';
+import { pictureReviewLink, pictureReviewOf } from '../pictures/review';
 
 export interface InboxItem {
   id: string;
@@ -34,6 +35,8 @@ export type DeepLink =
    * land. Without a correspondence, just the window.
    */
   | { screen: 'Letters'; params?: { bird: string } }
+  /** A held post a person has approved: the post itself, now shown to everyone. */
+  | { screen: 'LibraryPost'; params: { postId: string } }
   // Gifts, report outcomes and decisions on your account (reports/deepLinks.ts).
   | SocialDeepLink;
 
@@ -56,6 +59,9 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   // Gifts, report outcomes and decisions on your account first (reports/deepLinks.ts).
   const social = socialDeepLink(data);
   if (social) return social;
+  // A person's decision on a picture: what it belongs to, once it is shown (pictures/review.ts).
+  const picture = pictureReviewOf(data);
+  if (picture) return pictureReviewLink(picture);
   /*
    * The server writes a `kind` with the ids it needs rather than a screen name, so the app decides where each thing
    * lives.
@@ -212,6 +218,8 @@ export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): NoticeKi
       return { icon: 'shield', reward: false };
     case 'caring_message':
       return { icon: 'lifebuoy', reward: false };
+    case 'picture_review':
+      return { icon: 'image', reward: false };
     case 'group_removed':
       return { icon: 'sign-out', reward: false };
     case 'group_banned':

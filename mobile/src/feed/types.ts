@@ -119,6 +119,8 @@ export interface FeedItem {
   commentCount: number;
   engagement: PostEngagement;
   at: string;
+  /** Your own post while its pictures wait for a person: nobody else sees it until then. */
+  review?: 'held';
 }
 
 /** A card's pictures. Older APIs send only `imageUrl`, which stands in as one picture without description or size. */

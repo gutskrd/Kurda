@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { Alert, AppState, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { LETTERS_CHANGED, freshLetters, letterThreadPath, withEarlierLetters, type LetterItem, type LetterThread } from '@kurda/shared';
+import {
+  LETTERS_CHANGED,
+  freshLetters,
+  letterThreadPath,
+  withEarlierLetters,
+  type LetterItem,
+  type LetterThread,
+  type PictureRejection,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useUserEvents, type UserEvent } from '../realtime/useUserEvents';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -26,6 +34,8 @@ import { useWidgetPin } from './widgetPin';
 import { letterErrorText } from './errors';
 import { keepDraft, threadDraft, useLetterDrafts } from './drafts';
 import { onLetterNotice } from './letterPushes';
+import { HeldNote, PictureRefusal } from '../pictures/PictureReview';
+import { isHeld, rejectionOf } from '../pictures/review';
 
 /** The minimum gap between re-reads when the app returns to the front. */
 const FRONT_GAP_MS = 5000;
@@ -34,7 +44,8 @@ const FRONT_GAP_MS = 5000;
  * One correspondence (the website's web/src/letters/LetterThreadPage.tsx): its newest letters oldest first, each on its
  * own paper, with the earlier ones a press away, and at the foot either the paper to write back on, when it is your
  * turn, or a line saying your bird is with them. A received letter can be pinned to the widget or reported. The pen pal's ⋯ menu holds report, block and
- * goodbye, which asks first and closes the letters for both.
+ * goodbye, which asks first and closes the letters for both. Your letter whose drawing waits for a person says so
+ * instead, since its bird cannot fly until then; a drawing the check refuses says why under the paper.
  *
  * While in view it is re-read on `letters_changed`, on a notification for it, and on return to the front, so a new
  * letter appears here (it still lands at your window once); earlier letters already shown stay (shared `freshLetters`).
@@ -51,6 +62,7 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   const [error, setError] = useState<ApiError | null>(null);
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [refusal, setRefusal] = useState<PictureRejection | null>(null);
   const [sent, setSent] = useState<LetterItem | null>(null);
   const [reporting, setReporting] = useState<ReportTarget | null>(null);
   // A sent letter shows at once; a fresh sheet only comes with their answer.
@@ -118,11 +130,14 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   const reply = async (letter: ComposedLetter): Promise<void> => {
     setBusy(true);
     setSendError(null);
+    setRefusal(null);
     const res = await client.post<{ letter: LetterItem }>(`/letters/threads/${encodeURIComponent(threadId)}`, letter);
     setBusy(false);
     if (!res.ok) {
       haptic('error');
-      setSendError(letterErrorText(res.error, t) ?? describeError(res.error, t));
+      const rejection = rejectionOf(res.error);
+      if (rejection) setRefusal(rejection);
+      else setSendError(letterErrorText(res.error, t) ?? describeError(res.error, t));
       return;
     }
     haptic('tap');
@@ -180,6 +195,8 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
   const pending = thread && sent && !thread.letters.some((l) => l.id === sent.id) ? sent : null;
   const letters = thread ? (pending ? [...thread.letters, pending] : thread.letters) : [];
   const yourTurn = thread !== null && thread.yourTurn && !pending;
+  // The newest letter is yours and its drawing waits for a person: it has not gone yet.
+  const held = letters.length > 0 && letters[letters.length - 1]!.mine && isHeld(letters[letters.length - 1]);
   // The paper you last wrote on anywhere, else the one you last wrote to them on.
   const ownPaper = rememberedPaper() ?? [...letters].reverse().find((l) => l.mine && l.decor)?.decor?.paper ?? null;
 
@@ -252,18 +269,25 @@ export function LetterThreadScreen({ threadId, onExit }: { threadId: string; onE
                   {t('letters.thread.closed')}
                 </Text>
               ) : yourTurn ? (
-                <LetterComposer
-                  key={paperKey}
-                  label={t('letters.writeBack', { name })}
-                  busy={busy}
-                  onSend={(letter) => void reply(letter)}
-                  error={sendError}
-                  canDraw
-                  paper={ownPaper}
-                  host={page.host}
-                  draft={threadDraft(threadId)}
-                  testID="letters-reply"
-                />
+                <>
+                  <LetterComposer
+                    key={paperKey}
+                    label={t('letters.writeBack', { name })}
+                    busy={busy}
+                    onSend={(letter) => void reply(letter)}
+                    error={sendError}
+                    canDraw
+                    paper={ownPaper}
+                    host={page.host}
+                    draft={threadDraft(threadId)}
+                    testID="letters-reply"
+                  />
+                  {refusal ? <PictureRefusal rejection={refusal} testID="letters-refused" /> : null}
+                </>
+              ) : held ? (
+                <View style={[styles.heldNote, { backgroundColor: colors.surface }]}>
+                  <HeldNote body="picture.held.letter" testID="letters-held" />
+                </View>
               ) : (
                 <Text style={[styles.note, { color: colors.textSecondary, backgroundColor: colors.surface }]} testID="letters-waiting">
                   {t('letters.thread.waiting', { name })}
@@ -318,4 +342,5 @@ const styles = StyleSheet.create({
   centred: { textAlign: 'center' },
   widgetError: { fontSize: typography.sizes.sm, lineHeight: 19 },
   note: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', padding: spacing.md - 2, borderRadius: radii.lg, overflow: 'hidden' },
+  heldNote: { padding: spacing.md - 2, borderRadius: radii.lg },
 });

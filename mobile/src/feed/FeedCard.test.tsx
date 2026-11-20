@@ -88,6 +88,26 @@ describe('your own post on the wall', () => {
     await longPress(screen.getByRole('button', { name: 'Poem: Şev' }));
     expect(screen.queryByRole('button', { name: 'Delete post' })).toBeNull();
   });
+
+  it('says calmly that a post is being checked, and cannot be passed on until it is', () => {
+    renderWithProviders(
+      <FeedCard item={item({ kind: 'gotin', title: null, excerpt: 'Newroz', images: [{ url: 'https://media.test/private/p.webp', alt: null, width: 800, height: 600 }], review: 'held' })} />,
+    );
+    expect(screen.getByText('Being checked')).toBeTruthy();
+    expect(screen.getByText('Only you can see this until it’s checked. It usually takes a few hours.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Share this post' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Repost' })).toBeNull();
+    // Liking, commenting and saving your own stay where they were.
+    expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+  });
+
+  it('shows nothing of the kind once a post is cleared', () => {
+    renderWithProviders(<FeedCard item={item()} />);
+    expect(screen.queryByText('Being checked')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Share this post' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Repost' })).toBeTruthy();
+  });
 });
 
 describe('a post in the chain', () => {

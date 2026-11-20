@@ -67,6 +67,7 @@ import {
 } from './model';
 import { uploadPicture } from './upload';
 import { haptic } from '../feedback/haptics';
+import { PictureRefusal } from '../pictures/PictureReview';
 
 /** A picture somebody picked, before it is kept and uploaded. */
 export interface PickedPicture {
@@ -174,7 +175,7 @@ export function ComposeScreen({
   const startUpload = useCallback(
     async (picture: Pick<ComposerPicture, 'id' | 'localUri' | 'ownWork'>) => {
       if (!picture.localUri) return;
-      patchPicture(picture.id, { status: 'uploading', progress: 0, error: null, mediaKey: null });
+      patchPicture(picture.id, { status: 'uploading', progress: 0, error: null, mediaKey: null, review: undefined, rejection: null });
       const res = await upload(
         client,
         { uri: picture.localUri, contentType: typeOf(picture.localUri), ownWork: picture.ownWork },
@@ -188,10 +189,12 @@ export function ComposeScreen({
           status: 'done',
           progress: 1,
           mediaKey: res.mediaKey,
-          // The web build's picked file lives only as long as the tab; the uploaded copy outlasts it.
-          ...(Platform.OS === 'web' && res.url ? { localUri: res.url } : {}),
+          review: res.review,
+          // The web build's picked file lives only as long as the tab; the uploaded copy outlasts it, unless it is held,
+          // when its link is private and lasts minutes.
+          ...(Platform.OS === 'web' && res.url && res.review === 'clear' ? { localUri: res.url } : {}),
         });
-      } else patchPicture(picture.id, { status: 'failed', error: res.error });
+      } else patchPicture(picture.id, { status: 'failed', error: res.error, rejection: res.rejection ?? null });
     },
     [client, t, locale, upload, patchPicture],
   );
@@ -546,6 +549,17 @@ export function ComposeScreen({
                 ))}
               </View>
             ) : null}
+            {/* Why a picture was refused, under them all, with the way to ask a person; removing it posts the rest. */}
+            {state.pictures.map((p, i) =>
+              p.status === 'failed' && p.rejection ? (
+                <PictureRefusal
+                  key={`refused-${p.id}`}
+                  rejection={p.rejection}
+                  label={state.pictures.length > 1 ? t('composer.picture.label', { n: i + 1, total: state.pictures.length }) : undefined}
+                  testID={`composer-refused-${i}`}
+                />
+              ) : null,
+            )}
 
             {hasContent ? (
               <View style={styles.kinds}>
@@ -777,7 +791,11 @@ function SwitchCard({
   );
 }
 
-/** A picture on the post being written: remove, describe, and how its upload is going. */
+/**
+ * A picture on the post being written: remove, describe, and how its upload is going. A refused one is dimmed with no
+ * retry, since the same picture would be refused again (the reason is said under the pictures); a held one says it is
+ * checked before others see it.
+ */
 function PictureTile({
   picture,
   index,
@@ -797,12 +815,16 @@ function PictureTile({
   const { t } = useI18n();
   const n = { n: index + 1, total };
   const described = picture.altText.trim().length > 0;
+  const refused = picture.status === 'failed' && !!picture.rejection;
+  const held = picture.status === 'done' && picture.review === 'held';
   const status =
     picture.status === 'uploading'
       ? t('composer.picture.uploading', { percent: Math.round(picture.progress * 100) })
       : picture.status === 'failed'
         ? (picture.error ?? t('picture.uploadFailed'))
-        : null;
+        : held
+          ? t('picture.held.upload')
+          : null;
   return (
     <View style={[styles.tile, total === 1 && styles.tileWide, { backgroundColor: colors.controlTrack }]}>
       {picture.localUri ? (
@@ -823,7 +845,22 @@ function PictureTile({
           </View>
         </View>
       ) : null}
-      {picture.status === 'failed' ? (
+      {refused ? (
+        <View style={[styles.tileShade, styles.tileRefused, { backgroundColor: colors.scrim }]} pointerEvents="none" testID="composer-tile-refused">
+          <Icon name="shield" size={28} color={colors.textOnScrim} />
+        </View>
+      ) : null}
+      {held ? (
+        <View style={styles.tileHeld} pointerEvents="none" testID="composer-tile-held">
+          <View style={[styles.heldPill, { backgroundColor: colors.background }]}>
+            <Icon name="clock" size={12} color={colors.textSecondary} />
+            <Text style={[styles.heldPillText, { color: colors.textPrimary }]} numberOfLines={2}>
+              {t('picture.held.upload')}
+            </Text>
+          </View>
+        </View>
+      ) : null}
+      {picture.status === 'failed' && !refused ? (
         <View style={[styles.tileFailed, { backgroundColor: colors.dangerFill }]}>
           <Text style={[styles.tileFailedText, { color: colors.textPrimary }]} numberOfLines={3}>
             {status}
@@ -960,6 +997,11 @@ const styles = StyleSheet.create({
   // The picture dims while it uploads, with the bar across its middle, clear of the corner buttons.
   tileShade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: spacing.lg },
   progressTrack: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
+  tileRefused: { alignItems: 'center' },
+  // Along the top, clear of the remove button in the corner.
+  tileHeld: { position: 'absolute', top: spacing.sm, left: spacing.sm, right: MIN_TOUCH_TARGET },
+  heldPill: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radii.sm },
+  heldPillText: { flexShrink: 1, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   progressFill: { height: 6, borderRadius: radii.pill },
   tileFailed: {
     position: 'absolute',

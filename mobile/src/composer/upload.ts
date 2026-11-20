@@ -1,9 +1,10 @@
 import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system/legacy';
-import { pictureUploadPath } from '@kurda/shared';
+import { pictureUploadPath, type PictureRejection, type PictureReviewState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { Translate } from '../api/errors';
 import { normalizeContentType } from '../profile/photoUploadResult';
+import { rejectionInBody, reviewStateOf } from '../pictures/review';
 import { describePictureFailure } from './errors';
 
 /**
@@ -14,11 +15,11 @@ import { describePictureFailure } from './errors';
  * poster's handle; off, none, since a signature would claim somebody else's picture. The bytes go straight from the
  * file (`ApiClient.request()` would JSON-encode them), via expo-file-system's upload task on a phone and XMLHttpRequest
  * on the web, both with progress. A token that expired since the screen opened is refreshed once and the upload
- * retried.
+ * retried. A picture held for a person comes back with an owner-only link; one refused says why (pictures/review.ts).
  */
 export type PictureUpload =
-  | { ok: true; mediaKey: string; url: string | null; width: number | null; height: number | null }
-  | { ok: false; error: string };
+  | { ok: true; mediaKey: string; url: string | null; width: number | null; height: number | null; review: PictureReviewState }
+  | { ok: false; error: string; rejection?: PictureRejection };
 
 interface Raw {
   status: number;
@@ -85,16 +86,24 @@ export async function uploadPicture(
     if (!res) return { ok: false, error: t('upload.sessionExpired') };
     if (res.status >= 200 && res.status < 300) {
       try {
-        const body = JSON.parse(res.body) as { imageMediaId?: string; url?: string | null; width?: number; height?: number };
+        const body = JSON.parse(res.body) as { imageMediaId?: string; url?: string | null; width?: number; height?: number; review?: unknown };
         if (body.imageMediaId) {
-          return { ok: true, mediaKey: body.imageMediaId, url: body.url ?? null, width: body.width ?? null, height: body.height ?? null };
+          return {
+            ok: true,
+            mediaKey: body.imageMediaId,
+            url: body.url ?? null,
+            width: body.width ?? null,
+            height: body.height ?? null,
+            review: reviewStateOf(body),
+          };
         }
       } catch {
         // Not JSON: the generic failure below.
       }
       return { ok: false, error: t('picture.noIdReturned') };
     }
-    return { ok: false, error: describePictureFailure(res.status, res.body, t, locale) };
+    const rejection = rejectionInBody(res.status, res.body);
+    return { ok: false, error: describePictureFailure(res.status, res.body, t, locale), ...(rejection ? { rejection } : {}) };
   } catch {
     return { ok: false, error: t('error.offline') };
   }

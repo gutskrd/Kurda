@@ -11,7 +11,9 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 // The upload reads files off the phone, which is not under test here.
 vi.mock('../profile/photoUpload', () => ({ uploadProfilePhoto: vi.fn() }));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadProfilePhoto } from '../profile/photoUpload';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -27,7 +29,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmancî dibim.' as string | null } = {}) {
+function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmancî dibim.' as string | null, me = {} as Record<string, unknown> } = {}) {
   testAuth.client = fakeClient({
     'GET /me': ok({
       user: {
@@ -41,6 +43,7 @@ function open({ league = null as { tier: string } | null, bio = 'Fêrî Kurmanc�
         profilePhotoUrl: null,
         createdAt: '2026-01-01T00:00:00.000Z',
         profileVisibility: 'members',
+        ...me,
       },
     }),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
@@ -162,5 +165,44 @@ describe('your profile', () => {
   it('draws your own horizon behind your face', async () => {
     open();
     expect(await screen.findByTestId('profile-horizon')).toBeTruthy();
+  });
+});
+
+describe('your photo being checked', () => {
+  const pick = () =>
+    vi.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValueOnce({
+      canceled: false,
+      assets: [{ uri: 'file:///new.jpg', mimeType: 'image/jpeg', width: 512, height: 512 }],
+    } as never);
+
+  it('shows the new photo small while it waits, keeping the old one on your face', async () => {
+    open({ me: { profilePhotoUrl: 'https://cdn.test/old.webp', profilePhotoPending: { url: 'https://media.test/private/new.webp' } } });
+    expect(await screen.findByText('Your new photo is being checked. Others see your old one until then.')).toBeTruthy();
+    expect(screen.getAllByRole('img', { name: 'Being checked' }).length).toBeGreaterThan(0);
+  });
+
+  it('says so as soon as a new photo is held', async () => {
+    open();
+    await screen.findByText('23');
+    pick();
+    vi.mocked(uploadProfilePhoto).mockResolvedValueOnce({ ok: true, url: null, review: 'held', pending: { url: 'https://media.test/private/new.webp' } });
+    vi.mocked(testAuth.refreshUser).mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Change profile photo' }));
+    expect(await screen.findByText('Your new photo is being checked. Others see your old one until then.')).toBeTruthy();
+    expect(testAuth.refreshUser).not.toHaveBeenCalled();
+  });
+
+  it('says why a photo was refused, with the way to ask a person', async () => {
+    open();
+    await screen.findByText('23');
+    pick();
+    vi.mocked(uploadProfilePhoto).mockResolvedValueOnce({
+      ok: false,
+      error: 'x',
+      rejection: { code: 'PHOTO_REJECTED', message: 'rejected', reason: 'hate', reviewId: 'rv9' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Change profile photo' }));
+    expect(await screen.findByText('This picture looks like it shows hateful symbols or words, which aren’t allowed on Hevalo.')).toBeTruthy();
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Ask a person to check' })).toBeTruthy());
   });
 });

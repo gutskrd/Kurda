@@ -25,7 +25,9 @@ vi.mock('../theme/Pressable', () => import('../testing/reach'));
 // The pull to refresh as a button: the web's control has nothing to pull.
 vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 vi.mock('expo-image-picker', () => ({ launchImageLibraryAsync: vi.fn(async () => ({ canceled: true, assets: [] })) }));
-vi.mock('expo-file-system/legacy', () => ({ FileSystemUploadType: { BINARY_CONTENT: 0 }, uploadAsync: async () => ({ status: 500, body: '' }) }));
+vi.mock('expo-file-system/legacy', () => ({ FileSystemUploadType: { BINARY_CONTENT: 0 }, uploadAsync: vi.fn(async () => ({ status: 500, body: '' })) }));
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
 
 type Button = { text: string; style?: string; onPress?: () => void };
 
@@ -372,6 +374,52 @@ describe('editing a group', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     });
     await waitFor(() => expect(onExit).toHaveBeenCalled());
+  });
+});
+
+describe('a group’s new picture being checked', () => {
+  /** A picture chosen, and the server's answer to its upload. */
+  const upload = (status: number, body: unknown) => {
+    vi.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValueOnce({ canceled: false, assets: [{ uri: 'file:///g.jpg', mimeType: 'image/jpeg' }] } as never);
+    vi.mocked(FileSystem.uploadAsync).mockResolvedValueOnce({ status, body: JSON.stringify(body), headers: {} } as never);
+  };
+  const choose = async () => {
+    const link = await screen.findByTestId('group-photo-link');
+    await act(async () => {
+      fireEvent.click(link);
+    });
+  };
+
+  it('shows its admins the picture waiting for a person, while members see the old one', async () => {
+    const waiting = detail('moderator');
+    testAuth.client = fakeClient({ 'GET /groups/g1': ok({ ...(waiting.ok ? waiting.data : {}), photoPending: { url: 'https://media.test/private/g.webp' } }) });
+    renderWithProviders(<GroupEditScreen groupId="g1" onExit={() => undefined} />);
+    expect(await screen.findByText('The new group photo is being checked. Members see the old one until then.')).toBeTruthy();
+  });
+
+  it('says so as soon as a new picture is held', async () => {
+    testAuth.client = fakeClient({ 'GET /groups/g1': detail('owner') });
+    renderWithProviders(<GroupEditScreen groupId="g1" onExit={() => undefined} />);
+    upload(200, { photoUrl: null, review: 'held', photoPending: { url: 'https://media.test/private/g.webp' } });
+    await choose();
+    expect(await screen.findByText('The new group photo is being checked. Members see the old one until then.')).toBeTruthy();
+    // Nothing went wrong, so nothing is said as an error.
+    expect(screen.queryByText('The picture couldn’t be changed.')).toBeNull();
+  });
+
+  it('says why a picture was refused, with the way to ask a person, and never calls it a profile photo', async () => {
+    testAuth.client = fakeClient({ 'GET /groups/g1': detail('owner') });
+    renderWithProviders(<GroupEditScreen groupId="g1" onExit={() => undefined} />);
+    upload(422, { code: 'PHOTO_REJECTED', message: 'rejected', reason: 'sexual', reviewId: 'rv5' });
+    await choose();
+    expect(await screen.findByText('This picture looks like it shows nudity or sexual content, which isn’t allowed on Hevalo.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ask a person to check' })).toBeTruthy();
+
+    // An older server's refusal says no reason.
+    upload(422, { code: 'PHOTO_REJECTED', message: 'rejected' });
+    await choose();
+    expect(await screen.findByText('This picture can’t be shared on Hevalo.')).toBeTruthy();
+    expect(screen.queryByText(/profile photo/)).toBeNull();
   });
 });
 

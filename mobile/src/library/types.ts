@@ -33,6 +33,8 @@ export interface LibraryPost {
   sourceCredit?: string | null;
   /** Who wrote it: a face and a name, as the wall shows them; an older API leaves it out. */
   author?: { id: string; username: string; avatarUrl: string | null } | null;
+  /** Your own post while its pictures wait for a person: nobody else sees it until then. */
+  review?: 'held';
 }
 
 /** Threaded comment (text or audio), mirroring the API's library_comments. */

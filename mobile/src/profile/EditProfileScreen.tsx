@@ -3,7 +3,7 @@ import { AccessibilityInfo, KeyboardAvoidingView, Platform, ScrollView, StyleShe
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useNavigation, usePreventRemove, type NavigationAction } from '@react-navigation/native';
 import { PressableScale, heldDim } from '../theme/MotionParts';
-import { countriesIn, foldDiacritics } from '@kurda/shared';
+import { countriesIn, foldDiacritics, type PendingPicture } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useKeyboardShown, useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
@@ -30,6 +30,8 @@ import { FavoritesPicker } from './FavoritesPicker';
 import type { FavoriteRef } from './types';
 import { SectionToggles } from './SectionToggles';
 import { avatarAssetUrl } from './cosmetics';
+import { PendingPhoto } from '../pictures/PictureReview';
+import { pendingOf } from '../pictures/review';
 
 interface Me {
   username: string;
@@ -39,6 +41,8 @@ interface Me {
   premium?: boolean;
   selectedAvatarKey?: string | null;
   profilePhotoUrl?: string | null;
+  /** A new photo waiting for a person: only you see it, everyone else the one before. */
+  profilePhotoPending?: PendingPicture | null;
   equippedBackgroundSku?: string | null;
   equippedIconSku?: string | null;
   premiumIconEnabled?: boolean;
@@ -317,6 +321,9 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
               {t('edit.avatar')}
             </Text>
             {said('avatar')}
+            {pendingOf(me?.profilePhotoPending) ? (
+              <PendingPhoto pending={pendingOf(me?.profilePhotoPending)} body="picture.held.profile" testID="edit-photo-pending" />
+            ) : null}
             {/* The chosen one is ringed in the violet every choice wears, the empty choice and a face alike. */}
             <View style={[styles.avatars, { flexDirection: dir.row }]} accessibilityLabel={t('edit.chooseAvatar')}>
               <PressableScale
