@@ -105,7 +105,7 @@ describe('a hold in Account standing', () => {
   });
 
   it('follows the server’s own marker whatever its words, and never shows a marked hold as a rule broken', async () => {
-    const marked = { ...hold({ statement: 'Worded differently one day.' }), hold: true };
+    const marked = hold({ statement: 'Worded differently one day.', hold: true });
     expect(isHoldSanction(marked)).toBe(true);
     expect(isHoldNotice({ title: 'Something else', data: { kind: 'sanction', sanction: 'post_mute', policy: 'other', hold: true } })).toBe(true);
     const standing: Standing = { status: 'limited', active: [marked], past: [], unacknowledgedWarnings: [], reportAppeals: [], restrictions: {} };

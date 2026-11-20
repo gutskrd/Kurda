@@ -8,7 +8,7 @@ import type { StandingSanction } from '@kurda/shared';
  */
 
 /** Whether a decision in Account standing is a hold rather than a finding about something the person did. */
-export function isHoldSanction(s: Pick<StandingSanction, 'kind' | 'policy' | 'origin' | 'endsAt' | 'statement'> & { hold?: boolean }): boolean {
+export function isHoldSanction(s: Pick<StandingSanction, 'kind' | 'policy' | 'origin' | 'endsAt' | 'statement' | 'hold'>): boolean {
   // The server's own marker when it sends one; its words, for a server from before it did.
   if (s.hold === true) return true;
   return (
