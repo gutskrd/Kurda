@@ -1,3 +1,4 @@
+import { Readable } from 'node:stream';
 import { PrivateStorageUnavailable, type MediaStorage } from '../media/storage.js';
 
 /**
@@ -50,6 +51,24 @@ export class FakeStorage {
     }
     if (!this.publicObjects.has(key)) throw new Error('NoSuchKey');
     this.evidence.set(target, { contentType, cacheControl: 'private, no-store, max-age=0' });
+  }
+
+  async putEvidence(target: string, _body: Buffer, contentType: string): Promise<void> {
+    this.evidence.set(target, { contentType, cacheControl: 'private, no-store, max-age=0' });
+  }
+
+  async publishFromEvidence(target: string, key: string, contentType: string): Promise<void> {
+    if (!this.evidence.has(target)) throw new Error('NoSuchKey');
+    this.publicObjects.set(key, { contentType });
+  }
+
+  async read(key: string): Promise<{ body: Readable; contentType?: string } | null> {
+    const object = this.publicObjects.get(key);
+    return object ? { body: Readable.from([Buffer.from('public')]), contentType: object.contentType } : null;
+  }
+
+  async readEvidence(target: string): Promise<Buffer | null> {
+    return this.evidence.has(target) ? Buffer.from('evidence') : null;
   }
 
   async evidenceExists(target: string): Promise<boolean> {

@@ -84,11 +84,19 @@ export function registerLibraryRoutes(
    */
   const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => isAdmin(req) && (await staffCleared(app, req));
 
-  /** Resolve the audio rendition's and the pictures' media keys to public CDN URLs. */
-  const withAudioUrl = <T extends LibraryPost>(post: T) => ({
+  /**
+   * Resolve the audio rendition's and the pictures' media keys to public CDN URLs. A post waiting for a person reaches
+   * only its author, whose pictures not yet public come as short-lived private links.
+   */
+  const withAudioUrl = async <T extends LibraryPost>(post: T) => ({
     ...post,
     audioUrl: post.audioMediaId ? publicUrl(post.audioMediaId) : null,
-    media: post.media.map((m) => ({ ...m, url: publicUrl(m.mediaKey) })),
+    media: await Promise.all(
+      post.media.map(async (m) => ({
+        ...m,
+        url: post.status === 'held' && app.hasDecorator('pictures') ? ((await app.pictures.ownerLink(m.mediaKey))?.url ?? null) : publicUrl(m.mediaKey),
+      })),
+    ),
   });
 
   /**
@@ -116,7 +124,7 @@ export function registerLibraryRoutes(
   };
 
   /** A write's answer: the post as a reader gets it, with audio and picture URLs resolved, or the refusal. */
-  const respond = (reply: FastifyReply, res: MutateResult): unknown => {
+  const respond = async (reply: FastifyReply, res: MutateResult): Promise<unknown> => {
     if (res.ok) return withAudioUrl(res.post);
     if (res.reason === 'not-found') return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such post' });
     // An edit that would leave an unpostable post is invalid, not someone else's post.
@@ -153,7 +161,7 @@ export function registerLibraryRoutes(
       if (!res.ok) return refuse(reply, res.problem);
       // Screen the words after the post exists; a flag goes to the moderation queue and never blocks literature.
       if (publish) await gate.passed(req.user!.id, screened(res.post));
-      return reply.code(201).send(withAudioUrl(res.post));
+      return reply.code(201).send(await withAudioUrl(res.post));
     },
   );
 
@@ -178,7 +186,7 @@ export function registerLibraryRoutes(
       viewerId: req.user?.id ?? null,
     });
     const withAuthor = await library.withAuthors(posts, (k) => (app.storage ? app.storage.publicUrl(k) : null));
-    return { posts: withAuthor.map(withAudioUrl) };
+    return { posts: await Promise.all(withAuthor.map(withAudioUrl)) };
   });
 
   /** Read one post + increment views (public). */
@@ -273,7 +281,7 @@ export function registerLibraryRoutes(
     const { limit, offset } = req.query as z.infer<typeof page>;
     const drafts = await library.drafts(req.user!.id, { limit, offset });
     const withAuthor = await library.withAuthors(drafts, publicUrl);
-    return { posts: withAuthor.map(withAudioUrl) };
+    return { posts: await Promise.all(withAuthor.map(withAudioUrl)) };
   });
 }
 

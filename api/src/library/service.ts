@@ -15,6 +15,7 @@ import { AppError } from '../plugins/errors.js';
 import { lockPersonFor } from '../limits/limits.js';
 import { claimPostPictures, releasePostPictures, type PictureClaimFailure } from '../media/postMedia.js';
 import { OPEN_CASE_PREDICATE } from '../moderation/reports-service.js';
+import { attachPostContext } from '../moderation/pictures-service.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
@@ -33,7 +34,8 @@ export function titleRequired(type: PostType): boolean {
   return titleRequiredFor(type);
 }
 export type AuthorRole = 'user' | 'admin';
-export type PostStatus = 'draft' | 'published' | 'removed';
+/** `held`: one of its pictures waits for a person, and only its author sees it meanwhile */
+export type PostStatus = 'draft' | 'published' | 'removed' | 'held';
 
 /**
  * Unfinished server drafts one person may keep (@kurda/shared). Drafts reach nobody and are not gated like posts, so
@@ -107,6 +109,8 @@ export interface LibraryPost {
   meme: boolean;
   /** "Source / credit", shown under the post */
   sourceCredit: string | null;
+  /** the author's own copy of a post whose pictures a person is checking; nobody else is shown it */
+  review?: 'held';
 }
 
 
@@ -207,6 +211,8 @@ export class LibraryService {
       // the pictures first: they are the part that can still be refused
       const claim = await claimPostPictures(client, authorId, media.map((m) => m.mediaKey));
       if (!claim.ok) return { ok: false, reason: 'invalid', problem: { code: claim.code, mediaKey: claim.mediaKey } };
+      // a picture a person checks first makes the whole post wait, seen only by its author until then
+      const held = claim.pictures.filter((p) => p.held).map((p) => p.key);
 
       const res = await client.query<Row>(
         `INSERT INTO library_posts
@@ -215,12 +221,13 @@ export class LibraryService {
          RETURNING *`,
         [
           authorId, authorRole, type, cleanPostText(input.title) || null, cleanPostText(input.body),
-          input.audioMediaId ?? null, input.language ?? 'kmr', publish ? 'published' : 'draft',
+          input.audioMediaId ?? null, input.language ?? 'kmr', publish ? (held.length > 0 ? 'held' : 'published') : 'draft',
           input.meme === true, cleanPostText(input.sourceCredit) || null,
         ],
       );
       const row = res.rows[0]!;
       await writeMedia(client, row.id, media);
+      if (held.length > 0) await attachPostContext(client, held, postWords({ ...input, media }) || null, row.id);
       return { ok: true, post: toPost(row, await this.mediaFor(client, [row.id])) };
     });
   }
@@ -236,7 +243,8 @@ export class LibraryService {
   async list(filters: ListFilters = {}): Promise<LibraryPost[]> {
     const params: unknown[] = [filters.viewerId ?? null];
     const conds = [
-      `status = 'published'`,
+      // an author's own list shows them their posts still waiting for a person; nobody else ever sees those
+      filters.authorId && filters.authorId === filters.viewerId ? `status IN ('published','held')` : `status = 'published'`,
       writtenForSql('library_posts.author_id', '$1::uuid'),
       notBlockedSql('library_posts.author_id', '$1::uuid'),
     ];
@@ -281,7 +289,8 @@ export class LibraryService {
     const res = await this.pool.query<Row>(
       `UPDATE library_posts
           SET view_count = view_count + CASE WHEN author_id IS NOT DISTINCT FROM $2::uuid THEN 0 ELSE 1 END
-       WHERE id = $1 AND status = 'published' AND ${writtenForSql('library_posts.author_id', '$2::uuid')}
+       WHERE id = $1 AND (status = 'published' OR (status = 'held' AND author_id IS NOT DISTINCT FROM $2::uuid))
+         AND ${writtenForSql('library_posts.author_id', '$2::uuid')}
          AND ${notBlockedSql('library_posts.author_id', '$2::uuid')}
        RETURNING *`,
       [id, viewerId],
@@ -318,6 +327,12 @@ export class LibraryService {
         if (!claim.ok) {
           return { ok: false as const, reason: 'invalid' as const, problem: { code: claim.code, mediaKey: claim.mediaKey } };
         }
+        const held = claim.pictures.filter((p) => p.held).map((p) => p.key);
+        if (held.length > 0) {
+          // a picture a person checks first takes a published post back to waiting, seen only by its author until then
+          await client.query(`UPDATE library_posts SET status = 'held' WHERE id = $1 AND status = 'published'`, [id]);
+          await attachPostContext(client, held, postWords(mergeEdit(current, patch).content) || null, id);
+        }
         // A reported post's removed pictures are kept for its moderator, as a removed post's are, so an author cannot clear
         // one away before the case is opened.
         const dropped = nowKeys.filter((k) => !nextKeys.includes(k));
@@ -344,11 +359,17 @@ export class LibraryService {
 
   async setStatus(id: string, actorId: string, actorIsAdmin: boolean, status: 'published' | 'draft' | 'removed'): Promise<MutateResult> {
     return this.owned(id, actorId, actorIsAdmin, async (client) => {
+      // publishing waits for a person while any of its pictures does
       const res = await client.query<Row>(
-        `UPDATE library_posts
-         SET status = $2, updated_at = now(),
-             published_at = CASE WHEN $2 = 'published' AND published_at IS NULL THEN now() ELSE published_at END
-         WHERE id = $1 RETURNING *`,
+        `WITH waiting AS (
+           SELECT EXISTS (SELECT 1 FROM library_post_media pm JOIN media_uploads m ON m.key = pm.media_key
+                           WHERE pm.post_id = $1 AND m.scan_status <> 'cleared') AS yes
+         )
+         UPDATE library_posts
+            SET status = CASE WHEN $2 = 'published' AND (SELECT yes FROM waiting) THEN 'held' ELSE $2 END, updated_at = now(),
+                published_at = CASE WHEN $2 = 'published' AND NOT (SELECT yes FROM waiting) AND published_at IS NULL THEN now()
+                                    ELSE published_at END
+          WHERE id = $1 RETURNING *`,
         [id, status],
       );
       return { ok: true as const, post: toPost(res.rows[0]!, await this.mediaFor(client, [id])) };
@@ -509,5 +530,6 @@ function toPost(r: Row, media: Map<string, PostMedia[]>): LibraryPost {
     audioMediaId: r.audio_media_id, language: r.language, status: r.status, viewCount: r.view_count,
     commentCount: r.comment_count, createdAt: r.created_at, updatedAt: r.updated_at, publishedAt: r.published_at,
     media: media.get(r.id) ?? [], meme: r.is_meme, sourceCredit: r.source_credit,
+    ...(r.status === 'held' ? { review: 'held' as const } : {}),
   };
 }

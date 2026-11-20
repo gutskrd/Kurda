@@ -6,8 +6,8 @@ export const POST_PICTURE_KIND = 'image-post';
 /** Why a picture cannot go on a post. */
 export type PictureClaimFailure =
   /**
-   * Not a picture its author uploaded for a post, or one that did not clear the scan. One answer for every case, so it
-   * never reveals whose a key is.
+   * Not a picture its author uploaded for a post, or one the check refused or moderation took down. One answer for every
+   * case, so it never reveals whose a key is.
    */
   | 'INVALID_MEDIA'
   /** already on a post, this one's or another's */
@@ -17,6 +17,8 @@ export interface ClaimedPicture {
   key: string;
   width: number | null;
   height: number | null;
+  /** a person checks it before anyone else sees it, so the post waits with it */
+  held: boolean;
 }
 
 export type PictureClaim =
@@ -25,9 +27,10 @@ export type PictureClaim =
 
 /**
  * Claims uploads for a post inside the caller's transaction. A post may use a picture only if its author uploaded it
- * through `POST /images/upload`, the scan cleared it, and no post uses it yet; the upload step leaves it unconfirmed
- * and this confirms it, so one picture is one post's and unposted ones go to the orphan sweep. Rows are locked, so two
- * posts racing for an upload cannot both get it. Keys come back in the order asked, with their stored sizes.
+ * through `POST /images/upload`, the check cleared it or holds it for a person, and no post uses it yet; the upload
+ * step leaves it unconfirmed and this confirms it, so one picture is one post's and unposted ones go to the orphan
+ * sweep. A held picture makes the post wait for the same person (`held`). Rows are locked, so two posts racing for an
+ * upload cannot both get it. Keys come back in the order asked, with their stored sizes.
  */
 export async function claimPostPictures(
   executor: Pick<pg.PoolClient, 'query'>,
@@ -87,13 +90,19 @@ async function inspect(
       row.uploader_id === authorId &&
       row.kind === POST_PICTURE_KIND &&
       row.content_type.startsWith('image/') &&
-      row.scan_status === 'cleared' &&
+      (row.scan_status === 'cleared' || row.scan_status === 'held') &&
       // taken off the public bucket by moderation (moderation/quarantine.ts)
       !row.quarantined;
     if (!usable) return { ok: false, code: 'INVALID_MEDIA', mediaKey: key };
     if (row.confirmed) return { ok: false, code: 'MEDIA_IN_USE', mediaKey: key };
   }
-  return { ok: true, pictures: keys.map((key) => ({ key, width: byKey.get(key)!.width, height: byKey.get(key)!.height })) };
+  return {
+    ok: true,
+    pictures: keys.map((key) => {
+      const row = byKey.get(key)!;
+      return { key, width: row.width, height: row.height, held: row.scan_status === 'held' };
+    }),
+  };
 }
 
 /**

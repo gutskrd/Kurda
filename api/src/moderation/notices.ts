@@ -3,6 +3,8 @@ import {
   reportCategoryInfo,
   type AppealOutcome,
   type ModerationNotificationData,
+  type PictureReviewOutcome,
+  type PictureSurface,
   type ReportCategory,
   type SanctionKind,
   type SanctionOrigin,
@@ -161,6 +163,28 @@ export function sanctionLiftedNotice(sanctionId: string): Notice {
     body: 'A restriction on your account has been lifted. Thanks for your patience.',
     data: { kind: 'sanction_lifted', sanctionId },
   };
+}
+
+/** What the owner reads once a person approved a picture, by where it is shown. */
+const APPROVED_NEXT: Readonly<Record<PictureSurface, string>> = {
+  post: 'Your post is now visible.',
+  profile_photo: 'Your new photo is now on your profile.',
+  group_photo: 'The new group photo is now showing.',
+  letter: 'Your letter is on its way.',
+};
+
+/**
+ * A person checked a picture: approved (a held picture is shown now; a refusal its owner asked about can be shared),
+ * or upheld (a refusal its owner asked about stays). A removal is a sanction notice instead.
+ */
+export function pictureReviewNotice(outcome: PictureReviewOutcome, surface: PictureSurface, target: string | null, asked = false): Notice {
+  const data = { kind: 'picture_review' as const, outcome, surface, target };
+  if (outcome === 'upheld') {
+    return { title: 'Your picture was checked', body: 'A person checked your picture. It can’t be shared on Hevalo.', data };
+  }
+  // a post's picture that never made it onto a post can simply be shared now
+  const next = asked || (surface === 'post' && !target) ? 'You can share it now.' : APPROVED_NEXT[surface];
+  return { title: 'Your picture was checked', body: `Your picture was checked and it’s fine. ${next}`, data };
 }
 
 /** The answer to an appeal. */

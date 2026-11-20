@@ -8,7 +8,6 @@ import type { AppConfig } from '../config/env.js';
 import { imagePostLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { storeImageMedia } from '../media/imageMedia.js';
-import { ImageModerationService } from '../moderation/image-moderation-service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
 import { PostGate } from '../trust/post-gate.js';
@@ -81,10 +80,13 @@ export function registerImagePostRoutes(
     return respond(reply, res);
   };
 
-  /** Attach the public CDN URL so clients don't need to know the media key layout. */
-  const withUrl = <T extends { imageMediaId: string }>(post: T): T & { imageUrl: string | null } => ({
+  /**
+   * Attach the public CDN URL so clients don't need to know the media key layout. A post waiting for a person reaches only
+   * its author, who gets its picture as a short-lived private link.
+   */
+  const withUrl = async <T extends { imageMediaId: string; status: string }>(post: T): Promise<T & { imageUrl: string | null }> => ({
     ...post,
-    imageUrl: publicUrl(post.imageMediaId),
+    imageUrl: post.status === 'held' ? ((await app.pictures.ownerLink(post.imageMediaId))?.url ?? null) : publicUrl(post.imageMediaId),
   });
 
   /**
@@ -112,21 +114,24 @@ export function registerImagePostRoutes(
 
       const ownWork = !['false', '0'].includes(String((req.query as Record<string, unknown>).ownWork ?? ''));
       const res = await storeImageMedia(
-        { pool: app.db, storage: app.storage, usage, moderation: new ImageModerationService(app.db), limits, log: app.log },
+        { pool: app.db, storage: app.storage, usage, pictures: app.pictures, limits, log: app.log },
         IMAGE_POST_KIND,
         raw,
         { signAs: ownWork ? who.rows[0]?.username : undefined, ownerId: req.user!.id },
       );
       if (!res.ok) {
         req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'image upload rejected');
-        return reply.code(res.status).send({ code: res.code, message: res.message });
+        // a refusal by the picture check says why, and how to ask a person (PictureRejection)
+        return reply.code(res.status).send({ code: res.code, message: res.message, ...(res.refusal ?? {}) });
       }
+      // held: `url` is a short-lived link only the uploader gets; a post made with it waits for the same person
       return reply.code(201).send({
         imageMediaId: res.mediaId,
         url: res.url,
         width: res.width,
         height: res.height,
         signed: res.signed,
+        review: res.review,
       });
     },
   );
@@ -148,7 +153,7 @@ export function registerImagePostRoutes(
       if (!res.ok) return refusePicture(reply, res.reason);
       await gate.passed(req.user!.id, captionScreened(res.post));
       // with its byline, so the wall can show the new picture without refetching
-      return reply.code(201).send(withUrl((await images.withAuthors([res.post], publicUrl))[0]!));
+      return reply.code(201).send(await withUrl((await images.withAuthors([res.post], publicUrl))[0]!));
     },
   );
 
@@ -171,13 +176,13 @@ export function registerImagePostRoutes(
       viewerId: req.user?.id ?? null,
     });
     // Bylines come from the library's loader, so one person has one face everywhere.
-    return { posts: (await images.withAuthors(posts, publicUrl)).map(withUrl) };
+    return { posts: await Promise.all((await images.withAuthors(posts, publicUrl)).map(withUrl)) };
   });
 
   app.get('/images/:id', { schema: { params: idParam } }, async (req, reply) => {
     const post = await images.get((req.params as { id: string }).id, req.user?.id ?? null);
     if (!post) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such image' });
-    return withUrl((await images.withAuthors([post], publicUrl))[0]!);
+    return await withUrl((await images.withAuthors([post], publicUrl))[0]!);
   });
 
   app.patch(
@@ -190,8 +195,18 @@ export function registerImagePostRoutes(
   app.delete(
     '/images/:id',
     { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
-    async (req, reply) =>
-      respond(reply, await images.remove((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req))),
+    async (req, reply) => {
+      const { id } = req.params as { id: string };
+      const current = await images.current(id);
+      // Staff taking down someone else's picture make a moderation decision: blocked by its bytes, off the public
+      // bucket, and a removal notice with an appeal for its author (moderation/pictures-service.ts).
+      if (current && current.authorId !== req.user!.id && (await actsAsStaff(req))) {
+        await app.pictures.staffRemovePost(id, req.user!.id);
+        const after = await app.db.query<{ status: string }>(`SELECT status FROM image_posts WHERE id = $1`, [id]);
+        return { ...current, status: after.rows[0]?.status ?? 'removed' };
+      }
+      return respond(reply, await images.remove(id, req.user!.id, await actsAsStaff(req)));
+    },
   );
 }
 

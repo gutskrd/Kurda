@@ -7,6 +7,7 @@ import { requireCapability } from '../admin/routes.js';
 const moderators = [requireAuth, requireCapability('moderation.act')];
 import type { AiModerationService } from './ai-service.js';
 import type { ImageModerationService } from './image-moderation-service.js';
+import type { PictureReviewService } from './pictures-service.js';
 
 /**
  * Admin routes for the automated moderation tier: the pending-flags feed (the automated half of the queue) and the
@@ -39,10 +40,12 @@ export function registerAiModerationRoutes(app: FastifyInstance, ai: AiModeratio
 }
 
 /**
- * Admin routes for the automatic image-scan tier: the pending image-flag feed and the reversal path (a false-positive
- * `reversed` re-clears the image; a preserved-evidence CSAM flag can only be actioned).
+ * Admin routes for the automatic image-scan tier: the pending image-flag feed, each with its case, and its two buttons,
+ * decided as the Picture checks page decides (pictures-service.ts `resolveFlag`): `actioned` removes the picture with a
+ * removal notice and appeal for its owner, `reversed` approves it. A child-safety flag is refused here (403); it is
+ * decided from its case.
  */
-export function registerImageModerationRoutes(app: FastifyInstance, images: ImageModerationService): void {
+export function registerImageModerationRoutes(app: FastifyInstance, images: ImageModerationService, pictures: PictureReviewService): void {
   app.get(
     '/admin/moderation/image-flags',
     { config: { skipValidation: true }, preHandler: moderators },
@@ -61,7 +64,7 @@ export function registerImageModerationRoutes(app: FastifyInstance, images: Imag
     async (req, reply) => {
       const { id } = req.params as { id: string };
       const { outcome } = req.body as { outcome: 'actioned' | 'reversed' };
-      const ok = await images.resolve(id, req.user!.id, outcome);
+      const ok = await pictures.resolveFlag(id, req.user!.id, outcome);
       if (!ok) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no pending image flag with that id' });
       return { resolved: true, outcome };
     },

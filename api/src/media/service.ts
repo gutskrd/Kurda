@@ -9,9 +9,21 @@ const UNPOSTED_AUDIO = `NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_
           AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = m.key)`;
 
 /**
+ * Upload `m` is no picture moderation still needs: not waiting for a person, not a refusal still kept for its owner to
+ * ask about or appeal (its private copy goes after the window: moderation/pictures-service.ts `expireRefused`), and in
+ * no open picture case.
+ */
+const NOT_UNDER_REVIEW = `m.scan_status <> 'held'
+          AND NOT (m.scan_status = 'refused' AND m.private_key IS NOT NULL)
+          AND NOT EXISTS (SELECT 1 FROM moderation_cases pc
+                           WHERE pc.source = 'image_flag' AND pc.evidence->>'mediaKey' = m.key
+                             AND pc.status IN ('open','in_review','needs_second_approval','escalated'))`;
+
+/**
  * What happens to stored objects nothing references. Every upload path writes a `media_uploads` row before writing
- * to storage and confirms it only once the object is safe to serve, so gated images and failed writes stay
- * unconfirmed; the orphan sweep keeps those from accumulating.
+ * to storage and confirms it only once the object is used, so abandoned uploads and failed writes stay unconfirmed;
+ * the orphan sweep keeps those from accumulating. It never takes what moderation still needs: a picture waiting for a
+ * person, a refusal inside its window, or anything kept as evidence.
  */
 export class MediaService {
   constructor(
@@ -33,8 +45,8 @@ export class MediaService {
     );
     const orphans = await this.pool.query<{ key: string }>(
       // a file kept as report evidence is never an orphan, whatever let go of it
-      `SELECT key FROM media_uploads
-        WHERE confirmed_at IS NULL AND created_at < $1 AND NOT preserve_evidence LIMIT 500`,
+      `SELECT m.key FROM media_uploads m
+        WHERE m.confirmed_at IS NULL AND m.created_at < $1 AND NOT m.preserve_evidence AND ${NOT_UNDER_REVIEW} LIMIT 500`,
       [cutoff],
     );
     let cleaned = 0;
@@ -55,12 +67,12 @@ export class MediaService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const orphan = await client.query<{ quarantine_key: string | null }>(
-        // Never a recording a post or comment took up while this run was on its way.
+      const orphan = await client.query<{ quarantine_key: string | null; private_key: string | null }>(
+        // Never a recording a post or comment took up while this run was on its way, nor a picture moderation took up.
         `DELETE FROM media_uploads m
           WHERE m.key = $1 AND m.confirmed_at IS NULL AND m.created_at < $2 AND NOT m.preserve_evidence
-            AND ${UNPOSTED_AUDIO}
-          RETURNING m.quarantine_key`,
+            AND ${UNPOSTED_AUDIO} AND ${NOT_UNDER_REVIEW}
+          RETURNING m.quarantine_key, m.private_key`,
         [key, cutoff],
       );
       if (!orphan.rowCount) {
@@ -68,8 +80,9 @@ export class MediaService {
         return false;
       }
       await this.storage.delete(key);
-      const evidence = orphan.rows[0]!.quarantine_key;
+      const { quarantine_key: evidence, private_key: kept } = orphan.rows[0]!;
       if (evidence) await this.storage.deleteEvidence(evidence);
+      if (kept && kept !== evidence) await this.storage.deleteEvidence(kept);
       await client.query('COMMIT');
       return true;
     } catch (err) {

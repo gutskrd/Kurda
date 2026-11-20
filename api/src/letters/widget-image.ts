@@ -1,6 +1,18 @@
 import { createHash } from 'node:crypto';
 import sharp from 'sharp';
-import { DEFAULT_PAPER, LETTER_BIRD_FEET, LETTER_SILL, WIDGET_IMAGE, letterBirdSvg, letterPaperSvg, letterWindowSvg, type WidgetSky } from '@kurda/shared';
+import {
+  DEFAULT_PAPER,
+  LETTER_BIRD_FEET,
+  LETTER_SILL,
+  PAPER_H,
+  PAPER_PAGES,
+  WIDGET_IMAGE,
+  letterBirdSvg,
+  letterPaperSvg,
+  letterWindowSvg,
+  type LetterDecor,
+  type WidgetSky,
+} from '@kurda/shared';
 import type { WidgetPicture } from './widget.js';
 
 /**
@@ -72,6 +84,21 @@ function emptySvg(bird: number, sky: WidgetSky, width: number, height: number): 
 
 const wrap = (width: number, height: number, inner: string): string =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">${inner}</svg>`;
+
+/** How wide a letter's drawing is rendered for the picture check, in pixels; its length follows the sheet. */
+const DRAWING_CHECK_WIDTH = 600;
+
+/**
+ * A letter's drawing as one picture, for the picture check before it is delivered: the paper with what is drawn on it
+ * and no words (the letter's words are screened as text), as long as the drawing reaches, one page at least.
+ */
+export async function letterDrawingPng(decor: Pick<LetterDecor, 'paper' | 'strokes'>): Promise<Buffer> {
+  let lowest = 0;
+  for (const stroke of decor.strokes) for (let i = 1; i < stroke.points.length; i += 2) lowest = Math.max(lowest, stroke.points[i]!);
+  const length = Math.min(PAPER_H * PAPER_PAGES, Math.max(PAPER_H, Math.ceil(lowest + 40)));
+  const svg = letterPaperSvg({ paper: decor.paper, strokes: decor.strokes, length, width: DRAWING_CHECK_WIDTH, texture: false, idPrefix: 'lc' });
+  return sharp(Buffer.from(svg)).png({ compressionLevel: 8 }).toBuffer();
+}
 
 /** What a rendering is kept under: everything it shows, and its size. */
 export function widgetImageKey(picture: WidgetPicture, sky: WidgetSky, width: number, height: number): string {

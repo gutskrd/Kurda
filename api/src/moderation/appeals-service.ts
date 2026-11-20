@@ -13,6 +13,7 @@ import { AppError } from '../plugins/errors.js';
 import type { CasesService } from './cases-service.js';
 import { restoreContent, type RemovalRecord } from './content-removal.js';
 import { appealDecidedNotice } from './notices.js';
+import { appealPictures } from './pictures-service.js';
 import { userHash } from './pseudonym.js';
 import {
   deliverNotice,
@@ -30,8 +31,8 @@ import { inTransaction } from './tx.js';
  * as may a reporter whose report was found not to break the rules. A different admin from the decider reviews whenever
  * possible; a lone admin may review their own decision and must give a reason.
  * - upheld: nothing changes; the person is told.
- * - overturned: the sanction is lifted (an overturned removal restores the content) and the person told; a reporter's
- *   appeal sends the case back to the queue.
+ * - overturned: the sanction is lifted (an overturned removal restores the content, a picture public again) and the
+ *   person told; a reporter's appeal sends the case back to the queue.
  * - modified: the sanction is replaced by a lighter or different one.
  */
 
@@ -113,11 +114,13 @@ export class AppealsService {
       ? await this.pool.query<SanctionRow>(`SELECT * FROM sanctions WHERE id = ANY($1::uuid[])`, [sanctionIds])
       : { rows: [] as SanctionRow[] };
     const byId = new Map(sanctions.rows.map((s) => [s.id, toSanctionView(s)]));
+    const pictures = await appealPictures(this.pool, sanctionIds);
     return r.rows.map((a) => ({
       ...toAppealView(a),
       user: a.user_id && a.username ? { id: a.user_id, username: a.username } : null,
       sanction: a.sanction_id ? byId.get(a.sanction_id) ?? null : null,
       originalDeciderId: a.decider,
+      picture: a.sanction_id ? pictures.get(a.sanction_id) ?? null : null,
     }));
   }
 
@@ -222,6 +225,8 @@ export class AppealsService {
       return toAppealView(updated.rows[0]!);
     });
 
+    // a picture an overturned removal put back is copied to the public bucket
+    await this.cases.afterPictureDecision();
     // a reporter's appeal upheld in their favour: the case gets a second look
     if (reopenCase.id) {
       await this.cases.reopen(reopenCase.id, adminId, `reporter's appeal ${appealId} overturned the decision`).catch((err) => {
