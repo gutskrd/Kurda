@@ -378,11 +378,18 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
     const gone = await call('DELETE', '/me', appealToken);
     expect(gone.statusCode).toBe(200);
     expect(gone.json()).toEqual({ deletionScheduled: true, graceDays: 14 });
+    // signing in again says when it goes, so the screen can offer to keep the account on a later visit
+    const again = await kit.login(who);
+    expect(again.statusCode).toBe(403);
+    const when = Date.parse(again.json().details.deletionScheduledFor as string);
+    expect(when - Date.now()).toBeGreaterThan(13 * 86_400_000);
+    expect(when - Date.now()).toBeLessThanOrEqual(14 * 86_400_000);
     // and can change their mind, though they cannot sign in to cancel it
     const kept = await call('POST', '/me/deletion/cancel', appealToken);
     expect(kept.json()).toEqual({ cancelled: true });
     expect((await one<{ deletion_requested_at: Date | null }>(`SELECT deletion_requested_at FROM users WHERE id = $1`, [who.id])).deletion_requested_at).toBeNull();
     expect((await call('POST', '/me/deletion/cancel', appealToken)).json()).toEqual({ cancelled: true });
+    expect((await kit.login(who)).json().details.deletionScheduledFor).toBeNull();
     // deleting keeps the moderation record
     expect((await pool.query(`SELECT 1 FROM sanctions WHERE user_id = $1`, [who.id])).rowCount).toBe(1);
   });

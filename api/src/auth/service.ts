@@ -919,7 +919,7 @@ export class AuthService {
           await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [row.user_id]);
           await client.query('COMMIT');
           await recordRefusedSignIn(this.pool, owner.id, { deviceId: from.deviceId, ip: from.ip });
-          throw await suspendedError(this.config, owner, ban);
+          throw await suspendedError(this.config, owner, ban, this.pool);
         }
       }
 

@@ -21,7 +21,7 @@ import { MyReportsScreen } from './MyReportsScreen';
 import { AccountStandingScreen } from './AccountStandingScreen';
 import { WarningDialog } from './WarningDialog';
 import { SendErrorNotice } from './SendError';
-import { SuspensionScreen, accountSanction } from './SuspensionScreen';
+import { SuspensionScreen, accountSanction, scheduledDeletion } from './SuspensionScreen';
 
 patchReactNativeWeb();
 
@@ -439,6 +439,26 @@ describe('SuspensionScreen: a copy of the data and deleting the account', () => 
     expect(screen.getByRole('button', { name: 'Download a copy of my data' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Delete my account' })).toBeTruthy();
     expect(calls.find((c) => c.path === '/me/deletion/cancel')).toEqual({ method: 'POST', path: '/me/deletion/cancel', auth: 'Bearer appeal-tok' });
+  });
+
+  it('offers to keep the account on a later visit, when its deletion was asked for before', async () => {
+    serve((method, path) => {
+      if (path === '/me/export') return { status: 200, body: { status: 'none' } };
+      if (method === 'POST' && path === '/me/deletion/cancel') return { status: 200, body: { cancelled: true } };
+      return undefined;
+    });
+    const at = new Date(Date.now() + 3 * 86_400_000 - 60_000).toISOString();
+    renderWithProviders(<SuspensionScreen details={{ ...details, deletionScheduledFor: at }} baseUrl="http://api.test" onBack={() => undefined} />);
+    expect(await screen.findByText('Your account is set to be deleted. It will be gone for good in 3 days.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep my account' }));
+    expect(await screen.findByText('Your account will stay. Nothing has been deleted.')).toBeTruthy();
+  });
+
+  it('counts a waiting deletion in whole days, and forgets one already past', () => {
+    const now = Date.parse('2026-11-20T12:00:00.000Z');
+    expect(scheduledDeletion('2026-11-21T11:00:00.000Z', now)).toEqual({ kind: 'scheduled', days: 1 });
+    expect(scheduledDeletion('2026-11-19T12:00:00.000Z', now)).toBeNull();
+    expect(scheduledDeletion(null, now)).toBeNull();
   });
 
   it('says plainly when no copy can be made right now', async () => {

@@ -132,7 +132,7 @@ export function SuspensionScreen({
           )
         )}
 
-        <YourData appealToken={details.appealToken} />
+        <YourData appealToken={details.appealToken} scheduledFor={details.deletionScheduledFor ?? null} />
 
         <div className="suspension-actions">
           <Link to="/terms" className="btn btn-ghost">
@@ -159,7 +159,14 @@ const PREPARING_POLL_MS = 60_000;
 const READY_POLL_MS = 10 * 60_000;
 
 /** Where deleting the account stands on this screen: waiting out its grace period, or closed at once. */
-type Deletion = { kind: 'scheduled'; days: number } | { kind: 'gone' };
+export type Deletion = { kind: 'scheduled'; days: number } | { kind: 'gone' };
+
+/** A deletion asked for on an earlier visit, as whole days left, so the screen can offer to keep the account again. */
+export function scheduledDeletion(at: string | null, now = Date.now()): Deletion | null {
+  if (!at) return null;
+  const left = Date.parse(at) - now;
+  return Number.isFinite(left) && left > 0 ? { kind: 'scheduled', days: Math.ceil(left / 86_400_000) } : null;
+}
 
 /**
  * A copy of one's data and deleting the account, both sent with the appeal token. The copy is prepared in the background
@@ -167,7 +174,7 @@ type Deletion = { kind: 'scheduled'; days: number } | { kind: 'gone' };
  * Settings uses, and says which records are kept. A suspended person cannot sign in to change their mind, so a deletion
  * waiting out its grace period can be undone here (`POST /me/deletion/cancel`).
  */
-function YourData({ appealToken }: { appealToken: string }): React.JSX.Element {
+function YourData({ appealToken, scheduledFor }: { appealToken: string; scheduledFor: string | null }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const locale = useLocale();
@@ -178,7 +185,7 @@ function YourData({ appealToken }: { appealToken: string }): React.JSX.Element {
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deletion, setDeletion] = useState<Deletion | null>(null);
+  const [deletion, setDeletion] = useState<Deletion | null>(() => scheduledDeletion(scheduledFor));
   const [keeping, setKeeping] = useState(false);
   const [kept, setKept] = useState(false);
   const deleted = deletion !== null;

@@ -269,6 +269,8 @@ export interface SuspendedErrorDetails {
   statement: string;
   appealable: boolean;
   appealToken: string;
+  /** when the account is set to be erased, if the person asked for that; the screen then offers to keep it */
+  deletionScheduledFor?: string | null;
 }
 
 /** The appeal token's lifetime; signing in again gives a fresh one. */

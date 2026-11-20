@@ -5,7 +5,7 @@ import type { AccountStanding as Standing, MyReport, StandingSanction, Suspended
 import { renderApp, jsonResponse } from '../test/utils';
 import { MyReports } from './MyReports';
 import { AccountStanding } from './AccountStanding';
-import { SuspensionGate, SuspensionScreen } from './SuspensionGate';
+import { scheduledDeletion, SuspensionGate, SuspensionScreen } from './SuspensionGate';
 import { Login } from '../pages/Login';
 import { StandingWarnings } from './StandingWarnings';
 
@@ -357,6 +357,24 @@ describe('the suspension screen', () => {
     expect(data.getByRole('button', { name: 'Delete my account' })).toBeInTheDocument();
     const cancel = calls.find((c) => c.url.endsWith('/me/deletion/cancel'));
     expect(cancel).toMatchObject({ method: 'POST', auth: 'Bearer appeal-token' });
+  });
+
+  it('offers to keep the account on a later visit, when its deletion was asked for before', async () => {
+    stub({ '/me/standing': banned(), '/me/export': { status: 'none' }, '/me/deletion/cancel': () => jsonResponse(200, { cancelled: true }) });
+    const at = new Date(Date.now() + 3 * 86_400_000 - 60_000).toISOString();
+    renderApp(<SuspensionScreen details={{ ...details, deletionScheduledFor: at }} onClose={() => undefined} />);
+    const data = within(await screen.findByRole('region', { name: 'Your data' }));
+    expect(data.getByText('Your account is set to be deleted. It will be gone for good in 3 days.')).toBeInTheDocument();
+    await userEvent.click(data.getByRole('button', { name: 'Keep my account' }));
+    expect(await data.findByText('Your account will stay. Nothing has been deleted.')).toBeInTheDocument();
+  });
+
+  it('counts a waiting deletion in whole days, and forgets one already past', () => {
+    const now = Date.parse('2026-11-20T12:00:00.000Z');
+    expect(scheduledDeletion('2026-11-21T11:00:00.000Z', now)).toEqual({ kind: 'scheduled', days: 1 });
+    expect(scheduledDeletion('2026-12-04T12:00:00.000Z', now)).toEqual({ kind: 'scheduled', days: 14 });
+    expect(scheduledDeletion('2026-11-19T12:00:00.000Z', now)).toBeNull();
+    expect(scheduledDeletion(null, now)).toBeNull();
   });
 
   it('says plainly when no copy can be made right now', async () => {
