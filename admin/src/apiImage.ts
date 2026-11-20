@@ -82,9 +82,9 @@ export function useApiImage(path: string | null, what = 'pictures'): ApiImage {
 }
 
 /**
- * Where a case's evidence picture is fetched through the API, or null while the API has no such route and the console
- * shows the case's signed link as before. Switching over is this one line.
+ * Where a case's evidence picture is fetched through the API: only files attached to that case, each fetch audited, so the
+ * console's image policy stays closed to the storage host. Null means the console falls back to the signed link.
  */
-export function caseEvidenceImagePath(_caseId: string, _mediaKey: string): string | null {
-  return null;
+export function caseEvidenceImagePath(caseId: string, mediaKey: string): string | null {
+  return `/admin/moderation/cases/${encodeURIComponent(caseId)}/media?key=${encodeURIComponent(mediaKey)}`;
 }

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * A case's evidence picture once the API serves it: fetched with the session when shown and shown as a local copy,
- * never by its storage link, and given back when hidden. The route here stands in for the one the API will name.
+ * never by its storage link, and given back when hidden. The route is mocked so the test sees exactly what is fetched.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/dom';
