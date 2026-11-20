@@ -576,6 +576,24 @@ function faceFeatures(p: string): string {
   );
 }
 
+/** Each side of his head's outline, top to bottom, for measuring its width. */
+const HEAD_SIDES: Record<Side, readonly Knot[]> = {
+  left: HEAD.filter(([x]) => x <= AXIS).sort((a, b) => a[1] - b[1]),
+  right: HEAD.filter(([x]) => x >= AXIS).sort((a, b) => a[1] - b[1]),
+};
+
+/** His head's half-width at height `y`, from its outline (wider on his right by a hair, as drawn): a slice of the head there. */
+export function headHalfWidth(y: number, side: Side = 'left'): number {
+  const pts = HEAD_SIDES[side];
+  if (y <= pts[0]![1]) return Math.abs(pts[0]![0] - AXIS);
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1]!;
+    const [x1, y1] = pts[i]!;
+    if (y <= y1) return Math.abs(x0 + ((x1 - x0) * (y - y0)) / (y1 - y0 || 1) - AXIS);
+  }
+  return Math.abs(pts[pts.length - 1]![0] - AXIS);
+}
+
 function face(p: string): string {
   return faceOutline(p) + faceFeatures(p);
 }

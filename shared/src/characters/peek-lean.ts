@@ -1,8 +1,10 @@
 /**
- * Hevalo leaning with the phone. Tilting the phone to the right leans him to the right, through the page, and to the
- * left the same way. He follows on a soft spring, so his head swings over and settles rather than tracking every
- * tremor of the hand. The tilt is read from gravity, so it means the same whether the phone is held upright or lies
- * nearly flat. Both apps share this file: the phone reads the motion sensor, the website the browser's orientation.
+ * Hevalo moving with the phone. Tilting the phone to the right leans him to the right, through the page, and to the
+ * left the same way; swinging it round, one side going back, turns his head toward that side as a head in the round
+ * would (head-turn.ts), and swinging it back faces him to us again. He follows both on soft springs, so he swings
+ * over and settles rather than tracking every tremor of the hand. The tilt is read from gravity, so it means the same
+ * whether the phone is held upright or lies nearly flat; the swing from how fast the phone turns about its own upright
+ * line. Both apps share this file: the phone reads the motion sensor, the website the browser's motion events.
  */
 
 /** How far he leans and how he gets there. */
@@ -59,24 +61,94 @@ export function leanFor(tiltDeg: number): number {
   return Math.sign(tiltDeg) * PEEK_LEAN.maxDeg * Math.tanh((past * PEEK_LEAN.gain) / PEEK_LEAN.maxDeg);
 }
 
+/** How his head turns as the phone swings round. */
+export const PEEK_TURN = {
+  /** how far his head turns, in degrees, all the way to a side: further than the companion's, to read at this size */
+  yawDeg: 32,
+  /** the steps a player draws his turned face in, either way to a full turn: under half a degree each */
+  steps: 72,
+  /** how far the phone swings round, in degrees, to turn his head most of the way; he eases toward a full turn past it */
+  fullDeg: 18,
+  /**
+   * How slowly, in seconds, the way the phone is held becomes the new middle he faces us from, should it stay swung
+   * round (to about a third of the way): slow enough that swinging it back faces him to us, not past us.
+   */
+  settleSec: 15,
+  /** a swing within this many degrees of the middle leaves him facing us */
+  deadDeg: 4,
+  /** a swing slower than this, in degrees a second, is a hand's drift, not a turn */
+  stillRate: 4,
+  /** the furthest the swing is counted, in degrees, either way */
+  maxDeg: 60,
+  /** the spring his head turns on: quick to follow, settling without a wobble */
+  stiffness: 150,
+  damping: 21,
+  /** the smallest change that wakes the spring, as a share of a full turn */
+  wakeShare: 0.01,
+  /** how far the phone tilts, in degrees, to turn his head most of the way toward the side it goes down on */
+  tiltFullDeg: 20,
+} as const;
+
+/**
+ * How far the phone has swung round from the way it is held, in degrees (above 0 its right side gone back), after it
+ * turned at `rate` degrees a second for `seconds`: the swing so far, plus this turn, with the way it is held slowly
+ * becoming the middle. Never counted past `maxDeg` either way.
+ */
+export function swingAngle(previous: number, rate: number | null, seconds: number): number {
+  const dt = Math.min(Math.max(seconds, 0), 0.25);
+  const turned = rate != null && Number.isFinite(rate) && Math.abs(rate) >= PEEK_TURN.stillRate ? rate * dt : 0;
+  const next = previous * Math.exp(-dt / PEEK_TURN.settleSec) + turned;
+  return Math.max(-PEEK_TURN.maxDeg, Math.min(PEEK_TURN.maxDeg, Math.abs(next) < 1e-3 ? 0 : next));
+}
+
+/** How far his head turns for a swing, as a share of a full turn (above 0 to our right): none near the middle, then following it and easing into the limit. */
+export function turnFor(swingDeg: number): number {
+  const past = Math.abs(swingDeg) - PEEK_TURN.deadDeg;
+  return past > 0 ? Math.sign(swingDeg) * Math.tanh(past / PEEK_TURN.fullDeg) : 0;
+}
+
+/**
+ * How far his head turns for the phone's tilt, as a share of a full turn: toward the side going down, none while it is
+ * held nearly level, then following it and easing into the limit. Added to the swing's (`turnFor`), so tilting turns
+ * his head as well as leaning him.
+ */
+export function turnForTilt(tiltDeg: number): number {
+  const past = Math.abs(tiltDeg) - PEEK_LEAN.deadDeg;
+  return past > 0 ? Math.sign(tiltDeg) * Math.tanh(past / PEEK_TURN.tiltFullDeg) : 0;
+}
+
+/** The turn for a swing and a tilt together, never past a full turn. */
+export const turnForMotion = (swingDeg: number, tiltDeg: number): number => Math.max(-1, Math.min(1, turnFor(swingDeg) + turnForTilt(tiltDeg)));
+
 export interface LeanState {
   angle: number;
   speed: number;
 }
 
+/** A spring: how hard it pulls, how much it is damped, and how near and slow counts as still. */
+export interface Spring {
+  stiffness: number;
+  damping: number;
+  rest: number;
+}
+
+const LEAN_SPRING: Spring = { stiffness: PEEK_LEAN.stiffness, damping: PEEK_LEAN.damping, rest: 0.02 };
+/** His head's turn, on a share of a full turn rather than degrees, so still is nearer. */
+export const TURN_SPRING: Spring = { stiffness: PEEK_TURN.stiffness, damping: PEEK_TURN.damping, rest: 0.002 };
+
 /**
- * One step of the spring carrying him toward `target`, `seconds` long. Long frames are cut into short steps so a
- * stalled frame never throws him. `settled` once he is still at the target.
+ * One step of the spring carrying him toward `target`, `seconds` long: his lean by default, or his head's turn. Long
+ * frames are cut into short steps so a stalled frame never throws him. `settled` once he is still at the target.
  */
-export function stepLean(state: LeanState, target: number, seconds: number): LeanState & { settled: boolean } {
+export function stepLean(state: LeanState, target: number, seconds: number, spring: Spring = LEAN_SPRING): LeanState & { settled: boolean } {
   let { angle, speed } = state;
   let left = Math.min(Math.max(seconds, 0), 0.1);
   while (left > 0) {
     const dt = Math.min(left, 1 / 120);
-    speed += (PEEK_LEAN.stiffness * (target - angle) - PEEK_LEAN.damping * speed) * dt;
+    speed += (spring.stiffness * (target - angle) - spring.damping * speed) * dt;
     angle += speed * dt;
     left -= dt;
   }
-  const settled = Math.abs(target - angle) < 0.02 && Math.abs(speed) < 0.05;
+  const settled = Math.abs(target - angle) < spring.rest && Math.abs(speed) < spring.rest * 2.5;
   return settled ? { angle: target, speed: 0, settled } : { angle, speed, settled };
 }

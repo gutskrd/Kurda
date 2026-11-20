@@ -52,7 +52,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii } from '../theme/tokens';
 import { useGaze } from './gaze';
 import { useDrawingIds } from './drawingIds';
+import type { Turn } from './headTurnMotion';
 import { characterLayers, irisesMoved, type CharacterCrop, type Share } from './layers';
+import { TurnedHead } from './TurnedHead';
 import type { PlaybackClock } from './voice';
 
 export { CHARACTER_SIZE, knownVoice, type PlaybackClock } from './voice';
@@ -97,6 +99,13 @@ export interface SpeakingCharacterProps {
    * giggle on the second, a start and a laugh with a light haptic on the third (shared `tapActs`).
    */
   onPress?: () => void;
+  /**
+   * How far the head is turned aside, from -1 (to our left) to 1 (to our right), as a solid head turns (shared
+   * head-round.ts): the face is drawn turned, the snout coming out past the cheek and the far eye closing up, and the
+   * ears and antlers turn behind. Only a character drawn for it turns (the deer); without this, the head faces us,
+   * drawn as ever.
+   */
+  turn?: Turn | null;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -163,6 +172,7 @@ export function SpeakingCharacter({
   reaction = null,
   resting = false,
   onPress,
+  turn = null,
   style,
 }: SpeakingCharacterProps): React.JSX.Element {
   const { colors } = useTheme();
@@ -573,7 +583,7 @@ export function SpeakingCharacter({
     }),
     [values, height],
   );
-  const turn = useMemo(
+  const nod = useMemo(
     () => ({
       transformOrigin: origin(layers.pivot),
       transform: [{ rotate: degrees(Animated.add(Animated.add(Animated.add(Animated.add(values.nod, values.sway), values.tilt), values.dip), values.lean)) }],
@@ -708,11 +718,28 @@ export function SpeakingCharacter({
         ) : null}
         <Animated.View style={[StyleSheet.absoluteFill, figure]}>
           <Layer xml={layers.body} width={width} height={height} />
-          <Animated.View style={[StyleSheet.absoluteFill, turn]}>
-            {face}
-            {expression}
-            <Layer xml={layers.mouths[mouth]} width={width} height={height} />
-            {overlay}
+          <Animated.View style={[StyleSheet.absoluteFill, nod]}>
+            {turn && rig?.antlers ? (
+              <TurnedHead
+                layers={layers}
+                turn={turn}
+                width={width}
+                height={height}
+                eyes={eyes}
+                brows={brows}
+                mouth={mouth}
+                pupils={pupils}
+                ears={parts ? { left: parts.earLeft, right: parts.earRight } : null}
+                sniff={parts?.nose}
+              />
+            ) : (
+              <>
+                {face}
+                {expression}
+                <Layer xml={layers.mouths[mouth]} width={width} height={height} />
+                {overlay}
+              </>
+            )}
           </Animated.View>
         </Animated.View>
       </View>

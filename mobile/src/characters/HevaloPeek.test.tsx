@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 import { act, cleanup, screen, waitFor } from '@testing-library/react';
-import { PEEK_LEAN, PEEK_PLACE } from '@kurda/shared';
+import { PEEK_LEAN, PEEK_PLACE, mapPath } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { HevaloPeek } from './HevaloPeek';
@@ -119,5 +119,60 @@ describe('Hevalo leaning with the phone', () => {
     await waitFor(() => expect(turnOf('hevalo-peek-figure')).toBeGreaterThan(3), { timeout: 3000 });
     unmount();
     expect(stop.mock.calls.filter(([type]) => type === 'deviceorientation')).toHaveLength(1);
+  });
+});
+
+/** Swings the phone round its upright line at `rate` degrees a second (its right side going back above 0), `times` readings 40 ms apart. */
+async function swing(rate: number, times = 12): Promise<void> {
+  for (let i = 0; i < times; i++) {
+    act(() => {
+      window.dispatchEvent(Object.assign(new Event('devicemotion'), { rotationRate: { alpha: 0, beta: 0, gamma: rate } }));
+    });
+    await act(() => new Promise<void>((r) => setTimeout(r, 40)));
+  }
+}
+
+/** How far across his nose is drawn, in his own units (the middle of his face is 255): the middle of its outline's points. */
+function noseX(): number {
+  const markup = document.querySelector('svg[data-markup*=\'id="id-nose"\']')?.getAttribute('data-markup') ?? '';
+  const xs = [...markup.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
+    (mapPath(m[1]!, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => Number(pair.split(',')[0])),
+  );
+  return xs.reduce((a, b) => a + b, 0) / xs.length;
+}
+
+describe('Hevalo turning his head as the phone swings round or tilts', () => {
+  it('draws his head turned toward the side the phone swings back on, faces us again as it swings back, and turns the other way past it', async () => {
+    patchReactNativeWeb();
+    renderWithProviders(<HevaloPeek size={240} pop={false} />);
+    await settle();
+    expect(noseX()).toBeCloseTo(255, 0);
+    // A quarter-second swing of 24 degrees, its right side going back.
+    await swing(60, 10);
+    await waitFor(() => expect(noseX()).toBeGreaterThan(275), { timeout: 3000 });
+    await swing(-60, 10);
+    await waitFor(() => expect(Math.abs(noseX() - 255)).toBeLessThan(4), { timeout: 3000 });
+    await swing(-60, 10);
+    await waitFor(() => expect(noseX()).toBeLessThan(235), { timeout: 3000 });
+  }, 15000);
+
+  it('turns his head toward the side the phone tilts down on, as well as leaning him', async () => {
+    patchReactNativeWeb();
+    renderWithProviders(<HevaloPeek size={240} pop={false} />);
+    await settle();
+    tilt(16);
+    await waitFor(() => expect(noseX()).toBeGreaterThan(270), { timeout: 3000 });
+    await waitFor(() => expect(turnOf('hevalo-peek-figure')).toBeGreaterThan(3), { timeout: 3000 });
+    tilt(-16);
+    await waitFor(() => expect(noseX()).toBeLessThan(240), { timeout: 3000 });
+  });
+
+  it('turns as a still picture too, and the same way on screen when mirrored', async () => {
+    patchReactNativeWeb();
+    renderWithProviders(<HevaloPeek size={240} pop={false} still flip />);
+    await settle();
+    await swing(60, 10);
+    // Mirrored, the drawing turns the other way so that on screen he turns toward the same side.
+    await waitFor(() => expect(noseX()).toBeLessThan(235), { timeout: 3000 });
   });
 });

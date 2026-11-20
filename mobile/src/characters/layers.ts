@@ -42,6 +42,8 @@ export interface RigLayers {
   half: string;
   /** Where the nose swells from. */
   sniff: Share;
+  /** Each antler on its own, for a head turning aside (TurnedHead); null for a deer drawn with his antlers as one. */
+  antlers: { left: string; right: string } | null;
 }
 
 export interface CharacterLayers {
@@ -166,6 +168,7 @@ function drawLayers(speaker: SpeakerId, crop: CharacterCrop): CharacterLayers {
           pupilRight: svg(rig.look.right.art),
           half: svg(rig.look.half),
           sniff: share(rig.sniff),
+          antlers: rig.antlers ? { left: svg(rig.antlers.left.art), right: svg(rig.antlers.right.art) } : null,
         }
       : null,
   };

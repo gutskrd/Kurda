@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, characterSvg, peekArt, type BrowState, type CharacterPoint } from '@kurda/shared';
+import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, peekArt, type BrowState, type CharacterPoint } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
 import { useDrawingIds } from './drawingIds';
-import { renameIds } from './layers';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
-import { usePeekLean } from './usePeekLean';
+import { StillHead } from './StillHead';
+import { usePeekMotion } from './usePeekMotion';
 import type { PlaybackClock } from './voice';
 
 /** The share of his coming through at which he is through enough to cheer. */
@@ -29,11 +29,12 @@ export interface PeekSpeech {
  * Hevalo's head poking through a torn page (shared `peekArt`): he stands behind the page and has pushed his head
  * through it toward us. When shown, the tear bursts open and he comes out of the dark toward us on a spring, his
  * shadow sliding down the page as he comes; under Reduce Motion he is simply there. While his screen is in front he
- * leans with the phone's tilt (usePeekLean), his shadows swinging with him. He blinks, glances, looks where told
- * (`gaze`), follows a finger, cheers as he comes through, and reacts to `reaction`; `resting`, he dozes instead, with
- * no cheer, blinks or glances. `speech` and `text` make him say a line (auth/guide/speech.ts); `flip` mirrors the
+ * leans with the phone's tilt, his shadows swinging with him, and turns his head toward the side the phone swings back
+ * on, as a head in the round would, facing us again as it swings back (usePeekMotion). He blinks, glances, looks where
+ * told (`gaze`), follows a finger, cheers as he comes through, and reacts to `reaction`; `resting`, he dozes instead,
+ * with no cheer, blinks or glances. `speech` and `text` make him say a line (auth/guide/speech.ts); `flip` mirrors the
  * whole picture. The tear is decorative for screen readers; he is named and answers taps as everywhere. `still` draws
- * him once, with no life or taps, for a picture that only decorates; he still leans with the phone.
+ * him without life or taps, for a picture that only decorates; he still leans and turns with the phone.
  */
 export function HevaloPeek({
   size,
@@ -73,16 +74,13 @@ export function HevaloPeek({
   const width = (size * PEEK_VIEW.w) / PEEK_VIEW.h;
   const { figure } = PEEK_PLACE;
   const figureWidth = figure.width * width;
-  const drawn = useMemo(() => {
-    if (!still) return null;
-    const xml = characterSvg('hevalo', { crop: 'head', width: figureWidth, brows });
-    return ids ? renameIds(xml, 'hvhevalo-', `${ids}h-`) : xml;
-  }, [still, figureWidth, brows, ids]);
   const showing = pop && !reduce;
   const tear = useRef(new Animated.Value(showing ? 0 : 1)).current;
   const come = useRef(new Animated.Value(showing ? 0 : 1)).current;
   const alive = useMotionAlive();
-  const lean = usePeekLean(alive);
+  const { lean, turn } = usePeekMotion(alive);
+  // Mirrored, his head turns the other way in the drawing to turn the same way on screen.
+  const turnShown = useMemo(() => (flip ? Animated.multiply(turn, -1) : turn), [flip, turn]);
   // Through the page, he cheers as the spring settles, unless the screen has a reaction of its own for him; asleep, never.
   const [glad, setGlad] = useState<CharacterReaction | null>(null);
   useEffect(() => {
@@ -177,8 +175,8 @@ export function HevaloPeek({
           ]}
           testID="hevalo-peek-figure"
         >
-          {drawn ? (
-            <SvgXml xml={drawn} width={figureWidth} height={figure.height * size} style={flip ? styles.flip : null} />
+          {still ? (
+            <StillHead width={figureWidth} turn={turnShown} brows={brows} flip={flip} />
           ) : (
             <SpeakingCharacter
               speaker="hevalo"
@@ -193,6 +191,7 @@ export function HevaloPeek({
               reaction={reaction ?? (resting ? null : glad)}
               resting={resting}
               onPress={onPress}
+              turn={turnShown}
             />
           )}
         </Animated.View>

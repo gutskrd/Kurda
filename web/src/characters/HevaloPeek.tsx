@@ -2,7 +2,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, peekArt } from '@kurda/shared';
 import { prefersReducedMotion } from '../lib/motion';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
-import { usePeekLean } from './usePeekLean';
+import { usePeekMotion } from './usePeekMotion';
 import './characters.css';
 
 /** The share of his coming through at which he is through enough to cheer. */
@@ -13,7 +13,7 @@ const GLAD_AT = 0.55;
  * lies behind him, him cut off at the tear's foot, what is on our side of him, then the shade under his chin. As it
  * appears the tear bursts open and he comes out of the dark toward us on a spring, his shadow sliding down the page,
  * cheering as he comes through; under Reduce Motion or with `pop` off he is simply there. On a phone he leans with its
- * tilt (usePeekLean). Resting, he dozes there: eyes shut, no blinks, glances or cheer. The tear is drawn for light and
+ * tilt and turns his head as it swings round (usePeekMotion). Resting, he dozes there: eyes shut, no blinks, glances or cheer. The tear is drawn for light and
  * dark; `flip` mirrors the whole picture. Decorative, since the words beside him say everything.
  */
 export function HevaloPeek({
@@ -38,7 +38,7 @@ export function HevaloPeek({
   const [still] = useState(prefersReducedMotion);
   const rising = pop && !still;
   const root = useRef<HTMLSpanElement>(null);
-  usePeekLean(root, true);
+  usePeekMotion(root, true, flip);
   const art = useMemo(() => ({ light: peekArt({ idPrefix: `${id}l` }), dark: peekArt({ dark: true, idPrefix: `${id}d` }) }), [id]);
   // Through the page, he cheers as the spring settles, unless the page has a reaction of its own for him.
   const [glad, setGlad] = useState<CharacterReaction | null>(null);
@@ -102,6 +102,7 @@ export function HevaloPeek({
             mirrored={flip}
             reaction={reaction ?? (resting ? null : glad)}
             resting={resting}
+            turnable
           />
         </span>
       </span>
