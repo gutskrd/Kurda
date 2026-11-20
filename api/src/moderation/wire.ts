@@ -7,6 +7,7 @@ import { EmailService } from '../email/service.js';
 import { sendEmailJob } from '../jobs/email.js';
 import { ModerationAlerts, type ModerationMailer } from './alerts.js';
 import { AppealsService } from './appeals-service.js';
+import { ACCOUNT_CHANGED } from '@kurda/shared';
 import { banMailer, type SendEmail } from './ban-email.js';
 import { pruneRegistry, rekeyRegistry } from './ban-registry.js';
 import { CasesService } from './cases-service.js';
@@ -35,6 +36,8 @@ export interface ModerationOptions {
   registry?: Registry;
   /** where the emailed statements of reasons go (ban-email.ts) */
   banEmails?: SendEmail;
+  /** told of every "account changed" ping as well as the realtime channel */
+  accountChanged?: (userId: string) => Promise<void>;
 }
 
 export interface ModerationKit {
@@ -89,6 +92,11 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
     moderatorCount: options.moderatorCount,
     storage,
     log: app.log,
+    // a restriction given or lifted (a hold among them): the person's open apps read their account again
+    accountChanged: async (userId) => {
+      await options.accountChanged?.(userId);
+      if (app.hasDecorator('realtime')) await app.realtime.notifyUser(userId, { type: ACCOUNT_CHANGED });
+    },
     // a banned person leaves the games they are in, as a closed account does (gdpr/service.ts)
     afterBan: async (userId) => {
       if (app.hasDecorator('storyGames')) await app.storyGames.leaveAll(userId);
@@ -148,6 +156,7 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
   const queue = new ModerationQueueService(app.db, { cases, sanctions, log: app.log });
   const appeals = new AppealsService(app.db, sanctions, cases);
   const returns = new PossibleReturnsService(app.db, {
+    sanctions,
     isTrusted: isTrustedNetwork,
     log: app.log,
     // "Same person" bans the account under the user page's rules (second admin, typed username)
@@ -158,7 +167,7 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
   });
   app.decorate('returns', returns);
 
-  registerReportRoutes(app, config, { reports, sanctions, appeals, pictures, returns });
+  registerReportRoutes(app, config, { reports, sanctions, appeals, pictures });
   registerModerationQueueRoutes(app, { queue, cases, sanctions, appeals, returns });
   registerPictureRoutes(app, { pictures, cases });
   registerTrustedNetworkRoutes(app, new TrustedNetworksService(app.db));

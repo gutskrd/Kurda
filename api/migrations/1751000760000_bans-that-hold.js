@@ -9,7 +9,8 @@
  * - `device_sightings`: which install ids an account used on which days, kept 180 days, so a returning device is
  *   recognised however the person signed in.
  * - `possible_returns`: accounts that may belong to a banned person, with the signals that matched, for a person to
- *   decide; `users.held_at` is the hold on a strong match (learning goes on, posting and messaging wait).
+ *   decide; `users.held_at` is the hold on a strong match (learning goes on, posting and messaging wait), and a
+ *   sanction stands for it so the person can read and appeal it.
  * - `trusted_networks`: networks a superadmin vouched for (a school), which lifts the sign-up network cap until they end.
  * - `sanctions.notice_email_state`: the emailed statement of reasons, sent once by an outbox sweep.
  */
@@ -141,9 +142,6 @@ export const up = (pgm) => {
     status: { type: 'text', notNull: true, default: 'open', check: "status IN ('open','same_person','not_same_person','closed')" },
     first_seen_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },
     last_seen_at: { type: 'timestamptz', notNull: true, default: pgm.func('now()') },
-    // the held person asking for a person to look
-    person_note: { type: 'text', check: 'char_length(person_note) <= 2000' },
-    person_note_at: { type: 'timestamptz' },
     decided_by: { type: 'uuid', references: 'users', onDelete: 'SET NULL' },
     decided_at: { type: 'timestamptz' },
     decision_note: { type: 'text' },

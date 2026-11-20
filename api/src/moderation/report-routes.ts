@@ -8,7 +8,6 @@ import { requireAccountCaller } from './appeal-token.js';
 import type { AppealsService } from './appeals-service.js';
 import type { ReportsService } from './reports-service.js';
 import type { PictureReviewService } from './pictures-service.js';
-import type { PossibleReturnsService } from './returns.js';
 import type { SanctionsService } from './sanctions-service.js';
 
 const fileBody = z.object({
@@ -38,35 +37,20 @@ async function standingUserId(config: AppConfig, req: FastifyRequest): Promise<s
   return (await requireAccountCaller(config, req)).id;
 }
 
-const holdReviewBody = z.object({ text: z.string().trim().min(1).max(2000) });
-
 /**
  * Reporting and account standing, for everyone (M1).
  * - `POST /reports`: report a person, message, group, post, comment or game player (by seat). Answers with a receipt,
  *   and for "someone may hurt themselves" with where to find help at once.
  * - `GET /me/reports`: your reports and their outcomes.
  * - `GET /me/standing`, `POST /me/standing/ack`: your sanctions with reasons, what is limited and until when; warnings
- *   shown once.
+ *   shown once. A hold while a person checks the account is one of them (moderation/returns.ts).
  * - `POST /me/appeals`: appeal once per decision, within six months.
- * - `POST /me/hold/review`: a held account asks for a person to look.
  */
 export function registerReportRoutes(
   app: FastifyInstance,
   config: AppConfig,
-  deps: { reports: ReportsService; sanctions: SanctionsService; appeals: AppealsService; pictures?: PictureReviewService; returns?: PossibleReturnsService },
+  deps: { reports: ReportsService; sanctions: SanctionsService; appeals: AppealsService; pictures?: PictureReviewService },
 ): void {
-  /**
-   * A held account asks for a person to look (moderation/returns.ts): once per hold, shown to moderators on the
-   * Possible returns page. 201 { requested: true }; 409 NOT_HELD or ALREADY_REQUESTED.
-   */
-  if (deps.returns) {
-    const returns = deps.returns;
-    app.post(
-      '/me/hold/review',
-      { schema: { body: holdReviewBody }, config: { rateLimit: { max: 5, windowMs: 60_000, per: 'user-or-ip' as const } }, preHandler: requireAuth },
-      async (req, reply) => reply.code(201).send(await returns.requestReview(req.user!.id, (req.body as z.infer<typeof holdReviewBody>).text)),
-    );
-  }
 
   app.post(
     '/reports',

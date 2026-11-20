@@ -17,8 +17,7 @@ import {
   type SignalStrength,
   type WeighedSignal,
 } from './return-score.js';
-import { logAdminAction } from './sanctions-service.js';
-import { SAFETY_CATEGORY } from './notices.js';
+import { logAdminAction, type SanctionsService } from './sanctions-service.js';
 import { inTransaction, type Executor } from './tx.js';
 
 /**
@@ -30,10 +29,12 @@ import { inTransaction, type Executor } from './tx.js';
  * - The same identity is refused before the account exists (`isReturningIdentity`, the generic sign-up refusal); a
  *   strong match holds the account (it can learn, not post, message, upload, write letters or join groups) and queues
  *   it; a medium one only queues it; a network alone does nothing.
+ * - A hold is a decision like any other: a sanction stands for it (sanctions-service.ts `holdAccount`), so the person
+ *   reads its statement in Account standing and can appeal it; an appeal overturned, or the hold lifted on the person's
+ *   page, decides they are not the same person.
  * - A moderator decides: the same person (the ban is applied to this account too, with its own notice and appeal), or
- *   not (the hold ends and the pair is never flagged again). Every decision is audited.
- * - A held person can ask for a person to look (`requestReview`); lifting the banned person's ban ends the holds it
- *   caused (`closeReturnsOf`).
+ *   not (the hold ends and the pair is never flagged again). Every decision is audited. Lifting the banned person's ban
+ *   ends the holds it caused (`closeReturnsOf`).
  */
 
 /** The most entries a page of the queue or the user page's panel shows. */
@@ -68,6 +69,8 @@ export interface StoredSignal extends WeighedSignal {
 }
 
 export interface ReturnsOptions {
+  /** holds and ends holds (`holdAccount`, `endHold`) */
+  sanctions: SanctionsService;
   /** networks a superadmin vouched for are shared, never quiet (trusted-networks.ts) */
   isTrusted?: (db: Executor, netHash: string) => Promise<boolean>;
   log?: { warn: (obj: unknown, msg: string) => void };
@@ -218,15 +221,6 @@ function rescore(signals: StoredSignal[]): { level: ReturnLevel; signals: Stored
   };
 }
 
-const HELD_NOTICE = {
-  title: 'Your account is being checked',
-  body: 'Your account is being checked before you can post or message. Learning works as usual. You can ask for a person to look from Account standing.',
-};
-const CLEARED_NOTICE = {
-  title: 'Your account check is done',
-  body: 'Thanks for waiting. You can post and message again.',
-};
-
 export interface AssessedReturn {
   level: ReturnLevel;
   /** the account is held now (by this check or an earlier one) */
@@ -243,18 +237,18 @@ function readsHistory(event: ReturnEvent): boolean {
  * existing account that matches an identity is held rather than refused, since it was not made to get round the ban.
  * Never throws for a failed check: sign-up and sign-in must not fail because of it (the caller logs).
  */
-export async function assessReturn(pool: pg.Pool, probe: ReturnProbe, opts: ReturnsOptions = {}): Promise<AssessedReturn> {
+export async function assessReturn(pool: pg.Pool, probe: ReturnProbe, opts: ReturnsOptions): Promise<AssessedReturn> {
   const now = new Date();
   const candidates = new Map<string, Candidate>();
   await registryCandidates(pool, probe, candidates, now);
   if (probe.ip) await nearBanCandidates(pool, probe, opts, candidates, now);
   if (readsHistory(probe.event)) await evidenceCandidates(pool, probe.userId, candidates);
   if (candidates.size === 0) return { level: 'none', held: false };
-  return recordCandidates(pool, probe.userId, probe.event, [...candidates.values()].slice(0, MAX_CANDIDATES));
+  return recordCandidates(pool, opts.sanctions, probe.userId, probe.event, [...candidates.values()].slice(0, MAX_CANDIDATES));
 }
 
 /** Write what matched, per banned account, and hold the account on a strong match; in one transaction. */
-async function recordCandidates(pool: pg.Pool, userId: string, event: ReturnEvent, candidates: Candidate[]): Promise<AssessedReturn> {
+async function recordCandidates(pool: pg.Pool, sanctions: SanctionsService, userId: string, event: ReturnEvent, candidates: Candidate[]): Promise<AssessedReturn> {
   return inTransaction(pool, async (client) => {
     const me = await client.query<{ held_at: Date | null; deleted_at: Date | null; banned: boolean }>(
       `SELECT held_at, deleted_at, NOT ${availableSql('users')} AS banned FROM users WHERE id = $1 FOR UPDATE`,
@@ -293,51 +287,27 @@ async function recordCandidates(pool: pg.Pool, userId: string, event: ReturnEven
         [userId, c.bannedUserId, c.bannedUserHash, c.sanctionId, strength, JSON.stringify(merged.signals), hold],
       );
     }
-    if (holds && row.held_at === null) {
-      await client.query(`UPDATE users SET held_at = now(), hold_reason = 'possible_return' WHERE id = $1 AND held_at IS NULL`, [userId]);
-      await inboxNotice(client, userId, HELD_NOTICE, 'account_held');
-      await logAdminAction(client, {
-        targetUserId: userId,
-        adminId: null,
-        action: 'possible_return_hold',
-        reason: `held at ${event}: may be the same person as a banned account`,
-        meta: { event, level: best },
-      });
-    }
+    // the hold, its sanction (the statement the person reads and can appeal) and its notice
+    if (holds && row.held_at === null) await sanctions.holdAccount(client, userId, event);
     return { level: best, held: holds || row.held_at !== null };
   });
 }
 
-/** Lift the hold when no open strong entry is left, and tell the person. In the caller's transaction. */
-export async function liftHoldIfClear(db: Executor, userId: string): Promise<boolean> {
-  const r = await db.query<{ id: string }>(
-    `UPDATE users SET held_at = NULL, hold_reason = NULL
-      WHERE id = $1 AND held_at IS NOT NULL
-        AND NOT EXISTS (SELECT 1 FROM possible_returns p WHERE p.user_id = $1 AND p.status = 'open' AND p.strength = 'strong')
-      RETURNING id`,
-    [userId],
-  );
-  if (!r.rowCount) return false;
-  await inboxNotice(db, userId, CLEARED_NOTICE, 'account_hold_lifted');
-  return true;
-}
-
-/** A line in the person's inbox about their hold; the apps write their own words from `data.kind`. */
-async function inboxNotice(db: Executor, userId: string, notice: { title: string; body: string }, kind: string): Promise<void> {
-  await db.query(`INSERT INTO notifications (user_id, category, title, body, data) VALUES ($1, $2, $3, $4, $5::jsonb)`, [
-    userId,
-    SAFETY_CATEGORY,
-    notice.title,
-    notice.body,
-    JSON.stringify({ kind }),
-  ]);
+/**
+ * Lift the hold when no open strong entry is left: its sanction is lifted, so the person is told as for any lifted
+ * restriction and their apps read the account again. In the caller's transaction.
+ */
+export async function liftHoldIfClear(db: Executor, sanctions: SanctionsService, userId: string, reason: string): Promise<boolean> {
+  const open = await db.query(`SELECT 1 FROM possible_returns WHERE user_id = $1 AND status = 'open' AND strength = 'strong' LIMIT 1`, [userId]);
+  if (open.rowCount) return false;
+  return sanctions.endHold(db, userId, null, reason);
 }
 
 /**
  * A banned person's ban no longer in force (lifted, overturned, lapsed): open entries about them close, and the holds
  * they caused end. In the caller's transaction, after the enforced columns are synced.
  */
-export async function closeReturnsOf(db: Executor, bannedUserId: string): Promise<number> {
+export async function closeReturnsOf(db: Executor, sanctions: SanctionsService, bannedUserId: string): Promise<number> {
   const still = await db.query(
     `SELECT 1 FROM sanctions s WHERE s.user_id = $1 AND s.kind IN ('suspension','permanent_ban') AND s.revoked_at IS NULL
         AND (s.ends_at IS NULL OR s.ends_at > now()) LIMIT 1`,
@@ -349,7 +319,7 @@ export async function closeReturnsOf(db: Executor, bannedUserId: string): Promis
       WHERE banned_user_id = $1 AND status = 'open' RETURNING user_id`,
     [bannedUserId],
   );
-  for (const u of new Set(closed.rows.map((c) => c.user_id))) await liftHoldIfClear(db, u);
+  for (const u of new Set(closed.rows.map((c) => c.user_id))) await liftHoldIfClear(db, sanctions, u, 'the ban it was about is no longer in force');
   return closed.rowCount ?? 0;
 }
 
@@ -395,6 +365,8 @@ export interface PossibleReturnItem {
 
 interface ReturnRow {
   id: string;
+  appeal_text: string | null;
+  appeal_at: Date | null;
   user_id: string;
   banned_user_id: string | null;
   sanction_id: string | null;
@@ -404,8 +376,6 @@ interface ReturnRow {
   status: PossibleReturnItem['status'];
   first_seen_at: Date;
   last_seen_at: Date;
-  person_note: string | null;
-  person_note_at: Date | null;
   decided_at: Date | null;
   decision_note: string | null;
   linked_sanction_id: string | null;
@@ -427,12 +397,19 @@ interface ReturnRow {
 const RETURN_SELECT = `
   SELECT p.*, a.username AS a_username, a.created_at AS a_created_at, NOT ${availableSql('a')} AS a_unavailable, a.held_at IS NOT NULL AS a_held,
          b.username AS b_username, b.created_at AS b_created_at, NOT ${availableSql('b')} AS b_unavailable, b.held_at IS NOT NULL AS b_held,
-         s.kind AS ban_kind, s.policy AS ban_policy, s.starts_at AS ban_starts, s.ends_at AS ban_ends, d.username AS decider
+         s.kind AS ban_kind, s.policy AS ban_policy, s.starts_at AS ban_starts, s.ends_at AS ban_ends, d.username AS decider,
+         ap.text AS appeal_text, ap.created_at AS appeal_at
     FROM possible_returns p
     LEFT JOIN users a ON a.id = p.user_id
     LEFT JOIN users b ON b.id = p.banned_user_id
     LEFT JOIN sanctions s ON s.id = p.sanction_id
-    LEFT JOIN users d ON d.id = p.decided_by`;
+    LEFT JOIN users d ON d.id = p.decided_by
+    -- the held person's appeal of their hold, if they made one (sanctions-service.ts HOLD_META, read before that module has run)
+    LEFT JOIN LATERAL (
+      SELECT x.text, x.created_at FROM appeals x JOIN sanctions h ON h.id = x.sanction_id
+       WHERE h.user_id = p.user_id AND h.kind = 'post_mute' AND h.meta->>'hold' = 'possible_return'
+       ORDER BY x.created_at DESC LIMIT 1
+    ) ap ON true`;
 
 function toItem(r: ReturnRow): PossibleReturnItem {
   const person = (id: string | null, username: string | null, created: Date | null, unavailable: boolean | null, held: boolean | null): ReturnPerson | null =>
@@ -456,7 +433,7 @@ function toItem(r: ReturnRow): PossibleReturnItem {
     status: r.status,
     firstSeenAt: r.first_seen_at.toISOString(),
     lastSeenAt: r.last_seen_at.toISOString(),
-    personNote: r.person_note && r.person_note_at ? { text: r.person_note, at: r.person_note_at.toISOString() } : null,
+    personNote: r.appeal_text && r.appeal_at ? { text: r.appeal_text, at: r.appeal_at.toISOString() } : null,
     decision: r.decided_at ? { byUsername: r.decider, at: r.decided_at.toISOString(), note: r.decision_note, linkedSanctionId: r.linked_sanction_id } : null,
   };
 }
@@ -501,7 +478,7 @@ export type ReturnDecision =
 export class PossibleReturnsService {
   constructor(
     private readonly pool: pg.Pool,
-    private readonly opts: ReturnsOptions & { banner?: LinkedBanner } = {},
+    private readonly opts: ReturnsOptions & { banner?: LinkedBanner },
   ) {}
 
   useBanner(banner: LinkedBanner): void {
@@ -626,7 +603,7 @@ export class PossibleReturnsService {
           [entryId, adminId, note.slice(0, 2000)],
         );
         if (!upd.rowCount) throw new AppError('ALREADY_DECIDED', 409, 'this entry was already decided');
-        await liftHoldIfClear(client, entry.user_id);
+        await liftHoldIfClear(client, this.opts.sanctions, entry.user_id, 'a person checked: not the same person');
         await logAdminAction(client, {
           targetUserId: entry.user_id,
           adminId,
@@ -671,7 +648,8 @@ export class PossibleReturnsService {
           WHERE user_id = $1 AND status = 'open'`,
         [entry.user_id],
       );
-      await client.query(`UPDATE users SET held_at = NULL, hold_reason = NULL WHERE id = $1`, [entry.user_id]);
+      // the ban's own notice is the news, so the hold ends without one
+      await this.opts.sanctions.endHold(client, entry.user_id, adminId, 'found to be the same person; the ban takes its place', { notify: false });
       await logAdminAction(client, {
         targetUserId: entry.user_id,
         adminId,
@@ -687,23 +665,6 @@ export class PossibleReturnsService {
   async find(entryId: string): Promise<PossibleReturnItem | null> {
     const r = await this.pool.query<ReturnRow>(`${RETURN_SELECT} WHERE p.id = $1`, [entryId]);
     return r.rows[0] ? toItem(r.rows[0]) : null;
-  }
-
-  /** The held person asks for a person to look, once per hold; their words go on every open entry that holds them. */
-  async requestReview(userId: string, text: string): Promise<{ requested: boolean }> {
-    const clean = text.trim().slice(0, 2000);
-    if (!clean) throw new AppError('TEXT_REQUIRED', 400, 'say what a person should know');
-    const r = await this.pool.query(
-      `UPDATE possible_returns SET person_note = $2, person_note_at = now()
-        WHERE user_id = $1 AND status = 'open' AND strength = 'strong' AND person_note IS NULL`,
-      [userId, clean],
-    );
-    if (!r.rowCount) {
-      const held = await this.pool.query(`SELECT 1 FROM users WHERE id = $1 AND held_at IS NOT NULL`, [userId]);
-      if (!held.rowCount) throw new AppError('NOT_HELD', 409, 'your account is not being checked');
-      throw new AppError('ALREADY_REQUESTED', 409, 'you already asked; a person will look');
-    }
-    return { requested: true };
   }
 
   /**

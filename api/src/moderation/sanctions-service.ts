@@ -309,7 +309,24 @@ export interface SanctionsOptions {
   afterBan?: (userId: string) => Promise<void>;
   /** sends the emailed statement of reasons; without one, nothing is emailed */
   mailer?: BanMailer;
+  /** after a restriction is applied or lifted: the person's apps are told to read their account again */
+  accountChanged?: (userId: string) => Promise<void>;
   log?: { warn: (obj: unknown, msg: string) => void };
+}
+
+/** `sanctions.meta.hold` on the sanction that stands for a hold while a person checks a possible return. */
+export const HOLD_META = 'possible_return';
+
+/**
+ * The statement of reasons of a hold: a person is checking the account, nothing about which signals matched or whose
+ * account it may be.
+ */
+export const HOLD_STATEMENT =
+  'A person is checking your account before you can post, comment, send messages, share pictures, write letters or join groups. Learning works as usual. This is not a finding that you broke a rule.';
+
+/** Whether a sanction row stands for a hold (returns.ts). */
+export function isHoldSanction(row: { meta: Record<string, unknown> | null }): boolean {
+  return row.meta?.hold === HOLD_META;
 }
 
 /**
@@ -469,8 +486,69 @@ export class SanctionsService {
     if (!pending) {
       notice = this.noticeFor(row, input.content ?? null);
       if (input.notify !== false) await this.announce(db, row, notice);
+      if (SANCTION_SCOPE[input.kind] !== null) this.pingAccount(db, input.userId);
     }
     return { sanction: toSanctionView(row), notice, takedown };
+  }
+
+  /** Once the change commits, the person's open apps hear that their account changed and read it again. */
+  private pingAccount(db: Executor, userId: string): void {
+    const ping = this.opts.accountChanged;
+    if (!ping) return;
+    afterCommit(db, async () => {
+      await ping(userId).catch((err) => this.opts.log?.warn({ err }, 'telling the apps an account changed failed'));
+    });
+  }
+
+  /**
+   * Hold an account while a person checks whether it belongs to someone banned (returns.ts), in the caller's
+   * transaction: `users.held_at`, which every posting and messaging route refuses with 403 ACCOUNT_HELD, and a sanction
+   * standing for it, so the person sees the decision in Account standing and can appeal it like any other. It is a post
+   * mute in kind (the nearest there is), with no end and its own statement; standing lists it as limiting messages,
+   * posts and media. Returns the sanction's id; an account already held keeps its hold.
+   */
+  async holdAccount(db: Executor, userId: string, event: string): Promise<string | null> {
+    const held = await db.query<{ id: string }>(
+      `UPDATE users SET held_at = now(), hold_reason = 'possible_return' WHERE id = $1 AND held_at IS NULL RETURNING id`,
+      [userId],
+    );
+    if (!held.rowCount) return null;
+    const out = await this.apply(db, {
+      userId,
+      kind: 'post_mute',
+      policy: 'other',
+      statement: HOLD_STATEMENT,
+      internalNote: `held at ${event}: may be the same person as a banned account`,
+      createdBy: null,
+      origin: 'automatic',
+      notify: false,
+      auditAction: 'possible_return_hold',
+      meta: { hold: HOLD_META, event },
+    });
+    await deliverNotice(db, userId, {
+      title: 'Your account is being checked',
+      body: `${HOLD_STATEMENT}\n\nThink we got it wrong? You can ask for a review from Account standing within six months.`,
+      data: { kind: 'sanction', sanctionId: out.sanction.id, sanction: 'post_mute', policy: 'other', until: null },
+    });
+    return out.sanction.id;
+  }
+
+  /**
+   * End a hold, in the caller's transaction: its sanction lifted (the person told with the usual "lifted" notice unless
+   * `notify` is false, as when a ban takes its place) and `users.held_at` cleared. The caller settles the possible
+   * returns it came from.
+   */
+  async endHold(db: Executor, userId: string, adminId: string | null, reason: string, opts: { notify?: boolean } = {}): Promise<boolean> {
+    const live = await db.query<{ id: string }>(
+      `SELECT id FROM sanctions WHERE user_id = $1 AND kind = 'post_mute' AND revoked_at IS NULL AND meta->>'hold' = $2`,
+      [userId, HOLD_META],
+    );
+    for (const { id } of live.rows) {
+      await this.revoke(db, id, adminId, reason, { notify: opts.notify, auditAction: 'possible_return_cleared', holdSettled: true });
+    }
+    const cleared = await db.query(`UPDATE users SET held_at = NULL, hold_reason = NULL WHERE id = $1 AND held_at IS NOT NULL`, [userId]);
+    if (cleared.rowCount && live.rows.length === 0) this.pingAccount(db, userId);
+    return live.rows.length > 0 || (cleared.rowCount ?? 0) > 0;
   }
 
   /** The statement of reasons for a sanction row, as it is (or would be) sent. */
@@ -543,7 +621,8 @@ export class SanctionsService {
     sanctionId: string,
     adminId: string | null,
     reason: string,
-    opts: { notify?: boolean; auditAction?: string } = {},
+    /** holdSettled: the caller decides the possible returns behind a hold it lifts (`endHold`) */
+    opts: { notify?: boolean; auditAction?: string; holdSettled?: boolean } = {},
   ): Promise<CaseSanctionView> {
     await this.lockOwnerOf(db, sanctionId);
     const found = await db.query<SanctionRow>(`SELECT * FROM sanctions WHERE id = $1 FOR UPDATE`, [sanctionId]);
@@ -567,7 +646,19 @@ export class SanctionsService {
         await unregisterBans(db, [row.id]);
         // content comes back unless another ban in force keeps it down; holds on accounts that may be theirs end
         await settleTakedowns(db, row.user_id);
-        await closeReturnsOf(db, row.user_id);
+        await closeReturnsOf(db, this, row.user_id);
+      }
+      if (isHoldSanction(row)) {
+        await db.query(`UPDATE users SET held_at = NULL, hold_reason = NULL WHERE id = $1`, [row.user_id]);
+        // a moderator lifting the hold itself (on the person's page, or an appeal overturned) decides they are not the
+        // person it was about, so the pair is not flagged again
+        if (adminId !== null && !opts.holdSettled) {
+          await db.query(
+            `UPDATE possible_returns SET status = 'not_same_person', decided_by = $2, decided_at = now(), decision_note = $3
+              WHERE user_id = $1 AND status = 'open'`,
+            [row.user_id, adminId, `the hold was lifted: ${reason.trim().slice(0, 1900)}`],
+          );
+        }
       }
       await logAdminAction(db, {
         targetUserId: row.user_id,
@@ -584,6 +675,7 @@ export class SanctionsService {
       if (wasInForce && SANCTION_SCOPE[row.kind] !== null && opts.notify !== false) {
         await deliverNotice(db, row.user_id, sanctionLiftedNotice(row.id));
       }
+      if (wasInForce && SANCTION_SCOPE[row.kind] !== null) this.pingAccount(db, row.user_id);
     }
     return toSanctionView(updated.rows[0]!);
   }
@@ -819,10 +911,13 @@ export class SanctionsService {
       if (row.kind === 'warning' && row.revoked_at === null && row.acknowledged_at === null) warnings.push(view);
 
       if (inForce && scope !== null) {
-        const current = restrictions[scope];
         const until = row.ends_at?.toISOString() ?? null;
-        // keep the latest end; no end beats any end
-        if (!current || current.until !== null && (until === null || until > current.until)) restrictions[scope] = { until };
+        // a hold limits messages and media as well as posts, until a person decides
+        for (const sc of isHoldSanction(row) ? (['chat', 'post', 'media'] as const) : [scope]) {
+          const current = restrictions[sc];
+          // keep the latest end; no end beats any end
+          if (!current || current.until !== null && (until === null || until > current.until)) restrictions[sc] = { until };
+        }
         const s: StandingStatus = row.kind === 'permanent_ban' ? 'banned' : row.kind === 'suspension' ? 'suspended' : 'limited';
         if (rank[s] > rank[status]) status = s;
       }

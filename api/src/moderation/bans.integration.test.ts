@@ -16,7 +16,6 @@ import { networkHashOf } from '../net/network-key.js';
 import { memoryStorage, seedPictureUpload } from '../test/media.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
 import { befriend } from '../test/social.js';
-import { assessReturn } from './returns.js';
 import { purgeDue, settleTakedowns, takedownsToSettle } from './takedown.js';
 import { inTransaction } from './tx.js';
 
@@ -30,6 +29,7 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
   const kit = moderationKit(() => app, () => pool, 'bn', 163);
   const { call } = kit;
   const emails: Array<{ to: string; template: string; vars: Record<string, string>; locale: string }> = [];
+  const pings: string[] = [];
   let mod: Person;
   let root: Person;
   const created: string[] = [];
@@ -53,6 +53,9 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
         mailer: { send: async () => undefined },
         banEmails: async (to, template, vars, locale) => {
           emails.push({ to, template, vars, locale });
+        },
+        accountChanged: async (userId) => {
+          pings.push(userId);
         },
       },
     });
@@ -247,15 +250,29 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
     const panel = await call('GET', `/admin/users/${bannedId}/possible-matches`, mod.token);
     expect(JSON.stringify(panel.json().items)).toContain(heldId);
 
-    // the held person asks for a person to look, once
-    expect((await call('POST', '/me/hold/review', heldToken, { text: 'This is my sister’s tablet.' })).statusCode).toBe(201);
-    expect((await call('POST', '/me/hold/review', heldToken, { text: 'again' })).statusCode).toBe(409);
+    // the hold is a decision they can read in Account standing, without what matched or whose account, and appeal
+    const standing = (await call('GET', '/me/standing', heldToken)).json();
+    const hold = standing.active.find((x: { kind: string }) => x.kind === 'post_mute');
+    expect(hold).toMatchObject({ policy: 'other', endsAt: null, origin: 'automatic', reviewedByPerson: false, appeal: { allowed: true } });
+    expect(hold.statement).toContain('A person is checking your account');
+    expect(JSON.stringify(standing)).not.toContain(bannedId);
+    expect(standing.restrictions).toEqual({ chat: { until: null }, post: { until: null }, media: { until: null } });
+    const appealed = await call('POST', '/me/appeals', heldToken, { sanctionId: hold.id, text: 'This is my sister’s tablet.' });
+    expect(appealed.statusCode, appealed.body).toBe(201);
+    const withAppeal = await call('GET', '/admin/moderation/possible-returns', mod.token);
+    expect(JSON.stringify(withAppeal.json().items)).toContain('This is my sister’s tablet.');
 
-    // not the same person: the hold ends, and the pair is never flagged again
+    // not the same person: the hold ends, they are told as for any lifted restriction, their apps are pinged, and the
+    // pair is never flagged again
+    pings.length = 0;
     const cleared = await call('POST', `/admin/moderation/possible-returns/${entry!.id}/decide`, mod.token, { decision: 'not_same_person', note: 'siblings' });
     expect(cleared.statusCode, cleared.body).toBe(200);
     expect((await call('GET', '/me', heldToken)).json().user.accountHold).toBeNull();
-    const rechecked = await assessReturn(pool, { userId: heldId, event: 'signin', deviceId: device });
+    expect(pings).toContain(heldId);
+    const lifted = await pool.query(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'kind' = 'sanction_lifted' AND data->>'sanctionId' = $2`, [heldId, hold.id]);
+    expect(lifted.rowCount).toBe(1);
+    expect((await call('GET', '/me/standing', heldToken)).json().restrictions).toEqual({});
+    const rechecked = await app.returns.assess({ userId: heldId, event: 'signin', deviceId: device });
     expect(rechecked.held).toBe(false);
     const audit = await pool.query(`SELECT action FROM admin_actions WHERE target_user_id = $1 ORDER BY created_at`, [heldId]);
     expect(audit.rows.map((r) => r.action)).toEqual(expect.arrayContaining(['possible_return_hold', 'possible_return_cleared']));
@@ -273,7 +290,11 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
     });
     expect(same.statusCode, same.body).toBe(200);
     expect(same.json().entry.status).toBe('same_person');
-    const linked = await one<{ kind: string; meta: { linkedTo?: string } }>(`SELECT kind, meta FROM sanctions WHERE user_id = $1`, [thirdId]);
+    // the hold gives way to the ban, whose own notice is the news
+    expect((await one<{ held_at: Date | null }>(`SELECT held_at FROM users WHERE id = $1`, [thirdId])).held_at).toBeNull();
+    expect((await pool.query(`SELECT 1 FROM sanctions WHERE user_id = $1 AND kind = 'post_mute' AND revoked_at IS NULL`, [thirdId])).rowCount).toBe(0);
+    expect((await pool.query(`SELECT 1 FROM notifications WHERE user_id = $1 AND data->>'sanction' = 'permanent_ban'`, [thirdId])).rowCount).toBe(1);
+    const linked = await one<{ kind: string; meta: { linkedTo?: string } }>(`SELECT kind, meta FROM sanctions WHERE user_id = $1 AND kind <> 'post_mute'`, [thirdId]);
     expect(linked.kind).toBe('permanent_ban');
     expect(linked.meta.linkedTo).toEqual(expect.any(String));
 
@@ -318,7 +339,12 @@ describe.skipIf(!DATABASE_URL)('bans that hold (integration)', () => {
     expect([202, 503]).toContain((await call('POST', '/me/export', appealToken)).statusCode);
     const gone = await call('DELETE', '/me', appealToken);
     expect(gone.statusCode).toBe(200);
-    expect(gone.json().deletionScheduled).toBe(true);
+    expect(gone.json()).toEqual({ deletionScheduled: true, graceDays: 14 });
+    // and can change their mind, though they cannot sign in to cancel it
+    const kept = await call('POST', '/me/deletion/cancel', appealToken);
+    expect(kept.json()).toEqual({ cancelled: true });
+    expect((await one<{ deletion_requested_at: Date | null }>(`SELECT deletion_requested_at FROM users WHERE id = $1`, [who.id])).deletion_requested_at).toBeNull();
+    expect((await call('POST', '/me/deletion/cancel', appealToken)).json()).toEqual({ cancelled: true });
     // deleting keeps the moderation record
     expect((await pool.query(`SELECT 1 FROM sanctions WHERE user_id = $1`, [who.id])).rowCount).toBe(1);
   });

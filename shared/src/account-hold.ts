@@ -25,7 +25,14 @@ export const BAN_CONTENT_CHOICES = ['keep', 'hide', 'remove'] as const;
 export type BanContentChoice = (typeof BAN_CONTENT_CHOICES)[number];
 
 /**
- * The paths a suspension's appeal token may reach besides standing and appeals: a copy of one's data and deleting the
- * account, since those rights do not end with a ban.
+ * The paths a suspension's appeal token may reach besides standing and appeals: a copy of one's data (`GET` its status,
+ * `POST` for a fresh one), deleting the account (`DELETE /me`) and changing one's mind about that, since those rights do
+ * not end with a ban.
  */
-export const APPEAL_TOKEN_EXTRA_PATHS = ['/me/export', '/me'] as const;
+export const APPEAL_TOKEN_EXTRA_PATHS = ['/me/export', '/me', '/me/deletion/cancel'] as const;
+
+/**
+ * The realtime event on a person's own channel when a restriction on their account is given or lifted (a hold among
+ * them): their apps read `GET /me` and their standing again. `{ type: 'account_changed' }`, nothing else.
+ */
+export const ACCOUNT_CHANGED = 'account_changed';

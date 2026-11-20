@@ -482,6 +482,21 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   });
 
   /**
+   * Changing one's mind about deleting the account, within the grace period. Signing in cancels it too, but a suspended
+   * or banned person cannot sign in, so they reach this with their appeal token. Idempotent: `{ cancelled: true }`
+   * whether or not a deletion was waiting.
+   */
+  app.post(
+    '/me/deletion/cancel',
+    { config: { skipValidation: true, rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } } },
+    async (req) => {
+      const caller = await requireAccountCaller(config, req);
+      await gdpr.cancelDeletion(caller.id);
+      return { cancelled: true };
+    },
+  );
+
+  /**
    * Signs out everywhere, ending refresh sessions and live access tokens. `?except=current` keeps this session; the
    * others' access tokens stop at once too, since revoked families' tokens are refused (plugins/auth.ts).
    */
