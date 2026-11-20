@@ -13,6 +13,7 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { IMPOSTOR_CATEGORY_MIN, type ImpostorBoard, type ImpostorState, type MultiView } from '@kurda/shared';
 import { buildApp } from '../app.js';
+import { PLAY_CHANGED_COALESCE_MS } from '../play/events.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
 import { bustAvailability } from '../games/availability.js';
@@ -337,6 +338,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
     it('reads a game in a fixed number of statements', async () => {
       const { id, host } = await table('impostor', 'imbud', 3);
       await call(host, 'GET', `/mp/impostor/${id}`);
+      // The start's lobby-changed message goes out a moment later, on its own; let it pass so only the read is counted.
+      await new Promise((done) => setTimeout(done, PLAY_CHANGED_COALESCE_MS * 4));
       const log = countQueries(app.db);
       try {
         await call(host, 'GET', `/mp/impostor/${id}`);

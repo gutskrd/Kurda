@@ -24,6 +24,7 @@ import {
   type GroupRejoinRequest,
   type GroupRequestState,
   type GroupStanding,
+  type PendingPicture,
   type Role,
 } from '@kurda/shared';
 import { limitReached, lockPersonFor } from '../limits/limits.js';
@@ -773,14 +774,25 @@ export class GroupService {
    * when, and their request's state). Everyone else gets the same 404 as an unknown id. Two statements however many
    * members, since the apps poll it.
    */
-  async get(groupId: string, viewerId: string, publicUrl: PublicUrl = () => null): Promise<GroupDetail> {
+  /**
+   * A group as its viewer may see it. `pendingLink` turns a new photo still being checked into the private link its
+   * owner, admins and whoever put it up are shown; the key is read in the same query, so the page costs nothing more.
+   */
+  async get(
+    groupId: string,
+    viewerId: string,
+    publicUrl: PublicUrl = () => null,
+    pendingLink?: (key: string) => Promise<PendingPicture | null>,
+  ): Promise<GroupDetail & { photoPending?: PendingPicture | null }> {
     const g = await this.pool.query<{
       id: string; name: string; description: string | null; owner_id: string | null; archived_at: Date | null;
-      n: number; photo_key: string | null; my_role: string | null;
+      n: number; photo_key: string | null; my_role: string | null; pending_photo_key: string | null;
       banned: boolean; until: Date | null; reason: string | null; waiting: boolean; request_after: Date | null; requests_closed: boolean | null;
       request_sent_at: Date | null; pending_requests: number | null;
     }>(
       `SELECT g.id, g.name, g.description, g.owner_id, g.archived_at, g.photo_key,
+              CASE WHEN me.role IN ('owner', 'moderator') OR (me.role IS NOT NULL AND g.pending_photo_set_by = $2)
+                   THEN g.pending_photo_key END AS pending_photo_key,
               (SELECT count(*)::int FROM group_members x WHERE x.group_id = g.id) AS n,
               me.role AS my_role,
               b.user_id IS NOT NULL AS banned, b.until, b.reason, b.request_after, b.requests_closed,
@@ -834,6 +846,9 @@ export class GroupService {
       myRole,
       standing: standingOf(myRole, grp),
       ...(canModerateGroup(myRole) ? { pendingRequests: grp.pending_requests ?? 0 } : {}),
+      ...(pendingLink && (canEditGroup(myRole) || grp.pending_photo_key)
+        ? { photoPending: grp.pending_photo_key ? await pendingLink(grp.pending_photo_key) : null }
+        : {}),
     };
   }
 
