@@ -2,20 +2,22 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
   APPEAL_STATUSES,
+  BAN_CONTENT_CHOICES,
   CASE_SOURCES,
   CASE_STATUSES,
   MAX_STATEMENT_LEN,
   REPORT_CATEGORY_KEYS,
   SANCTION_KINDS,
   type CaseSourceGroup,
-  type DecideRequest,
   type ReportPriority,
 } from '@kurda/shared';
 import { requireCapability } from '../admin/routes.js';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppealsService } from './appeals-service.js';
-import type { CasesService } from './cases-service.js';
+import type { CasesService, DecideInput } from './cases-service.js';
+import { RETURNS_PAGE_MAX, type PossibleReturnsService } from './returns.js';
+import { contentSummary, parseContentChoice } from './takedown.js';
 import type { ModerationQueueService, QueueFilters } from './queue-service.js';
 import { logAdminAction, type SanctionsService } from './sanctions-service.js';
 import { inTransaction } from './tx.js';
@@ -26,6 +28,8 @@ const noBody = z.object({}).nullish();
 const reasonBody = z.object({ reason: z.string().trim().min(1).max(2000) });
 const statement = z.string().trim().min(1).max(MAX_STATEMENT_LEN);
 const durationHours = z.number().int().min(1).max(24 * 365).nullable().optional();
+/** What a suspension or ban does to the person's content; Keep when absent. */
+const banContent = z.object({ choice: z.enum(BAN_CONTENT_CHOICES), includeMessages: z.boolean().default(false) }).optional();
 
 const queueQuery = z.object({
   status: z.enum([...CASE_STATUSES, 'open', 'closed', 'all'] as const).optional(),
@@ -59,6 +63,7 @@ const decideBody = z.object({
   // one per permanent ban in the decision, so two bans for good can be confirmed in one go
   confirmUsernames: z.array(z.string().max(60)).max(20).optional(),
   note: z.string().trim().max(4000).optional(),
+  banContent,
 });
 
 const sanctionBody = z.object({
@@ -68,7 +73,29 @@ const sanctionBody = z.object({
   statement,
   internalNote: z.string().trim().max(2000).optional(),
   confirmUsername: z.string().max(60).optional(),
+  content: banContent,
 });
+
+const returnsQuery = z.object({
+  status: z.enum(['open', 'same_person', 'not_same_person', 'closed', 'all']).optional(),
+  cursor: z.string().max(200).optional(),
+  limit: z.coerce.number().int().min(1).max(RETURNS_PAGE_MAX).optional(),
+});
+const panelQuery = z.object({
+  offset: z.coerce.number().int().min(0).max(10_000).optional(),
+  limit: z.coerce.number().int().min(1).max(RETURNS_PAGE_MAX).optional(),
+});
+const returnDecideBody = z.discriminatedUnion('decision', [
+  z.object({ decision: z.literal('not_same_person'), note: z.string().trim().min(1).max(2000) }),
+  z.object({
+    decision: z.literal('same_person'),
+    note: z.string().trim().min(1).max(2000),
+    statement,
+    policy: z.enum(REPORT_CATEGORY_KEYS).optional(),
+    content: banContent,
+    confirmUsername: z.string().max(60).optional(),
+  }),
+]);
 
 const appealDecideBody = z.object({
   outcome: z.enum(['upheld', 'overturned', 'modified']),
@@ -83,9 +110,9 @@ const appealDecideBody = z.object({
  */
 export function registerModerationQueueRoutes(
   app: FastifyInstance,
-  deps: { queue: ModerationQueueService; cases: CasesService; sanctions: SanctionsService; appeals: AppealsService },
+  deps: { queue: ModerationQueueService; cases: CasesService; sanctions: SanctionsService; appeals: AppealsService; returns: PossibleReturnsService },
 ): void {
-  const { queue, cases, sanctions, appeals } = deps;
+  const { queue, cases, sanctions, appeals, returns } = deps;
   const guard = [requireAuth, requireCapability('moderation.act')];
 
   // ---- the queue ---------------------------------------------------------------
@@ -144,7 +171,10 @@ export function registerModerationQueueRoutes(
   /** Decide. With `preview: true`, the exact messages people would get, and no change. */
   app.post('/admin/moderation/cases/:id/decide', { schema: { params: idParam, body: decideBody }, preHandler: guard }, async (req) => {
     const body = req.body as z.infer<typeof decideBody>;
-    return cases.decide((req.params as { id: string }).id, req.user!.id, body as DecideRequest);
+    const { banContent: chosen, ...rest } = body;
+    // the target's shape is the schema's pattern, which its type cannot say
+    const decision = { ...rest, ...(chosen ? { banContent: parseContentChoice(chosen.choice, chosen.includeMessages) } : {}) } as DecideInput;
+    return cases.decide((req.params as { id: string }).id, req.user!.id, decision);
   });
 
   /** The old one-click resolve (kept for the current admin page), now with `remove`. */
@@ -206,7 +236,7 @@ export function registerModerationQueueRoutes(
 
   // ---- sanctions on a person -----------------------------------------------------
 
-  /** Sanction a person directly, under the same rules as a case decision. */
+  /** Sanction a person directly, under the same rules as a case decision; a suspension or ban says what happens to their content. */
   app.post('/admin/users/:id/sanctions', { schema: { params: idParam, body: sanctionBody }, preHandler: guard }, async (req, reply) => {
     const body = req.body as z.infer<typeof sanctionBody>;
     const out = await cases.sanctionUser(req.user!.id, (req.params as { id: string }).id, {
@@ -216,9 +246,45 @@ export function registerModerationQueueRoutes(
       internalNote: body.internalNote ?? null,
       durationHours: body.durationHours ?? null,
       confirmUsername: body.confirmUsername,
+      content: body.content ? parseContentChoice(body.content.choice, body.content.includeMessages) : null,
     });
     return reply.code(201).send(out);
   });
+
+  /** What a ban's content choice would cover for this person now, for the ban dialog's summary. */
+  app.get('/admin/users/:id/content-summary', { schema: { params: idParam }, preHandler: guard }, async (req) => {
+    const { id } = req.params as { id: string };
+    const exists = await app.db.query(`SELECT 1 FROM users WHERE id = $1`, [id]);
+    if (!exists.rowCount) throw new AppError('NOT_FOUND', 404, 'no such user');
+    return { summary: await contentSummary(app.db, id) };
+  });
+
+  // ---- possible returns ---------------------------------------------------------
+
+  /** Accounts that may belong to someone banned, newest first, a page at a time. */
+  app.get('/admin/moderation/possible-returns', { schema: { querystring: returnsQuery }, preHandler: guard }, async (req) => {
+    const q = req.query as z.infer<typeof returnsQuery>;
+    return { ...(await returns.list(q)), counts: await returns.openCount() };
+  });
+
+  /** Same person (the ban is applied to this account too) or not (the hold ends and the pair is never flagged again). */
+  app.post(
+    '/admin/moderation/possible-returns/:id/decide',
+    { schema: { params: idParam, body: returnDecideBody }, preHandler: guard },
+    async (req) => {
+      const body = req.body as z.infer<typeof returnDecideBody>;
+      const input =
+        body.decision === 'same_person'
+          ? { ...body, content: body.content ? parseContentChoice(body.content.choice, body.content.includeMessages) : undefined }
+          : body;
+      return { entry: await returns.decide((req.params as { id: string }).id, req.user!.id, input) };
+    },
+  );
+
+  /** "Possibly the same person as…" on a user page: every entry and shared device or network, a page at a time. */
+  app.get('/admin/users/:id/possible-matches', { schema: { params: idParam, querystring: panelQuery }, preHandler: guard }, async (req) =>
+    returns.panel((req.params as { id: string }).id, req.query as z.infer<typeof panelQuery>),
+  );
 
   app.post('/admin/sanctions/:id/revoke', { schema: { params: idParam, body: reasonBody }, preHandler: guard }, async (req) => {
     const { id } = req.params as { id: string };

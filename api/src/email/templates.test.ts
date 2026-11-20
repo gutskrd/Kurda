@@ -158,6 +158,10 @@ describe('every email, designed', () => {
     statement: 'I made it myself.\nIt was removed by mistake.',
     signature: 'A. Example',
     restoreDate: '26 November 2026',
+    until: '14 December 2026, 18:00 UTC',
+    rule: 'Bullying or harassment',
+    content: 'Your posts, comments, pictures and profile are hidden from everyone until the suspension ends.',
+    review: 'This came from a report by another member, and a person reviewed it.',
   };
   /** The words of an HTML email, as a reader gets them. */
   const words = (html: string): string =>

@@ -33,6 +33,8 @@ const payloadSchema = z.object({
     'new-sign-in',
     'sign-in-attempts',
     'security-alert',
+    'account-suspended',
+    'account-closed',
   ]),
   vars: z.record(z.string(), z.string()).default({}),
   /** Recipient language; English when omitted. */

@@ -18,6 +18,8 @@ import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { setProfilePhoto } from '../media/profilePhoto.js';
 import { assertUnrestricted, requireUnrestricted } from '../moderation/restrictions.js';
+import { requireAccountCaller } from '../moderation/appeal-token.js';
+import { accountHoldOf } from '../moderation/returns.js';
 import { birthDateRequired, isBelowConsentAgeRow, isKnownAdultRow, isMinorRow } from './age.js';
 import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
 import { leaveThisWeek, returnThisWeek } from '../leagues/service.js';
@@ -118,6 +120,9 @@ interface MeRow {
   /** a guest account (auth/guest.ts): learning only, until claimed */
   guest: boolean;
   created_at: Date;
+  /** held while a person checks whether it belongs to someone banned (moderation/returns.ts) */
+  held_at: Date | null;
+  hold_reason: string | null;
 }
 
 function toMe(row: MeRow) {
@@ -151,6 +156,8 @@ function toMe(row: MeRow) {
     skipSpeaking: row.skip_speaking,
     profileVisibility: row.profile_visibility,
     createdAt: new Date(row.created_at).toISOString(),
+    /** null for nearly everyone; set while the account may not post, message, upload, write letters or join groups */
+    accountHold: accountHoldOf(row),
   };
 }
 
@@ -428,21 +435,28 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     },
   );
 
+  /*
+   * The GDPR rights survive a ban: a suspended or banned person reaches these three with the appeal token from sign-in
+   * (moderation/appeal-token.ts), as well as anyone signed in. Deleting keeps moderation records and the ban registry's
+   * entries, which the privacy policy explains.
+   */
+
   /**
    * GDPR: starts the 14-day deletion grace period. A guest is closed at once instead, having no way to sign in again and
    * no address for the notice.
    */
-  app.delete('/me', { preHandler: requireAuth }, async (req) => {
-    if (req.user!.guest === true) {
-      await gdpr.closeNow(req.user!.id, 'guest_left');
+  app.delete('/me', { config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } } }, async (req) => {
+    const caller = await requireAccountCaller(config, req);
+    if (caller.guest) {
+      await gdpr.closeNow(caller.id, 'guest_left');
       return { deletionScheduled: false, deleted: true, graceDays: 0 };
     }
     // An unconfirmed sign-up is closed at once too, since there is nothing to come back to and the address was never shown
     // to be theirs; a guest's unconfirmed claim goes the same way, learning included, because deletion was asked for.
-    if (!req.user!.emailVerified && (await gdpr.endUnconfirmedSignup(req.user!.id, { keepLearning: false })) === 'closed') {
+    if (!caller.emailVerified && (await gdpr.endUnconfirmedSignup(caller.id, { keepLearning: false })) === 'closed') {
       return { deletionScheduled: false, deleted: true, graceDays: 0 };
     }
-    await gdpr.requestDeletion(req.user!.id);
+    await gdpr.requestDeletion(caller.id);
     return { deletionScheduled: true, graceDays: DELETION_GRACE_DAYS };
   });
 
@@ -450,11 +464,11 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   app.post(
     '/me/export',
     {
-      config: { skipValidation: true }, // no body
-      preHandler: requireAuth,
+      config: { skipValidation: true, rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } }, // no body
     },
     async (req, reply) => {
-      const exportId = await gdpr.requestExport(req.user!.id);
+      const caller = await requireAccountCaller(config, req);
+      const exportId = await gdpr.requestExport(caller.id);
       if (app.jobs) {
         await app.jobs.enqueue(makeExportJob(gdpr), { exportId }, { idempotencyKey: `export:${exportId}` });
       }
@@ -462,8 +476,9 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     },
   );
 
-  app.get('/me/export', { preHandler: requireAuth }, async (req) => {
-    return gdpr.exportStatus(req.user!.id);
+  app.get('/me/export', { config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } } }, async (req) => {
+    const caller = await requireAccountCaller(config, req);
+    return gdpr.exportStatus(caller.id);
   });
 
   /**

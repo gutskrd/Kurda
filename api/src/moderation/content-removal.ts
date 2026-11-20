@@ -2,6 +2,7 @@ import { MODERATED_MESSAGE_BODY, type ReportTargetType } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { parseTargetRef, type CaseSourceRow } from './sources.js';
 import { releasePicture } from './picture-release.js';
+import { claimFromTakedown } from './takedown.js';
 import type { Executor } from './tx.js';
 
 /**
@@ -15,6 +16,9 @@ import type { Executor } from './tx.js';
  * postable by others. Only a removal about the picture itself (a picture case, a reported profile or group photo, the
  * CSAM action) blocks its bytes on every kind (`removeMedia`). Putting a picture back makes it public again
  * (picture-release.ts), rather than restoring whatever hold it was under.
+ *
+ * Content a ban's takedown is holding (takedown.ts) is taken over by the removal with the state it had before the ban,
+ * so lifting the ban does not bring back what a case removed, and overturning the case does.
  */
 
 /** What a removal changed: enough to undo it. Stored on the case as `removed_content`. */
@@ -157,7 +161,8 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
     case 'image_post': {
       const table = target.type === 'library_post' ? 'library_posts' : 'image_posts';
       const r = await db.query<{ status: string }>(`SELECT status FROM ${table} WHERE id = $1::uuid FOR UPDATE`, [target.id]);
-      const previousStatus = r.rows[0]?.status ?? 'removed';
+      const held = await claimFromTakedown(db, target.type, target.id);
+      const previousStatus = typeof held?.status === 'string' ? held.status : (r.rows[0]?.status ?? 'removed');
       await db.query(`UPDATE ${table} SET status = 'removed', updated_at = now() WHERE id = $1::uuid`, [target.id]);
       const withdrawn = await withdrawPictures(db, await picturesOfPost(db, target.type, target.id));
       return { type: target.type, id: target.id, previousStatus, ...(withdrawn.length > 0 ? { withdrawn } : {}) };
@@ -173,6 +178,18 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
       );
       const row = r.rows[0];
       if (!row) throw new AppError('NOTHING_TO_REMOVE', 422, 'that comment no longer exists');
+      const held = await claimFromTakedown(db, target.type, target.id);
+      if (held) {
+        // already a tombstone, and already counted out of its post, by a ban's takedown
+        return {
+          type: target.type,
+          id: target.id,
+          postId: row.post_id,
+          previousStatus: 'visible',
+          previousBody: typeof held.body === 'string' ? held.body : null,
+          previousAudio: typeof held.audio === 'string' ? held.audio : null,
+        };
+      }
       if (row.status === 'visible') {
         const clearAudio = target.type === 'library_comment' ? ', audio_media_id = NULL' : '';
         await db.query(`UPDATE ${table} SET status = 'removed', body = NULL${clearAudio}, updated_at = now() WHERE id = $1::uuid`, [target.id]);
@@ -197,6 +214,8 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
       const row = r.rows[0];
       // a message erased with its sender's account is already gone; the snapshot has it
       if (!row) return { type: target.type, id: target.id, previousBody: null, kind: 'text' };
+      const held = await claimFromTakedown(db, target.type, target.id);
+      if (held) return { type: target.type, id: target.id, previousBody: typeof held.body === 'string' ? held.body : null, kind: row.kind };
       if (row.moderated_at === null) {
         // a gift or game card has no words to hide; it is marked, not rewritten
         await db.query(
@@ -210,8 +229,9 @@ export async function removeContent(db: Executor, c: CaseSourceRow, adminId: str
     }
     case 'letter': {
       const r = await db.query<{ status: string }>(`SELECT status FROM letters WHERE id = $1::uuid FOR UPDATE`, [target.id]);
+      const held = await claimFromTakedown(db, 'letter', target.id);
       // a letter erased with its writer's account is already gone; the snapshot has it
-      const previousStatus = r.rows[0]?.status ?? 'removed';
+      const previousStatus = typeof held?.status === 'string' ? held.status : (r.rows[0]?.status ?? 'removed');
       await db.query(`UPDATE letters SET status = 'removed' WHERE id = $1::uuid AND status <> 'removed'`, [target.id]);
       return { type: 'letter', id: target.id, previousStatus };
     }

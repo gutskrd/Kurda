@@ -31,6 +31,7 @@ import {
 } from '@kurda/shared';
 import { utcOffsetMinutes } from './league-logic.js';
 import { notKnownAdultSql, shownToSql } from '../users/age.js';
+import { availableSql } from '../moderation/availability.js';
 import { countedXpSql, isLearningSource } from '../xp/rules.js';
 import type { AwardedXp } from '../xp/service.js';
 import type { Notification } from '../push/service.js';
@@ -42,8 +43,9 @@ type Executor = Pick<pg.Pool, 'query'>;
  * and out for others. Derived from age at each ask, so a minor who never chose joins at 18.
  */
 export function inLeaguesSql(alias: string): string {
-  // Never a guest: a league table lists people, and a guest may not be on it whatever the setting.
-  return `(COALESCE(${alias}.leagues_enabled, NOT ${notKnownAdultSql(alias)}) AND NOT ${alias}.guest)`;
+  // Never a guest: a league table lists people, and a guest may not be on it whatever the setting; nor anyone suspended
+  // or banned, while it lasts (moderation/availability.ts).
+  return `(COALESCE(${alias}.leagues_enabled, NOT ${notKnownAdultSql(alias)}) AND NOT ${alias}.guest AND ${availableSql(alias)})`;
 }
 
 /**

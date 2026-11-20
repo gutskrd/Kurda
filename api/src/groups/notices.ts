@@ -5,7 +5,13 @@ import type { Notification } from '../push/service.js';
  * The notifications and pushes a group sends, in the social category. English here for the list and push; the
  * apps write their own words from `data`, whose `kind` says what happened and `groupId` which group to open.
  */
-export type GroupNoticeKind = 'group_removed' | 'group_banned' | 'group_request' | 'group_request_approved' | 'group_request_declined';
+export type GroupNoticeKind =
+  | 'group_removed'
+  | 'group_banned'
+  | 'group_request'
+  | 'group_request_approved'
+  | 'group_request_declined'
+  | 'group_owner_changed';
 
 /** Pushes a line already written to someone's notifications (jobs/push-jobs.ts `pushRecorded`). */
 export type PushNotice = (userId: string, notification: Notification) => Promise<void>;
@@ -60,4 +66,9 @@ export function declinedNotice(group: NoticeGroup, next: Date | null): Notificat
   const first = `Your request to rejoin ${group.name} wasn't accepted.`;
   const body = next ? `${first} You can ask again on ${day(next)}.` : `${first} The admins aren't taking requests from you for this group.`;
   return notice('group_request_declined', group, 'Request not accepted', body, next ? { until: next.toISOString() } : { closed: 'true' });
+}
+
+/** To the member a group passed to because its owner's account was suspended or banned. */
+export function ownerChangedNotice(group: NoticeGroup): Notification {
+  return notice('group_owner_changed', group, 'You now own a group', `${group.name} is yours to look after now: its owner’s account isn’t available.`);
 }

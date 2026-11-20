@@ -6,6 +6,7 @@ import {
   sanctionHasDuration,
   type AccountStanding,
   type AppealStatus,
+  type BanContentChoice,
   type AppealView,
   type CaseSanctionView,
   type ReportCategory,
@@ -16,9 +17,15 @@ import {
   type StandingStatus,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { handOverOwnedGroups } from '../groups/service.js';
+import type { MediaStorage } from '../media/storage.js';
+import { collectSignals, registerBan, unregisterBans } from './ban-registry.js';
 import { SAFETY_CATEGORY, sanctionLiftedNotice, sanctionNotice, type Notice } from './notices.js';
-import { emailRegistryHash, userHash } from './pseudonym.js';
-import { inTransaction, type Executor } from './tx.js';
+import { runHoldMoves } from './picture-release.js';
+import { userHash } from './pseudonym.js';
+import { closeReturnsOf } from './returns.js';
+import { settleTakedowns, takeDown, type TakedownCounts } from './takedown.js';
+import { afterCommit, inTransaction, type Executor } from './tx.js';
 
 /**
  * Sanctions: applying, lifting, enforcing and explaining them.
@@ -28,7 +35,13 @@ import { inTransaction, type Executor } from './tx.js';
  * is never recorded without enforcement, nor lifted while the account stays locked.
  *
  * Each sanction also writes an `admin_actions` row (case, rule, what the person was told, enforced state before and
- * after) and, unless awaiting a second admin, an inbox notice with the statement of reasons (notices.ts).
+ * after) and, unless awaiting a second admin, an inbox notice with the statement of reasons (notices.ts), which a
+ * suspension or ban also emails, since a locked-out person cannot open the inbox (`sendNoticeEmails`).
+ *
+ * Every suspension and ban goes through `apply`, wherever it was decided: its signals go on the ban registry
+ * (ban-registry.ts) before its sessions end, the content choice is carried out (takedown.ts), groups they own pass to
+ * the next admin, and their games end once it commits. `revoke` undoes each: signals off the registry, content back,
+ * holds on possible returns of the person lifted.
  *
  * Every change to one person's sanctions first locks their `users` row (`lockPerson`), so concurrent changes run in
  * sequence; otherwise the second re-derivation would read stale sanctions and overwrite the first (a suspension
@@ -81,11 +94,25 @@ export interface ApplySanctionInput {
   /** override the `admin_actions.action` (the spam engine logs `auto_mute`) */
   auditAction?: string;
   meta?: Record<string, unknown>;
+  /** a suspension or ban: what happens to their content (absent: kept, and the notice does not say) */
+  content?: { choice: BanContentChoice; includeMessages: boolean } | null;
 }
 
 export interface AppliedSanction {
   sanction: CaseSanctionView;
   notice: Notice | null;
+  /** what the content choice took down, when it took anything */
+  takedown: TakedownCounts | null;
+}
+
+/** Whether a kind locks a person out of the account. */
+export function isBanKind(kind: SanctionKind): boolean {
+  return kind === 'suspension' || kind === 'permanent_ban';
+}
+
+/** Sends the emailed statement of reasons (wire.ts: through the job queue). */
+export interface BanMailer {
+  send(sanctionId: string): Promise<'sent' | 'skipped'>;
 }
 
 export interface SanctionRow {
@@ -241,19 +268,23 @@ export async function activeRestriction(
   db: Executor,
   userId: string,
   scope: Exclude<RestrictionScope, 'account'>,
-): Promise<{ until: Date | null } | null> {
-  const r = await db.query<{ column_until: Date | null; column_forever: boolean; forever: boolean | null; until: Date | null }>(
+  opts: { withHold?: boolean } = {},
+): Promise<{ until: Date | null; held?: boolean } | null> {
+  const r = await db.query<{ column_until: Date | null; column_forever: boolean; forever: boolean | null; until: Date | null; held: boolean }>(
     `SELECT CASE WHEN $3 AND u.muted_until > now() AND u.muted_until <> 'infinity' THEN u.muted_until END AS column_until,
             COALESCE($3 AND u.muted_until = 'infinity', false) AS column_forever,
             (SELECT bool_or(s.ends_at IS NULL) FROM sanctions s
               WHERE s.user_id = u.id AND s.kind = ANY($2::text[]) AND ${IN_FORCE_SQL}) AS forever,
             (SELECT max(s.ends_at) FROM sanctions s
-              WHERE s.user_id = u.id AND s.kind = ANY($2::text[]) AND ${IN_FORCE_SQL}) AS until
+              WHERE s.user_id = u.id AND s.kind = ANY($2::text[]) AND ${IN_FORCE_SQL}) AS until,
+            u.held_at IS NOT NULL AS held
        FROM users u WHERE u.id = $1`,
     [userId, KINDS_FOR_SCOPE[scope], scope === 'chat'],
   );
   const row = r.rows[0];
   if (!row) return null;
+  // a hold (moderation/returns.ts) is read in the same statement, for the checks that refuse a held account too
+  if (opts.withHold && row.held) return { until: null, held: true };
   if (row.column_forever || row.forever) return { until: null };
   const ends = [row.column_until, row.until].filter((d): d is Date => d !== null);
   if (ends.length === 0) return null;
@@ -272,6 +303,13 @@ export function mutedError(scope: Exclude<RestrictionScope, 'account'>, until: D
 export interface SanctionsOptions {
   /** how many admins can moderate (the second-approval rule); a test seam */
   moderatorCount?: () => Promise<number>;
+  /** the bucket a Remove takes pictures off, found when needed */
+  storage?: () => MediaStorage | null | undefined;
+  /** after a ban commits: end the person's games (wire.ts gives the game services) */
+  afterBan?: (userId: string) => Promise<void>;
+  /** sends the emailed statement of reasons; without one, nothing is emailed */
+  mailer?: BanMailer;
+  log?: { warn: (obj: unknown, msg: string) => void };
 }
 
 /**
@@ -301,7 +339,7 @@ export class SanctionsService {
 
   constructor(
     private readonly pool: pg.Pool,
-    opts: SanctionsOptions = {},
+    private readonly opts: SanctionsOptions = {},
   ) {
     this.countFn = opts.moderatorCount ?? (() => countModerators(this.pool));
   }
@@ -329,6 +367,11 @@ export class SanctionsService {
       throw new AppError('DURATION_REQUIRED', 400, 'a suspension needs an end; use a permanent ban for none');
     }
 
+    const ban = isBanKind(input.kind);
+    if (input.content && input.content.choice !== 'keep' && !ban) {
+      throw new AppError('CONTENT_CHOICE_CONFLICT', 422, 'only a suspension or ban takes content down');
+    }
+
     // nobody sanctions themselves, by any route
     if (input.createdBy !== null && input.createdBy === input.userId) {
       throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot sanction yourself');
@@ -338,6 +381,8 @@ export class SanctionsService {
     if (!before) throw new AppError('NOT_FOUND', 404, 'no such user');
 
     const pending = input.pendingApproval === true;
+    // read before the sessions end, which takes the push tokens with them
+    const signals = ban ? await collectSignals(db, input.userId) : [];
     const inserted = await db.query<SanctionRow>(
       `INSERT INTO sanctions (user_id, user_hash, kind, policy, statement, internal_note, ends_at, case_id, origin,
                               created_by, approved_by, approved_at, pending_approval, single_approved, zero_tolerance, meta)
@@ -367,9 +412,36 @@ export class SanctionsService {
     );
     const row = inserted.rows[0]!;
 
+    // a waiting ban registers too: the person is suspended meanwhile, and the signals stand until it is decided
+    if (ban) await registerBan(db, { sanctionId: row.id, userId: input.userId, endsAt }, signals);
     if (!pending && SANCTION_SCOPE[input.kind] === 'account') await this.endSessions(db, input.userId);
     await this.syncEnforcedColumns(db, input.userId);
-    if (!pending && input.kind === 'permanent_ban') await this.registerBannedEmail(db, input.userId, row.id);
+
+    let takedown: TakedownCounts | null = null;
+    if (ban && input.content && input.content.choice !== 'keep') {
+      const taken = await takeDown(db, {
+        sanctionId: row.id,
+        userId: input.userId,
+        choice: input.content.choice,
+        includeMessages: input.content.includeMessages,
+        adminId: input.createdBy,
+      });
+      takedown = taken.counts;
+      if (taken.withdrawn.length > 0) {
+        const keys = taken.withdrawn;
+        afterCommit(db, async () => {
+          await runHoldMoves(this.pool, this.opts.storage?.(), { keys, log: this.opts.log });
+        });
+      }
+    }
+    if (ban && !pending) {
+      // whoever is next keeps a group running; the new owner is told
+      await handOverOwnedGroups(db, input.userId);
+      const userId = input.userId;
+      afterCommit(db, async () => {
+        await this.opts.afterBan?.(userId).catch((err) => this.opts.log?.warn({ err }, 'ending a banned person’s games failed'));
+      });
+    }
 
     const after = await enforcedState(db, input.userId);
     await logAdminAction(db, {
@@ -383,19 +455,29 @@ export class SanctionsService {
       statement,
       before,
       after,
-      meta: { kind: input.kind, endsAt: endsAt?.toISOString() ?? null, pendingApproval: pending },
+      meta: {
+        kind: input.kind,
+        endsAt: endsAt?.toISOString() ?? null,
+        pendingApproval: pending,
+        ...(ban && input.content ? { content: input.content.choice, includeMessages: input.content.includeMessages } : {}),
+        ...(takedown ? { takedown } : {}),
+        ...(ban ? { signals: signals.length } : {}),
+      },
     });
 
     let notice: Notice | null = null;
     if (!pending) {
-      notice = this.noticeFor(row);
-      if (input.notify !== false) await deliverNotice(db, input.userId, notice);
+      notice = this.noticeFor(row, input.content ?? null);
+      if (input.notify !== false) await this.announce(db, row, notice);
     }
-    return { sanction: toSanctionView(row), notice };
+    return { sanction: toSanctionView(row), notice, takedown };
   }
 
   /** The statement of reasons for a sanction row, as it is (or would be) sent. */
-  noticeFor(row: Pick<SanctionRow, 'id' | 'kind' | 'policy' | 'statement' | 'ends_at' | 'origin' | 'created_by'>): Notice {
+  noticeFor(
+    row: Pick<SanctionRow, 'id' | 'kind' | 'policy' | 'statement' | 'ends_at' | 'origin' | 'created_by'>,
+    content: { choice: BanContentChoice; includeMessages: boolean } | null = null,
+  ): Notice {
     return sanctionNotice({
       sanctionId: row.id,
       kind: row.kind,
@@ -404,7 +486,52 @@ export class SanctionsService {
       endsAt: row.ends_at,
       origin: row.origin,
       reviewedByPerson: row.created_by !== null,
+      content,
     });
+  }
+
+  /**
+   * Tell the person: the inbox notice, and for a suspension or ban the same statement of reasons by email, sent from
+   * an outbox once the decision commits (or by the sweep, if that send fails), so it goes once.
+   */
+  async announce(db: Executor, row: Pick<SanctionRow, 'id' | 'kind' | 'user_id'>, notice: Notice): Promise<void> {
+    if (!row.user_id) return;
+    await deliverNotice(db, row.user_id, notice);
+    if (!isBanKind(row.kind)) return;
+    await db.query(`UPDATE sanctions SET notice_email_state = 'pending' WHERE id = $1`, [row.id]);
+    const id = row.id;
+    afterCommit(db, async () => {
+      await this.sendNoticeEmails([id]);
+    });
+  }
+
+  /**
+   * Send the emailed statements of reasons waiting in the outbox (the named ones, or any the sweep finds). Each is
+   * claimed before it is sent, so two instances never send one twice; a failed send goes back to wait.
+   */
+  async sendNoticeEmails(ids: string[] | null = null, limit = 50): Promise<number> {
+    const mailer = this.opts.mailer;
+    if (!mailer) return 0;
+    const claimed = await this.pool.query<{ id: string }>(
+      `UPDATE sanctions SET notice_email_state = 'sent', notice_emailed_at = now()
+        WHERE id IN (SELECT id FROM sanctions
+                      WHERE notice_email_state = 'pending' AND ($1::uuid[] IS NULL OR id = ANY($1::uuid[]))
+                      ORDER BY created_at LIMIT $2 FOR UPDATE SKIP LOCKED)
+        RETURNING id`,
+      [ids, limit],
+    );
+    let sent = 0;
+    for (const { id } of claimed.rows) {
+      try {
+        const outcome = await mailer.send(id);
+        if (outcome === 'skipped') await this.pool.query(`UPDATE sanctions SET notice_email_state = 'skipped' WHERE id = $1`, [id]);
+        else sent++;
+      } catch (err) {
+        this.opts.log?.warn({ err, sanctionId: id }, 'emailing a statement of reasons failed; the sweep will retry');
+        await this.pool.query(`UPDATE sanctions SET notice_email_state = 'pending', notice_emailed_at = NULL WHERE id = $1`, [id]);
+      }
+    }
+    return sent;
   }
 
   /**
@@ -436,7 +563,12 @@ export class SanctionsService {
     );
     if (row.user_id) {
       await this.syncEnforcedColumns(db, row.user_id);
-      if (row.kind === 'permanent_ban') await this.unregisterBannedEmail(db, row.user_id);
+      if (isBanKind(row.kind)) {
+        await unregisterBans(db, [row.id]);
+        // content comes back unless another ban in force keeps it down; holds on accounts that may be theirs end
+        await settleTakedowns(db, row.user_id);
+        await closeReturnsOf(db, row.user_id);
+      }
       await logAdminAction(db, {
         targetUserId: row.user_id,
         adminId,
@@ -561,93 +693,37 @@ export class SanctionsService {
     return res.rowCount ?? 0;
   }
 
-  /** Put a permanently banned account's address on the registry signup checks. */
-  async registerBannedEmail(db: Executor, userId: string, sanctionId: string): Promise<void> {
-    const u = await db.query<{ email: string | null }>(`SELECT email FROM users WHERE id = $1`, [userId]);
-    // a guest has no address to register; the device caps are what stand in its way
-    if (!u.rows[0] || u.rows[0].email === null) return;
-    await db.query(
-      `INSERT INTO ban_registry (kind, value_hash, sanction_id) VALUES ('email', $1, $2)
-       ON CONFLICT (kind, value_hash) DO UPDATE SET sanction_id = EXCLUDED.sanction_id`,
-      [emailRegistryHash(u.rows[0].email), sanctionId],
-    );
+  /** Put a ban's signals on the registry again (a confirmed ban refreshes what its waiting one registered). */
+  async registerSignals(db: Executor, userId: string, sanctionId: string, endsAt: Date | null): Promise<void> {
+    await registerBan(db, { sanctionId, userId, endsAt });
   }
 
   /**
-   * Remove the address from the registry once no permanent ban remains, matching by ban ids as well as address, since a
-   * closed account's email is anonymised by then.
-   *
-   * Not when another permanently banned account has the same normalised address (a `+tag` or dots variant shares one
-   * entry); the entry then stays, pointing at that ban.
+   * Register every ban in force that the registry has nothing for: the ones carried over from the old columns, and any
+   * written before every signal was registered. Runs with the retention sweep (after start, then daily) and is a no-op
+   * once complete. Returns how many bans it registered.
    */
-  private async unregisterBannedEmail(db: Executor, userId: string): Promise<void> {
-    const stillBanned = await db.query(
-      `SELECT 1 FROM sanctions s WHERE s.user_id = $1 AND s.kind = 'permanent_ban' AND ${IN_FORCE_SQL}`,
-      [userId],
+  async backfillBanRegistry(limit = 200): Promise<number> {
+    const due = await this.pool.query<{ id: string; user_id: string; ends_at: Date | null }>(
+      `SELECT s.id, s.user_id, s.ends_at FROM sanctions s
+        WHERE s.kind IN ('suspension','permanent_ban') AND s.user_id IS NOT NULL AND s.revoked_at IS NULL
+          AND (s.ends_at IS NULL OR s.ends_at > now())
+          AND NOT EXISTS (SELECT 1 FROM ban_registry r WHERE r.sanction_id = s.id)
+        ORDER BY s.created_at
+        LIMIT $1`,
+      [limit],
     );
-    if (stillBanned.rowCount) return;
-    const u = await db.query<{ email: string | null }>(`SELECT email FROM users WHERE id = $1`, [userId]);
-    const address = u.rows[0]?.email ?? null;
-    const entries = await db.query<{ value_hash: string }>(
-      `SELECT value_hash FROM ban_registry
-        WHERE kind = 'email'
-          AND (value_hash = $2 OR sanction_id IN (SELECT id FROM sanctions WHERE user_id = $1 AND kind = 'permanent_ban'))`,
-      [userId, address === null ? null : emailRegistryHash(address)],
-    );
-    if (entries.rows.length === 0) return;
-    // the hashes are keyed, so the comparison is made here; unbanning is rare
-    const others = await db.query<{ id: string; email: string }>(
-      `SELECT DISTINCT ON (s.user_id) s.id, u.email
-         FROM sanctions s JOIN users u ON u.id = s.user_id
-        WHERE s.kind = 'permanent_ban' AND ${IN_FORCE_SQL} AND s.user_id <> $1 AND u.email IS NOT NULL
-        ORDER BY s.user_id, s.created_at`,
-      [userId],
-    );
-    const heldBy = new Map<string, string>();
-    for (const o of others.rows) {
-      const hash = emailRegistryHash(o.email);
-      if (!heldBy.has(hash)) heldBy.set(hash, o.id);
+    let n = 0;
+    for (const s of due.rows) {
+      // each still in force when it is written: an unban may have come in between
+      const written = await inTransaction(this.pool, async (client) => {
+        await this.lockPerson(client, s.user_id);
+        const live = await client.query(`SELECT 1 FROM sanctions WHERE id = $1 AND revoked_at IS NULL`, [s.id]);
+        return live.rowCount ? registerBan(client, { sanctionId: s.id, userId: s.user_id, endsAt: s.ends_at }) : 0;
+      });
+      if (written > 0) n++;
     }
-    for (const { value_hash } of entries.rows) {
-      const other = heldBy.get(value_hash);
-      if (other) {
-        await db.query(`UPDATE ban_registry SET sanction_id = $2 WHERE kind = 'email' AND value_hash = $1`, [value_hash, other]);
-      } else {
-        await db.query(`DELETE FROM ban_registry WHERE kind = 'email' AND value_hash = $1`, [value_hash]);
-      }
-    }
-  }
-
-  /**
-   * Add every permanent ban in force that the registry lacks. The migration that moved old column bans into sanctions
-   * could not (the hash needs the server key), which let those people sign up again with a `+tag`. Runs with the
-   * retention sweep (after start, then daily) and is a no-op once complete. Returns how many entries it added.
-   */
-  async backfillBanRegistry(): Promise<number> {
-    const due = await this.pool.query<{ sanction_id: string; email: string }>(
-      `SELECT DISTINCT ON (s.user_id) s.id AS sanction_id, u.email
-         FROM sanctions s JOIN users u ON u.id = s.user_id
-        WHERE s.kind = 'permanent_ban' AND ${IN_FORCE_SQL}
-          AND u.email IS NOT NULL AND u.email NOT LIKE '%@deleted.kurda.app'
-          AND NOT EXISTS (SELECT 1 FROM ban_registry r JOIN sanctions mine ON mine.id = r.sanction_id
-                           WHERE r.kind = 'email' AND mine.user_id = s.user_id)
-        ORDER BY s.user_id, s.created_at
-        LIMIT 1000`,
-    );
-    if (due.rows.length === 0) return 0;
-    // every entry in one statement, each still in force at the moment it is
-    // written (an unban may have come in between); two bans whose addresses
-    // hash alike take one entry, the first in the order above
-    const r = await this.pool.query(
-      `INSERT INTO ban_registry (kind, value_hash, sanction_id)
-       SELECT 'email', v.value_hash, v.sanction_id
-         FROM unnest($1::text[], $2::uuid[]) WITH ORDINALITY AS v(value_hash, sanction_id, n)
-        WHERE EXISTS (SELECT 1 FROM sanctions s WHERE s.id = v.sanction_id AND ${IN_FORCE_SQL})
-        ORDER BY v.n
-       ON CONFLICT (kind, value_hash) DO NOTHING`,
-      [due.rows.map((row) => emailRegistryHash(row.email)), due.rows.map((row) => row.sanction_id)],
-    );
-    return r.rowCount ?? 0;
+    return n;
   }
 
   /** The person exists, and is locked for the change that follows. */

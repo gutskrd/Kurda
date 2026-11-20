@@ -7,6 +7,8 @@ import { EmailService } from '../email/service.js';
 import { sendEmailJob } from '../jobs/email.js';
 import { ModerationAlerts, type ModerationMailer } from './alerts.js';
 import { AppealsService } from './appeals-service.js';
+import { banMailer } from './ban-email.js';
+import { pruneRegistry, rekeyRegistry } from './ban-registry.js';
 import { CasesService } from './cases-service.js';
 import { ImageModerationService } from './image-moderation-service.js';
 import type { ImageScanner } from './image-scanner.js';
@@ -18,7 +20,11 @@ import { ModerationQueueService } from './queue-service.js';
 import { registerModerationQueueRoutes } from './queue-routes.js';
 import { registerReportRoutes } from './report-routes.js';
 import { ReportsService } from './reports-service.js';
+import { PossibleReturnsService } from './returns.js';
 import { SanctionsService } from './sanctions-service.js';
+import { purgeDue, settleTakedowns, takedownsToSettle } from './takedown.js';
+import { inTransaction } from './tx.js';
+import { isTrustedNetwork, registerTrustedNetworkRoutes, TrustedNetworksService } from '../net/trusted-networks.js';
 
 /** Test seams: how many moderators there are, where urgent emails go, and the picture checker (null for none). */
 export interface ModerationOptions {
@@ -37,12 +43,15 @@ export interface ModerationKit {
   appeals: AppealsService;
   alerts: ModerationAlerts;
   pictures: PictureReviewService;
+  returns: PossibleReturnsService;
 }
 
 declare module 'fastify' {
   interface FastifyInstance {
     /** Every picture upload goes through it (pictures-service.ts); present when DATABASE_URL is configured. */
     pictures: PictureReviewService;
+    /** Checks accounts against banned ones at sign-up and sign-in (returns.ts); present when DATABASE_URL is configured. */
+    returns: PossibleReturnsService;
   }
 }
 
@@ -72,7 +81,26 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
     },
   };
   const alerts = new ModerationAlerts(app.db, mailer, config.ADMIN_BASE_URL);
-  const sanctions = new SanctionsService(app.db, { moderatorCount: options.moderatorCount });
+  // the bucket is looked up when needed, since a test gives the app its bucket after it is built
+  const storage = () => (app.hasDecorator('storage') ? app.storage : undefined);
+  const sanctions = new SanctionsService(app.db, {
+    moderatorCount: options.moderatorCount,
+    storage,
+    log: app.log,
+    // a banned person leaves the games they are in, as a closed account does (gdpr/service.ts)
+    afterBan: async (userId) => {
+      if (app.hasDecorator('storyGames')) await app.storyGames.leaveAll(userId);
+      if (app.hasDecorator('multiplayer')) await app.multiplayer.leaveAll(userId);
+    },
+    mailer: banMailer(
+      app.db,
+      async (to, template, vars, locale) => {
+        if (app.jobs) await app.jobs.enqueue(sendEmailJob, { to, template, vars, locale });
+        else await new EmailService(app.db, createEmailProvider(config, app.log)).send(to, template, vars, locale);
+      },
+      config.APP_BASE_URL,
+    ),
+  });
   // What the picture checks cost: every call by its outcome, and its tokens, so the owner can see the spend.
   const registers = options.registry ? [options.registry] : [];
   const checkCalls = new Counter({ name: 'picture_checks_total', help: 'Automatic picture checks by outcome', labelNames: ['outcome'], registers });
@@ -96,8 +124,6 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
     },
     log: app.log,
   });
-  // the bucket is looked up when needed, since a test gives the app its bucket after it is built
-  const storage = () => (app.hasDecorator('storage') ? app.storage : undefined);
   const pictures = new PictureReviewService(app.db, {
     checks,
     storage,
@@ -118,10 +144,31 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
   pictures.useCases(cases);
   const queue = new ModerationQueueService(app.db, { cases, sanctions, log: app.log });
   const appeals = new AppealsService(app.db, sanctions, cases);
+  const returns = new PossibleReturnsService(app.db, {
+    isTrusted: isTrustedNetwork,
+    log: app.log,
+    // "Same person" bans the account under the user page's rules (second admin, typed username)
+    banner: async (adminId, userId, input) => {
+      const out = await cases.sanctionUser(adminId, userId, input, { auditAction: 'linked_ban' });
+      return { sanctionIds: out.sanctions.map((s) => s.id), pendingApproval: out.pendingApproval };
+    },
+  });
+  app.decorate('returns', returns);
 
-  registerReportRoutes(app, config, { reports, sanctions, appeals, pictures });
-  registerModerationQueueRoutes(app, { queue, cases, sanctions, appeals });
+  registerReportRoutes(app, config, { reports, sanctions, appeals, pictures, returns });
+  registerModerationQueueRoutes(app, { queue, cases, sanctions, appeals, returns });
   registerPictureRoutes(app, { pictures, cases });
+  registerTrustedNetworkRoutes(app, new TrustedNetworksService(app.db));
+
+  /** Takedowns whose ban was lifted or whose Hide suspension ended come back, one person at a time. */
+  const settleEnded = async () => {
+    for (const userId of await takedownsToSettle(app.db)) {
+      await inTransaction(app.db, async (client) => {
+        await sanctions.lockPerson(client, userId);
+        await settleTakedowns(client, userId);
+      });
+    }
+  };
 
   let sweeps = 0;
   const sweep = setInterval(() => {
@@ -129,6 +176,9 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
       await queue.sync().catch((err) => app.log.warn({ err }, 'moderation sync failed'));
       await cases.expireApprovals().catch((err) => app.log.warn({ err }, 'expiring unconfirmed bans failed'));
       await alerts.sendMissed().catch((err) => app.log.warn({ err }, 'sending missed urgent alerts failed'));
+      // statements of reasons whose first send failed, and content an ended suspension gives back
+      await sanctions.sendNoticeEmails().catch((err) => app.log.warn({ err }, 'emailing statements of reasons failed'));
+      await settleEnded().catch((err) => app.log.warn({ err }, 'putting back content of ended bans failed'));
       await runQuarantine(app.db, storage(), { log: app.log });
       await pictures.sweep().catch((err) => app.log.warn({ err }, 'picture publishing sweep failed'));
       // every other sweep (ten minutes): pictures held only because the checker was down are checked again
@@ -143,8 +193,15 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
       await queue.pruneEvidence().catch((err) => app.log.warn({ err }, 'evidence retention sweep failed'));
       // refused pictures nobody asked about go once the window to ask and appeal has passed
       await pictures.expireRefused().catch((err) => app.log.warn({ err }, 'refused picture retention sweep failed'));
-      // and any permanent ban the registry is missing (the ones carried over from the old columns)
+      // and any ban the registry is missing (the ones carried over from the old columns), rows of ended ones, and
+      // rows written under an older key, re-keyed while the person can still be read
       await sanctions.backfillBanRegistry().catch((err) => app.log.warn({ err }, 'ban registry backfill failed'));
+      await pruneRegistry(app.db).catch((err) => app.log.warn({ err }, 'ban registry prune failed'));
+      await rekeyRegistry(app.db).catch((err) => app.log.warn({ err }, 'ban registry re-key failed'));
+      // removals past their appeal window are deleted for good
+      await purgeDue(app.db).catch((err) => app.log.warn({ err }, 'deleting removed content past its window failed'));
+      // accounts that keep turning up on a banned person's network
+      await returns.sweepRepeated().catch((err) => app.log.warn({ err }, 'possible returns sweep failed'));
     })();
   const firstPrune = setTimeout(prune, RETENTION_FIRST_RUN_MS);
   const retention = setInterval(prune, 24 * 60 * 60 * 1000);
@@ -154,5 +211,5 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
     clearInterval(retention);
   });
 
-  return { reports, sanctions, cases, queue, appeals, alerts, pictures };
+  return { reports, sanctions, cases, queue, appeals, alerts, pictures, returns };
 }

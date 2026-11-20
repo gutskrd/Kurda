@@ -11,6 +11,7 @@ import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from '../social/presence.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { accountUnavailable, availableSql } from '../moderation/availability.js';
 
 export const MAX_MESSAGE_LEN = 2000;
 
@@ -120,14 +121,17 @@ export class ChatService {
       profile_photo_key: string | null;
       selected_avatar_key: string | null;
     }>(
+      // a suspended or banned person cannot be written to: nothing is stored, and the sender is told it isn't available
       `WITH ins AS (
-         INSERT INTO dm_messages (user_lo, user_hi, sender_id, body) VALUES ($1, $2, $3, $4)
+         INSERT INTO dm_messages (user_lo, user_hi, sender_id, body)
+         SELECT $1, $2, $3, $4 WHERE EXISTS (SELECT 1 FROM users t WHERE t.id = $5 AND ${availableSql('t')})
          RETURNING id, created_at, sender_id
        )
        SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
          FROM ins JOIN users u ON u.id = ins.sender_id`,
-      [lo, hi, from, body],
+      [lo, hi, from, body, to],
     );
+    if (!row.rows[0]) throw accountUnavailable();
     if (filtered.flagged && this.moderation) void this.moderation.recordOffense(from).catch(() => undefined);
     if (this.badges) void this.badges.onLetterSent(from, to).catch(() => undefined);
     const message: DmMessage = {
@@ -195,13 +199,14 @@ export class ChatService {
     }>(
       `WITH ins AS (
          INSERT INTO dm_messages (user_lo, user_hi, sender_id, kind, game, game_lobby_id)
-         VALUES ($1, $2, $3, 'game', $4, $5)
+         SELECT $1, $2, $3, 'game', $4, $5 WHERE EXISTS (SELECT 1 FROM users t WHERE t.id = $6 AND ${availableSql('t')})
          RETURNING id, created_at, sender_id
        )
        SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
          FROM ins JOIN users u ON u.id = ins.sender_id`,
-      [lo, hi, from, card.game, card.lobbyId],
+      [lo, hi, from, card.game, card.lobbyId, to],
     );
+    if (!row.rows[0]) throw accountUnavailable();
     const message: DmMessage = {
       id: row.rows[0]!.id,
       senderId: from,

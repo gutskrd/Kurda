@@ -4,10 +4,11 @@ import { MAX_APPEAL_LEN, PLAY_GAMES, REPORT_TARGET_TYPES, reportCategoryFrom } f
 import type { AppConfig } from '../config/env.js';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import { verifyAppealToken } from './appeal-token.js';
+import { requireAccountCaller } from './appeal-token.js';
 import type { AppealsService } from './appeals-service.js';
 import type { ReportsService } from './reports-service.js';
 import type { PictureReviewService } from './pictures-service.js';
+import type { PossibleReturnsService } from './returns.js';
 import type { SanctionsService } from './sanctions-service.js';
 
 const fileBody = z.object({
@@ -31,26 +32,13 @@ const appealBody = z.object({
 
 /**
  * Who is asking for their standing: a signed-in user, or a suspended one with the appeal token from login. That token
- * reaches only these two routes and is refused once anything ends the account's sessions.
+ * reaches only the routes `accountCaller` lists and is refused once anything ends the account's sessions.
  */
 async function standingUserId(config: AppConfig, req: FastifyRequest): Promise<string> {
-  if (req.user) return req.user.id;
-  const header = req.headers.authorization;
-  if (header?.startsWith('Bearer ')) {
-    const claims = await verifyAppealToken(config, header.slice('Bearer '.length));
-    if (claims) {
-      const u = await req.server.db.query<{ token_version: number }>(
-        `SELECT token_version FROM users WHERE id = $1 AND deleted_at IS NULL`,
-        [claims.userId],
-      );
-      if (u.rows[0] && u.rows[0].token_version === claims.tokenVersion) return claims.userId;
-    }
-  }
-  if (req.authFailure === 'account_disabled') {
-    throw new AppError('ACCOUNT_DISABLED', 403, 'this account is disabled — sign in again to see why');
-  }
-  throw new AppError('UNAUTHORIZED', 401, 'authentication required');
+  return (await requireAccountCaller(config, req)).id;
 }
+
+const holdReviewBody = z.object({ text: z.string().trim().min(1).max(2000) });
 
 /**
  * Reporting and account standing, for everyone (M1).
@@ -60,12 +48,26 @@ async function standingUserId(config: AppConfig, req: FastifyRequest): Promise<s
  * - `GET /me/standing`, `POST /me/standing/ack`: your sanctions with reasons, what is limited and until when; warnings
  *   shown once.
  * - `POST /me/appeals`: appeal once per decision, within six months.
+ * - `POST /me/hold/review`: a held account asks for a person to look.
  */
 export function registerReportRoutes(
   app: FastifyInstance,
   config: AppConfig,
-  deps: { reports: ReportsService; sanctions: SanctionsService; appeals: AppealsService; pictures?: PictureReviewService },
+  deps: { reports: ReportsService; sanctions: SanctionsService; appeals: AppealsService; pictures?: PictureReviewService; returns?: PossibleReturnsService },
 ): void {
+  /**
+   * A held account asks for a person to look (moderation/returns.ts): once per hold, shown to moderators on the
+   * Possible returns page. 201 { requested: true }; 409 NOT_HELD or ALREADY_REQUESTED.
+   */
+  if (deps.returns) {
+    const returns = deps.returns;
+    app.post(
+      '/me/hold/review',
+      { schema: { body: holdReviewBody }, config: { rateLimit: { max: 5, windowMs: 60_000, per: 'user-or-ip' as const } }, preHandler: requireAuth },
+      async (req, reply) => reply.code(201).send(await returns.requestReview(req.user!.id, (req.body as z.infer<typeof holdReviewBody>).text)),
+    );
+  }
+
   app.post(
     '/reports',
     {

@@ -21,6 +21,11 @@ function keyed(purpose: string, value: string): string {
   return createHmac('sha256', moderationKey).update(`hevalo-moderation-v1:${purpose}:${value}`).digest('hex');
 }
 
+/** The moderation key's hash for `purpose`, which identity-hash.ts uses as its first key version. */
+export function moderationKeyed(purpose: string, value: string): string {
+  return keyed(purpose, value);
+}
+
 /** The pseudonym of an account in moderation records. */
 export function userHash(userId: string): string {
   return keyed('user', userId);
@@ -43,19 +48,28 @@ export function networkKeyHash(key: string): string {
   return keyed('network-v2', key);
 }
 
+/** Domains that are one mailbox under another name; only providers whose names are one namespace are listed. */
+const SAME_MAILBOX: Readonly<Record<string, string>> = {
+  'googlemail.com': 'gmail.com',
+  'proton.me': 'protonmail.com',
+  'pm.me': 'protonmail.com',
+  'protonmail.ch': 'protonmail.com',
+};
+
 /**
- * An email as the ban registry compares it: lower-cased and trimmed, without a `+tag`, and without the dots some
- * providers ignore, which are the cheap ways to make a "new address" that reaches the same inbox.
+ * An email as the ban registry compares it: lower-cased and trimmed, without a `+tag` on any provider, without the dots
+ * Gmail ignores, and with a provider's other domains for the same mailbox folded together. These are the cheap ways to
+ * make a "new address" that reaches the same inbox; nothing that could belong to someone else is folded.
  */
 export function normalizeEmailForRegistry(email: string): string {
   const lower = email.trim().toLowerCase();
   const at = lower.lastIndexOf('@');
   if (at <= 0) return lower;
   let local = lower.slice(0, at);
-  let domain = lower.slice(at + 1);
+  let domain = lower.slice(at + 1).replace(/\.+$/, '');
   const plus = local.indexOf('+');
   if (plus > 0) local = local.slice(0, plus);
-  if (domain === 'googlemail.com') domain = 'gmail.com';
+  domain = SAME_MAILBOX[domain] ?? domain;
   if (domain === 'gmail.com') local = local.replace(/\./g, '');
   return `${local}@${domain}`;
 }

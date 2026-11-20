@@ -8,6 +8,7 @@ import { isOnline } from '../social/presence.js';
 import { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS } from './pair.js';
 import { isNotKnownAdultUser, notKnownAdultSql, shownToSql } from '../users/age.js';
 import { notBlockedSql } from './blocked.js';
+import { availableSql } from '../moderation/availability.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
 
@@ -408,6 +409,8 @@ export class FriendService {
               count(*) OVER ()::int AS total FROM friendships f
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
         WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
+          -- a suspended or banned friend is nobody's to list until it ends (moderation/availability.ts)
+          AND ${availableSql('u')}
           AND ($4::uuid = $1 OR ${shownToSql('u', '$4::uuid')})
           AND ${notBlockedSql('u.id', '$4::uuid')}
         ORDER BY u.username
@@ -429,6 +432,7 @@ export class FriendService {
       `SELECT count(*)::int n FROM friendships f
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
         WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
+          AND ${availableSql('u')}
           AND ($2::uuid = $1 OR ${shownToSql('u', '$2::uuid')})
           AND ${notBlockedSql('u.id', '$2::uuid')}`,
       [user, viewer],
@@ -448,6 +452,7 @@ export class FriendService {
         WHERE f.status = 'pending' AND f.requested_by <> $1
           AND (f.user_lo = $1 OR f.user_hi = $1)
           AND NOT ${notKnownAdultSql('me')}
+          AND ${availableSql('u')}
           AND f.created_at > now() - ($2 || ' days')::interval
           AND NOT EXISTS (
             SELECT 1 FROM blocks b
@@ -513,6 +518,7 @@ export class FriendService {
            ON u.id = CASE WHEN f2.user_lo = mf.fid THEN f2.user_hi ELSE f2.user_lo END
         WHERE u.id <> $1
           AND u.deleted_at IS NULL
+          AND ${availableSql('u')}
           AND u.profile_visibility <> 'nobody'
           AND NOT ${notKnownAdultSql('u')}
           -- a guest cannot be befriended, so is never suggested (auth/guest.ts)

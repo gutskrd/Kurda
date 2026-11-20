@@ -10,6 +10,7 @@ import {
   sameUsername,
   type AgeBadge,
   type ApplySanctionResult,
+  type BanContentChoice,
   type CaseAuditEntry,
   type CaseDetail,
   type CaseEscalation,
@@ -51,7 +52,8 @@ import { readStoredPicture, runHoldMoves, runPicturePublishing } from './picture
 import { mediaWhereabouts, requestQuarantine, runQuarantine } from './quarantine.js';
 import { caringMessage, reportOutcomeNotice, sanctionNotice, type Notice } from './notices.js';
 import { isZeroTolerance, permanentBanMode, slaDueAt } from './rules.js';
-import { deliverNotice, deliverNotices, logAdminAction, toSanctionView, type SanctionRow, type SanctionsService } from './sanctions-service.js';
+import { deliverNotice, deliverNotices, isBanKind, logAdminAction, toSanctionView, type SanctionRow, type SanctionsService } from './sanctions-service.js';
+import type { TakedownCounts } from './takedown.js';
 import {
   assertDismissible,
   closeSource,
@@ -179,6 +181,18 @@ function originFor(source: CaseSource, evidence?: Record<string, unknown> | null
   if (source === 'image_flag' && evidence?.origin === 'reported' && evidence.staffRemoval !== true) return 'report';
   return REPORT_SOURCES.has(source) ? 'report' : 'automatic';
 }
+
+/** What happens to a banned person's content, as a decision or the user page sends it. */
+export interface BanContent {
+  choice: BanContentChoice;
+  includeMessages: boolean;
+}
+
+/** A case decision, with what a ban of the reported person does to their content (Keep when absent). */
+export type DecideInput = DecideRequest & { banContent?: BanContent };
+
+/** The user page's sanction answer, with what a ban took down. */
+export type SanctionUserResult = ApplySanctionResult & { takedown: TakedownCounts | null };
 
 export interface CasesOptions {
   /** the bucket, or how to find it when it is set after the services are built (an app's tests do) */
@@ -343,11 +357,14 @@ export class CasesService {
    * Decide a case. Everything is validated before anything changes, so a refused decision leaves nothing half-applied;
    * `preview` stops there and returns the messages.
    */
-  async decide(caseId: string, adminId: string, req: DecideRequest): Promise<DecideResult> {
+  async decide(caseId: string, adminId: string, req: DecideInput): Promise<DecideResult> {
     const quarantined: string[] = [];
     const withdrawn: string[] = [];
     const result = await inTransaction(this.pool, async (client) => {
       const c = await this.lockOpen(client, caseId, adminId);
+      if (req.banContent && req.banContent.choice === 'keep' && req.banContent.includeMessages) {
+        throw new AppError('CONTENT_CHOICE_CONFLICT', 422, 'private messages are hidden with the rest of their content, not on their own');
+      }
       if (c.resolution === 'csam') throw new AppError('ALREADY_DECIDED', 409, 'the CSAM action already decided this case');
       const outcome: Outcome = req.outcome;
       if (outcome === 'actioned' && !req.policy) throw new AppError('POLICY_REQUIRED', 400, 'say which rule was broken');
@@ -380,7 +397,7 @@ export class CasesService {
         reporters,
         preview: req.preview === true,
       });
-      const messages = this.previewMessages(resolved, outcome, req, reporters);
+      const messages = this.previewMessages(resolved, outcome, req, reporters, req.banContent ?? null);
       if (req.preview) return { preview: true, status: c.status, messages, sanctions: [], permanentBans };
 
       const applied: CaseSanctionView[] = [];
@@ -409,13 +426,16 @@ export class CasesService {
           createdBy: adminId,
           origin: r.origin,
         };
+        // the content choice is the reported person's; a reporter's ban keeps what they shared
+        const content = a.target === 'subject' && isBanKind(a.kind) ? (req.banContent ?? null) : null;
         if (a.kind === 'permanent_ban' && r.mode === 'second_approval') {
-          // in force now: a suspension until a second admin confirms or the wait ends
+          // in force now: a suspension until a second admin confirms or the wait ends, which takes the content down at once
           const emergency = await this.sanctions.apply(client, {
             ...common,
             kind: 'suspension',
             durationHours: SECOND_APPROVAL_HOURS,
             meta: { emergencyFor: 'permanent_ban' },
+            content,
           });
           const pending = await this.sanctions.apply(client, {
             ...common,
@@ -432,10 +452,11 @@ export class CasesService {
             zeroTolerance: r.mode === 'zero_tolerance',
             // a zero-tolerance ban with nobody else to confirm it is single-approved too
             singleApproved: r.mode === 'single' || (r.mode === 'zero_tolerance' && (await this.sanctions.moderatorCount()) < 2),
+            content,
           });
           applied.push(out.sanction);
         } else {
-          const out = await this.sanctions.apply(client, { ...common, kind: a.kind, durationHours: a.durationHours ?? null });
+          const out = await this.sanctions.apply(client, { ...common, kind: a.kind, durationHours: a.durationHours ?? null, content });
           applied.push(out.sanction);
         }
       }
@@ -593,6 +614,7 @@ export class CasesService {
     outcome: Outcome,
     req: DecideRequest,
     reporters: Set<string>,
+    banContent: BanContent | null,
   ): UserMessagePreview[] {
     const now = Date.now();
     const out: UserMessagePreview[] = [];
@@ -614,6 +636,7 @@ export class CasesService {
           endsAt: hours ? new Date(now + hours * 3_600_000) : null,
           origin: r.origin,
           reviewedByPerson: true,
+          content: a.target === 'subject' ? banContent : null,
         });
       if (a.kind === 'permanent_ban' && r.mode === 'second_approval') {
         push(a.target, r.userId, notice('suspension', SECOND_APPROVAL_HOURS));
@@ -989,9 +1012,13 @@ export class CasesService {
       internalNote?: string | null;
       durationHours?: number | null;
       confirmUsername?: string;
+      /** a suspension or ban: what happens to their content */
+      content?: BanContent | null;
+      /** recorded on the sanction (a ban linked to another account's) */
+      meta?: Record<string, unknown>;
     },
     opts: { auditAction?: string } = {},
-  ): Promise<ApplySanctionResult> {
+  ): Promise<SanctionUserResult> {
     if (userId === adminId) throw new AppError('CONFLICT_OF_INTEREST', 403, 'you cannot sanction yourself');
     // a person at risk of self-harm is helped, never sanctioned (M5) — from a
     // case or from here
@@ -1007,9 +1034,10 @@ export class CasesService {
     if (reportedMe.rowCount) {
       throw new AppError('CONFLICT_OF_INTEREST', 403, 'this person has an open report about you; another moderator must handle them');
     }
-    return inTransaction(this.pool, async (client) => {
+    return inTransaction(this.pool, async (client): Promise<SanctionUserResult> => {
       const u = await client.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [userId]);
       if (!u.rows[0]) throw new AppError('NOT_FOUND', 404, 'no such user');
+      const content = isBanKind(input.kind) ? (input.content ?? null) : null;
       const common = {
         userId,
         policy: input.policy,
@@ -1018,10 +1046,11 @@ export class CasesService {
         createdBy: adminId,
         origin: 'moderator' as const,
         auditAction: opts.auditAction,
+        ...(input.meta ? { meta: input.meta } : {}),
       };
       if (input.kind !== 'permanent_ban') {
-        const out = await this.sanctions.apply(client, { ...common, kind: input.kind, durationHours: input.durationHours ?? null });
-        return { sanctions: [out.sanction], pendingApproval: false };
+        const out = await this.sanctions.apply(client, { ...common, kind: input.kind, durationHours: input.durationHours ?? null, content });
+        return { sanctions: [out.sanction], pendingApproval: false, takedown: out.takedown };
       }
       const moderators = await this.sanctions.moderatorCount();
       const mode = permanentBanMode(moderators, isZeroTolerance(input.policy));
@@ -1029,27 +1058,30 @@ export class CasesService {
         throw new AppError('CONFIRM_USERNAME_REQUIRED', 409, 'you are the only moderator: type their username to confirm a permanent ban');
       }
       if (mode === 'second_approval') {
+        // the emergency suspension carries the content choice, so what they shared goes from view at once
         const emergency = await this.sanctions.apply(client, {
           ...common,
           kind: 'suspension',
           durationHours: SECOND_APPROVAL_HOURS,
-          meta: { emergencyFor: 'permanent_ban' },
+          meta: { ...(input.meta ?? {}), emergencyFor: 'permanent_ban' },
+          content,
         });
         const pending = await this.sanctions.apply(client, {
           ...common,
           kind: 'permanent_ban',
           pendingApproval: true,
-          meta: { emergencySanctionId: emergency.sanction.id },
+          meta: { ...(input.meta ?? {}), emergencySanctionId: emergency.sanction.id },
         });
-        return { sanctions: [emergency.sanction, pending.sanction], pendingApproval: true };
+        return { sanctions: [emergency.sanction, pending.sanction], pendingApproval: true, takedown: emergency.takedown };
       }
       const out = await this.sanctions.apply(client, {
         ...common,
         kind: 'permanent_ban',
         zeroTolerance: mode === 'zero_tolerance',
         singleApproved: mode === 'single' || moderators < 2,
+        content,
       });
-      return { sanctions: [out.sanction], pendingApproval: false };
+      return { sanctions: [out.sanction], pendingApproval: false, takedown: out.takedown };
     });
   }
 
@@ -1094,10 +1126,18 @@ export class CasesService {
       );
       const row = updated.rows[0]!;
       if (wasPending && row.user_id) {
+        // the signals are read again before the sessions end (which takes the push tokens)
+        await this.sanctions.registerSignals(client, row.user_id, row.id, null);
         await this.sanctions.endSessions(client, row.user_id);
-        // the emergency suspension has done its job; the ban replaces it
+        // the emergency suspension has done its job; the ban replaces it, and takes over its content choice
         const emergency = (row.meta as { emergencySanctionId?: string }).emergencySanctionId;
+        let content: BanContent | null = null;
         if (emergency) {
+          const moved = await client.query<{ choice: 'hide' | 'remove'; include_messages: boolean }>(
+            `UPDATE ban_takedowns SET sanction_id = $2 WHERE sanction_id = $1 AND state = 'hidden' RETURNING choice, include_messages`,
+            [emergency, row.id],
+          );
+          if (moved.rows[0]) content = { choice: moved.rows[0].choice, includeMessages: moved.rows[0].include_messages };
           const e = await client.query<{ revoked_at: Date | null }>(`SELECT revoked_at FROM sanctions WHERE id = $1`, [emergency]);
           if (e.rows[0] && e.rows[0].revoked_at === null) {
             await this.sanctions.revoke(client, emergency, adminId, 'replaced by the confirmed permanent ban', {
@@ -1107,8 +1147,7 @@ export class CasesService {
           }
         }
         await this.sanctions.syncEnforcedColumns(client, row.user_id);
-        await this.sanctions.registerBannedEmail(client, row.user_id, row.id);
-        await deliverNotice(client, row.user_id, this.sanctions.noticeFor(row));
+        await this.sanctions.announce(client, row, this.sanctions.noticeFor(row, content));
       }
       await logAdminAction(client, {
         targetUserId: row.user_id,

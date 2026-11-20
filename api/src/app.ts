@@ -930,6 +930,8 @@ declare module 'fastify' {
       birthMonthKnown?: boolean;
       /** a guest account (auth/guest.ts): learning only, until claimed (`requireAccount`) */
       guest?: boolean;
+      /** held while a person checks whether it belongs to someone banned (moderation/restrictions.ts `requireNotHeld`) */
+      held?: boolean;
     };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;
