@@ -43,6 +43,9 @@ export const LEVELS_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+/** The most a check may write, thinking and answer together. */
+export const CHECK_MAX_TOKENS = 1536;
+
 /** The picture as the checker sees it: rotated upright, at most CHECK_MAX_SIDE, transparency over mid grey, as JPEG. */
 export async function pictureForCheck(bytes: Buffer): Promise<Buffer> {
   return sharp(bytes)
@@ -50,7 +53,8 @@ export async function pictureForCheck(bytes: Buffer): Promise<Buffer> {
     .resize({ width: CHECK_MAX_SIDE, height: CHECK_MAX_SIDE, fit: 'inside', withoutEnlargement: true })
     // mid grey, so neither black nor white drawing on a transparent picture disappears
     .flatten({ background: '#808080' })
-    .jpeg({ quality: 85 })
+    // modest quality: plenty to judge by, at a fraction of the bytes
+    .jpeg({ quality: 78 })
     .toBuffer();
 }
 
@@ -78,8 +82,9 @@ export class VisionImageScanner implements ImageScanner {
       response = await this.client.beta.messages.create(
         {
           model: this.opts.model,
-          // room for the short thinking low effort allows as well as the answer
-          max_tokens: 4096,
+          // The answer is about 80 tokens (eight short fields); low effort thinks briefly. This leaves headroom for both
+          // without letting a runaway answer cost much, and a cut-off answer only holds the picture for a person.
+          max_tokens: CHECK_MAX_TOKENS,
           betas: ['server-side-fallback-2026-07-01'],
           fallbacks: 'default',
           system: PICTURE_CHECK_PROMPT,
@@ -110,6 +115,6 @@ export class VisionImageScanner implements ImageScanner {
     }
     const levels = parseLevels(parsed);
     if (!levels) throw new ScanUnavailable('malformed answer');
-    return { levels, model: response.model };
+    return { levels, model: response.model, usage: { inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens } };
   }
 }

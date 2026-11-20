@@ -256,6 +256,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       if (!res.ok) {
         req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'profile photo upload rejected');
         // a refusal by the picture check says why, and how to ask a person (PictureRejection)
+        if (res.retryAfterSec) reply.header('retry-after', String(res.retryAfterSec));
         return reply.code(res.status).send({ code: res.code, message: res.message, ...(res.refusal ?? {}) });
       }
       // held: others keep seeing the old photo, and the new one is the owner's alone until a person checks it

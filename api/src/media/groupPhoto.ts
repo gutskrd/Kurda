@@ -23,6 +23,7 @@ export type SetGroupPhotoResult =
       message: string;
       reason: string;
       refusal?: { reason: PictureRejectReason; reviewId: string | null };
+      retryAfterSec?: number;
     };
 
 const refuse = (status: number, code: string, message: string): SetGroupPhotoResult => ({ ok: false, status, code, message, reason: code.toLowerCase() });

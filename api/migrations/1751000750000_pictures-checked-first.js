@@ -15,9 +15,11 @@
  *   are still being copied to the public bucket (the sweep retries).
  * - `image_scans` keeps what the check found per category (`levels`), how the
  *   picture came to be held (`checked_by`), the outcome and the reason shown
- *   to the owner, who uploaded it, and the owner asking a person to look again
- *   (`asked_at`, `note`). `clear` scans are recorded too, for audit. The old
- *   numeric scores are still written, from the levels.
+ *   to the owner, who uploaded it, the owner asking a person to look again
+ *   (`asked_at`, `note`), what the check cost in tokens, and the bounded
+ *   retries of a check that could not be made. `clear` scans are recorded too,
+ *   for audit and the daily counts. The old numeric scores are still written,
+ *   from the levels.
  * - A held profile or group photo waits beside the live one
  *   (`users.pending_profile_photo_key`, `groups.pending_photo_key`), so others
  *   keep seeing the old one; a post or a letter with a held picture is `held`
@@ -89,7 +91,12 @@ export const up = (pgm) => {
     uploader_id: { type: 'uuid', references: 'users', onDelete: 'SET NULL' },
     asked_at: { type: 'timestamptz' },
     note: { type: 'text', check: 'char_length(note) <= 500' },
+    // a picture held because the checker could not be reached is checked again a few times, each wait longer
     rescan_attempts: { type: 'smallint', notNull: true, default: 0 },
+    rescan_after: { type: 'timestamptz' },
+    // what the check cost, for the owner to see the spend
+    input_tokens: { type: 'integer' },
+    output_tokens: { type: 'integer' },
   });
   pgm.addConstraint('image_scans', 'image_scans_levels_shape', {
     check: `levels IS NULL OR (jsonb_typeof(levels) = 'object' AND levels ?& ARRAY[${list(LEVEL_CATEGORIES)}])`,
@@ -119,9 +126,12 @@ export const up = (pgm) => {
     name: 'moderation_cases_pictures_idx',
     where: "source = 'image_flag'",
   });
+  // and every upload, report and sweep asks whether a picture is in a case already
+  pgm.sql(`CREATE INDEX moderation_cases_picture_key_idx ON moderation_cases ((evidence->>'mediaKey')) WHERE source = 'image_flag'`);
 };
 
 export const down = (pgm) => {
+  pgm.sql(`DROP INDEX IF EXISTS moderation_cases_picture_key_idx`);
   pgm.dropIndex('moderation_cases', ['status', 'first_reported_at'], { name: 'moderation_cases_pictures_idx' });
 
   pgm.dropIndex('letters', 'drawing_key', { name: 'letters_drawing_key' });
@@ -138,7 +148,9 @@ export const down = (pgm) => {
   pgm.dropIndex('image_scans', 'created_at', { name: 'image_scans_auto_day_idx' });
   pgm.dropIndex('image_scans', 'created_at', { name: 'image_scans_unavailable_idx' });
   pgm.dropConstraint('image_scans', 'image_scans_levels_shape');
-  pgm.dropColumns('image_scans', ['levels', 'checked_by', 'outcome', 'reason', 'uploader_id', 'asked_at', 'note', 'rescan_attempts']);
+  pgm.dropColumns('image_scans', [
+    'levels', 'checked_by', 'outcome', 'reason', 'uploader_id', 'asked_at', 'note', 'rescan_attempts', 'rescan_after', 'input_tokens', 'output_tokens',
+  ]);
   pgm.sql(`DELETE FROM image_scans WHERE status = 'clear' OR surface NOT IN (${list(SURFACES_OLD)})`);
   setCheck(pgm, 'image_scans', 'image_scans_status_check', 'status', SCAN_ROW_STATUSES_OLD);
   setCheck(pgm, 'image_scans', 'image_scans_surface_check', 'surface', SURFACES_OLD);

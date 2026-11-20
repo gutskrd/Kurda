@@ -1,4 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
+import { Counter, type Registry } from 'prom-client';
 import type { AppConfig } from '../config/env.js';
 import { createEmailProvider } from '../email/provider.js';
 import { EmailService } from '../email/service.js';
@@ -23,6 +25,8 @@ export interface ModerationOptions {
   moderatorCount?: () => Promise<number>;
   mailer?: ModerationMailer;
   imageScanner?: ImageScanner | null;
+  /** where the picture checks' call and token counters are kept (observability/metrics.ts) */
+  registry?: Registry;
 }
 
 export interface ModerationKit {
@@ -69,11 +73,27 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
   };
   const alerts = new ModerationAlerts(app.db, mailer, config.ADMIN_BASE_URL);
   const sanctions = new SanctionsService(app.db, { moderatorCount: options.moderatorCount });
+  // What the picture checks cost: every call by its outcome, and its tokens, so the owner can see the spend.
+  const registers = options.registry ? [options.registry] : [];
+  const checkCalls = new Counter({ name: 'picture_checks_total', help: 'Automatic picture checks by outcome', labelNames: ['outcome'], registers });
+  const checkTokens = new Counter({ name: 'picture_check_tokens_total', help: 'Tokens the picture checks used', labelNames: ['kind'], registers });
   // The one picture checker every upload goes through, decided here once (picture-checker.ts).
   const checks = new ImageModerationService(app.db, {
     scanner: pictureScannerFor(config, app.log, options.imageScanner),
     mode: config.IMAGE_REVIEW_MODE,
     dailyLimit: config.IMAGE_SCAN_DAILY_LIMIT,
+    perUserDaily: config.IMAGE_SCAN_PER_USER_DAILY,
+    // counted in the app's Redis when there is one; commands fail fast when it is down, and Postgres counts instead
+    counters: app.hasDecorator('redis') && app.redis ? app.redis : null,
+    counterPrefix: config.NODE_ENV === 'test' ? `picture-checks-test-${randomUUID()}` : undefined,
+    onCheck: ({ outcome, usage }) => {
+      checkCalls.inc({ outcome });
+      if (usage) {
+        checkTokens.inc({ kind: 'input' }, usage.inputTokens);
+        checkTokens.inc({ kind: 'output' }, usage.outputTokens);
+        app.log.info({ outcome, inputTokens: usage.inputTokens, outputTokens: usage.outputTokens }, 'picture check');
+      }
+    },
     log: app.log,
   });
   // the bucket is looked up when needed, since a test gives the app its bucket after it is built

@@ -8,6 +8,8 @@ import { CLEAN_LEVELS, levelsOf, type PictureLevels } from './image-scan.js';
 export interface PictureScanReport {
   levels: PictureLevels;
   model: string;
+  /** what the call cost, for the spend counters */
+  usage?: { inputTokens: number; outputTokens: number };
 }
 
 export interface ImageScanner {

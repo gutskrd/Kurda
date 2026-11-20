@@ -30,6 +30,8 @@ export type StoreImageResult =
       reason: string;
       /** a refusal by the picture check: why, and what its owner may ask a person about */
       refusal?: { reason: PictureRejectReason; reviewId: string | null };
+      /** a 429: when to try again */
+      retryAfterSec?: number;
     };
 
 interface Logger {
@@ -194,6 +196,16 @@ export async function storeImageMedia(
       return reject(502, 'MEDIA_UPLOAD_FAILED', 'could not store the image; please try again', 'put-failed');
     case 'refused':
       return refusal(intake.reason, intake.reviewId);
+    case 'limited':
+      // this account has had its automatic checks for today: told to wait, as any rate limit says it
+      return {
+        ok: false,
+        status: 429,
+        code: 'RATE_LIMITED',
+        message: 'you have shared as many new pictures as can be checked today',
+        reason: 'check-limit',
+        retryAfterSec: intake.retryAfterSec,
+      };
     case 'held':
       // nobody else sees it until a person checks it; its owner may still put it on a post, which waits with it
       return ok(false, 'held', (await pictures.ownerLink(key))?.url ?? '');

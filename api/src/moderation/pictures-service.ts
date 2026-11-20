@@ -26,8 +26,8 @@ import { minorSql } from '../users/age.js';
 import type { ModerationAlerts } from './alerts.js';
 import type { CasesService } from './cases-service.js';
 import { mediaRemovals, type RemovalRecord } from './content-removal.js';
-import { parseLevels, ruleFor, surfaceOfKind, type PictureLevels } from './image-scan.js';
-import type { CheckedBy, ImageModerationService, PictureCheck } from './image-moderation-service.js';
+import { decidePicture, parseLevels, ruleFor, surfaceOfKind, type PictureLevels } from './image-scan.js';
+import { REUSED_SUFFIX, secondsToUtcMidnight, type CheckedBy, type ImageModerationService, type PictureCheck } from './image-moderation-service.js';
 import { pictureReviewNotice } from './notices.js';
 import { ownerPictureUrl, readStoredPicture, releasePicture, runHoldMoves, runPicturePublishing, type StoredPicture } from './picture-release.js';
 import { evidenceObjectKey } from './pseudonym.js';
@@ -56,6 +56,8 @@ import { inTransaction, type Executor } from './tx.js';
 /** An upload as it comes out of `intake`. */
 export type Intake =
   | { state: 'clear'; scanId: string | null }
+  /** this account has had its automatic checks for today; nothing was stored */
+  | { state: 'limited'; retryAfterSec: number }
   | { state: 'held'; scanId: string; caseId: string }
   | { state: 'refused'; reason: PictureRejectReason; reviewId: string | null }
   | { state: 'failed' };
@@ -99,7 +101,13 @@ const DRAWING_KIND = 'letter-drawing';
 export const REFUSED_KEPT_DAYS = 182;
 
 /** How many times a picture held because the checker was down is checked again before it is left to a person. */
-export const RECHECK_ATTEMPTS = 4;
+export const RECHECK_ATTEMPTS = 3;
+
+/** The first wait before a picture the checker could not reach is checked again; each wait after is three times longer. */
+export const RECHECK_FIRST_WAIT_MINUTES = 10;
+
+/** How many refused pictures one person may ask a person to check in a day (UTC). */
+export const ASKS_PER_DAY = 5;
 
 const PAGE = 30;
 
@@ -246,6 +254,26 @@ export class PictureReviewService {
   }
 
   /**
+   * What the automatic check found in these bytes before (as stored, or as sent), under any key and kind, so the same
+   * picture is never sent to the checker twice. A verdict a person gave is not here: clear and removed bytes are found
+   * before this (`clearedBefore`, `refusedBefore`).
+   */
+  private async knownFindings(contentHash: string, key: string, sourceHash?: string | null): Promise<{ levels: PictureLevels; model: string } | null> {
+    const r = await this.pool.query<{ levels: unknown; model_version: string }>(
+      `SELECT s.levels, s.model_version FROM image_scans s
+        WHERE s.checked_by = 'auto' AND s.levels IS NOT NULL
+          AND (s.media_key = $2
+               OR s.media_key IN (SELECT m.key FROM media_uploads m
+                                   WHERE m.content_sha256 = $1 OR (m.source_sha256 IS NOT NULL AND m.source_sha256 = $3)))
+        ORDER BY s.created_at DESC LIMIT 1`,
+      [contentHash, key, sourceHash ?? null],
+    );
+    const levels = parseLevels(r.rows[0]?.levels);
+    if (!levels) return null;
+    return { levels, model: r.rows[0]!.model_version.replace(REUSED_SUFFIX, '') };
+  }
+
+  /**
    * Check a picture and store it where its outcome says: clear on the public bucket, anything else only in private
    * storage. Leaves the upload unconfirmed for the caller, which decides what uses it. A storage failure leaves nothing
    * stored and the row for the orphan sweep.
@@ -255,9 +283,18 @@ export class PictureReviewService {
     const before = await this.refusedBefore(input.contentHash, input.key, input.sourceHash);
     if (before) return { state: 'refused', reason: before, reviewId: null };
 
-    const check: PictureCheck = (await this.clearedBefore(input.contentHash))
-      ? { outcome: { state: 'clear' }, levels: null, model: 'seen-before', checkedBy: 'auto' }
-      : await this.checks.check(input.bytes, surface);
+    // the same bytes are never paid for twice: a picture already public is clear, and one checked before keeps its findings
+    let check: PictureCheck;
+    if (await this.clearedBefore(input.contentHash)) {
+      check = { outcome: { state: 'clear' }, levels: null, model: 'seen-before', checkedBy: 'auto' };
+    } else {
+      const known = await this.knownFindings(input.contentHash, input.key, input.sourceHash);
+      const checked = known
+        ? { outcome: decidePicture(known.levels, surface), levels: known.levels, model: `${known.model}${REUSED_SUFFIX}`, checkedBy: 'auto' as const }
+        : await this.checks.check(input.bytes, surface, input.uploaderId);
+      if ('limited' in checked) return { state: 'limited', retryAfterSec: checked.retryAfterSec };
+      check = checked;
+    }
     const state = check.outcome.state;
     const privateKey = state === 'clear' ? null : evidenceObjectKey(input.key);
     const status = state === 'clear' ? 'cleared' : state === 'held' ? 'held' : 'refused';
@@ -388,7 +425,11 @@ export class PictureReviewService {
    * is delivered. Never refused outright except for child safety; anything not clear is held for a person, kept
    * privately, and the letter waits. Nothing public is stored, since the apps draw a letter from its strokes.
    */
-  async checkDrawing(userId: string, png: Buffer, words: string | null): Promise<{ state: 'clear' } | { state: 'held'; key: string } | { state: 'refused' }> {
+  async checkDrawing(
+    userId: string,
+    png: Buffer,
+    words: string | null,
+  ): Promise<{ state: 'clear' } | { state: 'held'; key: string } | { state: 'refused' } | { state: 'limited'; retryAfterSec: number }> {
     const contentHash = createHash('sha256').update(png).digest('hex');
     const key = mediaKey(DRAWING_KIND, contentHash, 'image/png');
     // the same drawing sent again (a resend) is the one already checked
@@ -407,6 +448,7 @@ export class PictureReviewService {
     });
     if (intake.state === 'held') return { state: 'held', key };
     if (intake.state === 'clear') return { state: 'clear' };
+    if (intake.state === 'limited') return intake;
     // a failed private write still keeps the letter back: unchecked, it is not delivered
     if (intake.state === 'failed') return { state: 'held', key };
     return { state: 'refused' };
@@ -478,6 +520,16 @@ export class PictureReviewService {
         throw new AppError('NOT_FOUND', 404, 'no such picture of yours to check');
       }
       if (scan.asked_at) throw new AppError('REVIEW_ALREADY_ASKED', 409, 'a person is already asked to check this picture');
+      // a few asks a day: one person cannot fill the review queue
+      const today = await client.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM image_scans WHERE uploader_id = $1 AND asked_at >= date_trunc('day', now(), 'UTC')`,
+        [userId],
+      );
+      if ((today.rows[0]?.n ?? 0) >= ASKS_PER_DAY) {
+        throw new AppError('RATE_LIMITED', 429, 'you have asked for as many pictures to be checked as you can today', {
+          retryAfterSec: secondsToUtcMidnight(),
+        });
+      }
       await client.query(`UPDATE image_scans SET asked_at = now(), note = $2, status = 'pending' WHERE id = $1`, [reviewId, note]);
       await this.openCase(client, {
         origin: 'asked',
@@ -945,6 +997,7 @@ export class PictureReviewService {
          JOIN media_uploads m ON m.key = s.media_key AND m.scan_status = 'held'
          LEFT JOIN moderation_cases c ON c.source = 'image_flag' AND c.source_ref = s.id::text AND c.status = 'open'
         WHERE s.checked_by = 'checker_unavailable' AND s.status = 'pending' AND s.rescan_attempts < $1
+          AND (s.rescan_after IS NULL OR s.rescan_after <= now())
           AND (c.claimed_by IS NULL OR c.lease_until < now())
         ORDER BY s.created_at LIMIT $2`,
       [RECHECK_ATTEMPTS, limit],
@@ -955,9 +1008,16 @@ export class PictureReviewService {
       const bytes = await storage.readEvidence(scan.private_key).catch(() => null);
       if (!bytes) continue;
       const surface = surfaceOfKind(scan.kind);
-      const check = await this.checks.check(bytes, surface);
-      if (check.checkedBy !== 'auto') {
-        await this.pool.query(`UPDATE image_scans SET rescan_attempts = rescan_attempts + 1 WHERE id = $1`, [scan.id]);
+      // the service's own second look: it counts against the daily limit, not against the account
+      const check = await this.checks.check(bytes, surface, null);
+      if ('limited' in check || check.checkedBy !== 'auto') {
+        // still no answer: wait longer before the next look (10, 30, 90 minutes), then it is left to a person
+        await this.pool.query(
+          `UPDATE image_scans SET rescan_attempts = rescan_attempts + 1,
+                  rescan_after = now() + make_interval(mins => $2::int * power(3, rescan_attempts)::int)
+            WHERE id = $1`,
+          [scan.id, RECHECK_FIRST_WAIT_MINUTES],
+        );
         continue;
       }
       const urgent = await inTransaction(this.pool, async (client) => {

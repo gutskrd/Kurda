@@ -325,6 +325,9 @@ export class LetterService {
     if (checked.state === 'refused') {
       throw new ShapedError('IMAGE_REJECTED', 422, REFUSAL_MESSAGES.other, { reason: 'other', reviewId: null });
     }
+    if (checked.state === 'limited') {
+      throw new AppError('RATE_LIMITED', 429, 'you have sent as many drawings as can be checked today', { retryAfterSec: checked.retryAfterSec });
+    }
     return checked.state === 'held' ? checked.key : null;
   }
 

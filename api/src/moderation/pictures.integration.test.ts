@@ -379,6 +379,23 @@ describe.skipIf(!DATABASE_URL)('pictures are checked before anyone else sees the
     expect((await raw('/me/profile-picture', author.token, original)).json()).toMatchObject({ code: 'PHOTO_REJECTED', reviewId: null });
   });
 
+  it('never pays twice for the same picture: what the check found is reused on every kind', async () => {
+    const me = await person('reuse');
+    const original = await photo();
+    stub.queue({ suggestive: 'possible' });
+    expect((await upload(me.token, original)).json().review).toBe('held');
+    const calls = stub.calls;
+    // the same file as a profile photo, resized its own way, keeps the findings without a second call
+    const asPhoto = await raw('/me/profile-picture', me.token, original);
+    expect(asPhoto.json()).toMatchObject({ review: 'held' });
+    expect(stub.calls).toBe(calls);
+    const reused = await pool.query<{ model_version: string }>(
+      `SELECT s.model_version FROM image_scans s WHERE s.uploader_id = $1 AND s.surface = 'profile_photo'`,
+      [me.id],
+    );
+    expect(reused.rows[0]!.model_version).toMatch(/\(reused\)$/);
+  });
+
   it('never lets the orphan sweep take a picture waiting for a person', async () => {
     const me = await person('sweep');
     stub.queue({ drugs: 'likely' });

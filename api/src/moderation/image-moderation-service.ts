@@ -6,9 +6,12 @@ import type { Executor } from './tx.js';
 
 /**
  * The automatic check every picture goes through before anyone else sees it, and its record. `check` asks the scanner
- * (vision-scanner.ts) and applies the policy (image-scan.ts); with no scanner, in `people` mode, or past the daily
- * limit, every picture is held for a person instead, and any failure of the scanner holds it too: nothing unclear is
- * ever cleared. `record` writes each check to `image_scans`, with the findings, the model and how it came to be held.
+ * (vision-scanner.ts) and applies the policy (image-scan.ts); with no scanner, in `people` mode, or past the service's
+ * daily limit, every picture is held for a person instead, and any failure of the scanner holds it too: nothing unclear
+ * is ever cleared. One account past its own daily limit is told to wait instead (429), so it can neither run up the
+ * cost nor fill the review queue. Both limits are counted atomically in Redis, in Postgres while Redis is down, and an
+ * unknown count is taken as reached. `record` writes each check to `image_scans`, with the findings, the model, what it
+ * cost and how it came to be held.
  */
 
 export type CheckedBy = 'auto' | 'people_only' | 'checker_unavailable';
@@ -19,7 +22,18 @@ export interface PictureCheck {
   levels: PictureLevels | null;
   model: string;
   checkedBy: CheckedBy;
+  /** what the call cost, when one was made */
+  usage?: { inputTokens: number; outputTokens: number };
 }
+
+/** One account has had its automatic checks for the day: its next pictures wait until the next day (UTC). */
+export interface PersonOverLimit {
+  limited: true;
+  retryAfterSec: number;
+}
+
+/** The parts of a Redis client the counters use. */
+export type CounterStore = { incr(key: string): Promise<number>; expire(key: string, seconds: number): Promise<number> };
 
 export type PictureReviewMode = 'auto' | 'people';
 
@@ -32,8 +46,16 @@ export interface ImageModerationOptions {
   /** null or absent: no automatic checker, so every picture waits for a person */
   scanner?: ImageScanner | null;
   mode?: PictureReviewMode;
-  /** automatic checks a day at most (UTC) */
+  /** automatic checks a day at most for the whole service (UTC) */
   dailyLimit?: number;
+  /** automatic checks a day at most for one account (UTC) */
+  perUserDaily?: number;
+  /** where the counts live; without it they are read from Postgres */
+  counters?: CounterStore | null;
+  /** the counts' Redis key prefix; a test run gets its own, so suites sharing a Redis never reach each other's limits */
+  counterPrefix?: string;
+  /** told of every call made, for the spend counters (observability/metrics.ts) */
+  onCheck?: (check: { outcome: PictureOutcome['state'] | 'unavailable'; usage?: PictureCheck['usage'] }) => void;
   log?: Logger;
 }
 
@@ -61,10 +83,24 @@ function rowStatus(outcome: PictureOutcome): 'clear' | 'pending' | 'actioned' {
 
 const held = (checkedBy: CheckedBy, model: string): PictureCheck => ({ outcome: { state: 'held' }, levels: null, model, checkedBy });
 
+const COUNTER_PREFIX = 'picture-checks';
+
+/** The model column of a verdict reused for the same bytes, so the daily counts never count it as a call. */
+export const REUSED_SUFFIX = ' (reused)';
+
+/** Seconds until the next UTC midnight, when the daily counts start again. */
+export function secondsToUtcMidnight(now = new Date()): number {
+  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  return Math.max(1, Math.ceil((next - now.getTime()) / 1000));
+}
+
+const utcDay = (now = new Date()): string => now.toISOString().slice(0, 10);
+
 export class ImageModerationService {
   private readonly scanner: ImageScanner | null;
   private readonly mode: PictureReviewMode;
   private readonly dailyLimit: number;
+  private readonly perUserDaily: number;
   /** the UTC day moderators were last told the limit was reached, so this process asks at most once a day */
   private limitToldOn: string | null = null;
 
@@ -74,7 +110,8 @@ export class ImageModerationService {
   ) {
     this.scanner = opts.scanner ?? null;
     this.mode = opts.mode ?? 'auto';
-    this.dailyLimit = opts.dailyLimit ?? 3000;
+    this.dailyLimit = opts.dailyLimit ?? 1000;
+    this.perUserDaily = opts.perUserDaily ?? 30;
   }
 
   /** Whether pictures are checked automatically at all (a scanner, and not people-only). */
@@ -82,20 +119,75 @@ export class ImageModerationService {
     return this.scanner !== null && this.mode === 'auto';
   }
 
-  /** Check a picture's bytes for where it will be shown. Never throws for the scanner's sake. */
-  async check(bytes: Buffer, surface: PictureSurface): Promise<PictureCheck> {
+  /**
+   * Check a picture's bytes for where it will be shown, on behalf of the account uploading it (null for a second look the
+   * service takes itself). Never throws for the scanner's sake.
+   */
+  async check(bytes: Buffer, surface: PictureSurface, uploaderId: string | null = null): Promise<PictureCheck | PersonOverLimit> {
     if (!this.scanner || this.mode === 'people') return held('people_only', 'people');
+    if (uploaderId && (await this.overPersonLimit(uploaderId))) return { limited: true, retryAfterSec: secondsToUtcMidnight() };
     if (await this.limitReached()) {
       await this.tellLimitReached().catch((err) => this.opts.log?.warn({ err }, 'could not tell moderators the picture check limit was reached'));
       return held('people_only', 'daily-limit');
     }
     try {
       const report = await this.scanner.scan({ bytes });
-      return { outcome: decidePicture(report.levels, surface), levels: report.levels, model: report.model, checkedBy: 'auto' };
+      const outcome = decidePicture(report.levels, surface);
+      this.opts.onCheck?.({ outcome: outcome.state, usage: report.usage });
+      return { outcome, levels: report.levels, model: report.model, checkedBy: 'auto', usage: report.usage };
     } catch (err) {
+      this.opts.onCheck?.({ outcome: 'unavailable' });
       this.opts.log?.warn({ err: err instanceof Error ? err.message : String(err), surface }, 'picture check unavailable; held for a person');
       return held('checker_unavailable', 'unavailable');
     }
+  }
+
+  /**
+   * Takes one from a daily count and says whether it is past `limit`: in Redis, atomically, else from today's rows in
+   * Postgres. A count nobody can read is past the limit, so an outage never lets checks run unbounded.
+   */
+  private async takeOne(redisKey: string, limit: number, countSql: string, params: unknown[]): Promise<boolean> {
+    if (limit <= 0) return true;
+    const counters = this.opts.counters;
+    if (counters) {
+      try {
+        const n = await counters.incr(redisKey);
+        // two days, so a count read just before midnight is never cut short
+        if (n === 1) await counters.expire(redisKey, 2 * 86_400);
+        return n > limit;
+      } catch (err) {
+        this.opts.log?.warn({ err: err instanceof Error ? err.message : String(err) }, 'picture check counter unavailable; counting in Postgres');
+      }
+    }
+    try {
+      const r = await this.pool.query<{ n: number }>(countSql, params);
+      return (r.rows[0]?.n ?? 0) >= limit;
+    } catch {
+      return true;
+    }
+  }
+
+  /** The service's checks today (UTC) against its daily limit. */
+  private async limitReached(): Promise<boolean> {
+    return this.takeOne(
+      `${this.opts.counterPrefix ?? COUNTER_PREFIX}:${utcDay()}`,
+      this.dailyLimit,
+      `SELECT count(*)::int AS n FROM image_scans
+        WHERE checked_by = 'auto' AND created_at >= date_trunc('day', now(), 'UTC') AND model_version NOT LIKE '%${REUSED_SUFFIX}'`,
+      [],
+    );
+  }
+
+  /** One account's checks today (UTC) against its own daily limit. */
+  private async overPersonLimit(uploaderId: string): Promise<boolean> {
+    return this.takeOne(
+      `${this.opts.counterPrefix ?? COUNTER_PREFIX}:${utcDay()}:${uploaderId}`,
+      this.perUserDaily,
+      `SELECT count(*)::int AS n FROM image_scans
+        WHERE uploader_id = $1 AND checked_by = 'auto' AND created_at >= date_trunc('day', now(), 'UTC')
+          AND model_version NOT LIKE '%${REUSED_SUFFIX}'`,
+      [uploaderId],
+    );
   }
 
   /** Write one check, in the caller's transaction; returns its id (the `reviewId` of a refusal). */
@@ -110,8 +202,8 @@ export class ImageModerationService {
     const res = await db.query<{ id: string }>(
       `INSERT INTO image_scans
          (media_key, surface, nsfw_score, violence_score, csam_match, action, reasons, preserve_evidence, model_version, status,
-          levels, checked_by, outcome, reason, uploader_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15) RETURNING id`,
+          levels, checked_by, outcome, reason, uploader_id, input_tokens, output_tokens)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13,$14,$15,$16,$17) RETURNING id`,
       [
         input.key,
         input.surface,
@@ -128,18 +220,11 @@ export class ImageModerationService {
         check.outcome.state,
         reason,
         input.uploaderId,
+        check.usage?.inputTokens ?? null,
+        check.usage?.outputTokens ?? null,
       ],
     );
     return res.rows[0]!.id;
-  }
-
-  /** Today's automatic checks (UTC) against the limit; an unknown count lets the check go ahead. */
-  private async limitReached(): Promise<boolean> {
-    if (this.dailyLimit <= 0) return true;
-    const r = await this.pool
-      .query<{ n: number }>(`SELECT count(*)::int AS n FROM image_scans WHERE checked_by = 'auto' AND created_at >= date_trunc('day', now(), 'UTC')`)
-      .catch(() => null);
-    return (r?.rows[0]?.n ?? 0) >= this.dailyLimit;
   }
 
   /** Every moderator is told once a (UTC) day that pictures now wait for people; staff words, in English like the console. */

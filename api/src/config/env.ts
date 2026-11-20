@@ -108,10 +108,15 @@ const envSchema = z.object({
    */
   IMAGE_REVIEW_MODE: z.enum(['auto', 'people']).default('auto'),
   /**
-   * Automatic checks a day at most, a cost ceiling. Past it pictures wait for a person until the next day (UTC), and
-   * moderators are told once that day.
+   * Automatic checks a day at most for the whole service, a cost ceiling, counted in Redis (in Postgres while Redis is
+   * down). Past it pictures wait for a person until the next day (UTC), and moderators are told once that day.
    */
-  IMAGE_SCAN_DAILY_LIMIT: z.coerce.number().int().min(0).default(3000),
+  IMAGE_SCAN_DAILY_LIMIT: z.coerce.number().int().min(0).default(1000),
+  /**
+   * Automatic checks a day at most for one account. Past it that account's new pictures are refused with a 429 until the
+   * next day (UTC), so one account can neither run up the cost nor fill the review queue.
+   */
+  IMAGE_SCAN_PER_USER_DAILY: z.coerce.number().int().min(0).default(30),
   /** Distinct reporters (accounts over a day old) within a day that hide a picture from others until a person decides. */
   PICTURE_REPORT_HIDE_THRESHOLD: z.coerce.number().int().min(1).default(3),
   /** Voice notes are stored as uploaded, so their cost is capped by upload size and a rate limit. */

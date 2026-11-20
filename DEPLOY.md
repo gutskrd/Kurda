@@ -305,6 +305,62 @@ storage usage can't be read, it **fails closed**. Monitor via
 `GET /admin/media/usage` (admin) → stored bytes/objects + our own Class A/B op
 counts vs. the limits.
 
+## Picture checks — every picture is checked before others see it
+
+Every picture people share (post pictures, profile photos, group photos and the
+drawings on letters) is checked by a vision model **before anything is written
+to the public bucket**. Only the picture goes, downscaled; never who sent it,
+their name or any of their words.
+
+- **Clear** → stored publicly and shown at once.
+- **Uncertain** → stored **privately only** and held: its owner sees it through
+  a short-lived private link, nobody else sees it, and it waits on the admin
+  **Picture checks** page. Approve → it goes public and its post, profile or
+  group photo, or letter is published. Remove → a removal notice with the rule
+  and how to appeal.
+- **Clearly bad** (sexual, gory, self-harm, hateful, shocking) → the upload is
+  refused with a reason; the owner can ask a person to look. The bytes are kept
+  privately for the 182-day appeal window, then deleted.
+- **A possible child-safety hit** → refused, kept privately as evidence (365
+  days), an urgent case for moderators, decided only from its full case.
+
+Set on the **kurda-api** Render service → Environment:
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | *(none)* | the key for the vision service that checks pictures (mark as secret). **Without it in production every picture waits for a person** on the Picture checks page, and the boot log says so once. |
+| `IMAGE_SCAN_MODEL` | `claude-opus-5-5` | the model that checks pictures |
+| `IMAGE_REVIEW_MODE` | `auto` | `people` holds every picture for a person, whatever the check would say |
+| `IMAGE_SCAN_DAILY_LIMIT` | 1000 | **hard** ceiling on automatic checks a day for the whole service (UTC), counted atomically in Redis, in Postgres while Redis is down, and taken as reached if neither can count. Past it, pictures wait for a person until midnight UTC and moderators get one notification that day. |
+| `IMAGE_SCAN_PER_USER_DAILY` | 30 | **hard** ceiling on automatic checks a day for one account. Past it that account's new pictures are refused with `429 RATE_LIMITED` (and `Retry-After`) until midnight UTC, so one account can neither run up the cost nor fill the review queue. |
+| `PICTURE_REPORT_HIDE_THRESHOLD` | 3 | distinct reporters (accounts over a day old) within 24 hours that hide a picture from others until a person decides; one child-safety report hides it at once |
+
+Cost is kept small by design: a request is one picture at most 768 px on its
+longest side (JPEG, modest quality), a fixed instruction, low effort and a
+1536-token ceiling for the answer; the same bytes are never checked twice (the
+earlier findings are reused, on any kind, a letter's drawing included). Every
+call is counted in `/metrics` as `picture_checks_total{outcome}` and
+`picture_check_tokens_total{kind="input"|"output"}`, logged as `picture check`
+with its token counts, and stored on `image_scans.input_tokens` /
+`output_tokens`. A check the service could not make (the vision service down,
+a refusal, an odd answer) holds the picture; it is checked again at most three
+times, 10, 30 and 90 minutes apart, and released at once if clear, else left
+for a person. On the people side, an owner may ask a person to look at no more
+than five refused pictures a day, each once, with a note of at most 500
+characters.
+
+**A private bucket is strongly recommended.** Held and refused pictures are
+written only to private storage: `S3_EVIDENCE_BUCKET` when it is set (see
+above), otherwise unguessable `quarantine/…` keys in the public bucket, written
+`private, no-store`. Anyone holding such a key could still fetch it from the
+public bucket, so set the private bucket before turning the checks on.
+
+**Optional, recommended: free CSAM scanning on the CDN zone.** In the Cloudflare
+dashboard for the zone serving `CDN_BASE_URL`: **Caching → Configuration → CSAM
+Scanning Tool**, enable it with a notification address you read. It matches
+what is served from the zone against known CSAM hashes, a second layer beside
+the vision check; it is configured on the zone, not in the app.
+
 ## Rollback
 
 Every merge to `main` also publishes an image to GHCR. To redeploy a previous

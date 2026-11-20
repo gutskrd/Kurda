@@ -17,6 +17,8 @@ type Refused = {
   reason: string;
   /** a refusal by the picture check: why, and what its owner may ask a person about */
   refusal?: { reason: PictureRejectReason; reviewId: string | null };
+  /** a 429: when to try again */
+  retryAfterSec?: number;
 };
 
 export type SetPhotoResult =
@@ -147,6 +149,9 @@ export async function storeScannedPhoto(
       return reject(502, 'MEDIA_UPLOAD_FAILED', 'could not store the image; please try again', 'put-failed');
     case 'refused':
       return photoRefusal(intake.reason, intake.reviewId);
+    case 'limited':
+      // this account has had its automatic checks for today: told to wait, as any rate limit says it
+      return { ...reject(429, 'RATE_LIMITED', 'you have shared as many new pictures as can be checked today', 'check-limit'), retryAfterSec: intake.retryAfterSec };
     case 'held':
       return { ok: true, key, reused: false, review: 'held' };
     case 'clear':

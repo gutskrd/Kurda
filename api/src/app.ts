@@ -497,7 +497,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // friend + social + activity-feed routes
     registerFriendRoutes(app, friends);
     // Reports, cases, sanctions and appeals: one report service behind every report button.
-    const moderationKit = registerModeration(app, config, options.moderation);
+    const moderationKit = registerModeration(app, config, { ...options.moderation, registry: metricsRegistry });
     // Copyright notices from the public /copyright page land in the same queue.
     registerCopyright(app, config, options.copyright);
     registerSocialRoutes(app, new SocialService(app.db, friends), { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });

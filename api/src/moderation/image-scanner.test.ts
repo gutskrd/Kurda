@@ -5,7 +5,7 @@ import { PICTURE_SCAN_CATEGORIES } from '@kurda/shared';
 import { CLEAN_LEVELS, levelsOf } from './image-scan.js';
 import { ScanUnavailable, StubImageScanner } from './image-scanner.js';
 import { pictureScannerFor } from './picture-checker.js';
-import { CHECK_MAX_SIDE, LEVELS_SCHEMA, PICTURE_CHECK_PROMPT, VisionImageScanner, type CheckClient } from './vision-scanner.js';
+import { CHECK_MAX_SIDE, CHECK_MAX_TOKENS, LEVELS_SCHEMA, PICTURE_CHECK_PROMPT, VisionImageScanner, type CheckClient } from './vision-scanner.js';
 
 const picture = (width: number, height: number) =>
   sharp({ create: { width, height, channels: 4, background: { r: 200, g: 40, b: 40, alpha: 0.5 } } }).png().toBuffer();
@@ -57,11 +57,12 @@ describe('the vision picture checker', () => {
     const { client, requests } = fakeClient(() => message(answer, 'end_turn', 'claude-opus-5-5'));
     const scanner = new VisionImageScanner({ model: 'claude-opus-5-5', client });
     const report = await scanner.scan({ bytes: await picture(2400, 1200) });
-    expect(report).toEqual({ levels: levelsOf({ suggestive: 'possible' }), model: 'claude-opus-5-5' });
+    expect(report).toEqual({ levels: levelsOf({ suggestive: 'possible' }), model: 'claude-opus-5-5', usage: { inputTokens: 1, outputTokens: 1 } });
 
     const { body, options } = requests[0]!;
     expect(body).toMatchObject({
       model: 'claude-opus-5-5',
+      max_tokens: CHECK_MAX_TOKENS,
       fallbacks: 'default',
       betas: ['server-side-fallback-2026-07-01'],
       system: PICTURE_CHECK_PROMPT,
@@ -77,6 +78,13 @@ describe('the vision picture checker', () => {
     const meta = await sharp(sent).metadata();
     expect(messages[0]!.content[0]!.source!.media_type).toBe('image/jpeg');
     expect(Math.max(meta.width!, meta.height!)).toBe(CHECK_MAX_SIDE);
+  });
+
+  it('leaves the answer plenty of room in a small token budget', () => {
+    // the longest answer the schema allows, at about four characters a token, is a small part of the budget
+    const longest = JSON.stringify(Object.fromEntries(PICTURE_SCAN_CATEGORIES.map((c) => [c, 'possible'])));
+    expect(longest.length / 4).toBeLessThan(CHECK_MAX_TOKENS / 10);
+    expect(CHECK_MAX_TOKENS).toBeLessThanOrEqual(2048);
   });
 
   it('never enlarges a small picture', async () => {

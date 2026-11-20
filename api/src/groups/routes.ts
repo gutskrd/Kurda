@@ -163,6 +163,7 @@ export function registerGroupRoutes(
       if (!res.ok) {
         req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'group picture upload refused');
         // a refusal by the picture check says why, and how to ask a person (PictureRejection)
+        if (res.retryAfterSec) reply.header('retry-after', String(res.retryAfterSec));
         return reply.code(res.status).send({ code: res.code, message: res.message, ...(res.refusal ?? {}) });
       }
       // held: members keep seeing the old picture until a person checks the new one
