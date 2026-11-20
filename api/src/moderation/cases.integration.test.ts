@@ -473,9 +473,18 @@ describe.skipIf(!DATABASE_URL)('moderation cases (integration)', () => {
       const clicked = await call('POST', `/admin/moderation/cases/${oldCase}/resolve`, modA.token, { resolution: 'ban', confirmUsername: old.username });
       expect(clicked.statusCode).toBe(200);
       const page = await target('soloban');
-      const untypedBan = await call('POST', `/admin/users/${page.id}/ban`, modA.token, { reason: 'threats' });
+      // the older route asks for a rule and what the person is told: no canned "other" any more
+      const canned = await call('POST', `/admin/users/${page.id}/ban`, modA.token, { reason: 'threats' });
+      expect(canned.statusCode).toBe(400);
+      const said = { reason: 'threats', policy: 'violence', statement: 'You threatened another member.' };
+      const untypedBan = await call('POST', `/admin/users/${page.id}/ban`, modA.token, said);
       expect(untypedBan.json().code).toBe('CONFIRM_USERNAME_REQUIRED');
-      expect((await call('POST', `/admin/users/${page.id}/ban`, modA.token, { reason: 'threats', confirmUsername: page.username })).statusCode).toBe(200);
+      expect((await call('POST', `/admin/users/${page.id}/ban`, modA.token, { ...said, confirmUsername: page.username })).statusCode).toBe(200);
+      const told = await pool.query<{ policy: string; statement: string }>(
+        `SELECT policy, statement FROM sanctions WHERE user_id = $1 AND kind = 'permanent_ban'`,
+        [page.id],
+      );
+      expect(told.rows[0]).toEqual({ policy: 'violence', statement: 'You threatened another member.' });
     } finally {
       moderators = 2;
     }

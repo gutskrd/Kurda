@@ -75,14 +75,14 @@ describe.skipIf(!DATABASE_URL)('the scanner shield (integration)', { timeout: 30
     const renewed = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken }, remoteAddress: scanner });
     expect(renewed.statusCode).toBe(200);
     expect(renewed.json().accessToken).toEqual(expect.any(String));
-    // while signing in afresh from it still waits out the block
+    // and someone else on the network (a class behind a school's address) still signs in: sign-in has its own limits
     const signIn = await app.inject({
       method: 'POST',
       url: '/auth/login',
       payload: { email: `shield_${s}@it.kurda.app`, password: 'a-strong-password1' },
       remoteAddress: scanner,
     });
-    expect(signIn.statusCode).toBe(403);
+    expect(signIn.statusCode).toBe(200);
     // the health check is never blocked
     expect((await app.inject({ method: 'GET', url: '/health', remoteAddress: scanner })).statusCode).not.toBe(403);
     await vi.waitFor(async () => {

@@ -48,18 +48,18 @@ export function networkKeyHash(key: string): string {
   return keyed('network-v2', key);
 }
 
-/** Domains that are one mailbox under another name; only providers whose names are one namespace are listed. */
+/**
+ * Domains that are one mailbox under another name. Only Gmail's old name: other providers' sister domains are kept
+ * apart (auth/email-address.test.ts), since a fold that is wrong once refuses someone who did nothing.
+ */
 const SAME_MAILBOX: Readonly<Record<string, string>> = {
   'googlemail.com': 'gmail.com',
-  'proton.me': 'protonmail.com',
-  'pm.me': 'protonmail.com',
-  'protonmail.ch': 'protonmail.com',
 };
 
 /**
- * An email as the ban registry compares it: lower-cased and trimmed, without a `+tag` on any provider, without the dots
- * Gmail ignores, and with a provider's other domains for the same mailbox folded together. These are the cheap ways to
- * make a "new address" that reaches the same inbox; nothing that could belong to someone else is folded.
+ * An email as the ban registry compares it: lower-cased and trimmed (a trailing dot on the domain too), without a
+ * `+tag` on any provider, and without the dots Gmail ignores. These are the cheap ways to make a "new address" that
+ * reaches the same inbox; nothing that could belong to someone else is folded.
  */
 export function normalizeEmailForRegistry(email: string): string {
   const lower = email.trim().toLowerCase();

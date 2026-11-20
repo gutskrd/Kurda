@@ -18,6 +18,19 @@ const KINDS_OLD = ['email', 'device'];
 const KINDS_NEW = ['email', 'device', 'oauth', 'phone', 'push'];
 const list = (values) => values.map((v) => `'${v}'`).join(',');
 
+/** The decision log's actions before, and the ones added: holds and their decisions, linked bans, trusted networks. */
+const ACTIONS_BEFORE = [
+  'warn', 'mute', 'temp_ban', 'perm_ban', 'unban', 'wallet_adjust', 'auto_mute', 'auto_suspend', 'item_grant', 'item_revoke',
+  'content_removal', 'post_mute', 'feature_limit', 'unmute', 'lift_chat_mute', 'revoke_sanction', 'approve_ban', 'reject_ban',
+  'case_decision', 'case_reopen', 'case_escalate', 'csam', 'caring_message', 'appeal_decision', 'session_revoke', 'role_grant',
+  'role_revoke', 'plus_grant',
+];
+const ACTIONS_AFTER = [
+  ...ACTIONS_BEFORE,
+  'possible_return_hold', 'possible_return_cleared', 'possible_return_same', 'linked_ban', 'trusted_network_add', 'trusted_network_remove',
+];
+const actionCheck = (actions) => `action IN (${list(actions)})`;
+
 export const up = (pgm) => {
   // ---- what a ban did to the person's content ---------------------------------------
   pgm.createTable('ban_takedowns', {
@@ -162,9 +175,16 @@ export const up = (pgm) => {
     notice_emailed_at: { type: 'timestamptz' },
   });
   pgm.createIndex('sanctions', 'created_at', { name: 'sanctions_notice_email_due', where: "notice_email_state = 'pending'" });
+
+  pgm.dropConstraint('admin_actions', 'admin_actions_action_check');
+  pgm.addConstraint('admin_actions', 'admin_actions_action_check', { check: actionCheck(ACTIONS_AFTER) });
 };
 
 export const down = (pgm) => {
+  pgm.dropConstraint('admin_actions', 'admin_actions_action_check');
+  // the history is append-only: rows already written stay, and only new ones are held to the old list
+  pgm.sql(`ALTER TABLE admin_actions ADD CONSTRAINT admin_actions_action_check CHECK (${actionCheck(ACTIONS_BEFORE)}) NOT VALID`);
+
   pgm.dropIndex('sanctions', 'created_at', { name: 'sanctions_notice_email_due' });
   pgm.dropColumns('sanctions', ['notice_email_state', 'notice_emailed_at']);
 

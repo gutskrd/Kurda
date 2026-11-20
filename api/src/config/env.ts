@@ -128,6 +128,11 @@ const envSchema = z.object({
   MEDIA_AUDIO_UPLOAD_RATE_WINDOW_MIN: z.coerce.number().positive().default(60),
   /** HMAC secret for access tokens. MUST be overridden in production. */
   JWT_SECRET: z.string().min(32).default(DEV_JWT_SECRET),
+  /**
+   * The key the ban registry and phone numbers are hashed with (moderation/identity-hash.ts), apart from JWT_SECRET so
+   * rotating that one no longer empties the registry. Unset, they stay keyed from JWT_SECRET as before. See DEPLOY.md.
+   */
+  IDENTITY_HASH_SECRET: z.string().min(32).optional(),
   /** Comma-separated OAuth audiences (iOS/Android/web client ids). */
   GOOGLE_CLIENT_IDS: z.string().optional(),
   APPLE_CLIENT_IDS: z.string().optional(),
@@ -281,6 +286,10 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       problems.push('  JWT_SECRET: required in production');
     } else if (env.JWT_SECRET === DEV_JWT_SECRET) {
       problems.push('  JWT_SECRET: the built-in development secret must not be used in production');
+    }
+    // its own key, or rotating JWT_SECRET later would take the registry with it
+    if (config.IDENTITY_HASH_SECRET && config.IDENTITY_HASH_SECRET === config.JWT_SECRET) {
+      problems.push('  IDENTITY_HASH_SECRET: must differ from JWT_SECRET');
     }
     if (config.CORS_ORIGINS.split(',').some((o) => o.trim() === '*')) {
       problems.push("  CORS_ORIGINS: wildcard '*' is not allowed in production — use an explicit origin allowlist");

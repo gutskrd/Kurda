@@ -9,6 +9,9 @@ import { defaultJwksResolver, OAuthService } from './oauth.js';
 import { appleTokens } from './apple-tokens.js';
 import { signupRejected } from './rejections.js';
 import { isBannedEmail } from '../moderation/ban-registry.js';
+import { isReturningIdentity, type ReturnProbe } from '../moderation/returns.js';
+import { deviceHashOf } from '../moderation/identity-hash.js';
+import { writeDeviceSighting } from '../net/device-sightings.js';
 import { AuthService, notAGuest } from './service.js';
 import { GuestService } from './guest.js';
 import { RiskService } from '../risk/service.js';
@@ -166,6 +169,19 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   // a zone the database does not know is dropped, as one Intl does not know already was: the account gets UTC
   const knownTimeZone = async (tz: string | undefined): Promise<string | undefined> => (tz ? ((await storableTimeZone(app.db, tz)) ?? undefined) : undefined);
   const me = createMeReader(app);
+  /**
+   * The account against everyone banned or suspended now (moderation/returns.ts): held on a strong match, queued on a
+   * medium one. Never fails the sign-up or sign-in it follows.
+   */
+  const checkReturn = async (probe: ReturnProbe): Promise<void> => {
+    if (app.hasDecorator('returns')) await app.returns.assess(probe);
+  };
+  /** Whether this account used this install id before today's sign-in; a new one is checked against banned people. */
+  const newDevice = async (userId: string, deviceId: string | null): Promise<boolean> => {
+    if (!deviceId) return false;
+    const r = await app.db.query(`SELECT 1 FROM device_sightings WHERE user_id = $1 AND device_hash = $2 LIMIT 1`, [userId, deviceHashOf(deviceId)]);
+    return r.rowCount === 0;
+  };
 
   app.post(
     '/auth/register',
@@ -199,8 +215,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         deviceId: deviceIdOf(req.headers),
       });
       if (assessment.hardBlock) throw await rejected('too many accounts from this device or network');
-      // a permanently banned person's address (or a +tag/dot variant of it)
-      if (await isBannedEmail(app.db, body.email)) throw await rejected('banned email address');
+      // a banned or suspended person's address (or a +tag, dots or another domain of the same mailbox)
+      if (await isReturningIdentity(app.db, { email: body.email })) throw await rejected('banned email address');
 
       const result = await service.register({
         ...body,
@@ -214,6 +230,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       await risk.attachUser(decisionId, result.user.id).catch((err) => {
         app.log.warn({ err }, 'failed to attach user to risk decision');
       });
+      await checkReturn({ userId: result.user.id, event: 'signup', email: body.email, deviceId: deviceIdOf(req.headers), ip: req.ip });
       return reply.code(201).send(result);
     },
   );
@@ -245,6 +262,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       await risk.attachUser(decisionId, result.user.id).catch((err) => {
         app.log.warn({ err }, 'failed to attach user to risk decision');
       });
+      await checkReturn({ userId: result.user.id, event: 'guest', deviceId, ip: req.ip });
       await app.securityLog.record('signin.succeeded', { userId: result.user.id, details: { method: 'guest', newAccount: true } });
       return reply.code(201).send(result);
     },
@@ -278,7 +296,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       if (isDisposableEmail(body.email)) throw await rejected('throwaway email address');
       if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw await rejected('challenge not passed');
       await service.assertNotBreached(body.password);
-      if (await isBannedEmail(app.db, body.email)) throw await rejected('banned email address');
+      if (await isReturningIdentity(app.db, { email: body.email }, req.user!.id)) throw await rejected('banned email address');
 
       const claimed = await service.claim(req.user!.id, {
         email: body.email,
@@ -288,6 +306,10 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         birthMonth: body.birthMonth,
         locale: body.locale,
       });
+      // the claimed account's device, and the account checked as a sign-up is
+      const deviceId = deviceIdOf(req.headers);
+      if (deviceId) await writeDeviceSighting(app.db, claimed.id, deviceId).catch(() => undefined);
+      await checkReturn({ userId: claimed.id, event: 'claim', email: body.email, deviceId, ip: req.ip });
       return { user: await me(claimed.id) };
     },
   );
@@ -319,9 +341,12 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         ip: req.ip,
         deviceId: deviceIdOf(req.headers),
       });
+      const fresh = await newDevice(result.user.id, deviceIdOf(req.headers)).catch(() => false);
       await risk.attachUser(decisionId, result.user.id).catch((err) => {
         app.log.warn({ err }, 'failed to attach user to risk decision');
       });
+      // a sign-in on a device this account never used is compared with banned people's
+      if (fresh) await checkReturn({ userId: result.user.id, event: 'signin', deviceId: deviceIdOf(req.headers), ip: req.ip });
       return result;
     },
   );
@@ -373,6 +398,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       const tokens = await service.refresh((req.body as z.infer<typeof refreshBodySchema>).refreshToken, {
         deviceId: deviceIdOf(req.headers),
         deviceName: sessionName(undefined, req.headers['user-agent']),
+        ip: req.ip,
       });
       // rotation bookkeeping ids stay server-side
       return {
@@ -552,7 +578,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       const { email } = req.body as { email: string };
       if (req.user!.guest === true) throw new AppError('GUEST_ACCOUNT', 403, 'a guest has no address to change');
       if (isDisposableEmail(email)) throw await rejected('throwaway email address');
-      if (await isBannedEmail(app.db, email)) throw await rejected('banned email address');
+      if (await isBannedEmail(app.db, email, req.user!.id)) throw await rejected('banned email address');
       const changed = await service.changePendingEmail(req.user!.id, email);
       return { user: changed.user, sent: changed.sent };
     },
@@ -569,14 +595,42 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       const body = req.body as z.infer<typeof oauthBodySchema>;
       // signed in as a guest: a new identity claims the guest's row (auth/oauth.ts)
       const guestId = req.user?.guest === true ? req.user.id : null;
+      const deviceId = deviceIdOf(req.headers);
+      let decisionId: string | null = null;
       const result = await oauth.signIn(
         body.provider,
         body.idToken,
         sessionName(body.deviceName, req.headers['user-agent']),
-        deviceIdOf(req.headers),
+        deviceId,
         { authorizationCode: body.authorizationCode, fullName: body.fullName },
         guestId,
+        {
+          // a new account through a provider is a sign-up: the same caps and the same registry, answered alike
+          beforeNewAccount: async (identity) => {
+            const scored = await risk.assessSignup({ email: identity.email ?? undefined, ip: req.ip, deviceId });
+            decisionId = scored.decisionId;
+            if (scored.assessment.hardBlock) throw await rejected('too many accounts from this device or network');
+            if (await isReturningIdentity(app.db, { email: identity.email, oauth: { provider: identity.provider, subject: identity.subject } })) {
+              throw await rejected('banned sign-in');
+            }
+          },
+          refused: { deviceId, ip: req.ip },
+        },
       );
+      if (decisionId) {
+        await risk.attachUser(decisionId, result.user.id).catch((err) => app.log.warn({ err }, 'failed to attach user to risk decision'));
+      }
+      const fresh = !decisionId && (await newDevice(result.user.id, deviceId).catch(() => false));
+      if (!decisionId && deviceId) await writeDeviceSighting(app.db, result.user.id, deviceId).catch(() => undefined);
+      if (result.created || fresh) {
+        await checkReturn({
+          userId: result.user.id,
+          event: result.created ? 'oauth' : 'signin',
+          email: result.created ? result.user.email : null,
+          deviceId,
+          ip: req.ip,
+        });
+      }
       await app.securityLog.record('signin.succeeded', { userId: result.user.id, details: { method: body.provider, newAccount: result.created } });
       return reply.code(result.created ? 201 : 200).send(result);
     },

@@ -7,7 +7,7 @@ import { EmailService } from '../email/service.js';
 import { sendEmailJob } from '../jobs/email.js';
 import { ModerationAlerts, type ModerationMailer } from './alerts.js';
 import { AppealsService } from './appeals-service.js';
-import { banMailer } from './ban-email.js';
+import { banMailer, type SendEmail } from './ban-email.js';
 import { pruneRegistry, rekeyRegistry } from './ban-registry.js';
 import { CasesService } from './cases-service.js';
 import { ImageModerationService } from './image-moderation-service.js';
@@ -33,6 +33,8 @@ export interface ModerationOptions {
   imageScanner?: ImageScanner | null;
   /** where the picture checks' call and token counters are kept (observability/metrics.ts) */
   registry?: Registry;
+  /** where the emailed statements of reasons go (ban-email.ts) */
+  banEmails?: SendEmail;
 }
 
 export interface ModerationKit {
@@ -94,10 +96,11 @@ export function registerModeration(app: FastifyInstance, config: AppConfig, opti
     },
     mailer: banMailer(
       app.db,
-      async (to, template, vars, locale) => {
-        if (app.jobs) await app.jobs.enqueue(sendEmailJob, { to, template, vars, locale });
-        else await new EmailService(app.db, createEmailProvider(config, app.log)).send(to, template, vars, locale);
-      },
+      options.banEmails ??
+        (async (to, template, vars, locale) => {
+          if (app.jobs) await app.jobs.enqueue(sendEmailJob, { to, template, vars, locale });
+          else await new EmailService(app.db, createEmailProvider(config, app.log)).send(to, template, vars, locale);
+        }),
       config.APP_BASE_URL,
     ),
   });

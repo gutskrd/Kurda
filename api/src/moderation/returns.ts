@@ -233,9 +233,9 @@ export interface AssessedReturn {
   held: boolean;
 }
 
-/** Whether a check of this kind reads the account's history (a new account has none). */
+/** Whether a check of this kind reads the account's history: a new account has none, and a phone or push check is about one value. */
 function readsHistory(event: ReturnEvent): boolean {
-  return event === 'signin' || event === 'sweep' || event === 'phone' || event === 'push';
+  return event === 'signin' || event === 'sweep';
 }
 
 /**

@@ -17,7 +17,7 @@ import type { AppConfig } from '../config/env.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { setProfilePhoto } from '../media/profilePhoto.js';
-import { assertUnrestricted, requireUnrestricted } from '../moderation/restrictions.js';
+import { assertUnrestricted, requireNotHeld, requireUnrestricted } from '../moderation/restrictions.js';
 import { requireAccountCaller } from '../moderation/appeal-token.js';
 import { accountHoldOf } from '../moderation/returns.js';
 import { birthDateRequired, isBelowConsentAgeRow, isKnownAdultRow, isMinorRow } from './age.js';
@@ -636,7 +636,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     '/me/username',
     {
       schema: { body: changeUsernameBodySchema },
-      preHandler: requireAuth,
+      // a username is published, so a held account keeps its own until a person has looked
+      preHandler: [requireAuth, requireNotHeld],
       config: { rateLimit: { max: 5, windowMs: 15 * 60_000, per: 'user-or-ip' as const } },
     },
     async (req) => {
