@@ -3,6 +3,7 @@ import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { restrictionOf, restrictionText, standingExplains, STANDING_PATH } from './restriction';
+import { useAccountHeld } from './HeldNotice';
 
 /**
  * Why something sent did not go, for every send path. Account limits (reports/restriction.ts) say what is limited and
@@ -23,11 +24,12 @@ export function SendError({
   describe?: (error: ApiError) => string;
   className?: string;
   role?: 'alert' | 'status';
-  /** The box this answers turns into the held notice (reports/HeldNotice.tsx), so saying it here too would repeat it. */
+  /** The box this answers turns into the held notice once the account is known held, so saying it here would repeat it. */
   heldShownBeside?: boolean;
 }): React.JSX.Element | null {
   const t = useT();
   const locale = useLocale();
+  const held = useAccountHeld();
   if (!error) return null;
   if (typeof error === 'string') {
     return (
@@ -37,7 +39,7 @@ export function SendError({
     );
   }
   const restriction = restrictionOf(error);
-  if (heldShownBeside && restriction?.kind === 'held') return null;
+  if (heldShownBeside && held && restriction?.kind === 'held') return null;
   const text = restriction
     ? restrictionText(restriction, t, locale)
     : describe
