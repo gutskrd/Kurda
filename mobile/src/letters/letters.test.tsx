@@ -171,6 +171,30 @@ describe('the letters screen', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('LetterThread', { threadId: THREAD });
   });
 
+  it('says an answer’s drawing is being checked rather than that their bird is taking it home', async () => {
+    const answered = { threadId: THREAD, person: baran, letter: { ...visitor.letter, id: 'l10', mine: true, body: 'Silav', review: 'held' } };
+    testAuth.client = fakeClient({ 'GET /letters?landings=1': ok(home({ visitor })), 'POST /letters/visitor': ok(answered) });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.change(await screen.findByTestId('letters-visitor-answer-input'), { target: { value: 'Silav' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
+    expect(await screen.findByText('Your drawing is being checked before the bird can fly.')).toBeTruthy();
+    expect(screen.queryByText('Baran’s bird is taking your letter home.')).toBeNull();
+  });
+
+  it('says why an answer’s drawing was refused under the paper, with the way to ask a person when there is one', async () => {
+    testAuth.client = fakeClient({
+      'GET /letters?landings=1': ok(home({ visitor })),
+      'POST /letters/visitor': fail({ status: 422, code: 'IMAGE_REJECTED', rejection: { code: 'IMAGE_REJECTED', message: 'rejected', reason: 'violence', reviewId: 'rv3' } }),
+    });
+    renderWithProviders(<LettersScreen onExit={() => undefined} />);
+    fireEvent.change(await screen.findByTestId('letters-visitor-answer-input'), { target: { value: 'Silav' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Send it home with Baran’s bird' }));
+    expect(await screen.findByText('This picture looks violent or gory, which isn’t allowed on Hevalo.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ask a person to check' })).toBeTruthy();
+    // The bird is still at the window with the answer on the paper.
+    expect((screen.getByTestId('letters-visitor-answer-input') as HTMLTextAreaElement).value).toBe('Silav');
+  });
+
   it('asks once before sending a visiting bird on its way', async () => {
     const client = fakeClient({ 'GET /letters?landings=1': ok(home({ visitor })), 'DELETE /letters/visitor': ok(null) });
     testAuth.client = client;
@@ -389,6 +413,29 @@ describe('a correspondence', () => {
     expect(await screen.findByTestId('letters-waiting')).toBeTruthy();
     expect(screen.getByText('Your letter is with Baran. When they write back, their bird will bring it to your window.')).toBeTruthy();
     expect(screen.queryByTestId('letters-reply-input')).toBeNull();
+  });
+
+  it('says your drawing is being checked, in place of your bird being with them, until a person has looked', async () => {
+    const held = { id: 'l3', mine: true, body: 'Spas Baran!', removed: false, sentAt: '2026-11-13T11:00:00.000Z', readAt: null, decor: null, review: 'held' };
+    testAuth.client = fakeClient({ [`GET ${letterThreadPath(THREAD)}`]: ok(thread({ yourTurn: false, letters: [...thread().letters, held] as LetterThread['letters'] })) });
+    renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    expect(await screen.findByText('Your drawing is being checked before the bird can fly.')).toBeTruthy();
+    expect(screen.getByText('Being checked')).toBeTruthy();
+    expect(screen.queryByTestId('letters-waiting')).toBeNull();
+  });
+
+  it('says why a drawing was refused under the paper, keeping the letter to send another way', async () => {
+    testAuth.client = fakeClient({
+      [`GET ${letterThreadPath(THREAD)}`]: ok(thread()),
+      [`POST /letters/threads/${THREAD}`]: fail({ status: 422, code: 'IMAGE_REJECTED', rejection: { code: 'IMAGE_REJECTED', message: 'rejected', reason: 'other', reviewId: null } }),
+    });
+    renderWithProviders(<LetterThreadScreen threadId={THREAD} onExit={() => undefined} />);
+    fireEvent.change(await screen.findByTestId('letters-reply-input'), { target: { value: 'Spas Baran!' } });
+    fireEvent.click(screen.getByTestId('letters-reply-send'));
+    expect(await screen.findByText('This picture can’t be shared on Hevalo.')).toBeTruthy();
+    // A person looks at it anyway, so there is nobody to ask.
+    expect(screen.queryByRole('button', { name: 'Ask a person to check' })).toBeNull();
+    expect((screen.getByTestId('letters-reply-input') as HTMLTextAreaElement).value).toBe('Spas Baran!');
   });
 
   it('lets a letter written to you be reported, and not your own', async () => {

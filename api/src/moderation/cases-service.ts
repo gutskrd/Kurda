@@ -38,12 +38,16 @@ import { minorSql } from '../users/age.js';
 import { linkedEvidence } from '../net/evidence.js';
 import {
   mediaOfRemoval,
+  mediaRemovals,
   removableTarget,
   removeContent as removeContentOf,
   removedKeys,
   removeMedia,
+  restoreContent,
+  withdrawnKeys,
   type RemovalRecord,
 } from './content-removal.js';
+import { readStoredPicture, runHoldMoves, runPicturePublishing } from './picture-release.js';
 import { mediaWhereabouts, requestQuarantine, runQuarantine } from './quarantine.js';
 import { caringMessage, reportOutcomeNotice, sanctionNotice, type Notice } from './notices.js';
 import { isZeroTolerance, permanentBanMode, slaDueAt } from './rules.js';
@@ -170,12 +174,17 @@ export const DEFAULT_STATEMENTS = {
 // a copyright notice is a report from outside: the uploader is told it came from a complaint
 const REPORT_SOURCES: ReadonlySet<CaseSource> = new Set(['report', 'chat_report', 'library_report', 'image_report', 'user_report', 'copyright']);
 
-function originFor(source: CaseSource): SanctionOrigin {
+function originFor(source: CaseSource, evidence?: Record<string, unknown> | null): SanctionOrigin {
+  // a picture hidden after reports was taken down because people reported it
+  if (source === 'image_flag' && evidence?.origin === 'reported' && evidence.staffRemoval !== true) return 'report';
   return REPORT_SOURCES.has(source) ? 'report' : 'automatic';
 }
 
 export interface CasesOptions {
-  storage?: MediaStorage | null;
+  /** the bucket, or how to find it when it is set after the services are built (an app's tests do) */
+  storage?: MediaStorage | null | (() => MediaStorage | null | undefined);
+  /** after pictures are released: readers of letters that waited for them are told (pictures-service.ts) */
+  afterRelease?: () => Promise<void>;
   log?: { warn: (obj: unknown, msg: string) => void };
 }
 
@@ -203,6 +212,65 @@ export class CasesService {
     private readonly sanctions: SanctionsService,
     private readonly opts: CasesOptions = {},
   ) {}
+
+  private get storage(): MediaStorage | null | undefined {
+    const s = this.opts.storage;
+    return typeof s === 'function' ? s() : s;
+  }
+
+  /**
+   * After a decision commits: pictures it took down leave the public bucket, and pictures it (or an appeal, or a lifted
+   * removal) put back are copied to it. Whatever fails here, the five-minute sweep finishes.
+   */
+  async afterPictureDecision(quarantined: string[] = [], withdrawn: string[] = []): Promise<void> {
+    await runQuarantine(this.pool, this.storage, { keys: quarantined, log: this.opts.log });
+    await runHoldMoves(this.pool, this.storage, { keys: withdrawn, log: this.opts.log });
+    await runPicturePublishing(this.pool, this.storage, { log: this.opts.log });
+    await this.opts.afterRelease?.().catch((err) => this.opts.log?.warn({ err }, 'telling readers of released letters failed; the sweep will retry'));
+  }
+
+  /**
+   * Lift a sanction from the admin page. Lifting a content removal puts the content back, as an overturned appeal does,
+   * and makes a removed picture public again.
+   */
+  async revokeSanction(sanctionId: string, adminId: string, reason: string): Promise<CaseSanctionView> {
+    const view = await inTransaction(this.pool, async (client) => {
+      const lifted = await this.sanctions.revoke(client, sanctionId, adminId, reason);
+      if (lifted.kind === 'content_removal' && lifted.caseId) {
+        const c = await client.query<{ removed_content: RemovalRecord | null }>(
+          `SELECT removed_content FROM moderation_cases WHERE id = $1 FOR UPDATE`,
+          [lifted.caseId],
+        );
+        const removed = c.rows[0]?.removed_content;
+        if (removed && removed.type !== 'csam') {
+          await restoreContent(client, removed);
+          await client.query(`UPDATE moderation_cases SET removed_content = NULL, resolution_note = $2, updated_at = now() WHERE id = $1`, [
+            lifted.caseId,
+            `Removal lifted: ${reason.trim().slice(0, 1000)}`,
+          ]);
+        }
+      }
+      return lifted;
+    });
+    await this.afterPictureDecision();
+    return view;
+  }
+
+  /**
+   * One of a case's evidence files as bytes, for the case view: only a file the case holds (its reports' snapshots, its
+   * own evidence, what its decision took down), and never to someone the case is about or who reported it.
+   */
+  async evidenceFile(caseId: string, key: string, adminId: string): Promise<{ bytes: Buffer; contentType: string }> {
+    const c = await this.find(this.pool, caseId);
+    if (!c) throw new AppError('NOT_FOUND', 404, 'no such case');
+    await this.assertNotParty(this.pool, c, adminId);
+    const keys = new Set(await this.evidenceMediaKeys(this.pool, c));
+    for (const m of mediaRemovals(c.removed_content)) for (const k of removedKeys(m)) keys.add(k);
+    if (!keys.has(key)) throw new AppError('NOT_FOUND', 404, 'this case holds no such file');
+    const file = await readStoredPicture(this.pool, this.storage, key);
+    if (!file) throw new AppError('NOT_FOUND', 404, 'this file is not kept any more');
+    return file;
+  }
 
   // ---------------------------------------------------------------------------
   // Claim, release, notes
@@ -276,7 +344,9 @@ export class CasesService {
    * `preview` stops there and returns the messages.
    */
   async decide(caseId: string, adminId: string, req: DecideRequest): Promise<DecideResult> {
-    return inTransaction(this.pool, async (client) => {
+    const quarantined: string[] = [];
+    const withdrawn: string[] = [];
+    const result = await inTransaction(this.pool, async (client) => {
       const c = await this.lockOpen(client, caseId, adminId);
       if (c.resolution === 'csam') throw new AppError('ALREADY_DECIDED', 409, 'the CSAM action already decided this case');
       const outcome: Outcome = req.outcome;
@@ -372,6 +442,11 @@ export class CasesService {
 
       let removed: RemovalRecord | null = null;
       if (removeContent) removed = await removeContentOf(client, c, adminId);
+      // every picture a removal takes down leaves the public bucket
+      quarantined.push(...mediaRemovals(removed).flatMap(removedKeys));
+      await requestQuarantine(client, quarantined);
+      // a removed post's own picture copies leave the public bucket too, without blocking the picture anywhere else
+      withdrawn.push(...withdrawnKeys(removed));
 
       const status: CaseStatus = needsApproval ? 'needs_second_approval' : outcome;
       if (!needsApproval) await this.finalize(client, c, outcome, adminId, req.notifyReporters, removed !== null);
@@ -387,6 +462,7 @@ export class CasesService {
         [c.id, status, needsApproval, outcome, adminId, outcome === 'actioned' ? policy : req.policy ?? null, req.note?.trim() || null,
           req.notifyReporters, removed ? JSON.stringify(removed) : null],
       );
+      if (!needsApproval) await this.closeLinked(client, c, outcome, adminId, removed !== null, policy);
       if (req.note?.trim()) {
         await client.query(`INSERT INTO moderation_case_notes (case_id, author_id, body) VALUES ($1, $2, $3)`, [
           c.id,
@@ -408,6 +484,8 @@ export class CasesService {
       });
       return { preview: false, status, messages, sanctions: applied, permanentBans };
     });
+    if (!result.preview) await this.afterPictureDecision(quarantined, withdrawn);
+    return result;
   }
 
   /**
@@ -440,7 +518,7 @@ export class CasesService {
     for (const action of req.actions) {
       let userId: string;
       let actionPolicy = action.policy ?? policy;
-      let origin = originFor(c.source);
+      let origin = originFor(c.source, c.evidence);
       if (action.target === 'subject') {
         if (!c.subject_user_id) throw new AppError('NO_SUBJECT', 422, 'this case has no reported person to act on');
         userId = c.subject_user_id;
@@ -501,7 +579,7 @@ export class CasesService {
           userId: c.subject_user_id,
           username: u.rows[0].username,
           policy,
-          origin: originFor(c.source),
+          origin: originFor(c.source, c.evidence),
           mode: null,
         });
       }
@@ -579,6 +657,61 @@ export class CasesService {
       await deliverNotices(db, reporters.map((userId) => ({ userId, notice: reportOutcomeNotice(outcome, []) })));
     }
     await closeSource(db, c, outcome, adminId, removed);
+  }
+
+  /**
+   * A reported picture is decided once. Deciding its picture case decides the report case about the same thing (with
+   * the usual notices to reporters, once no other of its pictures still waits for a yes), and deciding the report case
+   * decides its picture cases, in the same transaction. A report case actioned without taking anything down leaves its
+   * pictures waiting, since nobody has decided them.
+   */
+  private async closeLinked(db: Executor, c: CaseRow, outcome: Outcome, adminId: string, removedSomething: boolean, policy: ReportCategory): Promise<void> {
+    const open = `status IN ('open','in_review','escalated') AND resolution IS DISTINCT FROM 'csam'`;
+    if (c.source === 'report') {
+      if (outcome === 'actioned' && !removedSomething) return;
+      const pictures = await db.query<CaseRow>(
+        `SELECT * FROM moderation_cases WHERE source = 'image_flag' AND evidence->>'reportCaseId' = $1 AND ${open} ORDER BY id FOR UPDATE`,
+        [c.id],
+      );
+      for (const p of pictures.rows) await this.closeWith(db, p, outcome, adminId, policy, `decided with its report case ${c.id}`, false);
+      return;
+    }
+    const reportCaseId = c.source === 'image_flag' ? (c.evidence as { reportCaseId?: unknown }).reportCaseId : null;
+    if (typeof reportCaseId !== 'string') return;
+    const report = await this.find(db, reportCaseId, true);
+    if (!report || report.source !== 'report' || !(['open', 'in_review', 'escalated'] as string[]).includes(report.status)) return;
+    if (outcome === 'no_violation') {
+      const others = await db.query(
+        `SELECT 1 FROM moderation_cases WHERE source = 'image_flag' AND evidence->>'reportCaseId' = $1 AND id <> $2 AND ${open} LIMIT 1`,
+        [reportCaseId, c.id],
+      );
+      if (others.rowCount) return;
+    }
+    // nobody decides a report they made, whichever page they decide it from
+    await this.assertNotParty(db, report, adminId);
+    await this.closeWith(db, report, outcome, adminId, policy, `decided with its picture case ${c.id}`, true);
+  }
+
+  /** Close a case that another decision decided: its reports and source closed, reporters told, nothing else applied. */
+  private async closeWith(db: Executor, row: CaseRow, outcome: Outcome, adminId: string, policy: ReportCategory, why: string, notifyReporters: boolean): Promise<void> {
+    await this.finalize(db, row, outcome, adminId, notifyReporters, false);
+    await db.query(
+      `UPDATE moderation_cases SET status = $2, resolution = $2, resolved_by = $3, resolved_at = now(),
+              policy = CASE WHEN $2 = 'actioned' THEN $4 ELSE policy END, resolution_note = COALESCE(resolution_note, $5),
+              notify_reporters = $6, claimed_by = NULL, lease_until = NULL, updated_at = now()
+        WHERE id = $1`,
+      [row.id, outcome, adminId, policy, why, notifyReporters],
+    );
+    await logAdminAction(db, {
+      targetUserId: row.subject_user_id,
+      adminId,
+      action: 'case_decision',
+      reason: why,
+      caseId: row.id,
+      policy,
+      before: { status: row.status },
+      after: { status: outcome, decidedWith: true },
+    });
   }
 
   /** Lock an open case for a decision, enforcing the lease and the conflict-of-interest rule. */
@@ -703,7 +836,7 @@ export class CasesService {
       const keys = new Set(await this.evidenceMediaKeys(client, c));
       for (const part of parts) for (const k of await mediaOfRemoval(client, part)) keys.add(k);
       for (const key of [...keys]) {
-        if (parts.some((p) => p.type === 'media' && removedKeys(p).includes(key))) continue;
+        if (parts.flatMap(mediaRemovals).some((p) => removedKeys(p).includes(key))) continue;
         const removal = await removeMedia(client, key);
         parts.push(removal);
         // the same picture under other keys is the same evidence, and leaves the public bucket too
@@ -736,7 +869,7 @@ export class CasesService {
             internalNote: note?.trim() || 'CSAM action',
             caseId: c.id,
             createdBy: adminId,
-            origin: originFor(c.source),
+            origin: originFor(c.source, c.evidence),
             zeroTolerance: true,
             singleApproved: (await this.sanctions.moderatorCount()) < 2,
           });
@@ -778,7 +911,7 @@ export class CasesService {
     });
 
     // after the commit: off the public bucket now (what fails, the sweep retries)
-    await runQuarantine(this.pool, this.opts.storage, { keys: done.keys, log: this.opts.log });
+    await runQuarantine(this.pool, this.storage, { keys: done.keys, log: this.opts.log });
     return {
       status: 'escalated',
       escalation: (await this.escalationViews(this.pool, [done.escalation]))[0]!,
@@ -789,7 +922,7 @@ export class CasesService {
   /** Escalations as the API shows them, with where each CSAM file is now. */
   private async escalationViews(db: Executor, rows: EscalationRow[]): Promise<CaseEscalation[]> {
     const where = await mediaWhereabouts(db, [...new Set(rows.flatMap((e) => e.media_keys))]);
-    const storage = this.opts.storage;
+    const storage = this.storage;
     return rows.map((e) =>
       toEscalation(
         e,
@@ -1294,16 +1427,28 @@ export class CasesService {
     return r.rows.map((a) => ({ at: a.at.toISOString(), adminId: a.admin_id, action: a.action, detail: a.detail }));
   }
 
-  /** Evidence media as five-minute signed links, to the private copy once a file is quarantined. */
+  /**
+   * Evidence media as five-minute signed links, to the private copy once a file is quarantined or while it was never
+   * public (held or refused). The console shows them through `GET /admin/moderation/cases/:id/media`, which its image
+   * policy allows; the links stay for tools that read the detail.
+   */
   private async signedMedia(keys: string[]): Promise<CaseDetail['media']> {
     if (keys.length === 0) return [];
     const where = await mediaWhereabouts(this.pool, keys);
-    const storage = this.opts.storage;
+    const kept = await this.pool.query<{ key: string; private_key: string }>(
+      `SELECT key, private_key FROM media_uploads WHERE key = ANY($1::text[]) AND private_key IS NOT NULL`,
+      [keys],
+    );
+    const privately = new Map(kept.rows.map((r) => [r.key, r.private_key]));
+    const storage = this.storage;
     const out: CaseDetail['media'] = [];
     for (const key of keys) {
       const m = where.get(key);
       let url: string | null = null;
-      if (storage && m?.quarantine === 'done') {
+      const own = privately.get(key);
+      if (storage && own) {
+        url = await storage.createEvidenceDownloadUrl(own, 300).catch(() => null);
+      } else if (storage && m?.quarantine === 'done') {
         url = m.quarantineKey ? await storage.createEvidenceDownloadUrl(m.quarantineKey, 300).catch(() => null) : null;
       } else if (storage) {
         url = await storage.createDownloadUrl(key, 300).catch(() => null);

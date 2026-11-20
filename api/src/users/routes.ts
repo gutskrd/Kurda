@@ -13,7 +13,6 @@ import { StreakService } from '../streaks/service.js';
 import { SocialService } from '../social/service.js';
 import { FriendService } from '../friends/service.js';
 import { toPublicProfileDto } from '../social/profile-dto.js';
-import { ImageModerationService } from '../moderation/image-moderation-service.js';
 import type { AppConfig } from '../config/env.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
@@ -109,6 +108,7 @@ interface MeRow {
   skip_speaking: boolean;
   profile_visibility: string;
   profile_photo_key: string | null;
+  pending_profile_photo_key: string | null;
   selected_avatar_key: string | null;
   equipped_background_sku: string | null;
   equipped_icon_sku: string | null;
@@ -187,6 +187,8 @@ export function createMeReader(app: FastifyInstance): (userId: string) => Promis
       ...toMe(row),
       streak,
       profilePhotoUrl: photoUrl(row.profile_photo_key),
+      // the new photo a person is still checking, for its owner only (a short-lived private link)
+      profilePhotoPending: app.hasDecorator('pictures') ? await app.pictures.ownerLink(row.pending_profile_photo_key) : null,
       // resolved, safe cosmetic + progression fields (same as public profile)
       avatarUrl: publicDto.avatarUrl,
       background: publicDto.background,
@@ -247,15 +249,22 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       if (!raw) return reply.code(415).send({ code: 'INVALID_IMAGE', message: 'send raw image bytes with an image/* content-type' });
 
       const res = await setProfilePhoto(
-        { pool: app.db, storage: app.storage, usage, moderation: new ImageModerationService(app.db), limits, log: app.log },
+        { pool: app.db, storage: app.storage, usage, pictures: app.pictures, limits, log: app.log },
         req.user!.id,
         raw,
       );
       if (!res.ok) {
         req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'profile photo upload rejected');
-        return reply.code(res.status).send({ code: res.code, message: res.message });
+        // a refusal by the picture check says why, and how to ask a person (PictureRejection)
+        if (res.retryAfterSec) reply.header('retry-after', String(res.retryAfterSec));
+        return reply.code(res.status).send({ code: res.code, message: res.message, ...(res.refusal ?? {}) });
       }
-      return { profilePhotoUrl: res.profilePhotoUrl };
+      // held: others keep seeing the old photo, and the new one is the owner's alone until a person checks it
+      return {
+        profilePhotoUrl: res.profilePhotoUrl,
+        review: res.review,
+        ...(res.review === 'held' ? { profilePhotoPending: res.profilePhotoPending ?? null } : {}),
+      };
     },
   );
 
@@ -274,7 +283,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       `SELECT profile_photo_key FROM users WHERE id = $1`,
       [req.user!.id],
     );
-    await app.db.query(`UPDATE users SET profile_photo_key = NULL WHERE id = $1`, [req.user!.id]);
+    // a new photo still waiting for a person is taken down with it
+    await app.db.query(`UPDATE users SET profile_photo_key = NULL, pending_profile_photo_key = NULL WHERE id = $1`, [req.user!.id]);
     await scheduleOrphan(app, prev.rows[0]?.profile_photo_key ?? null, null);
     return { ok: true };
   });

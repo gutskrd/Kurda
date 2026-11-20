@@ -109,7 +109,6 @@ import { registerPlayRoutes } from './play/routes.js';
 import { registerMultiplayerRoutes } from './mp/routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
-import { ImageModerationService } from './moderation/image-moderation-service.js';
 import { registerAiModerationRoutes, registerImageModerationRoutes } from './moderation/ai-routes.js';
 import { registerModeration, type ModerationOptions } from './moderation/wire.js';
 import { registerCopyright, type CopyrightWireOptions } from './copyright/wire.js';
@@ -223,7 +222,7 @@ export interface BuildAppOptions {
   gateway?: GatewayOptions;
   /** Test seam: where a dictionary import reads its words from; the real source downloads 65 MB over about ninety minutes, which no test should start. */
   ferheng?: FerhengSource;
-  /** Test seams for moderation: the moderator count and the urgent-report mailer. */
+  /** Test seams for moderation: the moderator count, the urgent-report mailer and the picture checker. */
   moderation?: ModerationOptions;
   /** where the security log's alert emails go (security/wire.ts) */
   security?: SecurityLogOptions;
@@ -498,7 +497,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // friend + social + activity-feed routes
     registerFriendRoutes(app, friends);
     // Reports, cases, sanctions and appeals: one report service behind every report button.
-    const moderationKit = registerModeration(app, config, options.moderation);
+    const moderationKit = registerModeration(app, config, { ...options.moderation, registry: metricsRegistry });
     // Copyright notices from the public /copyright page land in the same queue.
     registerCopyright(app, config, options.copyright);
     registerSocialRoutes(app, new SocialService(app.db, friends), { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });
@@ -514,8 +513,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // Automated content moderation: a spam and scam heuristic by default, provider-pluggable, feeding the review queue.
     const aiMod = new AiModerationService(app.db);
     registerAiModerationRoutes(app, aiMod);
-    // Automatic image scanning: a stub scanner by default, provider-pluggable; consumers scan at finalize before serving.
-    registerImageModerationRoutes(app, new ImageModerationService(app.db));
+    // The older "Automated flags" image routes, decided through the same picture checks as the Picture checks page.
+    registerImageModerationRoutes(app, moderationKit.pictures.checks, moderationKit.pictures);
     // Behavioural bot detection: scoring, CAPTCHA gating and ledger reversal.
     registerAntibotRoutes(app, new BotDetectionService(app.db));
     // The community library: stories and poems, with text screened by automated moderation.
@@ -795,18 +794,20 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerChatRoutes(app, chat, trust, aiMod);
 
     // Letters by bird: pen pals in Kurdish, met by sending a bird out, within an age band (letters/service.ts).
-    registerLetterRoutes(
-      app,
-      new LetterService(app.db, {
-        moderation,
-        inbox,
-        push: pushRecorded(pushService, app.jobs),
-        // an open window or correspondence hears of every change as it happens, and reads the page again
-        realtime: { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) },
-        log: app.log,
-        wallet: new WalletService(app.db),
-      }),
-    );
+    const letterService = new LetterService(app.db, {
+      moderation,
+      inbox,
+      push: pushRecorded(pushService, app.jobs),
+      // an open window or correspondence hears of every change as it happens, and reads the page again
+      realtime: { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) },
+      log: app.log,
+      wallet: new WalletService(app.db),
+      // a drawing is checked as any picture is before the letter is delivered
+      pictures: moderationKit.pictures,
+    });
+    registerLetterRoutes(app, letterService);
+    // and once a person approves it, its reader hears of it the way any letter's reader does
+    moderationKit.pictures.useLetters(letterService);
 
     // Group chat: per-group room fan-out over the bus, with moderation.
     const groupChat = new GroupChatService(

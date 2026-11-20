@@ -174,6 +174,7 @@ function asFeedItem(post: ImagePost, engagement: PostEngagement): FeedItem {
     commentCount: post.commentCount,
     engagement,
     at: post.createdAt,
+    ...(post.review === 'held' ? { review: 'held' as const } : {}),
   };
 }
 

@@ -16,9 +16,9 @@ import { imagePostLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { claimPostPictures } from '../media/postMedia.js';
 import { MediaService } from '../media/service.js';
-import { ImageModerationService } from '../moderation/image-moderation-service.js';
+import { StubImageScanner } from '../moderation/image-scanner.js';
 import { activate } from '../test/activate.js';
-import { memoryStorage } from '../test/media.js';
+import { memoryStorage, testPictures } from '../test/media.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -322,51 +322,43 @@ describe.skipIf(!DATABASE_URL)('picture uploads for posts (integration)', () => 
     expect(storage.objects.has(key)).toBe(true);
   });
 
-  it('scans a picture again that was held only because the scanner was down', async () => {
+  it('holds a picture the checker could not look at, and the same upload again is the same held picture', async () => {
     const me = await person('outage');
-    let scanner: 'down' | 'clean' | 'holds' = 'down';
+    const scanner = new StubImageScanner();
     const deps = {
       pool,
       storage,
       usage: new MediaUsageService(pool, null),
-      moderation: new ImageModerationService(pool, {
-        scanner: {
-          scan: async () => {
-            if (scanner === 'down') throw new Error('scanner unavailable');
-            return { nsfwScore: scanner === 'holds' ? 0.85 : 0, violenceScore: 0, csamMatch: false, modelVersion: 'test-v1' };
-          },
-        },
-      }),
+      pictures: testPictures(pool, storage, scanner),
       limits: imagePostLimits(config),
       log: { warn: () => undefined, error: () => undefined },
     };
     const store = (bytes: Buffer) => storeImageMedia(deps, 'image-post', bytes, { ownerId: me.id });
 
     try {
-      // held while the scanner is down, as an unscanned picture always is…
+      // held while the checker is down, as an unchecked picture always is, and never put on the public bucket…
       const bytes = await photo(250);
-      expect(await store(bytes)).toMatchObject({ ok: false, code: 'IMAGE_REJECTED' });
-      // …and scanned again when it is back, rather than refused for good
-      scanner = 'clean';
-      const again = await store(bytes);
-      expect(again).toMatchObject({ ok: true, reused: false });
-      if (again.ok) expect((await row(again.mediaId))!.scan_status).toBe('cleared');
-
-      // a hold the scanner decided stands, with no second scan
-      scanner = 'holds';
-      const held = await photo(251);
-      expect(await store(held)).toMatchObject({ ok: false, code: 'IMAGE_REJECTED' });
-      scanner = 'clean';
-      expect(await store(held)).toMatchObject({ ok: false, code: 'IMAGE_REJECTED' });
+      scanner.queue('unavailable');
+      const held = await store(bytes);
+      expect(held).toMatchObject({ ok: true, review: 'held' });
+      if (held.ok) {
+        expect(storage.objects.has(held.mediaId)).toBe(false);
+        expect((await row(held.mediaId))!.scan_status).toBe('held');
+      }
+      // …and the same upload again is that picture, waiting, with no second check (the retry job looks again)
+      const calls = scanner.calls;
+      expect(await store(bytes)).toMatchObject({ ok: true, review: 'held', reused: true });
+      expect(scanner.calls).toBe(calls);
       const verdicts = await pool.query(
         `SELECT 1 FROM image_scans s JOIN media_uploads m ON m.key = s.media_key
-          WHERE m.uploader_id = $1 AND s.action = 'gate' AND s.model_version = 'test-v1'`,
+          WHERE m.uploader_id = $1 AND s.action = 'gate' AND s.checked_by = 'checker_unavailable'`,
         [me.id],
       );
       expect(verdicts.rowCount).toBe(1);
     } finally {
       const mine = await pool.query<{ key: string }>(`SELECT key FROM media_uploads WHERE uploader_id = $1`, [me.id]);
       keys.push(...mine.rows.map((r) => r.key));
+      await pool.query(`DELETE FROM moderation_cases WHERE source = 'image_flag' AND evidence->>'mediaKey' = ANY($1)`, [mine.rows.map((r) => r.key)]);
       await pool.query(`DELETE FROM image_scans WHERE media_key = ANY($1)`, [mine.rows.map((r) => r.key)]);
     }
   });

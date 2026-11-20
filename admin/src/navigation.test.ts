@@ -13,7 +13,7 @@ const ids = (s: SessionAccess): string[] => visibleNav(s).map((n) => n.id);
 
 describe('who sees which page — what the API allows, not a guess', () => {
   it('a moderator sees the queue and the people, and not what refuses them', () => {
-    expect(ids(MODERATOR)).toEqual(['dashboard', 'users', 'moderation', 'appeals', 'ban-approvals', 'aimod', 'feedback', 'playbook', 'security']);
+    expect(ids(MODERATOR)).toEqual(['dashboard', 'users', 'moderation', 'picture-checks', 'appeals', 'ban-approvals', 'aimod', 'feedback', 'playbook', 'security']);
     // The API answers a moderator 403 on these.
     for (const page of ['analytics', 'shop', 'economy', 'antibot', 'lessons', 'audit']) expect(mayOpenPage(page, MODERATOR)).toBe(false);
   });

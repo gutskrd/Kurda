@@ -29,6 +29,7 @@ import { BansSection, RequestsSection, useModeration } from './GroupModeration';
 import { announceGroupsChanged } from './groupsChanged';
 import { useLeaveGroup } from './leave';
 import { membersLine } from './memberCount';
+import { PendingPhoto } from '../pictures/PictureCheck';
 
 /** Something irreversible, waiting for confirmation. */
 type Ask =
@@ -251,6 +252,8 @@ export function GroupInfo({
           </p>
         )}
         <p className="ginfo-meta">{membersLine(t, detail.memberCount ?? detail.members.length)}</p>
+        {/* Sent only to admins and whoever set it: a new picture members do not see yet. */}
+        {detail.photoPending && <PendingPhoto pending={detail.photoPending} words="pictureCheck.held.group" />}
       </header>
 
       {error && (

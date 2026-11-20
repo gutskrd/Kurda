@@ -54,6 +54,8 @@ export interface FileReportInput {
 export interface ReportsOptions {
   /** told when a case becomes P0, after the report is committed */
   onUrgent?: (caseId: string) => Promise<void>;
+  /** told of every new report after it is committed (a reported picture may need hiding: pictures-service.ts) */
+  onFiled?: (filed: { targetType: ReportTargetType; targetId: string; category: ReportCategory; reportCaseId: string }) => Promise<void>;
 }
 
 interface ReportRow {
@@ -210,6 +212,11 @@ export class ReportsService {
       // after commit: the alert reads the case it is about; a failure here never
       // undoes a report (the five-minute sweep sends any alert that did not go)
       await this.opts.onUrgent(result.urgent).catch(() => undefined);
+    }
+    if (result.created && result.row.case_id && this.opts.onFiled) {
+      await this.opts
+        .onFiled({ targetType: input.targetType, targetId: resolved.targetId, category: input.category, reportCaseId: result.row.case_id })
+        .catch(() => undefined);
     }
 
     const receipt: ReportReceipt = {

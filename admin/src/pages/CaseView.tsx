@@ -20,7 +20,7 @@ import {
   type DecisionDraft,
 } from '../moderation';
 import { Badge, Banner, Button, Drawer, ErrorState, Icon, Loading, PageHeader, Time, errorLine, useLoad, useMediaQuery, useToast } from '../ui';
-import { CopyrightPanel, Evidence } from './CaseEvidence';
+import { CopyrightPanel, Evidence, EvidenceCaseId } from './CaseEvidence';
 import { ReportersPanel, SubjectPanel } from './CasePeople';
 import { CaseSanctions, Escalations, History, Notes } from './CaseRecord';
 import { DecisionPanel } from './DecisionPanel';
@@ -289,25 +289,27 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
 
       <div className={`case-layout${wide ? ' is-wide' : ''}`}>
         <div className="case-main">
-          <Evidence detail={detail} sensitive={sensitive} />
-          {detail.copyright && <CopyrightPanel info={detail.copyright} />}
-          {subject && <SubjectPanel subject={subject} canAct={canAct} selfHarm={draft.policy === 'self_harm'} onSanction={() => addAction('subject')} />}
-          <ReportersPanel
-            reports={detail.reports}
-            media={detail.media}
-            sensitive={sensitive}
-            canAct={canAct}
-            inDraft={inDraft}
-            onSanction={(id) => addAction(`reporter:${id}`)}
-          />
-          <CaseSanctions sanctions={detail.sanctions} nameOf={nameOfUser} onChanged={() => void loaded.reload()} />
-          <Escalations escalations={detail.escalations} onChanged={() => void loaded.reload()} />
-          <Notes
-            caseId={c.id}
-            notes={detail.notes}
-            onAdded={(note) => loaded.setData((d) => (d ? { ...d, notes: [...d.notes, note] } : d!))}
-          />
-          <History audit={detail.audit} nameOf={nameOfAdmin} />
+          <EvidenceCaseId.Provider value={c.id}>
+            <Evidence detail={detail} sensitive={sensitive} />
+            {detail.copyright && <CopyrightPanel info={detail.copyright} />}
+            {subject && <SubjectPanel subject={subject} canAct={canAct} selfHarm={draft.policy === 'self_harm'} onSanction={() => addAction('subject')} />}
+            <ReportersPanel
+              reports={detail.reports}
+              media={detail.media}
+              sensitive={sensitive}
+              canAct={canAct}
+              inDraft={inDraft}
+              onSanction={(id) => addAction(`reporter:${id}`)}
+            />
+            <CaseSanctions sanctions={detail.sanctions} nameOf={nameOfUser} onChanged={() => void loaded.reload()} />
+            <Escalations escalations={detail.escalations} onChanged={() => void loaded.reload()} />
+            <Notes
+              caseId={c.id}
+              notes={detail.notes}
+              onAdded={(note) => loaded.setData((d) => (d ? { ...d, notes: [...d.notes, note] } : d!))}
+            />
+            <History audit={detail.audit} nameOf={nameOfAdmin} />
+          </EvidenceCaseId.Provider>
         </div>
         {wide && (
           <aside ref={aside} className="case-aside card" aria-label="Decision">

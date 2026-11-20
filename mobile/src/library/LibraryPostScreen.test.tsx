@@ -158,6 +158,18 @@ describe('the post’s own row', () => {
     expect(await screen.findByRole('button', { name: 'Unlike (6)' })).toBeTruthy();
   });
 
+  it('tells its author that it is being checked, and offers no way to pass it on yet', async () => {
+    open({
+      'GET /library/posts/p1': ok({ ...POST, media: [{ mediaKey: 'images/p.webp', url: 'https://media.test/private/p.webp', altText: null, width: 800, height: 600 }], review: 'held' }),
+      [ENGAGEMENT]: ok({ engagement: counts }),
+    });
+    expect(await screen.findByText('Being checked')).toBeTruthy();
+    expect(screen.getByText('Only you can see this until it’s checked. It usually takes a few hours.')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Like (4)' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Share this post' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Repost (2)' })).toBeNull();
+  });
+
   it('still shows the post, with no counts, when its numbers could not be read', async () => {
     open();
     expect(await screen.findByText('Rovî û Gur')).toBeTruthy();

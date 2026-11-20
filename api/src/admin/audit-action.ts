@@ -32,7 +32,7 @@ export function auditTargetId(params: unknown): string | null {
  * user's by user id). Null for routes whose id is something else.
  */
 export function auditTargetType(routeUrl: string): string | null {
-  if (routeUrl.startsWith('/admin/moderation/cases/:id')) return 'moderation_case';
+  if (routeUrl.startsWith('/admin/moderation/cases/:id') || routeUrl.startsWith('/admin/pictures/:id')) return 'moderation_case';
   if (routeUrl.startsWith('/admin/moderation/approvals/:id') || routeUrl.startsWith('/admin/sanctions/:id')) return 'sanction';
   if (routeUrl.startsWith('/admin/moderation/escalations/:id')) return 'escalation';
   if (routeUrl.startsWith('/admin/appeals/:id')) return 'appeal';

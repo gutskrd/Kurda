@@ -19,6 +19,8 @@ const SUMMARY: ModerationSummary = {
   appealsWaiting: 2,
   pendingApprovals: 1,
   openEscalations: 0,
+  picturesWaiting: 4,
+  picturesUrgent: 0,
 };
 
 function session(staffRoles: string[], capabilities: string[]) {
@@ -66,7 +68,7 @@ describe('the admin’s navigation', () => {
     );
     await openAt('');
     await waitFor(() => expect(location.hash).toBe('#/dashboard'));
-    expect(sidebarLinks()).toEqual(['Dashboard', 'Users', 'Queue', 'Appeals', 'Ban approvals', 'Automated flags', 'Feedback', 'Playbook', 'My security']);
+    expect(sidebarLinks()).toEqual(['Dashboard', 'Users', 'Queue', 'Picture checks', 'Appeals', 'Ban approvals', 'Automated flags', 'Feedback', 'Playbook', 'My security']);
     const nav = screen.getAllByRole('navigation', { name: 'Admin pages' })[0]!;
     expect(within(nav).getByRole('heading', { name: 'Moderation' })).toBeInTheDocument();
     expect(within(nav).queryByRole('heading', { name: 'Economy' })).not.toBeInTheDocument();
@@ -75,6 +77,9 @@ describe('the admin’s navigation', () => {
     // The queue's size is beside its link, and said to be urgent.
     await waitFor(() => expect(within(nav).getByRole('link', { name: /queue/i })).toHaveTextContent('7'));
     expect(within(nav).getByRole('link', { name: /queue/i })).toHaveTextContent('7 open, urgent');
+    // And the pictures waiting for a person beside theirs, not urgent while none is a child-safety hit.
+    await waitFor(() => expect(within(nav).getByRole('link', { name: /picture checks/i })).toHaveTextContent('4 waiting'));
+    expect(within(nav).getByRole('link', { name: /picture checks/i })).not.toHaveTextContent('urgent');
 
     // And the dashboard has the queue by priority, with links into it.
     const urgent = await screen.findByRole('link', { name: /^urgent/i });

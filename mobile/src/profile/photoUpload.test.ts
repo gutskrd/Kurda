@@ -9,7 +9,7 @@ vi.mock('expo-file-system/legacy', () => ({ uploadAsync: (...args: unknown[]) =>
 
 import type { ApiClient } from '../api/client';
 import { uploadVoiceNote } from '../library/voiceUpload';
-import { uploadProfilePhoto } from './photoUpload';
+import { uploadGroupPhoto, uploadProfilePhoto } from './photoUpload';
 
 const t = (key: string) => key;
 
@@ -31,7 +31,12 @@ describe('uploads past the client', () => {
   it('renews a session that ran out and sends the photo again', async () => {
     uploadAsync.mockResolvedValueOnce({ status: 401, body: '{}' }).mockResolvedValueOnce({ status: 200, body: JSON.stringify({ profilePhotoUrl: 'https://cdn.test/me.jpg' }) });
     const c = client();
-    expect(await uploadProfilePhoto(c.client, { uri: 'file:///me.jpg', contentType: 'image/jpeg' }, t)).toEqual({ ok: true, url: 'https://cdn.test/me.jpg' });
+    expect(await uploadProfilePhoto(c.client, { uri: 'file:///me.jpg', contentType: 'image/jpeg' }, t)).toEqual({
+      ok: true,
+      url: 'https://cdn.test/me.jpg',
+      review: 'clear',
+      pending: null,
+    });
     expect(c.get).toHaveBeenCalledWith('/me');
     expect(sentWith()).toEqual(['Bearer old', 'Bearer new']);
   });
@@ -51,5 +56,32 @@ describe('uploads past the client', () => {
     expect(c.get).not.toHaveBeenCalled();
     const none = { baseUrl: 'https://api.test', getAccessToken: async () => null, get: vi.fn() } as unknown as ApiClient;
     expect(await uploadProfilePhoto(none, { uri: 'file:///me.jpg', contentType: 'image/jpeg' }, t)).toEqual({ ok: false, error: 'upload.sessionExpired' });
+  });
+});
+
+describe('a photo the check holds or refuses', () => {
+  it('keeps the photo others see while the new one waits for a person', async () => {
+    uploadAsync.mockResolvedValueOnce({
+      status: 200,
+      body: JSON.stringify({ profilePhotoUrl: 'https://cdn.test/old.jpg', review: 'held', profilePhotoPending: { url: 'https://media.test/private/new.webp' } }),
+    });
+    expect(await uploadProfilePhoto(client().client, { uri: 'file:///me.jpg', contentType: 'image/jpeg' }, t)).toEqual({
+      ok: true,
+      url: 'https://cdn.test/old.jpg',
+      review: 'held',
+      pending: { url: 'https://media.test/private/new.webp' },
+    });
+  });
+
+  it('says why a group’s picture was refused, and keeps what asking a person needs', async () => {
+    const refused = { code: 'PHOTO_REJECTED', message: 'rejected', reason: 'violence', reviewId: 'rv2' };
+    uploadAsync.mockResolvedValueOnce({ status: 422, body: JSON.stringify(refused) });
+    expect(await uploadGroupPhoto(client().client, 'g1', { uri: 'file:///g.jpg', contentType: 'image/jpeg' }, t)).toEqual({
+      ok: false,
+      error: 'picture.refused.violence',
+      limited: false,
+      rejection: refused,
+    });
+    expect(uploadAsync.mock.calls[0]![0]).toBe('https://api.test/groups/g1/photo');
   });
 });

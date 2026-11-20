@@ -4,11 +4,13 @@ import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { claimPostPictures, type PictureClaimFailure } from '../media/postMedia.js';
+import { attachPostContext } from '../moderation/pictures-service.js';
 import { stripControlChars } from '@kurda/shared';
 
 export type AuthorRole = 'user' | 'admin' | 'founder';
 export type Category = 'meme' | 'image';
-export type PostStatus = 'published' | 'removed';
+/** `held`: its picture waits for a person, and only its author sees it meanwhile */
+export type PostStatus = 'published' | 'removed' | 'held';
 
 export const MAX_CAPTION_LEN = 2_000;
 
@@ -33,6 +35,8 @@ export interface ImagePost {
   commentCount: number;
   createdAt: Date;
   updatedAt: Date;
+  /** the author's own copy of a post whose picture a person is checking; nobody else is shown it */
+  review?: 'held';
 }
 
 /** A post with its author attached; a separate type because read paths always fill it and write paths never do. */
@@ -87,11 +91,14 @@ export class ImagePostService {
         await client.query('ROLLBACK');
         return { ok: false, reason: claim.code };
       }
+      const held = claim.pictures.some((p) => p.held);
       const res = await client.query<Row>(
-        `INSERT INTO image_posts (author_id, author_role, image_media_id, caption, category, language)
-         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-        [authorId, authorRole, imageMediaId, caption, category, input.language ?? null],
+        `INSERT INTO image_posts (author_id, author_role, image_media_id, caption, category, language, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+        [authorId, authorRole, imageMediaId, caption, category, input.language ?? null, held ? 'held' : 'published'],
       );
+      // the person checking its picture reads its caption with it
+      if (held) await attachPostContext(client, [imageMediaId], caption, res.rows[0]!.id);
       await client.query('COMMIT');
       return { ok: true, post: toPost(res.rows[0]!) };
     } catch (err) {
@@ -105,7 +112,8 @@ export class ImagePostService {
   async list(filters: ListFilters = {}): Promise<ImagePost[]> {
     const params: unknown[] = [filters.viewerId ?? null];
     const conds = [
-      `status = 'published'`,
+      // an author's own list shows them their posts still waiting for a person; nobody else ever sees those
+      filters.authorId && filters.authorId === filters.viewerId ? `status IN ('published','held')` : `status = 'published'`,
       writtenForSql('image_posts.author_id', '$1::uuid'),
       notBlockedSql('image_posts.author_id', '$1::uuid'),
     ];
@@ -131,8 +139,9 @@ export class ImagePostService {
 
   async get(id: string, viewerId: string | null = null): Promise<ImagePost | null> {
     const res = await this.pool.query<Row>(
-      `UPDATE image_posts SET view_count = view_count + 1
-        WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
+      `UPDATE image_posts SET view_count = view_count + CASE WHEN status = 'held' THEN 0 ELSE 1 END
+        WHERE id = $1 AND (status = 'published' OR (status = 'held' AND author_id IS NOT DISTINCT FROM $2::uuid))
+          AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
           AND ${notBlockedSql('image_posts.author_id', '$2::uuid')}
         RETURNING *`,
       [id, viewerId],
@@ -205,5 +214,6 @@ function toPost(r: Row): ImagePost {
     id: r.id, authorId: r.author_id, authorRole: r.author_role, imageMediaId: r.image_media_id, caption: r.caption,
     category: r.category, language: r.language, status: r.status, viewCount: r.view_count,
     reactionCount: r.reaction_count, commentCount: r.comment_count, createdAt: r.created_at, updatedAt: r.updated_at,
+    ...(r.status === 'held' ? { review: 'held' as const } : {}),
   };
 }

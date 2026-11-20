@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import type { CaseDetail, CaseMediaItem, CopyrightCaseInfo, CopyrightNoticeView, EvidenceMessage, EvidenceSnapshot } from '@kurda/shared';
+import { caseEvidenceImagePath, useApiImage } from '../apiImage';
 import { isSnapshot, mediaKind, noticeFields, noticeStatusName, noticeStatusTone, noticeTargetText, notifierRoleName, targetName } from '../moderation';
 import { Badge, Banner, Icon, Section, Time, UserLink, useDialogs } from '../ui';
 import { LetterPaperEvidence } from './CaseLetter';
@@ -207,14 +208,22 @@ function ChatContext({ messages }: { messages: EvidenceMessage[] }): React.JSX.E
   );
 }
 
+/** The case whose evidence is on screen, for fetching its pictures through the API rather than by a storage link. */
+export const EvidenceCaseId = createContext<string | null>(null);
+
 /** A picture hidden and not downloaded until revealed, a voice clip, or a gone file; links are signed for five minutes. */
 export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: string | null; sensitive: boolean }): React.JSX.Element {
   const [shown, setShown] = useState(false);
   const dialogs = useDialogs();
   const kind = mediaKind(item);
   const quarantined = item.quarantine !== null;
+  const caseId = useContext(EvidenceCaseId);
+  // Through the API once it serves case pictures: a local copy, never a storage address the image policy would refuse.
+  const apiPath = kind === 'image' && caseId ? caseEvidenceImagePath(caseId, item.key) : null;
+  const image = useApiImage(apiPath, 'moderation');
+  const src = apiPath ? image.src : shown ? item.url : null;
 
-  if (!item.url) {
+  if (!item.url && !apiPath) {
     return (
       <div className="media-item is-missing">
         <Icon name="alert" />
@@ -228,8 +237,8 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
   if (kind === 'audio') {
     return (
       <div className="media-item is-audio">
-        <audio controls preload="none" src={item.url}>
-          <a href={item.url}>Play the recording</a>
+        <audio controls preload="none" src={item.url ?? undefined}>
+          <a href={item.url ?? undefined}>Play the recording</a>
         </audio>
       </div>
     );
@@ -254,21 +263,24 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
       });
       if (!yes) return;
     }
-    setShown(true);
+    if (apiPath) await image.show();
+    else setShown(true);
   }
 
+  const hide = (): void => (apiPath ? image.hide() : setShown(false));
+
   return (
-    <figure className={`media-item is-image${shown ? ' is-shown' : ''}`}>
+    <figure className={`media-item is-image${src ? ' is-shown' : ''}`}>
       <div className="media-frame">
-        {shown ? (
+        {src ? (
           // Only now is the file requested: before the reveal it is not on this device at all, not even in the cache.
-          <img src={item.url} alt={alt ?? 'The reported picture'} draggable={false} referrerPolicy="no-referrer" />
+          <img src={src} alt={alt ?? 'The reported picture'} draggable={false} referrerPolicy="no-referrer" />
         ) : (
           <>
             <span className="media-hidden" aria-hidden="true">
               <Icon name="eyeOff" size={28} />
             </span>
-            <button type="button" className="media-reveal" onClick={() => void reveal()}>
+            <button type="button" className="media-reveal" onClick={() => void reveal()} disabled={image.busy}>
               <Icon name="eye" />
               Show picture
             </button>
@@ -278,8 +290,13 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
       <figcaption>
         {alt ? <span dir="auto">Alt text: {alt}</span> : <span className="subtle">No alt text</span>}
         {quarantined && <Badge tone="warn">Preserved as evidence</Badge>}
-        {shown && (
-          <button type="button" className="ghost media-hide" onClick={() => setShown(false)}>
+        {image.error && (
+          <span className="field-error" role="alert">
+            {image.error}
+          </span>
+        )}
+        {src && (
+          <button type="button" className="ghost media-hide" onClick={hide}>
             <Icon name="eyeOff" size={16} />
             Hide again
           </button>

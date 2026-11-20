@@ -602,6 +602,8 @@ export * from './deer.js';
 
 /** Reports, moderation cases, sanctions and appeals. */
 export * from './reports.js';
+/** How a shared picture is checked before others see it: held, refused with a reason, or asked about again. */
+export * from './picture-review.js';
 /** Copyright notices from the public form, counter-notices and strikes. */
 export * from './copyright.js';
 /** Game Ranks: the ranked games, the tier table, seasons and rewards, Rated or Friendly, and the API shapes. */

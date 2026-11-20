@@ -28,6 +28,7 @@ import { usePostMenu } from '../composer/PostExtras';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { ReportSheet } from '../reports/ReportSheet';
 import { pressedDim } from '../theme/motion';
+import { HeldNote } from '../pictures/PictureReview';
 
 /** The author's avatar: big enough to recognise, small enough for one line. */
 const AUTHOR = 32;
@@ -114,7 +115,8 @@ export function usePostEngagement(item: FeedItem, onChanged?: (next: FeedItem) =
 
 /**
  * The row of pills under a post: like, comments, repost, then share and save at the far end. Share opens a sheet that
- * passes the post on, out of the app or to a friend in chat (SharePostSheet), as the website's does.
+ * passes the post on, out of the app or to a friend in chat (SharePostSheet), as the website's does. A post still being
+ * checked cannot be passed on yet, so it has neither repost nor share.
  */
 export function PostActions({
   item,
@@ -131,6 +133,7 @@ export function PostActions({
   const [sharing, setSharing] = useState(false);
   const e = engage.shown;
   const count = (n: number): number | undefined => (n > 0 ? n : undefined);
+  const held = item.review === 'held';
   return (
     <View style={[styles.actions, { flexDirection: dir.row }]}>
       {/* The pills share the row's gap between them, and the 12 above them with what they are under. */}
@@ -145,17 +148,19 @@ export function PostActions({
           onPress={engage.like}
         />
         <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={count(item.commentCount)} onPress={onComment} />
-        <Action
-          icon="repost"
-          on={e.reposted}
-          tint={e.reposted ? colors.success : undefined}
-          label={e.reposted ? t('repost.undo') : t('repost.do')}
-          count={count(e.reposts)}
-          onPress={() => engage.act('repost')}
-        />
+        {held ? null : (
+          <Action
+            icon="repost"
+            on={e.reposted}
+            tint={e.reposted ? colors.success : undefined}
+            label={e.reposted ? t('repost.undo') : t('repost.do')}
+            count={count(e.reposts)}
+            onPress={() => engage.act('repost')}
+          />
+        )}
         <View style={styles.spacer} />
         {/* Sharing has its own glyph: the paper plane means Messages and Send. */}
-        <Action icon="share" label={t('share.post')} onPress={() => setSharing(true)} />
+        {held ? null : <Action icon="share" label={t('share.post')} onPress={() => setSharing(true)} />}
         <Action
           icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
           on={e.bookmarked}
@@ -163,7 +168,7 @@ export function PostActions({
           onPress={() => engage.act('bookmark')}
         />
       </ReachGroup>
-      {sharing ? <SharePostSheet item={item} onClose={() => setSharing(false)} /> : null}
+      {sharing && !held ? <SharePostSheet item={item} onClose={() => setSharing(false)} /> : null}
     </View>
   );
 }
@@ -289,6 +294,9 @@ export const FeedCard = memo(function FeedCard({
           </Pressable>
         </ReachGroup>
       </View>
+
+      {/* Your own post while its pictures wait for a person: only you see it meanwhile. */}
+      {item.review === 'held' ? <HeldNote style={styles.held} testID="post-held" /> : null}
 
       <Bloom fired={blooms}>
         {words ? (
@@ -553,6 +561,7 @@ const styles = StyleSheet.create({
   title: { fontSize: TITLE_SIZE, lineHeight: TITLE_LINE, fontWeight: typography.weights.bold },
   excerpt: { fontSize: typography.sizes.md, lineHeight: 23 },
   pictures: { paddingHorizontal: layout.gutter, paddingBottom: spacing.xs + 2 },
+  held: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
   bloomLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xs + 2 },
   spacer: { flex: 1 },

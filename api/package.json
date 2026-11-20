@@ -26,6 +26,7 @@
     "book:export": "tsx scripts/book-export.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.11.0",
     "@aws-sdk/client-s3": "^3.1101.0",
     "@aws-sdk/s3-request-presigner": "^3.1101.0",
     "@expo-google-fonts/fraunces": "^0.4.1",

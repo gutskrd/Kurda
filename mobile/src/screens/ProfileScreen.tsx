@@ -25,7 +25,16 @@ import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { Horizon } from '../profile/Horizon';
 import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
-import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import {
+  SEASON_FRAME_INNER,
+  countryName,
+  fireLevel,
+  type PendingPicture,
+  type PictureRejection,
+  type ProfileLeague,
+  type ShowcaseBadge,
+  type TreeGlimpse,
+} from '@kurda/shared';
 import { LevelBar, OnlyYou, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { ProfileTree } from '../tree/ProfileTree';
@@ -35,6 +44,8 @@ import { VISIBILITY_LABEL } from '../social/format';
 import { useFreshBadges } from '../badges/BadgeCelebrationHost';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
+import { PendingPhoto, PictureRefusal } from '../pictures/PictureReview';
+import { pendingOf } from '../pictures/review';
 import { useSendErrorAlert } from '../reports/SendError';
 import { useI18n } from '../i18n/I18nContext';
 import { learningStats, type Streak } from '../streak/format';
@@ -69,6 +80,8 @@ interface Me extends ProfileCosmetics {
   createdAt?: string | null;
   /** Who may open the profile; absent on an older server. */
   profileVisibility?: Visibility;
+  /** A new photo waiting for a person: only you see it, everyone else the one before. */
+  profilePhotoPending?: PendingPicture | null;
 }
 
 /**
@@ -161,6 +174,9 @@ function AccountProfile() {
   } | null>(null);
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  // A new photo waiting for a person, and one the check refused, said under the avatar.
+  const [pending, setPending] = useState<{ photo: PendingPicture | null } | null>(null);
+  const [refusal, setRefusal] = useState<PictureRejection | null>(null);
   const [streakOpen, setStreakOpen] = useState(false);
   const today = useToday(streakOpen);
   // Pull to refresh asks for everything below again.
@@ -192,6 +208,8 @@ function AccountProfile() {
           setMe(m.data.user);
           setStreak(m.data.user.streak);
           setPhotoUrl(m.data.user.profilePhotoUrl ?? null);
+          const waiting = pendingOf(m.data.user.profilePhotoPending);
+          setPending(waiting ? { photo: waiting } : null);
         }
         if (w.ok) setZer(w.data.balances.zer);
         // An older API sends no total, only the whole list.
@@ -243,13 +261,20 @@ function AccountProfile() {
     const asset = picked.canceled ? null : picked.assets[0];
     if (!asset) return;
     setUploading(true);
+    setRefusal(null);
     const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t, locale);
     setUploading(false);
-    if (res.ok) {
+    if (res.ok && res.review === 'held') {
+      // Everyone else keeps seeing the photo before; the new one shows small, waiting.
+      if (res.url) setPhotoUrl(res.url);
+      setPending({ photo: res.pending });
+    } else if (res.ok) {
       setPhotoUrl(res.url);
+      setPending(null);
       // The tab bar and everywhere else wearing your face read it from the session.
       void refreshUser();
-    } else showSendError(t('profile.photoFailed'), { message: res.error, limited: res.limited });
+    } else if (res.rejection) setRefusal(res.rejection);
+    else showSendError(t('profile.photoFailed'), { message: res.error, limited: res.limited });
   }, [client, uploading, showSendError, t, locale, refreshUser]);
 
   /*
@@ -405,6 +430,9 @@ function AccountProfile() {
             </Pressable>
           ) : null}
         </View>
+
+        {pending ? <PendingPhoto pending={pending.photo} body="picture.held.profile" testID="profile-photo-pending" /> : null}
+        {refusal ? <PictureRefusal rejection={refusal} testID="profile-photo-refused" /> : null}
 
         {/*
           Edit and Share side by side, and the find-friends button. The buttons are text only, each label on one line:

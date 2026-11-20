@@ -55,7 +55,7 @@ function pictures(...uris: string[]) {
       new Promise<PictureUpload>((resolve) => pending.push({ uri: p.uri, ownWork: p.ownWork, finish: resolve, progress: onProgress })),
   );
   const done = (i: number, key = `images/${i}.webp`) =>
-    pending[i]!.finish({ ok: true, mediaKey: key, url: null, width: 800, height: 600 });
+    pending[i]!.finish({ ok: true, mediaKey: key, url: null, width: 800, height: 600, review: 'clear' });
   return { pick, upload, pending, done };
 }
 
@@ -263,6 +263,58 @@ describe('pictures', () => {
     expect(p.pick).toHaveBeenCalledOnce();
   });
 
+});
+
+describe('pictures being checked', () => {
+  it('shows a held picture as checked before others see it, and still posts it', async () => {
+    const client = fakeClient({ [DRAFTS]: ok({ posts: [] }), 'POST /library/posts': ok(created()) });
+    testAuth.client = client;
+    const p = pictures('file:///one.jpg');
+    renderWithProviders(<ComposeScreen onExit={() => undefined} store={memoryStore()} pick={p.pick} upload={p.upload} />);
+    await screen.findByLabelText('Your post');
+    fireEvent.click(screen.getByRole('button', { name: 'Add pictures' }));
+    await waitFor(() => expect(p.upload).toHaveBeenCalledTimes(1));
+    await act(async () =>
+      p.pending[0]!.finish({ ok: true, mediaKey: 'images/held.webp', url: 'https://media.test/private/held.webp', width: 800, height: 600, review: 'held' }),
+    );
+    expect(screen.getByText('Checked before others see it')).toBeTruthy();
+    expect(screen.getByLabelText('Picture 1 of 1 — Checked before others see it')).toBeTruthy();
+    expect(disabled(postButton())).toBe(false);
+    fireEvent.click(postButton());
+    await waitFor(() => expect(client.calls.find((c) => c.method === 'POST')?.body).toMatchObject({ media: [{ mediaKey: 'images/held.webp' }] }));
+  });
+
+  it('says why a picture was refused, offers a person to look, and posts once it is removed', async () => {
+    testAuth.client = fakeClient({ [DRAFTS]: ok({ posts: [] }), 'POST /me/picture-reviews/rv7': ok({ ok: true }) });
+    const p = pictures('file:///one.jpg', 'file:///two.jpg');
+    renderWithProviders(<ComposeScreen onExit={() => undefined} store={memoryStore()} pick={p.pick} upload={p.upload} />);
+    fireEvent.change(await screen.findByLabelText('Your post'), { target: { value: 'Newroz' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Add pictures' }));
+    await waitFor(() => expect(p.upload).toHaveBeenCalledTimes(2));
+    const why = 'This picture looks violent or gory, which isn’t allowed on Hevalo.';
+    await act(async () => {
+      p.done(0);
+      p.pending[1]!.finish({
+        ok: false,
+        error: why,
+        rejection: { code: 'IMAGE_REJECTED', message: 'rejected', reason: 'violence', reviewId: 'rv7' },
+      });
+    });
+    // Said once, under the pictures, naming which; the same picture again would be refused, so there is no retry.
+    expect(screen.getByText(why)).toBeTruthy();
+    expect(screen.getByText('Picture 2 of 2')).toBeTruthy();
+    expect(screen.getByTestId('composer-tile-refused')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+    expect(disabled(postButton())).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ask a person to check' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Send' }));
+    expect(await screen.findByText('Thanks. A person will look at it and let you know.')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Remove picture 2 of 2' }));
+    expect(screen.queryByText(why)).toBeNull();
+    expect(disabled(postButton())).toBe(false);
+  });
 });
 
 describe('source and credit', () => {

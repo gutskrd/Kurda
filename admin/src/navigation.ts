@@ -103,6 +103,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'email', label: 'Email', group: 'people', icon: 'inbox', page: 'email', access: SUPPORT_READERS, keywords: 'support inbox mail sending resend reply' },
 
   { id: 'moderation', label: 'Queue', title: 'Moderation queue', group: 'moderation', icon: 'flag', page: 'moderation', access: MODERATORS, keywords: 'reports cases moderation' },
+  { id: 'picture-checks', label: 'Picture checks', group: 'moderation', icon: 'image', page: 'picture-checks', access: MODERATORS, keywords: 'pictures photos images held uploads nudity gore refused asked reported review approve remove' },
   { id: 'appeals', label: 'Appeals', group: 'moderation', icon: 'scale', page: 'appeals', access: MODERATORS, keywords: 'review standing sanctions' },
   { id: 'ban-approvals', label: 'Ban approvals', group: 'moderation', icon: 'approve', page: 'ban-approvals', access: MODERATORS, keywords: 'permanent ban second admin' },
   { id: 'aimod', label: 'Automated flags', group: 'moderation', icon: 'shield', page: 'aimod', access: MODERATORS, keywords: 'ai text image flags' },

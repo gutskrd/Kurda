@@ -159,6 +159,42 @@ describe('AccountStandingScreen', () => {
     expect(client.calls.find((c) => c.path === '/me/appeals')?.body).toEqual({ sanctionId: 's1', text: 'I was quoting a poem.' });
   });
 
+  it('shows the picture a removal is about, small, and says so when its link no longer opens', async () => {
+    const removal = (id: string, url: string) => ({
+      ...sanction({ id, kind: 'content_removal', policy: 'sexual', endsAt: null, statement: 'This picture shows nudity.' }),
+      picture: { url },
+    });
+    testAuth.client = fakeClient({ 'GET /me/standing': ok(standing({ past: [removal('s2', 'https://media.test/private/removed.webp')] })) });
+    renderWithProviders(<AccountStandingScreen onExit={() => undefined} />);
+    expect(await screen.findByText('The picture this is about')).toBeTruthy();
+    expect(screen.getAllByRole('img', { name: 'The picture this is about' }).length).toBeGreaterThan(0);
+    cleanup();
+
+    // A private link lasts minutes: one that has run out leaves words, not an empty box.
+    vi.stubGlobal(
+      'Image',
+      class {
+        onerror: ((e: unknown) => void) | null = null;
+        onload: ((e: unknown) => void) | null = null;
+        set src(_uri: string) {
+          setTimeout(() => this.onerror?.({ type: 'error' }));
+        }
+      },
+    );
+    testAuth.client = fakeClient({ 'GET /me/standing': ok(standing({ past: [removal('s3', 'https://media.test/private/expired.webp')] })) });
+    renderWithProviders(<AccountStandingScreen onExit={() => undefined} />);
+    expect(await screen.findByText('This picture can’t be shown right now.')).toBeTruthy();
+    expect(screen.queryAllByRole('img', { name: 'The picture this is about' })).toHaveLength(0);
+  });
+
+  it('shows no picture for a removal about something else', async () => {
+    const removal = { ...sanction({ kind: 'content_removal', endsAt: null }), picture: null };
+    testAuth.client = fakeClient({ 'GET /me/standing': ok(standing({ past: [removal] })) });
+    renderWithProviders(<AccountStandingScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Rule: Bullying or harassment')).toBeTruthy();
+    expect(screen.queryByTestId('standing-picture')).toBeNull();
+  });
+
   it('is plain about good standing', async () => {
     testAuth.client = fakeClient({ 'GET /me/standing': ok(standing({})) });
     renderWithProviders(<AccountStandingScreen onExit={() => undefined} />);

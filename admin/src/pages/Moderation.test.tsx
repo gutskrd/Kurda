@@ -10,7 +10,7 @@ import type { CaseDetail, ModerationSummary } from '@kurda/shared';
 import { setToken } from '../api';
 import { AuthProvider } from '../auth';
 import { rememberQueueOrder } from '../moderation';
-import { failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
+import { bytes, failure, fakeApi, json, on, type Call, type Route } from '../test/fetch';
 import { CASE_ID, ME_ID, REPORTER_A, SUBJECT_ID, caseDetail, preview, queueItem } from '../test/moderation';
 import { renderUi } from '../test/render';
 import { Moderation } from './Moderation';
@@ -30,6 +30,8 @@ const summary: ModerationSummary = {
   appealsWaiting: 2,
   pendingApprovals: 1,
   openEscalations: 0,
+  picturesWaiting: 0,
+  picturesUrgent: 0,
 };
 
 const me: Route = on('GET', '/me', json({ user: { id: ME_ID, username: 'rojda' } }));
@@ -177,11 +179,15 @@ describe('a case', () => {
       case: { category: 'child_safety', targetType: 'image_post' },
       media: [{ key: 'posts/a.webp', url: 'https://cdn.test/a.webp?sig=1', contentType: 'image/webp', quarantine: null }],
     });
-    show(at, detailRoute(d));
+    URL.createObjectURL = vi.fn(() => 'blob:evidence');
+    URL.revokeObjectURL = vi.fn();
+    const evidence = /^\/admin\/moderation\/cases\/[^/]+\/media\?key=posts%2Fa\.webp$/;
+    const { calls } = show(at, detailRoute(d), on('GET', evidence, bytes(new Uint8Array([1, 2, 3]), 'image/webp')));
     const figure = (await screen.findByRole('button', { name: 'Show picture' })).closest('figure')!;
     // No <img src> before the reveal: the file is not on the moderator's device, not even in the cache.
     expect(document.querySelector('img')).toBeNull();
     expect(document.body.innerHTML).not.toContain('cdn.test/a.webp');
+    expect(calls.some((c) => evidence.test(c.path))).toBe(false);
     await user.click(screen.getByRole('button', { name: 'Show picture' }));
     const ask = await screen.findByRole('alertdialog', { name: 'Show this picture?' });
     expect(ask).toHaveTextContent('Never download, forward or screenshot it');
@@ -190,9 +196,11 @@ describe('a case', () => {
     expect(document.querySelector('img')).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Show picture' }));
     await user.click(within(await screen.findByRole('alertdialog', { name: 'Show this picture?' })).getByRole('button', { name: 'Show it' }));
+    // Fetched through the API with the moderator's session and shown as a local copy, never by its storage link.
+    const img = await within(figure as HTMLElement).findByRole('img', { name: 'The reported picture' });
     expect(figure).toHaveClass('is-shown');
-    const img = within(figure as HTMLElement).getByRole('img', { name: 'The reported picture' });
-    expect(img).toHaveAttribute('src', 'https://cdn.test/a.webp?sig=1');
+    expect(img).toHaveAttribute('src', 'blob:evidence');
+    expect(calls.filter((c) => evidence.test(c.path))).toHaveLength(1);
     expect(img).toHaveAttribute('referrerpolicy', 'no-referrer');
     await user.click(screen.getByRole('button', { name: 'Hide again' }));
     expect(figure).not.toHaveClass('is-shown');

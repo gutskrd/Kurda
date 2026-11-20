@@ -252,6 +252,11 @@ export function registerSocialRoutes(
       // The sections this profile shows, so the client renders the right tabs, and today's tree, which a private profile
       // keeps to itself.
       const [sections, tree] = profile.private ? [null, null] : await Promise.all([activity.sections(id), deps.trees?.glimpse(id) ?? null]);
+      // your own profile shows you the new photo a person is still checking, through a link only you get
+      if (req.user?.id === id && app.hasDecorator('pictures')) {
+        const pending = await app.db.query<{ k: string | null }>(`SELECT pending_profile_photo_key AS k FROM users WHERE id = $1`, [id]);
+        return { ...dto, sections, tree, profilePhotoPending: await app.pictures.ownerLink(pending.rows[0]?.k) };
+      }
       return { ...dto, sections, tree };
     },
   );

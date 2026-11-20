@@ -583,11 +583,18 @@ export class ModerationQueueService {
         GROUP BY priority, status`,
       [PRIORITY_SLA_HOURS[0], PRIORITY_SLA_HOURS[1], PRIORITY_SLA_HOURS[2], PRIORITY_SLA_HOURS[3]],
     );
-    const extra = await this.pool.query<{ appeals: number; approvals: number; escalations: number }>(
+    const extra = await this.pool.query<{ appeals: number; approvals: number; escalations: number; pictures: number; urgent: number }>(
       `SELECT (SELECT count(*)::int FROM appeals WHERE status = 'open') AS appeals,
               (SELECT count(*)::int FROM sanctions WHERE kind = 'permanent_ban' AND revoked_at IS NULL
                   AND approved_at IS NULL AND NOT single_approved) AS approvals,
-              (SELECT count(*)::int FROM moderation_escalations WHERE status = 'open') AS escalations`,
+              (SELECT count(*)::int FROM moderation_escalations WHERE status = 'open') AS escalations,
+              -- the Picture checks page: what waits there, and the child-safety hits among it
+              p.pictures, p.urgent
+         FROM (SELECT count(*)::int AS pictures,
+                      count(*) FILTER (WHERE evidence->>'origin' = 'child_safety' OR category = 'child_safety')::int AS urgent
+                 FROM moderation_cases
+                WHERE source = 'image_flag' AND evidence ? 'origin' AND ${OPEN_CASE_PREDICATE}
+                  AND resolution IS DISTINCT FROM 'csam') p`,
     );
     const byPriority = Object.fromEntries(REPORT_PRIORITIES.map((p) => [p, 0])) as Record<ReportPriority, number>;
     const breachesByPriority = Object.fromEntries(REPORT_PRIORITIES.map((p) => [p, 0])) as Record<ReportPriority, number>;
@@ -613,6 +620,8 @@ export class ModerationQueueService {
       appealsWaiting: extra.rows[0]?.appeals ?? 0,
       pendingApprovals: extra.rows[0]?.approvals ?? 0,
       openEscalations: extra.rows[0]?.escalations ?? 0,
+      picturesWaiting: extra.rows[0]?.pictures ?? 0,
+      picturesUrgent: extra.rows[0]?.urgent ?? 0,
     };
   }
 

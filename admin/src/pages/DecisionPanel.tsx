@@ -15,6 +15,7 @@ import {
   banModeText,
   categoryName,
   contentTarget,
+  removalLabel,
   decisionRequest,
   defaultStatement,
   draftProblems,
@@ -119,7 +120,7 @@ export function DecisionPanel({
       if (check.permanentBans.length === 0) {
         const yes = await dialogs.confirm({
           title: actioned ? 'Apply this decision?' : 'Close the case: no rule broken?',
-          body: <DecisionSummary draft={draft} names={names} reporters={reporters.length} canRemove={canRemove} />,
+          body: <DecisionSummary draft={draft} names={names} reporters={reporters.length} canRemove={canRemove} removal={removalLabel(c.targetType)} />,
           confirmLabel: actioned ? 'Apply' : 'Close the case',
           tone: actioned && draft.actions.some((a) => a.kind === 'suspension') ? 'danger' : 'default',
         });
@@ -286,7 +287,7 @@ export function DecisionPanel({
 
         {canRemove && actioned && (
           <Checkbox
-            label={c.contentRemoved ? 'Remove the content (already removed)' : 'Remove the content'}
+            label={c.contentRemoved ? `${removalLabel(c.targetType)} (already removed)` : removalLabel(c.targetType)}
             hint="Hidden from everyone and kept as evidence. The author is told why, and can ask for a review."
             checked={draft.removeContent}
             disabled={c.contentRemoved}
@@ -468,16 +469,18 @@ function DecisionSummary({
   names,
   reporters,
   canRemove,
+  removal,
 }: {
   draft: DecisionDraft;
   names: (t: DecisionTarget) => string;
   reporters: number;
   canRemove: boolean;
+  removal: string;
 }): React.JSX.Element {
   const lines = draft.actions.map(
     (a) => `${sanctionName(a.kind)}${hasDuration(a.kind) && a.kind !== 'permanent_ban' ? `, ${durationName(a.durationHours).toLowerCase()}` : ''} — ${names(a.target)}`,
   );
-  if (canRemove && draft.outcome === 'actioned' && draft.removeContent) lines.push('Remove the content');
+  if (canRemove && draft.outcome === 'actioned' && draft.removeContent) lines.push(removal);
   if (reporters > 0) lines.push(draft.notifyReporters ? 'Tell the reporters the outcome' : 'Don’t tell the reporters');
   return (
     <div className="dialog-text">

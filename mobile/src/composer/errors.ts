@@ -2,6 +2,7 @@ import { describeError, type Translate } from '../api/errors';
 import { restrictionOf, restrictionText, type Restriction } from '../reports/sendErrors';
 import type { ApiError } from '../api/types';
 import type { TranslationKey } from '../i18n/translations';
+import { REFUSAL_KEY, rejectionInBody } from '../pictures/review';
 
 /**
  * What to say when a post or one of its pictures is refused: each code the composer can meet (the server's post codes
@@ -67,6 +68,9 @@ export function describePictureFailure(status: number, body: string, t: Translat
   }
   const restriction = accountLimitOf({ kind: 'client', status, code, message: '', details });
   if (restriction) return restrictionText(restriction, t, locale);
+  // A refused picture says why (pictures/review.ts).
+  const rejection = rejectionInBody(status, body);
+  if (rejection) return t(REFUSAL_KEY[rejection.reason]);
   const key = code ? PICTURE_COPY[code] : undefined;
   if (key) return t(key);
   if (status === 429) return t('composer.picture.tooMany');

@@ -1,3 +1,5 @@
+import type { PictureRejection } from '@kurda/shared';
+
 /** Every API call returns a result — screens never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
 
@@ -15,6 +17,8 @@ export interface ApiError {
    * 403 ACCOUNT_SUSPENDED (`SuspendedErrorDetails`), and a calm answer needs them (see `reports/sendErrors.ts`).
    */
   details?: unknown;
+  /** A picture refused at upload (422 `PictureRejection`): why, and whether a person can be asked to look again. */
+  rejection?: PictureRejection;
 }
 
 export interface TokenPair {

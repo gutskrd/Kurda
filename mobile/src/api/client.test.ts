@@ -264,6 +264,19 @@ describe('ApiClient', () => {
     expect(res.error.details).toEqual({ until: '2026-10-20T10:00:00.000Z', scope: 'chat' });
   });
 
+  it('keeps why a picture was refused and whether a person can be asked, and nothing of the kind otherwise', async () => {
+    const refused = { code: 'IMAGE_REJECTED', message: 'this image was rejected by moderation', reason: 'other', reviewId: null, requestId: 'r1' };
+    const fetchFn = vi.fn().mockResolvedValueOnce(jsonResponse(422, refused)).mockResolvedValueOnce(jsonResponse(422, { code: 'LETTER_LONG', message: 'too long' }));
+    const { client, ready } = makeClient(fetchFn);
+    await ready;
+    const res = await client.post('/letters/threads/t1', { body: 'hi' });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.rejection).toEqual({ code: 'IMAGE_REJECTED', message: 'this image was rejected by moderation', reason: 'other', reviewId: null });
+    const other = await client.post('/letters/threads/t1', { body: 'hi' });
+    expect(other.ok ? null : other.error.rejection).toBeUndefined();
+  });
+
   /**
    * A ban revokes the session, so the phone learns of it at the next refresh, which must pass the reasons and
    * appeal token to the suspension screen before signing out.

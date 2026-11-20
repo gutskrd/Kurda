@@ -1,7 +1,8 @@
 import { useId } from 'react';
-import { POST_ALT_MAX, postTextLength } from '@kurda/shared';
-import { CloseIcon, DrawIcon } from '../components/icons';
+import { POST_ALT_MAX, postTextLength, type PictureRejection, type PictureReviewState } from '@kurda/shared';
+import { BlockIcon, CloseIcon, DrawIcon, ShieldIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { PictureRefusal } from '../pictures/PictureCheck';
 import { textDir } from './textDir';
 
 /** A picture in the composer: what the draft keeps, and what only this page knows. */
@@ -22,6 +23,10 @@ export interface ComposerPicture {
   /** From 0 to 1 while uploading. */
   progress: number;
   error: string | null;
+  /** Uploaded, and shown to others at once (`clear`) or only once a person has checked it (`held`); null before then. */
+  review: PictureReviewState | null;
+  /** Refused at upload, with its reason and whether a person can be asked to look; uploading it again cannot help. */
+  rejection: PictureRejection | null;
   /** Already on the post being edited, so its signature is settled. */
   existing: boolean;
 }
@@ -29,7 +34,8 @@ export interface ComposerPicture {
 /**
  * The pictures on a post being written: up to four tiles with upload progress, errors and retry, remove, and describe.
  * "Describe" opens the details (alt text, "I made this", Edit) below rather than in a nested dialog. A tile says "ALT"
- * until described and shows a tick once it is.
+ * until described and shows a tick once it is. A picture held for a person to check is marked, with one line under the
+ * tiles saying so; a refused one is dimmed, and why it was refused is said under the tiles (PictureRefusals).
  */
 export function PictureTiles({
   pictures,
@@ -46,58 +52,101 @@ export function PictureTiles({
   onRetry: (id: string) => void;
 }): React.JSX.Element | null {
   const t = useT();
+  const heldId = useId();
   if (pictures.length === 0) return null;
+  const held = pictures.some((p) => p.status === 'ready' && p.review === 'held');
   return (
-    <ul className={`cmp-tiles cmp-tiles-${pictures.length}`} aria-label={t('composer.pictures')}>
-      {pictures.map((p, i) => {
-        const n = i + 1;
-        const described = postTextLength(p.altText) > 0;
-        return (
-          <li key={p.id} className={`cmp-tile${openId === p.id ? ' is-open' : ''}${p.status === 'failed' ? ' is-failed' : ''}`}>
-            {p.previewUrl ? (
-              <img src={p.previewUrl} alt={described ? p.altText : t('composer.pictureN', { n })} />
-            ) : (
-              <span className="cmp-tile-empty" aria-hidden="true" />
-            )}
+    <>
+      <ul className={`cmp-tiles cmp-tiles-${pictures.length}`} aria-label={t('composer.pictures')}>
+        {pictures.map((p, i) => {
+          const n = i + 1;
+          const described = postTextLength(p.altText) > 0;
+          const isHeld = p.status === 'ready' && p.review === 'held';
+          return (
+            <li
+              key={p.id}
+              className={`cmp-tile${openId === p.id ? ' is-open' : ''}${p.status === 'failed' ? ' is-failed' : ''}${p.rejection ? ' is-refused' : ''}`}
+              aria-describedby={isHeld ? heldId : undefined}
+            >
+              {p.previewUrl ? (
+                <img src={p.previewUrl} alt={described ? p.altText : t('composer.pictureN', { n })} />
+              ) : (
+                <span className="cmp-tile-empty" aria-hidden="true" />
+              )}
 
-            {p.status === 'uploading' && (
-              <span className="cmp-tile-progress" role="progressbar" aria-label={t('composer.uploadingN', { n })}
-                aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p.progress * 100)}>
-                <span style={{ width: `${Math.max(4, Math.round(p.progress * 100))}%` }} />
-              </span>
-            )}
+              {p.status === 'uploading' && (
+                <span className="cmp-tile-progress" role="progressbar" aria-label={t('composer.uploadingN', { n })}
+                  aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(p.progress * 100)}>
+                  <span style={{ width: `${Math.max(4, Math.round(p.progress * 100))}%` }} />
+                </span>
+              )}
 
-            {p.status === 'failed' && (
-              <span className="cmp-tile-failed">
-                <span className="cmp-tile-why">{p.error}</span>
-                {p.file && (
-                  <button type="button" className="cmp-chip" onClick={() => onRetry(p.id)}>
-                    {t('common.retry')}
-                  </button>
-                )}
-              </span>
-            )}
+              {isHeld && (
+                <span className="cmp-tile-held" aria-hidden="true">
+                  <ShieldIcon size={14} />
+                </span>
+              )}
 
-            <button type="button" className="cmp-tile-remove" aria-label={t('composer.removePictureN', { n })} onClick={() => onRemove(p.id)}>
-              <CloseIcon size={16} />
-            </button>
+              {p.status === 'failed' && p.rejection && (
+                <span className="cmp-tile-failed" aria-hidden="true">
+                  <BlockIcon size={26} />
+                </span>
+              )}
+              {p.status === 'failed' && !p.rejection && (
+                <span className="cmp-tile-failed">
+                  <span className="cmp-tile-why">{p.error}</span>
+                  {p.file && (
+                    <button type="button" className="cmp-chip" onClick={() => onRetry(p.id)}>
+                      {t('common.retry')}
+                    </button>
+                  )}
+                </span>
+              )}
 
-            {p.status !== 'failed' && (
-              <button
-                type="button"
-                className={`cmp-tile-alt${described ? ' is-done' : ''}`}
-                aria-expanded={openId === p.id}
-                aria-label={described ? t('composer.editDetailsN', { n }) : t('composer.describeN', { n })}
-                onClick={() => onOpen(openId === p.id ? null : p.id)}
-              >
-                {described ? '✓ ' : ''}
-                {t('composer.alt')}
+              <button type="button" className="cmp-tile-remove" aria-label={t('composer.removePictureN', { n })} onClick={() => onRemove(p.id)}>
+                <CloseIcon size={16} />
               </button>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+
+              {p.status !== 'failed' && (
+                <button
+                  type="button"
+                  className={`cmp-tile-alt${described ? ' is-done' : ''}`}
+                  aria-expanded={openId === p.id}
+                  aria-label={described ? t('composer.editDetailsN', { n }) : t('composer.describeN', { n })}
+                  onClick={() => onOpen(openId === p.id ? null : p.id)}
+                >
+                  {described ? '✓ ' : ''}
+                  {t('composer.alt')}
+                </button>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      {held && (
+        <p className="cmp-held" id={heldId}>
+          <ShieldIcon size={14} />
+          {t('pictureCheck.held.upload')}
+        </p>
+      )}
+    </>
+  );
+}
+
+/** Why each refused picture was refused, with the way to ask a person, numbered when the post has more than one. */
+export function PictureRefusals({ pictures }: { pictures: ComposerPicture[] }): React.JSX.Element | null {
+  const t = useT();
+  const refused = pictures.map((p, i) => ({ p, n: i + 1 })).filter(({ p }) => p.rejection);
+  if (refused.length === 0) return null;
+  return (
+    <div className="cmp-refusals">
+      {refused.map(({ p, n }) => (
+        <section key={p.id} aria-label={t('composer.pictureN', { n })}>
+          {pictures.length > 1 && <h3 className="cmp-refusal-n">{t('composer.pictureN', { n })}</h3>}
+          <PictureRefusal rejection={p.rejection!} />
+        </section>
+      ))}
+    </div>
   );
 }
 

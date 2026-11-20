@@ -261,6 +261,56 @@ describe('changing a group', () => {
   });
 });
 
+describe('a group picture checked before members see it', () => {
+  const upload = async (): Promise<void> => {
+    const input = document.querySelector<HTMLInputElement>('.gedit input[type="file"]')!;
+    await userEvent.upload(input, new File([new Uint8Array([137, 80, 78, 71])], 'group.png', { type: 'image/png' }));
+  };
+
+  it('shows a held picture small to the admin who set it, while members keep the old one', async () => {
+    stubApi([
+      [
+        'POST',
+        /\/groups\/g1\/photo$/,
+        () => jsonResponse(200, { photoUrl: 'https://cdn.test/old.webp', review: 'held', photoPending: { url: 'https://private.test/g1.webp?sig=1' } }),
+      ],
+    ]);
+    const changed = vi.fn(async () => undefined);
+    renderApp(<GroupInfo detail={{ ...detailFor('moderator'), photoUrl: 'https://cdn.test/old.webp' }} onChanged={changed} onLeft={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit group' }));
+    await upload();
+
+    expect(await screen.findByText('The new group photo is being checked. Members see the old one until then.')).toBeInTheDocument();
+    expect(document.querySelector('.pcheck-pending img')).toHaveAttribute('src', 'https://private.test/g1.webp?sig=1');
+    expect(changed).toHaveBeenCalled();
+  });
+
+  it('says so on the group’s own page for its admins', () => {
+    stubApi([]);
+    renderApp(
+      <GroupInfo detail={{ ...detailFor('owner'), photoPending: { url: 'https://private.test/g1.webp' } }} onChanged={async () => undefined} onLeft={() => undefined} />,
+    );
+    expect(screen.getByText('The new group photo is being checked. Members see the old one until then.')).toBeInTheDocument();
+  });
+
+  it('says nothing of it when there is none, as members are sent', () => {
+    stubApi([]);
+    renderApp(<GroupInfo detail={detailFor('member')} onChanged={async () => undefined} onLeft={() => undefined} />);
+    expect(screen.queryByText(/is being checked/)).not.toBeInTheDocument();
+  });
+
+  it('says why a picture was refused in the reader’s words, never the server’s', async () => {
+    stubApi([['POST', /\/groups\/g1\/photo$/, () => jsonResponse(422, { code: 'PHOTO_REJECTED', message: 'profile photo rejected', reason: 'hate', reviewId: 'rv-5' })]]);
+    renderApp(<GroupInfo detail={detailFor('moderator')} onChanged={async () => undefined} onLeft={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit group' }));
+    await upload();
+
+    expect(await screen.findByText('This picture looks like it shows hateful symbols or words, which aren’t allowed on Hevalo.')).toBeInTheDocument();
+    expect(screen.queryByText(/profile photo rejected/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Ask a person to check' })).toBeInTheDocument();
+  });
+});
+
 describe('banning a member', () => {
   async function openBan(routes: Parameters<typeof stubApi>[0] = []): Promise<{ calls: Call[]; changed: ReturnType<typeof vi.fn> }> {
     const calls = stubApi(routes);

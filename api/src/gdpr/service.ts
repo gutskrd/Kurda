@@ -277,10 +277,20 @@ export class GdprService {
    */
   private async deleteFiles(keys: string[]): Promise<void> {
     if (!this.deps.storage) return;
+    // a picture that was never public (held, refused, or taken off with a removed post) has its bytes in private storage
+    const kept = await this.pool
+      .query<{ key: string; private_key: string }>(
+        `SELECT key, private_key FROM media_uploads WHERE key = ANY($1::text[]) AND private_key IS NOT NULL AND NOT preserve_evidence`,
+        [keys],
+      )
+      .catch(() => ({ rows: [] as Array<{ key: string; private_key: string }> }));
+    const privately = new Map(kept.rows.map((r) => [r.key, r.private_key]));
     const deleted: string[] = [];
     for (const key of keys) {
       try {
         await this.deps.storage.delete(key);
+        const copy = privately.get(key);
+        if (copy) await this.deps.storage.deleteEvidence(copy);
         deleted.push(key);
       } catch (err) {
         this.deps.log?.warn({ err, key }, 'could not delete a closed account’s file; the orphan sweep will');
@@ -472,6 +482,17 @@ export class GdprService {
       `SELECT kind, sent_at FROM security_notices WHERE user_id = $1 ORDER BY sent_at`,
       [userId],
     );
+    // Their pictures the check held or refused, what they were told and what they wrote asking a person to look; what the
+    // check found and who decided are moderation's.
+    const pictureChecks = await this.pool.query(
+      `SELECT surface, outcome, reason, created_at AS checked_at, asked_at, note FROM image_scans
+        WHERE uploader_id = $1 AND status <> 'clear' ORDER BY created_at`,
+      [userId],
+    );
+    const waitingPhoto = await this.pool.query<{ waiting: boolean }>(
+      `SELECT pending_profile_photo_key IS NOT NULL AS waiting FROM users WHERE id = $1`,
+      [userId],
+    );
     // Their mail to the support address from this account's address and the answers; who answered is not theirs.
     const support = await this.pool.query(
       `SELECT e.subject, e.received_at, e.text_body, e.html_body,
@@ -505,6 +526,7 @@ export class GdprService {
       letterPaper: letterPaper.rows[0] ?? null,
       letterWidget: { prefs: widgetPrefs.rows[0] ?? null, phones: widgets.rows },
       supportEmails: support.rows,
+      pictureChecks: { profilePhotoWaiting: waitingPhoto.rows[0]?.waiting ?? false, pictures: pictureChecks.rows },
       // XP, leagues, streaks, badges, the story shelf and the saved words (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
     };
@@ -614,6 +636,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // the files, read before the rows that point at them go
   const keys = await executor.query<{ key: string }>(
     `SELECT profile_photo_key AS key FROM users WHERE id = $1 AND profile_photo_key IS NOT NULL
+     UNION SELECT pending_profile_photo_key FROM users WHERE id = $1 AND pending_profile_photo_key IS NOT NULL
+     UNION SELECT pending_photo_key FROM groups WHERE pending_photo_set_by = $1 AND pending_photo_key IS NOT NULL
      UNION SELECT image_media_id FROM image_posts WHERE author_id = $1
      UNION SELECT audio_media_id FROM library_posts WHERE author_id = $1 AND audio_media_id IS NOT NULL
      UNION SELECT audio_media_id FROM library_comments WHERE author_id = $1 AND audio_media_id IS NOT NULL`,
@@ -746,6 +770,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`UPDATE group_bans SET banned_by = NULL WHERE banned_by = $1`);
   await q(`UPDATE group_rejoin_requests SET decided_by = NULL WHERE decided_by = $1`);
   await q(`UPDATE groups SET chat_cleared_by = NULL WHERE chat_cleared_by = $1`);
+  // a group picture they put up that was still waiting for a person goes with them; one already showing is the group's
+  await q(`UPDATE groups SET pending_photo_key = NULL, pending_photo_set_by = NULL WHERE pending_photo_set_by = $1`);
   if (owned.rows.length > 0) {
     const ids = owned.rows.map((row) => row.group_id);
     await q(`UPDATE groups SET owner_id = NULL WHERE id = ANY($1::uuid[]) AND owner_id = $2`, [ids, userId]);
@@ -780,7 +806,7 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM email_verification_codes WHERE user_id = $1`);
   await q(
     `UPDATE users SET
-       profile_photo_key = NULL, selected_avatar_key = NULL, country = NULL,
+       profile_photo_key = NULL, pending_profile_photo_key = NULL, selected_avatar_key = NULL, country = NULL,
        favorite_poem_id = NULL, favorite_story_id = NULL, last_seen_at = NULL,
        consent_version = NULL, consented_at = NULL, analytics_consent = false,
        profile_sections = '{}'::jsonb, leagues_enabled = NULL
@@ -794,7 +820,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
             (EXISTS (SELECT 1 FROM media_uploads m WHERE m.key = k.key AND m.preserve_evidence)
              OR EXISTS (SELECT 1 FROM image_scans s WHERE s.media_key = k.key AND s.preserve_evidence)) AS evidence
        FROM unnest($1::text[]) AS k(key)
-      WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.profile_photo_key = k.key)
+      WHERE NOT EXISTS (SELECT 1 FROM users u WHERE u.profile_photo_key = k.key OR u.pending_profile_photo_key = k.key)
+        AND NOT EXISTS (SELECT 1 FROM groups g WHERE g.photo_key = k.key OR g.pending_photo_key = k.key)
         AND NOT EXISTS (SELECT 1 FROM image_posts i WHERE i.image_media_id = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_media_id = k.key)
         AND NOT EXISTS (SELECT 1 FROM library_post_media pm WHERE pm.media_key = k.key)
@@ -811,6 +838,22 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
      ON CONFLICT (key) DO UPDATE SET confirmed_at = NULL, created_at = now() - interval '2 days'`,
     [[...files, ...evidence]],
   );
+  // Their pictures still waiting for a person, or refused and kept for them to ask about, go with them: no longer under
+  // review, so the orphan sweep takes what the deletion below misses. Their cases close, saying why; the case and
+  // its decision log stay as moderation records. Evidence is kept and its case stays open.
+  await q(
+    `UPDATE media_uploads SET scan_status = 'pending' WHERE key = ANY($1::text[]) AND scan_status IN ('held','refused','withdrawn')`,
+    [files],
+  );
+  await q(
+    `UPDATE moderation_cases SET status = 'no_violation', resolution = 'no_violation', resolved_at = now(), claimed_by = NULL,
+            lease_until = NULL, resolution_note = 'the account was closed, and the picture went with it', updated_at = now()
+      WHERE source = 'image_flag' AND evidence ? 'origin' AND evidence->>'mediaKey' = ANY($1::text[])
+        AND status IN ('open','in_review','escalated') AND resolution IS DISTINCT FROM 'csam'`,
+    [files],
+  );
+  // a check that found nothing is no moderation record
+  await q(`DELETE FROM image_scans WHERE uploader_id = $1 AND status = 'clear'`);
   await requestQuarantine(executor, evidence);
   return files;
 }

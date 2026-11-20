@@ -151,6 +151,8 @@ export interface LetterItem {
   removed: boolean;
   sentAt: string;
   readAt: string | null;
+  /** the writer's own copy of a letter whose drawing a person is checking; it is delivered once cleared */
+  review?: 'held';
 }
 
 /** A pen pal, as the list of them shows one. */

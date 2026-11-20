@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import * as ImagePicker from 'expo-image-picker';
-import { GROUP_DESCRIPTION_MAX, GROUP_NAME_MAX, GROUP_NAME_MIN, canEditGroup } from '@kurda/shared';
+import { GROUP_DESCRIPTION_MAX, GROUP_NAME_MAX, GROUP_NAME_MIN, canEditGroup, type PendingPicture, type PictureRejection } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -21,11 +21,14 @@ import { groupError } from './groupError';
 import { clearGroupPhoto, groupDetail, updateGroup, type GroupDetail } from './api';
 import { Loading } from '../theme/Loading';
 import { heldDim } from '../theme/MotionParts';
+import { PendingPhoto, PictureRefusal } from '../pictures/PictureReview';
+import { pendingOf } from '../pictures/review';
 
 /**
  * Change a group's picture, name and description, as its owner or an admin. The picture changes as soon as one is
  * chosen; the words change on Save, which is enabled once there is something new and the name is long enough. What the
- * server refuses is said under the fields, and nothing typed is lost.
+ * server refuses is said under the fields, and nothing typed is lost. A new picture held for a person shows small under
+ * the old one, which members keep seeing until then; one the check refuses says why, with the way to ask a person.
  */
 export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -40,6 +43,8 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<{ photo: PendingPicture | null } | null>(null);
+  const [refusal, setRefusal] = useState<PictureRejection | null>(null);
   // The group could not be read at all: said, with the way to ask again.
   const [loadError, setLoadError] = useState<ApiError | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -57,6 +62,8 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
       setName(res.data.name);
       setDescription(res.data.description ?? '');
       setPhotoUrl(res.data.photoUrl ?? null);
+      const waiting = pendingOf(res.data.photoPending);
+      setPending(waiting ? { photo: waiting } : null);
     });
     return () => {
       active = false;
@@ -91,15 +98,23 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
     if (!asset) return;
     setUploading(true);
     setError(null);
+    setRefusal(null);
     const res = await uploadGroupPhoto(client, groupId, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t, locale);
     setUploading(false);
-    if (res.ok) setPhotoUrl(res.url);
+    if (res.ok && res.review === 'held') {
+      if (res.url) setPhotoUrl(res.url);
+      setPending({ photo: res.pending });
+    } else if (res.ok) {
+      setPhotoUrl(res.url);
+      setPending(null);
+    } else if (res.rejection) setRefusal(res.rejection);
     else setError(res.error || t('groups.photo.failed'));
   };
 
   const removePhoto = async (): Promise<void> => {
     setUploading(true);
     setError(null);
+    setRefusal(null);
     const res = await clearGroupPhoto(client, groupId);
     setUploading(false);
     if (res.ok) setPhotoUrl(null);
@@ -183,6 +198,8 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
                 <Text style={[styles.photoLink, { color: colors.textPrimary }]}>{photoUrl ? t('groups.photo.change') : t('groups.photo.add')}</Text>
               </Pressable>
             </View>
+            {pending ? <PendingPhoto pending={pending.photo} body="picture.held.group" testID="group-photo-pending" /> : null}
+            {refusal ? <PictureRefusal rejection={refusal} testID="group-photo-refused" /> : null}
 
             <Field
               label={t('groups.name')}

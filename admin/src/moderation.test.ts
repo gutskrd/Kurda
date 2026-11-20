@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   categoryName,
   contentTarget,
+  removalLabel,
   decisionRequest,
   defaultStatement,
   draftProblems,
@@ -73,10 +74,14 @@ describe('names', () => {
   it('knows which cases are about a piece of content that can come down', () => {
     expect(contentTarget('library_post')).toBe(true);
     expect(contentTarget('dm_message')).toBe(true);
-    expect(contentTarget('user')).toBe(false);
+    expect(contentTarget('user')).toBe(true);
+    expect(contentTarget('group')).toBe(true);
     expect(contentTarget('game_player')).toBe(false);
     expect(contentTarget(null)).toBe(false);
     expect(contentTarget(null, 'image_flag')).toBe(true);
+    expect(removalLabel('user')).toBe('Remove their profile photo');
+    expect(removalLabel('group')).toBe('Remove the group photo');
+    expect(removalLabel('library_post')).toBe('Remove the content');
   });
 
   it('says lengths the way the presets show them', () => {

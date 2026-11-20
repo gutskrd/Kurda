@@ -190,10 +190,20 @@ export function targetName(target: string | null | undefined): string {
   return named(TARGET_NAME, target, 'Account');
 }
 
-/** Whether a decision can take this case's content down (the server checks again). */
+/**
+ * Whether a decision can take this case's content down (the server checks again). For a report about a person or a
+ * group that content is the profile or group photo kept in the report, so the checkbox says so.
+ */
 export function contentTarget(target: string | null | undefined, source?: string): boolean {
   if (source === 'image_flag' || source === 'library_report' || source === 'image_report' || source === 'chat_report') return true;
-  return !!target && !['user', 'group', 'game_player'].includes(target);
+  return !!target && target !== 'game_player';
+}
+
+/** What "remove the content" takes down for this case, in the decision panel's words. */
+export function removalLabel(target: string | null | undefined): string {
+  if (target === 'user') return 'Remove their profile photo';
+  if (target === 'group') return 'Remove the group photo';
+  return 'Remove the content';
 }
 
 // ---------------------------------------------------------------------------

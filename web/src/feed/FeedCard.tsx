@@ -16,6 +16,7 @@ import { lastSeen } from '../social/time';
 
 import { CARD_LABEL_KEY, cardKind } from './postKinds';
 import { PostPictures } from '../composer/PostPictures';
+import { HeldPost } from '../pictures/PictureCheck';
 import type { FeedImage } from '@kurda/shared';
 
 type Kind = 'like' | 'bookmark' | 'repost';
@@ -24,7 +25,8 @@ type Kind = 'like' | 'bookmark' | 'repost';
  * One post on the wall, separated from the next by a hairline. Every kind has the same order: the author, kind and
  * age on one line, then the words, the pictures and the action pills with their counts. Only the words link to the
  * post, so liking never navigates. On the post's own page (`onPage`) the words do not link and the comment button
- * goes to the comments below.
+ * goes to the comments below. While a picture on it waits for a person to check it, its author is told only they can
+ * see it, and it cannot be passed on.
  */
 export function FeedCard({
   item,
@@ -39,11 +41,13 @@ export function FeedCard({
   /** On the post's own page: `onComment` is the comment button, and `pending` holds the actions while counts load. */
   onPage?: { onComment: () => void; pending?: boolean };
 }): React.JSX.Element | null {
-  const { client, status } = useAuth();
+  const { client, status, user } = useAuth();
   const { openProfile } = useProfileModal();
   const t = useT();
   const { locale } = useI18n();
   const waiting = onPage?.pending ?? false;
+  // Only the author is ever sent a held post; the check here keeps anyone else from being told about one.
+  const heldForMe = item.review === 'held' && user?.id === item.author.id;
   const engage = useEngagement(item, onChanged, waiting);
   // The big heart over a picture, once per double click.
   const [pop, setPop] = useState(0);
@@ -113,6 +117,8 @@ export function FeedCard({
         </span>
         <PostMenu item={item} onDelete={remove} />
       </header>
+
+      {heldForMe && <HeldPost className="fcard-held" />}
 
       {/* The words come first on every post, pictures included. */}
       {words &&
@@ -250,6 +256,8 @@ export function PostActions({
   const count = (n: number): string => shortCount(n, locale);
   // Only a row that cannot act is held; a press in flight does not hold the other two.
   const held = !signedIn || waiting;
+  // Nobody else can open a post whose picture is still being checked, so it is not reposted or shared yet.
+  const unshared = item.review === 'held';
 
   /** Labels a button by what it does, not the number it shows, which a screen reader would otherwise announce. */
   const actionLabel = (verb: string, undo: string, n?: number): string => {
@@ -293,20 +301,22 @@ export function PostActions({
       )}
 
       {/* Repost to your profile: a toggle like the heart. Your own posts can be reposted, to bring old ones back up. */}
-      <button
-        type="button"
-        className={`fcard-act fcard-repost${e.reposted ? ' is-on' : ''}${justOn?.kind === 'repost' ? ' just-on' : ''}`}
-        disabled={held}
-        aria-pressed={e.reposted}
-        aria-label={actionLabel(t('repost.do'), e.reposted ? t('repost.undo') : t('repost.do'), e.reposts)}
-        title={signedIn ? (e.reposted ? t('repost.undo') : t('repost.do')) : t('repost.signIn')}
-        onClick={() => toggle('repost')}
-      >
-        <RepostIcon size={20} weight={e.reposted ? 'bold' : 'regular'} />
-        {e.reposts > 0 && <span className="fcard-count">{count(e.reposts)}</span>}
-      </button>
+      {!unshared && (
+        <button
+          type="button"
+          className={`fcard-act fcard-repost${e.reposted ? ' is-on' : ''}${justOn?.kind === 'repost' ? ' just-on' : ''}`}
+          disabled={held}
+          aria-pressed={e.reposted}
+          aria-label={actionLabel(t('repost.do'), e.reposted ? t('repost.undo') : t('repost.do'), e.reposts)}
+          title={signedIn ? (e.reposted ? t('repost.undo') : t('repost.do')) : t('repost.signIn')}
+          onClick={() => toggle('repost')}
+        >
+          <RepostIcon size={20} weight={e.reposted ? 'bold' : 'regular'} />
+          {e.reposts > 0 && <span className="fcard-count">{count(e.reposts)}</span>}
+        </button>
+      )}
 
-      <SharePost item={item} />
+      {!unshared && <SharePost item={item} />}
 
       <button
         type="button"
