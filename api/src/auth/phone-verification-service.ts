@@ -10,14 +10,17 @@ import {
 } from './phone-verification.js';
 import { maskE164, normalizeE164 } from './phone-number.js';
 import type { SmsSender } from './sms.js';
+import { phoneHash, phoneHashCandidates } from '../moderation/identity-hash.js';
+import { availableSql } from '../moderation/availability.js';
+import { isReturningIdentity } from '../moderation/returns.js';
 
 export type SendResult =
   | { ok: true; masked: string; resent: boolean }
-  | { ok: false; reason: 'invalid-number' | 'cooldown' | 'max-sends'; retryAfterMs?: number };
+  | { ok: false; reason: 'invalid-number' | 'cooldown' | 'max-sends' | 'unavailable'; retryAfterMs?: number };
 
 export type VerifyResultOut =
   | { ok: true; masked: string }
-  | { ok: false; reason: 'no-session' | 'wrong-number' | 'too-many-attempts' | 'expired' | 'mismatch'; remaining?: number };
+  | { ok: false; reason: 'no-session' | 'wrong-number' | 'too-many-attempts' | 'expired' | 'mismatch' | 'unavailable'; remaining?: number };
 
 interface Row {
   phone_hash: string;
@@ -33,10 +36,15 @@ interface Row {
  * Optional SMS phone verification: the pure OTP state machine (`phone-verification.ts`) with persistence and a
  * provider-agnostic SMS sender.
  *
- * The raw number is never stored, only a hash (for the accounts-per-number cap and recycle detection) and a masked
- * display form. Clients resend the number on each `send`, so a resend to the same in-flight number is detected by hash
- * and gated by the cooldown and send cap; a new number starts a fresh session. A verified phone raises trust and is
- * exported and deleted with the account.
+ * The raw number is never stored, only a keyed hash (moderation/identity-hash.ts; for the accounts-per-number rule and
+ * recycle detection) and a masked display form. Numbers stored before the hash was keyed are a plain SHA-256: they are
+ * matched too, and rewritten keyed when the number is verified again. Clients resend the number on each `send`, so a
+ * resend to the same in-flight number is detected by hash and gated by the cooldown and send cap; a new number starts a
+ * fresh session. A verified phone raises trust and is exported and deleted with the account.
+ *
+ * A suspended or banned person's number is never taken from them by verifying it elsewhere, nor verified on another
+ * account while the ban stands (the registry keeps it after their account is deleted): `unavailable`, and no code is
+ * sent for it.
  */
 export class PhoneVerificationService {
   private readonly pool: pg.Pool;
@@ -56,7 +64,9 @@ export class PhoneVerificationService {
   async send(userId: string, rawPhone: string): Promise<SendResult> {
     const e164 = normalizeE164(rawPhone);
     if (!e164) return { ok: false, reason: 'invalid-number' };
-    const phoneHash = hash(e164);
+    if (await this.heldByBanned(userId, e164)) return { ok: false, reason: 'unavailable' };
+    const keyed = phoneHash(e164);
+    const candidates = phoneHashCandidates(e164);
     const masked = maskE164(e164);
     const now = this.now();
 
@@ -67,7 +77,7 @@ export class PhoneVerificationService {
     let state: VerificationState;
     let resent = false;
 
-    if (existing && existing.phone_hash === phoneHash && existing.expires_at.getTime() > now) {
+    if (existing && candidates.includes(existing.phone_hash) && existing.expires_at.getTime() > now) {
       // resend to the same number — enforce cooldown + send cap
       const check = canResend(toState(existing), now);
       if (!check.allowed) {
@@ -87,7 +97,7 @@ export class PhoneVerificationService {
       state = startVerification(hash(code), now);
     }
 
-    await this.upsert(userId, phoneHash, masked, state);
+    await this.upsert(userId, keyed, masked, state);
     await this.sms.send(e164, smsBody(code));
     return { ok: true, masked, resent };
   }
@@ -97,7 +107,9 @@ export class PhoneVerificationService {
     const row = await this.load(userId);
     if (!row) return { ok: false, reason: 'no-session' };
     const e164 = normalizeE164(rawPhone);
-    if (!e164 || hash(e164) !== row.phone_hash) return { ok: false, reason: 'wrong-number' };
+    if (!e164 || !phoneHashCandidates(e164).includes(row.phone_hash)) return { ok: false, reason: 'wrong-number' };
+    // checked again here: a ban may have come in since the code was sent
+    if (await this.heldByBanned(userId, e164)) return { ok: false, reason: 'unavailable' };
 
     const result = verifyCode(toState(row), hash(code), this.now());
     if (!result.ok) {
@@ -111,16 +123,16 @@ export class PhoneVerificationService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      // number recycling: reclaiming a recycled number detaches it from any
-      // prior account that still holds it.
+      // number recycling: reclaiming a recycled number detaches it from any prior account that still holds it, in any
+      // stored form, except a suspended or banned one's (refused above)
       await client.query(
         `UPDATE users SET phone_verified_at = NULL, phone_hash = NULL, phone_masked = NULL
-         WHERE phone_hash = $1 AND id <> $2`,
-        [row.phone_hash, userId],
+         WHERE phone_hash = ANY($1::text[]) AND id <> $2 AND ${availableSql('users')}`,
+        [phoneHashCandidates(e164), userId],
       );
       await client.query(
         `UPDATE users SET phone_verified_at = now(), phone_hash = $2, phone_masked = $3 WHERE id = $1`,
-        [userId, row.phone_hash, row.phone_masked],
+        [userId, phoneHash(e164), row.phone_masked],
       );
       await client.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [userId]);
       await client.query('COMMIT');
@@ -131,6 +143,19 @@ export class PhoneVerificationService {
       client.release();
     }
     return { ok: true, masked: row.phone_masked };
+  }
+
+  /**
+   * Whether the number belongs to someone suspended or banned now: on their account (in any stored form), or on the ban
+   * registry, which outlives a deleted account.
+   */
+  private async heldByBanned(userId: string, e164: string): Promise<boolean> {
+    const holder = await this.pool.query(
+      `SELECT 1 FROM users u WHERE u.phone_hash = ANY($1::text[]) AND u.id <> $2 AND NOT ${availableSql('u')} LIMIT 1`,
+      [phoneHashCandidates(e164), userId],
+    );
+    if (holder.rowCount) return true;
+    return isReturningIdentity(this.pool, { phone: e164 }, userId);
   }
 
   /** Remove a verified phone from the account (user-initiated). */

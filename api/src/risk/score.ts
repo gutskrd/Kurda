@@ -24,6 +24,11 @@ export interface RiskSignals {
   geoMismatch: boolean;
   /** A shared network (campus, café, carrier NAT), by reputation or because many established accounts use it; softens address volume, never device volume. */
   sharedNetwork: boolean;
+  /**
+   * A network a superadmin vouched for (net/trusted-networks.ts), such as a school's: address volume counts for nothing
+   * and its cap does not apply, so a class can sign up together. The device cap still does.
+   */
+  trustedNetwork?: boolean;
 }
 
 /** Scoring weights (points added to the risk score). Tunable defaults. */
@@ -58,7 +63,7 @@ export function computeRiskScore(signals: RiskSignals): number {
 
   // Address volume is softened on shared networks, so a busy campus is not punished on address alone.
   const ipExtra = Math.max(0, signals.accountsFromIpRecently - 1);
-  const ipFactor = signals.sharedNetwork ? SHARED_NETWORK_IP_FACTOR : 1;
+  const ipFactor = signals.trustedNetwork ? 0 : signals.sharedNetwork ? SHARED_NETWORK_IP_FACTOR : 1;
   score += ipExtra * RISK_WEIGHTS.perExtraIpAccount * ipFactor;
 
   if (signals.velocityPerMin >= VELOCITY_RISK_THRESHOLD) score += RISK_WEIGHTS.highVelocity;
@@ -114,7 +119,7 @@ export interface CapCheck {
 export function exceedsSignupCap(signals: RiskSignals): CapCheck {
   const device = signals.accountsFromDeviceRecently > MAX_ACCOUNTS_PER_DEVICE;
   const ipCap = signals.sharedNetwork ? MAX_ACCOUNTS_PER_SHARED_IP : MAX_ACCOUNTS_PER_IP;
-  const ip = signals.accountsFromIpRecently > ipCap;
+  const ip = !signals.trustedNetwork && signals.accountsFromIpRecently > ipCap;
   return { device, ip, blocked: device || ip };
 }
 

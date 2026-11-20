@@ -1,4 +1,4 @@
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, type RouteOptions } from 'fastify';
 import { readFileSync } from 'node:fs';
 import type pg from 'pg';
 import type { Redis } from 'ioredis';
@@ -113,6 +113,7 @@ import { registerAiModerationRoutes, registerImageModerationRoutes } from './mod
 import { registerModeration, type ModerationOptions } from './moderation/wire.js';
 import { registerCopyright, type CopyrightWireOptions } from './copyright/wire.js';
 import { setModerationKey } from './moderation/pseudonym.js';
+import { setIdentityKey } from './moderation/identity-hash.js';
 import { BotDetectionService } from './antibot/service.js';
 import { registerAntibotRoutes } from './antibot/routes.js';
 import { registerLibraryRoutes } from './library/routes.js';
@@ -218,6 +219,8 @@ const pkg = JSON.parse(
 ) as { version: string };
 
 export interface BuildAppOptions {
+  /** Test seam: every route as it is registered, for the tests that walk the route table. */
+  onRoute?: (route: RouteOptions) => void;
   /** Test seam: shrink heartbeat windows etc. */
   gateway?: GatewayOptions;
   /** Test seam: where a dictionary import reads its words from; the real source downloads 65 MB over about ninety minutes, which no test should start. */
@@ -237,8 +240,9 @@ export interface BuildAppOptions {
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
   // the lesson shuffle is keyed with a server secret, never with what the client sees
   setShuffleKey(config.JWT_SECRET);
-  // and moderation's pseudonyms and banned-address hashes, with the same secret
+  // and moderation's pseudonyms with the same secret; the ban registry with its own, when one is set
   setModerationKey(config.JWT_SECRET);
+  setIdentityKey(config.IDENTITY_HASH_SECRET);
   const app = Fastify({
     // Start-up seeding of stories, lessons and game decks runs in onReady hooks, which fastify cuts off at this limit;
     // the 10 s default is too short for a first seed on a small server, and a cut-off start fails the deploy.
@@ -259,6 +263,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // who the client is, when there is a proxy in between — see TRUST_PROXY
     trustProxy: trustProxyOption(config.TRUST_PROXY),
   });
+  if (options.onRoute) app.addHook('onRoute', options.onRoute);
 
   // who the client is, read past the proxies once, before any hook asks
   setupClientIp(app, config);
@@ -930,6 +935,8 @@ declare module 'fastify' {
       birthMonthKnown?: boolean;
       /** a guest account (auth/guest.ts): learning only, until claimed (`requireAccount`) */
       guest?: boolean;
+      /** held while a person checks whether it belongs to someone banned (moderation/restrictions.ts `requireNotHeld`) */
+      held?: boolean;
     };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;

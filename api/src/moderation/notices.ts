@@ -2,6 +2,7 @@ import {
   HELPLINE_URL,
   reportCategoryInfo,
   type AppealOutcome,
+  type BanContentChoice,
   type ModerationNotificationData,
   type PictureReviewOutcome,
   type PictureReviewTarget,
@@ -89,14 +90,34 @@ export interface SanctionNoticeInput {
   endsAt: Date | null;
   origin: SanctionOrigin;
   reviewedByPerson: boolean;
+  /** for a suspension or ban: what happens to what they shared */
+  content?: { choice: BanContentChoice; includeMessages: boolean } | null;
+}
+
+/** What a suspension or ban does to what the person shared, said plainly; nothing when the decision did not say. */
+export function contentSentence(kind: SanctionKind, content: { choice: BanContentChoice; includeMessages: boolean } | null | undefined): string | null {
+  if (!content || (kind !== 'suspension' && kind !== 'permanent_ban')) return null;
+  const messages = content.includeMessages ? ' Your private messages show as removed too.' : '';
+  switch (content.choice) {
+    case 'keep':
+      return 'What you shared stays up, shown as from an account that isn’t available.';
+    case 'hide':
+      return kind === 'suspension'
+        ? `Your posts, comments, pictures and profile are hidden from everyone until the suspension ends.${messages}`
+        : `Your posts, comments, pictures and profile are hidden from everyone.${messages}`;
+    case 'remove':
+      return `Your posts, comments, pictures and profile are removed. They are kept privately for six months in case you ask for a review, then deleted for good.${messages}`;
+  }
 }
 
 /** What a person is told about a sanction: the statement of reasons. */
 export function sanctionNotice(input: SanctionNoticeInput): Notice {
   const rule = reportCategoryInfo(input.policy).label;
+  const content = contentSentence(input.kind, input.content);
   const body = [
     input.statement.trim(),
     whatHappens(input.kind, input.endsAt),
+    ...(content ? [content] : []),
     `The rule: ${rule}.`,
     howItCame(input.origin, input.reviewedByPerson, input.policy),
     input.policy === 'copyright' && input.kind === 'content_removal'

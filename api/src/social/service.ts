@@ -10,6 +10,7 @@ import { inLeaguesSql } from '../leagues/service.js';
 import { profileShowcase } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { availableSql, accountUnavailable } from '../moderation/availability.js';
 import { resolveSections, type SectionVisibility } from './profile-activity.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
@@ -134,6 +135,8 @@ export class SocialService {
                          coalesce(similarity(${FOLDED_NAME}, $2), 0), coalesce(word_similarity($2, ${FOLDED_NAME}), 0)) AS closeness
            FROM users u
           WHERE u.deleted_at IS NULL AND u.id <> $1
+            -- nobody finds a suspended or banned account (moderation/availability.ts)
+            AND ${availableSql('u')}
             AND u.profile_visibility <> 'nobody'
             -- strangers cannot look a minor up (they reach friends another way),
             -- nor anyone whose age is not on record yet
@@ -225,6 +228,7 @@ export class SocialService {
       birth_year: number | null;
       birth_month: number | null;
       guest: boolean;
+      unavailable: boolean;
       streak: number;
       tier: string | null;
       frame_sku: string | null;
@@ -262,7 +266,7 @@ export class SocialService {
       // block are not shown.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
               u.last_seen_at, u.premium_until, u.xp, u.profile_visibility, u.country,
-              u.birth_year, u.birth_month, u.guest,
+              u.birth_year, u.birth_month, u.guest, NOT ${availableSql('u')} AS unavailable,
               u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
@@ -400,7 +404,8 @@ export class SocialService {
    */
   async access(viewerId: string | null, targetId: string): Promise<{ private: boolean; sections: SectionVisibility }> {
     const row = await this.pool.query<GateRow & { profile_sections: unknown }>(
-      `SELECT profile_visibility, birth_year, birth_month, guest, profile_sections FROM users WHERE id = $1 AND deleted_at IS NULL`,
+      `SELECT profile_visibility, birth_year, birth_month, guest, NOT ${availableSql('users')} AS unavailable, profile_sections
+         FROM users WHERE id = $1 AND deleted_at IS NULL`,
       [targetId],
     );
     const found = row.rows[0];
@@ -421,12 +426,14 @@ interface GateRow {
   birth_year: number | null;
   birth_month: number | null;
   guest: boolean;
+  /** suspended or banned now (moderation/availability.ts) */
+  unavailable: boolean;
 }
 
 /**
  * Where the viewer stands with a profile and whether its detail shows them; `status` is null for one's own profile or a
  * signed-out reader. A missing account, a guest's (to anyone but its owner) and one a block stands across are all
- * "no such user", so neither a block nor a guest is revealed.
+ * "no such user", so neither a block nor a guest is revealed; a suspended or banned one is 404 ACCOUNT_UNAVAILABLE.
  */
 function standing<Row extends GateRow>(
   u: Row | undefined,
@@ -437,6 +444,8 @@ function standing<Row extends GateRow>(
   if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
   const isSelf = viewerId !== null && viewerId === targetId;
   if (u.guest && !isSelf) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
+  // a suspended or banned account's profile says only that it isn't available, to everyone, whatever its content
+  if (u.unavailable && !isSelf) throw accountUnavailable(404);
   const friendStatus: FriendStatus = isSelf ? 'self' : (status ?? 'none');
   if (friendStatus === 'blocked') throw new AppError('USER_NOT_FOUND', 404, 'no such user');
   // An 'everyone' stored before their age was known reads as 'members' for a minor or unknown age.

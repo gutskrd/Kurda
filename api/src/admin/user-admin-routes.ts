@@ -1,5 +1,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { BAN_CONTENT_CHOICES, MAX_STATEMENT_LEN, REPORT_CATEGORY_KEYS } from '@kurda/shared';
+import { parseContentChoice } from '../moderation/takedown.js';
 import { requireAuth } from '../plugins/auth.js';
 import { hasCapability } from './roles.js';
 import { requireAdmin, requireCapability } from './routes.js';
@@ -13,8 +15,19 @@ import { VOICE_ID } from '../recording/script.js';
 const idParam = z.object({ id: z.uuid() });
 const reasonBody = z.object({ reason: z.string() });
 const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) });
-// confirmUsername: the person's username, which the only moderator types to confirm a permanent ban
-const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional(), confirmUsername: z.string().max(60).optional() });
+/**
+ * The older ban route goes through the one ban flow (cases-service.ts `sanctionUser`) and asks what it asks: the rule
+ * and what the person is told, never a canned "other", and what happens to their content (Keep when absent). `reason`
+ * stays the private note. confirmUsername: the person's username, which the only moderator types for a permanent ban.
+ */
+const banBody = z.object({
+  reason: z.string(),
+  hours: z.number().int().min(1).max(24 * 365).optional(),
+  policy: z.enum(REPORT_CATEGORY_KEYS),
+  statement: z.string().trim().min(1).max(MAX_STATEMENT_LEN),
+  content: z.object({ choice: z.enum(BAN_CONTENT_CHOICES), includeMessages: z.boolean().default(false) }).optional(),
+  confirmUsername: z.string().max(60).optional(),
+});
 /**
  * The most one admin change may add or take away. A grant mints currency, so a typo (1000000 for 1000) must be refused.
  */
@@ -115,9 +128,14 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
     const reason = normalizeReason(b.reason);
     if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
     const id = (req.params as z.infer<typeof idParam>).id;
+    const ban = {
+      policy: b.policy,
+      statement: b.statement,
+      content: b.content ? parseContentChoice(b.content.choice, b.content.includeMessages) : null,
+    };
     const res = b.hours
-      ? await users.tempBan(req.user!.id, id, reason, expiryFrom(new Date(), b.hours)!)
-      : await users.permBan(req.user!.id, id, reason, b.confirmUsername);
+      ? await users.tempBan(req.user!.id, id, reason, expiryFrom(new Date(), b.hours)!, ban)
+      : await users.permBan(req.user!.id, id, reason, b.confirmUsername, ban);
     return sendResult(reply, res);
   });
 

@@ -34,7 +34,8 @@ import { recordNotifications } from '../notifications/inbox-service.js';
 import type { Notification } from '../push/service.js';
 import { notBlockedSql } from '../friends/blocked.js';
 import { isNotKnownAdultUser } from '../users/age.js';
-import { approvedNotice, bannedNotice, declinedNotice, removedNotice, requestNotice, type NoticeGroup, type PushNotice } from './notices.js';
+import { accountUnavailable, availableSql } from '../moderation/availability.js';
+import { approvedNotice, bannedNotice, declinedNotice, ownerChangedNotice, removedNotice, requestNotice, type NoticeGroup, type PushNotice } from './notices.js';
 
 /** A group's name or description as stored: without control characters or the invisible ones a name could hide behind. */
 function cleanGroupText(text: string): string {
@@ -321,6 +322,13 @@ export class GroupService {
       if (await this.staysAdultsOnly(client, groupId, targetId)) {
         throw new AppError('FORBIDDEN', 403, 'this group takes nobody new');
       }
+      // nobody suspended or banned is added, nor an account held while a person checks it (moderation/returns.ts)
+      const target = await client.query<{ unavailable: boolean; held: boolean }>(
+        `SELECT NOT ${availableSql('users')} AS unavailable, held_at IS NOT NULL AS held FROM users WHERE id = $1`,
+        [targetId],
+      );
+      if (target.rows[0]?.unavailable) throw accountUnavailable();
+      if (target.rows[0]?.held) throw new AppError('CANNOT_JOIN_YET', 409, 'they can’t join groups right now');
       if (!(await this.roleOf(client, groupId, targetId))) {
         // someone banned is let back by lifting the ban first, never by being added past it
         await lockPersonFor(client, 'groups', targetId);
@@ -913,4 +921,36 @@ export async function handOnGroups(executor: Pick<pg.Pool, 'query'>, groupIds: r
       WHERE g.id = ANY($1::uuid[]) AND NOT EXISTS (SELECT 1 FROM next WHERE next.group_id = g.id)`,
     [groupIds],
   );
+}
+
+/**
+ * The groups a suspended or banned person owns pass on, in the ban's transaction: to its oldest admin, else its oldest
+ * member, whose account is available; the person stays an admin, and the new owner is told in their inbox. A group
+ * with nobody else to take it is left as it is, since nobody else sees it.
+ */
+export async function handOverOwnedGroups(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<number> {
+  const moved = await executor.query<{ id: string; name: string; new_owner: string }>(
+    `WITH owned AS (
+       SELECT id, name FROM groups WHERE owner_id = $1 AND archived_at IS NULL ORDER BY id FOR UPDATE
+     ), next AS (
+       SELECT DISTINCT ON (m.group_id) m.group_id, m.user_id FROM group_members m
+         JOIN owned o ON o.id = m.group_id
+         JOIN users u ON u.id = m.user_id
+        WHERE m.user_id <> $1 AND u.deleted_at IS NULL AND ${availableSql('u')}
+        ORDER BY m.group_id, m.role = 'moderator' DESC, m.joined_at ASC
+     ), demoted AS (
+       UPDATE group_members gm SET role = 'moderator' FROM next WHERE gm.group_id = next.group_id AND gm.user_id = $1
+     ), promoted AS (
+       UPDATE group_members gm SET role = 'owner' FROM next WHERE gm.group_id = next.group_id AND gm.user_id = next.user_id
+     )
+     UPDATE groups g SET owner_id = next.user_id FROM next, owned
+      WHERE g.id = next.group_id AND owned.id = g.id
+      RETURNING g.id, owned.name, next.user_id AS new_owner`,
+    [userId],
+  );
+  await recordNotifications(
+    executor,
+    moved.rows.map((g) => ({ userId: g.new_owner, notification: ownerChangedNotice({ id: g.id, name: g.name }) })),
+  );
+  return moved.rows.length;
 }

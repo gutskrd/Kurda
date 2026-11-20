@@ -9,6 +9,7 @@ import type { UserRow } from '../users/repository.js';
 import { cleanDisplayName } from '../users/display-name.js';
 import { isBannedEmail } from '../moderation/ban-registry.js';
 import { suspensionError } from '../moderation/suspension.js';
+import { recordRefusedSignIn } from '../net/device-sightings.js';
 import { signupRejected } from './rejections.js';
 import type { AppleTokens } from './apple-tokens.js';
 import { GdprService, cancelPendingDeletion } from '../gdpr/service.js';
@@ -121,6 +122,17 @@ async function uniqueUsername(pool: pg.Pool, base: string): Promise<string> {
   return free.rows[0]?.candidate ?? fallback();
 }
 
+/** What the sign-in route checks around a provider sign-in (auth/routes.ts). */
+export interface OAuthChecks {
+  /**
+   * Before a brand-new account is made (or a guest's row becomes one): the sign-up caps and the ban registry, which
+   * throw the generic sign-up refusal.
+   */
+  beforeNewAccount?: (identity: { provider: string; subject: string; email: string | null }) => Promise<void>;
+  /** Where a banned person's refused sign-in came from, recorded under their account (net/device-sightings.ts). */
+  refused?: { deviceId: string | null; ip: string | null };
+}
+
 export class OAuthService {
   constructor(
     private readonly config: AppConfig,
@@ -142,9 +154,10 @@ export class OAuthService {
      * identity that already has an account signs that account in, leaving the guest row behind.
      */
     guestId: string | null = null,
+    checks: OAuthChecks = {},
   ): Promise<{ user: PublicUser; tokens: IssuedTokens; created: boolean }> {
     const identity = await verifyProviderToken(this.config, provider, idToken, this.jwksResolver);
-    const signedIn = await this.signInAs(identity, deviceName, deviceId, extras, guestId);
+    const signedIn = await this.signInAs(identity, deviceName, deviceId, extras, guestId, checks);
     if (provider === 'apple' && extras.authorizationCode && this.apple) {
       // After the sign-in has succeeded, and not awaited: Apple being slow or
       // down must not hold it up. `keep` logs its own failures as warnings.
@@ -159,6 +172,7 @@ export class OAuthService {
     deviceId: string | null | undefined,
     extras: AppleSignInExtras,
     guestId: string | null,
+    checks: OAuthChecks,
   ): Promise<{ user: PublicUser; tokens: IssuedTokens; created: boolean }> {
     // 1) known identity → login
     const known = await this.pool.query<{ user_id: string }>(
@@ -167,7 +181,7 @@ export class OAuthService {
     );
     if (known.rows[0]) {
       const user = await this.activeUser(known.rows[0].user_id);
-      await this.refuseIfSuspended(user);
+      await this.refuseIfSuspended(user, checks);
       const tokens = await this.session(user, deviceName, deviceId);
       return { user: toPublicUser(user), tokens, created: false };
     }
@@ -195,7 +209,7 @@ export class OAuthService {
         account = undefined;
       }
       if (account) {
-        await this.refuseIfSuspended(account);
+        await this.refuseIfSuspended(account, checks);
         await this.link(account.id, identity);
         const tokens = await this.session(account, deviceName, deviceId);
         return { user: toPublicUser(account), tokens, created: false };
@@ -220,8 +234,10 @@ export class OAuthService {
       }
     }
     const email = confirmedEmail ?? `${identity.provider}_${identity.providerUserId}@noemail.kurda.app`;
-    // a permanently banned address does not come back through a provider either
+    // a banned or suspended person's address does not come back through a provider either
     if (await isBannedEmail(this.pool, email)) throw signupRejected();
+    // nor their provider subject, and a new account here is held to the sign-up caps
+    await checks.beforeNewAccount?.({ provider: identity.provider, subject: identity.providerUserId, email: confirmedEmail });
     // Apple's identity token never carries a name: the app passes on the one
     // the person shared, which Apple gives it on their first sign-in only. It
     // names a new account; an existing one keeps the name it has.
@@ -325,9 +341,11 @@ export class OAuthService {
     return user;
   }
 
-  /** 403 ACCOUNT_SUSPENDED with the reasons and an appeal token, like password sign-in. */
-  private async refuseIfSuspended(user: UserRow): Promise<void> {
+  /** 403 ACCOUNT_SUSPENDED with the reasons and an appeal token, like password sign-in; where it came from is recorded. */
+  private async refuseIfSuspended(user: UserRow, checks: OAuthChecks = {}): Promise<void> {
     const suspended = await suspensionError(this.config, this.pool, user);
-    if (suspended) throw suspended;
+    if (!suspended) return;
+    if (checks.refused) await recordRefusedSignIn(this.pool, user.id, checks.refused);
+    throw suspended;
   }
 }

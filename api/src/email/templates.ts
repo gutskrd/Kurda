@@ -24,6 +24,8 @@ export const EMAIL_TEMPLATES = [
   'new-sign-in',
   'sign-in-attempts',
   'security-alert',
+  'account-suspended',
+  'account-closed',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -218,6 +220,31 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
       text: 'Silav {username},\n\nKesekî ji bo hesabê te yê Hevalo çend şîfreyên şaş ceribandine, ji ber vê yekê me ji bo demekê têketinên ji amûrên nû rawestandin ({time}). Amûrên ku tu jixwe bi kar tînî bandor nabin.\n\nHeke ev tu bûyî, hinekî bisekine an şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre).\n\nHeke ne tu bûyî, şîfreya te nehatiye guhertin, lê hilbijartina şîfreyeke nû û yekta baş e.\n\n— Tîma Hevalo',
     },
   },
+  /*
+   * The statement of reasons for a suspension or a ban, emailed because a locked-out person cannot open the inbox:
+   * what the moderator wrote, the rule, until when, what happens to what they shared, how it came about, and how to
+   * ask for a review. `content` and `review` arrive in the reader's language (moderation/ban-email.ts).
+   */
+  'account-suspended': {
+    en: {
+      subject: 'Your Hevalo account is suspended',
+      text: 'Hello {username},\n\nYour Hevalo account is suspended until {until}. {statement}\n\nThe rule: {rule}.\n\n{content}\n\n{review}\n\nThink we got it wrong? Within six months you can ask a person to look again. Sign in to read why and ask for a review: {link}\n\nYou can also ask for a copy of your data, or for your account to be deleted, from there.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Hesabê te yê Hevalo hatiye rawestandin',
+      text: 'Silav {username},\n\nHesabê te yê Hevalo heta {until} hatiye rawestandin. {statement}\n\nRêzik: {rule}.\n\n{content}\n\n{review}\n\nTu difikirî ku me şaşî kiriye? Di nav şeş mehan de tu dikarî bixwazî ku kesek dîsa lê binêre. Têkeve da ku sedemê bixwînî û daxwaza nirxandinê bikî: {link}\n\nJi wir tu dikarî kopiyeke daneyên xwe an jêbirina hesabê xwe jî bixwazî.\n\n— Tîma Hevalo',
+    },
+  },
+  'account-closed': {
+    en: {
+      subject: 'Your Hevalo account has been closed',
+      text: 'Hello {username},\n\nYour Hevalo account has been closed, and you can no longer use it. {statement}\n\nThe rule: {rule}.\n\n{content}\n\n{review}\n\nThink we got it wrong? Within six months you can ask a person to look again. Sign in to read why and ask for a review: {link}\n\nYou can also ask for a copy of your data, or for your account to be deleted, from there.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Hesabê te yê Hevalo hatiye girtin',
+      text: 'Silav {username},\n\nHesabê te yê Hevalo hatiye girtin, û tu êdî nikarî wî bi kar bînî. {statement}\n\nRêzik: {rule}.\n\n{content}\n\n{review}\n\nTu difikirî ku me şaşî kiriye? Di nav şeş mehan de tu dikarî bixwazî ku kesek dîsa lê binêre. Têkeve da ku sedemê bixwînî û daxwaza nirxandinê bikî: {link}\n\nJi wir tu dikarî kopiyeke daneyên xwe an jêbirina hesabê xwe jî bixwazî.\n\n— Tîma Hevalo',
+    },
+  },
   'deletion-notice': {
     en: {
       subject: 'Your account is scheduled for deletion',
@@ -258,6 +285,9 @@ const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<Ema
   'new-sign-in': { picture: 'device' },
   'sign-in-attempts': { picture: 'shield' },
   'security-alert': { picture: 'bell', button: { en: 'Open the security log', ku: 'Tomara ewlehiyê veke' } },
+  // a decision about the account is something weighed, like a copyright decision
+  'account-suspended': { picture: 'scales', button: { en: 'Sign in to Hevalo', ku: 'Têkeve Hevalo' } },
+  'account-closed': { picture: 'scales', button: { en: 'Sign in to Hevalo', ku: 'Têkeve Hevalo' } },
 };
 
 /** The footer's two lines: where to write, and the link again for a button that will not press. */
