@@ -214,6 +214,59 @@
 .playbook h2 { margin-top: 0; }
 .playbook .section-text + .section-text { margin-top: 8px; }
 
+/* ---- Picture checks ------------------------------------------------------------------- */
+/* Tiles of one width that fill the row: three beside the sidebar at 1280 px, one on a phone. */
+.pcheck-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 272px), 1fr)); }
+.pcheck-grid > li { display: flex; min-width: 0; }
+.card.pcheck-tile { display: flex; flex-direction: column; width: 100%; margin: 0; padding: 0; overflow: hidden; }
+.pcheck-tile:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 3px; border-radius: var(--radius); }
+.pcheck-tile .media-frame { border-radius: 0; }
+/* The whole picture in the frame, never cropped: what is cut off is not seen before deciding. */
+.pcheck-frame img { position: absolute; inset: 0; }
+/* Hidden is a quiet hatch, not a blurred copy: nothing of the picture is on this device until it is shown. */
+.pcheck-frame:not(.is-shown) {
+  background-color: var(--control);
+  background-image: repeating-linear-gradient(135deg, transparent 0 11px, rgba(255, 255, 255, 0.022) 11px 22px);
+}
+.pcheck-hidden { display: grid; justify-items: center; gap: 10px; padding: 16px; text-align: center; }
+.pcheck-hidden-icon { color: var(--text-dim); }
+.pcheck-hidden-warn { font-size: 12.5px; font-weight: 600; color: var(--warn); }
+.pcheck-hidden-hint { font-size: 12.5px; color: var(--text-dim); }
+.pcheck-hidden-error { font-size: 12.5px; color: var(--bad); max-width: 34ch; }
+.pcheck-hide {
+  position: absolute; top: 8px; inset-inline-end: 8px;
+  min-height: 32px; padding: 4px 10px; font-size: 13px; border-radius: 999px;
+}
+.pcheck-body { display: flex; flex-direction: column; gap: 8px; flex: 1 1 auto; padding: 14px 16px 16px; min-width: 0; }
+.pcheck-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; }
+.pcheck-title { margin: 0; font-size: 15px; font-weight: 650; }
+/* What the check found: one neutral chip per finding, the surest set a shade stronger rather than in a colour. */
+.pcheck-chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.pcheck-chip {
+  padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 550; line-height: 1.5;
+  background: var(--control); border: 1px solid var(--hairline); color: var(--text-2);
+}
+.pcheck-chip.is-certain { color: var(--text); border-color: color-mix(in srgb, var(--text) 30%, transparent); }
+.pcheck-line { margin: 0; font-size: 13px; }
+.pcheck-owner { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.pcheck-context { margin: 0; padding: 8px 12px; border-radius: var(--radius-xs); background: var(--control); color: var(--text-2); font-size: 13px; overflow-wrap: anywhere; }
+.pcheck-note {
+  margin: 0; padding: 8px 12px; display: grid; gap: 2px; border-radius: var(--radius-xs);
+  background: var(--control); border-inline-start: 3px solid var(--info);
+  color: var(--text); font-size: 13.5px; white-space: pre-wrap; overflow-wrap: anywhere;
+}
+.pcheck-note-label { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.pcheck-facts { margin: 0; display: flex; flex-wrap: wrap; gap: 2px 0; color: var(--text-dim); font-size: 13px; }
+.pcheck-facts > span:not(:last-child)::after { content: '·'; margin: 0 8px; }
+.pcheck-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; padding-top: 6px; }
+.pcheck-actions > * { flex: 1 1 auto; }
+@media (pointer: coarse), (max-width: 560px) { .pcheck-actions > * { min-height: var(--target); } }
+.pcheck-more { border-top: 0; }
+.pcheck-tile.is-skeleton .media-frame { height: auto; }
+.pcheck-tile.is-skeleton .skeleton.is-short { width: 60%; }
+.appeal-picture { max-width: 360px; }
+.appeal-picture .drawer-sub { margin-top: 0; }
+
 /* ---- A person's page ------------------------------------------------------------------ */
 
 .user-tabs { position: sticky; top: 0; z-index: 5; padding: 6px 0; margin-bottom: 10px; background: linear-gradient(var(--bg-2), transparent); }

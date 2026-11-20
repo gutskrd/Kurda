@@ -6,6 +6,7 @@ import { useSession } from './session';
 import { EmptyState } from './ui';
 import { Shell } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
+import { PictureChecks } from './pages/PictureChecks';
 import { Appeals } from './pages/Appeals';
 import { BanApprovals } from './pages/BanApprovals';
 import { Feedback } from './pages/Feedback';
@@ -48,6 +49,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   users: () => <Users />,
   email: () => <Email />,
   moderation: () => <Moderation />,
+  'picture-checks': () => <PictureChecks />,
   appeals: () => <Appeals />,
   'ban-approvals': () => <BanApprovals />,
   feedback: () => <Feedback />,

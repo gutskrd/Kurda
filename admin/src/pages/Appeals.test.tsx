@@ -147,6 +147,44 @@ describe('appeals', () => {
     expect(await within(drawer).findByRole('alert')).toHaveTextContent('Another admin has to review your own decision.');
   });
 
+  it('shows the removed picture of a picture appeal only when asked, through its short-lived link', async () => {
+    const user = userEvent.setup();
+    const { calls } = show(
+      '#/appeals',
+      <Appeals />,
+      on('GET', /^\/admin\/appeals/, json({ appeals: [{ ...appeal(), picture: { caseId: 'pc-7' } }, appeal({ id: 'ap-2', picture: null } as Partial<AdminAppealItem>)] })),
+      on('POST', '/admin/pictures/pc-7/view', json({ url: 'https://media.test/pc-7.webp?sig=1', expiresAt: new Date(Date.now() + 300_000).toISOString() })),
+    );
+    expect(await screen.findByText('The picture that was removed')).toBeInTheDocument();
+    // One appeal is about a picture, the other is not; nothing is fetched yet.
+    expect(screen.getAllByRole('button', { name: 'Show picture' })).toHaveLength(1);
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(posts(calls, '/admin/pictures/pc-7/view')).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: 'Show picture' }));
+    expect(await screen.findByRole('img', { name: 'The removed picture by @baran' })).toHaveAttribute('src', 'https://media.test/pc-7.webp?sig=1');
+    expect(posts(calls, '/admin/pictures/pc-7/view')).toHaveLength(1);
+    await user.click(screen.getByRole('button', { name: 'Hide' }));
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+  });
+
+  it('asks before showing a picture removed under the child-safety rule', async () => {
+    const user = userEvent.setup();
+    const { calls } = show(
+      '#/appeals',
+      <Appeals />,
+      on(
+        'GET',
+        /^\/admin\/appeals/,
+        json({ appeals: [{ ...appeal({ sanction: sanction({ id: 's-1', kind: 'content_removal', policy: 'child_safety' }) }), picture: { caseId: 'pc-7' } }] }),
+      ),
+      on('POST', '/admin/pictures/pc-7/view', json({ url: 'https://media.test/pc-7.webp?sig=1', expiresAt: new Date(Date.now() + 300_000).toISOString() })),
+    );
+    await user.click(await screen.findByRole('button', { name: 'Show picture' }));
+    const ask = await screen.findByRole('alertdialog', { name: 'Show this picture?' });
+    await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
+    expect(posts(calls, '/admin/pictures/pc-7/view')).toHaveLength(0);
+  });
+
   it('offers no "change it" for a report’s appeal, which has no sanction', async () => {
     const user = userEvent.setup();
     show('#/appeals', <Appeals />, on('GET', /^\/admin\/appeals/, json({ appeals: [appeal({ sanctionId: null, sanction: null, caseId: CASE_ID })] })));

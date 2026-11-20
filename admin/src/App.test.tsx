@@ -61,12 +61,13 @@ describe('the admin’s navigation', () => {
       session(['moderator'], ['users.view', 'users.moderate', 'moderation.act']),
       me('rojda'),
       on('GET', '/admin/moderation/summary', json(SUMMARY)),
+      on('GET', '/admin/pictures?view=waiting', json({ items: [], nextCursor: null, counts: { waiting: 4, asked: 1, reported: 0 } })),
       on('GET', '/admin/moderation/sla', json({ medianSeconds: 5400, resolved: 12 })),
       on('GET', '/admin/feedback/summary', json({ total: { count: 0, averageStars: null, distribution: [0, 0, 0, 0, 0] }, last30Days: { count: 3, averageStars: 4.3, distribution: [0, 0, 1, 0, 2] }, daily: [], byStatus: { new: 3, read: 0, archived: 0 }, byCategory: {} })),
     );
     await openAt('');
     await waitFor(() => expect(location.hash).toBe('#/dashboard'));
-    expect(sidebarLinks()).toEqual(['Dashboard', 'Users', 'Queue', 'Appeals', 'Ban approvals', 'Automated flags', 'Feedback', 'Playbook', 'My security']);
+    expect(sidebarLinks()).toEqual(['Dashboard', 'Users', 'Queue', 'Picture checks', 'Appeals', 'Ban approvals', 'Automated flags', 'Feedback', 'Playbook', 'My security']);
     const nav = screen.getAllByRole('navigation', { name: 'Admin pages' })[0]!;
     expect(within(nav).getByRole('heading', { name: 'Moderation' })).toBeInTheDocument();
     expect(within(nav).queryByRole('heading', { name: 'Economy' })).not.toBeInTheDocument();
@@ -75,6 +76,9 @@ describe('the admin’s navigation', () => {
     // The queue's size is beside its link, and said to be urgent.
     await waitFor(() => expect(within(nav).getByRole('link', { name: /queue/i })).toHaveTextContent('7'));
     expect(within(nav).getByRole('link', { name: /queue/i })).toHaveTextContent('7 open, urgent');
+    // And the pictures waiting for a person beside theirs, not urgent while none is a child-safety hit.
+    await waitFor(() => expect(within(nav).getByRole('link', { name: /picture checks/i })).toHaveTextContent('4 waiting'));
+    expect(within(nav).getByRole('link', { name: /picture checks/i })).not.toHaveTextContent('urgent');
 
     // And the dashboard has the queue by priority, with links into it.
     const urgent = await screen.findByRole('link', { name: /^urgent/i });

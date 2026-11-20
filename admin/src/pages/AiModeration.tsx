@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api';
-import { Badge, Button, PageHeader, Section, Table, Time, UserLink, errorLine, useLoad, useToast, type Column, type Tone } from '../ui';
+import { PICTURES_PAGE, SURFACE_NAME } from '../pictureChecks';
+import { Badge, Button, Icon, PageHeader, Section, Table, Time, UserLink, errorLine, useLoad, useToast, type Column, type Tone } from '../ui';
 
 interface TextFlag {
   id: string;
@@ -16,6 +17,8 @@ interface TextFlag {
 }
 interface ImageFlag {
   id: string;
+  /** the moderation case holding the picture, where it can be shown; absent from older rows */
+  caseId?: string | null;
   mediaKey: string;
   surface: string;
   action: string;
@@ -87,8 +90,29 @@ export function AiModeration(): React.JSX.Element {
   ];
 
   const imageColumns: Column<ImageFlag>[] = [
-    { key: 'media', header: 'Media', card: 'title', cell: (f) => <code className="strong-code">{short(f.mediaKey)}</code> },
-    { key: 'surface', header: 'Surface', cell: (f) => f.surface },
+    {
+      key: 'surface',
+      header: 'Surface',
+      card: 'title',
+      cell: (f) => <strong>{Object.hasOwn(SURFACE_NAME, f.surface) ? SURFACE_NAME[f.surface as keyof typeof SURFACE_NAME] : f.surface}</strong>,
+    },
+    {
+      key: 'picture',
+      header: 'Picture',
+      // A key says nothing about what is in the picture: the case, or the picture checks, show it before anyone decides.
+      cell: (f) =>
+        f.caseId ? (
+          <a className="table-link" href={`#/moderation/${encodeURIComponent(f.caseId)}`}>
+            See it on its case
+            <Icon name="chevronRight" size={16} />
+          </a>
+        ) : (
+          <a className="table-link" href={`#/${PICTURES_PAGE}`}>
+            See it in Picture checks
+            <Icon name="chevronRight" size={16} />
+          </a>
+        ),
+    },
     {
       key: 'action',
       header: 'Action',

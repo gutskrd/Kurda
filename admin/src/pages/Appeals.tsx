@@ -25,7 +25,11 @@ import {
   type Tone,
 } from '../ui';
 import { SanctionLine } from './CasePeople';
+import { PictureReveal } from './PictureReveal';
 import { SanctionFields, newSanctionDraft, sanctionDraftProblems, type SanctionDraft } from './SanctionParts';
+
+/** An appeal about a removed picture names its case, so the picture can be shown here before anyone answers. */
+type AppealItem = AdminAppealItem & { picture?: { caseId: string; sensitive?: boolean } | null };
 
 type Filter = 'open' | 'upheld' | 'overturned' | 'modified' | 'all';
 const FILTERS: ReadonlyArray<{ key: Filter; label: string }> = [
@@ -54,8 +58,8 @@ export function Appeals(): React.JSX.Element {
   const route = useRoute();
   const raw = route.query.get('status');
   const filter: Filter = FILTERS.some((f) => f.key === raw) ? (raw as Filter) : 'open';
-  const list = useLoad(() => api<{ appeals: AdminAppealItem[] }>(`/admin/appeals?status=${filter}`).then((r) => r.appeals), [filter]);
-  const [answering, setAnswering] = useState<AdminAppealItem | null>(null);
+  const list = useLoad(() => api<{ appeals: AppealItem[] }>(`/admin/appeals?status=${filter}`).then((r) => r.appeals), [filter]);
+  const [answering, setAnswering] = useState<AppealItem | null>(null);
   const { me } = useAuth();
 
   return (
@@ -107,9 +111,11 @@ export function Appeals(): React.JSX.Element {
   );
 }
 
-function AppealCard({ appeal: a, mine, onAnswer }: { appeal: AdminAppealItem; mine: boolean; onAnswer: () => void }): React.JSX.Element {
+function AppealCard({ appeal: a, mine, onAnswer }: { appeal: AppealItem; mine: boolean; onAnswer: () => void }): React.JSX.Element {
   const status = STATUS[a.status];
   const caseId = a.sanction?.caseId ?? a.caseId;
+  // A removal under the child-safety rule asks before showing, as its case does.
+  const sensitive = a.picture?.sensitive === true || a.sanction?.policy === 'child_safety';
   return (
     <li className="card section appeal">
       <div className="appeal-head">
@@ -125,6 +131,12 @@ function AppealCard({ appeal: a, mine, onAnswer }: { appeal: AdminAppealItem; mi
         </ul>
       ) : (
         <p className="section-text">About a report they made that was closed as not breaking the rules.</p>
+      )}
+      {a.picture && (
+        <div className="appeal-picture">
+          <h3 className="drawer-sub">The picture that was removed</h3>
+          <PictureReveal caseId={a.picture.caseId} sensitive={sensitive} alt={`The removed picture${a.user ? ` by @${a.user.username}` : ''}`} />
+        </div>
       )}
       <blockquote className="appeal-text" dir="auto">
         {a.text}
@@ -176,7 +188,7 @@ function AnswerDrawer({
   onClose,
   onDone,
 }: {
-  appeal: AdminAppealItem;
+  appeal: AppealItem;
   mine: boolean;
   onClose: () => void;
   onDone: () => void;
