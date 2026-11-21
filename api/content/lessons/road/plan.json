@@ -1157,7 +1157,7 @@
       "cefr": "A2",
       "titleKu": "Roj û dem",
       "titleEn": "Days and time",
-      "story": "Lorîn has invited everyone to Kobanî, and the trip is on Saturday, so the whole village plans the week around it. Dapîr’s calendar by the stove fills up with days; the months and birthdays are argued over (Hamo does not know his own birthday; his mother does, but she is in Kobanî). The clock becomes the week’s great enemy. Hamo’s day runs on tea: up with the rooster, tea, the orchard, tea, a nap of “five minutes”, tea, and he is late for everything, cheerfully. Baran explains the school week (his teacher says reading comes before football, always). Hamo gives his solemn word to be on time for the Saturday bus. On Saturday his alarm rings at eight o’clock, in the evening, and everyone reaches the square just in time to see the bus disappear round the bend.",
+      "story": "A week in Sêvan, by the calendar and the clock. Dapîr’s calendar by the stove fills up with days; the months and birthdays are counted (Hamo does not know his own birthday; his mother does, but she is in Kobanî). Hamo’s day runs on tea: up with the rooster, tea, the orchard, tea, a nap of “five minutes”, tea, and he is late for everything, cheerfully. Baran explains the school week (his teacher says reading comes before football, always). Hamo gives his solemn word to be on time for the Saturday bus to town, and on Saturday everyone reaches the square just in time to see it disappear round the bend; the next one is in the evening, and there is always time for tea.",
       "recorder": "hamo",
       "skills": [
         {
@@ -1173,7 +1173,7 @@
               "titleKu": "Şemî û Yekşem",
               "titleEn": "Saturday and Sunday",
               "focus": "meet",
-              "beat": "Dapîr’s calendar hangs by the stove. Hamo explains the week to you, starting, as every Kurdish week does, on Saturday, which happens to be the day of the trip to Kobanî. “Kengî em diçin?” asks Hêvî, every five minutes. Saturday, says Hamo. And Sunday? Sunday is a holiday, he says; so is every day, if you ask him.",
+              "beat": "Dapîr’s calendar hangs by the stove. Hamo explains the week to you, starting, as every Kurdish week does, on Saturday, and this Saturday there is a day out in Kobanî. “Kengî em diçin?” asks Hêvî, every five minutes. Saturday, says Hamo. And Sunday? Sunday is a holiday, he says; so is every day, if you ask him.",
               "voice": "hamo",
               "new": [
                 {"ku": "Şemî", "en": "Saturday", "pos": "noun", "gender": "f", "forms": ["şemî", "şemiyê"]},
@@ -1207,7 +1207,7 @@
               "titleKu": "Roja Çarşemê",
               "titleEn": "On Wednesday",
               "focus": "talk",
-              "beat": "Hamo plans the rest of the week out loud: on Wednesday he bakes bread with Dapîr; on Thursday he writes to his mother to say you are all coming, which takes all day because he keeps crossing out the jokes. Then he asks you how long you will stay in Sêvan. As long as there are apples, says Hevalo’s face.",
+              "beat": "Hamo plans the rest of the week out loud: on Wednesday he bakes bread with Dapîr; on Thursday he writes to his mother in Kobanî, which takes all day because he keeps crossing out the jokes. Then he asks you how long you will stay in Sêvan: a week or two, you say. And Hevalo? As long as there are apples, says Hamo.",
               "voice": "hamo",
               "new": [
                 {"ku": "Çarşem", "en": "Wednesday", "pos": "noun", "gender": "f", "forms": ["çarşem", "çarşemê"]},
@@ -1275,7 +1275,7 @@
               "titleKu": "Pîroz be!",
               "titleEn": "Happy birthday!",
               "focus": "talk",
-              "beat": "Hamo announces that since nobody knows his birthday he will have one today, and again tomorrow, to be safe. “Bîra min nayê,” he admits, when you ask what year he was born. “Xem neke!” he tells you: a man is as old as his moustache, and his moustache is young.",
+              "beat": "It is your birthday, and Hamo is the first to say “Rojbûna te pîroz be!” His own birthday? “Bîra min nayê,” he admits: his mother knows, and she is in Kobanî. And your present? “Xem neke!” he says: he remembers. Meanwhile Hevalo is hungry again, and Dapîr gives you an extra spoonful of honey.",
               "voice": "hamo",
               "new": [
                 {"ku": "Pîroz be!", "en": "Congratulations! (Rojbûna te pîroz be! Happy birthday!)", "pos": "phrase", "forms": ["pîroz", "be"]},
@@ -1290,7 +1290,7 @@
               "titleKu": "Sal û meh",
               "titleEn": "Years and months",
               "focus": "review",
-              "beat": "Hamo and the children count the days to Saturday and the months to Newroz. Baran wants to know why there is no month for apples; Hevalo agrees. Hamo promises, once again, to be on time on Saturday, and Nazê writes it down.",
+              "beat": "Hamo and the children count the days to Saturday and the months to Newroz, and say whose birthday falls in which month. Baran wants to know why there is no month for apples; Hevalo agrees.",
               "voice": "hamo",
               "new": []
             }
@@ -1358,7 +1358,7 @@
               "titleKu": "Roja Hamo",
               "titleEn": "Hamo’s day",
               "focus": "review",
-              "beat": "Hamo’s whole day, hour by hour, from tea at seven to tea at nine at night, with a short nap in the middle that is not short. Then he sets his alarm for the Saturday bus: eight o’clock. But which eight?",
+              "beat": "Hamo’s whole day, hour by hour, from tea at seven to tea at nine at night, with a short nap in the middle that is not short, and lunch, which is at noon for everyone else.",
               "voice": "hamo",
               "new": []
             }
@@ -1411,7 +1411,7 @@
               "titleKu": "Soza min",
               "titleEn": "My promise",
               "focus": "talk",
-              "beat": "Everyone plans the trip: the bus leaves the square at eight sharp on Saturday, with no time for tea. Hamo gives his solemn word: “Soza min soz e!” If the bus will not stop for him, he says, he will run after it. Everybody looks at Nazê; Nazê just laughs.",
+              "beat": "The bus to town leaves the square at eight sharp on Saturday, with no time for tea. Hamo gives his solemn word: “Soza min soz e!” If the bus will not stop for him, he says, he will run after it, with Hevalo. Get up early, you tell him; he is ready, he says.",
               "voice": "hamo",
               "new": [
                 {"ku": "soz", "en": "promise", "pos": "noun", "gender": "f", "forms": ["soz", "sozên", "sozan", "sozek", "soza", "sozê", "sozeke"]},
@@ -1426,7 +1426,7 @@
               "titleKu": "Otobûs diçe!",
               "titleEn": "The bus is leaving!",
               "focus": "review",
-              "beat": "Saturday morning, and Hamo’s alarm does not ring: it is set for eight in the evening. Everyone runs to the square; Hevalo races after the bus, but it is gone round the bend, on its way to Kobanî without them. Hamo phones Lorîn, a little sheepishly. How will they get to Kobanî now?",
+              "beat": "Saturday morning, and you wake Hamo at half past eight: the bus leaves at eight. Everyone runs to the square; Hevalo races after the bus, but it is gone round the bend. The next one is in the evening, and Hamo knows what to do in between: drink tea.",
               "voice": "hamo",
               "new": []
             }
@@ -1439,7 +1439,7 @@
       "cefr": "A2",
       "titleKu": "Bajar",
       "titleEn": "The city",
-      "story": "With the bus gone, Ferhad drives everyone down to the main road on his tractor, and a minibus takes you the rest of the way to Kobanî. The town is Hamo’s world: the streets of his childhood, the crowded market, the bakery where he bought bread as a boy of seven, and Miştenûr hill above the roofs. He is so happy to be home that he gets lost twice in his own town. At his parents’ house his mother Edûl will not let anyone stand up from the table (“Bixwe! Vexwe! Rûne!”), Lorîn’s children call him Xalo and climb all over him, and his father Ibrahîm takes the old shepherd’s flute down from the wall. Lorîn brings out an old book: the other half of the photo, and the promise of their childhood, that one day their father would play for them again by a Newroz fire. This Newroz, Ibrahîm says, he will come to Sêvan and keep it. Orders fill the house, and so do divê and dikarim.",
+      "story": "A town, and being a guest and a host. A minibus takes you to Kobanî, where Hamo grew up: the town has grown since he was a boy and he gets lost in it, but there are the crowded market, the bakery where he bought bread as a boy of seven, the old bookshop, and Miştenûr hill above the roofs. At the table the orders never stop (“Werin hundir! Rûnin! Bixwe! Vexwe! Neke! Neçe!”), his sister’s children call their uncle Xalo and climb all over him, and an old photo shows who is who: this is my father, this is my mother, these are my brother and my two sisters. Then snow is forecast, and you must go back early, before the road closes. Orders fill the house, and so do divê and dikarim.",
       "recorder": "hamo",
       "skills": [
         {
@@ -1455,7 +1455,7 @@
               "titleKu": "Bi minîbûsê",
               "titleEn": "By minibus",
               "focus": "meet",
-              "beat": "With the bus gone, Ferhad’s tractor rattles everyone down to the main road, Hevalo in the trailer among the apple boxes. There a minibus driver squeezes you all in and sells Hamo tickets for everyone, Hevalo included. Kobanî is far; the driver is fast. “Hêdî, hêdî!” says Hamo, holding his moustache with both hands.",
+              "beat": "Ferhad’s tractor rattles everyone down to the main road, Hevalo in the trailer among the apple boxes. There a minibus driver squeezes you all in and sells Hamo tickets for everyone, Hevalo included. Kobanî is far; the driver is fast. “Hêdî, hêdî!” says Hamo, holding his moustache with both hands.",
               "voice": "hamo",
               "new": [
                 {"ku": "minîbûs", "en": "minibus", "pos": "noun", "gender": "f", "forms": ["minîbûs", "minîbûsên", "minîbûsan", "minîbûsek", "minîbûsa", "minîbûsê", "minîbûseke"]},
@@ -1489,7 +1489,7 @@
               "titleKu": "Kobanî!",
               "titleEn": "Kobanî!",
               "focus": "talk",
-              "beat": "Kobanî at last: the crowded market, new shops where the old ones were, and Miştenûr hill high above the roofs. Lorîn lives upstairs, at the top of the family house; Hamo stops on every stair to “admire the view”, and you ask him about everything you see. Lorîn calls down from upstairs, Hamo calls back up from below, and it takes some time.",
+              "beat": "Kobanî at last: the crowded market, new shops where the old ones were, and Miştenûr hill high above the roofs. You ask Hamo about everything you see, while Hevalo climbs onto a flat roof for a better view, until Hamo calls him down.",
               "voice": "hamo",
               "new": [
                 {"ku": "qelebalix", "en": "crowded; a crowd", "pos": "adj", "forms": ["qelebalix"]},
@@ -1504,7 +1504,7 @@
               "titleKu": "Mala bavê min",
               "titleEn": "My father’s house",
               "focus": "review",
-              "beat": "The family house at the corner, the old fig tree still in the yard. Hamo shows you everything from the gate: the window he climbed out of, the step he fell down, the street where he got lost today. Edûl opens the door, Lorîn comes down the stairs, and brother and sister look at each other: she knows why he has come.",
+              "beat": "The house where Hamo grew up, his father’s house at the corner, with the old fig tree still in the yard. Hamo shows you everything from the gate: the window he climbed out of, the step he fell down, the street where he got lost today.",
               "voice": "hamo",
               "new": []
             }
@@ -1523,7 +1523,7 @@
               "titleKu": "Werin hundir!",
               "titleEn": "Come in!",
               "focus": "meet",
-              "beat": "Edûl’s welcome fills the street: “Werin hundir! Rûnin!” Lorîn’s children pour out of the house: Hamo is their uncle, their mother’s brother, and all four of them climb on him at once. He is told to sit, get up, go out and wash his hands and sit down again, by his mother, exactly as when he was a boy.",
+              "beat": "“Werin hundir! Rûnin!” Hamo welcomes you in, and his sister’s children pour out of the house: Hamo is their uncle, their mother’s brother, so he is Xalo to all four of them, and all four climb on him at once.",
               "voice": "hamo",
               "new": [
                 {"ku": "were / werin", "en": "come!", "pos": "verb", "forms": ["were", "werin"]},
@@ -1540,7 +1540,7 @@
               "titleKu": "Bixwe, vexwe!",
               "titleEn": "Eat, drink!",
               "focus": "build",
-              "beat": "At Edûl’s table the orders never stop: “Bixwe! Vexwe! Bide min! Bibêje!” Nobody may stand up from it. Hamo’s uncle and aunt come round from next door with more food: “Mala me mala we ye,” says his aunt. Hamo eats everything he is given and is given everything again.",
+              "beat": "At the table the orders never stop: “Bixwe! Vexwe! Bide min! Bibêje!” Nobody may stand up from it. Hamo’s uncle and aunt come round from next door with more food, and every guest hears the same: “Mala me mala we ye.” Hamo eats everything he is given and is given everything again.",
               "voice": "hamo",
               "new": [
                 {"ku": "bide / bidin", "en": "give!", "pos": "verb", "forms": ["bide", "bidin"]},
@@ -1557,7 +1557,7 @@
               "titleKu": "Neke!",
               "titleEn": "Don’t!",
               "focus": "talk",
-              "beat": "Hamo wants four sugars in his tea; his mother says “Neke!” He wants to walk to the old market alone; she says “Neçe!”: he gets lost, remember? He says he is afraid of nothing in Kobanî except his mother. Then he whispers a question to you: the other half of the photo, is it with Lorîn? You go and ask her for him.",
+              "beat": "You are Hamo’s guest, and a little afraid of Şêro, his dog: “Netirse!” says Hamo, Şêro will not hurt you. You want four sugars in your tea: “Neke!” You want to go to the market after tea: “Neçe!”, dinner is ready. And when you say you are full: “Bixwe!”",
               "voice": "hamo",
               "new": [
                 {"ku": "neke / nekin", "en": "don’t!", "pos": "verb", "forms": ["neke", "nekin"]},
@@ -1571,7 +1571,7 @@
               "titleKu": "Wêneyê kevn",
               "titleEn": "The old photo",
               "focus": "review",
-              "beat": "After dinner Lorîn brings out an old book, and in it, kept safe for forty years, is the other half of the photo: their father on Miştenûr at Newroz. On the back, in two children’s handwriting, is a promise: one day he will play for us again by a Newroz fire. Ibrahîm gets up and takes his old shepherd’s flute down from the wall.",
+              "beat": "After dinner Hamo brings out an old photo, forty years old: his father and mother, and four children in a row. He shows you who is who: this is my father, this is my mother, this is me, this is my brother, and these are my two sisters. You may hold it, gently.",
               "voice": "hamo",
               "new": []
             }
@@ -1607,7 +1607,7 @@
               "titleKu": "Ez dikarim alîkariyê bikim",
               "titleEn": "I can help",
               "focus": "build",
-              "beat": "Edûl asks who can help in the kitchen. In her house, she says, women and men both help, and every man in the room suddenly has to rest. Hamo asks his mother’s permission to take you up Miştenûr instead: maybe, she says, after the washing-up.",
+              "beat": "Who washes the dishes? In Hamo’s house, he says, women and men both help, and every man in the room suddenly has to rest. You ask whether you may go up Miştenûr instead: maybe, says Hamo, after you help.",
               "voice": "hamo",
               "new": [
                 {"ku": "alîkarî", "en": "help", "pos": "noun", "gender": "f", "forms": ["alîkarî", "alîkariyên", "alîkariyan", "alîkariyek", "alîkariya", "alîkariyê", "alîkariyeke"]},
@@ -1623,7 +1623,7 @@
               "titleKu": "Derî veke!",
               "titleEn": "Open the door!",
               "focus": "talk",
-              "beat": "Up the hill to the old bookshop where Hamo bought his first book of stories. The bookseller is just closing; he opens the door again for Ibrahîm’s boy, and laughs when Hamo asks for a book of proverbs for his father: Ibrahîm knows every proverb there is, and the ones in this book came from him.",
+              "beat": "Up the hill to the old bookshop where Hamo bought his first books of stories. The bookseller is just closing, but he opens the door again for five minutes, and Hamo asks for a book of proverbs for his father, who knows so many proverbs that he is a book himself.",
               "voice": "hamo",
               "new": [
                 {"ku": "çîrok", "en": "story, tale", "pos": "noun", "gender": "f", "forms": ["çîrok", "çîrokên", "çîrokan", "çîrokek", "çîroka", "çîrokê", "çîrokeke"]},
@@ -1638,7 +1638,7 @@
               "titleKu": "Pirtûka bavê min",
               "titleEn": "My father’s book",
               "focus": "review",
-              "beat": "Hamo gives his father the book of proverbs, and Ibrahîm laughs: half of them are his. He reads them aloud, correcting the book as he goes, and everyone must say each one after him. Edûl says they must stop now, it is late; Ibrahîm says one more, and reads ten.",
+              "beat": "Hamo gives his father the book of proverbs, and his father laughs: he knows half of them already. He reads them aloud, correcting the book as he goes, and everyone must say each one after him. It is late, says Hamo’s mother; one more, says his father, and reads ten.",
               "voice": "hamo",
               "new": []
             }
@@ -1657,7 +1657,7 @@
               "titleKu": "Bi trênê",
               "titleEn": "By train",
               "focus": "meet",
-              "beat": "Hamo goes out early for bread to the bakery of his boyhood, where the old baker remembers him as Ibrahîm’s boy who ate the crusts on the way home. Lorîn’s children argue about how you should all go back to Sêvan: by train, by plane, by taxi? Hevalo votes for going on foot, through every orchard on the way.",
+              "beat": "Hamo goes out early for bread to the bakery of his boyhood, where the old baker still remembers the boy who ate the crusts on the way home. The children argue about how you should all go back to Sêvan: by train, by plane, by taxi? Hevalo votes for going on foot, through every orchard on the way.",
               "voice": "hamo",
               "new": [
                 {"ku": "trên", "en": "train", "pos": "noun", "gender": "f", "forms": ["trên", "trênên", "trênan", "trênek", "trêna", "trênê", "trêneke"]},
@@ -1674,7 +1674,7 @@
               "titleKu": "Ya kê ye?",
               "titleEn": "Whose is it?",
               "focus": "build",
-              "beat": "Packing: a mountain of shoes, bags and parcels by the door. Hamo sorts it all out: this bag is mine, that one is yours, the biggest is Edûl’s food for the journey, and nothing at all belongs to Hevalo except the apples. In the street a man stops and stares: he knows Hamo, they were at school together, and they talk until Lorîn phones to ask where he is.",
+              "beat": "Packing: a mountain of shoes, bags and parcels by the door. Hamo sorts it all out: this bag is mine, that one is yours, and nothing at all belongs to Hevalo except the apples. In the street a man stops and stares: he knows Hamo, they were at school together, and they talk until Hamo’s mother phones to ask where he is, as she does every day.",
               "voice": "hamo",
               "new": [
                 {"ku": "çiqas", "en": "how much, how far", "pos": "question", "forms": ["çiqas"]},
@@ -1691,7 +1691,7 @@
               "titleKu": "Rê girtî ye?",
               "titleEn": "Is the road closed?",
               "focus": "talk",
-              "beat": "The last evening in Kobanî. Ibrahîm says he will come to Sêvan for Newroz and keep the old promise. Then the news on the radio: snow is coming, and the mountain road may be closed by morning. You must go back tomorrow, early, while it is still open. Hamo sets three alarms, and asks you to check all of them.",
+              "beat": "The last evening in Kobanî, and the news on the radio: snow is coming, and the mountain road may be closed by morning. You must go back tomorrow, early, while it is still open: by minibus, since there is no train and a taxi costs too much. Hamo sets three alarms, and asks you to check all of them.",
               "voice": "hamo",
               "new": [
                 {"ku": "vegerîn", "en": "to go back, to return", "pos": "verb", "forms": ["vegerîn", "vedigerim", "vedigerî", "vedigere", "vedigerin", "venagerim", "venagere", "vegerim", "vegerî", "vegere", "vegerin"]},
@@ -1706,7 +1706,7 @@
               "titleKu": "Bi xatirê te, Kobanî!",
               "titleEn": "Goodbye, Kobanî!",
               "focus": "review",
-              "beat": "Dawn, three alarms, and for once Hamo is on time. Edûl fills every bag with bread and cheese, the children shout goodbye from the window, Ibrahîm reminds his son of the promise, and the minibus climbs into the first snowflakes.",
+              "beat": "Dawn, three alarms, and for once Hamo is on time. His mother fills every bag with bread and cheese, the children shout goodbye from the window, and the minibus climbs into the first snowflakes.",
               "voice": "hamo",
               "new": []
             }
