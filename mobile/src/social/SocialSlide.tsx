@@ -251,7 +251,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                   >
                     {/* A group in its rounded square, as Messages draws it, so it is never mistaken for a person of
                        that name. */}
-                    <GroupAvatar name={g.name} id={g.id} size={34} photoUrl={g.photoUrl ?? null} />
+                    <GroupAvatar name={g.name} size={34} photoUrl={g.photoUrl ?? null} />
                     <View style={styles.rowMain}>
                       <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>{g.name}</Text>
                       <Text style={[styles.detail, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>

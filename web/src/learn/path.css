@@ -1,28 +1,23 @@
 /*
  * The lesson path (pages/CourseMap.tsx). Calm on purpose: soft colours, one line to follow, nothing counting down.
- * Each unit has its own tone (`lp-tone-*`, in @kurda/shared's UNIT_TONES order) for its heading, finished lessons and
- * walked line; gold is for what was earned and violet for where the learner is.
- *
- * Every tone has a light and a dark set cut from the app's hues: light colours with dark words on the dark page, deep
- * ones with white words on the light page (saffron keeps dark brown words). Banner text is 4.5:1 or better and every
- * filled stop 3:1 or better against the page.
+ * A unit's heading, finished lessons and walked line are in the page's ink (`lp-tone-*` names the unit's drawn stops,
+ * which keep their own colours), so the main button stays the one coloured thing. Banner text is 4.5:1 or better and
+ * every filled stop 3:1 or better against the page.
  */
 
-.lp-tone-meadow { --u-fill: #78d694; --u-lip: #459b61; --u-ink: #011c0a; --u-text: #92dfa7; }
-.lp-tone-river { --u-fill: #91c1ff; --u-lip: #5188cd; --u-ink: #05162c; --u-text: #a8ceff; }
-.lp-tone-clay { --u-fill: #ffa47a; --u-lip: #c16d45; --u-ink: #280d02; --u-text: #ffb798; }
-.lp-tone-dusk { --u-fill: #aeb8fe; --u-lip: #767ecd; --u-ink: #11132c; --u-text: #bec6ff; }
-.lp-tone-saffron { --u-fill: #eeb154; --u-lip: #b07a20; --u-ink: #221200; --u-text: #f5c076; }
-.lp-tone-pine { --u-fill: #57d4d4; --u-lip: #009a9a; --u-ink: #001b1b; --u-text: #65e1e1; }
-.lp-tone-rose { --u-fill: #fd9ac6; --u-lip: #bc668e; --u-ink: #260b18; --u-text: #ffafd1; }
-
-:root[data-theme='light'] .lp-tone-meadow { --u-fill: #058644; --u-lip: #006531; --u-ink: #ffffff; --u-text: #00783b; }
-:root[data-theme='light'] .lp-tone-river { --u-fill: #0073df; --u-lip: #0157ac; --u-ink: #ffffff; --u-text: #0161bd; }
-:root[data-theme='light'] .lp-tone-clay { --u-fill: #c45001; --u-lip: #973c00; --u-ink: #ffffff; --u-text: #a24102; }
-:root[data-theme='light'] .lp-tone-dusk { --u-fill: #6363eb; --u-lip: #4a47c0; --u-ink: #ffffff; --u-text: #504bd1; }
-:root[data-theme='light'] .lp-tone-saffron { --u-fill: #c37902; --u-lip: #8f5d04; --u-ink: #241600; --u-text: #885703; }
-:root[data-theme='light'] .lp-tone-pine { --u-fill: #008282; --u-lip: #006262; --u-ink: #ffffff; --u-text: #067272; }
-:root[data-theme='light'] .lp-tone-rose { --u-fill: #cd3688; --u-lip: #a51a6a; --u-ink: #ffffff; --u-text: #af0f6f; }
+/* Every unit wears the ink, as what is chosen or earned does everywhere; only the drawn stops keep their colours. */
+[class*='lp-tone-'] {
+  --u-fill: #f3f1fb;
+  --u-lip: #a9a6bb;
+  --u-ink: #14112e;
+  --u-text: #f3f1fb;
+}
+:root[data-theme='light'] [class*='lp-tone-'] {
+  --u-fill: #14112e;
+  --u-lip: #050410;
+  --u-ink: #ffffff;
+  --u-text: #14112e;
+}
 
 .lp {
   /* The grey of what is not open yet, and of the line still ahead. */

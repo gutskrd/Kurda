@@ -125,7 +125,7 @@ export function GroupOutside({
 
   return (
     <div className="gout">
-      <GroupAvatar id={group.id} name={group.name} photoUrl={group.photoUrl} size={88} />
+      <GroupAvatar name={group.name} photoUrl={group.photoUrl} size={88} />
       <h2 className="gout-name" dir="auto">
         {group.name}
       </h2>

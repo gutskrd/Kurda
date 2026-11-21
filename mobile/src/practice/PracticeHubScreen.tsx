@@ -10,7 +10,7 @@ import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import type { RootNavigation } from '../navigation/rootStack';
-import { REST, TONES } from '../coursemap/path';
+import { REST, UNIT_INK } from '../coursemap/path';
 import { haptic, refreshFelt } from '../feedback/haptics';
 import { micRefused } from '../recording/useMicRecorder';
 import { useI18n } from '../i18n/I18nContext';
@@ -294,7 +294,7 @@ function UnitPicker({
     <BottomSheet visible={visible} onClose={onClose} title={t('practice.hub.unit')}>
       <ScrollView contentContainerStyle={styles.picker}>
         {units.map((unit) => {
-          const tone = TONES[scheme][unit.tone];
+          const tone = UNIT_INK[scheme];
           const name = t('coursemap.path.unit', { n: formatNumber(unit.number, locale) });
           return (
             <PressableScale

@@ -28,7 +28,7 @@ export function CalmCard({
   children: ReactNode;
 }): React.JSX.Element {
   return (
-    <CalmFrame name={group.name} picture={(size) => <GroupAvatar name={group.name} id={group.id} size={size} photoUrl={group.photoUrl} />}>
+    <CalmFrame name={group.name} picture={(size) => <GroupAvatar name={group.name} size={size} photoUrl={group.photoUrl} />}>
       {children}
     </CalmFrame>
   );

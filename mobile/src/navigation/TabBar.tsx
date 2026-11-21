@@ -18,7 +18,7 @@ import { TAB_BAR_HEIGHT, TAB_BAR_SIDE, tabBarLift, useKeyboardShown } from './ta
 import { TABS, type TabName } from './tabs';
 import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useAuth } from '../auth/AuthContext';
-import { floating } from '../theme/floating';
+import { GlassFill, useGlassShape } from '../theme/LiquidGlass';
 
 /** The glyphs: big enough to hit and to read at a glance, with room under them for the tab's word. */
 const GLYPH = 24;
@@ -28,7 +28,7 @@ const AVATAR = 22;
 const PAD = 6;
 
 /**
- * The tab bar: four places in one solid rounded bar floating over the page's foot, each an icon with its word (screens
+ * The tab bar: four places in one rounded bar of glass floating over the page's foot (LiquidGlass.tsx), each an icon with its word (screens
  * leave room with `useTabBarInset`). The chosen tab has a solid glyph, a heavier word and a sliding capsule, so colour
  * is never the only sign. Only Messages (unread messages and requests, 1–9 then "9+") and Profile (a dot for a gift to
  * unwrap) badge, both said in words to a screen reader; tapping the current tab scrolls it to the top
@@ -47,6 +47,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
 
   const mirrored = dir.row === 'row-reverse';
   const typing = useKeyboardShown();
+  const glass = useGlassShape('raised');
 
   // Moving between tabs is a good moment to refresh the badges.
   useEffect(() => {
@@ -81,7 +82,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
 
   return (
     <View pointerEvents="box-none" style={[styles.dock, { bottom: tabBarLift(insets.bottom) }]}>
-      <View style={[styles.bar, floating.raised, { backgroundColor: colors.barFill, shadowColor: colors.softShadow }]}>
+      <View style={[styles.bar, ...glass]}>
+        <GlassFill />
         <View
           style={[styles.row, { flexDirection: dir.row }]}
           accessibilityRole="tablist"

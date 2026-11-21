@@ -221,7 +221,7 @@ export function GroupMembersScreen({
         ) : (
           <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false} refreshControl={pull}>
             <View style={styles.head}>
-              <GroupAvatar name={detail.name} id={detail.id} size={HEAD_AVATAR} photoUrl={detail.photoUrl} />
+              <GroupAvatar name={detail.name} size={HEAD_AVATAR} photoUrl={detail.photoUrl} />
               <Text style={[styles.title, dir.free, styles.centred, { color: colors.textPrimary }]} accessibilityRole="header">
                 {detail.name}
               </Text>

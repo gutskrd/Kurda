@@ -8,7 +8,7 @@ import { Icon } from './Icon';
 import { useTheme } from './ThemeProvider';
 import { radii, spacing, typography } from './tokens';
 import { pressedDim } from './motion';
-import { floating } from './floating';
+import { GlassFill, useGlassShape } from './LiquidGlass';
 
 /**
  * A search field: a magnifier, the text, and a clear button once there is text. The one field for every search
@@ -26,7 +26,7 @@ export const SearchField = forwardRef<TextInput, {
   autoFocus?: boolean;
   /** The most that can be typed, where the search has a limit. */
   maxLength?: number;
-  /** The search page's own field: rounded in the bar's fill and floating slightly off the page like the back button beside it. */
+  /** The search page's own field: a pill of glass floating off the page like the back button beside it. */
   floating?: boolean;
   /** Where the field sits (a margin), not how it looks. */
   style?: StyleProp<ViewStyle>;
@@ -36,6 +36,7 @@ export const SearchField = forwardRef<TextInput, {
   useImperativeHandle(ref, () => input.current as TextInput);
   const { t } = useI18n();
   const dir = useDirection();
+  const glass = useGlassShape('control');
   const clearable = value.length > 0;
   // The magnifier side always has its inset; the other side has the clear button's 44 points, or its own inset when
   // there is nothing to clear.
@@ -49,10 +50,11 @@ export const SearchField = forwardRef<TextInput, {
         styles.field,
         inset,
         { backgroundColor: colors.controlTrack, flexDirection: dir.row },
-        lifted && [styles.lifted, floating.control, { backgroundColor: colors.barFill, shadowColor: colors.softShadow }],
+        lifted && [styles.lifted, ...glass],
         style,
       ]}
     >
+      {lifted ? <GlassFill /> : null}
       <Icon name="search" size={18} color={colors.textSecondary} />
       <TextInput
         ref={input}

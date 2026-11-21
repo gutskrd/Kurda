@@ -431,7 +431,7 @@ function ConversationRow({
         <Avatar name={row.name} size={52} photoUrl={row.chat.avatarUrl ?? undefined} />
       ) : (
         // A group in its rounded square, so it is never mistaken for a person with that name.
-        <GroupAvatar name={row.name} id={row.group.id} size={52} photoUrl={row.group.photoUrl} />
+        <GroupAvatar name={row.name} size={52} photoUrl={row.group.photoUrl} />
       )}
       <View style={styles.rowMain}>
         <View style={[styles.rowTop, { flexDirection: dir.row }]}>

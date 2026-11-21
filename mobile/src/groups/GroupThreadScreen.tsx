@@ -535,7 +535,7 @@ export function GroupThreadScreen({
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenHeader
           title={notFound ? t('groups.missing.title') : name}
-          titleAvatar={notFound ? undefined : <GroupAvatar name={name} id={groupId} size={30} photoUrl={group.photoUrl} />}
+          titleAvatar={notFound ? undefined : <GroupAvatar name={name} size={30} photoUrl={group.photoUrl} />}
           // The group's page is its members': out of it, the name is only a name.
           onTitlePress={member ? onOpenMembers : undefined}
           titleHint={member ? t('groups.info') : undefined}

@@ -12,6 +12,7 @@ import { NavSearch } from '../search/NavSearch';
 import { useT } from '../i18n/I18nProvider';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { BackButton } from '../layouts/BackButton';
+import { useGlass } from '../glass/useGlass';
 import { PHONE_CHROME, isPlaceRoot } from '../layouts/roots';
 
 export interface NavItem {
@@ -265,11 +266,12 @@ function PhoneBar({ links }: { links: NavItem[] }): React.JSX.Element {
   const t = useT();
   const { pathname, search } = useLocation();
   const signedIn = status === 'signedIn';
+  const glass = useGlass<HTMLDivElement>();
   return (
     <header className="nav nav-phone">
       <div className="container nav-inner">
         {isPlaceRoot(pathname, search) ? <Brand to={signedIn ? '/app' : '/'} /> : <BackButton links={links} />}
-        <div className="nav-pill">
+        <div ref={glass} className="nav-pill glass">
           <NavSearch />
           {/* Nothing for a visitor, whose pill is then search alone. */}
           <NotificationsBell />

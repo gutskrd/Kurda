@@ -24,7 +24,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useTabFocusLoad } from '../navigation/tabFocusLoad';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, UnitFace, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
-import { TONES, awayFrom, centredOffset, firstCourse } from '../coursemap/path';
+import { UNIT_INK, awayFrom, centredOffset, firstCourse } from '../coursemap/path';
 import { courseName } from '../coursemap/courseName';
 import { UnitRailSheet, type RailSection } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -483,7 +483,7 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
     <View style={[styles.hero, { backgroundColor: colors.surface }]} testID="learn-continue">
       {/* The chapter's heading in its colour, as the path and the website head it; with everything done, nothing to head. */}
       {step.kind === 'review' ? null : (
-        <UnitFace number={step.unit.number} title={step.unitTitle} tone={TONES[scheme][step.unit.tone]} section={step.unit.section} testID="learn-continue-chapter" />
+        <UnitFace number={step.unit.number} title={step.unitTitle} tone={UNIT_INK[scheme]} section={step.unit.section} testID="learn-continue-chapter" />
       )}
       <Text style={[styles.heroTitle, step.kind === 'review' ? dir.text : dir.free, { color: colors.textPrimary }]} numberOfLines={2} accessibilityRole="header">
         {title}

@@ -1156,7 +1156,8 @@ a.league-card-mini:focus-visible {
   place-items: center;
   width: 100%;
   height: 100%;
-  color: #fff;
+  background: var(--surface-2);
+  color: var(--ink);
   font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.02em;

@@ -31,7 +31,7 @@ import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
 import { duration, pressedDim } from '../../theme/motion';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
-import { TONES, type ToneColors } from '../../coursemap/path';
+import { UNIT_INK, type ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, lessonMoments, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
 import { ReminderOffer, useReminderOffer } from '../../push/ReminderOffer';
@@ -211,7 +211,7 @@ export function LessonResults({
     : isSoraniDialect(dialect)
       ? 'lesson.results.strongerSorani'
       : 'lesson.results.strongerKurmanci';
-  const tones = TONES[scheme];
+  const ink = UNIT_INK[scheme];
   const gold: ToneColors = { fill: colors.gold, lip: colors.gold, ink: colors.textOnGold, text: colors.goldText };
   const clock = sitting ? sittingClock(sitting.ms) : null;
 
@@ -260,7 +260,7 @@ export function LessonResults({
               band={band}
               onBand={fitBand}
               travel={plan.travel}
-              tone={tones.meadow}
+              tone={ink}
               icon="target"
               label={gradeWord}
               to={pct}
@@ -274,7 +274,7 @@ export function LessonResults({
                 band={band}
                 onBand={fitBand}
                 travel={plan.travel}
-                tone={tones.river}
+                tone={ink}
                 icon="clock"
                 label={t(sittingPace(sitting.ms, sitting.answers) === 'quick' ? 'lesson.results.quick' : 'lesson.results.time')}
                 to={clock.minutes * 60 + clock.seconds}

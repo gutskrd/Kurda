@@ -98,10 +98,13 @@ export interface Palette {
   bubbleTheirsInk: string;
 
   /**
-   * The tab bar's fill, solid: nothing blurs behind it, so any translucency shows content scrolling beneath as a ghost.
-   * A hairline along its top separates it from the page.
+   * The fill of what floats over the page (the tab bar, the back button, the pill of top actions) where the system has
+   * no Liquid Glass to draw: solid, since nothing blurs behind it and translucency would show the page beneath as a ghost.
    */
   barFill: string;
+  /** The line of light round that floating shape's edge, on its upper side and on the rest (LiquidGlass.tsx). */
+  glassRim: string;
+  glassRimFar: string;
 
   /*
    * Gold for text, which is not gold for fills. The sun's gold (`gold`) reads as text on the dark page, but is 1.9:1
@@ -164,6 +167,8 @@ export const LIGHT: Palette = {
   bubbleTheirs: '#E7E4F1',
   bubbleTheirsInk: '#14112E',
   barFill: '#FFFFFF',
+  glassRim: 'rgba(255,255,255,0.9)',
+  glassRimFar: 'rgba(20,17,46,0.07)',
   goldText: '#14112E',
 };
 
@@ -218,6 +223,8 @@ export const DARK: Palette = {
   bubbleTheirs: '#302C46',
   bubbleTheirsInk: '#F3F1FB',
   barFill: '#27243A',
+  glassRim: 'rgba(255,255,255,0.3)',
+  glassRimFar: 'rgba(255,255,255,0.1)',
   goldText: '#F3F1FB',
 };
 

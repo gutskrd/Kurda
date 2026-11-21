@@ -162,7 +162,7 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
           <div key={g.id} className="rail-row rail-group">
             {/* The name opens the full page; the bubble docks the conversation. */}
             <Link to={`/app/messages?group=${g.id}`} className="rail-row-link">
-              <GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={28} />
+              <GroupAvatar name={g.name} photoUrl={g.photoUrl} size={28} />
               <span className="rail-row-text">
                 <span className="rail-row-name">{g.name}</span>
                 <span className="rail-row-sub">{t('rail.members', { count: g.memberCount.toLocaleString() })}</span>

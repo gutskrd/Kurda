@@ -4,7 +4,8 @@
  * - A surface has no passive edge: a border that is always `colors.glassBorder` around a surface with a fill says
  *   nothing the fill does not and reads as a box drawn on glass. An edge that changes (selected, wrong, live, gold) is
  *   a state and is allowed. An edge carrying another colour is not passive and is not checked.
- * - Nothing is blurred behind a surface.
+ * - Nothing is blurred behind a surface. What floats over the page wears the system's Liquid Glass (theme/LiquidGlass.tsx),
+ *   never a blur library.
  * - A corner is a radius token (the scale mirrors the web's `--r-*` tokens to the pixel), unless it is a listed
  *   geometric consequence.
  * - A border on one side only is a divider and takes `colors.separator`, not the edge colour: the palette has
@@ -89,7 +90,7 @@ for (const file of sources(SRC)) {
 
   // The frost, which is the one thing here that is a single import away.
   if (/from '(expo-blur|@react-native-community\/blur)'/.test(src)) {
-    problems.push(`${where}  a backdrop blur — surfaces are clear now; the edge is LensRim, not frost`);
+    problems.push(`${where}  a backdrop blur — floating chrome wears GlassFill (theme/LiquidGlass.tsx), and nothing else is frosted`);
   }
 
   // A frame round a shape that already has one.

@@ -175,7 +175,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
                 accessibilityLabel={photoUrl ? t('groups.photo.change') : t('groups.photo.add')}
                 style={({ pressed }) => pressed && heldDim}
               >
-                <GroupAvatar name={trimmed || detail.name} id={detail.id} size={PHOTO} photoUrl={photoUrl} />
+                <GroupAvatar name={trimmed || detail.name} size={PHOTO} photoUrl={photoUrl} />
                 {uploading ? (
                   <View style={[styles.uploading, { backgroundColor: colors.scrim }]}>
                     <ActivityIndicator color={colors.textOnScrim} />

@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { UserIcon } from '../components/icons';
 import { countLabel, type NavItem } from '../components/TopNav';
 import { useT } from '../i18n/I18nProvider';
+import { useGlass } from '../glass/useGlass';
 
 /**
  * The phone's bar of places (`useNavLinks`), floating and solid over the bottom of the window like the phone app's
@@ -17,6 +18,7 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
   const t = useT();
   const { status } = useAuth();
   const { pathname } = useLocation();
+  const glass = useGlass<HTMLElement>();
 
   const items: readonly NavItem[] =
     status === 'signedIn' ? links : [...links, { key: 'login', label: t('nav.login'), to: '/login', icon: <UserIcon size={22} /> }];
@@ -24,7 +26,7 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
   const at = items.findIndex((l) => l.owns?.(pathname));
 
   return (
-    <nav className="places-bar" aria-label={t('nav.primary')}>
+    <nav ref={glass} className="places-bar glass" aria-label={t('nav.primary')}>
       <div className="places-row" style={{ '--places': items.length, '--at': Math.max(at, 0) } as React.CSSProperties}>
         {at >= 0 && <span className="places-capsule" aria-hidden="true" />}
         <ul className="places-list">
