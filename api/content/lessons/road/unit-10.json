@@ -531,7 +531,8 @@
                     "options": [
                       "Hêviyê li mêrgê sed kulîlk dîtin.",
                       "Dapîrê sêvek da Hevalo, û Hevalo ew bir.",
-                      "Tarî bû, û hirç li dora min bû."
+                      "Dema ku tarî dibe, gur li dora gund digerin.",
+                      "Hirç û gur di daristanê de dijîn."
                     ],
                     "correctIndex": 0
                   }
@@ -686,7 +687,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Yes, it’s a wild doe. She is licking the salt.",
+                    "prompt": "Yes, it’s a wild doe. She is eating the salt.",
                     "accepted": [
                       "Erê, askeke kûvî ye. Ew xwê dixwe."
                     ]
@@ -876,7 +877,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Yes, it’s a wild doe. She is licking the salt.",
+                    "prompt": "Yes, it’s a wild doe. She is eating the salt.",
                     "options": [
                       "Erê, askeke kûvî ye. Ew xwê dixwe.",
                       "Erê, ask kûvî ye. Ew xwê dixwe.",
@@ -904,7 +905,7 @@
                     "voice": "hamo",
                     "prompt": "Erê, askeke kûvî ye. Ew xwê dixwe.",
                     "options": [
-                      "Yes, it’s a wild doe. She is licking the salt.",
+                      "Yes, it’s a wild doe. She is eating the salt.",
                       "Baran is nine, and he eats a lot!",
                       "She’s six!"
                     ],
@@ -1794,7 +1795,7 @@
                     "options": [
                       "sêv",
                       "sêvên",
-                      "sêva"
+                      "sêvan"
                     ],
                     "correctIndex": 0,
                     "cue": "This apple is for you, Zerê!"
@@ -1957,8 +1958,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê. Peyama Bişar rast bû. Em ê bi şopan re biçin.",
-                        "en": "Yes. Bişar’s message was true. We’ll follow the tracks."
+                        "text": "Erê! Werin, em ê bi şopan re biçin.",
+                        "en": "Yes! Come on, we’ll follow the tracks."
                       },
                       {
                         "speaker": 1,
@@ -2035,7 +2036,7 @@
                     "options": [
                       "Dibe ku. Ez telefona xwe derdixim, ji bo wêneyekî.",
                       "Dibe ku. Ez telefon xwe derdixim, ji bo wêneyekî.",
-                      "Pêşî, ez çûm bazarê, ji bo kerekî."
+                      "Pêşî em çûn bazarê, paşê em çûn çem, û di dawiyê de em vegeriyan malê."
                     ],
                     "correctIndex": 0
                   }
@@ -2308,7 +2309,8 @@
                     "options": [
                       "Erê, maleke kevn û wêran. Xwediyê wê kî bû?",
                       "Erê, mal kevn û wêran. Xwediyê wê kî bû?",
-                      "Tarî bû, û hirç li dora min bû."
+                      "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
+                      "Hirç û gur di daristanê de dijîn."
                     ],
                     "correctIndex": 0
                   }
@@ -2318,13 +2320,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Erê. Peyama Bişar rast bû. Em ê bi şopan re biçin.",
+                    "say": "Erê! Werin, em ê bi şopan re biçin.",
                     "voice": "hamo",
-                    "prompt": "Erê. Peyama Bişar rast bû. Em ê bi şopan re biçin.",
+                    "prompt": "Erê! Werin, em ê bi şopan re biçin.",
                     "options": [
-                      "Yes. Bişar’s message was true. We’ll follow the tracks.",
-                      "Hevalo is following the tracks. Let’s go too!",
-                      "Success! We followed the tracks and reached the spring."
+                      "Yes! Come on, we’ll follow the tracks.",
+                      "No! We’ll stay here, by the tents.",
+                      "Hevalo is following the tracks. Let’s go too!"
                     ],
                     "correctIndex": 0
                   }
@@ -2420,13 +2422,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
+                    "say": "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî.",
                     "voice": "hamo",
-                    "prompt": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
+                    "prompt": "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî.",
                     "options": [
-                      "Dapîr says: We used to come up from the plain to this stone house.",
-                      "Dapîr says: We used to go down to the plain from this house.",
-                      "Dapîr says: We came from the town to this wooden house."
+                      "Every summer Dapîr’s family used to come from the plain to this stone house.",
+                      "Every summer Dapîr’s family used to go down to the plain from this house.",
+                      "Every winter Dapîr’s family came from the town to this wooden house."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2469,8 +2471,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
-                    "reference": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî."
+                    "prompt": "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî.",
+                    "reference": "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî."
                   }
                 },
                 {
@@ -2482,7 +2484,7 @@
                     "prompt": "She worked all the time, and stayed with the lambs all day.",
                     "options": [
                       "Ew berdewam dixebitî, û hemû rojê bi berxan re dima.",
-                      "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
+                      "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî.",
                       "Nerîtek bû: wê berdewam li ser banî keşk çêdikir."
                     ],
                     "correctIndex": 0
@@ -2606,9 +2608,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
+                    "say": "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî.",
                     "voice": "hamo",
-                    "prompt": "Dapîr dibêje: Em ji ___ dihatin vê mala kevirî.",
+                    "prompt": "Malbata Dapîrê her havîn ji ___ dihat vê mala kevirî.",
                     "options": [
                       "deştê",
                       "deşt",
@@ -2650,7 +2652,7 @@
                     "options": [
                       "For nineteen summers her mother sang her a lullaby.",
                       "I say to her: safe journey!",
-                      "Her name is Edûl."
+                      "For nineteen summers she sang her mother a lullaby."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2727,7 +2729,7 @@
                       "loriyan"
                     ],
                     "correctIndex": 0,
-                    "cue": "felt rug"
+                    "cue": "felt rugs"
                   }
                 },
                 {
@@ -3012,7 +3014,9 @@
                     "voice": "hamo",
                     "prompt": "Ew dibêje ku hevdîtina me havîna bê ye. Û tu yê bi me re bêyî?",
                     "accepted": [
-                      "He says our next meeting is next summer. And will you come with us?"
+                      "He says our meeting is next summer. And will you come with us?",
+                      "He says our next meeting is next summer. And will you come with us?",
+                      "He says we’ll meet next summer. And will you come with us?"
                     ],
                     "new": [
                       {
@@ -3141,7 +3145,7 @@
                       {
                         "speaker": 0,
                         "text": "Ew dibêje ku hevdîtina me havîna bê ye. Û tu yê bi me re bêyî?",
-                        "en": "He says our next meeting is next summer. And will you come with us?"
+                        "en": "He says our meeting is next summer. And will you come with us?"
                       }
                     ],
                     "prompt": "Hevalo îro çend sêv xwarin?",
@@ -3171,7 +3175,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "He says our next meeting is next summer. And will you come with us?",
+                    "prompt": "He says our meeting is next summer. And will you come with us?",
                     "options": [
                       "Ew dibêje ku hevdîtina me havîna bê ye. Û tu yê bi me re bêyî?",
                       "Ew dibêjim ku hevdîtina me havîna bê ye. Û tu yê bi me re bêyî?",
@@ -3203,7 +3207,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "He says our next meeting is next summer. And will you come with us?",
+                    "prompt": "He says our meeting is next summer. And will you come with us?",
                     "accepted": [
                       "Ew dibêje ku hevdîtina me havîna bê ye. Û tu yê bi me re bêyî?"
                     ]
@@ -3308,9 +3312,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
+                    "say": "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî.",
                     "voice": "hamo",
-                    "prompt": "Dapîr dibêje: Em ji ___ dihatin vê mala kevirî.",
+                    "prompt": "Malbata Dapîrê her havîn ji ___ dihat vê mala kevirî.",
                     "options": [
                       "deştê",
                       "deşt",
@@ -3346,7 +3350,7 @@
                     "prompt": "Nerîtek bû: wê berdewam li ser banî keşk çêdikir.",
                     "options": [
                       "It was a custom: she used to make dried curd on the roof all the time.",
-                      "She used to make dried curd on this roof.",
+                      "It was a custom: she used to make bread on the roof every day.",
                       "We’re up on the roof!"
                     ],
                     "correctIndex": 0
@@ -3569,13 +3573,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Cîranan pirsî: bûyera herî mezin a rêwîtiyê çi bû?",
+                    "say": "Cîranan pirsî bûyera herî mezin a rêwîtiyê çi bû.",
                     "voice": "hamo",
-                    "prompt": "Cîranan pirsî: bûyera herî mezin a rêwîtiyê çi bû?",
+                    "prompt": "Cîranan pirsî bûyera herî mezin a rêwîtiyê çi bû.",
                     "options": [
-                      "The neighbours asked: what was the biggest event of the journey?",
-                      "When he got up, what happened?",
-                      "What are you doing? Four spoonfuls?"
+                      "The neighbours asked what the biggest event of the journey was.",
+                      "The neighbours told us about the biggest event of the journey.",
+                      "The neighbours asked how long the journey was."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3613,9 +3617,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Cîranan pirsî: bûyera herî mezin a rêwîtiyê çi bû?",
+                    "say": "Cîranan pirsî bûyera herî mezin a rêwîtiyê çi bû.",
                     "voice": "hamo",
-                    "prompt": "Cîranan pirsî: bûyera herî mezin a ___ çi bû?",
+                    "prompt": "Cîranan pirsî bûyera herî mezin a ___ çi bû.",
                     "options": [
                       "rêwîtiyê",
                       "rêwîtî",
@@ -3634,7 +3638,7 @@
                     "voice": "hamo",
                     "prompt": "Min wêne kişandin, lê di wan de tenê tiliya min heye!",
                     "options": [
-                      "I took photos, but there’s only my thumb in them!",
+                      "I took photos, but there’s only my finger in them!",
                       "I took photos, and they are all beautiful!",
                       "I lost my photos, and my finger hurts!"
                     ],
@@ -3653,8 +3657,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Cîranan pirsî: bûyera herî mezin a rêwîtiyê çi bû?",
-                    "reference": "Cîranan pirsî: bûyera herî mezin a rêwîtiyê çi bû?"
+                    "prompt": "Cîranan pirsî bûyera herî mezin a rêwîtiyê çi bû.",
+                    "reference": "Cîranan pirsî bûyera herî mezin a rêwîtiyê çi bû."
                   }
                 },
                 {
@@ -3663,7 +3667,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "I took photos, but there’s only my thumb in them!",
+                    "prompt": "I took photos, but there’s only my finger in them!",
                     "accepted": [
                       "Min wêne kişandin, lê di wan de tenê tiliya min heye!"
                     ]
@@ -3700,7 +3704,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "I took photos, but there’s only my thumb in them!",
+                    "prompt": "I took photos, but there’s only my finger in them!",
                     "options": [
                       "Min wêne kişandin, lê di wan de tenê tiliya min heye!",
                       "Cîranan pirsî çi qewimî, û Baran serpêhatî vegot.",
@@ -3799,7 +3803,7 @@
                     "voice": "hamo",
                     "prompt": "Hemû rê hêja bû, û em hemû bextewar in, mîna zarokan!",
                     "options": [
-                      "The whole climb was worth it, and we are all happy, like children!",
+                      "The whole way was worth it, and we are all happy, like children!",
                       "The whole road was hard, and we are all sad, like rain!",
                       "The road was short, and we are all tired."
                     ],
@@ -3934,7 +3938,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The whole climb was worth it, and we are all happy, like children!",
+                    "prompt": "The whole way was worth it, and we are all happy, like children!",
                     "accepted": [
                       "Hemû rê hêja bû, û em hemû bextewar in, mîna zarokan!"
                     ]
@@ -3994,6 +3998,9 @@
                     "voice": "hamo",
                     "prompt": "Hemû rê hêja bû, û em hemû bextewar in, mîna zarokan!",
                     "accepted": [
+                      "The whole way was worth it, and we are all happy, like children!",
+                      "The whole way was worth it, and we’re all happy, like children!",
+                      "The whole road was worth it, and we are all happy, like children!",
                       "The whole climb was worth it, and we are all happy, like children!",
                       "The whole climb was worth it, and we’re all happy, like children!"
                     ]
@@ -4175,7 +4182,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Cîranan pirsî: bûyera herî mezin a rêwîtiyê çi bû?"
+                      "Cîranan pirsî bûyera herî mezin a rêwîtiyê çi bû."
                     ]
                   }
                 },
@@ -4324,7 +4331,7 @@
                     "voice": "hamo",
                     "prompt": "Hemû rê hêja bû, û em hemû bextewar in, mîna zarokan!",
                     "options": [
-                      "The whole climb was worth it, and we are all happy, like children!",
+                      "The whole way was worth it, and we are all happy, like children!",
                       "The whole road was hard, and we are all sad, like rain!",
                       "The road was short, and we are all tired."
                     ],
@@ -4438,10 +4445,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The neighbours asked: what was the biggest event of the journey?",
+                    "prompt": "The neighbours asked what the biggest event of the journey was.",
                     "options": [
-                      "Cîranan pirsî: bûyera herî mezin a rêwîtiyê çi bû?",
-                      "Cîranan pirsîn: bûyera herî mezin a rêwîtiyê çi bû?",
+                      "Cîranan pirsî bûyera herî mezin a rêwîtiyê çi bû.",
+                      "Cîranan pirsîn bûyera herî mezin a rêwîtiyê çi bû.",
                       "Dapîr dadwer e: bûyera herî mezin hevdîtina li ber golê bû."
                     ],
                     "correctIndex": 0
@@ -4535,6 +4542,9 @@
                     "voice": "hamo",
                     "prompt": "Hemû rê hêja bû, û em hemû bextewar in, mîna zarokan!",
                     "accepted": [
+                      "The whole way was worth it, and we are all happy, like children!",
+                      "The whole way was worth it, and we’re all happy, like children!",
+                      "The whole road was worth it, and we are all happy, like children!",
                       "The whole climb was worth it, and we are all happy, like children!",
                       "The whole climb was worth it, and we’re all happy, like children!"
                     ]
@@ -4546,7 +4556,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "I took photos, but there’s only my thumb in them!",
+                    "prompt": "I took photos, but there’s only my finger in them!",
                     "options": [
                       "Min wêne kişandin, lê di wan de tenê tiliya min heye!",
                       "Baweriya min bi Hevalo heye. Em di nav daristanê re daketin, û ev kanî ye.",

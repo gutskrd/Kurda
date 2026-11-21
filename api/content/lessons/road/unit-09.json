@@ -101,13 +101,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran dibêje: Duh ez çûm çem.",
+                    "say": "Duh ez çûm çem.",
                     "voice": "hamo",
-                    "prompt": "Baran dibêje: Duh ez çûm çem.",
+                    "prompt": "Duh ez çûm çem.",
                     "options": [
-                      "Baran says: Yesterday I went to the river.",
-                      "Baran says: Yesterday I came back from the river.",
-                      "Baran says: Tomorrow I’m going to the river."
+                      "Yesterday I went to the river.",
+                      "Yesterday I came back from the river.",
+                      "Tomorrow I’m going to the river."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -224,7 +224,7 @@
                     "options": [
                       "Ji nişka ve tiştek bû.",
                       "Ji nişka ve tişt bû.",
-                      "Ji kerema xwe, here cem wê!"
+                      "Ji kerema xwe, here cem wan!"
                     ],
                     "correctIndex": 0
                   }
@@ -245,9 +245,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran says: Yesterday I went to the river.",
+                    "prompt": "Yesterday I went to the river.",
                     "accepted": [
-                      "Baran dibêje: Duh ez çûm çem."
+                      "Duh ez çûm çem.",
+                      "Ez duh çûm çem."
                     ]
                   }
                 },
@@ -267,11 +268,11 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Baran dibêje: Duh ez çûm çem.",
+                    "say": "Duh ez çûm çem.",
                     "voice": "hamo",
-                    "prompt": "Baran dibêje: Duh ez çûm çem.",
+                    "prompt": "Duh ez çûm çem.",
                     "accepted": [
-                      "Baran says: Yesterday I went to the river."
+                      "Yesterday I went to the river."
                     ]
                   }
                 },
@@ -329,10 +330,6 @@
                       {
                         "ku": "gelî",
                         "en": "valley"
-                      },
-                      {
-                        "ku": "di nav … de",
-                        "en": "among, in the middle of"
                       }
                     ]
                   }
@@ -481,7 +478,7 @@
                       "keviran"
                     ],
                     "correctIndex": 0,
-                    "cue": "cliff, big rock"
+                    "cue": "cliffs"
                   }
                 },
                 {
@@ -500,15 +497,21 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Par, roja sersalê, ez ketim çem û hefteyekê nexweş bûm.",
+                    "say": "Gund di nav çiyayan de ye.",
                     "voice": "hamo",
-                    "prompt": "Par, roja sersalê, ez ketim çem û hefteyekê nexweş bûm.",
+                    "prompt": "Gund di nav çiyayan de ye.",
                     "options": [
-                      "Last year, on New Year’s Day, I fell into the river and was ill for a week.",
-                      "Last year, on New Year’s Day, I fell into the river and was ill for a month.",
-                      "On Friday I drink tea and do nothing."
+                      "The village is among the mountains.",
+                      "The village is on top of the mountain.",
+                      "The mountains are far from the village."
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "di nav … de",
+                        "en": "among, in the middle of"
+                      }
+                    ]
                   }
                 },
                 {
@@ -535,7 +538,7 @@
                       "geliyan"
                     ],
                     "correctIndex": 0,
-                    "cue": "stone"
+                    "cue": "stones"
                   }
                 },
                 {
@@ -756,8 +759,8 @@
                     "lines": [
                       {
                         "speaker": 1,
-                        "text": "Xalo, Baran li ku rûnişt?",
-                        "en": "Xalo, where did Baran sit down?"
+                        "text": "Xalo, duh Baran li ku rûnişt?",
+                        "en": "Xalo, where did Baran sit down yesterday?"
                       },
                       {
                         "speaker": 0,
@@ -935,7 +938,7 @@
                     "options": [
                       "Baran di gelî de tenê ma.",
                       "Baran di geliyên de tenê ma.",
-                      "Tu di gelî de tirsiyayî?"
+                      "Kurên cîranan şanzdeh û hivdeh salî ne."
                     ],
                     "correctIndex": 0
                   }
@@ -1003,9 +1006,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Baran says: Yesterday I went to the river.",
+                    "prompt": "Yesterday I went to the river.",
                     "accepted": [
-                      "Baran dibêje: Duh ez çûm çem."
+                      "Duh ez çûm çem.",
+                      "Ez duh çûm çem."
                     ]
                   }
                 },
@@ -1404,21 +1408,21 @@
             {
               "key": "u09s2l2",
               "position": 2,
-              "titleKu": "Hamo û gur",
-              "titleEn": "Hamo and the wolf",
+              "titleKu": "Gur, hirç û rovî",
+              "titleEn": "Wolf, bear and fox",
               "exercises": [
                 {
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hingê gur li dora min dimeşe.",
+                    "say": "Dema ku tarî dibe, gur li dora gund digerin.",
                     "voice": "hamo",
-                    "prompt": "Hingê gur li dora min dimeşe.",
+                    "prompt": "Dema ku tarî dibe, gur li dora gund digerin.",
                     "options": [
-                      "Then the wolf walks around me.",
-                      "Then the wolf runs away from me.",
-                      "Then the wolf sleeps next to me."
+                      "When it gets dark, wolves roam around the village.",
+                      "When it gets light, wolves sleep in the forest.",
+                      "When it gets dark, the dogs come back home."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1427,8 +1431,8 @@
                         "en": "wolf"
                       },
                       {
-                        "ku": "hingê",
-                        "en": "then, at that moment"
+                        "ku": "tarî",
+                        "en": "dark"
                       },
                       {
                         "ku": "li dora",
@@ -1459,16 +1463,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hingê gur li dora min dimeşe.",
+                    "say": "Dema ku tarî dibe, gur li dora gund digerin.",
                     "voice": "hamo",
-                    "prompt": "Hingê ___ li dora min dimeşe.",
+                    "prompt": "Dema ku tarî dibe, ___ li dora gund digerin.",
                     "options": [
                       "gur",
-                      "gurên",
+                      "guran",
                       "gurê"
                     ],
                     "correctIndex": 0,
-                    "cue": "Then the wolf walks around me."
+                    "cue": "wolf"
                   }
                 },
                 {
@@ -1481,8 +1485,8 @@
                     "prompt": "Hingê rovî ji daristanê derket.",
                     "options": [
                       "Then the fox came out of the forest.",
-                      "Don’t forget the speech!",
-                      "Slowly, please!"
+                      "Then the fox went into the forest.",
+                      "Then the wolf came out of the forest."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1493,6 +1497,10 @@
                       {
                         "ku": "daristan",
                         "en": "forest"
+                      },
+                      {
+                        "ku": "hingê",
+                        "en": "then, at that moment"
                       }
                     ]
                   }
@@ -1519,20 +1527,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Tarî bû, û hirç li dora min bû.",
+                    "say": "Hirç û gur di daristanê de dijîn.",
                     "voice": "hamo",
-                    "prompt": "Tarî bû, û hirç li dora min bû.",
+                    "prompt": "Hirç û gur di daristanê de dijîn.",
                     "options": [
-                      "It was dark, and the bear was around me.",
-                      "And then, sit with me.",
-                      "My father and my mother are here!"
+                      "Bears and wolves live in the forest.",
+                      "Bears and foxes live in the mountains.",
+                      "Wolves and dogs live in the village."
                     ],
                     "correctIndex": 0,
                     "new": [
-                      {
-                        "ku": "tarî",
-                        "en": "dark"
-                      },
                       {
                         "ku": "hirç",
                         "en": "bear"
@@ -1592,11 +1596,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Tarî bû, û hirç li dora min bû.",
+                    "say": "Hirç û gur di daristanê de dijîn.",
                     "voice": "hamo",
-                    "prompt": "Tarî bû, û hirç li dora min bû.",
+                    "prompt": "Hirç û gur di daristanê de dijîn.",
                     "accepted": [
-                      "It was dark, and the bear was around me."
+                      "Bears and wolves live in the forest.",
+                      "Bears and wolves live in the woods."
                     ]
                   }
                 },
@@ -1605,13 +1610,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li ber sêvên Mîrza ye, û li wan dinêre.",
+                    "say": "Ew ne gur bû, kûçikê cîranan bû!",
                     "voice": "hamo",
-                    "prompt": "Li ber sêvên Mîrza ye, û li wan dinêre.",
+                    "prompt": "Ew ne gur bû, kûçikê cîranan bû!",
                     "options": [
-                      "By Mîrza’s apples, looking at them.",
-                      "Hevalo is by the window, looking at the mountains.",
-                      "The shop is in front of the school."
+                      "It wasn’t a wolf, it was the neighbours’ dog!",
+                      "It wasn’t a dog, it was the neighbours’ wolf!",
+                      "It was a big wolf, not a dog!"
                     ],
                     "correctIndex": 0
                   }
@@ -1622,9 +1627,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "It was dark, and the bear was around me.",
+                    "prompt": "Bears and wolves live in the forest.",
                     "options": [
-                      "Tarî bû, û hirç li dora min bû.",
+                      "Hirç û gur di daristanê de dijîn.",
+                      "Hirç û gur di daristanê de dijî.",
                       "Rojekê, li Kobaniyê, diranê min diêşe, û ez diçim nexweşxaneyê.",
                       "Îro pêşbirk e, û simbêlê min herî dirêj e, ez dizanim!"
                     ],
@@ -1646,13 +1652,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Kûçikê cîranan bû!",
+                    "say": "Dema ku tarî bû, zarok li dora agir rûniştin.",
                     "voice": "hamo",
-                    "prompt": "Kûçikê cîranan bû!",
+                    "prompt": "Dema ku tarî bû, zarok li dora agir rûniştin.",
                     "options": [
-                      "It was the neighbours’ dog!",
-                      "It was the neighbours’ wolf!",
-                      "It was our dog!"
+                      "When it got dark, the children sat around the fire.",
+                      "When it got dark, the children ran around the house.",
+                      "When it got light, the children sat by the river."
                     ],
                     "correctIndex": 0
                   }
@@ -1673,16 +1679,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Tarî bû, û hirç li dora min bû.",
+                    "say": "Dema ku tarî dibe, gur li dora gund digerin.",
                     "voice": "hamo",
-                    "prompt": "Tarî bû, û ___ li dora min bû.",
+                    "prompt": "Dema ku ___ dibe, gur li dora gund digerin.",
                     "options": [
-                      "hirç",
-                      "hirçên",
-                      "gur"
+                      "tarî",
+                      "ciwan",
+                      "borî"
                     ],
                     "correctIndex": 0,
-                    "cue": "It was dark, and the bear was around me."
+                    "cue": "dark"
                   }
                 }
               ]
@@ -1967,13 +1973,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hingê gur li dora min dimeşe.",
+                    "say": "Dema ku tarî dibe, gur li dora gund digerin.",
                     "voice": "hamo",
-                    "prompt": "Hingê gur li dora min dimeşe.",
+                    "prompt": "Dema ku tarî dibe, gur li dora gund digerin.",
                     "options": [
-                      "Then the wolf walks around me.",
-                      "Then the wolf runs away from me.",
-                      "Then the wolf sleeps next to me."
+                      "When it gets dark, wolves roam around the village.",
+                      "When it gets dark, wolves sleep in the forest.",
+                      "When it gets light, the dogs run around the village."
                     ],
                     "correctIndex": 0
                   }
@@ -2048,11 +2054,12 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Then the wolf walks around me.",
+                    "prompt": "When it gets dark, wolves roam around the village.",
                     "options": [
-                      "Hingê gur li dora min dimeşe.",
-                      "Hingê gurên li dora min dimeşe.",
-                      "Laşê wî dirêj bû, û ew li dora min bû!"
+                      "Dema ku tarî dibe, gur li dora gund digerin.",
+                      "Dema ku tarî dibe, guran li dora gund digerin.",
+                      "Laşê wî dirêj e, û lingên wî kin in.",
+                      "Dapîr her roj hinek dimeşe."
                     ],
                     "correctIndex": 0
                   }
@@ -2064,7 +2071,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Kurên Lorînê şanzdeh û hivdeh salî ne."
+                      "Ew ne gur bû, kûçikê cîranan bû!"
                     ]
                   }
                 },
@@ -2073,16 +2080,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Tarî bû, û hirç li dora min bû.",
+                    "say": "Hirç û gur di daristanê de dijîn.",
                     "voice": "hamo",
-                    "prompt": "Tarî bû, û ___ li dora min bû.",
+                    "prompt": "Hirç û ___ di daristanê de dijîn.",
                     "options": [
-                      "hirç",
-                      "hirçên",
+                      "gur",
+                      "guran",
                       "peyam"
                     ],
                     "correctIndex": 0,
-                    "cue": "It was dark, and the bear was around me."
+                    "cue": "Bears and wolves live in the forest."
                   }
                 },
                 {
@@ -2271,13 +2278,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                    "say": "Em di Tîrmehê de çûn çiyê, û di Tebaxê de vegeriyan.",
                     "voice": "hamo",
-                    "prompt": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                    "prompt": "Em di Tîrmehê de çûn çiyê, û di Tebaxê de vegeriyan.",
                     "options": [
-                      "Be patient: July went, August came!",
-                      "Yesterday Baran went to the river and came home late.",
-                      "Enjoy!"
+                      "We went to the mountains in July, and came back in August.",
+                      "We went to the mountains in August, and came back in July.",
+                      "We went to the town in July, and stayed there until August."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2288,10 +2295,6 @@
                       {
                         "ku": "Tebax",
                         "en": "August"
-                      },
-                      {
-                        "ku": "bêhnfireh",
-                        "en": "patient, easy-going"
                       }
                     ]
                   }
@@ -2301,15 +2304,21 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Tebax",
+                    "say": "bêhnfireh",
                     "voice": "hamo",
-                    "prompt": "Tebax",
+                    "prompt": "bêhnfireh",
                     "options": [
-                      "August",
-                      "July",
-                      "deer"
+                      "patient, easy-going",
+                      "at once, straight away",
+                      "August"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "bêhnfireh",
+                        "en": "patient, easy-going"
+                      }
+                    ]
                   }
                 },
                 {
@@ -2317,20 +2326,50 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                    "say": "Em di Tîrmehê de çûn çiyê, û di Tebaxê de vegeriyan.",
                     "voice": "hamo",
-                    "prompt": "Bêhnfireh be: Tîrmeh çû, ___ hat!",
+                    "prompt": "Em di Tîrmehê de çûn çiyê, û di ___ de vegeriyan.",
                     "options": [
-                      "Tebax",
                       "Tebaxê",
-                      "Tîrmeh"
+                      "Tebax",
+                      "Tîrmehê"
                     ],
                     "correctIndex": 0,
-                    "cue": "Be patient: July went, August came!"
+                    "cue": "August"
                   }
                 },
                 {
                   "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "ask": "meaning",
+                    "say": "Pêşî em çûn bazarê, paşê em çûn çem, û di dawiyê de em vegeriyan malê.",
+                    "voice": "hamo",
+                    "prompt": "Pêşî em çûn bazarê, paşê em çûn çem, û di dawiyê de em vegeriyan malê.",
+                    "options": [
+                      "First we went to the market, then we went to the river, and in the end we came back home.",
+                      "First we went to the river, then we went to the market, and in the end we came back home.",
+                      "First we went to the market, then we came back home, and in the end we went to the river."
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "pêşî",
+                        "en": "first"
+                      },
+                      {
+                        "ku": "paşê",
+                        "en": "then, later"
+                      },
+                      {
+                        "ku": "di dawiyê de",
+                        "en": "in the end, finally"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
@@ -2345,34 +2384,8 @@
                     "correctIndex": 0,
                     "new": [
                       {
-                        "ku": "di dawiyê de",
-                        "en": "in the end, finally"
-                      },
-                      {
                         "ku": "yekser",
                         "en": "at once, straight away"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "position": 5,
-                  "type": "multiple_choice",
-                  "payload": {
-                    "ask": "meaning",
-                    "say": "Pêşî, ez çûm bazarê, ji bo kerekî.",
-                    "voice": "hamo",
-                    "prompt": "Pêşî, ez çûm bazarê, ji bo kerekî.",
-                    "options": [
-                      "First, I went to the market, for a donkey.",
-                      "In the end, I went to the market, for a horse.",
-                      "First, I went to the river, for some water."
-                    ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "pêşî",
-                        "en": "first"
                       }
                     ]
                   }
@@ -2390,25 +2403,23 @@
                       "Then, slowly, Bozo ran down the road!",
                       "First, suddenly, Bozo fell into the river!"
                     ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "paşê",
-                        "en": "then, later"
-                      }
-                    ]
+                    "correctIndex": 0
                   }
                 },
                 {
                   "position": 7,
-                  "type": "writing",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "meaning",
+                    "say": "Bêhnfireh be! Pêşî çay, paşê çîrok.",
                     "voice": "hamo",
-                    "prompt": "First, I went to the market, for a donkey.",
-                    "accepted": [
-                      "Pêşî, ez çûm bazarê, ji bo kerekî."
-                    ]
+                    "prompt": "Bêhnfireh be! Pêşî çay, paşê çîrok.",
+                    "options": [
+                      "Be patient! First tea, then the story.",
+                      "Be patient! First the story, then tea.",
+                      "Be quick! The tea is getting cold."
+                    ],
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -2421,7 +2432,7 @@
                     "options": [
                       "Paşê, ji nişka ve, Bozo li ser rê rûnişt!",
                       "Baran dixwaze çîrok kin be, û dawiyê yekser bizane.",
-                      "Bêhnfireh be: Tîrmeh çû, Tebax hat!"
+                      "Em di Tîrmehê de çûn çiyê, û di Tebaxê de vegeriyan."
                     ],
                     "correctIndex": 0
                   }
@@ -2431,11 +2442,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Pêşî, ez çûm bazarê, ji bo kerekî.",
+                    "say": "Pêşî em çûn bazarê, paşê em çûn çem, û di dawiyê de em vegeriyan malê.",
                     "voice": "hamo",
-                    "prompt": "Pêşî, ez çûm bazarê, ji bo kerekî.",
+                    "prompt": "Pêşî em çûn bazarê, paşê em çûn çem, û di dawiyê de em vegeriyan malê.",
                     "accepted": [
-                      "First, I went to the market, for a donkey."
+                      "First we went to the market, then we went to the river, and in the end we came back home.",
+                      "First we went to the market, then to the river, and in the end we came back home.",
+                      "First we went to the market, then we went to the river, and finally we came back home."
                     ]
                   }
                 },
@@ -2465,8 +2478,8 @@
                         "right": "the day before yesterday"
                       },
                       {
-                        "left": "heb",
-                        "right": "pill"
+                        "left": "bêhnfireh",
+                        "right": "patient"
                       }
                     ],
                     "voice": "hamo"
@@ -2474,18 +2487,15 @@
                 },
                 {
                   "position": 11,
-                  "type": "multiple_choice",
+                  "type": "writing",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Ew ji hemûyan mezintir e, ji bo bêtir şekir!",
+                    "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Ew ji hemûyan mezintir e, ji bo bêtir şekir!",
-                    "options": [
-                      "It’s the biggest of all, for more sugar!",
-                      "It’s the smallest of all, for less sugar!",
-                      "It’s bigger than the teapot, for more tea!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Be patient! First tea, then the story.",
+                    "accepted": [
+                      "Bêhnfireh be! Pêşî çay, paşê çîrok.",
+                      "Bêhnfireh be, pêşî çay, paşê çîrok."
+                    ]
                   }
                 },
                 {
@@ -2505,10 +2515,11 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Be patient: July went, August came!",
+                    "prompt": "We went to the mountains in July, and came back in August.",
                     "accepted": [
-                      "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
-                      "Bêhnfireh be, Tîrmeh çû, Tebax hat!"
+                      "Em di Tîrmehê de çûn çiyê, û di Tebaxê de vegeriyan.",
+                      "Em di Tîrmehê de çûn çiyê û di Tebaxê de vegeriyan.",
+                      "Di Tîrmehê de em çûn çiyê, û di Tebaxê de vegeriyan."
                     ]
                   }
                 },
@@ -2796,7 +2807,8 @@
                     "options": [
                       "Paşê ew di nav daran de geriya.",
                       "Baran bi tena serê xwe meşiya.",
-                      "Dapîr dibêje ku ew di zarokatiya xwe de serçopiya govendê bû."
+                      "Dapîr dibêje ku ew di zarokatiya xwe de serçopiya govendê bû.",
+                      "Dapîr ji hemûyan bêtir xebitî."
                     ],
                     "correctIndex": 0
                   }
@@ -2986,7 +2998,7 @@
                       "konan"
                     ],
                     "correctIndex": 0,
-                    "cue": "summer pasture in the mountains"
+                    "cue": "summer pastures"
                   }
                 },
                 {
@@ -3026,8 +3038,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ji bo çîroka tiştê kûvî! Divê em wî bibînin.",
-                        "en": "For the story of the wild thing! We have to see it."
+                        "text": "Havînê li gund germ e, lê li zozanan hewa xweş e.",
+                        "en": "In summer it’s hot in the village, but the weather on the pastures is lovely."
                       },
                       {
                         "speaker": 1,
@@ -3051,8 +3063,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Û Bozo? Ew bihêz e.",
-                        "en": "And Bozo? He’s strong."
+                        "text": "Û Bozo? Ew jî tê?",
+                        "en": "And Bozo? Is he coming too?"
                       },
                       {
                         "speaker": 0,
@@ -3130,7 +3142,7 @@
                     "options": [
                       "In the autumn, when the apples come.",
                       "There are forty apples in the basket.",
-                      "Lorîn has an apple in her mouth!"
+                      "In the spring, when the flowers come."
                     ],
                     "correctIndex": 0
                   }
@@ -3175,10 +3187,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "For the story of the wild thing! We have to see it.",
+                    "prompt": "In summer it’s hot in the village, but the weather on the pastures is lovely.",
                     "options": [
-                      "Ji bo çîroka tiştê kûvî! Divê em wî bibînin.",
-                      "Ji bo çîrok tiştê kûvî! Divê em wî bibînin.",
+                      "Havînê li gund germ e, lê li zozanan hewa xweş e.",
+                      "Havînê li gund germ e, lê li zozanan hewa sar e.",
                       "Hingê rovî ji daristanê derket."
                     ],
                     "correctIndex": 0
@@ -3189,16 +3201,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                    "say": "Em di Tîrmehê de çûn çiyê, û di Tebaxê de vegeriyan.",
                     "voice": "hamo",
-                    "prompt": "Bêhnfireh be: Tîrmeh çû, ___ hat!",
+                    "prompt": "Em di Tîrmehê de çûn çiyê, û di ___ de vegeriyan.",
                     "options": [
-                      "Tebax",
                       "Tebaxê",
-                      "zozan"
+                      "Tebax",
+                      "zozanê"
                     ],
                     "correctIndex": 0,
-                    "cue": "Be patient: July went, August came!"
+                    "cue": "August"
                   }
                 },
                 {
@@ -3268,9 +3280,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "First, I went to the market, for a donkey.",
+                    "prompt": "Be patient! First tea, then the story.",
                     "accepted": [
-                      "Pêşî, ez çûm bazarê, ji bo kerekî."
+                      "Bêhnfireh be! Pêşî çay, paşê çîrok.",
+                      "Bêhnfireh be, pêşî çay, paşê çîrok."
                     ]
                   }
                 },
@@ -3348,15 +3361,14 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "picture",
-                    "say": "sêv",
-                    "voice": "hevalo",
-                    "prompt": "sêv",
+                    "ask": "meaning",
+                    "say": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
+                    "voice": "hamo",
+                    "prompt": "Peyamek ji Bişar hat, ji çiyê. Guhdarî bike!",
                     "options": [
-                      "apple",
-                      "tent",
-                      "horse",
-                      "bread"
+                      "A message has come from Bişar, from the mountain. Listen!",
+                      "Bişar has gone up the mountain. Wait for him!",
+                      "A message has come from the town. Read it!"
                     ],
                     "correctIndex": 0
                   }
@@ -3565,7 +3577,7 @@
                     "options": [
                       "Dema ku ew panzdeh salî bû, ew li çiyê geriya.",
                       "Dema ku Dapîr hejdeh salî bû, ew li hespekî siwar bû û hilkişiya vî çiyayî.",
-                      "Dema ku ez xort bûm, ez vegeriyam Sêvanê û li vir mam."
+                      "Dema ku ez xort bûm, ez hatim Sêvanê û li vir mam."
                     ],
                     "correctIndex": 0
                   }
@@ -3891,7 +3903,7 @@
                     "options": [
                       "Ez werîsên konan kontrol dikim: ew bihêz in.",
                       "Berbangê ez ê hişyar rabim!",
-                      "Ez telefonî Lorînê dikim."
+                      "Ez telefonî Bişar dikim."
                     ],
                     "correctIndex": 0
                   }
@@ -4214,13 +4226,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                    "say": "Em di Tîrmehê de çûn çiyê, û di Tebaxê de vegeriyan.",
                     "voice": "hamo",
-                    "prompt": "Bêhnfireh be: Tîrmeh çû, Tebax hat!",
+                    "prompt": "Em di Tîrmehê de çûn çiyê, û di Tebaxê de vegeriyan.",
                     "options": [
-                      "Be patient: July went, August came!",
-                      "July went, August came, but Bozo didn’t come!",
-                      "Be patient, Baran: the story is long!"
+                      "We went to the mountains in July, and came back in August.",
+                      "We went to the mountains in August, and came back in July.",
+                      "We stayed in the village in July and August."
                     ],
                     "correctIndex": 0
                   }
@@ -4260,7 +4272,8 @@
                     "options": [
                       "Bozo dîsa reviya! Ez gazî wî dikim, lê ew nayê.",
                       "Bozo dîsa revîn! Ez gazî wî dikim, lê ew nayê.",
-                      "Hinek. Lê ew dîsa jî raza, destên wî li ser singê wî."
+                      "Hinek. Lê ew dîsa jî raza, destên wî li ser singê wî.",
+                      "Bêhnfireh be! Pêşî çay, paşê çîrok."
                     ],
                     "correctIndex": 0
                   }

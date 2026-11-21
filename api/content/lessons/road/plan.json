@@ -2301,7 +2301,7 @@
       "cefr": "A2",
       "titleKu": "Duh",
       "titleEn": "Yesterday",
-      "story": "At breakfast Baran finally tells what happened yesterday: he took Bozo to the river, Bozo saw a goat across the valley and ran off, Baran ran after him, got lost among the rocks, sat down under a walnut tree and fell asleep, and came home in the dark by the stars, to find that Bozo had been home for hours, eating Dapîr’s mint. Then everyone tells their own yesterday, and Hamo tells the stories of long ago: the wolf he met in Kobanî at nine (it gets bigger every time; on the phone his mother says it was the neighbours’ dog), his first summers in Sêvan, Dapîr’s summers on the pastures as a girl. A message comes down from Bişar the shepherd: something wild and shy, like a deer, comes to his tent every night. Hevalo’s ears go straight up, and Hamo decides that this summer everyone goes up to the zozan. Then Bozo runs away again, and is found at the spring with Ferhad’s little donkey, very much in love.",
+      "story": "At breakfast Baran finally tells what happened yesterday: he took Bozo to the river, Bozo saw a goat across the valley and ran off, Baran ran after him, got lost among the rocks, sat down under a walnut tree and fell asleep, and came home in the dark by the stars, to find that Bozo had been home for hours, eating Dapîr’s mint. Then everyone tells their own yesterday, and the days of long ago: Hamo as a handsome young man with a black moustache, the wolves that roam around the village when it gets dark and the bears and foxes of the forest, and Dapîr’s summers on the pastures as a girl. A message comes down from Bişar the shepherd: something wild and shy, like a deer, comes to his tent every night. Hevalo’s ears go straight up, and Hamo decides that this summer everyone goes up to the zozan. Then Bozo runs away again, and is found at the spring with Ferhad’s little donkey, very much in love.",
       "recorder": "hamo",
       "skills": [
         {
@@ -2386,7 +2386,7 @@
               "titleKu": "Dema ez zarok bûm",
               "titleEn": "When I was a child",
               "focus": "meet",
-              "beat": "Hamo sits back, strokes his moustache and begins the old days: as children he and Lorîn lived every summer in Sêvan with their aunt; every morning they went out early to the orchard and came back only when the stars came out, and as a young man he came back and stayed. Nazê pours more tea: this will take a while. Dapîr says that when she was young the summers were longer; Hamo says they were the same length, only with fewer clocks.",
+              "beat": "Hamo sits back, strokes his moustache and begins the old days: when he was a boy in Kobanî, and when he was a handsome young man in the traditional suit, with a moustache as black as the night. Last week Dapîr was ill, and now she is better; the day before yesterday Bozo ran away, again; and on long summer nights, when the stars came out, everyone came home happy. Nazê pours more tea: this will take a while. Dapîr says that when she was young the summers were longer; Hamo says they were the same length, only with fewer clocks.",
               "voice": "hamo",
               "new": [
                 {"ku": "vegeriya", "en": "came back (past of vegerîn)", "pos": "verb", "forms": ["vegeriya", "vegeriyam", "vegeriyayî", "vegeriyan", "venegeriya"]},
@@ -2401,10 +2401,10 @@
             {
               "key": "u09s2l2",
               "position": 2,
-              "titleKu": "Hamo û gur",
-              "titleEn": "Hamo and the wolf",
+              "titleKu": "Gur, hirç û rovî",
+              "titleEn": "Wolf, bear and fox",
               "focus": "build",
-              "beat": "Hamo’s favourite story: at nine, one dark night behind his parents’ house in Kobanî, he met a wolf as big as a horse, which came out of the forest (three trees) and walked round and round him. Or was it a bear? A fox, says Hêvî. Hamo phones his mother to settle it, and then Edûl laughs: it was the neighbours’ dog.",
+              "beat": "Hamo tells you about the animals of the hills. When it gets dark, wolves roam around the village; bears and wolves live in the forest, where it is dark even at noon; and once, when the children sat around the fire, a fox came out of the trees to look at them. And the big wolf everyone saw at the gate one winter night? It wasn’t a wolf at all: it was the neighbours’ dog. Hêvî laughs until she has to sit down.",
               "voice": "hamo",
               "new": [
                 {"ku": "gur", "en": "wolf", "pos": "noun", "gender": "m", "forms": ["gur", "gurên", "guran", "gurek", "gurê", "gurekî", "gurî"]},
@@ -2437,7 +2437,7 @@
               "titleKu": "Çîroka rast",
               "titleEn": "The true story",
               "focus": "review",
-              "beat": "Hamo tells the wolf story again (the wolf is bigger now), and the children tell it back to him, each with a different animal. Then everyone tells about when they were small, and the best story, everyone agrees, is Dapîr’s: the year she found a lamb in the snow and carried it home under her shawl.",
+              "beat": "Everyone tells a story from when they were small, each with a different animal in it: a wolf at the gate, a bear in the forest, Hêvî’s clever fox. The best story, everyone agrees, is Dapîr’s, because it is true: the year she found a lamb in the snow and carried it home under her shawl.",
               "voice": "hamo",
               "new": []
             }
@@ -2456,7 +2456,7 @@
               "titleKu": "Pêşî, paşê",
               "titleEn": "First, then",
               "focus": "meet",
-              "beat": "Hamo teaches Baran how to tell a story properly, first, then, in the end, using the most exciting day of his life: the day he bought Bozo, which lasted from July to August because Bozo would not come. Baran wants to get to the end at once; Hamo tells him to be patient. A good story, he says, is like tea: it needs time.",
+              "beat": "Hamo teaches Baran how to tell a story properly, first, then, in the end: first we went to the market, then to the river, and in the end we came home; in July we went up the mountain, and in August we came back. Baran wants to get to the end at once. Be patient, says Hamo: first tea, then the story. A good story, he says, is like tea: it needs time.",
               "voice": "hamo",
               "new": [
                 {"ku": "di dawiyê de", "en": "in the end, finally", "pos": "phrase", "forms": ["di", "dawiyê", "de"]},
@@ -2492,7 +2492,7 @@
               "titleKu": "Em ê biçin zozanan!",
               "titleEn": "We’ll go to the zozan!",
               "focus": "talk",
-              "beat": "Hamo makes a decision: this summer everyone, the neighbours, Dapîr and you, will move up to the zozan, to Bişar’s tent, to see his mysterious visitor. He asks you whether you have ever slept in a tent. The packing begins at once, and Bozo, hearing the word “zozan”, runs away again.",
+              "beat": "Hamo makes a decision: this summer everyone, the neighbours, Dapîr and you, will move up to the zozan, to Bişar’s tent, to see his mysterious visitor. In summer the village is hot, he says, but up on the pastures the weather is lovely. He asks you whether you have ever slept in a tent. The packing begins at once, and Bozo, hearing the word “zozan”, runs away again.",
               "voice": "hamo",
               "new": [
                 {"ku": "zozan", "en": "summer pasture(s) in the mountains", "pos": "noun", "gender": "f", "forms": ["zozan", "zozanê", "zozanan"]},
@@ -2590,7 +2590,7 @@
       "cefr": "B1",
       "titleKu": "Zozan",
       "titleEn": "The summer pastures",
-      "story": "The shepherd on the path is Bişar, Hamo’s old friend, and he leads everyone up to the zozan, the high summer pastures, where his black tents stand by a cold spring. Life up there is milk and bread and work: milking at dawn, churning butter in a goatskin, baking bread on the saj, songs at night under more stars than Baran can count. The mysterious visitor is Zerê, a shy wild doe who comes every night for the salt Bişar puts out, and from the moment Hevalo sees her he has eyes for nobody else: he brings her apples, he forgets his own, and one morning he is gone with the whole sack. Following the two deer, the camp finds a hidden lake and an old stone house: Dapîr’s summer home when she was a girl, where, she remembers, a young flute player from Kobanî used to play for the shepherds by the lake. It was Hamo’s father. You learn the past of verbs that take an object (min nan xwar, te çi dît?) and the past continuous for the old summers. At the end of the summer Hevalo says a long goodbye to Zerê, and everyone goes back down to the village with a notebook full of stories.",
+      "story": "The shepherd on the path is Bişar, Hamo’s old friend, and he leads everyone up to the zozan, the high summer pastures, where his black tents stand by a cold spring. Life up there is milk and bread and work: milking at dawn, churning butter in a goatskin, baking bread on the saj, songs at night under more stars than Baran can count. The mysterious visitor is Zerê, a shy wild doe who comes every night for the salt Bişar puts out, and from the moment Hevalo sees her he has eyes for nobody else: he brings her apples, he forgets his own, and one morning he is gone with the whole sack. Following the two deer, the camp finds a hidden lake and an old stone house: Dapîr’s summer home when she was a girl, where, she remembers, a young flute player from Kobanî used to play for the shepherds by the lake. You learn the past of verbs that take an object (min nan xwar, te çi dît?) and the past continuous for the old summers. At the end of the summer Hevalo says a long goodbye to Zerê, and everyone goes back down to the village with a notebook full of stories.",
       "recorder": "hamo",
       "skills": [
         {
@@ -2766,7 +2766,7 @@
               "titleKu": "Dema Dapîr keçik bû",
               "titleEn": "When Dapîr was a girl",
               "focus": "build",
-              "beat": "Dapîr tells: when she was a girl, the women used to milk while the girls sang, and at night the whole household slept on felt rugs by the fire, even when lightning lit the sky. Her mother used to sing her a lullaby; she came up here nineteen summers in a row. And one summer a young flute player from Kobanî came up and played for the shepherds by the lake every evening. His name was Ibrahîm. Hamo, for once in his life, has nothing to say.",
+              "beat": "Dapîr tells: when she was a girl, the women used to milk while the girls sang, and at night the whole household slept on felt rugs by the fire, even when lightning lit the sky. Her mother used to sing her a lullaby; she came up here nineteen summers in a row. And every evening a young man from Kobanî used to play the flute for the shepherds by the lake. Dapîr still remembers the tune, and hums it for you.",
               "voice": "hamo",
               "new": [
                 {"ku": "lêxist", "en": "played (an instrument); hit (past of lêxistin)", "pos": "verb", "forms": ["lêxist", "lêdixist"]},
@@ -2799,7 +2799,7 @@
               "titleKu": "Dema ku em li vir bûn",
               "titleEn": "When we were here",
               "focus": "review",
-              "beat": "On the last evening Dapîr hums the tune the flute player used to play by the lake, and Bişar remembers his own father dancing to it. Hamo tells what his father told him about these mountains, and the fire burns low while the old summers come back one by one.",
+              "beat": "On the last evening Dapîr hums the tune the flute player used to play by the lake, and Bişar remembers his own father dancing to it. Hamo tells what the old shepherds used to say about these mountains, and the fire burns low while the old summers come back one by one.",
               "voice": "hamo",
               "new": []
             }
@@ -2818,7 +2818,7 @@
               "titleKu": "Çi qewimî?",
               "titleEn": "What happened?",
               "focus": "meet",
-              "beat": "Back in Sêvan, everyone tells the summer at once. The neighbours who stayed behind ask what happened. Baran tells the whole journey as a great adventure; Hêvî shows the flowers she pressed; Hamo shows the photos he took, mostly of his own thumb. The biggest event, everyone agrees, was the lake, and Hevalo’s face whenever someone says “Zerê”.",
+              "beat": "Back in Sêvan, everyone tells the summer at once. The neighbours who stayed behind ask what happened. Baran tells the whole journey as a great adventure; Hêvî shows the flowers she pressed; Hamo shows the photos he took, mostly of his own finger. The biggest event, everyone agrees, was the lake, and Hevalo’s face whenever someone says “Zerê”.",
               "voice": "hamo",
               "new": [
                 {"ku": "qewimîn", "en": "to happen", "pos": "verb", "forms": ["qewimîn", "diqewime", "qewimî"]},

@@ -134,7 +134,7 @@
     "u09s1l3": {"shot": "close", "cast": [{"who": "hamo", "pose": "laughing", "x": 0.24}], "things": [{"show": "walnutTree", "at": "back", "x": 0.7}, {"show": "walnut", "at": "ground", "x": 0.56, "size": 1.4}]},
     "u09s1l4": {"shot": "wide", "set": "night", "cast": [], "things": [{"show": "tent", "at": "back", "x": 0.78}, {"show": "donkey", "at": "ground", "x": 0.42}]},
     "u09s2l1": {"shot": "wide", "cast": [{"who": "hamo", "pose": "telling", "x": 0.22}], "things": [{"show": "appleTree", "at": "back", "x": 0.46}, {"show": "appleTree", "at": "back", "x": 0.82, "size": 0.8}]},
-    "u09s2l2": {"shot": "mid", "cast": [{"who": "hamo", "pose": "shocked", "x": 0.26}], "things": [{"show": "dog", "at": "ground", "x": 0.7}, {"show": "phone", "at": "hand", "of": "hamo"}]},
+    "u09s2l2": {"shot": "mid", "cast": [{"who": "hamo", "pose": "laughing", "x": 0.26}], "things": [{"show": "dog", "at": "ground", "x": 0.7}]},
     "u09s2l3": {"shot": "wide", "cast": [{"who": "hamo", "pose": "telling", "x": 0.18}, {"who": "hevalo", "pose": "curious", "x": 0.86}], "things": [{"show": "donkey", "at": "ground", "x": 0.54}, {"show": "letter", "at": "on", "on": 0, "x": 0.0, "size": 0.8}]},
     "u09s2l4": {"shot": "close", "cast": [{"who": "hamo", "pose": "telling", "x": 0.22}], "things": [{"show": "wolf", "at": "ground", "x": 0.58}, {"show": "fox", "at": "ground", "x": 0.8}]},
     "u09s3l1": {"shot": "wide", "cast": [{"who": "hamo", "pose": "proud", "x": 0.24}], "things": [{"show": "donkey", "at": "ground", "x": 0.66}, {"show": "tea", "at": "hand", "of": "hamo"}]},
