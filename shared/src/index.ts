@@ -242,28 +242,20 @@ export {
 } from './lesson-path.js';
 /** A topic's rounds: the ring round its stop and the stars under it, from how often each lesson was finished. */
 export { PATH_RING, TOPIC_STARS, nextInRound, ringPieces, roundStars, starPath, topicRounds, type TopicRounds } from './lesson-rounds.js';
-/** The land the lesson path runs through: each unit's landscape, landmark and host, and where they stand. */
+/** The land the lesson path runs through: each unit's landscape, its landmark and the person who belongs to it. */
 export {
   PATH_GROUNDS,
   PATH_LANDMARKS,
   PATH_LANDS,
   PATH_MOTION,
   PATH_SCENERY,
-  PATH_TRAIL,
-  hopAt,
-  hostBox,
-  landClear,
   landmarkBox,
-  mascotBox,
   pathLand,
-  trailStones,
   type PathBox,
   type PathGround,
   type PathHost,
   type PathLand,
   type PathLandmark,
-  type TrailStone,
-  type WorldStop,
 } from './path-world.js';
 /** Practice as a hub: its kinds of session, what each draws on, and what the hub shows. */
 export { PRACTICE_MODES, PRACTICE_MODE_TYPES, type PracticeHub, type PracticeHubUnit, type PracticeMode } from './practice.js';
@@ -730,22 +722,17 @@ export {
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
   PATH_STOP_TONES,
-  pathGroundColour,
-  pathLandSvg,
   pathLandmarkSvg,
   chapterBannerSvg,
   type ChapterBannerOptions,
   pathLoopSvg,
   pathSignpostSvg,
-  pathStonesSvg,
   pathStopSvg,
   type PathSignpostOptions,
-  type PathLandOptions,
   type PathLandmarkOptions,
   type PathLoop,
   type PathLoopKind,
   type PathLoopOptions,
-  type PathStonesOptions,
   type PathStopLook,
   type PathStopOptions,
   BADGES as ART_BADGES,
