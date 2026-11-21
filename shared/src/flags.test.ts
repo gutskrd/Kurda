@@ -23,6 +23,14 @@ describe('flags', () => {
     expect(svg.match(/Z/g)).toHaveLength(21);
   });
 
+  it('draws the sun as large as the flag has it: rays a quarter of the height from the centre, into the red and green', () => {
+    const svg = flagSvg('KU')!;
+    const rays = svg.match(/<path d="(M[^"]+)"/)![1]!;
+    const points = [...rays.matchAll(/(-?[\d.]+) (-?[\d.]+)/g)].map((m) => Math.hypot(Number(m[1]) - 513 / 2, Number(m[2]) - 342 / 2));
+    expect(Math.max(...points)).toBeCloseTo(342 / 4, 0);
+    expect(Math.min(...points)).toBeCloseTo(342 * 0.124, 0);
+  });
+
   it('has nothing for a code that is not a country’s', () => {
     expect(flagSvg('XX')).toBeNull();
     expect(flagSvg('nl"><script>')).toBeNull();

@@ -9,13 +9,16 @@ import * as STATES from 'country-flag-icons/string/3x2';
 const W = 513;
 const H = 342;
 
-/** Red, white and green, with the golden sun of twenty-one rays in the middle. */
+/**
+ * Red, white and green, with the golden sun of twenty-one rays in the middle, its rays reaching a quarter of the
+ * flag's height from the centre, well into the red and the green, and its disc an eighth, as the flag is drawn.
+ */
 function kurdistan(): string {
   const cx = W / 2;
   const cy = H / 2;
   const n = 21;
-  const tip = 52;
-  const foot = 28;
+  const tip = H / 4;
+  const foot = H * 0.124;
   const pts: string[] = [];
   for (let i = 0; i < n; i++) {
     // One ray points straight up; each is a narrow triangle whose base meets the next one's at the disc.
@@ -30,7 +33,7 @@ function kurdistan(): string {
     `<path fill="#ED2024" d="M0 0h${W}v${band}H0z"/>` +
     `<path fill="#FFF" d="M0 ${band}h${W}v${band}H0z"/>` +
     `<path fill="#278E43" d="M0 ${band * 2}h${W}v${band}H0z"/>` +
-    `<g fill="#FEBD11"><circle cx="${cx}" cy="${cy}" r="${foot + 1}"/><path d="${pts.join('')}"/></g>` +
+    `<g fill="#FEBD11"><circle cx="${cx}" cy="${cy}" r="${(foot + 0.5).toFixed(1)}"/><path d="${pts.join('')}"/></g>` +
     `</svg>`
   );
 }
