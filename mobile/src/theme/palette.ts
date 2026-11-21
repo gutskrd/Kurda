@@ -107,6 +107,8 @@ export interface Palette {
   glassRimFar: string;
   /** The breath of tint on clear glass that bends the page, so the words on it stay readable. */
   glassTint: string;
+  /** A control's disc where it stands on a drawing (a chapter's banner): the page's colour, mostly opaque. */
+  onArt: string;
 
   /*
    * Gold for text, which is not gold for fills. The sun's gold (`gold`) reads as text on the dark page, but is 1.9:1
@@ -172,6 +174,7 @@ export const LIGHT: Palette = {
   glassRim: 'rgba(255,255,255,0.9)',
   glassRimFar: 'rgba(20,17,46,0.07)',
   glassTint: 'rgba(255,255,255,0.22)',
+  onArt: 'rgba(255,255,255,0.78)',
   goldText: '#14112E',
 };
 
@@ -229,6 +232,7 @@ export const DARK: Palette = {
   glassRim: 'rgba(255,255,255,0.3)',
   glassRimFar: 'rgba(255,255,255,0.1)',
   glassTint: 'rgba(30,27,46,0.3)',
+  onArt: 'rgba(16,14,29,0.6)',
   goldText: '#F3F1FB',
 };
 

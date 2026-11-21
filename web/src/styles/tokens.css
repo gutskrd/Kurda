@@ -165,6 +165,8 @@
      deeper so words behind never fight the chrome's */
   --glass-tint: transparent;
   --glass-tint-still: rgba(30, 27, 46, 0.5);
+  /* a control's disc where it stands on a drawing (a chapter's banner) */
+  --on-art: rgba(16, 14, 29, 0.6);
   --glass-optics: saturate(1.7) brightness(0.92);
   --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(255, 255, 255, 0.1);
 
@@ -263,6 +265,7 @@
   --shadow-raised: 0 6px 16px rgba(46, 40, 74, 0.12);
   --glass-tint: transparent;
   --glass-tint-still: rgba(255, 255, 255, 0.55);
+  --on-art: rgba(255, 255, 255, 0.78);
   --glass-optics: saturate(1.8) brightness(1.08);
   --glass-shadow: 0 10px 30px rgba(46, 40, 74, 0.12), 0 0 0 0.5px rgba(46, 40, 74, 0.08), inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
 

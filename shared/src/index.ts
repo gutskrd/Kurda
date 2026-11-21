@@ -732,6 +732,8 @@ export {
   pathGroundColour,
   pathLandSvg,
   pathLandmarkSvg,
+  chapterBannerSvg,
+  type ChapterBannerOptions,
   pathLoopSvg,
   pathSignpostSvg,
   pathStonesSvg,

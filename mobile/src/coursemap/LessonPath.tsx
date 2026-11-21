@@ -1,11 +1,13 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Animated, Dimensions, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 import { Pressable } from '../theme/Pressable';
 import {
   PATH_GEOMETRY,
   PATH_MOTION,
   PATH_RETURN,
+  chapterBannerSvg,
   lean,
   lessonPath,
   mascotSpot,
@@ -450,7 +452,6 @@ export const LessonPath = memo(function LessonPath({
                     <UnitFace
                       number={unit.number}
                       title={unit.title}
-                      tone={tone}
                       section={named ? unit.section : null}
                       openGuide={guideOf(unit)}
                       onRail={onOpenRail}
@@ -682,14 +683,14 @@ function unitHeading(number: string, title: string, section?: string | null): st
 }
 
 /**
- * A unit's heading in its colour: "Section 1 · Chapter 2" over its name (no section in a single-section course),
- * with the guide's book button where the unit has notes and the unit map beside it. PinnedUnit and Learn's next-step
- * card wear the same face.
+ * A unit's heading on its own painted horizon (@kurda/shared's chapterBannerSvg): the chapter's hills and ground under a
+ * day sky, or a starry night in dark mode, with "Section 1 · Chapter 2" over its name on the open sky (no section in a
+ * single-section course). Where the guide's book and the unit map stand at the far end the landmark is left out, since
+ * the road below shows it; Learn's next-step card shows it. PinnedUnit wears the same face.
  */
 export function UnitFace({
   number,
   title,
-  tone,
   section,
   openGuide,
   onRail,
@@ -697,24 +698,55 @@ export function UnitFace({
 }: {
   number: number;
   title: string;
-  tone: ToneColors;
   section: number | null;
   openGuide?: () => void;
   onRail?: () => void;
   testID?: string;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
+  const { colors, scheme } = useTheme();
   const dir = useDirection();
+  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
   const chapter = t('coursemap.path.unit', { n: formatNumber(number, locale) });
   const eyebrow = section !== null ? t('coursemap.path.sectionUnit', { section: formatNumber(section, locale), unit: formatNumber(number, locale) }) : chapter;
   const sectionWords = section !== null ? t('coursemap.path.section', { n: formatNumber(section, locale) }) : null;
+  const land = pathLand(number - 1);
+  const buttons = Boolean(openGuide || onRail);
+  const art = useMemo(
+    () =>
+      box
+        ? chapterBannerSvg({
+            ground: land.ground,
+            landmark: buttons ? undefined : land.landmark,
+            width: box.width,
+            height: box.height,
+            dark: scheme === 'dark',
+            rtl: dir.rtl,
+            idPrefix: `unitface${number}${scheme}${buttons ? 'b' : 'l'}`,
+          })
+        : null,
+    [box, land, buttons, scheme, dir.rtl, number],
+  );
   return (
-    <View style={[styles.pinLip, { backgroundColor: tone.lip }]} testID={testID}>
-      <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: tone.fill }]}>
-        <View style={styles.pinWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(chapter, title, sectionWords)}>
+    <View
+      style={styles.banner}
+      testID={testID}
+      onLayout={(e: LayoutChangeEvent) => {
+        const { width, height } = e.nativeEvent.layout;
+        setBox((was) => (was && Math.round(was.width) === Math.round(width) && Math.round(was.height) === Math.round(height) ? was : { width, height }));
+      }}
+    >
+      {art && box ? <SvgXml xml={art} width={box.width} height={box.height} style={StyleSheet.absoluteFill} /> : null}
+      <View style={[styles.pin, { flexDirection: dir.row }]}>
+        <View
+          style={styles.pinWords}
+          accessible
+          accessibilityRole="header"
+          accessibilityLabel={unitHeading(chapter, title, sectionWords)}
+        >
           {/* Both wrap: "Abschnitt 1 · Kapitel 2" is long beside two buttons on a narrow phone. */}
-          <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{eyebrow}</Text>
-          <Text style={[styles.pinTitle, dir.free, { color: tone.ink }]}>{title}</Text>
+          <Text style={[styles.eyebrow, dir.text, { color: colors.textPrimary }]}>{eyebrow}</Text>
+          <Text style={[styles.pinTitle, dir.free, buttons ? null : styles.pinTitleBesideLandmark, { color: colors.textPrimary }]}>{title}</Text>
         </View>
         {openGuide ? (
           <Pressable
@@ -722,9 +754,9 @@ export function UnitFace({
             accessibilityRole="button"
             accessibilityLabel={t('coursemap.path.guideFor', { unit: title })}
             testID="lp-unit-guide"
-            style={({ pressed }) => [styles.pinButton, { backgroundColor: wash(tone.ink), opacity: pressed ? pressedDim : 1 }]}
+            style={({ pressed }) => [styles.pinButton, { backgroundColor: colors.onArt, opacity: pressed ? pressedDim : 1 }]}
           >
-            <Icon name="book" size={20} color={tone.ink} />
+            <Icon name="book" size={20} color={colors.textPrimary} />
           </Pressable>
         ) : null}
         {onRail ? (
@@ -733,9 +765,9 @@ export function UnitFace({
             accessibilityRole="button"
             accessibilityLabel={t('learn.map.title')}
             testID="lp-unit-rail"
-            style={({ pressed }) => [styles.pinButton, { backgroundColor: wash(tone.ink), opacity: pressed ? pressedDim : 1 }]}
+            style={({ pressed }) => [styles.pinButton, { backgroundColor: colors.onArt, opacity: pressed ? pressedDim : 1 }]}
           >
-            <Icon name="flag" size={20} color={tone.ink} />
+            <Icon name="flag" size={20} color={colors.textPrimary} />
           </Pressable>
         ) : null}
       </View>
@@ -865,7 +897,7 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
     // Only a new unit turns it, not a new object for the same one.
   }, [unit.unitId, reduce]);
   const face = (u: UnitPlace, rail?: () => void) => (
-    <UnitFace number={u.number} title={u.title} tone={u.tone} section={u.section} openGuide={u.openGuide} onRail={rail} />
+    <UnitFace number={u.number} title={u.title} section={u.section} openGuide={u.openGuide} onRail={rail} />
   );
   return (
     <Animated.View testID="lp-pinned-unit" style={dropIn}>
@@ -933,9 +965,13 @@ const styles = StyleSheet.create({
   pathUnderHead: { marginTop: -spacing.md },
   eyebrow: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
   pinLip: { borderRadius: radii.lg, paddingBottom: 4, zIndex: 2 },
-  pin: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingStart: spacing.md, paddingEnd: spacing.xs },
+  // The painted horizon: tall enough for its hills under the words, clipped to the card's corner.
+  banner: { borderRadius: radii.lg, overflow: 'hidden', zIndex: 2, minHeight: 112 },
+  pin: { alignItems: 'flex-start', gap: spacing.xs, borderRadius: radii.lg, paddingTop: spacing.md, paddingBottom: 48, paddingStart: spacing.md, paddingEnd: spacing.sm },
   pinWords: { flex: 1, gap: 2 },
-  pinTitle: { ...display(typography.sizes.text) },
+  pinTitle: { ...display(typography.sizes.title) },
+  // The name keeps clear of the landmark at the far end, which stands below the line above it.
+  pinTitleBesideLandmark: { paddingEnd: 96 },
   pinButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm + 4 },
   cardRow: { alignItems: 'center', gap: spacing.sm + 4 },

@@ -94,6 +94,19 @@ export function pathGroundShade(ground: PathGround, dark = false): string {
   return dusk(land.shade, dark);
 }
 
+/** A land's far and near hills and its ground, by day or evening, for a picture of the land seen from afar (a chapter's banner). */
+export function pathGroundView(ground: PathGround, dark = false): { far: string; near: string; base: string; shade: string; snow: boolean } {
+  const land = LANDS[ground];
+  if (!land) throw new RangeError(`art: no ground ${String(ground)}`);
+  return {
+    far: dusk(land.hills.far, dark),
+    near: dusk(land.hills.near, dark),
+    base: dusk(land.base, dark),
+    shade: dusk(land.shade, dark),
+    snow: land.hills.snow === true,
+  };
+}
+
 /** The road's widths: its edge, the track, and the two ruts in it. */
 const ROAD = { edge: 46, face: 38, ruts: 20 } as const;
 
