@@ -1768,6 +1768,7 @@ export const ku: Catalogue = {
   'learn.continue': 'Berdewam bike',
   'learn.openMap': 'Nexşeya kursê',
   'coursemap.back': 'Vegere Fêrbûnê',
+  'coursemap.lessonOf': 'Wane {n} ji {total}',
   'coursemap.progress': '{done} ji {total} waneyan qediyan',
   'coursemap.state.locked': 'Hê ne vekirî ye',
   'coursemap.state.open': 'Vekirî',

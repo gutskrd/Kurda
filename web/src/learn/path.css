@@ -682,7 +682,7 @@ button.lp-scard:focus-visible {
   color: #fffaf0;
 }
 .lp-node.is-current .lp-node-glyph {
-  color: var(--u-ink);
+  color: var(--accent-ink);
 }
 /* On an open stop's cream: deep by day; by evening the cream stays light, so the valley's ink. */
 .lp-node.is-available .lp-node-glyph,
@@ -714,19 +714,6 @@ button.lp-scard:focus-visible {
   box-shadow: 0 0 0 2px var(--u-fill);
 }
 
-/* The current stop sits in a soft pool of its unit's light. */
-.lp-glow {
-  /* The stop's own base draws its ring of light on the road now. */
-  display: none;
-  position: absolute;
-  inset-inline-start: -30px;
-  top: 14px;
-  width: 132px;
-  height: 64px;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--u-fill) 60%, transparent), color-mix(in srgb, var(--u-fill) 25%, transparent) 55%, transparent);
-  pointer-events: none;
-}
 /*
  * A topic's ring (learn/PathRing.tsx): a piece per lesson, the track until finished in the current round, violet then,
  * and gold all round after three rounds, each piece edged a step darker. Returning from a lesson the new pieces fill in
@@ -743,10 +730,6 @@ button.lp-scard:focus-visible {
 }
 [dir='rtl'] .lp-ring {
   scale: -1 1;
-}
-/* barely there: the lessons waiting in a topic not open yet, without crowding the road */
-.lp-ring.is-faint {
-  opacity: 0.35;
 }
 .lp-ring-edge,
 .lp-ring-piece {
@@ -817,43 +800,11 @@ button.lp-scard:focus-visible {
   stroke: #a8691a;
 }
 
-/* The learner on the current stop: their picture in a ring of the unit's colour, on a stem standing on the stop's face. */
-.lp-learner {
-  position: absolute;
-  z-index: 3;
-  inset-inline-start: calc(50% + var(--tx, 0px) - 25px);
-  width: 50px;
-  margin-top: -70px;
-  display: grid;
-  justify-items: center;
-  pointer-events: none;
-  list-style: none;
-}
-.lp-learner-ring {
-  display: grid;
-  place-items: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: 3px solid var(--u-fill);
-  background: var(--surface-solid);
-  overflow: hidden;
-}
-.lp-learner-ring .friend-avatar {
-  width: 42px;
-  height: 42px;
-}
-.lp-learner-stem {
-  width: 4px;
-  height: 12px;
-  border-radius: 0 0 2px 2px;
-  background: var(--u-fill);
-}
-
-/* "Start" over the learner: a chunky flag in the unit's colour on its darker lip, outlined like the stops. */
+/* "Start" over the stop to do now: a chunky flag in the page's ink, on a darker lip. */
 .lp-callout {
   position: absolute;
-  bottom: 118px;
+  /* clear of the stop's ring */
+  bottom: calc(var(--node) + 20px);
   inset-inline-start: calc(50% + var(--x, 0px));
   translate: -50% 0;
   z-index: 4;
@@ -863,20 +814,14 @@ button.lp-scard:focus-visible {
   padding: 0 var(--space-4);
   border: 0;
   border-radius: var(--r-pill);
-  /* By evening a cream pill with the valley's ink; by day an ink pill with cream words. */
-  background: #fffaf0;
-  color: #3d2a1f;
+  background: var(--primary);
+  color: var(--primary-ink);
   font-size: var(--text);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 0 3px 0 #d6c7a6;
-}
-:root[data-theme='light'] .lp-callout {
-  background: #3d2a1f;
-  color: #fffaf0;
-  box-shadow: 0 3px 0 #24170f;
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.28);
 }
 [dir='rtl'] .lp-callout {
   translate: 50% 0;
@@ -894,11 +839,8 @@ button.lp-scard:focus-visible {
   margin-top: -7px;
 }
 .lp-callout:hover {
-  color: #3d2a1f;
+  color: var(--primary-ink);
   text-decoration: none;
-}
-:root[data-theme='light'] .lp-callout:hover {
-  color: #fffaf0;
 }
 .lp-callout:focus-visible {
   outline: 3px solid var(--focus);
@@ -1006,13 +948,12 @@ button.lp-scard:focus-visible {
 /* ---- motion ----------------------------------------------------------------- */
 
 /*
- * Only the unit in view (`is-seen`) moves, and nothing under reduced motion: the current stop and learner bob, a unit's
+ * Only the unit in view (`is-seen`) moves, and nothing under reduced motion: the current stop bobs, a unit's
  * stops rise into place the first time it is seen (`is-rising`; `is-waiting` keeps them underground until then), and
  * the landmark's loop turns.
  */
 @media (prefers-reduced-motion: no-preference) {
-  .lp-unit.is-seen .lp-stop.is-here:not(.is-open),
-  .lp-unit.is-seen .lp-learner:not(.is-hopping) {
+  .lp-unit.is-seen .lp-stop.is-here:not(.is-open) {
     animation: lp-bob 1.2s ease-in-out infinite alternate;
   }
   .lp-unit.is-waiting .lp-node {
@@ -1043,10 +984,6 @@ button.lp-scard:focus-visible {
   .lp-unit.is-seen .lp-loop.is-sign {
     transform-origin: 50% 0;
     animation: lp-swing 2.8s ease-in-out infinite;
-  }
-  /* The learner hops from the finished stop to the current one. */
-  .lp-learner.is-hopping {
-    animation: lp-hop 520ms ease-in-out both;
   }
   /* A chest the lesson earned wobbles as the skill pops, then bursts open. */
   .lp-node.is-wobbling .lp-node-face {
@@ -1131,17 +1068,6 @@ button.lp-scard:focus-visible {
     rotate: -9deg;
   }
 }
-@keyframes lp-hop {
-  from {
-    translate: var(--hx) var(--hy);
-  }
-  50% {
-    translate: calc(var(--hx) / 2) calc(var(--hy) / 2 - 46px);
-  }
-  to {
-    translate: 0 0;
-  }
-}
 @keyframes lp-wobble {
   25% {
     rotate: -9deg;
@@ -1196,6 +1122,86 @@ button.lp-scard:focus-visible {
   .lp-node-glyph,
   .lp-stars {
     transition: none;
+  }
+}
+
+/* ---- the stop to do now ------------------------------------------------------ */
+
+/* The road's main button: its ring fills in the main button's violet, as its face is drawn. */
+.lp-node.is-current .lp-ring-piece.is-filled {
+  stroke: var(--accent);
+}
+/* Now and then a glint sweeps its face (shared PATH_STOP_ART: centre 56,58 and radii 36 by 31 in a 112 box) and a few
+   sparks wink on it after. */
+.lp-shine {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: ellipse(32.1% 27.7% at 50% 51.8%);
+  pointer-events: none;
+}
+.lp-shine::before {
+  content: '';
+  position: absolute;
+  inset: 0 -40%;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.6) 50%, rgb(255 255 255 / 0.12) 57%, transparent 64%);
+  translate: -70% 0;
+  animation: lp-glint 3.6s ease-in-out 1s infinite;
+}
+.lp-spark {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  background: #ffffff;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  scale: 0;
+  animation: lp-twinkle 3.6s ease-out 1s infinite;
+}
+.lp-spark:nth-child(1) {
+  inset-inline-start: 31%;
+  top: 33%;
+  animation-delay: 1.5s;
+}
+.lp-spark:nth-child(2) {
+  inset-inline-start: 63%;
+  top: 41%;
+  width: 8px;
+  height: 8px;
+  animation-delay: 1.7s;
+}
+.lp-spark:nth-child(3) {
+  inset-inline-start: 50%;
+  top: 63%;
+  width: 7px;
+  height: 7px;
+  animation-delay: 1.9s;
+}
+@keyframes lp-glint {
+  0% {
+    translate: -70% 0;
+  }
+  38%,
+  100% {
+    translate: 70% 0;
+  }
+}
+@keyframes lp-twinkle {
+  0%,
+  100% {
+    scale: 0;
+  }
+  7% {
+    scale: 1;
+    rotate: 45deg;
+  }
+  16% {
+    scale: 0;
+    rotate: 90deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-shine {
+    display: none;
   }
 }
 
@@ -1303,6 +1309,66 @@ button.lp-scard:focus-visible {
   justify-self: center;
   gap: 6px;
 }
+/* A topic to play now: the card is the road's main button, in its violet, with one light button that says what the
+   lesson pays and that a glint crosses now and then. */
+.lp-pop.is-go {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.lp-pop.is-go .lp-pop-arrow {
+  border-color: transparent;
+  background: var(--accent);
+}
+.lp-pop.is-go .lp-pop-title {
+  color: inherit;
+  font-weight: 750;
+}
+.lp-pop.is-go .lp-pop-line {
+  color: inherit;
+  opacity: 0.85;
+}
+.lp-pop.is-go .lp-pop-tips {
+  color: inherit;
+}
+.lp-pop.is-go .lp-pop-start {
+  position: relative;
+  overflow: hidden;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  border: 0;
+  background: #ffffff;
+  color: var(--accent-ink);
+  box-shadow: 0 4px 0 rgb(0 0 0 / 0.18);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+:root[data-theme='light'] .lp-pop.is-go .lp-pop-start {
+  color: var(--accent);
+}
+.lp-pop.is-go .lp-pop-start:active {
+  translate: 0 3px;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.18);
+}
+.lp-pop.is-go .lp-pop-start::after {
+  content: '';
+  position: absolute;
+  inset: 0 -60%;
+  background: linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0) 44%, color-mix(in srgb, var(--accent) 22%, transparent) 50%, transparent 58%);
+  translate: -60% 0;
+  animation: lp-glint 2.8s ease-in-out 0.6s infinite;
+}
+.lp-pop-start-xp {
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-pop.is-go .lp-pop-start::after {
+    display: none;
+  }
+}
+
 /* The card's one action, with what its lesson pays under it. */
 .lp-pop-go {
   display: grid;

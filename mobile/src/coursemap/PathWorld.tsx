@@ -5,18 +5,12 @@ import { SvgXml } from 'react-native-svg';
 import {
   PATH_LANDMARK_LOOP,
   PATH_MOTION,
-  PATH_RETURN,
   PATH_STOP_ART,
-  hopAt,
   landmarkBox,
-  pathGroundColour,
-  pathLandSvg,
   pathLandmarkSvg,
   pathLoopSvg,
   pathSignpostSvg,
-  pathStonesSvg,
   pathStopSvg,
-  trailStones,
   type PathBox,
   type PathGround,
   type PathLand,
@@ -24,13 +18,10 @@ import {
   type PathStopLook,
   type PathUnit,
 } from '@kurda/shared';
-import { useAuth } from '../auth/AuthContext';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
-import { Avatar, ownAvatarUrl } from '../profile/Avatar';
 import { useDirection } from '../reports/direction';
-import { useEnter } from '../theme/animate';
 import { sectionLabel } from '../theme/fonts';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
@@ -43,84 +34,39 @@ import type { UpcomingUnit } from './types';
 import type { SkillNode } from './types';
 
 /**
- * The scenery of the lesson path, drawn from @kurda/shared (path-world.ts for placement, art/path-land.ts for
- * drawings): each unit's land, stepping stones, landmark and course character, the learner's token, the upcoming
- * unit's sign, and the unit map.
+ * What stands beside the lesson path, drawn from @kurda/shared (path-world.ts for placement, art/path-landmark.ts for
+ * drawings): each unit's landmark and course character, the upcoming unit's sign, and the unit map. The path itself
+ * stands on the page.
  *
- * Kept cheap: a unit far from the screen (`near` false) is only its ground colour, and only the unit in view
- * (`live`) animates. All motion is transform or opacity on the native driver, and none runs under Reduce Motion.
+ * Kept cheap: a unit far from the screen (`near` false) draws nothing, and only the unit in view (`live`) animates. All motion is transform or opacity on the native driver, and none runs under Reduce Motion.
  */
 
 type Unit = PathUnit<SkillNode>;
 
-/** One unit's land, its trail and its landmark, behind its stops. */
-export const UnitLand = memo(function UnitLand({
-  unit,
+/** A unit's landmark beside its stops, the path itself standing on the page. */
+export const UnitLandmark = memo(function UnitLandmark({
   land,
   width,
   sign,
   near,
   live,
-  fresh,
 }: {
-  unit: Unit;
   land: PathLand;
   width: number;
   sign: number;
-  /** Drawn in full; otherwise only its ground colour. */
+  /** Drawn in full; otherwise nothing. */
   near: boolean;
   /** In view, so its landmark animates. */
   live: boolean;
-  /** Stops whose stretch of trail was walked since the last lesson; their stones fill in as the path moves on. */
-  fresh: ReadonlySet<string>;
 }): React.JSX.Element {
   const { scheme } = useTheme();
-  const dark = scheme === 'dark';
-  const rtl = sign < 0;
-  const stones = useMemo(() => trailStones(unit.stops), [unit.stops]);
-  const ground = useMemo(() => {
-    if (!near || width <= 0) return null;
-    const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
-    return pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark, rtl, seed: unit.unitId });
-  }, [near, width, unit, land.ground, stones, dark, rtl]);
-  const trail = useMemo(() => {
-    if (!near || width <= 0) return null;
-    const draw = (list: typeof stones, walked: boolean): string | null =>
-      list.length > 0 ? pathStonesSvg({ width, height: unit.height, stones: list, walked, dark, rtl }) : null;
-    const isFresh = (s: (typeof stones)[number]): boolean => s.walked && fresh.has(s.to);
-    return {
-      ahead: draw(
-        stones.filter((s) => !s.walked || isFresh(s)),
-        false,
-      ),
-      walked: draw(
-        stones.filter((s) => s.walked && !isFresh(s)),
-        true,
-      ),
-      fresh: draw(stones.filter(isFresh), true),
-    };
-  }, [near, width, unit.height, stones, fresh, dark, rtl]);
   const box = landmarkBox(width);
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" aria-hidden>
-      {ground ? <SvgXml xml={ground} width={width} height={unit.height} /> : <View style={[styles.flat, { backgroundColor: pathGroundColour(land.ground, dark) }]} />}
-      {trail?.ahead ? <SvgXml xml={trail.ahead} width={width} height={unit.height} style={StyleSheet.absoluteFill} /> : null}
-      {trail?.walked ? <SvgXml xml={trail.walked} width={width} height={unit.height} style={StyleSheet.absoluteFill} /> : null}
-      {trail?.fresh ? <FreshStones xml={trail.fresh} width={width} height={unit.height} /> : null}
-      {near && width > 0 ? <Landmark landmark={land.landmark} ground={land.ground} box={box} left={width / 2 + sign * box.x - box.w / 2} dark={dark} live={live} /> : null}
+      {near && width > 0 ? <Landmark landmark={land.landmark} ground={land.ground} box={box} left={width / 2 + sign * box.x - box.w / 2} dark={scheme === 'dark'} live={live} /> : null}
     </View>
   );
 });
-
-/** The stretch walked since the lesson, fading in over the grey as the opened stop gets its number. */
-function FreshStones({ xml, width, height }: { xml: string; width: number; height: number }): React.JSX.Element {
-  const p = useEnter(true, PATH_RETURN.finishAtMs + PATH_RETURN.popMs / 2, PATH_RETURN.bubbleAtMs - PATH_RETURN.finishAtMs - PATH_RETURN.popMs / 2);
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, { opacity: p }]}>
-      <SvgXml xml={xml} width={width} height={height} />
-    </Animated.View>
-  );
-}
 
 /** A unit's landmark, with its looping part on top: a flag, steam or smoke, water, fire, a bee or a sign. */
 function Landmark({
@@ -202,62 +148,6 @@ export const StopArt = memo(function StopArt({ look, tone, part, near }: { look:
 
 /** The stop face's position in its 72-point button: a little above centre, so the base shows under it. */
 export const STOP_FACE = { x: 36, y: 30 } as const;
-
-/** The learner's token: their picture in a ring on a short stem standing on the stop's face. */
-const TOKEN = { size: 44, ring: 3, stem: 12 } as const;
-export const TOKEN_HEIGHT = TOKEN.size + 2 * TOKEN.ring + TOKEN.stem;
-
-/**
- * The learner on the current stop (`at`). After a lesson that moved them on, they appear at the finished stop
- * (`from`) when the bubble arrives (`PATH_MOTION.hopAtMs`) and hop over `delayMs` later. They bob with the stop.
- */
-export function LearnerToken({
-  at,
-  from,
-  tone,
-  bob,
-  delayMs = 0,
-}: {
-  at: { x: number; y: number };
-  from: { x: number; y: number } | null;
-  tone: ToneColors;
-  bob: Animated.Value | null;
-  /** Delay from appearing to the start of the hop. */
-  delayMs?: number;
-}): React.JSX.Element {
-  const { user } = useAuth();
-  const { colors } = useTheme();
-  const p = useRef(new Animated.Value(from ? 0 : 1)).current;
-  useEffect(() => {
-    if (!from) {
-      p.setValue(1);
-      return;
-    }
-    p.setValue(0);
-    const run = Animated.timing(p, { toValue: 1, duration: PATH_MOTION.hopMs, delay: delayMs, easing: Easing.inOut(Easing.quad), useNativeDriver: true });
-    run.start();
-    return () => run.stop();
-  }, [from, p, delayMs]);
-  // The hop: straight across, up and down on an arc, sampled for the native driver.
-  const samples = [0, 0.25, 0.5, 0.75, 1];
-  const path = from ? samples.map((s) => hopAt(from, at, s)) : null;
-  const translateX = path ? p.interpolate({ inputRange: samples, outputRange: path.map((q) => q.x - at.x) }) : 0;
-  const translateY = path ? p.interpolate({ inputRange: samples, outputRange: path.map((q) => q.y - at.y) }) : 0;
-  const width = TOKEN.size + 2 * TOKEN.ring;
-  return (
-    <Animated.View
-      style={[styles.token, { left: at.x - width / 2, top: at.y - 6 - TOKEN_HEIGHT, width }, { transform: [{ translateX }, { translateY }, ...(bob ? [{ translateY: bob }] : [])] }]}
-      pointerEvents="none"
-      aria-hidden
-      testID="lp-learner"
-    >
-      <View style={[styles.tokenRing, { borderColor: tone.fill, backgroundColor: colors.surfaceRaised }]}>
-        <Avatar name={user?.displayName ?? user?.username ?? ''} size={TOKEN.size - 2} photoUrl={ownAvatarUrl(user)} />
-      </View>
-      <View style={[styles.stem, { backgroundColor: tone.fill }]} />
-    </Animated.View>
-  );
-}
 
 /**
  * The end of the path for now: a signpost with the next unit's number and name. On a course still being recorded,
@@ -434,13 +324,9 @@ const styles = StyleSheet.create({
   nextLineText: { flex: 1, fontSize: typography.sizes.text, lineHeight: REC_LINE },
   // Level with the first line of text, however many lines it wraps to.
   rec: { width: REC, height: REC, borderRadius: radii.pill, backgroundColor: '#d6493a', marginTop: (REC_LINE - REC) / 2 },
-  flat: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   landmark: { position: 'absolute' },
   loop: { position: 'absolute' },
   art: { position: 'absolute' },
-  token: { position: 'absolute', alignItems: 'center' },
-  tokenRing: { borderRadius: radii.pill, borderWidth: TOKEN.ring, padding: 1, overflow: 'hidden' },
-  stem: { width: 4, height: TOKEN.stem, borderBottomLeftRadius: 2, borderBottomRightRadius: 2 },
   rail: { paddingBottom: spacing.lg, gap: spacing.md },
   railSection: { gap: 0 },
   railSectionName: { ...sectionLabel, paddingHorizontal: spacing.xs, marginBottom: spacing.xs },

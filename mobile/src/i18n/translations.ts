@@ -3194,6 +3194,7 @@ export type TranslationKey =
   | 'coursemap.path.state.strong'
   | 'coursemap.path.state.refresh'
   | 'coursemap.path.lessonsDone'
+  | 'coursemap.path.lessonOf'
   | 'coursemap.path.start'
   | 'coursemap.path.again'
   | 'coursemap.path.refreshWhy'
@@ -7100,6 +7101,7 @@ const en: Catalog = {
   'coursemap.path.state.strong': 'done, and strong',
   'coursemap.path.state.refresh': 'done, ready for a refresh',
   'coursemap.path.lessonsDone': '{done} of {total} lessons done',
+  'coursemap.path.lessonOf': 'Lesson {n} of {total}',
   'coursemap.path.start': 'Start',
   'coursemap.path.again': 'Practise again',
   'coursemap.path.refreshWhy': 'Your reviews say some of this has not stuck yet.',
@@ -11004,6 +11006,7 @@ const ku: Catalog = {
   'coursemap.path.state.strong': 'qediya, û xurt e',
   'coursemap.path.state.refresh': 'qediya, ji bo nûkirinê amade',
   'coursemap.path.lessonsDone': '{done} ji {total} waneyan qediyan',
+  'coursemap.path.lessonOf': 'Wane {n} ji {total}',
   'coursemap.path.start': 'Dest pê bike',
   'coursemap.path.again': 'Dîsa biceribîne',
   'coursemap.path.refreshWhy': 'Dubarekirinên te nîşan didin ku hinek ji vê hê di bîra te de neman.',
@@ -14908,6 +14911,7 @@ const de: Catalog = {
   'coursemap.path.state.strong': 'fertig und gefestigt',
   'coursemap.path.state.refresh': 'fertig, bereit zum Auffrischen',
   'coursemap.path.lessonsDone': '{done} von {total} Lektionen fertig',
+  'coursemap.path.lessonOf': 'Lektion {n} von {total}',
   'coursemap.path.start': 'Starten',
   'coursemap.path.again': 'Noch einmal üben',
   'coursemap.path.refreshWhy': 'Deine Wiederholungen zeigen: Einiges davon sitzt noch nicht.',
@@ -18812,6 +18816,7 @@ const es: Catalog = {
   'coursemap.path.state.strong': 'hecha y afianzada',
   'coursemap.path.state.refresh': 'hecha, lista para repasar',
   'coursemap.path.lessonsDone': '{done} de {total} lecciones hechas',
+  'coursemap.path.lessonOf': 'Lección {n} de {total}',
   'coursemap.path.start': 'Empezar',
   'coursemap.path.again': 'Practicar de nuevo',
   'coursemap.path.refreshWhy': 'Tus repasos indican que parte de esto aún no se ha afianzado.',
@@ -22716,6 +22721,7 @@ const tr: Catalog = {
   'coursemap.path.state.strong': 'bitti ve sağlam',
   'coursemap.path.state.refresh': 'bitti, tazelemeye hazır',
   'coursemap.path.lessonsDone': '{total} dersten {done} tanesi bitti',
+  'coursemap.path.lessonOf': 'Ders {n}/{total}',
   'coursemap.path.start': 'Başla',
   'coursemap.path.again': 'Yeniden alıştırma yap',
   'coursemap.path.refreshWhy': 'Tekrarların bunun bir kısmının henüz oturmadığını gösteriyor.',
@@ -26620,6 +26626,7 @@ const ar: Catalog = {
   'coursemap.path.state.strong': 'مكتملة وراسخة',
   'coursemap.path.state.refresh': 'مكتملة، جاهزة للمراجعة',
   'coursemap.path.lessonsDone': '{done} من {total} دروس مكتملة',
+  'coursemap.path.lessonOf': 'الدرس {n} من {total}',
   'coursemap.path.start': 'ابدأ',
   'coursemap.path.again': 'تدرّب مرة أخرى',
   'coursemap.path.refreshWhy': 'تقول مراجعاتك إن بعض هذا لم يرسخ بعد.',
@@ -30524,6 +30531,7 @@ const fr: Catalog = {
   'coursemap.path.state.strong': 'terminée, et solide',
   'coursemap.path.state.refresh': 'terminée, prête à être révisée',
   'coursemap.path.lessonsDone': '{done} leçons sur {total} terminées',
+  'coursemap.path.lessonOf': 'Leçon {n} sur {total}',
   'coursemap.path.start': 'Commencer',
   'coursemap.path.again': 'S’entraîner encore',
   'coursemap.path.refreshWhy': 'Tes révisions montrent qu’une partie n’est pas encore acquise.',
@@ -34428,6 +34436,7 @@ const nl: Catalog = {
   'coursemap.path.state.strong': 'klaar, en stevig',
   'coursemap.path.state.refresh': 'klaar, toe aan herhaling',
   'coursemap.path.lessonsDone': '{done} van {total} lessen klaar',
+  'coursemap.path.lessonOf': 'Les {n} van {total}',
   'coursemap.path.start': 'Beginnen',
   'coursemap.path.again': 'Nog eens oefenen',
   'coursemap.path.refreshWhy': 'Je herhalingen laten zien dat een deel nog niet blijft hangen.',
@@ -38333,6 +38342,7 @@ const ckb: Catalog = {
   'coursemap.path.state.strong': 'تەواو، و بەهێز',
   'coursemap.path.state.refresh': 'تەواو، ئامادە بۆ نوێکردنەوە',
   'coursemap.path.lessonsDone': '{done} لە {total} وانە تەواو بوون',
+  'coursemap.path.lessonOf': 'وانەی {n} لە {total}',
   'coursemap.path.start': 'دەست پێ بکە',
   'coursemap.path.again': 'دووبارە ڕاهێنان بکە',
   'coursemap.path.refreshWhy': 'پێداچوونەوەکانت دەڵێن هەندێکی هێشتا لە بیرت نەماوە.',

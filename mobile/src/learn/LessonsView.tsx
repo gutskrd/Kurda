@@ -267,6 +267,25 @@ export function LessonsView({
     [reduceMotion],
   );
 
+  // A stop's card opening low on the screen, or under the pinned unit, scrolls until it and its stop are both in view.
+  const scrollAt = useRef(0);
+  scrollAt.current = scrollY;
+  const onCard = useCallback(
+    (from: number, to: number) => {
+      const top = pathTopRef.current;
+      if (top === null || viewport === 0) return;
+      const now = scrollAt.current;
+      const fits = top + to + spacing.md - (viewport - tabBarInset);
+      const keepsStop = top + from - PIN_HEIGHT - spacing.sm;
+      // The stop wins where both cannot be in view.
+      const next = Math.min(Math.max(now, fits), keepsStop);
+      if (Math.abs(next - now) < 1) return;
+      touched.current = true;
+      scroller.current?.scrollTo({ y: Math.max(0, next), animated: !reduceMotion });
+    },
+    [viewport, tabBarInset, reduceMotion],
+  );
+
   const lastUnit = units[units.length - 1];
   const pinned =
     pathTopOnPage === null || !lastUnit || scrollY >= pathTopOnPage + lastUnit.bottom - PIN_CLEAR
@@ -386,6 +405,7 @@ export function LessonsView({
                   onOpenRail={openRail}
                   reveal={reveal}
                   onReveal={onReveal}
+                  onCard={onCard}
                 />
               </View>
             ) : entry?.map ? (

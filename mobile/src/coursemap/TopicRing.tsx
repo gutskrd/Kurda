@@ -29,7 +29,7 @@ export function TopicRing({
   ring,
   from,
   roundDone = false,
-  locked = false,
+  tint,
   mirrored = false,
 }: {
   ring: RingShown;
@@ -37,8 +37,8 @@ export function TopicRing({
   from?: RingShown | null;
   /** A round was completed since: the ring fills, goes gold, then starts the next round. */
   roundDone?: boolean;
-  /** A locked topic, whose ring is only a faint track. */
-  locked?: boolean;
+  /** The colour finished pieces are drawn in, where not the ink: the violet of the stop to do now. */
+  tint?: string;
   /** Fills the other way round, for a mirrored right-to-left path. */
   mirrored?: boolean;
 }): React.JSX.Element {
@@ -51,16 +51,16 @@ export function TopicRing({
     <Path key={key} d={d} stroke={colour} strokeWidth={STROKE} strokeLinecap="round" fill="none" />,
   ];
   if (!from) {
-    const colourOf = (k: number): string => (ring.whole ? colors.gold : k < ring.filled ? colors.primary : track.track);
+    const colourOf = (k: number): string => (ring.whole ? colors.gold : k < ring.filled ? (tint ?? colors.primary) : track.track);
     return (
-      <View style={[styles.box, flip, locked ? styles.faint : null]} pointerEvents="none" aria-hidden testID="lp-ring">
+      <View style={[styles.box, flip]} pointerEvents="none" aria-hidden testID="lp-ring">
         <Svg width={box} height={box} viewBox={`${-pad} ${-pad} ${box} ${box}`}>
           {pieces.flatMap((d, k) => draw(d, colourOf(k), `p${k}`))}
         </Svg>
       </View>
     );
   }
-  return <MovingRing ring={ring} from={from} roundDone={roundDone} pieces={pieces} flip={flip} draw={draw} />;
+  return <MovingRing ring={ring} from={from} roundDone={roundDone} pieces={pieces} flip={flip} draw={draw} tint={tint ?? colors.primary} />;
 }
 
 /** The ring animating from its old state, piece by piece, gold for a completed round, then its next round. */
@@ -71,6 +71,7 @@ function MovingRing({
   pieces,
   flip,
   draw,
+  tint,
 }: {
   ring: RingShown;
   from: RingShown;
@@ -78,6 +79,7 @@ function MovingRing({
   pieces: string[];
   flip: object | null;
   draw: (d: string, colour: string, key: string) => React.JSX.Element[];
+  tint: string;
 }): React.JSX.Element {
   const { scheme, colors } = useTheme();
   // A completed round fills all the way before the next begins.
@@ -114,7 +116,7 @@ function MovingRing({
       {pieces.map((d, k) => (
         <Animated.View key={k} style={[StyleSheet.absoluteFill, { opacity: shown.interpolate({ inputRange: [k, k + 1], outputRange: [0, 1], extrapolate: 'clamp' }) }]}>
           <Svg width={box} height={box} viewBox={`${-pad} ${-pad} ${box} ${box}`}>
-            <Path d={d} stroke={colors.primary} strokeWidth={STROKE} strokeLinecap="round" fill="none" />
+            <Path d={d} stroke={tint} strokeWidth={STROKE} strokeLinecap="round" fill="none" />
           </Svg>
         </Animated.View>
       ))}
@@ -186,8 +188,6 @@ export function RoundStars({ rounds, earned = false }: { rounds: number; earned?
 const styles = StyleSheet.create({
   // The ring's square, laid over the stop's 72-point button from `pad` out.
   box: { position: 'absolute', left: -pad, top: -pad, width: box, height: box },
-  // Barely there: the lessons waiting in a topic not open yet, without crowding the road.
-  faint: { opacity: 0.35 },
   mirrored: { transform: [{ scaleX: -1 }] },
   stars: { position: 'absolute', left: 0, top: 0, width: 72, height: 72 },
   falling: { position: 'absolute' },

@@ -1853,6 +1853,7 @@ export const en = {
   'learn.continue': 'Continue',
   'learn.openMap': 'Course map',
   'coursemap.back': 'Back to Learn',
+  'coursemap.lessonOf': 'Lesson {n} of {total}',
   'coursemap.progress': '{done} of {total} lessons done',
   'coursemap.state.locked': 'Not open yet',
   'coursemap.state.open': 'Open',

@@ -1765,6 +1765,7 @@ export const fr: Catalogue = {
   'learn.continue': 'Continuer',
   'learn.openMap': 'Carte du cours',
   'coursemap.back': 'Retour à Apprendre',
+  'coursemap.lessonOf': 'Leçon {n} sur {total}',
   'coursemap.progress': '{done} leçons sur {total} terminées',
   'coursemap.state.locked': 'Pas encore ouvert',
   'coursemap.state.open': 'Ouvert',

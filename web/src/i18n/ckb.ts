@@ -1771,6 +1771,7 @@ export const ckb: Catalogue = {
   'learn.continue': 'بەردەوام بە',
   'learn.openMap': 'نەخشەی خولەکە',
   'coursemap.back': 'گەڕانەوە بۆ فێربوون',
+  'coursemap.lessonOf': 'وانەی {n} لە {total}',
   'coursemap.progress': '{done} لە {total} وانە تەواو بوون',
   'coursemap.state.locked': 'هێشتا نەکراوەتەوە',
   'coursemap.state.open': 'کراوە',

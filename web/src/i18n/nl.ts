@@ -1766,6 +1766,7 @@ export const nl: Catalogue = {
   'learn.continue': 'Verdergaan',
   'learn.openMap': 'Cursuskaart',
   'coursemap.back': 'Terug naar Leren',
+  'coursemap.lessonOf': 'Les {n} van {total}',
   'coursemap.progress': '{done} van {total} lessen klaar',
   'coursemap.state.locked': 'Nog niet open',
   'coursemap.state.open': 'Open',

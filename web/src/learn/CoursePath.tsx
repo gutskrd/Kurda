@@ -26,7 +26,7 @@ import { useApiGet, type ApiState } from '../lib/useApi';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { LinkButton } from '../components/Button';
 import { Sheet } from '../components/Sheet';
-import { ArrowIcon, BookIcon, CheckIcon, LockIcon, RepostIcon } from '../components/icons';
+import { ArrowIcon, BookIcon, CheckIcon, LockIcon, RepostIcon, StarIcon } from '../components/icons';
 import { ErrorState } from '../components/states';
 import { CourseMapSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -36,7 +36,7 @@ import { JumpSheet } from './JumpSheet';
 import { courseProgress, lessonStates } from './map';
 import { RoundStars, StarRow, TopicRing } from './PathRing';
 import { SectionCard, UnitDivider, UnitPin, levelWords, useUnitAtTop } from './PathSections';
-import { LearnerToken, StopArt, UnitLand, UnitRail, UpcomingUnit, useDarkPage, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
+import { StopArt, UnitLandmark, UnitRail, UpcomingUnit, useDarkPage, useUnitsOnScreen, useWidth, type RailSection } from './PathWorld';
 import { preloadLesson } from './preloadLesson';
 import type { CourseMap as Map, CourseSummary, PracticeDue, SkillNode } from './types';
 import './path.css';
@@ -64,7 +64,8 @@ const lessonHref = (lessonId: string, courseId: string): string =>
 function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
   if (stop.kind === 'review') return <RepostIcon size={28} weight="bold" />;
   if (stop.kind === 'trophy' || stop.kind === 'story') return null;
-  if (stop.state === 'current') return null;
+  // The stop to do now wears a star, as the road's main button.
+  if (stop.state === 'current') return <StarIcon size={34} weight="fill" />;
   if (stop.state === 'locked') return <LockIcon size={26} weight="bold" />;
   if (stop.state === 'done') {
     const refresh = stop.finish === 'refresh' && (
@@ -101,6 +102,11 @@ function stopLook(stop: Stop): PathStopLook {
   if (stop.kind === 'story') return stop.open ? 'story' : 'storyLocked';
   if (stop.state === 'done') return stop.finish === 'refresh' ? 'refresh' : 'done';
   return stop.state;
+}
+
+/** Whether a stop's card offers a lesson to play now, and so is the road's main button, in its violet. */
+function goes(stop: Stop): boolean {
+  return stop.kind === 'skill' && stop.state !== 'locked' && Boolean(stop.launch);
 }
 
 /**
@@ -214,6 +220,39 @@ function StopCard({
           };
   // What the lesson pays, from the server's own numbers (@kurda/shared xp.ts).
   const xp = action && action.again !== null ? lessonXpRange(action.again) : null;
+  const tips = skill.hasGrammar && (
+    <button type="button" className="btn btn-ghost btn-sm lp-pop-tips" onClick={() => onTips([skill], t('coursemap.tipsFor', { skill: skill.title }))}>
+      <BookIcon size={18} />
+      {t('coursemap.tips')}
+    </button>
+  );
+  // A topic to play now: its name, which lesson or round is next, and one button that says what it pays.
+  if (action && goes(stop)) {
+    const at = skill.lessons.findIndex((l) => l.lessonId === stop.launch);
+    // A finished topic is played again in rounds, so it says which round; any other says which lesson is next.
+    const where =
+      stop.state === 'done' && stop.rounds > 0
+        ? stop.rounds >= TOPIC_STARS
+          ? t('coursemap.roundsDone', { last: TOPIC_STARS })
+          : t('coursemap.round', { round: stop.rounds + 1, last: TOPIC_STARS, done: stop.pieces, total: stop.lessonsTotal })
+        : at >= 0
+          ? t('coursemap.lessonOf', { n: number(at + 1), total: number(skill.lessons.length) })
+          : null;
+    return (
+      <>
+        <h3 className="lp-pop-title" id={titleId}>
+          {skill.title}
+        </h3>
+        {where && <p className="lp-pop-line">{where}</p>}
+        {stop.rounds > 0 && <StarRow rounds={stop.rounds} />}
+        <LinkButton to={action.to} state={{ title: skill.title, from: home }} block className="lp-pop-start">
+          <span>{action.label}</span>
+          {xp && <span className="lp-pop-start-xp">{t(action.again ? 'coursemap.xp.again' : 'coursemap.xp.first', { min: number(xp.min), max: number(xp.max) })}</span>}
+        </LinkButton>
+        {tips}
+      </>
+    );
+  }
   return (
     <>
       <p className="lp-pop-eyebrow">
@@ -292,16 +331,7 @@ function StopCard({
           )}
         </div>
       )}
-      {skill.hasGrammar && (
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm lp-pop-tips"
-          onClick={() => onTips([skill], t('coursemap.tipsFor', { skill: skill.title }))}
-        >
-          <BookIcon size={18} />
-          {t('coursemap.tips')}
-        </button>
-      )}
+      {tips}
     </>
   );
 }
@@ -377,8 +407,6 @@ function GuideSheet({ guide, onClose }: { guide: { skills: SkillNode[]; label: s
  * `pathChanges`). Without a snapshot the path is simply drawn.
  */
 const snapshotKey = (courseId: string): string => `hevalo:path:${courseId}`;
-
-const NO_STOPS: ReadonlySet<string> = new Set();
 
 function readSnapshot(courseId: string): PathSnapshot | null {
   try {
@@ -676,9 +704,6 @@ export function CoursePath({
   const progress = courseProgress(data);
   const list = courses.data?.courses ?? [];
   const current = path.current;
-  // The learner stands on the skill to do now, or on the previous one until the return moves on, and hops across.
-  const tokenAt = current ? (playing && step! < STEP.bubble && was ? was : current) : null;
-  const hopping = playing && step! >= STEP.bubble && was !== null && current !== null && was !== current;
   const placedOf = (key: string | null): { unitId: string; x: number; y: number } | null => {
     for (const u of path.units) {
       const p = u.stops.find((s) => s.stop.key === key);
@@ -686,17 +711,7 @@ export function CoursePath({
     }
     return null;
   };
-  const tokenPlace = placedOf(tokenAt);
-  const fromPlace = hopping ? placedOf(was) : null;
   const sign = rtl ? -1 : 1;
-  const hop =
-    hopping && tokenPlace
-      ? fromPlace && fromPlace.unitId === tokenPlace.unitId
-        ? { dx: sign * (fromPlace.x - tokenPlace.x), dy: fromPlace.y - tokenPlace.y }
-        : { dx: 0, dy: -2 * PATH_GEOMETRY.step }
-      : null;
-  // The trail walked since the lesson fills in as the path moves on.
-  const fresh: ReadonlySet<string> = playing && step! < STEP.bubble && ret.changes.current && was ? new Set([ret.changes.current]) : NO_STOPS;
   const unitOfCurrent = placedOf(current)?.unitId ?? null;
   const rail: RailSection[] = path.sections.map((s) => ({
     number: named ? s.number : null,
@@ -824,7 +839,7 @@ export function CoursePath({
 
                       {unit.stops.length > 0 && (
                         <ol className={`lp-path${index === 0 ? ' is-first' : ''}`} style={{ height: unit.height }}>
-                          <UnitLand unit={unit} land={land} width={width} rtl={rtl} dark={dark} near={near} fresh={fresh} />
+                          <UnitLandmark land={land} width={width} dark={dark} near={near} />
                           {spot && here && (
                             <PathMascot x={spot.x} y={spot.y} flip={sign * spot.x > sign * here.x} cheer={cheer} onPress={() => current && setOpenKey(current)} />
                           )}
@@ -877,12 +892,20 @@ export function CoursePath({
                                   aria-controls={isOpen ? popId : undefined}
                                   onClick={() => (jumpHere ? setJumpTo(unit) : setOpenKey(isOpen ? null : stop.key))}
                                 >
-                                  {isCurrent && <span className="lp-glow" aria-hidden="true" />}
-                                  {ring && near && stop.kind === 'skill' && (
-                                    <TopicRing of={stop.lessonsTotal} filled={ring.filled} whole={ring.whole} from={ring.from} locked={stop.state === 'locked'} />
+                                  {/* The ring is the topic in hand: the one to do now, or one a return is filling. */}
+                                  {ring && near && stop.kind === 'skill' && (isCurrent || (playing && ret.changes.ring.some((r) => r.key === stop.key))) && (
+                                    <TopicRing of={stop.lessonsTotal} filled={ring.filled} whole={ring.whole} from={ring.from} />
                                   )}
                                   <span className="lp-node-face">
                                     <StopArt look={look} tone={unit.tone} dark={dark} near={near} />
+                                    {/* Now and then a glint sweeps the stop to do now, and a few sparks wink round it. */}
+                                    {isCurrent && near && (
+                                      <span className="lp-shine" aria-hidden="true">
+                                        <span className="lp-spark" />
+                                        <span className="lp-spark" />
+                                        <span className="lp-spark" />
+                                      </span>
+                                    )}
                                     {ring && stop.kind === 'skill' && stop.state === 'done' && <RoundStars rounds={ring.stars} earned={ring.earned} />}
                                     <span className="lp-node-glyph">
                                       <Glyph stop={stop} />
@@ -890,7 +913,7 @@ export function CoursePath({
                                   </span>
                                 </button>
                                 {isOpen && (
-                                  <div className="lp-pop" id={popId} role="group" aria-labelledby={`${popId}-title`}>
+                                  <div className={`lp-pop${goes(real) ? ' is-go' : ''}`} id={popId} role="group" aria-labelledby={`${popId}-title`}>
                                     <span className="lp-pop-arrow" aria-hidden="true" />
                                     <StopCard
                                       stop={real}
@@ -909,7 +932,6 @@ export function CoursePath({
                               </li>
                             );
                           })}
-                          {tokenPlace && tokenPlace.unitId === unit.unitId && <LearnerToken key={tokenAt} x={tokenPlace.x} y={tokenPlace.y} hop={hop} />}
                         </ol>
                       )}
                     </section>

@@ -1761,6 +1761,7 @@ export const tr: Catalogue = {
   'learn.continue': 'Devam et',
   'learn.openMap': 'Kurs haritası',
   'coursemap.back': 'Öğren’e dön',
+  'coursemap.lessonOf': 'Ders {n}/{total}',
   'coursemap.progress': '{total} dersten {done} tanesi bitti',
   'coursemap.state.locked': 'Henüz açık değil',
   'coursemap.state.open': 'Açık',

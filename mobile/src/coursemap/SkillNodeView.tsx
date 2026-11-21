@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import Svg, { Defs, Ellipse, RadialGradient, Stop as GradientStop } from 'react-native-svg';
+import Svg, { Defs, Ellipse, Path, RadialGradient, Stop as GradientStop } from 'react-native-svg';
 import { PATH_GEOMETRY, PATH_MOTION, PATH_RETURN, PATH_STOP_ART, type PathStop, type PathStopLook, type RingChange, type UnitTone } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
@@ -13,7 +13,7 @@ import { PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { FACE_INK, REST, ringAt, ringOf, stopLook, type ToneColors } from './path';
-import { STOP_FACE, StopArt, TOKEN_HEIGHT } from './PathWorld';
+import { STOP_FACE, StopArt } from './PathWorld';
 import { RoundStars, TopicRing } from './TopicRing';
 import type { SkillNode } from './types';
 
@@ -49,8 +49,9 @@ const PULSE_AT_MS = 700;
  * wear a ring with one piece per lesson (TopicRing). A chapter ends at its story, and a jumpable unit's first stop
  * is drawn as a gate. Pressed, the face sinks into its base.
  *
- * The current skill stands higher in a glow of its unit's colour, with the learner on it and a "Start" flag above.
- * It bobs while the path is in view, not under Reduce Motion.
+ * The current skill is the road's main button: it stands higher in a glow of the app's violet, wears a star and its
+ * ring in that violet, and a "Start" flag above; now and then a glint sweeps it and sparks wink on it. It bobs while
+ * the path is in view. None of it moves under Reduce Motion.
  *
  * After a lesson, `change` animates what it did to the stop: the ring fills, the stop pops and turns gold, a star
  * drops in, a padlock gives way to a number, a prize bursts open, and the flag arrives last. Under Reduce Motion
@@ -70,6 +71,7 @@ export function SkillNodeView({
   bob = null,
   bobbing = false,
   rise = null,
+  expanded,
   onPress,
   onStart,
 }: {
@@ -90,16 +92,18 @@ export function SkillNodeView({
   jump?: { text: string };
   /** Drawn in full; far from the screen it is a plain round in its colour. */
   near?: boolean;
-  /** The current stop's bob, shared with the learner on it. */
+  /** The current stop's bob. */
   bob?: Animated.Value | null;
   /** Whether the bob is running, so tests can tell. */
   bobbing?: boolean;
   /** Its rise as its unit first comes into view: 0 under the ground, 1 in place. */
   rise?: Animated.AnimatedInterpolation<number> | null;
+  /** Whether its card is open under it; undefined where a press opens something else. */
+  expanded?: boolean;
   onPress: () => void;
   onStart?: () => void;
 }): React.JSX.Element {
-  const { scheme } = useTheme();
+  const { scheme, colors } = useTheme();
   const dir = useDirection();
   const rest = REST[scheme];
   const look = stopLook(stop, !!jump);
@@ -159,7 +163,7 @@ export function SkillNodeView({
     };
   }, [change, finishing, opening, unlocking, pop, lock, shut, before, wobble]);
 
-  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme]);
+  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme], colors.textOnPrimary);
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
   // Its ring now, and as it was before a lesson that moved it on.
@@ -174,16 +178,17 @@ export function SkillNodeView({
       <Animated.View style={[StyleSheet.absoluteFill, bob ? { transform: [{ translateY: bob }] } : null]} pointerEvents="box-none">
         {callout && onStart ? <Callout text={callout.text} label={callout.label} arriving={!!change?.arriving} bobbing={bobbing} onPress={onStart} /> : null}
         {jump ? <Callout text={jump.text} label={label} arriving={false} bobbing={false} onPress={onPress} /> : null}
-        {raised && stop.kind === 'skill' ? <Glow fill={tone.fill} /> : null}
+        {raised && stop.kind === 'skill' ? <Glow fill={colors.accent} /> : null}
         <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="none">
-          {ring && stop.kind === 'skill' ? (
+          {/* The ring is the topic in hand: the one to do now, or one a return is filling. */}
+          {ring && stop.kind === 'skill' && (raised || moved) ? (
             <TopicRing
               // A return remounts the ring so it starts again.
               key={moved ? 'moving' : 'still'}
               ring={ring}
               from={moved ? ringAt(stop, moved.from) : null}
               roundDone={roundDone}
-              locked={stop.state === 'locked'}
+              tint={raised ? colors.accent : undefined}
               mirrored={dir.rtl}
             />
           ) : null}
@@ -210,6 +215,7 @@ export function SkillNodeView({
             onPress={onPress}
             accessibilityRole="button"
             accessibilityLabel={label}
+            accessibilityState={expanded === undefined ? undefined : { expanded }}
             testID={`lp-node-${jump ? 'jump' : testName(stop)}`}
             hitSlop={4}
             style={({ pressed }) => [styles.face, { transform: [{ translateY: pressed ? PRESS : 0 }] }]}
@@ -248,6 +254,7 @@ export function SkillNodeView({
                 <Icon name="lock" size={26} color={FACE_INK[scheme].stone} />
               </Animated.View>
             ) : null}
+            {raised && near ? <Shine /> : null}
             {stars > 0 ? <RoundStars rounds={stars} earned={roundDone} /> : null}
             {glyph ? (
               <View style={styles.glyph} pointerEvents="none">
@@ -282,19 +289,18 @@ export function SkillNodeView({
 
 /**
  * The glyph on a stop's face: a skill's number or padlock, or review's arrows. A finished coin carries its stars
- * instead (a check only on a map too old to count them), the current skill carries the learner, and the drawn
- * stops carry their own.
+ * instead (a check only on a map too old to count them), the current skill a star in the ink its violet takes, and
+ * the drawn stops carry their own.
  */
-function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark']): { icon?: IconName; number?: number; colour: string } | null {
+function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark'], onNow: string): { icon?: IconName; number?: number; colour: string } | null {
   if (stop.kind === 'review') return { icon: 'review', colour: ink.paper(tone) };
   if (stop.kind !== 'skill' || look === 'jump') return null;
   switch (stop.state) {
     // Cream on gold in every chapter, so what was earned looks the same everywhere.
     case 'done':
       return stop.rounds > 0 ? null : { icon: 'check', colour: DONE_INK };
-    // The learner's picture is the current skill's glyph.
     case 'current':
-      return null;
+      return { icon: 'star-fill', colour: onNow };
     case 'available':
       return { number: stop.number, colour: ink.paper(tone) };
     case 'locked':
@@ -317,6 +323,62 @@ const DONE_INK = '#fffaf0';
 function testName(stop: Stop): string {
   if (stop.kind !== 'skill') return stop.kind;
   return stop.state;
+}
+
+/** The stop's face in its 72-point button (shared PATH_STOP_ART: radii 36 by 31 about `STOP_FACE`). */
+const FACE = { left: STOP_FACE.x - 36, top: STOP_FACE.y - 31, width: 72, height: 62 } as const;
+/** How often the glint crosses the stop to do now, how long it takes, and where its sparks wink after it. */
+const GLINT = { everyMs: 3600, crossMs: 1300, firstMs: 1000 } as const;
+const SPARKS = [
+  { x: 22, y: 18, size: 11, at: 500 },
+  { x: 46, y: 24, size: 8, at: 700 },
+  { x: 36, y: 40, size: 7, at: 900 },
+] as const;
+/** A four-pointed spark, 10 units square. */
+const SPARK_PATH = 'M5 0L6.1 3.9L10 5L6.1 6.1L5 10L3.9 6.1L0 5L3.9 3.9Z';
+
+/**
+ * Now and then a glint of light sweeps the face of the stop to do now, and a few sparks wink on it after, as on the
+ * website. Native driver; none of it under Reduce Motion.
+ */
+function Shine(): React.JSX.Element | null {
+  const reduce = useReducedMotion();
+  const sweep = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduce) return;
+    const run = Animated.loop(
+      Animated.sequence([timing(sweep, 1, GLINT.crossMs), Animated.delay(GLINT.everyMs - GLINT.crossMs), timing(sweep, 0, 0)]),
+    );
+    const start = setTimeout(() => run.start(), GLINT.firstMs);
+    return () => {
+      clearTimeout(start);
+      run.stop();
+    };
+  }, [reduce, sweep]);
+  if (reduce) return null;
+  const crossAt = GLINT.crossMs / GLINT.everyMs;
+  return (
+    <View style={[styles.shine, FACE]} pointerEvents="none">
+      <Animated.View
+        style={[
+          styles.glint,
+          { transform: [{ translateX: sweep.interpolate({ inputRange: [0, 1], outputRange: [-48, FACE.width + 24] }) }, { rotate: '20deg' }] },
+        ]}
+      />
+      {SPARKS.map((spark) => {
+        // Each spark grows and goes in a moment after the glint has passed.
+        const at = Math.min(0.99, crossAt * (spark.at / GLINT.crossMs) + crossAt * 0.4);
+        const scale = sweep.interpolate({ inputRange: [0, at, at + 0.04, at + 0.1, 1], outputRange: [0, 0, 1, 0, 0], extrapolate: 'clamp' });
+        return (
+          <Animated.View key={`${spark.x}-${spark.y}`} style={[styles.spark, { left: spark.x - spark.size / 2, top: spark.y - spark.size / 2, transform: [{ scale }] }]}>
+            <Svg width={spark.size} height={spark.size} viewBox="0 0 10 10">
+              <Path d={SPARK_PATH} fill="#ffffff" />
+            </Svg>
+          </Animated.View>
+        );
+      })}
+    </View>
+  );
 }
 
 /** The size of the glow the current skill stands in. */
@@ -368,7 +430,7 @@ function Callout({
   bobbing: boolean;
   onPress: () => void;
 }): React.JSX.Element {
-  const { scheme } = useTheme();
+  const { colors } = useTheme();
   const reduce = useReducedMotion();
   const shown = useRef(new Animated.Value(arriving && !reduce ? 0 : 1)).current;
   useEffect(() => {
@@ -380,8 +442,8 @@ function Callout({
     run.start();
     return () => run.stop();
   }, [reduce, arriving, shown]);
-  // Ink with cream text by day; a cream pill with ink text by evening.
-  const pill = scheme === 'dark' ? { face: '#fffaf0', edge: '#d6c7a6', words: '#3d2a1f' } : { face: '#3d2a1f', edge: '#24170f', words: '#fffaf0' };
+  // The app's ink with the words written on it, as the website's, on a lip of shadow.
+  const pill = { face: colors.primary, edge: 'rgba(0,0,0,0.28)', words: colors.textOnPrimary };
   return (
     <Animated.View style={[styles.calloutWrap, { opacity: shown }]} pointerEvents="box-none" testID={bobbing ? 'lp-callout-bobbing' : undefined}>
       <View style={[styles.calloutLip, { backgroundColor: pill.edge }]}>
@@ -439,11 +501,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Clipped to the face: a pill on its box, within a point of the oval at every edge.
+  shine: { position: 'absolute', overflow: 'hidden', borderRadius: radii.pill },
+  glint: { position: 'absolute', top: -20, width: 18, height: 104, backgroundColor: 'rgba(255, 255, 255, 0.45)' },
+  spark: { position: 'absolute' },
   glow: { position: 'absolute', left: STOP_FACE.x - GLOW.rx, top: STOP_FACE.y + PATH_STOP_ART.raised + 4 - GLOW.ry },
   calloutWrap: {
     position: 'absolute',
-    // Above the learner on the stop: the face's middle, plus the token, plus a little air.
-    bottom: STOP_HEIGHT - STOP_FACE.y + TOKEN_HEIGHT + 6 + spacing.xs,
+    // Above the stop and the ring round it, with a little air.
+    bottom: STOP_HEIGHT + 20,
     left: (NODE - CALLOUT_WIDTH) / 2,
     width: CALLOUT_WIDTH,
     alignItems: 'center',

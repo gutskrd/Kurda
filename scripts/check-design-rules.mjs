@@ -6,7 +6,8 @@
  *   `typography.sizes.title` on the phone. A size handed down as a name (a component's `size`) is allowed; a number or
  *   sum written at the call is not. Either size may shrink, never grow, to fit a box that cannot grow with it.
  * - One accent, on the main button alone: only the main button's styles may name it (`--accent` in ui.css's
- *   `.btn-primary`, `colors.accent` in the phone's button and lesson-button tones).
+ *   `.btn-primary`, `colors.accent` in the phone's button and lesson-button tones), and the road's own main button:
+ *   the stop to do now and the card that starts its lesson.
  *
  * Drawings keep their own type and colour: a letter's paper scales its writing with the sheet. Those files are listed
  * below with why. Runs inside `npm run lint` for the website (`web`) and the phone (`mobile`).
@@ -59,6 +60,8 @@ if (app === 'web') {
         const before = src.slice(0, m.index);
         const selector = before.slice(before.lastIndexOf('}') + 1, before.lastIndexOf('{')).trim();
         if (name === 'styles/ui.css' && /^\.btn-primary\b/.test(selector)) continue;
+        // The road's main button: the stop to do now and the card it opens, where the lesson is started.
+        if (name === 'learn/path.css' && /^(:root\[data-theme='light'\] )?\.lp-(pop\.is-go|node\.is-current)\b/.test(selector)) continue;
         wrong.push(`${name}:${lineOf(src, m.index)} the accent off the main button: ${selector}`);
       }
     }
@@ -82,8 +85,11 @@ if (app === 'web') {
    * picker shows a note's three sizes as three letters.
    */
   const SIZE_EXEMPT = new Set(['letters/PaperSheet.tsx', 'letters/LetterComposer.tsx']);
-  /** The main button (ClayButton), the lesson's Check (tileButtonTone) and an empty screen's way out: the only places the accent is worn. */
-  const ACCENT_ALLOWED = new Set(['theme/glass.tsx', 'theme/tileTones.ts', 'theme/palette.ts', 'theme/EmptyState.tsx']);
+  /**
+   * The main button (ClayButton), the lesson's Check (tileButtonTone) and an empty screen's way out: the only places the
+   * accent is worn, with the road's own main button, the stop to do now and the card that starts its lesson.
+   */
+  const ACCENT_ALLOWED = new Set(['theme/glass.tsx', 'theme/tileTones.ts', 'theme/palette.ts', 'theme/EmptyState.tsx', 'coursemap/SkillNodeView.tsx', 'coursemap/StopCard.tsx']);
   for (const f of files(SRC, (n) => /\.tsx?$/.test(n) && !/\.test\.tsx?$/.test(n))) {
     const src = code(readFileSync(f, 'utf8'));
     const name = rel(f);

@@ -1759,6 +1759,7 @@ export const ar: Catalogue = {
   'learn.continue': 'تابِع',
   'learn.openMap': 'خريطة الدورة',
   'coursemap.back': 'العودة إلى التعلّم',
+  'coursemap.lessonOf': 'الدرس {n} من {total}',
   'coursemap.progress': 'أُنجز {done} من {total} درسًا',
   'coursemap.state.locked': 'غير متاح بعد',
   'coursemap.state.open': 'متاح',
