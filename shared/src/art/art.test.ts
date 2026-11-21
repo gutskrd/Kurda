@@ -56,6 +56,7 @@ import { isHueName } from '../hues.js';
 import { PLAY_GAMES } from '../play.js';
 import { GAME_NAMES } from '../games/names.js';
 import { LETTERS, letter } from './ink.js';
+import { DICTIONARY_TILE, dictionaryStillSvg, dictionarySvg, dictionaryTileSvg, dictionaryTiles } from './dictionary.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import { PATH_STOP_ART, PATH_STOP_LOOKS, PATH_STOP_TONES, pathSignpostSvg, pathStopSvg, type PathStopLook } from './path-land.js';
@@ -2477,5 +2478,41 @@ describe('gameEmblemNamed', () => {
 
   it('has none for a name it does not know', () => {
     expect(gameEmblemNamed('Something else')).toBeNull();
+  });
+});
+
+describe('the dictionary’s picture', () => {
+  it('is a valid drawing in both schemes, the same on every machine, with its tiles and without', () => {
+    for (const dark of [false, true]) {
+      const svg = dictionarySvg({ size: 240, dark, title: 'A dictionary' });
+      checkSvg(svg, 240);
+      expect(dictionarySvg({ size: 240, dark, title: 'A dictionary' })).toBe(svg);
+      checkSvg(dictionaryStillSvg({ size: 240, dark, title: 'A dictionary' }), 240);
+      // light enough to draw every time the page opens
+      expect(svg.length).toBeLessThan(12_000);
+    }
+    expect(dictionarySvg({ dark: true })).not.toBe(dictionarySvg());
+  });
+
+  it('lifts the five letters Kurmancî adds to the Latin alphabet off the pages, each tile its own markup', () => {
+    const tiles = dictionaryTiles();
+    expect(new Set(tiles.map((t) => t.ch))).toEqual(new Set(['Ç', 'Ê', 'Î', 'Ş', 'Û']));
+    const whole = dictionarySvg();
+    const still = dictionaryStillSvg();
+    for (const t of tiles) {
+      const tile = dictionaryTileSvg(t);
+      expect(whole).toContain(tile);
+      expect(still).not.toContain(tile);
+      // inside the picture, clear of its edges
+      expect(t.at[0]).toBeGreaterThan(DICTIONARY_TILE);
+      expect(t.at[0]).toBeLessThan(120 - DICTIONARY_TILE);
+      expect(t.at[1]).toBeGreaterThan(DICTIONARY_TILE);
+    }
+  });
+
+  it('keeps its ids its own, so two on one page do not collide', () => {
+    const a = checkSvg(dictionarySvg({ idPrefix: 'a', title: 'A dictionary' }), 240);
+    for (const id of checkSvg(dictionarySvg({ idPrefix: 'b', title: 'A dictionary' }), 240)) expect(a.has(id)).toBe(false);
+    expect(() => dictionarySvg({ size: -1 })).toThrow(RangeError);
   });
 });

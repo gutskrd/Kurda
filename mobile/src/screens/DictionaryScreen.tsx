@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useSayNotSaved } from '../api/optimistic';
 import { EntryDetail } from '../dictionary/EntryDetail';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
+import { DictionaryArt } from '../dictionary/DictionaryArt';
 import type { RootNavigation } from '../navigation/rootStack';
 import { SourceLine } from '../dictionary/SourceLine';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -116,7 +117,77 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   // A saved word's ✕ is at the row's end, which is on the left when the row is mirrored.
   const towardWord = dir.row === 'row-reverse' ? 'right' : 'left';
   const removeReach = reachSlop(MIN_TOUCH_TARGET, MIN_TOUCH_TARGET, { edge: SAVED_ROW_REACH, limit: { [towardWord]: 0 } });
-  const showRecents = isEmpty && recents.length > 0;
+
+  // Before a search, never a blank page: the picture, today's word, the way in for beginners, then what you searched
+  // and saved. It scrolls with the list, so a long list of saved words is never cut off.
+  const idleHeader = (
+    <View style={styles.idle}>
+      <DictionaryArt />
+      <WordOfDayCard />
+      <Pressable
+        onPress={() => navigation.navigate('Alphabet')}
+        accessibilityRole="link"
+        style={({ pressed }) => [styles.alphabetCard, { flexDirection: dir.row, backgroundColor: colors.surface }, pressed && heldRow(colors.controlTrack)]}
+        testID="dictionary-alphabet"
+      >
+        <Icon name="text" size={22} color={colors.textPrimary} />
+        <Text style={[styles.alphabetText, dir.text, { color: colors.textPrimary }]}>{t('alphabet.link')}</Text>
+        <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
+      </Pressable>
+
+      {recents.length > 0 ? (
+        <View style={styles.recents}>
+          <Text style={[styles.recentsTitle, dir.text, { color: colors.textSecondary }]}>{t('dictionary.recent')}</Text>
+          {recents.map((r) => (
+            <Pressable
+              key={r}
+              onPress={() => setQuery(r)}
+              style={({ pressed }) => [styles.recentRow, pressed && heldRow(colors.controlTrack)]}
+              accessibilityRole="button"
+            >
+              <Text style={[styles.recentText, dir.free, { color: colors.primary }]}>{r}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
+      {!savedSettled ? <SavedSkeleton /> : null}
+
+      {saved.length > 0 ? (
+        <View style={styles.recents}>
+          {/* The heading's icon in grey: gold is for what is earned, and saving a word is not. */}
+          <View style={[styles.savedHeading, { flexDirection: dir.row }]}>
+            <Icon name="bookmark" size={13} color={colors.textSecondary} />
+            <Text style={[styles.recentsTitle, dir.text, { color: colors.textSecondary }]}>{t('saved.title')}</Text>
+          </View>
+          {saved.map((w) => (
+            <View key={w.entryId} style={[styles.savedRow, { flexDirection: dir.row }]}>
+              <Pressable
+                style={({ pressed }) => [styles.savedMain, pressed && heldRow(colors.controlTrack)]}
+                onPress={() => setOpenEntry(w.entryId)}
+                accessibilityRole="button"
+                hitSlop={SAVED_WORD_REACH}
+              >
+                <Text style={[styles.recentText, dir.free, { color: colors.primary }]}>{w.headword}</Text>
+                <Text style={[styles.hitDef, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {w.definitionEn ?? w.definitionKu ?? ''}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => removeSaved(w.entryId)}
+                accessibilityRole="button"
+                accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })}
+                hitSlop={removeReach}
+                style={({ pressed }) => [styles.removeButton, pressed && heldDim]}
+              >
+                <Icon name="close" size={18} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      ) : null}
+    </View>
+  );
 
   return (
     <GradientBackground>
@@ -130,74 +201,6 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
         />
 
         {result?.fuzzy ? <Text style={[styles.banner, dir.text, { color: colors.textSecondary }]}>{t('dictionary.noExactMatch')}</Text> : null}
-
-        {/* Before a search, never a blank page: the way in for beginners, as on the website, and today's word. */}
-        {isEmpty ? (
-          <View style={styles.idle}>
-            <Pressable
-              onPress={() => navigation.navigate('Alphabet')}
-              accessibilityRole="link"
-              style={({ pressed }) => [styles.alphabetLink, { flexDirection: dir.row }, pressed && heldDim]}
-              testID="dictionary-alphabet"
-            >
-              <Text style={[styles.alphabetText, dir.text, { color: colors.primary }]}>{t('alphabet.link')}</Text>
-              <Icon name="chevron-right" size={14} color={colors.primary} style={dir.flip ?? undefined} />
-            </Pressable>
-            <WordOfDayCard />
-          </View>
-        ) : null}
-
-        {showRecents ? (
-          <View style={styles.recents}>
-            <Text style={[styles.recentsTitle, dir.text, { color: colors.textSecondary }]}>{t('dictionary.recent')}</Text>
-            {recents.map((r) => (
-              <Pressable
-                key={r}
-                onPress={() => setQuery(r)}
-                style={({ pressed }) => [styles.recentRow, pressed && heldRow(colors.controlTrack)]}
-                accessibilityRole="button"
-              >
-                <Text style={[styles.recentText, dir.free, { color: colors.primary }]}>{r}</Text>
-              </Pressable>
-            ))}
-          </View>
-        ) : null}
-
-        {isEmpty && !savedSettled ? <SavedSkeleton /> : null}
-
-        {isEmpty && saved.length > 0 ? (
-          <View style={styles.recents}>
-            {/* The heading's icon in grey: gold is for what is earned, and saving a word is not. */}
-            <View style={[styles.savedHeading, { flexDirection: dir.row }]}>
-              <Icon name="bookmark" size={13} color={colors.textSecondary} />
-              <Text style={[styles.recentsTitle, dir.text, { color: colors.textSecondary }]}>{t('saved.title')}</Text>
-            </View>
-            {saved.map((w) => (
-              <View key={w.entryId} style={[styles.savedRow, { flexDirection: dir.row }]}>
-                <Pressable
-                  style={({ pressed }) => [styles.savedMain, pressed && heldRow(colors.controlTrack)]}
-                  onPress={() => setOpenEntry(w.entryId)}
-                  accessibilityRole="button"
-                  hitSlop={SAVED_WORD_REACH}
-                >
-                  <Text style={[styles.recentText, dir.free, { color: colors.primary }]}>{w.headword}</Text>
-                  <Text style={[styles.hitDef, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {w.definitionEn ?? w.definitionKu ?? ''}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => removeSaved(w.entryId)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })}
-                  hitSlop={removeReach}
-                  style={({ pressed }) => [styles.removeButton, pressed && heldDim]}
-                >
-                  <Icon name="close" size={18} color={colors.textSecondary} />
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        ) : null}
 
         {loading && results.length === 0 ? <HitsSkeleton /> : null}
 
@@ -226,6 +229,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
             </Pressable>
           )}
           keyboardShouldPersistTaps="handled"
+          ListHeaderComponent={isEmpty ? idleHeader : null}
           ListFooterComponent={<SourceLine />}
         />
       </View>
@@ -283,9 +287,10 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.sm },
   banner: { fontSize: typography.sizes.text, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
-  idle: { gap: spacing.md },
-  alphabetLink: { alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
-  alphabetText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  idle: { gap: spacing.md, paddingBottom: spacing.md },
+  // A card beside today's word: the letters' glyph, the way in, and where it leads.
+  alphabetCard: { alignItems: 'center', gap: spacing.md, minHeight: 56, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  alphabetText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   savedHeading: { alignItems: 'center', gap: spacing.xs },
   recentsTitle: { ...sectionLabel },
   // A fingertip tall, the word centred.

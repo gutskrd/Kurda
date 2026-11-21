@@ -4,7 +4,7 @@ import { Button } from '../components/Button';
 import { BookIcon, CheckIcon, FlagIcon, LockIcon, NextIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { useDarkPage } from './PathWorld';
+import { useDarkPage } from '../theme/useDarkPage';
 import type { SkillNode } from './types';
 
 /**

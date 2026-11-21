@@ -4353,6 +4353,11 @@ button.mkp-fact {
   display: grid;
   gap: 10px;
 }
+/* before a search: the picture over today's word and the way to the letters, one column of cards */
+.dict-idle {
+  display: grid;
+  gap: 12px;
+}
 .dict-section-title {
   display: flex;
   align-items: center;

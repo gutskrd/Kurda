@@ -413,9 +413,67 @@
 }
 
 /* ---- the ways in, from the dictionary and the landing page ------------------ */
-.dict-alphabet {
-  display: inline-block;
-  margin: 10px 0 4px;
+/* on the dictionary, a card beside today's word: the letters' glyph, the way in, and where it leads */
+.learn-tool.dict-alphabet {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.dict-alphabet-text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+.learn-tool-link.dict-alphabet > svg {
+  flex: none;
+}
+[dir='rtl'] .dict-alphabet-go {
+  transform: scaleX(-1);
+}
+
+/* ---- the dictionary's picture before a search ---------------------------------- */
+.dict-art {
+  display: grid;
+  place-items: center;
+  margin: 4px 0 -4px;
+  line-height: 0;
+}
+.dict-art svg {
+  width: min(232px, 64vw);
+  height: auto;
+}
+/* each letter tile rises and settles on its own beat */
+.dict-art-tile {
+  animation: dict-float 3.2s ease-in-out infinite;
+}
+.dict-art-tile-2 {
+  animation-delay: -0.6s;
+}
+.dict-art-tile-3 {
+  animation-delay: -1.3s;
+}
+.dict-art-tile-4 {
+  animation-delay: -1.9s;
+}
+.dict-art-tile-5 {
+  animation-delay: -2.5s;
+}
+@keyframes dict-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dict-art-tile {
+    animation: none;
+  }
 }
 .lp-alphabet {
   display: inline-block;

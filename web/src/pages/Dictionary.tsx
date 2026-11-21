@@ -6,7 +6,7 @@ import { useT } from '../i18n/I18nProvider';
 import { useGrowsInto } from '../lib/viewTransition';
 import { EmptyState, ErrorState } from '../components/states';
 import { DictRowsSkeleton } from '../components/skeletons';
-import { BookmarkIcon, CloseIcon } from '../components/icons';
+import { BookmarkIcon, ChevronIcon, CloseIcon, TextIcon } from '../components/icons';
 import { SearchField } from '../components/SearchField';
 import { EntryView } from '../dictionary/EntryView';
 import { unsaveWord } from '../dictionary/save';
@@ -16,6 +16,7 @@ import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchResult } from '../dictionary/types';
 import { WordOfDayTool } from '../learn/WordOfDayTool';
+import { DictionaryArt } from '../dictionary/DictionaryArt';
 
 /**
  * The dictionary: search as you type against the phone's endpoints, with the same debounce and closest-match fallback.
@@ -127,13 +128,17 @@ export function Dictionary(): React.JSX.Element {
         spellCheck={false}
       />
 
+      {/* Before a search: the picture, today's word, and the way in for somebody new to the letters. */}
       {idle && (
-        <>
-          <Link to="/app/alphabet" className="doc-link reach-line dict-alphabet">
-            {t('alphabet.link')}
-          </Link>
+        <div className="dict-idle">
+          <DictionaryArt />
           <WordOfDayTool />
-        </>
+          <Link to="/app/alphabet" className="learn-tool learn-tool-link dict-alphabet">
+            <TextIcon size={22} />
+            <span className="dict-alphabet-text">{t('alphabet.link')}</span>
+            <ChevronIcon size={18} className="dict-alphabet-go" />
+          </Link>
+        </div>
       )}
 
       {result?.fuzzy ? <p className="muted dict-fuzzy">{t('dictionary.noExactMatch')}</p> : null}

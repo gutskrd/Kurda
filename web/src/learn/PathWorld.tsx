@@ -26,19 +26,6 @@ import type { SkillNode } from './types';
 
 type Unit = PathUnit<SkillNode>;
 
-/** Whether the page is dark (theme/theme.ts sets the scheme on the root), followed as it changes. */
-export function useDarkPage(): boolean {
-  const read = (): boolean => typeof document !== 'undefined' && document.documentElement.dataset.theme !== 'light';
-  const [dark, setDark] = useState(read);
-  useEffect(() => {
-    if (typeof MutationObserver === 'undefined') return;
-    const observer = new MutationObserver(() => setDark(read()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => observer.disconnect();
-  }, []);
-  return dark;
-}
-
 /** An element's width, followed as it changes, from when it is `ready`. */
 export function useWidth(ref: React.RefObject<HTMLElement | null>, ready: boolean): number {
   const [width, setWidth] = useState(0);
