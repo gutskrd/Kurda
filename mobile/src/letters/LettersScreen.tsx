@@ -938,12 +938,12 @@ function LettersSkeleton({ size }: { size: number }): React.JSX.Element {
   return (
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')} testID="letters-loading">
       <View>
-        <SkeletonText size={typography.sizes.sm} lineHeight={20} width="92%" align={start} />
-        <SkeletonText size={typography.sizes.sm} lineHeight={20} width="58%" align={start} />
+        <SkeletonText size={typography.sizes.text} lineHeight={20} width="92%" align={start} />
+        <SkeletonText size={typography.sizes.text} lineHeight={20} width="58%" align={start} />
       </View>
       {size > 0 ? <Skeleton width={size} height={size} radius={radii.xl} style={styles.skeletonWindow} /> : null}
       <Skeleton height={50} radius={radii.pill} />
-      <SkeletonText size={typography.sizes.xs} width={96} align={start} />
+      <SkeletonText size={typography.sizes.text} width={96} align={start} />
     </View>
   );
 }
@@ -954,11 +954,11 @@ const styles = StyleSheet.create({
   skeletonWindow: { alignSelf: 'center' },
   windowSpot: { alignSelf: 'center' },
   content: { padding: layout.gutter, paddingBottom: spacing.xxl, gap: spacing.lg },
-  lead: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  lead: { fontSize: typography.sizes.text, lineHeight: 20 },
   hero: { alignItems: 'center', gap: spacing.sm, marginTop: -spacing.sm },
-  status: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center', maxWidth: 360 },
+  status: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center', maxWidth: 360 },
   strong: { fontWeight: typography.weights.bold },
-  quiet: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  quiet: { fontSize: typography.sizes.text, lineHeight: 20 },
   link: { textDecorationLine: 'underline' },
   wide: { alignSelf: 'stretch' },
   // Your bird home with an answer while a visitor is on the sill: shown under the visitor's words, with its own way in.
@@ -969,7 +969,7 @@ const styles = StyleSheet.create({
   // The birds overlap a little, each ringed in the card's colour so they read as separate birds.
   skyBird: { borderRadius: radii.pill, borderWidth: 2 },
   skyBirdOver: { marginStart: -12 },
-  skyText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
+  skyText: { flex: 1, fontSize: typography.sizes.text, lineHeight: 20 },
   change: {
     position: 'absolute',
     top: spacing.sm + 2,
@@ -983,25 +983,25 @@ const styles = StyleSheet.create({
   // In the window's corner on the line-end side.
   changeRight: { right: spacing.sm + 2 },
   changeLeft: { left: spacing.sm + 2 },
-  changeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  changeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   how: { borderRadius: radii.lg, borderWidth: StyleSheet.hairlineWidth * 2, paddingHorizontal: spacing.md },
   howLines: { gap: spacing.sm, paddingBottom: spacing.md, paddingStart: 18 + spacing.sm + 2 },
   visitor: { gap: spacing.md },
-  note: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  note: { fontSize: typography.sizes.text, lineHeight: 20 },
   ask: { gap: spacing.sm },
   askActions: { flexWrap: 'wrap', gap: spacing.sm },
   askAction: { flexGrow: 1 },
   section: { gap: spacing.sm },
   heading: { ...sectionLabel },
-  empty: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  empty: { fontSize: typography.sizes.text, lineHeight: 20 },
   pal: { alignItems: 'center', gap: spacing.md - 4, minHeight: MIN_TOUCH_TARGET + 20, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm + 2, borderRadius: radii.lg },
   palText: { flex: 1, gap: 2 },
-  palName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  palTurn: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  palName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  palTurn: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   newBadge: { paddingHorizontal: spacing.sm + 2, paddingVertical: 2, borderRadius: radii.pill },
-  newText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  newText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   howHead: { alignItems: 'center', gap: spacing.sm + 2, minHeight: MIN_TOUCH_TARGET + 6 },
-  howTitle: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  howTitle: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   flipped: { transform: [{ rotate: '180deg' }] },
-  howLine: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  howLine: { fontSize: typography.sizes.text, lineHeight: 20 },
 });

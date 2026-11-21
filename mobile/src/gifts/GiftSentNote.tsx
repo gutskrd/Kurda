@@ -80,8 +80,8 @@ const styles = StyleSheet.create({
   },
   row: { alignItems: 'flex-start', gap: spacing.sm },
   text: { flex: 1, gap: 2 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  body: { fontSize: typography.sizes.sm },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  body: { fontSize: typography.sizes.text },
   close: { padding: 4 },
   open: {
     flexDirection: 'row',
@@ -91,5 +91,5 @@ const styles = StyleSheet.create({
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.pill,
   },
-  openText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  openText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

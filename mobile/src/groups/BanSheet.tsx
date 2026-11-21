@@ -128,11 +128,11 @@ const styles = StyleSheet.create({
   // The scroll view keeps the gutter, so a row inside can run to the edges.
   sheet: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm },
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   fieldTop: { justifyContent: 'space-between', alignItems: 'baseline', marginTop: spacing.sm },
-  count: { fontSize: typography.sizes.xs, fontVariant: ['tabular-nums'] },
-  input: { minHeight: 80, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, textAlignVertical: 'top' },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  count: { fontSize: typography.sizes.text, fontVariant: ['tabular-nums'] },
+  input: { minHeight: 80, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.text, textAlignVertical: 'top' },
+  hint: { fontSize: typography.sizes.text, lineHeight: 20 },
   edge: { marginHorizontal: -layout.gutter },
   foot: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.sm },
 });

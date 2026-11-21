@@ -195,7 +195,7 @@ const styles = StyleSheet.create({
   words: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm + 2 },
   // A word tile like the word bank's: smaller than an answer card, on the same hairline edge.
   word: { alignItems: 'center', gap: spacing.xs + 2, borderRadius: radii.md + 2, borderWidth: CARD.edge, paddingHorizontal: spacing.md + 2 },
-  wordText: { ...display(typography.sizes.md + 2) },
+  wordText: { ...display(typography.sizes.text) },
   ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.md + 2 },
   hidden: { opacity: 0 },
 });

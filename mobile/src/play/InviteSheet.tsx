@@ -536,6 +536,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     padding: spacing.sm,
   },
-  gameName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  gameName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  hint: { fontSize: typography.sizes.text, lineHeight: 19 },
 });

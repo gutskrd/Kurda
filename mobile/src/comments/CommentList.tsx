@@ -345,8 +345,8 @@ export function CommentsSkeleton(): React.JSX.Element {
         <View key={i} style={styles.comment}>
           <Skeleton width={AVATAR} height={AVATAR} radius={radii.pill} />
           <View style={styles.main}>
-            <SkeletonText size={typography.sizes.sm} width={i === 1 ? 72 : 96} />
-            <SkeletonText size={typography.sizes.md} width={i === 1 ? '54%' : '80%'} />
+            <SkeletonText size={typography.sizes.text} width={i === 1 ? 72 : 96} />
+            <SkeletonText size={typography.sizes.text} width={i === 1 ? '54%' : '80%'} />
           </View>
         </View>
       ))}
@@ -376,16 +376,16 @@ const styles = StyleSheet.create({
   main: { flex: 1, gap: 2 },
   byline: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   who: { flexShrink: 1 },
-  name: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  age: { fontSize: typography.sizes.xs },
-  body: { fontSize: typography.sizes.md },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  age: { fontSize: typography.sizes.text },
+  body: { fontSize: typography.sizes.text },
   voice: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   voiceText: { flexShrink: 1 },
   actions: { flexDirection: 'row', gap: spacing.md, paddingTop: 2 },
   action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingVertical: spacing.xs },
   actionApart: { marginLeft: 'auto' },
   actionApartLeft: { marginRight: 'auto' },
-  actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  actionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   more: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md, paddingVertical: spacing.xs, alignSelf: 'flex-start' },
   moreRule: { width: 24, height: StyleSheet.hairlineWidth },
   // Under the words of the comment they answer, not under its picture.
@@ -394,11 +394,11 @@ const styles = StyleSheet.create({
   composerWrap: { gap: spacing.sm, paddingTop: spacing.sm },
   held: { marginHorizontal: spacing.md },
   replying: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.md },
-  replyingText: { flex: 1, fontSize: typography.sizes.sm },
+  replyingText: { flex: 1, fontSize: typography.sizes.text },
   cancel: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
   composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderRadius: radii.lg, paddingLeft: spacing.md, paddingRight: spacing.xs, paddingVertical: 2 },
   // The words' room on the right, Send's on the left.
   composerRtl: { paddingLeft: spacing.xs, paddingRight: spacing.md },
-  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.md, maxHeight: 120, paddingVertical: spacing.sm },
+  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.text, maxHeight: 120, paddingVertical: spacing.sm },
   send: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
 });

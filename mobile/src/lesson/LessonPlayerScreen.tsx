@@ -954,19 +954,19 @@ const styles = StyleSheet.create({
   round: { width: 36, height: 36, borderRadius: radii.pill, borderWidth: CARD.edge, alignItems: 'center', justifyContent: 'center' },
   pill: { height: 36, paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill, borderWidth: CARD.edge, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: pressedDim },
-  reask: { fontSize: typography.sizes.sm, paddingHorizontal: layout.gutter },
+  reask: { fontSize: typography.sizes.text, paddingHorizontal: layout.gutter },
   progressWrap: { flex: 1 },
   body: { paddingHorizontal: layout.gutter, paddingTop: spacing.md + 6, paddingBottom: spacing.lg, flexGrow: 1 },
   // The lesson's name: small tracked capitals in red, just over the question.
-  kicker: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase' },
+  kicker: { fontSize: typography.sizes.text, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase' },
   kickerRow: { justifyContent: 'center', marginBottom: spacing.xs },
   // The kicker's line, as tall as the "New word" badge that replaces it on some questions.
   badged: { minHeight: BADGE },
-  tallying: { fontSize: typography.sizes.md },
-  leaveBody: { fontSize: typography.sizes.md, lineHeight: 22 },
+  tallying: { fontSize: typography.sizes.text },
+  leaveBody: { fontSize: typography.sizes.text, lineHeight: 22 },
   leaveActions: { gap: spacing.sm, marginTop: spacing.sm },
-  errorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
-  errorDetail: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  errorText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
+  errorDetail: { fontSize: typography.sizes.text, textAlign: 'center' },
   stuckActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },
   offline: {
     margin: spacing.lg,
@@ -974,5 +974,5 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     alignItems: 'center',
   },
-  offlineText: { fontSize: typography.sizes.md, textAlign: 'center' },
+  offlineText: { fontSize: typography.sizes.text, textAlign: 'center' },
 });

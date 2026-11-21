@@ -70,6 +70,6 @@ const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.sm + 4, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm + 2 },
   art: { borderRadius: radii.md, overflow: 'hidden' },
   main: { flex: 1, gap: 1 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  sub: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  sub: { fontSize: typography.sizes.text, lineHeight: 20 },
 });

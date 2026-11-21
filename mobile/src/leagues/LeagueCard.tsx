@@ -25,8 +25,8 @@ export function LeagueCard({ league, onOpen }: { league: LeagueView | null; onOp
       <View style={[styles.card, { flexDirection: dir.row, backgroundColor: colors.surface }]} accessibilityLabel={t('common.loading')}>
         <Skeleton width={52} height={52} radius={radii.pill} />
         <View style={styles.text}>
-          <SkeletonText size={typography.sizes.md} width="50%" />
-          <SkeletonText size={typography.sizes.sm} width="70%" />
+          <SkeletonText size={typography.sizes.text} width="50%" />
+          <SkeletonText size={typography.sizes.text} width="70%" />
         </View>
       </View>
     );
@@ -93,8 +93,8 @@ function zoneLines(t: ReturnType<typeof useI18n>['t'], league: LeagueView): Zone
 const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.md - 2, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 4 },
   text: { flex: 1, gap: 3 },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  meta: { fontSize: typography.sizes.sm, lineHeight: 19, fontVariant: ['tabular-nums'] },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  meta: { fontSize: typography.sizes.text, lineHeight: 19, fontVariant: ['tabular-nums'] },
   line: { alignItems: 'center', gap: 5 },
   zones: { flexWrap: 'wrap', columnGap: spacing.md, rowGap: 2 },
 });

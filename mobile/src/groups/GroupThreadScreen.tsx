@@ -766,8 +766,8 @@ function ClubThreadSkeleton(): React.JSX.Element {
         <View key={i} style={[styles.skeletonRow, { flexDirection: dir.row, width: `${Math.round(share * 100)}%` }, mine !== mirrored ? styles.rowEnd : styles.rowStart]}>
           {!mine ? <Skeleton width={RUN_FACE} height={RUN_FACE} radius={radii.pill} /> : null}
           <View style={[styles.skeletonMain, styles.flex]}>
-            {!mine ? <SkeletonText size={typography.sizes.xs} width={56} style={[styles.senderSkeleton, { alignItems: mirrored ? 'flex-end' : 'flex-start' }]} /> : null}
-            <Skeleton height={18 + lineOf(typography.sizes.md)} radius={radii.lg} />
+            {!mine ? <SkeletonText size={typography.sizes.text} width={56} style={[styles.senderSkeleton, { alignItems: mirrored ? 'flex-end' : 'flex-start' }]} /> : null}
+            <Skeleton height={18 + lineOf(typography.sizes.text)} radius={radii.lg} />
           </View>
         </View>
       ))}
@@ -792,8 +792,8 @@ const styles = StyleSheet.create({
   // A card in the middle of what the chat would fill.
   centred: { flexGrow: 1, justifyContent: 'center', padding: spacing.md },
   welcome: { flexGrow: 1, paddingTop: spacing.sm },
-  error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
-  giftNote: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  error: { textAlign: 'center', fontSize: typography.sizes.text, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  giftNote: { textAlign: 'center', fontSize: typography.sizes.text, lineHeight: 20, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   inputRow: {
     flexDirection: 'row',
     // The buttons stay by the last line as a long message grows the field upwards.

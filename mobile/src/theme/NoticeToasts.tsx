@@ -108,6 +108,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
   },
-  text: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm },
+  text: { flex: 1, fontSize: typography.sizes.text, lineHeight: 20, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm },
   close: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
 });

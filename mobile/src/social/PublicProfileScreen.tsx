@@ -401,13 +401,13 @@ function ProfileCardSkeleton(): React.JSX.Element {
       <View style={[styles.face, { borderColor: colors.background, backgroundColor: colors.background }]}>
         <Skeleton width={FACE} height={FACE} radius={radii.pill} raised />
       </View>
-      <SkeletonText size={typography.sizes.xl} width={120} align="center" raised />
-      <SkeletonText size={typography.sizes.md} width={72} align="center" raised />
+      <SkeletonText size={typography.sizes.title} width={120} align="center" raised />
+      <SkeletonText size={typography.sizes.text} width={72} align="center" raised />
       <View style={[styles.stats, styles.statsSkeleton]}>
         {[0, 1, 2, 3].map((i) => (
           <View key={i} style={styles.statSkeleton}>
-            <SkeletonText size={typography.sizes.lg} width={36} align="center" raised />
-            <SkeletonText size={typography.sizes.xs} width={48} align="center" raised />
+            <SkeletonText size={typography.sizes.text} width={36} align="center" raised />
+            <SkeletonText size={typography.sizes.text} width={48} align="center" raised />
           </View>
         ))}
       </View>
@@ -458,13 +458,13 @@ const styles = StyleSheet.create({
   banner: { height: BANNER, alignSelf: 'stretch', marginHorizontal: -spacing.xl },
   // Their face stands half over the band's lower edge, ringed in the page's colour.
   face: { marginTop: -(FACE / 2 + 4 + spacing.sm), borderRadius: radii.pill, borderWidth: 4 },
-  username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
-  display: { fontSize: typography.sizes.md },
+  username: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },
+  display: { fontSize: typography.sizes.text },
   // The flag and the name of where they are from, as your own profile draws them.
   country: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
   flag: { width: 22, height: 16 },
-  countryName: { fontSize: typography.sizes.sm },
-  bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
+  countryName: { fontSize: typography.sizes.text },
+  bio: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
   stats: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.md },
   statsSkeleton: { flexDirection: 'row', justifyContent: 'space-around' },
   statSkeleton: { alignItems: 'center', gap: 2 },

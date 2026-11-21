@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   // A long "Copy code" wraps inside the button rather than being cut.
-  copyText: { flexShrink: 1, textAlign: 'center', fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
-  note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  copyText: { flexShrink: 1, textAlign: 'center', fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  note: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  hint: { fontSize: typography.sizes.text, lineHeight: 20 },
 });

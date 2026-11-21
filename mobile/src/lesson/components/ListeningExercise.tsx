@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
   wave: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: WAVE },
   bar: { width: 3, borderRadius: radii.pill },
   slow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm },
-  slowText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.4 },
+  slowText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.4 },
   pressed: { opacity: pressedDim },
-  prompt: { fontSize: typography.sizes.md },
+  prompt: { fontSize: typography.sizes.text },
   // The field's card, edge and face match the answer box (KurdishAnswerInput).
   input: { minHeight: MIN_TOUCH_TARGET, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
   dim: { opacity: 0.4 },

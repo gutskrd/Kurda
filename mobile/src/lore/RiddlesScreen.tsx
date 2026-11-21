@@ -322,14 +322,14 @@ function ListSkeleton(): React.JSX.Element {
   return (
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
       <View style={[styles.daily, { backgroundColor: colors.surface }]}>
-        <SkeletonText size={typography.sizes.xs} width={120} />
-        <SkeletonText size={typography.sizes.lg} width="90%" />
-        <SkeletonText size={typography.sizes.lg} width="60%" />
+        <SkeletonText size={typography.sizes.text} width={120} />
+        <SkeletonText size={typography.sizes.text} width="90%" />
+        <SkeletonText size={typography.sizes.text} width="60%" />
       </View>
       <View style={[styles.rows, { backgroundColor: colors.surface }]}>
         {[0.8, 0.65, 0.9].map((w, i) => (
           <View key={i} style={styles.row}>
-            <SkeletonText size={typography.sizes.md} width={`${Math.round(w * 100)}%`} />
+            <SkeletonText size={typography.sizes.text} width={`${Math.round(w * 100)}%`} />
           </View>
         ))}
       </View>
@@ -344,26 +344,26 @@ const styles = StyleSheet.create({
   barFill: { height: 4, borderRadius: radii.pill },
   guest: { alignItems: 'flex-start', gap: spacing.sm, borderRadius: radii.md, paddingLeft: spacing.md, paddingRight: spacing.xs, paddingVertical: spacing.xs },
   guestBody: { flex: 1, gap: 2, paddingVertical: spacing.sm },
-  guestText: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  guestText: { fontSize: typography.sizes.text, lineHeight: 20 },
   guestLink: { minHeight: 28, justifyContent: 'center' },
-  guestLinkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  guestLinkText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   guestClose: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   daily: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   dailyKicker: { alignItems: 'center', gap: spacing.xs },
-  dailyQuestion: { ...display(typography.sizes.lg), lineHeight: Math.round(typography.sizes.lg * 1.35) },
-  dailyTranslation: { fontSize: typography.sizes.md, lineHeight: 24 },
+  dailyQuestion: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.35) },
+  dailyTranslation: { fontSize: typography.sizes.text, lineHeight: 24 },
   dailyFoot: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs, minHeight: MIN_TOUCH_TARGET - spacing.sm },
-  dailyGo: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  dailyGo: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   flex: { flex: 1 },
   listHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginBottom: -spacing.sm },
   toggle: { alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
-  toggleText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  toggleText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   group: { gap: spacing.sm },
   rows: { borderRadius: radii.lg, paddingHorizontal: spacing.md },
   row: { alignItems: 'center', gap: spacing.md, minHeight: 60, paddingVertical: spacing.sm + 2 },
   mark: { width: 24, height: 24, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   rowMain: { flex: 1, gap: 2 },
-  question: { fontSize: typography.sizes.md, lineHeight: 24 },
-  rowTranslation: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  question: { fontSize: typography.sizes.text, lineHeight: 24 },
+  rowTranslation: { fontSize: typography.sizes.text, lineHeight: 20 },
   skeleton: { gap: spacing.lg },
 });

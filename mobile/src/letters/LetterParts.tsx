@@ -133,11 +133,11 @@ const styles = StyleSheet.create({
   // The quiet actions under a letter, toward the end of the line.
   actions: { justifyContent: 'flex-end', flexWrap: 'wrap', columnGap: spacing.md },
   action: { alignItems: 'center', gap: 5, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.xs },
-  actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  actionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 
   removedCard: { gap: spacing.sm, borderRadius: radii.lg, borderWidth: 1, paddingHorizontal: spacing.md, paddingTop: spacing.md - 2, paddingBottom: spacing.sm + 2 },
   removedHead: { justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
-  from: { flexShrink: 1, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  when: { fontSize: typography.sizes.xs },
-  removed: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
+  from: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  when: { fontSize: typography.sizes.text },
+  removed: { fontSize: typography.sizes.text, fontStyle: 'italic' },
 });

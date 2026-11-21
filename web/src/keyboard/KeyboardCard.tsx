@@ -20,7 +20,7 @@ export function KeyboardCard(): React.JSX.Element {
         <h2 className="friend-heading" id="settings-keyboard" style={{ marginTop: 0 }}>
           {t('keyboard.settings.title')}
         </h2>
-        <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
+        <p className="muted" style={{ fontSize: 'var(--text)', marginBottom: 14 }}>
           {t('keyboard.settings.help')}
         </p>
         <KeyboardSettings context="settings" onHelp={() => setGuideOpen(true)} />

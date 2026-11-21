@@ -22,8 +22,8 @@
   background: var(--surface);
 }
 .dt-title {
-  font-family: var(--font-display);
-  font-size: var(--text-section, 1.3rem);
+  font-family: var(--font-sans);
+  font-size: var(--text);
 }
 .dt-intro {
   color: var(--ink-2);
@@ -59,7 +59,7 @@
 }
 .dt-muted {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 
 /* the board: a cork-coloured field the suspects and the cards are pinned to */
@@ -72,12 +72,12 @@
 }
 .dt-board-title {
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 650;
 }
 .dt-section {
   color: var(--u-text, var(--ink-3));
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.02em;
 }
@@ -103,7 +103,7 @@
 }
 .dt-suspect-about {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .dt-portrait {
   position: relative;
@@ -124,7 +124,7 @@
 .dt-initial {
   position: absolute;
   inset-block-end: 6%;
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 700;
   color: var(--ink-2);
 }
@@ -171,14 +171,14 @@
   align-items: center;
   gap: 4px;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
 }
 .dt-card-from {
   font-weight: 500;
 }
 .dt-card-ku {
-  font-size: 1.1rem;
+  font-size: var(--text);
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -199,7 +199,7 @@
   padding-top: var(--space-2);
   border-top: 1px dashed var(--border);
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .dt-translate {
   display: inline-flex;
@@ -243,7 +243,7 @@
 }
 .dt-step-count {
   color: var(--u-text, var(--ink-3));
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
 }
 .dt-question-title,
@@ -253,11 +253,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 650;
 }
 .dt-question-title {
-  font-size: 1.15rem;
+  font-size: var(--text);
 }
 .dt-options {
   display: grid;
@@ -318,7 +318,7 @@
 .dt-look,
 .dt-noted {
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .dt-solution {
   display: grid;
@@ -357,7 +357,7 @@
 }
 .dt-note-q {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .dt-note-a {
   font-weight: 600;
@@ -402,7 +402,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.8rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 

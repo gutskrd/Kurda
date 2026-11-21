@@ -98,6 +98,6 @@ const styles = StyleSheet.create({
   thumb: { width: 44, height: 44, borderRadius: radii.sm, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   art: { width: '100%', height: '100%' },
   main: { flex: 1 },
-  name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  from: { fontSize: typography.sizes.sm },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  from: { fontSize: typography.sizes.text },
 });

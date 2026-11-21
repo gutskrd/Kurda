@@ -428,10 +428,10 @@ function RowsSkeleton(): React.JSX.Element {
     <View style={styles.rows} accessibilityLabel={t('common.loading')}>
       {Array.from({ length: rows }, (_, i) => (
         <View key={i} style={styles.row}>
-          <SkeletonText size={typography.sizes.sm} width={14} align="center" style={styles.rankSkeleton} />
+          <SkeletonText size={typography.sizes.text} width={14} align="center" style={styles.rankSkeleton} />
           <Skeleton width={32} height={32} radius={radii.pill} />
-          <SkeletonText size={typography.sizes.md} width={i % 2 ? '40%' : '56%'} style={styles.nameSkeleton} />
-          <SkeletonText size={typography.sizes.sm} width={52} />
+          <SkeletonText size={typography.sizes.text} width={i % 2 ? '40%' : '56%'} style={styles.nameSkeleton} />
+          <SkeletonText size={typography.sizes.text} width={52} />
         </View>
       ))}
     </View>
@@ -447,19 +447,19 @@ const styles = StyleSheet.create({
   pinned: { paddingHorizontal: layout.gutter, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: spacing.xs, borderTopWidth: StyleSheet.hairlineWidth },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.sm, minHeight: MIN_TOUCH_TARGET + 4 },
   rank: { width: 26, textAlign: 'center', fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  name: { flex: 1, fontSize: typography.sizes.md },
+  name: { flex: 1, fontSize: typography.sizes.text },
   nameSelf: { fontWeight: typography.weights.bold },
   amount: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  score: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  score: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
+  hint: { fontSize: typography.sizes.text, lineHeight: 19 },
   note: { paddingHorizontal: spacing.sm },
   center: { textAlign: 'center' },
   end: { paddingVertical: spacing.md },
   centered: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
   more: { alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.md, minHeight: MIN_TOUCH_TARGET },
   busy: { opacity: 0.5 },
-  moreText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  moreText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   rankSkeleton: { width: 26 },
   nameSkeleton: { flex: 1 },
 });

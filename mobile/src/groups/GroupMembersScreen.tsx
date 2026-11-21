@@ -384,14 +384,14 @@ function InfoSkeleton(): React.JSX.Element {
     <View style={styles.page}>
       <View style={styles.head}>
         <Skeleton width={HEAD_AVATAR} height={HEAD_AVATAR} radius={Math.round(HEAD_AVATAR * 0.22)} />
-        <SkeletonText size={typography.sizes.xl} width={180} align="center" />
-        <SkeletonText size={typography.sizes.sm} width={240} align="center" />
+        <SkeletonText size={typography.sizes.title} width={180} align="center" />
+        <SkeletonText size={typography.sizes.text} width={240} align="center" />
       </View>
       {[0, 1, 2, 3, 4].map((i) => (
         <View key={i} style={styles.member}>
           <Skeleton width={MEMBER_AVATAR} height={MEMBER_AVATAR} radius={radii.pill} />
           <View style={styles.memberWords}>
-            <SkeletonText size={typography.sizes.md} width={i % 2 ? '40%' : '56%'} />
+            <SkeletonText size={typography.sizes.text} width={i % 2 ? '40%' : '56%'} />
           </View>
         </View>
       ))}
@@ -406,16 +406,16 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   page: { paddingBottom: spacing.xxl },
   head: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: layout.gutter, paddingTop: spacing.md, paddingBottom: spacing.lg },
-  title: { ...display(typography.sizes.xl), textAlign: 'center', marginTop: spacing.sm },
-  about: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
-  meta: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  title: { ...display(typography.sizes.title), textAlign: 'center', marginTop: spacing.sm },
+  about: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
+  meta: { fontSize: typography.sizes.text, textAlign: 'center' },
   // Under the picture everything is centred, whichever way it reads.
   centred: { textAlign: 'center' },
   member: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: layout.gutter, minHeight: 60, paddingVertical: spacing.sm },
   memberWords: { flex: 1, minWidth: 0, gap: 1 },
-  memberName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  memberRole: { fontSize: typography.sizes.xs },
+  memberName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  memberRole: { fontSize: typography.sizes.text },
   more: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginEnd: -spacing.sm },
-  error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  error: { textAlign: 'center', fontSize: typography.sizes.text, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   working: { marginTop: spacing.md },
 });

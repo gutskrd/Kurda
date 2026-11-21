@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  keyText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
+  keyText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   soraniText: { writingDirection: 'rtl' },
   off: { opacity: 0.5 },
 });

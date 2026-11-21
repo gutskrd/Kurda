@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
-  words: { fontSize: typography.sizes.md, lineHeight: 23 },
+  words: { fontSize: typography.sizes.text, lineHeight: 23 },
   // A point drawn with borders: the two beside it clear, the one toward the face in its colour.
   tail: { position: 'absolute', width: 0, height: 0, borderStyle: 'solid', borderColor: 'transparent' },
   tailStart: { left: -TAIL + 1, top: '50%', marginTop: -TAIL * 0.7, borderTopWidth: TAIL * 0.7, borderBottomWidth: TAIL * 0.7, borderRightWidth: TAIL },

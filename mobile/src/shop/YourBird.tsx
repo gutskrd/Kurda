@@ -244,7 +244,7 @@ function BirdSheet({
 const BIRD = 56;
 
 const styles = StyleSheet.create({
-  lead: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  lead: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
   // Two even rows of four.
   birds: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.md, alignSelf: 'center', maxWidth: 4 * (BIRD + 10) + 3 * spacing.md + 2 },
   // Each bird a round button; the one picked ringed in the violet every chosen option wears.
@@ -252,6 +252,6 @@ const styles = StyleSheet.create({
   // The bird that is yours, ticked, whichever is picked.
   mine: { position: 'absolute', right: 0, bottom: 0, width: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderRadius: radii.pill },
   picked: { alignItems: 'center', justifyContent: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
-  pickedText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  short: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
+  pickedText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  short: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
 });

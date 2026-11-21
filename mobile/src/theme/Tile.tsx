@@ -300,10 +300,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   faded: { opacity: 0.5 },
-  label: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, textAlign: 'center' },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium, textAlign: 'center' },
   band: { position: 'absolute', top: -8, bottom: -8, left: 0, backgroundColor: SHINE },
   spark: { position: 'absolute', right: spacing.sm, bottom: spacing.xs },
   // 50, which iOS gives a screen's full-width main button.
   buttonFace: { minHeight: 50, alignSelf: 'stretch' },
-  buttonLabel: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
+  buttonLabel: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
 });

@@ -6,7 +6,7 @@ import { CharacterStage } from '../../characters/CharacterStage';
 import { HevaloWindow } from '../../characters/HevaloWindow';
 import type { CharacterReaction } from '../../characters/SpeakingCharacter';
 import { useDirection } from '../../reports/direction';
-import { display, displayFont } from '../../theme/fonts';
+import { display } from '../../theme/fonts';
 import { radii, spacing, typography } from '../../theme/tokens';
 import type { AudioControls } from '../useAudio';
 import { useValley } from '../ValleyScope';
@@ -29,7 +29,7 @@ export function saidStyle(words: string | undefined): TextStyle {
 }
 
 const LINE: TextStyle = display(21);
-const SCENE: TextStyle = { fontFamily: displayFont, fontSize: typography.sizes.md + 1, lineHeight: 25, fontWeight: typography.weights.regular };
+const SCENE: TextStyle = { fontSize: typography.sizes.text, lineHeight: 25, fontWeight: typography.weights.regular };
 
 /** A one-line bubble's height. */
 const BUBBLE = 56;

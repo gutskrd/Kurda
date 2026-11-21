@@ -76,7 +76,7 @@ export function WeekRow({ week, mini = false }: { week: readonly WeekDay[]; mini
 const styles = StyleSheet.create({
   row: { justifyContent: 'space-between' },
   day: { flex: 1, alignItems: 'center', gap: spacing.xs + 2 },
-  name: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   today: { fontWeight: typography.weights.bold },
   dot: { alignItems: 'center', justifyContent: 'center' },
   mini: { gap: 4, alignItems: 'center' },

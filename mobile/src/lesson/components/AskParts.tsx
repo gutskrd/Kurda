@@ -32,7 +32,7 @@ const SPEAKER = 32;
 const PICTURE_WORD = display(32);
 
 /** An English line to put into Kurdish: the reading face, a step under the Kurdish line's size. */
-const ENGLISH: TextStyle = { fontSize: typography.sizes.md + 2, lineHeight: 25, fontWeight: typography.weights.semibold, writingDirection: 'ltr' };
+const ENGLISH: TextStyle = { fontSize: typography.sizes.text, lineHeight: 25, fontWeight: typography.weights.semibold, writingDirection: 'ltr' };
 
 /** A gap's state: waiting, holding the chosen or typed word, or graded. */
 export type GapState = 'empty' | 'filled' | 'right' | 'wrong';
@@ -234,12 +234,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm + 4,
     borderRadius: radii.pill,
   },
-  slowText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
+  slowText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
   cue: { flexShrink: 1, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill },
-  cueText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
+  cueText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
   gap: { minWidth: GAP_WIDTH, alignItems: 'center' },
   gapWord: { paddingHorizontal: 2 },
   rule: { alignSelf: 'stretch', height: 2.5, borderRadius: radii.pill, marginTop: -1 },
   badge: { height: BADGE, alignItems: 'center', gap: spacing.xs + 1, paddingHorizontal: spacing.sm + 2, borderRadius: radii.pill },
-  badgeText: { fontSize: 11, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
+  badgeText: { fontSize: typography.sizes.text, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
 });

@@ -399,7 +399,7 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
       <View style={styles.head}>
         <Skeleton width={AUTHOR} height={AUTHOR} radius={radii.pill} />
         <View style={styles.byline}>
-          <SkeletonText size={typography.sizes.sm} width="46%" />
+          <SkeletonText size={typography.sizes.text} width="46%" />
         </View>
       </View>
       <View style={styles.words}>
@@ -407,7 +407,7 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
         {/* One paragraph, its lines with nothing between them. */}
         <View>
           {Array.from({ length: lines }, (_, i) => (
-            <SkeletonText key={i} size={typography.sizes.md} width={i === lines - 1 ? '64%' : '94%'} />
+            <SkeletonText key={i} size={typography.sizes.text} width={i === lines - 1 ? '64%' : '94%'} />
           ))}
         </View>
       </View>
@@ -441,7 +441,7 @@ export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React
 /** Past this a short paragraph fits on one line. */
 const WIDE = 600;
 /** A title is bold and a size up from what is under it, in the face the rest of the post is in. */
-const TITLE_SIZE = 19;
+const TITLE_SIZE = typography.sizes.text;
 const TITLE_LINE = 25;
 /**
  * A pill's height and a round pill's width: drawn at 36 and reaching 48 up and down; across, the row's 8 gap is
@@ -565,13 +565,13 @@ const styles = StyleSheet.create({
   /* Author, kind and time on one line where they fit; otherwise kind and time wrap under the name rather than truncating it. */
   byline: { flex: 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 6 },
   whoLink: { flexShrink: 1 },
-  who: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  meta: { flexShrink: 1, fontSize: typography.sizes.sm },
+  who: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  meta: { flexShrink: 1, fontSize: typography.sizes.text },
   more: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginVertical: -6, marginEnd: -spacing.sm - 2 },
   // The 12 between a post's content and its pills is split between them, so the pills reach into a gap of their own (ACTIONS_ABOVE).
   words: { paddingHorizontal: layout.gutter, gap: 6, paddingBottom: spacing.xs + 2 },
   title: { fontSize: TITLE_SIZE, lineHeight: TITLE_LINE, fontWeight: typography.weights.bold },
-  excerpt: { fontSize: typography.sizes.md, lineHeight: 23 },
+  excerpt: { fontSize: typography.sizes.text, lineHeight: 23 },
   pictures: { paddingHorizontal: layout.gutter, paddingBottom: spacing.xs + 2 },
   held: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
   bloomLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: PILL, height: PILL, borderRadius: radii.pill },
   pillWide: { paddingHorizontal: spacing.sm + 4 },
   pressed: { opacity: pressedDim },
-  count: { fontSize: typography.sizes.sm, lineHeight: COUNT_LINE, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  count: { fontSize: typography.sizes.text, lineHeight: COUNT_LINE, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   // The count's window: one line tall, so a number sliding out is gone at its edge.
   tick: { height: COUNT_LINE, overflow: 'hidden', justifyContent: 'center' },
   tickOld: { position: 'absolute', left: 0, right: 0 },

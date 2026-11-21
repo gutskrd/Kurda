@@ -61,8 +61,8 @@ export function ProverbScreen({ slug, onExit }: { slug: string; onExit: () => vo
           )
         ) : (
           <View style={[styles.content, styles.skeleton]} accessibilityLabel={t('common.loading')}>
-            <SkeletonText size={typography.sizes.xl} width="80%" />
-            <SkeletonText size={typography.sizes.md} width="60%" />
+            <SkeletonText size={typography.sizes.title} width="80%" />
+            <SkeletonText size={typography.sizes.text} width="60%" />
           </View>
         )}
       </GradientBackground>
@@ -170,14 +170,14 @@ const styles = StyleSheet.create({
   verse: { alignItems: 'center', gap: spacing.md, paddingVertical: spacing.sm },
   // A quiet rule above and below the verse, in the page's secondary ink softened, as a story's chapter rule is.
   rule: { width: 32, height: 2, borderRadius: radii.pill, opacity: 0.4 },
-  proverb: { ...display(typography.sizes.xl), lineHeight: Math.round(typography.sizes.xl * 1.4) },
-  translation: { fontSize: typography.sizes.lg, lineHeight: 30 },
-  lead: { fontSize: typography.sizes.md, lineHeight: 24, fontWeight: typography.weights.semibold },
-  body: { fontSize: typography.sizes.md, lineHeight: 26 },
+  proverb: { ...display(typography.sizes.title), lineHeight: Math.round(typography.sizes.title * 1.4) },
+  translation: { fontSize: typography.sizes.text, lineHeight: 30 },
+  lead: { fontSize: typography.sizes.text, lineHeight: 24, fontWeight: typography.weights.semibold },
+  body: { fontSize: typography.sizes.text, lineHeight: 26 },
   scene: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
-  sceneTranslation: { fontSize: typography.sizes.sm, lineHeight: 22 },
+  sceneTranslation: { fontSize: typography.sizes.text, lineHeight: 22 },
   variants: { gap: spacing.md },
   variant: { gap: 2 },
-  variantText: { fontSize: typography.sizes.md, lineHeight: 24, fontWeight: typography.weights.medium },
-  meta: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  variantText: { fontSize: typography.sizes.text, lineHeight: 24, fontWeight: typography.weights.medium },
+  meta: { fontSize: typography.sizes.text, lineHeight: 18 },
 });

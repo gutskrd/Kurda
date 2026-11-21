@@ -113,11 +113,11 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.xs },
   heading: { ...sectionLabel },
-  help: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
+  help: { fontSize: typography.sizes.text, marginBottom: spacing.xs },
   // ToggleRow lays out the words and switch across the row and makes it at least a fingertip tall.
   row: { paddingVertical: 11, borderBottomWidth: StyleSheet.hairlineWidth },
   main: { flex: 1, gap: 2 },
-  label: { fontSize: typography.ios.row },
-  hint: { fontSize: typography.sizes.sm },
-  error: { fontSize: typography.sizes.sm, marginTop: spacing.xs },
+  label: { fontSize: typography.sizes.text },
+  hint: { fontSize: typography.sizes.text },
+  error: { fontSize: typography.sizes.text, marginTop: spacing.xs },
 });

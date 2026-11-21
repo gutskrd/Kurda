@@ -82,6 +82,6 @@ export function AgreeLine({ style }: { style?: StyleProp<TextStyle> }): React.JS
 
 const styles = StyleSheet.create({
   // An inline link has no hit slop of its own, so its line is made taller instead.
-  line: { fontSize: typography.sizes.xs, lineHeight: 24, textAlign: 'center' },
+  line: { fontSize: typography.sizes.text, lineHeight: 24, textAlign: 'center' },
   link: { fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },
 });

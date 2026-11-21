@@ -159,26 +159,26 @@
 .celebrate-kicker {
   margin: 12px 0 0;
   color: var(--t-text, var(--t-hi, var(--gold-ink)));
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 .celebrate-title {
   margin: 0;
-  font-size: 2rem;
+  font-size: var(--text-title);
   line-height: 1.1;
 }
 .celebrate-body {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.98rem;
+  font-size: var(--text);
 }
 .celebrate-desc,
 .celebrate-note {
   margin: 4px 0 0;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .celebrate-note {
@@ -190,7 +190,7 @@
 .celebrate-link {
   margin-top: 4px;
   color: var(--ink-2);
-  font-size: 0.88rem;
+  font-size: var(--text);
   text-decoration: underline;
   text-underline-offset: 3px;
 }
@@ -219,11 +219,11 @@
     padding: 14px;
   }
   .badges-stat dt {
-    font-size: var(--text-tab);
+    font-size: var(--text);
     letter-spacing: 0.06em;
   }
   .badges-stat dd {
-    font-size: 1.05rem;
+    font-size: var(--text);
   }
 }
 .badges-showcase,
@@ -246,7 +246,7 @@
   align-items: baseline;
   gap: 10px;
   margin: 0 0 12px;
-  font-size: 1.25rem;
+  font-size: var(--text);
 }
 .badges-showcase-head .badges-section-title {
   margin: 0;
@@ -254,7 +254,7 @@
 .badges-family-count {
   font-family: var(--font-sans);
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 500;
 }
 .badges-showcase-slots {
@@ -282,17 +282,17 @@
   background: radial-gradient(closest-side, rgba(255, 255, 255, 0.07), transparent);
 }
 .badges-slot-name {
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .badges-slot-empty {
   color: var(--ink-4);
-  font-size: 0.8rem;
+  font-size: var(--text);
 }
 .badges-showcase-help {
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.84rem;
+  font-size: var(--text);
 }
 .badges-stats {
   display: grid;
@@ -305,15 +305,15 @@
 }
 .badges-stat dt {
   color: var(--ink-3);
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .badges-stat dd {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
 }
 .badges-stat-bar,
 .badge-bar {
@@ -385,8 +385,8 @@
   margin-bottom: 6px;
 }
 .badge-tile-name {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.15;
 }
@@ -395,11 +395,11 @@
 }
 .badge-tile-meaning {
   color: var(--ink-3);
-  font-size: 0.78rem;
+  font-size: var(--text);
 }
 .badge-tile-tier {
   color: var(--t-text, var(--t-hi, var(--ink-2)));
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -416,7 +416,7 @@
 }
 .badge-tile-progress-text {
   color: var(--ink-3);
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .badge-tile-done {
@@ -425,7 +425,7 @@
   gap: 4px;
   margin-top: 6px;
   color: var(--t-text, var(--t-hi, var(--success)));
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .badge-pips {
@@ -498,14 +498,14 @@
 .badge-detail-kicker {
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .badge-detail-name {
   margin: 0;
-  font-size: 1.7rem;
+  font-size: var(--text-title);
   line-height: 1.15;
 }
 .badge-detail-meaning {
@@ -531,7 +531,7 @@
   gap: 6px;
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
 }
 .badge-detail-progress {
   display: grid;
@@ -539,7 +539,7 @@
   width: 100%;
   max-width: 280px;
   color: var(--ink-2);
-  font-size: 0.86rem;
+  font-size: var(--text);
 }
 .badge-detail-done {
   margin-top: 14px;
@@ -563,7 +563,7 @@
   border-radius: var(--r-sm);
   background: var(--surface);
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
 }
 .badge-ladder-row.is-reached {
   background: color-mix(in srgb, var(--t-mid, #fff) 12%, transparent);
@@ -585,13 +585,13 @@
 }
 .badge-ladder-when {
   color: var(--ink-3);
-  font-size: 0.78rem;
+  font-size: var(--text);
 }
 
 .showcase-picker-count {
   margin: 4px 0 12px;
   color: var(--ink-2);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 .showcase-picker-grid {
   list-style: none;
@@ -624,7 +624,7 @@
   cursor: not-allowed;
 }
 .showcase-pick-name {
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .showcase-pick-order {
@@ -638,7 +638,7 @@
   border-radius: 50%;
   background: var(--gold);
   color: #1b1405;
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 800;
 }
 
@@ -667,7 +667,7 @@
 .league-head-meaning {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .league-head-meta {
   display: flex;
@@ -675,7 +675,7 @@
   gap: 2px 14px;
   margin: 2px 0 0;
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
 }
 /* the emblem and the ring while the league is on its way, at their own sizes */
 .league-skel-emblem {
@@ -709,7 +709,7 @@
     height: 72px;
   }
   .league-head .goal-ring-num {
-    font-size: 1.1rem;
+    font-size: var(--text);
   }
 }
 .league-status {
@@ -722,7 +722,7 @@
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: 0.9rem;
+  font-size: var(--text);
   line-height: 1.45;
 }
 .league-status svg {
@@ -756,7 +756,7 @@
 .league-join-hint {
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 
 /* The week in reading order (LeaguePanel): name and days left, the six leagues, a line, then the week; no inner boxes. */
@@ -773,7 +773,7 @@
 .league-week-meaning {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .league-week-left {
   display: flex;
@@ -781,7 +781,7 @@
   gap: 6px;
   margin: 4px 0 0;
   color: var(--ink-3);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -866,7 +866,7 @@
 .league-goal-group {
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
 }
 /* not in a group yet: Hevalo asleep, with room above for the "z"s to rise into */
 .league-resting {
@@ -882,7 +882,7 @@
 .league-resting-title {
   margin: 0;
   color: var(--ink);
-  font-size: 1.15rem;
+  font-size: var(--text);
 }
 .league-resting-body {
   max-width: 34ch;
@@ -1003,7 +1003,7 @@
   padding: 0 14px;
   border-radius: var(--r-pill);
   color: var(--ink-3);
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
   user-select: none;
@@ -1077,8 +1077,8 @@ a.league-card-mini:focus-visible {
   min-width: 0;
 }
 .league-card-mini-title {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 650;
   line-height: 1.2;
 }
@@ -1088,7 +1088,7 @@ a.league-card-mini:focus-visible {
   flex-wrap: wrap;
   gap: 4px 14px;
   color: var(--ink-2);
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .league-card-mini-left,
@@ -1117,7 +1117,7 @@ a.league-card-mini:focus-visible {
 .rank-standing-note {
   margin: 6px 0 0;
   padding-inline: 12px;
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .rankings-blurb {
   margin: 0 0 14px;
@@ -1134,7 +1134,7 @@ a.league-card-mini:focus-visible {
   }
 }
 .league-page .league-week-title {
-  font-size: clamp(1.9rem, 1.5rem + 1.6vw, 2.4rem);
+  font-size: var(--text-title);
 }
 .league-page .league-ladder {
   margin-inline: calc(-1 * var(--league-edge));
@@ -1157,7 +1157,7 @@ a.league-card-mini:focus-visible {
   width: 100%;
   height: 100%;
   color: #fff;
-  font-size: 0.7rem;
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -1169,7 +1169,7 @@ a.league-card-mini:focus-visible {
 }
 .league-leave-link {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .league-leave-link:hover {
   color: var(--ink);
@@ -1182,7 +1182,7 @@ a.league-card-mini:focus-visible {
 .league-leave-title {
   margin: 0;
   padding-inline-end: 36px;
-  font-size: 1.25rem;
+  font-size: var(--text);
 }
 .league-leave-body {
   margin: 0;
@@ -1202,7 +1202,7 @@ a.league-card-mini:focus-visible {
   gap: 8px;
   padding: 6px 12px;
   color: var(--ink-3);
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .league-divider::after {
@@ -1230,7 +1230,7 @@ a.league-card-mini:focus-visible {
   flex: none;
   padding: 2px 8px;
   border-radius: var(--r-pill);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 .zone-tag.is-up {
@@ -1248,7 +1248,7 @@ a.league-card-mini:focus-visible {
 .league-row-tier {
   margin-inline-start: 8px;
   color: var(--ink-3);
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 500;
 }
 .league-last {
@@ -1269,7 +1269,7 @@ a.league-card-mini:focus-visible {
   margin: 0;
   font-family: var(--font-sans);
   color: var(--ink-3);
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 650;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1285,14 +1285,14 @@ a.league-card-mini:focus-visible {
   gap: 6px 8px;
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.84rem;
+  font-size: var(--text);
 }
 .league-last-chip {
   padding: 1px 8px;
   border-radius: var(--r-pill);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .league-weeks {
@@ -1301,7 +1301,7 @@ a.league-card-mini:focus-visible {
 .league-weeks-title {
   margin-bottom: 8px;
   color: var(--ink-3);
-  font-size: 0.8rem;
+  font-size: var(--text);
 }
 .league-weeks-bars {
   list-style: none;
@@ -1337,7 +1337,7 @@ a.league-card-mini:focus-visible {
 }
 .league-week-xp {
   color: var(--ink-3);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .league-personal-join {
@@ -1349,7 +1349,7 @@ a.league-card-mini:focus-visible {
 }
 .league-personal-join .muted {
   margin: 0;
-  font-size: 0.86rem;
+  font-size: var(--text);
 }
 
 /* the goal ring */
@@ -1390,14 +1390,14 @@ a.league-card-mini:focus-visible {
   color: var(--gold);
 }
 .goal-ring-num {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 .goal-ring-of {
   color: var(--ink-3);
-  font-size: 0.7rem;
+  font-size: var(--text);
 }
 
 /* Home: one line about the week */
@@ -1429,7 +1429,7 @@ a.league-card-mini:focus-visible {
 }
 .home-league-detail {
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1471,7 +1471,7 @@ a.league-card-mini:focus-visible {
 }
 .profile-progress-link {
   color: var(--ink-3);
-  font-size: 0.8rem;
+  font-size: var(--text);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -1491,12 +1491,12 @@ a.league-card-mini:focus-visible {
 }
 .profile-badge-name {
   margin-top: 4px;
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
 }
 .profile-badge-meaning {
   color: var(--ink-3);
-  font-size: 0.76rem;
+  font-size: var(--text);
 }
 .profile-ranks {
   list-style: none;
@@ -1530,7 +1530,7 @@ a.league-card-mini:focus-visible {
 }
 .profile-rank-best {
   color: var(--ink-3);
-  font-size: 0.78rem;
+  font-size: var(--text);
 }
 
 .profile-progress .mkp-showcase + .mkp-showcase-label {

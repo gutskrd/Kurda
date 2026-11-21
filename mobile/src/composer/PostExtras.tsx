@@ -179,12 +179,12 @@ function MenuRow({ icon, label, danger = false, onPress }: { icon: IconName; lab
 
 const styles = StyleSheet.create({
   credit: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  creditText: { flex: 1, fontSize: typography.sizes.sm, fontStyle: 'italic' },
+  creditText: { flex: 1, fontSize: typography.sizes.text, fontStyle: 'italic' },
   // The height GlassRow gives a row meant for a thumb.
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52 },
   pressed: { opacity: pressedDim },
-  rowText: { fontSize: typography.ios.row },
+  rowText: { fontSize: typography.sizes.text },
   confirm: { gap: spacing.md, paddingBottom: spacing.sm },
-  confirmTitle: { ...display(typography.sizes.lg) },
-  confirmBody: { fontSize: typography.sizes.md },
+  confirmTitle: { ...display(typography.sizes.text) },
+  confirmBody: { fontSize: typography.sizes.text },
 });

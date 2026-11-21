@@ -97,5 +97,5 @@ export function LoginScreen({ navigation, route, presented = false }: Props) {
 const styles = StyleSheet.create({
   // The sign-up notice's calm panel (RegisterScreen.tsx).
   notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
-  noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  noticeText: { fontSize: typography.sizes.text, lineHeight: 21 },
 });

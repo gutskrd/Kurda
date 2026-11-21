@@ -106,9 +106,9 @@ const styles = StyleSheet.create({
   card: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm + 4, paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.sm + 6, borderRadius: radii.lg },
   fire: { width: CARD_FIRE, height: CARD_FIRE, alignItems: 'center', justifyContent: 'center' },
   words: { minWidth: 0 },
-  number: { fontSize: 24, lineHeight: 26, fontWeight: '800' },
-  unit: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  number: { fontSize: typography.sizes.title, lineHeight: 26, fontWeight: '800' },
+  unit: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   week: { flex: 1 },
   zer: { alignItems: 'center', gap: 4, minHeight: 28, paddingStart: 6, paddingEnd: 10, borderRadius: radii.pill },
-  zerText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  zerText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
 });

@@ -100,6 +100,6 @@ const styles = StyleSheet.create({
   pictured: { minHeight: PICTURED_HEIGHT, overflow: 'hidden' },
   fill: { width: '100%', height: '100%' },
   dim: { ...StyleSheet.absoluteFill, backgroundColor: UNDER_WORDS },
-  title: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
-  subtitle: { opacity: 0.9, fontSize: typography.sizes.sm },
+  title: { fontWeight: typography.weights.bold, fontSize: typography.sizes.text },
+  subtitle: { opacity: 0.9, fontSize: typography.sizes.text },
 });

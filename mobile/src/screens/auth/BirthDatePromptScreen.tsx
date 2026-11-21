@@ -116,5 +116,5 @@ export function BirthDatePromptScreen() {
 
 const styles = StyleSheet.create({
   month: { gap: spacing.md },
-  once: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  once: { fontSize: typography.sizes.text, lineHeight: 18 },
 });

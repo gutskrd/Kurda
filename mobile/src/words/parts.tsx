@@ -49,7 +49,7 @@ export function Digits({ value, dialect, size }: { value: number; dialect: Alpha
   return (
     <Text style={[styles.digits, { fontSize: size, lineHeight: Math.round(size * 1.3), color: colors.textPrimary }]} accessibilityLanguage="ckb">
       {easternDigits(value)}
-      <Text style={[styles.digitsSmall, { fontSize: Math.round(size * 0.55), color: colors.textSecondary }]}>{` ${western}`}</Text>
+      <Text style={[styles.digitsSmall, { typography.sizes.text, color: colors.textSecondary }]}>{` ${western}`}</Text>
     </Text>
   );
 }
@@ -163,12 +163,12 @@ const styles = StyleSheet.create({
   digits: { ...display(28), fontVariant: ['tabular-nums'] },
   digitsSmall: { fontWeight: typography.weights.semibold },
   mark: { textDecorationLine: 'underline' },
-  latin: { fontSize: typography.sizes.sm, writingDirection: 'ltr' },
+  latin: { fontSize: typography.sizes.text, writingDirection: 'ltr' },
 
   progress: { alignItems: 'center', gap: spacing.sm + 4, marginTop: spacing.xs },
   track: { width: 120, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radii.pill },
   fillEnd: { alignSelf: 'flex-end' },
-  progressText: { flexShrink: 1, fontSize: typography.sizes.xs },
+  progressText: { flexShrink: 1, fontSize: typography.sizes.text },
   progressDone: { fontWeight: typography.weights.semibold },
 });

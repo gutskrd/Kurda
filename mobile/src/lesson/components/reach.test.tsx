@@ -33,7 +33,7 @@ const tokens: PromptToken[] = [
 describe('the words of a prompt', () => {
   it('reach down only, half of what a fingertip is missing, and never sideways into the word beside them', () => {
     // A 24-tall line plus its dots makes a 28-tall word, 20 short of 48.
-    renderWithProviders(<PromptWords prompt="Bibore, xatirê te" tokens={tokens} style={{ fontSize: 21, lineHeight: 24 }} />);
+    renderWithProviders(<PromptWords prompt="Bibore, xatirê te" tokens={tokens} style={{ fontSize: typography.sizes.text, lineHeight: 24 }} />);
     expect(reachOf('Bibore')).toEqual({ top: 0, bottom: 10, left: 0, right: 0 });
     expect(reachOf('xatirê te')).toEqual({ top: 0, bottom: 10, left: 0, right: 0 });
   });
@@ -46,7 +46,7 @@ describe('the words of a prompt', () => {
   it('keep what a word means clear of any group round the prompt, so a tap anywhere still closes it', async () => {
     renderWithProviders(
       <ReachGroup gap={0} rowGap={0}>
-        <PromptWords prompt="Bibore, xatirê te" tokens={tokens} style={{ fontSize: 21, lineHeight: 24 }} />
+        <PromptWords prompt="Bibore, xatirê te" tokens={tokens} style={{ fontSize: typography.sizes.text, lineHeight: 24 }} />
       </ReachGroup>,
     );
     expect(reachLimitOf('Bibore')).toEqual({ top: 0, bottom: 0, left: 0, right: 0 });

@@ -141,7 +141,7 @@ export function HevaloDeer({
                 justifyContent: 'center',
               }}
             >
-              <Text style={{ color: DEER_INK, fontSize: size * 0.115, fontWeight: '700', letterSpacing: size * 0.012 }}>
+              <Text style={{ color: DEER_INK, fontSize: typography.sizes.text, fontWeight: '700' }}>
                 {board.letters}
               </Text>
             </View>

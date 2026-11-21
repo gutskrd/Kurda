@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.lg,
     paddingVertical: spacing.sm + spacing.xs,
     paddingHorizontal: spacing.md,
-    fontSize: typography.sizes.lg,
+    fontSize: typography.sizes.text,
   },
   inputMirrored: { textAlign: 'right' },
   inputRoomEnd: { paddingRight: spacing.xl + spacing.md },

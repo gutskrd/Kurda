@@ -182,18 +182,18 @@ function EntrySkeleton(): React.JSX.Element {
   return (
     <View style={styles.body} accessibilityLabel={t('common.loading')}>
       <View style={styles.headwordRow}>
-        <SkeletonText size={typography.sizes.xxl} lineHeight={HEADWORD_LINE} width={120} />
+        <SkeletonText size={typography.sizes.title} lineHeight={HEADWORD_LINE} width={120} />
         <Skeleton width={44} height={44} radius={radii.pill} />
       </View>
-      <SkeletonText size={typography.sizes.sm} width={72} />
+      <SkeletonText size={typography.sizes.text} width={72} />
       <View style={styles.senses}>
         {[0, 1, 2].map((i) => (
           <View key={i} style={styles.senseSkeleton}>
             <View style={styles.senseHead}>
-              <SkeletonText size={typography.sizes.xs} width={32} style={styles.posSkeleton} />
-              <SkeletonText size={typography.sizes.md} width={i === 1 ? '50%' : '70%'} style={styles.flex} />
+              <SkeletonText size={typography.sizes.text} width={32} style={styles.posSkeleton} />
+              <SkeletonText size={typography.sizes.text} width={i === 1 ? '50%' : '70%'} style={styles.flex} />
             </View>
-            <SkeletonText size={typography.sizes.sm} width="46%" style={styles.underPos} />
+            <SkeletonText size={typography.sizes.text} width="46%" style={styles.underPos} />
           </View>
         ))}
       </View>
@@ -202,7 +202,7 @@ function EntrySkeleton(): React.JSX.Element {
 }
 
 /** display(34) sets 1.12. */
-const HEADWORD_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
+const HEADWORD_LINE = Math.round(typography.sizes.title * typography.displayLineHeight);
 /** The part of speech's column in a sense (SenseSection.tsx). */
 const POS_COLUMN = 64;
 
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
 
   body: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.sm },
   headwordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  headword: { ...display(typography.sizes.xxl) },
+  headword: { ...display(typography.sizes.title) },
   audioBtn: {
     width: 44,
     height: 44,
@@ -224,12 +224,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dialect: { fontSize: typography.sizes.sm, textTransform: 'capitalize' },
+  dialect: { fontSize: typography.sizes.text, textTransform: 'capitalize' },
   pronunciations: { marginTop: spacing.sm, gap: spacing.sm },
   pronunciation: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  speakerName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  speakerName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   senses: { marginTop: spacing.md },
   xrefs: { marginTop: spacing.lg, gap: spacing.xs },
   xrefsTitle: { ...sectionLabel },
-  xrefsList: { fontSize: typography.sizes.md },
+  xrefsList: { fontSize: typography.sizes.text },
 });

@@ -163,8 +163,8 @@ function GlossMeaning({ entry, dialect, onClose }: { entry: StoryGlossEntry; dia
 const styles = StyleSheet.create({
   content: { ...COLUMN, padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   loading: { marginTop: spacing.xxl },
-  trouble: { fontSize: typography.sizes.sm, textAlign: 'center', paddingBottom: spacing.xs },
+  trouble: { fontSize: typography.sizes.text, textAlign: 'center', paddingBottom: spacing.xs },
   gloss: { gap: spacing.sm },
-  glossTerm: { ...display(typography.sizes.xl) },
-  glossMeaning: { fontSize: typography.sizes.lg, lineHeight: 26 },
+  glossTerm: { ...display(typography.sizes.title) },
+  glossMeaning: { fontSize: typography.sizes.text, lineHeight: 26 },
 });

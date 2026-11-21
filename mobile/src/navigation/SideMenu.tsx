@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderRadius: radii.sm,
   },
-  linkText: { fontSize: typography.ios.row, flexShrink: 1, flex: 1 },
+  linkText: { fontSize: typography.sizes.text, flexShrink: 1, flex: 1 },
   badge: {
     minWidth: 20,
     height: 20,
@@ -183,5 +183,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  badgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

@@ -155,6 +155,6 @@ const styles = StyleSheet.create({
   bare: { paddingStart: spacing.md },
   face: { width: FACE, height: FACE, borderRadius: radii.pill, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' },
   words: { flexShrink: 1 },
-  ku: { fontSize: typography.sizes.sm, fontWeight: '600', lineHeight: 20, writingDirection: 'ltr' },
-  means: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  ku: { fontSize: typography.sizes.text, fontWeight: '600', lineHeight: 20, writingDirection: 'ltr' },
+  means: { fontSize: typography.sizes.text, lineHeight: 18 },
 });

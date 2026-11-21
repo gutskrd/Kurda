@@ -245,7 +245,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
               <View style={styles.balanceChip} accessible accessibilityLabel={`${formatNumber(balances.zer, locale)} Zêr`}>
                 <Icon name="coin" size={18} color={colors.gold} />
                 {loading ? (
-                  <SkeletonText size={typography.sizes.md} width={40} />
+                  <SkeletonText size={typography.sizes.text} width={40} />
                 ) : (
                   <Counted value={balances.zer} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
@@ -254,7 +254,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
               <View style={styles.balanceChip} accessible accessibilityLabel={`${formatNumber(balances.gems, locale)} ${t('gift.picker.gems')}`}>
                 <Icon name="gem" size={18} color={colors.primary} />
                 {loading ? (
-                  <SkeletonText size={typography.sizes.md} width={20} />
+                  <SkeletonText size={typography.sizes.text} width={20} />
                 ) : (
                   <Counted value={balances.gems} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
@@ -437,17 +437,17 @@ function ShopSkeleton(): React.JSX.Element {
       <View style={[styles.catalogue, styles.column]}>
         {chips([136, 180])}
         <View style={[styles.gutter, styles.skeletonResults, start]}>
-          <SkeletonText size={typography.sizes.sm} width={64} />
+          <SkeletonText size={typography.sizes.text} width={64} />
         </View>
         <View style={[styles.section, styles.gutter]}>
-          <SkeletonText size={typography.sizes.xs} width={96} style={start} />
+          <SkeletonText size={typography.sizes.text} width={96} style={start} />
           <View style={[styles.grid, { flexDirection: dir.row }]}>
             {Array.from({ length: cards }, (_, i) => (
               <View key={i} style={[styles.card, { backgroundColor: colors.glassFill }]}>
                 <Skeleton height={ART_HEIGHT} radius={radii.sm} />
-                <SkeletonText size={typography.sizes.md} width={i % 2 ? '54%' : '68%'} style={start} />
-                <SkeletonText size={typography.sizes.sm} width="80%" style={start} />
-                <SkeletonText size={typography.sizes.md} width={48} style={start} />
+                <SkeletonText size={typography.sizes.text} width={i % 2 ? '54%' : '68%'} style={start} />
+                <SkeletonText size={typography.sizes.text} width="80%" style={start} />
+                <SkeletonText size={typography.sizes.text} width={48} style={start} />
               </View>
             ))}
           </View>
@@ -647,13 +647,13 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   // Bought: the words, and what is left in the purse under them.
   yours: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  yoursText: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  yoursText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   left: { alignItems: 'center', justifyContent: 'center', gap: spacing.xs, marginBottom: spacing.sm },
-  leftText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  leftText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   balances: { flexDirection: 'row', gap: spacing.md },
   balanceChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  balanceUnit: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  balance: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  balanceUnit: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   content: { paddingBottom: spacing.xxl },
   // On a tablet the list is a centred column, as the Season screen's is.
   column: { width: '100%', maxWidth: 680, alignSelf: 'center' },
@@ -672,17 +672,17 @@ const styles = StyleSheet.create({
   grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm },
   card: { width: '48.5%', gap: 4, borderRadius: radii.md, padding: spacing.sm },
   cardArt: { height: ART_HEIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
-  itemName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  itemDesc: { fontSize: typography.sizes.sm, lineHeight: 18 },
+  itemName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  itemDesc: { fontSize: typography.sizes.text, lineHeight: 18 },
   stretch: { alignSelf: 'stretch' },
   // At the card's foot, so the prices of a row line up whatever their meanings' length.
   priceRow: { alignItems: 'center', gap: spacing.xs, marginTop: 'auto', paddingTop: spacing.xs },
-  price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  price: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   detail: { alignItems: 'center', gap: spacing.sm, paddingBottom: spacing.sm },
   preview: { marginBottom: spacing.sm },
-  detailName: { ...display(typography.sizes.xl), textAlign: 'center' },
-  detailDesc: { fontSize: typography.sizes.md, textAlign: 'center' },
-  detailPrice: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginVertical: spacing.sm },
+  detailName: { ...display(typography.sizes.title), textAlign: 'center' },
+  detailDesc: { fontSize: typography.sizes.text, textAlign: 'center' },
+  detailPrice: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, marginVertical: spacing.sm },
   gift: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -693,8 +693,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     alignSelf: 'stretch',
   },
-  giftText: { fontSize: 15, fontWeight: typography.weights.semibold },
+  giftText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   insufficient: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm },
-  insufficientText: { textAlign: 'center', fontSize: typography.sizes.sm },
-  finalNote: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20 },
+  insufficientText: { textAlign: 'center', fontSize: typography.sizes.text },
+  finalNote: { textAlign: 'center', fontSize: typography.sizes.text, lineHeight: 20 },
 });

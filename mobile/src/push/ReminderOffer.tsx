@@ -151,9 +151,9 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'center',
   },
-  title: { ...display(typography.sizes.xl), textAlign: 'center', marginTop: spacing.sm },
-  text: { fontSize: typography.sizes.md, lineHeight: 24, textAlign: 'center' },
-  note: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
+  title: { ...display(typography.sizes.title), textAlign: 'center', marginTop: spacing.sm },
+  text: { fontSize: typography.sizes.text, lineHeight: 24, textAlign: 'center' },
+  note: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
   // The way on keeps the foot of the screen, where the lesson's own buttons were.
   bar: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
 });

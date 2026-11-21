@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   counter: { position: 'absolute', top: spacing.md, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radii.pill, backgroundColor: UNDER },
   counterRight: { right: spacing.md },
   counterLeft: { left: spacing.md },
-  counterText: { color: ON_PICTURE, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  counterText: { color: ON_PICTURE, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   dots: { position: 'absolute', bottom: spacing.sm, alignSelf: 'center', gap: 5, paddingHorizontal: 6, paddingVertical: 5, borderRadius: radii.pill, backgroundColor: UNDER },
   dot: { width: 6, height: 6, borderRadius: radii.pill, backgroundColor: ON_PICTURE, opacity: 0.45 },
   dotOn: { opacity: 1 },

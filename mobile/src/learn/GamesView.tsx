@@ -387,20 +387,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   entryText: { flex: 1, gap: 1 },
-  entryTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  entryDetail: { fontSize: typography.sizes.xs },
+  entryTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  entryDetail: { fontSize: typography.sizes.text },
 
   section: { gap: spacing.sm },
   heading: { ...sectionLabel },
   invite: { alignItems: 'center', gap: spacing.md - 4, borderRadius: radii.md, padding: spacing.md - 4 },
-  inviteText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  inviteText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   joinButton: { minHeight: JOIN_HEIGHT, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  joinText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
+  joinText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 
   // The game put forward: its stamp in the middle of the page, its line and its ways in under it.
   hero: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xs },
   heroStamp: { marginVertical: spacing.sm },
-  heroLine: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.md },
+  heroLine: { fontSize: typography.sizes.text, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.md },
   heroWays: { alignSelf: 'stretch', gap: spacing.sm },
 
   // A collection page: stamps in level rows, with air between for their glow.
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
 
   ways: { gap: spacing.sm, paddingBottom: spacing.sm },
   waysTop: { alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },
-  waysLine: { flex: 1, fontSize: typography.sizes.md, lineHeight: 23 },
+  waysLine: { flex: 1, fontSize: typography.sizes.text, lineHeight: 23 },
 
   // A game not open yet is only named: quieter than a card, and nothing to press.
   soonRow: { flexWrap: 'wrap', gap: spacing.sm },
@@ -416,5 +416,5 @@ const styles = StyleSheet.create({
   // Mirrored by hand: the picture's side is the right, and keeps the narrow edge.
   soonMirrored: { paddingStart: spacing.md, paddingEnd: 6 },
   soonArt: { opacity: 0.7 },
-  soonName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  soonName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

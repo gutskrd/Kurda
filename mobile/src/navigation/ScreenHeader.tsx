@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   sideFill: { flex: 1 },
   trailing: { alignItems: 'center', gap: spacing.sm },
   pressed: { opacity: pressedDim },
-  title: { fontSize: typography.ios.row, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   // The face and the name together, centred as the title alone is, a fingertip tall.
   titleRow: { flexShrink: 1, alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
 });

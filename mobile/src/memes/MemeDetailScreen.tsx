@@ -143,13 +143,13 @@ function MemeSkeleton(): React.JSX.Element {
     <View style={styles.body} accessibilityLabel={t('common.loading')}>
       <View style={styles.skeletonHead}>
         <Skeleton width={34} height={34} radius={radii.pill} />
-        <SkeletonText size={typography.sizes.sm} width={120} />
+        <SkeletonText size={typography.sizes.text} width={120} />
       </View>
       <View style={styles.image}>
         <Skeleton height="100%" radius={0} />
       </View>
       <View style={styles.comments}>
-        <SkeletonText size={typography.sizes.sm} width={96} style={styles.commentsTitleSkeleton} />
+        <SkeletonText size={typography.sizes.text} width={96} style={styles.commentsTitleSkeleton} />
         <CommentsSkeleton />
       </View>
     </View>
@@ -197,6 +197,6 @@ const styles = StyleSheet.create({
   image: { width: '100%', aspectRatio: 1 },
   skeletonHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
   comments: { paddingHorizontal: layout.gutter, gap: spacing.md },
-  commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  commentsTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   commentsTitleSkeleton: { marginTop: spacing.sm },
 });

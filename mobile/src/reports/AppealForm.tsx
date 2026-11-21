@@ -81,13 +81,13 @@ export function AppealForm({
 
 const styles = StyleSheet.create({
   form: { gap: spacing.sm, marginTop: spacing.sm },
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   input: {
     minHeight: 96,
     textAlignVertical: 'top',
     borderRadius: radii.md,
     padding: spacing.md,
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.text,
   },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 20 },
 });

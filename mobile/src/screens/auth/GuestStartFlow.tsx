@@ -79,6 +79,6 @@ export function GuestStartFlow({ onExit }: { onExit: () => void }): React.JSX.El
 const styles = StyleSheet.create({
   list: { gap: spacing.md },
   row: { alignItems: 'center', gap: spacing.md },
-  rowText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 22 },
-  hint: { fontSize: typography.sizes.sm, marginTop: spacing.md },
+  rowText: { flex: 1, fontSize: typography.sizes.text, lineHeight: 22 },
+  hint: { fontSize: typography.sizes.text, marginTop: spacing.md },
 });

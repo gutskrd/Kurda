@@ -83,7 +83,7 @@ export function JumpResults({
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.md },
-  title: { ...display(typography.sizes.xxl), textAlign: 'center' },
-  line: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  title: { ...display(typography.sizes.title), textAlign: 'center' },
+  line: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
   bar: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
 });

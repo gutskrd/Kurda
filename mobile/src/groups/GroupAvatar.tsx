@@ -32,7 +32,7 @@ export function GroupAvatar({ name, id, size, photoUrl }: { name: string; id: st
       // The palette is already AA against white; this nudges it to AAA (7:1) for low-vision users, deterministically.
       style={[styles.box, box, { backgroundColor: ensureContrast(backgroundColor, textColor, AAA_NORMAL) }]}
     >
-      <Text allowFontScaling={false} style={[styles.text, { color: textColor, fontSize: scaledFontSize(Math.round(size * 0.4), fontScale) }]}>
+      <Text allowFontScaling={false} style={[styles.text, { color: textColor, fontSize: scaledFontSize(size >= 56 ? typography.sizes.title : typography.sizes.text, fontScale) }]}>
         {initials}
       </Text>
     </View>

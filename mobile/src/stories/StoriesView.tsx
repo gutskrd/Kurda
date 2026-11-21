@@ -701,7 +701,7 @@ function StoryCard({
 const CHIP_GAP = spacing.sm;
 
 /** The display face at size md, with its 1.12 line height. */
-const TITLE_LINE = Math.round(typography.sizes.md * typography.displayLineHeight);
+const TITLE_LINE = Math.round(typography.sizes.text * typography.displayLineHeight);
 
 function GridSkeleton({ cardWidth, count }: { cardWidth: number; count: number }): React.JSX.Element {
   const { colors } = useTheme();
@@ -712,13 +712,13 @@ function GridSkeleton({ cardWidth, count }: { cardWidth: number; count: number }
         <View key={i} style={[styles.card, { width: cardWidth, backgroundColor: colors.surface }]}>
           <View style={styles.cardBody}>
             <Skeleton width="100%" height={Math.round((cardWidth - spacing.sm * 2) * COVER_RATIO)} radius={radii.sm} />
-            <SkeletonText size={typography.sizes.md} lineHeight={TITLE_LINE} width={i % 2 ? '70%' : '85%'} />
-            <SkeletonText size={typography.sizes.xs} lineHeight={18} width="92%" />
+            <SkeletonText size={typography.sizes.text} lineHeight={TITLE_LINE} width={i % 2 ? '70%' : '85%'} />
+            <SkeletonText size={typography.sizes.text} lineHeight={18} width="92%" />
             <View style={styles.facts}>
-              <Skeleton width={56} height={lineOf(typography.sizes.xs) + 6} radius={radii.pill} />
-              <Skeleton width={44} height={lineOf(typography.sizes.xs)} />
+              <Skeleton width={56} height={lineOf(typography.sizes.text) + 6} radius={radii.pill} />
+              <Skeleton width={44} height={lineOf(typography.sizes.text)} />
             </View>
-            <SkeletonText size={typography.sizes.xs} lineHeight={18} width="55%" />
+            <SkeletonText size={typography.sizes.text} lineHeight={18} width="55%" />
           </View>
         </View>
       ))}
@@ -736,18 +736,18 @@ function LibrarySkeleton({ cardWidth, columns, personal }: { cardWidth: number; 
         <View style={[styles.progress, { backgroundColor: colors.surface }]}>
           <Skeleton width={64} height={64} radius={radii.pill} />
           <View style={styles.progressText}>
-            <SkeletonText size={typography.sizes.md} width="50%" />
-            <SkeletonText size={typography.sizes.sm} width="80%" />
-            <SkeletonText size={typography.sizes.sm} width="65%" />
+            <SkeletonText size={typography.sizes.text} width="50%" />
+            <SkeletonText size={typography.sizes.text} width="80%" />
+            <SkeletonText size={typography.sizes.text} width="65%" />
           </View>
         </View>
       ) : null}
       <View style={styles.section}>
-        <SkeletonText size={typography.sizes.xs} width={96} />
+        <SkeletonText size={typography.sizes.text} width={96} />
         <GridSkeleton cardWidth={cardWidth} count={columns} />
       </View>
       <View style={styles.section}>
-        <SkeletonText size={typography.sizes.xs} width={120} />
+        <SkeletonText size={typography.sizes.text} width={120} />
         <GridSkeleton cardWidth={cardWidth} count={columns} />
       </View>
     </View>
@@ -769,12 +769,12 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md - 2,
   },
-  chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  chipCount: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  chipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  chipCount: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   categories: { flexWrap: 'wrap', gap: CHIP_GAP },
   resultsHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   clear: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  clearText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  clearText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   grid: { flexWrap: 'wrap', gap: layout.rowGap },
   // A row's cards are as tall as its tallest, so their feet line up.
   card: { flexGrow: 1, borderRadius: radii.lg, position: 'relative' },
@@ -783,13 +783,13 @@ const styles = StyleSheet.create({
   cover: { width: '100%', aspectRatio: 1 / COVER_RATIO },
   hairline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 4, borderBottomLeftRadius: radii.sm, borderBottomRightRadius: radii.sm, overflow: 'hidden' },
   hairlineFill: { height: 4 },
-  title: { ...display(typography.sizes.md), lineHeight: Math.round(typography.sizes.md * 1.2), marginTop: 2 },
-  summary: { fontSize: typography.sizes.xs, lineHeight: 18 },
-  titleTranslation: { fontSize: typography.sizes.xs, lineHeight: 18, fontWeight: typography.weights.semibold, marginTop: -2 },
+  title: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.2), marginTop: 2 },
+  summary: { fontSize: typography.sizes.text, lineHeight: 18 },
+  titleTranslation: { fontSize: typography.sizes.text, lineHeight: 18, fontWeight: typography.weights.semibold, marginTop: -2 },
   foot: { marginTop: 'auto', gap: spacing.xs },
   facts: { flexWrap: 'wrap', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
-  factText: { fontSize: typography.sizes.xs },
-  category: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  factText: { fontSize: typography.sizes.text },
+  category: { fontSize: typography.sizes.text, lineHeight: 18 },
   bookmark: {
     position: 'absolute',
     top: spacing.sm + 6,
@@ -803,10 +803,10 @@ const styles = StyleSheet.create({
   progress: { alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, padding: spacing.md },
   ring: { width: 64, height: 64, position: 'relative' },
   ringCenter: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
-  ringText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  ringText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   progressText: { flex: 1, gap: 2 },
-  progressTitle: { ...display(typography.sizes.md), lineHeight: Math.round(typography.sizes.md * 1.2) },
-  progressLine: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  progressTitle: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.2) },
+  progressLine: { fontSize: typography.sizes.text, lineHeight: 20 },
   continue: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -817,9 +817,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   rowMain: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  rowMeta: { fontSize: typography.sizes.sm },
-  continueText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  rowTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  rowMeta: { fontSize: typography.sizes.text },
+  continueText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   // Stacked: side by side, "Play with friends" wraps in most languages.
   actions: { gap: spacing.sm },
 });

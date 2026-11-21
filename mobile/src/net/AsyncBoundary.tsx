@@ -79,5 +79,5 @@ export function AsyncBoundary({
 const styles = StyleSheet.create({
   skeleton: { padding: spacing.lg },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl, gap: spacing.sm },
-  body: { fontSize: typography.sizes.md, textAlign: 'center' },
+  body: { fontSize: typography.sizes.text, textAlign: 'center' },
 });

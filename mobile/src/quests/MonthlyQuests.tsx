@@ -77,8 +77,8 @@ export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean })
 const styles = StyleSheet.create({
   card: { alignItems: 'flex-end', gap: spacing.sm, borderRadius: radii.lg, paddingTop: spacing.md + 4, paddingHorizontal: spacing.md + 4 },
   words: { flex: 1, gap: spacing.xs, paddingBottom: spacing.md + 4 },
-  eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.86 },
-  title: { ...display(typography.sizes.md), fontVariant: ['tabular-nums'] },
+  eyebrow: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.86 },
+  title: { ...display(typography.sizes.text), fontVariant: ['tabular-nums'] },
   track: { height: 10, borderRadius: radii.pill, overflow: 'hidden', marginTop: spacing.xs },
   fill: { ...StyleSheet.absoluteFill, borderRadius: radii.pill },
   // She stands on the card's foot, her waist at its edge.

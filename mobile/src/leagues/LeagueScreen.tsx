@@ -385,8 +385,8 @@ function LeagueSkeleton(): React.JSX.Element {
     <View style={styles.list} accessibilityLabel={t('common.loading')}>
       <View style={styles.head}>
         <View style={styles.titleBlock}>
-          <SkeletonText size={typography.sizes.xxl} lineHeight={LEAGUE_TITLE_LINE} width="62%" />
-          <SkeletonText size={typography.sizes.sm} width={110} style={styles.endsSkeleton} />
+          <SkeletonText size={typography.sizes.title} lineHeight={LEAGUE_TITLE_LINE} width="62%" />
+          <SkeletonText size={typography.sizes.text} width={110} style={styles.endsSkeleton} />
         </View>
         <View style={[styles.ladder, styles.ladderScroll, { flexDirection: 'row' }]}>
           {LEAGUE_TIERS.map((key, i) => (
@@ -397,15 +397,15 @@ function LeagueSkeleton(): React.JSX.Element {
         <View style={styles.goalRow}>
           <Skeleton width={84} height={84} radius={radii.pill} />
           <View style={styles.goalText}>
-            <SkeletonText size={typography.sizes.md} width="54%" />
-            <SkeletonText size={typography.sizes.sm} lineHeight={19} width="88%" />
-            <SkeletonText size={typography.sizes.sm} lineHeight={19} width="40%" />
+            <SkeletonText size={typography.sizes.text} width="54%" />
+            <SkeletonText size={typography.sizes.text} lineHeight={19} width="88%" />
+            <SkeletonText size={typography.sizes.text} lineHeight={19} width="40%" />
           </View>
         </View>
         <View style={styles.rules}>
-          <SkeletonText size={typography.sizes.xs} width={96} />
-          <SkeletonText size={typography.sizes.sm} lineHeight={19} width="90%" />
-          <SkeletonText size={typography.sizes.sm} lineHeight={19} width="76%" />
+          <SkeletonText size={typography.sizes.text} width={96} />
+          <SkeletonText size={typography.sizes.text} lineHeight={19} width="90%" />
+          <SkeletonText size={typography.sizes.text} lineHeight={19} width="76%" />
         </View>
       </View>
       <TableSkeleton rows={Math.max(6, Math.ceil((height - 560) / ROW))} zone />
@@ -418,13 +418,13 @@ function TableSkeleton({ rows, zone = false }: { rows: number; zone?: boolean })
   return (
     <>
       {/* The "Moving up" heading the group's table opens with. */}
-      {zone ? <SkeletonText size={typography.sizes.xs} width={96} style={styles.zoneSkeleton} /> : null}
+      {zone ? <SkeletonText size={typography.sizes.text} width={96} style={styles.zoneSkeleton} /> : null}
       {Array.from({ length: rows }, (_, i) => (
         <View key={i} style={styles.row}>
-          <SkeletonText size={typography.sizes.sm} width={14} align="center" style={styles.rankSkeleton} />
+          <SkeletonText size={typography.sizes.text} width={14} align="center" style={styles.rankSkeleton} />
           <Skeleton width={32} height={32} radius={radii.pill} />
-          <SkeletonText size={typography.sizes.md} width={i % 2 ? '40%' : '56%'} style={styles.nameSkeleton} />
-          <SkeletonText size={typography.sizes.sm} width={52} />
+          <SkeletonText size={typography.sizes.text} width={i % 2 ? '40%' : '56%'} style={styles.nameSkeleton} />
+          <SkeletonText size={typography.sizes.text} width={52} />
         </View>
       ))}
     </>
@@ -434,7 +434,7 @@ function TableSkeleton({ rows, zone = false }: { rows: number; zone?: boolean })
 /** A table row: a fingertip and 4, with the 4 between rows. */
 const ROW = MIN_TOUCH_TARGET + 4 + spacing.xs;
 /** display(34) sets 1.12. */
-const LEAGUE_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
+const LEAGUE_TITLE_LINE = Math.round(typography.sizes.title * typography.displayLineHeight);
 
 /**
  * One group table row, memoised against list re-renders. `delay` is the row's place in the entrance, for the
@@ -629,8 +629,8 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingTop: spacing.sm, gap: spacing.xs, paddingBottom: spacing.xxl },
   head: { gap: spacing.md, marginBottom: spacing.sm },
   titleBlock: { gap: 2, paddingTop: spacing.xs },
-  leagueTitle: { ...display(typography.sizes.xxl) },
-  left: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  leagueTitle: { ...display(typography.sizes.title) },
+  left: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
   // The ladder runs from one edge of the phone to the other, past the list's gutter.
   ladderScroll: { marginHorizontal: -layout.gutter },
   ladder: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: LADDER_GAP, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
@@ -638,51 +638,51 @@ const styles = StyleSheet.create({
   resting: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.sm },
   // His words, in a bubble under him: filled, not framed, like every surface here.
   bubble: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2, maxWidth: 320 },
-  bubbleText: { fontSize: typography.sizes.md, lineHeight: 22, fontStyle: 'italic', textAlign: 'center' },
+  bubbleText: { fontSize: typography.sizes.text, lineHeight: 22, fontStyle: 'italic', textAlign: 'center' },
   daysPill: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, marginTop: spacing.sm },
   leave: { alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.md },
   // A fingertip tall, however few its words.
   leaveLink: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
-  leaveText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  leaveText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  heroTitle: { ...display(typography.sizes.xl) },
-  heroMeaning: { fontSize: typography.sizes.md },
+  heroTitle: { ...display(typography.sizes.title) },
+  heroMeaning: { fontSize: typography.sizes.text },
   ends: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs },
-  endsText: { fontSize: typography.sizes.sm },
+  endsText: { fontSize: typography.sizes.text },
   goalRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   goalText: { flex: 1, gap: spacing.xs },
   endsSkeleton: { marginTop: spacing.xs },
   rankSkeleton: { width: 26 },
   zoneSkeleton: { paddingTop: spacing.sm, paddingBottom: 2, paddingHorizontal: spacing.xs },
   nameSkeleton: { flex: 1 },
-  goalTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  goalHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  goalTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  goalHint: { fontSize: typography.sizes.text, lineHeight: 19 },
   safe: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4 },
-  safeText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  safeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   lastWeek: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  lastLine: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, lineHeight: 21 },
+  lastLine: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, lineHeight: 21 },
   flex: { flex: 1, gap: 2 },
   rules: { gap: 4, marginTop: spacing.sm },
-  rule: { fontSize: typography.sizes.sm, lineHeight: 19 },
+  rule: { fontSize: typography.sizes.text, lineHeight: 19 },
   waiting: { alignItems: 'center', gap: spacing.sm },
-  waitTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
+  waitTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   center: { textAlign: 'center' },
   stretch: { alignSelf: 'stretch', marginTop: spacing.xs },
   zone: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: spacing.sm, paddingBottom: 2, paddingHorizontal: spacing.xs },
-  zoneText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  zoneText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
   gap: { height: spacing.sm },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.sm, minHeight: MIN_TOUCH_TARGET + 4 },
   rank: { width: 26, textAlign: 'center', fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  name: { flex: 1, fontSize: typography.sizes.md },
+  name: { flex: 1, fontSize: typography.sizes.text },
   nameSelf: { fontWeight: typography.weights.bold },
   anon: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  score: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  score: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   personal: { alignItems: 'center', gap: spacing.sm },
   bars: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, marginTop: spacing.md },
   goalLine: { position: 'absolute', left: 0, right: 0, height: 1, opacity: 0.45 },
-  goalTag: { position: 'absolute', right: 0, fontSize: typography.sizes.xs },
+  goalTag: { position: 'absolute', right: 0, fontSize: typography.sizes.text },
   barCol: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' },
   bar: { width: '70%', borderRadius: radii.xs },
   barLabels: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs },
-  barLabel: { flex: 1, fontSize: typography.sizes.xs, textAlign: 'center' },
+  barLabel: { flex: 1, fontSize: typography.sizes.text, textAlign: 'center' },
 });

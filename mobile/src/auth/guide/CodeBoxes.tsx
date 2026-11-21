@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   // Three and three, as a code is read off an email.
   afterGap: { marginLeft: spacing.sm },
   box: { height: BOX_HEIGHT, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  digit: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  digit: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   mark: { width: 2, height: 26, borderRadius: radii.pill },
   // No focus ring of its own: the lit box shows where typing goes. In a browser the ring comes from its style, so the
   // style is turned off there too.
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.text,
     color: 'transparent',
     outlineWidth: 0,
     ...({ outlineStyle: 'none' } as object),

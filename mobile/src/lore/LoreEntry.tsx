@@ -62,6 +62,6 @@ const styles = StyleSheet.create({
   shelf: { flex: 1, borderRadius: radii.lg, padding: spacing.md - 4, gap: 2, minHeight: 92 },
   head: { alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs },
   icon: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  name: { ...display(typography.sizes.md), lineHeight: Math.round(typography.sizes.md * 1.25) },
-  beside: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  name: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.25) },
+  beside: { fontSize: typography.sizes.text, lineHeight: 18 },
 });

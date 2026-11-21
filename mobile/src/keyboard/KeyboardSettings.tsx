@@ -181,13 +181,13 @@ export function KeyboardSettingsList(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
   modes: { gap: spacing.sm, marginBottom: spacing.sm },
   mode: { borderRadius: radii.md, padding: spacing.md, gap: 2, borderWidth: 1.5, minHeight: MIN_TOUCH_TARGET },
   modeHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  modeName: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  modeHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 19, marginBottom: spacing.sm },
+  modeName: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  modeHint: { fontSize: typography.sizes.text, lineHeight: 19 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 19, marginBottom: spacing.sm },
   // The gutter is the ScrollView's own, so the options scroll edge to edge.
   scroller: { paddingHorizontal: 0 },
   sheetBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.xs },

@@ -273,15 +273,15 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
       <GlassCard>
         <View style={[styles.showHead, { flexDirection: dir.row }]}>
           <View style={styles.flex}>
-            <SkeletonText size={typography.sizes.xs} width={96} />
-            <SkeletonText size={typography.sizes.lg} lineHeight={SUMMARY_LINE} width="52%" />
+            <SkeletonText size={typography.sizes.text} width={96} />
+            <SkeletonText size={typography.sizes.text} lineHeight={SUMMARY_LINE} width="52%" />
           </View>
         </View>
         <View style={[styles.slots, { flexDirection: dir.row }]}>
           {[0, 1, 2].map((i) => (
             <View key={i} style={styles.slot}>
               <Skeleton width={72} height={72} radius={radii.pill} style={styles.slotSkeleton} />
-              <SkeletonText size={typography.sizes.xs} width={56} align="center" />
+              <SkeletonText size={typography.sizes.text} width={56} align="center" />
             </View>
           ))}
         </View>
@@ -289,15 +289,15 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
       {Array.from({ length: families }, (_, f) => (
         <View key={f} style={styles.family}>
           <View style={[styles.familyHead, { flexDirection: dir.row }]}>
-            <SkeletonText size={typography.sizes.xs} width={88} />
-            <SkeletonText size={typography.sizes.xs} width={40} />
+            <SkeletonText size={typography.sizes.text} width={88} />
+            <SkeletonText size={typography.sizes.text} width={40} />
           </View>
           <View style={[styles.grid, { flexDirection: dir.row }]}>
             {Array.from({ length: columns * 2 }, (_, i) => (
               <View key={i} style={[styles.tile, { width: tile }]}>
                 <Skeleton width={medal} height={medal} radius={radii.pill} />
-                <SkeletonText size={typography.sizes.sm} width="70%" align="center" style={styles.tileNameSkeleton} />
-                <SkeletonText size={typography.sizes.xs} width="44%" align="center" style={styles.tileTierSkeleton} />
+                <SkeletonText size={typography.sizes.text} width="70%" align="center" style={styles.tileNameSkeleton} />
+                <SkeletonText size={typography.sizes.text} width="44%" align="center" style={styles.tileTierSkeleton} />
               </View>
             ))}
           </View>
@@ -312,7 +312,7 @@ const STAGE = 196;
 const RISE = 150;
 
 /** display(22) sets 1.12. */
-const SUMMARY_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
+const SUMMARY_LINE = Math.round(typography.sizes.text * typography.displayLineHeight);
 
 /** One badge in the grid; `fresh` means earned since the app opened, shown with a "New" chip. */
 function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView; width: number; fresh?: boolean; onPress: () => void }): React.JSX.Element {
@@ -557,51 +557,51 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 720, alignSelf: 'center' },
   flex: { flex: 1, gap: 2 },
   showHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  summary: { ...display(typography.sizes.lg) },
+  summary: { ...display(typography.sizes.text) },
   slots: { flexDirection: 'row', justifyContent: 'space-around', marginTop: spacing.md },
   slot: { alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
   emptySlot: { borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', margin: 6 },
-  slotName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 19, marginTop: spacing.sm },
+  slotName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  hint: { fontSize: typography.sizes.text, lineHeight: 19, marginTop: spacing.sm },
   family: { gap: spacing.sm },
   familyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  familyCount: { fontSize: typography.sizes.xs, fontVariant: ['tabular-nums'] },
-  secretLine: { fontSize: typography.sizes.sm },
+  familyCount: { fontSize: typography.sizes.text, fontVariant: ['tabular-nums'] },
+  secretLine: { fontSize: typography.sizes.text },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: { alignItems: 'center', gap: 2, paddingVertical: spacing.sm },
-  tileName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center', marginTop: spacing.xs },
-  tileTier: { fontSize: typography.sizes.xs },
+  tileName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center', marginTop: spacing.xs },
+  tileTier: { fontSize: typography.sizes.text },
   tileMeter: { width: '62%', alignSelf: 'center', marginTop: 4 },
   tileNameSkeleton: { alignSelf: 'stretch', marginTop: spacing.xs },
   tileTierSkeleton: { alignSelf: 'stretch' },
   slotSkeleton: { margin: 6 },
   month: { borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
   monthHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  monthText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  monthText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   legacy: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.md },
-  legacyText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  legacyText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   sheetHero: { alignItems: 'center', gap: spacing.xs + 2 },
   // The wash the badge stands on: as wide as the sheet's column, its lower edge under the surface's curve.
   stage: { alignSelf: 'stretch', height: STAGE, alignItems: 'center', justifyContent: 'flex-end', borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, overflow: 'hidden', marginBottom: spacing.xs },
   stageRise: { position: 'absolute', left: '-14%', right: '-14%', bottom: -RISE * 0.58, height: RISE, borderRadius: radii.pill },
   // Small capitals, as on a medal's label: when it was earned.
-  sheetKicker: { fontSize: 12, fontWeight: typography.weights.semibold, letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center' },
-  sheetName: { ...display(typography.sizes.xl), textAlign: 'center' },
-  sheetMeaning: { fontSize: typography.sizes.md, textAlign: 'center' },
+  sheetKicker: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center' },
+  sheetName: { ...display(typography.sizes.title), textAlign: 'center' },
+  sheetMeaning: { fontSize: typography.sizes.text, textAlign: 'center' },
   sheetRule: { width: 132, height: StyleSheet.hairlineWidth * 2, marginVertical: spacing.sm },
-  sheetHow: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
+  sheetHow: { fontSize: typography.sizes.text, textAlign: 'center', lineHeight: 22 },
   sheetProgress: { gap: spacing.sm },
-  sheetProgressText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  sheetProgressText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   ladder: { gap: spacing.sm },
   rung: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.sm },
-  rungName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  rungFact: { fontSize: typography.sizes.xs },
+  rungName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  rungFact: { fontSize: typography.sizes.text },
   showcaseAction: { gap: spacing.xs },
   pickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   pick: { width: '31%', alignItems: 'center', gap: spacing.xs, borderRadius: radii.md, borderWidth: 1.5, padding: spacing.sm, minHeight: MIN_TOUCH_TARGET },
-  pickName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  pickName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   order: { position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   // The place's number in the corner the row starts from, on the right in Soranî and Arabic.
   orderRtl: { right: undefined, left: 6 },
-  orderText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  orderText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

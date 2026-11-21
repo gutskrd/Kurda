@@ -120,5 +120,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  keyText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  keyText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

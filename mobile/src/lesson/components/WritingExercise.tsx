@@ -70,7 +70,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled, dialec
 const styles = StyleSheet.create({
   container: { gap: spacing.lg },
   // The question, under the headline that says what to do with it.
-  prompt: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
+  prompt: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   // The field's card, edge and face match the answer box (KurdishAnswerInput).
   input: { minHeight: 96, paddingVertical: spacing.md, paddingHorizontal: spacing.md, textAlignVertical: 'top' },
   // One word for a gap: one line, a fingertip tall.

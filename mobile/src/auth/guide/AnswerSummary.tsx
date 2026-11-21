@@ -26,6 +26,6 @@ export function AnswerSummary({ rows, testID = 'answer-summary' }: { rows: Reado
 
 const styles = StyleSheet.create({
   panel: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md },
-  label: { fontSize: typography.sizes.xs, marginBottom: 2 },
-  value: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  label: { fontSize: typography.sizes.text, marginBottom: 2 },
+  value: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
 });

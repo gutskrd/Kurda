@@ -32,7 +32,7 @@ body {
   padding-left: env(safe-area-inset-left, 0px);
   padding-right: env(safe-area-inset-right, 0px);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: var(--text);
   line-height: 1.6;
   color: var(--ink);
   background: var(--app-bg);
@@ -58,7 +58,7 @@ h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.01em;
@@ -132,7 +132,7 @@ input[type='range'] {
 .eyebrow {
   font-family: var(--font-sans);
   /* the front page's kicker: small, wide-tracked, quiet */
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.13em;
   text-transform: uppercase;
@@ -143,19 +143,19 @@ input[type='range'] {
   letter-spacing: normal;
 }
 .kurdish {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-style: italic;
   color: var(--ink-2);
 }
 .display {
-  font-size: clamp(2.4rem, 5vw, 3.75rem);
+  font-size: var(--text-title);
   letter-spacing: -0.022em;
 }
 .h-section {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-size: var(--text-title);
 }
 .lead {
-  font-size: 1.175rem;
+  font-size: var(--text);
   line-height: 1.6;
   color: var(--ink-2);
 }

@@ -14,7 +14,7 @@
   gap: 8px;
 }
 .race-choice-label {
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-weight: 550;
   color: var(--ink-2);
 }
@@ -70,7 +70,7 @@
 .race-timer {
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: var(--text);
   min-width: 66px;
 }
 .race-progress {
@@ -114,7 +114,7 @@
 }
 .race-text {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: var(--text);
   line-height: 1.9;
   letter-spacing: 0.01em;
   padding: 18px;
@@ -128,8 +128,8 @@
 }
 /* Soranî in a face made for Arabic script, larger, and without the Latin letter spacing */
 .race-text-rtl {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   letter-spacing: 0;
   line-height: 2.1;
 }
@@ -158,7 +158,7 @@
   position: absolute;
   inset-inline-end: 10px;
   bottom: 8px;
-  font-size: 0.74rem;
+  font-size: var(--text);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-4);
@@ -166,7 +166,7 @@
 }
 .race-refused {
   margin: 0 0 12px;
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--danger);
 }
 .race-char {
@@ -254,7 +254,7 @@
   border-radius: var(--r-pill);
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 .race-figures {
@@ -268,13 +268,13 @@
   flex-direction: column;
 }
 .race-figure-value {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.1;
 }
 .race-figure-label {
-  font-size: 0.74rem;
+  font-size: var(--text);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   color: var(--ink-3);
@@ -286,13 +286,13 @@
   gap: 8px;
   margin: 0 0 16px;
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .race-mode-tag {
   padding: 2px 9px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-pill);
-  font-size: 0.76rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .race-nudge {
@@ -325,14 +325,14 @@
   background: var(--bg);
   color: var(--ink);
   font: inherit;
-  font-size: 1.2rem;
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
   touch-action: manipulation;
   transition: background var(--dur-fast) var(--ease-out), transform 0.08s ease;
 }
 .key-bar-key[lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }
 .key-bar-key:hover:not(:disabled) {
   background: var(--surface-2);
@@ -362,7 +362,7 @@
   height: 36px;
   padding: 0 10px;
   border-color: var(--border);
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 550;
   color: var(--ink-2);
 }
@@ -423,7 +423,7 @@
 }
 .kb-option-hint {
   color: var(--ink-3);
-  font-size: 0.84rem;
+  font-size: var(--text);
 }
 .kb-note {
   margin: 8px 0 0;
@@ -472,14 +472,14 @@
 }
 .kb-guide-title {
   margin: 0 0 6px;
-  font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.2;
 }
 .kb-guide-lead {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.95rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .kb-guide-device {
@@ -509,7 +509,7 @@
   position: relative;
   padding-inline-start: 38px;
   line-height: 1.55;
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .kb-guide-steps li::before {
   content: counter(kb-step);
@@ -523,7 +523,7 @@
   border-radius: 50%;
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 /* the device's own words, as its screen shows them */
@@ -552,7 +552,7 @@
 }
 .kb-try-title {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .kb-try-letters {
   display: flex;
@@ -569,13 +569,13 @@
   place-items: center;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
-  font-size: 1.25rem;
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-3);
   transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out), transform var(--dur) var(--ease-out);
 }
 .kb-try-letter[lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }
 .kb-try-letter.is-on {
   background: var(--gold);
@@ -595,10 +595,10 @@
   }
 }
 .kb-try-input {
-  font-size: 1.1rem;
+  font-size: var(--text);
 }
 .kb-try-input[lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }
 .kb-try-status {
   margin: 0;
@@ -653,12 +653,12 @@
 .kb-guide-outs-lead {
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 .kb-guide-keys-note {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .kb-guide-out-buttons {
   display: flex;

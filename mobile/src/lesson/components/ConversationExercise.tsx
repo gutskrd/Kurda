@@ -277,14 +277,14 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  title: { ...display(typography.sizes.lg - 2) },
+  title: { ...display(typography.sizes.text) },
   controls: { flexWrap: 'wrap', gap: spacing.sm },
   lines: { gap: spacing.sm },
   row: { alignItems: 'flex-end', gap: spacing.sm, maxWidth: '92%' },
   rowStart: { alignSelf: 'flex-start' },
   rowEnd: { alignSelf: 'flex-end' },
   initial: { width: FACE, height: FACE, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  initialText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  initialText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   bubble: {
     flexShrink: 1,
     alignItems: 'center',
@@ -295,10 +295,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   said: { flexShrink: 1, gap: 2 },
-  name: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   // What is said, in the lesson's Kurdish display face.
-  text: { ...display(typography.sizes.md + 1) },
-  meaning: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
+  text: { ...display(typography.sizes.text) },
+  meaning: { fontSize: typography.sizes.text, fontStyle: 'italic' },
   play: { width: PLAY, height: PLAY, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
   ltr: { writingDirection: 'ltr' },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },

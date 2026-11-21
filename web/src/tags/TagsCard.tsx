@@ -107,14 +107,14 @@ export function TagsCard(): React.JSX.Element {
         <p className="muted">{t('common.loading')}</p>
       ) : (
         <>
-          <h3 className="friend-heading" style={{ fontSize: '0.95rem' }}>{t('tags.main')}</h3>
+          <h3 className="friend-heading" style={{ fontSize: 'var(--text)' }}>{t('tags.main')}</h3>
           {profile?.main ? (
             <span className="badge badge-gold">{profile.main.label}</span>
           ) : (
             <p className="muted" style={{ marginTop: 0 }}>{t('tags.noMain')}</p>
           )}
 
-          <h3 className="friend-heading" style={{ fontSize: '0.95rem' }}>{t('tags.yours')}</h3>
+          <h3 className="friend-heading" style={{ fontSize: 'var(--text)' }}>{t('tags.yours')}</h3>
           {claimed.length === 0 ? (
             <p className="muted" style={{ marginTop: 0 }}>{t('tags.none')}</p>
           ) : (
@@ -138,7 +138,7 @@ export function TagsCard(): React.JSX.Element {
 
           {toClaim.length > 0 && (
             <>
-              <h3 className="friend-heading" style={{ fontSize: '0.95rem' }}>{t('tags.add')}</h3>
+              <h3 className="friend-heading" style={{ fontSize: 'var(--text)' }}>{t('tags.add')}</h3>
               <div className="toolbar" style={{ flexWrap: 'wrap' }}>
                 {toClaim.map((tag) => (
                   <button key={tag.key} type="button" className="chip" disabled={busy} onClick={() => startClaim(tag)}>
@@ -151,7 +151,7 @@ export function TagsCard(): React.JSX.Element {
 
           {claiming && (
             <div style={{ marginTop: 12 }}>
-              <h3 className="friend-heading" style={{ fontSize: '0.95rem' }}>
+              <h3 className="friend-heading" style={{ fontSize: 'var(--text)' }}>
                 {t('tags.addTitle', { tag: claiming.label })}
               </h3>
               <input

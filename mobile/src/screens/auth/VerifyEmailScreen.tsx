@@ -220,7 +220,7 @@ export function VerifyEmailScreen(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   step: { gap: spacing.md },
-  lead: { fontSize: typography.sizes.md, lineHeight: 22, marginTop: -spacing.sm },
+  lead: { fontSize: typography.sizes.text, lineHeight: 22, marginTop: -spacing.sm },
   address: {
     alignItems: 'center',
     gap: spacing.sm,
@@ -229,11 +229,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
     maxWidth: '100%',
   },
-  addressText: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  addressText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   footer: { marginTop: spacing.lg, gap: spacing.sm },
-  notice: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  notice: { fontSize: typography.sizes.text, lineHeight: 20 },
   resendTarget: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  resend: { fontSize: typography.sizes.sm, lineHeight: 22 },
+  resend: { fontSize: typography.sizes.text, lineHeight: 22 },
   resendLink: { fontWeight: typography.weights.semibold },
-  small: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  small: { fontSize: typography.sizes.text, lineHeight: 18 },
 });

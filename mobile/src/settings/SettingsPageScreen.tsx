@@ -264,6 +264,6 @@ function Credits(): React.JSX.Element {
 const CREDIT_ICONS: readonly IconName[] = ['text', 'star', 'image'];
 
 const styles = StyleSheet.create({
-  birth: { paddingHorizontal: layout.gutter, paddingVertical: spacing.sm, fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
+  birth: { paddingHorizontal: layout.gutter, paddingVertical: spacing.sm, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   birthAdd: { paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
 });

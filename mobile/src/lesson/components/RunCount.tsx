@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   label: { position: 'absolute', bottom: '100%', marginBottom: spacing.xs, flexDirection: 'row', alignItems: 'center', gap: 4 },
   labelStart: { left: spacing.xs },
   labelEnd: { right: spacing.xs, flexDirection: 'row-reverse' },
-  labelText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.3, fontVariant: ['tabular-nums'] },
+  labelText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.3, fontVariant: ['tabular-nums'] },
   over: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1 },
   moment: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   momentBody: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg },

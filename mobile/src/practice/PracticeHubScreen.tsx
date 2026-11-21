@@ -363,9 +363,9 @@ const styles = StyleSheet.create({
   hero: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.md },
   heroTop: { alignItems: 'flex-end', gap: spacing.sm },
   heroWords: { flex: 1, gap: spacing.xs, alignSelf: 'center' },
-  eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  heroTitle: { ...display(typography.sizes.lg) },
-  heroBody: { fontSize: typography.sizes.sm, lineHeight: 20, opacity: 0.82 },
+  eyebrow: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  heroTitle: { ...display(typography.sizes.text) },
+  heroBody: { fontSize: typography.sizes.text, lineHeight: 20, opacity: 0.82 },
   // He stands at the card's foot, waist at its padding, so the button sits under his hands.
   heroCharacter: { marginBottom: -(spacing.md + 4) + spacing.xs },
 
@@ -374,11 +374,11 @@ const styles = StyleSheet.create({
   row: { minHeight: ROW_HEIGHT, borderRadius: radii.lg, paddingStart: spacing.md + 4, paddingEnd: spacing.sm + 2, paddingVertical: spacing.sm + 2, alignItems: 'center', gap: spacing.md },
   rowBadge: { borderRadius: radii.lg, alignItems: 'center', justifyContent: 'center' },
   rowWords: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: typography.ios.row, fontWeight: typography.weights.semibold },
-  rowDetail: { fontSize: typography.sizes.sm },
+  rowTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  rowDetail: { fontSize: typography.sizes.text },
 
   picker: { gap: spacing.sm, paddingBottom: spacing.md },
   unit: { minHeight: MIN_TOUCH_TARGET + spacing.md, borderRadius: radii.lg, padding: spacing.sm + 4, alignItems: 'center', gap: spacing.md },
   unitDisc: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, borderBottomWidth: 3, alignItems: 'center', justifyContent: 'center' },
-  unitNumber: { fontSize: typography.ios.row, fontWeight: typography.weights.bold },
+  unitNumber: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

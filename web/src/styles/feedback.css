@@ -48,7 +48,7 @@
   font-family: var(--font-sans);
 }
 .deer-letters[lang='ckb'] {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }
 /* a hop of joy: twice up, then back to the bob */
 .deer-cheer .deer-body {
@@ -152,20 +152,20 @@
     flex: none;
   }
   .rb-host .rb-title {
-    font-size: 1.15rem;
+    font-size: var(--text);
   }
 }
 .rb-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.25;
   outline: none;
 }
 .rb-lead {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .rb-stars {
   display: flex;

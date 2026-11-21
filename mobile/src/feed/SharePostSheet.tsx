@@ -153,10 +153,10 @@ const FACE = 36;
 const styles = StyleSheet.create({
   ways: { gap: spacing.sm },
   friends: { gap: spacing.xs, marginTop: spacing.md },
-  divider: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xs },
-  sent: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, paddingVertical: spacing.md, textAlign: 'center' },
-  note: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
+  divider: { fontSize: typography.sizes.text, textAlign: 'center', marginBottom: spacing.xs },
+  sent: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, paddingVertical: spacing.md, textAlign: 'center' },
+  note: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
   error: { marginHorizontal: 0 },
   friend: { alignItems: 'center', gap: spacing.md - 4, minHeight: FACE + spacing.md, paddingVertical: spacing.xs },
-  name: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  name: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

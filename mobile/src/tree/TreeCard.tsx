@@ -105,9 +105,9 @@ const styles = StyleSheet.create({
   art: { borderRadius: radii.md },
   main: { flex: 1, gap: 1 },
   head: { alignItems: 'baseline', gap: spacing.sm },
-  title: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  stage: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  sub: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  title: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  stage: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  sub: { fontSize: typography.sizes.text, lineHeight: 20 },
   water: { alignItems: 'center', gap: 4, borderRadius: radii.pill, paddingVertical: 4, paddingHorizontal: 9 },
-  waterText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  waterText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
 });

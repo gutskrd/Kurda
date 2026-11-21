@@ -210,14 +210,14 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  detail: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  detail: { fontSize: typography.sizes.text, textAlign: 'center' },
   recordingBox: { alignItems: 'center', gap: spacing.sm },
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36 },
   bar: { width: 4, borderRadius: radii.pill },
-  dur: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  dur: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   track: { width: 160, height: 4, borderRadius: radii.pill, overflow: 'hidden' },
   used: { height: '100%', borderRadius: radii.pill },
   stop: { paddingVertical: spacing.sm, paddingHorizontal: spacing.xl, borderRadius: radii.md },
-  stopText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  stopText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

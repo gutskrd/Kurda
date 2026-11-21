@@ -210,7 +210,7 @@ export function RegisterScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   // A calm panel rather than an error line: nothing was done wrong, and it offers a way forward.
   notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
-  noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  noticeText: { fontSize: typography.sizes.text, lineHeight: 21 },
   noticeActions: { flexWrap: 'wrap', gap: spacing.sm },
   noticeAction: { flexGrow: 1 },
   terms: { marginTop: spacing.lg },

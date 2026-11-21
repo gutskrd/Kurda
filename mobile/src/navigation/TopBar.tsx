@@ -75,6 +75,6 @@ export function TabHeader({
 const styles = StyleSheet.create({
   head: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   // The title takes the room, pushing the actions to the far end.
-  title: { ...display(typography.sizes.xl), flex: 1 },
+  title: { ...display(typography.sizes.title), flex: 1 },
   lead: { flex: 1, alignItems: 'center' },
 });

@@ -62,20 +62,20 @@ export function MarkdownView({ source }: { source: string }) {
 }
 
 function headingSize(level: 1 | 2 | 3) {
-  return { fontSize: level === 1 ? typography.sizes.xl : level === 2 ? typography.sizes.lg : typography.sizes.md };
+  return { fontSize: level === 1 ? typography.sizes.title : level === 2 ? typography.sizes.text : typography.sizes.text };
 }
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
   heading: { fontFamily: typography.fontFamily, fontWeight: typography.weights.bold },
-  paragraph: { fontFamily: typography.fontFamily, fontSize: typography.sizes.md, lineHeight: 24 },
+  paragraph: { fontFamily: typography.fontFamily, fontSize: typography.sizes.text, lineHeight: 24 },
   bold: { fontWeight: typography.weights.bold },
   italic: { fontStyle: 'italic' },
   code: { fontFamily: typography.fontFamily },
   bullets: { gap: spacing.xs },
   bulletRow: { flexDirection: 'row', gap: spacing.sm },
-  bulletDot: { fontSize: typography.sizes.md },
-  bulletText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 24 },
+  bulletDot: { fontSize: typography.sizes.text },
+  bulletText: { flex: 1, fontSize: typography.sizes.text, lineHeight: 24 },
   codeBlock: { borderRadius: radii.sm, padding: spacing.md },
-  codeText: { fontFamily: typography.fontFamily, fontSize: typography.sizes.md },
+  codeText: { fontFamily: typography.fontFamily, fontSize: typography.sizes.text },
 });

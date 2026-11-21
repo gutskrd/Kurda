@@ -634,7 +634,7 @@
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .tree-health strong {
   color: var(--ink);
@@ -701,13 +701,13 @@
 }
 .tree-growth-next {
   color: var(--ink);
-  font-size: 1.06rem;
+  font-size: var(--text);
   font-weight: 800;
 }
 .tree-growth-count {
   justify-self: start;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   /* A new count pops in to show something was added. */
@@ -748,7 +748,7 @@
 .tree-harvests {
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 
 /* The water held, and pouring it. */
@@ -783,7 +783,7 @@
 .tree-about {
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   text-align: center;
 }
 .tree-failed {
@@ -792,7 +792,7 @@
   border-radius: var(--r-md);
   background: var(--danger-soft);
   color: var(--ink);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .tree-moment-zer {
   display: inline-flex;
@@ -870,7 +870,7 @@
 .tree-seed-meaning {
   max-width: 100%;
   color: var(--ink-3);
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.25;
   hyphens: auto;
@@ -879,7 +879,7 @@
 .tree-choices-more {
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   text-align: center;
 }
 .tree-kinds {
@@ -914,17 +914,17 @@
 }
 .tree-kind-name {
   color: var(--ink);
-  font-size: 1.08rem;
+  font-size: var(--text);
   font-weight: 800;
 }
 .tree-kind-meaning {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
 }
 .tree-kind-about {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .tree-kind-price,
 .tree-kind-note {
@@ -933,7 +933,7 @@
   align-items: center;
   margin-top: 4px;
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 700;
 }
 /* On a narrow screen a kind's button goes below, so its text keeps the space beside its picture. */
@@ -947,13 +947,13 @@
 }
 .tree-nursery-title {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: var(--text);
   font-weight: 800;
 }
 .tree-nursery-sub {
   margin: 4px 0 0;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .tree-nursery-zer {
   display: inline-flex;
@@ -974,7 +974,7 @@
 }
 .tree-ask-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--text);
   font-weight: 800;
 }
 .tree-ask-body,
@@ -1035,12 +1035,12 @@
 }
 .tree-card-stage {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
 }
 .tree-card-sub {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .tree-card.is-wilting .tree-card-sub,
 .tree-card.is-withered .tree-card-sub {
@@ -1085,13 +1085,13 @@
 }
 .profile-tree-name {
   color: var(--ink);
-  font-size: 1.12rem;
+  font-size: var(--text);
   font-weight: 800;
 }
 .profile-tree-meaning,
 .profile-tree-facts {
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .profile-tree-meaning {
   font-weight: 600;
@@ -1103,7 +1103,7 @@
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--gold) 18%, var(--surface-2));
   color: var(--ink);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 .profile-tree-plant {

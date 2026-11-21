@@ -150,7 +150,7 @@ function LetterOnPaper({
           <TextWidget
             text={date}
             maxLines={1}
-            style={{ fontSize: 11, color: colors.muted as HexColor, backgroundColor: washOf(colors.sheet), borderRadius: radii.xs, paddingHorizontal: 5, paddingVertical: 1 }}
+            style={{ fontSize: typography.sizes.text, color: colors.muted as HexColor, backgroundColor: washOf(colors.sheet), borderRadius: radii.xs, paddingHorizontal: 5, paddingVertical: 1 }}
           />
         </FlexWidget>
       </FlexWidget>
@@ -175,9 +175,9 @@ function EmptySill({ image, width, height, family, locale, rtl }: { image: strin
       {image ? <ImageWidget image={image as `data:image${string}`} imageWidth={width} imageHeight={height} resizeMode="cover" /> : null}
       <FlexWidget style={{ ...fill, flexDirection: 'column', justifyContent: 'flex-start', padding: 10 }}>
         <FlexWidget style={{ width: 'match_parent', flexDirection: 'column', backgroundColor: washOf(colors.sheet), borderRadius: radii.sm, padding: 6 }}>
-          <TextWidget text={widgetText(locale, 'empty')} maxLines={2} style={{ width: 'match_parent', fontSize: 14, fontWeight: '600', color: colors.ink as HexColor, textAlign: align }} />
+          <TextWidget text={widgetText(locale, 'empty')} maxLines={2} style={{ width: 'match_parent', fontSize: typography.sizes.text, fontWeight: '600', color: colors.ink as HexColor, textAlign: align }} />
           {family === 'small' ? null : (
-            <TextWidget text={widgetText(locale, 'emptyMore')} maxLines={2} style={{ width: 'match_parent', fontSize: 12, color: colors.muted as HexColor, textAlign: align, marginTop: 2 }} />
+            <TextWidget text={widgetText(locale, 'emptyMore')} maxLines={2} style={{ width: 'match_parent', fontSize: typography.sizes.text, color: colors.muted as HexColor, textAlign: align, marginTop: 2 }} />
           )}
         </FlexWidget>
       </FlexWidget>
@@ -196,7 +196,7 @@ function Plain({ text, link, pose, dark, family }: { text: string; link: string;
       accessibilityLabel={text}
     >
       <SvgWidget svg={letterBirdSvg({ bird: 0, pose, portrait: true, size: bird })} style={{ width: bird, height: bird }} />
-      <TextWidget text={text} maxLines={3} style={{ fontSize: 14, fontWeight: '600', color: palette.textPrimary as ColorProp, textAlign: 'center', marginTop: 8 }} />
+      <TextWidget text={text} maxLines={3} style={{ fontSize: typography.sizes.text, fontWeight: '600', color: palette.textPrimary as ColorProp, textAlign: 'center', marginTop: 8 }} />
     </FlexWidget>
   );
 }

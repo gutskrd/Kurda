@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   },
   list: { borderWidth: EDGE, borderRadius: radii.md, overflow: 'hidden' },
   meaning: {
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.text,
     textAlign: 'center',
     paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.lg,

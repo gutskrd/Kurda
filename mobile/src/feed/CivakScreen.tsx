@@ -339,11 +339,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   // The way into sorting and narrowing: a fingertip tall, as wide as its words.
   sortChip: { alignItems: 'center', gap: spacing.xs + 2, minHeight: CHIP, paddingHorizontal: spacing.md - 4, borderRadius: radii.pill },
-  sortChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  sortChipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   waiting: { paddingHorizontal: layout.gutter },
   // The page's line, today's reward and the week, inside the gutter above the faces.
   top: { paddingHorizontal: layout.gutter, gap: spacing.sm, paddingBottom: spacing.md },
-  subtitle: { fontSize: typography.sizes.md, lineHeight: 22 },
+  subtitle: { fontSize: typography.sizes.text, lineHeight: 22 },
   // The chips under the faces, inside the page's gutter.
   filterChips: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
 });

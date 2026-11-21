@@ -61,7 +61,7 @@ export function DiscoverGrid({ width, onCount }: { width: number; onCount?: (n: 
   if (items === null) {
     return (
       <View style={styles.section} accessibilityLabel={t('common.loading')}>
-        <SkeletonText size={typography.sizes.xs} width={160} style={[styles.title, { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }]} />
+        <SkeletonText size={typography.sizes.text} width={160} style={[styles.title, { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }]} />
         <View style={[styles.grid, { flexDirection: dir.row }]}>
           {Array.from({ length: 9 }, (_, i) => (
             <Skeleton key={i} width={tile} height={tile} radius={0} />

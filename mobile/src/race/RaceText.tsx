@@ -124,10 +124,10 @@ function charColor(state: string | undefined, c: Palette): string {
 const styles = StyleSheet.create({
   text: { flexDirection: 'row', flexWrap: 'wrap' },
   rtl: { flexDirection: 'row-reverse' },
-  word: { fontSize: typography.sizes.lg, lineHeight: 32, letterSpacing: 0.2 },
+  word: { fontSize: typography.sizes.text, lineHeight: 32, letterSpacing: 0.2 },
   wordRtl: { writingDirection: 'rtl' },
   // Forgiven, not wrong: underlined in the gold the app uses for "nearly".
   accent: { textDecorationLine: 'underline' },
   caret: { borderRadius: radii.xs },
-  extra: { fontSize: typography.sizes.md, textDecorationLine: 'line-through' },
+  extra: { fontSize: typography.sizes.text, textDecorationLine: 'line-through' },
 });

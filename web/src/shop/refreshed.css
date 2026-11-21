@@ -17,13 +17,13 @@
 .refresh-notice-title {
   margin: 0 0 4px;
   color: var(--gold-ink);
-  font-size: 1rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 .refresh-notice-body {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.93rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .refresh-notice-actions {

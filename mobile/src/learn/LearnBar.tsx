@@ -184,9 +184,9 @@ const styles = StyleSheet.create({
   bar: { alignItems: 'center', gap: spacing.xs },
   // Each stat is a 44pt target however small its number.
   stat: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
-  number: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  number: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   sheetBody: { gap: spacing.md, paddingBottom: spacing.sm },
   goalHead: { alignItems: 'center', gap: spacing.md },
-  goalWords: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  caption: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  goalWords: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  caption: { fontSize: typography.sizes.text, lineHeight: 18 },
 });

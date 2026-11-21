@@ -497,7 +497,7 @@ function AccountProfile() {
         {!progress && !progressSettled ? (
           // Your own profile always has the badges row, chosen or not.
           <View style={styles.showcaseSkeleton}>
-            <SkeletonText size={typography.sizes.xs} width={64} />
+            <SkeletonText size={typography.sizes.text} width={64} />
             <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
           </View>
         ) : null}
@@ -567,18 +567,18 @@ const styles = StyleSheet.create({
 
 
   nameRow: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
-  name: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
-  handle: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
+  handle: { fontSize: typography.sizes.text, textAlign: 'center' },
   country: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
   // A plain 22x16 image, as on the website; a radius this small would be a rounding error.
   flag: { width: 22, height: 16 },
-  countryName: { fontSize: typography.sizes.sm },
-  bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
+  countryName: { fontSize: typography.sizes.text },
+  bio: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
   level: { alignSelf: 'stretch', marginTop: spacing.sm },
   seen: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
-  seenText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
-  addBio: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  seenText: { fontSize: typography.sizes.text, textDecorationLine: 'underline' },
+  addBio: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
+  hint: { fontSize: typography.sizes.text, lineHeight: 20 },
   showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
 
   // The buttons wrap to a second row where they do not fit, and each row's buttons share its width.
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm + spacing.xs,
     paddingVertical: spacing.xs,
   },
-  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  actionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   // Find friends: the one filled control of the three, round, and at least as tall as its neighbours.
   actionIcon: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignSelf: 'center', borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
@@ -604,8 +604,8 @@ const styles = StyleSheet.create({
   guestCard: { marginTop: spacing.md },
   guestInner: { gap: spacing.md },
   guestHead: { alignItems: 'center', gap: spacing.sm },
-  guestName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  guestTitle: { ...display(typography.sizes.lg), textAlign: 'center', marginTop: spacing.xs },
-  guestBody: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
+  guestName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  guestTitle: { ...display(typography.sizes.text), textAlign: 'center', marginTop: spacing.xs },
+  guestBody: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
   guestActions: { gap: spacing.sm },
 });

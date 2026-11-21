@@ -55,7 +55,7 @@
 .cmp-title {
   flex: 1;
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text);
   font-weight: 600;
   text-align: center;
 }
@@ -135,7 +135,7 @@
   background: transparent;
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 1.15rem;
+  font-size: var(--text);
   line-height: 1.5;
   resize: none;
   overflow: hidden;
@@ -154,16 +154,16 @@
   display: block;
   margin-bottom: 6px;
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 /* At least 16px, since iOS zooms into smaller fields on focus. */
 .cmp-input {
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .cmp-title-input {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
 }
 .cmp-alt {
   height: auto;
@@ -175,7 +175,7 @@
 .cmp-hint {
   margin: 6px 0 0;
   color: var(--ink-4);
-  font-size: 0.82rem;
+  font-size: var(--text);
   line-height: 1.45;
 }
 /* A separate note, not the end of the description's hint. */
@@ -192,7 +192,7 @@
   border-radius: var(--r-md);
   background: var(--bg);
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
 }
 .cmp-banner {
   background: var(--gold-soft);
@@ -200,7 +200,7 @@
 }
 .cmp-count {
   color: var(--ink-4);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .cmp-field .cmp-count {
@@ -229,7 +229,7 @@
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .cmp-kind-option input {
@@ -314,7 +314,7 @@
   bottom: 6px;
   inset-inline-start: 6px;
   padding: 0 12px;
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -350,7 +350,7 @@
   gap: 6px;
   padding: 10px 8px;
   color: var(--danger);
-  font-size: 0.82rem;
+  font-size: var(--text);
   text-align: center;
 }
 
@@ -423,7 +423,7 @@
 }
 .cmp-switch-label {
   color: var(--ink-2);
-  font-size: 0.95rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 
@@ -438,7 +438,7 @@
   background: var(--bg);
   color: var(--ink);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .cmp-chip:hover {
@@ -500,7 +500,7 @@
   margin: 8px 0 0;
   margin-inline-start: 52px;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .cmp-held svg {
   flex: none;
@@ -516,7 +516,7 @@
 .cmp-refusal-n {
   margin: 0 0 4px;
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
@@ -563,7 +563,7 @@
 .cmp-why {
   margin: 0;
   color: var(--ink-4);
-  font-size: 0.8rem;
+  font-size: var(--text);
   line-height: 1.3;
 }
 .cmp-why-error {
@@ -577,7 +577,7 @@
 }
 .cmp-confirm-q {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .cmp-confirm-actions {
@@ -621,7 +621,7 @@
 }
 .cmp-draft-meta {
   color: var(--ink-4);
-  font-size: 0.8rem;
+  font-size: var(--text);
 }
 
 @media (max-width: 640px) {

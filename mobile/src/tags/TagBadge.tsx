@@ -25,5 +25,5 @@ export function TagBadge({ label, tone = 'default' }: { label: string; tone?: 'm
 
 const styles = StyleSheet.create({
   chip: { borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 4 },
-  text: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  text: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
 });

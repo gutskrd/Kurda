@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md - 2,
     borderRadius: radii.pill,
   },
-  text: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  text: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   count: { minWidth: 18, height: 18, paddingHorizontal: 4, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  countText: { fontSize: typography.ios.tabLabel, fontWeight: typography.weights.bold },
+  countText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

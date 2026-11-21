@@ -177,6 +177,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: radii.pill,
   },
-  methodText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  note: { fontSize: typography.sizes.xs, lineHeight: 18, textAlign: 'center' },
+  methodText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  note: { fontSize: typography.sizes.text, lineHeight: 18, textAlign: 'center' },
 });

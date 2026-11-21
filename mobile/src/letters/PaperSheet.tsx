@@ -29,7 +29,6 @@ import type { TranslationKey } from '../i18n/translations';
 import type { Translate } from '../api/errors';
 import { useTheme } from '../theme/ThemeProvider';
 import { fontScaleCap, layout, radii, typography } from '../theme/tokens';
-import { displayFont } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { DRAWING_DEEPEST, NOTE_WIDTH, WRITING_TOP, pagesFor, writingInsets } from './paperKit';
 
@@ -334,10 +333,10 @@ const styles = StyleSheet.create({
   picture: { position: 'absolute', left: 0, right: 0, top: 0 },
   head: { position: 'absolute', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
   headEnd: { alignItems: 'center', gap: 4, flexShrink: 0 },
-  from: { flexShrink: 1, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  when: { fontSize: typography.sizes.xs },
+  from: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  when: { fontSize: typography.sizes.text },
   noteBox: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   note: { borderRadius: radii.xs, maxWidth: '100%' },
   noteQuiet: { borderWidth: 1.5, borderColor: 'transparent' },
-  noteText: { fontFamily: displayFont, fontWeight: typography.weights.semibold },
+  noteText: { fontWeight: typography.weights.semibold },
 });

@@ -90,8 +90,8 @@ export function RiddleAnswerScreen({ slug, onExit }: { slug: string; onExit: () 
           <ErrorRetry message={problem} onRetry={load} />
         ) : (
           <View style={[styles.content, styles.skeleton]} accessibilityLabel={t('common.loading')}>
-            <SkeletonText size={typography.sizes.xl} width="50%" />
-            <SkeletonText size={typography.sizes.md} width="90%" />
+            <SkeletonText size={typography.sizes.title} width="50%" />
+            <SkeletonText size={typography.sizes.text} width="90%" />
           </View>
         )}
       </GradientBackground>
@@ -173,15 +173,15 @@ const styles = StyleSheet.create({
   content: { ...COLUMN, padding: spacing.lg, gap: spacing.lg },
   skeleton: { alignItems: 'center', paddingTop: spacing.xxl },
   moment: { alignSelf: 'center', alignItems: 'center', gap: spacing.sm },
-  momentText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  momentXp: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  momentText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  momentXp: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   riddle: { alignItems: 'center', gap: spacing.xs },
-  question: { fontSize: typography.sizes.md, lineHeight: 24 },
-  questionTranslation: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  question: { fontSize: typography.sizes.text, lineHeight: 24 },
+  questionTranslation: { fontSize: typography.sizes.text, lineHeight: 20 },
   answer: { alignItems: 'center', borderRadius: radii.lg, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg, gap: spacing.sm },
-  answerText: { ...display(typography.sizes.xxl), lineHeight: Math.round(typography.sizes.xxl * 1.2) },
-  answerTranslation: { fontSize: typography.sizes.lg, lineHeight: 28 },
-  body: { fontSize: typography.sizes.md, lineHeight: 26 },
-  bodyTranslation: { fontSize: typography.sizes.md, lineHeight: 24 },
+  answerText: { ...display(typography.sizes.title), lineHeight: Math.round(typography.sizes.title * 1.2) },
+  answerTranslation: { fontSize: typography.sizes.text, lineHeight: 28 },
+  body: { fontSize: typography.sizes.text, lineHeight: 26 },
+  bodyTranslation: { fontSize: typography.sizes.text, lineHeight: 24 },
   actions: { gap: spacing.sm },
 });

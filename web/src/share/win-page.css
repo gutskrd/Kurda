@@ -30,7 +30,7 @@
 .win-kicker {
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
 }
 .win-title {
@@ -40,7 +40,7 @@
   max-width: 40ch;
   margin: 0;
   color: var(--ink-2);
-  font-size: var(--text-body);
+  font-size: var(--text);
   line-height: 1.5;
   text-wrap: pretty;
 }

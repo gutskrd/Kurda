@@ -163,13 +163,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { ...display(typography.sizes.xl), textAlign: 'center' },
-  line: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  title: { ...display(typography.sizes.title), textAlign: 'center' },
+  line: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
   slots: { flexDirection: 'row', gap: spacing.sm, marginVertical: spacing.xs },
   slot: { width: SLOT, height: SLOT, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   // An empty place: the outline of a freeze not held.
   slotEmpty: { borderWidth: 2, borderStyle: 'dashed' },
   stretch: { alignSelf: 'stretch', marginTop: spacing.xs },
   notNow: { minHeight: MIN_TOUCH_TARGET, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-  notNowText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  notNowText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

@@ -230,7 +230,7 @@
   border-radius: var(--r-xs);
   background: color-mix(in srgb, currentColor 8%, transparent);
   color: var(--t-ink);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1.4;
   letter-spacing: 0.08em;
@@ -366,7 +366,7 @@ button.request-name::after {
   width: calc(100% + var(--stub-w, 52px));
 }
 .request-sub {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--t-ink);
 }
 .request-actions {

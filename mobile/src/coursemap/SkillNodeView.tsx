@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   glyphLayer: { position: 'absolute' },
-  number: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  number: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   badge: {
     position: 'absolute',
     top: STOP_FACE.y - PATH_STOP_ART.ry - 8,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   calloutText: {
-    fontSize: typography.sizes.sm,
+    fontSize: typography.sizes.text,
     fontWeight: typography.weights.bold,
     letterSpacing: 0.8,
     textTransform: 'uppercase',

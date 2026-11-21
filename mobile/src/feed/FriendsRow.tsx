@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  name: { fontSize: 12, maxWidth: CIRCLE + 6, textAlign: 'center' },
+  name: { fontSize: typography.sizes.text, maxWidth: CIRCLE + 6, textAlign: 'center' },
   // The "+" on your own face, sitting on its rim at the bottom corner.
   plus: {
     position: 'absolute',

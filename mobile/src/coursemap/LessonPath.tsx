@@ -895,8 +895,8 @@ export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX
         <View style={[styles.pinLip, { backgroundColor: colors.surface }]}>
           <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: colors.surface }]}>
             <View style={styles.pinWords}>
-              <SkeletonText size={typography.sizes.xs} width={112} style={start} />
-              <SkeletonText size={typography.sizes.md} width="48%" style={start} />
+              <SkeletonText size={typography.sizes.text} width={112} style={start} />
+              <SkeletonText size={typography.sizes.text} width="48%" style={start} />
             </View>
             <Skeleton width={MIN_TOUCH_TARGET} height={MIN_TOUCH_TARGET} radius={radii.pill} />
           </View>
@@ -926,25 +926,25 @@ const styles = StyleSheet.create({
   // The words wrap within their share of the line rather than pushing the hairlines off it.
   dividerWords: { flexShrink: 1, maxWidth: '72%', alignItems: 'center', gap: 2 },
   dividerEyebrow: { ...sectionLabel, textAlign: 'center' },
-  dividerTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
+  dividerTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   // The land runs under the page's gutters to the screen's edges.
   path: { position: 'relative', marginHorizontal: -layout.gutter },
   // And a little under the heading above.
   pathUnderHead: { marginTop: -spacing.md },
-  eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
+  eyebrow: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
   pinLip: { borderRadius: radii.lg, paddingBottom: 4, zIndex: 2 },
   pin: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingStart: spacing.md, paddingEnd: spacing.xs },
   pinWords: { flex: 1, gap: 2 },
-  pinTitle: { ...display(typography.sizes.md + 2) },
+  pinTitle: { ...display(typography.sizes.text) },
   pinButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm + 4 },
   cardRow: { alignItems: 'center', gap: spacing.sm + 4 },
   cardBadge: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  cardBadgeNumber: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  cardBadgeNumber: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   cardWords: { flex: 1, gap: 2 },
   cardEyebrow: { ...sectionLabel },
-  cardTitle: { ...display(typography.sizes.lg) },
-  cardLine: { fontSize: typography.sizes.sm },
+  cardTitle: { ...display(typography.sizes.text) },
+  cardLine: { fontSize: typography.sizes.text },
   cardJump: {
     alignSelf: 'flex-start',
     alignItems: 'center',
@@ -955,5 +955,5 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   cardJumpEnd: { alignSelf: 'flex-end' },
-  cardJumpText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  cardJumpText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

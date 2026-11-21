@@ -292,18 +292,18 @@ function KindRow({
 }
 
 const styles = StyleSheet.create({
-  body: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  body: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
   price: { alignItems: 'center', justifyContent: 'center', gap: 6 },
-  priceText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  balance: { fontSize: typography.sizes.sm, textAlign: 'center', fontVariant: ['tabular-nums'] },
-  short: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
+  priceText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  balance: { fontSize: typography.sizes.text, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  short: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   ask: { alignItems: 'center', gap: spacing.sm },
   kind: { alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, padding: spacing.sm + 2 },
   kindText: { flex: 1, gap: 2 },
-  kindName: { fontSize: typography.sizes.md + 1, fontWeight: typography.weights.bold },
-  kindMeaning: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  kindNote: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  kindName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  kindMeaning: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  kindNote: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   kindPrice: { alignItems: 'center', flexWrap: 'wrap', gap: 5 },
-  kindShort: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  kindShort: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   kindAct: { alignSelf: 'stretch', marginTop: spacing.xs },
 });

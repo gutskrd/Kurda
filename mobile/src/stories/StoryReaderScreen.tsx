@@ -1178,15 +1178,15 @@ function OverviewSkeleton(): React.JSX.Element {
     <View style={styles.content} accessibilityLabel={t('common.loading')}>
       <Skeleton width="100%" height={COVER_HEIGHT} radius={radii.lg} />
       <View style={styles.head}>
-        <SkeletonText size={typography.sizes.xl} lineHeight={TITLE_LINE} width="60%" />
+        <SkeletonText size={typography.sizes.title} lineHeight={TITLE_LINE} width="60%" />
         <View style={styles.pills}>
           {[96, 72, 56, 64].map((w) => (
-            <Skeleton key={w} width={w} height={lineOf(typography.sizes.xs) + 6} radius={radii.pill} />
+            <Skeleton key={w} width={w} height={lineOf(typography.sizes.text) + 6} radius={radii.pill} />
           ))}
         </View>
         <View>
-          <SkeletonText size={typography.sizes.md} lineHeight={storyLineHeight(typography.sizes.md)} width="94%" />
-          <SkeletonText size={typography.sizes.md} lineHeight={storyLineHeight(typography.sizes.md)} width="58%" />
+          <SkeletonText size={typography.sizes.text} lineHeight={storyLineHeight(typography.sizes.text)} width="94%" />
+          <SkeletonText size={typography.sizes.text} lineHeight={storyLineHeight(typography.sizes.text)} width="58%" />
         </View>
       </View>
       <Skeleton width="100%" height={50} radius={radii.pill} />
@@ -1195,7 +1195,7 @@ function OverviewSkeleton(): React.JSX.Element {
 }
 
 /** The display face at size xl, with its 1.12 line height. */
-const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
+const TITLE_LINE = Math.round(typography.sizes.title * typography.displayLineHeight);
 const COVER_HEIGHT = 180;
 /**
  * Word play and save buttons are drawn at 40 so the row stays compact, and answer over 48 (4 past every edge): the
@@ -1206,57 +1206,57 @@ const styles = StyleSheet.create({
   content: { ...COLUMN, padding: spacing.lg, gap: spacing.lg },
   cover: { width: '100%', height: COVER_HEIGHT },
   head: { gap: spacing.sm },
-  title: { ...display(typography.sizes.xl) },
-  summary: { fontSize: typography.sizes.md, lineHeight: 24 },
-  titleTranslation: { fontSize: typography.sizes.lg, lineHeight: 28, marginTop: -spacing.xs },
-  summaryTranslation: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  title: { ...display(typography.sizes.title) },
+  summary: { fontSize: typography.sizes.text, lineHeight: 24 },
+  titleTranslation: { fontSize: typography.sizes.text, lineHeight: 28, marginTop: -spacing.xs },
+  summaryTranslation: { fontSize: typography.sizes.text, lineHeight: 21 },
   chapterSticky: { marginVertical: -spacing.sm, paddingVertical: spacing.sm },
   chapterLine: { borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   chapterLineHead: { alignItems: 'center', gap: spacing.xs },
-  chapterLineWhere: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  chapterLineTitle: { flex: 1, fontSize: typography.sizes.sm },
+  chapterLineWhere: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  chapterLineTitle: { flex: 1, fontSize: typography.sizes.text },
   chapterStones: { gap: 4 },
   chapterStone: { flex: 1, height: 4, borderRadius: radii.pill },
   chapterList: { gap: 2 },
   chapterRow: { alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET + 8, borderRadius: radii.md, paddingHorizontal: spacing.sm, paddingVertical: spacing.xs },
-  chapterNumber: { width: 20, textAlign: 'center', fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  chapterNumber: { width: 20, textAlign: 'center', fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   chapterMain: { flex: 1, gap: 2 },
-  chapterTitle: { ...display(typography.sizes.md), lineHeight: Math.round(typography.sizes.md * 1.3) },
-  chapterUnder: { fontSize: typography.sizes.xs, lineHeight: 18 },
-  chapterHere: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  byline: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  source: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  chapterTitle: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.3) },
+  chapterUnder: { fontSize: typography.sizes.text, lineHeight: 18 },
+  chapterHere: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  byline: { fontSize: typography.sizes.text, lineHeight: 20 },
+  source: { fontSize: typography.sizes.text, lineHeight: 18 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   variety: { gap: spacing.sm },
   actions: { gap: spacing.sm },
   headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   sizeControls: { flexDirection: 'row', alignItems: 'center' },
   sizeButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  sizeSmall: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  sizeLarge: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  sizeSmall: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  sizeLarge: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   section: { gap: spacing.sm },
   readingHead: { gap: 2 },
-  readingTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  readingMeta: { fontSize: typography.sizes.xs },
+  readingTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  readingMeta: { fontSize: typography.sizes.text },
   continueChip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.pill, paddingHorizontal: spacing.md },
-  continueChipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  continueChipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   end: { gap: spacing.lg, paddingTop: spacing.md },
-  endText: { fontSize: typography.sizes.sm, textAlign: 'center', fontStyle: 'italic' },
+  endText: { fontSize: typography.sizes.text, textAlign: 'center', fontStyle: 'italic' },
   player: { paddingHorizontal: spacing.md, paddingTop: spacing.xs },
   check: { gap: spacing.sm },
   checkHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  checkTitle: { ...display(typography.sizes.lg), flex: 1 },
-  checkLine: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  checkBest: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  checkTitle: { ...display(typography.sizes.text), flex: 1 },
+  checkLine: { fontSize: typography.sizes.text, lineHeight: 20 },
+  checkBest: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   wordRow: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   wordMain: { flex: 1, justifyContent: 'center', paddingVertical: spacing.xs, gap: 2 },
-  wordTerm: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  wordMeaning: { fontSize: typography.sizes.sm },
+  wordTerm: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  wordMeaning: { fontSize: typography.sizes.text },
   wordPlay: { width: WORD_BUTTON, height: WORD_BUTTON, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   wordSlot: { width: WORD_BUTTON, height: WORD_BUTTON },
-  sheetText: { fontSize: typography.sizes.md, lineHeight: 22 },
-  glossTerm: { ...display(typography.sizes.xl) },
-  glossPos: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
-  glossMeaning: { fontSize: typography.sizes.lg, lineHeight: 26 },
+  sheetText: { fontSize: typography.sizes.text, lineHeight: 22 },
+  glossTerm: { ...display(typography.sizes.title) },
+  glossPos: { fontSize: typography.sizes.text, fontStyle: 'italic' },
+  glossMeaning: { fontSize: typography.sizes.text, lineHeight: 26 },
   glossActions: { gap: spacing.sm },
 });

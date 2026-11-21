@@ -111,18 +111,18 @@ export function NewGroupSheet({
 }
 
 const styles = StyleSheet.create({
-  notice: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  notice: { fontSize: typography.sizes.text, lineHeight: 20 },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   input: {
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    fontSize: typography.sizes.md,
+    fontSize: typography.sizes.text,
   },
   multiline: { minHeight: 70, textAlignVertical: 'top' },
-  hint: { fontSize: typography.sizes.xs, lineHeight: 18 },
-  error: { textAlign: 'center', fontSize: typography.sizes.sm },
+  hint: { fontSize: typography.sizes.text, lineHeight: 18 },
+  error: { textAlign: 'center', fontSize: typography.sizes.text },
   held: { marginBottom: spacing.xs },
   // The sheet already has its own margins.
   limit: { marginHorizontal: 0, marginBottom: 0 },

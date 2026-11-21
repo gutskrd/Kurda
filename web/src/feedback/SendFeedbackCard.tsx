@@ -14,7 +14,7 @@ export function SendFeedbackCard(): React.JSX.Element {
         <h2 className="friend-heading" id="settings-feedback" style={{ marginTop: 0 }}>
           {t('appFeedback.settingsTitle')}
         </h2>
-        <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
+        <p className="muted" style={{ fontSize: 'var(--text)', marginBottom: 14 }}>
           {t('appFeedback.settingsHelp')}
         </p>
         <Button variant="secondary" onClick={() => setOpen(true)}>
