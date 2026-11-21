@@ -4081,17 +4081,12 @@
                       {
                         "speaker": 0,
                         "text": "Hêvî, sêv çend in?",
-                        "en": "Hêvî, how many apples are there?"
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Deh! Aferîn, Hêvî!",
-                        "en": "Ten! Well done, Hêvî! (she has counted them all)"
+                        "en": "Hêvî, how many apples are there? (she counts them, one by one)"
                       },
                       {
                         "speaker": 1,
-                        "text": "Aferîn, Hêvî!",
-                        "en": "Well done, Hêvî!"
+                        "text": "Deh! Aferîn, Hêvî!",
+                        "en": "Ten! Well done, Hêvî!"
                       },
                       {
                         "speaker": 0,
