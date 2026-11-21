@@ -115,6 +115,9 @@ export interface Palette {
    * on the light one, so light-mode gold text uses this darker ochre, which clears 4.5:1 on the page and a white card.
    */
   goldText: string;
+
+  /** Something new waiting (an unread message, a gift): the small dot on a tab, in the red every phone uses for it. */
+  notice: string;
 }
 
 export const LIGHT: Palette = {
@@ -176,6 +179,7 @@ export const LIGHT: Palette = {
   glassTint: 'rgba(255,255,255,0.22)',
   onArt: 'rgba(255,255,255,0.78)',
   goldText: '#14112E',
+  notice: '#FF3B30',
 };
 
 export const DARK: Palette = {
@@ -234,6 +238,7 @@ export const DARK: Palette = {
   glassTint: 'rgba(30,27,46,0.3)',
   onArt: 'rgba(16,14,29,0.6)',
   goldText: '#F3F1FB',
+  notice: '#FF453A',
 };
 
 export const PALETTES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK };

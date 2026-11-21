@@ -15,6 +15,7 @@ import { formatNumber } from '../i18n/format';
 import { HeaderButton } from '../navigation/HeaderButton';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { JoinCodeSheet } from '../play/JoinByCode';
 import { useDirection } from '../reports/direction';
 import { useListEntrance } from '../theme/animate';
@@ -77,6 +78,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   const { t, locale } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
+  const tabScroll = useTabBarScroll();
   const { prefs, ready, update } = useStoryPrefs();
   const width = usePageWidth();
   // The one variety on show: what the switch says and this phone remembers.
@@ -397,6 +399,8 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
     <>
       <ScrollView
         ref={scrollRef}
+        onScroll={inTab ? tabScroll : undefined}
+        scrollEventThrottle={64}
         contentContainerStyle={[styles.content, { paddingBottom: inTab ? tabBarInset : spacing.xxl }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

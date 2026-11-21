@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useLocation } from 'react-router-dom';
 import type { NavItem } from '../components/TopNav';
@@ -95,18 +95,18 @@ const bar = () => screen.getByRole('navigation', { name: 'Primary' });
 const places = () => within(bar()).getAllByRole('link');
 
 describe('the bar of places', () => {
-  it('has the four places in order, each a glyph over its word, in a navigation of its own', async () => {
+  it('has the four places in order, each a glyph alone named for a screen reader, in a navigation of its own', async () => {
     signIn();
     serve();
     showReal();
-    await waitFor(() => expect(places().map((link) => link.textContent)).toEqual(['Home', 'Learn', 'Messages', 'Profile']));
+    await waitFor(() => expect(places().map((link) => link.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Profile']));
     expect(places().map((link) => link.getAttribute('href'))).toEqual(['/app', '/app/learn', '/app/messages', '/app/profile']);
     for (const link of places()) {
       const glyphBox = link.querySelector('.places-glyph')!;
-      // drawn, not said: the word under it is the name
+      // drawn, not said, and no word under it
       expect(glyphBox).toHaveAttribute('aria-hidden', 'true');
-      expect(glyphBox.firstElementChild, link.textContent ?? '').not.toBeNull();
-      expect(link.querySelector('.places-word')).toHaveAttribute('dir', 'auto');
+      expect(glyphBox.firstElementChild, link.getAttribute('aria-label') ?? '').not.toBeNull();
+      expect(link.textContent).toBe('');
     }
   });
 
@@ -118,10 +118,10 @@ describe('the bar of places', () => {
     await waitFor(() => expect(places()).toHaveLength(4));
     // Learn opens on the view last left, and that view is a root too
     expect(screen.getByRole('link', { name: 'Learn' })).toHaveAttribute('href', '/app/games');
-    for (const link of places()) expect(isPlaceRoot(link.getAttribute('href')!), link.textContent ?? '').toBe(true);
+    for (const link of places()) expect(isPlaceRoot(link.getAttribute('href')!), link.getAttribute('aria-label') ?? '').toBe(true);
   });
 
-  it('tells the place you are on three ways: a filled glyph, its word marked, and a capsule behind it', async () => {
+  it('tells the place you are on two ways: a filled glyph and a capsule behind it', async () => {
     const { container } = show('/app/learn');
     const learn = await screen.findByRole('link', { name: 'Learn' });
     expect(learn).toHaveAttribute('aria-current', 'page');
@@ -163,18 +163,17 @@ describe('the bar of places', () => {
     expect(screen.getByRole('link', { name: 'Messages' })).toHaveAttribute('aria-current', 'page');
   });
 
-  it('says how many messages are unread in words, and shows the count on the glyph', async () => {
+  it('says how many messages are unread in words, and marks the glyph with a dot', async () => {
     show('/app', [LINKS[0]!, LINKS[1]!, { ...LINKS[2]!, badge: 3 }, LINKS[3]!]);
     const messages = await screen.findByRole('link', { name: 'Messages, 3 unread' });
-    expect(messages.querySelector('.places-glyph .nav-badge')!.textContent).toBe('3');
-    // the word under the glyph is still only the place's name
-    expect(messages.querySelector('.places-word')!.textContent).toBe('Messages');
+    expect(messages.querySelector('.places-glyph .nav-dot')).not.toBeNull();
+    expect(messages.textContent).toBe('');
   });
 
-  it('caps the count at 9+', async () => {
+  it('says the whole count however many there are', async () => {
     show('/app', [LINKS[0]!, LINKS[1]!, { ...LINKS[2]!, badge: 12 }, LINKS[3]!]);
     const messages = await screen.findByRole('link', { name: 'Messages, 12 unread' });
-    expect(messages.querySelector('.nav-badge')!.textContent).toBe('9+');
+    expect(messages.querySelector('.nav-dot')).not.toBeNull();
   });
 
   it('marks Profile with a dot when something is waiting, and says so in words', async () => {
@@ -191,7 +190,7 @@ describe('the bar of places', () => {
   it('gives a visitor the two places a visitor can use, and the way in beside them', async () => {
     serve();
     const { container } = showReal('/app');
-    await waitFor(() => expect(places().map((link) => link.textContent)).toEqual(['Home', 'Learn', 'Sign in']));
+    await waitFor(() => expect(places().map((link) => link.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Sign in']));
     expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
     expect(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('aria-current', 'page');
     expect(container.querySelector<HTMLElement>('.places-row')!.style.getPropertyValue('--places')).toBe('3');
@@ -220,11 +219,35 @@ describe('the bar of places', () => {
     expect(screen.getByTestId('where').textContent).toBe('/app/profile');
   });
 
-  it('takes its direction from the page, and lets each word read its own way', async () => {
+  it('takes its direction from the page', async () => {
     document.documentElement.dir = 'rtl';
     const { container } = show('/app');
     await screen.findByRole('link', { name: 'Home' });
     expect(container.querySelector('.places-bar')).not.toHaveAttribute('dir');
-    for (const word of container.querySelectorAll('.places-word')) expect(word).toHaveAttribute('dir', 'auto');
+  });
+
+  it('leads the capsule with its end toward the place chosen, so it stretches that way', async () => {
+    const { container } = show('/app');
+    const row = container.querySelector<HTMLElement>('.places-row')!;
+    await userEvent.click(screen.getByRole('link', { name: 'Messages' }));
+    expect(row).toHaveClass('is-leading-end');
+    await userEvent.click(screen.getByRole('link', { name: 'Home' }));
+    expect(row).toHaveClass('is-leading-start');
+  });
+
+  it('shrinks while the page scrolls down, and comes back on a scroll up', async () => {
+    const { container } = show('/app');
+    await screen.findByRole('link', { name: 'Home' });
+    const navBar = container.querySelector('.places-bar')!;
+    const scrollTo = (y: number) =>
+      act(() => {
+        Object.defineProperty(window, 'scrollY', { value: y, configurable: true });
+        window.dispatchEvent(new Event('scroll'));
+      });
+    for (const y of [0, 40, 80, 120, 160]) scrollTo(y);
+    expect(navBar).toHaveClass('is-compact');
+    for (const y of [140, 100, 60]) scrollTo(y);
+    expect(navBar).not.toHaveClass('is-compact');
+    scrollTo(0);
   });
 });

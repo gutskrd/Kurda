@@ -53,13 +53,13 @@ function open({ index = 0, chats = [] as number[], groups = [] as number[], requ
 }
 
 describe('the tab bar', () => {
-  it('shows the four tabs in order, each an icon with its word under it and named for a screen reader', async () => {
+  it('shows the four tabs in order, each an icon alone and named for a screen reader', async () => {
     open();
     const bar = await screen.findByRole('tablist');
     const tabs = within(bar).getAllByRole('tab');
     expect(tabs.map((t) => t.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Profile']);
-    // Every tab has a word under its glyph.
-    for (const word of ['Home', 'Learn', 'Messages', 'Profile']) expect(within(bar).getByText(word)).toBeTruthy();
+    // No word is drawn under a glyph.
+    for (const word of ['Home', 'Learn', 'Messages', 'Profile']) expect(within(bar).queryByText(word)).toBeNull();
   });
 
   /* Search opens from the magnifier at the top of every tab, so the bar holds only the four places. */
@@ -94,22 +94,24 @@ describe('the tab bar', () => {
   });
 
   /* Unread direct and group messages and waiting friend requests all count on Messages, and are said in words. */
-  it('counts what is waiting in Messages on its tab, and says so', async () => {
+  it('puts a dot on Messages while something is unread, and says how much', async () => {
     open({ chats: [2], groups: [0], requests: 1 });
     const tab = await screen.findByRole('tab', { name: 'Messages, 3 unread' });
-    expect(within(tab).getByText('3')).toBeTruthy();
+    expect(within(tab).getByTestId('tab-Messages-dot')).toBeTruthy();
+    expect(within(tab).queryByText('3')).toBeNull();
   });
 
-  it('stops counting at nine', async () => {
+  it('says the whole count to a screen reader however many there are', async () => {
     open({ chats: [7, 4] });
     const tab = await screen.findByRole('tab', { name: 'Messages, 11 unread' });
-    expect(within(tab).getByText('9+')).toBeTruthy();
+    expect(within(tab).getByTestId('tab-Messages-dot')).toBeTruthy();
   });
 
   it('badges nothing when nothing is waiting', async () => {
     open();
     await screen.findByRole('tablist');
     expect(screen.getByRole('tab', { name: 'Messages' })).toBeTruthy();
+    expect(screen.queryByTestId('tab-Messages-dot')).toBeNull();
     expect(screen.queryByTestId('tab-Profile-dot')).toBeNull();
   });
 
@@ -153,10 +155,10 @@ describe('the tab bar', () => {
   it('answers a thumb on the bar’s own edge, not only on the tabs inside it', async () => {
     open();
     await screen.findByRole('tablist');
-    expect(reachOf('tab-Home')).toEqual({ top: 6, bottom: 6, left: 6, right: 0 });
-    expect(reachOf('tab-Learn')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
-    expect(reachOf('tab-Messages')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
-    expect(reachOf('tab-Profile')).toEqual({ top: 6, bottom: 6, left: 0, right: 6 });
+    expect(reachOf('tab-Home')).toEqual({ top: 5, bottom: 5, left: 5, right: 0 });
+    expect(reachOf('tab-Learn')).toEqual({ top: 5, bottom: 5, left: 0, right: 0 });
+    expect(reachOf('tab-Messages')).toEqual({ top: 5, bottom: 5, left: 0, right: 0 });
+    expect(reachOf('tab-Profile')).toEqual({ top: 5, bottom: 5, left: 0, right: 5 });
   });
 
   it('gives the bar’s ends to whichever tabs stand there in a mirrored bar', async () => {
@@ -164,8 +166,8 @@ describe('the tab bar', () => {
     open();
     await screen.findByRole('tablist');
     // Home is on the right in Soranî, and Profile on the left.
-    await waitFor(() => expect(reachOf('tab-Home')).toEqual({ top: 6, bottom: 6, left: 0, right: 6 }));
-    expect(reachOf('tab-Profile')).toEqual({ top: 6, bottom: 6, left: 6, right: 0 });
-    expect(reachOf('tab-Learn')).toEqual({ top: 6, bottom: 6, left: 0, right: 0 });
+    await waitFor(() => expect(reachOf('tab-Home')).toEqual({ top: 5, bottom: 5, left: 0, right: 5 }));
+    expect(reachOf('tab-Profile')).toEqual({ top: 5, bottom: 5, left: 5, right: 0 });
+    expect(reachOf('tab-Learn')).toEqual({ top: 5, bottom: 5, left: 0, right: 0 });
   });
 });

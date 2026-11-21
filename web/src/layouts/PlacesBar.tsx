@@ -1,22 +1,23 @@
+import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { TAB_BAR_SCROLL, tabBarScroll } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { UserIcon } from '../components/icons';
-import { countLabel, type NavItem } from '../components/TopNav';
+import type { NavItem } from '../components/TopNav';
 import { useT } from '../i18n/I18nProvider';
 import { useGlass } from '../glass/useGlass';
-import { useWordFit } from '../lib/useWordFit';
-
-/** How far the words may shrink together before the longest is cut short instead. */
-const WORD_MIN_FIT = 0.6;
 
 /**
- * The phone's bar of places (`useNavLinks`), floating and solid over the bottom of the window like the phone app's
- * (mobile/src/navigation/TabBar.tsx), each place an icon with its label; the page leaves room for it (shell.css).
+ * The phone's bar of places (`useNavLinks`), floating over the bottom of the window like the phone app's
+ * (mobile/src/navigation/TabBar.tsx), each place an icon alone with its name for screen readers; the page leaves room
+ * for it (shell.css).
  *
- * The current place shows a solid glyph, a heavier label and a capsule that slides to it (still under Reduce Motion).
- * Messages shows an unread count (1–9, then "9+") and Profile a dot, both also in the link's name. Pressing the
- * current place scrolls to the top. Visitors see their two places and Sign in. It is mirrored in Arabic and Soranî,
- * drawn only on place roots (`isPlaceRoot`), and comes after the page in the document as the `nav` of places.
+ * The current place shows a solid glyph, or a ring round your picture, and a capsule that stretches as it slides to it.
+ * Something new waiting (unread messages, a gift or a request) is a small red dot, said in the link's name. While the
+ * page scrolls down the bar shrinks out of the way and comes back on a short scroll up (shared tab-bar-scroll.ts).
+ * Pressing the current place scrolls to the top. Visitors see their two places and Sign in. It is mirrored in Arabic
+ * and Soranî, drawn only on place roots (`isPlaceRoot`), and comes after the page in the document as the `nav` of
+ * places.
  */
 export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.Element {
   const t = useT();
@@ -28,31 +29,47 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
     status === 'signedIn' ? links : [...links, { key: 'login', label: t('nav.login'), to: '/login', icon: <UserIcon size={22} /> }];
   // counted from the reading edge; the styles turn it into a place along the bar, in either direction
   const at = items.findIndex((l) => l.owns?.(pathname));
-  // Every place's word at one size, smaller together on a narrow phone where the longest would not fit; past that floor
-  // the longest is cut short.
-  const [list, wordFit] = useWordFit<HTMLUListElement>(items.map((l) => l.label), { typeOf: '.places-link', weight: 600, inset: 4 });
-  const fit = Math.max(WORD_MIN_FIT, wordFit);
+
+  // Which way the capsule last moved, so the end in front can lead and the one behind follow.
+  const [was, setWas] = useState(at);
+  const [lead, setLead] = useState<'end' | 'start'>('end');
+  if (at !== was) {
+    setWas(at);
+    if (at >= 0 && was >= 0) setLead(at > was ? 'end' : 'start');
+  }
+
+  // Small while the page scrolls down; each page starts with the bar full size.
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const rule = tabBarScroll();
+    const onScroll = () => setCompact(rule.note(window.scrollY));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      setCompact(false);
+    };
+  }, [pathname]);
 
   return (
-    <nav ref={glass} className="places-bar glass" aria-label={t('nav.primary')}>
-      <div className="places-row" style={{ '--places': items.length, '--at': Math.max(at, 0), '--word-fit': fit } as React.CSSProperties}>
+    <nav
+      ref={glass}
+      className={`places-bar glass${compact ? ' is-compact' : ''}`}
+      aria-label={t('nav.primary')}
+      style={{ '--compact': TAB_BAR_SCROLL.compactScale } as React.CSSProperties}
+    >
+      <div className={`places-row is-leading-${lead}`} style={{ '--places': items.length, '--at': Math.max(at, 0) } as React.CSSProperties}>
         {at >= 0 && <span className="places-capsule" aria-hidden="true" />}
-        <ul ref={list} className="places-list">
+        <ul className="places-list">
           {items.map((l, i) => {
             const active = i === at;
             const badge = l.badge ?? 0;
-            // what is waiting, in words: the badge and the dot themselves are only drawn
-            const spoken = badge > 0 ? t('nav.tabUnread', { place: l.label, count: badge }) : l.dot ? t('nav.tabWaiting', { place: l.label }) : undefined;
+            // the place's name, with what is waiting in words: the dot itself is only drawn
+            const spoken = badge > 0 ? t('nav.tabUnread', { place: l.label, count: badge }) : l.dot ? t('nav.tabWaiting', { place: l.label }) : l.label;
             const face = (
-              <>
-                <span className="places-glyph" aria-hidden="true">
-                  {active && l.activeIcon ? l.activeIcon : l.icon}
-                  {badge > 0 ? <span className="nav-badge">{countLabel(badge)}</span> : l.dot ? <span className="nav-dot" /> : null}
-                </span>
-                <span className="places-word" dir="auto">
-                  {l.label}
-                </span>
-              </>
+              <span className="places-glyph" aria-hidden="true">
+                {active && l.activeIcon ? l.activeIcon : l.icon}
+                {badge > 0 || l.dot ? <span className="nav-dot" /> : null}
+              </span>
             );
             return (
               <li key={l.key ?? l.to}>

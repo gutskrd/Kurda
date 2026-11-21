@@ -22,6 +22,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { TabHeader } from '../navigation/TopBar';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useOpenSlide } from '../social/SocialSlide';
@@ -79,6 +80,7 @@ export function MessagesScreen(): React.JSX.Element {
   const dir = useDirection();
   const openSlide = useOpenSlide();
   const bottomInset = useTabBarInset();
+  const tabScroll = useTabBarScroll();
   const { report } = useUnread();
 
   const [filter, setFilter] = useState<MessageFilter>('all');
@@ -350,6 +352,8 @@ export function MessagesScreen(): React.JSX.Element {
 
       <FlatList
         ref={listRef}
+        onScroll={tabScroll}
+        scrollEventThrottle={64}
         data={rows}
         keyExtractor={(r) => r.key}
         renderItem={({ item, index }) => (

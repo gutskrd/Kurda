@@ -79,6 +79,8 @@
   --danger-soft: rgba(255, 120, 105, 0.16);
   /* a filled destructive button, and the words on it (5.9:1) */
   --danger-fill: #d93a2b;
+  /* something new waiting (an unread message, a gift): the small dot on a place, in the red every phone uses for it */
+  --notice: #ff453a;
   --on-danger: #ffffff;
   --success: #86e2a4;
   --success-soft: rgba(87, 185, 107, 0.18);
@@ -241,6 +243,7 @@
   --danger: #b42318;
   --danger-soft: rgba(180, 35, 24, 0.09);
   --danger-fill: #b42318;
+  --notice: #ff3b30;
   --on-danger: #ffffff;
   /* 5.9:1 on a card, 4.8:1 on its own soft tint over a grey panel */
   --success: #17723a;

@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { BottomSheet } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -77,6 +78,7 @@ export function GamesView({
   const { t } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
+  const tabScroll = useTabBarScroll();
   const windowWidth = usePageWidth();
   // Two stamps to a row, three where there is room; never wider than a reading column, nor narrower than the
   // narrowest phone, which a window reports before it is measured.
@@ -172,6 +174,8 @@ export function GamesView({
   const page = (
     <ScrollView
       ref={scrollRef}
+      onScroll={tabScroll}
+      scrollEventThrottle={64}
       contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
       showsVerticalScrollIndicator={false}
       refreshControl={pull}

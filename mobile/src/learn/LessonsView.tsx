@@ -22,6 +22,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { useTabFocusLoad } from '../navigation/tabFocusLoad';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, UnitFace, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
@@ -158,6 +159,8 @@ export function LessonsView({
   const [units, setUnits] = useState<UnitPlace[]>([]);
   const [viewport, setViewport] = useState(0);
   const [scrollY, setScrollY] = useState(0);
+  // The page's own reading of its scroll, and the tab bar's (tabBarScroll.ts).
+  const tabScroll = useTabBarScroll(useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => setScrollY(e.nativeEvent.contentOffset.y), []));
   const scrolledFor = useRef<string | null>(null);
   /*
    * Content above the path (the next-step card, a tile's review count) arrives with its own answer and would push
@@ -310,7 +313,7 @@ export function LessonsView({
         contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.xl }]}
         showsVerticalScrollIndicator={false}
         onLayout={(e: LayoutChangeEvent) => setViewport(e.nativeEvent.layout.height)}
-        onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => setScrollY(e.nativeEvent.contentOffset.y)}
+        onScroll={tabScroll}
         onScrollBeginDrag={() => {
           touched.current = true;
         }}

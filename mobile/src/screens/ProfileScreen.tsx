@@ -15,6 +15,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon } from '../theme/Icon';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { TabHeader } from '../navigation/TopBar';
 import { useOpenMenu } from '../navigation/SideMenu';
 import { HeaderButton } from '../navigation/HeaderButton';
@@ -151,6 +152,7 @@ function AccountProfile() {
   const { counts } = useUnread();
   const dir = useDirection();
   const scrollRef = useRef<ScrollView>(null);
+  const tabScroll = useTabBarScroll();
   // Tapping the Profile tab while on it scrolls to the top.
   useScrollToTop(scrollRef);
   const [streak, setStreak] = useState<Streak | null>(null);
@@ -363,6 +365,8 @@ function AccountProfile() {
       />
       <ScrollView
         ref={scrollRef}
+        onScroll={tabScroll}
+        scrollEventThrottle={64}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
         showsVerticalScrollIndicator={false}
         refreshControl={

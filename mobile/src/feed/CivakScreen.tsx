@@ -13,6 +13,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import type { TabNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
@@ -123,6 +124,8 @@ export function CivakScreen({
     apply: (update) => setItems((prev) => (prev ? update(prev) : prev)),
     retry: error ? () => void refresh() : undefined,
   });
+  // The tab bar shrinks as the feed scrolls down (tabBarScroll.ts).
+  const tabScroll = useTabBarScroll(onScroll);
 
   // The bell's dot is worth getting right on the screen it sits on.
   useFocusEffect(
@@ -233,7 +236,7 @@ export function CivakScreen({
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(onPull)} tintColor={colors.textSecondary} />}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
-          onScroll={onScroll}
+          onScroll={tabScroll}
           scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
