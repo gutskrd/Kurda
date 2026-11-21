@@ -28,7 +28,7 @@ const KEPT_STEPS = 24;
  * Hevalo moving with the phone on the website, as in the phone app (shared peek-lean.ts): the browser's motion events
  * carry the tilt and the swing round, the shared springs carry him, `--peek-lean` on `ref` leans him and his shadows,
  * and his head turns as the phone tilts and swings: its antlers and ears as `data-turn` groups (head-turn.ts), and its
- * face, eyes, mouth and nose redrawn turned in the round (head-round.ts), the other way round when `mirrored`. It never
+ * outline, face, eyes, mouth and nose redrawn turned in the round (head-round.ts), the other way round when `mirrored`. It never
  * asks for motion access: where a browser would ask first, or has no sensor, he simply stays as he is. Off under Reduce
  * Motion; each frame runs only while he is moving.
  */

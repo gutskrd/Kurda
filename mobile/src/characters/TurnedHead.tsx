@@ -1,7 +1,8 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { characterArt, roundLayer, roundPoint, turnStep, type BrowState, type EyeState, type MouthShape } from '@kurda/shared';
+import { characterArt, roundClipped, roundLayer, roundPoint, turnStep, type BrowState, type EyeState, type MouthShape } from '@kurda/shared';
+import { useDrawingIds } from './drawingIds';
 import { partStyles, type Turn } from './headTurnMotion';
 import type { CharacterLayers } from './layers';
 
@@ -22,9 +23,10 @@ function useTurnStep(turn: Turn): number {
 
 /**
  * The deer's head turned aside in the round (shared head-round.ts), laid as the speaking character lays it: the antlers
- * and ears behind, turning on the native driver; then the face, the eyes with their pupils, lids and brows, the mouth
- * and the nose, each drawn turned at the step `turn` has reached, so his outline, snout and features move as a solid
- * head's do. The player passes what moves of its own: the pupils' look, the ears' twitch and the nose's sniff.
+ * and ears behind, turning on the native driver; then his outline redrawn for the turn, what lies on his face and his
+ * eyes with their pupils, lids and brows carried round within it, and the mouth and the nose, each at the step `turn`
+ * has reached, so they move as a solid head's do. The player passes what moves of its own: the pupils' look, the ears'
+ * twitch and the nose's sniff.
  */
 export function TurnedHead({
   layers,
@@ -52,6 +54,7 @@ export function TurnedHead({
   const rig = layers.rig;
   const antlers = rig?.antlers;
   const step = useTurnStep(turn);
+  const clip = `${useDrawingIds('turn') ?? 'turn'}-face`;
   const style = useMemo(() => partStyles(turn, characterArt('hevalo'), layers.frame, width / layers.frame.w), [turn, layers.frame, width]);
   // The nose swells about where it has turned to.
   const sniffAt = useMemo(() => {
@@ -60,9 +63,13 @@ export function TurnedHead({
     const { frame } = layers;
     return p ? { transformOrigin: `${(((p.x - frame.x) / frame.w) * 100).toFixed(3)}% ${(((p.y - frame.y) / frame.h) * 100).toFixed(3)}%` } : null;
   }, [step, layers]);
-  if (!rig || !antlers) return null;
+  const parts = rig?.faceParts;
+  if (!rig || !antlers || !parts) return null;
   const fur = (xml: string): string => roundLayer(xml, step, 'fur');
-  const eye = (xml: string): string => roundLayer(xml, step, 'eyes');
+  // What lies on his face, and his eyes, are kept within his turned outline, so what goes round the far side is hidden.
+  const onFace = (xml: string): string => roundClipped(xml, step, 'fur', clip);
+  const eye = (xml: string): string => roundClipped(xml, step, 'eyes', clip);
+  const pupil = (xml: string): string => roundLayer(xml, step, 'eyes');
   const at = (s: object | undefined | null, xml: string) => (
     <Animated.View style={[StyleSheet.absoluteFill, s]}>
       <Layer xml={xml} width={width} height={height} />
@@ -74,10 +81,11 @@ export function TurnedHead({
       {at(style.antlerRight, antlers.right)}
       <Animated.View style={[StyleSheet.absoluteFill, style.earLeft]}>{at(ears?.left, rig.earLeft)}</Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, style.earRight]}>{at(ears?.right, rig.earRight)}</Animated.View>
-      <Layer xml={fur(rig.face)} width={width} height={height} />
+      <Layer xml={roundLayer(parts.outline, step, 'outline')} width={width} height={height} />
+      <Layer xml={onFace(parts.features)} width={width} height={height} />
       <Layer xml={eye(rig.whites)} width={width} height={height} />
-      {at(pupils?.left, eye(rig.pupilLeft))}
-      {at(pupils?.right, eye(rig.pupilRight))}
+      {at(pupils?.left, pupil(rig.pupilLeft))}
+      {at(pupils?.right, pupil(rig.pupilRight))}
       {eyes === 'open' ? null : <Layer xml={eye(eyes === 'half' ? rig.half : layers.eyes[eyes])} width={width} height={height} />}
       <Layer xml={eye(layers.brows[brows])} width={width} height={height} />
       <Layer xml={fur(layers.mouths[mouth])} width={width} height={height} />
