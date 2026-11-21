@@ -209,6 +209,15 @@ describe('the lesson path', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('Practice');
   });
 
+  /* A review left part-way is carried on from the road, in its own session rather than a new one beside it. */
+  it('carries on a review left part-way from its stop', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={3} openReview="p9" onFocus={() => undefined} />);
+    fireEvent.click(button('Review, words ready: 3'));
+    fireEvent.click(button('Continue review'));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Practice', { sessionId: 'p9' });
+  });
+
   it('opens a unit’s guide from the book on its heading, fetching each note once', async () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);

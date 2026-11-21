@@ -16,7 +16,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 const ART = 52;
 
 /**
- * Hevalo's book on Learn: one slim card opening the PDF of every online chapter (api/src/books), with Hamo's
+ * Hevalo's book in Stories: one slim card opening the PDF of every online chapter (api/src/books), with Hamo's
  * stories, words and grammar, to keep, share or print. Shown only once a chapter is online, never when the server
  * has no book.
  */

@@ -62,6 +62,8 @@ export const REACH_CONTROLS = [
   '.dt-note',
   // Today's goal on Learn, a 40px pill that opens the goal picker.
   '.learn-strip-goal',
+  // Learn's letters and dictionary, the two halves of one 44px pill under the bell's (styles/shell.css).
+  '.learn-tools-btn',
 ] as const;
 
 /** Links on a line of their own, enlarged only under a coarse pointer. */
@@ -115,9 +117,9 @@ export const LARGE_ENOUGH = [
   '.wa-answer-btn',
   // Rankings' league card, a whole card wide and over 80px tall (styles/ranks.css).
   '.league-card-mini',
-  // Learn's practice tools, cards at least 64px tall in a row of two or three (styles/shell.css).
+  // A card of practice (review on the practice hub, today's word on the dictionary page), at least 64px tall.
   '.learn-tool-link',
-  // The event card on Learn, 64px tall across the column (events/events.css).
+  // The event card on Home, 64px tall across the column (events/events.css).
   '.event-card',
   // The daily view's card on Home, its rows, its way back from the insights, and the profile figures that open a page
   // or the daily view (daily/daily.css, styles/pages.css): each at least 48px tall and wider still.

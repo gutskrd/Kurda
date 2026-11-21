@@ -38,6 +38,7 @@ import { COLUMN, Note, Pill } from './ui';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { pressedDim } from '../theme/motion';
 import { LoreEntry } from '../lore/LoreEntry';
+import { BookCard } from '../learn/BookCard';
 import { textIn } from '../lore/labels';
 import { metaFor } from './legend';
 import { dialectNameKey } from '../i18n/dialectName';
@@ -407,6 +408,8 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         refreshControl={pull}
       >
         <LoreEntry />
+        {/* The course on paper, once a chapter is online. */}
+        <BookCard />
         {/* The library's variety; a bar of the switch's height holds its place while the preference is read. */}
         {ready ? (
           <Segmented<StoryDialect>

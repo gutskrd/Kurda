@@ -114,59 +114,39 @@ afterEach(() => {
 });
 
 describe('Learn', () => {
-  it('lists every course with its progress and the lesson up next, and review first with what is due', async () => {
+  /* The lessons are the road: today and two buttons at its head, and no practice, tools or list of courses around it. */
+  it('is the road alone, with today and the letters and the dictionary at its head', async () => {
     serve({
       'GET /courses': courses,
       'GET /courses/c1/map': basics,
       'GET /courses/c2/map': newroz,
       'GET /practice/due': { due: 4, available: 9 },
+      'GET /me/quests': { date: '2026-10-29', monthDone: 0, quests: [] },
     });
     routes('/app/learn');
-
-    expect(await screen.findByText('Due now: 4')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/app/learn/review');
-    // And beside it, the other kinds of practice.
-    expect(screen.getByRole('link', { name: 'More ways to practise' })).toHaveAttribute('href', '/app/learn/practice');
-
-    const first = (await screen.findByRole('heading', { name: 'Kurmanji for Beginners' })).closest('article')!;
-    expect(within(first).getByText('Kurmancî')).toBeInTheDocument();
-    expect(within(first).getByText('1 of 3 lessons done')).toBeInTheDocument();
-    expect(within(first).getByRole('progressbar')).toHaveAttribute('aria-valuenow', '33');
-    expect(within(first).getByText('Goodbye')).toBeInTheDocument();
-    expect(within(first).getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
-    expect(within(first).getByRole('link', { name: 'Course map' })).toHaveAttribute('href', '/app/learn/course/c1');
-
-    // Not only the first course: the Newroz one is there too, not started.
-    const second = screen.getByRole('heading', { name: 'Newroz' }).closest('article')!;
-    expect(within(second).getByRole('link', { name: 'Start' })).toHaveAttribute('href', '/app/learn/lesson/n1?course=c2');
+    expect(await screen.findByRole('region', { name: 'Kurmanji for Beginners' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Letters and words' })).toHaveAttribute('href', '/app/learn/words');
+    expect(screen.getByRole('link', { name: 'Dictionary' })).toHaveAttribute('href', '/app/dictionary');
+    // Every course is a tap away on the switch over the road, and nowhere else.
+    expect(within(screen.getByRole('navigation', { name: 'Your courses' })).getAllByRole('link')).toHaveLength(2);
+    expect(screen.queryByRole('heading', { name: 'Courses' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Practice' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'More ways to practise' })).toBeNull();
+    expect(screen.queryByText('Due now: 4')).toBeNull();
+    expect(document.querySelector('.course-card, .learn-tool')).toBeNull();
+    // Today's quests are on Home now.
+    expect(calls.some((c) => c.path === '/me/quests')).toBe(false);
   });
 
-  it('shows the quests of the day under today, read once, with a chest waiting', async () => {
+  /* Review is a stop on the road; one left part-way is carried on there, in its own session. */
+  it('carries on a review left part-way from its stop on the road', async () => {
     serve({
-      'GET /courses': { courses: [] },
-      'GET /practice/due': { due: 0, available: 0 },
-      'GET /me/quests': {
-        date: '2026-10-29',
-        monthDone: 1,
-        quests: [
-          { id: 'q1', kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: true, claimed: false },
-          { id: 'q2', kind: 'xp', target: 40, progress: 15, chest: 'rare', claimable: false, claimed: false },
-          { id: 'q3', kind: 'lessons', target: 2, progress: 1, chest: 'epic', claimable: false, claimed: false },
-        ],
-      },
-    });
-    routes('/app/learn');
-    expect(await screen.findByRole('button', { name: 'Daily quests A chest to open! 1 of 3 done' })).toBeInTheDocument();
-    expect(calls.filter((c) => c.path === '/me/quests')).toHaveLength(1);
-  });
-
-  it('offers a review left part-way through before a new one', async () => {
-    serve({
-      'GET /courses': { courses: [] },
+      'GET /courses': { courses: courses.courses.slice(0, 1) },
+      'GET /courses/c1/map': basics,
       'GET /practice/due': { due: 4, available: 9, open: 'p1' },
     });
     routes('/app/learn');
-    expect(await screen.findByText('You left a review part-way through. Your answers so far are saved.')).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('button', { name: 'Review, words ready: 4' }));
     expect(screen.getByRole('link', { name: 'Continue review' })).toHaveAttribute('href', '/app/learn/review/p1');
     expect(screen.queryByRole('link', { name: 'Start review' })).not.toBeInTheDocument();
   });
@@ -234,7 +214,8 @@ describe('Learn', () => {
     expect(goal).toHaveAttribute('aria-haspopup', 'dialog');
     expect(within(today).getByText('12/20 XP')).toBeInTheDocument();
     expect(within(today).getByText('5-day streak')).toBeInTheDocument();
-    expect(within(today).getByRole('link', { name: '7 due' })).toHaveAttribute('href', '/app/learn/review');
+    // What review has waiting is on the road, not counted here.
+    expect(within(today).queryByRole('link')).toBeNull();
   });
 
   // A passed goal says what was earned with a done mark, rather than "130/20 XP".
@@ -340,47 +321,14 @@ describe('Learn', () => {
     stop();
   });
 
-  it('offers today’s word among the practice tools, opening its dictionary entry', async () => {
+  it('says on the road when no course is online yet', async () => {
     serve({
       'GET /courses': { courses: [] },
       'GET /practice/due': { due: 0, available: 0 },
-      'GET /dictionary/word-of-day': { word: { entryId: 'e42', headword: 'hêvî', pos: 'n', definitionEn: 'hope', definitionKu: null } },
     });
     routes('/app/learn');
-    const tools = await screen.findByRole('region', { name: 'Practice' });
-    const word = await within(tools).findByRole('link', { name: /Word of the day/ });
-    expect(word).toHaveTextContent('hêvî');
-    expect(word).toHaveTextContent('n · hope');
-    expect(word).toHaveAttribute('href', '/app/dictionary?entry=e42');
-  });
-
-  it('leaves no gap among the tools on a day without a word', async () => {
-    serve({
-      'GET /courses': { courses: [] },
-      'GET /practice/due': { due: 0, available: 0 },
-      'GET /dictionary/word-of-day': { word: null },
-    });
-    routes('/app/learn');
-    const tools = await screen.findByRole('region', { name: 'Practice' });
-    await waitFor(() => expect(calls.some((c) => c.path === '/dictionary/word-of-day')).toBe(true));
-    await waitFor(() => expect(within(tools).queryByText('Word of the day')).toBeNull());
-    expect(tools.querySelector('.skeleton-late')).toBeNull();
-  });
-
-  it('says what review is before there is anything in it, and keeps a course whose map failed', async () => {
-    serve({
-      'GET /courses': courses,
-      'GET /courses/c1/map': basics,
-      'GET /courses/c2/map': jsonResponse(500, { message: 'boom' }),
-      'GET /practice/due': { due: 0, available: 0 },
-    });
-    routes('/app/learn');
-
-    expect(await screen.findByText('What you answer in lessons comes back here, spread over days so it stays.')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Start review' })).not.toBeInTheDocument();
-    const second = (await screen.findByRole('heading', { name: 'Newroz' })).closest('article')!;
-    expect(within(second).getByText('Your progress in this course could not be loaded.')).toBeInTheDocument();
-    expect(within(second).getByRole('link', { name: 'Course map' })).toBeInTheDocument();
+    expect(await screen.findByText('No courses available yet')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dictionary' })).toBeInTheDocument();
   });
 });
 

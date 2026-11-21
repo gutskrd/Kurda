@@ -414,7 +414,7 @@
   text-align: center;
 }
 
-/* ---- The card on Learn -------------------------------------------------------------- */
+/* ---- The card on Home, under the daily card and spaced as it is ---------------------- */
 .quests-card {
   display: flex;
   align-items: center;
@@ -422,7 +422,7 @@
   width: 100%;
   max-width: var(--container-narrow);
   min-height: 64px;
-  margin: 0 auto var(--space-5);
+  margin: 0 auto 12px;
   padding: 10px 14px;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);

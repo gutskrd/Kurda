@@ -1236,15 +1236,49 @@
   }
 }
 
-/* today, in one row above the path: the streak, the goal's ring, what review has waiting */
+/* the head of the road: today at the reading edge, the letters and the dictionary at the far end, under the bell */
+.learn-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: var(--container-narrow);
+  margin: 0 auto var(--space-5);
+}
+/* today: the streak and the goal's ring */
 .learn-strip {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
   min-height: 40px;
-  margin: 0 auto var(--space-5);
-  max-width: var(--container-narrow);
+}
+/* the letters and the dictionary: two buttons in one pill, drawn as the pill of search and the bell is */
+.learn-tools {
+  display: flex;
+  flex: none;
+  height: 44px;
+  margin-inline-start: auto;
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  box-shadow: var(--shadow-control);
+}
+.learn-tools-btn {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  border-radius: var(--r-pill);
+  color: var(--ink);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+.learn-tools-btn:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.learn-tools-btn:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
 }
 .learn-strip-item {
   display: inline-flex;
@@ -1369,17 +1403,6 @@
   margin-inline-start: -2px;
   color: var(--success);
 }
-/* review waiting: the one item here that opens something */
-.learn-strip-chip {
-  margin-inline-start: auto;
-  background: var(--surface-2);
-  color: var(--ink);
-}
-.learn-strip-chip:hover {
-  background: var(--surface-3);
-  color: var(--ink);
-  text-decoration: none;
-}
 /* the path, as wide as a course's own page draws it */
 .lp-courses.learn-courses-switch {
   max-width: var(--container-narrow);
@@ -1390,18 +1413,7 @@
   margin: 0 auto var(--space-8);
 }
 
-/* practice tools: review, the alphabet, the words to know and the dictionary, side by side */
-.learn-tools-section {
-  margin-bottom: var(--space-8);
-}
-.learn-tools {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-3);
-}
-.learn-tools.is-guest {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
+/* a card of practice: review on the practice hub, today's word on the dictionary page */
 .learn-tool {
   display: flex;
   flex-direction: column;
@@ -1437,16 +1449,7 @@
   font-size: var(--text);
   color: var(--ink-3);
 }
-/* Letters and words shows its first letters where an icon would be */
-.learn-tool-letters {
-  font-family: var(--font-sans);
-  font-size: var(--text-title);
-  line-height: 1;
-  letter-spacing: 0.04em;
-  color: var(--primary);
-  direction: ltr;
-}
-/* today's word stands where another tool has its icon, in the display face as the first letters are */
+/* today's word stands where another card has its icon */
 .learn-tool-word {
   max-width: 100%;
   font-family: var(--font-sans);
@@ -1462,30 +1465,12 @@
 .learn-tool.learn-review .learn-review-text {
   flex: 0 1 auto;
 }
-/* review's button, and on Learn the way to the other kinds of practice beside it */
+/* review's button, and the way to the other kinds of practice beside it */
 .learn-review-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
-}
-@media (max-width: 860px) {
-  .learn-tools,
-  .learn-tools.is-guest {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .learn-tools .learn-review {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-}
-@media (max-width: 380px) {
-  .learn-tools,
-  .learn-tools.is-guest {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 /* what a visitor sees where the courses would be */

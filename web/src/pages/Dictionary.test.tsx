@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { jsonResponse, renderApp } from '../test/utils';
@@ -15,6 +15,34 @@ function Where(): React.JSX.Element {
 }
 
 describe('the dictionary', () => {
+  it('offers today’s word before anything is searched, opening its entry, and leaves no gap on a day without one', async () => {
+    for (const word of [{ entryId: 'e42', headword: 'hêvî', pos: 'n', definitionEn: 'hope', definitionKu: null }, null]) {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+          const path = new URL(url).pathname;
+          if (path === '/dictionary/word-of-day') return jsonResponse(200, { word });
+          return jsonResponse(401, {});
+        }),
+      );
+      const { unmount } = renderApp(
+        <Routes>
+          <Route path="/app/dictionary" element={<Dictionary />} />
+        </Routes>,
+        ['/app/dictionary'],
+      );
+      if (word) {
+        const card = await screen.findByRole('link', { name: /Word of the day/ });
+        expect(card).toHaveTextContent('hêvî');
+        expect(card).toHaveTextContent('n · hope');
+        expect(card).toHaveAttribute('href', '/app/dictionary?entry=e42');
+      } else {
+        await waitFor(() => expect(document.querySelector('.learn-wotd, .skeleton-late')).toBeNull());
+      }
+      unmount();
+    }
+  });
+
   it('opens the entry an address names, and drops it from the address on the way back to search', async () => {
     vi.stubGlobal(
       'fetch',

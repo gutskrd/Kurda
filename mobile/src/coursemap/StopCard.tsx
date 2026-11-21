@@ -36,6 +36,8 @@ type Unit = PathUnit<SkillNode>;
 export interface StopActions {
   onLesson: (lessonId: string) => void;
   onReview: () => void;
+  /** A review is waiting part-way through, so the review stop's button carries it on. */
+  reviewOpen?: boolean;
   /** Opens the chapter's review in practice. */
   onPractise: (unitId: string) => void;
   onTips: (skill: SkillNode) => void;
@@ -279,7 +281,13 @@ function PanelCard({
         {eyebrow(t('learn.tools.review'))}
         {title(t('coursemap.path.reviewDue', { count: stop.due }))}
         {line(t('coursemap.path.reviewWhy'))}
-        <ClayButton label={t('coursemap.path.reviewGo')} tone="primary" size="large" onPress={onReview} style={styles.action} />
+        <ClayButton
+          label={actions.reviewOpen ? t('practice.open.continue') : t('coursemap.path.reviewGo')}
+          tone="primary"
+          size="large"
+          onPress={onReview}
+          style={styles.action}
+        />
       </>
     );
   }

@@ -1852,7 +1852,6 @@ export type TranslationKey =
   | 'practice.hub.noneTitle'
   | 'practice.hub.noneBody'
   | 'practice.hub.toLessons'
-  | 'practice.open.body'
   | 'practice.open.continue'
   | 'practice.hub.mistakes'
   | 'practice.hub.mistakesCount'
@@ -2970,9 +2969,6 @@ export type TranslationKey =
   | 'learn.view.lessons'
   | 'learn.view.games'
   | 'learn.continue.button'
-  | 'learn.continue.start'
-  | 'learn.continue.allDone'
-  | 'learn.continue.progress'
   | 'learn.today.title'
   | 'learn.today.goal'
   | 'learn.today.goalShort'
@@ -2987,7 +2983,6 @@ export type TranslationKey =
   | 'learn.tools.due'
   | 'learn.tools.dueOne'
   | 'learn.tools.dueNone'
-  | 'learn.tools.dictionaryHint'
   | 'learn.tools.sentenceHint'
   | 'learn.tools.hearHint'
   | 'learn.map.title'
@@ -3382,7 +3377,6 @@ export type TranslationKey =
   | 'nav.alphabet'
   | 'learn.tools.alphabetHint'
   | 'words.title'
-  | 'words.toolHint'
   | 'words.fromAlphabet'
   | 'words.lead'
   | 'words.setLead'
@@ -3577,7 +3571,6 @@ export type TranslationKey =
   | 'practice.hub.xp'
   | 'quests.monthly.title'
   | 'quests.monthly.soFar'
-  | 'learn.more.title'
   | 'coursemap.xp.first'
   | 'coursemap.xp.again'
   // --- Hevalo offline for a while (maintenance/) ---
@@ -3785,11 +3778,6 @@ export type TranslationKey =
   | 'book.card.subOne'
   | 'book.card.sub'
   | 'tree.card.plant'
-  | 'tree.card.plantSub'
-  | 'tree.card.hasWater'
-  | 'tree.card.thirstyWater'
-  | 'tree.card.well'
-  | 'tree.card.thirsty'
   | 'tree.profile.title'
   | 'tree.results.water'
   // --- Riddles and proverbs (lore/) ---
@@ -5272,7 +5260,6 @@ const en: Catalog = {
   'practice.hub.noneTitle': 'Practice starts with a lesson',
   'practice.hub.noneBody': 'Finish a lesson, and what you learned comes back here to practise.',
   'practice.hub.toLessons': 'Go to lessons',
-  'practice.open.body': 'You left a review part-way through. Your answers so far are saved.',
   'practice.open.continue': 'Continue review',
   'practice.hub.mistakes': 'Mistakes',
   'practice.hub.mistakesCount': '{count} to put right',
@@ -6878,9 +6865,6 @@ const en: Catalog = {
   'learn.view.lessons': 'Lessons',
   'learn.view.games': 'Games',
   'learn.continue.button': 'Continue',
-  'learn.continue.start': 'Start your first lesson',
-  'learn.continue.allDone': 'You have finished every lesson open to you',
-  'learn.continue.progress': '{done} of {total} skills done',
   'learn.today.title': 'Today',
   'learn.today.goal': '{xp} of {goal} XP today',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -6895,7 +6879,6 @@ const en: Catalog = {
   'learn.tools.due': '{count} words due',
   'learn.tools.dueOne': '1 word due',
   'learn.tools.dueNone': 'Nothing due right now',
-  'learn.tools.dictionaryHint': 'Look up any word',
   'learn.tools.sentenceHint': 'Put the words in order',
   'learn.tools.hearHint': 'Find what you heard',
   'learn.map.title': 'Course map',
@@ -7291,7 +7274,6 @@ const en: Catalog = {
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Every letter, and how it sounds',
   'words.title': 'Letters and words',
-  'words.toolHint': 'Letters, colours, numbers, days, months',
   'words.fromAlphabet': 'Learn colours, numbers, days and months',
   'words.lead': 'Start with the letters, then the first words. Tap a letter or a word to hear it.',
   'words.setLead': 'Tap a word to hear it.',
@@ -7490,7 +7472,6 @@ const en: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'This month',
   'quests.monthly.soFar': '{done} of {possible} so far this month',
-  'learn.more.title': 'More for today',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP, played again',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -7692,11 +7673,6 @@ const en: Catalog = {
   'book.card.subOne': 'Chapter 1 of the road, to keep or print: Hamo’s story, the words and the grammar. Open the PDF.',
   'book.card.sub': '{count} chapters of the road, to keep or print: Hamo’s stories, the words and the grammar. Open the PDF.',
   'tree.card.plant': 'Plant your tree',
-  'tree.card.plantSub': 'Grow it with the water your lessons earn.',
-  'tree.card.hasWater': 'You have water to pour.',
-  'tree.card.thirstyWater': '{health}. You have water for it.',
-  'tree.card.well': 'Doing well.',
-  'tree.card.thirsty': '{health}. A lesson earns water.',
   'tree.profile.title': 'Tree',
   'tree.results.water': '+{count} water for your tree',
   // --- Riddles and proverbs (lore/) ---
@@ -9178,7 +9154,6 @@ const ku: Catalog = {
   'practice.hub.noneTitle': 'Rahênan bi waneyekê dest pê dike',
   'practice.hub.noneBody': 'Waneyekê biqedîne, û tiştê ku te hîn kir li vir ji bo rahênanê vedigere.',
   'practice.hub.toLessons': 'Here waneyan',
-  'practice.open.body': 'Te dubarekirinek di nîvî de hiştiye. Bersivên te yên heta niha tomarkirî ne.',
   'practice.open.continue': 'Dubarekirinê bidomîne',
   'practice.hub.mistakes': 'Şaşî',
   'practice.hub.mistakesCount': '{count} ji bo rastkirinê',
@@ -10783,9 +10758,6 @@ const ku: Catalog = {
   'learn.view.lessons': 'Wane',
   'learn.view.games': 'Lîstik',
   'learn.continue.button': 'Bidomîne',
-  'learn.continue.start': 'Waneya xwe ya yekem dest pê bike',
-  'learn.continue.allDone': 'Te hemû waneyên vekirî qedandin',
-  'learn.continue.progress': '{done} ji {total} mijaran qediyan',
   'learn.today.title': 'Îro',
   'learn.today.goal': 'Îro {xp} ji {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -10800,7 +10772,6 @@ const ku: Catalog = {
   'learn.tools.due': '{count} peyv li benda dubarekirinê ne',
   'learn.tools.dueOne': '1 peyv li benda dubarekirinê ye',
   'learn.tools.dueNone': 'Niha tiştek li bendê tune',
-  'learn.tools.dictionaryHint': 'Li her peyvê bigere',
   'learn.tools.sentenceHint': 'Peyvan bi rêz bike',
   'learn.tools.hearHint': 'Ya ku te bihîst bibîne',
   'learn.map.title': 'Nexşeya kursê',
@@ -11196,7 +11167,6 @@ const ku: Catalog = {
   'nav.alphabet': 'Alfabe',
   'learn.tools.alphabetHint': 'Her tîp û dengê wê',
   'words.title': 'Tîp û peyv',
-  'words.toolHint': 'Tîp, reng, hejmar, roj, meh',
   'words.fromAlphabet': 'Reng, hejmar, roj û mehan hîn bibe',
   'words.lead': 'Bi tîpan dest pê bike, paşê bi peyvên pêşîn. Li tîpekê an peyvekê bitikîne da ku bibihîzî.',
   'words.setLead': 'Li peyvekê bitikîne da ku bibihîzî.',
@@ -11395,7 +11365,6 @@ const ku: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Ev meh',
   'quests.monthly.soFar': '{done} ji {possible} heta niha di vê mehê de',
-  'learn.more.title': 'Ji bo îro zêdetir',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP, dîsa',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -11597,11 +11566,6 @@ const ku: Catalog = {
   'book.card.subOne': 'Beşa 1ê ya rêyê, ji bo hilanînê an çapkirinê: çîroka Hamo, peyv û rêziman. PDF’ê veke.',
   'book.card.sub': '{count} beşên rêyê, ji bo hilanînê an çapkirinê: çîrokên Hamo, peyv û rêziman. PDF’ê veke.',
   'tree.card.plant': 'Dara xwe biçîne',
-  'tree.card.plantSub': 'Bi ava ku waneyên te didin wê mezin bike.',
-  'tree.card.hasWater': 'Ava te heye ku birijînî.',
-  'tree.card.thirstyWater': '{health}. Ava te ji bo wê heye.',
-  'tree.card.well': 'Baş e.',
-  'tree.card.thirsty': '{health}. Waneyek avê dide.',
   'tree.profile.title': 'Dar',
   'tree.results.water': '+{count} av ji bo dara te',
   // --- Riddles and proverbs (lore/) ---
@@ -13083,7 +13047,6 @@ const de: Catalog = {
   'practice.hub.noneTitle': 'Üben beginnt mit einer Lektion',
   'practice.hub.noneBody': 'Schließ eine Lektion ab, dann kommt das Gelernte hier zum Üben zurück.',
   'practice.hub.toLessons': 'Zu den Lektionen',
-  'practice.open.body': 'Du hast eine Wiederholung mittendrin verlassen. Deine bisherigen Antworten sind gespeichert.',
   'practice.open.continue': 'Wiederholung fortsetzen',
   'practice.hub.mistakes': 'Fehler',
   'practice.hub.mistakesCount': '{count} zum Ausbessern',
@@ -14688,9 +14651,6 @@ const de: Catalog = {
   'learn.view.lessons': 'Lektionen',
   'learn.view.games': 'Spiele',
   'learn.continue.button': 'Weiter',
-  'learn.continue.start': 'Erste Lektion starten',
-  'learn.continue.allDone': 'Du hast alle offenen Lektionen geschafft',
-  'learn.continue.progress': '{done} von {total} Themen geschafft',
   'learn.today.title': 'Heute',
   'learn.today.goal': 'Heute {xp} von {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -14705,7 +14665,6 @@ const de: Catalog = {
   'learn.tools.due': '{count} Wörter fällig',
   'learn.tools.dueOne': '1 Wort fällig',
   'learn.tools.dueNone': 'Gerade nichts fällig',
-  'learn.tools.dictionaryHint': 'Jedes Wort nachschlagen',
   'learn.tools.sentenceHint': 'Ordne die Wörter',
   'learn.tools.hearHint': 'Finde, was du gehört hast',
   'learn.map.title': 'Kursübersicht',
@@ -15101,7 +15060,6 @@ const de: Catalog = {
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Jeder Buchstabe und sein Klang',
   'words.title': 'Buchstaben und Wörter',
-  'words.toolHint': 'Buchstaben, Farben, Zahlen, Tage, Monate',
   'words.fromAlphabet': 'Farben, Zahlen, Tage und Monate lernen',
   'words.lead': 'Fang mit den Buchstaben an, dann kommen die ersten Wörter. Tippe auf einen Buchstaben oder ein Wort, um es zu hören.',
   'words.setLead': 'Tippe auf ein Wort, um es zu hören.',
@@ -15300,7 +15258,6 @@ const de: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Diesen Monat',
   'quests.monthly.soFar': '{done} von {possible} bisher in diesem Monat',
-  'learn.more.title': 'Mehr für heute',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP bei Wiederholung',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -15502,11 +15459,6 @@ const de: Catalog = {
   'book.card.subOne': 'Kapitel 1 des Weges zum Behalten oder Ausdrucken: Hamos Geschichte, die Wörter und die Grammatik. Öffne das PDF.',
   'book.card.sub': '{count} Kapitel des Weges zum Behalten oder Ausdrucken: Hamos Geschichten, die Wörter und die Grammatik. Öffne das PDF.',
   'tree.card.plant': 'Pflanze deinen Baum',
-  'tree.card.plantSub': 'Lass ihn mit dem Wasser wachsen, das deine Lektionen bringen.',
-  'tree.card.hasWater': 'Du hast Wasser zum Gießen.',
-  'tree.card.thirstyWater': '{health}. Du hast Wasser für ihn.',
-  'tree.card.well': 'Es geht ihm gut.',
-  'tree.card.thirsty': '{health}. Eine Lektion bringt Wasser.',
   'tree.profile.title': 'Baum',
   'tree.results.water': '+{count} Wasser für deinen Baum',
   // --- Riddles and proverbs (lore/) ---
@@ -16988,7 +16940,6 @@ const es: Catalog = {
   'practice.hub.noneTitle': 'La práctica empieza con una lección',
   'practice.hub.noneBody': 'Termina una lección y lo que aprendiste volverá aquí para practicarlo.',
   'practice.hub.toLessons': 'Ir a las lecciones',
-  'practice.open.body': 'Dejaste un repaso a medias. Tus respuestas hasta ahora están guardadas.',
   'practice.open.continue': 'Seguir con el repaso',
   'practice.hub.mistakes': 'Errores',
   'practice.hub.mistakesCount': '{count} por corregir',
@@ -18593,9 +18544,6 @@ const es: Catalog = {
   'learn.view.lessons': 'Lecciones',
   'learn.view.games': 'Juegos',
   'learn.continue.button': 'Continuar',
-  'learn.continue.start': 'Empieza tu primera lección',
-  'learn.continue.allDone': 'Has terminado todas las lecciones disponibles',
-  'learn.continue.progress': '{done} de {total} temas completados',
   'learn.today.title': 'Hoy',
   'learn.today.goal': '{xp} de {goal} XP hoy',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -18610,7 +18558,6 @@ const es: Catalog = {
   'learn.tools.due': '{count} palabras para repasar',
   'learn.tools.dueOne': '1 palabra para repasar',
   'learn.tools.dueNone': 'Nada pendiente ahora',
-  'learn.tools.dictionaryHint': 'Busca cualquier palabra',
   'learn.tools.sentenceHint': 'Ordena las palabras',
   'learn.tools.hearHint': 'Encuentra lo que oíste',
   'learn.map.title': 'Mapa del curso',
@@ -19006,7 +18953,6 @@ const es: Catalog = {
   'nav.alphabet': 'Alfabeto',
   'learn.tools.alphabetHint': 'Cada letra y cómo suena',
   'words.title': 'Letras y palabras',
-  'words.toolHint': 'Letras, colores, números, días, meses',
   'words.fromAlphabet': 'Aprende colores, números, días y meses',
   'words.lead': 'Empieza por las letras y sigue con las primeras palabras. Toca una letra o una palabra para oírla.',
   'words.setLead': 'Toca una palabra para oírla.',
@@ -19205,7 +19151,6 @@ const es: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Este mes',
   'quests.monthly.soFar': '{done} de {possible} hasta ahora este mes',
-  'learn.more.title': 'Más para hoy',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP al repetir',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -19407,11 +19352,6 @@ const es: Catalog = {
   'book.card.subOne': 'El capítulo 1 del camino, para guardar o imprimir: la historia de Hamo, las palabras y la gramática. Abre el PDF.',
   'book.card.sub': '{count} capítulos del camino, para guardar o imprimir: las historias de Hamo, las palabras y la gramática. Abre el PDF.',
   'tree.card.plant': 'Planta tu árbol',
-  'tree.card.plantSub': 'Hazlo crecer con el agua que te dan tus lecciones.',
-  'tree.card.hasWater': 'Tienes agua para regar.',
-  'tree.card.thirstyWater': '{health}. Tienes agua para él.',
-  'tree.card.well': 'Está bien.',
-  'tree.card.thirsty': '{health}. Una lección da agua.',
   'tree.profile.title': 'Árbol',
   'tree.results.water': '+{count} de agua para tu árbol',
   // --- Riddles and proverbs (lore/) ---
@@ -20893,7 +20833,6 @@ const tr: Catalog = {
   'practice.hub.noneTitle': 'Alıştırma bir dersle başlar',
   'practice.hub.noneBody': 'Bir ders bitir; öğrendiklerin alıştırma için buraya gelir.',
   'practice.hub.toLessons': 'Derslere git',
-  'practice.open.body': 'Bir tekrarı yarıda bıraktın. Şimdiye kadarki yanıtların kayıtlı.',
   'practice.open.continue': 'Tekrara devam et',
   'practice.hub.mistakes': 'Hatalar',
   'practice.hub.mistakesCount': 'Düzeltilecek {count} hata',
@@ -22498,9 +22437,6 @@ const tr: Catalog = {
   'learn.view.lessons': 'Dersler',
   'learn.view.games': 'Oyunlar',
   'learn.continue.button': 'Devam et',
-  'learn.continue.start': 'İlk dersine başla',
-  'learn.continue.allDone': 'Açık olan tüm dersleri bitirdin',
-  'learn.continue.progress': '{total} konudan {done} tanesi bitti',
   'learn.today.title': 'Bugün',
   'learn.today.goal': 'Bugün {xp} / {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -22515,7 +22451,6 @@ const tr: Catalog = {
   'learn.tools.due': '{count} kelime tekrar bekliyor',
   'learn.tools.dueOne': '1 kelime tekrar bekliyor',
   'learn.tools.dueNone': 'Şu an bekleyen yok',
-  'learn.tools.dictionaryHint': 'İstediğin kelimeyi ara',
   'learn.tools.sentenceHint': 'Kelimeleri sıraya koy',
   'learn.tools.hearHint': 'Duyduğunu bul',
   'learn.map.title': 'Kurs haritası',
@@ -22911,7 +22846,6 @@ const tr: Catalog = {
   'nav.alphabet': 'Alfabe',
   'learn.tools.alphabetHint': 'Her harf ve nasıl okunduğu',
   'words.title': 'Harfler ve kelimeler',
-  'words.toolHint': 'Harfler, renkler, sayılar, günler, aylar',
   'words.fromAlphabet': 'Renkleri, sayıları, günleri ve ayları öğren',
   'words.lead': 'Harflerle başla, ardından ilk kelimelere geç. Duymak için bir harfe ya da kelimeye dokun.',
   'words.setLead': 'Duymak için bir kelimeye dokun.',
@@ -23110,7 +23044,6 @@ const tr: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Bu ay',
   'quests.monthly.soFar': 'Bu ay şimdiye kadar {done} / {possible}',
-  'learn.more.title': 'Bugün için daha fazlası',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': 'Tekrarda +{min}–{max} XP',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -23312,11 +23245,6 @@ const tr: Catalog = {
   'book.card.subOne': 'Yolun 1. bölümü, saklamak ya da yazdırmak için: Hamo’nun hikâyesi, kelimeler ve dil bilgisi. PDF’yi aç.',
   'book.card.sub': 'Yolun {count} bölümü, saklamak ya da yazdırmak için: Hamo’nun hikâyeleri, kelimeler ve dil bilgisi. PDF’yi aç.',
   'tree.card.plant': 'Ağacını dik',
-  'tree.card.plantSub': 'Derslerinin kazandırdığı suyla büyüt.',
-  'tree.card.hasWater': 'Dökecek suyun var.',
-  'tree.card.thirstyWater': '{health}. Onun için suyun var.',
-  'tree.card.well': 'İyi durumda.',
-  'tree.card.thirsty': '{health}. Bir ders su kazandırır.',
   'tree.profile.title': 'Ağaç',
   'tree.results.water': 'Ağacın için +{count} su',
   // --- Riddles and proverbs (lore/) ---
@@ -24798,7 +24726,6 @@ const ar: Catalog = {
   'practice.hub.noneTitle': 'التدريب يبدأ بدرس',
   'practice.hub.noneBody': 'أنهِ درسًا، وسيعود ما تعلّمته إلى هنا لتتدرّب عليه.',
   'practice.hub.toLessons': 'إلى الدروس',
-  'practice.open.body': 'تركت مراجعة في منتصفها. إجاباتك حتى الآن محفوظة.',
   'practice.open.continue': 'تابِع المراجعة',
   'practice.hub.mistakes': 'الأخطاء',
   'practice.hub.mistakesCount': '{count} للتصحيح',
@@ -26403,9 +26330,6 @@ const ar: Catalog = {
   'learn.view.lessons': 'دروس',
   'learn.view.games': 'ألعاب',
   'learn.continue.button': 'تابع',
-  'learn.continue.start': 'ابدأ درسك الأول',
-  'learn.continue.allDone': 'أنهيت كل الدروس المتاحة لك',
-  'learn.continue.progress': 'المهارات المنجزة: {done} من {total}',
   'learn.today.title': 'اليوم',
   'learn.today.goal': '{xp} من {goal} XP اليوم',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -26420,7 +26344,6 @@ const ar: Catalog = {
   'learn.tools.due': 'كلمات للمراجعة: {count}',
   'learn.tools.dueOne': 'كلمة واحدة للمراجعة',
   'learn.tools.dueNone': 'لا شيء للمراجعة الآن',
-  'learn.tools.dictionaryHint': 'ابحث عن أي كلمة',
   'learn.tools.sentenceHint': 'رتّب الكلمات',
   'learn.tools.hearHint': 'جِد ما سمعت',
   'learn.map.title': 'خريطة الدورة',
@@ -26816,7 +26739,6 @@ const ar: Catalog = {
   'nav.alphabet': 'الأبجدية',
   'learn.tools.alphabetHint': 'كل حرف وكيف يُنطق',
   'words.title': 'الحروف والكلمات',
-  'words.toolHint': 'الحروف والألوان والأرقام والأيام والأشهر',
   'words.fromAlphabet': 'تعلّم الألوان والأرقام والأيام والأشهر',
   'words.lead': 'ابدأ بالحروف ثم بأولى الكلمات. اضغط على حرف أو كلمة لتسمعها.',
   'words.setLead': 'اضغط على كلمة لتسمعها.',
@@ -27015,7 +26937,6 @@ const ar: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'هذا الشهر',
   'quests.monthly.soFar': '{done} من {possible} حتى الآن هذا الشهر',
-  'learn.more.title': 'المزيد لليوم',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP عند الإعادة',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -27217,11 +27138,6 @@ const ar: Catalog = {
   'book.card.subOne': 'الفصل الأول من الطريق، لتحتفظ به أو تطبعه: قصة حمو والكلمات والقواعد. افتح ملف PDF.',
   'book.card.sub': '{count} فصول من الطريق، لتحتفظ بها أو تطبعها: قصص حمو والكلمات والقواعد. افتح ملف PDF.',
   'tree.card.plant': 'ازرع شجرتك',
-  'tree.card.plantSub': 'نمِّها بالماء الذي تكسبه دروسك.',
-  'tree.card.hasWater': 'لديك ماء لتسكبه.',
-  'tree.card.thirstyWater': '{health}. لديك ماء لها.',
-  'tree.card.well': 'بخير.',
-  'tree.card.thirsty': '{health}. درس واحد يكسبك ماءً.',
   'tree.profile.title': 'الشجرة',
   'tree.results.water': '+{count} ماء لشجرتك',
   // --- Riddles and proverbs (lore/) ---
@@ -28703,7 +28619,6 @@ const fr: Catalog = {
   'practice.hub.noneTitle': 'L’entraînement commence par une leçon',
   'practice.hub.noneBody': 'Termine une leçon, et ce que tu as appris reviendra ici pour t’entraîner.',
   'practice.hub.toLessons': 'Aller aux leçons',
-  'practice.open.body': 'Tu as laissé une révision en cours. Tes réponses données jusqu’ici sont enregistrées.',
   'practice.open.continue': 'Reprendre la révision',
   'practice.hub.mistakes': 'Erreurs',
   'practice.hub.mistakesCount': '{count} à corriger',
@@ -30308,9 +30223,6 @@ const fr: Catalog = {
   'learn.view.lessons': 'Leçons',
   'learn.view.games': 'Jeux',
   'learn.continue.button': 'Continuer',
-  'learn.continue.start': 'Commencer ta première leçon',
-  'learn.continue.allDone': 'Tu as terminé toutes les leçons ouvertes',
-  'learn.continue.progress': '{done} sur {total} thèmes terminés',
   'learn.today.title': 'Aujourd’hui',
   'learn.today.goal': '{xp} sur {goal} XP aujourd’hui',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -30325,7 +30237,6 @@ const fr: Catalog = {
   'learn.tools.due': '{count} mots à réviser',
   'learn.tools.dueOne': '1 mot à réviser',
   'learn.tools.dueNone': 'Rien à réviser pour l’instant',
-  'learn.tools.dictionaryHint': 'Cherche n’importe quel mot',
   'learn.tools.sentenceHint': 'Remets les mots dans l’ordre',
   'learn.tools.hearHint': 'Trouve ce que tu as entendu',
   'learn.map.title': 'Plan du cours',
@@ -30721,7 +30632,6 @@ const fr: Catalog = {
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Chaque lettre et comment elle se prononce',
   'words.title': 'Lettres et mots',
-  'words.toolHint': 'Lettres, couleurs, nombres, jours, mois',
   'words.fromAlphabet': 'Apprendre couleurs, nombres, jours et mois',
   'words.lead': 'Commence par les lettres, puis les premiers mots. Touche une lettre ou un mot pour l’entendre.',
   'words.setLead': 'Touche un mot pour l’entendre.',
@@ -30920,7 +30830,6 @@ const fr: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Ce mois-ci',
   'quests.monthly.soFar': '{done} sur {possible} jusqu’ici ce mois-ci',
-  'learn.more.title': 'Aussi pour aujourd’hui',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP en la refaisant',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -31122,11 +31031,6 @@ const fr: Catalog = {
   'book.card.subOne': 'Le chapitre 1 de la route, à garder ou à imprimer : l’histoire de Hamo, les mots et la grammaire. Ouvre le PDF.',
   'book.card.sub': '{count} chapitres de la route, à garder ou à imprimer : les histoires de Hamo, les mots et la grammaire. Ouvre le PDF.',
   'tree.card.plant': 'Plante ton arbre',
-  'tree.card.plantSub': 'Fais-le grandir avec l’eau que rapportent tes leçons.',
-  'tree.card.hasWater': 'Tu as de l’eau à verser.',
-  'tree.card.thirstyWater': '{health}. Tu as de l’eau pour lui.',
-  'tree.card.well': 'Il va bien.',
-  'tree.card.thirsty': '{health}. Une leçon donne de l’eau.',
   'tree.profile.title': 'Arbre',
   'tree.results.water': '+{count} eau pour ton arbre',
   // --- Riddles and proverbs (lore/) ---
@@ -32608,7 +32512,6 @@ const nl: Catalog = {
   'practice.hub.noneTitle': 'Oefenen begint met een les',
   'practice.hub.noneBody': 'Rond een les af, dan komt wat je leerde hier terug om te oefenen.',
   'practice.hub.toLessons': 'Naar de lessen',
-  'practice.open.body': 'Je bent halverwege een herhaling gestopt. Je antwoorden tot nu toe zijn bewaard.',
   'practice.open.continue': 'Verder met herhalen',
   'practice.hub.mistakes': 'Fouten',
   'practice.hub.mistakesCount': '{count} om te verbeteren',
@@ -34213,9 +34116,6 @@ const nl: Catalog = {
   'learn.view.lessons': 'Lessen',
   'learn.view.games': 'Spellen',
   'learn.continue.button': 'Doorgaan',
-  'learn.continue.start': 'Begin je eerste les',
-  'learn.continue.allDone': 'Je hebt alle open lessen afgerond',
-  'learn.continue.progress': '{done} van {total} onderdelen klaar',
   'learn.today.title': 'Vandaag',
   'learn.today.goal': 'Vandaag {xp} van {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -34230,7 +34130,6 @@ const nl: Catalog = {
   'learn.tools.due': '{count} woorden te herhalen',
   'learn.tools.dueOne': '1 woord te herhalen',
   'learn.tools.dueNone': 'Nu niets te herhalen',
-  'learn.tools.dictionaryHint': 'Zoek elk woord op',
   'learn.tools.sentenceHint': 'Zet de woorden op volgorde',
   'learn.tools.hearHint': 'Vind wat je hoorde',
   'learn.map.title': 'Cursuskaart',
@@ -34626,7 +34525,6 @@ const nl: Catalog = {
   'nav.alphabet': 'Alfabet',
   'learn.tools.alphabetHint': 'Elke letter en hoe hij klinkt',
   'words.title': 'Letters en woorden',
-  'words.toolHint': 'Letters, kleuren, getallen, dagen, maanden',
   'words.fromAlphabet': 'Leer kleuren, getallen, dagen en maanden',
   'words.lead': 'Begin met de letters, daarna de eerste woorden. Tik op een letter of woord om het te horen.',
   'words.setLead': 'Tik op een woord om het te horen.',
@@ -34825,7 +34723,6 @@ const nl: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'Deze maand',
   'quests.monthly.soFar': '{done} van {possible} tot nu toe deze maand',
-  'learn.more.title': 'Meer voor vandaag',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP bij herhalen',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -35027,11 +34924,6 @@ const nl: Catalog = {
   'book.card.subOne': 'Hoofdstuk 1 van de route, om te bewaren of te printen: Hamo’s verhaal, de woorden en de grammatica. Open de pdf.',
   'book.card.sub': '{count} hoofdstukken van de route, om te bewaren of te printen: Hamo’s verhalen, de woorden en de grammatica. Open de pdf.',
   'tree.card.plant': 'Plant je boom',
-  'tree.card.plantSub': 'Laat hem groeien met het water dat je lessen opleveren.',
-  'tree.card.hasWater': 'Je hebt water om te geven.',
-  'tree.card.thirstyWater': '{health}. Je hebt water voor hem.',
-  'tree.card.well': 'Het gaat goed.',
-  'tree.card.thirsty': '{health}. Een les levert water op.',
   'tree.profile.title': 'Boom',
   'tree.results.water': '+{count} water voor je boom',
   // --- Riddles and proverbs (lore/) ---
@@ -36514,7 +36406,6 @@ const ckb: Catalog = {
   'practice.hub.noneTitle': 'ڕاهێنان بە وانەیەک دەست پێ دەکات',
   'practice.hub.noneBody': 'وانەیەک تەواو بکە، ئەوەی فێری بوویت دەگەڕێتەوە ئێرە بۆ ڕاهێنان.',
   'practice.hub.toLessons': 'بڕۆ بۆ وانەکان',
-  'practice.open.body': 'پێداچوونەوەیەکت لە نیوەدا جێهێشتووە. وەڵامەکانت تا ئێستا پاشەکەوت کراون.',
   'practice.open.continue': 'درێژە بە پێداچوونەوە بدە',
   'practice.hub.mistakes': 'هەڵەکان',
   'practice.hub.mistakesCount': '{count} بۆ ڕاستکردنەوە',
@@ -38119,9 +38010,6 @@ const ckb: Catalog = {
   'learn.view.lessons': 'وانەکان',
   'learn.view.games': 'یارییەکان',
   'learn.continue.button': 'بەردەوام بە',
-  'learn.continue.start': 'یەکەم وانەکەت دەست پێ بکە',
-  'learn.continue.allDone': 'هەموو وانە کراوەکانت تەواو کرد',
-  'learn.continue.progress': '{done} لە {total} بابەت تەواو بوون',
   'learn.today.title': 'ئەمڕۆ',
   'learn.today.goal': 'ئەمڕۆ {xp} لە {goal} XP',
   'learn.today.goalShort': '{xp}/{goal} XP',
@@ -38136,7 +38024,6 @@ const ckb: Catalog = {
   'learn.tools.due': '{count} وشە چاوەڕێی پێداچوونەوەن',
   'learn.tools.dueOne': '1 وشە چاوەڕێی پێداچوونەوەیە',
   'learn.tools.dueNone': 'ئێستا هیچ شتێک چاوەڕێ نییە',
-  'learn.tools.dictionaryHint': 'بەدوای هەر وشەیەکدا بگەڕێ',
   'learn.tools.sentenceHint': 'وشەکان ڕیز بکە',
   'learn.tools.hearHint': 'ئەوەی بیستت بیدۆزەرەوە',
   'learn.map.title': 'نەخشەی خول',
@@ -38532,7 +38419,6 @@ const ckb: Catalog = {
   'nav.alphabet': 'ئەلفوبێ',
   'learn.tools.alphabetHint': 'هەموو پیتێک و دەنگەکەی',
   'words.title': 'پیت و وشە',
-  'words.toolHint': 'پیت، ڕەنگ، ژمارە، ڕۆژ، مانگ',
   'words.fromAlphabet': 'ڕەنگ و ژمارە و ڕۆژ و مانگەکان فێربە',
   'words.lead': 'بە پیتەکان دەست پێ بکە، پاشان یەکەم وشەکان. کرتە لە پیتێک یان وشەیەک بکە بۆ ئەوەی گوێت لێی بێت.',
   'words.setLead': 'کرتە لە وشەیەک بکە بۆ ئەوەی گوێت لێی بێت.',
@@ -38731,7 +38617,6 @@ const ckb: Catalog = {
   'practice.hub.xp': '+{min}–{max} XP',
   'quests.monthly.title': 'ئەم مانگە',
   'quests.monthly.soFar': '{done} لە {possible} تا ئێستا لەم مانگە',
-  'learn.more.title': 'زیاتر بۆ ئەمڕۆ',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP، دووبارە',
   // --- Learn’s Stories group and the library (learn-mobile) ---
@@ -38933,11 +38818,6 @@ const ckb: Catalog = {
   'book.card.subOne': 'بەشی یەکەمی ڕێگاکە، بۆ هەڵگرتن یان چاپکردن: چیرۆکی حەمۆ، وشەکان و ڕێزمان. PDFەکە بکەرەوە.',
   'book.card.sub': '{count} بەشی ڕێگاکە، بۆ هەڵگرتن یان چاپکردن: چیرۆکەکانی حەمۆ، وشەکان و ڕێزمان. PDFەکە بکەرەوە.',
   'tree.card.plant': 'دارەکەت بچێنە',
-  'tree.card.plantSub': 'بەو ئاوەی وانەکانت دەیدەن گەورەی بکە.',
-  'tree.card.hasWater': 'ئاوت هەیە بیڕژێنیت.',
-  'tree.card.thirstyWater': '{health}. ئاوت بۆی هەیە.',
-  'tree.card.well': 'باشە.',
-  'tree.card.thirsty': '{health}. وانەیەک ئاو دەدات.',
   'tree.profile.title': 'دار',
   'tree.results.water': '+{count} ئاو بۆ دارەکەت',
   // --- Riddles and proverbs (lore/) ---

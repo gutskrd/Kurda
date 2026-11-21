@@ -11,50 +11,40 @@ import {
   type NativeSyntheticEvent,
 } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import { isSoraniDialect } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { refreshFelt } from '../feedback/haptics';
 import { ClayButton, ErrorRetry } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { Skeleton, SkeletonText } from '../theme/Skeleton';
-import { Icon, type IconName } from '../theme/Icon';
-import { display, sectionLabel } from '../theme/fonts';
+import { Icon } from '../theme/Icon';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { useTabFocusLoad } from '../navigation/tabFocusLoad';
-import { LessonPath, LessonPathSkeleton, PinnedUnit, UnitFace, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
+import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
 import { courseName } from '../coursemap/courseName';
 import { UnitRailSheet, type RailSection } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { WordOfDayCard } from '../dictionary/WordOfDayCard';
-import { QuestsCard } from '../quests/QuestsCard';
-import { TreeCard } from '../tree/TreeCard';
-import { BookCard } from './BookCard';
-import { EventBanner } from '../events/EventBanner';
 import type { CourseEntry } from '../coursemap/node';
 import type { CourseMap, CourseSummary } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
-import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
 import type { Streak } from '../streak/format';
 import { KeptStreakSheet, useKeptStreak } from '../streak/KeptStreak';
 import { ReminderNudge } from '../push/ReminderNudge';
-import { fraction, nextStep, type NextStep } from './next';
-import { rememberCourseDialect, useCourseDialect } from './courseDialect';
-import { useLessonExercises } from '../practice/useLessonExercises';
+import { nextStep, type NextStep } from './next';
+import { rememberCourseDialect } from './courseDialect';
+import { ActionPill, HeaderButton } from '../navigation/HeaderButton';
 import { pressedDim } from '../theme/motion';
-import { PressableScale } from '../theme/MotionParts';
 
 /**
- * Learn's first half, top to bottom: the next step (one card, one button, with a part-finished review offered
- * under it), the practice tools with today's quests, the course as a lesson path, then the day's extras under "More
- * for today". The path shows one course and one section at a time and draws only the units near the screen; it
- * scrolls to the current skill on first show. Learn's one-at-a-time moments (a kept streak, the reminder banner) show
+ * Learn's lessons: the course as a lesson road, and nothing else. Above it stand the course's name and, under the bell,
+ * a pill of two buttons for the letters and first words and for the dictionary. The road shows one course and one
+ * section at a time and draws only the units near the screen; it scrolls to the current skill on first show, and its
+ * review stop picks up a review left part-way. Learn's one-at-a-time moments (a kept streak, the reminder banner) show
  * here. Pull to refresh reloads the course and, via `onRefresh`, the bar.
  */
 export function LessonsView({
@@ -69,7 +59,7 @@ export function LessonsView({
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const dir = useDirection();
   const reduceMotion = useReducedMotion();
   const tabBarInset = useTabBarInset();
@@ -133,9 +123,6 @@ export function LessonsView({
   // The learner's Kurdish, for whatever else speaks to them in it (learn/courseDialect.ts).
   const dialect = entry?.course.dialect;
   useEffect(() => rememberCourseDialect(dialect), [dialect]);
-  // Exercise availability is asked once the course is known, in its Kurdish; with no course, in the Kurdish last learnt here.
-  const remembered = useCourseDialect();
-  const exercises = useLessonExercises(courses === null ? null : dialect ? (isSoraniDialect(dialect) ? 'ckb' : 'kmr') : remembered);
 
   /*
    * Scrolling to the current skill: the path reports its focus stop's position, the path's place on the page is
@@ -163,8 +150,8 @@ export function LessonsView({
   const tabScroll = useTabBarScroll(useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => setScrollY(e.nativeEvent.contentOffset.y), []));
   const scrolledFor = useRef<string | null>(null);
   /*
-   * Content above the path (the next-step card, a tile's review count) arrives with its own answer and would push
-   * the path down after scrolling. For the few seconds those take, and until the person scrolls, the scroll
+   * Content above the path (the reminder banner, the course's name) arrives with its own answer and would push the
+   * path down after scrolling. For the few seconds those take, and until the person scrolls, the scroll
    * follows the stop. After that the page is theirs: a later card change never pulls it away.
    */
   const touched = useRef(false);
@@ -212,7 +199,7 @@ export function LessonsView({
     scroller.current?.scrollTo({ y: target, animated: !reduceMotion });
   }, [focusY, focus, viewport, courseId, settle, reduceMotion]);
 
-  // Only once the path is on the screen: above it, the card at the top already offers the next lesson.
+  // Only once the path is on the screen.
   const onPath = courseTop !== null && scrollY + viewport - tabBarInset > courseTop;
   const away = focusY === null || viewport === 0 || !onPath ? null : awayFrom(focusY, scrollY, viewport, tabBarInset);
   // Back to the skill to do now, or with none left open, to the furthest point reached.
@@ -322,51 +309,20 @@ export function LessonsView({
       >
         <View style={styles.header}>
           <ReminderNudge hold={kept.pending} />
-          {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
-          {openReview ? <ContinueReview onPress={() => navigation.navigate('Practice', { sessionId: openReview })} /> : null}
-          <View style={styles.tools} testID="learn-tools">
-            {/* Practice's hub, with what review has due on its face. */}
-            <ToolTile
-              icon="review"
-              title={t('practice.title')}
-              detail={
-                due === null
-                  ? ''
-                  : due === 1
-                    ? t('learn.tools.dueOne')
-                    : due > 1
-                      ? t('learn.tools.due', { count: formatNumber(due, locale) })
-                      : t('learn.tools.dueNone')
-              }
-              highlight={(due ?? 0) > 0}
-              onPress={() => navigation.navigate('PracticeHub')}
-            />
-            <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
-            {/* The letters and first words, one way in (WordsScreen): the letters are shown rather than drawn as an icon. */}
-            <ToolTile
-              letters={locale === 'ckb' ? SORANI_TEASER : LATIN_TEASER}
-              title={t('words.title')}
-              detail={t('words.toolHint')}
-              onPress={() => navigation.navigate('Words')}
-            />
-            {/* The lesson exercises with their own screens, while available (practice/exercises.ts); the hub lists them too. */}
-            {exercises.map((e) => (
-              <ToolTile key={e.key} icon={e.icon} title={t(e.title)} detail={t(e.detail)} onPress={() => navigation.navigate(e.route)} />
-            ))}
+          <View style={[styles.top, { flexDirection: dir.row }]}>
+            {courses?.length === 1 && entry ? (
+              <Text style={[styles.courseTitle, dir.free, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
+                {courseName(t, { slug: entry.course.slug, title: entry.map?.course.title ?? entry.course.title })}
+              </Text>
+            ) : (
+              <View style={styles.flex} />
+            )}
+            <LearnTools />
           </View>
-          {/* Today's three quests, slim, under the tools: a chest waiting shows here. */}
-          <QuestsCard />
-          {/* The learner's tree, under the quests: water to pour shows here. */}
-          <TreeCard />
-          {/* And the road on paper, once a chapter is online. */}
-          <BookCard />
         </View>
 
         {courses && courses.length > 0 ? (
           <View style={styles.course} onLayout={(e: LayoutChangeEvent) => setCourseTop(e.nativeEvent.layout.y)}>
-            <Text style={[styles.mapLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
-              {t('learn.map.title')}
-            </Text>
             {courses.length > 1 ? (
               <View style={[styles.switcher, { flexDirection: dir.row }]} accessibilityLabel={t('coursemap.path.courses')}>
                 {courses.map((c) => {
@@ -388,17 +344,13 @@ export function LessonsView({
                 })}
               </View>
             ) : null}
-            {courses.length === 1 ? (
-              <Text style={[styles.courseTitle, dir.free, { color: colors.textPrimary }]} accessibilityRole="header">
-                {entry ? courseName(t, { slug: entry.course.slug, title: entry.map?.course.title ?? entry.course.title }) : null}
-              </Text>
-            ) : null}
             {entry?.map && dueSettled ? (
               <View onLayout={(e: LayoutChangeEvent) => setPathInCourse(e.nativeEvent.layout.y)}>
                 <LessonPath
                   key={entry.course.id}
                   map={entry.map}
                   due={due ?? 0}
+                  openReview={openReview}
                   onFocus={onFocus}
                   onUnits={setUnits}
                   onCourse={setRailSections}
@@ -427,14 +379,6 @@ export function LessonsView({
           <EmptyState title={t('learn.noCourses')} />
         )}
 
-        {/* After the path, the day's extras; today's Zêr and the week's league are at the top of Home, as on the website. */}
-        <View style={styles.more}>
-          <Text style={[styles.mapLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
-            {t('learn.more.title')}
-          </Text>
-          <EventBanner />
-          <WordOfDayCard />
-        </View>
       </ScrollView>
 
       {pinned ? (
@@ -489,164 +433,24 @@ const PIN_HEIGHT = 68;
 /** How long after the path is first centred a card arriving above it may still move the scroll to follow. */
 const FOLLOW_MS = 4000;
 
-/** The next step: course and unit, the lesson's name, the course's progress, and one button. */
-function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
-  const navigation = useNavigation<RootNavigation>();
-  const { colors } = useTheme();
-  const { t, locale } = useI18n();
-  const dir = useDirection();
-  const share = fraction(step.done, step.total);
-  const title = step.kind === 'review' ? t('learn.continue.allDone') : step.skill.title;
-  const button =
-    step.kind === 'start' ? t('learn.continue.start') : step.kind === 'review' ? t('practice.title') : t('learn.continue.button');
-  const go = () => openStep(navigation, step);
-  const progress = t('learn.continue.progress', { done: formatNumber(step.done, locale), total: formatNumber(step.total, locale) });
-
-  return (
-    <View style={[styles.hero, { backgroundColor: colors.surface }]} testID="learn-continue">
-      {/* The chapter's heading in its colour, as the path and the website head it; with everything done, nothing to head. */}
-      {step.kind === 'review' ? null : (
-        <UnitFace number={step.unit.number} title={step.unitTitle} section={step.unit.section} testID="learn-continue-chapter" />
-      )}
-      <Text style={[styles.heroTitle, step.kind === 'review' ? dir.text : dir.free, { color: colors.textPrimary }]} numberOfLines={2} accessibilityRole="header">
-        {title}
-      </Text>
-      <View
-        style={[styles.bar, { backgroundColor: colors.controlTrack }]}
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityLabel={progress}
-        accessibilityValue={{ min: 0, max: step.total, now: step.done }}
-      >
-        {/* Course progress is a place on the road, not a reward: violet, like every progress bar. */}
-        <View style={[styles.barFill, { width: `${Math.round(share * 100)}%`, backgroundColor: colors.primary }, dir.rtl && styles.barFillEnd]} />
-      </View>
-      <Text style={[styles.heroProgress, dir.text, { color: colors.textSecondary }]}>{progress}</Text>
-      <ClayButton label={button} tone="primary" size="large" onPress={go} style={styles.heroButton} />
-    </View>
-  );
-}
-
-/**
- * A review left part-way (GET /practice/due's `open`), offered as on the web: Continue resumes that session with
- * its answers so far, rather than a new review that would leave it unfinished. Its button is the quieter outline,
- * since the card above has the screen's one solid button.
- */
-function ContinueReview({ onPress }: { onPress: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const dir = useDirection();
-  return (
-    <View style={[styles.reviewOpen, { backgroundColor: colors.surface }]} testID="learn-review-open">
-      <View style={[styles.reviewOpenRow, { flexDirection: dir.row }]}>
-        <Icon name="review" size={24} color={colors.textPrimary} />
-        <Text style={[styles.reviewOpenText, dir.text, { color: colors.textPrimary }]}>{t('practice.open.body')}</Text>
-      </View>
-      <ClayButton label={t('practice.open.continue')} tone="primary" variant="outline" onPress={onPress} />
-    </View>
-  );
-}
-
-/** The chapter band's height on the card, one line of eyebrow and one of title. */
-const CHAPTER_BAND = 64;
-
-/** The card while the course loads, line for line at the card's own sizes, so the arriving card matches the placeholder. */
-function ContinueSkeleton(): React.JSX.Element {
-  const { colors } = useTheme();
-  const start = useStartEdge();
-  return (
-    <View style={[styles.hero, { backgroundColor: colors.surface }]}>
-      <Skeleton height={CHAPTER_BAND} radius={radii.lg} />
-      <SkeletonText size={typography.sizes.text} lineHeight={HERO_TITLE_LINE} width="38%" style={start} />
-      <Skeleton height={6} radius={radii.pill} />
-      <SkeletonText size={typography.sizes.text} width={96} style={start} />
-      <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.heroButton} />
-    </View>
-  );
-}
-
-/** The course's heading, its name and the start of its path, while the course is on its way. */
+/** The start of the road, while the course is on its way. */
 function CourseSkeleton(): React.JSX.Element {
-  const start = useStartEdge();
   return (
     <View style={styles.course}>
-      <SkeletonText size={typography.sizes.text} width={96} style={start} />
-      <SkeletonText size={typography.sizes.text} width="56%" style={[start, styles.courseTitleSkeleton]} />
       <LessonPathSkeleton />
     </View>
   );
 }
 
-/** Bars start on the reading edge — the right, in Soranî. */
-function useStartEdge(): { alignItems: 'flex-start' | 'flex-end' } {
-  return { alignItems: useDirection().row === 'row-reverse' ? 'flex-end' : 'flex-start' };
-}
-
-/** display(22) sets 1.12. */
-const HERO_TITLE_LINE = Math.round(typography.sizes.text * typography.displayLineHeight);
-/** ClayButton's large size. */
-const LARGE_BUTTON = 50;
-
-/** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
-const LATIN_TEASER = { text: 'Aa Çç Êê', rtl: false } as const;
-const SORANI_TEASER = { text: 'ئ ب پ چ', rtl: true } as const;
-
-function ToolTile({
-  icon,
-  letters,
-  title,
-  detail,
-  highlight = false,
-  onPress,
-}: {
-  icon?: IconName;
-  /** Letters to show where the icon would be. */
-  letters?: { text: string; rtl: boolean };
-  title: string;
-  detail: string;
-  /** Something is waiting in it (words due), said in the app's violet as well as in words. */
-  highlight?: boolean;
-  onPress: () => void;
-}): React.JSX.Element {
-  const { colors } = useTheme();
-  const dir = useDirection();
+/** The letters and first words, and the dictionary: two buttons in one pill under the bell, drawn as that pill is. */
+function LearnTools(): React.JSX.Element {
+  const navigation = useNavigation<RootNavigation>();
+  const { t } = useI18n();
   return (
-    <PressableScale
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={detail ? `${title}, ${detail}` : title}
-      // A card: it gives under the finger, as the cards on every other screen do.
-      style={[
-        styles.tile,
-        // A column starts on the reading side too.
-        { backgroundColor: colors.surface, alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' },
-      ]}
-    >
-      {letters ? (
-        <Text
-          style={[styles.tileLetters, { color: colors.primary, writingDirection: letters.rtl ? 'rtl' : 'ltr' }]}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          maxFontSizeMultiplier={1.2}
-        >
-          {letters.text}
-        </Text>
-      ) : icon ? (
-        <Icon name={icon} size={24} color={colors.textPrimary} />
-      ) : null}
-      {/*
-        Half a row on a narrow phone fits "Letters and words" on one line in few languages, so the title may take
-        a second line and the text under it a third before truncating.
-      */}
-      <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
-        {title}
-      </Text>
-      {detail ? (
-        <Text style={[styles.tileDetail, dir.text, { color: highlight ? colors.primary : colors.textSecondary }]} numberOfLines={3}>
-          {detail}
-        </Text>
-      ) : null}
-    </PressableScale>
+    <ActionPill>
+      <HeaderButton icon="text" label={t('words.title')} onPress={() => navigation.navigate('Words')} testID="learn-words" />
+      <HeaderButton icon="dictionary" label={t('nav.dictionary')} onPress={() => navigation.navigate('Dictionary')} testID="learn-dictionary" />
+    </ActionPill>
   );
 }
 
@@ -654,31 +458,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, gap: spacing.xs },
   header: { gap: layout.rowGap, marginBottom: spacing.sm },
+  // The course's name at the reading edge and the pill at the far end, under the bell's.
+  top: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
 
-  hero: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm },
-  heroTitle: { ...display(typography.sizes.text) },
-  heroProgress: { fontSize: typography.sizes.text },
-  heroButton: { marginTop: spacing.xs },
-  bar: { height: 6, borderRadius: radii.pill, overflow: 'hidden', alignSelf: 'stretch' },
-  barFill: { height: 6, borderRadius: radii.pill },
-  barFillEnd: { alignSelf: 'flex-end' },
-
-  reviewOpen: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
-  reviewOpenRow: { alignItems: 'center', gap: spacing.sm + 4 },
-  reviewOpenText: { flex: 1, fontSize: typography.sizes.text, lineHeight: 20 },
-
-  // Two to a row: the path is what this screen is for, and the tools sit above it, small.
-  tools: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  tile: { flexGrow: 1, flexBasis: '40%', minHeight: 76, borderRadius: radii.lg, paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.sm + 4, gap: 2 },
-  tileLetters: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, lineHeight: 22 },
-  tileTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
-  tileDetail: { fontSize: typography.sizes.text },
-
-  course: { gap: spacing.sm + 4, marginTop: spacing.md },
-  more: { gap: layout.rowGap, marginTop: spacing.xl },
-  mapLabel: { ...sectionLabel },
-  courseTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
-  courseTitleSkeleton: { marginBottom: spacing.xs },
+  course: { gap: spacing.sm + 4, marginTop: spacing.xs },
+  courseTitle: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   flex: { flex: 1 },
   switcher: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xs },
   chip: { minHeight: MIN_TOUCH_TARGET, maxWidth: '100%', paddingHorizontal: spacing.md, borderRadius: radii.pill, justifyContent: 'center' },

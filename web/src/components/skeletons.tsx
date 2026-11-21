@@ -1027,38 +1027,6 @@ export function PostSkeleton({ withImage = false }: { withImage?: boolean }): Re
   );
 }
 
-/** The course list on Learn: a card per course with its progress and two ways in. */
-export function CourseGridSkeleton({ count = 2 }: { count?: number }): React.JSX.Element {
-  const t = useT();
-  return (
-    <SkeletonRegion label={t('common.loading')} className="learn-courses">
-      {times(count, (i) => (
-        <article className="course-card" key={i}>
-          <span className="lp-chip">
-            <Skeleton line w={56} />
-          </span>
-          <h2 className="course-card-title">
-            <Skeleton line w="58%" />
-          </h2>
-          <div className="course-progress">
-            <div className="course-progress-bar" />
-            <span className="course-progress-text">
-              <Skeleton line w={96} />
-            </span>
-          </div>
-          <p className="course-next">
-            <Skeleton line w="52%" />
-          </p>
-          <div className="course-card-actions">
-            <ButtonBox size="sm" w={96} />
-            <ButtonBox size="sm" w={120} />
-          </div>
-        </article>
-      ))}
-    </SkeletonRegion>
-  );
-}
-
 /** A course's lesson path: the map's head, then the first unit's banner and stops leaning as the path leans. */
 export function CourseMapSkeleton(): React.JSX.Element {
   const t = useT();

@@ -1,4 +1,7 @@
-/** The one next step on the Lessons view and the course's progress. Pure, so the choice is tested apart from the screen. */
+/**
+ * The one next step in a course: the lesson to open next, or practice once every lesson is done (the kept-streak
+ * sheet's button, the next lesson after sign-up). Pure, so it is tested apart from the screen.
+ */
 import { lessonPath, type UnitTone } from '@kurda/shared';
 import type { CourseEntry } from '../coursemap/node';
 import { firstCourse } from '../coursemap/path';
@@ -61,10 +64,4 @@ export function nextStep(courses: readonly CourseEntry[]): NextStep | null {
     }
   }
   return { kind: 'review', courseTitle: entry.map.course.title, ...counts };
-}
-
-/** 0–1, for a progress bar; an empty course is at the start, not halfway. */
-export function fraction(done: number, total: number): number {
-  if (total <= 0) return 0;
-  return Math.max(0, Math.min(1, done / total));
 }

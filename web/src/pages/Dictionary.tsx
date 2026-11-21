@@ -15,6 +15,7 @@ import { SourceLine } from '../dictionary/SourceLine';
 import { pushRecent } from '../dictionary/recents';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import type { SavedWord, SearchResult } from '../dictionary/types';
+import { WordOfDayTool } from '../learn/WordOfDayTool';
 
 /**
  * The dictionary: search as you type against the phone's endpoints, with the same debounce and closest-match fallback.
@@ -127,9 +128,12 @@ export function Dictionary(): React.JSX.Element {
       />
 
       {idle && (
-        <Link to="/app/alphabet" className="doc-link reach-line dict-alphabet">
-          {t('alphabet.link')}
-        </Link>
+        <>
+          <Link to="/app/alphabet" className="doc-link reach-line dict-alphabet">
+            {t('alphabet.link')}
+          </Link>
+          <WordOfDayTool />
+        </>
       )}
 
       {result?.fuzzy ? <p className="muted dict-fuzzy">{t('dictionary.noExactMatch')}</p> : null}

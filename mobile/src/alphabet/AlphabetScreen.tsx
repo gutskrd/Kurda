@@ -220,7 +220,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
             </Text>
             {/* Stacked from the reading side: side by side, the longest overflowed the card in English and German. */}
             <View style={[styles.links, { alignItems: dir.rtl ? 'flex-end' : 'flex-start' }]}>
-              <ClayButton label={t('alphabet.next.dictionary')} icon="text" onPress={() => navigation.navigate('Dictionary')} />
+              <ClayButton label={t('alphabet.next.dictionary')} icon="dictionary" onPress={() => navigation.navigate('Dictionary')} />
               <ClayButton label={t('alphabet.next.wordle')} icon="grid" onPress={() => navigation.navigate('Wordle')} />
               <ClayButton label={t('words.fromAlphabet')} icon="palette" onPress={() => navigation.popTo('Words')} />
             </View>

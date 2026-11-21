@@ -41,6 +41,8 @@ import { EmptyState } from '../theme/EmptyState';
 import { FilterChip, FilterChips } from '../theme/FilterSheet';
 import { Loading } from '../theme/Loading';
 import { DailyCard } from '../daily/DailyCard';
+import { EventBanner } from '../events/EventBanner';
+import { QuestsCard } from '../quests/QuestsCard';
 import { LeagueLine } from '../leagues/LeagueLine';
 import { HeldBanner } from '../reports/HeldNotice';
 
@@ -245,7 +247,10 @@ export function CivakScreen({
                 <Text style={[styles.subtitle, dir.text, { color: colors.textSecondary }]}>{t('civak.subtitle')}</Text>
                 {/* Where a held account lands: what waits and that learning does not. */}
                 <HeldBanner />
+                {/* An event while one runs, then the day: the streak and today's Zêr, today's quests, the week's league. */}
+                <EventBanner />
                 <DailyCard onLearn={() => navigation.navigate('Learn', { view: 'lessons' })} />
+                <QuestsCard />
                 <LeagueLine />
               </View>
               <FriendsRow refreshKey={pulls} />

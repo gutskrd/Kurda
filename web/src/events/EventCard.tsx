@@ -6,7 +6,7 @@ import { useApiGet } from '../lib/useApi';
 import './events.css';
 
 /**
- * The event running now on Learn, as a slim card beside the daily quests, opening its quests (events/EventsPage.tsx).
+ * The event running now on Home, as a slim card above the daily card, opening its quests (events/EventsPage.tsx).
  * Only while an event runs: it takes no room while loading, between events, or when events cannot be read.
  */
 export function EventCard(): React.JSX.Element | null {

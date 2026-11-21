@@ -32,22 +32,6 @@
   color: var(--ink-3);
   font-size: var(--text);
 }
-.learn-courses {
-  display: grid;
-  gap: 16px;
-}
-@media (min-width: 900px) {
-  .learn-courses {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.course-card-link {
-  color: inherit;
-}
-.course-card-link:hover {
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
 .course-progress {
   display: grid;
   gap: 6px;
@@ -71,16 +55,6 @@
 .course-progress-text {
   font-size: var(--text);
   color: var(--ink-3);
-}
-.course-card .course-next {
-  margin: 0;
-  color: var(--ink-2);
-}
-.course-card-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 4px;
 }
 .learn-empty-action {
   margin-top: 18px;

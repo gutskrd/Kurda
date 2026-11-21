@@ -12,7 +12,7 @@ import { useQuestDay } from './useQuestDay';
 import './quests.css';
 
 /**
- * Today's quests on Learn as one slim card: a chest, how many are done and a small bar for each, with a gold dot (and
+ * Today's quests on Home as one slim card: a chest, how many are done and a small bar for each, with a gold dot (and
  * words for screen readers) when a chest waits. It opens a sheet with the quests in full, this month's count, the past
  * week's unopened chests ("Earlier", so none is lost at midnight) and "Open chest". The card keeps its shape while
  * loading, and a failure offers a retry.

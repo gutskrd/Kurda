@@ -1243,22 +1243,7 @@ a.invite-card:hover {
   color: var(--ink-2);
 }
 
-/* ---- learn: the courses (the rest is in learn.css) ------------------------- */
-.course-card {
-  display: grid;
-  gap: 10px;
-  padding: 22px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-xl);
-  background: var(--surface);
-  box-shadow: var(--glass-rim);
-}
-.course-card-title {
-  font-size: var(--text-title);
-}
-.course-card p {
-  color: var(--ink-3);
-}
+/* ---- learn (the rest is in learn.css) -------------------------------------- */
 .lp-status {
   display: inline-flex;
   align-items: center;

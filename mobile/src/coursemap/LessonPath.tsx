@@ -121,6 +121,7 @@ export interface UnitPlace {
 export const LessonPath = memo(function LessonPath({
   map,
   due,
+  openReview = null,
   onFocus,
   onUnits,
   onCourse,
@@ -134,6 +135,8 @@ export const LessonPath = memo(function LessonPath({
 }: {
   map: CourseMap;
   due: number;
+  /** A review left part-way through, which the review stop picks up rather than starting another beside it. */
+  openReview?: string | null;
   onFocus: (focus: PathFocus | null) => void;
   /** Where each unit of the open section lies, once laid out, for the pinned header. */
   onUnits?: (units: UnitPlace[]) => void;
@@ -339,7 +342,8 @@ export const LessonPath = memo(function LessonPath({
   };
   const review = () => {
     setCard(null);
-    navigation.navigate('Practice');
+    if (openReview) navigation.navigate('Practice', { sessionId: openReview });
+    else navigation.navigate('Practice');
   };
 
   // One stable object per stop for the whole return, so each stop plays its change once.
@@ -430,6 +434,7 @@ export const LessonPath = memo(function LessonPath({
   const actions: StopActions = {
     onLesson: lesson,
     onReview: review,
+    reviewOpen: Boolean(openReview),
     onPractise: (unitId) => {
       setCard(null);
       navigation.navigate('Practice', { mode: 'unit', unitId });
