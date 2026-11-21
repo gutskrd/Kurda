@@ -21,9 +21,11 @@ import {
   glanceTarget,
   leanToward,
   lookToward,
+  partInDepth,
   pickAct,
   reactionAct,
   rigLayer,
+  rigNeck,
   sampleKeys,
   skullClip,
   speakingFrame,
@@ -105,19 +107,21 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     BROW_STATES.map((b) => `<g data-brows="${b}"${b === 'neutral' ? '' : hidden}>${own(art.brows?.states[b] ?? '')}</g>`).join('') +
     (art.cheeks ? `<g data-cheeks="blush"${hidden}>${own(art.cheeks.blush)}</g>` : '');
   const hair = art.hair ? `<g data-sc="hair"${about(art.hair.pivot)}>${own(art.hair.art)}</g>` : '';
-  const ear = (side: 'left' | 'right'): string => `<g data-sc="ear-${side}"${about(rig!.ears[side].pivot)}>${own(rig!.ears[side].art)}</g>`;
+  const ear = (side: 'left' | 'right', inner = own(rig!.ears[side].art)): string => `<g data-sc="ear-${side}"${about(rig!.ears[side].pivot)}>${inner}</g>`;
   // Drawn to turn, the antlers and ears are groups the page turns (shared head-turn.ts), and every shape of the face is
   // a piece the page places as the whole head turns (head-round.ts).
   const round = turnable && rig?.antlers && rig.faceLayers ? rig.antlers : null;
   const turned = (name: string, inner: string): string => `<g data-turn="${name}">${inner}</g>`;
   // Turning, every shape of his face rides on its piece of his head (`data-piece`), placed by the page as he turns,
-  // what lies on his face kept within his outline.
+  // what lies on his face kept within his outline; the ears and antlers show their depth (`data-sink`), and the neck
+  // rides round under the head (`data-neck`).
   const clipId = `${prefix}-turnface`;
+  const deep = (name: string, part: 'ear' | 'antler', markup: string): string => partInDepth(own(markup), part, `${clipId}-${name}`);
   const head = round
-    ? turned('antler-left', own(round.left.art)) +
-      turned('antler-right', own(round.right.art)) +
-      turned('ear-left', ear('left')) +
-      turned('ear-right', ear('right')) +
+    ? turned('antler-left', deep('antler-left', 'antler', round.left.art)) +
+      turned('antler-right', deep('antler-right', 'antler', round.right.art)) +
+      turned('ear-left', ear('left', deep('ear-left', 'ear', rig!.ears.left.art))) +
+      turned('ear-right', ear('right', deep('ear-right', 'ear', rig!.ears.right.art))) +
       skullClip(clipId) +
       rigLayer(own(rig!.faceLayers!.outline), 'outline', clipId)
     : rig
@@ -157,7 +161,7 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     (mirrored ? `<g transform="matrix(-1 0 0 1 ${2 * frame.x + frame.w} 0)">` : '<g>') +
     shadow +
     `<g class="sc-breathe"${about(feet)}><g data-sc="wiggle"${about(feet)}><g data-sc="hop"${about(feet)}>` +
-    own(cropBody(art, crop)) +
+    (round && crop === 'head' ? rigNeck(own(cropBody(art, crop))) : own(cropBody(art, crop))) +
     `<g data-sc="head"><g class="sc-drift"${about(art.headPivot)}><g data-sc="tilt"${about(art.headPivot)}>` +
     head +
     (round

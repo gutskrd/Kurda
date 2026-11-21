@@ -54,7 +54,7 @@ import { useGaze } from './gaze';
 import { useDrawingIds } from './drawingIds';
 import type { Turn } from './headTurnMotion';
 import { characterLayers, irisesMoved, type CharacterCrop, type Share } from './layers';
-import { TurnedHead } from './TurnedHead';
+import { TurnedHead, TurnedNeck } from './TurnedHead';
 import type { PlaybackClock } from './voice';
 
 export { CHARACTER_SIZE, knownVoice, type PlaybackClock } from './voice';
@@ -717,7 +717,11 @@ export function SpeakingCharacter({
           </Animated.View>
         ) : null}
         <Animated.View style={[StyleSheet.absoluteFill, figure]}>
-          <Layer xml={layers.body} width={width} height={height} />
+          {turn && rig?.antlers && crop === 'head' ? (
+            <TurnedNeck xml={layers.body} turn={turn} width={width} height={height} />
+          ) : (
+            <Layer xml={layers.body} width={width} height={height} />
+          )}
           <Animated.View style={[StyleSheet.absoluteFill, nod]}>
             {turn && rig?.antlers ? (
               <TurnedHead

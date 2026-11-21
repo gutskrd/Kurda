@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { characterArt, roundLayer, roundPoint, turnStep, type BrowState, type EyeState, type MouthShape } from '@kurda/shared';
+import { characterArt, roundLayer, roundNeck, roundPart, roundPoint, turnStep, type BrowState, type EyeState, type MouthShape } from '@kurda/shared';
 import { useDrawingIds } from './drawingIds';
 import { partStyles, type Turn } from './headTurnMotion';
 import type { CharacterLayers } from './layers';
@@ -21,9 +21,16 @@ function useTurnStep(turn: Turn): number {
   return step;
 }
 
+/** The deer's neck riding round under his head as it turns (shared head-round.ts), at the step `turn` has reached. */
+export function TurnedNeck({ xml, turn, width, height }: { xml: string; turn: Turn; width: number; height: number }): React.JSX.Element {
+  const step = useTurnStep(turn);
+  return <Layer xml={roundNeck(xml, step)} width={width} height={height} />;
+}
+
 /**
  * The deer's head turned aside as a whole (shared head-round.ts), laid as the speaking character lays it: the antlers
- * and ears behind, turning on the native driver; then his outline, what lies on his face, his eyes with their pupils,
+ * and ears behind, turning on the native driver and showing their depth at the step reached (an ear's back and hollow,
+ * an antler's far side); then his outline, what lies on his face, his eyes with their pupils,
  * lids and brows, and his muzzle with the mouth and nose, each shape kept as drawn and moved with the piece of his head
  * it sits on at the step `turn` has reached, his face within his outline. The player passes what moves of its own: the
  * pupils' look, the ears' twitch and the nose's sniff.
@@ -77,10 +84,10 @@ export function TurnedHead({
   );
   return (
     <>
-      {at(style.antlerLeft, antlers.left)}
-      {at(style.antlerRight, antlers.right)}
-      <Animated.View style={[StyleSheet.absoluteFill, style.earLeft]}>{at(ears?.left, rig.earLeft)}</Animated.View>
-      <Animated.View style={[StyleSheet.absoluteFill, style.earRight]}>{at(ears?.right, rig.earRight)}</Animated.View>
+      {at(style.antlerLeft, roundPart(antlers.left, step, 'antler', `${clip}-antler-left`))}
+      {at(style.antlerRight, roundPart(antlers.right, step, 'antler', `${clip}-antler-right`))}
+      <Animated.View style={[StyleSheet.absoluteFill, style.earLeft]}>{at(ears?.left, roundPart(rig.earLeft, step, 'ear', `${clip}-ear-left`))}</Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, style.earRight]}>{at(ears?.right, roundPart(rig.earRight, step, 'ear', `${clip}-ear-right`))}</Animated.View>
       <Layer xml={roundLayer(parts.outline, step, 'outline')} width={width} height={height} />
       <Layer xml={fur(parts.features)} width={width} height={height} />
       <Layer xml={eye(rig.whites)} width={width} height={height} />

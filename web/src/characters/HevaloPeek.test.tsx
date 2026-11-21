@@ -141,11 +141,22 @@ describe('HevaloPeek', () => {
     expect(container.querySelectorAll('[data-round] ellipse, [data-round] circle')).toHaveLength(0);
     expect(container.querySelectorAll('[data-eyes="closed"]')).toHaveLength(1);
     expect(noseX(container)).toBeCloseTo(art.rig!.sniff.x, 0);
+    // Facing us, his muzzle's side and the backs of his ears and antlers are hidden; his neck is marked to bend.
+    expect(container.querySelector('[data-shape="snout"]')!.getAttribute('display')).toBe('none');
+    const behind = [...container.querySelectorAll('[data-behind]')];
+    expect(behind.length).toBeGreaterThan(4);
+    for (const g of behind) expect(g.getAttribute('display')).toBe('none');
+    const neckTop = (): string => container.querySelector('[data-neck="neck"]')!.getAttribute('d') ?? '';
+    const restNeck = neckTop();
     for (let i = 0; i < 12; i++) {
       window.dispatchEvent(Object.assign(new Event('devicemotion'), { rotationRate: { alpha: 0, beta: 0, gamma: 150 } }));
       await act(() => new Promise((r) => setTimeout(r, 40)));
     }
     await waitFor(() => expect(noseX(container)).toBeGreaterThan(280), { timeout: 3000 });
+    // Turned, they come into view, and his neck rides round under his head.
+    expect(container.querySelector('[data-shape="snout"]')!.hasAttribute('display')).toBe(false);
+    for (const g of behind) expect(g.hasAttribute('display')).toBe(false);
+    expect(neckTop()).not.toBe(restNeck);
     // The antlers, behind the middle of his head, go the other way.
     expect(container.querySelector('[data-turn="antler-left"]')!.getAttribute('transform')).toMatch(/^translate\((-?[\d.]+)/);
     cleanup();

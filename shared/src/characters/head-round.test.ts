@@ -7,26 +7,34 @@ import {
   PART_GROUPS,
   PEEK_TURN,
   SKULL,
+  SNOUT_FILLS,
+  bentNeck,
   characterArt,
   eyesFor,
   headParts,
   mapPath,
   headPiece,
-  muzzleSide,
+  partInDepth,
   partTransforms,
   peekParts,
   pieceTransform,
   placePiece,
   readPiece,
   rigLayer,
+  rigNeck,
   roundLayer,
+  roundNeck,
+  roundPart,
   roundPoint,
+  sinkTransform,
+  snoutSlices,
   stepYaw,
   turnStep,
   turnedHead,
+  turnedNeck,
   type RoundLayer,
 } from '../index.js';
-import { HEVALO_SILHOUETTE, headHalfWidth, hevaloKnots } from './hevalo.js';
+import { HEVALO_SILHOUETTE, headHalfWidth } from './hevalo.js';
 
 const art = characterArt('hevalo');
 const rig = art.rig!;
@@ -88,9 +96,9 @@ describe('Hevalo’s head turned as a whole', () => {
 
   it('redraws his outline for the turn: the round of his skull stays, his jaw and chin come round the way he turns', () => {
     expect(turnedHead(0)).toBe(HEVALO_SILHOUETTE.head);
-    const knots = hevaloKnots('head');
-    const turned = (mapPath(turnedHead(yaw), (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => pair.split(',').map(Number));
-    expect(turned.length).toBeGreaterThan(knots.length);
+    const points = (d: string): number[][] => (mapPath(d, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => pair.split(',').map(Number));
+    const turned = points(turnedHead(yaw));
+    expect(Math.abs(turned.length - points(HEVALO_SILHOUETTE.head).length)).toBeLessThan(10);
     // The widest point of his skull, at eye height, stays where it was on both sides.
     const atEyes = (side: 1 | -1): number => Math.max(...turned.filter(([, y]) => Math.abs(y! - 288) < 6).map(([x]) => side * (x! - HEAD_RIG.centre.x)));
     expect(atEyes(1)).toBeCloseTo(headHalfWidth(288, 'right'), -1);
@@ -101,18 +109,81 @@ describe('Hevalo’s head turned as a whole', () => {
     expect(turnedHead(yaw)).toBe(turnedHead(yaw));
   });
 
-  it('brings the side of his muzzle into view only as he turns, fading into his fur where it meets his face', () => {
-    expect(muzzleSide(0)).toBeNull();
-    const right = muzzleSide(yaw)!;
-    const left = muzzleSide(-yaw)!;
-    expect(right.d).toMatch(/^M[\d.,L-]+z$/);
-    // Turning to our right, the side shows on our left of the muzzle's front, fading out further left.
-    expect(right.from).toBeLessThan(right.to);
-    expect(left.from).toBeGreaterThan(left.to);
+  it('builds the side of his muzzle out of his face as he turns, darker where it meets his face', () => {
+    expect(snoutSlices(0)).toEqual([]);
+    const slices = snoutSlices(yaw);
+    expect(slices).toHaveLength(SNOUT_FILLS.length);
+    const placed = slices.map((t) => t.match(/[\d.-]+/g)!.map(Number));
+    // From his face to its front, each slice comes further round and narrows toward the muzzle's front as drawn.
+    const centre = ([w, , , , e]: number[]): number => e! + w! * HEAD_RIG.muzzle.x;
+    for (let i = 1; i < placed.length; i++) {
+      expect(centre(placed[i]!)).toBeGreaterThan(centre(placed[i - 1]!));
+      expect(placed[i]![0]!).toBeLessThan(placed[i - 1]![0]!);
+    }
+    expect(centre(placed.at(-1)!)).toBeLessThan(placePiece(muzzle, yaw).x);
+    // Mirrored either way, and only a little wider than its front on a small turn, so it grows out of his face.
+    expect(centre(snoutSlices(-yaw)[0]!.match(/[\d.-]+/g)!.map(Number))).toBeCloseTo(2 * HEAD_RIG.centre.x - centre(placed[0]!), 0);
+    expect(Number(snoutSlices(stepYaw(1))[0]!.match(/[\d.-]+/)![0])).toBeLessThan(1.01);
+    const shade = (hex: string): number => parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(3, 5), 16) + parseInt(hex.slice(5, 7), 16);
+    expect(shade(SNOUT_FILLS[0]!)).toBeLessThan(shade(SNOUT_FILLS.at(-1)!));
+    // Drawn under the muzzle's front, each slice its outline.
     const turned = roundLayer(rig.faceLayers!.features, FULL, 'fur', 'face');
-    expect(turned.indexOf('id="face-side"')).toBeGreaterThan(-1);
-    expect(turned.indexOf('id="face-side"')).toBeLessThan(turned.indexOf('muzzle)"'));
-    expect(hevaloKnots('muzzle').length).toBeGreaterThan(8);
+    const front = turned.indexOf('muzzle)"');
+    for (const t of slices) expect(turned.indexOf(`<path transform="${t}"`)).toBeGreaterThan(-1);
+    expect(turned.indexOf(`<path transform="${slices.at(-1)}"`)).toBeLessThan(front);
+  });
+
+  it('shows the depth of his ears and antlers as he turns: an ear’s back and hollow, an antler’s far side', () => {
+    const ear = rig.ears.left.art;
+    expect(roundPart(ear, 0, 'ear', 'rim')).toBe(ear);
+    const deep = roundPart(ear, FULL, 'ear', 'rim');
+    expect(deep).toBe(roundPart(ear, FULL, 'ear', 'rim'));
+    // Its back, in its own colour, beside its rim; its hollow set back within the rim.
+    expect(deep).toContain(`<g transform="${sinkTransform(HEAD_RIG.ear.back, yaw)}"><path d=`);
+    expect(deep).toContain(`fill="${HEAD_RIG.ear.colour}"`);
+    expect(deep).toMatch(/<clipPath id="rim"><path d="M[^"]+"\/><\/clipPath>/);
+    expect(deep).toContain(`<g clip-path="url(#rim)"><g transform="${sinkTransform(HEAD_RIG.ear.hollow, yaw)}">`);
+    expect(sinkTransform(10, yaw)).toMatch(/^translate\(-[\d.]+ 0\)$/);
+    expect(sinkTransform(10, -yaw)).toMatch(/^translate\([\d.]+ 0\)$/);
+    // An antler's far side: copies of its outline stepping back, its highlights left off.
+    const antler = roundPart(rig.antlers!.left.art, FULL, 'antler', 'a');
+    expect((antler.match(new RegExp(`fill="${HEAD_RIG.antler.colour}"`, 'g')) ?? []).length).toBe(HEAD_RIG.antler.copies * 2);
+    expect(antler).toContain(`<g transform="${sinkTransform(HEAD_RIG.antler.far, yaw)}">`);
+    // For a player: what sits back marked with how far, what shows only turned hidden facing us.
+    const marked = partInDepth(ear, 'ear', 'rim');
+    expect(marked).toContain(`<g data-sink="${HEAD_RIG.ear.back}" data-behind display="none">`);
+    expect(marked).toContain(`<g clip-path="url(#rim)"><g data-sink="${HEAD_RIG.ear.hollow}">`);
+    expect((partInDepth(rig.antlers!.left.art, 'antler', 'a').match(/data-behind display="none"/g) ?? []).length).toBe(HEAD_RIG.antler.copies);
+  });
+
+  it('carries his neck round under his turned head, easing into his chest, its shading as drawn', () => {
+    const body = art.neck!.body;
+    expect(turnedNeck(body, 0)).toBe(body);
+    expect(roundNeck(body, 0)).toBe(body);
+    const shift = placePiece(SKULL, yaw).x - HEAD_RIG.centre.x;
+    const turned = turnedNeck(body, yaw);
+    expect(turned).not.toMatch(/NaN|Infinity/);
+    // Every gradient stays as drawn, so the shading never tilts.
+    expect(turned.match(/<linearGradient\b[^>]*>/g)).toEqual(body.match(/<linearGradient\b[^>]*>/g));
+    // The top of his neck rides with his head; down at his chest it is as drawn.
+    const fur = (markup: string): number[][] =>
+      (mapPath(markup.match(/<path d="([^"]+)" fill="url\(#hvhevalo-fur\)"/)![1]!, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((p) => p.split(',').map(Number));
+    const left = (pts: number[][], from: number, to: number): number => Math.min(...pts.filter(([, y]) => y! > from && y! < to).map(([x]) => x!));
+    expect(left(fur(turned), 390, 420) - left(fur(body), 390, 420)).toBeCloseTo(shift, 0);
+    expect(left(fur(turned), 640, 720)).toBeCloseTo(left(fur(body), 640, 720), 1);
+    // His throat turns a little further, within his outline.
+    expect(turned).toMatch(/<g clip-path="url\(#hvhevalo-figure\)"><path d="[^"]+" fill="url\(#hvhevalo-bib\)"\/><\/g>/);
+    expect(roundNeck(`<svg viewBox="0 0 1 1">${body}</svg>`, FULL)).toBe(`<svg viewBox="0 0 1 1">${turned}</svg>`);
+    // For a player: each shape a path marked to bend, drawn the same as the turned neck.
+    const rigged = rigNeck(body);
+    expect(rigged).not.toContain('<ellipse');
+    expect((rigged.match(/data-neck="throat"/g) ?? []).length).toBe(1);
+    const bent = [...rigged.matchAll(/<path data-neck="(neck|throat)" d="([^"]+)"/g)].map((m) => bentNeck(m[2]!, yaw, m[1] === 'throat'));
+    expect(bent.length).toBe((turned.match(/<path\b/g) ?? []).length);
+    expect(left(fur(rigged.replace(/ data-neck="[a-z]+"/g, '').replace(/d="[^"]+"(?= fill="url\(#hvhevalo-fur\)")/, `d="${bent[2]}"`)), 390, 420)).toBeCloseTo(
+      left(fur(turned), 390, 420),
+      1,
+    );
   });
 
   it('turns his ears and antlers with him, each on its own: the near ones open out, the far ones narrow', () => {
@@ -191,11 +262,12 @@ describe('Hevalo’s head turned as a whole', () => {
 
   it('marks each piece for a player that places them as he turns, the same places as a drawn turn', () => {
     const marked = rigLayer(rig.faceLayers!.features, 'fur', 'face');
-    expect(marked).toContain('data-shape="muzzle-side"');
+    expect(marked).toContain('<g data-shape="snout" display="none"><path d=');
+    expect((marked.match(/<g data-shape="snout"[^>]*>(<path [^>]*\/>)+<\/g>/)![0].match(/<path/g) ?? []).length).toBe(SNOUT_FILLS.length);
     expect(rigLayer(rig.faceLayers!.outline, 'outline', 'face')).toContain('data-shape="head"');
     const pieces = [...marked.matchAll(/data-piece="([^"]+)"/g)].map((m) => readPiece(m[1]!));
     expect(pieces.length).toBeGreaterThan(5);
-    const baked = transforms(roundLayer(rig.faceLayers!.features, FULL, 'fur')).filter((t) => t !== pieceTransform(SKULL, yaw));
+    const baked = transforms(roundLayer(rig.faceLayers!.features, FULL, 'fur')).filter((t) => t !== pieceTransform(SKULL, yaw) && !snoutSlices(yaw).includes(t));
     expect(new Set(pieces.map((p) => pieceTransform(p, yaw)))).toEqual(new Set(baked));
     expect(readPiece('skull')).toEqual(SKULL);
   });

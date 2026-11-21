@@ -1,6 +1,6 @@
-import { mapRuns, pathRuns } from '../art/warp.js';
+import { mapMarkup, mapPath, mapRuns, pathRuns } from '../art/warp.js';
 import { headParts, type HeadParts } from './head-turn.js';
-import { HEVALO_SILHOUETTE, headHalfWidth, hevaloKnots, hevaloShape } from './hevalo.js';
+import { HEVALO_SILHOUETTE, headHalfWidth, hevaloHead } from './hevalo.js';
 import { PEEK_TURN } from './peek-lean.js';
 import type { CharacterArt, CharacterPoint } from './types.js';
 
@@ -10,9 +10,10 @@ import type { CharacterArt, CharacterPoint } from './types.js';
  * head's cross-sections, a round skull whose jaw and snout reach forward, so the jaw comes round on the side he turns
  * to. Every shape of his face keeps its own shape and rides on a piece set at a depth on his head (each eye with its lid
  * and socket, each freckle), moving with the point it sits on and seen nearer or further, so the far eye is a little
- * smaller. His muzzle is a block standing out of his face: its front, with the nose and mouth, faces where he looks and
- * swings out furthest, and its side comes into view. His ears and antlers turn on their own as well (head-turn.ts).
- * What lies on his face stays within his outline. In his own units.
+ * smaller. His muzzle stands out of his face: its front, with the nose and mouth, faces where he looks and swings out
+ * furthest, and its side comes into view, built up from his face to its front. His ears and antlers turn on their own
+ * (head-turn.ts) and show their depth, and his neck rides round under his head. What lies on his face stays within his
+ * outline. In his own units.
  */
 export const HEAD_RIG = {
   /** the middle of his skull, where his outline sits */
@@ -24,12 +25,13 @@ export const HEAD_RIG = {
   /** each eye's middle, how near a shape's middle must be to ride on that eye, and how far the eyes stand proud */
   eyes: { left: { x: 177.5, y: 281 }, right: { x: 329.5, y: 281 }, reach: 50, lift: 6 },
   /**
-   * The muzzle: its middle, how far its front stands out, and how far back its sides run into his face; shapes within
-   * `across` of its upright line and below `top` ride on its front.
+   * The muzzle: its middle, how far its front stands out, how far back its sides run into his face, and how much wider
+   * it is there than at its front, seen fully turned; shapes within `across` of its upright line and below `top` ride on
+   * its front.
    */
-  muzzle: { x: 255, y: 404, depth: 170, back: 90, across: 40, top: 360 },
-  /** the colour of the muzzle's side, its edge colour, fading into his fur where it meets his face */
-  muzzleSide: '#dca874',
+  muzzle: { x: 255, y: 404, depth: 170, back: 70, taper: 1.18, across: 40, top: 360 },
+  /** the muzzle's side as slices of its outline, darker where it meets his face and lighter toward its front */
+  snout: { slices: 20, back: [168, 106, 54], front: [214, 160, 106] },
   /** where his jaw starts reaching forward below his eyes, and where it reaches as far as the muzzle */
   jaw: { from: 330, full: 405 },
   /** how far away we see him from, for the far side to be smaller and the near side larger */
@@ -40,6 +42,15 @@ export const HEAD_RIG = {
   /** how far his ears and antlers face out to their sides, so how much each turns with him (head-turn.ts) */
   earOut: 38,
   antlerOut: 32,
+  /** how far an ear's back and the hollow inside it sit behind its rim, and the colour of its back */
+  ear: { back: 16, hollow: 18, colour: '#8a4f22' },
+  /** how far an antler's far side sits behind its near one, drawn as that many copies of its outline, and its colour */
+  antler: { far: 16, copies: 4, colour: '#2b1712' },
+  /**
+   * His neck rides round with his head down to `top` and eases into his chest by `bottom`; the light front of his
+   * throat turns `throat` further, as a neck twists.
+   */
+  neck: { top: 430, bottom: 620, throat: 15 },
 } as const;
 
 /** What a layer of his head is drawn on: his outline, what lies on his face (and his muzzle, nose and mouth), or his eyes. */
@@ -112,16 +123,6 @@ export function pieceTransform(piece: HeadPiece, yaw: number): string {
   return `matrix(${f3(p.wide)} 0 0 ${f3(p.tall)} ${f3(p.x - p.wide * piece.x)} ${f3(p.y - p.tall * piece.y)})`;
 }
 
-/** A point `depth` in front of his skull's middle seen with his head turned `yaw` radians aside: turned about his neck, nearer looking bigger. */
-export function projectPoint(x: number, y: number, depth: number, yaw: number): CharacterPoint {
-  const across = x - R.centre.x;
-  const deep = depth + R.pivot;
-  const turnedAcross = across * Math.cos(yaw) + deep * Math.sin(yaw);
-  const turnedDeep = deep * Math.cos(yaw) - across * Math.sin(yaw);
-  const near = (R.distance - deep) / (R.distance - turnedDeep);
-  return { x: R.centre.x + turnedAcross * near, y: R.centre.y + (y - R.centre.y) * near };
-}
-
 const smoothstep = (from: number, to: number, v: number): number => {
   const t = Math.max(0, Math.min(1, (v - from) / (to - from)));
   return t * t * (3 - 2 * t);
@@ -152,7 +153,7 @@ export function turnedHead(yaw: number): string {
   if (d === undefined) {
     const cos = Math.cos(yaw);
     const sin = Math.sin(yaw);
-    d = hevaloShape('head', (x, y) => {
+    d = hevaloHead((x, y) => {
       const { half, middle, deep } = section(y);
       const ratio = deep / Math.max(1, half);
       return [R.centre.x + middle * sin + (x - R.centre.x) * Math.sqrt(cos * cos + ratio * ratio * sin * sin), y];
@@ -163,49 +164,39 @@ export function turnedHead(yaw: number): string {
   return d;
 }
 
-/** The knots of his muzzle's outline, as drawn. */
-const MUZZLE_KNOTS = hevaloKnots('muzzle');
+const DEG = Math.PI / 180;
+const hex = (rgb: readonly number[]): string => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
+
+/** Each slice of his muzzle's side, from where it meets his face toward its front. */
+export const SNOUT_FILLS: readonly string[] = Array.from({ length: R.snout.slices }, (_, i) =>
+  hex(R.snout.back.map((v, j) => v + (R.snout.front[j]! - v) * (i / R.snout.slices))),
+);
 
 /**
- * The side of his muzzle with his head turned `yaw` radians aside: the outline round its front (as the muzzle's piece
- * draws it) and where it runs into his face, and where across its colour fades from its front edge (`to`) into his fur
- * (`from`). None facing us.
+ * The side of his muzzle with his head turned `yaw` radians aside, as its outline in slices from where it meets his
+ * face to its front: each slice as a transform of the muzzle's front as drawn (`SNOUT_FILLS` colours them). Wider
+ * toward his face the further he turns, so it grows out of his face from facing us; none facing us.
  */
-export function muzzleSide(yaw: number): { d: string; from: number; to: number } | null {
-  if (yaw === 0) return null;
-  const front = placePiece(headPiece(R.muzzle, 'fur'), yaw);
+export function snoutSlices(yaw: number): string[] {
+  if (yaw === 0) return [];
   const m = R.muzzle;
-  const fronts = MUZZLE_KNOTS.map((k) => ({ x: front.x + (k.x - m.x) * front.wide, y: front.y + (k.y - m.y) * front.tall }));
-  const backs = MUZZLE_KNOTS.map((k) => projectPoint(m.x + (k.x - m.x) * 1.04, k.y, m.back, yaw));
-  const outline = hull([...fronts, ...backs]);
-  const edge = (pts: CharacterPoint[]): number => (yaw > 0 ? Math.min(...pts.map((p) => p.x)) : Math.max(...pts.map((p) => p.x)));
-  return { d: `M${outline.map((p) => `${f3(p.x)},${f3(p.y)}`).join('L')}z`, from: edge(backs), to: edge(fronts) };
+  const turned = Math.min(1, Math.abs(yaw) / (PEEK_TURN.yawDeg * DEG));
+  return SNOUT_FILLS.map((_, i) => {
+    const t = i / R.snout.slices;
+    const at = placePiece({ x: m.x, y: m.y, depth: m.back + (m.depth - m.back) * t, narrow: R.narrowMuzzle, within: false }, yaw);
+    const wider = 1 + (m.taper - 1) * (1 - t) * turned;
+    const wide = at.wide * wider;
+    const tall = at.tall * wider;
+    return `matrix(${f3(wide)} 0 0 ${f3(tall)} ${f3(at.x - wide * m.x)} ${f3(at.y - tall * m.y)})`;
+  });
 }
 
-/** The convex hull of some points, round in order. */
-function hull(points: CharacterPoint[]): CharacterPoint[] {
-  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
-  const cross = (o: CharacterPoint, a: CharacterPoint, b: CharacterPoint): number => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
-  const half = (pts: CharacterPoint[]): CharacterPoint[] => {
-    const out: CharacterPoint[] = [];
-    for (const p of pts) {
-      while (out.length >= 2 && cross(out[out.length - 2]!, out[out.length - 1]!, p) <= 0) out.pop();
-      out.push(p);
-    }
-    return out.slice(0, -1);
-  };
-  return [...half(sorted), ...half([...sorted].reverse())];
-}
-
-/** The muzzle's side as markup, under the gradient `id`, for a layer drawn turned; `null` facing us. */
-function sideMarkup(yaw: number, id: string): string {
-  const side = muzzleSide(yaw);
-  if (!side) return '';
-  return (
-    `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${f3(side.from)}" y1="0" x2="${f3(side.to)}" y2="0">` +
-    `<stop offset="0" stop-color="${R.muzzleSide}" stop-opacity="0"/><stop offset="0.55" stop-color="${R.muzzleSide}" stop-opacity="0.6"/>` +
-    `<stop offset="1" stop-color="${R.muzzleSide}"/></linearGradient></defs><path d="${side.d}" fill="url(#${id})"/>`
-  );
+/** The muzzle's side under its front `el`, for a layer drawn turned; nothing facing us. */
+function snoutMarkup(el: string, yaw: number): string {
+  const d = el.match(/\sd="([^"]*)"/)?.[1] ?? '';
+  return snoutSlices(yaw)
+    .map((transform, i) => `<path transform="${transform}" d="${d}" fill="${SNOUT_FILLS[i]}"/>`)
+    .join('');
 }
 
 /** His antlers and ears turned with his head, `share` of a full turn aside, riding round his neck (head-turn.ts). */
@@ -343,52 +334,164 @@ const drawn = new Map<string, string>();
  */
 export function roundLayer(markup: string, step: number, layer: RoundLayer, clipId?: string): string {
   if (step === 0 || !markup) return markup;
-  const key = `${layer}${step}|${clipId ?? ''}|${markup}`;
+  return keep(`${layer}${step}|${clipId ?? ''}|${markup}`, () => {
+    const yaw = stepYaw(step);
+    return insideRoot(markup, (body) => {
+      let clipped = false;
+      const within = (g: string): string => {
+        if (!clipId) return g;
+        clipped = true;
+        return `<g clip-path="url(#${clipId})">${g}</g>`;
+      };
+      const pieces = onPieces(body, layer, (el, piece) => {
+        // His outline is redrawn for the turn before it is carried round his neck.
+        const shape = piece === SKULL ? el.replace(/\sd="[^"]*"/, ` d="${turnedHead(yaw)}"`) : el;
+        const g = `<g transform="${pieceTransform(piece, yaw)}">${shape}</g>`;
+        // The muzzle's side comes into view under its front.
+        return (isMuzzle(el) ? snoutMarkup(el, yaw) : '') + (piece.within ? within(g) : g);
+      });
+      return (clipped ? skullClip(clipId!, yaw) : '') + pieces;
+    });
+  });
+}
+
+/** Kept as made, with `key`, among the drawings kept lately. */
+function keep(key: string, make: () => string): string {
   const kept = drawn.get(key);
   if (kept !== undefined) {
     drawn.delete(key);
     drawn.set(key, kept);
     return kept;
   }
-  const yaw = stepYaw(step);
-  const made = insideRoot(markup, (body) => {
-    let clipped = false;
-    const within = (g: string): string => {
-      if (!clipId) return g;
-      clipped = true;
-      return `<g clip-path="url(#${clipId})">${g}</g>`;
-    };
-    const pieces = onPieces(body, layer, (el, piece) => {
-      // His outline is redrawn for the turn before it is carried round his neck.
-      const shape = piece === SKULL ? el.replace(/\sd="[^"]*"/, ` d="${turnedHead(yaw)}"`) : el;
-      const g = `<g transform="${pieceTransform(piece, yaw)}">${shape}</g>`;
-      // The muzzle's side comes into view under its front.
-      const side = isMuzzle(el) ? within(sideMarkup(yaw, `${clipId ?? 'turn'}-side`)) : '';
-      return side + (piece.within ? within(g) : g);
-    });
-    return (clipped ? skullClip(clipId!, yaw) : '') + pieces;
-  });
+  const made = make();
   drawn.set(key, made);
   if (drawn.size > KEPT) drawn.delete(drawn.keys().next().value!);
   return made;
 }
 
+/** The shift that shows what sits `sink` behind the front of an ear or antler, with his head turned `yaw` radians aside. */
+export const sinkTransform = (sink: number, yaw: number): string => `translate(${f3(-sink * Math.sin(yaw))} 0)`;
+
+/**
+ * An ear or antler with its depth showing as his head turns `yaw` radians aside: an ear's back comes out beside its
+ * rim and the hollow inside it sits back within the rim (under the clip `clipId`); an antler's far side comes out beside
+ * it. Without `yaw`, for a player: what sits back is marked with how far (`data-sink`, set with `sinkTransform`), and
+ * what only shows turned is hidden facing us (`data-behind`).
+ */
+export function partInDepth(markup: string, part: 'ear' | 'antler', clipId: string, yaw?: number): string {
+  return insideRoot(markup, (body) => {
+    const els = elements(body);
+    const defs = els.filter((el) => el.startsWith('<defs')).join('');
+    const shapes = els.filter((el) => !el.startsWith('<defs'));
+    const sunk = (sink: number, inner: string, behind: boolean): string =>
+      yaw !== undefined
+        ? `<g transform="${sinkTransform(sink, yaw)}">${inner}</g>`
+        : `<g data-sink="${f3(sink)}"${behind ? ' data-behind display="none"' : ''}>${inner}</g>`;
+    const shade = (el: string, colour: string): string => el.replace(/\sfill="[^"]*"/, ` fill="${colour}"`);
+    if (part === 'ear') {
+      const [rim = '', ...hollow] = shapes;
+      const d = rim.match(/\sd="([^"]*)"/)?.[1] ?? '';
+      return (
+        defs +
+        `<defs><clipPath id="${clipId}"><path d="${d}"/></clipPath></defs>` +
+        sunk(R.ear.back, shade(rim, R.ear.colour), true) +
+        rim +
+        `<g clip-path="url(#${clipId})">${sunk(R.ear.hollow, hollow.join(''), false)}</g>`
+      );
+    }
+    // The far side is the antler's own outline, without its highlights, in a few copies stepping back.
+    const outline = shapes.filter((el) => /\sfill="url\(/.test(el)).map((el) => shade(el, R.antler.colour)).join('');
+    const copies = Array.from({ length: R.antler.copies }, (_, i) => sunk((R.antler.far * (R.antler.copies - i)) / R.antler.copies, outline, true));
+    return defs + copies.join('') + shapes.join('');
+  });
+}
+
+/** An ear or antler drawn with its depth showing, his head turned `step` steps aside (`partInDepth`); kept like a turned layer. */
+export function roundPart(markup: string, step: number, part: 'ear' | 'antler', clipId: string): string {
+  if (step === 0 || !markup) return markup;
+  return keep(`${part}${step}|${clipId}|${markup}`, () => partInDepth(markup, part, clipId, stepYaw(step)));
+}
+
+/** How far a point of his neck at height `y` moves aside with his head turned `yaw` radians aside; `throat` for its light front. */
+function neckShift(y: number, yaw: number, throat: boolean): number {
+  const ride = placePiece(SKULL, yaw).x - R.centre.x + (throat ? R.neck.throat * Math.sin(yaw) : 0);
+  return ride * smoothstep(R.neck.bottom, R.neck.top, y);
+}
+
+/** Whether an element is the light front of his throat, which turns a little further than his neck. */
+const THROAT = /<path\b[^>]*\sfill="url\(#[^)]*-bib\)"[^>]*\/>/;
+
+/** The clip of his figure's outline in his neck's markup, which keeps his turning throat within his neck. */
+const figureClip = (markup: string): string | undefined => markup.match(/clip-path="url\(#([^)]*-figure)\)"/)?.[1];
+
+const necks = new Map<string, string>();
+
+/**
+ * His neck's path data with his head turned `yaw` radians aside: its upper part rides round with his head, so his
+ * neck never shows its top, easing into his chest below; `throat` for its light front, which turns a little further.
+ */
+export function bentNeck(d: string, yaw: number, throat = false): string {
+  if (yaw === 0) return d;
+  // Several of his neck's shapes share one outline, so each is bent once a frame.
+  const key = `${throat ? 't' : 'n'}${Math.round(yaw * 1e5)}|${d}`;
+  let bent = necks.get(key);
+  if (bent === undefined) {
+    bent = mapPath(d, (x, y) => [x + neckShift(y, yaw, throat), y]);
+    necks.set(key, bent);
+    if (necks.size > 64) necks.delete(necks.keys().next().value!);
+  }
+  return bent;
+}
+
+/**
+ * His neck's markup with his head turned `yaw` radians aside (`bentNeck`). Its gradients stay as drawn, so its shading
+ * never tilts; his throat stays within his outline.
+ */
+export function turnedNeck(markup: string, yaw: number): string {
+  if (yaw === 0) return markup;
+  const held: string[] = [];
+  const hold = markup.replace(/<linearGradient\b[^>]*>/g, (tag) => `<!--${held.push(tag) - 1}-->`);
+  const throat = hold.match(THROAT)?.[0];
+  const clip = figureClip(markup);
+  let bent = mapMarkup(throat ? hold.replace(throat, '<!--throat-->') : hold, (x, y) => [x + neckShift(y, yaw, false), y]);
+  if (throat) {
+    const front = mapMarkup(throat, (x, y) => [x + neckShift(y, yaw, true), y]);
+    bent = bent.replace('<!--throat-->', clip ? `<g clip-path="url(#${clip})">${front}</g>` : front);
+  }
+  return bent.replace(/<!--(\d+)-->/g, (_, i: string) => held[Number(i)]!);
+}
+
+/** His neck drawn with his head turned `step` steps aside (`turnedNeck`); kept like a turned layer. */
+export function roundNeck(markup: string, step: number): string {
+  if (step === 0 || !markup) return markup;
+  return keep(`neck${step}|${markup}`, () => insideRoot(markup, (body) => turnedNeck(body, stepYaw(step))));
+}
+
+/**
+ * His neck's markup facing us for a player that bends it as he turns: each shape a path marked with what it is
+ * (`data-neck`, "throat" for its light front) for the player to redraw (`bentNeck`), his throat within his outline.
+ */
+export function rigNeck(markup: string): string {
+  const clip = figureClip(markup);
+  return mapMarkup(markup, (x, y) => [x, y]).replace(/<path\b[^>]*\/>/g, (el) =>
+    THROAT.test(el)
+      ? `${clip ? `<g clip-path="url(#${clip})">` : ''}${el.replace('<path', '<path data-neck="throat"')}${clip ? '</g>' : ''}`
+      : el.replace('<path', '<path data-neck="neck"'),
+  );
+}
+
 /**
  * A layer drawn facing us for a player that places its pieces as he turns: each shape in a group marked with its piece
  * (`data-piece`, read back with `readPiece`), those on his face within the clip `clipId` (`skullClip`); his outline
- * and his muzzle's side marked (`data-shape`) for the player to redraw (`turnedHead`, `muzzleSide`).
+ * marked (`data-shape="head"`) for the player to redraw (`turnedHead`), and his muzzle's side as slices, hidden facing
+ * us (`data-shape="snout"`), for the player to place (`snoutSlices`).
  */
 export function rigLayer(markup: string, layer: RoundLayer, clipId: string): string {
   return onPieces(markup, layer, (el, piece) => {
     const shape = piece === SKULL ? el.replace(/<path\b/, '<path data-shape="head"') : el;
     const g = `<g data-piece="${piece.x} ${piece.y} ${piece.depth} ${piece.narrow}">${shape}</g>`;
-    // The muzzle's side, empty facing us, for the player to draw as he turns (`muzzleSide`).
-    const side = isMuzzle(el)
-      ? `<defs><linearGradient id="${clipId}-side" data-shape="side-fade" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0">` +
-        `<stop offset="0" stop-color="${R.muzzleSide}" stop-opacity="0"/><stop offset="0.55" stop-color="${R.muzzleSide}" stop-opacity="0.6"/>` +
-        `<stop offset="1" stop-color="${R.muzzleSide}"/></linearGradient></defs>` +
-        `<g clip-path="url(#${clipId})"><path data-shape="muzzle-side" d="" fill="url(#${clipId}-side)"/></g>`
-      : '';
+    const d = el.match(/\sd="([^"]*)"/)?.[1] ?? '';
+    const side = isMuzzle(el) ? `<g data-shape="snout" display="none">${SNOUT_FILLS.map((fill) => `<path d="${d}" fill="${fill}"/>`).join('')}</g>` : '';
     return side + (piece.within ? `<g clip-path="url(#${clipId})">${g}</g>` : g);
   });
 }

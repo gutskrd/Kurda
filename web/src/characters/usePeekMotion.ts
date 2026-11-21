@@ -3,14 +3,16 @@ import {
   PEEK_LEAN,
   PEEK_TURN,
   TURN_SPRING,
+  bentNeck,
   characterArt,
   leanFor,
-  muzzleSide,
   partTransforms,
   peekParts,
   pieceTransform,
   readPiece,
   shareYaw,
+  sinkTransform,
+  snoutSlices,
   stepLean,
   tiltFromOrientation,
   swingAngle,
@@ -26,8 +28,9 @@ type Settling = LeanState & { settled?: boolean };
 /**
  * Hevalo moving with the phone on the website, as in the phone app (shared peek-lean.ts): the browser's motion events
  * carry the tilt and the swing round, the shared springs carry him, `--peek-lean` on `ref` leans him and his shadows,
- * and his whole head turns as the phone tilts and swings: its antlers and ears as `data-turn` groups (head-turn.ts), and
- * every shape of his face as a `data-piece` group placed on his turned head (head-round.ts), the other way round when
+ * and his whole head turns as the phone tilts and swings: its antlers and ears as `data-turn` groups (head-turn.ts)
+ * showing their depth (`data-sink`), every shape of his face as a `data-piece` group placed on his turned head, his
+ * muzzle's side in slices, and his neck bent to ride round under it (head-round.ts), the other way round when
  * `mirrored`. It never
  * asks for motion access: where a browser would ask first, or has no sensor, he simply stays as he is. Off under Reduce
  * Motion; each frame runs only while he is moving.
@@ -49,10 +52,15 @@ export function usePeekMotion(ref: RefObject<HTMLElement | null>, active: boolea
     // The pieces of his face as drawn, read once, and again should the drawing be replaced (he dozes off, say).
     const read = () =>
       [...el.querySelectorAll<SVGElement>('[data-piece]')].map((node) => ({ node, piece: readPiece(node.dataset.piece ?? 'skull') as HeadPiece }));
+    // His neck's shapes as drawn, read the same way.
+    const readNeck = () =>
+      [...el.querySelectorAll<SVGPathElement>('[data-neck]')].map((node) => ({ node, d: node.getAttribute('d') ?? '', throat: node.dataset.neck === 'throat' }));
     let pieces = read();
+    let neck = readNeck();
     let placed = false;
     const place = (share: number): void => {
       if (pieces.length > 0 && !pieces[0]!.node.isConnected) pieces = read();
+      if (neck.length > 0 && !neck[0]!.node.isConnected) neck = readNeck();
       const yaw = shareYaw(share);
       for (const { node, piece } of pieces) {
         if (yaw === 0) node.removeAttribute('transform');
@@ -61,12 +69,23 @@ export function usePeekMotion(ref: RefObject<HTMLElement | null>, active: boolea
       // His outline redrawn for the turn, and his muzzle's side coming into view.
       const head = turnedHead(yaw);
       for (const path of el.querySelectorAll('[data-shape="head"]')) path.setAttribute('d', head);
-      const side = muzzleSide(yaw);
-      for (const path of el.querySelectorAll('[data-shape="muzzle-side"]')) path.setAttribute('d', side?.d ?? '');
-      for (const fade of el.querySelectorAll('[data-shape="side-fade"]')) {
-        fade.setAttribute('x1', String(side?.from ?? 0));
-        fade.setAttribute('x2', String(side?.to ?? 1));
+      const slices = snoutSlices(yaw);
+      for (const snout of el.querySelectorAll('[data-shape="snout"]')) {
+        if (yaw === 0) snout.setAttribute('display', 'none');
+        else snout.removeAttribute('display');
+        [...snout.children].forEach((slice, i) => slice.setAttribute('transform', slices[i] ?? ''));
       }
+      // The depth of his ears and antlers: what sits back moves aside, and what shows only turned comes out.
+      for (const g of el.querySelectorAll<SVGGElement>('[data-sink]')) {
+        if (yaw === 0) {
+          g.removeAttribute('transform');
+          if (g.hasAttribute('data-behind')) g.setAttribute('display', 'none');
+        } else {
+          g.setAttribute('transform', sinkTransform(Number(g.dataset.sink), yaw));
+          g.removeAttribute('display');
+        }
+      }
+      for (const { node, d, throat } of neck) node.setAttribute('d', bentNeck(d, yaw, throat));
       placed = yaw !== 0;
     };
     const show = (): void => {

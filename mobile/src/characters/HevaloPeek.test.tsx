@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 import { act, cleanup, screen, waitFor } from '@testing-library/react';
-import { PEEK_LEAN, PEEK_PLACE, mapPath } from '@kurda/shared';
+import { HEAD_RIG, PEEK_LEAN, PEEK_PLACE, mapPath } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { HevaloPeek } from './HevaloPeek';
@@ -146,15 +146,29 @@ function noseX(): number {
   return xs.reduce((a, b) => a + b, 0) / xs.length;
 }
 
+/** How far across the top of his neck's outline is seen on its left, in his own units, and whether his ears show their backs. */
+function neckAndEars(): { neck: number; earBacks: boolean } {
+  const markups = [...document.querySelectorAll('svg[data-markup]')].map((svg) => svg.getAttribute('data-markup') ?? '');
+  const neck = markups.find((m) => m.includes('-bib)')) ?? '';
+  const fur = neck.match(/<path d="([^"]+)" fill="url\(#[^)]*-fur\)"/)?.[1] ?? '';
+  const top = (mapPath(fur, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => pair.split(',').map(Number)).filter(([, y]) => y! < 420);
+  return { neck: Math.min(...top.map(([x]) => x!)), earBacks: markups.some((m) => m.includes(`fill="${HEAD_RIG.ear.colour}"`)) };
+}
+
 describe('Hevalo turning his head as the phone swings round or tilts', () => {
   it('draws his head turned toward the side the phone swings back on, faces us again as it swings back, and turns the other way past it', async () => {
     patchReactNativeWeb();
     renderWithProviders(<HevaloPeek size={240} pop={false} />);
     await settle();
     expect(noseX()).toBeCloseTo(255, 0);
+    const rest = neckAndEars();
+    expect(rest.earBacks).toBe(false);
     // A quarter-second swing of 24 degrees, its right side going back.
     await swing(60, 10);
     await waitFor(() => expect(noseX()).toBeGreaterThan(275), { timeout: 3000 });
+    // His neck rides round under his head, and his ears show their depth.
+    expect(neckAndEars().neck).toBeGreaterThan(rest.neck + 10);
+    expect(neckAndEars().earBacks).toBe(true);
     await swing(-60, 10);
     await waitFor(() => expect(Math.abs(noseX() - 255)).toBeLessThan(4), { timeout: 3000 });
     await swing(-60, 10);
