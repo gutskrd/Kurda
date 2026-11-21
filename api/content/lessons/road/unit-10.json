@@ -1355,7 +1355,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Piştre… ez nizanim. Tenê bavê min hemû efsaneyê dizane."
+                      "Piştre… ez nizanim. Tenê Dapîr hemû efsaneyê dizane."
                     ]
                   }
                 },
@@ -3720,7 +3720,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike."
+                      "Ev jiyan e, û jiyan berdewam dike."
                     ]
                   }
                 },
