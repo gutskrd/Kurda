@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
-import { fontScaleCap, radii, typography, wash } from '../theme/tokens';
+import { fitted, fontScaleCap, radii, typography, wash } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { unreadBadge } from '../notifications/inbox';
@@ -26,6 +26,8 @@ const GLYPH = 24;
 const AVATAR = 22;
 /** The bar's padding around the tabs, which is the air round the capsule behind the chosen tab. */
 const PAD = 6;
+/** How far the tab words may shrink together on a narrow phone before the longest is cut short instead. */
+const WORD_MIN_FIT = 0.6;
 
 /**
  * The tab bar: four places in one rounded bar of glass floating over the page's foot (LiquidGlass.tsx), each an icon with its word (screens
@@ -61,6 +63,14 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
    */
   const [rowWidth, setRowWidth] = useState(0);
   const slot = rowWidth > 0 ? rowWidth / state.routes.length : 0;
+  // Every tab's word at one size: the text size where the longest fits its share of the bar, all smaller where not.
+  const words = state.routes.map((route) => {
+    const tab = TABS.find((x) => x.name === route.name);
+    return tab ? t(tab.labelKey) : route.name;
+  });
+  const [widths, setWidths] = useState<Record<string, number>>({});
+  const widest = Math.max(0, ...words.map((w) => widths[w] ?? 0));
+  const fit = slot > 0 && widest > 0 ? Math.max(WORD_MIN_FIT, Math.min(1, (slot - 4) / widest)) : 1;
   // Counted from the left whichever way the tabs run.
   const place = mirrored ? state.routes.length - 1 - state.index : state.index;
   const capsuleX = useRef(new Animated.Value(0)).current;
@@ -84,6 +94,22 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
     <View pointerEvents="box-none" style={[styles.dock, { bottom: tabBarLift(insets.bottom) }]}>
       <View style={[styles.bar, ...glass]}>
         <GlassFill lift="raised" />
+        {/* The words at full size, out of sight, to learn how wide the longest is in this language. */}
+        <View style={styles.ruler} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          {words.map((w) => (
+            <Text
+              key={w}
+              style={[styles.word, { fontWeight: typography.weights.semibold }]}
+              maxFontSizeMultiplier={fontScaleCap.fixedBox}
+              onLayout={(e) => {
+                const width = e.nativeEvent.layout.width;
+                setWidths((had) => (had[w] === width ? had : { ...had, [w]: width }));
+              }}
+            >
+              {w}
+            </Text>
+          ))}
+        </View>
         <View
           style={[styles.row, { flexDirection: dir.row }]}
           accessibilityRole="tablist"
@@ -127,6 +153,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                 leftmost={at === 0}
                 rightmost={at === state.routes.length - 1}
                 word={full}
+                fit={fit}
                 spoken={spoken}
                 focused={focused}
                 ink={ink}
@@ -176,6 +203,7 @@ function TabButton({
   leftmost,
   rightmost,
   word,
+  fit,
   spoken,
   focused,
   ink,
@@ -192,6 +220,8 @@ function TabButton({
   rightmost: boolean;
   /** The tab's name, under its glyph. */
   word: string;
+  /** The share of the text size the words are drawn at, so the longest fits. */
+  fit: number;
   spoken: string;
   focused: boolean;
   ink: string;
@@ -220,7 +250,10 @@ function TabButton({
       <Animated.View style={[styles.face, { transform: [{ scale: press.scale }] }]}>
         <View style={styles.glyph}>{children}</View>
         <Text
-          style={[styles.word, { color: ink, fontWeight: focused ? typography.weights.semibold : typography.weights.medium }]}
+          style={[
+            styles.word,
+            { color: ink, fontSize: fitted(typography.sizes.text, fit), fontWeight: focused ? typography.weights.semibold : typography.weights.medium },
+          ]}
           numberOfLines={1}
           // A word in a share of the bar that cannot grow with it.
           maxFontSizeMultiplier={fontScaleCap.fixedBox}
@@ -244,6 +277,7 @@ const styles = StyleSheet.create({
   face: { alignItems: 'center', gap: 3 },
   glyph: { width: GLYPH + 4, height: GLYPH + 2, alignItems: 'center', justifyContent: 'center' },
   word: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
+  ruler: { position: 'absolute', top: 0, left: 0, width: 1000, alignItems: 'flex-start', opacity: 0 },
   // The ring sits round the picture with a hairline of air between them.
   ring: {
     width: AVATAR + 5,

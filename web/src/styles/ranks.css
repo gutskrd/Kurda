@@ -1431,9 +1431,6 @@ a.league-card-mini:focus-visible {
 .home-league-detail {
   color: var(--ink-3);
   font-size: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .home-league.is-safe .home-league-detail {
   color: var(--success);

@@ -1027,21 +1027,22 @@ button.feature {
   gap: 1px;
   min-width: 0;
 }
-.shop-name {
-  display: block;
-  font-size: var(--text);
-  color: var(--ink-2);
-  white-space: nowrap;
+/* a name or a description runs to a second line on a narrow tile rather than being cut short */
+.shop-name,
+.shop-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--text);
+  overflow-wrap: anywhere;
+}
+.shop-name {
+  color: var(--ink-2);
 }
 .shop-desc {
-  display: block;
-  font-size: var(--text);
   color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 /* the price and the buttons sit on the tile's floor, level along a row
    whether or not the tile beside has a line of description */

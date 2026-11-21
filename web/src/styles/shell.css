@@ -1984,7 +1984,7 @@
   color: var(--ink-3);
   font-size: var(--text);
   font-weight: 500;
-  line-height: 13px;
+  line-height: 20px;
   transition:
     color var(--dur-fast) var(--ease-out),
     transform var(--dur) var(--ease-spring);
@@ -2018,6 +2018,9 @@
   max-width: 100%;
   padding-inline: 2px;
   overflow: hidden;
+  /* all the words at one size, a little smaller together where the longest would not fit its share (PlacesBar.tsx) */
+  font-size: calc(var(--text) * var(--word-fit, 1));
+  line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

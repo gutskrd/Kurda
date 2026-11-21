@@ -1382,6 +1382,10 @@ a.lp-part-row:hover {
   cursor: pointer;
   animation: lp-pop-in var(--dur) var(--ease-out);
 }
+/* while the way back floats over the page's foot, the page ends above it, so it never covers the last buttons */
+:root:has(.places-bar):has(.lp-jump) main.app-main {
+  padding-bottom: calc(var(--bottom-chrome) + 44px + 2 * var(--space-4) + var(--rb-space, 0px));
+}
 .lp-jump:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;

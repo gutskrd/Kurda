@@ -166,10 +166,10 @@
   color: var(--ink-3);
 }
 .settings-row-value {
-  /* gives way far sooner than the title: a long value is cut short, not the name */
-  flex: 0 100 auto;
+  /* keeps its whole width up to half the row, and the name wraps beside it; only a longer value is cut short */
+  flex: 0 0 auto;
   min-width: 0;
-  max-width: 45%;
+  max-width: 50%;
   overflow: hidden;
   color: var(--ink-3);
   font-size: var(--text);

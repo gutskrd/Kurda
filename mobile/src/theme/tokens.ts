@@ -57,6 +57,11 @@ export const fontScaleCap = {
   heading: 1.3,
 } as const;
 
+/** One of the two sizes, shrunk but never grown, so a word fits a box that cannot grow with it on a narrow phone. */
+export function fitted(size: number, fit: number): number {
+  return size * Math.min(1, Math.max(0, fit));
+}
+
 /** The page's geometry. `gutter` is the phone's edge-to-content space (16), a single decision rather than a step on `spacing`. */
 export const layout = {
   gutter: 16,

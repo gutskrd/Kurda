@@ -4,7 +4,7 @@
  * - One face: a font family is the one token (`var(--font-sans)` on the website, `typography.fontFamily` on the phone).
  * - Two sizes: a text size is `var(--text)` or `var(--text-title)` on the website, `typography.sizes.text` or
  *   `typography.sizes.title` on the phone. A size handed down as a name (a component's `size`) is allowed; a number or
- *   sum written at the call is not.
+ *   sum written at the call is not. Either size may shrink, never grow, to fit a box that cannot grow with it.
  * - One accent, on the main button alone: only the main button's styles may name it (`--accent` in ui.css's
  *   `.btn-primary`, `colors.accent` in the phone's button and lesson-button tones).
  *
@@ -44,6 +44,8 @@ if (app === 'web') {
     for (const m of src.matchAll(/(?<![-\w])font-size:\s*([^;}]+)/g)) {
       const v = m[1].replace('!important', '').trim();
       if (['var(--text)', 'var(--text-title)', 'inherit'].includes(v)) continue;
+      // One of the two sizes shrunk to fit a box that cannot grow; the script that sets the fit keeps it at or under 1.
+      if (/^calc\(var\(--text(-title)?\) \* var\(--[a-z-]+-fit, 1\)\)$/.test(v)) continue;
       if (SIZE_EXEMPT.has(name)) continue;
       wrong.push(`${name}:${lineOf(src, m.index)} a third text size: font-size: ${v}`);
     }
@@ -90,6 +92,8 @@ if (app === 'web') {
       if (/^typography\.sizes\.(text|title)$/.test(v) || /^number\b/.test(v)) continue;
       // The reader's own text size, applied to a size handed down by name.
       if (/^fontSize:\s*scaledFontSize\([A-Za-z_$][\w$.]*, [A-Za-z_$][\w$.]*\)/.test(src.slice(m.index))) continue;
+      // One of the two sizes shrunk, never grown, to fit a box that cannot grow (tokens.ts `fitted`).
+      if (/^fontSize:\s*fitted\(typography\.sizes\.(text|title), [A-Za-z_$][\w$.]*\)/.test(src.slice(m.index))) continue;
       // A size handed down by name, or the two sizes chosen between, is decided where it was named.
       if (/^[A-Za-z_$][\w$.]*(\[[\w$.'"]+\])?$/.test(v) && !/^\d/.test(v)) continue;
       if (/^[\w$.\s>=<!?:]+$/.test(v) && /typography\.sizes\.(text|title)/.test(v) && !/typography\.sizes\.(?!text\b|title\b)/.test(v)) continue;
