@@ -49,7 +49,7 @@ export function Digits({ value, dialect, size }: { value: number; dialect: Alpha
   return (
     <Text style={[styles.digits, { fontSize: size, lineHeight: Math.round(size * 1.3), color: colors.textPrimary }]} accessibilityLanguage="ckb">
       {easternDigits(value)}
-      <Text style={[styles.digitsSmall, { typography.sizes.text, color: colors.textSecondary }]}>{` ${western}`}</Text>
+      <Text style={[styles.digitsSmall, { fontSize: typography.sizes.text, color: colors.textSecondary }]}>{` ${western}`}</Text>
     </Text>
   );
 }

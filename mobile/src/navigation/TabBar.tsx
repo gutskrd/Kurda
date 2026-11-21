@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
   face: { alignItems: 'center', gap: 3 },
   glyph: { width: GLYPH + 4, height: GLYPH + 2, alignItems: 'center', justifyContent: 'center' },
-  word: { fontSize: typography.sizes.text, lineHeight: 13, textAlign: 'center' },
+  word: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
   // The ring sits round the picture with a hairline of air between them.
   ring: {
     width: AVATAR + 5,
@@ -253,11 +253,11 @@ const styles = StyleSheet.create({
   },
   badge: {
     position: 'absolute',
-    top: -5,
-    left: 16,
-    minWidth: 18,
-    height: 18,
-    paddingHorizontal: 4,
+    top: -8,
+    left: 14,
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 5,
     borderRadius: radii.pill,
     borderWidth: 2,
     alignItems: 'center',
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   },
   // Over the glyph's leading shoulder in a mirrored bar, as the platform puts it.
   badgeMirrored: { left: undefined, right: 16 },
-  badgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, lineHeight: 13 },
+  badgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, lineHeight: 20 },
   dot: { position: 'absolute', top: -2, right: -2, width: 10, height: 10, borderRadius: radii.pill, borderWidth: 2 },
   dotMirrored: { right: undefined, left: -2 },
 });

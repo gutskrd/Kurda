@@ -146,10 +146,10 @@ const styles = StyleSheet.create({
   titleLine: { fontSize: typography.sizes.text, lineHeight: 20 },
   section: { gap: spacing.sm },
   centre: { textAlign: 'center' },
-  note: { fontSize: typography.sizes.text, lineHeight: 18 },
+  note: { fontSize: typography.sizes.text, lineHeight: 22 },
   sources: { gap: spacing.xs },
   source: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.sm },
   sourceBody: { flex: 1, gap: 2, paddingVertical: spacing.xs },
   sourceTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, lineHeight: 20 },
-  sourceMeta: { fontSize: typography.sizes.text, lineHeight: 18 },
+  sourceMeta: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

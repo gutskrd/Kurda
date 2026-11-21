@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
   rowWords: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   badgeLabel: { fontSize: typography.sizes.text },
   quietRow: { alignItems: 'center', justifyContent: 'center', gap: spacing.xs + 2 },
-  quiet: { fontSize: typography.sizes.text, lineHeight: 18 },
+  quiet: { fontSize: typography.sizes.text, lineHeight: 22 },
   strong: { fontWeight: typography.weights.bold },
   centred: { textAlign: 'center' },
   steps: { gap: spacing.sm + 2, paddingTop: spacing.xs },

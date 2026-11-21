@@ -188,5 +188,5 @@ const styles = StyleSheet.create({
   sheetBody: { gap: spacing.md, paddingBottom: spacing.sm },
   goalHead: { alignItems: 'center', gap: spacing.md },
   goalWords: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
-  caption: { fontSize: typography.sizes.text, lineHeight: 18 },
+  caption: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

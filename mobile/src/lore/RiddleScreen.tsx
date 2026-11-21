@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   input: { minHeight: 52, borderRadius: radii.md, paddingHorizontal: spacing.md, fontSize: typography.sizes.text },
   wrong: { fontSize: typography.sizes.text, lineHeight: 22 },
-  small: { fontSize: typography.sizes.text, lineHeight: 18 },
+  small: { fontSize: typography.sizes.text, lineHeight: 22 },
   helpers: { gap: spacing.sm, marginTop: spacing.sm },
   after: { gap: spacing.sm },
   solved: { alignItems: 'center', borderRadius: radii.lg, padding: spacing.lg, gap: spacing.sm },

@@ -315,7 +315,7 @@ export function SetupSheet({
 
 const styles = StyleSheet.create({
   field: { gap: spacing.sm },
-  hint: { fontSize: typography.sizes.text, lineHeight: 19 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   fixed: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.md },
   fixedText: { flex: 1, gap: 2 },
   fixedTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },

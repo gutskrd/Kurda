@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
   slot: { alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
   emptySlot: { borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', margin: 6 },
   slotName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
-  hint: { fontSize: typography.sizes.text, lineHeight: 19, marginTop: spacing.sm },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22, marginTop: spacing.sm },
   family: { gap: spacing.sm },
   familyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   familyCount: { fontSize: typography.sizes.text, fontVariant: ['tabular-nums'] },

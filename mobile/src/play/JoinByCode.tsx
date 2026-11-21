@@ -458,5 +458,5 @@ const styles = StyleSheet.create({
   },
   cardText: { flex: 1, gap: 2 },
   cardTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
-  cardLine: { fontSize: typography.sizes.text, lineHeight: 18 },
+  cardLine: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

@@ -235,5 +235,5 @@ const styles = StyleSheet.create({
   resendTarget: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   resend: { fontSize: typography.sizes.text, lineHeight: 22 },
   resendLink: { fontWeight: typography.weights.semibold },
-  small: { fontSize: typography.sizes.text, lineHeight: 18 },
+  small: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

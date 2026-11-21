@@ -3453,7 +3453,6 @@ export const ar: Catalogue = {
   'about.makerBody': 'Hevalo منتج من Zagrosian.',
   'about.creditsTitle': 'الشكر والتراخيص',
   'about.creditsLead': 'يستخدم Hevalo أيضًا أعمال آخرين، بموجب هذه التراخيص:',
-  'about.credits.fonts': 'خط Vazirmatn، من مؤلفي مشروع Vazirmatn — SIL Open Font License 1.1',
   'about.credits.icons': 'Phosphor Icons — MIT License',
   'about.credits.emoji': 'صور Noto Emoji من Google، بعد تغيير حجمها وإعادة ترميزها — Apache License 2.0',
   'about.credits.art': 'خلفيات المتجر وأيقوناته وملصقات الصور يصنعها Hevalo بنفسه.',

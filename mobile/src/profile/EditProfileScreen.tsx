@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   firstSection: { marginTop: spacing.md },
   section: { marginTop: spacing.lg },
   label: { fontSize: typography.sizes.text, marginTop: spacing.sm },
-  hint: { fontSize: typography.sizes.text, lineHeight: 18 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.text },
   // Right to left, what is typed starts at the right.
   inputMirrored: { textAlign: 'right' },

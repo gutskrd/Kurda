@@ -3457,7 +3457,6 @@ export const tr: Catalogue = {
   'about.makerBody': 'Hevalo bir Zagrosian ürünüdür.',
   'about.creditsTitle': 'Teşekkürler ve lisanslar',
   'about.creditsLead': 'Hevalo başkalarının emeğini de bu lisanslarla kullanıyor:',
-  'about.credits.fonts': 'Vazirmatn yazı tipi, Vazirmatn Project Authors — SIL Open Font License 1.1',
   'about.credits.icons': 'Phosphor Icons — MIT License',
   'about.credits.emoji': 'Google’ın Noto Emoji görselleri, yeniden boyutlandırılıp yeniden kodlandı — Apache License 2.0',
   'about.credits.art': 'Mağazadaki arka planları ve simgeleri, fotoğraf çıkartmalarını Hevalo kendisi yapıyor.',

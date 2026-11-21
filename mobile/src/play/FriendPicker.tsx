@@ -155,7 +155,7 @@ export function togglePick(picked: readonly string[], id: string, single: boolea
 
 const styles = StyleSheet.create({
   picker: { gap: spacing.sm },
-  hint: { fontSize: typography.sizes.text, lineHeight: 19 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   subhead: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
   friend: {
     flexDirection: 'row',

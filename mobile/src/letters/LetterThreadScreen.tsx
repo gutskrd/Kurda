@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   earlier: { alignItems: 'center', gap: spacing.sm },
   earlierButton: { alignSelf: 'center' },
   centred: { textAlign: 'center' },
-  widgetError: { fontSize: typography.sizes.text, lineHeight: 19 },
+  widgetError: { fontSize: typography.sizes.text, lineHeight: 22 },
   note: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center', padding: spacing.md - 2, borderRadius: radii.lg, overflow: 'hidden' },
   heldNote: { padding: spacing.md - 2, borderRadius: radii.lg },
 });

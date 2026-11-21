@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import '@fontsource-variable/vazirmatn';
 import { KURDISH_NUMBER_MAX, WORD_SET_IDS, wordIn, wordSet, wordSetSvg, type AlphabetScript, type KurdishWord, type WordsCardId } from '@kurda/shared';
 import { useScript } from '../alphabet/script';
 import { lettersSeen } from '../alphabet/seen';

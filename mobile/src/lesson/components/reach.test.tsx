@@ -14,6 +14,7 @@ import { ReachGroup } from '../../theme/Pressable';
 import { forgetReach, reachLimitOf, reachOf } from '../../testing/reach';
 import { SlowButton } from './AskParts';
 import { PromptWords } from './PromptWords';
+import { typography } from '../../theme/tokens';
 
 // How far the lesson's small controls answer past what they draw: prompt words, which touch each other and the line
 // under them, and the slow chip under a bubble that may be a button itself.

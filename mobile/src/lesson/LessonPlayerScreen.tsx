@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
   progressWrap: { flex: 1 },
   body: { paddingHorizontal: layout.gutter, paddingTop: spacing.md + 6, paddingBottom: spacing.lg, flexGrow: 1 },
   // The lesson's name: small tracked capitals in red, just over the question.
-  kicker: { fontSize: typography.sizes.text, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase' },
+  kicker: { fontSize: typography.sizes.text, lineHeight: 22, fontWeight: typography.weights.bold, letterSpacing: 1.4, textTransform: 'uppercase' },
   kickerRow: { justifyContent: 'center', marginBottom: spacing.xs },
   // The kicker's line, as tall as the "New word" badge that replaces it on some questions.
   badged: { minHeight: BADGE },

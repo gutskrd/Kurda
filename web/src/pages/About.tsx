@@ -19,7 +19,7 @@ const NOW: MessageKey[] = [
 const NEXT: MessageKey[] = ['about.next.apps', 'about.next.varieties'];
 
 /** Whose work Hevalo uses and under which licence: fonts (OFL), icons (MIT), emoji (Apache 2.0); the shop art and stickers are Hevalo's own. */
-const CREDITS: MessageKey[] = ['about.credits.fonts', 'about.credits.icons', 'about.credits.emoji'];
+const CREDITS: MessageKey[] = ['about.credits.icons', 'about.credits.emoji'];
 
 export function About(): React.JSX.Element {
   const t = useT();

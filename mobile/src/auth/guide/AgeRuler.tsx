@@ -17,7 +17,7 @@ const TICK_HAPTIC_MS = 40;
 const FADE = 56;
 
 /** How tall the big number is drawn. */
-const NUMBER_SIZE = 72;
+const NUMBER_SIZE = typography.sizes.title;
 
 /** What stands where the number goes while no age is chosen: a mark, not a word, so it needs no translating. */
 const NO_NUMBER = '–';

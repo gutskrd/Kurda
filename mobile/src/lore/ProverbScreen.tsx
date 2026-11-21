@@ -179,5 +179,5 @@ const styles = StyleSheet.create({
   variants: { gap: spacing.md },
   variant: { gap: 2 },
   variantText: { fontSize: typography.sizes.text, lineHeight: 24, fontWeight: typography.weights.medium },
-  meta: { fontSize: typography.sizes.text, lineHeight: 18 },
+  meta: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

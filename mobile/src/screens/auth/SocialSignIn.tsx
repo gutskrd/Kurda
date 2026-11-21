@@ -178,5 +178,5 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   methodText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
-  note: { fontSize: typography.sizes.text, lineHeight: 18, textAlign: 'center' },
+  note: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
 });

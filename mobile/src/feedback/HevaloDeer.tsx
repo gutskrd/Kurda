@@ -5,6 +5,7 @@ import { DEER_BOARD_PIVOT, DEER_BOARD_TEXT, DEER_INK, DEER_PICTURE, DEER_VIEW, d
 import MASCOT from '../../assets/mascot-deer.png';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useMotionAlive } from '../a11y/useMotionAlive';
+import { typography } from '../theme/tokens';
 
 /**
  * Hevalo the deer from the app icon, holding up a wooden board: the rating board with five stars, or a sign with

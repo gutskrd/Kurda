@@ -134,7 +134,7 @@ export function Restored({ streak }: { streak: Streak }): React.JSX.Element {
         <SoftGlow colour={colors.gold} size={BACK_STAGE} id="streak-back-glow" />
         {moment.plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={BACK_STAGE * 0.62} /> : null}
         {moment.plan.travel ? (
-          <ConfettiBurst progress={moment.burst} count={10} seed={streak.current} colours={[colors.gold, colors.accent, colors.primary]} reach={BACK_STAGE * 0.6} testID="streak-restored-burst" />
+          <ConfettiBurst progress={moment.burst} count={10} seed={streak.current} colours={[colors.primary, colors.textSecondary]} reach={BACK_STAGE * 0.6} testID="streak-restored-burst" />
         ) : null}
         <Animated.View style={{ opacity, transform: [{ scale }] }}>
           <Fire size={fireSizeToFit(level.stage, BACK_FIRE, BACK_FIRE)} level={level} framed />
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
   shortLines: { gap: 2 },
   balance: { alignItems: 'center', gap: spacing.xs + 2 },
   balanceText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
-  hint: { fontSize: typography.sizes.text, lineHeight: 18 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   back: { alignItems: 'center', gap: spacing.xs },
   backStage: { width: BACK_STAGE, height: BACK_STAGE, alignItems: 'center', justifyContent: 'center' },
   backTitle: { ...display(typography.sizes.text), textAlign: 'center' },

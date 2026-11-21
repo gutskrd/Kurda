@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
   amount: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   score: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   title: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
-  hint: { fontSize: typography.sizes.text, lineHeight: 19 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   note: { paddingHorizontal: spacing.sm },
   center: { textAlign: 'center' },
   end: { paddingVertical: spacing.md },

@@ -1937,7 +1937,6 @@ export type TranslationKey =
   | 'settings.credits.title'
   | 'settings.kvk'
   | 'settings.credits.lead'
-  | 'settings.credits.fonts'
   | 'settings.credits.icons'
   | 'settings.credits.emoji'
   | 'settings.credits.art'
@@ -5357,7 +5356,6 @@ const en: Catalog = {
   'settings.credits.title': 'Credits & licences',
   'settings.kvk': 'KvK number',
   'settings.credits.lead': 'Hevalo also uses other people’s work, under these licences:',
-  'settings.credits.fonts': 'The Vazirmatn typeface, on hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Noto Emoji images by Google, in the photo editor on hevalo.app, resized and re-encoded — Apache License 2.0',
   'settings.credits.art': 'The shop’s backgrounds and icons, and the photo stickers, are made by Hevalo.',
@@ -9263,7 +9261,6 @@ const ku: Catalog = {
   'settings.credits.title': 'Spas û lîsans',
   'settings.kvk': 'Hejmara KvK-ê',
   'settings.credits.lead': 'Hevalo karê kesên din jî bi kar tîne, bi van lîsansan:',
-  'settings.credits.fonts': 'Tîpa Vazirmatn, li ser hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Wêneyên Noto Emoji yên Google, di edîtora wêneyan a hevalo.app de, mezinahî û format guhertî — Apache License 2.0',
   'settings.credits.art': 'Paşxane û îkonên Firoşgehê û stickerên wêneyan ji aliyê Hevalo ve hatine çêkirin.',
@@ -13168,7 +13165,6 @@ const de: Catalog = {
   'settings.credits.title': 'Danksagungen und Lizenzen',
   'settings.kvk': 'KvK-Nummer',
   'settings.credits.lead': 'Hevalo nutzt auch die Arbeit anderer, unter diesen Lizenzen:',
-  'settings.credits.fonts': 'Die Schrift Vazirmatn, auf hevalo.app – SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Noto-Emoji-Bilder von Google, im Foto-Editor auf hevalo.app, verkleinert und neu kodiert – Apache License 2.0',
   'settings.credits.art': 'Die Hintergründe und Symbole im Shop und die Foto-Sticker macht Hevalo selbst.',
@@ -17073,7 +17069,6 @@ const es: Catalog = {
   'settings.credits.title': 'Créditos y licencias',
   'settings.kvk': 'Número KvK',
   'settings.credits.lead': 'Hevalo también usa el trabajo de otras personas, con estas licencias:',
-  'settings.credits.fonts': 'La tipografía Vazirmatn, en hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Las imágenes de Noto Emoji de Google, en el editor de fotos de hevalo.app, redimensionadas y recodificadas — Apache License 2.0',
   'settings.credits.art': 'Los fondos e iconos de la tienda y las pegatinas de fotos los hace Hevalo.',
@@ -20978,7 +20973,6 @@ const tr: Catalog = {
   'settings.credits.title': 'Teşekkürler ve lisanslar',
   'settings.kvk': 'KvK numarası',
   'settings.credits.lead': 'Hevalo başkalarının emeğini de bu lisanslarla kullanıyor:',
-  'settings.credits.fonts': 'Vazirmatn yazı tipi, hevalo.app’te — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Google’ın Noto Emoji görselleri, hevalo.app’in fotoğraf düzenleyicisinde, yeniden boyutlandırılıp yeniden kodlandı — Apache License 2.0',
   'settings.credits.art': 'Mağazadaki arka planları ve simgeleri, fotoğraf çıkartmalarını Hevalo kendisi yapıyor.',
@@ -24883,7 +24877,6 @@ const ar: Catalog = {
   'settings.credits.title': 'الشكر والتراخيص',
   'settings.kvk': 'رقم السجل التجاري (KvK)',
   'settings.credits.lead': 'يستخدم Hevalo أيضًا أعمال آخرين، بموجب هذه التراخيص:',
-  'settings.credits.fonts': 'خط Vazirmatn، على hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'صور Noto Emoji من Google، في محرر الصور على hevalo.app، بعد تغيير حجمها وترميزها — Apache License 2.0',
   'settings.credits.art': 'خلفيات المتجر وأيقوناته وملصقات الصور يصنعها Hevalo بنفسه.',
@@ -28788,7 +28781,6 @@ const fr: Catalog = {
   'settings.credits.title': 'Crédits et licences',
   'settings.kvk': 'Numéro KvK',
   'settings.credits.lead': 'Hevalo utilise aussi le travail d’autres personnes, sous ces licences :',
-  'settings.credits.fonts': 'La police Vazirmatn, sur hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Les images Noto Emoji de Google, dans l’éditeur photo de hevalo.app, redimensionnées et réencodées — Apache License 2.0',
   'settings.credits.art': 'Les arrière-plans et icônes de la boutique et les stickers photo sont créés par Hevalo.',
@@ -32693,7 +32685,6 @@ const nl: Catalog = {
   'settings.credits.title': 'Bronvermelding en licenties',
   'settings.kvk': 'KvK-nummer',
   'settings.credits.lead': 'Hevalo gebruikt ook werk van anderen, onder deze licenties:',
-  'settings.credits.fonts': 'Het lettertype Vazirmatn, op hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'Noto Emoji-afbeeldingen van Google, in de foto-editor op hevalo.app, verkleind en opnieuw gecodeerd — Apache License 2.0',
   'settings.credits.art': 'De achtergronden en iconen in de winkel en de fotostickers maakt Hevalo zelf.',
@@ -36599,7 +36590,6 @@ const ckb: Catalog = {
   'settings.credits.title': 'سوپاس و مۆڵەتەکان',
   'settings.kvk': 'ژمارەی KvK',
   'settings.credits.lead': 'Hevalo کاری کەسانی تریش بەکاردەهێنێت، بەم مۆڵەتانە:',
-  'settings.credits.fonts': 'فۆنتی Vazirmatn، لە hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
   'settings.credits.emoji': 'وێنەکانی Noto Emoji لە Google، لە دەستکاریکەری وێنەی hevalo.app، قەبارە و فۆرماتیان گۆڕدراوە — Apache License 2.0',
   'settings.credits.art': 'پاشبنەما و ئایکۆنەکانی فرۆشگا و ستیکەرەکانی وێنە، Hevalo خۆی دروستیان دەکات.',

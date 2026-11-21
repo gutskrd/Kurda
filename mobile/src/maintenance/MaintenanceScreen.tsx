@@ -198,5 +198,5 @@ const styles = StyleSheet.create({
   },
   pillText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   retry: { marginTop: spacing.sm, alignSelf: 'center' },
-  note: { fontSize: typography.sizes.text, lineHeight: 18 },
+  note: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

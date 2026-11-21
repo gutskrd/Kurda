@@ -25,6 +25,7 @@ export function GroupAvatar({ name, id, size, photoUrl }: { name: string; id: st
     return <Image source={{ uri }} onError={() => setBroken(true)} accessibilityRole="image" accessibilityLabel={t('profile.avatarOf', { name })} style={box} />;
   }
   const { initials, backgroundColor, textColor } = initialsAvatar(name, id);
+  const letters = size >= 56 ? typography.sizes.title : typography.sizes.text;
   return (
     <View
       accessibilityRole="image"
@@ -32,7 +33,7 @@ export function GroupAvatar({ name, id, size, photoUrl }: { name: string; id: st
       // The palette is already AA against white; this nudges it to AAA (7:1) for low-vision users, deterministically.
       style={[styles.box, box, { backgroundColor: ensureContrast(backgroundColor, textColor, AAA_NORMAL) }]}
     >
-      <Text allowFontScaling={false} style={[styles.text, { color: textColor, fontSize: scaledFontSize(size >= 56 ? typography.sizes.title : typography.sizes.text, fontScale) }]}>
+      <Text allowFontScaling={false} style={[styles.text, { color: textColor, fontSize: scaledFontSize(letters, fontScale) }]}>
         {initials}
       </Text>
     </View>

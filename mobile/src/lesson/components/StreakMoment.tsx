@@ -59,7 +59,7 @@ const FLAME_MOST = 400;
 const RING = 168;
 const GLOW = RING * 1.6;
 /** The day's number on the flame screen. */
-const NUMBER = 112;
+const NUMBER = typography.sizes.title;
 /** The streak medal, standing half over the card's top edge; it squashes and hops about its foot. */
 const MEDAL = 132;
 const MEDAL_FOOT = '50% 88%';

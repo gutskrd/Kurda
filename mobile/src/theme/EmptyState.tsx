@@ -63,7 +63,7 @@ export function EmptyState({
             accessibilityRole="button"
             accessibilityLabel={action.label}
             reach="open"
-            style={[styles.action, { backgroundColor: colors.primary }]}
+            style={[styles.action, { backgroundColor: colors.accent }]}
           >
             <Text style={[styles.actionText, { color: colors.textOnPrimary }]}>{action.label}</Text>
           </PressableScale>

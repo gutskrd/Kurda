@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   previewWords: { borderRadius: radii.sm, padding: 6, gap: 2 },
   previewHeading: { alignItems: 'center', gap: 6 },
   previewName: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
-  previewBody: { fontSize: typography.sizes.text, lineHeight: 18 },
+  previewBody: { fontSize: typography.sizes.text, lineHeight: 22 },
   previewDate: { fontSize: typography.sizes.text, borderRadius: radii.xs, paddingHorizontal: 5, paddingVertical: 1, overflow: 'hidden' },
   problem: { fontSize: typography.sizes.text, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
   bird: { alignItems: 'center', paddingTop: spacing.sm },

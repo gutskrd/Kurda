@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   saveRow: { alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs, minHeight: SAVE_LINE },
   // A long label wraps under itself, centred, rather than running past the card.
   saveText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
-  error: { fontSize: typography.sizes.text, lineHeight: 18, textAlign: 'center' },
+  error: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
   meaningLine: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
   missed: { gap: spacing.xs, alignSelf: 'stretch', marginTop: spacing.sm },
   missedTitle: { ...sectionLabel, marginBottom: spacing.xs },

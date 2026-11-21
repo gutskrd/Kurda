@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 // Soranî proverbs in a typeface made for Arabic script.
-import '@fontsource-variable/vazirmatn';
 import { Link, useParams } from 'react-router-dom';
 import { dialectDirection, type ProverbView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';

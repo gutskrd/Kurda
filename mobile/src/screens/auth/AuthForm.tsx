@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.text) },
   centred: { textAlign: 'center' },
   titleAlone: { marginBottom: spacing.md },
-  subtitle: { fontSize: typography.sizes.text, marginTop: spacing.xs, marginBottom: spacing.md, lineHeight: 18 },
+  subtitle: { fontSize: typography.sizes.text, marginTop: spacing.xs, marginBottom: spacing.md, lineHeight: 22 },
   field: { marginBottom: spacing.md },
   label: { fontSize: typography.sizes.text, marginBottom: spacing.xs },
   input: {

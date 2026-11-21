@@ -120,7 +120,7 @@ function ClaimedCoin(): React.JSX.Element {
   return (
     <View style={styles.stage} testID="daily-zer-landed">
       {moment.plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={COIN_STAGE + 16} /> : null}
-      {moment.plan.travel ? <ConfettiBurst progress={moment.burst} count={8} seed={7} colours={[colors.gold, colors.accent, colors.primary]} reach={40} /> : null}
+      {moment.plan.travel ? <ConfettiBurst progress={moment.burst} count={8} seed={7} colours={[colors.primary, colors.textSecondary]} reach={40} /> : null}
       <Animated.View style={{ opacity, transform: [{ scale }] }}>
         <Icon name="coin" size={COIN} />
       </Animated.View>

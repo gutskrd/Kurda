@@ -186,8 +186,8 @@ const styles = StyleSheet.create({
   mode: { borderRadius: radii.md, padding: spacing.md, gap: 2, borderWidth: 1.5, minHeight: MIN_TOUCH_TARGET },
   modeHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   modeName: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
-  modeHint: { fontSize: typography.sizes.text, lineHeight: 19 },
-  hint: { fontSize: typography.sizes.text, lineHeight: 19, marginBottom: spacing.sm },
+  modeHint: { fontSize: typography.sizes.text, lineHeight: 22 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22, marginBottom: spacing.sm },
   // The gutter is the ScrollView's own, so the options scroll edge to edge.
   scroller: { paddingHorizontal: 0 },
   sheetBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.xs },

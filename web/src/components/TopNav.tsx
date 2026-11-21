@@ -229,7 +229,7 @@ export function TopNav({
               <LinkButton to="/login" variant="ghost" size="sm" className="nav-desktop-only">
                 {t('nav.login')}
               </LinkButton>
-              <LinkButton to="/register" variant="primary" size="sm" className={joinOnPhone ? 'nav-register' : 'nav-desktop-only'}>
+              <LinkButton to="/register" variant="secondary" size="sm" className={joinOnPhone ? 'nav-register' : 'nav-desktop-only'}>
                 {t('nav.register')}
               </LinkButton>
             </>
@@ -275,7 +275,7 @@ function PhoneBar({ links }: { links: NavItem[] }): React.JSX.Element {
           <NotificationsBell />
         </div>
         {!signedIn && (
-          <LinkButton to="/register" variant="primary" size="sm" className="nav-register">
+          <LinkButton to="/register" variant="secondary" size="sm" className="nav-register">
             {t('nav.register')}
           </LinkButton>
         )}

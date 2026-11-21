@@ -28,8 +28,8 @@ const rgbOf = (colour: string): number[] =>
 
 describe('storyLineHeight', () => {
   it('spaces lines for the reader’s size alone — React Native adds the system text size to it', () => {
-    expect(storyLineHeight(STORY_BODY_SIZE)).toBe(30);
-    expect(storyLineHeight(Math.round(STORY_BODY_SIZE * 1.5))).toBe(45);
+    expect(storyLineHeight(STORY_BODY_SIZE)).toBe(26);
+    expect(storyLineHeight(Math.round(STORY_BODY_SIZE * 1.5))).toBe(40);
   });
 });
 

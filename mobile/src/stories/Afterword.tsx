@@ -179,5 +179,5 @@ const styles = StyleSheet.create({
   source: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, paddingVertical: spacing.xs },
   sourceType: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
   sourceTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, lineHeight: 20 },
-  sourceMeta: { fontSize: typography.sizes.text, lineHeight: 18 },
+  sourceMeta: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

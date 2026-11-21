@@ -24,7 +24,7 @@ export function GroupAvatar({
     height: size,
     // Square enough to read as a group, soft enough to sit beside the round faces.
     borderRadius: Math.round(size * 0.22),
-    fontSize: Math.max(11, Math.round(size * 0.36)),
+    fontSize: size >= 56 ? 'var(--text-title)' : 'var(--text)',
     ...(photoUrl ? {} : { background: colourFor(id) }),
   };
   // The group's name is always written beside its picture, so the picture is hidden from screen readers.

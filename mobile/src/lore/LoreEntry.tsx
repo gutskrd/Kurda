@@ -63,5 +63,5 @@ const styles = StyleSheet.create({
   head: { alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xs },
   icon: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   name: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.25) },
-  beside: { fontSize: typography.sizes.text, lineHeight: 18 },
+  beside: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

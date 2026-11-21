@@ -241,5 +241,5 @@ const styles = StyleSheet.create({
   gapWord: { paddingHorizontal: 2 },
   rule: { alignSelf: 'stretch', height: 2.5, borderRadius: radii.pill, marginTop: -1 },
   badge: { height: BADGE, alignItems: 'center', gap: spacing.xs + 1, paddingHorizontal: spacing.sm + 2, borderRadius: radii.pill },
-  badgeText: { fontSize: typography.sizes.text, lineHeight: 15, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
+  badgeText: { fontSize: typography.sizes.text, lineHeight: 22, fontWeight: typography.weights.bold, letterSpacing: 1.2, textTransform: 'uppercase' },
 });

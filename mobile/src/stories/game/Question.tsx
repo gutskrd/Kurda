@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   optionMain: { flex: 1, gap: 2 },
   optionText: { fontSize: typography.sizes.text, lineHeight: 22 },
-  optionTranslation: { fontSize: typography.sizes.text, lineHeight: 19, opacity: 0.8 },
+  optionTranslation: { fontSize: typography.sizes.text, lineHeight: 22, opacity: 0.8 },
   statusRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
   status: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   soon: { fontSize: typography.sizes.text, textAlign: 'center' },

@@ -3462,7 +3462,6 @@ export const de: Catalogue = {
   'about.makerBody': 'Hevalo ist ein Produkt von Zagrosian.',
   'about.creditsTitle': 'Danksagungen und Lizenzen',
   'about.creditsLead': 'Hevalo nutzt auch die Arbeit anderer, unter diesen Lizenzen:',
-  'about.credits.fonts': 'Die Schrift Vazirmatn von den Vazirmatn Project Authors – SIL Open Font License 1.1',
   'about.credits.icons': 'Phosphor Icons — MIT License',
   'about.credits.emoji': 'Noto-Emoji-Bilder von Google, verkleinert und neu kodiert – Apache License 2.0',
   'about.credits.art': 'Die Hintergründe und Symbole im Shop und die Foto-Sticker macht Hevalo selbst.',

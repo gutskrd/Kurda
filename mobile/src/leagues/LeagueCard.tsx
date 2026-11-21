@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.md - 2, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 4 },
   text: { flex: 1, gap: 3 },
   title: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
-  meta: { fontSize: typography.sizes.text, lineHeight: 19, fontVariant: ['tabular-nums'] },
+  meta: { fontSize: typography.sizes.text, lineHeight: 22, fontVariant: ['tabular-nums'] },
   line: { alignItems: 'center', gap: 5 },
   zones: { flexWrap: 'wrap', columnGap: spacing.md, rowGap: 2 },
 });

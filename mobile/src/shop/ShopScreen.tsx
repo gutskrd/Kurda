@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
   card: { width: '48.5%', gap: 4, borderRadius: radii.md, padding: spacing.sm },
   cardArt: { height: ART_HEIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
   itemName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
-  itemDesc: { fontSize: typography.sizes.text, lineHeight: 18 },
+  itemDesc: { fontSize: typography.sizes.text, lineHeight: 22 },
   stretch: { alignSelf: 'stretch' },
   // At the card's foot, so the prices of a row line up whatever their meanings' length.
   priceRow: { alignItems: 'center', gap: spacing.xs, marginTop: 'auto', paddingTop: spacing.xs },

@@ -3469,7 +3469,6 @@ export const ku: Catalogue = {
   'about.makerBody': 'Hevalo berhemeke Zagrosian e.',
   'about.creditsTitle': 'Spas û lîsans',
   'about.creditsLead': 'Hevalo karê kesên din jî bi kar tîne, bi van lîsansan:',
-  'about.credits.fonts': 'Tîpa Vazirmatn, ji nivîskarên projeya Vazirmatn — SIL Open Font License 1.1',
   'about.credits.icons': 'Phosphor Icons — MIT License',
   'about.credits.emoji': 'Wêneyên Noto Emoji yên Google, mezinahî û format guhertî — Apache License 2.0',
   'about.credits.art': 'Paşxane û îkonên Firoşgehê û stickerên wêneyan ji aliyê Hevalo ve hatine çêkirin.',

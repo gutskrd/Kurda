@@ -2,7 +2,7 @@
 import { FlexWidget, ImageWidget, OverlapWidget, SvgWidget, TextWidget, type ColorProp, type HexColor } from 'react-native-android-widget';
 import { DEFAULT_PAPER, letterBirdSvg, paperColors, type WidgetLetter } from '@kurda/shared';
 import { DARK, LIGHT } from '../../theme/palette';
-import { radii } from '../../theme/tokens';
+import { radii, typography } from '../../theme/tokens';
 import { ICON_PATHS, ICON_VIEWBOX } from '../../theme/icon-paths';
 import { APP_LINK, LETTERS_LINK, letterThreadLink } from '../contract';
 import { widgetDate, widgetText } from '../strings';
@@ -131,7 +131,7 @@ function LetterOnPaper({
                   text={heading}
                   maxLines={sealed ? 3 : 1}
                   truncate="END"
-                  style={{ width: 'match_parent', fontSize: family === 'small' ? 14 : 15, fontWeight: sealed ? '600' : 'bold', color: ink, textAlign: align }}
+                  style={{ width: 'match_parent', fontSize: typography.sizes.text, fontWeight: sealed ? '600' : 'bold', color: ink, textAlign: align }}
                 />
               </FlexWidget>
               {!rtl && pinned ? <Pin color={colors.ink} /> : null}
@@ -141,7 +141,7 @@ function LetterOnPaper({
                 text={letter.excerpt}
                 maxLines={EXCERPT_LINES[family]}
                 truncate="END"
-                style={{ width: 'match_parent', fontSize: family === 'large' ? 15 : 13, lineHeight: family === 'large' ? 21 : 18, color: ink, textAlign: align, marginTop: 2 }}
+                style={{ width: 'match_parent', fontSize: typography.sizes.text, lineHeight: 21, color: ink, textAlign: align, marginTop: 2 }}
               />
             )}
           </FlexWidget>

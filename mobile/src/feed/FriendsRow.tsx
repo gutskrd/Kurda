@@ -2,8 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
-import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { hueSteps } from '@kurda/shared';
+import Svg, { Circle } from 'react-native-svg';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { useI18n } from '../i18n/I18nContext';
@@ -14,7 +13,7 @@ import { springTo, useListEntrance } from '../theme/animate';
 import { bucket, type RailFriend, type SocialRailData } from '../social/rail';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { layout, radii, spacing } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { pressedDim } from '../theme/motion';
 
 /** The face in each circle, and the ring round it with a little air between. */
@@ -155,19 +154,13 @@ function Face({
   spoken: string;
   /** When the face springs in, or null for one that is simply there. */
   delay?: number | null;
-  /**
-   * Who is around, as a ring: a warm gradient for a friend playing now (the liveliest thing in the row), quiet
-   * green for online, nothing otherwise.
-   */
+  /** Who is around, as a ring: solid ink for a friend playing now (the liveliest thing in the row), a quiet grey for online, nothing otherwise. */
   ring?: 'playing' | 'online' | 'none';
   onPress: () => void;
   children: React.ReactNode;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const r = (CIRCLE - RING) / 2;
-  /* The warm ring for a friend playing now: orange into pink, two of the shared hues (gold is kept for what is earned). */
-  const from = hueSteps(colors.scheme, 'orange').base;
-  const to = hueSteps(colors.scheme, 'pink').base;
   return (
     <Pressable
       onPress={onPress}
@@ -179,17 +172,11 @@ function Face({
         <View style={styles.ring}>
           {ring !== 'none' ? (
           <Svg width={CIRCLE} height={CIRCLE} style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Defs>
-              <LinearGradient id="playing" x1="0" y1="1" x2="1" y2="0">
-                <Stop offset="0" stopColor={from} />
-                <Stop offset="1" stopColor={to} />
-              </LinearGradient>
-            </Defs>
             <Circle
               cx={CIRCLE / 2}
               cy={CIRCLE / 2}
               r={r}
-              stroke={ring === 'playing' ? 'url(#playing)' : colors.success}
+              stroke={ring === 'playing' ? colors.textPrimary : colors.textSecondary}
               strokeWidth={RING}
               fill="none"
             />

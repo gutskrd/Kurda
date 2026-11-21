@@ -3467,7 +3467,6 @@ export const ckb: Catalogue = {
   'about.makerBody': 'Hevalo بەرهەمێکی Zagrosian ە.',
   'about.creditsTitle': 'سوپاس و مۆڵەتەکان',
   'about.creditsLead': 'Hevalo کاری کەسانی تریش بەکاردەهێنێت، بەم مۆڵەتانە:',
-  'about.credits.fonts': 'فۆنتی Vazirmatn، لە نووسەرانی پرۆژەی Vazirmatn — SIL Open Font License 1.1',
   'about.credits.icons': 'Phosphor Icons — MIT License',
   'about.credits.emoji': 'وێنەکانی Noto Emoji لە Google، قەبارە و فۆرماتیان گۆڕدراوە — Apache License 2.0',
   'about.credits.art': 'پاشبنەما و ئایکۆنەکانی فرۆشگا و ستیکەرەکانی وێنە، Hevalo خۆی دروستیان دەکات.',

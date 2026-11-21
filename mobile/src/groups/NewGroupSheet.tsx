@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.text,
   },
   multiline: { minHeight: 70, textAlignVertical: 'top' },
-  hint: { fontSize: typography.sizes.text, lineHeight: 18 },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
   error: { textAlign: 'center', fontSize: typography.sizes.text },
   held: { marginBottom: spacing.xs },
   // The sheet already has its own margins.

@@ -156,5 +156,5 @@ const styles = StyleSheet.create({
   face: { width: FACE, height: FACE, borderRadius: radii.pill, overflow: 'hidden', alignItems: 'center', justifyContent: 'flex-end' },
   words: { flexShrink: 1 },
   ku: { fontSize: typography.sizes.text, fontWeight: '600', lineHeight: 20, writingDirection: 'ltr' },
-  means: { fontSize: typography.sizes.text, lineHeight: 18 },
+  means: { fontSize: typography.sizes.text, lineHeight: 22 },
 });
