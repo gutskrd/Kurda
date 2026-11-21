@@ -360,7 +360,7 @@ function Foot({ onArt, children }: { onArt: boolean; children: React.ReactNode }
   const row = [styles.foot, { flexDirection: dir.row }];
   if (!onArt) return <View style={row} pointerEvents="none">{children}</View>;
   return (
-    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.62)']} style={row} pointerEvents="none">
+    <LinearGradient colors={['transparent', 'rgba(0,0,0,0.72)']} style={row} pointerEvents="none">
       {children}
     </LinearGradient>
   );
@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   wordsBody: { fontSize: typography.sizes.text, lineHeight: 21 },
   mark: { position: 'absolute', top: 8, end: 8 },
   markOnArt: { shadowColor: '#000000', shadowOpacity: 0.45, shadowRadius: 3, shadowOffset: { width: 0, height: 0 } },
-  foot: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: 4, paddingTop: 18, paddingBottom: 6, paddingHorizontal: spacing.sm },
+  foot: { position: 'absolute', left: 0, right: 0, bottom: 0, alignItems: 'center', gap: 4, paddingTop: 28, paddingBottom: 6, paddingHorizontal: spacing.sm },
   footStack: { flex: 1, minWidth: 0 },
   footText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   footDate: { fontSize: typography.sizes.text, opacity: 0.85 },

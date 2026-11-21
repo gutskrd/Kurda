@@ -551,7 +551,8 @@
   position: absolute;
   top: 8px;
   inset-inline-end: 8px;
-  color: var(--on-art);
+  /* white in both schemes: it always stands on a picture, over a shade */
+  color: #fff;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
 }
 .pg-tile-mark.is-words {
@@ -566,9 +567,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 18px 8px 6px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), transparent);
-  color: var(--on-art);
+  padding: 28px 8px 6px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.72), transparent);
+  /* white in both schemes: it always stands on a picture, over a shade */
+  color: #fff;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -576,14 +578,22 @@
   background: none;
   color: var(--ink-3);
 }
-.pg-tile.is-game .gp-art,
+/* the square cover as tall as the tile, centred, its sides running past the tile's edges */
+.pg-tile.is-game .gp-art {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: block;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+  border-radius: 0;
+  transform: translateX(-50%);
+}
 .pg-tile.is-game .gp-art svg {
   display: block;
   width: 100%;
   height: 100%;
-}
-.pg-tile.is-game .gp-art {
-  border-radius: 0;
 }
 .pg-tile-foot.is-game {
   display: grid;
