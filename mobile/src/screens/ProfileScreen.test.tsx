@@ -67,12 +67,14 @@ describe('your profile', () => {
     expect(await screen.findByText('23')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeTruthy();
     expect(screen.getByText('Rojda')).toBeTruthy();
-    expect(screen.getByText(/@rojda\s+·\s+Joined\s2026/)).toBeTruthy();
+    expect(screen.getByText('@rojda')).toBeTruthy();
+    expect(screen.getByText('Joined 2026')).toBeTruthy();
     expect(screen.getByText('Fêrî Kurmancî dibim.')).toBeTruthy();
     expect(screen.getByRole('progressbar', { name: 'Level 5, 160 XP to level 6' })).toBeTruthy();
     // Streak, XP, friends and badges, in one row.
     const row = screen.getByTestId('profile-facts');
-    expect(row.textContent).toMatch(/6.*Streak.*1,340.*XP.*23.*Friends/);
+    // XP shortened beside the face, and said whole to a screen reader
+    expect(row.textContent).toMatch(/6.*Streak.*1\.3K.*XP.*23.*Friends/);
     expect(screen.getByRole('button', { name: 'Streak, 6 days' })).toBeTruthy();
     expect(screen.getByLabelText('1,340 XP')).toBeTruthy();
     expect(screen.getByRole('button', { name: '23 Friends' })).toBeTruthy();

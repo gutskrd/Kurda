@@ -49,7 +49,9 @@ describe('Profile view (full, read-only)', () => {
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
     expect(document.querySelector('.ph-handle')?.textContent).toBe('@ada');
     expect(screen.getByText('Learning Kurdish.', { selector: 'p.mkp-bio' })).toBeInTheDocument();
-    expect(fact('XP')).toBe('3,200');
+    // shortened beside the face so four figures always fit, and said whole to a screen reader
+    expect(fact('XP')).toBe('3.2K');
+    expect(screen.getByText('XP', { selector: '.mkp-fact-label' }).parentElement?.querySelector('.sr-only')?.textContent).toBe('3,200');
     await openYours();
     expect(fact('Zêr')).toBe('450');
     expect(fact('Friends')).toBe('2');

@@ -119,25 +119,42 @@
   border-radius: 50%;
   background: var(--online, var(--success));
 }
-/* the figures: number over word, in a row like a social app's counts, with no rules between them */
+/* the figures: number over word, in a row like a social app's counts, with no rules between them; each as wide as it
+   needs, the row shrinking together only where it would overflow (FullProfile.tsx) */
 .ph-stats .mkp-facts {
+  display: flex;
+  gap: 6px;
   margin: 0;
   padding: 0 0 6px;
   border-top: 0;
 }
+.ph-stats .mkp-facts > li {
+  flex: 1 1 auto;
+  min-width: auto;
+}
 .ph-stats .mkp-facts > li + li {
   border-inline-start: 0;
 }
+/* figures too long to sit beside the face at a readable size take the whole width under it (FullProfile.tsx) */
+.ph-top:has(.mkp-facts[data-crowded]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ph-top:has(.mkp-facts[data-crowded]) .ph-stats {
+  padding-top: 4px;
+}
 .ph-stats .mkp-fact {
   margin-inline: 0;
-  padding-inline: 2px;
+  padding-inline: 0;
 }
 .ph-stats .mkp-fact-value {
-  font-size: calc(var(--text-title) * var(--value-fit, 1));
+  font-size: calc(var(--text-title) * var(--row-fit, 1));
+  white-space: nowrap;
 }
 .ph-stats .mkp-fact-label {
+  font-size: calc(var(--text) * var(--row-fit, 1));
   font-weight: 500;
   text-decoration: none;
+  overflow: visible;
 }
 
 /* the name with its level ring, and the handle */

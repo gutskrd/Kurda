@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { gameEmblemNamed } from '@kurda/shared';
+import { compactCount, gameEmblemNamed } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ActivityEntry, FeedItem, ProfileSection, ProfileSections } from '../lib/types';
@@ -238,7 +238,7 @@ function PostTile({ item }: { item: FeedItem }): React.JSX.Element {
       {item.viewCount > 0 && (
         <span className="pg-tile-foot" aria-hidden="true">
           <EyeIcon size={15} />
-          {item.viewCount.toLocaleString(locale)}
+          {compactCount(item.viewCount, locale)}
         </span>
       )}
     </Link>

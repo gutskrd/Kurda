@@ -97,7 +97,9 @@ describe('who somebody is', () => {
       'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
     });
     renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
-    expect(await screen.findByText('1,385')).toBeTruthy();
+    // shortened beside their face, and said whole to a screen reader
+    expect(await screen.findByText('1.4K')).toBeTruthy();
+    expect(screen.getByLabelText('1,385 XP')).toBeTruthy();
   });
 
   it('shows neither their words nor where they are from on a profile that is private', async () => {

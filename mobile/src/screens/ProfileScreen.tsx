@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { ActivityIndicator, Image, RefreshControl, ScrollView, Share, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { ActivityIndicator, RefreshControl, ScrollView, Share, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
@@ -23,7 +23,7 @@ import { useDirection } from '../reports/direction';
 import { useUnread } from '../messages/unread';
 import { SITE_ORIGIN } from '../feed/api';
 import { Avatar, ownAvatarUrl } from '../profile/Avatar';
-import { GiftedNote, IconOverlay, flagUrl } from '../profile/cosmetic-parts';
+import { Flag, GiftedNote, IconOverlay } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
 import {
   countryName,
@@ -52,7 +52,7 @@ import { learningStats, type Streak } from '../streak/format';
 import { freezeSlots } from '../streak/kept';
 import { DailySheet } from '../daily/DailySheet';
 import { useToday } from '../daily/today';
-import { formatNumber } from '../i18n/format';
+import { formatCompact, formatNumber } from '../i18n/format';
 import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
@@ -299,30 +299,34 @@ function AccountProfile() {
   const joined = me?.createdAt ? new Date(me.createdAt) : null;
   const joinedYear = joined && !Number.isNaN(joined.getTime()) ? joined.getFullYear() : null;
   const username = me?.username ?? user?.username ?? '';
-  /*
-   * Handle and year joined share a line where they fit; otherwise the year moves to its own line rather than being
-   * cut off. The year's words stay together and the dot stays with the handle, so that is the only break.
-   */
-  const handleLine = joinedYear
-    ? `@${username} ·  ${t('profile.joined', { year: joinedYear }).replace(/ /g, ' ')}`
-    : `@${username}`;
+  const handleLine = `@${username}`;
 
   const number = (n: number | null | undefined): string | null => (n == null ? null : formatNumber(n, locale));
+  // The figures beside the face are shortened (5230 → 5.2K) so four always fit; a screen reader hears the whole number.
+  const short = (n: number | null | undefined): string | null => (n == null ? null : formatCompact(n, locale));
+  const whole = (n: number | null | undefined): string | undefined => (n == null || short(n) === number(n) ? undefined : (number(n) ?? undefined));
   const streakDays = streak?.current ?? 0;
+  const xp = me?.level?.xp ?? me?.xp ?? 0;
   // The four figures the website shows. The streak opens its sheet; friends and badges open their pages.
   const facts: ProfileFact[] = [
     {
       key: 'streak',
       label: t('profile.stat.streak'),
-      value: settled ? number(streakDays) : null,
+      value: settled ? short(streakDays) : null,
       art: <Fire size={18} level={fireLevel(streakDays)} />,
       spoken: t(streakDays === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: formatNumber(streakDays, locale) }),
       onPress: streak ? () => setStreakOpen(true) : undefined,
     },
-    { key: 'xp', label: t('profile.stat.xp'), value: settled ? number(me?.level?.xp ?? me?.xp ?? 0) : null },
-    { key: 'friends', label: t('nav.friends'), value: settled ? (number(friends) ?? '—') : null, onPress: () => navigation.navigate('Friends') },
+    { key: 'xp', label: t('profile.stat.xp'), value: settled ? short(xp) : null, whole: whole(xp) },
+    { key: 'friends', label: t('nav.friends'), value: settled ? (short(friends) ?? '—') : null, whole: whole(friends), onPress: () => navigation.navigate('Friends') },
     // The count arrives with the public profile, after the first answers.
-    { key: 'badges', label: t('profile.badges'), value: progressSettled ? (number(progress?.achievements) ?? '—') : null, onPress: () => navigation.navigate('Badges') },
+    {
+      key: 'badges',
+      label: t('profile.badges'),
+      value: progressSettled ? (short(progress?.achievements) ?? '—') : null,
+      whole: whole(progress?.achievements),
+      onPress: () => navigation.navigate('Badges'),
+    },
   ];
   const stats = streak ? learningStats(streak) : null;
   // A Hevalo+ member has room for a second freeze, and the hint says how many rather than "one".
@@ -455,10 +459,21 @@ function AccountProfile() {
               </View>
             }
           >
-            {country ? (
-              <View style={[styles.about, { flexDirection: dir.row }]}>
-                <Image source={{ uri: flagUrl(me!.country!) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
-                <Text style={[styles.aboutText, { color: colors.textSecondary }]}>{country}</Text>
+            {/* Where they are from and since when, on one row that wraps, as on the website. */}
+            {country || joinedYear ? (
+              <View style={[styles.aboutRow, { flexDirection: dir.row }]}>
+                {country ? (
+                  <View style={[styles.about, { flexDirection: dir.row }]} testID="profile-country">
+                    <Flag code={me!.country!} />
+                    <Text style={[styles.aboutText, { color: colors.textSecondary }]}>{country}</Text>
+                  </View>
+                ) : null}
+                {joinedYear ? (
+                  <View style={[styles.about, { flexDirection: dir.row }]}>
+                    <Icon name="calendar" size={15} tone="secondary" />
+                    <Text style={[styles.aboutText, { color: colors.textSecondary }]}>{t('profile.joined', { year: joinedYear })}</Text>
+                  </View>
+                ) : null}
               </View>
             ) : null}
             {/* Who can open this page, said on the page itself, and one tap from where it is changed. */}
@@ -542,9 +557,8 @@ const styles = StyleSheet.create({
   bleed: { marginHorizontal: -layout.gutter },
   // The upload spinner covers the avatar alone.
   avatarOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  aboutRow: { flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.md, rowGap: spacing.xs },
   about: { alignItems: 'center', gap: spacing.xs },
-  // A plain 22x16 image, as on the website; a radius this small would be a rounding error.
-  flag: { width: 22, height: 16 },
   aboutText: { fontSize: typography.sizes.text },
   seenText: { fontSize: typography.sizes.text, textDecorationLine: 'underline' },
   bio: { fontSize: typography.sizes.text, lineHeight: 21 },

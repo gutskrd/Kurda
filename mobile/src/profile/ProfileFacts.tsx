@@ -26,6 +26,8 @@ export interface ProfileFact {
   art?: ReactNode;
   /** How a screen reader says it, where the figure alone would not do ("12 days"). */
   spoken?: string;
+  /** The whole number, where the figure is shortened ("5.2K"): what a screen reader says instead. */
+  whole?: string;
   onPress?: () => void;
 }
 
@@ -37,7 +39,7 @@ export function ProfileFacts({ facts, head = false, testID }: { facts: readonly 
   const { colors } = useTheme();
   const dir = useDirection();
   return (
-    <View style={[styles.facts, { flexDirection: dir.row }]} testID={testID}>
+    <View style={[styles.facts, head ? styles.factsHead : null, { flexDirection: dir.row }]} testID={testID}>
       {facts.map((fact, i) => (
         <Fragment key={fact.key}>
           {i > 0 && !head ? <View style={[styles.divider, { backgroundColor: colors.separator }]} /> : null}
@@ -79,10 +81,12 @@ function Fact({ fact, head }: { fact: ProfileFact; head: boolean }): React.JSX.E
     </>
   );
   // "23 Friends", or the label first where the figure needs words of its own ("Streak, 6 days").
-  const spoken = fact.spoken ? `${fact.label}, ${fact.spoken}` : `${fact.value ?? '—'} ${fact.label}`;
+  const spoken = fact.spoken ? `${fact.label}, ${fact.spoken}` : `${fact.whole ?? fact.value ?? '—'} ${fact.label}`;
+  // Beside a face each figure is as wide as it needs and the row shares out the rest, so "128K" never squeezes "Friends".
+  const place = head ? [styles.fact, styles.factHead] : styles.fact;
   if (!fact.onPress) {
     return (
-      <View style={styles.fact} accessible accessibilityLabel={spoken}>
+      <View style={place} accessible accessibilityLabel={spoken}>
         {body}
       </View>
     );
@@ -92,7 +96,7 @@ function Fact({ fact, head }: { fact: ProfileFact; head: boolean }): React.JSX.E
       onPress={fact.onPress}
       accessibilityRole="button"
       accessibilityLabel={spoken}
-      style={({ pressed }) => [styles.fact, pressed && { opacity: pressedDim }]}
+      style={({ pressed }) => [place, pressed && { opacity: pressedDim }]}
     >
       {body}
     </Pressable>
@@ -141,8 +145,10 @@ export function OnlyYou({ title, children }: { title: string; children: ReactNod
 
 const styles = StyleSheet.create({
   facts: { alignSelf: 'stretch', alignItems: 'stretch' },
+  factsHead: { justifyContent: 'space-between', gap: spacing.xs },
   divider: { width: StyleSheet.hairlineWidth, marginVertical: spacing.xs },
   fact: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2, paddingVertical: spacing.xs },
+  factHead: { flexGrow: 1, flexShrink: 1, flexBasis: 'auto' },
   figureRow: { alignItems: 'center', gap: 4, maxWidth: '100%' },
   figure: { ...statValue },
   figureHead: { flexShrink: 1, fontSize: typography.sizes.title, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },

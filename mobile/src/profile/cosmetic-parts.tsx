@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { assetUrl } from '../api/env';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -99,6 +100,13 @@ export function GiftedNote({
   );
 }
 
+/** A country's small flag beside its name; a flag that cannot be fetched is left out rather than leaving a gap. */
+export function Flag({ code }: { code: string }): React.JSX.Element | null {
+  const [failed, setFailed] = useState(false);
+  if (failed) return null;
+  return <Image source={{ uri: flagUrl(code) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden onError={() => setFailed(true)} />;
+}
+
 /**
  * Where a flag picture comes from. The country list is `@kurda/shared`'s, as the browser's. Flags are small cached PNGs
  * from a flag CDN, since emoji flags do not render on every platform; Kurdistan's is served by Hevalo, since services
@@ -115,4 +123,6 @@ const styles = StyleSheet.create({
   gifts: { gap: 2, marginTop: spacing.xs },
   gift: { alignItems: 'center', gap: spacing.xs },
   giftText: { fontSize: typography.sizes.text },
+  // A plain 22x16 image, as on the website; a radius this small would be a rounding error.
+  flag: { width: 22, height: 16 },
 });

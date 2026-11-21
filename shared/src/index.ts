@@ -977,3 +977,4 @@ export * from './pending-signup.js';
 /** How a notification is sorted into the list's filters and pictured at the end of its row. */
 export * from './notices.js';
 export { GLASS, bendAt, bendImage, bezelFor, glassField, roundedEdge, shineAt, shineImage, veilAt, veilImage, type GlassField, type GlassShape } from './glass.js';
+export * from './counts.js';

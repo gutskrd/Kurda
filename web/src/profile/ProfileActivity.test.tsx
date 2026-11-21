@@ -160,7 +160,7 @@ describe('ProfileActivity', () => {
     expect(tabs.every((t) => t.textContent === '')).toBe(true);
   });
 
-  it('draws a post with a picture as the picture, filling its tile, with how often it was seen', async () => {
+  it('draws a post with a picture as the picture, filling its tile, with how often it was seen, shortened', async () => {
     const { fetch } = activityFetch({
       posts: [post('i1', 'Çiya', { imageUrl: 'https://cdn.test/a.webp', viewCount: 1240 })],
     });
@@ -169,7 +169,7 @@ describe('ProfileActivity', () => {
 
     const tile = await screen.findByRole('link', { name: /Çiya/ });
     expect(tile.querySelector('img.pg-tile-img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
-    expect(tile.querySelector('.pg-tile-foot')?.textContent).toBe('1,240');
+    expect(tile.querySelector('.pg-tile-foot')?.textContent).toBe('1.2K');
   });
 
   it('draws a post of words as its title and opening lines, marked with its kind', async () => {

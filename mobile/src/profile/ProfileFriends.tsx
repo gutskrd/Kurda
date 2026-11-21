@@ -10,7 +10,7 @@ import { Pressable } from '../theme/Pressable';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
-import { formatNumber } from '../i18n/format';
+import { formatCompact } from '../i18n/format';
 import { useDirection } from '../reports/direction';
 
 /** Enough to show who someone knows without turning a profile into a directory. */
@@ -60,7 +60,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
 
   if (!friends || friends.length === 0) return null;
   const nameOf = (f: FriendOf): string => f.displayName || f.username;
-  const count = `${t('nav.friends')} · ${formatNumber(total, locale)}`;
+  const count = `${t('nav.friends')} · ${formatCompact(total, locale)}`;
   const names = friends.slice(0, 2).map(nameOf).join(', ');
 
   return (

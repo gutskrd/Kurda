@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
-import { flagUrl } from '../lib/countries';
+import { Flag } from '../components/Flag';
 import { GiftedNote } from './cosmetic-parts';
-import type { ProfileLeague, ShowcaseBadge, TreeGlimpse } from '@kurda/shared';
+import { compactCount, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { ProfileHead } from './ProfileHead';
 import { ProfileHighlights } from './ProfileHighlights';
 import { CalendarIcon, ChevronIcon, EyeIcon, FlameIcon, LockIcon } from '../components/icons';
@@ -59,8 +59,8 @@ export interface ProfileFact {
 
 /** How far the labels may shrink together in one row before four figures stand two by two instead. */
 const FACTS_MIN_FIT = 0.82;
-/** The title size over the text size (tokens.css), for figures drawn at the title size beside a face. */
-const TITLE_OVER_TEXT = 1.75;
+/** How far the figures beside a face may shrink together before they stand two by two instead. */
+const ROW_MIN_FIT = 0.62;
 
 /**
  * A row of up to four figures with their labels; a tile with its own page links there. The label comes first in the
@@ -70,12 +70,55 @@ export function ProfileFacts({ facts, stack = true }: { facts: readonly ProfileF
   // The labels at one size in one row, a little smaller together where the longest needs it; where they would have to
   // shrink further, four figures stand two by two at the full size instead.
   const [row, fit] = useWordFit<HTMLUListElement>(facts.map((f) => f.label), { typeOf: '.mkp-fact', weight: 600, inset: 16 });
-  // The figures beside a face are drawn at the title size, and the longest ("12,345") sets how much all of them shrink.
-  const [, valueFit] = useWordFit<HTMLUListElement>(facts.map((f) => f.value), { typeOf: '.mkp-fact', weight: 700, inset: 12, scale: TITLE_OVER_TEXT }, row);
   const stacked = stack && facts.length === 4 && fit < FACTS_MIN_FIT;
+  // Beside a face (`stack` off) each figure is as wide as it needs; the whole row shrinks together only if it overflows.
+  const key = facts.map((f) => `${f.value}|${f.label}`).join('\n');
+  useLayoutEffect(() => {
+    const el = row.current;
+    if (!el || stack) return;
+    // The words scale with the fit while the icons and gaps do not, so the row's natural width is measured at two fits
+    // and the fit that makes it as wide as its room is worked out from them. Where the room beside the face would need
+    // a fit under ROW_MIN_FIT (long short forms such as German's "12,3 Tsd."), the row moves under the face instead.
+    const top = el.closest<HTMLElement>('.ph-top');
+    const face = top?.querySelector<HTMLElement>('.ph-face');
+    const needs = (at: number): number => {
+      el.style.setProperty('--row-fit', String(at));
+      el.style.width = 'max-content';
+      const w = el.getBoundingClientRect().width;
+      el.style.width = '';
+      return w;
+    };
+    let seen = -1;
+    const measure = (): void => {
+      const whole = top?.clientWidth ?? el.clientWidth;
+      if (whole === seen || whole === 0) return;
+      seen = whole;
+      const gap = top ? parseFloat(getComputedStyle(top).columnGap) || 0 : 0;
+      const beside = top && face ? whole - face.offsetWidth - gap : whole;
+      const full = needs(1);
+      const words = (full - needs(0.5)) * 2;
+      const fitIn = (room: number): number => (full <= room || words <= 0 ? 1 : Math.max(0, (room - (full - words)) / words));
+      const fit = fitIn(beside);
+      if (fit >= ROW_MIN_FIT) {
+        delete el.dataset.crowded;
+        el.style.setProperty('--row-fit', String(Math.floor(fit * 100) / 100));
+      } else {
+        el.dataset.crowded = '';
+        el.style.setProperty('--row-fit', String(Math.floor(Math.min(1, fitIn(whole)) * 100) / 100));
+      }
+    };
+    measure();
+    void document.fonts?.ready.then(() => {
+      seen = -1;
+      measure();
+    });
+    const watch = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
+    watch?.observe(top ?? el);
+    return () => watch?.disconnect();
+  }, [row, stack, key]);
   if (facts.length === 0) return null;
   return (
-    <ul ref={row} className={`mkp-facts${stacked ? ' is-stacked' : ''}`} style={{ '--word-fit': stacked ? 1 : fit, '--value-fit': valueFit } as React.CSSProperties}>
+    <ul ref={row} className={`mkp-facts${stacked ? ' is-stacked' : ''}`} style={{ '--word-fit': stacked ? 1 : fit } as React.CSSProperties}>
       {facts.map((fact) => {
         const inside = (
           <>
@@ -176,19 +219,22 @@ export function FullProfile({
   const t = useT();
   const locale = useLocale();
   const number = (n: number): string => n.toLocaleString(locale);
+  // Figures beside the face are shortened (5230 → 5.2K) so four always fit; a screen reader is given the whole number.
+  const short = (n: number): string => compactCount(n, locale);
+  const whole = (n: number): string | undefined => (short(n) === number(n) ? undefined : number(n));
   const facts: ProfileFact[] = [
     {
       key: 'streak',
       label: t('profile.stat.streak'),
-      value: number(view.streakDays),
+      value: short(view.streakDays),
       // the flame is lit only while there is a streak to speak of
       icon: <FlameIcon size={15} className={view.streakDays > 0 ? 'mkp-fact-lit' : undefined} />,
       spoken: t(view.streakDays === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: number(view.streakDays) }),
       onOpen: own ? onStreak : undefined,
     },
-    { key: 'xp', label: t('profile.stat.xp'), value: number(view.xp) },
-    ...(view.friends != null ? [{ key: 'friends', label: t('nav.friends'), value: number(view.friends), to: own ? '/app/friends' : undefined }] : []),
-    ...(view.badges != null ? [{ key: 'badges', label: t('profile.badges'), value: number(view.badges), to: own ? '/app/badges' : undefined }] : []),
+    { key: 'xp', label: t('profile.stat.xp'), value: short(view.xp), spoken: whole(view.xp) },
+    ...(view.friends != null ? [{ key: 'friends', label: t('nav.friends'), value: short(view.friends), spoken: whole(view.friends), to: own ? '/app/friends' : undefined }] : []),
+    ...(view.badges != null ? [{ key: 'badges', label: t('profile.badges'), value: short(view.badges), spoken: whole(view.badges), to: own ? '/app/badges' : undefined }] : []),
   ];
 
   return (
@@ -215,7 +261,7 @@ export function FullProfile({
                 <ul className="mkp-about">
                   {view.country && (
                     <li className="mkp-country">
-                      <img className="flag" src={flagUrl(view.country.code)} alt="" width={22} height={16} loading="lazy" />
+                      <Flag code={view.country.code} />
                       <span>{view.country.name}</span>
                     </li>
                   )}

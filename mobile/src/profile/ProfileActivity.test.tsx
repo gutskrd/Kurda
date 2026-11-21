@@ -120,7 +120,7 @@ describe('the grid', () => {
     open({ own: true }, { 'GET /users/u1/activity?kind=posts&limit=12': ok({ items: [post('s1', { viewCount: 1240 })] }) });
     const tile = await screen.findByRole('button', { name: 'Story: Çîroka min' });
     expect(tile.textContent).toContain('Rojekê Hevalo');
-    expect(tile.textContent).toContain('1,240');
+    expect(tile.textContent).toContain('1.2K');
     fireEvent.click(tile);
     expect(navigation.navigate).toHaveBeenCalledWith('LibraryPost', { postId: 's1' });
   });

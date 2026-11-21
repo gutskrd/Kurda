@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Image, ScrollView, Share, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { Alert, ScrollView, Share, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
@@ -23,7 +23,7 @@ import { knownTier, leagueName } from '../leagues/format';
 import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { countryName, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
-import { flagUrl } from '../profile/cosmetic-parts';
+import { Flag } from '../profile/cosmetic-parts';
 import { Avatar } from '../profile/Avatar';
 import { ActivityGrid, ActivityTabs, ProfileActivitySkeleton, nearEnd, useProfileActivity } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
@@ -36,7 +36,7 @@ import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
 import { useBlock } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
-import { formatNumber } from '../i18n/format';
+import { formatCompact, formatNumber } from '../i18n/format';
 import { PlayWithButton } from '../play/PlayWithButton';
 import { useAnnouncer } from '../stories/ui';
 import { useDirection } from '../reports/direction';
@@ -337,7 +337,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     >
                       {!profile.private && profile.country ? (
                         <View style={[styles.country, { flexDirection: dir.row }]}>
-                          <Image source={{ uri: flagUrl(profile.country) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
+                          <Flag code={profile.country} />
                           <Text style={[styles.countryName, { color: colors.textSecondary }]}>{countryName(profile.country, locale) ?? profile.country}</Text>
                         </View>
                       ) : null}
@@ -433,18 +433,23 @@ function useFacts(): (profile: Profile) => ProfileFact[] {
   return (profile) => {
     const streak = profile.streak ?? 0;
     const tier = knownTier(profile.league?.tier ?? profile.tier);
+    // Shortened (128450 → 128K) so the figures fit beside the face; a screen reader hears the whole number.
+    const short = (n: number): string => formatCompact(n, locale);
+    const whole = (n: number): string | undefined => (short(n) === formatNumber(n, locale) ? undefined : formatNumber(n, locale));
+    const xp = profile.level?.xp ?? profile.xp ?? 0;
+    const badges = profile.achievements ?? 0;
     return [
       {
         key: 'streak',
         label: t('profile.stat.streak'),
-        value: formatNumber(streak, locale),
+        value: short(streak),
         // The fire as big as their streak has grown it; cold logs with none.
         art: <Fire size={18} level={fireLevel(streak)} />,
         spoken: t(streak === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: formatNumber(streak, locale) }),
       },
-      { key: 'xp', label: t('profile.stat.xp'), value: formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale) },
+      { key: 'xp', label: t('profile.stat.xp'), value: short(xp), whole: whole(xp) },
       ...(tier ? [{ key: 'league', label: t('profile.league'), value: leagueName(t, tier) }] : []),
-      { key: 'badges', label: t('profile.badges'), value: formatNumber(profile.achievements ?? 0, locale) },
+      { key: 'badges', label: t('profile.badges'), value: short(badges), whole: whole(badges) },
     ];
   };
 }
@@ -457,7 +462,6 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   // The flag and the name of where they are from, as your own profile draws them.
   country: { alignItems: 'center', gap: spacing.xs },
-  flag: { width: 22, height: 16 },
   countryName: { fontSize: typography.sizes.text },
   bio: { fontSize: typography.sizes.text, lineHeight: 21 },
   private: { alignItems: 'center', gap: spacing.xs },

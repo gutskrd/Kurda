@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { compactCount } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useProfileModal } from './ProfileModal';
 import { Avatar } from '../components/Avatar';
@@ -69,7 +70,7 @@ export function ProfileFriends({
           ))}
         </span>
         <span className="mkp-friends-said">
-          <span className="mkp-friends-count">{t('nav.friends')} · {total.toLocaleString(locale)}</span>
+          <span className="mkp-friends-count">{t('nav.friends')} · {compactCount(total, locale)}</span>
           <span className="mkp-friends-names" dir="auto">
             {names.join(', ')}
           </span>
@@ -77,7 +78,7 @@ export function ProfileFriends({
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} label={t('nav.friends')}>
         <h2 className="friend-heading">
-          {t('nav.friends')} <span className="mkp-friends-count">{total}</span>
+          {t('nav.friends')} <span className="mkp-friends-count">{total.toLocaleString(locale)}</span>
         </h2>
         <ul className="mkp-friends-list">
           {friends.map((f) => (

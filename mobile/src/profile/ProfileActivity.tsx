@@ -9,7 +9,7 @@ import { onPostDeleted, samePost, useDeleting } from '../composer/postDeleted';
 import { CARD_LABEL_KEY, feedImages, type FeedItem } from '../feed/types';
 import { GameArt } from '../games/GameArt';
 import { useI18n } from '../i18n/I18nContext';
-import { formatNumber } from '../i18n/format';
+import { formatCompact } from '../i18n/format';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
 import { timing } from '../theme/animate';
@@ -309,7 +309,7 @@ function PostTile({ item, size }: { item: FeedItem; size: { width: number; heigh
         <Foot onArt={!!picture}>
           <Icon name="eye" size={14} color={picture ? colors.textOnScrim : colors.textSecondary} />
           <Text style={[styles.footText, { color: picture ? colors.textOnScrim : colors.textSecondary }]} numberOfLines={1}>
-            {formatNumber(item.viewCount, locale)}
+            {formatCompact(item.viewCount, locale)}
           </Text>
         </Foot>
       ) : null}

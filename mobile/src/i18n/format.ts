@@ -3,6 +3,7 @@
  * separators and date order follow the user's language. Event windows are stored in UTC and shown in the device's
  * time zone.
  */
+import { compactCount } from '@kurda/shared';
 import { RTL_LOCALES, type Locale } from './translations.js';
 
 export function isRTL(locale: Locale): boolean {
@@ -25,16 +26,9 @@ export function formatNumber(value: number, locale: Locale): string {
   }
 }
 
-/**
- * Compact large numbers for tight spots: 1234 → "1.2K", 1_500_000 → "1.5M"; below 1000 unchanged. Falls back to
- * the plain number without compact Intl support.
- */
+/** Large counts shortened for tight spots (5230 → "5.2K", 1_240_000 → "1.2M"), as the website writes them. */
 export function formatCompact(value: number, locale: Locale): string {
-  try {
-    return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
-  } catch {
-    return formatNumber(value, locale);
-  }
+  return compactCount(value, locale);
 }
 
 /**
