@@ -1,13 +1,13 @@
 import { useEffect, type RefObject } from 'react';
 import {
-  HEAD_RIG,
   PEEK_LEAN,
   PEEK_TURN,
   TURN_SPRING,
   characterArt,
-  headParts,
   leanFor,
+  muzzleSide,
   partTransforms,
+  peekParts,
   pieceTransform,
   readPiece,
   shareYaw,
@@ -15,6 +15,7 @@ import {
   tiltFromOrientation,
   swingAngle,
   turnForMotion,
+  turnedHead,
   type HeadPiece,
   type LeanState,
 } from '@kurda/shared';
@@ -57,12 +58,21 @@ export function usePeekMotion(ref: RefObject<HTMLElement | null>, active: boolea
         if (yaw === 0) node.removeAttribute('transform');
         else node.setAttribute('transform', pieceTransform(piece, yaw));
       }
+      // His outline redrawn for the turn, and his muzzle's side coming into view.
+      const head = turnedHead(yaw);
+      for (const path of el.querySelectorAll('[data-shape="head"]')) path.setAttribute('d', head);
+      const side = muzzleSide(yaw);
+      for (const path of el.querySelectorAll('[data-shape="muzzle-side"]')) path.setAttribute('d', side?.d ?? '');
+      for (const fade of el.querySelectorAll('[data-shape="side-fade"]')) {
+        fade.setAttribute('x1', String(side?.from ?? 0));
+        fade.setAttribute('x2', String(side?.to ?? 1));
+      }
       placed = yaw !== 0;
     };
     const show = (): void => {
       el.style.setProperty('--peek-lean', `${lean.angle.toFixed(2)}deg`);
       const share = mirrored ? -turn.angle : turn.angle;
-      const transforms = partTransforms(headParts(art, share, PEEK_TURN.yawDeg, HEAD_RIG.pivot));
+      const transforms = partTransforms(peekParts(art, share));
       for (const group of el.querySelectorAll<SVGGElement>('[data-turn]')) {
         const name = group.dataset.turn as keyof typeof transforms;
         if (transforms[name]) group.setAttribute('transform', transforms[name]);
