@@ -86,7 +86,6 @@ export { HEAD_ROUND, PART_GROUPS, headParts, partTransform, partTransforms, type
 export {
   HEAD_RIG,
   SKULL,
-  SNOUT_FILLS,
   bentNeck,
   headPiece,
   partInDepth,

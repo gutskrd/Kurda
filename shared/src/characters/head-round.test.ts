@@ -7,7 +7,6 @@ import {
   PART_GROUPS,
   PEEK_TURN,
   SKULL,
-  SNOUT_FILLS,
   bentNeck,
   characterArt,
   eyesFor,
@@ -109,10 +108,10 @@ describe('Hevalo’s head turned as a whole', () => {
     expect(turnedHead(yaw)).toBe(turnedHead(yaw));
   });
 
-  it('builds the side of his muzzle out of his face as he turns, darker where it meets his face', () => {
+  it('builds the side of his muzzle out of his face as he turns, in the muzzle’s own light fur', () => {
     expect(snoutSlices(0)).toEqual([]);
     const slices = snoutSlices(yaw);
-    expect(slices).toHaveLength(SNOUT_FILLS.length);
+    expect(slices).toHaveLength(HEAD_RIG.muzzle.slices);
     const placed = slices.map((t) => t.match(/[\d.-]+/g)!.map(Number));
     // From his face to its front, each slice comes further round and narrows toward the muzzle's front as drawn.
     const centre = ([w, , , , e]: number[]): number => e! + w! * HEAD_RIG.muzzle.x;
@@ -124,13 +123,11 @@ describe('Hevalo’s head turned as a whole', () => {
     // Mirrored either way, and only a little wider than its front on a small turn, so it grows out of his face.
     expect(centre(snoutSlices(-yaw)[0]!.match(/[\d.-]+/g)!.map(Number))).toBeCloseTo(2 * HEAD_RIG.centre.x - centre(placed[0]!), 0);
     expect(Number(snoutSlices(stepYaw(1))[0]!.match(/[\d.-]+/)![0])).toBeLessThan(1.01);
-    const shade = (hex: string): number => parseInt(hex.slice(1, 3), 16) + parseInt(hex.slice(3, 5), 16) + parseInt(hex.slice(5, 7), 16);
-    expect(shade(SNOUT_FILLS[0]!)).toBeLessThan(shade(SNOUT_FILLS.at(-1)!));
-    // Drawn under the muzzle's front, each slice its outline.
+    // Each slice is the muzzle as drawn, its own fill and all, drawn under its front.
     const turned = roundLayer(rig.faceLayers!.features, FULL, 'fur', 'face');
-    const front = turned.indexOf('muzzle)"');
-    for (const t of slices) expect(turned.indexOf(`<path transform="${t}"`)).toBeGreaterThan(-1);
-    expect(turned.indexOf(`<path transform="${slices.at(-1)}"`)).toBeLessThan(front);
+    const front = rig.faceLayers!.features.match(/<path\b[^>]*fill="url\(#[^)]*muzzle\)"[^>]*\/>/)![0];
+    for (const t of slices) expect(turned).toContain(front.replace('<path', `<path transform="${t}"`));
+    expect(turned.indexOf(`transform="${slices.at(-1)}"`)).toBeLessThan(turned.indexOf(`<g transform="${pieceTransform(muzzle, yaw)}">`));
   });
 
   it('shows the depth of his ears and antlers as he turns: an ear’s back and hollow, an antler’s far side', () => {
@@ -263,7 +260,7 @@ describe('Hevalo’s head turned as a whole', () => {
   it('marks each piece for a player that places them as he turns, the same places as a drawn turn', () => {
     const marked = rigLayer(rig.faceLayers!.features, 'fur', 'face');
     expect(marked).toContain('<g data-shape="snout" display="none"><path d=');
-    expect((marked.match(/<g data-shape="snout"[^>]*>(<path [^>]*\/>)+<\/g>/)![0].match(/<path/g) ?? []).length).toBe(SNOUT_FILLS.length);
+    expect((marked.match(/<g data-shape="snout"[^>]*>(<path [^>]*\/>)+<\/g>/)![0].match(/<path/g) ?? []).length).toBe(HEAD_RIG.muzzle.slices);
     expect(rigLayer(rig.faceLayers!.outline, 'outline', 'face')).toContain('data-shape="head"');
     const pieces = [...marked.matchAll(/data-piece="([^"]+)"/g)].map((m) => readPiece(m[1]!));
     expect(pieces.length).toBeGreaterThan(5);

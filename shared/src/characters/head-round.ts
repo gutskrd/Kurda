@@ -25,13 +25,11 @@ export const HEAD_RIG = {
   /** each eye's middle, how near a shape's middle must be to ride on that eye, and how far the eyes stand proud */
   eyes: { left: { x: 177.5, y: 281 }, right: { x: 329.5, y: 281 }, reach: 50, lift: 6 },
   /**
-   * The muzzle: its middle, how far its front stands out, how far back its sides run into his face, and how much wider
-   * it is there than at its front, seen fully turned; shapes within `across` of its upright line and below `top` ride on
-   * its front.
+   * The muzzle: its middle, how far its front stands out, how far back its sides run into his face, how much wider it
+   * is there than at its front, seen fully turned, and how many slices of it build its side; shapes within `across` of
+   * its upright line and below `top` ride on its front.
    */
-  muzzle: { x: 255, y: 404, depth: 170, back: 70, taper: 1.18, across: 40, top: 360 },
-  /** the muzzle's side as slices of its outline, darker where it meets his face and lighter toward its front */
-  snout: { slices: 20, back: [168, 106, 54], front: [214, 160, 106] },
+  muzzle: { x: 255, y: 404, depth: 170, back: 95, taper: 1.06, slices: 20, across: 40, top: 360 },
   /** where his jaw starts reaching forward below his eyes, and where it reaches as far as the muzzle */
   jaw: { from: 330, full: 405 },
   /** how far away we see him from, for the far side to be smaller and the near side larger */
@@ -165,24 +163,19 @@ export function turnedHead(yaw: number): string {
 }
 
 const DEG = Math.PI / 180;
-const hex = (rgb: readonly number[]): string => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
-
-/** Each slice of his muzzle's side, from where it meets his face toward its front. */
-export const SNOUT_FILLS: readonly string[] = Array.from({ length: R.snout.slices }, (_, i) =>
-  hex(R.snout.back.map((v, j) => v + (R.snout.front[j]! - v) * (i / R.snout.slices))),
-);
 
 /**
- * The side of his muzzle with his head turned `yaw` radians aside, as its outline in slices from where it meets his
- * face to its front: each slice as a transform of the muzzle's front as drawn (`SNOUT_FILLS` colours them). Wider
- * toward his face the further he turns, so it grows out of his face from facing us; none facing us.
+ * The side of his muzzle with his head turned `yaw` radians aside, as slices of the muzzle from where it meets his face
+ * to its front, each as a transform of the muzzle as drawn and filled as it is, so its side is the same light fur as
+ * its front, darkening only toward its edge. A little wider toward his face the further he turns, so it grows out of
+ * his face from facing us; none facing us.
  */
 export function snoutSlices(yaw: number): string[] {
   if (yaw === 0) return [];
   const m = R.muzzle;
   const turned = Math.min(1, Math.abs(yaw) / (PEEK_TURN.yawDeg * DEG));
-  return SNOUT_FILLS.map((_, i) => {
-    const t = i / R.snout.slices;
+  return Array.from({ length: m.slices }, (_, i) => {
+    const t = i / m.slices;
     const at = placePiece({ x: m.x, y: m.y, depth: m.back + (m.depth - m.back) * t, narrow: R.narrowMuzzle, within: false }, yaw);
     const wider = 1 + (m.taper - 1) * (1 - t) * turned;
     const wide = at.wide * wider;
@@ -193,9 +186,8 @@ export function snoutSlices(yaw: number): string[] {
 
 /** The muzzle's side under its front `el`, for a layer drawn turned; nothing facing us. */
 function snoutMarkup(el: string, yaw: number): string {
-  const d = el.match(/\sd="([^"]*)"/)?.[1] ?? '';
   return snoutSlices(yaw)
-    .map((transform, i) => `<path transform="${transform}" d="${d}" fill="${SNOUT_FILLS[i]}"/>`)
+    .map((transform) => el.replace(/^<path\b/, `<path transform="${transform}"`))
     .join('');
 }
 
@@ -490,8 +482,7 @@ export function rigLayer(markup: string, layer: RoundLayer, clipId: string): str
   return onPieces(markup, layer, (el, piece) => {
     const shape = piece === SKULL ? el.replace(/<path\b/, '<path data-shape="head"') : el;
     const g = `<g data-piece="${piece.x} ${piece.y} ${piece.depth} ${piece.narrow}">${shape}</g>`;
-    const d = el.match(/\sd="([^"]*)"/)?.[1] ?? '';
-    const side = isMuzzle(el) ? `<g data-shape="snout" display="none">${SNOUT_FILLS.map((fill) => `<path d="${d}" fill="${fill}"/>`).join('')}</g>` : '';
+    const side = isMuzzle(el) ? `<g data-shape="snout" display="none">${el.repeat(R.muzzle.slices)}</g>` : '';
     return side + (piece.within ? `<g clip-path="url(#${clipId})">${g}</g>` : g);
   });
 }
