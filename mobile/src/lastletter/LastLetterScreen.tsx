@@ -65,7 +65,7 @@ function Start({ onEnter, onExit }: { onEnter: (id: string) => void; onExit: () 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (answer === null) return <Loading size="large" style={styles.loading} />;
+  if (answer === null) return <Loading style={styles.loading} />;
   if (group.length === 0) {
     return (
       <GlassCard>

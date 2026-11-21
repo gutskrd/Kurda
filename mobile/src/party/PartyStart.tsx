@@ -41,7 +41,7 @@ export function PartyStart({
   const { t } = useI18n();
   const offer = usePartyOffer(game);
   const [inviting, setInviting] = useState(false);
-  if (offer === null) return <Loading size="large" style={styles.loading} />;
+  if (offer === null) return <Loading style={styles.loading} />;
   if (offer.length === 0) {
     return (
       <GlassCard>

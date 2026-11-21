@@ -151,7 +151,7 @@ function Start({
   const dialect = useCourseDialect();
   // A guest is not told where the game is played online, and is offered an account at its door instead.
   const online = useMpAvailability('who-am-i', !gate.isGuest);
-  if (offer === undefined || (!gate.isGuest && online === null)) return <Loading size="large" style={styles.loading} />;
+  if (offer === undefined || (!gate.isGuest && online === null)) return <Loading style={styles.loading} />;
   const phone = (offer?.difficulties.length ?? 0) > 0;
   // The same approved identities fill both ways, so what one phone is offered a guest's account would be too.
   const together = gate.isGuest ? phone : groupDialects(online).length > 0;

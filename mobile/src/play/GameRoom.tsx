@@ -130,7 +130,7 @@ export function GameRoom<Board>({
       </GlassCard>
     );
   }
-  if (!view) return <Loading size="large" style={styles.loading} />;
+  if (!view) return <Loading style={styles.loading} />;
 
   const name = (seat: number): string => {
     const p = view.players.find((x) => x.seat === seat);
