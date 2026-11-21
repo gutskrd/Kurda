@@ -440,6 +440,14 @@ input[type='password']::-ms-clear {
   font-size: var(--text-secondary);
 }
 
+.spinner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid var(--border-strong);
+  border-top-color: var(--ink);
+  animation: spin 0.7s linear infinite;
+}
 .spinner-center {
   display: grid;
   place-items: center;
@@ -447,100 +455,14 @@ input[type='password']::-ms-clear {
   /* The spinner fades in after a short wait, so quick loads do not flicker; its space is held from the start. */
   animation: spinner-wait var(--dur) var(--ease-out) 120ms both;
 }
-/* Hevalo chasing the winged apple (ChaseLoader): the stride's drawings shown one at a time, the apple bobbing once a
-   stride, drifting more slowly, its wings beating down fast and up slower. Mid-stride and still under Reduce Motion. */
-.chase {
-  width: min(220px, 62vw);
-  color: var(--border-strong);
-}
-.chase svg {
-  display: block;
-  width: 100%;
-  height: auto;
-}
-.chase-frame {
-  visibility: hidden;
-  animation: chase-frame 500ms linear infinite;
-}
-@keyframes chase-frame {
-  0%,
-  6.66% {
-    visibility: visible;
-  }
-  6.67%,
-  100% {
-    visibility: hidden;
-  }
-}
-.chase-apple {
-  animation: chase-bob 500ms ease-in-out infinite;
-}
-@keyframes chase-bob {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  25% {
-    transform: translateY(-6px);
-  }
-  75% {
-    transform: translateY(6px);
-  }
-}
-.chase-drift {
-  animation: chase-drift 2500ms ease-in-out infinite;
-}
-@keyframes chase-drift {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(5px);
-  }
-  75% {
-    transform: translateX(-5px);
-  }
-}
-.chase-wing {
-  animation: chase-beat 240ms ease-in-out infinite;
-}
-.chase-wing.is-far {
-  animation-name: chase-beat-far;
-}
-@keyframes chase-beat {
-  0%,
-  100% {
-    transform: rotate(44deg);
-  }
-  40% {
-    transform: rotate(-24deg);
-  }
-}
-@keyframes chase-beat-far {
-  0%,
-  100% {
-    transform: rotate(39.6deg);
-  }
-  40% {
-    transform: rotate(-21.6deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .chase-frame,
-  .chase-apple,
-  .chase-drift,
-  .chase-wing {
-    animation: none;
-  }
-  .chase-frame:first-child {
-    visibility: visible;
-  }
-}
-
 @keyframes spinner-wait {
   from {
     opacity: 0;
+  }
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

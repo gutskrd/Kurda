@@ -255,7 +255,7 @@ export function CouchGame({ onLeave, ask }: { onLeave: () => void; ask?: CouchAs
     setEvening({ ...evening, deck, at, played: evening.played + 1, totals, game: deal(evening.dialect, evening.game.players, evening.wanted, deck[at]!) });
   }
 
-  if (offers === null) return <Loading size="large" style={styles.loading} />;
+  if (offers === null) return <Loading style={styles.loading} />;
   if (offers.length === 0) {
     return (
       <View style={styles.content}>

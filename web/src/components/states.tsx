@@ -1,14 +1,12 @@
 import { Button } from './Button';
-import { ChaseLoader } from './ChaseLoader';
 import { useT } from '../i18n/I18nProvider';
 
-/** A page on its way: Hevalo galloping after his winged apple, and for screen readers what is loading. */
 export function Loading({ label }: { label?: string }): React.JSX.Element {
   const t = useT();
   const text = label ?? t('common.loading');
   return (
     <div className="spinner-center" role="status" aria-live="polite">
-      <ChaseLoader />
+      <div className="spinner" />
       <span className="sr-only">{text}</span>
     </div>
   );
