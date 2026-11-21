@@ -59,7 +59,7 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
       </>
     );
   } else if (!view) {
-    body = <Loading style={styles.loading} />;
+    body = <Loading size="large" style={styles.loading} />;
   } else if (view.status === 'cancelled') {
     body = (
       <>

@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, characterSvg, peekArt, type BrowState, type CharacterPoint } from '@kurda/shared';
+import { PEEK_PLACE, PEEK_POP, PEEK_VIEW, peekArt, type BrowState, type CharacterPoint } from '@kurda/shared';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
 import { useDrawingIds } from './drawingIds';
-import { renameIds } from './layers';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
+import { StillHead } from './StillHead';
+import { usePeekMotion } from './usePeekMotion';
 import type { PlaybackClock } from './voice';
 
-/** The share of the rise at which he is through enough to cheer. */
+/** The share of his coming through at which he is through enough to cheer. */
 const GLAD_AT = 0.55;
 
 /** How far past the picture's top and sides a hop or ear twitch may carry him before he is clipped, as a share of its height. */
@@ -24,12 +26,15 @@ export interface PeekSpeech {
 }
 
 /**
- * Hevalo's head poking through a torn page (shared `peekArt`). He rises through the tear on a spring when shown,
- * with his shadows following on one value, or appears in place under Reduce Motion. He blinks, glances, looks
- * where told (`gaze`), follows a finger, cheers as he comes through, and reacts to `reaction`; `resting`, he dozes
- * instead, with no cheer, blinks or glances. `speech` and `text` make him say a line (auth/guide/speech.ts); `flip`
- * mirrors the whole picture. The tear is decorative for screen readers; he is named and answers taps as everywhere.
- * `still` draws him once, with no life and no taps, for a picture that only decorates.
+ * Hevalo's head poking through a torn page (shared `peekArt`): he stands behind the page and has pushed his head
+ * through it toward us. When shown, the tear bursts open and he comes out of the dark toward us on a spring, his
+ * shadow sliding down the page as he comes; under Reduce Motion he is simply there. While his screen is in front he
+ * leans with the phone's tilt, his shadows swinging with him, and turns his head toward the side the phone swings back
+ * on, as a head in the round would, facing us again as it swings back (usePeekMotion). He blinks, glances, looks where
+ * told (`gaze`), follows a finger, cheers as he comes through, and reacts to `reaction`; `resting`, he dozes instead,
+ * with no cheer, blinks or glances. `speech` and `text` make him say a line (auth/guide/speech.ts); `flip` mirrors the
+ * whole picture. The tear is decorative for screen readers; he is named and answers taps as everywhere. `still` draws
+ * him without life or taps, for a picture that only decorates; he still leans and turns with the phone.
  */
 export function HevaloPeek({
   size,
@@ -69,13 +74,13 @@ export function HevaloPeek({
   const width = (size * PEEK_VIEW.w) / PEEK_VIEW.h;
   const { figure } = PEEK_PLACE;
   const figureWidth = figure.width * width;
-  const drawn = useMemo(() => {
-    if (!still) return null;
-    const xml = characterSvg('hevalo', { crop: 'head', width: figureWidth, brows });
-    return ids ? renameIds(xml, 'hvhevalo-', `${ids}h-`) : xml;
-  }, [still, figureWidth, brows, ids]);
-  const drop = PEEK_PLACE.drop * size;
-  const rise = useRef(new Animated.Value(pop && !reduce ? drop : 0)).current;
+  const showing = pop && !reduce;
+  const tear = useRef(new Animated.Value(showing ? 0 : 1)).current;
+  const come = useRef(new Animated.Value(showing ? 0 : 1)).current;
+  const alive = useMotionAlive();
+  const { lean, turn } = usePeekMotion(alive);
+  // Mirrored, his head turns the other way in the drawing to turn the same way on screen.
+  const turnShown = useMemo(() => (flip ? Animated.multiply(turn, -1) : turn), [flip, turn]);
   // Through the page, he cheers as the spring settles, unless the screen has a reaction of its own for him; asleep, never.
   const [glad, setGlad] = useState<CharacterReaction | null>(null);
   useEffect(() => {
@@ -86,31 +91,71 @@ export function HevaloPeek({
 
   useEffect(() => {
     // Under Reduce Motion (an answer that may arrive just after he appears) he is simply there.
-    if (!pop || reduce) {
-      rise.stopAnimation();
-      rise.setValue(0);
+    if (!showing) {
+      tear.stopAnimation();
+      come.stopAnimation();
+      tear.setValue(1);
+      come.setValue(1);
       return;
     }
-    const up = springTo(rise, 0, 'bouncy', PEEK_POP.delayMs);
-    up.start();
-    return () => up.stop();
+    const through = Animated.parallel([springTo(tear, 1, 'release', PEEK_POP.delayMs), springTo(come, 1, 'bouncy', PEEK_POP.delayMs)]);
+    through.start();
+    return () => through.stop();
     // Once, as he appears; a new size moves nothing.
-  }, [pop, reduce, rise]);
+  }, [showing, tear, come]);
 
-  // His shadows come with him: on the page behind his head, and in the dark under his chin.
-  const shade = useMemo(() => rise.interpolate({ inputRange: [0, drop], outputRange: [1, 0], extrapolate: 'clamp' }), [rise, drop]);
+  const motion = useMemo(() => {
+    const turn = lean.interpolate({ inputRange: [-90, 90], outputRange: ['-90deg', '90deg'] });
+    const { fall } = PEEK_PLACE;
+    return {
+      turn,
+      tear: {
+        opacity: tear.interpolate({ inputRange: [0, 0.3], outputRange: [0, 1], extrapolate: 'clamp' }),
+        scale: tear.interpolate({ inputRange: [0, 1], outputRange: [PEEK_POP.tearFrom, 1] }),
+      },
+      him: {
+        opacity: come.interpolate({ inputRange: [0, 0.35], outputRange: [0, 1], extrapolate: 'clamp' }),
+        scale: come.interpolate({ inputRange: [0, 1], outputRange: [PEEK_POP.from, 1] }),
+      },
+      // His shadows arrive as he does, and the further he comes toward us, the further down the page his head's falls.
+      shade: come.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' }),
+      fall: come.interpolate({ inputRange: [0, 1], outputRange: [-fall * size * 0.85, 0], extrapolate: 'clamp' }),
+    };
+  }, [lean, tear, come, size]);
 
   const room = size * ROOM;
   const mirrored = flip ? styles.flip : null;
+  const mirror = flip ? [{ scaleX: -1 }] : [];
+  const tearStyle = {
+    opacity: motion.tear.opacity,
+    transformOrigin: origin(PEEK_PLACE.tear),
+    transform: [{ scale: motion.tear.scale }, ...mirror],
+  };
   return (
     // The tear is decorative for screen readers; he is named and answers a tap as everywhere.
     <View style={[{ width, height: size }, style]} pointerEvents="box-none" testID="hevalo-peek">
-      <View style={[StyleSheet.absoluteFill, mirrored]} pointerEvents="none" aria-hidden>
-        <SvgXml xml={art.back} width={width} height={size} />
-      </View>
-      {/* The shadow his head throws on the page, arriving with him. */}
-      <Animated.View style={[StyleSheet.absoluteFill, mirrored, { opacity: shade }]} pointerEvents="none" aria-hidden testID="hevalo-peek-cast">
+      {/* His shadows on the page, arriving with him and swinging as he leans; the tear laid over them hides what falls inside it. */}
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          { opacity: motion.shade, transformOrigin: origin(PEEK_PLACE.castPivot), transform: [{ translateY: motion.fall }, { rotate: motion.turn }, ...mirror] },
+        ]}
+        pointerEvents="none"
+        aria-hidden
+        testID="hevalo-peek-cast"
+      >
         <SvgXml xml={art.cast} width={width} height={size} />
+      </Animated.View>
+      <Animated.View
+        style={[StyleSheet.absoluteFill, { opacity: motion.shade, transformOrigin: origin(PEEK_PLACE.earsPivot), transform: [{ rotate: motion.turn }, ...mirror] }]}
+        pointerEvents="none"
+        aria-hidden
+        testID="hevalo-peek-cast-ears"
+      >
+        <SvgXml xml={art.castEars} width={width} height={size} />
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, tearStyle]} pointerEvents="none" aria-hidden testID="hevalo-peek-back">
+        <SvgXml xml={art.back} width={width} height={size} />
       </Animated.View>
       {/* He is clipped at the tear's foot only: an ear or antler may reach past the picture's top and sides. */}
       <View
@@ -118,11 +163,20 @@ export function HevaloPeek({
         pointerEvents="box-none"
       >
         <Animated.View
-          style={[styles.place, { left: room + figure.left * width, top: room + figure.top * size, transform: [{ translateY: rise }] }]}
+          style={[
+            styles.place,
+            {
+              left: room + figure.left * width,
+              top: room + figure.top * size,
+              opacity: motion.him.opacity,
+              transformOrigin: origin(PEEK_PLACE.pivot),
+              transform: [{ rotate: motion.turn }, { scale: motion.him.scale }],
+            },
+          ]}
           testID="hevalo-peek-figure"
         >
-          {drawn ? (
-            <SvgXml xml={drawn} width={figureWidth} height={figure.height * size} style={flip ? styles.flip : null} />
+          {still ? (
+            <StillHead width={figureWidth} turn={turnShown} brows={brows} flip={flip} />
           ) : (
             <SpeakingCharacter
               speaker="hevalo"
@@ -137,19 +191,23 @@ export function HevaloPeek({
               reaction={reaction ?? (resting ? null : glad)}
               resting={resting}
               onPress={onPress}
+              turn={turnShown}
             />
           )}
         </Animated.View>
       </View>
-      <View style={[StyleSheet.absoluteFill, mirrored]} pointerEvents="none" aria-hidden>
+      <Animated.View style={[StyleSheet.absoluteFill, tearStyle]} pointerEvents="none" aria-hidden testID="hevalo-peek-front">
         <SvgXml xml={art.front} width={width} height={size} />
-      </View>
-      <Animated.View style={[StyleSheet.absoluteFill, mirrored, { opacity: shade }]} pointerEvents="none" aria-hidden testID="hevalo-peek-shadow">
+      </Animated.View>
+      <Animated.View style={[StyleSheet.absoluteFill, mirrored, { opacity: motion.shade }]} pointerEvents="none" aria-hidden testID="hevalo-peek-shadow">
         <SvgXml xml={art.shadow} width={width} height={size} />
       </Animated.View>
     </View>
   );
 }
+
+/** A point given as shares of a box, as a transform origin. */
+const origin = ({ x, y }: { x: number; y: number }): string => `${(x * 100).toFixed(2)}% ${(y * 100).toFixed(2)}%`;
 
 const styles = StyleSheet.create({
   flip: { transform: [{ scaleX: -1 }] },

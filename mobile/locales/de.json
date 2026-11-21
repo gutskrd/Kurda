@@ -1,6 +1,7 @@
 {
   "ios": {
     "NSPhotoLibraryUsageDescription": "Hevalo lädt die Fotos hoch, die du auswählst: als Profilbild, als Bild einer Gruppe, als Meme oder für einen Beitrag.",
-    "NSMicrophoneUsageDescription": "Hevalo nimmt deine Stimme auf, wenn du auf Aufnehmen tippst, damit du eine Sprachnotiz posten oder deine Sprechübung noch einmal anhören kannst."
+    "NSMicrophoneUsageDescription": "Hevalo nimmt deine Stimme auf, wenn du auf Aufnehmen tippst, damit du eine Sprachnotiz posten oder deine Sprechübung noch einmal anhören kannst.",
+    "NSMotionUsageDescription": "Hevalo liest, wie du dein Handy neigst und drehst, damit sich der Hirsch auf dem Bildschirm mit dir bewegt, und speichert davon nichts."
   }
 }

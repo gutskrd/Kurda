@@ -374,7 +374,7 @@
                     "prompt": "Bihar piştî zivistanê tê.",
                     "options": [
                       "Spring comes after winter.",
-                      "After dinner, Lorîn comes down from upstairs.",
+                      "Winter comes after spring.",
                       "The wind is blowing."
                     ],
                     "correctIndex": 0,
@@ -803,8 +803,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Spas. Ba gelek sar e!",
-                        "en": "Thanks. The wind is very cold!"
+                        "text": "Spas. Ez ji bahozê ditirsim, û ba gelek sar e!",
+                        "en": "Thanks. I’m afraid of the storm, and the wind is very cold!"
                       },
                       {
                         "speaker": 0,
@@ -813,8 +813,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Payîzê gelek baran dibare.",
-                        "en": "In autumn it rains a lot."
+                        "text": "Payîzê li jêr baran dibare, û li jor, li çiyê, berf dibare.",
+                        "en": "In autumn it rains down below, and up on the mountain it snows."
                       },
                       {
                         "speaker": 0,
@@ -900,7 +900,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Rasterast. Lorîn li jor dimîne."
+                      "Bihar piştî zivistanê tê."
                     ]
                   }
                 }
@@ -982,9 +982,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "An apple? Look, Hevalo is eating its nose!",
+                    "prompt": "In summer the weather is hot.",
                     "accepted": [
-                      "Sêvek? Binêre, Hevalo pozê wî dixwe!"
+                      "Havînê hewa germ e."
                     ]
                   }
                 },
@@ -998,7 +998,7 @@
                     "prompt": "gul",
                     "options": [
                       "rose",
-                      "flower",
+                      "sun",
                       "cloud",
                       "tree"
                     ],
@@ -1278,13 +1278,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nan bide wan!",
+                    "say": "Ez ê sibe telefonî te bikim.",
                     "voice": "hamo",
-                    "prompt": "Nan bide wan!",
+                    "prompt": "Ez ê sibe telefonî te bikim.",
                     "options": [
-                      "Give them bread!",
-                      "Give me the bread, please.",
-                      "There’s no bread."
+                      "I’ll phone you tomorrow.",
+                      "Phone me tomorrow!",
+                      "I phoned you today."
                     ],
                     "correctIndex": 0
                   }
@@ -1296,7 +1296,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Fermo. Neke, hêdî!"
+                      "Li asman ewr tune, îcar berf zû dihele."
                     ]
                   }
                 },
@@ -1607,7 +1607,7 @@
                     "options": [
                       "Don’t forget the speech!",
                       "Speak without forgetting anything!",
-                      "Four sugars? Don’t!"
+                      "Forget the speech!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1636,7 +1636,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Hevalo, bring me the speech and give it to me, and then I’ll give you a red apple!",
+                    "prompt": "Hevalo, bring me the speech, and then I’ll give you a red apple!",
                     "accepted": [
                       "Hevalo, gotarê bîne û bide min, û piştre ez ê sêveke sor bidim te!"
                     ]
@@ -1717,13 +1717,14 @@
                   "position": 14,
                   "type": "multiple_choice",
                   "payload": {
-                    "ask": "choose-kurdish",
+                    "ask": "reply",
+                    "say": "Gotarê ji bîr neke!",
                     "voice": "hamo",
-                    "prompt": "Don’t forget the speech!",
+                    "prompt": "Gotarê ji bîr neke!",
                     "options": [
-                      "Gotarê ji bîr neke!",
-                      "Hevalo, gotarê bîne û bide min, û piştre ez ê sêveke sor bidim te!",
-                      "Gotarê ji xewn neke!"
+                      "Soz didim, ez ê ji bîr nekim!",
+                      "Şev baş, xewnên xweş!",
+                      "Piştre ez ê sêvekê bînim."
                     ],
                     "correctIndex": 0
                   }
@@ -1817,12 +1818,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Na, neke! Efsaneya bavê min du demjimêr e.",
+                    "say": "Ji wê rojê ve, her sal em jî agir çêdikin.",
                     "voice": "hamo",
-                    "prompt": "Na, neke! Efsaneya bavê min du demjimêr e.",
+                    "prompt": "Ji wê rojê ve, her sal em jî agir çêdikin.",
                     "accepted": [
-                      "No, don’t! My father’s legend takes two hours.",
-                      "No, do not! My father’s legend takes two hours."
+                      "Since that day, every year, we make fires too.",
+                      "Since that day, we make fires every year too.",
+                      "Since that day, we too make fires every year."
                     ]
                   }
                 },
@@ -1841,13 +1843,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Na, neke! Efsaneya bavê min du demjimêr e.",
+                    "say": "Ji wê rojê ve, her sal em jî agir çêdikin.",
                     "voice": "hamo",
-                    "prompt": "Na, neke! Efsaneya bavê min du demjimêr e.",
+                    "prompt": "Ji wê rojê ve, her sal em jî agir çêdikin.",
                     "options": [
-                      "No, don’t! My father’s legend takes two hours.",
-                      "This is my father.",
-                      "This is a photo of my father."
+                      "Since that day, every year, we make fires too.",
+                      "Since that day, every year, we eat bread on the mountains.",
+                      "Every year, Kawa makes fires on the mountains."
                     ],
                     "correctIndex": 0
                   }
@@ -1875,11 +1877,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "No, don’t! My father’s legend takes two hours.",
+                    "prompt": "Since that day, every year, we make fires too.",
                     "options": [
-                      "Na, neke! Efsaneya bavê min du demjimêr e.",
-                      "Na, nekin! Efsaneya bavê min du demjimêr e.",
-                      "Na, neke! Efsane bavê min du demjimêr e."
+                      "Ji wê rojê ve, her sal em jî agir çêdikin.",
+                      "Ji wê rojê ve, her sal em jî agir çêdikim.",
+                      "Ji wê rojê ve, her sal em jî êzing çêdikin."
                     ],
                     "correctIndex": 0
                   }
@@ -1960,23 +1962,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Piştre… ez nizanim. Tenê bavê min hemû efsaneyê dizane.",
-                        "en": "Then… I don’t know. Only my father knows the whole legend."
+                        "text": "Ji wê rojê ve, her sal em jî agir çêdikin.",
+                        "en": "Since that day, every year, we make fires too."
                       },
                       {
                         "speaker": 0,
-                        "text": "Em ê telefonî bavê te bikin?",
-                        "en": "Shall we phone your father?"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Na, neke! Efsaneya bavê min du demjimêr e.",
-                        "en": "No, don’t! My father’s legend takes two hours."
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Du demjimêr? Ez ditirsim, ez diçim!",
-                        "en": "Two hours? I’m scared, I’m off!"
+                        "text": "Bi destûra te, niha ez diçim malê.",
+                        "en": "If you’ll excuse me, I’m going home now."
                       },
                       {
                         "speaker": 1,
@@ -1984,11 +1976,11 @@
                         "en": "Don’t go! Sit down, I’ll tell the legend again from the start."
                       }
                     ],
-                    "prompt": "Kî hemû efsaneyê dizane?",
+                    "prompt": "Kawa kî ye?",
                     "options": [
-                      "Bavê Hamo.",
-                      "Baran.",
-                      "Kawa."
+                      "Hesinkar.",
+                      "Mamoste.",
+                      "Nanpêj."
                     ],
                     "correctIndex": 0
                   }
@@ -2094,8 +2086,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Na, neke! Efsaneya bavê min du demjimêr e.",
-                    "reference": "Na, neke! Efsaneya bavê min du demjimêr e."
+                    "prompt": "Rûne, ez ê ji te re bibêjim. Newroz cejn e, û sersala me ye.",
+                    "reference": "Rûne, ez ê ji te re bibêjim. Newroz cejn e, û sersala me ye."
                   }
                 },
                 {
@@ -2261,11 +2253,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Then… I don’t know. Only my father knows the whole legend.",
+                    "prompt": "Since that day, every year, we make fires too.",
                     "options": [
-                      "Piştre… ez nizanim. Tenê bavê min hemû efsaneyê dizane.",
-                      "Piştre… ez nizanî. Tenê bavê min hemû efsaneyê dizane.",
-                      "Bavê te hemû gotinên pêşiyan dizane?"
+                      "Ji wê rojê ve, her sal em jî agir çêdikin.",
+                      "Ji wê rojê ve, her sal em jî agir çêdike.",
+                      "Tu hemû gotinên pêşiyan dizanî?"
                     ],
                     "correctIndex": 0
                   }
@@ -2533,8 +2525,8 @@
                         "right": "Thanks!"
                       },
                       {
-                        "left": "dê",
-                        "right": "mother"
+                        "left": "bajar",
+                        "right": "town"
                       }
                     ],
                     "voice": "hamo"
@@ -2572,7 +2564,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Dayê, destûr heye?"
+                      "Gotarê ji bîr neke!"
                     ]
                   }
                 },
@@ -2890,13 +2882,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bavê min çîrokên stêrkan dizane.",
+                    "say": "Li gund, bi şev gelek stêrk hene.",
                     "voice": "hamo",
-                    "prompt": "Bavê min çîrokên stêrkan dizane.",
+                    "prompt": "Li gund, bi şev gelek stêrk hene.",
                     "options": [
-                      "My father knows the stories of the stars.",
-                      "My father closes the book.",
-                      "This is my father."
+                      "In the village there are lots of stars at night.",
+                      "In the village there are no stars at night.",
+                      "In the town there are lots of lamps at night."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2934,13 +2926,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Bavê min çîrokên stêrkan dizane.",
+                    "say": "Li gund, bi şev gelek stêrk hene.",
                     "voice": "hamo",
-                    "prompt": "Bavê min çîrokên ___ dizane.",
+                    "prompt": "Li gund, bi şev gelek ___ hene.",
                     "options": [
-                      "stêrkan",
                       "stêrk",
-                      "stêrka"
+                      "stêrka",
+                      "stêrkê"
                     ],
                     "correctIndex": 0,
                     "cue": "star"
@@ -2957,7 +2949,7 @@
                     "options": [
                       "Come, look at the sky! How big the moon is!",
                       "It’s from the old shop, on the big street.",
-                      "Lorîn is upstairs."
+                      "Come, look at the sky! How small the moon is!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3016,8 +3008,8 @@
                     "prompt": "Come, look at the sky! How big the moon is!",
                     "options": [
                       "Were, li asman binêre! Heyv çiqas mezin e!",
-                      "Ez nizanim. Lorîn li hundir e.",
-                      "Lorîn li jor e."
+                      "Were, li asman binêre! Heyv çiqas biçûk e!",
+                      "Were, li asman binêre! Roj çiqas mezin e!"
                     ],
                     "correctIndex": 0
                   }
@@ -3057,13 +3049,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dereng? Na! Pênc xulek, ji kerema xwe, derî veke!",
+                    "say": "Hêvî destmalê digire, û Baran defê lêdixe.",
                     "voice": "hamo",
-                    "prompt": "Dereng? Na! Pênc xulek, ji kerema xwe, derî veke!",
+                    "prompt": "Hêvî destmalê digire, û Baran defê lêdixe.",
                     "options": [
-                      "Late? No! Five minutes, please, open the door!",
-                      "Late? Yes! Close the door, please!",
-                      "Early? No! Five minutes, please, close the shop!"
+                      "Hêvî is holding the handkerchief, and Baran is playing the drum.",
+                      "Baran is holding the handkerchief, and Hêvî is playing the drum.",
+                      "Hêvî is playing the zurna, and Baran is singing a song."
                     ],
                     "correctIndex": 0
                   }
@@ -3096,8 +3088,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Bavê min çîrokên stêrkan dizane.",
-                        "en": "My father knows the stories of the stars."
+                        "text": "Li gund, bi şev gelek stêrk hene.",
+                        "en": "In the village there are lots of stars at night."
                       },
                       {
                         "speaker": 1,
@@ -3111,25 +3103,30 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Binêre, li ser rê çirayek heye… niha du çira!",
-                        "en": "Look, there’s a light on the road… now two!"
+                        "text": "Binêre, li ber derî çirayek heye!",
+                        "en": "Look, there’s a lamp at the door!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew ji Kobaniyê tên! Ez ê derî vekim.",
-                        "en": "They’re coming from Kobanî! I’ll open the gate."
+                        "text": "Ev çiraya kê ye?",
+                        "en": "Whose lamp is this?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ya Nazê ye. Ew û xwarziya wê tên!",
+                        "en": "It’s Nazê’s. She and her niece are coming!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Bavê min û diya min li vir in!",
-                        "en": "My father and my mother are here!"
+                        "text": "Ez ê derî vekim, û em ê çayê vexwin.",
+                        "en": "I’ll open the door, and we’ll drink tea."
                       }
                     ],
-                    "prompt": "Çira ji ku tên?",
+                    "prompt": "Çira ya kê ye?",
                     "options": [
-                      "Ji Kobaniyê.",
-                      "Ji asman.",
-                      "Ji dibistanê."
+                      "Ya Nazê.",
+                      "Ya Hamo.",
+                      "Ya Xezo."
                     ],
                     "correctIndex": 0
                   }
@@ -3177,9 +3174,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "My father knows the stories of the stars.",
+                    "prompt": "In the village there are lots of stars at night.",
                     "accepted": [
-                      "Bavê min çîrokên stêrkan dizane."
+                      "Li gund, bi şev gelek stêrk hene.",
+                      "Bi şev li gund gelek stêrk hene."
                     ]
                   }
                 },
@@ -3209,7 +3207,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bavê min û diya min li vir in!"
+                      "Nazê dê ji zarokan re kincên nû bidirû."
                     ]
                   }
                 },
@@ -3279,13 +3277,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ew ji Kobaniyê tên! Ez ê derî vekim.",
+                    "say": "Ez ê derî vekim, û em ê çayê vexwin.",
                     "voice": "hamo",
-                    "prompt": "Ew ji Kobaniyê tên! Ez ê derî vekim.",
+                    "prompt": "Ez ê derî vekim, û em ê çayê vexwin.",
                     "options": [
-                      "They’re coming from Kobanî! I’ll open the gate.",
-                      "I’m from Kobanî, and so is Lorîn.",
-                      "They’re in Kobanî, and I’m in Sêvan."
+                      "I’ll open the door, and we’ll drink tea.",
+                      "I’ll close the door, and we’ll go to sleep.",
+                      "Open the door, and drink your tea!"
                     ],
                     "correctIndex": 0
                   }
@@ -3296,9 +3294,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "My father knows the stories of the stars.",
+                    "prompt": "In the village there are lots of stars at night.",
                     "accepted": [
-                      "Bavê min çîrokên stêrkan dizane."
+                      "Li gund, bi şev gelek stêrk hene.",
+                      "Bi şev li gund gelek stêrk hene."
                     ]
                   }
                 },
@@ -3619,7 +3618,7 @@
                     "options": [
                       "I’m not afraid at all; I jump over the fire!",
                       "I’m giving twenty, for the tea.",
-                      "I’m afraid of nothing, only of my mother!"
+                      "I’m very afraid; I won’t jump over the fire!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3756,8 +3755,8 @@
             {
               "key": "u07s4l2",
               "position": 2,
-              "titleKu": "Bilûra bavê min",
-              "titleEn": "My father’s flute",
+              "titleKu": "Hêsirên xweşiyê",
+              "titleEn": "Tears of joy",
               "exercises": [
                 {
                   "position": 1,
@@ -3768,7 +3767,7 @@
                     "voice": "hamo",
                     "prompt": "Em dikenin, û hêsirên xweşiyê tên.",
                     "options": [
-                      "We laugh until tears of joy come.",
+                      "We laugh, and tears of joy come.",
                       "We cry, and tears of pain come.",
                       "We laugh, and the smoke comes."
                     ],
@@ -3821,7 +3820,7 @@
                       "xweşiyên"
                     ],
                     "correctIndex": 0,
-                    "cue": "We laugh until tears of joy come."
+                    "cue": "We laugh, and tears of joy come."
                   }
                 },
                 {
@@ -3829,13 +3828,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike.",
+                    "say": "Ev jiyan e, û jiyan berdewam dike.",
                     "voice": "hamo",
-                    "prompt": "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike.",
+                    "prompt": "Ev jiyan e, û jiyan berdewam dike.",
                     "options": [
-                      "My father says this is life, and life goes on.",
-                      "My father says this is a flute, and the song is over.",
-                      "My father says this is the smoke, and it’s going."
+                      "This is life, and life goes on.",
+                      "This is a flute, and the song is over.",
+                      "This is the smoke, and it’s going."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3855,13 +3854,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Diya min digirî.",
+                    "say": "Çima tu digirî?",
                     "voice": "hamo",
-                    "prompt": "Diya min digirî.",
+                    "prompt": "Çima tu digirî?",
                     "options": [
-                      "My mother is crying.",
-                      "My mother is laughing.",
-                      "My mother is sleeping."
+                      "Why are you crying?",
+                      "Why are you laughing?",
+                      "Why are you sleeping?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3877,9 +3876,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike.",
+                    "say": "Ev jiyan e, û jiyan berdewam dike.",
                     "voice": "hamo",
-                    "prompt": "Bavê min dibêje ku ev ___ e, û jiyan berdewam dike.",
+                    "prompt": "Ev ___ e, û jiyan berdewam dike.",
                     "options": [
                       "jiyan",
                       "jiyanên",
@@ -3930,9 +3929,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "My mother is crying.",
+                    "prompt": "Why are you crying?",
                     "accepted": [
-                      "Diya min digirî."
+                      "Çima tu digirî?"
                     ]
                   }
                 },
@@ -3940,11 +3939,13 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "ask": "to-kurdish",
+                    "ask": "to-english",
+                    "say": "Ez bilûrê lêdixim, û hemû kes dikenin!",
                     "voice": "hamo",
-                    "prompt": "shepherd’s flute",
+                    "prompt": "Ez bilûrê lêdixim, û hemû kes dikenin!",
                     "accepted": [
-                      "bilûr"
+                      "I play the flute, and everyone laughs!",
+                      "I play the flute and everyone laughs!"
                     ]
                   }
                 },
@@ -3987,7 +3988,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "We laugh until tears of joy come.",
+                    "prompt": "We laugh, and tears of joy come.",
                     "accepted": [
                       "Em dikenin, û hêsirên xweşiyê tên."
                     ]
@@ -3998,11 +3999,11 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Diya min digirî.",
+                    "say": "Çima tu digirî?",
                     "voice": "hamo",
-                    "prompt": "Diya min digirî.",
+                    "prompt": "Çima tu digirî?",
                     "accepted": [
-                      "My mother is crying."
+                      "Why are you crying?"
                     ]
                   }
                 },
@@ -4023,8 +4024,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike.",
-                    "reference": "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike."
+                    "prompt": "Ev jiyan e, û jiyan berdewam dike.",
+                    "reference": "Ev jiyan e, û jiyan berdewam dike."
                   }
                 },
                 {
@@ -4036,7 +4037,7 @@
                     "prompt": "I wish you all health and success.",
                     "options": [
                       "Ez ji we re tenduristiyê û serkeftinê dixwazim.",
-                      "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike.",
+                      "Ev jiyan e, û jiyan berdewam dike.",
                       "Nazê ji bo min jî şal û şapik û piştênekî kesk didirû."
                     ],
                     "correctIndex": 0
@@ -4101,7 +4102,7 @@
                     "voice": "hamo",
                     "prompt": "Êş gelek dijwar e.",
                     "options": [
-                      "The pain is very hard.",
+                      "The pain is very bad.",
                       "The water is very cold.",
                       "Sêvan is really lovely!"
                     ],
@@ -4138,7 +4139,7 @@
                     "ask": "missing",
                     "say": "Êş gelek dijwar e.",
                     "voice": "hamo",
-                    "cue": "The pain is very hard.",
+                    "cue": "The pain is very bad.",
                     "prompt": "Êş gelek ___ e.",
                     "accepted": [
                       "dijwar"
@@ -4257,12 +4258,12 @@
                       {
                         "speaker": 1,
                         "text": "Gelek dijwar e?",
-                        "en": "Is it very hard?"
+                        "en": "Is it very bad?"
                       },
                       {
                         "speaker": 0,
                         "text": "Gelek dijwar e. Ji kerema xwe, çayeke germ bîne, û hinek hingiv.",
-                        "en": "Very hard. Please bring me a hot tea, and some honey."
+                        "en": "Very bad. Please bring me a hot tea, and some honey."
                       },
                       {
                         "speaker": 0,
@@ -4302,7 +4303,7 @@
                     "options": [
                       "And then, sit with me.",
                       "My uncle and my aunt are with us.",
-                      "My father and my mother are in Kobanî."
+                      "And then, go home."
                     ],
                     "correctIndex": 0
                   }
@@ -4327,7 +4328,7 @@
                     "options": [
                       "Li her derê. Pişta min, çokên min, serê min…",
                       "Li her derê. Pişta min, çok min, serê min…",
-                      "Li ber çirayê, bavê min dibêje bila baran bibare, ew bereket e."
+                      "Li her derê stêrk hene."
                     ],
                     "correctIndex": 0
                   }
@@ -4342,7 +4343,7 @@
                     "prompt": "Li her derê. Pişta min, çokên min, serê min…",
                     "options": [
                       "Everywhere. My back, my knees, my head…",
-                      "My family is in Kobanî.",
+                      "Nowhere. I’m very well!",
                       "My work is in the orchard."
                     ],
                     "correctIndex": 0
@@ -4393,11 +4394,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "My father says this is life, and life goes on.",
+                    "prompt": "This is life, and life goes on.",
                     "options": [
-                      "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike.",
-                      "Baran dibêje ku ev mala hesinkarê efsaneyê ye!",
-                      "Meta min li ber derî disekine û dibêje: Divê tu bêyî!"
+                      "Ev jiyan e, û jiyan berdewam dike.",
+                      "Ev jiyan e, û jiyan berdewam dikin.",
+                      "Ev bilûr e, û stran berdewam dike."
                     ],
                     "correctIndex": 0
                   }
@@ -4455,7 +4456,7 @@
                     "prompt": "Newroza we pîroz be!",
                     "options": [
                       "Newroza te jî pîroz be!",
-                      "Newroza me jî pîroz be!",
+                      "Rojbûna te pîroz be!",
                       "Bi xêr hatî!"
                     ],
                     "correctIndex": 0
@@ -4518,7 +4519,7 @@
                     "voice": "hamo",
                     "prompt": "Êş gelek dijwar e.",
                     "options": [
-                      "The pain is very hard.",
+                      "The pain is very bad.",
                       "The work is very hard.",
                       "The water is very cold."
                     ],
@@ -4539,7 +4540,7 @@
                       "pîrozbahiyên"
                     ],
                     "correctIndex": 0,
-                    "cue": "We laugh until tears of joy come."
+                    "cue": "We laugh, and tears of joy come."
                   }
                 },
                 {
@@ -4548,8 +4549,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Newroza we pîroz be!",
-                    "reference": "Newroza we pîroz be!"
+                    "prompt": "Xem neke. Ev baran bereket e.",
+                    "reference": "Xem neke. Ev baran bereket e."
                   }
                 },
                 {
@@ -4557,13 +4558,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Li her derê. Pişta min, çokên min, serê min…",
+                    "say": "Ev efsaneyeke kevn e. Kawa hesinkar e, û zivistan gelek sar e.",
                     "voice": "hamo",
-                    "prompt": "Li her derê. Pişta min, çokên min, serê min…",
+                    "prompt": "Ev efsaneyeke kevn e. Kawa hesinkar e, û zivistan gelek sar e.",
                     "options": [
-                      "Everywhere. My back, my knees, my head…",
-                      "The pain is only in my back.",
-                      "My family is in Kobanî."
+                      "It’s an old legend. Kawa is a blacksmith, and the winter is very cold.",
+                      "It’s a new song. Kawa is a baker, and the summer is very hot.",
+                      "It’s an old legend. Kawa is a teacher, and the spring is warm."
                     ],
                     "correctIndex": 0
                   }
@@ -4575,7 +4576,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Û piştre, li cem min rûne."
+                      "Ev çiraya kê ye?"
                     ]
                   }
                 },
@@ -4585,9 +4586,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "My mother is crying.",
+                    "prompt": "Why are you crying?",
                     "accepted": [
-                      "Diya min digirî."
+                      "Çima tu digirî?"
                     ]
                   }
                 },

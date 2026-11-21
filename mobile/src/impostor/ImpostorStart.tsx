@@ -44,7 +44,7 @@ export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }
   const preferred = useCourseDialect();
   const dialect = (offer?.find((o) => o.dialect === preferred) ?? offer?.[0])?.dialect ?? null;
   const couch = useImpostorCategories(dialect);
-  if (offer === null) return <Loading style={styles.loading} />;
+  if (offer === null) return <Loading size="large" style={styles.loading} />;
   if (dialect === null) {
     return (
       <GlassCard>

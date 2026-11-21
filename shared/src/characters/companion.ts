@@ -1,4 +1,5 @@
 import { n, prefixFor } from '../art/svg.js';
+import { CHEEK, HEAD_ROUND as ROUND, earRoot as earHeld, inTheRound, partTransform, partTurn } from './head-turn.js';
 import { drawHevalo } from './hevalo.js';
 import { curve, type Knot } from './pen.js';
 import { ACTS, BLINK_STEPS, HABITS, between, eyesMiddle, glanceTarget, pupilShift, sampleHold, sampleKeys, type Act, type Keys } from './life.js';
@@ -637,38 +638,6 @@ const SHAKE: CompanionAct = {
 /** How hard each key nudges him to lean in towards the box, and how long after a key his mouth stays round (ms). */
 const LEAN_KICK = 7;
 const OO_MS = 650;
-
-/**
- * His head in the round, for turning it: each part moves as a point on a turned head would, so features in front go the
- * way he turns, parts behind go the other way and side parts come in as their side turns away. The ears and antlers stay
- * where they grow, one swinging behind and the other towards us, each seen narrower or wider as a flat thing is.
- */
-const ROUND = {
-  /** the middle of his head, which it turns about */
-  centre: { x: HEAD_AXIS, y: 300 },
-  /** how far it turns, in degrees, looking all the way to a side, up or down */
-  yaw: 17,
-  pitch: 6,
-  /** how far each part stands in front of the middle (behind it below 0): the face's features, his jaw at the chin, the ears and antlers */
-  features: 62,
-  jaw: 30,
-  ear: -10,
-  antler: -24,
-  /** how far each ear and antler faces out to its side, and how far each leans back, in degrees */
-  earOut: 26,
-  earBack: 14,
-  /** how far in from where an ear turns its foot ends, under the head */
-  earRoot: 20,
-  antlerOut: 18,
-  antlerBack: 24,
-  /** how high on the head the outline starts coming round with the jaw */
-  brow: 175,
-  /** the bottom of his head's outline, under his chin */
-  chin: 461,
-} as const;
-
-/** The shade on the right of his face as it turns away (the left mirrors it): just outside his outline, and how far in it comes at a full turn. */
-const CHEEK = { x: 490, y: 318, rx: 84, ry: 200, reach: 80 } as const;
 
 /** Where one side's face shade is with his head turned `share` of a full turn towards that side. */
 function cheekAt(side: 'left' | 'right', share: number): string {
@@ -1332,38 +1301,11 @@ function foreleg(
 const DEG = Math.PI / 180;
 
 /** Where each ear is held to the head: the inner end of its foot, level with where it turns to twitch. */
-const earRootAt = (side: 'left' | 'right'): CharacterPoint => {
-  const pivot = RIG.rig!.ears[side].pivot;
-  return { x: pivot.x + (side === 'left' ? ROUND.earRoot : -ROUND.earRoot), y: pivot.y };
-};
+const earRootAt = (side: 'left' | 'right'): CharacterPoint => earHeld(side, RIG.rig!.ears[side].pivot);
 
-/** How a point `depth` in front of the head's middle moves as the head turns `yaw` across (his left, our right, above 0) and `pitch` down, in radians. */
-function inTheRound(p: CharacterPoint, depth: number, yaw: number, pitch: number): CharacterPoint {
-  const x = p.x - ROUND.centre.x;
-  const y = p.y - ROUND.centre.y;
-  const across = x * Math.cos(yaw) + depth * Math.sin(yaw);
-  const nearer = depth * Math.cos(yaw) - x * Math.sin(yaw);
-  return { x: across - x, y: y * Math.cos(pitch) + nearer * Math.sin(pitch) - y };
-}
-
-/**
- * An ear or antler on the turned head. It moves with the point it grows from (`pivot`, `depth` in front of the head's
- * middle); it leans back `back` degrees, so its tip swings opposite its foot and it shortens as the head tips back; and it
- * narrows as its side turns away and widens coming round (facing `out` degrees to its side), as far as it has turned
- * itself (`own`; an ear lags the head). All about `root`, where it is held to the head; `lift` first turns it about
- * `pivot` (an ear's twitch).
- */
+/** An ear or antler on the turned head (head-turn.ts), as a transform; `lift` first turns it about `pivot` (an ear's twitch). */
 function onTheHead(side: 'left' | 'right', pivot: CharacterPoint, depth: number, yaw: number, pitch: number, out: number, back: number, own = yaw, lift = 0, root = pivot): string {
-  const move = inTheRound(root, depth, yaw, pitch);
-  const o = out * DEG;
-  const b = back * DEG;
-  const wide = Math.cos(o + (side === 'left' ? -own : own)) / Math.cos(o);
-  const tall = Math.cos(b - pitch) / Math.cos(b);
-  const lean = Math.atan(Math.tan(b) * Math.sin(yaw)) / DEG;
-  return (
-    `translate(${n(move.x + root.x)} ${n(move.y + root.y)}) skewX(${n(lean)}) scale(${f3(wide)} ${f3(tall)}) translate(${n(-root.x)} ${n(-root.y)})` +
-    (lift ? ` rotate(${n(lift)} ${n(pivot.x)} ${n(pivot.y)})` : '')
-  );
+  return partTransform(partTurn(side, root, depth, yaw, pitch, out, back, own), lift, pivot);
 }
 
 /** His shadow on the card under his chest: none while below the sill, smaller and fainter as he hops off it. */

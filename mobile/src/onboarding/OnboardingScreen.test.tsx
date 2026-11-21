@@ -35,7 +35,7 @@ import { OnboardingScreen } from './OnboardingScreen';
 /*
  * The intro: the language choice ticks when it changes; slides turn in the reading direction (forward leaves to
  * the start side, back to the end side) with the dots' capsule sliding along; and the welcome slide shows Hevalo
- * over all four lines at once, in the language just chosen.
+ * over one line at a time, in the language just chosen.
  */
 
 let felt: HapticEvent[] = [];
@@ -115,7 +115,7 @@ describe('OnboardingScreen', () => {
     expect(getComputedStyle(onward.parentElement as HTMLElement).flexDirection).toBe('row-reverse');
   });
 
-  it('turns on to Hevalo over the four lines in the language chosen, the language slide leaving to the start side, and back again to the end side', async () => {
+  it('turns on to Hevalo over his first line in the language chosen, the language slide leaving to the start side, and back again to the end side', async () => {
     await device({ reduceMotion: true });
     renderWithProviders(<OnboardingScreen onComplete={() => undefined} />);
     await settle();
@@ -124,13 +124,11 @@ describe('OnboardingScreen', () => {
     await settle();
     fireEvent.click(screen.getByRole('button', { name: de['common.continue'] }));
     await settle();
-    // The language list on its way out, a still of itself; Hevalo and all four lines in.
+    // The language list on its way out, a still of itself; Hevalo in, with the first of his lines.
     const leaving = screen.getByTestId('slide-out-start');
     expect(leaving.textContent).toContain(de['onboarding.language.title']);
     expect(screen.getByRole('img', { name: /Hevalo/ })).toBeTruthy();
-    for (const line of ['onboarding.prop.learn', 'onboarding.prop.play', 'onboarding.prop.read', 'onboarding.prop.streak'] as const) {
-      expect(screen.getByText(de[line])).toBeTruthy();
-    }
+    expect(screen.getByTestId('welcome-line').textContent).toBe(de['onboarding.prop.learn']);
     expect(capsuleAt()).toBeGreaterThan(0);
     const second = capsuleAt();
     // The cross-fade done, the list is gone.
@@ -151,6 +149,25 @@ describe('OnboardingScreen', () => {
     // The last slide: the bell, and the capsule a slot further on.
     expect(screen.getByText(de['onboarding.notify.title'])).toBeTruthy();
     expect(capsuleAt()).toBeCloseTo(second * 2);
+  });
+
+  it('shows one line under his name at a time, the next after a few seconds, and gives a screen reader all of them at once', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      renderWithProviders(<OnboardingScreen onComplete={() => undefined} />);
+      await settle();
+      fireEvent.click(screen.getByRole('button', { name: en['common.continue'] }));
+      await settle();
+      finishAll();
+      const lines = (['onboarding.prop.learn', 'onboarding.prop.play', 'onboarding.prop.read', 'onboarding.prop.streak'] as const).map((k) => en[k]);
+      expect(screen.getByTestId('welcome-line').textContent).toBe(lines[0]);
+      expect(screen.getByLabelText(lines.join('. '))).toBeTruthy();
+      act(() => vi.advanceTimersByTime(3400));
+      finishAll();
+      expect(screen.getByTestId('welcome-line').textContent).toBe(lines[1]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('greets a tap on Hevalo with a knock', async () => {

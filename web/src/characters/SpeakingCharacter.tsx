@@ -20,6 +20,7 @@ import {
   eyesMiddle,
   glanceTarget,
   leanToward,
+  mapMarkup,
   lookToward,
   pickAct,
   reactionAct,
@@ -85,7 +86,7 @@ function ground(art: CharacterArt, frame: CharacterBox, crop: CharacterCrop): { 
  * Xezo's loose hair and the near end of Hamo's moustache are separate groups so they can move. Resting adds three
  * "z"s for the stylesheet to float.
  */
-function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop, resting: boolean, mirrored: boolean): string {
+function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop, resting: boolean, mirrored: boolean, turnable = false): string {
   const own = (part: string): string => part.split(`${TEMPLATE}-`).join(`${prefix}-`);
   const hidden = ' visibility="hidden"';
   const feet = { x: frame.x + frame.w / 2, y: ground(art, frame, crop).y };
@@ -103,17 +104,27 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     BROW_STATES.map((b) => `<g data-brows="${b}"${b === 'neutral' ? '' : hidden}>${own(art.brows?.states[b] ?? '')}</g>`).join('') +
     (art.cheeks ? `<g data-cheeks="blush"${hidden}>${own(art.cheeks.blush)}</g>` : '');
   const hair = art.hair ? `<g data-sc="hair"${about(art.hair.pivot)}>${own(art.hair.art)}</g>` : '';
-  const head = rig
-    ? own(rig.crown) +
-      `<g data-sc="ear-left"${about(rig.ears.left.pivot)}>${own(rig.ears.left.art)}</g>` +
-      `<g data-sc="ear-right"${about(rig.ears.right.pivot)}>${own(rig.ears.right.art)}</g>` +
-      own(rig.face)
-    : own(art.brows?.bare ?? art.head) + hair;
+  const ear = (side: 'left' | 'right'): string => `<g data-sc="ear-${side}"${about(rig!.ears[side].pivot)}>${own(rig!.ears[side].art)}</g>`;
+  // Drawn to turn, the antlers and ears are groups the page turns (shared head-turn.ts), and the face, eyes, mouth
+  // and nose are drawn in paths alone, under `data-round`, so the page can redraw each for a turn (head-round.ts).
+  const round = turnable && rig?.antlers ? rig.antlers : null;
+  const turned = (name: string, inner: string): string => `<g data-turn="${name}">${inner}</g>`;
+  const paths = (markup: string): string => mapMarkup(markup, (x, y) => [x, y]);
+  const head = round
+    ? turned('antler-left', own(round.left.art)) +
+      turned('antler-right', own(round.right.art)) +
+      turned('ear-left', ear('left')) +
+      turned('ear-right', ear('right')) +
+      `<g data-round="fur">${own(paths(rig!.face))}</g>`
+    : rig
+      ? own(rig.crown) + ear('left') + ear('right') + own(rig.face)
+      : own(art.brows?.bare ?? art.head) + hair;
   const nose = rig
     ? `<g data-sc="nose"${about(rig.sniff)}>${own(art.overlay)}</g>`
     : art.moustache
       ? own(art.moustache.body) + `<g data-sc="lift"${about(art.moustache.end.pivot)}>${own(art.moustache.end.art)}</g>`
       : own(art.overlay);
+  const mouths = MOUTH_SHAPES.map((v) => `<g data-mouth="${v}"${v === 'rest' ? '' : hidden}>${own(art.mouths[v])}</g>`).join('');
   // A soft shadow on the ground under a standing figure.
   const shadow =
     crop === 'full'
@@ -145,10 +156,7 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     own(cropBody(art, crop)) +
     `<g data-sc="head"><g class="sc-drift"${about(art.headPivot)}><g data-sc="tilt"${about(art.headPivot)}>` +
     head +
-    eyes +
-    face +
-    MOUTH_SHAPES.map((v) => `<g data-mouth="${v}"${v === 'rest' ? '' : hidden}>${own(art.mouths[v])}</g>`).join('') +
-    nose +
+    (round ? `<g data-round="eyes">${paths(eyes + face)}</g><g data-round="fur">${paths(mouths + nose)}</g>` : eyes + face + mouths + nose) +
     '</g></g></g></g></g></g></g>' +
     snooze +
     '</svg>'
@@ -234,6 +242,12 @@ export interface SpeakingCharacterProps {
    * and a laugh (shared `tapActs`).
    */
   onPress?: () => void;
+  /**
+   * Draws the head ready to turn aside, for a character drawn for it (the deer): the antlers and ears as `data-turn`
+   * groups whose transform the page sets, and the rest in paths under `data-round` the page redraws for a turn
+   * (usePeekMotion). Untouched, they face us.
+   */
+  turnable?: boolean;
   className?: string;
 }
 
@@ -263,6 +277,7 @@ export function SpeakingCharacter({
   quiet = false,
   still = false,
   onPress,
+  turnable = false,
   className,
 }: SpeakingCharacterProps): React.JSX.Element {
   const t = useT();
@@ -270,7 +285,10 @@ export function SpeakingCharacter({
   const prefix = `sc${id.replace(/[^A-Za-z0-9]/g, '')}`;
   const art = useMemo(() => characterArt(speaker, TEMPLATE), [speaker]);
   const frame = cropBox(art, crop);
-  const markup = useMemo(() => ({ __html: drawing(art, prefix, frame, crop, resting, mirrored) }), [art, prefix, frame, crop, resting, mirrored]);
+  const markup = useMemo(
+    () => ({ __html: drawing(art, prefix, frame, crop, resting, mirrored, turnable) }),
+    [art, prefix, frame, crop, resting, mirrored, turnable],
+  );
   // As two numbers, so a new object for the same look changes nothing.
   const gazeX = gaze?.x ?? null;
   const gazeY = gaze?.y ?? null;

@@ -2357,6 +2357,65 @@
     },
     {
       "story": "road-02-mevane-be-simbel",
+      "paragraph": 1,
+      "opens": "Ev wêneyên",
+      "words": [
+        {
+          "term": "malbata",
+          "meanings": {
+            "en": "family",
+            "de": "Familie",
+            "es": "familia",
+            "fr": "famille",
+            "nl": "familie",
+            "tr": "aile",
+            "ar": "العائلة",
+            "ckb": "خێزان"
+          }
+        },
+        {
+          "term": "bavê",
+          "meanings": {
+            "en": "father",
+            "de": "Vater",
+            "es": "padre",
+            "fr": "père",
+            "nl": "vader",
+            "tr": "baba",
+            "ar": "الأب",
+            "ckb": "باوک"
+          }
+        },
+        {
+          "term": "diya",
+          "meanings": {
+            "en": "mother",
+            "de": "Mutter",
+            "es": "madre",
+            "fr": "mère",
+            "nl": "moeder",
+            "tr": "anne",
+            "ar": "الأم",
+            "ckb": "دایک"
+          }
+        },
+        {
+          "term": "xwişkên",
+          "meanings": {
+            "en": "sisters",
+            "de": "Schwestern",
+            "es": "hermanas",
+            "fr": "sœurs",
+            "nl": "zussen",
+            "tr": "kız kardeşler",
+            "ar": "الأخوات",
+            "ckb": "خوشکەکان"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-02-mevane-be-simbel",
       "paragraph": 2,
       "opens": "Ev wêneyekî",
       "words": [
@@ -2385,14 +2444,7 @@
             "ar": "عشرة",
             "ckb": "دە"
           }
-        }
-      ]
-    },
-    {
-      "story": "road-02-mevane-be-simbel",
-      "paragraph": 3,
-      "opens": "“Dapîr, ev",
-      "words": [
+        },
         {
           "term": "wêne",
           "meanings": {
@@ -2405,25 +2457,58 @@
             "ar": "صورة",
             "ckb": "وێنە"
           }
+        }
+      ]
+    },
+    {
+      "story": "road-02-mevane-be-simbel",
+      "paragraph": 3,
+      "opens": "Fermo, çay",
+      "words": [
+        {
+          "term": "şekir",
+          "meanings": {
+            "en": "sugar",
+            "de": "Zucker",
+            "es": "azúcar",
+            "fr": "sucre",
+            "nl": "suiker",
+            "tr": "şeker",
+            "ar": "سكر",
+            "ckb": "شەکر"
+          }
         },
         {
-          "term": "dapîr",
+          "term": "pênc",
           "meanings": {
-            "en": "grandmother",
-            "de": "Großmutter",
-            "es": "abuela",
-            "fr": "grand-mère",
-            "nl": "oma",
-            "tr": "nine, büyükanne",
-            "ar": "جدة",
-            "ckb": "داپیرە"
+            "en": "five",
+            "de": "fünf",
+            "es": "cinco",
+            "fr": "cinq",
+            "nl": "vijf",
+            "tr": "beş",
+            "ar": "خمسة",
+            "ckb": "پێنج"
+          }
+        },
+        {
+          "term": "çay",
+          "meanings": {
+            "en": "tea",
+            "de": "Tee",
+            "es": "té",
+            "fr": "thé",
+            "nl": "thee",
+            "tr": "çay",
+            "ar": "شاي",
+            "ckb": "چا"
           }
         }
       ]
     },
     {
       "story": "road-02-mevane-be-simbel",
-      "paragraph": 5,
+      "paragraph": 4,
       "opens": "Û Hevalo?",
       "words": [
         {
@@ -2486,16 +2571,29 @@
           }
         },
         {
-          "term": "kevn",
+          "term": "çar",
           "meanings": {
-            "en": "old (of things)",
-            "de": "alt (von Dingen)",
-            "es": "viejo (de cosas)",
-            "fr": "vieux (des choses)",
-            "nl": "oud (van dingen)",
-            "tr": "eski",
-            "ar": "قديم",
-            "ckb": "کۆن"
+            "en": "four",
+            "de": "vier",
+            "es": "cuatro",
+            "fr": "quatre",
+            "nl": "vier",
+            "tr": "dört",
+            "ar": "أربعة",
+            "ckb": "چوار"
+          }
+        },
+        {
+          "term": "kursî",
+          "meanings": {
+            "en": "chair",
+            "de": "Stuhl",
+            "es": "silla",
+            "fr": "chaise",
+            "nl": "stoel",
+            "tr": "sandalye",
+            "ar": "كرسي",
+            "ckb": "کورسی"
           }
         }
       ]
@@ -2503,19 +2601,19 @@
     {
       "story": "road-03-du-xezine",
       "paragraph": 1,
-      "opens": "Li ser",
+      "opens": "Binêre, li",
       "words": [
         {
-          "term": "şîn",
+          "term": "dibistan",
           "meanings": {
-            "en": "blue",
-            "de": "blau",
-            "es": "azul",
-            "fr": "bleu",
-            "nl": "blauw",
-            "tr": "mavi",
-            "ar": "أزرق",
-            "ckb": "شین"
+            "en": "school",
+            "de": "Schule",
+            "es": "escuela",
+            "fr": "école",
+            "nl": "school",
+            "tr": "okul",
+            "ar": "مدرسة",
+            "ckb": "قوتابخانە"
           }
         },
         {
@@ -2549,6 +2647,52 @@
     {
       "story": "road-03-du-xezine",
       "paragraph": 2,
+      "opens": "Li bin",
+      "words": [
+        {
+          "term": "sor",
+          "meanings": {
+            "en": "red",
+            "de": "rot",
+            "es": "rojo",
+            "fr": "rouge",
+            "nl": "rood",
+            "tr": "kırmızı",
+            "ar": "أحمر",
+            "ckb": "سوور"
+          }
+        },
+        {
+          "term": "nîv",
+          "meanings": {
+            "en": "half",
+            "de": "Hälfte",
+            "es": "mitad",
+            "fr": "moitié",
+            "nl": "helft",
+            "tr": "yarım",
+            "ar": "نصف",
+            "ckb": "نیو"
+          }
+        },
+        {
+          "term": "din",
+          "meanings": {
+            "en": "other",
+            "de": "andere",
+            "es": "otra",
+            "fr": "autre",
+            "nl": "andere",
+            "tr": "öbür, diğer",
+            "ar": "الآخر",
+            "ckb": "تر"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-03-du-xezine",
+      "paragraph": 3,
       "opens": "Bizina spî",
       "words": [
         {
@@ -2589,65 +2733,6 @@
             "ar": "ماعز",
             "ckb": "بزن"
           }
-        },
-        {
-          "term": "nexşe",
-          "meanings": {
-            "en": "map",
-            "de": "Landkarte",
-            "es": "mapa",
-            "fr": "carte",
-            "nl": "kaart",
-            "tr": "harita",
-            "ar": "خريطة",
-            "ckb": "نەخشە"
-          }
-        }
-      ]
-    },
-    {
-      "story": "road-03-du-xezine",
-      "paragraph": 3,
-      "opens": "Pozê Hevalo",
-      "words": [
-        {
-          "term": "zarok",
-          "meanings": {
-            "en": "child",
-            "de": "Kind",
-            "es": "niño",
-            "fr": "enfant",
-            "nl": "kind",
-            "tr": "çocuk",
-            "ar": "طفل",
-            "ckb": "منداڵ"
-          }
-        },
-        {
-          "term": "kevn",
-          "meanings": {
-            "en": "old (of things)",
-            "de": "alt (von Dingen)",
-            "es": "viejo (de cosas)",
-            "fr": "vieux (des choses)",
-            "nl": "oud (van dingen)",
-            "tr": "eski",
-            "ar": "قديم",
-            "ckb": "کۆن"
-          }
-        },
-        {
-          "term": "sêv",
-          "meanings": {
-            "en": "apple",
-            "de": "Apfel",
-            "es": "manzana",
-            "fr": "pomme",
-            "nl": "appel",
-            "tr": "elma",
-            "ar": "تفاح",
-            "ckb": "سێو"
-          }
         }
       ]
     },
@@ -2680,19 +2765,6 @@
             "tr": "sarı",
             "ar": "أصفر",
             "ckb": "زەرد"
-          }
-        },
-        {
-          "term": "sêv",
-          "meanings": {
-            "en": "apple",
-            "de": "Apfel",
-            "es": "manzana",
-            "fr": "pomme",
-            "nl": "appel",
-            "tr": "elma",
-            "ar": "تفاح",
-            "ckb": "سێو"
           }
         }
       ]
@@ -2882,54 +2954,93 @@
       ]
     },
     {
-      "story": "road-05-penc-deqiqe",
-      "paragraph": 0,
-      "opens": "Tu dizanî?",
+      "story": "road-04-zebese-bist-sali",
+      "paragraph": 4,
+      "opens": "Ji bo",
       "words": [
         {
-          "term": "soz",
+          "term": "kîlo",
           "meanings": {
-            "en": "promise",
-            "de": "Versprechen",
-            "es": "promesa",
-            "fr": "promesse",
-            "nl": "belofte",
-            "tr": "söz, vaat",
-            "ar": "وعد",
-            "ckb": "بەڵێن"
+            "en": "kilo",
+            "de": "Kilo",
+            "es": "kilo",
+            "fr": "kilo",
+            "nl": "kilo",
+            "tr": "kilo",
+            "ar": "كيلو",
+            "ckb": "کیلۆ"
           }
         },
         {
-          "term": "baş",
+          "term": "kartol",
           "meanings": {
-            "en": "good, well",
-            "de": "gut",
-            "es": "bueno, bien",
-            "fr": "bon, bien",
-            "nl": "goed",
-            "tr": "iyi",
-            "ar": "جيّد",
-            "ckb": "باش"
+            "en": "potato",
+            "de": "Kartoffel",
+            "es": "patata",
+            "fr": "pomme de terre",
+            "nl": "aardappel",
+            "tr": "patates",
+            "ar": "بطاطا",
+            "ckb": "پەتاتە"
+          }
+        },
+        {
+          "term": "pîvaz",
+          "meanings": {
+            "en": "onion",
+            "de": "Zwiebel",
+            "es": "cebolla",
+            "fr": "oignon",
+            "nl": "ui",
+            "tr": "soğan",
+            "ar": "بصل",
+            "ckb": "پیاز"
+          }
+        },
+        {
+          "term": "tije",
+          "meanings": {
+            "en": "full (of something)",
+            "de": "voll",
+            "es": "lleno",
+            "fr": "plein",
+            "nl": "vol",
+            "tr": "dolu",
+            "ar": "ممتلئ",
+            "ckb": "پڕ"
           }
         }
       ]
     },
     {
       "story": "road-05-penc-deqiqe",
-      "paragraph": 1,
-      "opens": "Otobûs di",
+      "paragraph": 0,
+      "opens": "Tu dizanî?",
       "words": [
         {
-          "term": "otobûs",
+          "term": "dereng",
           "meanings": {
-            "en": "bus",
-            "de": "Bus",
-            "es": "autobús",
-            "fr": "bus",
-            "nl": "bus",
-            "tr": "otobüs",
-            "ar": "حافلة",
-            "ckb": "پاس"
+            "en": "late",
+            "de": "spät",
+            "es": "tarde",
+            "fr": "en retard",
+            "nl": "laat",
+            "tr": "geç",
+            "ar": "متأخر",
+            "ckb": "درەنگ"
+          }
+        },
+        {
+          "term": "şiyar",
+          "meanings": {
+            "en": "awake",
+            "de": "wach",
+            "es": "despierto",
+            "fr": "réveillé",
+            "nl": "wakker",
+            "tr": "uyanık",
+            "ar": "مستيقظ",
+            "ckb": "بەئاگا"
           }
         },
         {
@@ -2949,8 +3060,41 @@
     },
     {
       "story": "road-05-penc-deqiqe",
+      "paragraph": 1,
+      "opens": "Li mala",
+      "words": [
+        {
+          "term": "demjimêr",
+          "meanings": {
+            "en": "hour; clock",
+            "de": "Stunde; Uhr",
+            "es": "hora; reloj",
+            "fr": "heure; horloge",
+            "nl": "uur; klok",
+            "tr": "saat",
+            "ar": "ساعة",
+            "ckb": "کاتژمێر"
+          }
+        },
+        {
+          "term": "telefona",
+          "meanings": {
+            "en": "phone",
+            "de": "Telefon",
+            "es": "teléfono",
+            "fr": "téléphone",
+            "nl": "telefoon",
+            "tr": "telefon",
+            "ar": "الهاتف",
+            "ckb": "تەلەفۆن"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-05-penc-deqiqe",
       "paragraph": 2,
-      "opens": "Roja Şemiyê",
+      "opens": "Sibehê ez",
       "words": [
         {
           "term": "nan",
@@ -2990,27 +3134,27 @@
             "ar": "شاي",
             "ckb": "چا"
           }
-        },
-        {
-          "term": "demjimêr",
-          "meanings": {
-            "en": "hour; clock",
-            "de": "Stunde; Uhr",
-            "es": "hora; reloj",
-            "fr": "heure; horloge",
-            "nl": "uur; klok",
-            "tr": "saat",
-            "ar": "ساعة",
-            "ckb": "کاتژمێر"
-          }
         }
       ]
     },
     {
       "story": "road-05-penc-deqiqe",
       "paragraph": 3,
-      "opens": "Demjimêr pênc",
+      "opens": "Nîvro em",
       "words": [
+        {
+          "term": "nîvro",
+          "meanings": {
+            "en": "noon",
+            "de": "Mittag",
+            "es": "mediodía",
+            "fr": "midi",
+            "nl": "middag",
+            "tr": "öğle",
+            "ar": "ظهر",
+            "ckb": "نیوەڕۆ"
+          }
+        },
         {
           "term": "nîv",
           "meanings": {
@@ -3025,42 +3169,16 @@
           }
         },
         {
-          "term": "pênc",
+          "term": "xweş",
           "meanings": {
-            "en": "five",
-            "de": "fünf",
-            "es": "cinco",
-            "fr": "cinq",
-            "nl": "vijf",
-            "tr": "beş",
-            "ar": "خمسة",
-            "ckb": "پێنج"
-          }
-        },
-        {
-          "term": "xulek",
-          "meanings": {
-            "en": "minute",
-            "de": "Minute",
-            "es": "minuto",
-            "fr": "minute",
-            "nl": "minuut",
-            "tr": "dakika",
-            "ar": "دقيقة",
-            "ckb": "خولەک"
-          }
-        },
-        {
-          "term": "demjimêr",
-          "meanings": {
-            "en": "hour; clock",
-            "de": "Stunde; Uhr",
-            "es": "hora; reloj",
-            "fr": "heure; horloge",
-            "nl": "uur; klok",
-            "tr": "saat",
-            "ar": "ساعة",
-            "ckb": "کاتژمێر"
+            "en": "nice, pleasant",
+            "de": "angenehm, schön",
+            "es": "agradable",
+            "fr": "agréable",
+            "nl": "fijn, prettig",
+            "tr": "hoş, güzel",
+            "ar": "لطيف",
+            "ckb": "خۆش"
           }
         }
       ]
@@ -3068,91 +3186,19 @@
     {
       "story": "road-05-penc-deqiqe",
       "paragraph": 4,
-      "opens": "Ez şiyar",
+      "opens": "Êvarê cîran",
       "words": [
         {
-          "term": "deh",
+          "term": "cîran",
           "meanings": {
-            "en": "ten",
-            "de": "zehn",
-            "es": "diez",
-            "fr": "dix",
-            "nl": "tien",
-            "tr": "on",
-            "ar": "عشرة",
-            "ckb": "دە"
-          }
-        },
-        {
-          "term": "telefon",
-          "meanings": {
-            "en": "phone",
-            "de": "Telefon",
-            "es": "teléfono",
-            "fr": "téléphone",
-            "nl": "telefoon",
-            "tr": "telefon",
-            "ar": "هاتف",
-            "ckb": "تەلەفۆن"
-          }
-        },
-        {
-          "term": "heşt",
-          "meanings": {
-            "en": "eight",
-            "de": "acht",
-            "es": "ocho",
-            "fr": "huit",
-            "nl": "acht",
-            "tr": "sekiz",
-            "ar": "ثمانية",
-            "ckb": "هەشت"
-          }
-        },
-        {
-          "term": "otobûs",
-          "meanings": {
-            "en": "bus",
-            "de": "Bus",
-            "es": "autobús",
-            "fr": "bus",
-            "nl": "bus",
-            "tr": "otobüs",
-            "ar": "حافلة",
-            "ckb": "پاس"
-          }
-        }
-      ]
-    },
-    {
-      "story": "road-05-penc-deqiqe",
-      "paragraph": 6,
-      "opens": "Êvar e.",
-      "words": [
-        {
-          "term": "êvar",
-          "meanings": {
-            "en": "evening",
-            "de": "Abend",
-            "es": "tarde, noche",
-            "fr": "soir",
-            "nl": "avond",
-            "tr": "akşam",
-            "ar": "مساء",
-            "ckb": "ئێوارە"
-          }
-        },
-        {
-          "term": "heşt",
-          "meanings": {
-            "en": "eight",
-            "de": "acht",
-            "es": "ocho",
-            "fr": "huit",
-            "nl": "acht",
-            "tr": "sekiz",
-            "ar": "ثمانية",
-            "ckb": "هەشت"
+            "en": "neighbour",
+            "de": "Nachbar",
+            "es": "vecino",
+            "fr": "voisin",
+            "nl": "buur",
+            "tr": "komşu",
+            "ar": "جار",
+            "ckb": "دراوسێ"
           }
         },
         {
@@ -3184,198 +3230,67 @@
       ]
     },
     {
-      "story": "road-06-nameya-bave-me",
-      "paragraph": 0,
-      "opens": "Were, rûne!",
+      "story": "road-05-penc-deqiqe",
+      "paragraph": 5,
+      "opens": "Roja Şemiyê",
       "words": [
         {
-          "term": "germ",
+          "term": "baxçe",
           "meanings": {
-            "en": "hot, warm",
-            "de": "heiß, warm",
-            "es": "caliente",
-            "fr": "chaud",
-            "nl": "warm, heet",
-            "tr": "sıcak",
-            "ar": "حارّ، دافئ",
-            "ckb": "گەرم"
+            "en": "garden, orchard",
+            "de": "Garten, Obstgarten",
+            "es": "huerto",
+            "fr": "jardin, verger",
+            "nl": "tuin, boomgaard",
+            "tr": "bahçe",
+            "ar": "بستان",
+            "ckb": "باخچە، باخ"
           }
         },
         {
-          "term": "otobûs",
+          "term": "betlane",
           "meanings": {
-            "en": "bus",
-            "de": "Bus",
-            "es": "autobús",
-            "fr": "bus",
-            "nl": "bus",
-            "tr": "otobüs",
-            "ar": "حافلة",
-            "ckb": "پاس"
+            "en": "holiday, day off",
+            "de": "freier Tag",
+            "es": "día libre",
+            "fr": "jour de congé",
+            "nl": "vrije dag",
+            "tr": "tatil",
+            "ar": "عطلة",
+            "ckb": "پشوو"
           }
         },
         {
-          "term": "ajovan",
+          "term": "çay",
           "meanings": {
-            "en": "driver",
-            "de": "Fahrer",
-            "es": "conductor",
-            "fr": "chauffeur",
-            "nl": "chauffeur",
-            "tr": "şoför",
-            "ar": "سائق",
-            "ckb": "شۆفێر"
-          }
-        },
-        {
-          "term": "mezin",
-          "meanings": {
-            "en": "big",
-            "de": "groß",
-            "es": "grande",
-            "fr": "grand",
-            "nl": "groot",
-            "tr": "büyük",
-            "ar": "كبير",
-            "ckb": "گەورە"
+            "en": "tea",
+            "de": "Tee",
+            "es": "té",
+            "fr": "thé",
+            "nl": "thee",
+            "tr": "çay",
+            "ar": "شاي",
+            "ckb": "چا"
           }
         }
       ]
     },
     {
-      "story": "road-06-nameya-bave-me",
-      "paragraph": 1,
-      "opens": "Kobanî bajarê",
+      "story": "road-05-penc-deqiqe",
+      "paragraph": 6,
+      "opens": "Rojbûna min",
       "words": [
         {
-          "term": "kolan",
+          "term": "diyarî",
           "meanings": {
-            "en": "street",
-            "de": "Straße",
-            "es": "calle",
-            "fr": "rue",
-            "nl": "straat",
-            "tr": "sokak",
-            "ar": "شارع",
-            "ckb": "کۆڵان، شەقام"
-          }
-        },
-        {
-          "term": "bazar",
-          "meanings": {
-            "en": "market",
-            "de": "Markt",
-            "es": "mercado",
-            "fr": "marché",
-            "nl": "markt",
-            "tr": "pazar",
-            "ar": "سوق",
-            "ckb": "بازاڕ"
-          }
-        },
-        {
-          "term": "mezin",
-          "meanings": {
-            "en": "big",
-            "de": "groß",
-            "es": "grande",
-            "fr": "grand",
-            "nl": "groot",
-            "tr": "büyük",
-            "ar": "كبير",
-            "ckb": "گەورە"
-          }
-        }
-      ]
-    },
-    {
-      "story": "road-06-nameya-bave-me",
-      "paragraph": 2,
-      "opens": "Diya min,",
-      "words": [
-        {
-          "term": "derî",
-          "meanings": {
-            "en": "door",
-            "de": "Tür",
-            "es": "puerta",
-            "fr": "porte",
-            "nl": "deur",
-            "tr": "kapı",
-            "ar": "باب",
-            "ckb": "دەرگا"
-          }
-        },
-        {
-          "term": "çar",
-          "meanings": {
-            "en": "four",
-            "de": "vier",
-            "es": "cuatro",
-            "fr": "quatre",
-            "nl": "vier",
-            "tr": "dört",
-            "ar": "أربعة",
-            "ckb": "چوار"
-          }
-        },
-        {
-          "term": "pêncî",
-          "meanings": {
-            "en": "fifty",
-            "de": "fünfzig",
-            "es": "cincuenta",
-            "fr": "cinquante",
-            "nl": "vijftig",
-            "tr": "elli",
-            "ar": "خمسون",
-            "ckb": "پەنجا"
-          }
-        },
-        {
-          "term": "zarok",
-          "meanings": {
-            "en": "child",
-            "de": "Kind",
-            "es": "niño",
-            "fr": "enfant",
-            "nl": "kind",
-            "tr": "çocuk",
-            "ar": "طفل",
-            "ckb": "منداڵ"
-          }
-        }
-      ]
-    },
-    {
-      "story": "road-06-nameya-bave-me",
-      "paragraph": 3,
-      "opens": "Piştî şîvê,",
-      "words": [
-        {
-          "term": "kevn",
-          "meanings": {
-            "en": "old (of things)",
-            "de": "alt (von Dingen)",
-            "es": "viejo (de cosas)",
-            "fr": "vieux (des choses)",
-            "nl": "oud (van dingen)",
-            "tr": "eski",
-            "ar": "قديم",
-            "ckb": "کۆن"
-          }
-        },
-        {
-          "term": "çil",
-          "meanings": {
-            "en": "forty",
-            "de": "vierzig",
-            "es": "cuarenta",
-            "fr": "quarante",
-            "nl": "veertig",
-            "tr": "kırk",
-            "ar": "أربعون",
-            "ckb": "چل"
+            "en": "present, gift",
+            "de": "Geschenk",
+            "es": "regalo",
+            "fr": "cadeau",
+            "nl": "cadeau",
+            "tr": "hediye",
+            "ar": "هدية",
+            "ckb": "دیاری"
           }
         },
         {
@@ -3394,9 +3309,9 @@
       ]
     },
     {
-      "story": "road-06-nameya-bave-me",
-      "paragraph": 5,
-      "opens": "Bavê min,",
+      "story": "road-05-penc-deqiqe",
+      "paragraph": 7,
+      "opens": "Îsal ez",
       "words": [
         {
           "term": "soz",
@@ -3409,6 +3324,374 @@
             "tr": "söz, vaat",
             "ar": "وعد",
             "ckb": "بەڵێن"
+          }
+        },
+        {
+          "term": "dereng",
+          "meanings": {
+            "en": "late",
+            "de": "spät",
+            "es": "tarde",
+            "fr": "en retard",
+            "nl": "laat",
+            "tr": "geç",
+            "ar": "متأخر",
+            "ckb": "درەنگ"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-06-nameya-bave-me",
+      "paragraph": 0,
+      "opens": "Îro ez",
+      "words": [
+        {
+          "term": "dûr",
+          "meanings": {
+            "en": "far",
+            "de": "weit",
+            "es": "lejos",
+            "fr": "loin",
+            "nl": "ver",
+            "tr": "uzak",
+            "ar": "بعيد",
+            "ckb": "دوور"
+          }
+        },
+        {
+          "term": "minîbûsê",
+          "meanings": {
+            "en": "minibus",
+            "de": "Minibus",
+            "es": "minibús",
+            "fr": "minibus",
+            "nl": "busje",
+            "tr": "minibüs",
+            "ar": "الحافلة الصغيرة",
+            "ckb": "مینیبووس"
+          }
+        },
+        {
+          "term": "bilêt",
+          "meanings": {
+            "en": "ticket",
+            "de": "Fahrkarte",
+            "es": "billete",
+            "fr": "billet",
+            "nl": "kaartje",
+            "tr": "bilet",
+            "ar": "تذكرة",
+            "ckb": "بلیت"
+          }
+        },
+        {
+          "term": "ajovan",
+          "meanings": {
+            "en": "driver",
+            "de": "Fahrer",
+            "es": "conductor",
+            "fr": "chauffeur",
+            "nl": "chauffeur",
+            "tr": "şoför",
+            "ar": "سائق",
+            "ckb": "شۆفێر"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-06-nameya-bave-me",
+      "paragraph": 1,
+      "opens": "Bajar qelebalix",
+      "words": [
+        {
+          "term": "qelebalix",
+          "meanings": {
+            "en": "crowded",
+            "de": "voller Leute",
+            "es": "lleno de gente",
+            "fr": "bondé",
+            "nl": "druk",
+            "tr": "kalabalık",
+            "ar": "مزدحم",
+            "ckb": "قەرەباڵغ"
+          }
+        },
+        {
+          "term": "kolan",
+          "meanings": {
+            "en": "street",
+            "de": "Straße",
+            "es": "calle",
+            "fr": "rue",
+            "nl": "straat",
+            "tr": "sokak",
+            "ar": "شارع",
+            "ckb": "کۆڵان، شەقام"
+          }
+        },
+        {
+          "term": "bilind",
+          "meanings": {
+            "en": "tall, high",
+            "de": "hoch",
+            "es": "alto",
+            "fr": "haut",
+            "nl": "hoog",
+            "tr": "yüksek",
+            "ar": "عالٍ",
+            "ckb": "بەرز"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-06-nameya-bave-me",
+      "paragraph": 2,
+      "opens": "Ez ji",
+      "words": [
+        {
+          "term": "nêzîk",
+          "meanings": {
+            "en": "near",
+            "de": "nah",
+            "es": "cerca",
+            "fr": "près",
+            "nl": "dichtbij",
+            "tr": "yakın",
+            "ar": "قريب",
+            "ckb": "نزیک"
+          }
+        },
+        {
+          "term": "rasterast",
+          "meanings": {
+            "en": "straight on",
+            "de": "geradeaus",
+            "es": "todo recto",
+            "fr": "tout droit",
+            "nl": "rechtdoor",
+            "tr": "dümdüz",
+            "ar": "إلى الأمام مباشرة",
+            "ckb": "ڕاستەوخۆ"
+          }
+        },
+        {
+          "term": "rastê",
+          "meanings": {
+            "en": "right (li rastê: on the right)",
+            "de": "rechts",
+            "es": "derecha",
+            "fr": "droite",
+            "nl": "rechts",
+            "tr": "sağ",
+            "ar": "اليمين",
+            "ckb": "ڕاست"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-06-nameya-bave-me",
+      "paragraph": 3,
+      "opens": "Ez dîsa",
+      "words": [
+        {
+          "term": "derî",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ckb": "دەرگا"
+          }
+        },
+        {
+          "term": "dikan",
+          "meanings": {
+            "en": "shop",
+            "de": "Laden",
+            "es": "tienda",
+            "fr": "boutique",
+            "nl": "winkel",
+            "tr": "dükkân",
+            "ar": "دكان",
+            "ckb": "دوکان"
+          }
+        },
+        {
+          "term": "girtî",
+          "meanings": {
+            "en": "closed",
+            "de": "geschlossen",
+            "es": "cerrado",
+            "fr": "fermé",
+            "nl": "dicht",
+            "tr": "kapalı",
+            "ar": "مغلق",
+            "ckb": "داخراو"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-06-nameya-bave-me",
+      "paragraph": 4,
+      "opens": "Ez pirtûkeke",
+      "words": [
+        {
+          "term": "pêncî",
+          "meanings": {
+            "en": "fifty",
+            "de": "fünfzig",
+            "es": "cincuenta",
+            "fr": "cinquante",
+            "nl": "vijftig",
+            "tr": "elli",
+            "ar": "خمسون",
+            "ckb": "پەنجا"
+          }
+        },
+        {
+          "term": "xweşik",
+          "meanings": {
+            "en": "beautiful",
+            "de": "schön",
+            "es": "hermoso",
+            "fr": "beau",
+            "nl": "mooi",
+            "tr": "güzel",
+            "ar": "جميل",
+            "ckb": "جوان"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-06-nameya-bave-me",
+      "paragraph": 5,
+      "opens": "Piştî dikanê",
+      "words": [
+        {
+          "term": "germ",
+          "meanings": {
+            "en": "hot, warm",
+            "de": "heiß, warm",
+            "es": "caliente",
+            "fr": "chaud",
+            "nl": "warm, heet",
+            "tr": "sıcak",
+            "ar": "حارّ، دافئ",
+            "ckb": "گەرم"
+          }
+        },
+        {
+          "term": "yek",
+          "meanings": {
+            "en": "one",
+            "de": "eins",
+            "es": "uno",
+            "fr": "un",
+            "nl": "een",
+            "tr": "bir",
+            "ar": "واحد",
+            "ckb": "یەک"
+          }
+        },
+        {
+          "term": "nanpêj",
+          "meanings": {
+            "en": "baker",
+            "de": "Bäcker",
+            "es": "panadero",
+            "fr": "boulanger",
+            "nl": "bakker",
+            "tr": "fırıncı",
+            "ar": "خبّاز",
+            "ckb": "نانەوا"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-06-nameya-bave-me",
+      "paragraph": 6,
+      "opens": "Ez bi",
+      "words": [
+        {
+          "term": "minîbûsê",
+          "meanings": {
+            "en": "minibus",
+            "de": "Minibus",
+            "es": "minibús",
+            "fr": "minibus",
+            "nl": "busje",
+            "tr": "minibüs",
+            "ar": "الحافلة الصغيرة",
+            "ckb": "مینیبووس"
+          }
+        },
+        {
+          "term": "pirtûka",
+          "meanings": {
+            "en": "book",
+            "de": "Buch",
+            "es": "libro",
+            "fr": "livre",
+            "nl": "boek",
+            "tr": "kitap",
+            "ar": "الكتاب",
+            "ckb": "کتێب"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-06-nameya-bave-me",
+      "paragraph": 7,
+      "opens": "Nanpêj telefonî",
+      "words": [
+        {
+          "term": "nan",
+          "meanings": {
+            "en": "bread",
+            "de": "Brot",
+            "es": "pan",
+            "fr": "pain",
+            "nl": "brood",
+            "tr": "ekmek",
+            "ar": "خبز",
+            "ckb": "نان"
+          }
+        },
+        {
+          "term": "maseyê",
+          "meanings": {
+            "en": "table",
+            "de": "Tisch",
+            "es": "mesa",
+            "fr": "table",
+            "nl": "tafel",
+            "tr": "masa",
+            "ar": "الطاولة",
+            "ckb": "مێز"
+          }
+        },
+        {
+          "term": "sibe",
+          "meanings": {
+            "en": "tomorrow",
+            "de": "morgen",
+            "es": "mañana",
+            "fr": "demain",
+            "nl": "morgen",
+            "tr": "yarın",
+            "ar": "غدًا",
+            "ckb": "سبەی"
           }
         }
       ]
@@ -3671,22 +3954,55 @@
     },
     {
       "story": "road-07-sercopi",
-      "paragraph": 6,
-      "opens": "Sibehê dê",
+      "paragraph": 5,
+      "opens": "Hêsir di",
       "words": [
         {
-          "term": "telefon",
+          "term": "hêsir",
           "meanings": {
-            "en": "phone",
-            "de": "Telefon",
-            "es": "teléfono",
-            "fr": "téléphone",
-            "nl": "telefoon",
-            "tr": "telefon",
-            "ar": "هاتف",
-            "ckb": "تەلەفۆن"
+            "en": "tears",
+            "de": "Tränen",
+            "es": "lágrimas",
+            "fr": "larmes",
+            "nl": "tranen",
+            "tr": "gözyaşı",
+            "ar": "دموع",
+            "ckb": "فرمێسک"
           }
         },
+        {
+          "term": "dûman",
+          "meanings": {
+            "en": "smoke",
+            "de": "Rauch",
+            "es": "humo",
+            "fr": "fumée",
+            "nl": "rook",
+            "tr": "duman",
+            "ar": "دخان",
+            "ckb": "دووکەڵ"
+          }
+        },
+        {
+          "term": "jiyan",
+          "meanings": {
+            "en": "life",
+            "de": "Leben",
+            "es": "vida",
+            "fr": "vie",
+            "nl": "leven",
+            "tr": "hayat",
+            "ar": "الحياة",
+            "ckb": "ژیان"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-07-sercopi",
+      "paragraph": 6,
+      "opens": "Sibehê ez",
+      "words": [
         {
           "term": "baş",
           "meanings": {
@@ -3699,13 +4015,26 @@
             "ar": "جيّد",
             "ckb": "باش"
           }
+        },
+        {
+          "term": "rast",
+          "meanings": {
+            "en": "true",
+            "de": "wahr",
+            "es": "verdad",
+            "fr": "vrai",
+            "nl": "waar",
+            "tr": "doğru",
+            "ar": "صحيح",
+            "ckb": "ڕاست"
+          }
         }
       ]
     },
     {
       "story": "road-08-simbele-sirin",
       "paragraph": 0,
-      "opens": "Piştî Newrozê",
+      "opens": "Piştî govenda",
       "words": [
         {
           "term": "nexweş",
@@ -4018,23 +4347,56 @@
       ]
     },
     {
-      "story": "road-09-gure-min",
-      "paragraph": 0,
-      "opens": "Hûn çîroka",
+      "story": "road-08-simbele-sirin",
+      "paragraph": 6,
+      "opens": "Êvarê Baran",
       "words": [
         {
-          "term": "sal",
+          "term": "xemgîn",
           "meanings": {
-            "en": "year",
-            "de": "Jahr",
-            "es": "año",
-            "fr": "année",
-            "nl": "jaar",
-            "tr": "yıl",
-            "ar": "سنة",
-            "ckb": "ساڵ"
+            "en": "sad",
+            "de": "traurig",
+            "es": "triste",
+            "fr": "triste",
+            "nl": "verdrietig",
+            "tr": "üzgün",
+            "ar": "حزين",
+            "ckb": "خەمبار"
           }
         },
+        {
+          "term": "dereng",
+          "meanings": {
+            "en": "late",
+            "de": "spät",
+            "es": "tarde",
+            "fr": "en retard",
+            "nl": "laat",
+            "tr": "geç",
+            "ar": "متأخر",
+            "ckb": "درەنگ"
+          }
+        },
+        {
+          "term": "guhdarî",
+          "meanings": {
+            "en": "listening (guhdarî kirin: to listen)",
+            "de": "zuhören",
+            "es": "escuchar",
+            "fr": "écouter",
+            "nl": "luisteren",
+            "tr": "dinlemek",
+            "ar": "الاستماع",
+            "ckb": "گوێگرتن"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-09-gure-min",
+      "paragraph": 0,
+      "opens": "Îro ez",
+      "words": [
         {
           "term": "îro",
           "meanings": {
@@ -4046,6 +4408,19 @@
             "tr": "bugün",
             "ar": "اليوم",
             "ckb": "ئەمڕۆ"
+          }
+        },
+        {
+          "term": "rast",
+          "meanings": {
+            "en": "true",
+            "de": "wahr",
+            "es": "verdad",
+            "fr": "vrai",
+            "nl": "waar",
+            "tr": "doğru",
+            "ar": "صحيح",
+            "ckb": "ڕاست"
           }
         }
       ]
@@ -4144,8 +4519,54 @@
     },
     {
       "story": "road-09-gure-min",
+      "paragraph": 3,
+      "opens": "Em di",
+      "words": [
+        {
+          "term": "keviran",
+          "meanings": {
+            "en": "stones",
+            "de": "Steine",
+            "es": "piedras",
+            "fr": "pierres",
+            "nl": "stenen",
+            "tr": "taşlar",
+            "ar": "الحجارة",
+            "ckb": "بەردەکان"
+          }
+        },
+        {
+          "term": "zinaran",
+          "meanings": {
+            "en": "cliffs",
+            "de": "Felsen",
+            "es": "rocas",
+            "fr": "rochers",
+            "nl": "rotsen",
+            "tr": "kayalar",
+            "ar": "الصخور",
+            "ckb": "تاشەبەردەکان"
+          }
+        },
+        {
+          "term": "biçûk",
+          "meanings": {
+            "en": "small",
+            "de": "klein",
+            "es": "pequeño",
+            "fr": "petit",
+            "nl": "klein",
+            "tr": "küçük",
+            "ar": "صغير",
+            "ckb": "بچووک"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-09-gure-min",
       "paragraph": 4,
-      "opens": "Baran dibêje:",
+      "opens": "Bozo evîndar",
       "words": [
         {
           "term": "evîndar",
@@ -4243,6 +4664,52 @@
     },
     {
       "story": "road-10-ke-got-bizin",
+      "paragraph": 0,
+      "opens": "Havîna borî",
+      "words": [
+        {
+          "term": "havîna",
+          "meanings": {
+            "en": "summer",
+            "de": "Sommer",
+            "es": "verano",
+            "fr": "été",
+            "nl": "zomer",
+            "tr": "yaz",
+            "ar": "الصيف",
+            "ckb": "هاوین"
+          }
+        },
+        {
+          "term": "borî",
+          "meanings": {
+            "en": "last (havîna borî: last summer)",
+            "de": "letzte",
+            "es": "pasado",
+            "fr": "dernier",
+            "nl": "vorige",
+            "tr": "geçen",
+            "ar": "الماضي",
+            "ckb": "ڕابردوو"
+          }
+        },
+        {
+          "term": "zozanan",
+          "meanings": {
+            "en": "summer pastures",
+            "de": "Sommerweiden",
+            "es": "pastos de verano",
+            "fr": "alpages",
+            "nl": "zomerweiden",
+            "tr": "yaylalar",
+            "ar": "المراعي الصيفية",
+            "ckb": "کوێستان"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-10-ke-got-bizin",
       "paragraph": 1,
       "opens": "Roja me",
       "words": [
@@ -4315,6 +4782,52 @@
     },
     {
       "story": "road-10-ke-got-bizin",
+      "paragraph": 2,
+      "opens": "Ez gelek",
+      "words": [
+        {
+          "term": "westiyayî",
+          "meanings": {
+            "en": "tired",
+            "de": "müde",
+            "es": "cansado",
+            "fr": "fatigué",
+            "nl": "moe",
+            "tr": "yorgun",
+            "ar": "متعب",
+            "ckb": "ماندوو"
+          }
+        },
+        {
+          "term": "hêdî",
+          "meanings": {
+            "en": "quietly, softly",
+            "de": "leise",
+            "es": "en voz baja",
+            "fr": "doucement",
+            "nl": "zachtjes",
+            "tr": "yavaşça",
+            "ar": "بهدوء",
+            "ckb": "لەسەرخۆ"
+          }
+        },
+        {
+          "term": "tenê",
+          "meanings": {
+            "en": "just, only",
+            "de": "nur",
+            "es": "solo",
+            "fr": "seulement",
+            "nl": "alleen maar",
+            "tr": "sadece",
+            "ar": "فقط",
+            "ckb": "تەنیا"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-10-ke-got-bizin",
       "paragraph": 3,
       "opens": "Êvara paşê,",
       "words": [
@@ -4361,7 +4874,66 @@
     },
     {
       "story": "road-10-ke-got-bizin",
-      "paragraph": 6,
+      "paragraph": 4,
+      "opens": "Jiyana zozanê",
+      "words": [
+        {
+          "term": "bizin",
+          "meanings": {
+            "en": "goat",
+            "de": "Ziege",
+            "es": "cabra",
+            "fr": "chèvre",
+            "nl": "geit",
+            "tr": "keçi",
+            "ar": "ماعز",
+            "ckb": "بزن"
+          }
+        },
+        {
+          "term": "nan",
+          "meanings": {
+            "en": "bread",
+            "de": "Brot",
+            "es": "pan",
+            "fr": "pain",
+            "nl": "brood",
+            "tr": "ekmek",
+            "ar": "خبز",
+            "ckb": "نان"
+          }
+        },
+        {
+          "term": "xweş",
+          "meanings": {
+            "en": "nice, pleasant",
+            "de": "angenehm, schön",
+            "es": "agradable",
+            "fr": "agréable",
+            "nl": "fijn, prettig",
+            "tr": "hoş, güzel",
+            "ar": "لطيف",
+            "ckb": "خۆش"
+          }
+        },
+        {
+          "term": "dijwar",
+          "meanings": {
+            "en": "hard",
+            "de": "hart, schwer",
+            "es": "duro",
+            "fr": "dur",
+            "nl": "zwaar",
+            "tr": "zor",
+            "ar": "صعب",
+            "ckb": "سەخت"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-10-ke-got-bizin",
+      "paragraph": 5,
       "opens": "Roja xatirxwestinê,",
       "words": [
         {
@@ -4419,34 +4991,316 @@
       ]
     },
     {
-      "story": "road-11-seva-bave-min",
-      "paragraph": 0,
-      "opens": "Zivistan hat,",
+      "story": "road-10-ke-got-bizin",
+      "paragraph": 6,
+      "opens": "Min di",
       "words": [
         {
-          "term": "zivistan",
+          "term": "deftera",
           "meanings": {
-            "en": "winter",
-            "de": "Winter",
-            "es": "invierno",
-            "fr": "hiver",
-            "nl": "winter",
-            "tr": "kış",
-            "ar": "شتاء",
-            "ckb": "زستان"
+            "en": "notebook",
+            "de": "Heft",
+            "es": "cuaderno",
+            "fr": "cahier",
+            "nl": "schrift",
+            "tr": "defter",
+            "ar": "الدفتر",
+            "ckb": "دەفتەر"
           }
         },
         {
-          "term": "berf",
+          "term": "bêhempa",
           "meanings": {
-            "en": "snow",
-            "de": "Schnee",
-            "es": "nieve",
-            "fr": "neige",
-            "nl": "sneeuw",
-            "tr": "kar",
-            "ar": "ثلج",
-            "ckb": "بەفر"
+            "en": "like no other, unique",
+            "de": "einzigartig",
+            "es": "único",
+            "fr": "unique",
+            "nl": "uniek",
+            "tr": "eşsiz",
+            "ar": "لا مثيل له",
+            "ckb": "بێوێنە"
+          }
+        },
+        {
+          "term": "bizinan",
+          "meanings": {
+            "en": "goats",
+            "de": "Ziegen",
+            "es": "cabras",
+            "fr": "chèvres",
+            "nl": "geiten",
+            "tr": "keçiler",
+            "ar": "الماعز",
+            "ckb": "بزنەکان"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-11-seva-bave-min",
+      "paragraph": 1,
+      "opens": "Li gundê",
+      "words": [
+        {
+          "term": "cotkar",
+          "meanings": {
+            "en": "farmer",
+            "de": "Bauer",
+            "es": "agricultor",
+            "fr": "agriculteur",
+            "nl": "boer",
+            "tr": "çiftçi",
+            "ar": "مزارع",
+            "ckb": "جوتیار"
+          }
+        },
+        {
+          "term": "dikandar",
+          "meanings": {
+            "en": "shopkeeper",
+            "de": "Ladenbesitzer",
+            "es": "tendero",
+            "fr": "commerçant",
+            "nl": "winkelier",
+            "tr": "dükkâncı",
+            "ar": "صاحب متجر",
+            "ckb": "دووکاندار"
+          }
+        },
+        {
+          "term": "aşpêj",
+          "meanings": {
+            "en": "cook",
+            "de": "Köchin",
+            "es": "cocinera",
+            "fr": "cuisinière",
+            "nl": "kok",
+            "tr": "aşçı",
+            "ar": "طبّاخة",
+            "ckb": "چێشتلێنەر"
+          }
+        },
+        {
+          "term": "şivan",
+          "meanings": {
+            "en": "shepherd",
+            "de": "Hirte",
+            "es": "pastor",
+            "fr": "berger",
+            "nl": "herder",
+            "tr": "çoban",
+            "ar": "راعٍ",
+            "ckb": "شوان"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-11-seva-bave-min",
+      "paragraph": 2,
+      "opens": "Îro em",
+      "words": [
+        {
+          "term": "giran",
+          "meanings": {
+            "en": "heavy",
+            "de": "schwer",
+            "es": "pesado",
+            "fr": "lourd",
+            "nl": "zwaar",
+            "tr": "ağır",
+            "ar": "ثقيل",
+            "ckb": "قورس"
+          }
+        },
+        {
+          "term": "sivik",
+          "meanings": {
+            "en": "light (not heavy)",
+            "de": "leicht",
+            "es": "ligero",
+            "fr": "léger",
+            "nl": "licht (niet zwaar)",
+            "tr": "hafif",
+            "ar": "خفيف",
+            "ckb": "سووک"
+          }
+        },
+        {
+          "term": "tije",
+          "meanings": {
+            "en": "full (of something)",
+            "de": "voll",
+            "es": "lleno",
+            "fr": "plein",
+            "nl": "vol",
+            "tr": "dolu",
+            "ar": "ممتلئ",
+            "ckb": "پڕ"
+          }
+        },
+        {
+          "term": "vala",
+          "meanings": {
+            "en": "empty",
+            "de": "leer",
+            "es": "vacío",
+            "fr": "vide",
+            "nl": "leeg",
+            "tr": "boş",
+            "ar": "فارغ",
+            "ckb": "بەتاڵ"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-11-seva-bave-min",
+      "paragraph": 3,
+      "opens": "Êvarê me",
+      "words": [
+        {
+          "term": "êvarê",
+          "meanings": {
+            "en": "in the evening",
+            "de": "am Abend",
+            "es": "por la tarde",
+            "fr": "le soir",
+            "nl": "’s avonds",
+            "tr": "akşam",
+            "ar": "في المساء",
+            "ckb": "ئێوارە"
+          }
+        },
+        {
+          "term": "berhema",
+          "meanings": {
+            "en": "harvest",
+            "de": "Ernte",
+            "es": "cosecha",
+            "fr": "récolte",
+            "nl": "oogst",
+            "tr": "hasat",
+            "ar": "المحصول",
+            "ckb": "بەرهەم"
+          }
+        },
+        {
+          "term": "hevpar",
+          "meanings": {
+            "en": "shared",
+            "de": "gemeinsam",
+            "es": "compartido",
+            "fr": "partagé",
+            "nl": "gedeeld",
+            "tr": "ortak",
+            "ar": "مشترك",
+            "ckb": "هاوبەش"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-11-seva-bave-min",
+      "paragraph": 4,
+      "opens": "Xezo li",
+      "words": [
+        {
+          "term": "mamoste",
+          "meanings": {
+            "en": "teacher",
+            "de": "Lehrer",
+            "es": "profesor",
+            "fr": "enseignant",
+            "nl": "leraar",
+            "tr": "öğretmen",
+            "ar": "معلم",
+            "ckb": "مامۆستا"
+          }
+        },
+        {
+          "term": "tîpan",
+          "meanings": {
+            "en": "letters (of the alphabet)",
+            "de": "Buchstaben",
+            "es": "letras",
+            "fr": "lettres",
+            "nl": "letters",
+            "tr": "harfler",
+            "ar": "الحروف",
+            "ckb": "پیتەکان"
+          }
+        },
+        {
+          "term": "nivîskar",
+          "meanings": {
+            "en": "writer",
+            "de": "Schriftsteller",
+            "es": "escritor",
+            "fr": "écrivain",
+            "nl": "schrijver",
+            "tr": "yazar",
+            "ar": "كاتب",
+            "ckb": "نووسەر"
+          }
+        },
+        {
+          "term": "hemşîre",
+          "meanings": {
+            "en": "nurse",
+            "de": "Krankenschwester",
+            "es": "enfermera",
+            "fr": "infirmière",
+            "nl": "verpleegster",
+            "tr": "hemşire",
+            "ar": "ممرضة",
+            "ckb": "پەرستار"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-11-seva-bave-min",
+      "paragraph": 5,
+      "opens": "Armanca min",
+      "words": [
+        {
+          "term": "kevn",
+          "meanings": {
+            "en": "old (of things)",
+            "de": "alt (von Dingen)",
+            "es": "viejo (de cosas)",
+            "fr": "vieux (des choses)",
+            "nl": "oud (van dingen)",
+            "tr": "eski",
+            "ar": "قديم",
+            "ckb": "کۆن"
+          }
+        },
+        {
+          "term": "şitilek",
+          "meanings": {
+            "en": "a sapling",
+            "de": "ein Setzling",
+            "es": "un plantón",
+            "fr": "un jeune arbre",
+            "nl": "een jong boompje",
+            "tr": "bir fidan",
+            "ar": "شتلة",
+            "ckb": "نەمامێک"
+          }
+        },
+        {
+          "term": "reh",
+          "meanings": {
+            "en": "root",
+            "de": "Wurzel",
+            "es": "raíz",
+            "fr": "racine",
+            "nl": "wortel",
+            "tr": "kök",
+            "ar": "جذر",
+            "ckb": "ڕەگ"
           }
         },
         {
@@ -4465,106 +5319,34 @@
       ]
     },
     {
-      "story": "road-11-seva-bave-min",
-      "paragraph": 1,
-      "opens": "Sî sal",
+      "story": "road-12-sitila-hevalo",
+      "paragraph": 0,
+      "opens": "Zivistan e,",
       "words": [
         {
-          "term": "sal",
+          "term": "berf",
           "meanings": {
-            "en": "year",
-            "de": "Jahr",
-            "es": "año",
-            "fr": "année",
-            "nl": "jaar",
-            "tr": "yıl",
-            "ar": "سنة",
-            "ckb": "ساڵ"
+            "en": "snow",
+            "de": "Schnee",
+            "es": "nieve",
+            "fr": "neige",
+            "nl": "sneeuw",
+            "tr": "kar",
+            "ar": "ثلج",
+            "ckb": "بەفر"
           }
         },
         {
-          "term": "xort",
+          "term": "sobeyê",
           "meanings": {
-            "en": "young man",
-            "de": "junger Mann",
-            "es": "muchacho",
-            "fr": "jeune homme",
-            "nl": "jongeman",
-            "tr": "delikanlı",
-            "ar": "شابّ",
-            "ckb": "لاو، گەنج"
-          }
-        },
-        {
-          "term": "derî",
-          "meanings": {
-            "en": "door",
-            "de": "Tür",
-            "es": "puerta",
-            "fr": "porte",
-            "nl": "deur",
-            "tr": "kapı",
-            "ar": "باب",
-            "ckb": "دەرگا"
-          }
-        }
-      ]
-    },
-    {
-      "story": "road-11-seva-bave-min",
-      "paragraph": 3,
-      "opens": "Li Sêvanê",
-      "words": [
-        {
-          "term": "dirêj",
-          "meanings": {
-            "en": "long",
-            "de": "lang",
-            "es": "largo",
-            "fr": "long",
-            "nl": "lang",
-            "tr": "uzun",
-            "ar": "طويل",
-            "ckb": "درێژ"
-          }
-        },
-        {
-          "term": "sibeh",
-          "meanings": {
-            "en": "morning",
-            "de": "Morgen",
-            "es": "mañana (la parte del día)",
-            "fr": "matin",
-            "nl": "ochtend",
-            "tr": "sabah",
-            "ar": "صباح",
-            "ckb": "بەیانی"
-          }
-        },
-        {
-          "term": "dilgermî",
-          "meanings": {
-            "en": "enthusiasm, warm-heartedness",
-            "de": "Begeisterung, Herzlichkeit",
-            "es": "entusiasmo, cordialidad",
-            "fr": "enthousiasme, chaleur humaine",
-            "nl": "enthousiasme, hartelijkheid",
-            "tr": "coşku, içtenlik",
-            "ar": "حماس، دفء القلب",
-            "ckb": "دڵگەرمی"
-          }
-        },
-        {
-          "term": "nan",
-          "meanings": {
-            "en": "bread",
-            "de": "Brot",
-            "es": "pan",
-            "fr": "pain",
-            "nl": "brood",
-            "tr": "ekmek",
-            "ar": "خبز",
-            "ckb": "نان"
+            "en": "stove",
+            "de": "Ofen",
+            "es": "estufa",
+            "fr": "poêle",
+            "nl": "kachel",
+            "tr": "soba",
+            "ar": "المدفأة",
+            "ckb": "سۆبە"
           }
         },
         {
@@ -4579,117 +5361,189 @@
             "ar": "شاي",
             "ckb": "چا"
           }
-        }
-      ]
-    },
-    {
-      "story": "road-11-seva-bave-min",
-      "paragraph": 4,
-      "opens": "Bihar hat,",
-      "words": [
-        {
-          "term": "bihar",
-          "meanings": {
-            "en": "spring (the season)",
-            "de": "Frühling",
-            "es": "primavera",
-            "fr": "printemps",
-            "nl": "lente",
-            "tr": "ilkbahar",
-            "ar": "ربيع",
-            "ckb": "بەهار"
-          }
         },
         {
-          "term": "reh",
+          "term": "germ",
           "meanings": {
-            "en": "root",
-            "de": "Wurzel",
-            "es": "raíz",
-            "fr": "racine",
-            "nl": "wortel",
-            "tr": "kök",
-            "ar": "جذر",
-            "ckb": "ڕەگ"
-          }
-        },
-        {
-          "term": "kevn",
-          "meanings": {
-            "en": "old (of things)",
-            "de": "alt (von Dingen)",
-            "es": "viejo (de cosas)",
-            "fr": "vieux (des choses)",
-            "nl": "oud (van dingen)",
-            "tr": "eski",
-            "ar": "قديم",
-            "ckb": "کۆن"
-          }
-        },
-        {
-          "term": "dar",
-          "meanings": {
-            "en": "tree",
-            "de": "Baum",
-            "es": "árbol",
-            "fr": "arbre",
-            "nl": "boom",
-            "tr": "ağaç",
-            "ar": "شجرة",
-            "ckb": "دار"
-          }
-        }
-      ]
-    },
-    {
-      "story": "road-11-seva-bave-min",
-      "paragraph": 6,
-      "opens": "Baran pirsî:",
-      "words": [
-        {
-          "term": "kevn",
-          "meanings": {
-            "en": "old (of things)",
-            "de": "alt (von Dingen)",
-            "es": "viejo (de cosas)",
-            "fr": "vieux (des choses)",
-            "nl": "oud (van dingen)",
-            "tr": "eski",
-            "ar": "قديم",
-            "ckb": "کۆن"
-          }
-        },
-        {
-          "term": "sêv",
-          "meanings": {
-            "en": "apple",
-            "de": "Apfel",
-            "es": "manzana",
-            "fr": "pomme",
-            "nl": "appel",
-            "tr": "elma",
-            "ar": "تفاح",
-            "ckb": "سێو"
+            "en": "hot, warm",
+            "de": "heiß, warm",
+            "es": "caliente",
+            "fr": "chaud",
+            "nl": "warm, heet",
+            "tr": "sıcak",
+            "ar": "حارّ، دافئ",
+            "ckb": "گەرم"
           }
         }
       ]
     },
     {
       "story": "road-12-sitila-hevalo",
-      "paragraph": 0,
-      "opens": "Rêya me",
+      "paragraph": 1,
+      "opens": "Ez çîroka",
       "words": [
         {
-          "term": "dirêj",
+          "term": "gur",
           "meanings": {
-            "en": "long",
-            "de": "lang",
-            "es": "largo",
-            "fr": "long",
-            "nl": "lang",
-            "tr": "uzun",
-            "ar": "طويل",
-            "ckb": "درێژ"
+            "en": "wolf",
+            "de": "Wolf",
+            "es": "lobo",
+            "fr": "loup",
+            "nl": "wolf",
+            "tr": "kurt",
+            "ar": "ذئب",
+            "ckb": "گورگ"
+          }
+        },
+        {
+          "term": "derî",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ckb": "دەرگا"
+          }
+        },
+        {
+          "term": "nerm",
+          "meanings": {
+            "en": "soft, gentle",
+            "de": "weich, sanft",
+            "es": "suave, blando",
+            "fr": "doux, mou",
+            "nl": "zacht",
+            "tr": "yumuşak",
+            "ar": "ليّن، ناعم",
+            "ckb": "نەرم"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-12-sitila-hevalo",
+      "paragraph": 2,
+      "opens": "Lê Şengê",
+      "words": [
+        {
+          "term": "reş",
+          "meanings": {
+            "en": "black",
+            "de": "schwarz",
+            "es": "negro",
+            "fr": "noir",
+            "nl": "zwart",
+            "tr": "siyah",
+            "ar": "أسود",
+            "ckb": "ڕەش"
+          }
+        },
+        {
+          "term": "spî",
+          "meanings": {
+            "en": "white",
+            "de": "weiß",
+            "es": "blanco",
+            "fr": "blanc",
+            "nl": "wit",
+            "tr": "beyaz",
+            "ar": "أبيض",
+            "ckb": "سپی"
+          }
+        },
+        {
+          "term": "derî",
+          "meanings": {
+            "en": "door",
+            "de": "Tür",
+            "es": "puerta",
+            "fr": "porte",
+            "nl": "deur",
+            "tr": "kapı",
+            "ar": "باب",
+            "ckb": "دەرگا"
+          }
+        },
+        {
+          "term": "derewker",
+          "meanings": {
+            "en": "liar",
+            "de": "Lügner",
+            "es": "mentiroso",
+            "fr": "menteur",
+            "nl": "leugenaar",
+            "tr": "yalancı",
+            "ar": "كذّاب",
+            "ckb": "درۆزن"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-12-sitila-hevalo",
+      "paragraph": 3,
+      "opens": "Piştre zarok",
+      "words": [
+        {
+          "term": "rola",
+          "meanings": {
+            "en": "part, role",
+            "de": "Rolle",
+            "es": "papel",
+            "fr": "rôle",
+            "nl": "rol",
+            "tr": "rol",
+            "ar": "الدور",
+            "ckb": "ڕۆڵ"
+          }
+        },
+        {
+          "term": "gur",
+          "meanings": {
+            "en": "wolf",
+            "de": "Wolf",
+            "es": "lobo",
+            "fr": "loup",
+            "nl": "wolf",
+            "tr": "kurt",
+            "ar": "ذئب",
+            "ckb": "گورگ"
+          }
+        },
+        {
+          "term": "dilxweş",
+          "meanings": {
+            "en": "cheerful, happy",
+            "de": "fröhlich",
+            "es": "alegre",
+            "fr": "joyeux",
+            "nl": "vrolijk",
+            "tr": "neşeli",
+            "ar": "مرح",
+            "ckb": "دڵخۆش"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-12-sitila-hevalo",
+      "paragraph": 4,
+      "opens": "Hêvî dipirse",
+      "words": [
+        {
+          "term": "gur",
+          "meanings": {
+            "en": "wolf",
+            "de": "Wolf",
+            "es": "lobo",
+            "fr": "loup",
+            "nl": "wolf",
+            "tr": "kurt",
+            "ar": "ذئب",
+            "ckb": "گورگ"
           }
         },
         {
@@ -4706,101 +5560,16 @@
           }
         },
         {
-          "term": "rovî",
+          "term": "zana",
           "meanings": {
-            "en": "fox",
-            "de": "Fuchs",
-            "es": "zorro",
-            "fr": "renard",
-            "nl": "vos",
-            "tr": "tilki",
-            "ar": "ثعلب",
-            "ckb": "ڕێوی"
-          }
-        },
-        {
-          "term": "hirç",
-          "meanings": {
-            "en": "bear",
-            "de": "Bär",
-            "es": "oso",
-            "fr": "ours",
-            "nl": "beer",
-            "tr": "ayı",
-            "ar": "دب",
-            "ckb": "ورچ"
-          }
-        },
-        {
-          "term": "îro",
-          "meanings": {
-            "en": "today",
-            "de": "heute",
-            "es": "hoy",
-            "fr": "aujourd’hui",
-            "nl": "vandaag",
-            "tr": "bugün",
-            "ar": "اليوم",
-            "ckb": "ئەمڕۆ"
-          }
-        }
-      ]
-    },
-    {
-      "story": "road-12-sitila-hevalo",
-      "paragraph": 2,
-      "opens": "Piştî ku",
-      "words": [
-        {
-          "term": "otobûs",
-          "meanings": {
-            "en": "bus",
-            "de": "Bus",
-            "es": "autobús",
-            "fr": "bus",
-            "nl": "bus",
-            "tr": "otobüs",
-            "ar": "حافلة",
-            "ckb": "پاس"
-          }
-        },
-        {
-          "term": "baxçe",
-          "meanings": {
-            "en": "garden, orchard",
-            "de": "Garten, Obstgarten",
-            "es": "huerto",
-            "fr": "jardin, verger",
-            "nl": "tuin, boomgaard",
-            "tr": "bahçe",
-            "ar": "بستان",
-            "ckb": "باخچە، باخ"
-          }
-        },
-        {
-          "term": "dar",
-          "meanings": {
-            "en": "tree",
-            "de": "Baum",
-            "es": "árbol",
-            "fr": "arbre",
-            "nl": "boom",
-            "tr": "ağaç",
-            "ar": "شجرة",
-            "ckb": "دار"
-          }
-        },
-        {
-          "term": "kevn",
-          "meanings": {
-            "en": "old (of things)",
-            "de": "alt (von Dingen)",
-            "es": "viejo (de cosas)",
-            "fr": "vieux (des choses)",
-            "nl": "oud (van dingen)",
-            "tr": "eski",
-            "ar": "قديم",
-            "ckb": "کۆن"
+            "en": "wise",
+            "de": "klug",
+            "es": "sabios",
+            "fr": "sages",
+            "nl": "wijs",
+            "tr": "bilge",
+            "ar": "حكماء",
+            "ckb": "زانا"
           }
         }
       ]
@@ -4808,7 +5577,53 @@
     {
       "story": "road-12-sitila-hevalo",
       "paragraph": 5,
-      "opens": "Heke tu",
+      "opens": "Piştî her",
+      "words": [
+        {
+          "term": "bijare",
+          "meanings": {
+            "en": "favourite",
+            "de": "Lieblings-",
+            "es": "favorito",
+            "fr": "préféré",
+            "nl": "favoriet",
+            "tr": "en sevdiğim",
+            "ar": "المفضّل",
+            "ckb": "دڵخواز"
+          }
+        },
+        {
+          "term": "dilop",
+          "meanings": {
+            "en": "drop",
+            "de": "Tropfen",
+            "es": "gota",
+            "fr": "goutte",
+            "nl": "druppel",
+            "tr": "damla",
+            "ar": "قطرة",
+            "ckb": "دڵۆپ"
+          }
+        },
+        {
+          "term": "avê",
+          "meanings": {
+            "en": "water",
+            "de": "Wasser",
+            "es": "agua",
+            "fr": "eau",
+            "nl": "water",
+            "tr": "su",
+            "ar": "الماء",
+            "ckb": "ئاو"
+          }
+        }
+      ]
+    },
+    {
+      "story": "road-12-sitila-hevalo",
+      "paragraph": 6,
+      "opens": "Ev şevbêrka",
       "words": [
         {
           "term": "şîn",
@@ -4837,19 +5652,6 @@
           }
         },
         {
-          "term": "çay",
-          "meanings": {
-            "en": "tea",
-            "de": "Tee",
-            "es": "té",
-            "fr": "thé",
-            "nl": "thee",
-            "tr": "çay",
-            "ar": "شاي",
-            "ckb": "چا"
-          }
-        },
-        {
           "term": "vekirî",
           "meanings": {
             "en": "open",
@@ -4860,6 +5662,19 @@
             "tr": "açık",
             "ar": "مفتوح",
             "ckb": "کراوە"
+          }
+        },
+        {
+          "term": "germ",
+          "meanings": {
+            "en": "hot, warm",
+            "de": "heiß, warm",
+            "es": "caliente",
+            "fr": "chaud",
+            "nl": "warm, heet",
+            "tr": "sıcak",
+            "ar": "حارّ، دافئ",
+            "ckb": "گەرم"
           }
         },
         {

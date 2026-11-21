@@ -1,6 +1,7 @@
 {
   "ios": {
     "NSPhotoLibraryUsageDescription": "Hevalo uploads the photos you choose as your profile picture, a group’s picture, a meme or a post.",
-    "NSMicrophoneUsageDescription": "Hevalo records your voice when you tap record, to post a voice note or to play your speaking exercise back to you."
+    "NSMicrophoneUsageDescription": "Hevalo records your voice when you tap record, to post a voice note or to play your speaking exercise back to you.",
+    "NSMotionUsageDescription": "Hevalo reads how you tilt and turn your phone so that the deer on the screen moves with you, and keeps none of it."
   }
 }

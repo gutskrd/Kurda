@@ -12,11 +12,11 @@ import { HevaloGuide, SpeechBubble } from '../auth/guide/HevaloGuide';
 import { useSpokenLine } from '../auth/guide/speech';
 import { HevaloPeek } from '../characters/HevaloPeek';
 import { useDirection } from '../reports/direction';
-import { springTo } from '../theme/animate';
+import { springTo, timing } from '../theme/animate';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { BreathingIcon, Icon } from '../theme/Icon';
-import { ENTRANCE } from '../theme/motion';
-import { PressableScale, Rise, heldDim } from '../theme/MotionParts';
+import { ENTRANCE, duration } from '../theme/motion';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { SlideSwap, type SlideDirection } from '../theme/SlideSwap';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -91,8 +91,11 @@ const VALUE_PROPS: readonly TranslationKey[] = [
 /** How tall Hevalo stands on the welcome slide, head to the tops of his legs. */
 const HERO_HEIGHT = 200;
 
-/** The lines under his name sit a little further apart than list rows: each is read, not scanned. */
-const LINE_STAGGER_MS = ENTRANCE.staggerMs * 2;
+/** The height of one line under his name. */
+const PROP_LINE = 24;
+
+/** How long each line under his name stays before the next takes its place: long enough to read it twice. */
+const LINE_HOLD_MS = 3400;
 
 /** Skip is drawn one line of the body size tall, about this. */
 const SKIP_LINE = { height: 20 };
@@ -295,9 +298,9 @@ function LanguageSlide({ selected, onSelect, arriving, mirrored }: { selected: s
 const greeted = (): void => undefined;
 
 /**
- * Hevalo with his name and what the app is in four lines. The lines rise in one after another as the slide
- * arrives, and Hevalo breathes, blinks, glances, greets a tap and says hello with lip-sync while floating like
- * every slide's art. Under Reduce Motion the lines are just there and he stands still.
+ * Hevalo with his name and what the app is in one line that changes every few seconds. Hevalo breathes, blinks,
+ * glances, greets a tap and says hello with lip-sync while floating like every slide's art; under Reduce Motion he
+ * stands still.
  */
 function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
@@ -315,13 +318,54 @@ function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
       </Drift>
       <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
-      <View style={styles.propList}>
-        {VALUE_PROPS.map((p, i) => (
-          <Rise key={p} delay={reduce ? null : i * LINE_STAGGER_MS}>
-            <Text style={[styles.prop, { color: colors.textSecondary }]}>{t(p)}</Text>
-          </Rise>
-        ))}
-      </View>
+      <TurningLine lines={VALUE_PROPS.map((p) => t(p))} running={focused} />
+    </View>
+  );
+}
+
+/**
+ * One line at a time from `lines`, each giving way to the next after `LINE_HOLD_MS`: the old one lifts away as the
+ * new one rises in, or under Reduce Motion they only cross-fade. A screen reader hears all of them once, as one
+ * label, rather than a change every few seconds. The line rests while its screen is not in front.
+ */
+function TurningLine({ lines, running }: { lines: readonly string[]; running: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
+  const reduce = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  // 0 below and unseen, 1 in place, 2 lifted away and unseen.
+  const phase = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!running || lines.length < 2) return;
+    let swap: Animated.CompositeAnimation | null = null;
+    const wait = setTimeout(() => {
+      swap = timing(phase, 2, duration.base);
+      swap.start(({ finished }) => {
+        if (!finished) return;
+        setIndex((i) => (i + 1) % lines.length);
+        phase.setValue(0);
+        swap = timing(phase, 1, duration.slow);
+        swap.start();
+      });
+    }, LINE_HOLD_MS);
+    return () => {
+      clearTimeout(wait);
+      swap?.stop();
+      phase.setValue(1);
+    };
+  }, [index, running, lines.length, phase]);
+  const rise = reduce ? 0 : ENTRANCE.distance;
+  const opacity = phase.interpolate({ inputRange: [0, 1, 2], outputRange: [0, 1, 0] });
+  const translateY = phase.interpolate({ inputRange: [0, 1, 2], outputRange: [rise, 0, -rise] });
+  return (
+    <View style={styles.turning} accessible accessibilityLabel={lines.join('. ')}>
+      <Animated.Text
+        style={[styles.prop, { color: colors.textSecondary, opacity, transform: [{ translateY }] }]}
+        importantForAccessibility="no-hide-descendants"
+        accessibilityElementsHidden
+        testID="welcome-line"
+      >
+        {lines[index % lines.length]}
+      </Animated.Text>
     </View>
   );
 }
@@ -382,8 +426,9 @@ const styles = StyleSheet.create({
   langLabelActive: { fontWeight: typography.weights.bold },
   brand: { ...display(typography.sizes.xxl) },
   tagline: { fontSize: typography.sizes.lg, marginTop: spacing.xs, fontStyle: 'italic', marginBottom: spacing.lg },
-  propList: { marginTop: spacing.sm, gap: spacing.sm, alignItems: 'center', paddingHorizontal: spacing.lg },
-  prop: { fontSize: typography.sizes.md, textAlign: 'center' },
+  // Room for a line that wraps to two in the longer languages, so nothing below moves as the lines change.
+  turning: { minHeight: 2 * PROP_LINE, justifyContent: 'center', alignSelf: 'stretch', paddingHorizontal: spacing.lg },
+  prop: { fontSize: typography.sizes.md, lineHeight: PROP_LINE, textAlign: 'center' },
   nav: { alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
   back: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
   backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },

@@ -21,7 +21,7 @@ describe('the book’s own words', () => {
     expect(FRIENDS.hamo).toMatch(/^Hamo was born in Kobanî/);
     // what he made is the app, not the deer who walks the road with him
     for (const fact of ['Kurdish roots', 'the Netherlands', 'he created the Hevalo app']) expect(FRIENDS.hamo).toContain(fact);
-    for (const family of ['Ibrahîm', 'Edûl', 'Evdila', 'Lorîn', 'Cîhan', 'father', 'mother', 'brother', 'sister', 'aunt']) {
+    for (const family of ['father', 'mother', 'brother', 'sister', 'aunt']) {
       expect(FRIENDS.hamo, family).not.toContain(family);
     }
   });

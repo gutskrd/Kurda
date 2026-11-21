@@ -907,6 +907,8 @@ export {
 export { HUES, HUE_NAMES, hueSteps, isHueName, type HueName, type HueScheme, type HueSteps } from './hues.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
+/** A drawing bent through a map of the plane, as his head turned in the round is drawn. */
+export { mapMarkup, mapPath, type PlaneMap } from './art/warp.js';
 /** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
 export {
   COLD_FIRE,

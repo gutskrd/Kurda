@@ -596,9 +596,8 @@ export function roadBookCast(plan: BookPlan, chapters: readonly BookChapter[]): 
     ])
     .join('\n');
   return (plan.names ?? [])
-    // an entry that only says what someone is called by another is not a person of its own; Hamo's own
-    // family (`family` in the plan) stays in the cast, for the people pages to tell apart and leave out
-    .filter((who) => (who.kind === 'person' || who.kind === 'family' || who.kind === 'animal') && !/^what /.test(who.en))
+    // an entry that only says what someone is called by another is not a person of its own
+    .filter((who) => (who.kind === 'person' || who.kind === 'animal') && !/^what /.test(who.en))
     .filter((who) => [who.name, ...(who.forms ?? [])].some((form) => new RegExp(`(^|[^\\p{L}])${form}($|[^\\p{L}])`, 'u').test(text)))
     .map(({ name, kind, en }) => ({ name, kind, en }));
 }

@@ -1,10 +1,10 @@
 /**
  * The front and back matter (pdf.ts): a meaning shortened only at its joints and never left empty, so the word list and
- * alphabet print meanings whole or at a clause; the people of the road without Hamo's family; and the file's metadata
+ * alphabet print meanings whole or at a clause; the people of the road, none of them Hamo's family; and the file's metadata
  * naming the author.
  */
 import { describe, expect, it } from 'vitest';
-import { glossFor, isFamily, renderRoadBook } from './pdf.js';
+import { glossFor, renderRoadBook } from './pdf.js';
 import { AUTHOR } from './prose.js';
 import { roadBookCast, roadBookChapters, roadBookWordList } from './road-book.js';
 import { loadRoadBookSources } from './sources.js';
@@ -46,14 +46,13 @@ describe('the pages around the chapters', () => {
     expect(meaning('met')).not.toBe(meaning('xaltî'));
   });
 
-  it('introduces the people of the road without Hamo’s own family', async () => {
+  it('introduces the people of the road, and none of Hamo’s own family, whom the road never names', async () => {
     const { plan, docs, stories } = await loadRoadBookSources();
     const cast = roadBookCast(plan, roadBookChapters(plan, docs, stories, ALL));
-    const family = cast.filter(isFamily).map((p) => p.name);
-    expect(family.sort()).toEqual(['Cîhan', 'Edûl', 'Evdila', 'Ibrahîm', 'Lorîn'].sort());
-    // his neighbours, his animals and the people of the tales are not his family
-    for (const name of ['Nazê', 'Baran', 'Bozo', 'Şêro', 'Ferhad', 'Kawa']) expect(family).not.toContain(name);
-    expect(isFamily({ name: 'Someone', kind: 'family', en: 'a cousin' })).toBe(true);
+    expect(cast.filter((p) => /^Hamo’s (father|mother|(\p{L}+ )?(brother|sister))\b/u.test(p.en))).toEqual([]);
+    for (const p of cast) expect(['person', 'animal'], p.name).toContain(p.kind);
+    // his neighbours, his animals and the people of the tales are all there
+    expect(cast.map((p) => p.name)).toEqual(expect.arrayContaining(['Nazê', 'Baran', 'Bozo', 'Şêro', 'Ferhad', 'Kawa']));
   });
 
   it('names the book’s author in the file’s details', async () => {

@@ -102,8 +102,8 @@
                     "prompt": "Em diçin bazarê.",
                     "options": [
                       "We’re going to the market.",
-                      "We’re fine.",
-                      "There are seven of us."
+                      "I’m going to the market.",
+                      "We’re at the market."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -186,7 +186,7 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Na. Bizin nexşe dixwaze, ne reng!"
+                      "Bizina spî nan dixwe, ne kulîlkan."
                     ]
                   }
                 },
@@ -323,7 +323,7 @@
                     "prompt": "Ez simbêlê xwe di çem de dibînim!",
                     "options": [
                       "I can see my moustache in the river!",
-                      "In this photo, Lorîn and I are children.",
+                      "I can see my moustache in the window!",
                       "The bread is in the tenûr."
                     ],
                     "correctIndex": 0,
@@ -597,8 +597,8 @@
                     "prompt": "Nexşe? Ez dizanim kî çi difiroşe!",
                     "options": [
                       "A map? I know who sells what!",
-                      "I’m drinking milk.",
-                      "I’m drinking the tea."
+                      "A map? I know what Mîrza sells!",
+                      "A map? I know where the market is!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -735,7 +735,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
+                    "prompt": "Mîrza, this friend knows Kurdish!",
                     "accepted": [
                       "Mîrza, ev heval kurdî dizane!"
                     ]
@@ -795,7 +795,7 @@
                       {
                         "speaker": 0,
                         "text": "Mîrza, ev heval kurdî dizane!",
-                        "en": "Mîrza, this friend of ours knows Kurdish!"
+                        "en": "Mîrza, this friend knows Kurdish!"
                       },
                       {
                         "speaker": 1,
@@ -828,7 +828,7 @@
                     "options": [
                       "I can see my moustache in the river!",
                       "I’m looking at my moustache.",
-                      "In this photo, Lorîn and I are children."
+                      "I can see my moustache in the window!"
                     ],
                     "correctIndex": 0
                   }
@@ -839,7 +839,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
+                    "prompt": "Mîrza, this friend knows Kurdish!",
                     "options": [
                       "Mîrza, ev heval kurdî dizane!",
                       "Mîrza, ev hevalên kurdî dizane!",
@@ -880,9 +880,9 @@
                     "voice": "hamo",
                     "prompt": "Mîrza, ev heval kurdî dizane!",
                     "options": [
-                      "Mîrza, this friend of ours knows Kurdish!",
-                      "This is water.",
-                      "This is tea."
+                      "Mîrza, this friend knows Kurdish!",
+                      "Mîrza, this guest knows Kurdish!",
+                      "Mîrza, this friend sells apples!"
                     ],
                     "correctIndex": 0
                   }
@@ -989,7 +989,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Mîrza, this friend of ours knows Kurdish!",
+                    "prompt": "Mîrza, this friend knows Kurdish!",
                     "accepted": [
                       "Mîrza, ev heval kurdî dizane!"
                     ]
@@ -1749,7 +1749,7 @@
                     "options": [
                       "Mîrza says it’s too much as well.",
                       "Well done! Mîrza says you speak well.",
-                      "My father is in Kobanî. My mother too."
+                      "Mîrza says it’s cheap as well."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1906,7 +1906,7 @@
                       {
                         "speaker": 1,
                         "text": "Du kevçî? Ez hinek dixwazim!",
-                        "en": "Two spoonfuls? I wanted just a little!"
+                        "en": "Two spoonfuls? I want just a little!"
                       }
                     ],
                     "prompt": "How many spoonfuls does Hamo take in the end?",
@@ -1938,7 +1938,7 @@
                     "options": [
                       "Çaya Mîrza germ e. Tu hinek şekir dixwazî?",
                       "Çaya Mîrza germ e. Tu hinek şekirên dixwazî?",
-                      "Ev nîvê wêneyekî kevn e!"
+                      "Çaya Mîrza kevn e. Tu hinek şekir dixwazî?"
                     ],
                     "correctIndex": 0
                   }
@@ -2217,9 +2217,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The white goat eats bread, not maps.",
+                    "prompt": "The white goat eats bread, not the flowers.",
                     "accepted": [
-                      "Bizina spî nan dixwe, ne nexşe."
+                      "Bizina spî nan dixwe, ne kulîlkan."
                     ]
                   }
                 },
@@ -2832,13 +2832,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Sed û deh? Mîrza çi dibêje?",
+                    "say": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi sed û deh e.",
                     "voice": "hamo",
-                    "prompt": "Sed û deh? Mîrza çi dibêje?",
+                    "prompt": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi sed û deh e.",
                     "options": [
-                      "A hundred and ten? What does Mîrza say?",
-                      "Yes. And what is the baker saying?",
-                      "What does Mîrza sell?"
+                      "Grapes are twenty, onions fifty, apples forty. That’s a hundred and ten altogether.",
+                      "Grapes are twenty, onions fifty, apples forty. That’s a thousand altogether.",
+                      "Grapes are forty, onions fifty, apples twenty. That’s a hundred and ten altogether."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2854,13 +2854,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!",
+                    "say": "Ev bi hezar e? Gelek biha ye!",
                     "voice": "hamo",
-                    "prompt": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!",
+                    "prompt": "Ev bi hezar e? Gelek biha ye!",
                     "options": [
-                      "Grapes twenty, onions fifty, apples forty. That’s a thousand altogether!",
-                      "Twenty? A tea is twenty! Mîrza, one tea!",
-                      "Potatoes forty, fish fifty, and Mîrza’s tea too."
+                      "Is this a thousand? That’s very expensive!",
+                      "Is this a hundred? That’s very cheap!",
+                      "Is this a thousand? That’s very cheap!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2876,16 +2876,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Sed û deh? Mîrza çi dibêje?",
+                    "say": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi sed û deh e.",
                     "voice": "hamo",
-                    "prompt": "Sed û deh? Mîrza çi ___?",
+                    "prompt": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi ___ û deh e.",
                     "options": [
-                      "dibêje",
-                      "dibêjim",
-                      "dibêjî"
+                      "sed",
+                      "hezar",
+                      "deh"
                     ],
                     "correctIndex": 0,
-                    "cue": "A hundred and ten? What does Mîrza say?"
+                    "cue": "a hundred"
                   }
                 },
                 {
@@ -2915,13 +2915,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!",
+                    "say": "Ev bi hezar e? Gelek biha ye!",
                     "voice": "hamo",
-                    "prompt": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi ___ e!",
+                    "prompt": "Ev bi ___ e? Gelek biha ye!",
                     "options": [
                       "hezar",
                       "sed",
-                      "bîst"
+                      "sî"
                     ],
                     "correctIndex": 0,
                     "cue": "a thousand"
@@ -3005,23 +3005,33 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!",
-                        "en": "Grapes twenty, onions fifty, apples forty. That’s a thousand altogether!"
+                        "text": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi sed û deh e.",
+                        "en": "Grapes are twenty, onions fifty, apples forty. That’s a hundred and ten altogether."
                       },
                       {
                         "speaker": 1,
-                        "text": "Hezar? Na, sed û deh e.",
-                        "en": "A thousand? No, it’s a hundred and ten."
+                        "text": "Sed û deh? Ne biha ye.",
+                        "en": "A hundred and ten? That’s not expensive."
                       },
                       {
                         "speaker": 0,
-                        "text": "Sed û deh? Mîrza çi dibêje?",
-                        "en": "A hundred and ten? What does Mîrza say?"
+                        "text": "Ez pere didim.",
+                        "en": "I’m paying."
                       },
                       {
                         "speaker": 1,
-                        "text": "Na, tu sed û deh didî.",
-                        "en": "No, you give him a hundred and ten."
+                        "text": "Na, ez pere didim!",
+                        "en": "No, I’m paying!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Tu mêvan î.",
+                        "en": "You’re a guest."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Spas! Destê te sax be!",
+                        "en": "Thank you!"
                       },
                       {
                         "speaker": 0,
@@ -3042,8 +3052,8 @@
                     "prompt": "How much does Hamo give Mîrza in all?",
                     "options": [
                       "A hundred and forty",
-                      "A thousand",
-                      "A hundred and ten"
+                      "A hundred and ten",
+                      "A thousand"
                     ],
                     "correctIndex": 0
                   }
@@ -3080,9 +3090,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "A hundred and ten? What does Mîrza say?",
+                    "prompt": "Grapes are twenty, onions fifty, apples forty. That’s a hundred and ten altogether.",
                     "accepted": [
-                      "Sed û deh? Mîrza çi dibêje?"
+                      "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi sed û deh e."
                     ]
                   }
                 },
@@ -3092,8 +3102,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!",
-                    "reference": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!"
+                    "prompt": "Ev bi hezar e? Gelek biha ye!",
+                    "reference": "Ev bi hezar e? Gelek biha ye!"
                   }
                 },
                 {
@@ -3112,18 +3122,18 @@
                 },
                 {
                   "position": 16,
-                  "type": "multiple_choice",
+                  "type": "translate",
                   "payload": {
-                    "ask": "meaning",
-                    "say": "Selik bi sî ye!",
+                    "ask": "to-english",
+                    "say": "Ev bi hezar e? Gelek biha ye!",
                     "voice": "hamo",
-                    "prompt": "Selik bi sî ye!",
-                    "options": [
-                      "The basket is thirty!",
-                      "The basket is twenty!",
-                      "The grapes are thirty!"
-                    ],
-                    "correctIndex": 0
+                    "prompt": "Ev bi hezar e? Gelek biha ye!",
+                    "accepted": [
+                      "Is this a thousand? That’s very expensive!",
+                      "Is it a thousand? That’s very expensive!",
+                      "Is this a thousand? It’s very expensive!",
+                      "Is this a thousand? That is very expensive!"
+                    ]
                   }
                 }
               ]
@@ -3242,9 +3252,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "A hundred and ten? What does Mîrza say?",
+                    "prompt": "Is this a thousand? That’s very expensive!",
                     "accepted": [
-                      "Sed û deh? Mîrza çi dibêje?"
+                      "Ev bi hezar e? Gelek biha ye!"
                     ]
                   }
                 },
@@ -3301,13 +3311,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Binêre, Mîrza li selika xwe dinêre.",
-                        "en": "Look, Mîrza is looking at his basket."
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Wey! Sêv li ku ne?",
-                        "en": "Oh no! Where are the apples?"
+                        "text": "Noşî can be!",
+                        "en": "Enjoy!"
                       }
                     ],
                     "prompt": "What does Hamo spend his last twenty on?",
@@ -3387,12 +3392,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!",
+                    "say": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi sed û deh e.",
                     "voice": "hamo",
-                    "prompt": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi hezar e!",
+                    "prompt": "Tirî bi bîst e, pîvaz bi pêncî, sêv bi çil. Hemû bi sed û deh e.",
                     "accepted": [
-                      "Grapes twenty, onions fifty, apples forty. That’s a thousand altogether!",
-                      "Grapes twenty, onions fifty, apples forty. That is a thousand altogether!"
+                      "Grapes are twenty, onions fifty, apples forty. That’s a hundred and ten altogether.",
+                      "Grapes are twenty, onions fifty, apples forty. That is a hundred and ten altogether.",
+                      "Grapes twenty, onions fifty, apples forty. That’s a hundred and ten altogether."
                     ]
                   }
                 },
@@ -3748,13 +3754,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hevalo ne birçî ye, lê zikê wî tije ye!",
+                    "say": "Selik vala ye, lê zikê Hevalo tije ye!",
                     "voice": "hamo",
-                    "prompt": "Hevalo ne birçî ye, lê zikê wî tije ye!",
+                    "prompt": "Selik vala ye, lê zikê Hevalo tije ye!",
                     "options": [
-                      "Hevalo isn’t hungry, but his belly is full!",
-                      "Hevalo is hungry, but his belly is full!",
-                      "Hevalo isn’t hungry, but his basket is full!"
+                      "The basket is empty, but Hevalo’s belly is full!",
+                      "The basket is full, but Hevalo’s belly is empty!",
+                      "The basket is empty, and Hevalo’s belly is empty too!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3794,9 +3800,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hevalo ne birçî ye, lê zikê wî tije ye!",
+                    "say": "Selik vala ye, lê zikê Hevalo tije ye!",
                     "voice": "hamo",
-                    "prompt": "Hevalo ne birçî ye, lê ___ wî tije ye!",
+                    "prompt": "Selik vala ye, lê ___ Hevalo tije ye!",
                     "options": [
                       "zikê",
                       "zik",
@@ -3957,9 +3963,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Hevalo isn’t hungry, but his belly is full!",
+                    "prompt": "The basket is empty, but Hevalo’s belly is full!",
                     "accepted": [
-                      "Hevalo ne birçî ye, lê zikê wî tije ye!"
+                      "Selik vala ye, lê zikê Hevalo tije ye!"
                     ]
                   }
                 },
@@ -3994,12 +4000,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hevalo ne birçî ye, lê zikê wî tije ye!",
+                    "say": "Selik vala ye, lê zikê Hevalo tije ye!",
                     "voice": "hamo",
-                    "prompt": "Hevalo ne birçî ye, lê zikê wî tije ye!",
+                    "prompt": "Selik vala ye, lê zikê Hevalo tije ye!",
                     "accepted": [
-                      "Hevalo isn’t hungry, but his belly is full!",
-                      "Hevalo is not hungry, but his belly is full!"
+                      "The basket is empty, but Hevalo’s belly is full!",
+                      "The basket is empty but Hevalo’s belly is full!"
                     ]
                   }
                 }
@@ -4038,13 +4044,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
+                    "say": "Çima tu dikenî?",
                     "voice": "hamo",
-                    "prompt": "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
+                    "prompt": "Çima tu dikenî?",
                     "options": [
-                      "All right. Now I’m laughing too! Mîrza, I’ll pay.",
-                      "All right, I’ll check them.",
-                      "All right. Here you are, Mîrza: a hundred and ten, and twenty for the tea."
+                      "Why are you laughing?",
+                      "Why are you eating?",
+                      "Who is laughing?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -4081,9 +4087,9 @@
                     "voice": "hamo",
                     "prompt": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
                     "options": [
-                      "No! Hevalo never eats apples. He doesn’t even like apples!",
-                      "Hevalo? No, Hevalo just eats the apples!",
-                      "And nobody knows who’s eating the apples. Hevalo? No, never!"
+                      "No! Hevalo never eats apples. He doesn’t like apples!",
+                      "No! Hevalo always eats apples. He loves apples!",
+                      "No! Hevalo never eats bread. He doesn’t like bread!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -4115,16 +4121,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
+                    "say": "Çima tu dikenî?",
                     "voice": "hamo",
-                    "prompt": "Baş e. Ez jî ___! Mîrza, ez pere didim.",
+                    "prompt": "Çima tu ___?",
                     "options": [
-                      "dikenim",
                       "dikenî",
+                      "dikenim",
                       "dikirim"
                     ],
                     "correctIndex": 0,
-                    "cue": "to laugh"
+                    "cue": "Why are you laughing?"
                   }
                 },
                 {
@@ -4138,7 +4144,7 @@
                     "options": [
                       "Where is my phone?",
                       "Where’s Hevalo?",
-                      "And where is the other half?"
+                      "Where is my money?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -4215,7 +4221,7 @@
                       {
                         "speaker": 0,
                         "text": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
-                        "en": "No! Hevalo never eats apples. He doesn’t even like apples!"
+                        "en": "No! Hevalo never eats apples. He doesn’t like apples!"
                       },
                       {
                         "speaker": 1,
@@ -4230,12 +4236,22 @@
                       {
                         "speaker": 1,
                         "text": "Binêre, Hevalo jî dikene!",
-                        "en": "Look, even Hevalo is laughing!"
+                        "en": "Look, Hevalo is laughing too!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
-                        "en": "All right. Now I’m laughing too! Mîrza, I’ll pay."
+                        "text": "Çima tu dikenî?",
+                        "en": "Why are you laughing?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Hevalo ji sêvan hez dike!",
+                        "en": "Hevalo loves apples!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ez pere didim.",
+                        "en": "I’m paying."
                       },
                       {
                         "speaker": 1,
@@ -4244,15 +4260,15 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Roj baş, Lorîn! Tu çawa yî?",
-                        "en": "Hello, Lorîn! How are you?"
+                        "text": "Roj baş, Nazê! Tu çawa yî?",
+                        "en": "Hello, Nazê! How are you?"
                       }
                     ],
-                    "prompt": "Who phones Hamo after the trial?",
+                    "prompt": "Why does nobody believe Hamo?",
                     "options": [
-                      "Lorîn",
-                      "Mîrza",
-                      "Ferhad"
+                      "There’s apple on Hevalo’s nose.",
+                      "Hevalo is hungry.",
+                      "The basket is full."
                     ],
                     "correctIndex": 0
                   }
@@ -4291,7 +4307,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "No! Hevalo never eats apples. He doesn’t even like apples!",
+                    "prompt": "No! Hevalo never eats apples. He doesn’t like apples!",
                     "options": [
                       "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
                       "Na! Hevalo hîç sêvan naxivim. Ew ji sêvan hez nake!",
@@ -4316,12 +4332,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
+                    "say": "Çima tu dikenî?",
                     "voice": "hamo",
-                    "prompt": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
+                    "prompt": "Çima tu dikenî?",
                     "accepted": [
-                      "No! Hevalo never eats apples. He doesn’t even like apples!",
-                      "No! Hevalo never eats apples. He does not even like apples!"
+                      "Why are you laughing?",
+                      "Why do you laugh?"
                     ]
                   }
                 }
@@ -4342,9 +4358,9 @@
                     "voice": "hamo",
                     "prompt": "Na! Hevalo hîç sêvan naxwe. Ew ji sêvan hez nake!",
                     "options": [
-                      "No! Hevalo never eats apples. He doesn’t even like apples!",
+                      "No! Hevalo never eats apples. He doesn’t like apples!",
                       "Hevalo loves apples.",
-                      "Hevalo? No, Hevalo just eats the apples!"
+                      "No! Hevalo never eats bread. He doesn’t like bread!"
                     ],
                     "correctIndex": 0
                   }
@@ -4475,11 +4491,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "All right. Now I’m laughing too! Mîrza, I’ll pay.",
+                    "prompt": "Why are you laughing?",
                     "options": [
-                      "Baş e. Ez jî dikenim! Mîrza, ez pere didim.",
-                      "Baş e. Ez jî dikenî! Mîrza, ez pere didim.",
-                      "Mîrza dikene, ez jî dikenim."
+                      "Çima tu dikenî?",
+                      "Çima tu dikenim?",
+                      "Çima ew dikenî?"
                     ],
                     "correctIndex": 0
                   }
@@ -4500,10 +4516,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Hello, Lorîn! How are you?",
+                    "prompt": "Hello, Nazê! How are you?",
                     "options": [
-                      "Roj baş, Lorîn! Tu çawa yî?",
-                      "Roj şaş, Lorîn! Tu çawa yî?",
+                      "Roj baş, Nazê! Tu çawa yî?",
+                      "Roj şaş, Nazê! Tu çawa yî?",
                       "Tu jî têyî?"
                     ],
                     "correctIndex": 0
@@ -4527,7 +4543,7 @@
                     "pairs": [
                       {
                         "left": "kes",
-                        "right": "nobody"
+                        "right": "person"
                       },
                       {
                         "left": "vala",
@@ -4558,9 +4574,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hevalo ne birçî ye, lê zikê wî tije ye!",
+                    "say": "Selik vala ye, lê zikê Hevalo tije ye!",
                     "voice": "hamo",
-                    "prompt": "Hevalo ne birçî ye, lê ___ wî tije ye!",
+                    "prompt": "Selik vala ye, lê ___ Hevalo tije ye!",
                     "options": [
                       "zikê",
                       "zik",

@@ -352,7 +352,7 @@ function MatchRoom({
       </GlassCard>
     );
   }
-  if (!match) return <Loading style={styles.loading} />;
+  if (!match) return <Loading size="large" style={styles.loading} />;
 
   const playerCount = match.scoreboard.length || (match.me ? 1 : 0);
   const seconds = Math.ceil(remaining / 1000);

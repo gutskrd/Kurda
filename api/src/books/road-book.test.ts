@@ -293,10 +293,10 @@ describe('the Hevalo book', () => {
     const { plan, docs, stories } = await loadRoadBookSources();
     const cast = (chapters: number[]): string[] => roadBookCast(plan, roadBookChapters(plan, docs, stories, chapters)).map((p) => p.name);
     expect(cast([1])).toEqual(['Hamo', 'Hevalo']);
-    expect(cast([1, 2])).toEqual(expect.arrayContaining(['Nazê', 'Baran', 'Hêvî', 'Şemsê', 'Ibrahîm', 'Edûl', 'Bozo', 'Şêro']));
+    expect(cast([1, 2])).toEqual(expect.arrayContaining(['Nazê', 'Baran', 'Hêvî', 'Şemsê', 'Bozo', 'Şêro']));
     expect(cast([1, 2])).not.toContain('Zerê');
     const all = cast(ALL);
-    expect(all).toEqual(expect.arrayContaining(['Xezo', 'Lorîn', 'Mîrza', 'Azad', 'Bişar', 'Zerê']));
+    expect(all).toEqual(expect.arrayContaining(['Xezo', 'Mîrza', 'Azad', 'Bişar', 'Zerê']));
     // places are not people
     expect(all).not.toContain('Kobanî');
   });

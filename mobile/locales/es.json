@@ -1,6 +1,7 @@
 {
   "ios": {
     "NSPhotoLibraryUsageDescription": "Hevalo sube las fotos que eliges como foto de perfil, foto de un grupo, meme o publicación.",
-    "NSMicrophoneUsageDescription": "Hevalo graba tu voz cuando tocas grabar, para publicar una nota de voz o para que te escuches en un ejercicio oral."
+    "NSMicrophoneUsageDescription": "Hevalo graba tu voz cuando tocas grabar, para publicar una nota de voz o para que te escuches en un ejercicio oral.",
+    "NSMotionUsageDescription": "Hevalo detecta cómo inclinas y giras el teléfono para que el ciervo de la pantalla se mueva contigo, y no guarda nada de ello."
   }
 }

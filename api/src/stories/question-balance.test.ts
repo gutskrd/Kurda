@@ -48,10 +48,6 @@ const LONGEST_SHARE = 0.4;
  * rise, until each is under the share and removed.
  */
 const STILL_TO_BALANCE: Readonly<Record<string, number>> = {
-  'road-06-nameya-bave-me': 7,
-  'road-07-sercopi': 7,
-  'road-09-gure-min': 7,
-  'road-10-ke-got-bizin': 6,
   'kmr-qelema-sin': 4,
   'kmr-nameya-dapire': 4,
   'kmr-rovi-u-hirc': 7,

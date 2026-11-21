@@ -128,7 +128,7 @@ describe('the people of the road', () => {
     expect(pictureForName('Hamo')).toEqual({ kind: 'cast', who: 'hamo', pose: 'proud' });
     expect(pictureForName('Xezo')).toEqual({ kind: 'cast', who: 'xezo', pose: 'smiling' });
     expect(pictureForName('Hevalo')).toEqual({ kind: 'cast', who: 'hevalo', pose: 'caught' });
-    expect(pictureForName('Ibrahîm')).toEqual({ kind: 'spot', spot: 'flute' });
+    expect(pictureForName('Azad')).toEqual({ kind: 'spot', spot: 'doctorBag' });
     expect(pictureForName('Bozo')).toEqual({ kind: 'word', id: 'donkey' });
     expect(pictureForName('Nobody')).toBeNull();
     expect(pictureForName('toString')).toBeNull();
@@ -136,8 +136,8 @@ describe('the people of the road', () => {
     const cast = roadBookCast(plan, roadBookChapters(plan, docs, stories, ALL));
     const emblems = cast.map((who) => pictureForName(who.name));
     for (const p of emblems) if (p) expect(drawable(p), JSON.stringify(p)).toBe(true);
-    // nearly everyone has one; a brother and a sister met only in a photo do without
-    expect(emblems.filter((p) => p === null).length).toBeLessThanOrEqual(2);
+    // everyone the road names has one
+    expect(cast.filter((_, i) => emblems[i] === null).map((who) => who.name)).toEqual([]);
   });
 });
 

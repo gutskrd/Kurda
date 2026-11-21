@@ -852,9 +852,9 @@ describe('the pen', () => {
 });
 
 describe('the tear in the page Hevalo pokes his head through', () => {
-  const layers = (drawn: PeekArt): string[] => [drawn.back, drawn.cast, drawn.front, drawn.shadow];
+  const layers = (drawn: PeekArt): string[] => [drawn.cast, drawn.castEars, drawn.back, drawn.front, drawn.shadow];
 
-  it('is four well-formed drawings in its box, behind him, his shadow on the page, on our side of him and his shade, on a light page and a dark one', () => {
+  it('is well-formed drawings in its box, his shadows on the page, behind him, on our side of him and his shade, on a light page and a dark one', () => {
     for (const dark of [false, true]) {
       const drawn = peekArt({ dark, idPrefix: `tear${dark ? 'd' : 'l'}` });
       for (const layer of layers(drawn)) {
@@ -891,8 +891,37 @@ describe('the tear in the page Hevalo pokes his head through', () => {
     const cut = PEEK_VIEW.y + PEEK_PLACE.cut * PEEK_VIEW.h;
     expect(cut).toBeGreaterThan(head.y + head.h - 1);
     expect(cut).toBeLessThan(600);
-    // and he waits behind the page wholly under it before he comes through
-    expect(PEEK_VIEW.y + (PEEK_PLACE.figure.top + PEEK_PLACE.drop) * PEEK_VIEW.h).toBeCloseTo(cut);
     expect(head.y).toBeGreaterThan(PEEK_VIEW.y);
+  });
+
+  it('leans him about where his neck meets the tear’s foot, and swings his shadows about the same point as far down the page as each falls', () => {
+    const f = PEEK_PLACE.figure;
+    const cut = PEEK_VIEW.y + PEEK_PLACE.cut * PEEK_VIEW.h;
+    const middle = PEEK_VIEW.x + PEEK_VIEW.w / 2;
+    expect(PEEK_VIEW.x + (f.left + f.width * PEEK_PLACE.pivot.x) * PEEK_VIEW.w).toBeCloseTo(middle);
+    expect(PEEK_VIEW.y + (f.top + f.height * PEEK_PLACE.pivot.y) * PEEK_VIEW.h).toBeCloseTo(cut);
+    for (const at of [PEEK_PLACE.castPivot, PEEK_PLACE.earsPivot, PEEK_PLACE.tear]) expect(at.x).toBeCloseTo(0.5);
+    const ears = PEEK_VIEW.y + PEEK_PLACE.earsPivot.y * PEEK_VIEW.h;
+    const head = PEEK_VIEW.y + PEEK_PLACE.castPivot.y * PEEK_VIEW.h;
+    expect(ears).toBeGreaterThan(cut);
+    expect(head).toBeGreaterThan(ears);
+    expect(head - cut).toBeCloseTo(PEEK_PLACE.fall * PEEK_VIEW.h);
+    // the tear bursts open from its own middle, above the cut
+    expect(PEEK_VIEW.y + PEEK_PLACE.tear.y * PEEK_VIEW.h).toBeLessThan(cut);
+  });
+
+  it('lights everything from above: every shadow on the page falls straight down it', () => {
+    for (const dark of [false, true]) {
+      const drawn = peekArt({ dark });
+      const moves = [...`${drawn.back}${drawn.front}`.matchAll(/translate\(([-\d.]+) ([-\d.]+)\)/g)].map((m) => [Number(m[1]), Number(m[2])] as const);
+      expect(moves.length).toBeGreaterThan(5);
+      for (const [x] of moves) expect(Math.abs(x)).toBeLessThanOrEqual(1);
+      // his head's shadow is his head's own outline moved down the page, and his ears' the same
+      for (const layer of [drawn.cast, drawn.castEars]) {
+        const down = [...layer.matchAll(/translate\(0 ([\d.]+)\)/g)].map((m) => Number(m[1]));
+        expect(down.length).toBeGreaterThan(0);
+        for (const y of down) expect(y).toBeGreaterThan(0);
+      }
+    }
   });
 });

@@ -309,7 +309,7 @@ function BattleRoom({
       </GlassCard>
     );
   }
-  if (!battle) return <Loading style={styles.loading} />;
+  if (!battle) return <Loading size="large" style={styles.loading} />;
 
   const playerCount = (battle.me ? 1 : 0) + battle.opponents.length;
 

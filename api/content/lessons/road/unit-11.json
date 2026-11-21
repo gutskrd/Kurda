@@ -33,8 +33,8 @@
                     "prompt": "Di Cotmehê de cotkar û karker selikan li ser milên xwe hildigirin.",
                     "options": [
                       "In October the farmers and the workers carry baskets on their shoulders.",
-                      "We drank tea on the rocks, in the sunshine.",
-                      "In the legend, Kawa the blacksmith makes fires on the mountains."
+                      "In September the farmers and the workers carry baskets on their shoulders.",
+                      "In October the shopkeepers and the cooks carry baskets on their heads."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -122,8 +122,8 @@
                     "prompt": "Dikandarê me dikanê dereng vedike. Ev çi pîşe ye?",
                     "options": [
                       "Our shopkeeper opens his shop late. What kind of trade is that?",
-                      "What’s this in Kurdish?",
-                      "I don’t know. What’s this in Kurdish?"
+                      "Our shopkeeper opens his shop early. What a good trade!",
+                      "Our cook opens the tea house late. What kind of trade is that?"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -214,6 +214,7 @@
                     "prompt": "September is going, October is coming.",
                     "options": [
                       "Îlon diçe, Cotmeh tê.",
+                      "Cotmeh diçe, Îlon tê.",
                       "Dikandarê me dikanê dereng vedike. Ev çi pîşe ye?",
                       "Beran bi xwe tê malê, bi kelecan!"
                     ],
@@ -288,8 +289,8 @@
                     "prompt": "Our shopkeeper opens his shop late. What kind of trade is that?",
                     "options": [
                       "Dikandarê me dikanê dereng vedike. Ev çi pîşe ye?",
-                      "Dikandarê me dikan dereng vedike. Ev çi pîşe ye?",
-                      "Ev serpêhatiyeke mezin bû: me li ser sêlê nan çêkir!"
+                      "Dikandarê me dikanê zû vedike. Ev çi pîşe ye?",
+                      "Dikandarê me xwê difiroşe."
                     ],
                     "correctIndex": 0
                   }
@@ -305,7 +306,7 @@
                     "options": [
                       "I’m tired. My legs and my shoulders hurt.",
                       "I’m hungry. My legs and my shoulders hurt.",
-                      "I lead the govend, and then my father plays the flute."
+                      "I’m tired. My hands and my head hurt."
                     ],
                     "correctIndex": 0
                   }
@@ -338,8 +339,8 @@
                     "prompt": "Em ê îro şitilan di axê de biçînin.",
                     "options": [
                       "We’ll plant the saplings in the soil today.",
-                      "In August we’ll be on the pastures.",
-                      "This is my decision: we’ll come back in autumn."
+                      "We planted the saplings in the soil yesterday.",
+                      "We’ll pick the apples in the orchard today."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -379,13 +380,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
+                    "say": "Hêvî dê bibe hemşîre, û kurê cîranê me wergêr.",
                     "voice": "hamo",
-                    "prompt": "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
+                    "prompt": "Hêvî dê bibe hemşîre, û kurê cîranê me wergêr.",
                     "options": [
-                      "Hêvî will become a nurse, and Lorîn’s son a translator.",
-                      "Lorîn’s eldest son is sixteen, and the second one seventeen.",
-                      "Baran, Hêvî and Hevalo are three children!"
+                      "Hêvî will become a nurse, and our neighbour’s son a translator.",
+                      "Hêvî will become a teacher, and our neighbour’s son a writer.",
+                      "Our neighbour’s son will become a nurse, and Hêvî a translator."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -427,9 +428,9 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
+                    "say": "Hêvî dê bibe hemşîre, û kurê cîranê me wergêr.",
                     "voice": "hamo",
-                    "prompt": "Hêvî dê bibe ___, û kurê Lorînê wergêr.",
+                    "prompt": "Hêvî dê bibe ___, û kurê cîranê me wergêr.",
                     "options": [
                       "hemşîre",
                       "hunermend",
@@ -492,8 +493,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
-                    "reference": "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr."
+                    "prompt": "Hêvî dê bibe hemşîre, û kurê cîranê me wergêr.",
+                    "reference": "Hêvî dê bibe hemşîre, û kurê cîranê me wergêr."
                   }
                 },
                 {
@@ -535,8 +536,8 @@
                     "prompt": "Min gazî Bozo kir, lê wî nebihîst: wî tenê giya xwest!",
                     "options": [
                       "I called Bozo, but he didn’t hear: he only wanted grass!",
-                      "Bozo forgot his love: he only wanted grass!",
-                      "Those too: how Bozo ate all the grass, and how I called him!"
+                      "I called Bozo, and he came at once: he wanted grass!",
+                      "Bozo called me, but I didn’t hear: I only wanted tea!"
                     ],
                     "correctIndex": 0
                   }
@@ -575,7 +576,8 @@
                     "prompt": "Baran bought a notebook, and he wants to be a writer.",
                     "options": [
                       "Baran defterek kirî, û ew dixwaze bibe nivîskar.",
-                      "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
+                      "Baran defterek kirî, û ew dixwaze bibe hunermend.",
+                      "Hêvî dê bibe hemşîre, û kurê cîranê me wergêr.",
                       "Baran qîr kir, û ez şaşmayî bûm."
                     ],
                     "correctIndex": 0
@@ -639,8 +641,8 @@
                     "prompt": "Na. Dibistaneke mezin li Hewlêrê pêşniyarek ji Xezoyê re kir.",
                     "options": [
                       "No. A big school in Hewlêr has made Xezo an offer.",
-                      "It’s from the old shop, on the big street.",
-                      "No! Love is a secret. We’re not telling Ferhad."
+                      "No. A small school in Amed has made Xezo an offer.",
+                      "Yes. Xezo has made a big school in Hewlêr an offer."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -694,8 +696,8 @@
                     "prompt": "Ji bo Sêvanê jî rûmet e. Li qehwexaneyê karker û hosta tenê li ser vê diaxivin.",
                     "options": [
                       "It’s an honour for Sêvan too. At the tea house the workers and builders talk about nothing else.",
-                      "We made dough from flour, and the saj is on the fire.",
-                      "All right. Here you are, Mîrza: a hundred and ten, and twenty for the tea."
+                      "It’s a shame for Sêvan too. At the tea house nobody talks about it.",
+                      "It’s an honour for Sêvan too. At the school the children talk about nothing else."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -715,8 +717,9 @@
                     "prompt": "It’s an honour for Sêvan too. At the tea house the workers and builders talk about nothing else.",
                     "options": [
                       "Ji bo Sêvanê jî rûmet e. Li qehwexaneyê karker û hosta tenê li ser vê diaxivin.",
-                      "Piştî xatirxwestinê, Hevalo dilteng e: ew evîndar e, û ew li ser Zerê dihizire.",
-                      "Nerîteke kevn bû: dayika Dapîrê lorî digot, û hemû mal û hal li ser kulavan radiza."
+                      "Ji bo Sêvanê jî derfet e. Li qehwexaneyê karker û hosta tenê li ser vê diaxivin.",
+                      "Nerîteke kevn bû: dayika Dapîrê lorî digot, û hemû mal û hal li ser kulavan radiza.",
+                      "Piştî xatirxwestinê, her kes dilteng e."
                     ],
                     "correctIndex": 0
                   }
@@ -731,8 +734,8 @@
                     "prompt": "Em ê îro şitilan di axê de biçînin.",
                     "options": [
                       "We’ll plant the saplings in the soil today.",
-                      "In August we’ll be on the pastures.",
-                      "This is my decision: we’ll come back in autumn."
+                      "We planted the saplings in the soil yesterday.",
+                      "We’ll pick the apples in the orchard today."
                     ],
                     "correctIndex": 0
                   }
@@ -896,7 +899,8 @@
                     "ask": "hear",
                     "voice": "hamo",
                     "accepted": [
-                      "Bişar. Ew her şev xwê datîne."
+                      "Îlon diçe, Cotmeh tê.",
+                      "Îlon diçe û Cotmeh tê."
                     ]
                   }
                 }
@@ -929,8 +933,8 @@
                     "prompt": "Dikandarê me dikanê dereng vedike. Ev çi pîşe ye?",
                     "options": [
                       "Our shopkeeper opens his shop late. What kind of trade is that?",
-                      "What’s this in Kurdish?",
-                      "I don’t know. What’s this in Kurdish?"
+                      "Our shopkeeper opens his shop early. What a good trade!",
+                      "Our cook opens the tea house late. What kind of trade is that?"
                     ],
                     "correctIndex": 0
                   }
@@ -987,12 +991,11 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Hêvî will become a nurse, and Lorîn’s son a translator.",
+                    "prompt": "Hêvî will become a nurse, and our neighbour’s son a translator.",
                     "accepted": [
-                      "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr.",
-                      "Hêvî ê bibe hemşîre, û kurê Lorînê wergêr.",
-                      "Hêvî dê bibe hemşîre, û kurê Lorînê dê bibe wergêr.",
-                      "Hêvî dê bibe hemşîre, kurê Lorînê jî wergêr."
+                      "Hêvî dê bibe hemşîre, û kurê cîranê me wergêr.",
+                      "Hêvî dê bibe hemşîre, û kurê cîranê me dê bibe wergêr.",
+                      "Hêvî dê bibe hemşîre, kurê cîranê me jî wergêr."
                     ]
                   }
                 },
@@ -1020,7 +1023,7 @@
                     "prompt": "It’s September, and there’s big news. Drink your tea!",
                     "options": [
                       "Îlon e, û nûçeyeke mezin heye. Çaya xwe vexwe!",
-                      "Ez? Ez hunermendê çayê me, û ev rûmeteke mezin e!",
+                      "Ji bo Sêvanê jî rûmet e. Li qehwexaneyê karker û hosta tenê li ser vê diaxivin.",
                       "Nivîskar aram e û bi tena serê xwe dixebite."
                     ],
                     "correctIndex": 0
@@ -1337,7 +1340,7 @@
                     "prompt": "Dapîr is experienced. She says the work will finish on Friday.",
                     "options": [
                       "Dapîr xwedî ezmûn e. Ew dibêje ku kar roja Înê diqede.",
-                      "Cotmeh e, û me dest pê kiriye!",
+                      "Dapîr xwedî ezmûn e. Ew dibêje ku kar roja Înê dest pê dike.",
                       "Dapîr dibêje ku ew di zarokatiya xwe de serçopiya govendê bû."
                     ],
                     "correctIndex": 0
@@ -1446,8 +1449,8 @@
                     "prompt": "Me ji ardê hevîr çêkir, û sêl li ser agir e.",
                     "options": [
                       "We made dough from flour, and the saj is on the fire.",
-                      "The celebration is on the hill, and the warmth of the fire is lovely.",
-                      "Half of our photo is here, on the table."
+                      "We bought flour at the market, and the saj is on the fire.",
+                      "We made dough from flour, and the tea is on the stove."
                     ],
                     "correctIndex": 0
                   }
@@ -1540,13 +1543,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Baran li ser sindoqê nivîsî: ji bo dibistanê.",
+                    "say": "Barê Bozo giran e: du sindoq û sê selik!",
                     "voice": "hamo",
-                    "prompt": "Baran li ser sindoqê nivîsî: ji bo dibistanê.",
+                    "prompt": "Barê Bozo giran e: du sindoq û sê selik!",
                     "options": [
-                      "Baran wrote on the crate: for the school.",
-                      "Baran studies at school.",
-                      "The apples are for the children at school."
+                      "Bozo’s load is heavy: two crates and three baskets!",
+                      "Bozo’s load is light: two crates and three baskets!",
+                      "Bozo’s load is heavy: three crates and two baskets!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1562,12 +1565,12 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Selik sivik in, lê Bozo dibêje ku ew giran in!",
+                    "say": "Barê Bozo giran e: du sindoq û sê selik!",
                     "voice": "hamo",
-                    "prompt": "Selik sivik in, lê Bozo dibêje ku ew ___ in!",
+                    "prompt": "Barê Bozo ___ e: du sindoq û sê selik!",
                     "options": [
                       "giran",
-                      "bar",
+                      "sivik",
                       "vala"
                     ],
                     "correctIndex": 0,
@@ -1601,8 +1604,8 @@
                     "prompt": "Bi lez! Êvarê hevdîtina gund heye.",
                     "options": [
                       "Quickly! There’s a village get-together this evening.",
-                      "I trust you.",
-                      "I believe in Baran."
+                      "Slowly! There’s a village get-together this evening.",
+                      "Quickly! There’s a village get-together tomorrow evening."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1712,8 +1715,9 @@
                     "prompt": "Quickly! There’s a village get-together this evening.",
                     "options": [
                       "Bi lez! Êvarê hevdîtina gund heye.",
+                      "Hêdî! Êvarê hevdîtina gund heye.",
                       "Îro em sêvan berhev dikin, û ez li ser nêrdewanê me!",
-                      "Bi şev hingiv qedexe ye!"
+                      "Di dibistanê de telefon qedexe ye."
                     ],
                     "correctIndex": 0
                   }
@@ -1747,7 +1751,7 @@
                     "options": [
                       "I’ll go to Hewlêr, but I’ll come back every Newroz.",
                       "I’ll go to Hewlêr, and I’ll never come back.",
-                      "On Tuesday I’ll go to the market."
+                      "I’ll go to Amed, but I’ll come back every Newroz."
                     ],
                     "correctIndex": 0
                   }
@@ -1762,8 +1766,8 @@
                     "prompt": "Civîn dirêj bû, lê xweş bû.",
                     "options": [
                       "The meeting was long, but it was nice.",
-                      "Baran was afraid, but he was brave.",
-                      "Hevalo was sad, but not angry."
+                      "The meeting was short, but it was nice.",
+                      "The meeting was long, and it wasn’t nice."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1801,8 +1805,8 @@
                     "prompt": "Mijdar tê, lê zivistan dirêj e.",
                     "options": [
                       "November is coming, but the winter is long.",
-                      "But Hewlêr is far.",
-                      "Look, it’s eight, but in the evening!"
+                      "November is going, and the winter is short.",
+                      "October is coming, but the winter is long."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1936,8 +1940,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Û Baran?",
-                        "en": "And Baran?"
+                        "text": "Û zarok?",
+                        "en": "And the children?"
                       },
                       {
                         "speaker": 0,
@@ -2005,8 +2009,9 @@
                     "prompt": "The harvest is shared: a basket for every house.",
                     "options": [
                       "Berhem hevpar e: ji bo her malê selikek.",
-                      "Bişar hişyar e: ew dibêje ku ask her şev tê, ji bo xwê.",
-                      "Dapîrê meşk û sêl ji kon derxistin, û Nazê ard anî."
+                      "Berhem hevpar e: ji bo her malê sindoqek.",
+                      "Dapîrê meşk û sêl ji kon derxistin, û Nazê ard anî.",
+                      "Şêro hişyar e, û her şev li ber derî radize."
                     ],
                     "correctIndex": 0
                   }
@@ -2085,6 +2090,7 @@
                     "prompt": "The baskets are light, but Bozo says they’re heavy!",
                     "options": [
                       "Selik sivik in, lê Bozo dibêje ku ew giran in!",
+                      "Selik giran in, lê Bozo dibêje ku ew sivik in!",
                       "Dema ku Dapîr keçik bû, ew nozdeh havînan hat vir.",
                       "Ez werîsên konan kontrol dikim: ew bihêz in."
                     ],
@@ -2175,11 +2181,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Lorîn’s sons are sixteen and seventeen.",
+                    "prompt": "Our neighbour’s sons are sixteen and seventeen.",
                     "options": [
-                      "Kurên Lorînê şanzdeh û hivdeh salî ne.",
-                      "Kurên Lorînê şanzdehan û hivdeh salî ne.",
-                      "Hêvî dê bibe hemşîre, û kurê Lorînê wergêr."
+                      "Kurên cîranê me şanzdeh û hivdeh salî ne.",
+                      "Keçên cîranê me şanzdeh û hivdeh salî ne.",
+                      "Hêvî dê bibe hemşîre, û kurê cîranê me wergêr."
                     ],
                     "correctIndex": 0
                   }
@@ -2194,8 +2200,8 @@
                     "prompt": "Paşê Xezo rabû û got ku wê biryar daye.",
                     "options": [
                       "Then Xezo stood up and said that she had decided.",
-                      "Baran said that I climb the ladder and sing songs!",
-                      "First Ferhad came, and said that without farmers and workers there is no bread."
+                      "Then Xezo sat down and said that she hadn’t decided.",
+                      "Then Baran stood up and said that he had decided."
                     ],
                     "correctIndex": 0
                   }
@@ -2323,8 +2329,8 @@
                     "prompt": "Baran şermok e, loma ew nikare. Ango, ew naxwaze!",
                     "options": [
                       "Baran is shy, so he can’t. That is, he doesn’t want to!",
-                      "Baran is a clever boy, but he’s afraid.",
-                      "Bozo is shy; he is behind a stone."
+                      "Baran is brave, so he can. That is, he wants to!",
+                      "Baran is shy, but he can. That is, he wants to!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2371,8 +2377,8 @@
                     "prompt": "Mijara Baran Sêvan e, çimkî ew ji gundê xwe hez dike.",
                     "options": [
                       "Baran’s subject is Sêvan, because he loves his village.",
-                      "Hêvî is short, but she’s cleverer than Baran!",
-                      "No! Hevalo never eats apples. He doesn’t even like apples!"
+                      "Baran’s subject is Sêvan, so he loves his village.",
+                      "Baran’s subject is Amed, because he loves the city."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2409,7 +2415,7 @@
                     "voice": "hamo",
                     "prompt": "Ji ber vê yekê em ê îro biaxivin, û herwiha çayê vexwin.",
                     "options": [
-                      "That’s why we’ll practise talking today, and also drink tea.",
+                      "That’s why we’ll talk today, and also drink tea.",
                       "That’s why we’ll go home today, and also sleep.",
                       "That’s why we’ll pick apples today, and also sing."
                     ],
@@ -2494,8 +2500,10 @@
                     "voice": "hamo",
                     "prompt": "Ji ber vê yekê em ê îro biaxivin, û herwiha çayê vexwin.",
                     "accepted": [
-                      "That’s why we’ll practise talking today, and also drink tea.",
-                      "That is why we will practise talking today, and also drink tea."
+                      "That’s why we’ll talk today, and also drink tea.",
+                      "That is why we will talk today, and also drink tea.",
+                      "So today we’ll talk, and also drink tea.",
+                      "That’s why we’ll talk today and drink tea too."
                     ]
                   }
                 },
@@ -2508,8 +2516,9 @@
                     "prompt": "Xezo gave Baran’s class a task, and his subject is Sêvan.",
                     "options": [
                       "Xezoyê erkek da pola Baran, û mijara wî Sêvan e.",
+                      "Xezoyê erkek da pola Hêviyê, û mijara wê Sêvan e.",
                       "Ji ber vê yekê em ê îro biaxivin, û herwiha çayê vexwin.",
-                      "Beranê Bişar ji birûskê tirsiya û nexweş bû, lê niha lingên wî sax in."
+                      "Zarok ji birûskê ditirsin."
                     ],
                     "correctIndex": 0
                   }
@@ -2530,13 +2539,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
+                    "say": "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî.",
                     "voice": "hamo",
-                    "prompt": "Dapîr dibêje: Em ji deştê dihatin vê mala kevirî.",
+                    "prompt": "Malbata Dapîrê her havîn ji deştê dihat vê mala kevirî.",
                     "options": [
-                      "Dapîr says: We used to come up from the plain to this stone house.",
-                      "Dapîr says: We used to go down to the plain from this house.",
-                      "Dapîr says: We came from the town to this wooden house."
+                      "Every summer Dapîr’s family used to come from the plain to this stone house.",
+                      "Every summer Dapîr’s family used to go down to the plain from this house.",
+                      "Every winter Dapîr’s family came from the town to this wooden house."
                     ],
                     "correctIndex": 0
                   }
@@ -2559,11 +2568,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "That’s why we’ll practise talking today, and also drink tea.",
+                    "prompt": "That’s why we’ll talk today, and also drink tea.",
                     "options": [
                       "Ji ber vê yekê em ê îro biaxivin, û herwiha çayê vexwin.",
-                      "Çivîk ji zeviyê firiyan, û Bozo bi dilekî giran li me dinêre.",
-                      "Kurekî ciwan, bi kirasekî sor, pêr ji çiyê hat û îro vegeriya."
+                      "Kurekî ciwan, bi kirasekî sor, pêr ji çiyê hat û îro vegeriya.",
+                      "Çivîk ji zeviyê firiyan, û Bozo bi dilekî giran li me dinêre."
                     ],
                     "correctIndex": 0
                   }
@@ -2737,8 +2746,8 @@
                     "prompt": "Biaxive, bêyî ku tiştekî ji bîr bikî!",
                     "options": [
                       "Speak without forgetting anything!",
-                      "Don’t forget the speech!",
-                      "Don’t forget your medicine!"
+                      "Write without forgetting anything!",
+                      "Speak, and forget everything!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2915,8 +2924,8 @@
                     "prompt": "Û Hevalo bêdeng ma, û di dawiyê de wî çepik lêxistin!",
                     "options": [
                       "And Hevalo stayed quiet, and at the end he clapped!",
-                      "In the end only the ayran was left, and Hevalo wanted ayran too!",
-                      "Hevalo slept quietly: he saw Zerê in his dream."
+                      "And Baran stayed quiet, and at the end he clapped!",
+                      "And Hevalo talked a lot, and at the end he sang!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2937,8 +2946,8 @@
                     "prompt": "Aferîn, Baran!",
                     "options": [
                       "Well done, Baran!",
-                      "Well done, Hêvî!",
-                      "To town? Great!"
+                      "Thank you, Baran!",
+                      "Good night, Baran!"
                     ],
                     "correctIndex": 0
                   }
@@ -2952,7 +2961,8 @@
                     "voice": "hamo",
                     "prompt": "Baran gotara xwe li ber mirîşkan xwend. Te jî guhdarî kir?",
                     "accepted": [
-                      "Baran gave his talk in front of the hens. Did you listen too?"
+                      "Baran gave his talk in front of the hens. Did you listen too?",
+                      "Baran read his talk in front of the hens. Did you listen too?"
                     ],
                     "new": [
                       {
@@ -3040,8 +3050,8 @@
                     "prompt": "Baran hewl dide.",
                     "options": [
                       "Baran is trying.",
-                      "Look, Hevalo is giving Baran his apple!",
-                      "Baran is playing the drum."
+                      "Baran is tired.",
+                      "Baran is listening."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3233,7 +3243,7 @@
                     "options": [
                       "Baran’s subject is Sêvan, because he loves his village.",
                       "My subject is Sêvan, because I love my village.",
-                      "Hêvî is short, but she’s cleverer than Baran!"
+                      "Baran’s subject is Sêvan, so he loves his village."
                     ],
                     "correctIndex": 0
                   }
@@ -3296,8 +3306,10 @@
                     "voice": "hamo",
                     "prompt": "Ji ber vê yekê em ê îro biaxivin, û herwiha çayê vexwin.",
                     "accepted": [
-                      "That’s why we’ll practise talking today, and also drink tea.",
-                      "That is why we will practise talking today, and also drink tea."
+                      "That’s why we’ll talk today, and also drink tea.",
+                      "That is why we will talk today, and also drink tea.",
+                      "So today we’ll talk, and also drink tea.",
+                      "That’s why we’ll talk today and drink tea too."
                     ]
                   }
                 },
@@ -3371,7 +3383,7 @@
                     "options": [
                       "Bi rastî bibêje, çawa bû?",
                       "Bi rastiyên bibêje, çawa bû?",
-                      "Ew bi tevahî bi şaşî bû, çewtiyeke biçûk!"
+                      "Bi rastî bibêje, kengî bû?"
                     ],
                     "correctIndex": 0
                   }
@@ -3648,8 +3660,9 @@
                     "prompt": "Hêvî’s plan is to get a cat.",
                     "options": [
                       "Plana Hêviyê ev e ku pisîkekê bi dest bixe.",
+                      "Plana Baran ev e ku pisîkekê bi dest bixe.",
                       "Ez ê bernameya xwe pêk bînim, û ez ê serkeftî bibim!",
-                      "Hevalo tûr bi şaşî bir? Na, ev ne çewtî ye, ev evîn e!"
+                      "Hevalo tûr bi şaşî bir."
                     ],
                     "correctIndex": 0
                   }
@@ -3872,7 +3885,7 @@
                     "prompt": "Tu ji kîjan welatî yî?",
                     "accepted": [
                       "Which country are you from?",
-                      "Which country are you from?"
+                      "What country are you from?"
                     ]
                   }
                 },
@@ -3881,13 +3894,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hemşîreya me ya biçûk dibêje ku li wir zarok dê zimanê dayikê fêr bibin.",
+                    "say": "Xezo dibêje ku li Hewlêrê zarok dê zimanê dayikê fêr bibin.",
                     "voice": "hamo",
-                    "prompt": "Hemşîreya me ya biçûk dibêje ku li wir zarok dê zimanê dayikê fêr bibin.",
+                    "prompt": "Xezo dibêje ku li Hewlêrê zarok dê zimanê dayikê fêr bibin.",
                     "options": [
-                      "Our little nurse says that the children there will learn their mother tongue.",
-                      "Our little nurse says that the children there will learn to cook.",
-                      "Our little nurse says that there are no children there."
+                      "Xezo says that in Hewlêr the children will learn their mother tongue.",
+                      "Xezo says that in Hewlêr the children will learn to cook.",
+                      "Xezo says that there are no children in Hewlêr."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3957,7 +3970,8 @@
                     "prompt": "Xezo’s place in Hewlêr is small, but it’s near the school.",
                     "options": [
                       "Cihê Xezoyê li Hewlêrê biçûk e, lê nêzîkî dibistanê ye.",
-                      "Hemşîreya me ya biçûk dibêje ku li wir zarok dê zimanê dayikê fêr bibin.",
+                      "Cihê Xezoyê li Hewlêrê mezin e, lê nêzîkî dibistanê ye.",
+                      "Xezo dibêje ku li Hewlêrê zarok dê zimanê dayikê fêr bibin.",
                       "Piştî vê zivistanê xatirxwestina Xezoyê ye, loma her şev hêja ye."
                     ],
                     "correctIndex": 0
@@ -3980,9 +3994,10 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Our little nurse says that the children there will learn their mother tongue.",
+                    "prompt": "Xezo says that in Hewlêr the children will learn their mother tongue.",
                     "accepted": [
-                      "Hemşîreya me ya biçûk dibêje ku li wir zarok dê zimanê dayikê fêr bibin."
+                      "Xezo dibêje ku li Hewlêrê zarok dê zimanê dayikê fêr bibin.",
+                      "Xezo dibêje ku zarok dê li Hewlêrê zimanê dayikê fêr bibin."
                     ]
                   }
                 },
@@ -4031,9 +4046,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Our little nurse says that the children there will learn their mother tongue.",
+                    "prompt": "Xezo says that in Hewlêr the children will learn their mother tongue.",
                     "options": [
-                      "Hemşîreya me ya biçûk dibêje ku li wir zarok dê zimanê dayikê fêr bibin.",
+                      "Xezo dibêje ku li Hewlêrê zarok dê zimanê dayikê fêr bibin.",
+                      "Xezo dibêje ku li Hewlêrê zarok dê zimanê dayikê ji bîr bikin.",
                       "Dema ku ez hatim Sêvanê, min bêriya malê dikir, lê rehên min li Kobaniyê man.",
                       "Lê gund hêz û dilgermî da min."
                     ],
@@ -4058,8 +4074,8 @@
                     "prompt": "Berf hat, û şevbêrka me ya yekem dest pê dike.",
                     "options": [
                       "The snow has come, and our first winter evening of tales is beginning.",
-                      "It’s October, and we’ve begun!",
-                      "We’ve begun, and I have an idea."
+                      "The rain has come, and our first winter evening of tales is beginning.",
+                      "The snow has come, and our last winter evening of tales is ending."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -4080,8 +4096,8 @@
                     "prompt": "Erê, û niha ez jî hewl didim ku bibim çîrokbêjekî baş.",
                     "options": [
                       "Yes, and now I’m trying to become a good storyteller too.",
-                      "All right. Now I’m laughing too! Mîrza, I’ll pay.",
-                      "I want you to come too and hold the handkerchief."
+                      "Yes, and now I’m trying to become a good singer too.",
+                      "No, and now I don’t want to be a storyteller."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -4101,9 +4117,9 @@
                     "voice": "hamo",
                     "prompt": "Dengbêjek di nav geliyan de geriya. Dibe ku ew bê Sêvanê jî.",
                     "options": [
-                      "A dengbêj has been wandering through the valleys. Maybe he’ll come to Sêvan too.",
-                      "Then he wandered among the trees.",
-                      "Maybe I’ll be well in June!"
+                      "A dengbêj travelled through the valleys. Maybe he’ll come to Sêvan too.",
+                      "A dengbêj came to Sêvan. Maybe he’ll go through the valleys too.",
+                      "A storyteller travelled through the valleys. He won’t come to Sêvan."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -4162,8 +4178,9 @@
                     "voice": "hamo",
                     "prompt": "Dengbêjek di nav geliyan de geriya. Dibe ku ew bê Sêvanê jî.",
                     "accepted": [
-                      "A dengbêj has been wandering through the valleys. Maybe he’ll come to Sêvan too.",
-                      "A dengbêj has been wandering through the valleys. Maybe he will come to Sêvan too."
+                      "A dengbêj travelled through the valleys. Maybe he’ll come to Sêvan too.",
+                      "A dengbêj travelled through the valleys. Maybe he will come to Sêvan too.",
+                      "A dengbêj went round the valleys. Maybe he’ll come to Sêvan too."
                     ]
                   }
                 },
@@ -4239,13 +4256,13 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez ê çîrokeke bavê xwe vebêjim. Herwiha dew û nan jî hene!",
-                        "en": "I’ll tell one of my father’s tales. There’s ayran and bread too!"
+                        "text": "Ez ê çîrokeke Dapîrê vebêjim. Herwiha dew û nan jî hene!",
+                        "en": "I’ll tell one of Dapîr’s tales. There’s ayran and bread too!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Bavê te çîrokbêj e?",
-                        "en": "Is your father a storyteller?"
+                        "text": "Dapîr çîrokbêj e?",
+                        "en": "Is Dapîr a storyteller?"
                       },
                       {
                         "speaker": 0,
@@ -4254,13 +4271,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Û nûçeya Mîrza?",
-                        "en": "And Mîrza’s news?"
+                        "text": "Nûçeyek heye?",
+                        "en": "Is there any news?"
                       },
                       {
                         "speaker": 0,
                         "text": "Dengbêjek di nav geliyan de geriya. Dibe ku ew bê Sêvanê jî.",
-                        "en": "A dengbêj has been wandering through the valleys. Maybe he’ll come to Sêvan too."
+                        "en": "A dengbêj travelled through the valleys. Maybe he’ll come to Sêvan too."
                       },
                       {
                         "speaker": 1,
@@ -4268,7 +4285,7 @@
                         "en": "I love tales and songs!"
                       }
                     ],
-                    "prompt": "Bavê Hamo çi ye?",
+                    "prompt": "Dapîr çi ye?",
                     "options": [
                       "Çîrokbêj.",
                       "Dengbêj.",
@@ -4283,11 +4300,12 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "A dengbêj has been wandering through the valleys. Maybe he’ll come to Sêvan too.",
+                    "prompt": "A dengbêj travelled through the valleys. Maybe he’ll come to Sêvan too.",
                     "options": [
                       "Dengbêjek di nav geliyan de geriya. Dibe ku ew bê Sêvanê jî.",
-                      "Xezoyê li ser pêşniyarê ji dibistana Hewlêrê re nivîsiye ku ew ê di biharê de bê.",
-                      "Me masî di golê de dîtin, û Bişar dibêje ku wî hivdeh masî girtin!"
+                      "Çîrokbêjek di nav geliyan de geriya. Dibe ku ew bê Sêvanê jî.",
+                      "Me masî di golê de dîtin, û Bişar dibêje ku wî hivdeh masî girtin!",
+                      "Xezoyê li ser pêşniyarê ji dibistana Hewlêrê re nivîsiye ku ew ê di biharê de bê."
                     ],
                     "correctIndex": 0
                   }
@@ -4335,8 +4353,9 @@
                     "prompt": "It’s snowing, and I’m lighting the stove.",
                     "options": [
                       "Berf dibare, û ez sobeyê vêdixim.",
+                      "Berf dibare, û ez derî vedikim.",
                       "Ez? Ez hunermendê çayê me, û ev rûmeteke mezin e!",
-                      "Tiştên girîng: gol, Zerê, keşkê Dapîrê, û şopên du askan."
+                      "Tiştên girîng: nan, keşk û çay."
                     ],
                     "correctIndex": 0
                   }
@@ -4374,8 +4393,9 @@
                     "voice": "hamo",
                     "prompt": "Dengbêjek di nav geliyan de geriya. Dibe ku ew bê Sêvanê jî.",
                     "accepted": [
-                      "A dengbêj has been wandering through the valleys. Maybe he’ll come to Sêvan too.",
-                      "A dengbêj has been wandering through the valleys. Maybe he will come to Sêvan too."
+                      "A dengbêj travelled through the valleys. Maybe he’ll come to Sêvan too.",
+                      "A dengbêj travelled through the valleys. Maybe he will come to Sêvan too.",
+                      "A dengbêj went round the valleys. Maybe he’ll come to Sêvan too."
                     ]
                   }
                 },
@@ -4431,8 +4451,9 @@
                     "prompt": "Baran bought a notebook, and he wants to be a writer.",
                     "options": [
                       "Baran defterek kirî, û ew dixwaze bibe nivîskar.",
-                      "Havîneke bêhempa bû, tije xweşî: bilûr, stran û gol!",
-                      "Baran gotar tîp bi tîp nivîsî, wekî ku me kir, û ew bêhnfireh bû."
+                      "Baran defterek kirî, û ew dixwaze bibe wergêr.",
+                      "Baran gotar tîp bi tîp nivîsî, wekî ku me kir, û ew bêhnfireh bû.",
+                      "Havîneke bêhempa bû, tije xweşî: bilûr, stran û gol!"
                     ],
                     "correctIndex": 0
                   }
@@ -4462,6 +4483,7 @@
                     "prompt": "Which country are you from?",
                     "options": [
                       "Tu ji kîjan welatî yî?",
+                      "Tu li kîjan welatî yî?",
                       "Me li dora sobeyê çay vexwar.",
                       "Doktor Azad dibêje ku hemşîre gelek girîng in."
                     ],
@@ -4549,6 +4571,7 @@
                     "prompt": "I’ll carry out my plan, and I’ll be successful!",
                     "options": [
                       "Ez ê bernameya xwe pêk bînim, û ez ê serkeftî bibim!",
+                      "Em ê bernameya xwe pêk bînin, û em ê serkeftî bibin!",
                       "Li mala xwe ya kevirî, Dapîrê ji bo mêvanan xwarin pijand, û Bişar pez dot.",
                       "Xezo plana xwe pêk tîne. Armanca wê ev e ku zarok zimanê dayikê fêr bibin."
                     ],

@@ -67,6 +67,24 @@ export { LEAN_DEGREES, eyeShift, gazeTargets, leanToward, lookAcross, standToget
 export { BLINK_MS, NOD_DEGREES, eyesAt, speakingFrame, voiceTimeline, type SpeakingFrame, type SpeakingInput } from './speaking.js';
 export { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt, type WindowArt, type WindowShare } from './window.js';
 export { PEEK_PLACE, PEEK_POP, PEEK_VIEW, peekArt, type PeekArt } from './peek.js';
+export { CHASE, CHASE_APPLE, CHASE_VIEW, chaseApple, chaseArt, chaseFrame, chaseGround, chaseWing } from './chase.js';
+export {
+  PEEK_LEAN,
+  PEEK_TURN,
+  TURN_SPRING,
+  leanFor,
+  stepLean,
+  swingAngle,
+  tiltFromGravity,
+  tiltFromOrientation,
+  turnFor,
+  turnForMotion,
+  turnForTilt,
+  type LeanState,
+  type Spring,
+} from './peek-lean.js';
+export { HEAD_ROUND, PART_GROUPS, headParts, partTransform, partTransforms, type HeadParts, type PartGroup, type PartTurn } from './head-turn.js';
+export { HEAD_SOLID, roundLayer, roundMap, roundPoint, turnStep, turnedHeadMap, type RoundLayer } from './head-round.js';
 export {
   COMPANION_DOZE_MS,
   COMPANION_EDGE,

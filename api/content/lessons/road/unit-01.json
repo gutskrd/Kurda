@@ -942,7 +942,6 @@
                     "say": "Tu jî sêvekê dixwî?",
                     "voice": "hamo",
                     "prompt": "Tu jî sêvekê dixwî?",
-                    "cue": "answer for Hevalo, who loves apples",
                     "options": [
                       "Erê, spas!",
                       "Ez Hamo me.",
@@ -1741,7 +1740,7 @@
                       {
                         "speaker": 0,
                         "text": "Bi xêr hatî!",
-                        "en": "Welcome! (he has run back to the blue gate, and opens it again with a bow)"
+                        "en": "Welcome! (he opens the gate with a bow)"
                       },
                       {
                         "speaker": 1,
@@ -1766,7 +1765,7 @@
                       {
                         "speaker": 1,
                         "text": "Hevalo nan dixwe!",
-                        "en": "Hevalo is eating the bread! (he blew on it first, very helpfully)"
+                        "en": "Hevalo is eating the bread!"
                       },
                       {
                         "speaker": 0,
@@ -2225,7 +2224,8 @@
                       "te",
                       "çi"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "My name is Hamo."
                   }
                 },
                 {
@@ -3170,7 +3170,8 @@
                       "min",
                       "kî"
                     ],
-                    "correctIndex": 0
+                    "correctIndex": 0,
+                    "cue": "What’s your name?"
                   }
                 }
               ]
@@ -3715,11 +3716,11 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "reply",
-                    "say": "Ez? Ez nizanim!",
+                    "say": "Ez birçî me!",
                     "voice": "hevalo",
-                    "prompt": "Ez? Ez nizanim!",
+                    "prompt": "Ez birçî me!",
                     "options": [
-                      "Hevalo, were!",
+                      "Were! Nan bixwe.",
                       "Gelek spas!",
                       "Av sar e."
                     ],
@@ -4081,7 +4082,7 @@
                     "voice": "hamo",
                     "prompt": "Sêv tune!",
                     "options": [
-                      "Nan bixwe, Hevalo!",
+                      "Nan heye?",
                       "Gelek spas!",
                       "Roj baş!"
                     ],

@@ -3,8 +3,8 @@
  * road (masculine oblique, past-transitive agent, one spelling per word), and a later line in the old style would undo
  * it. The checks read every string in the plan and unit files, naming where a line breaks a rule.
  *
- * Also holds the plan to the owner's wish for Hamo's family: they are marked as family so the book can leave them off
- * its people pages, and the chapter summaries the book prints do not name them.
+ * Also holds the plan to the owner's wish for Hamo's family: none of them is named anywhere, so no name for them is in
+ * the lexicon, and any line naming one fails the road check as an unknown word.
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
@@ -62,17 +62,8 @@ describe('the road’s Kurdish usage', () => {
 });
 
 describe('Hamo’s family in the plan', () => {
-  const family = plan.names.filter((n) => /^Hamo’s (father|mother|(\p{L}+ )?(brother|sister))\b/u.test(n.en));
-
-  it('marks each of them as family, so the people pages can leave them out', () => {
-    expect(family.map((n) => n.name).sort()).toEqual(['Cîhan', 'Edûl', 'Evdila', 'Ibrahîm', 'Lorîn']);
-    for (const n of family) expect(n.kind, n.name).toBe('family');
-  });
-
-  it('names none of them in the summaries the book prints on the chapter 2 and chapter 12 openers', () => {
-    for (const number of [2, 12]) {
-      const story = plan.units.find((u) => u.number === number)!.story;
-      for (const n of family) expect(story, `chapter ${number}: ${n.name}`).not.toContain(n.name);
-    }
+  it('names none of them: the road calls them only by who they are to him, and the lexicon knows no name for them', () => {
+    expect(plan.names.filter((n) => n.kind === 'family')).toEqual([]);
+    expect(plan.names.filter((n) => /^Hamo’s (father|mother|(\p{L}+ )?(brother|sister))\b/u.test(n.en))).toEqual([]);
   });
 });

@@ -813,8 +813,8 @@ describe('a lesson', () => {
     const frame = waiting.closest('.lesson')!;
     expect(frame.querySelector('.lesson-progress')).not.toBeNull();
     expect(frame.querySelector('.lesson-bar')).not.toBeNull();
-    // No spinner on an empty page.
-    expect(document.querySelector('.spinner')).toBeNull();
+    // No page-loading picture over the lesson's own frame.
+    expect(document.querySelector('.chase')).toBeNull();
     // Leaving does not wait for the lesson, and goes where the lesson's own ✕ will.
     expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn/course/c1');
 
