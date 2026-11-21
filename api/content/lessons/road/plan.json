@@ -2918,7 +2918,7 @@
               "titleKu": "Ez ê bibim…",
               "titleEn": "When I grow up…",
               "focus": "build",
-              "beat": "The children play “what will you be?”. Baran will be a writer of adventures; Hêvî a nurse for the hens; Lorîn’s eldest, on the phone, a translator. Hamo says he would have been an artist, which is the same as a writer with more tea. Meanwhile someone must plant the new saplings in the soil, and he looks at you.",
+              "beat": "The children play “what will you be?”. Baran will be a writer of adventures; Hêvî a nurse for the hens; the neighbour’s eldest son, a translator. Hamo says he would have been an artist, which is the same as a writer with more tea. Meanwhile someone must plant the new saplings in the soil, and he looks at you.",
               "voice": "hamo",
               "new": [
                 {"ku": "nivîskar", "en": "writer", "pos": "noun", "gender": "mf", "forms": ["nivîskar", "nivîskarên", "nivîskaran", "nivîskarek", "nivîskarê", "nivîskarekî", "nivîskarî", "nivîskara", "nivîskareke"]},
@@ -3132,7 +3132,7 @@
               "titleKu": "Dema ku ez vegerim",
               "titleEn": "When I go back",
               "focus": "build",
-              "beat": "The children tell Hamo all about Xezo’s plans for Hewlêr: a small room near the school, a phone call home every Friday, and her mother tongue taught to children every day. Then Hamo asks about you: your country, your place in the world, who will hear your Kurdish first. Does a person forget their roots far away? His father told him, the day he left Kobanî: go, but don’t forget your roots. In his first winter here he was homesick, and the village gave him strength and warmth.",
+              "beat": "The children tell Hamo all about Xezo’s plans for Hewlêr: a small room near the school, a phone call home every Friday, and her mother tongue taught to children every day. Then Hamo asks about you: your country, your place in the world, who will hear your Kurdish first. Does a person forget their roots far away? Not Hamo, whose roots are still in Kobanî: in his first winter here he was homesick, and the village gave him strength and warmth.",
               "voice": "hamo",
               "new": [
                 {"ku": "cih", "en": "place, spot", "pos": "noun", "gender": "m", "forms": ["cih", "cihên", "cihan", "cihek", "cihê", "cihekî", "cihî"]},
@@ -3150,7 +3150,7 @@
               "titleKu": "Şevbêrk",
               "titleEn": "Winter evenings",
               "focus": "talk",
-              "beat": "The first snow. Hamo lights the stove and makes a plan of his own: a winter evening of tales every night at the blue gate, one of the tales his father told him each time. He is a storyteller now, he says, as his father was. And there is news from Mîrza: a dengbêj is travelling the villages this winter. Hamo asks you which you like better, a tale or a song.",
+              "beat": "The first snow. Hamo lights the stove and makes a plan of his own: a winter evening of tales every night at the blue gate, one of Dapîr’s old tales each time. Dapîr is the village’s storyteller, he says, and he is trying to become one too. And there is news from Mîrza: a dengbêj is travelling the villages this winter. Hamo asks you which you like better, a tale or a song.",
               "voice": "hamo",
               "new": [
                 {"ku": "sobe", "en": "stove", "pos": "noun", "gender": "f", "forms": ["sobe", "sobeyên", "sobeyan", "sobeyek", "sobeya", "sobeyê", "sobeyeke"]},
@@ -3178,7 +3178,7 @@
       "cefr": "B1",
       "titleKu": "Çîrok û stran",
       "titleEn": "Stories and songs",
-      "story": "The last winter by the stove. Each night Hamo tells one of his father’s tales (Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear) while Dapîr answers every tale with a proverb and the children act them out; Hevalo makes a terrible wolf, far too friendly. One snowy night travellers knock: an old dengbêj and his grandson, who sing for their supper, and their kilam about a flute player from Kobanî is missing its last verse, until Hamo’s father sings it down the telephone line. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it Ferhad’s son’s wedding, which is also the village’s farewell to its teacher: Xezo thanks everyone for every tale and every glass of tea, and at dawn the bus takes her from the blue gate to Hewlêr. Then the village turns to you, at the blue gate where your road began: “Rêya te vekirî be!”",
+      "story": "The last winter by the stove. Each night Hamo tells one of the old tales (Şengê and Pengê and the wolf at the door, the fox who shared a field with the bear) while Dapîr answers every tale with a proverb and the children act them out; Hevalo makes a terrible wolf, far too friendly. One snowy night travellers knock: an old dengbêj and his grandson, who sing for their supper, and their kilam about a shepherd who played the flute by a lake is missing its last verse, which nobody remembers. Conditions (heke tu derî vekî …) and reported speech (wî got ku …) join everything the road has taught. Spring comes, and with it Ferhad’s son’s wedding, which is also the village’s farewell to its teacher: Xezo thanks everyone for every tale and every glass of tea, and at dawn the bus takes her from the blue gate to Hewlêr. Then the village turns to you, at the blue gate where your road began: “Rêya te vekirî be!”",
       "recorder": "hamo",
       "skills": [
         {
@@ -3279,7 +3279,7 @@
               "titleKu": "Wî got ku…",
               "titleEn": "He said that…",
               "focus": "build",
-              "beat": "Over dinner everyone talks at once, and Hamo passes it all on: the old man said that the pass will be closed until February, the grandson asked whether there were apples, Dapîr asked whether they knew her cousin, Baran complains that nobody listens to him, and I wonder, says Hamo, who will let Bişar know that his old friend is here? By January, he jokes, he will have said everything twice.",
+              "beat": "Over dinner everyone talks at once, and Hamo passes it all on: the old man said that the pass will be closed until February, the grandson asked whether there were apples, Dapîr asked whether they knew her cousin, Baran complains that nobody listens to him. Then another knock: who can that be, Hamo wonders, in this snow? If the pass opens in January, he promises, he will let everyone know.",
               "voice": "hamo",
               "new": [
                 {"ku": "ka", "en": "whether, if (in a question)", "pos": "conj", "forms": ["ka"]},
@@ -3296,7 +3296,7 @@
               "titleKu": "Dengbêj",
               "titleEn": "The dengbêj",
               "focus": "talk",
-              "beat": "After dinner the old man sings: kilams of the old days in a voice that fills the house, each tune rising and falling like the mountain road. He has the finest voice Hamo has ever heard, and his last kilam is about a young flute player from Kobanî who played by a lake on the pastures: Hamo’s father. But its last verse is missing; only the flute player himself knew it. Hamo asks you whether he should phone Kobanî.",
+              "beat": "After dinner the old man sings: kilams of the old days in a voice that fills the house, each tune rising and falling like the mountain road. He has the finest voice Hamo has ever heard, and his last kilam is about a shepherd who played the flute by a lake on the pastures. But its last verse is lost, and nobody knows it. Hamo wonders aloud who could still know it, and you think of Dapîr.",
               "voice": "hamo",
               "new": [
                 {"ku": "kilam", "en": "kilam, a dengbêj’s sung tale", "pos": "noun", "gender": "f", "forms": ["kilam", "kilamên", "kilaman", "kilamek", "kilama", "kilamê", "kilameke"]},
@@ -3311,7 +3311,7 @@
               "titleKu": "Malika winda",
               "titleEn": "The lost verse",
               "focus": "review",
-              "beat": "Hamo phones his father: no answer. Ibrahîm, as always, has left his phone at home. When the snow stops, the guests go on their way, leaving the song unfinished, and the whole village hums it for days.",
+              "beat": "In the morning Hamo phones the town to ask whether the pass is open: no answer. When the snow stops, the guests go on their way, leaving the song unfinished, and the whole village hums it for days.",
               "voice": "hamo",
               "new": []
             }
@@ -3379,7 +3379,7 @@
               "titleKu": "Ji Kobaniyê",
               "titleEn": "From Kobanî",
               "focus": "review",
-              "beat": "In the middle of the laughter Hamo’s phone rings: Kobanî. It is his father, calling back. He laughs (a kilam about him?) and then sings the last verse down the line, and Hamo repeats it line by line for everyone: it is for those who come after. Hamo’s voice shakes; Dapîr sings along.",
+              "beat": "In the middle of the laughter Hamo’s phone rings: a call from Kobanî, the town where he grew up. Hamo tells the caller about the proverb duel, everyone shouts a proverb down the line, and Dapîr, as always, has the last word.",
               "voice": "hamo",
               "new": []
             }
@@ -3398,7 +3398,7 @@
               "titleKu": "Dawet û govend",
               "titleEn": "Wedding and govend",
               "focus": "meet",
-              "beat": "Spring again, and the square is full for Ferhad’s son’s wedding: the bride on a white horse, the groom’s family singing, the big drum and the zurna, the women’s joyful cries. It is also the village’s farewell for its teacher, who leaves for Hewlêr at the end of the week. The govend winds round the square, Hamo at its head with his father’s handkerchief, and even Bozo, it is said, dances.",
+              "beat": "Spring again, and the square is full for Ferhad’s son’s wedding: the bride on a white horse, the groom’s family singing, the big drum and the zurna, the women’s joyful cries. It is also the village’s farewell for its teacher, who leaves for Hewlêr at the end of the week. The govend winds round the square, Hamo at its head, waving his handkerchief, and even Bozo, it is said, dances.",
               "voice": "hamo",
               "new": [
                 {"ku": "dawet", "en": "wedding", "pos": "noun", "gender": "f", "forms": ["dawet", "dawetên", "dawetan", "dawetek", "daweta", "dawetê", "daweteke"]},
