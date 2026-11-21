@@ -599,7 +599,7 @@
       "cefr": "A1",
       "titleKu": "Mal û gund",
       "titleEn": "House and village",
-      "story": "Hamo shows you his house, all the way up to the flat roof where everyone sleeps on summer nights, and the clay tenûr in the yard where Dapîr bakes bread. In an old box Baran finds a child’s map of Sêvan, drawn long ago by Hamo and his sister Lorîn when they spent their summers here with their aunt, with a big X on it. With the map you follow the colours of the village (the blue gate, the red apples, the green leaves, Dapîr’s white goat) and learn where things are: on, under, in, in front of and behind, while Hamo swears he knows nothing and Hevalo hides apples in every one of those places. A game of “touch your nose” goes wrong when Hevalo joins in. Under the walnut tree by the spring the treasure is found: a tin of marbles and half of an old photo of young Hamo and Lorîn. The other half is in Kobanî. Then Hamo walks you through the village: the school, where Xezo, the young teacher from Amed, teaches the children their letters, the shop, the spring and the hills. Tomorrow is market day in the town.",
+      "story": "Hamo shows you his house, all the way up to the flat roof where everyone sleeps on summer nights, and the clay tenûr in the yard where Dapîr bakes bread. You learn the colours of the village (the blue gate, the red apples, the green leaves, Dapîr’s white goat) and where things are: on, under, in, in front of and behind, while Hevalo hides apples in every one of those places. A game of “touch your nose” goes wrong when Hevalo joins in, and an apple shared under the walnut tree by the spring loses its other half to a certain deer. Then Hamo walks you through the village: the school, where Xezo, the young teacher from Amed, teaches the children their letters, the shop, the spring and the hills. Tomorrow is market day in the town.",
       "recorder": "hamo",
       "skills": [
         {
@@ -648,7 +648,7 @@
               "titleKu": "Li ser banî",
               "titleEn": "Up on the roof",
               "focus": "talk",
-              "beat": "Up the ladder to the flat roof, where the whole family sleeps on summer nights under the stars; down in the yard, the round clay tenûr where Dapîr bakes bread. “Rûne!” says Hamo, and you sit on the roof with tea. Then Baran shouts from the guest room: in an old box he has found a map of the village, drawn in a child’s hand, with a big X on it.",
+              "beat": "Up the ladder to the flat roof, where everyone sleeps on summer nights under the stars; down in the yard, the round clay tenûr where Dapîr bakes bread. “Rûne!” says Hamo, and you sit on the roof with tea and warm tenûr bread. On the table lies a map of Sêvan, and Hevalo sniffs it all over, in case an apple is drawn on it.",
               "voice": "hamo",
               "new": [
                 {"ku": "ban", "en": "roof", "pos": "noun", "gender": "m", "forms": ["ban", "banên", "banan", "banek", "banê", "banekî", "banî"]},
@@ -663,7 +663,7 @@
               "titleKu": "Mala Hamo",
               "titleEn": "Hamo’s house",
               "focus": "review",
-              "beat": "With the map in his hand, Hamo gives the house tour again, faster, to check that the X is not inside: not in this room, not in that one, not on the roof, not in the tenûr. The X is outside, says Baran. Hamo strokes his moustache and says he has never seen this map before in his life.",
+              "beat": "Hamo gives you the house tour once more, faster, and you name everything as you go: this room, that window, the beds, the roof, the yard and the tenûr. Then he finds his own house on the map of Sêvan, and Hevalo checks every chair again, in case another apple has turned up.",
               "voice": "hamo",
               "new": []
             }
@@ -682,7 +682,7 @@
               "titleKu": "Sor û şîn",
               "titleEn": "Red and blue",
               "focus": "meet",
-              "beat": "Following the map, you start in Hamo’s own orchard: red apples on every tree, and the blue gate. Hamo declares red the best colour in the world, because of the apples, and blue the second best, because of the gate. Hevalo votes for red by eating one.",
+              "beat": "You start in Hamo’s own orchard: red apples on every tree, and the blue gate. Hamo declares red the best colour in the world, because of the apples, and blue the second best, because of the gate. Hevalo votes for red by eating one.",
               "voice": "hamo",
               "new": [
                 {"ku": "reng", "en": "colour", "pos": "noun", "gender": "m", "forms": ["reng", "rengên", "rengan", "rengek", "rengê", "rengekî", "rengî"]},
@@ -698,7 +698,7 @@
               "titleKu": "Kesk û zer",
               "titleEn": "Green and yellow",
               "focus": "build",
-              "beat": "The map’s next clue: a yellow flower by an old door. Sêvan has a hundred flowers and a hundred old doors. Hamo shows you the new door he made last year, which already looks older than the old ones. Hevalo eats a yellow flower, to be sure.",
+              "beat": "A walk through the lanes of Sêvan, which has a hundred yellow flowers and a hundred old doors. Hamo shows you the new door he made last year, which already looks older than the old ones. Hevalo eats three yellow flowers, to see whether yellow tastes like apples.",
               "voice": "hamo",
               "new": [
                 {"ku": "kesk", "en": "green", "pos": "adj", "forms": ["kesk"]},
@@ -714,7 +714,7 @@
               "titleKu": "Bizina spî",
               "titleEn": "The white goat",
               "focus": "talk",
-              "beat": "“Binêre!” Hamo points: Dapîr’s white goat with her long white beard, and Hamo’s own black moustache, the two finest in the village, he says, and the goat does not disagree. The next clue hangs on the goat’s collar, and the goat does not want to give it up.",
+              "beat": "“Binêre!” Hamo points: Dapîr’s white goat with her long white beard, and Hamo’s own black moustache, the two finest in the village, he says, and the goat does not disagree. Then she starts on Dapîr’s flowers, and Hamo saves them with a piece of bread.",
               "voice": "hamo",
               "new": [
                 {"ku": "reş", "en": "black", "pos": "adj", "forms": ["reş"]},
@@ -729,7 +729,7 @@
               "titleKu": "Zer, sor, şîn!",
               "titleEn": "Yellow, red, blue!",
               "focus": "review",
-              "beat": "The clues lead from the blue gate past the red apples and the green leaves to the white goat, and the goat leads to the old walnut tree by the spring. But who drew a fresh yellow X on the window this morning? Hêvî giggles behind her hands, with yellow on her fingers.",
+              "beat": "You name the colours of Sêvan with Hamo: the blue gate, the red apples, the green leaves, the white goat and the black dog. But who put fresh yellow paint on the window this morning? Hêvî giggles behind her hands, with yellow on her fingers.",
               "voice": "hamo",
               "new": []
             }
@@ -748,7 +748,7 @@
               "titleKu": "Li ser û li bin",
               "titleEn": "On and under",
               "focus": "meet",
-              "beat": "The goat’s clue says: under the walnut tree. Meanwhile Hamo cannot find his cap anywhere, not on the table, not under the bed, until Hêvî points: it is on his head, and has been all morning. “Ser!” she says, patting her own head, and the game of the day begins.",
+              "beat": "Hamo cannot find his cap anywhere, not on the table, not under the bed, until Hêvî points: it is on his head, and has been all morning. “Ser!” she says, patting her own head, and the game of the day begins.",
               "voice": "hamo",
               "new": [
                 {"ku": "li bin", "en": "under", "pos": "prep", "forms": ["li", "bin"]},
@@ -763,7 +763,7 @@
               "titleKu": "Çav û guh",
               "titleEn": "Eyes and ears",
               "focus": "build",
-              "beat": "Hêvî’s game: Hamo calls out a part of the body and everyone touches it. Eyes! Ears! Head! Hevalo touches everything with his nose, mostly other people’s ears. Then lunch, “Destên xwe bişo!”, and the next clue turns up in the tenûr, a little toasted, right in front of everyone.",
+              "beat": "Hêvî’s game: Hamo calls out a part of the body and everyone touches it. Eyes! Ears! Head! Hevalo touches everything with his nose, mostly other people’s ears. Then lunch, “Destên xwe bişo!”, and the bread comes out of the tenûr, hot, right in front of everyone.",
               "voice": "hamo",
               "new": [
                 {"ku": "di … de", "en": "in, inside", "pos": "prep", "forms": ["di", "de"]},
@@ -779,7 +779,7 @@
               "titleKu": "Li pişt darê",
               "titleEn": "Behind the tree",
               "focus": "talk",
-              "beat": "At the walnut tree by the spring you search behind the trunk and under the stones, and Hevalo’s nose finds it first: a rusty tin. Inside are marbles and half of an old photo: little Hamo, no moustache, and his sister Lorîn with her mouth full of apple. Where is the other half? In Kobanî, says Hamo softly, at Lorîn’s.",
+              "beat": "Under the walnut tree by the spring Hamo shares an apple with you: half for you, the other half for him. But where is the other half? Behind the tree there is a nose, and the other half is in Hevalo’s mouth. Never mind, says Hamo: Grandma Şemsê has plenty of apples.",
               "voice": "hamo",
               "new": [
                 {"ku": "li pişt", "en": "behind", "pos": "prep", "forms": ["li", "pişt"]},
@@ -793,10 +793,10 @@
             {
               "key": "u03s3l4",
               "position": 4,
-              "titleKu": "Nîvê wêneyekî",
-              "titleEn": "Half a photo",
+              "titleKu": "Li ku ne?",
+              "titleEn": "Where are they?",
               "focus": "review",
-              "beat": "Everyone gathers round the tin: marbles in every colour and half a photo. Hamo tells the story: summers with his aunt, he and Lorîn under this walnut tree, burying treasure for the next summer, and then forgetting it for forty years. Hevalo sniffs every marble, in case one of them is an apple.",
+              "beat": "Lunch is ready, but where is everyone? Şêro is under the table, the cat is out in the yard, and Hevalo’s nose is behind the walnut tree again. You find them all with Hamo, wash your hands and sit down to eat.",
               "voice": "hamo",
               "new": []
             }
@@ -875,7 +875,7 @@
       "cefr": "A1",
       "titleKu": "Bazar",
       "titleEn": "The market",
-      "story": "Market day in the town below the village. Hamo, Hevalo and you go down the road with Bozo, who carries the empty baskets and stops at every flower. Now the verbs come alive in the present tense: going, coming, seeing, saying, knowing, wanting, eating. At the market Hamo knows every seller, and Mîrza the fruit seller best of all: they haggle like the old friends they are, and Mîrza always wins. Hamo buys what is on his list and several things that are not, takes far too much sugar in Mîrza’s tea, and gets his numbers in a muddle once the prices pass a hundred. Then Mîrza’s apple basket is found empty, every witness says “Ez nizanim”, and a certain deer has a very round belly. On the way home Hamo’s phone rings: it is his sister Lorîn in Kobanî. Come for the weekend, all of you.",
+      "story": "Market day in the town below the village. Hamo, Hevalo and you go down the road with Bozo, who carries the empty baskets and stops at every flower. Now the verbs come alive in the present tense: going, coming, seeing, saying, knowing, wanting, eating. At the market Hamo knows every seller, and Mîrza the fruit seller best of all: they haggle like the old friends they are, and Mîrza always wins. Hamo buys what is on his list and several things that are not, takes far too much sugar in Mîrza’s tea, and gets his numbers in a muddle once the prices pass a hundred. Then an apple basket is found empty, everyone says “Ez nizanim”, and a certain deer has a very round belly. By sunset, with Bozo groaning under the bags on the road home, you can say what you want and what you don’t, and what it all costs.",
       "recorder": "hamo",
       "skills": [
         {
@@ -1061,7 +1061,7 @@
               "titleKu": "Sed û hezar",
               "titleEn": "A hundred and a thousand",
               "focus": "talk",
-              "beat": "Hamo adds up everything he has bought and gets a thousand. You add it up and get a hundred and ten. Mîrza adds it up and gets whatever is in Hamo’s pocket. You help Hamo give the right money, and he gives Mîrza a little extra for the tea, and the sugar.",
+              "beat": "Hamo reads out the prices: grapes twenty, onions fifty, apples forty, a hundred and ten in all, and a thousand for a carpet, which he finds very expensive. Then you both want to pay, and Hamo wins, because you are his guest. He gives Mîrza a little extra for the tea, and the sugar.",
               "voice": "hamo",
               "new": [
                 {"ku": "sed", "en": "a hundred", "pos": "num", "forms": ["sed"]},
@@ -1076,7 +1076,7 @@
               "titleKu": "Pere tune!",
               "titleEn": "No money left!",
               "focus": "review",
-              "beat": "Hamo adds it all up once more: the potatoes, the fish, the honey, the basket of apples, Mîrza’s tea. He has twenty left, exactly the price of a glass of tea, and he spends it on tea. Then Mîrza looks at his apple basket and goes pale.",
+              "beat": "Hamo adds it all up once more: the potatoes, the fish, the honey, the basket of apples, Mîrza’s tea. He has twenty left, exactly the price of a glass of tea, and he spends it on tea, because Mîrza’s tea is good, and cheap.",
               "voice": "hamo",
               "new": []
             }
@@ -1095,7 +1095,7 @@
               "titleKu": "Kes nizane!",
               "titleEn": "Nobody knows!",
               "focus": "meet",
-              "beat": "Mîrza’s apple basket is empty. Who ate the apples? Nobody knows. Bozo looks away. Hevalo shakes his head very, very fast, and Hamo puts it into words for him: “Ez nizanim! Ez hîç nizanim!” “Çima?” asks Mîrza. Nobody knows that either.",
+              "beat": "An apple basket at the market is empty. Who ate the apples? Nobody knows. Bozo looks away. Hevalo shakes his head very, very fast: “Ez nizanim! Ez hîç nizanim!” “Çima?” asks Mîrza. Nobody knows that either.",
               "voice": "hamo",
               "new": [
                 {"ku": "na-", "en": "not (the negative present: naçim, nakim)", "pos": "particle", "forms": ["naçim", "naçî", "naçe", "naçin", "nayêm", "nayî", "nayê", "nayên", "nakim", "nakî", "nake", "nakin", "nabînim", "nabînî", "nabîne", "nabînin", "nabêjim", "nabêjî", "nabêje", "nabêjin", "nanêrim", "nanêrî", "nanêre", "nanêrin", "naxivim", "naxivî", "naxive", "naxivin", "nakirim", "nakirî", "nakire", "nakirin", "nafiroşim", "nafiroşî", "nafiroşe", "nafiroşin", "nadim", "nadî", "nade", "nadin", "nagerim", "nagerî", "nagere", "nagerin", "naxebitim", "naxebitî", "naxebite", "naxebitin", "naxwazim", "naxwazî", "naxwaze", "naxwazin", "naxwim", "naxwî", "naxwe", "naxwin", "venaxwim", "venaxwî", "venaxwe", "venaxwin"]},
@@ -1112,7 +1112,7 @@
               "titleKu": "Zikê te tije ye!",
               "titleEn": "Your belly is full!",
               "focus": "build",
-              "beat": "Hamo turns detective and goes round looking for the apple thief, with you as his assistant. Is Hevalo hungry? He shakes his head. Then why is his belly so full? Is it true that he was by the basket? Hevalo says that is wrong, but there is apple peel on his nose.",
+              "beat": "The basket is empty, but somebody’s belly is very full. Hamo goes round looking for the apples, with you as his assistant. Is it true that Hevalo was by the basket? Hevalo says that is wrong, but there is apple peel on his nose.",
               "voice": "hamo",
               "new": [
                 {"ku": "zik", "en": "belly, stomach", "pos": "noun", "gender": "m", "forms": ["zik", "zikên", "zikan", "zikek", "zikê", "zikekî", "zikî"]},
@@ -1129,7 +1129,7 @@
               "titleKu": "Ez ji sêvan hez dikim",
               "titleEn": "I love apples",
               "focus": "talk",
-              "beat": "The apple trial in the middle of the market: Mîrza is the judge, Hamo speaks for the accused, and the accused has apple all over his face. Hamo swears Hevalo never eats apples; nobody believes him; then even Hamo laughs and pays. On the way home his phone rings: Lorîn in Kobanî. Their mother says everyone must come for the weekend, you and Hevalo too.",
+              "beat": "Hamo swears that Hevalo never eats apples and does not even like them, but Hevalo has apple all over his face. Nobody believes Hamo, not Mîrza and not the neighbours; then even Hamo laughs and pays for the apples. Then his phone rings: it is Nazê, the neighbour, asking how the market is.",
               "voice": "hamo",
               "new": [
                 {"ku": "bawer kirin", "en": "to believe", "pos": "verb", "forms": ["bawer", "kirin"]},
@@ -1144,7 +1144,7 @@
               "titleKu": "Em diçin malê",
               "titleEn": "Going home",
               "focus": "review",
-              "beat": "Home at sunset, Bozo groaning under the bags. Hamo tells the story of the apple trial to everyone you pass on the road, and it gets longer each time. At the blue gate he stops: Lorîn says come to Kobanî, all of you, at the end of the week. Do you want to go? Of course you do.",
+              "beat": "Home at sunset, Bozo groaning under the bags. On the road you and Hamo go over the day: what you saw, what you bought, what it cost and who ate the apples. Hevalo looks at the sky, and at the blue gate he is the first one in.",
               "voice": "hamo",
               "new": []
             }

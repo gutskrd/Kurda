@@ -99,8 +99,8 @@
                     "prompt": "Li vir çar kursî hene.",
                     "options": [
                       "There are four chairs here.",
-                      "Grandma has hens.",
-                      "No, there are four!"
+                      "There are four tables here.",
+                      "There are three chairs here."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -396,8 +396,8 @@
                     "prompt": "Pisîk li wir e, li hewşê.",
                     "options": [
                       "The cat is over there, in the yard.",
-                      "Thanks! It’s lovely up here.",
-                      "The bread is lovely."
+                      "The cat is here, in the yard.",
+                      "The dog is over there, in the yard."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -581,9 +581,9 @@
                     "voice": "hamo",
                     "prompt": "Fermo, li vir rûne!",
                     "options": [
-                      "Here, sit down here!",
-                      "There are four chairs here.",
-                      "Thanks! It’s lovely up here."
+                      "Please, sit down here!",
+                      "Please, sit down there!",
+                      "Please, eat here!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -599,13 +599,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nexşeya Sêvanê ye! Were!",
+                    "say": "Ev nexşeya Sêvanê ye.",
                     "voice": "hamo",
-                    "prompt": "Nexşeya Sêvanê ye! Were!",
+                    "prompt": "Ev nexşeya Sêvanê ye.",
                     "options": [
-                      "It’s a map of Sêvan! Come on!",
-                      "Come on, breakfast is on the table!",
-                      "My mother’s sister’s house is in Sêvan."
+                      "This is a map of Sêvan.",
+                      "This is a photo of Sêvan.",
+                      "This is a map of Amed."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -625,6 +625,9 @@
                     "voice": "hamo",
                     "prompt": "Fermo, li vir rûne!",
                     "accepted": [
+                      "Please, sit down here!",
+                      "Please sit down here!",
+                      "Please, sit here!",
                       "Here, sit down here!"
                     ]
                   }
@@ -638,9 +641,9 @@
                     "voice": "hamo",
                     "prompt": "Erê! Odeyên me germ in, ban sar e.",
                     "options": [
-                      "Yes! The rooms are hot, and the roof is cool.",
-                      "Is dinner cold? No, it’s hot.",
-                      "Yes, please. Ooh, the tea is hot!"
+                      "Yes! Our rooms are hot, and the roof is cool.",
+                      "Yes! Our rooms are cool, and the roof is hot.",
+                      "Yes! Our rooms are hot, and the yard is cool."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -656,12 +659,13 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Nexşeya Sêvanê ye! Were!",
+                    "say": "Ev nexşeya Sêvanê ye.",
                     "voice": "hamo",
-                    "prompt": "Nexşeya Sêvanê ye! Were!",
+                    "prompt": "Ev nexşeya Sêvanê ye.",
                     "accepted": [
-                      "It’s a map of Sêvan! Come on!",
-                      "It is a map of Sêvan! Come on!"
+                      "This is a map of Sêvan.",
+                      "This is the map of Sêvan.",
+                      "It’s a map of Sêvan."
                     ]
                   }
                 },
@@ -696,6 +700,8 @@
                     "voice": "hamo",
                     "prompt": "Erê! Odeyên me germ in, ban sar e.",
                     "accepted": [
+                      "Yes! Our rooms are hot, and the roof is cool.",
+                      "Yes! Our rooms are hot and the roof is cool.",
                       "Yes! The rooms are hot, and the roof is cool."
                     ]
                   }
@@ -747,7 +753,7 @@
                       {
                         "speaker": 0,
                         "text": "Fermo, li vir rûne!",
-                        "en": "Here, sit down here!"
+                        "en": "Please, sit down here!"
                       },
                       {
                         "speaker": 1,
@@ -761,35 +767,50 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Heşt nivîn? Li vir?",
-                        "en": "Eight beds? Up here?"
+                        "text": "Heşt nivîn? Li ser banî?",
+                        "en": "Eight beds? On the roof?"
                       },
                       {
                         "speaker": 0,
                         "text": "Erê! Odeyên me germ in, ban sar e.",
-                        "en": "Yes! The rooms are hot, and the roof is cool."
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Wey! Baran li odeya mêvanan e, û li wir nexşeyek heye!",
-                        "en": "Oh! Baran’s in the guest room, and there’s a map in there!"
+                        "en": "Yes! Our rooms are hot, and the roof is cool."
                       },
                       {
                         "speaker": 1,
-                        "text": "Nexşeyek? Nexşeya ku derê ye?",
-                        "en": "A map? A map of where?"
+                        "text": "Ev çi ye, li ser maseyê?",
+                        "en": "What’s this, on the table?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Nexşeya Sêvanê ye! Were!",
-                        "en": "It’s a map of Sêvan! Come on!"
+                        "text": "Ev nexşeya Sêvanê ye.",
+                        "en": "This is a map of Sêvan."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Nexşeyeke xweş e! Û ev nan?",
+                        "en": "It’s a lovely map! And this bread?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Nanê tenûrê germ e.",
+                        "en": "The bread from the tenûr is warm."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Spas! Destê te sax be! Tu ji ku derê yî?",
+                        "en": "Thank you! Where are you from?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ez ji Kobaniyê me, û ji Sêvanê jî!",
+                        "en": "I’m from Kobanî, and from Sêvan too!"
                       }
                     ],
-                    "prompt": "What has Baran found in the guest room?",
+                    "prompt": "Why are there beds up on the roof at night?",
                     "options": [
-                      "A map of Sêvan",
-                      "Eight beds",
-                      "A glass of tea"
+                      "The rooms are hot, and the roof is cool.",
+                      "The rooms are cold, and the roof is warm.",
+                      "The house has no rooms."
                     ],
                     "correctIndex": 0
                   }
@@ -800,7 +821,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Yes! The rooms are hot, and the roof is cool.",
+                    "prompt": "Yes! Our rooms are hot, and the roof is cool.",
                     "options": [
                       "Erê! Odeyên me germ in, ban sar e.",
                       "Erê! Odeyên me germ in, banên sar e.",
@@ -819,7 +840,7 @@
                     "options": [
                       "Nanê tenûrê germ e.",
                       "Nanê tenûr germ e.",
-                      "Navê wî Ibrahîm e."
+                      "Navê wî Baran e."
                     ],
                     "correctIndex": 0
                   }
@@ -843,8 +864,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Nexşeya Sêvanê ye! Were!",
-                    "reference": "Nexşeya Sêvanê ye! Were!"
+                    "prompt": "Ev nexşeya Sêvanê ye.",
+                    "reference": "Ev nexşeya Sêvanê ye."
                   }
                 },
                 {
@@ -853,7 +874,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Here, sit down here!",
+                    "prompt": "Please, sit down here!",
                     "accepted": [
                       "Fermo, li vir rûne!"
                     ]
@@ -997,8 +1018,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Nexşeya Sêvanê ye! Were!",
-                    "reference": "Nexşeya Sêvanê ye! Were!"
+                    "prompt": "Ev nexşeya Sêvanê ye.",
+                    "reference": "Ev nexşeya Sêvanê ye."
                   }
                 },
                 {
@@ -1039,13 +1060,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Wey! Baran li odeya mêvanan e, û li wir nexşeyek heye!",
+                    "say": "Erê. Bi şev heşt nivîn li vir hene.",
                     "voice": "hamo",
-                    "prompt": "Wey! Baran li odeya mêvanan e, û li wir nexşeyek heye!",
+                    "prompt": "Erê. Bi şev heşt nivîn li vir hene.",
                     "options": [
-                      "Oh! Baran’s in the guest room, and there’s a map in there!",
-                      "The cat is over there, in the yard.",
-                      "Bozo’s over there, at the window!"
+                      "Yes. At night there are eight beds up here.",
+                      "Yes. At night there are eight guests up here.",
+                      "Yes. In the morning there are eight beds up here."
                     ],
                     "correctIndex": 0
                   }
@@ -1056,7 +1077,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Here, sit down here!",
+                    "prompt": "Please, sit down here!",
                     "options": [
                       "Fermo, li vir rûne!",
                       "Fermo, li wir rûne!",
@@ -1074,9 +1095,9 @@
                     "voice": "hamo",
                     "prompt": "Erê! Odeyên me germ in, ban sar e.",
                     "options": [
-                      "Yes! The rooms are hot, and the roof is cool.",
-                      "Is dinner cold? No, it’s hot.",
-                      "Yes, please. Ooh, the tea is hot!"
+                      "Yes! Our rooms are hot, and the roof is cool.",
+                      "Yes! Our rooms are cool, and the roof is hot.",
+                      "Yes! Our rooms are hot, and the yard is cool."
                     ],
                     "correctIndex": 0
                   }
@@ -1673,13 +1694,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bizina spî nan dixwe, ne nexşe.",
+                    "say": "Bizina spî nan dixwe, ne kulîlkan.",
                     "voice": "hamo",
-                    "prompt": "Bizina spî nan dixwe, ne nexşe.",
+                    "prompt": "Bizina spî nan dixwe, ne kulîlkan.",
                     "options": [
-                      "The white goat eats bread, not maps.",
-                      "Hevalo is eating the bread!",
-                      "Bozo is eating bread. Eat up, Bozo!"
+                      "The white goat eats bread, not the flowers.",
+                      "The white goat eats flowers, not bread.",
+                      "The black goat eats bread, not the flowers."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -1761,9 +1782,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The white goat eats bread, not maps.",
+                    "prompt": "The white goat eats bread, not the flowers.",
                     "accepted": [
-                      "Bizina spî nan dixwe, ne nexşe."
+                      "Bizina spî nan dixwe, ne kulîlkan."
                     ]
                   }
                 },
@@ -1773,9 +1794,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Oh no! The goat is eating the map!",
+                    "prompt": "Oh no! The goat is eating the flowers!",
                     "accepted": [
-                      "Wey! Bizin nexşeyê dixwe!"
+                      "Wey! Bizin kulîlkan dixwe!"
                     ]
                   }
                 },
@@ -1811,16 +1832,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Bizina spî nan dixwe, ne nexşe.",
+                    "say": "Bizina spî nan dixwe, ne kulîlkan.",
                     "voice": "hamo",
-                    "prompt": "Bizina ___ nan dixwe, ne nexşe.",
+                    "prompt": "Bizina ___ nan dixwe, ne kulîlkan.",
                     "options": [
                       "spî",
                       "reş",
                       "mezin"
                     ],
                     "correctIndex": 0,
-                    "cue": "The white goat eats bread, not maps."
+                    "cue": "white"
                   }
                 },
                 {
@@ -1873,18 +1894,18 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Binêre! Nexşeyeke biçûk li ser bizinê ye.",
-                        "en": "Look! There’s a little map on the goat."
+                        "text": "Binêre! Bizin çi dixwe?",
+                        "en": "Look! What is the goat eating?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Wey! Bizin nexşeyê dixwe!",
-                        "en": "Oh no! The goat is eating the map!"
+                        "text": "Wey! Bizin kulîlkan dixwe!",
+                        "en": "Oh no! The goat is eating the flowers!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Na! Ew nexşeya me ye!",
-                        "en": "No! That’s our map!"
+                        "text": "Na! Ew kulîlkên Dapîrê ne!",
+                        "en": "No! Those are Grandma’s flowers!"
                       },
                       {
                         "speaker": 0,
@@ -1893,19 +1914,19 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Aferîn! Nexşe li vir e.",
-                        "en": "Well done! We’ve got the map."
+                        "text": "Aferîn! Ew nan dixwe.",
+                        "en": "Well done! She’s eating the bread."
                       },
                       {
                         "speaker": 0,
-                        "text": "Bizina spî nan dixwe, ne nexşe.",
-                        "en": "The white goat eats bread, not maps."
+                        "text": "Bizina spî nan dixwe, ne kulîlkan.",
+                        "en": "The white goat eats bread, not the flowers."
                       }
                     ],
-                    "prompt": "How does Hamo get the map back from the goat?",
+                    "prompt": "How does Hamo save Grandma’s flowers?",
                     "options": [
-                      "He gives her some bread.",
-                      "He gives her some milk.",
+                      "He gives the goat some bread.",
+                      "He gives the goat some milk.",
                       "He asks Şêro for help."
                     ],
                     "correctIndex": 0
@@ -1917,11 +1938,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Oh no! The goat is eating the map!",
+                    "prompt": "Oh no! The goat is eating the flowers!",
                     "options": [
-                      "Wey! Bizin nexşeyê dixwe!",
-                      "Wey! Bizin nexşe dixwe!",
-                      "Wey! Bizin nexşeyê dixwim!"
+                      "Wey! Bizin kulîlkan dixwe!",
+                      "Wey! Bizin kulîlkan dixwim!",
+                      "Wey! Bizin kulîlkên dixwe!"
                     ],
                     "correctIndex": 0
                   }
@@ -1966,13 +1987,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Wey! Bizin nexşeyê dixwe!",
+                    "say": "Wey! Bizin kulîlkan dixwe!",
                     "voice": "hamo",
-                    "prompt": "Wey! Bizin nexşeyê dixwe!",
+                    "prompt": "Wey! Bizin kulîlkan dixwe!",
                     "options": [
-                      "Oh no! The goat is eating the map!",
-                      "Hevalo is eating the bread!",
-                      "Hevalo is eating the apple!"
+                      "Oh no! The goat is eating the flowers!",
+                      "Oh no! The goat is eating the bread!",
+                      "Oh no! Hevalo is eating the flowers!"
                     ],
                     "correctIndex": 0
                   }
@@ -1990,13 +2011,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Bizina spî nan dixwe, ne nexşe.",
+                    "say": "Bizina spî nan dixwe, ne kulîlkan.",
                     "voice": "hamo",
-                    "prompt": "Bizina spî nan dixwe, ne nexşe.",
+                    "prompt": "Bizina spî nan dixwe, ne kulîlkan.",
                     "options": [
-                      "The white goat eats bread, not maps.",
-                      "Hevalo is eating the bread!",
-                      "Bozo is eating bread. Eat up, Bozo!"
+                      "The white goat eats bread, not the flowers.",
+                      "The white goat eats flowers, not bread.",
+                      "The black goat eats bread, not the flowers."
                     ],
                     "correctIndex": 0
                   }
@@ -2128,8 +2149,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Na. Bizin nexşe dixwaze, ne reng!",
-                        "en": "No. The goat wants maps, not paint!"
+                        "text": "Na. Bizin kulîlk dixwaze, ne reng!",
+                        "en": "No. The goat wants flowers, not paint!"
                       },
                       {
                         "speaker": 1,
@@ -2233,13 +2254,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Wey! Bizin nexşeyê dixwe!",
+                    "say": "Wey! Bizin kulîlkan dixwe!",
                     "voice": "hamo",
-                    "prompt": "Wey! Bizin nexşeyê dixwe!",
+                    "prompt": "Wey! Bizin kulîlkan dixwe!",
                     "options": [
-                      "Oh no! The goat is eating the map!",
-                      "The goat is white.",
-                      "Hevalo is eating the bread!"
+                      "Oh no! The goat is eating the flowers!",
+                      "Oh no! The goat is eating the bread!",
+                      "Oh no! Hevalo is eating the flowers!"
                     ],
                     "correctIndex": 0
                   }
@@ -2438,13 +2459,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Şeş salî! Û Hevalo pênc salî ye.",
+                    "say": "Kûçik li bin maseyê ye.",
                     "voice": "hamo",
-                    "prompt": "Şeş salî! Û Hevalo pênc salî ye.",
+                    "prompt": "Kûçik li bin maseyê ye.",
                     "options": [
-                      "Six! And Hevalo is five.",
-                      "Five! And Hevalo is six.",
-                      "Six! And Hevalo is hungry."
+                      "The dog is under the table.",
+                      "The dog is on the table.",
+                      "The cat is under the table."
                     ],
                     "correctIndex": 0
                   }
@@ -2669,7 +2690,7 @@
                     "options": [
                       "The bread is in the tenûr.",
                       "The bread is on the table.",
-                      "The map is in the tenûr."
+                      "The bread is in front of the tenûr."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2880,8 +2901,8 @@
                     "prompt": "Binêre! Pozê Hevalo li pişt darê ye.",
                     "options": [
                       "Look! Hevalo’s nose is behind the tree.",
-                      "Look! The goat is up the tree!",
-                      "Look, the goat is on the table!"
+                      "Look! Hevalo’s nose is under the tree.",
+                      "Look! Hevalo’s nose is in front of the tree."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2897,13 +2918,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                    "say": "Nîvê sêvê ji te re, nîvê din ji min re.",
                     "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                    "prompt": "Nîvê sêvê ji te re, nîvê din ji min re.",
                     "options": [
-                      "The other half is in Kobanî, at Lorîn’s.",
-                      "My family is in Kobanî.",
-                      "My father is in Kobanî. My mother too."
+                      "Half of the apple for you, the other half for me.",
+                      "Half of the apple for me, the other half for you.",
+                      "Half of the bread for you, the other half for me."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2912,8 +2933,8 @@
                         "en": "half"
                       },
                       {
-                        "ku": "li cem",
-                        "en": "at (someone’s place), with"
+                        "ku": "din",
+                        "en": "other"
                       }
                     ]
                   }
@@ -2940,13 +2961,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
+                    "say": "Nîvê din di devê Hevalo de ye!",
                     "voice": "hamo",
-                    "prompt": "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
+                    "prompt": "Nîvê din di devê Hevalo de ye!",
                     "options": [
-                      "That’s Lorîn, my sister. She has an apple in her mouth!",
-                      "In her hand there’s an old photo.",
-                      "My mother’s sister’s house is in Sêvan."
+                      "The other half is in Hevalo’s mouth!",
+                      "The other half is on Hevalo’s nose!",
+                      "The other apple is in Hevalo’s mouth!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2959,14 +2980,23 @@
                 },
                 {
                   "position": 6,
-                  "type": "translate",
+                  "type": "multiple_choice",
                   "payload": {
-                    "ask": "to-english",
-                    "say": "Nîvek li Kobaniyê ye, li cem Lorînê.",
+                    "ask": "meaning",
+                    "say": "Li cem Dapîr Şemsê gelek sêv hene.",
                     "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
-                    "accepted": [
-                      "The other half is in Kobanî, at Lorîn’s."
+                    "prompt": "Li cem Dapîr Şemsê gelek sêv hene.",
+                    "options": [
+                      "There are lots of apples at Grandma Şemsê’s.",
+                      "There are lots of apples behind Grandma Şemsê’s house.",
+                      "Grandma Şemsê wants lots of apples."
+                    ],
+                    "correctIndex": 0,
+                    "new": [
+                      {
+                        "ku": "li cem",
+                        "en": "at (someone’s place), with"
+                      }
                     ]
                   }
                 },
@@ -2975,12 +3005,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
+                    "say": "Nîvê din di devê Hevalo de ye!",
                     "voice": "hamo",
-                    "prompt": "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
+                    "prompt": "Nîvê din di devê Hevalo de ye!",
                     "accepted": [
-                      "That’s Lorîn, my sister. She has an apple in her mouth!",
-                      "That is Lorîn, my sister. She has an apple in her mouth!"
+                      "The other half is in Hevalo’s mouth!",
+                      "The other half is in Hevalo’s mouth."
                     ]
                   }
                 },
@@ -2994,16 +3024,10 @@
                     "prompt": "Nîvê din li ku ye?",
                     "options": [
                       "Where is the other half?",
-                      "Where is the other photo?",
-                      "Here’s one half."
+                      "Where is the other apple?",
+                      "Is that the other half?"
                     ],
-                    "correctIndex": 0,
-                    "new": [
-                      {
-                        "ku": "din",
-                        "en": "other"
-                      }
-                    ]
+                    "correctIndex": 0
                   }
                 },
                 {
@@ -3024,55 +3048,55 @@
                     "lines": [
                       {
                         "speaker": 0,
+                        "text": "Nîvê sêvê ji te re, nîvê din ji min re.",
+                        "en": "Half of the apple for you, the other half for me."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Spas! Sêv gelek xweş e.",
+                        "en": "Thanks! The apple is lovely."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Nîvê din li ku ye?",
+                        "en": "Where is the other half?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Li bin darê? Li pişt darê?",
+                        "en": "Under the tree? Behind the tree?"
+                      },
+                      {
+                        "speaker": 0,
                         "text": "Binêre! Pozê Hevalo li pişt darê ye.",
                         "en": "Look! Hevalo’s nose is behind the tree."
                       },
                       {
                         "speaker": 1,
-                        "text": "Li wir çi heye? Sêv?",
-                        "en": "What’s there? An apple?"
+                        "text": "Hevalo, nîvê din li cem te ye?",
+                        "en": "Hevalo, have you got the other half?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Na, ne sêv e. Ev nîvê wêneyekî kevn e!",
-                        "en": "No, it isn’t an apple. It’s half of an old photo!"
+                        "text": "Nîvê din di devê Hevalo de ye!",
+                        "en": "The other half is in Hevalo’s mouth!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Ev kurê biçûk kî ye?",
-                        "en": "Who’s this little boy?"
+                        "text": "Wey, Hevalo! Ew nîvê Hamo ye!",
+                        "en": "Oh, Hevalo! That’s Hamo’s half!"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ew ez im, li Sêvanê.",
-                        "en": "That’s me, here in Sêvan."
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Û ev keça biçûk?",
-                        "en": "And this little girl?"
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
-                        "en": "That’s Lorîn, my sister. She has an apple in her mouth!"
-                      },
-                      {
-                        "speaker": 1,
-                        "text": "Nîvek li vir e. Nîvê din li ku ye?",
-                        "en": "Here’s one half. Where is the other half?"
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Nîvek li Kobaniyê ye, li cem Lorînê.",
-                        "en": "The other half is in Kobanî, at Lorîn’s."
+                        "text": "Li cem Dapîr Şemsê gelek sêv hene.",
+                        "en": "There are lots of apples at Grandma Şemsê’s."
                       }
                     ],
-                    "prompt": "Where is the other half of the photo?",
+                    "prompt": "Where is the other half of the apple?",
                     "options": [
-                      "In Kobanî, at Lorîn’s",
-                      "Under the walnut tree",
-                      "In Hevalo’s mouth"
+                      "In Hevalo’s mouth",
+                      "Under the tree",
+                      "At Grandma Şemsê’s"
                     ],
                     "correctIndex": 0
                   }
@@ -3083,8 +3107,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Nîvek li Kobaniyê ye, li cem Lorînê.",
-                    "reference": "Nîvek li Kobaniyê ye, li cem Lorînê."
+                    "prompt": "Li cem Dapîr Şemsê gelek sêv hene.",
+                    "reference": "Li cem Dapîr Şemsê gelek sêv hene."
                   }
                 },
                 {
@@ -3104,12 +3128,14 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Nîvê din li ku ye?",
+                    "say": "Li cem Dapîr Şemsê gelek sêv hene.",
                     "voice": "hamo",
-                    "prompt": "Nîvê din li ku ye?",
+                    "prompt": "Li cem Dapîr Şemsê gelek sêv hene.",
                     "accepted": [
-                      "Where is the other half?",
-                      "Where’s the other half?"
+                      "There are lots of apples at Grandma Şemsê’s.",
+                      "Grandma Şemsê has lots of apples.",
+                      "There are a lot of apples at Grandma Şemsê’s.",
+                      "Grandma Şemsê has a lot of apples."
                     ]
                   }
                 },
@@ -3119,11 +3145,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "That’s Lorîn, my sister. She has an apple in her mouth!",
+                    "prompt": "The other half is in Hevalo’s mouth!",
                     "options": [
-                      "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
-                      "Ew Lorîn e, xwişk min. Sêv di devê wê de ye!",
-                      "Sêv kesk e, ne sor e."
+                      "Nîvê din di devê Hevalo de ye!",
+                      "Nîvê din di dev Hevalo de ye!",
+                      "Nîvê din di devê Hevalo de in!"
                     ],
                     "correctIndex": 0
                   }
@@ -3134,11 +3160,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The other half is in Kobanî, at Lorîn’s.",
+                    "prompt": "Half of the apple for you, the other half for me.",
                     "options": [
-                      "Nîvek li Kobaniyê ye, li cem Lorînê.",
-                      "Nîvek li Kobaniyê e, li cem Lorînê.",
-                      "Neh mirîşkên spî li ber derî ne."
+                      "Nîvê sêvê ji te re, nîvê din ji min re.",
+                      "Nîvê sêv ji te re, nîvê din ji min re.",
+                      "Nîvê sêvê ji min re, nîvê din ji te re."
                     ],
                     "correctIndex": 0
                   }
@@ -3171,8 +3197,8 @@
             {
               "key": "u03s3l4",
               "position": 4,
-              "titleKu": "Nîvê wêneyekî",
-              "titleEn": "Half a photo",
+              "titleKu": "Li ku ne?",
+              "titleEn": "Where are they?",
               "exercises": [
                 {
                   "position": 1,
@@ -3200,13 +3226,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Ew ez im, li Sêvanê.",
+                    "say": "Nîvê sêvê ji te re, nîvê din ji min re.",
                     "voice": "hamo",
-                    "prompt": "Ew ez im, li Sêvanê.",
+                    "prompt": "Nîvê sêvê ji te re, nîvê din ji min re.",
                     "options": [
-                      "That’s me, here in Sêvan.",
-                      "They’re in Kobanî, and I’m in Sêvan.",
-                      "I’m fine."
+                      "Half of the apple for you, the other half for me.",
+                      "Half of the bread for you, the other half for me.",
+                      "The whole apple is for you."
                     ],
                     "correctIndex": 0
                   }
@@ -3295,7 +3321,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu03s3l4a",
-                    "title": "Di vî wêneyî de",
+                    "title": "Li ku ne?",
                     "speakers": [
                       {
                         "name": "Hamo",
@@ -3308,55 +3334,50 @@
                     "lines": [
                       {
                         "speaker": 0,
-                        "text": "Di vî wêneyî de ez û Lorîn zarok in.",
-                        "en": "In this photo, Lorîn and I are children."
+                        "text": "Destên xwe bişo! Xwarin germ e.",
+                        "en": "Wash your hands! The food is hot."
                       },
                       {
                         "speaker": 1,
-                        "text": "Hûn li ku ne?",
-                        "en": "Where are you?"
+                        "text": "Spas! Şêro li ku ye?",
+                        "en": "Thanks! Where’s Şêro?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Em li vir in, li bin vê dara gûzê.",
-                        "en": "We’re right here, under this walnut tree."
+                        "text": "Kûçik li bin maseyê ye.",
+                        "en": "The dog is under the table."
                       },
                       {
                         "speaker": 1,
-                        "text": "Li Sêvanê? Tu ji ku derê yî?",
-                        "en": "In Sêvan? Where are you from?"
+                        "text": "Û pisîk li ku ye?",
+                        "en": "And where’s the cat?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Ez ji Kobaniyê me, Lorîn jî.",
-                        "en": "I’m from Kobanî, and so is Lorîn."
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Mala xwişka diya min li Sêvanê ye.",
-                        "en": "My mother’s sister’s house is in Sêvan."
+                        "text": "Pisîk li wir e, li hewşê.",
+                        "en": "The cat is over there, in the yard."
                       },
                       {
                         "speaker": 1,
-                        "text": "Û nîvek li ku ye?",
-                        "en": "And where is the other half?"
+                        "text": "Û Hevalo li ku ye?",
+                        "en": "And where’s Hevalo?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Nîvek li Kobaniyê ye, li mala Lorînê.",
-                        "en": "The other half is in Kobanî, at Lorîn’s house."
+                        "text": "Binêre! Pozê Hevalo li pişt darê ye.",
+                        "en": "Look! Hevalo’s nose is behind the tree."
                       },
                       {
                         "speaker": 1,
-                        "text": "Hevalo! Ev ne sêv e!",
-                        "en": "Hevalo! That’s not an apple!"
+                        "text": "Hevalo, were! Xwarin heye.",
+                        "en": "Hevalo, come! There’s food."
                       }
                     ],
-                    "prompt": "Where are Hamo and Lorîn in the photo?",
+                    "prompt": "Where is the dog?",
                     "options": [
-                      "Under the walnut tree",
-                      "Up on the roof",
-                      "At the school"
+                      "Under the table",
+                      "In the yard",
+                      "Behind the tree"
                     ],
                     "correctIndex": 0
                   }
@@ -3428,11 +3449,12 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "No, it isn’t an apple. It’s half of an old photo!",
+                    "prompt": "Where is the other half?",
                     "options": [
-                      "Na, ne sêv e. Ev nîvê wêneyekî kevn e!",
-                      "Na, ne sêvên e. Ev nîvê wêneyekî kevn e!",
-                      "Na, ne sêv e. Ev nîv wêneyekî kevn e!"
+                      "Nîvê din li ku ye?",
+                      "Nîv din li ku ye?",
+                      "Nîvê din li ku ne?",
+                      "Neh mirîşkên spî li ber derî ne."
                     ],
                     "correctIndex": 0
                   }
@@ -3443,11 +3465,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The other half is in Kobanî, at Lorîn’s.",
+                    "prompt": "There are lots of apples at Grandma Şemsê’s.",
                     "options": [
-                      "Nîvek li Kobaniyê ye, li cem Lorînê.",
-                      "Nîvek li Kobaniyê e, li cem Lorînê.",
-                      "Nîvek li Sêvanê ye, li cem Lorînê."
+                      "Li cem Dapîr Şemsê gelek sêv hene.",
+                      "Li pişt Dapîr Şemsê gelek sêv hene.",
+                      "Li cem Dapîr Şemsê gelek sêvên hene."
                     ],
                     "correctIndex": 0
                   }
@@ -3458,11 +3480,11 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "That’s Lorîn, my sister. She has an apple in her mouth!",
+                    "prompt": "The other half is in Hevalo’s mouth!",
                     "options": [
-                      "Ew Lorîn e, xwişka min. Sêv di devê wê de ye!",
-                      "Ew Lorîn e, xwişk min. Sêv di devê wê de ye!",
-                      "Ew Lorîn e, xwişka din. Sêv di devê wê de ye!"
+                      "Nîvê din di devê Hevalo de ye!",
+                      "Nîvê din di dev Hevalo de ye!",
+                      "Sêv kesk e, ne sor e."
                     ],
                     "correctIndex": 0
                   }
@@ -3770,7 +3792,7 @@
                     "options": [
                       "Ava kaniyê gelek sar e!",
                       "Ava kanî gelek sar e!",
-                      "Mase li vir e, li ser banî."
+                      "Ev derî kevn e."
                     ],
                     "correctIndex": 0
                   }
@@ -4061,8 +4083,8 @@
                     "prompt": "Îro roj xweş e. Çivîk li ser darên sêvan in.",
                     "options": [
                       "It’s a lovely day today. The birds are in the apple trees.",
-                      "The table is here, on the roof.",
-                      "Hevalo’s eyes are on the walnuts."
+                      "It’s a lovely day today. The birds are on the roof.",
+                      "It’s cold today. The birds are in the apple trees."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -4142,7 +4164,7 @@
                     "voice": "hamo",
                     "prompt": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
                     "options": [
-                      "Tomorrow we’re off to town! You, me, Hevalo and Bozo.",
+                      "Tomorrow we’ll be in town! You, me, Hevalo and Bozo.",
                       "There are seven of us, and eight with Hevalo!",
                       "Hevalo’s friends are Bozo and Şêro."
                     ],
@@ -4164,8 +4186,10 @@
                     "voice": "hamo",
                     "prompt": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
                     "accepted": [
-                      "Tomorrow we’re off to town! You, me, Hevalo and Bozo.",
-                      "Tomorrow we are off to town! You, me, Hevalo and Bozo."
+                      "Tomorrow we’ll be in town! You, me, Hevalo and Bozo.",
+                      "Tomorrow we will be in town! You, me, Hevalo and Bozo.",
+                      "Tomorrow we’re in town! You, me, Hevalo and Bozo.",
+                      "Tomorrow we’re off to town! You, me, Hevalo and Bozo."
                     ]
                   }
                 },
@@ -4248,8 +4272,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Hêvî û birayê wê jî li gund in.",
-                        "en": "And Hêvî and her brother are out in the village."
+                        "text": "Keça Nazê û birayê wê jî li gund in.",
+                        "en": "And Nazê’s daughter and her brother are out in the village."
                       },
                       {
                         "speaker": 0,
@@ -4258,13 +4282,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Û sibe çi heye?",
-                        "en": "And what’s on tomorrow?"
+                        "text": "Û sibe hûn li ku ne?",
+                        "en": "And where will you be tomorrow?"
                       },
                       {
                         "speaker": 0,
                         "text": "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
-                        "en": "Tomorrow we’re off to town! You, me, Hevalo and Bozo."
+                        "en": "Tomorrow we’ll be in town! You, me, Hevalo and Bozo."
                       },
                       {
                         "speaker": 1,
@@ -4284,7 +4308,7 @@
                       {
                         "speaker": 0,
                         "text": "Hevalo? Ew niha li ber derî ye!",
-                        "en": "Hevalo? He’s at the gate already!"
+                        "en": "Hevalo? He’s at the gate now!"
                       },
                       {
                         "speaker": 1,
@@ -4339,7 +4363,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Tomorrow we’re off to town! You, me, Hevalo and Bozo.",
+                    "prompt": "Tomorrow we’ll be in town! You, me, Hevalo and Bozo.",
                     "options": [
                       "Sibe em li bajêr in! Ez, tu, Hevalo û Bozo.",
                       "Sibe em li bajar in! Ez, tu, Hevalo û Bozo.",
@@ -4486,7 +4510,7 @@
                     "options": [
                       "Bajar li bin çiyê ye. Li wir gelek sêv hene.",
                       "Bajar li bin çiya ye. Li wir gelek sêv hene.",
-                      "Sêv li pişt darê ye, ne di devê min de."
+                      "Nîvê din di devê Hevalo de ye!"
                     ],
                     "correctIndex": 0
                   }
@@ -4599,7 +4623,7 @@
                     "prompt": "Niha çay heye. Kerem bike, rûne.",
                     "options": [
                       "There’s tea now. Please, sit down.",
-                      "There’s tea now. Please, help yourself!",
+                      "There’s bread now. Please, sit down.",
                       "Sit down, Grandma! There’s tea."
                     ],
                     "correctIndex": 0
