@@ -341,7 +341,7 @@
               "titleKu": "Bavê min",
               "titleEn": "My father",
               "focus": "meet",
-              "beat": "Tea for the neighbours, and while it brews Hamo shows you the photo wall in the guest room. A man with a grand moustache and a shepherd’s flute: “Ev bavê min e. Navê wî Ibrahîm e.” A woman with laughing eyes: “Ev diya min e.” Both far away in Kobanî. You look from the photo to Hamo: the same moustache.",
+              "beat": "Tea for the neighbours, and while it brews Hamo shows you the photo wall in the guest room. A man with a grand moustache: “Ev bavê min e.” A woman with laughing eyes: “Ev diya min e.” Both far away in Kobanî. Beside them hangs a photo of the neighbours’ children: “Navê wî Baran e. Navê wê Hêvî ye.”",
               "voice": "hamo",
               "new": [
                 {"ku": "bav", "en": "father", "pos": "noun", "gender": "m", "forms": ["bav", "bavên", "bavan", "bavek", "bavê", "bavekî", "bavî", "bavo"]},
@@ -357,7 +357,7 @@
               "titleKu": "Birayê min",
               "titleEn": "My brother",
               "focus": "build",
-              "beat": "More photos: Hamo’s brother Evdila and his sisters Lorîn and Cîhan, all four children in a row in Kobanî, Hamo the tallest because he is standing on a stone. “Em malbat in,” he says proudly, and straightens every frame, and then straightens them again.",
+              "beat": "More photos: four children in a row in Kobanî, Hamo the tallest because he is standing on a stone. “Ev birayê min e. Ev xwişkên min in. Em malbatek in,” he says proudly, and straightens every frame, and then straightens them again.",
               "voice": "hamo",
               "new": [
                 {"ku": "bira", "en": "brother", "pos": "noun", "gender": "m", "forms": ["bira", "birayên", "birayan", "birayek", "birayê", "birayekî", "birayî"]},
@@ -409,7 +409,7 @@
               "titleKu": "Yek, du",
               "titleEn": "One, two",
               "focus": "meet",
-              "beat": "Nazê introduces her children properly: “Ev kurê min e, Baran. Ev keça min e, Hêvî.” Then Hêvî and Hamo count the hens in the yard. One, two… but the hens will not stand still, so the answer changes every time: yek, du, yek, du, du, yek.",
+              "beat": "Nazê introduces her children properly: “Ev kurê min e, Baran. Ev keça min e, Hêvî.” Then Hêvî and Hamo count the hens in the yard. One, two… but the hens will not stand still, so the answer changes every time: yek, du, yek, du, du, yek. At the photo wall two is easy: “Ev du xwişkên min in.”",
               "voice": "hamo",
               "new": [
                 {"ku": "yek", "en": "one", "pos": "num", "forms": ["yek", "yekê"]},
@@ -441,7 +441,7 @@
               "titleKu": "Tu çend salî yî?",
               "titleEn": "How old are you?",
               "focus": "talk",
-              "beat": "Ages round the tea tray. Hêvî holds up her fingers: six. Hevalo, says Hamo, is five, or he eats like five deer, anyway. Dapîr counts her grandchildren and runs out of fingers. Then Hamo asks how old you are, and how many children there are in your family.",
+              "beat": "Ages round the tea tray. Hêvî holds up her fingers: six. Hevalo, says Hamo, is five, or he eats like five deer, anyway. Hamo asks how many brothers and sisters you have; in his family there are four children: Hamo, his brother and his two sisters. Then he counts Dapîr’s children and runs out of fingers.",
               "voice": "hamo",
               "new": [
                 {"ku": "pênc", "en": "five", "pos": "num", "forms": ["pênc", "pêncan"]},
@@ -539,7 +539,7 @@
               "titleKu": "Kerekî min heye",
               "titleEn": "I have a donkey",
               "focus": "meet",
-              "beat": "Everyone says which animals they have. Nazê has a cat; Dapîr has hens, a goat and opinions about everything; Hamo has a dog, Şêro, who guards the orchard and sleeps through it, and a donkey, Bozo, who chooses that moment to put his big grey head over the wall. Bozo is big, says Hamo, in body and in stubbornness.",
+              "beat": "Everyone says which animals they have. Nazê has a cat; Dapîr has hens, a goat and opinions about everything; Hamo has a dog, Şêro, who guards the orchard and sleeps through it, and a donkey, Bozo, who chooses that moment to put his big grey head over the wall. Bozo is big, says Hamo, in body and in stubbornness. Hamo counts his family the same way: “Du xwişkên min hene. Birayekî min heye.”",
               "voice": "hamo",
               "new": [
                 {"ku": "pisîk", "en": "cat", "pos": "noun", "gender": "f", "forms": ["pisîk", "pisîkên", "pisîkan", "pisîkek", "pisîka", "pisîkê", "pisîkeke", "pisîkekê"]},
@@ -571,7 +571,7 @@
               "titleKu": "Kerem bike!",
               "titleEn": "Help yourself!",
               "focus": "talk",
-              "beat": "Dinner with everyone at Hamo’s. “Kerem bike!” he says, passing round the bread, and when Hêvî counts all the way to ten without a mistake he calls out “Aferîn!”. Dapîr wants to know where you are from, so Hamo asks you for her, and tells you his own answer: from Kobanî, and from Sêvan. Meanwhile Hevalo eats the bread you were holding.",
+              "beat": "Dinner with everyone at Hamo’s. “Kerem bike!” he says, passing round the bread, and when Hêvî counts all the way to ten without a mistake he calls out “Aferîn!”. Hamo asks where you are from, and tells you his own answer: from Kobanî, and from Sêvan. Meanwhile Hevalo eats the bread you were holding.",
               "voice": "hamo",
               "new": [
                 {"ku": "Kerem bike!", "en": "Please! Go ahead! (offering)", "pos": "phrase", "forms": ["kerem", "bike", "bikin"]},
