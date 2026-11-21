@@ -146,6 +146,7 @@ export {
   rubberBand,
   shouldDismiss,
   snapTarget,
+  springEasing,
   springFor,
   type DragSample,
   type Spring,

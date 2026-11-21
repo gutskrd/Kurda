@@ -13,6 +13,22 @@ export const TAB_BAR_SCROLL = {
   compactScale: 0.82,
 } as const;
 
+/**
+ * How the capsule behind the chosen tab moves to another tab. The end in front leads on a spring with some bounce and
+ * the end behind follows on a softer one, so the capsule stretches toward the tab, runs a little past it (squeezing
+ * against the bar's end when there is no room) and settles round it. While it travels it lifts a little larger and
+ * lighter, and lands back as the solid capsule. `fill` is how strongly it is tinted with the chosen tab's ink at rest.
+ */
+export const TAB_CAPSULE = {
+  lead: { duration: 0.32, bounce: 0.3 },
+  follow: { duration: 0.42, bounce: 0.18 },
+  /** The lift: how much larger, how much of its tint it keeps at the top, and how long it lasts, in milliseconds. */
+  liftScale: 1.06,
+  liftFill: 0.72,
+  liftMs: 420,
+  fill: { light: 0.15, dark: 0.14 },
+} as const;
+
 export interface TabBarScroll {
   /** A new scroll offset, in points or pixels from the top; says whether the bar is now small. */
   note(y: number): boolean;

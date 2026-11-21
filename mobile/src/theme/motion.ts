@@ -10,7 +10,7 @@
  * Nothing moves while someone is reading.
  */
 
-import { APPLE_SPRINGS, springFor } from '@kurda/shared';
+import { APPLE_SPRINGS, TAB_CAPSULE, springFor } from '@kurda/shared';
 
 export const duration = {
   /** Presses and small state changes. */
@@ -33,10 +33,11 @@ export const curve = {
 
 /**
  * The springs, as Apple tunes them (shared `motion-physics.ts` converts duration and bounce to stiffness and
- * damping). `chrome` is the interface's own: no bounce, 99% there at 300 ms, for tab and segment capsules, steps,
+ * damping). `chrome` is the interface's own: no bounce, 99% there at 300 ms, for segment capsules, steps,
  * menus and sheets. `standard` is Apple's smooth half-second spring, for a moment's own parts. `release` has a touch
  * of bounce, for something just let go with momentum. `bouncy` is for joyful moments (an emblem landing). `arrive`
  * grows a page out of the card that opened it (theme/origin), as long as the stack's fade so the two read as one.
+ * `tabLead` and `tabFollow` carry the tab bar's capsule to another tab (shared `TAB_CAPSULE`).
  */
 export const spring = {
   chrome: springFor({ duration: 0.25, bounce: 0 }),
@@ -44,6 +45,8 @@ export const spring = {
   standard: springFor(APPLE_SPRINGS.smooth),
   release: springFor(APPLE_SPRINGS.snappy),
   bouncy: springFor(APPLE_SPRINGS.bouncy),
+  tabLead: springFor(TAB_CAPSULE.lead),
+  tabFollow: springFor(TAB_CAPSULE.follow),
 } as const;
 
 /** How far a finger moves before a tap becomes a drag: iOS's 10 points. */

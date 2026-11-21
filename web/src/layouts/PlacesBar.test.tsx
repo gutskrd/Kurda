@@ -235,6 +235,20 @@ describe('the bar of places', () => {
     expect(row).toHaveClass('is-leading-start');
   });
 
+  it('lifts the capsule again on every move, and not when the page first opens', async () => {
+    const { container } = show('/app');
+    const row = container.querySelector<HTMLElement>('.places-row')!;
+    expect(row.className).not.toMatch(/is-lift/);
+    await userEvent.click(screen.getByRole('link', { name: 'Messages' }));
+    expect(row).toHaveClass('is-lift-a');
+    await userEvent.click(screen.getByRole('link', { name: 'Home' }));
+    expect(row).toHaveClass('is-lift-b');
+    expect(row).not.toHaveClass('is-lift-a');
+    // the springs' curves travel with the row, from the numbers the phone app uses
+    expect(row.style.getPropertyValue('--lead-ease')).toMatch(/^linear\(0, /);
+    expect(row.style.getPropertyValue('--lead-ms')).toMatch(/^\d+ms$/);
+  });
+
   it('shrinks while the page scrolls down, and comes back on a scroll up', async () => {
     const { container } = show('/app');
     await screen.findByRole('link', { name: 'Home' });

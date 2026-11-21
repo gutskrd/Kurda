@@ -12,8 +12,8 @@ import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { useUnread } from '../messages/unread';
 import { haptic } from '../feedback/haptics';
-import { springTo, usePressScale } from '../theme/animate';
-import { TAB_BAR_SCROLL } from '@kurda/shared';
+import { springTo, timing, usePressScale } from '../theme/animate';
+import { TAB_BAR_SCROLL, TAB_CAPSULE } from '@kurda/shared';
 import { TAB_BAR_HEIGHT, TAB_BAR_SIDE, tabBarLift, useKeyboardShown } from './tabBarLayout';
 import { resetTabBar, useTabBarCompact } from './tabBarScroll';
 import { TABS, type TabName } from './tabs';
@@ -29,8 +29,6 @@ const RING = 2;
 const RING_GAP = 2;
 /** The bar's padding around the tabs, which is the air round the capsule behind the chosen tab. */
 const PAD = 5;
-/** How strongly the capsule is tinted with the ink the chosen tab is drawn in (tokens.ts `wash`). */
-const CAPSULE_TINT = 0x1f / 255;
 
 /**
  * The tab bar: four places in one rounded bar of glass floating over the page's foot (LiquidGlass.tsx), each an icon
@@ -45,7 +43,7 @@ const CAPSULE_TINT = 0x1f / 255;
  * shrinks and the bar would ride up over the list.
  */
 export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Element | null {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const insets = useSafeAreaInsets();
@@ -73,9 +71,10 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   }, [compact, size]);
 
   /*
-   * The capsule behind the chosen tab, by its two ends. Moving to another tab, the end in front springs there first and
-   * the one behind follows, so the capsule stretches toward the tab and settles round it. It is drawn once the row has
-   * been measured and arrives without a slide the first time.
+   * The capsule behind the chosen tab, by its two ends (shared `TAB_CAPSULE`). Moving to another tab, the end in front
+   * springs there first, a little past it, and the one behind follows, so the capsule stretches toward the tab and
+   * settles round it, lifting larger and lighter on the way. It is drawn once the row has been measured and arrives
+   * without a slide the first time.
    */
   const [row, setRow] = useState({ width: 0, height: 0 });
   const slot = row.width > 0 ? row.width / state.routes.length : 0;
@@ -83,6 +82,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   const place = mirrored ? state.routes.length - 1 - state.index : state.index;
   const start = useRef(new Animated.Value(0)).current;
   const end = useRef(new Animated.Value(0)).current;
+  const lift = useRef(new Animated.Value(0)).current;
   const placed = useRef<number | null>(null);
   useEffect(() => {
     if (slot <= 0) return;
@@ -93,16 +93,19 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
     if (reduceMotion || was === null || was === place) {
       start.setValue(from);
       end.setValue(to);
+      lift.setValue(0);
       return;
     }
     const forward = place > was;
+    const rise = Math.round(TAB_CAPSULE.liftMs / 3);
     const run = Animated.parallel([
-      springTo(forward ? end : start, forward ? to : from, 'chrome'),
-      springTo(forward ? start : end, forward ? from : to, 'arrive'),
+      springTo(forward ? end : start, forward ? to : from, 'tabLead'),
+      springTo(forward ? start : end, forward ? from : to, 'tabFollow'),
+      Animated.sequence([timing(lift, 1, rise), timing(lift, 0, TAB_CAPSULE.liftMs - rise)]),
     ]);
     run.start();
     return () => run.stop();
-  }, [place, slot, reduceMotion, start, end]);
+  }, [place, slot, reduceMotion, start, end, lift]);
 
   if (typing) return null;
 
@@ -118,7 +121,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             setRow((had) => (had.width === width && had.height === height ? had : { width, height }));
           }}
         >
-          {slot > 0 && row.height > 0 ? <Capsule start={start} end={end} slot={slot} height={row.height} ink={colors.primary} /> : null}
+          {slot > 0 && row.height > 0 ? <Capsule start={start} end={end} lift={lift} width={row.width} slot={slot} height={row.height} ink={colors.primary} fill={TAB_CAPSULE.fill[scheme]} /> : null}
           {state.routes.map((route, i) => {
             const tab = TABS.find((x) => x.name === route.name);
             const name = (tab?.name ?? route.name) as TabName;
@@ -180,25 +183,51 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
 
 /**
  * The capsule, drawn as two round ends and the span between them so its ends stay round however far it stretches.
- * The pieces are solid ink under one shared opacity, so where they overlap the tint does not double.
+ * The pieces are solid ink under one shared opacity, so where they overlap the tint does not double. Its ends stop at
+ * the bar's, so running past an end tab squeezes it against the wall instead of out of the bar.
  */
-function Capsule({ start, end, slot, height, ink }: { start: Animated.Value; end: Animated.Value; slot: number; height: number; ink: string }): React.JSX.Element {
+function Capsule({
+  start,
+  end,
+  lift,
+  width,
+  slot,
+  height,
+  ink,
+  fill,
+}: {
+  start: Animated.Value;
+  end: Animated.Value;
+  lift: Animated.Value;
+  width: number;
+  slot: number;
+  height: number;
+  ink: string;
+  fill: number;
+}): React.JSX.Element {
   const pieces = useMemo(() => {
-    const span = Animated.add(Animated.subtract(end, start), new Animated.Value(-height));
+    const wall = { inputRange: [0, width], outputRange: [0, width], extrapolate: 'clamp' as const };
+    const left = start.interpolate(wall);
+    const right = end.interpolate(wall);
+    const span = Animated.add(Animated.subtract(right, left), new Animated.Value(-height));
     return {
-      endCap: Animated.add(end, new Animated.Value(-height)),
+      left,
+      endCap: Animated.add(right, new Animated.Value(-height)),
       // The span is `slot` wide as drawn, scaled about its middle to reach from one end's centre to the other's.
-      spanX: Animated.add(Animated.multiply(Animated.add(start, end), 0.5), new Animated.Value(-slot / 2)),
+      spanX: Animated.add(Animated.multiply(Animated.add(left, right), 0.5), new Animated.Value(-slot / 2)),
       spanScale: span.interpolate({ inputRange: [0, slot], outputRange: [0, 1], extrapolateLeft: 'clamp' }),
+      grow: lift.interpolate({ inputRange: [0, 1], outputRange: [1, TAB_CAPSULE.liftScale] }),
+      tint: lift.interpolate({ inputRange: [0, 1], outputRange: [fill, fill * TAB_CAPSULE.liftFill] }),
     };
-  }, [start, end, slot, height]);
+  }, [start, end, lift, width, slot, height, fill]);
   const piece = { height, backgroundColor: ink };
+  const cap = { width: height, borderRadius: radii.pill };
   return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: CAPSULE_TINT }]} needsOffscreenAlphaCompositing testID="tab-pill">
-      <Animated.View style={[styles.piece, piece, { width: height, borderRadius: radii.pill, transform: [{ translateX: start }] }]} />
-      <Animated.View style={[styles.piece, piece, { width: height, borderRadius: radii.pill, transform: [{ translateX: pieces.endCap }] }]} />
-      <Animated.View style={[styles.piece, piece, { width: slot, transform: [{ translateX: pieces.spanX }, { scaleX: pieces.spanScale }] }]} />
-    </View>
+    <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { opacity: pieces.tint }]} needsOffscreenAlphaCompositing testID="tab-pill">
+      <Animated.View style={[styles.piece, piece, cap, { transform: [{ translateX: pieces.left }, { scale: pieces.grow }] }]} />
+      <Animated.View style={[styles.piece, piece, cap, { transform: [{ translateX: pieces.endCap }, { scale: pieces.grow }] }]} />
+      <Animated.View style={[styles.piece, piece, { width: slot, transform: [{ translateX: pieces.spanX }, { scaleX: pieces.spanScale }, { scaleY: pieces.grow }] }]} />
+    </Animated.View>
   );
 }
 

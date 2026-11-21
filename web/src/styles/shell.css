@@ -1963,26 +1963,56 @@
 }
 /*
  * The capsule behind the current place, by its two ends (`--at` of `--places`), appearing without a slide once a place
- * is chosen. Moving on, the end in front leads and the one behind follows, so it stretches toward the place and
- * settles round it.
+ * is chosen. Moving on, the end in front leads on a spring that runs a little past the place and the one behind
+ * follows on a softer one (PlacesBar.tsx), so it stretches toward the place and settles round it, lifting larger and
+ * lighter on the way. Its track stops at the bar's ends, so running past an end place squeezes it against the wall.
  */
+.places-track {
+  position: absolute;
+  inset-block: -4px;
+  inset-inline: 0;
+  border-radius: var(--r-pill);
+  overflow: hidden;
+  pointer-events: none;
+}
 .places-capsule {
   position: absolute;
-  inset-block: 0;
+  inset-block: 4px;
   inset-inline-start: calc(100% * var(--at) / var(--places));
   inset-inline-end: calc(100% * (var(--places) - var(--at) - 1) / var(--places));
   border-radius: var(--r-pill);
-  /* a faint wash of the ink the chosen place is drawn in, so capsule and glyph are one thing */
-  background: var(--primary-soft);
+  /* a wash of the ink the chosen place is drawn in, so capsule and glyph are one thing */
+  background: var(--capsule);
   transition:
-    inset-inline-start var(--dur-slow) var(--ease-out),
-    inset-inline-end var(--dur-slow) var(--ease-out);
+    inset-inline-start var(--follow-ms) var(--follow-ease),
+    inset-inline-end var(--follow-ms) var(--follow-ease);
 }
 .places-row.is-leading-end .places-capsule {
-  transition-duration: var(--dur-progress), var(--dur);
+  transition-duration: var(--follow-ms), var(--lead-ms);
+  transition-timing-function: var(--follow-ease), var(--lead-ease);
 }
 .places-row.is-leading-start .places-capsule {
-  transition-duration: var(--dur), var(--dur-progress);
+  transition-duration: var(--lead-ms), var(--follow-ms);
+  transition-timing-function: var(--lead-ease), var(--follow-ease);
+}
+/* the same lift under two names, so each move starts it again */
+.places-row.is-lift-a .places-capsule {
+  animation: places-lift-a var(--lift-ms) var(--ease-out);
+}
+.places-row.is-lift-b .places-capsule {
+  animation: places-lift-b var(--lift-ms) var(--ease-out);
+}
+@keyframes places-lift-a {
+  33% {
+    scale: var(--lift-scale);
+    opacity: var(--lift-fill);
+  }
+}
+@keyframes places-lift-b {
+  33% {
+    scale: var(--lift-scale);
+    opacity: var(--lift-fill);
+  }
 }
 /* a place: its whole share of the bar is the target, its glyph alone in the middle */
 .places-link {

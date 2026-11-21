@@ -55,6 +55,8 @@
   --primary-ink: #14112e;
   /* the ink as a faint ground: a chosen row, a chip that is on */
   --primary-soft: rgba(243, 241, 251, 0.1);
+  /* the capsule behind the chosen tab: the ink as a ground strong enough to read as the place you are on */
+  --capsule: rgba(243, 241, 251, 0.14);
 
   /* what is earned (XP, Zêr, the streak, medals): the ink, set apart by shape and weight */
   --gold: #f3f1fb;
@@ -230,6 +232,7 @@
   --primary-hover: #2c2a46;
   --primary-ink: #ffffff;
   --primary-soft: rgba(20, 17, 46, 0.06);
+  --capsule: rgba(20, 17, 46, 0.15);
 
   --gold: #14112e;
   --gold-ink: #14112e;
