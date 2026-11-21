@@ -1902,14 +1902,17 @@ button.chat-run-avatar:hover {
 .mkp-country {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   color: var(--ink-2);
   font-size: var(--text);
 }
-.mkp-country .flag {
+/* a country's flag before its name (components/Flag.tsx): cap height, square as the phone draws it, with a hairline so a white band keeps its edge */
+.flag {
   display: block;
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  flex: none;
+  width: 21px;
+  height: 14px;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 /* the sections under the card, in the order they are read */

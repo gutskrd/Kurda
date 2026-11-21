@@ -90,7 +90,7 @@ export function StoryCard({
           aria-label={bookmarked ? t('stories.library.unbookmark', { title: story.title }) : t('stories.library.bookmark', { title: story.title })}
           onClick={toggle}
         >
-          <BookmarkIcon size={18} weight={bookmarked ? 'fill' : 'regular'} />
+          <BookmarkIcon size={18} weight={bookmarked ? 'fill' : 'regular'} className={bookmarked ? 'saved-mark' : undefined} />
         </button>
       )}
       {problem && (

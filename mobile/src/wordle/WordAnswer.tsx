@@ -92,7 +92,7 @@ export function WordAnswer({
           // One 20-point line (its style says so), answered at a fingertip's reach above and below it.
           style={({ pressed }) => [styles.saveRow, { flexDirection: dir.row }, pressed && heldDim]}
         >
-          <Icon name={save.saved ? 'bookmark-fill' : 'bookmark'} size={16} color={colors.primary} />
+          <Icon name={save.saved ? 'bookmark-fill' : 'bookmark'} size={16} color={save.saved ? colors.saved : colors.primary} edge={save.saved ? colors.savedEdge : undefined} />
           <Text style={[styles.saveText, { color: colors.primary }]}>{save.saved ? t('dictionary.savedWord') : t('dictionary.saveWord')}</Text>
         </Pressable>
       ) : null}

@@ -75,8 +75,13 @@
   --bubble-theirs: #302c46;
   --bubble-theirs-ink: #f3f1fb;
   --gems: #f3f1fb;
-  /* a heart that has been given: filled, in the ink */
-  --like: #f3f1fb;
+  /*
+   * A heart given is red and a post saved is yellow, as everywhere people like and keep things; only the glyph wears
+   * them, never the count beside it. A saved bookmark has a deeper edge by day, where yellow alone is faint on white.
+   */
+  --like: #ff5a6a;
+  --saved: #ffc83d;
+  --saved-edge: #ffc83d;
   --danger: #ff9c90;
   --danger-soft: rgba(255, 120, 105, 0.16);
   /* a filled destructive button, and the words on it (5.9:1) */
@@ -242,7 +247,9 @@
   --bubble-theirs: #e7e4f1;
   --bubble-theirs-ink: #14112e;
   --gems: #14112e;
-  --like: #14112e;
+  --like: #e0263f;
+  --saved: #f5b400;
+  --saved-edge: #a87600;
   --danger: #b42318;
   --danger-soft: rgba(180, 35, 24, 0.09);
   --danger-fill: #b42318;

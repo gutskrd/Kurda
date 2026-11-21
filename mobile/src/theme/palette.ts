@@ -118,6 +118,14 @@ export interface Palette {
 
   /** Something new waiting (an unread message, a gift): the small dot on a tab, in the red every phone uses for it. */
   notice: string;
+
+  /**
+   * A heart given is red and something saved is yellow, as everywhere people like and keep things; only the glyph wears
+   * them. A saved bookmark has a deeper edge by day (`savedEdge`), where yellow alone is faint on white.
+   */
+  like: string;
+  saved: string;
+  savedEdge: string;
 }
 
 export const LIGHT: Palette = {
@@ -127,6 +135,9 @@ export const LIGHT: Palette = {
   accent: '#862BE2',
   gold: '#14112E',
   danger: '#C0392B',
+  like: '#E0263F',
+  saved: '#F5B400',
+  savedEdge: '#A87600',
   success: '#2E7D32',
   successFill: '#DCF7E1',
   dangerFill: '#FEE9E6',
@@ -189,6 +200,9 @@ export const DARK: Palette = {
   accent: '#BF9BFE',
   gold: '#F3F1FB',
   danger: '#FF9C90',
+  like: '#FF5A6A',
+  saved: '#FFC83D',
+  savedEdge: '#FFC83D',
   success: '#86E2A4',
   successFill: 'rgba(87,185,107,0.18)',
   dangerFill: 'rgba(255,120,105,0.16)',

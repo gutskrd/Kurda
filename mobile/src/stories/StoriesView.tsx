@@ -698,8 +698,8 @@ function StoryCard({
         // Drawn 32 over the cover but answering over 48: 8 past every edge, still inside the card.
         style={({ pressed }) => [styles.bookmark, { backgroundColor: colors.surface, opacity: pressed ? pressedDim : 1 }]}
       >
-        {/* On is violet, as everything chosen is. */}
-        <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={18} color={bookmarked ? colors.primary : colors.textSecondary} />
+        {/* A saved story's bookmark is yellow, as a saved post's is. */}
+        <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={18} color={bookmarked ? colors.saved : colors.textSecondary} edge={bookmarked ? colors.savedEdge : undefined} />
       </Pressable>
     </View>
   );

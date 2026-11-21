@@ -32,8 +32,8 @@
   --t-ink: var(--hue-deep);
 }
 .ticket--friend {
-  --t-accent: var(--like);
-  --t-ink: var(--like);
+  --t-accent: var(--ink);
+  --t-ink: var(--ink);
 }
 .ticket--muted {
   --t-accent: var(--ink-4);
@@ -279,7 +279,7 @@
   flex-direction: column;
 }
 .friend-ask-sent > svg {
-  color: var(--like);
+  color: var(--ink);
 }
 .friend-ask-ticket {
   --stub-w: 18px;

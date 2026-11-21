@@ -160,7 +160,7 @@
   inset: 0;
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--like);
   filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.35));
   pointer-events: none;
   animation: fcard-heart 0.9s var(--ease-out, ease-out) both;

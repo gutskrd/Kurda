@@ -482,7 +482,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       accessibilityState={{ selected: bookmarked }}
       style={({ pressed }) => [styles.headerButton, pressed && heldDim]}
     >
-      <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={22} color={bookmarked ? colors.primary : colors.textPrimary} />
+      <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={22} color={bookmarked ? colors.saved : colors.textPrimary} edge={bookmarked ? colors.savedEdge : undefined} />
     </Pressable>
   );
 
@@ -990,7 +990,7 @@ function VocabularyRow({
           accessibilityState={{ selected: saved }}
           style={({ pressed }) => [styles.wordPlay, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
         >
-          <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={colors.primary} />
+          <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={saved ? colors.saved : colors.primary} edge={saved ? colors.savedEdge : undefined} />
         </Pressable>
       ) : saveColumn && playable ? (
         <View style={styles.wordSlot} />

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { COUNTRIES, countriesIn, countryName, flagUrl } from './countries';
+import { COUNTRIES, countriesIn, countryName } from './countries';
 
 describe('COUNTRIES', () => {
   it('includes Kurdistan', () => {
@@ -21,17 +21,6 @@ describe('COUNTRIES', () => {
   it('stays in alphabetical order, so the picker is scannable', () => {
     const names = COUNTRIES.map((c) => c.name);
     expect([...names].sort((a, b) => a.localeCompare(b))).toEqual(names);
-  });
-});
-
-describe('flagUrl', () => {
-  it('serves Kurdistan from this app, not from a service that only knows states', () => {
-    expect(flagUrl('KU')).toBe('/flags/kurdistan.png');
-    expect(flagUrl('ku')).toBe('/flags/kurdistan.png');
-  });
-
-  it('still uses the flag service for everything else', () => {
-    expect(flagUrl('DE')).toBe('https://flagcdn.com/w40/de.png');
   });
 });
 

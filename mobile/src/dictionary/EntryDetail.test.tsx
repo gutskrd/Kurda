@@ -103,7 +103,7 @@ describe('a dictionary entry’s pronunciations', () => {
 });
 
 describe('a saved word', () => {
-  it('is marked in the violet of what is on, as a bookmarked story is, and in the page’s quiet ink when it is not', async () => {
+  it('is marked in the saved yellow, as a bookmarked story is, and in the page’s quiet ink when it is not', async () => {
     testAuth.client = fakeClient({
       'GET /dictionary/entries/e1': ok({ ...entry([]), saved: true }),
       'DELETE /dictionary/entries/e1/save': ok({ saved: false }),
@@ -112,7 +112,7 @@ describe('a saved word', () => {
     // The app opens by night until the reader chooses otherwise, and nobody has here.
     const night = PALETTES.dark;
     const mark = (name: string): string | null | undefined => screen.getByRole('button', { name }).querySelector('path')?.getAttribute('fill');
-    await waitFor(() => expect(mark('Remove bookmark')).toBe(night.primary));
+    await waitFor(() => expect(mark('Remove bookmark')).toBe(night.saved));
     fireEvent.click(screen.getByRole('button', { name: 'Remove bookmark' }));
     await waitFor(() => expect(mark('Bookmark word')).toBe(night.textSecondary));
   });

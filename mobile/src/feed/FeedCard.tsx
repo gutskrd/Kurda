@@ -141,7 +141,8 @@ export function PostActions({
       <ReachGroup gap={spacing.sm} rowGap={ACTIONS_ABOVE}>
         <Action
           icon={e.liked ? 'heart-fill' : 'heart'}
-          tint={e.liked ? colors.danger : undefined}
+          tint={e.liked ? colors.like : undefined}
+          inkCount
           on={e.liked}
           label={e.liked ? t('feed.unlike') : t('feed.like')}
           count={count(e.likes)}
@@ -164,6 +165,8 @@ export function PostActions({
         {held ? null : <Action icon="share" label={t('share.post')} onPress={() => setSharing(true)} />}
         <Action
           icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
+          tint={e.bookmarked ? colors.saved : undefined}
+          edge={e.bookmarked ? colors.savedEdge : undefined}
           on={e.bookmarked}
           label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
           onPress={() => engage.act('bookmark')}
@@ -382,7 +385,7 @@ function Bloom({ fired, children }: { fired: number; children: React.ReactNode }
       {children}
       <View pointerEvents="none" style={styles.bloomLayer} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Animated.View style={{ opacity, transform: [{ scale }] }}>
-          <Icon name="heart-fill" size={92} color={colors.danger} />
+          <Icon name="heart-fill" size={92} color={colors.like} />
         </Animated.View>
       </View>
     </View>
@@ -461,7 +464,7 @@ const NAME_LINE = 18;
 
 /**
  * One soft pill under a post: a 20 pt glyph and its count, or a round button of the same height without one.
- * Filled, not framed, and no different when on; the glyph shows that (a red heart, a green repost, a filled
+ * Filled, not framed, and no different when on; the glyph shows that (a red heart, a green repost, a yellow
  * bookmark). The label says what pressing does, never the count, since a screen reader would otherwise announce
  * the number as its name.
  */
@@ -471,6 +474,8 @@ function Action({
   count,
   on = false,
   tint,
+  edge,
+  inkCount = false,
   burst,
   onPress,
 }: {
@@ -478,15 +483,19 @@ function Action({
   label: string;
   count?: number;
   on?: boolean;
-  /** The colour while on, when it is not the ink (a red heart, a green repost). */
+  /** The colour while on, when it is not the ink (a red heart, a green repost, a yellow bookmark). */
   tint?: string;
+  /** The on glyph's hairline, where its colour alone is faint on the page. */
+  edge?: string;
+  /** The count stays in the ink while the glyph is tinted: the heart says it, the number counts it. */
+  inkCount?: boolean;
   /** Goes up each time the icon should pop with a burst (a like). */
   burst?: number;
   onPress: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const colour = tint ?? colors.textPrimary;
-  const glyph = <Icon name={icon} size={20} color={colour} />;
+  const glyph = <Icon name={icon} size={20} color={colour} edge={edge} />;
   return (
     <Pressable
       onPress={onPress}
@@ -496,13 +505,13 @@ function Action({
       style={({ pressed }) => [styles.pill, count ? styles.pillWide : null, { backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
     >
       {burst !== undefined ? (
-        <HeartBurst fired={burst} color={colors.danger} size={20}>
+        <HeartBurst fired={burst} color={colors.like} size={20}>
           {glyph}
         </HeartBurst>
       ) : (
         glyph
       )}
-      {count ? <TickCount value={count} color={tint ?? colors.textPrimary} /> : null}
+      {count ? <TickCount value={count} color={inkCount ? colors.textPrimary : (tint ?? colors.textPrimary)} /> : null}
     </Pressable>
   );
 }

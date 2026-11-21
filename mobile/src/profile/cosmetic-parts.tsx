@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
+import { SvgXml } from 'react-native-svg';
+import { flagSvg } from '@kurda/shared/src/flags';
 import { assetUrl } from '../api/env';
 import { radii, spacing, typography } from '../theme/tokens';
 import { Icon } from '../theme/Icon';
@@ -100,22 +102,24 @@ export function GiftedNote({
   );
 }
 
-/** A country's small flag beside its name; a flag that cannot be fetched is left out rather than leaving a gap. */
+/**
+ * A country's small flag before its name, drawn by Hevalo (shared/src/flags.ts), so it shows at once, offline too, and
+ * no outside service learns who looked. Left out for a code with no flag. Decorative: the name beside it says it.
+ */
 export function Flag({ code }: { code: string }): React.JSX.Element | null {
-  const [failed, setFailed] = useState(false);
-  if (failed) return null;
-  return <Image source={{ uri: flagUrl(code) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden onError={() => setFailed(true)} />;
+  const { colors } = useTheme();
+  const xml = useMemo(() => flagSvg(code), [code]);
+  if (!xml) return null;
+  return (
+    <View style={[styles.flag, { borderColor: colors.separator }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <SvgXml xml={xml} width={FLAG_W} height={FLAG_H} preserveAspectRatio="xMidYMid slice" />
+    </View>
+  );
 }
 
-/**
- * Where a flag picture comes from. The country list is `@kurda/shared`'s, as the browser's. Flags are small cached PNGs
- * from a flag CDN, since emoji flags do not render on every platform; Kurdistan's is served by Hevalo, since services
- * that only know states do not have it.
- */
-export function flagUrl(code: string): string {
-  if (code.toUpperCase() === 'KU') return assetUrl('/flags/kurdistan.png') ?? '';
-  return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
-}
+/** A flag's size: 3:2, as tall as a capital letter. */
+const FLAG_W = 21;
+const FLAG_H = 14;
 
 const styles = StyleSheet.create({
   premium: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
@@ -123,6 +127,6 @@ const styles = StyleSheet.create({
   gifts: { gap: 2, marginTop: spacing.xs },
   gift: { alignItems: 'center', gap: spacing.xs },
   giftText: { fontSize: typography.sizes.text },
-  // A plain 22x16 image, as on the website; a radius this small would be a rounding error.
-  flag: { width: 22, height: 16 },
+  // A hairline so a white band keeps its edge on a white page, as on the website.
+  flag: { width: FLAG_W, height: FLAG_H, borderRadius: radii.none, borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
 });

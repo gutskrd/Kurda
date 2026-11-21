@@ -13,6 +13,7 @@ import { describeError } from '../api/errors';
 import { restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
 import { useDirection } from '../reports/direction';
+import { Flag } from './cosmetic-parts';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -266,7 +267,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
             <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{t('edit.country')}</Text>
             <View style={[styles.countries, { flexDirection: dir.row }]}>
               {/* What it is set to now: a value, not a button, since tapping it has nothing to do. */}
-              <CountryChip label={chosenCountry ? chosenCountry.name : t('edit.noCountry')} on />
+              <CountryChip label={chosenCountry ? chosenCountry.name : t('edit.noCountry')} code={chosenCountry?.code} on />
               {/* Taking it off is one tap, and says so. */}
               {chosenCountry ? (
                 <CountryChip
@@ -290,6 +291,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                     <CountryChip
                       key={c.code}
                       label={c.name}
+                      code={c.code}
                       on={false}
                       onPress={() => {
                         typed(setCountry)(c.code);
@@ -393,29 +395,35 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
 /**
  * A country as a choice to tap, or (without `onPress`) as the one chosen, in solid violet as every chosen option
- * is. Drawn 36pt tall and answering over 48pt; where the matches wrap, their group holds each to half the
+ * is, with its flag before its name. Drawn 36pt tall and answering over 48pt; where the matches wrap, their group holds each to half the
  * gap between rows.
  */
 function CountryChip({
   label,
+  code,
   on,
   onPress,
   accessibilityLabel,
 }: {
   label: string;
+  /** The country's code, for its flag; none on "Remove" or with no country chosen. */
+  code?: string;
   on: boolean;
   onPress?: () => void;
   accessibilityLabel?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const dir = useDirection();
   const fill = on ? colors.primary : colors.controlTrack;
   const ink = on ? colors.textOnPrimary : colors.textPrimary;
+  const body = (
+    <>
+      {code ? <Flag code={code} /> : null}
+      <Text style={[styles.chipText, { color: ink }]}>{label}</Text>
+    </>
+  );
   if (!onPress) {
-    return (
-      <View style={[styles.chip, { backgroundColor: fill }]}>
-        <Text style={[styles.chipText, { color: ink }]}>{label}</Text>
-      </View>
-    );
+    return <View style={[styles.chip, { backgroundColor: fill, flexDirection: dir.row }]}>{body}</View>;
   }
   return (
     <Pressable
@@ -423,9 +431,9 @@ function CountryChip({
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       accessibilityLabel={accessibilityLabel ?? label}
-      style={({ pressed }) => [styles.chip, { backgroundColor: fill }, pressed && heldDim]}
+      style={({ pressed }) => [styles.chip, { backgroundColor: fill, flexDirection: dir.row }, pressed && heldDim]}
     >
-      <Text style={[styles.chipText, { color: ink }]}>{label}</Text>
+      {body}
     </Pressable>
   );
 }
@@ -445,7 +453,7 @@ const styles = StyleSheet.create({
   inputMirrored: { textAlign: 'right' },
   bio: { minHeight: 96, textAlignVertical: 'top' },
   countries: { flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
-  chip: { minHeight: 36, justifyContent: 'center', borderRadius: radii.pill, paddingHorizontal: spacing.md - 2 },
+  chip: { minHeight: 36, alignItems: 'center', justifyContent: 'center', gap: spacing.sm - 2, borderRadius: radii.pill, paddingHorizontal: spacing.md - 2 },
   chipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   save: { marginTop: spacing.md },
   avatars: { flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },

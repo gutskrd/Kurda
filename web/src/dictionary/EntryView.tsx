@@ -96,8 +96,8 @@ export function EntryView({
             aria-pressed={saved}
             aria-label={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
           >
-            {/* A saved word is filled, in the violet used for everything chosen. */}
-            <BookmarkIcon size={16} weight={saved ? 'fill' : 'regular'} />
+            {/* A saved word's bookmark is filled in yellow, as a saved post's is. */}
+            <BookmarkIcon size={16} weight={saved ? 'fill' : 'regular'} className={saved ? 'saved-mark' : undefined} />
             <span>{saved ? t('dictionary.savedWord') : t('dictionary.saveWord')}</span>
           </button>
         </div>

@@ -291,7 +291,7 @@ function ReadStory({ story, cover }: { story: StoryDetail; cover: React.Ref<HTML
                 aria-label={bookmarked ? t('stories.library.unbookmark', { title: story.title }) : t('stories.library.bookmark', { title: story.title })}
                 onClick={toggleBookmark}
               >
-                <BookmarkIcon size={18} weight={bookmarked ? 'fill' : 'regular'} />
+                <BookmarkIcon size={18} weight={bookmarked ? 'fill' : 'regular'} className={bookmarked ? 'saved-mark' : undefined} />
                 <span>{bookmarked ? t('stories.overview.bookmarked') : t('stories.overview.bookmark')}</span>
               </button>
             )}

@@ -53,9 +53,9 @@ describe('UserProfile (other user, full page)', () => {
     );
 
     expect(await screen.findByText('Zana K')).toBeInTheDocument();
-    // Country: real flag image + name under the username.
+    // Country: its flag, drawn by Hevalo rather than fetched from elsewhere, before the name under the username.
     expect(screen.getByText('Germany')).toBeInTheDocument();
-    expect((document.querySelector('.mkp-country .flag') as HTMLImageElement | null)?.src).toContain('flagcdn.com/w40/de.png');
+    await waitFor(() => expect((document.querySelector('.mkp-country img.flag') as HTMLImageElement | null)?.src).toMatch(/^data:image\/svg\+xml/));
     expect(document.querySelector('.ph-level-n')?.textContent).toBe('5');
     expect((document.querySelector('.ph-banner .pcard-bg-media') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
     expect(screen.getByText('River Song')).toBeInTheDocument();

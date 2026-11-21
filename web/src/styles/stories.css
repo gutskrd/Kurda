@@ -554,10 +554,6 @@
 .story-card-bookmark:hover {
   background: color-mix(in srgb, var(--app-bg) 90%, transparent);
 }
-/* a bookmark that is on is the violet of everything chosen */
-.story-card-bookmark.is-on {
-  color: var(--primary);
-}
 .story-card-bookmark:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
@@ -702,9 +698,6 @@
   .story-overview-actions .btn-primary {
     flex: 1 1 100%;
   }
-}
-.story-overview-bookmark.is-on {
-  color: var(--primary);
 }
 /* a story told in both varieties: the library's own switch, at the head of its overview */
 .story-variety-reader {

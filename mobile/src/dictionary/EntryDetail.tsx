@@ -101,8 +101,8 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                   reach="open"
                   style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
                 >
-                  {/* A saved word is on, and on is violet, as a bookmarked story is. */}
-                  <Icon name={shownSaved ? 'bookmark-fill' : 'bookmark'} size={22} color={shownSaved ? colors.primary : colors.textSecondary} />
+                  {/* A saved word's bookmark is yellow, as a saved story's is. */}
+                  <Icon name={shownSaved ? 'bookmark-fill' : 'bookmark'} size={22} color={shownSaved ? colors.saved : colors.textSecondary} edge={shownSaved ? colors.savedEdge : undefined} />
                 </PressableScale>
               </ReachGroup>
             </View>

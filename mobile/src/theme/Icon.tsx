@@ -20,12 +20,15 @@ export function Icon({
   size = 24,
   color,
   tone,
+  edge,
   style,
 }: {
   name: IconName;
   size?: number;
   color?: string;
   tone?: 'primary' | 'secondary' | 'onPrimary';
+  /** A hairline round a filled glyph, where its colour alone is faint on the page (a saved bookmark by day). */
+  edge?: string;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -45,7 +48,7 @@ export function Icon({
     <View style={[{ width: size, height: size }, style]}>
       <Svg width={size} height={size} viewBox={`0 0 ${ICON_VIEWBOX} ${ICON_VIEWBOX}`}>
         {ICON_PATHS[name].map((d) => (
-          <Path key={d} d={d} fill={fill} />
+          <Path key={d} d={d} fill={fill} stroke={edge} strokeWidth={edge ? 10 : undefined} />
         ))}
       </Svg>
     </View>

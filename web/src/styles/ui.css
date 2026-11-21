@@ -632,3 +632,10 @@ select optgroup {
 .currency-icon > svg {
   display: block;
 }
+
+/* A bookmark that is on, wherever something can be saved: yellow, with a deeper edge by day (tokens.css). */
+.saved-mark {
+  color: var(--saved);
+  stroke: var(--saved-edge);
+  stroke-width: 10px;
+}
