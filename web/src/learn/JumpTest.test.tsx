@@ -85,7 +85,9 @@ describe('a jump-ahead test', () => {
   it('ends on the chapter opened, and goes to it', async () => {
     serve({ 'POST /courses/c1/jump': test({ x: { verdict: 'correct', accepted: true } }), 'POST /practice/sessions/j1/complete': outcome(true) });
     show();
-    expect(await screen.findByRole('heading', { name: 'Chapter 3 is open!' })).toHaveFocus();
+    const heading = await screen.findByRole('heading', { name: 'Chapter 3 is open!' });
+    // The heading takes focus once it is on screen, so it is read at once.
+    await waitFor(() => expect(heading).toHaveFocus());
     expect(screen.getByText('1 of 1 right. The lessons you skipped stay open to come back to.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Go to Chapter 3' }));
     expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/course/c1');
