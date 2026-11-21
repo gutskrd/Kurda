@@ -104,19 +104,29 @@ export interface HeadParts {
 
 /**
  * His antlers and ears on his head turned `share` of a full turn of `yawDeg` aside (above 0 to our right): standing
- * behind the middle of his head, they move the other way from his face, and each narrows as its side turns away. The
- * face itself is drawn turned in the round (head-round.ts).
+ * behind the middle of his head, they move the other way from his face, and each narrows as its side turns away. With
+ * `turn.behind`, the head turns about a point that far behind its middle (his neck), so they ride with the whole head
+ * as well; `turn.earOut` and `turn.antlerOut` say how far each faces out to its side, so how much it turns with him.
+ * The face itself is drawn turned as a whole (head-round.ts).
  */
-export function headParts(art: CharacterArt, share: number, yawDeg: number = HEAD_ROUND.yaw): HeadParts {
+export function headParts(
+  art: CharacterArt,
+  share: number,
+  yawDeg: number = HEAD_ROUND.yaw,
+  turn: { behind?: number; earOut?: number; antlerOut?: number } = {},
+): HeadParts {
   const rig = art.rig;
   if (!rig?.antlers) throw new Error('headParts: drawn without antlers on their own');
   const yaw = Math.max(-1, Math.min(1, share)) * yawDeg * DEG;
   const R = HEAD_ROUND;
+  const behind = turn.behind ?? 0;
+  const earOut = turn.earOut ?? R.earOut;
+  const antlerOut = turn.antlerOut ?? R.antlerOut;
   return {
-    antlerLeft: partTurn('left', rig.antlers.left.pivot, R.antler, yaw, 0, R.antlerOut, R.antlerBack),
-    antlerRight: partTurn('right', rig.antlers.right.pivot, R.antler, yaw, 0, R.antlerOut, R.antlerBack),
-    earLeft: partTurn('left', earRoot('left', rig.ears.left.pivot), R.ear, yaw, 0, R.earOut, R.earBack),
-    earRight: partTurn('right', earRoot('right', rig.ears.right.pivot), R.ear, yaw, 0, R.earOut, R.earBack),
+    antlerLeft: partTurn('left', rig.antlers.left.pivot, R.antler + behind, yaw, 0, antlerOut, R.antlerBack),
+    antlerRight: partTurn('right', rig.antlers.right.pivot, R.antler + behind, yaw, 0, antlerOut, R.antlerBack),
+    earLeft: partTurn('left', earRoot('left', rig.ears.left.pivot), R.ear + behind, yaw, 0, earOut, R.earBack),
+    earRight: partTurn('right', earRoot('right', rig.ears.right.pivot), R.ear + behind, yaw, 0, earOut, R.earBack),
   };
 }
 

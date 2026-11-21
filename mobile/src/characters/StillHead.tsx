@@ -1,11 +1,10 @@
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { SvgXml } from 'react-native-svg';
 import type { BrowState } from '@kurda/shared';
 import { useDrawingIds } from './drawingIds';
 import type { Turn } from './headTurnMotion';
 import { characterLayers } from './layers';
-import { TurnedHead } from './TurnedHead';
+import { TurnedHead, TurnedNeck } from './TurnedHead';
 
 /**
  * Hevalo's head and neck as a still picture that can still turn aside in the round (`turn`, shared head-round.ts): no
@@ -18,7 +17,7 @@ export function StillHead({ width, turn, brows = 'neutral', flip = false }: { wi
   const height = (width * layers.frame.h) / layers.frame.w;
   return (
     <View style={[{ width, height }, flip ? styles.flip : null]} aria-hidden>
-      <SvgXml xml={layers.body} width={width} height={height} style={StyleSheet.absoluteFill} />
+      <TurnedNeck xml={layers.body} turn={turn} width={width} height={height} />
       <TurnedHead layers={layers} turn={turn} width={width} height={height} eyes="open" brows={brows} mouth="rest" />
     </View>
   );

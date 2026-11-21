@@ -14,10 +14,15 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-/** How far across his nose is drawn, in his own units (the middle of his face is 255): the middle of its outline's points. */
+/** How far across his nose is seen, in his own units (the middle of his face is 255): its outline's points where its piece puts them. */
 function noseX(root: Element): number {
-  const ds = [...root.querySelectorAll('[data-sc="nose"] path')].map((p) => p.getAttribute('d') ?? '');
-  const xs = ds.flatMap((d) => (mapPath(d, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => Number(pair.split(',')[0])));
+  const xs = [...root.querySelectorAll('[data-sc="nose"] path')].flatMap((p) => {
+    // A turned piece is moved and scaled across as `matrix(wide 0 0 tall x y)`.
+    const placed = (p.closest('[data-piece]')?.getAttribute('transform') ?? '').match(/matrix\(([^)]+)\)/)?.[1]?.split(' ').map(Number);
+    const [wide, , , , x] = placed ?? [1, 0, 0, 1, 0, 0];
+    const pairs = mapPath(p.getAttribute('d') ?? '', (px, py) => [px, py]).match(/-?[\d.]+,-?[\d.]+/g) ?? [];
+    return pairs.map((pair) => wide! * Number(pair.split(',')[0]) + x!);
+  });
   return xs.reduce((a, b) => a + b, 0) / xs.length;
 }
 
@@ -123,7 +128,7 @@ describe('HevaloPeek', () => {
     expect(still.style.getPropertyValue('--peek-lean')).toBe('');
   });
 
-  it('redraws his head turned in the round toward the side the phone swings back on, and toward the side it tilts down on', async () => {
+  it('turns his whole head toward the side the phone swings back on, and toward the side it tilts down on', async () => {
     vi.stubGlobal('DeviceOrientationEvent', class extends Event {});
     const { container } = render(
       <I18nProvider>
@@ -136,11 +141,22 @@ describe('HevaloPeek', () => {
     expect(container.querySelectorAll('[data-round] ellipse, [data-round] circle')).toHaveLength(0);
     expect(container.querySelectorAll('[data-eyes="closed"]')).toHaveLength(1);
     expect(noseX(container)).toBeCloseTo(art.rig!.sniff.x, 0);
+    // Facing us, his muzzle's side and the backs of his ears and antlers are hidden; his neck is marked to bend.
+    expect(container.querySelector('[data-shape="snout"]')!.getAttribute('display')).toBe('none');
+    const behind = [...container.querySelectorAll('[data-behind]')];
+    expect(behind.length).toBeGreaterThan(4);
+    for (const g of behind) expect(g.getAttribute('display')).toBe('none');
+    const neckTop = (): string => container.querySelector('[data-neck="neck"]')!.getAttribute('d') ?? '';
+    const restNeck = neckTop();
     for (let i = 0; i < 12; i++) {
       window.dispatchEvent(Object.assign(new Event('devicemotion'), { rotationRate: { alpha: 0, beta: 0, gamma: 150 } }));
       await act(() => new Promise((r) => setTimeout(r, 40)));
     }
     await waitFor(() => expect(noseX(container)).toBeGreaterThan(280), { timeout: 3000 });
+    // Turned, they come into view, and his neck rides round under his head.
+    expect(container.querySelector('[data-shape="snout"]')!.hasAttribute('display')).toBe(false);
+    for (const g of behind) expect(g.hasAttribute('display')).toBe(false);
+    expect(neckTop()).not.toBe(restNeck);
     // The antlers, behind the middle of his head, go the other way.
     expect(container.querySelector('[data-turn="antler-left"]')!.getAttribute('transform')).toMatch(/^translate\((-?[\d.]+)/);
     cleanup();

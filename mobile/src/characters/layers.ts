@@ -44,6 +44,8 @@ export interface RigLayers {
   sniff: Share;
   /** Each antler on its own, for a head turning aside (TurnedHead); null for a deer drawn with his antlers as one. */
   antlers: { left: string; right: string } | null;
+  /** The face as its outline and what lies on it, for a head turning aside; null for a deer drawn without them. */
+  faceParts: { outline: string; features: string } | null;
 }
 
 export interface CharacterLayers {
@@ -169,6 +171,7 @@ function drawLayers(speaker: SpeakerId, crop: CharacterCrop): CharacterLayers {
           half: svg(rig.look.half),
           sniff: share(rig.sniff),
           antlers: rig.antlers ? { left: svg(rig.antlers.left.art), right: svg(rig.antlers.right.art) } : null,
+          faceParts: rig.faceLayers ? { outline: svg(rig.faceLayers.outline), features: svg(rig.faceLayers.features) } : null,
         }
       : null,
   };

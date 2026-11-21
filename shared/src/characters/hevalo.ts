@@ -429,6 +429,19 @@ const MUZZLE: Knot[] = symmetric(
   AXIS,
 );
 
+/**
+ * His head's outline drawn through its knots moved by `map`: the same curve as drawn when the map leaves them, and
+ * smooth however it moves them, for his head turned aside (head-round.ts).
+ */
+export function hevaloHead(map: (x: number, y: number) => readonly [number, number]): string {
+  return curve(
+    HEAD.map(([x, y, r]) => {
+      const [mx, my] = map(x, y);
+      return [mx, my, r ?? 1] as const;
+    }),
+  );
+}
+
 /** His head's and resting ears' outlines, for shadows he throws on what is behind him (peek.ts). */
 export const HEVALO_SILHOUETTE: { head: string; ears: readonly [string, string] } = {
   head: curve(HEAD),

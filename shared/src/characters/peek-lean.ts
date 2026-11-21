@@ -64,8 +64,8 @@ export function leanFor(tiltDeg: number): number {
 
 /** How his head turns as the phone swings round. */
 export const PEEK_TURN = {
-  /** how far his head turns, in degrees, all the way to a side: further than the companion's, to read at this size */
-  yawDeg: 32,
+  /** how far his whole head turns, in degrees, all the way to a side: far enough to read as a turn, his far eye still whole */
+  yawDeg: 24,
   /** the steps a player draws his turned face in, either way to a full turn: under half a degree each */
   steps: 72,
   /** how far the phone swings round, in degrees, to turn his head most of the way; he eases toward a full turn past it */

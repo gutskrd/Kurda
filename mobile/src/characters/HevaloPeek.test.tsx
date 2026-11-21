@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 import { act, cleanup, screen, waitFor } from '@testing-library/react';
-import { PEEK_LEAN, PEEK_PLACE, mapPath } from '@kurda/shared';
+import { HEAD_RIG, PEEK_LEAN, PEEK_PLACE, mapPath } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { HevaloPeek } from './HevaloPeek';
@@ -132,13 +132,27 @@ async function swing(rate: number, times = 12): Promise<void> {
   }
 }
 
-/** How far across his nose is drawn, in his own units (the middle of his face is 255): the middle of its outline's points. */
+/** How far across his nose is seen, in his own units (the middle of his face is 255): its outline's points where its piece puts them. */
 function noseX(): number {
   const markup = document.querySelector('svg[data-markup*=\'id="id-nose"\']')?.getAttribute('data-markup') ?? '';
-  const xs = [...markup.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
-    (mapPath(m[1]!, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => Number(pair.split(',')[0])),
+  // Each shape of a turned head sits in its piece's `matrix(wide 0 0 tall x y)`; facing us, it is drawn as it is.
+  const pieces = [...markup.matchAll(/<g transform="matrix\(([^)]+)\)">(.*?)<\/g>/g)];
+  const placed = pieces.length > 0 ? pieces.map((m) => ({ by: m[1]!.split(' ').map(Number), inner: m[2]! })) : [{ by: [1, 0, 0, 1, 0, 0], inner: markup }];
+  const xs = placed.flatMap(({ by, inner }) =>
+    [...inner.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
+      (mapPath(m[1]!, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => by[0]! * Number(pair.split(',')[0]) + by[4]!),
+    ),
   );
   return xs.reduce((a, b) => a + b, 0) / xs.length;
+}
+
+/** How far across the top of his neck's outline is seen on its left, in his own units, and whether his ears show their backs. */
+function neckAndEars(): { neck: number; earBacks: boolean } {
+  const markups = [...document.querySelectorAll('svg[data-markup]')].map((svg) => svg.getAttribute('data-markup') ?? '');
+  const neck = markups.find((m) => m.includes('-bib)')) ?? '';
+  const fur = neck.match(/<path d="([^"]+)" fill="url\(#[^)]*-fur\)"/)?.[1] ?? '';
+  const top = (mapPath(fur, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => pair.split(',').map(Number)).filter(([, y]) => y! < 420);
+  return { neck: Math.min(...top.map(([x]) => x!)), earBacks: markups.some((m) => m.includes(`fill="${HEAD_RIG.ear.colour}"`)) };
 }
 
 describe('Hevalo turning his head as the phone swings round or tilts', () => {
@@ -147,9 +161,14 @@ describe('Hevalo turning his head as the phone swings round or tilts', () => {
     renderWithProviders(<HevaloPeek size={240} pop={false} />);
     await settle();
     expect(noseX()).toBeCloseTo(255, 0);
+    const rest = neckAndEars();
+    expect(rest.earBacks).toBe(false);
     // A quarter-second swing of 24 degrees, its right side going back.
     await swing(60, 10);
     await waitFor(() => expect(noseX()).toBeGreaterThan(275), { timeout: 3000 });
+    // His neck rides round under his head, and his ears show their depth.
+    expect(neckAndEars().neck).toBeGreaterThan(rest.neck + 10);
+    expect(neckAndEars().earBacks).toBe(true);
     await swing(-60, 10);
     await waitFor(() => expect(Math.abs(noseX() - 255)).toBeLessThan(4), { timeout: 3000 });
     await swing(-60, 10);
