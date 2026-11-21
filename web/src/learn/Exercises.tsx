@@ -24,6 +24,7 @@ import { kurdishText } from './map';
 import { PlayButton } from './PlayButton';
 import { askHeadline, lineIsEnglish, lineTokens } from './asks';
 import { Bubble, LinePlay, LineWords, PromptWords, SoundBubble, type GapFill } from './Bubble';
+import { useAutoplay } from './useAutoplay';
 import { PictureArt, pictureName } from './Pictures';
 import { Tile, type TileState } from './Tile';
 import { ExerciseVoice, exerciseClips } from './Voice';
@@ -104,6 +105,8 @@ function Scene({ exercise, feedback, children }: { exercise: DeliveredExercise; 
  */
 function Said({ exercise }: { exercise: DeliveredExercise }): React.JSX.Element | null {
   const t = useT();
+  // Heard on its turn, before it is to be said back.
+  useAutoplay(exercise.modelAudioUrl);
   if (!exercise.prompt && !exercise.modelAudioUrl) return null;
   return (
     <Bubble>
@@ -138,7 +141,7 @@ function AskedLine({ exercise, dialect, gap }: { exercise: DeliveredExercise; di
   return (
     <>
       <Bubble className={`is-line${exercise.ask === 'picture' ? ' is-word' : ''}`}>
-        {model && <LinePlay src={model} />}
+        {model && <LinePlay src={model} auto />}
         <LineWords tokens={tokens} english={english} lang={lang} dir={dir} big={exercise.ask === 'picture'} gap={gap} />
       </Bubble>
       <Cue text={exercise.cue} />

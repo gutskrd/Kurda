@@ -1234,7 +1234,7 @@ export const es: Catalogue = {
   'settings.sounds.lesson': 'Reproducir un sonido suave en las respuestas correctas y las lecciones terminadas',
   'settings.sounds.lessonHint': 'Solo en este dispositivo. El audio de la lección siempre suena.',
   'settings.sounds.autoplay': 'Reproducir las pronunciaciones automáticamente',
-  'settings.sounds.autoplayHint': 'Después de cada respuesta, escucha cómo se dice.',
+  'settings.sounds.autoplayHint': 'Escucha cada frase en kurdo cuando aparece, y otra vez después de responder.',
   'settings.sounds.characterVoices': 'Voces de los personajes',
   'settings.sounds.characterVoicesHint': 'Hevalo y Xezo dicen una palabra corta en kurmancî en los momentos especiales, nunca encima del audio de la lección. En silencio mientras el sonido suave esté desactivado.',
   'reactions.says': '{name} dice «{line}»',

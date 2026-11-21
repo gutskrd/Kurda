@@ -1231,7 +1231,7 @@ export const tr: Catalogue = {
   'settings.sounds.lesson': 'Doğru yanıtlarda ve biten derslerde yumuşak bir ses çal',
   'settings.sounds.lessonHint': 'Yalnızca bu cihazda. Dersin kendi sesi her zaman çalar.',
   'settings.sounds.autoplay': 'Telaffuzları otomatik oynat',
-  'settings.sounds.autoplayHint': 'Her yanıttan sonra nasıl söylendiğini dinle.',
+  'settings.sounds.autoplayHint': 'Her Kürtçe cümleyi ekrana gelince ve cevabından sonra bir kez daha dinle.',
   'settings.sounds.characterVoices': 'Karakter sesleri',
   'settings.sounds.characterVoicesHint': 'Hevalo ve Xezo önemli anlarda Kurmancî kısa bir söz söyler, asla dersin kendi sesinin üstüne değil. Yumuşak ses kapalıyken sessizdir.',
   'reactions.says': '{name} diyor ki: “{line}”',

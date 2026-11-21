@@ -313,7 +313,7 @@
                     "voice": "hevalo",
                     "prompt": "Erê, spas!",
                     "options": [
-                      "Yes, please!",
+                      "Yes, thanks!",
                       "No, thanks!",
                       "Hello, thanks!"
                     ],
@@ -352,7 +352,7 @@
                     "prompt": "Na, spas.",
                     "options": [
                       "No, thank you.",
-                      "Yes, please.",
+                      "Yes, thanks.",
                       "Thanks, Hevalo."
                     ],
                     "correctIndex": 0,
@@ -452,7 +452,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hevalo",
-                    "prompt": "Yes, please!",
+                    "prompt": "Yes, thanks!",
                     "accepted": [
                       "Erê, spas!"
                     ]
@@ -675,7 +675,7 @@
                       {
                         "speaker": 1,
                         "text": "Erê, spas!",
-                        "en": "Yes, please!"
+                        "en": "Yes, thanks!"
                       }
                     ],
                     "prompt": "Why doesn’t Hevalo answer?",
@@ -988,7 +988,7 @@
                       },
                       {
                         "left": "Erê, spas!",
-                        "right": "Yes, please!"
+                        "right": "Yes, thanks!"
                       },
                       {
                         "left": "Ez Hamo me.",
@@ -2812,7 +2812,7 @@
                       {
                         "speaker": 0,
                         "text": "Erê, spas. Û ew? Ew çi ye?",
-                        "en": "Yes, please. And that? What’s that? (an old tool over the stove)"
+                        "en": "Yes, thanks. And that? What’s that? (an old tool over the stove)"
                       },
                       {
                         "speaker": 1,
@@ -4215,7 +4215,7 @@
                     "voice": "hevalo",
                     "prompt": "Erê, spas!",
                     "options": [
-                      "Yes, please!",
+                      "Yes, thanks!",
                       "No, thanks!",
                       "Go well!"
                     ],

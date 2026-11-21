@@ -8,6 +8,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 import type { PlaybackClock } from '../../characters/voice';
 import { useAudio } from '../useAudio';
+import { useAutoplayOnce } from '../useAutoplay';
 import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
 import { knownVoice } from '../../characters/SpeakingCharacter';
@@ -54,24 +55,12 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   // Playing slowly, so "Slow" is lit meanwhile.
   const [slow, setSlow] = useState(false);
 
-  // Played once by itself, AUTOPLAY_MS after appearing or as soon after as it loads. If the learner already started
-  // it, that counts as the once, so the timer never restarts a clip behind them.
-  const shownAt = useRef(Date.now());
-  const autoplayed = useRef(false);
-  const loaded = audio.clock !== null;
-  const { play, playing } = audio;
+  // The clip is the question, so it plays once by itself as the exercise appears, whatever Settings says.
+  const { playing } = audio;
+  useAutoplayOnce(audio, !disabled);
   useEffect(() => {
-    if (playing) autoplayed.current = true;
-    else setSlow(false);
+    if (!playing) setSlow(false);
   }, [playing]);
-  useEffect(() => {
-    if (!loaded || disabled || autoplayed.current) return;
-    const id = setTimeout(() => {
-      autoplayed.current = true;
-      play(1);
-    }, Math.max(0, AUTOPLAY_MS - (Date.now() - shownAt.current)));
-    return () => clearTimeout(id);
-  }, [loaded, disabled, play, playing]);
 
   // A download or playback failure skips the exercise once.
   const cannotPlay = !audio.supported || audio.error;
@@ -157,9 +146,6 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
     </View>
   );
 }
-
-/** The delay before a clip plays by itself: long enough to see what is asked. */
-const AUTOPLAY_MS = 250;
 
 /** The waveform's bars as fractions of its height: a fixed shape, the same for every clip. */
 const BARS = [0.25, 0.4, 0.6, 0.35, 0.8, 1, 0.55, 0.75, 0.4, 0.9, 0.65, 0.3, 0.7, 0.95, 0.5, 0.35, 0.6, 0.25];

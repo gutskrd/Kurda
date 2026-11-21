@@ -1236,7 +1236,7 @@ export const nl: Catalogue = {
   'settings.sounds.lesson': 'Een zacht belletje afspelen bij goede antwoorden en afgeronde lessen',
   'settings.sounds.lessonHint': 'Alleen op dit apparaat. Het geluid van de les zelf wordt altijd afgespeeld.',
   'settings.sounds.autoplay': 'Uitspraak automatisch afspelen',
-  'settings.sounds.autoplayHint': 'Hoor na elk antwoord hoe het wordt uitgesproken.',
+  'settings.sounds.autoplayHint': 'Hoor elke Koerdische zin zodra hij verschijnt, en nog eens na je antwoord.',
   'settings.sounds.characterVoices': 'Stemmen van de personages',
   'settings.sounds.characterVoicesHint': 'Hevalo en Xezo zeggen op mooie momenten een kort woordje Kurmancî, nooit door het geluid van de les heen. Stil zolang het belletje uit staat.',
   'reactions.says': '{name} zegt ‘{line}’',

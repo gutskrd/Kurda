@@ -1236,7 +1236,7 @@ export const de: Catalogue = {
   'settings.sounds.lesson': 'Einen sanften Klang bei richtigen Antworten und abgeschlossenen Lektionen abspielen',
   'settings.sounds.lessonHint': 'Nur auf diesem Gerät. Der Ton der Lektion selbst wird immer abgespielt.',
   'settings.sounds.autoplay': 'Aussprache automatisch abspielen',
-  'settings.sounds.autoplayHint': 'Nach jeder Antwort hörst du, wie sie gesagt wird.',
+  'settings.sounds.autoplayHint': 'Hör jeden kurdischen Satz, sobald er erscheint, und noch einmal nach deiner Antwort.',
   'settings.sounds.characterVoices': 'Stimmen der Figuren',
   'settings.sounds.characterVoicesHint': 'Hevalo und Xezo sagen in besonderen Momenten ein kurzes Wort auf Kurmancî, nie über den Ton der Lektion hinweg. Still, solange der Klang aus ist.',
   'reactions.says': '{name} sagt „{line}“',

@@ -1300,7 +1300,7 @@ export const en = {
   'settings.sounds.lesson': 'Play a soft chime for right answers and finished lessons',
   'settings.sounds.lessonHint': 'On this device only. The lesson’s own audio always plays.',
   'settings.sounds.autoplay': 'Play pronunciations automatically',
-  'settings.sounds.autoplayHint': 'After each answer, hear it said.',
+  'settings.sounds.autoplayHint': 'Hear each Kurdish line as it appears, and again after you answer.',
   'settings.sounds.characterVoices': 'Character voices',
   'settings.sounds.characterVoicesHint': 'Hevalo and Xezo say a short word in Kurmancî at moments worth marking, never over a lesson’s own audio. Silent while the chime is off.',
   'reactions.says': '{name} says “{line}”',

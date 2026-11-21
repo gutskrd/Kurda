@@ -7334,7 +7334,7 @@ const en: Catalog = {
   'maintenance.checkEvery': 'We check again every {seconds} seconds.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Play pronunciations automatically',
-  'settings.sounds.autoplayHint': 'After each answer, hear it said.',
+  'settings.sounds.autoplayHint': 'Hear each Kurdish line as it appears, and again after you answer.',
   'settings.sounds.characterVoices': 'Character voices',
   'settings.sounds.characterVoicesHint': 'Hevalo and Xezo say a short word in Kurmancî at moments worth marking, never over a lesson’s own audio. Silent while Sounds is off.',
   'reactions.says': '{name} says “{line}”',
@@ -11222,7 +11222,7 @@ const ku: Catalog = {
   'maintenance.checkEvery': 'Em her {seconds} çirkeyan carekê dîsa kontrol dikin.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Bilêvkirinan bixweber lê bide',
-  'settings.sounds.autoplayHint': 'Piştî her bersivê, bibihîze ka çawa tê gotin.',
+  'settings.sounds.autoplayHint': 'Her hevokeke kurdî gava xuya dibe bibihîze, û dîsa piştî bersiva xwe.',
   'settings.sounds.characterVoices': 'Dengê karakteran',
   'settings.sounds.characterVoicesHint': 'Hevalo û Xezo di demên taybet de gotineke kurt a kurmancî dibêjin, qet ne li ser dengê waneyê. Dema Deng girtî be, bêdeng in.',
   'reactions.says': '{name} dibêje: “{line}”',
@@ -15110,7 +15110,7 @@ const de: Catalog = {
   'maintenance.checkEvery': 'Wir sehen alle {seconds} Sekunden wieder nach.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Aussprache automatisch abspielen',
-  'settings.sounds.autoplayHint': 'Nach jeder Antwort hörst du, wie sie gesagt wird.',
+  'settings.sounds.autoplayHint': 'Hör jeden kurdischen Satz, sobald er erscheint, und noch einmal nach deiner Antwort.',
   'settings.sounds.characterVoices': 'Stimmen der Figuren',
   'settings.sounds.characterVoicesHint': 'Hevalo und Xezo sagen in besonderen Momenten ein kurzes Wort auf Kurmancî, nie über den Ton der Lektion hinweg. Still, solange „Töne“ aus ist.',
   'reactions.says': '{name} sagt „{line}“',
@@ -18998,7 +18998,7 @@ const es: Catalog = {
   'maintenance.checkEvery': 'Lo volvemos a comprobar cada {seconds} segundos.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Reproducir las pronunciaciones automáticamente',
-  'settings.sounds.autoplayHint': 'Después de cada respuesta, escucha cómo se dice.',
+  'settings.sounds.autoplayHint': 'Escucha cada frase en kurdo cuando aparece, y otra vez después de responder.',
   'settings.sounds.characterVoices': 'Voces de los personajes',
   'settings.sounds.characterVoicesHint': 'Hevalo y Xezo dicen una palabra corta en kurmancî en los momentos especiales, nunca encima del audio de la lección. En silencio mientras «Sonidos» esté desactivado.',
   'reactions.says': '{name} dice «{line}»',
@@ -22886,7 +22886,7 @@ const tr: Catalog = {
   'maintenance.checkEvery': 'Her {seconds} saniyede bir yeniden kontrol ediyoruz.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Telaffuzları otomatik oynat',
-  'settings.sounds.autoplayHint': 'Her yanıttan sonra nasıl söylendiğini dinle.',
+  'settings.sounds.autoplayHint': 'Her Kürtçe cümleyi ekrana gelince ve cevabından sonra bir kez daha dinle.',
   'settings.sounds.characterVoices': 'Karakter sesleri',
   'settings.sounds.characterVoicesHint': 'Hevalo ve Xezo önemli anlarda Kurmancî kısa bir söz söyler, asla dersin kendi sesinin üstüne değil. Sesler kapalıyken sessizdir.',
   'reactions.says': '{name} diyor ki: “{line}”',
@@ -26774,7 +26774,7 @@ const ar: Catalog = {
   'maintenance.checkEvery': 'نتحقق مجددًا كل {seconds} ثانية.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'تشغيل النطق تلقائيًا',
-  'settings.sounds.autoplayHint': 'بعد كل إجابة، استمع إلى نطقها.',
+  'settings.sounds.autoplayHint': 'استمع إلى كل جملة كردية عند ظهورها، ومرة أخرى بعد إجابتك.',
   'settings.sounds.characterVoices': 'أصوات الشخصيات',
   'settings.sounds.characterVoicesHint': 'يقول Hevalo وXezo كلمة قصيرة بالكرمانجية في اللحظات المهمة، ولا يعلو صوتهما أبدًا على صوت الدرس. يصمتان ما دامت «الأصوات» متوقفة.',
   'reactions.says': '{name}: «{line}»',
@@ -30662,7 +30662,7 @@ const fr: Catalog = {
   'maintenance.checkEvery': 'Nous vérifions à nouveau toutes les {seconds} secondes.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Lire les prononciations automatiquement',
-  'settings.sounds.autoplayHint': 'Après chaque réponse, écoute comment elle se dit.',
+  'settings.sounds.autoplayHint': 'Écoute chaque phrase en kurde dès qu’elle apparaît, puis de nouveau après ta réponse.',
   'settings.sounds.characterVoices': 'Voix des personnages',
   'settings.sounds.characterVoicesHint': 'Hevalo et Xezo disent un petit mot en kurmancî aux moments qui comptent, jamais par-dessus l’audio de la leçon. Muets tant que « Sons » est désactivé.',
   'reactions.says': '{name} dit « {line} »',
@@ -34550,7 +34550,7 @@ const nl: Catalog = {
   'maintenance.checkEvery': 'We kijken elke {seconds} seconden opnieuw.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'Uitspraak automatisch afspelen',
-  'settings.sounds.autoplayHint': 'Hoor na elk antwoord hoe het wordt uitgesproken.',
+  'settings.sounds.autoplayHint': 'Hoor elke Koerdische zin zodra hij verschijnt, en nog eens na je antwoord.',
   'settings.sounds.characterVoices': 'Stemmen van de personages',
   'settings.sounds.characterVoicesHint': 'Hevalo en Xezo zeggen op mooie momenten een kort woordje Kurmancî, nooit door het geluid van de les heen. Stil zolang Geluiden uit staat.',
   'reactions.says': '{name} zegt ‘{line}’',
@@ -38439,7 +38439,7 @@ const ckb: Catalog = {
   'maintenance.checkEvery': 'هەموو {seconds} چرکە جارێک دووبارە دەپشکنین.',
   // --- how a lesson feels: the footer, runs, results, the path (lesson-ux) ---
   'settings.sounds.autoplay': 'دەربڕینەکان بە شێوەی خۆکار لێبدە',
-  'settings.sounds.autoplayHint': 'دوای هەر وەڵامێک، گوێ لە دەربڕینەکەی بگرە.',
+  'settings.sounds.autoplayHint': 'هەر ڕستەیەکی کوردی کاتێک دەردەکەوێت ببیستە، و دووبارە دوای وەڵامدانەوەکەت.',
   'settings.sounds.characterVoices': 'دەنگی کارەکتەرەکان',
   'settings.sounds.characterVoicesHint': 'Hevalo و Xezo لە ساتە تایبەتەکاندا وشەیەکی کورتی کورمانجی دەڵێن، هەرگیز بەسەر دەنگی وانەکەدا نا. کاتێک «دەنگەکان» کوژاوەتەوە، بێدەنگن.',
   'reactions.says': '{name} دەڵێت: «{line}»',

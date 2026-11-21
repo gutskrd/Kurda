@@ -1235,7 +1235,7 @@ export const fr: Catalogue = {
   'settings.sounds.lesson': 'Jouer un doux carillon pour les bonnes réponses et les leçons finies',
   'settings.sounds.lessonHint': 'Sur cet appareil seulement. L’audio de la leçon joue toujours.',
   'settings.sounds.autoplay': 'Lire les prononciations automatiquement',
-  'settings.sounds.autoplayHint': 'Après chaque réponse, écoute comment elle se dit.',
+  'settings.sounds.autoplayHint': 'Écoute chaque phrase en kurde dès qu’elle apparaît, puis de nouveau après ta réponse.',
   'settings.sounds.characterVoices': 'Voix des personnages',
   'settings.sounds.characterVoicesHint': 'Hevalo et Xezo disent un petit mot en kurmancî aux moments qui comptent, jamais par-dessus l’audio de la leçon. Muets tant que le carillon est coupé.',
   'reactions.says': '{name} dit « {line} »',

@@ -1241,7 +1241,7 @@ export const ckb: Catalogue = {
   'settings.sounds.lesson': 'زەنگێکی نەرم بۆ وەڵامی دروست و وانەی تەواوبوو لێبدە',
   'settings.sounds.lessonHint': 'تەنها لەسەر ئەم ئامێرە. دەنگی خودی وانەکە هەمیشە لێدەدرێت.',
   'settings.sounds.autoplay': 'دەربڕینەکان بە شێوەی خۆکار لێبدە',
-  'settings.sounds.autoplayHint': 'دوای هەر وەڵامێک، گوێ لە دەربڕینەکەی بگرە.',
+  'settings.sounds.autoplayHint': 'هەر ڕستەیەکی کوردی کاتێک دەردەکەوێت ببیستە، و دووبارە دوای وەڵامدانەوەکەت.',
   'settings.sounds.characterVoices': 'دەنگی کارەکتەرەکان',
   'settings.sounds.characterVoicesHint': 'Hevalo و Xezo لە ساتە تایبەتەکاندا وشەیەکی کورتی کورمانجی دەڵێن، هەرگیز بەسەر دەنگی وانەکەدا نا. کاتێک زەنگەکە کوژاوەتەوە، بێدەنگن.',
   'reactions.says': '{name} دەڵێت: «{line}»',

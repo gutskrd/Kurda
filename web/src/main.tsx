@@ -6,6 +6,7 @@ import { applyTheme, watchSystemTheme } from './theme/theme';
 import { startArtOverrides } from './art/overrides';
 import { installPressFeedback } from './lib/press';
 import { watchOpeners } from './lib/opener';
+import { unlockOnFirstTap } from './lib/sound';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -60,6 +61,8 @@ startArtOverrides();
 installPressFeedback();
 // The last press's position, so a dialog can grow out of its opener (lib/opener.ts).
 watchOpeners();
+// So a lesson's line can play on its turn without its own tap, Safari included (lib/sound.ts).
+unlockOnFirstTap();
 // In development, `?show-reach` tints each control's touch area (styles/reach.css).
 if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('show-reach')) document.documentElement.classList.add('show-reach');
 

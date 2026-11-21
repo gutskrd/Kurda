@@ -1229,7 +1229,7 @@ export const ar: Catalogue = {
   'settings.sounds.lesson': 'تشغيل رنين هادئ للإجابات الصحيحة والدروس المكتملة',
   'settings.sounds.lessonHint': 'على هذا الجهاز فقط. صوت الدرس نفسه يعمل دائمًا.',
   'settings.sounds.autoplay': 'تشغيل النطق تلقائيًا',
-  'settings.sounds.autoplayHint': 'بعد كل إجابة، استمع إلى نطقها.',
+  'settings.sounds.autoplayHint': 'استمع إلى كل جملة كردية عند ظهورها، ومرة أخرى بعد إجابتك.',
   'settings.sounds.characterVoices': 'أصوات الشخصيات',
   'settings.sounds.characterVoicesHint': 'يقول Hevalo وXezo كلمة قصيرة بالكرمانجية في اللحظات المهمة، ولا يعلو صوتهما أبدًا على صوت الدرس. يصمتان ما دام الرنين متوقفًا.',
   'reactions.says': '{name}: «{line}»',

@@ -15,6 +15,8 @@ import { fontScaleCap, radii, spacing, typography } from '../../theme/tokens';
 import { lineIsEnglish } from '../asks';
 import type { Exercise } from '../types';
 import type { AudioControls } from '../useAudio';
+import { useAutoplayOnce } from '../useAutoplay';
+import { autoplayOn } from '../../feedback/autoplayPref';
 import { useValley } from '../ValleyScope';
 import { PlayDisc } from './ModelButton';
 import { PromptScene, saidStyle } from './SpeechBubble';
@@ -69,6 +71,8 @@ export function AskScene({
   useEffect(() => {
     if (!playing) setSlow(false);
   }, [playing]);
+  // Said on its turn, as the exercise appears, unless Settings keeps recordings to a tap.
+  useAutoplayOnce(model, playable && autoplayOn());
   const say = (): void => {
     setSlow(false);
     play(1);
