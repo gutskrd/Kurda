@@ -121,7 +121,8 @@ describe('LibraryPostPage', () => {
     show();
     expect(await screen.findByText('Being checked')).toBeInTheDocument();
     expect(screen.getByText('Only you can see this until it’s checked. It usually takes a few hours.')).toBeInTheDocument();
-    await screen.findByRole('button', { name: 'Like' });
+    // Named “Like” until the counts arrive, then “Like (5)”: either way the author can like it.
+    await screen.findByRole('button', { name: /^Like\b/ });
     expect(screen.queryByRole('button', { name: 'Share this post' })).toBeNull();
   });
 });
