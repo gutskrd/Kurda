@@ -21,15 +21,6 @@ export const ORIGIN = 'https://hevalo.app';
  */
 export const WORDS_PER_PAGE = 150;
 
-/**
- * The one webfont, copied from node_modules at build time and served from /ferheng/fonts/: Arabic only, since Latin uses
- * the system stack and no system Arabic face is reliable. Self-hosted because the pages run under `default-src 'none'`;
- * its `unicode-range` keeps Kurmancî pages from fetching it.
- */
-export const FONTS = [
-  { from: '@fontsource-variable/vazirmatn/files/vazirmatn-arabic-wght-normal.woff2', as: 'vazirmatn-arabic.woff2' },
-] as const;
-
 /** An entry plus where this build files it: `key` is the folded sort form and anchor, decided here, not in the source. */
 export interface Word extends Entry {
   /** What it is grouped and sorted by: letters only, diacritics folded. */
@@ -731,8 +722,7 @@ function card(w: Word, pageOf: Map<string, string>, copy: Copy): string {
  * dictionary's own rules. Copied rather than imported because these pages load no bundle, so keep it in step with the
  * app; a reader should not be able to tell they left it.
  */
-export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal; font-display: swap; font-weight: 100 900; src: url(/ferheng/fonts/vazirmatn-arabic.woff2) format('woff2-variations'); unicode-range: U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF,U+200C-200E; }
-
+export const STYLE = `
 /* ======================================================================== *
  * Copied from the app, value for value: tokens.css, base.css and layout.css's nav and footer. Keep it in step.
  * ======================================================================== */
@@ -750,15 +740,17 @@ export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal;
   --surface-2: rgba(255, 255, 255, 0.1);
   --border: rgba(255, 255, 255, 0.12);
   --border-strong: rgba(255, 255, 255, 0.26);
-  --primary: #bf9bfe;
-  --primary-hover: #ccb0ff;
+  --accent: #bf9bfe;
+  --accent-hover: #ccb0ff;
+  --accent-ink: #14112e;
+  --primary: #f3f1fb;
+  --primary-hover: #ffffff;
   --primary-ink: #14112e;
-  --gold: #f0c24a;
-  --gold-ink: #f6d68b;
-  --focus: rgba(204, 176, 255, 0.8);
+  --gold: #f3f1fb;
+  --gold-ink: #f3f1fb;
+  --focus: rgba(243, 241, 251, 0.7);
   --glass-blur: 20px;
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', 'Georgia', 'Times New Roman', serif;
   --r-xs: 6px;
   --r-sm: 8px;
   --r-md: 12px;
@@ -768,7 +760,8 @@ export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal;
   --shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
   --container: 1120px;
   --nav-h: 64px;
-  --text-secondary: 0.9375rem;
+  --text-title: 1.75rem;
+  --text: 1rem;
 }
 
 /* ---- base.css ---------------------------------------------------------- */
@@ -779,7 +772,7 @@ html, body { overflow-x: clip; max-width: 100%; }
 body {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: var(--text);
   line-height: 1.6;
   color: var(--ink);
   background: var(--app-bg);
@@ -790,9 +783,9 @@ body {
   html { scroll-behavior: auto; }
   * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
-/* The app sets every heading in the display serif. */
+/* The app sets every heading in its one face. */
 h1, h2, h3, h4 {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: -0.01em;
@@ -809,16 +802,16 @@ img { max-width: 100%; display: block; }
 .muted { color: var(--ink-3); }
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 12px;
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.kurdish { font-family: var(--font-display); font-style: italic; color: var(--ink-2); }
-.display { font-size: clamp(2.4rem, 5vw, 3.75rem); letter-spacing: -0.022em; }
-.h-section { font-size: clamp(1.6rem, 3vw, 2.2rem); }
-.lead { font-size: 1.175rem; line-height: 1.6; color: var(--ink-2); }
+.kurdish { font-family: var(--font-sans); font-style: italic; color: var(--ink-2); }
+.display { font-size: var(--text-title); letter-spacing: -0.022em; }
+.h-section { font-size: var(--text-title); }
+.lead { font-size: var(--text); line-height: 1.6; color: var(--ink-2); }
 
 /* ---- layout.css: the nav ----------------------------------------------- */
 /* The bar may be wider than the page: 1440px against the content column's 1120px. */
@@ -835,14 +828,14 @@ img { max-width: 100%; display: block; }
 .nav-inner { height: 100%; display: flex; align-items: center; gap: 28px; }
 .brand {
   display: inline-flex; align-items: center; gap: 9px; flex: none;
-  font-family: var(--font-display); font-size: 1.22rem; font-weight: 600;
+  font-family: var(--font-sans); font-size: var(--text); font-weight: 600;
   letter-spacing: -0.01em; color: var(--ink);
 }
 .brand-mark { flex: none; width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
 .nav-links { display: flex; align-items: center; gap: 4px; }
 .nav-link {
   display: inline-flex; align-items: center; height: 40px; padding: 0 14px;
-  border-radius: var(--r-pill); font-size: var(--text-secondary); font-weight: 600;
+  border-radius: var(--r-pill); font-size: var(--text); font-weight: 600;
   color: var(--ink-3); transition: color 0.15s ease, background 0.15s ease;
 }
 .nav-link:hover { color: var(--ink); background: var(--surface-2); }
@@ -854,7 +847,7 @@ img { max-width: 100%; display: block; }
 .btn-sm {
   display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px;
   border: 1px solid transparent; border-radius: var(--r-pill);
-  font-size: 0.875rem; font-weight: 600; line-height: 1; white-space: nowrap;
+  font-size: var(--text); font-weight: 600; line-height: 1; white-space: nowrap;
   background: var(--primary); color: var(--primary-ink);
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
@@ -902,7 +895,7 @@ img { max-width: 100%; display: block; }
     transition: opacity 0.16s ease, transform 0.16s ease;
   }
   .nav-toggle-state:checked ~ .nav-links { transform: translateY(0); opacity: 1; pointer-events: auto; }
-  .nav-link { height: 44px; font-size: 1rem; }
+  .nav-link { height: 44px; font-size: var(--text); }
   /* The app's links sit in list items as wide as their words; these are the panel's own children. */
   .nav-links > .nav-link { align-self: flex-start; }
   .nav-desktop-only { display: none; }
@@ -929,16 +922,16 @@ img { max-width: 100%; display: block; }
 }
 .footer-grid { display: flex; flex-wrap: wrap; gap: 40px; justify-content: space-between; }
 .footer-brand { max-width: 280px; }
-.footer-brand .muted { margin-top: 12px; font-size: 0.92rem; }
+.footer-brand .muted { margin-top: 12px; font-size: var(--text); }
 .footer-brand .kurdish { margin-top: 10px; }
-.footer-col h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; font-weight: 600; }
-.footer-col a { display: block; color: var(--ink-2); font-size: 0.95rem; padding: 4px 0; }
+.footer-col h4 { font-family: var(--font-sans); font-size: var(--text); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; font-weight: 600; }
+.footer-col a { display: block; color: var(--ink-2); font-size: var(--text); padding: 4px 0; }
 .footer-col a:hover { color: var(--ink); }
-.footer-soon { display: block; color: var(--ink-3); font-size: 0.95rem; padding: 4px 0; }
+.footer-soon { display: block; color: var(--ink-3); font-size: var(--text); padding: 4px 0; }
 .footer-bottom {
   margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--border);
   display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
-  justify-content: space-between; color: var(--ink-3); font-size: 0.88rem;
+  justify-content: space-between; color: var(--ink-3); font-size: var(--text);
 }
 .footer-bottom-left { display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: center; }
 .footer-imprint { color: var(--ink-3); }
@@ -957,15 +950,15 @@ main { padding-bottom: 8px; }
 
 .crumbs ol {
   list-style: none; display: flex; flex-wrap: wrap; gap: 8px;
-  padding: 0; margin: 20px 0 0; font-size: 0.82rem; color: var(--ink-4);
+  padding: 0; margin: 20px 0 0; font-size: var(--text); color: var(--ink-4);
 }
 .crumbs li + li::before { content: "›"; margin-right: 8px; color: var(--ink-4); }
 .crumbs a { color: var(--ink-3); }
 .crumbs a:hover { color: var(--ink); }
 
 .head { padding: 28px 0 0; }
-.running { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 10px 0; }
-.letter { font-size: clamp(3.5rem, 2rem + 8vw, 7rem); line-height: 1; margin: 6px 0 10px; }
+.running { font-size: var(--text-title); margin: 10px 0; }
+.letter { font-size: var(--text-title); line-height: 1; margin: 6px 0 10px; }
 
 /* ---- the front page ---------------------------------------------------- */
 .hero { padding: 48px 0 0; }
@@ -1001,8 +994,8 @@ main { padding-bottom: 8px; }
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .thumb:hover { background: var(--surface-2); border-color: var(--ink-4); }
-.thumb-t { font-family: var(--font-display); font-size: 1.5rem; line-height: 1; color: var(--ink); }
-.thumb-n { font-size: 0.7rem; color: var(--ink-4); }
+.thumb-t { font-family: var(--font-sans); font-size: var(--text-title); line-height: 1; color: var(--ink); }
+.thumb-n { font-size: var(--text); color: var(--ink-4); }
 .thumbs + .eyebrow { margin-top: 32px; }
 
 /* ---- a letter's pages -------------------------------------------------- */
@@ -1014,40 +1007,40 @@ main { padding-bottom: 8px; }
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .range:hover { background: var(--surface-2); border-color: var(--ink-4); }
-.range-span { font-family: var(--font-display); font-size: 1.05rem; color: var(--ink); }
-.range-n { margin-left: auto; font-size: 0.8rem; color: var(--ink-4); }
+.range-span { font-family: var(--font-sans); font-size: var(--text); color: var(--ink); }
+.range-n { margin-left: auto; font-size: var(--text); color: var(--ink-4); }
 
 /* ---- the entries ------------------------------------------------------- */
 .entries { margin-top: 20px; }
 .entry { padding: 20px 0; border-top: 1px solid var(--border); scroll-margin-top: calc(var(--nav-h) + 12px); }
-.entry:target { background: rgba(240, 194, 74, 0.07); box-shadow: inset 2px 0 0 var(--gold); padding-left: 14px; }
-.hw { font-size: clamp(1.4rem, 1.1rem + 1vw, 1.9rem); margin: 0 0 10px; }
+.entry:target { background: rgba(243, 241, 251, 0.06); box-shadow: inset 2px 0 0 var(--gold); padding-left: 14px; }
+.hw { font-size: var(--text-title); margin: 0 0 10px; }
 .hw a:hover { color: var(--gold); }
 
 /* One grid for every labelled row, so parts of speech and the Soranî line up. */
 .row { display: grid; grid-template-columns: 7.5rem 1fr; gap: 4px 18px; align-items: baseline; margin: 0 0 8px; }
 /* Italic at 0.78rem like the app's .dict-pos, which also keeps "Formeke navdêrê" on one line. */
-.row .label { font-size: 0.78rem; font-style: italic; color: var(--ink-3); text-align: right; line-height: 1.9; }
+.row .label { font-size: var(--text); font-style: italic; color: var(--ink-3); text-align: right; line-height: 1.9; }
 .sense ol { margin: 0; padding-left: 1.2rem; color: var(--ink-2); }
 .sense ol li { margin-bottom: 4px; }
-.sense ol li::marker { color: var(--ink-4); font-size: 0.85em; }
+.sense ol li::marker { color: var(--ink-4); font-size: var(--text); }
 .sense ol:not(:has(li + li)) { list-style: none; padding-left: 0; }
 
 /* An inflected form is set back, since half the corpus is these. */
-.sense.form ol { color: var(--ink-3); font-size: 0.94rem; }
+.sense.form ol { color: var(--ink-3); font-size: var(--text); }
 
 /* Flex, not inline text: a long synonym row joined by a glyph separator is one unbreakable token, but flex items wrap. */
 .vals { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5em; color: var(--ink-2); }
 .vals a { border-bottom: 1px solid var(--border); }
 .vals a:hover { color: var(--ink); border-color: var(--ink); }
 /* The corpus's Soranî and Arabic forms, not the bar, footer or chrome.js's words, which keep the app's type. */
-:is([lang="ar"], [dir="rtl"]):not(.nav, .footer, [data-copy], [data-copy-pos]) { font-family: 'Vazirmatn', var(--font-sans); font-size: 1.06em; }
+:is([lang="ar"], [dir="rtl"]):not(.nav, .footer, [data-copy], [data-copy-pos]) { font-family: var(--font-sans); font-size: var(--text); }
 
 .pager { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 40px 0 0; }
 .pager .pill {
   display: inline-flex; align-items: center; height: 36px; padding: 0 16px;
   border: 1px solid var(--border); border-radius: var(--r-pill);
-  background: var(--surface); color: var(--ink-2); font-size: 0.92rem;
+  background: var(--surface); color: var(--ink-2); font-size: var(--text);
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .pager.alphabet-link { justify-content: flex-start; margin: 22px 0 0; }
@@ -1076,11 +1069,11 @@ main { padding-bottom: 8px; }
   background: var(--surface); color: var(--ink-3);
   transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
-.search--big .search-field { height: 58px; padding: 0 20px; font-size: 1.08rem; }
+.search--big .search-field { height: 58px; padding: 0 20px; font-size: var(--text); }
 .search-field:focus-within { border-color: var(--ink-3); background: var(--surface-2); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06); }
 .search-field input {
   flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent;
-  color: var(--ink); font: inherit; font-size: 1em;
+  color: var(--ink); font: inherit; font-size: var(--text);
 }
 .search-field input::placeholder { color: var(--ink-4); }
 .search-field input::-webkit-search-cancel-button { filter: invert(1) opacity(0.5); }
@@ -1096,9 +1089,9 @@ main { padding-bottom: 8px; }
   color: var(--ink-2);
 }
 .search-list [aria-selected="true"] a, .search-list a:hover { background: var(--surface-2); color: var(--ink); }
-.search-word { flex: none; font-family: var(--font-display); font-size: 1.15rem; color: var(--ink); }
-.search-gloss { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.88rem; color: var(--ink-3); }
-.search-msg { margin: 10px 4px 0; font-size: 0.88rem; color: var(--ink-3); }
+.search-word { flex: none; font-family: var(--font-sans); font-size: var(--text); color: var(--ink); }
+.search-gloss { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text); color: var(--ink-3); }
+.search-msg { margin: 10px 4px 0; font-size: var(--text); color: var(--ink-3); }
 .search-msg a { color: var(--ink-2); border-bottom: 1px solid var(--border); }
 
 /* ---- the front page's words, as cards ---------------------------------- */
@@ -1109,10 +1102,10 @@ main { padding-bottom: 8px; }
   transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
 .word-card:hover { background: var(--surface-2); border-color: var(--ink-4); transform: translateY(-1px); }
-.word-card-hw { font-family: var(--font-display); font-size: 1.45rem; color: var(--ink); }
-.word-card .label { font-size: 0.78rem; font-style: italic; color: var(--ink-3); }
+.word-card-hw { font-family: var(--font-sans); font-size: var(--text); color: var(--ink); }
+.word-card .label { font-size: var(--text); font-style: italic; color: var(--ink-3); }
 .word-card-def {
-  color: var(--ink-2); font-size: 0.93rem; line-height: 1.5;
+  color: var(--ink-2); font-size: var(--text); line-height: 1.5;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .other-letters { margin-top: 28px; }
@@ -1127,15 +1120,15 @@ main { padding-bottom: 8px; }
   display: grid; grid-template-columns: minmax(7rem, 14rem) 1fr; gap: 2px 18px; align-items: baseline;
   padding: 7px 0; border-top: 0;
 }
-.form-entry .hw { font-size: 1.12rem; margin: 0; overflow-wrap: anywhere; }
-.form-of { color: var(--ink-3); font-size: 0.92rem; }
+.form-entry .hw { font-size: var(--text); margin: 0; overflow-wrap: anywhere; }
+.form-of { color: var(--ink-3); font-size: var(--text); }
 .form-of summary { cursor: pointer; list-style: none; }
 .form-of summary::-webkit-details-marker { display: none; }
-.form-of summary .label { font-style: italic; font-size: 0.82rem; }
+.form-of summary .label { font-style: italic; font-size: var(--text); }
 .form-of summary a { color: var(--ink-2); border-bottom: 1px solid var(--border); }
 .form-of summary a:hover { color: var(--ink); border-color: var(--ink); }
 .form-of .arrow { color: var(--ink-4); }
-.form-of ol { margin: 6px 0 2px; padding-left: 1.1rem; font-size: 0.88rem; color: var(--ink-3); }
+.form-of ol { margin: 6px 0 2px; padding-left: 1.1rem; font-size: var(--text); color: var(--ink-3); }
 .form-of ol:not(:has(li + li)) { list-style: none; padding-left: 0; }
 .forms .entry.form-entry:target { padding-left: 12px; }
 @media (max-width: 560px) {
@@ -1146,7 +1139,7 @@ main { padding-bottom: 8px; }
 .more { display: contents; }
 .more summary {
   cursor: pointer; list-style: none; padding: 0 8px; border-radius: var(--r-pill);
-  border: 1px solid var(--border); font-size: 0.8rem; color: var(--ink-3); line-height: 1.6;
+  border: 1px solid var(--border); font-size: var(--text); color: var(--ink-3); line-height: 1.6;
 }
 .more summary::-webkit-details-marker { display: none; }
 .more[open] summary { display: none; }

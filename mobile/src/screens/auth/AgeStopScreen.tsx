@@ -25,5 +25,5 @@ export function AgeStopScreen({ kind }: { kind: AgeStopKind }) {
 }
 
 const styles = StyleSheet.create({
-  body: { fontSize: typography.sizes.md, lineHeight: 22, marginTop: spacing.sm },
+  body: { fontSize: typography.sizes.text, lineHeight: 22, marginTop: spacing.sm },
 });

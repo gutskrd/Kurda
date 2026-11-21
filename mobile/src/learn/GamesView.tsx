@@ -1,6 +1,6 @@
 import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { gameOfTheDay, type IncomingInvite } from '@kurda/shared';
@@ -8,6 +8,7 @@ import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { BottomSheet } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -30,6 +31,7 @@ import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GAME_CARDS, GAME_MEANING, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
 import { GameArt } from '../games/GameArt';
 import { GameStamp } from '../games/GameStamp';
+import { usePageWidth } from '../theme/pageWidth';
 
 type Mode = GameMode;
 type Way = GameWay;
@@ -76,7 +78,8 @@ export function GamesView({
   const { t } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
-  const { width: windowWidth } = useWindowDimensions();
+  const tabScroll = useTabBarScroll();
+  const windowWidth = usePageWidth();
   // Two stamps to a row, three where there is room; never wider than a reading column, nor narrower than the
   // narrowest phone, which a window reports before it is measured.
   const column = Math.max(NARROWEST, Math.min(windowWidth, layout.column)) - layout.gutter * 2;
@@ -171,6 +174,8 @@ export function GamesView({
   const page = (
     <ScrollView
       ref={scrollRef}
+      onScroll={tabScroll}
+      scrollEventThrottle={64}
       contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
       showsVerticalScrollIndicator={false}
       refreshControl={pull}
@@ -387,20 +392,20 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   entryText: { flex: 1, gap: 1 },
-  entryTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  entryDetail: { fontSize: typography.sizes.xs },
+  entryTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  entryDetail: { fontSize: typography.sizes.text },
 
   section: { gap: spacing.sm },
   heading: { ...sectionLabel },
   invite: { alignItems: 'center', gap: spacing.md - 4, borderRadius: radii.md, padding: spacing.md - 4 },
-  inviteText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  inviteText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   joinButton: { minHeight: JOIN_HEIGHT, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  joinText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
+  joinText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 
   // The game put forward: its stamp in the middle of the page, its line and its ways in under it.
   hero: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xs },
   heroStamp: { marginVertical: spacing.sm },
-  heroLine: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.md },
+  heroLine: { fontSize: typography.sizes.text, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.md },
   heroWays: { alignSelf: 'stretch', gap: spacing.sm },
 
   // A collection page: stamps in level rows, with air between for their glow.
@@ -408,7 +413,7 @@ const styles = StyleSheet.create({
 
   ways: { gap: spacing.sm, paddingBottom: spacing.sm },
   waysTop: { alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },
-  waysLine: { flex: 1, fontSize: typography.sizes.md, lineHeight: 23 },
+  waysLine: { flex: 1, fontSize: typography.sizes.text, lineHeight: 23 },
 
   // A game not open yet is only named: quieter than a card, and nothing to press.
   soonRow: { flexWrap: 'wrap', gap: spacing.sm },
@@ -416,5 +421,5 @@ const styles = StyleSheet.create({
   // Mirrored by hand: the picture's side is the right, and keeps the narrow edge.
   soonMirrored: { paddingStart: spacing.md, paddingEnd: 6 },
   soonArt: { opacity: 0.7 },
-  soonName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  soonName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

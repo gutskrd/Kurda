@@ -137,10 +137,10 @@ export function GroupBansScreen({ groupId, onExit }: { groupId: string; onExit: 
 
 const styles = StyleSheet.create({
   list: { padding: layout.gutter, gap: layout.rowGap },
-  failed: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', paddingBottom: spacing.sm },
+  failed: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center', paddingBottom: spacing.sm },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   who: { alignItems: 'center', gap: spacing.md - 4 },
   names: { flex: 1, gap: 2 },
-  name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  sub: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  sub: { fontSize: typography.sizes.text, lineHeight: 20 },
 });

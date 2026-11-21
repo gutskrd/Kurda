@@ -223,16 +223,16 @@ function DeclineSheet({
 
 const styles = StyleSheet.create({
   list: { padding: layout.gutter, gap: layout.rowGap },
-  failed: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', paddingBottom: spacing.sm },
+  failed: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center', paddingBottom: spacing.sm },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md - 4 },
   who: { alignItems: 'center', gap: spacing.md - 4 },
   names: { flex: 1, gap: 2 },
-  name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  sub: { fontSize: typography.sizes.sm },
-  note: { fontSize: typography.sizes.md, lineHeight: 22, borderRadius: radii.md, overflow: 'hidden', paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  sub: { fontSize: typography.sizes.text },
+  note: { fontSize: typography.sizes.text, lineHeight: 22, borderRadius: radii.md, overflow: 'hidden', paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   actions: { gap: spacing.sm },
   action: { flex: 1 },
-  sheetText: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  sheetText: { fontSize: typography.sizes.text, lineHeight: 20 },
   // A list row inside the sheet runs edge to edge, as in Settings.
   edge: { marginHorizontal: -layout.gutter },
 });

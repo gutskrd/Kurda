@@ -423,7 +423,7 @@ function TicketMotif({ size }: { size: number }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  hint: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
+  hint: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
   boxesWrap: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.sm },
   boxes: { direction: 'ltr', flexDirection: 'row' },
   char: { writingDirection: 'ltr', textAlign: 'center', includeFontPadding: false },
@@ -443,10 +443,10 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     // The boxes show where typing goes, so a focus ring round the row would repeat it.
     outlineWidth: 0,
-    fontSize: 1,
+    fontSize: typography.sizes.text,
   },
   message: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.md - 4, paddingVertical: spacing.sm + 2 },
-  messageText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, lineHeight: 20 },
+  messageText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, lineHeight: 20 },
 
   card: {
     alignItems: 'center',
@@ -457,6 +457,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: layout.gutter,
   },
   cardText: { flex: 1, gap: 2 },
-  cardTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  cardLine: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  cardTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  cardLine: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

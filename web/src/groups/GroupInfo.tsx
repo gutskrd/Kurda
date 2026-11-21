@@ -242,7 +242,7 @@ export function GroupInfo({
     <div className="ginfo">
       {status}
       <header className="ginfo-head">
-        <GroupAvatar id={detail.id} name={detail.name} photoUrl={detail.photoUrl} size={96} />
+        <GroupAvatar name={detail.name} photoUrl={detail.photoUrl} size={96} />
         <h2 className="ginfo-name" dir="auto">
           {detail.name}
         </h2>

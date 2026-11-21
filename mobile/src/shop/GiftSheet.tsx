@@ -174,7 +174,7 @@ function shopGiftErrorText(error: ApiError, name: string, t: Translate): string 
 }
 
 const styles = StyleSheet.create({
-  note: { fontSize: typography.sizes.sm },
+  note: { fontSize: typography.sizes.text },
   // Lined up with the search field and the list, inside the sheet's own padding.
   notice: { marginHorizontal: 0, marginBottom: 0 },
   search: { marginTop: spacing.xs },
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingVertical: spacing.sm,
   },
-  who: { flex: 1, fontSize: typography.sizes.md },
+  who: { flex: 1, fontSize: typography.sizes.text },
   cancel: { alignItems: 'center', paddingVertical: spacing.md },
-  cancelText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  cancelText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

@@ -39,7 +39,7 @@ export function SourceLine() {
 
 const styles = StyleSheet.create({
   line: {
-    fontSize: typography.sizes.xs,
+    fontSize: typography.sizes.text,
     // An inline link cannot reach past its own line, so the line is taller than its type: each link answers over the full 24.
     lineHeight: 24,
     marginTop: spacing.lg,

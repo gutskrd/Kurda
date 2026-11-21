@@ -48,12 +48,12 @@
   min-width: 0;
 }
 .event-card-title {
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 700;
 }
 .event-card-sub {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
 }
 .event-card-go {
@@ -90,13 +90,13 @@
 .event-name {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: var(--text-section);
+  font-size: var(--text);
   font-weight: 700;
 }
 .event-ends {
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
 }
 .event-quests {
@@ -164,7 +164,7 @@
 .event-quest-count {
   flex: none;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
@@ -174,7 +174,7 @@
   gap: 4px;
   flex: none;
   color: var(--success);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 700;
 }
 /* claimed just now: the word lands with a little spring */

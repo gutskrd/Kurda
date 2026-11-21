@@ -22,7 +22,7 @@
   gap: 2px;
   min-height: 32px;
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
   font-weight: 550;
   text-decoration: none;
   transition: color var(--dur-fast) var(--ease-out);
@@ -44,13 +44,13 @@
 .yours-title {
   margin: 0;
   color: var(--ink);
-  font-size: 1rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 .yours-lead {
   margin: 4px 0 0;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .yours-lead--alone {
@@ -59,7 +59,7 @@
 .yours-error {
   margin: 12px 0 0;
   color: var(--danger);
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 /* A section that failed to load: what went wrong and a retry. */
 .yours-failed {
@@ -72,7 +72,7 @@
 .yours-failed p {
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 
 /* ---- The birds ------------------------------------------------------------ */
@@ -87,6 +87,12 @@
   .yours-birds {
     grid-template-columns: repeat(4, max-content);
     justify-content: space-between;
+  }
+}
+/* On the narrowest phones the birds are drawn smaller (YourBird.tsx) and stand closer, so four still fit a row. */
+@media (max-width: 340px) {
+  .yours-birds {
+    gap: 10px 4px;
   }
 }
 .yours-birds--waiting {
@@ -170,7 +176,7 @@
   gap: 6px 8px;
   margin: 0;
   color: var(--ink-2);
-  font-size: 0.93rem;
+  font-size: var(--text);
   font-weight: 550;
 }
 .yours-picked-tick {
@@ -182,7 +188,7 @@
   border-radius: var(--r-pill);
   background: var(--bg);
   color: var(--ink-3);
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 500;
 }
 .yours-actions {
@@ -239,7 +245,7 @@
   overflow: hidden;
   padding-inline: 2px;
   color: var(--ink);
-  font-size: 0.95rem;
+  font-size: var(--text);
   font-weight: 650;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -248,7 +254,7 @@
   overflow: hidden;
   padding-inline: 2px;
   color: var(--ink-3);
-  font-size: 0.8rem;
+  font-size: var(--text);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -261,7 +267,7 @@
 }
 .yours-tree-note {
   color: var(--ink-2);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 /* The growing one: a small pill in its colour with a leaf dot. */
@@ -273,7 +279,7 @@
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--tree) 16%, var(--surface));
   color: var(--ink);
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 650;
   white-space: nowrap;
 }

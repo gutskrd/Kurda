@@ -77,10 +77,10 @@ export function NotificationPrefsCard(): React.JSX.Element {
                 </li>
               ))}
             </ul>
-            <h3 className="friend-heading" style={{ fontSize: '0.95rem', marginBottom: 4 }}>
+            <h3 className="friend-heading" style={{ fontSize: 'var(--text)', marginBottom: 4 }}>
               {t('notifications.quietHours')}
             </h3>
-            <p className="muted" style={{ fontSize: '0.92rem', marginTop: 0, marginBottom: 10 }}>
+            <p className="muted" style={{ fontSize: 'var(--text)', marginTop: 0, marginBottom: 10 }}>
               {t('notifications.quietHoursHelp')}
             </p>
             <span className="section-toggle" style={{ paddingTop: 0 }}>
@@ -110,10 +110,10 @@ export function NotificationPrefsCard(): React.JSX.Element {
             ))}
           </ul>
 
-          <h3 className="friend-heading" style={{ fontSize: '0.95rem', marginBottom: 4 }}>
+          <h3 className="friend-heading" style={{ fontSize: 'var(--text)', marginBottom: 4 }}>
             {t('notifications.quietHours')}
           </h3>
-          <p className="muted" style={{ fontSize: '0.92rem', marginTop: 0, marginBottom: 10 }}>
+          <p className="muted" style={{ fontSize: 'var(--text)', marginTop: 0, marginBottom: 10 }}>
             {t('notifications.quietHoursHelp')}
           </p>
 

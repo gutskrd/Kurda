@@ -184,18 +184,14 @@ export {
   PATH_STOP_ART,
   PATH_STOP_LOOKS,
   PATH_STOP_TONES,
-  pathGroundColour,
-  pathLandSvg,
   pathSignpostSvg,
-  pathStonesSvg,
   pathStopSvg,
   type PathSignpostOptions,
-  type PathLandOptions,
-  type PathStonesOptions,
   type PathStopLook,
   type PathStopOptions,
 } from './path-land.js';
 export { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg, type PathLandmarkOptions, type PathLoop, type PathLoopKind, type PathLoopOptions } from './path-landmark.js';
+export { chapterBannerSvg, type ChapterBannerOptions } from './chapter-banner.js';
 export { WORD_PICTURES, WORD_PICTURE_IDS, wordPictureSvg, type WordPictureId, type WordPictureOptions } from './word-pictures.js';
 export {
   BOOK_APPLE_BITES,

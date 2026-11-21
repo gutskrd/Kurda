@@ -339,8 +339,8 @@ function startOf(row: string | undefined): { alignItems: 'flex-start' | 'flex-en
   return { alignItems: row === 'row-reverse' ? 'flex-end' : 'flex-start' };
 }
 
-const GLYPH = 64;
-const GLYPH_STAGED = 84;
+const GLYPH = typography.sizes.title;
+const GLYPH_STAGED = typography.sizes.title;
 
 const styles = StyleSheet.create({
   // The gutter is the scroll view's own, so the card scrolls edge to edge.
@@ -355,27 +355,27 @@ const styles = StyleSheet.create({
   // Beside the character on its stage the letter is bigger still: the thing to look at.
   glyphBig: { ...display(GLYPH_STAGED), lineHeight: Math.round(GLYPH_STAGED * 1.1) },
   glyphArabicBig: { fontSize: GLYPH_STAGED, lineHeight: Math.round(GLYPH_STAGED * 1.4) },
-  glyphSmall: { fontSize: Math.round(GLYPH * 0.55) },
+  glyphSmall: { fontSize: typography.sizes.text },
   ipa: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 3 },
-  ipaText: { fontSize: typography.sizes.xs },
+  ipaText: { fontSize: typography.sizes.text },
   staged: { alignItems: 'center', gap: spacing.sm },
   stagedTools: { alignItems: 'center', gap: spacing.sm + 2 },
 
   badge: { alignSelf: 'flex-start', borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 3, marginTop: -spacing.xs },
-  badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  badgeText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 
   row: { gap: spacing.xs + 2, paddingTop: spacing.md - 2, borderTopWidth: StyleSheet.hairlineWidth },
   wordRow: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
-  partner: { ...display(typography.sizes.xxl), lineHeight: Math.round(typography.sizes.xxl * 1.2) },
-  partnerArabic: { fontSize: typography.sizes.xxl, lineHeight: Math.round(typography.sizes.xxl * 1.5) },
-  wordArabic: { fontSize: typography.sizes.xl, lineHeight: Math.round(typography.sizes.xl * 1.5) },
-  note: { fontSize: typography.sizes.sm, lineHeight: 21 },
-  voiceNote: { fontSize: typography.sizes.xs },
+  partner: { ...display(typography.sizes.title), lineHeight: Math.round(typography.sizes.title * 1.2) },
+  partnerArabic: { fontSize: typography.sizes.title, lineHeight: Math.round(typography.sizes.title * 1.5) },
+  wordArabic: { fontSize: typography.sizes.title, lineHeight: Math.round(typography.sizes.title * 1.5) },
+  note: { fontSize: typography.sizes.text, lineHeight: 21 },
+  voiceNote: { fontSize: typography.sizes.text },
 
   forms: { alignSelf: 'stretch', gap: spacing.sm },
   form: { flex: 1, alignItems: 'center', gap: 2, borderRadius: radii.md, paddingTop: spacing.sm, paddingBottom: spacing.sm - 2 },
-  formGlyph: { fontSize: typography.sizes.xl, lineHeight: Math.round(typography.sizes.xl * 1.5) },
-  formLabel: { fontSize: typography.sizes.xs },
+  formGlyph: { fontSize: typography.sizes.title, lineHeight: Math.round(typography.sizes.title * 1.5) },
+  formLabel: { fontSize: typography.sizes.text },
 
   stepper: { justifyContent: 'space-between', marginTop: spacing.xs },
   step: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

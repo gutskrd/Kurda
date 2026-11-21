@@ -25,45 +25,21 @@ export const radii = {
 } as const;
 
 export const typography = {
-  /** System fonts render the Kurdish Latin diacritics (ê î û ç ş) on both platforms; any custom font must be checked against the full set first. */
+  /** The device's own face for every word and every script: system fonts render the Kurdish letters (ê î û ç ş) on both platforms. */
   fontFamily: 'System',
-  /**
-   * The display face for headings, matching the website's `--font-display`. Kept as per-platform data because this
-   * module is free of React Native for unit tests; `fonts.ts` resolves it. The order mirrors the website's stack, so an
-   * iPhone shows the same letters in the app and on hevalo.app. Body text stays on the system face.
-   */
-  displayByPlatform: {
-    iosFont: 'Iowan Old Style',
-    androidFont: 'serif',
-    webFont: "'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif",
-  },
-  /** Headings are 600, as on the website; a serif at 700 gets heavy fast. */
+  /** Titles are 600 with tightened leading and tracking; 700 is too heavy. */
   displayWeight: '600',
-  /** The website's heading line height (1.12) and letter spacing (-0.01em). */
-  displayLineHeight: 1.12,
+  displayLineHeight: 1.15,
   displayTracking: -0.01,
-  /** One scale everywhere: 34 and 28 for large titles, 22 for section titles, 17 body and rows, 15 secondary, 13 captions, and 11 only for tab labels. */
+  /** Two sizes and no others: `title` for a screen's title and a hero number or word, `text` for every other word. */
   sizes: {
-    xs: 13,
-    sm: 15,
-    md: 17,
-    lg: 22,
-    xl: 28,
-    xxl: 34,
-  },
-  /** The sizes iOS sets its own controls at (Human Interface Guidelines), so rows, buttons and tab labels read as native. */
-  ios: {
-    /** A tab bar label. */
-    tabLabel: 11,
-    /** A button's label. */
-    button: 15,
-    /** A list row's title and value. */
-    row: 17,
+    text: 16,
+    title: 28,
   },
   weights: {
     regular: '400',
     medium: '500',
-    /** The website's button and heading weight; 700 is too heavy for both. */
+    /** Headings and buttons; 700 is too heavy for both. */
     semibold: '600',
     bold: '700',
   },
@@ -81,6 +57,11 @@ export const fontScaleCap = {
   heading: 1.3,
 } as const;
 
+/** One of the two sizes, shrunk but never grown, so a word fits a box that cannot grow with it on a narrow phone. */
+export function fitted(size: number, fit: number): number {
+  return size * Math.min(1, Math.max(0, fit));
+}
+
 /** The page's geometry. `gutter` is the phone's edge-to-content space (16), a single decision rather than a step on `spacing`. */
 export const layout = {
   gutter: 16,
@@ -88,6 +69,8 @@ export const layout = {
   rowGap: 12,
   /** The widest a list or reading page gets on a tablet or wide window, past which the eye loses its place between lines. */
   column: 680,
+  /** The widest the whole app gets: an unfolded phone or a tablet shows it in a centred column this wide (pageWidth.ts). */
+  page: 600,
 } as const;
 
 /** The tint behind a chosen or current item, as the tab bar draws it: the colour at 12% (hex alpha 1F). */

@@ -29,7 +29,6 @@ import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { TileButton } from '../theme/Tile';
 import { useTheme } from '../theme/ThemeProvider';
-import { displayFont } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GameArt } from './GameArt';
 import { DIFFICULTY_KEY } from './partyChoices';
@@ -432,32 +431,32 @@ export function SoloGameShell<Item, H, C, B = unknown>({
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, paddingBottom: spacing.xl * 2, gap: spacing.md },
-  title: { fontFamily: displayFont, fontSize: typography.sizes.xl, fontWeight: typography.displayWeight },
-  blurb: { fontSize: typography.sizes.md, lineHeight: 24 },
-  muted: { fontSize: typography.sizes.sm },
-  legend: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
+  title: { fontSize: typography.sizes.title, fontWeight: typography.displayWeight },
+  blurb: { fontSize: typography.sizes.text, lineHeight: 24 },
+  muted: { fontSize: typography.sizes.text },
+  legend: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
   chips: { flexWrap: 'wrap', gap: spacing.sm },
   chip: { minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderRadius: radii.pill, justifyContent: 'center' },
-  chipText: { fontSize: typography.sizes.sm },
+  chipText: { fontSize: typography.sizes.text },
   bar: { alignItems: 'center', gap: spacing.sm },
   stones: { flex: 1, gap: 6 },
   stonesNight: { flex: 0, alignSelf: 'stretch', justifyContent: 'center', marginTop: spacing.sm },
   stone: { flex: 1, maxWidth: 44, height: 8, borderRadius: radii.pill },
   stoneNight: { height: 10 },
   hero: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
-  heroKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
-  heroName: { color: TABLE.ink, fontFamily: displayFont, fontSize: typography.sizes.xxl, fontWeight: typography.displayWeight, textAlign: 'center' },
-  heroLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
-  heroScore: { color: TABLE.ink, fontFamily: displayFont, fontSize: typography.sizes.xxl + 8, fontWeight: typography.displayWeight, textAlign: 'center' },
+  heroKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
+  heroName: { color: TABLE.ink, fontSize: typography.sizes.title, fontWeight: typography.displayWeight, textAlign: 'center' },
+  heroLine: { color: TABLE.inkSoft, fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
+  heroScore: { color: TABLE.ink, fontSize: typography.sizes.title, fontWeight: typography.displayWeight, textAlign: 'center' },
   stoneHere: { transform: [{ scaleY: 1.5 }] },
-  count: { fontSize: typography.sizes.xs, fontVariant: ['tabular-nums'] },
+  count: { fontSize: typography.sizes.text, fontVariant: ['tabular-nums'] },
   feedback: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   verdictRow: { alignItems: 'center', gap: spacing.xs },
-  verdict: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  why: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  verdict: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  why: { fontSize: typography.sizes.text, lineHeight: 21 },
   whyLabel: { fontWeight: typography.weights.semibold },
-  score: { fontFamily: displayFont, fontSize: typography.sizes.xxl, fontWeight: typography.displayWeight },
-  xp: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
-  honest: { fontSize: typography.sizes.md, lineHeight: 24 },
+  score: { fontSize: typography.sizes.title, fontWeight: typography.displayWeight },
+  xp: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  honest: { fontSize: typography.sizes.text, lineHeight: 24 },
   actions: { gap: spacing.sm, marginTop: spacing.md },
 });

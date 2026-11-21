@@ -192,8 +192,8 @@ function RequestsSkeleton(): React.JSX.Element {
           <View style={[styles.who, { flexDirection: dir.row }]}>
             <Skeleton width={44} height={44} radius={radii.pill} />
             <View style={styles.names}>
-              <SkeletonText size={typography.sizes.md} width={i % 2 ? '34%' : '46%'} style={start} />
-              <SkeletonText size={typography.sizes.sm} width="28%" style={start} />
+              <SkeletonText size={typography.sizes.text} width={i % 2 ? '34%' : '46%'} style={start} />
+              <SkeletonText size={typography.sizes.text} width="28%" style={start} />
             </View>
           </View>
           <View style={[styles.actions, { flexDirection: dir.row }]}>

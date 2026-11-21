@@ -34,5 +34,5 @@ export function NewChip({ delayMs = 0, style }: { delayMs?: number; style?: Styl
 
 const styles = StyleSheet.create({
   chip: { position: 'absolute', top: 0, right: 0, borderRadius: radii.pill, paddingHorizontal: 6, paddingVertical: 2 },
-  text: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  text: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
 });

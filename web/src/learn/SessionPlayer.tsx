@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from 'react';
 // A Soranî lesson's letters in a face made for Arabic script, fetched only when used.
-import '@fontsource-variable/vazirmatn';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   NO_LESSON_MOMENTS,

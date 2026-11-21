@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
   fill: { width: '100%', height: '100%' },
   deer: { height: '78%', aspectRatio: 512 / 480 },
   title: { ...display(24) },
-  message: { fontSize: 16, lineHeight: 23 },
+  message: { fontSize: typography.sizes.text, lineHeight: 23 },
   center: { textAlign: 'center' },
   pill: {
     alignItems: 'center',
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     borderRadius: radii.pill,
   },
-  pillText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  pillText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   retry: { marginTop: spacing.sm, alignSelf: 'center' },
-  note: { fontSize: typography.sizes.xs, lineHeight: 18 },
+  note: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

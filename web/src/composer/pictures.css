@@ -58,7 +58,7 @@
   border-radius: 4px;
   background: rgba(0, 0, 0, 0.72);
   color: #fff;
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -106,7 +106,7 @@
   border-radius: var(--r-pill);
   background: rgba(0, 0, 0, 0.45);
   color: #fff;
-  font-size: 0.75rem;
+  font-size: var(--text);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.5;
@@ -215,13 +215,13 @@
   gap: 4px;
   max-width: 62ch;
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
   line-height: 1.45;
   text-align: center;
 }
 .pp-count {
   color: var(--ink-4);
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .pp-close,
@@ -287,7 +287,7 @@
 /* ---- The post page around them ------------------------------------------ */
 /* A saying has no title, so its words are the headline. */
 .post-body-saying {
-  font-size: 1.22rem;
+  font-size: var(--text);
   line-height: 1.6;
 }
 .post-source {
@@ -295,7 +295,7 @@
   padding-top: 12px;
   border-top: 1px solid var(--border);
   color: var(--ink-3);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 .post-edit {
   min-height: 44px;
@@ -306,7 +306,7 @@
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .post-edit:hover {

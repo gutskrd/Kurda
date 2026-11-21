@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   // Mirrored by hand: padding start and end are still physical left and right, and Hevalo's side keeps the wider edge.
   bannerMirrored: { paddingStart: spacing.xs, paddingEnd: spacing.sm },
   words: { flex: 1, gap: spacing.xs },
-  line: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  line: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   // A 16pt ✕ in a 44pt target.
   close: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
 });

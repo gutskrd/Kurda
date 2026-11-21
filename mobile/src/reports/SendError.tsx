@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  text: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
+  text: { flex: 1, fontSize: typography.sizes.text, lineHeight: 20 },
   dismiss: { padding: 2 },
   link: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', alignSelf: 'flex-start' },
-  linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  linkText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

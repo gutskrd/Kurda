@@ -150,13 +150,13 @@ const styles = StyleSheet.create({
   badges: { flexDirection: 'row', justifyContent: 'space-around' },
   badge: { alignItems: 'center', gap: 4, width: 96 },
   medal: { width: 68, height: 68 },
-  badgeName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  badgeName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   empty: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, minHeight: MIN_TOUCH_TARGET },
-  emptyText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  emptyText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   chip: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingVertical: spacing.sm, paddingLeft: spacing.sm, paddingRight: spacing.md, minWidth: 150 },
   // The emblem on the right, with the narrow side of the padding beside it.
   chipMirrored: { flexDirection: 'row-reverse', paddingLeft: spacing.md, paddingRight: spacing.sm },
   chipText: { gap: 1, maxWidth: 140 },
-  kicker: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.4, textTransform: 'uppercase' },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  kicker: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.4, textTransform: 'uppercase' },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

@@ -136,8 +136,8 @@ const styles = StyleSheet.create({
   methods: { gap: spacing.md },
   link: { marginTop: spacing.sm, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   // Centred on every line: the German label wraps at 320 points.
-  linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, textAlign: 'center' },
+  linkText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium, textAlign: 'center' },
   agree: { marginTop: spacing.lg, paddingHorizontal: spacing.md },
   diag: { marginTop: spacing.xl, alignItems: 'center', gap: 2 },
-  diagText: { fontSize: typography.sizes.xs },
+  diagText: { fontSize: typography.sizes.text },
 });

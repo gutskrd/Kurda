@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { HUES, HUE_NAMES, type HueScheme, type HueSteps } from '@kurda/shared';
+import { HUE_NAMES, hueSteps, type HueScheme, type HueSteps } from '@kurda/shared';
 
 /*
  * The shared hues exist in shared/src/hues.ts and as tokens.css `.hue-*` classes, so every class is checked against
- * the module in both schemes. The stylesheet is read from disk, since an imported stylesheet arrives empty in tests;
+ * the steps the interface draws (`hueSteps`, the page's greys) in both schemes. The stylesheet is read from disk, since an imported stylesheet arrives empty in tests;
  * the one file-system call is typed here so the browser-typed app cannot reach for it.
  */
 interface FileSystem {
@@ -52,10 +52,10 @@ describe('the shared hues in the website’s tokens', () => {
     expect([...names].sort()).toEqual([...HUE_NAMES].sort());
   });
 
-  it.each(['dark', 'light'] as const)('gives every hue the module’s own four steps in the %s scheme', (scheme) => {
+  it.each(['dark', 'light'] as const)('gives every hue the interface’s four steps in the %s scheme', (scheme) => {
     for (const name of HUE_NAMES) {
       const rule = rules.find((r) => r.scheme === scheme && r.name === name);
-      const steps: HueSteps = HUES[scheme][name];
+      const steps: HueSteps = hueSteps(scheme, name);
       const expected = Object.fromEntries(STEPS.map((step) => [`--hue-${step}`, steps[step].toLowerCase()]));
       expect(rule?.values, `.hue-${name}, ${scheme}`).toEqual(expected);
     }

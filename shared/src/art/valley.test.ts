@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { PATH_LANDMARKS } from '../path-world.js';
 import { BOOK_SPOTS, bookSpotSvg } from './book.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
+import { moonlitKeepingLamps, relight } from './light.js';
 import { seeded } from './svg.js';
 import { KURDISTAN_FLAG, VALLEY, bark, foliage, grownTree, kurdistanFlag, kurdistanSun, limbsReachCrown, orchardTree, poplar, poplarLeaves, roundTree, type TreeShape } from './valley.js';
 
@@ -141,7 +142,7 @@ describe('the school’s flag', () => {
     }
   });
 
-  it('has the golden sun of twenty-one rays in the middle of the white, one ray standing straight up', () => {
+  it('has the golden sun of twenty-one rays in the middle, half as tall as the flag, one ray standing straight up', () => {
     for (const dark of [false, true]) {
       const flag = kurdistanFlag(dark);
       const sun = /<g transform="translate\(([\d.]+) ([\d.]+)\) scale\(0\.1\)"><path d="([^"]+)" fill="(#[0-9a-f]{6})"\/><\/g>/.exec(flag);
@@ -149,20 +150,20 @@ describe('the school’s flag', () => {
       const [r, g, b] = rgb(sun![4]!);
       expect(r).toBeGreaterThan(g);
       expect(g).toBeGreaterThan(2 * b);
-      // Its points go out to a ray tip and back to the disc between rays, twenty-one times round.
+      // Its points go out to a ray tip and back to a notch half as far, twenty-one times round.
+      const middle = kurdistanSun();
       const pts = points(sun![3]!);
-      const far = pts.map(([x, y]) => Math.hypot(x, y));
-      const tips = far.filter((d) => d > 15);
+      const far = pts.map(([x, y]) => Math.hypot(x, y) / 10);
+      const tips = far.filter((d) => d > middle.r * 0.75);
+      const notches = far.filter((d) => d <= middle.r * 0.75);
       expect(pts).toHaveLength(42);
       expect(tips).toHaveLength(KURDISTAN_FLAG.rays);
-      expect(Math.max(...far.filter((d) => d <= 15))).toBeLessThan(Math.min(...tips) * 0.7);
+      expect(Math.max(...notches)).toBeCloseTo(middle.r * 0.51, 1);
       expect(pts[0]![0]).toBeCloseTo(0, 0);
       expect(pts[0]![1]).toBeLessThan(0);
-      // It sits halfway along the cloth in the middle of the white, its rays clear of the red and green.
-      const middle = kurdistanSun();
+      // It sits halfway along the cloth, as tall as half the flag, its rays reaching into the red and the green.
       expect(Number(sun![1])).toBeCloseTo((KURDISTAN_FLAG.top[0][0] + KURDISTAN_FLAG.top[3][0]) / 2, 0);
-      expect(2 * middle.r).toBeLessThan(KURDISTAN_FLAG.depth / 3);
-      expect(2 * middle.r).toBeGreaterThan(0.8 * (KURDISTAN_FLAG.depth / 3));
+      expect(2 * middle.r).toBeCloseTo(KURDISTAN_FLAG.depth / 2, 5);
     }
   });
 
@@ -171,7 +172,8 @@ describe('the school’s flag', () => {
     expect(loop.kind).toBe('colours');
     expect(loop.w / loop.h).toBeCloseTo(KURDISTAN_FLAG.w / KURDISTAN_FLAG.h, 2);
     for (const dark of [false, true]) {
-      const cloth = kurdistanFlag(dark);
+      // By night both are under the road's moonlight (light.ts).
+      const cloth = dark ? relight(kurdistanFlag(dark), moonlitKeepingLamps) : kurdistanFlag(dark);
       expect(pathLandmarkSvg({ landmark: 'school', dark })).toContain(`<g transform="translate(${loop.x} ${loop.y}) scale(${loop.w / KURDISTAN_FLAG.w})">${cloth}</g>`);
       const moving = pathLoopSvg({ kind: 'colours', dark });
       expect(moving).toContain(`viewBox="0 0 ${KURDISTAN_FLAG.w} ${KURDISTAN_FLAG.h}"`);
@@ -185,7 +187,8 @@ describe('the school’s flag', () => {
     expect(loop.kind).toBe('colours');
     expect(loop.w / loop.h).toBeCloseTo(KURDISTAN_FLAG.w / KURDISTAN_FLAG.h, 2);
     for (const dark of [false, true]) {
-      expect(pathLandmarkSvg({ landmark: 'citywall', dark })).toContain(`<g transform="translate(${loop.x} ${loop.y}) scale(${loop.w / KURDISTAN_FLAG.w})">${kurdistanFlag(dark)}</g>`);
+      const cloth = dark ? relight(kurdistanFlag(dark), moonlitKeepingLamps) : kurdistanFlag(dark);
+      expect(pathLandmarkSvg({ landmark: 'citywall', dark })).toContain(`<g transform="translate(${loop.x} ${loop.y}) scale(${loop.w / KURDISTAN_FLAG.w})">${cloth}</g>`);
     }
   });
 

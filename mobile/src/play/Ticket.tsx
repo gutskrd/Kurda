@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   acrossRule: { flex: 1, marginHorizontal: spacing.sm },
   band: { position: 'absolute', top: -12, bottom: -12, left: 0 },
   stamp: { borderWidth: 2, borderRadius: radii.xs, paddingHorizontal: spacing.sm, paddingVertical: 2, alignSelf: 'flex-start' },
-  stampText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.4 },
+  stampText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, letterSpacing: 0.4 },
   burst: { position: 'absolute', top: '50%', left: '50%', width: 0, height: 0, alignItems: 'center', justifyContent: 'center' },
   spark: { position: 'absolute', width: 5, height: 5, borderRadius: radii.pill },
   badge: { borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },

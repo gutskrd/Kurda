@@ -39,24 +39,24 @@
   gap: 3px;
 }
 .wd-set-title {
-  font-size: 1.15rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 .wd-set-name {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   color: var(--gold-ink);
 }
 .wd-set-body {
   color: var(--ink-3);
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .wd-set-progress {
   display: flex;
   align-items: center;
   gap: 10px;
   margin-top: 4px;
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -172,7 +172,7 @@
   position: absolute;
   top: 7px;
   inset-inline-start: 9px;
-  font-size: 0.66rem;
+  font-size: var(--text);
   font-weight: 700;
   color: var(--success);
 }
@@ -200,12 +200,12 @@
   border-radius: 8px;
   background: var(--surface-solid);
   color: var(--ink);
-  font-size: 0.88rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .wd-chip.is-seen::after {
   content: '✓';
-  font-size: 0.66rem;
+  font-size: var(--text);
   font-weight: 700;
   color: var(--success);
 }
@@ -215,7 +215,7 @@
   padding-top: 34px;
 }
 .wd-digits {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   line-height: 1.15;
   color: var(--ink);
@@ -223,29 +223,29 @@
 .wd-digits small {
   margin-inline-start: 6px;
   font-family: var(--font-sans);
-  font-size: 0.55em;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
 .wd-digits--tile {
-  font-size: 1.7rem;
+  font-size: var(--text-title);
 }
 .wd-digits--card {
-  font-size: 3.4rem;
+  font-size: var(--text-title);
 }
 .wd-digits--option {
-  font-size: 1.8rem;
+  font-size: var(--text-title);
 }
 .wd-digits--prompt {
-  font-size: 3rem;
+  font-size: var(--text-title);
 }
 .wd-tile-word {
-  font-size: 0.88rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
 .wd-tile-meaning {
-  font-size: 0.76rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 
@@ -255,8 +255,8 @@
   gap: 4px;
 }
 .wd-day-name {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.2;
 }
 .wd-day-name.ab-ar,
@@ -267,10 +267,10 @@
 .wd-card-meaning.ab-ar,
 .wd-set-name.ab-ar,
 .wd-face-meaning.ab-ar {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }
 .wd-day-name.ab-ar {
-  font-size: 1.3rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 .wd-day-name mark,
@@ -287,7 +287,7 @@
   border-radius: var(--r-pill);
   background: var(--primary);
   color: var(--primary-ink);
-  font-size: 0.7rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 
@@ -304,18 +304,18 @@
   pointer-events: none;
 }
 .wd-month-number {
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
 .wd-month-name {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.25;
 }
 .wd-month-name.ab-ar {
-  font-size: 1.05rem;
+  font-size: var(--text);
   line-height: 1.6;
 }
 .wd-legend {
@@ -332,7 +332,7 @@
   gap: 6px;
   padding: 5px 10px;
   border-radius: var(--r-pill);
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .wd-legend-dot {
   width: 8px;
@@ -344,7 +344,7 @@
 }
 .wd-legend-gloss {
   color: var(--ink-3);
-  font-size: 0.78rem;
+  font-size: var(--text);
 }
 
 /* ---- the open word ------------------------------------------------------------- */
@@ -373,41 +373,41 @@
   gap: 2px;
 }
 .wd-word-text {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   line-height: 1.2;
 }
 .wd-word-text.ab-ar {
   line-height: 1.5;
 }
 .wd-latin {
-  font-size: 0.9rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .wd-said--head .wd-word-text {
-  font-size: 2.6rem;
+  font-size: var(--text-title);
 }
 .wd-said--partner .wd-word-text {
-  font-size: 1.9rem;
+  font-size: var(--text-title);
 }
 .wd-swatch {
   display: inline-block;
   box-shadow: inset 0 0 0 1px var(--border-strong);
 }
 .wd-card-meaning {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.3;
 }
 .wd-card-phrase .wd-word-text {
-  font-size: 1.4rem;
+  font-size: var(--text);
 }
 .wd-gloss {
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .wd-card-partner {
-  font-family: var(--font-display);
-  font-size: 1.9rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.2;
 }
 .wd-make {
@@ -423,12 +423,12 @@
   border-radius: var(--r-md);
   background: var(--input-bg);
   color: var(--ink);
-  font-size: 1.4rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .wd-make-hint {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .wd-make-out {
@@ -436,7 +436,7 @@
   min-height: 1.6rem;
 }
 .wd-made .wd-word-text {
-  font-size: 1.4rem;
+  font-size: var(--text);
 }
 .wd-relatives {
   display: grid;
@@ -461,15 +461,15 @@
   color: var(--gold-ink);
 }
 .wd-relative-gloss {
-  font-size: 0.76rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .wd-relative-day {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
 }
 .wd-relative-day.ab-ar {
-  font-size: 1.2rem;
+  font-size: var(--text);
 }
 .wd-season {
   display: inline-flex;
@@ -482,11 +482,11 @@
   border-radius: 50%;
 }
 .wd-season-word {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
 }
 .wd-season-word.ab-ar {
-  font-size: 1.2rem;
+  font-size: var(--text);
 }
 
 /* ---- check yourself ------------------------------------------------------------ */
@@ -495,26 +495,26 @@
 }
 .wd-face--prompt .wd-word-text,
 .wd-face--prompt.wd-word-text {
-  font-size: 2.2rem;
+  font-size: var(--text-title);
 }
 .wd-face--option .wd-word-text,
 .wd-face--option.wd-word-text {
-  font-size: 1.15rem;
+  font-size: var(--text);
 }
 .wd-face-meaning {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.3;
   text-align: center;
 }
 .wd-face-meaning.wd-face--prompt {
-  font-size: 1.6rem;
+  font-size: var(--text-title);
 }
 .wd-option {
   padding: 10px 6px;
 }
 .wd-explain-word .wd-word-text {
-  font-size: 1.3rem;
+  font-size: var(--text);
 }
 
 @media (prefers-reduced-motion: reduce) {

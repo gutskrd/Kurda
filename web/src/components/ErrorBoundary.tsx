@@ -40,7 +40,7 @@ class Boundary extends Component<Props & { t: Translate }, State> {
     if (!error) return this.props.children;
     return (
       <div className="container" style={{ padding: '96px 24px', textAlign: 'center' }}>
-        <h1 className="display" style={{ marginTop: 12, fontSize: 'clamp(1.6rem, 4vw, 2.4rem)' }}>
+        <h1 className="display" style={{ marginTop: 12, fontSize: 'var(--text-title)' }}>
           {t('error.crash.title')}
         </h1>
         <p className="lead" style={{ margin: '16px auto 30px', maxWidth: '46ch' }}>

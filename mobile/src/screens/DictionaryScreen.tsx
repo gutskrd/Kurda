@@ -239,12 +239,12 @@ function SavedSkeleton(): React.JSX.Element {
   const dir = useDirection();
   return (
     <View style={styles.recents} accessibilityLabel={t('common.loading')}>
-      <SkeletonText size={typography.sizes.xs} width={72} />
+      <SkeletonText size={typography.sizes.text} width={72} />
       {[0, 1, 2, 3, 4].map((i) => (
         <View key={i} style={[styles.savedRow, { flexDirection: dir.row }]}>
           <View style={styles.savedMain}>
-            <SkeletonText size={typography.sizes.md} width={i % 2 ? 56 : 80} />
-            <SkeletonText size={typography.sizes.sm} width={i % 2 ? '44%' : '60%'} />
+            <SkeletonText size={typography.sizes.text} width={i % 2 ? 56 : 80} />
+            <SkeletonText size={typography.sizes.text} width={i % 2 ? '44%' : '60%'} />
           </View>
           <View style={styles.removeButton}>
             <Skeleton width={18} height={18} radius={radii.pill} />
@@ -262,8 +262,8 @@ function HitsSkeleton(): React.JSX.Element {
     <View accessibilityLabel={t('common.loading')}>
       {[0, 1, 2, 3, 4].map((i) => (
         <View key={i} style={styles.hit}>
-          <SkeletonText size={typography.sizes.lg} width={i % 2 ? 72 : 104} />
-          <SkeletonText size={typography.sizes.sm} width={i % 2 ? '52%' : '68%'} />
+          <SkeletonText size={typography.sizes.text} width={i % 2 ? 72 : 104} />
+          <SkeletonText size={typography.sizes.text} width={i % 2 ? '52%' : '68%'} />
         </View>
       ))}
     </View>
@@ -281,16 +281,16 @@ const SAVED_WORD_REACH = reachSlop(null, null, { edge: SAVED_ROW_REACH });
 const styles = StyleSheet.create({
   // The app's gutter, so the field lines up with the back button above.
   screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.sm },
-  banner: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
+  banner: { fontSize: typography.sizes.text, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
   idle: { gap: spacing.md },
   alphabetLink: { alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET },
-  alphabetText: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  alphabetText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   savedHeading: { alignItems: 'center', gap: spacing.xs },
   recentsTitle: { ...sectionLabel },
   // A fingertip tall, the word centred.
   recentRow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingVertical: spacing.sm },
-  recentText: { fontSize: typography.sizes.md },
+  recentText: { fontSize: typography.sizes.text },
   savedRow: { alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   savedMain: { flex: 1 },
   // A full touch target round the small cross.
@@ -298,6 +298,6 @@ const styles = StyleSheet.create({
   hits: { marginHorizontal: -spacing.sm },
   hitsBody: { paddingHorizontal: spacing.sm },
   hit: { paddingVertical: spacing.md },
-  hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  hitDef: { fontSize: typography.sizes.sm },
+  hitWord: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  hitDef: { fontSize: typography.sizes.text },
 });

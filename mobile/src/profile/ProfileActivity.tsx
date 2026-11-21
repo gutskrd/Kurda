@@ -200,7 +200,7 @@ export function ProfileActivitySkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   return (
     <View style={styles.wrap}>
-      <SkeletonText size={typography.sizes.xs} width={72} />
+      <SkeletonText size={typography.sizes.text} width={72} />
       <View style={[styles.tabs, styles.tabsSkeleton, { backgroundColor: colors.controlTrack }]} />
       <ActivitySkeleton games={false} />
     </View>
@@ -216,8 +216,8 @@ function ActivitySkeleton({ games }: { games: boolean }): React.JSX.Element {
       {games
         ? [0, 1, 2].map((i) => (
             <View key={i} style={[styles.row, { backgroundColor: colors.glassFill }]}>
-              <SkeletonText size={typography.sizes.md} width={i % 2 ? '40%' : '52%'} />
-              <SkeletonText size={typography.sizes.sm} width="30%" />
+              <SkeletonText size={typography.sizes.text} width={i % 2 ? '40%' : '52%'} />
+              <SkeletonText size={typography.sizes.text} width="30%" />
             </View>
           ))
         : [0, 1].map((i) => <FeedCardSkeleton key={i} titled={i > 0} />)}
@@ -245,13 +245,13 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   tabLabel: { alignItems: 'center', gap: 3 },
-  tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  tabText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   list: { gap: spacing.md },
   row: {
     borderRadius: radii.md,
     padding: spacing.md,
     gap: 2,
   },
-  rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  rowDetail: { fontSize: typography.sizes.sm },
+  rowTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  rowDetail: { fontSize: typography.sizes.text },
 });

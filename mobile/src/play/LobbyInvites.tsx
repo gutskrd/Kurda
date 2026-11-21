@@ -154,9 +154,9 @@ const styles = StyleSheet.create({
   ticket: { flex: 1 },
   body: { alignItems: 'center', gap: spacing.sm, minHeight: 48 },
   main: { flex: 1, gap: 2 },
-  name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   state: { alignItems: 'center', gap: 4 },
-  stateText: { flexShrink: 1, fontSize: typography.sizes.sm },
+  stateText: { flexShrink: 1, fontSize: typography.sizes.text },
   action: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.pill, paddingHorizontal: spacing.md, justifyContent: 'center' },
-  actionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  actionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

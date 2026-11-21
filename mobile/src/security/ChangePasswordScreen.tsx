@@ -184,13 +184,13 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   // One column on a tablet, on the same 16pt gutter as every other screen on a phone.
   column: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter, gap: spacing.md },
-  intro: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  intro: { fontSize: typography.sizes.text, lineHeight: 21 },
   // The rules line sits under its field like the field's own error would.
-  hint: { fontSize: typography.sizes.xs, marginTop: -spacing.sm, marginBottom: spacing.md },
+  hint: { fontSize: typography.sizes.text, marginTop: -spacing.sm, marginBottom: spacing.md },
   submit: { marginTop: spacing.xs },
   notice: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, padding: spacing.md },
-  noticeText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 23 },
+  noticeText: { flex: 1, fontSize: typography.sizes.text, lineHeight: 23 },
   panel: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md },
-  panelTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  panelBody: { fontSize: typography.sizes.sm, lineHeight: 21, marginTop: -spacing.xs },
+  panelTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  panelBody: { fontSize: typography.sizes.text, lineHeight: 21, marginTop: -spacing.xs },
 });

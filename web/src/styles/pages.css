@@ -22,13 +22,13 @@
 }
 .feature h3 {
   font-family: var(--font-sans);
-  font-size: 1.1rem;
+  font-size: var(--text);
   font-weight: 650;
   margin-bottom: 7px;
 }
 .feature p {
   color: var(--ink-3);
-  font-size: 0.96rem;
+  font-size: var(--text);
 }
 
 .cta {
@@ -66,7 +66,7 @@
   box-shadow: var(--glass-rim), var(--shadow-lg);
 }
 .auth-card h1 {
-  font-size: 1.9rem;
+  font-size: var(--text-title);
 }
 .auth-head {
   margin-bottom: 26px;
@@ -80,7 +80,7 @@
   padding-top: 20px;
   border-top: 1px solid var(--border);
   text-align: center;
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .auth-alt a {
@@ -190,7 +190,7 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  font-size: 0.9rem;
+  font-size: var(--text);
   color: var(--ink-2);
   cursor: pointer;
 }
@@ -204,7 +204,7 @@
   border: 0;
   padding: 0;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--text);
   color: var(--ink);
   font-weight: 550;
   cursor: pointer;
@@ -213,14 +213,14 @@
 }
 .oauth-note {
   margin-top: 18px;
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--ink-4);
   text-align: center;
 }
 
 /* ---- home dashboard ---------------------------------------------------- */
 .hello {
-  font-size: clamp(1.7rem, 3vw, 2.2rem);
+  font-size: var(--text-title);
 }
 .stat-row {
   display: flex;
@@ -236,13 +236,13 @@
   background: var(--surface);
 }
 .stat .k {
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
   letter-spacing: 0.03em;
 }
 .stat .v {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 600;
   margin-top: 3px;
 }
@@ -274,16 +274,16 @@
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .post h3 {
-  font-size: 1.2rem;
+  font-size: var(--text);
   margin-bottom: 6px;
 }
 .post-excerpt {
   color: var(--ink-2);
-  font-size: 0.96rem;
+  font-size: var(--text);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   line-clamp: 2;
@@ -309,7 +309,7 @@
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
   transition:
@@ -345,7 +345,7 @@
   gap: 12px;
   margin-top: 16px;
   min-height: 32px;
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 
 /* more than one of these can appear at once — add friend, message, view — and
@@ -483,7 +483,7 @@
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--text);
   text-align: left;
   cursor: pointer;
 }
@@ -498,11 +498,11 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .user-menu-note {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--text);
   line-height: 1.45;
   color: var(--ink-3);
 }
@@ -524,7 +524,7 @@
   gap: 6px;
   justify-items: center;
   text-align: center;
-  font-size: 0.88rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .pcard-blocked p {
@@ -580,7 +580,7 @@
   border: 1px solid color-mix(in srgb, var(--gold) 34%, transparent);
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: 0.7rem;
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.03em;
   text-transform: uppercase;
@@ -597,7 +597,7 @@
 }
 .friend-heading {
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: var(--text);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -686,7 +686,7 @@
 }
 .friend-handle {
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
   flex: none;
 }
 .friend-id:hover .friend-name {
@@ -886,7 +886,7 @@ button.feature {
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   color: var(--ink-2);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 650;
   line-height: 1.4;
   white-space: nowrap;
@@ -905,7 +905,7 @@ button.feature {
 }
 .cosmetic-name {
   display: block;
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
@@ -913,7 +913,7 @@ button.feature {
 }
 .cosmetic-desc {
   display: block;
-  font-size: 0.74rem;
+  font-size: var(--text);
   color: var(--ink-3);
   white-space: nowrap;
   overflow: hidden;
@@ -940,7 +940,7 @@ button.feature {
 }
 .cosmetic-locked {
   margin-top: auto;
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 600;
   text-align: center;
   padding: 6px 0;
@@ -1027,21 +1027,22 @@ button.feature {
   gap: 1px;
   min-width: 0;
 }
-.shop-name {
-  display: block;
-  font-size: 0.9rem;
-  color: var(--ink-2);
-  white-space: nowrap;
+/* a name or a description runs to a second line on a narrow tile rather than being cut short */
+.shop-name,
+.shop-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: var(--text);
+  overflow-wrap: anywhere;
+}
+.shop-name {
+  color: var(--ink-2);
 }
 .shop-desc {
-  display: block;
-  font-size: 0.8rem;
   color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 /* the price and the buttons sit on the tile's floor, level along a row
    whether or not the tile beside has a line of description */
@@ -1050,7 +1051,7 @@ button.feature {
   margin-top: auto;
 }
 .shop-owned {
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--gold-ink);
   text-align: center;
@@ -1062,7 +1063,7 @@ button.feature {
   align-items: center;
   gap: 10px;
   margin-top: 14px;
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--ink-2);
   cursor: pointer;
 }
@@ -1094,7 +1095,7 @@ button.feature {
   gap: 2px;
 }
 .fav-label {
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .fav-value {
@@ -1130,7 +1131,7 @@ button.feature {
   border-bottom: 1px solid var(--border);
   color: var(--ink);
   cursor: pointer;
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .fav-options li:last-child .fav-option {
   border-bottom: 0;
@@ -1172,7 +1173,7 @@ button.feature {
 /* sender name above a group message that isn't yours */
 .bubble-author {
   display: block;
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 700;
   color: var(--ink-3);
   margin-bottom: 2px;
@@ -1224,14 +1225,14 @@ button.feature {
   border-radius: var(--r-pill);
   background: var(--bubble-mine);
   color: var(--bubble-mine-ink);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
 .chat-convo-last {
   display: block;
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1337,7 +1338,7 @@ button.chat-thread-title:hover {
   text-underline-offset: 3px;
 }
 .chat-head-status {
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 /* the thread and what floats over its foot: the way back down to the newest message */
@@ -1371,7 +1372,7 @@ button.chat-thread-title:hover {
 }
 .chat-hint {
   margin: auto;
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 /* a conversation nobody has written in yet (chat/DmWelcome.tsx): their face, large, over the group welcome's own layout */
 .dm-welcome-face {
@@ -1424,7 +1425,7 @@ button.chat-run-avatar:hover {
   opacity: 0.85;
 }
 .chat-run-author {
-  font-size: 0.74rem;
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-3);
   padding: 0 12px 1px;
@@ -1435,7 +1436,7 @@ button.chat-run-avatar:hover {
   gap: 5px;
   min-height: 15px;
   padding: 0 6px;
-  font-size: 0.69rem;
+  font-size: var(--text);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -1456,7 +1457,7 @@ button.chat-run-avatar:hover {
   border-radius: var(--r-pill);
   background: var(--surface-solid);
   color: var(--ink-2);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 650;
   box-shadow: var(--shadow-sm);
 }
@@ -1472,7 +1473,7 @@ button.chat-run-avatar:hover {
   border-radius: 20px;
   background: var(--bubble-theirs);
   color: var(--bubble-theirs-ink);
-  font-size: 0.98rem;
+  font-size: var(--text);
   line-height: 1.4;
   overflow-wrap: anywhere;
   /* the composer can produce line breaks now, so they have to survive */
@@ -1533,7 +1534,7 @@ button.chat-run-avatar:hover {
 .bubble.is-emoji {
   padding: 0 4px;
   background: none;
-  font-size: 2.5rem;
+  font-size: var(--text-title);
   line-height: 1.15;
 }
 /* an invite card brings its own layout; pre-wrap would add phantom lines */
@@ -1560,7 +1561,7 @@ button.chat-run-avatar:hover {
   margin: 0;
   padding: 0 4px;
   color: var(--danger);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .chat-run.mine .chat-unsent {
   justify-content: flex-end;
@@ -1600,7 +1601,7 @@ button.chat-run-avatar:hover {
   border-radius: var(--r-pill);
   background: var(--bubble-mine);
   color: var(--bubble-mine-ink);
-  font-size: 0.7rem;
+  font-size: var(--text);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -1616,7 +1617,7 @@ button.chat-run-avatar:hover {
 
 /* delivery state on your own latest message */
 .chat-receipt {
-  font-size: 0.72rem;
+  font-size: var(--text);
   line-height: 1;
   letter-spacing: -0.06em;
   color: var(--ink-3);
@@ -1706,10 +1707,14 @@ button.chat-run-avatar:hover {
   flex: 1;
   min-width: 0;
   resize: none;
-  /* one line sits in the middle of the field, which stands as tall as the Send beside it */
-  min-height: 38px;
-  max-height: 132px;
-  padding: 8px 0;
+  /* one line sits in the middle of the field, which stands as tall as the Send beside it; the box reaches over the
+     field's own padding, so a tap anywhere in the pill but Send lands in it */
+  min-height: 44px;
+  max-height: 138px;
+  margin: -3px 0;
+  margin-inline-start: -16px;
+  padding: 11px 0;
+  padding-inline-start: 16px;
   border: 0;
   background: none;
   color: var(--ink);
@@ -1822,7 +1827,7 @@ button.chat-run-avatar:hover {
     padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   }
   .chat-compose-input {
-    font-size: 16px;
+    font-size: var(--text);
   }
   .chat-messages {
     padding: 12px;
@@ -1856,7 +1861,7 @@ button.chat-run-avatar:hover {
   padding: 0;
   list-style: none;
   color: var(--ink-2);
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .mkp-about > li,
 .mkp-seen {
@@ -1899,7 +1904,7 @@ button.chat-run-avatar:hover {
   align-items: center;
   gap: 7px;
   color: var(--ink-2);
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .mkp-country .flag {
   display: block;
@@ -1935,6 +1940,15 @@ button.chat-run-avatar:hover {
 .mkp-facts > li + li {
   border-inline-start: 1px solid var(--separator);
 }
+/* where the labels would have to shrink too far in one row, four figures stand two by two (FullProfile.tsx) */
+.mkp-facts.is-stacked {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 10px;
+}
+.mkp-facts.is-stacked > li:nth-child(odd) {
+  border-inline-start: 0;
+}
 .mkp-fact {
   display: flex;
   flex-direction: column-reverse;
@@ -1959,23 +1973,25 @@ button.mkp-fact {
   cursor: pointer;
 }
 .mkp-fact-value {
-  font-size: 1.3rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   line-height: 1.1;
 }
 .mkp-fact-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
   max-width: 100%;
+  overflow: hidden;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  /* every label at one size, a little smaller together where the longest would not fit (FullProfile.tsx) */
+  font-size: calc(var(--text) * var(--word-fit, 1));
   font-weight: 600;
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .mkp-fact-icon {
   display: inline-flex;
@@ -2012,7 +2028,7 @@ button.mkp-fact {
     display: none;
   }
   .mkp-fact-value {
-    font-size: 1.15rem;
+    font-size: var(--text);
   }
 }
 
@@ -2020,7 +2036,7 @@ button.mkp-fact {
 .pc .mkp-bio {
   max-width: 62ch;
   margin-top: 10px;
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .mkp-bio-add {
   display: inline-flex;
@@ -2028,7 +2044,7 @@ button.mkp-fact {
   min-height: 44px;
   margin-top: 4px;
   color: var(--primary);
-  font-size: 0.92rem;
+  font-size: var(--text);
   font-weight: 600;
   text-decoration: none;
 }
@@ -2046,7 +2062,7 @@ button.mkp-fact {
   gap: 7px;
   margin: 10px 0 0;
   color: var(--ink-2);
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 
 /* the favourite poem and story stand side by side where there is room for both */
@@ -2079,7 +2095,7 @@ button.mkp-fact {
   align-items: center;
   gap: 5px;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -2107,7 +2123,7 @@ button.mkp-fact {
 /* the sections under the card are cards themselves, headed the way the front page heads one */
 .mkp-showcase-label {
   margin: 0 0 8px 2px;
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -2153,8 +2169,8 @@ button.mkp-fact {
   min-width: 0;
 }
 .mkp-fav-title {
-  font-family: var(--font-display);
-  font-size: 1.2rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   letter-spacing: -0.01em;
 }
 
@@ -2179,7 +2195,7 @@ button.mkp-fact {
 }
 .mkp-collection-head .n {
   color: var(--ink);
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -2228,7 +2244,7 @@ button.mkp-fact {
 }
 .avatar-stack-more {
   margin-left: 8px;
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .avatar-stack-square .avatar-stack-more {
@@ -2266,7 +2282,7 @@ button.mkp-fact {
   background: transparent;
   color: var(--ink-3);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text);
   padding: 6px 14px;
   border-radius: var(--r-pill);
   cursor: pointer;
@@ -2276,7 +2292,7 @@ button.mkp-fact {
   /* buy the width back from the padding before the labels have to give any up */
   .seg-btn {
     padding: 6px 9px;
-    font-size: 0.8rem;
+    font-size: var(--text);
   }
 }
 /* a segment's words, which give up their end to an ellipsis when the segment has to shrink */
@@ -2335,7 +2351,7 @@ button.mkp-fact {
 .dimen-card-who {
   flex: 1;
   min-width: 0;
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--ink-2);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2346,7 +2362,7 @@ button.mkp-fact {
   gap: 10px;
   flex: none;
   color: var(--ink-4);
-  font-size: 0.78rem;
+  font-size: var(--text);
 }
 .dimen-card-counts span {
   display: inline-flex;
@@ -2354,7 +2370,7 @@ button.mkp-fact {
   gap: 3px;
 }
 .dimen-card-caption {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -2395,7 +2411,7 @@ button.mkp-fact {
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: var(--text);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -2405,7 +2421,7 @@ button.mkp-fact {
 }
 /* the tab you are on is drawn as every chosen one is: the shared rule in shell.css */
 .mkp-tab-hidden {
-  font-size: var(--text-tab);
+  font-size: var(--text);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-4);
@@ -2496,7 +2512,7 @@ a.mkp-activity-row:hover {
 .mkp-activity-detail {
   display: block;
   color: var(--ink-4);
-  font-size: 0.82rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2504,7 +2520,7 @@ a.mkp-activity-row:hover {
 .mkp-activity-when {
   flex: none;
   color: var(--ink-4);
-  font-size: 0.78rem;
+  font-size: var(--text);
 }
 .mkp-gallery {
   display: grid;
@@ -2532,7 +2548,7 @@ a.mkp-activity-row:hover {
 .mkp-shot figcaption {
   margin-top: 5px;
   color: var(--ink-4);
-  font-size: 0.76rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2547,7 +2563,7 @@ a.mkp-activity-row:hover {
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .mkp-more:hover {
@@ -2584,7 +2600,7 @@ a.mkp-activity-row:hover {
 .section-toggle-hint {
   display: block;
   color: var(--ink-3);
-  font-size: 0.84rem;
+  font-size: var(--text);
 }
 
 /* edit-profile page photo controls */
@@ -2665,7 +2681,7 @@ a.mkp-activity-row:hover {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
-  font-size: clamp(1rem, 5vw, 1.6rem);
+  font-size: var(--text-title);
   font-weight: 700;
   border: 2px solid var(--border);
   border-radius: 8px;
@@ -2717,7 +2733,7 @@ a.mkp-activity-row:hover {
   color: var(--ink);
   font: inherit;
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: var(--text);
   text-transform: lowercase;
   cursor: pointer;
   touch-action: manipulation;
@@ -2730,7 +2746,7 @@ a.mkp-activity-row:hover {
 }
 .wordle-key-wide {
   flex: 1.5 1 0;
-  font-size: 0.85rem;
+  font-size: var(--text);
   text-transform: none;
 }
 .wordle-keyboard-alphabet .wordle-key-wide {
@@ -2738,7 +2754,7 @@ a.mkp-activity-row:hover {
 }
 .wordle-keyboard-qwerty .wordle-krow-last .wordle-key {
   flex: 2 1 0;
-  font-size: 1.2rem;
+  font-size: var(--text);
 }
 .wordle-key:disabled {
   opacity: 0.55;
@@ -2759,7 +2775,7 @@ a.mkp-activity-row:hover {
   background: none;
   color: var(--ink-3);
   font: inherit;
-  font-size: 0.82rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .wordle-layout-option:hover {
@@ -2779,7 +2795,7 @@ a.mkp-activity-row:hover {
   }
   .wordle-toolbar .chip {
     padding: 6px 12px;
-    font-size: 0.82rem;
+    font-size: var(--text);
   }
   .wordle-head {
     margin-bottom: 12px;
@@ -2809,10 +2825,10 @@ a.mkp-activity-row:hover {
 .is-desktop .wordle-key {
   height: 46px;
   border-radius: var(--r-xs);
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .is-desktop .wordle-key-wide {
-  font-size: 0.82rem;
+  font-size: var(--text);
 }
 /* the Kurdish letters: each the width of one key of the ten-key row */
 .is-desktop .wordle-keyboard-qwerty .wordle-krow-last {
@@ -2820,12 +2836,12 @@ a.mkp-activity-row:hover {
 }
 .is-desktop .wordle-keyboard-qwerty .wordle-krow-last .wordle-key {
   flex: 0 0 calc((100% - 9 * 6px) / 10);
-  font-size: 1.05rem;
+  font-size: var(--text);
 }
 .wordle-type-hint {
   margin: 14px 0 0;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   text-align: center;
 }
 
@@ -2856,7 +2872,7 @@ a.mkp-activity-row:hover {
   text-align: center;
   color: var(--danger);
   margin-top: 8px;
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .wordle-result {
   text-align: center;
@@ -2867,7 +2883,7 @@ a.mkp-activity-row:hover {
   align-items: center;
 }
 .wordle-result-title {
-  font-size: 1.1rem;
+  font-size: var(--text);
 }
 /* the trophy beside "You won" and "Solved it": drawn, in the gold of what is earned, where an emoji used to be typed */
 .verdict-icon {
@@ -2892,7 +2908,7 @@ a.mkp-activity-row:hover {
   margin: 0 0 var(--space-2);
   color: var(--ink-3);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
 }
 .wordle-stats-row {
@@ -2914,14 +2930,14 @@ a.mkp-activity-row:hover {
 }
 .wordle-stat dt {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
 .wordle-stat dd {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -2943,11 +2959,11 @@ a.mkp-activity-row:hover {
   }
   .wordle-key {
     height: 48px;
-    font-size: 1rem;
+    font-size: var(--text);
   }
   /* "Enter" in the space of a key and a half, with room either side of it */
   .wordle-key-wide {
-    font-size: 0.8rem;
+    font-size: var(--text);
     padding: 0 2px;
   }
   .wordle-layout-option {
@@ -2973,14 +2989,14 @@ a.mkp-activity-row:hover {
   gap: 2px;
 }
 .rhyme-label {
-  font-size: 0.78rem;
+  font-size: var(--text);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 .rhyme-prompt {
-  font-family: var(--font-display);
-  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   color: var(--ink);
 }
@@ -2994,7 +3010,7 @@ a.mkp-activity-row:hover {
   text-align: center;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  font-size: 1.3rem;
+  font-size: var(--text);
   padding: 6px 12px;
   border-radius: var(--r-md);
   border: 1px solid var(--border);
@@ -3008,7 +3024,7 @@ a.mkp-activity-row:hover {
 }
 .rhyme-score {
   color: var(--ink-2);
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .rhyme-compose {
   display: flex;
@@ -3041,7 +3057,7 @@ a.mkp-activity-row:hover {
   font-weight: 600;
 }
 .rhyme-chip .rhyme-pts {
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 /* perfect rhymes read gold, near rhymes a subtle tint */
@@ -3084,7 +3100,7 @@ a.mkp-activity-row:hover {
   text-align: center;
 }
 .match-verdict {
-  font-size: 1.6rem;
+  font-size: var(--text-title);
 }
 
 /* ---- Peyvok Battle (opponents) ---------------------------------------- */
@@ -3100,7 +3116,7 @@ a.mkp-activity-row:hover {
 /* where an invite to a game that is no longer part of Hevalo was: a line, not a ticket */
 .invite-retired {
   display: block;
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-style: italic;
   opacity: 0.75;
 }
@@ -3143,11 +3159,11 @@ a.mkp-activity-row:hover {
 }
 .mode-option-label {
   font-weight: 650;
-  font-size: 1.02rem;
+  font-size: var(--text);
 }
 .mode-option-blurb {
   color: var(--ink-3);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 
 
@@ -3206,7 +3222,7 @@ a.mkp-activity-row:hover {
 .verify-said {
   min-height: 1.45em;
   margin: 10px 0 12px;
-  font-size: 0.92rem;
+  font-size: var(--text);
   line-height: 1.45;
   color: var(--ink-3);
 }
@@ -3224,14 +3240,14 @@ a.mkp-activity-row:hover {
 }
 .verify-foot {
   margin-top: 18px;
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .verify-foot p + p {
   margin-top: 6px;
 }
 .verify-small {
-  font-size: 0.8rem;
+  font-size: var(--text);
 }
 .verify-leave {
   margin-top: 8px;
@@ -3293,21 +3309,21 @@ a.mkp-activity-row:hover {
 .msg-toast-notice {
   margin: 0;
   cursor: default;
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .msg-toast-notice:hover {
   background: none;
 }
 .msg-toast-title {
   font-weight: 650;
-  font-size: 0.9rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .msg-toast-body {
   color: var(--ink-3);
-  font-size: 0.86rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -3371,10 +3387,10 @@ a.mkp-activity-row:hover {
 }
 .byline-name {
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .byline-when {
-  font-size: 0.76rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .byline-trailing {
@@ -3385,7 +3401,7 @@ a.mkp-activity-row:hover {
   height: 28px;
 }
 .byline-sm .byline-name {
-  font-size: 0.86rem;
+  font-size: var(--text);
 }
 
 /* ---- a post read in full ------------------------------------------------ */
@@ -3402,7 +3418,7 @@ a.mkp-activity-row:hover {
   gap: 6px;
   margin-bottom: 14px;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .back-link:hover {
   color: var(--ink);
@@ -3423,7 +3439,7 @@ a.mkp-activity-row:hover {
   /* a poem's line breaks ARE the poem */
   white-space: pre-wrap;
   line-height: 1.75;
-  font-size: 1.02rem;
+  font-size: var(--text);
   margin-top: 14px;
   overflow-wrap: anywhere;
 }
@@ -3437,7 +3453,7 @@ a.mkp-activity-row:hover {
   margin-top: 28px;
 }
 .section-heading {
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 650;
   margin: 0 0 12px;
 }
@@ -3491,7 +3507,7 @@ a.mkp-activity-row:hover {
   flex-basis: 100%;
   margin: 0;
   color: var(--danger);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 /* a comment still on its way is faint until the server has it; one that did not go says so in the danger colour */
 .comment.is-pending > .comment-body {
@@ -3500,7 +3516,7 @@ a.mkp-activity-row:hover {
 .comment-pending {
   margin-bottom: 0;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .comment-pending.is-failed {
   color: var(--danger);
@@ -3510,7 +3526,7 @@ a.mkp-activity-row:hover {
   border: 0;
   background: none;
   font: inherit;
-  font-size: 0.84rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
   cursor: pointer;
@@ -3557,7 +3573,7 @@ a.mkp-activity-row:hover {
   /* the price at the start of the row, the buttons at its end — on either side of the page */
   margin-inline-end: auto;
   color: var(--gold-ink);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
@@ -3570,7 +3586,7 @@ a.mkp-activity-row:hover {
   border-radius: var(--r-pill);
   background: var(--bg);
   color: var(--ink-3);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 500;
 }
 
@@ -3643,7 +3659,7 @@ a.mkp-activity-row:hover {
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--gold) 22%, transparent);
 }
 .gift-from {
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 
@@ -3731,7 +3747,7 @@ a.mkp-activity-row:hover {
 .picture-raw .muted {
   margin: 0;
   max-width: 42ch;
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .picture-drop img {
   display: block;
@@ -3747,7 +3763,7 @@ a.mkp-activity-row:hover {
   gap: 8px;
   padding: 40px 16px;
   color: var(--ink-3);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 
 /* the composer's stage: the picture with its words, and the mark's stand-in */
@@ -3773,7 +3789,7 @@ a.mkp-activity-row:hover {
   border-radius: var(--r-pill);
   background: rgba(8, 10, 14, 0.46);
   color: rgba(255, 255, 255, 0.94);
-  font-size: 0.7rem;
+  font-size: var(--text);
   pointer-events: none;
 }
 .picture-sign img {
@@ -3787,7 +3803,7 @@ a.mkp-activity-row:hover {
   gap: 8px;
   margin-top: 12px;
   color: var(--ink-2);
-  font-size: 0.86rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .picture-toggle input {
@@ -3825,7 +3841,7 @@ a.mkp-activity-row:hover {
   flex: none;
   width: 56px;
   color: var(--ink-4);
-  font-size: 0.78rem;
+  font-size: var(--text);
 }
 .tool-row input[type='range'] {
   flex: 1;
@@ -3834,7 +3850,7 @@ a.mkp-activity-row:hover {
   flex: none;
   width: 40px;
   color: var(--ink-3);
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
@@ -3883,7 +3899,7 @@ a.mkp-activity-row:hover {
   border: 1px dashed rgba(255, 255, 255, 0.4);
   background: rgba(8, 10, 14, 0.35);
   color: rgba(255, 255, 255, 0.7);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   pointer-events: none;
   overflow: hidden;
 }
@@ -3894,7 +3910,7 @@ a.mkp-activity-row:hover {
 }
 .editor-title {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
@@ -3903,7 +3919,7 @@ a.mkp-activity-row:hover {
 .editor-hint {
   margin: 4px 0 0;
   color: var(--ink-4);
-  font-size: 0.82rem;
+  font-size: var(--text);
 }
 
 .editor-tools {
@@ -3929,7 +3945,7 @@ a.mkp-activity-row:hover {
   background: var(--surface-2);
   color: var(--ink);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
 }
@@ -3963,7 +3979,7 @@ a.mkp-activity-row:hover {
   justify-content: space-between;
 }
 .editor-panel-title {
-  font-size: 0.72rem;
+  font-size: var(--text);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-4);
@@ -3989,7 +4005,7 @@ a.mkp-activity-row:hover {
   border: 1px solid transparent;
   border-radius: var(--r-sm);
   background: transparent;
-  font-size: 1.15rem;
+  font-size: var(--text);
   line-height: 1.2;
   cursor: pointer;
 }
@@ -4095,14 +4111,14 @@ a.mkp-activity-row:hover {
 }
 .cpick-field-label {
   color: var(--ink-4);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .cpick-field .input {
   width: 100%;
   padding: 5px 7px;
-  font-size: 0.76rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 @media (max-width: 460px) {
@@ -4140,7 +4156,7 @@ a.mkp-activity-row:hover {
 /* a mode you cannot reach yet, said plainly next to the ones you can */
 .mode-locked {
   color: var(--ink-4);
-  font-size: 0.86em;
+  font-size: var(--text);
 }
 
 /* sign out and sign-out-everywhere sit together; they are the same decision */
@@ -4187,7 +4203,7 @@ a.mkp-activity-row:hover {
 }
 .blocklist-meta {
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4254,7 +4270,7 @@ a.mkp-activity-row:hover {
 }
 .device-meta {
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -4309,7 +4325,7 @@ a.mkp-activity-row:hover {
   margin: 0 0 16px;
 }
 .username-now dt {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .username-now dd {
@@ -4321,7 +4337,7 @@ a.mkp-activity-row:hover {
   margin: 0 0 16px;
   padding: 0;
   list-style: none;
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .username-held li + li {
@@ -4329,7 +4345,7 @@ a.mkp-activity-row:hover {
 }
 .username-wait {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 
@@ -4349,7 +4365,7 @@ a.mkp-activity-row:hover {
   align-items: center;
   gap: 6px;
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
   line-height: 1.35;
 }
 .gifted-note svg {
@@ -4379,7 +4395,7 @@ a.mkp-activity-row:hover {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.92rem;
+  font-size: var(--text);
   white-space: nowrap;
 }
 .home-civak-list {
@@ -4394,7 +4410,7 @@ a.mkp-activity-row:hover {
 /* The friends section is headed like the profile's other sections. */
 .mkp-friends .friend-heading {
   margin: 0 0 8px 2px;
-  font-size: 0.72rem;
+  font-size: var(--text);
   letter-spacing: 0.12em;
 }
 [dir='rtl'] .mkp-friends .friend-heading {
@@ -4424,7 +4440,7 @@ a.mkp-activity-row:hover {
   border-radius: var(--r-pill);
   background: var(--surface);
   color: var(--ink);
-  font-size: 0.88rem;
+  font-size: var(--text);
   cursor: pointer;
   transition:
     border-color var(--dur-fast) var(--ease-out),
@@ -4448,7 +4464,7 @@ a.mkp-activity-row:hover {
 }
 .mkp-friends-more {
   margin-top: 8px;
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 
 /* ---- passing a post on ------------------------------------------------- */
@@ -4468,7 +4484,7 @@ a.mkp-activity-row:hover {
   align-items: center;
 }
 .share-link .input {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .share-link .btn {
@@ -4492,7 +4508,7 @@ a.mkp-activity-row:hover {
   align-items: center;
   gap: 10px;
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
 }
 .share-divider::before,
 .share-divider::after {
@@ -4502,7 +4518,7 @@ a.mkp-activity-row:hover {
 }
 .share-note {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 .share-sent {
   margin: 0;
@@ -4510,7 +4526,7 @@ a.mkp-activity-row:hover {
   border-radius: var(--r-sm);
   background: var(--success-soft);
   color: var(--success);
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .share-friends-block {
   display: grid;
@@ -4524,13 +4540,13 @@ a.mkp-activity-row:hover {
 }
 .dict-search {
   width: 100%;
-  font-size: 1.05rem;
+  font-size: var(--text);
   padding: 12px 14px;
 }
 .dict-fuzzy {
   margin: 0;
   font-style: italic;
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .dict-section {
   display: grid;
@@ -4541,7 +4557,7 @@ a.mkp-activity-row:hover {
   align-items: center;
   gap: 6px;
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -4588,7 +4604,7 @@ a.mkp-activity-row:hover {
   font-weight: 700;
 }
 .dict-row-def {
-  font-size: 0.88rem;
+  font-size: var(--text);
   color: var(--ink-3);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4625,7 +4641,7 @@ a.mkp-activity-row:hover {
 }
 .dict-headword {
   margin: 0 0 4px;
-  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-size: var(--text-title);
 }
 .dict-senses {
   margin: 0;
@@ -4638,22 +4654,22 @@ a.mkp-activity-row:hover {
   gap: 4px;
 }
 .dict-pos {
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-style: italic;
   color: var(--ink-3);
 }
 .dict-def {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .dict-def-ku {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .dict-source {
   margin: 24px 0 0;
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .dict-source a {
@@ -4672,10 +4688,10 @@ a.mkp-activity-row:hover {
   gap: 2px;
 }
 .dict-example-ku {
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .dict-example-en {
-  font-size: 0.86rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .dict-xrefs {
@@ -4684,7 +4700,7 @@ a.mkp-activity-row:hover {
 }
 .dict-xrefs-title {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;

@@ -12,7 +12,6 @@ import { isSoraniDialect, typingKeys } from '@kurda/shared';
 import { KeyBar } from '../../keyboard/KeyBar';
 import { insertAtSelection, type Selection } from '../kurdishKeys';
 import { spacing, typography } from '../../theme/tokens';
-import { displayFont } from '../../theme/fonts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { AnswerMotion } from '../../theme/MotionParts';
 import { useValley } from '../ValleyScope';
@@ -116,5 +115,5 @@ const styles = StyleSheet.create({
   // The lesson's column starts at the left edge, and the keys line up with it.
   bar: { justifyContent: 'flex-start' },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },
-  field: { borderWidth: CARD.edge, borderRadius: CARD.radius, fontFamily: displayFont, fontSize: typography.sizes.lg - 2 },
+  field: { borderWidth: CARD.edge, borderRadius: CARD.radius, fontSize: typography.sizes.text },
 });

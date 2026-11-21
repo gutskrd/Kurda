@@ -155,8 +155,8 @@ export function togglePick(picked: readonly string[], id: string, single: boolea
 
 const styles = StyleSheet.create({
   picker: { gap: spacing.sm },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 19 },
-  subhead: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
+  hint: { fontSize: typography.sizes.text, lineHeight: 22 },
+  subhead: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
   friend: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   },
   online: { position: 'absolute', right: -1, bottom: -1, width: 12, height: 12, borderRadius: radii.pill, borderWidth: 2 },
   friendText: { flex: 1 },
-  friendName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  friendHandle: { fontSize: typography.sizes.sm },
+  friendName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  friendHandle: { fontSize: typography.sizes.text },
   check: { width: 24, height: 24, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 });

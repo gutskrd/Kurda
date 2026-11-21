@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  label: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, fontVariant: ['tabular-nums'] },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium, fontVariant: ['tabular-nums'] },
   chosen: { fontWeight: typography.weights.bold },
   dim: { opacity: 0.5 },
 });

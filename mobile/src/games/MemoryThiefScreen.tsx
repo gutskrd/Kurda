@@ -30,7 +30,6 @@ import { Icon } from '../theme/Icon';
 import { duration } from '../theme/motion';
 import { Tile, TileButton } from '../theme/Tile';
 import { useTheme } from '../theme/ThemeProvider';
-import { displayFont } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability, useOpenRound } from './learnGames';
@@ -358,7 +357,7 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
 
   const words = done ? (result?.correction?.words ?? null) : null;
   const text = [dir.text, { color: colors.textPrimary }];
-  const wordStyle = [styles.word, { color: colors.textPrimary }, rtl ? styles.rtl : null, rtl ? null : { fontFamily: displayFont }];
+  const wordStyle = [styles.word, { color: colors.textPrimary }, rtl ? styles.rtl : null, null];
 
   return (
     <View style={styles.board}>
@@ -576,11 +575,11 @@ const styles = StyleSheet.create({
   // The ribbon runs down toward the side the line starts from.
   fromLeft: { transformOrigin: 'left center' },
   fromRight: { transformOrigin: 'right center' },
-  kicker: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
+  kicker: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   line: { flexWrap: 'wrap', alignItems: 'center', columnGap: 6, rowGap: 2, minHeight: MIN_TOUCH_TARGET },
-  word: { fontSize: typography.sizes.lg, lineHeight: 32 },
-  speaker: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, borderRadius: radii.pill, paddingHorizontal: spacing.sm, overflow: 'hidden' },
+  word: { fontSize: typography.sizes.text, lineHeight: 32 },
+  speaker: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, borderRadius: radii.pill, paddingHorizontal: spacing.sm, overflow: 'hidden' },
   gapWrap: { alignItems: 'center' },
   gap: {
     minWidth: 64,
@@ -594,31 +593,31 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   glow: { borderTopLeftRadius: 10, borderTopRightRadius: 10 },
-  gapN: { fontSize: 10, fontWeight: typography.weights.bold, alignSelf: 'flex-start', marginTop: 6 },
+  gapN: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, alignSelf: 'flex-start', marginTop: 6 },
   gapWord: { fontWeight: typography.weights.semibold },
   rtl: { writingDirection: 'rtl' },
   study: { gap: spacing.sm },
-  muted: { fontSize: typography.sizes.sm },
+  muted: { fontSize: typography.sizes.text },
   restore: { gap: spacing.md },
-  hint: { fontSize: typography.sizes.sm },
+  hint: { fontSize: typography.sizes.text },
   typed: { gap: spacing.sm },
   chips: { flexWrap: 'wrap', gap: spacing.sm },
   chip: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   chipText: { fontWeight: typography.weights.semibold },
-  input: { borderWidth: 1, borderRadius: radii.md, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, fontSize: typography.sizes.lg },
+  input: { borderWidth: 1, borderRadius: radii.md, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, fontSize: typography.sizes.text },
   tray: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   ghost: { borderRadius: radii.lg, paddingHorizontal: spacing.md, minHeight: 48, justifyContent: 'center' },
-  ghostText: { opacity: 0, fontSize: typography.sizes.md },
+  ghostText: { opacity: 0, fontSize: typography.sizes.text },
   reveal: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
-  revealTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  revealTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   revealRow: { flexWrap: 'wrap', alignItems: 'center', columnGap: spacing.sm },
-  revealN: { fontSize: typography.sizes.xs },
-  revealTerm: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  revealMeaning: { fontSize: typography.sizes.sm },
-  note: { fontSize: typography.sizes.xs },
+  revealN: { fontSize: typography.sizes.text },
+  revealTerm: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  revealMeaning: { fontSize: typography.sizes.text },
+  note: { fontSize: typography.sizes.text },
   steps: { flexWrap: 'wrap', gap: spacing.sm },
   step: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderRadius: radii.pill, borderWidth: 1 },
   stepN: { width: 24, height: 24, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  stepNText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  stepText: { fontSize: typography.sizes.sm },
+  stepNText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  stepText: { fontSize: typography.sizes.text },
 });

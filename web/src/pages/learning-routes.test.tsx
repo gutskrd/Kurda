@@ -455,7 +455,7 @@ describe('a course map', () => {
     expect(within(next).getByText('On its way: Hamo is recording it now.')).toBeInTheDocument();
   });
 
-  it('opens a card on a stop: its lessons as ways in, how far along, and one thing to do', async () => {
+  it('opens a card on a stop: the one to do now in violet with one button, a locked one saying what opens it', async () => {
     serve({
       'GET /courses/c1/map': basics,
       'GET /practice/due': { due: 0, available: 3 },
@@ -467,11 +467,11 @@ describe('a course map', () => {
     expect(greetings).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(greetings);
     expect(greetings).toHaveAttribute('aria-expanded', 'true');
+    // The road's main button: its name, which lesson is next, and one button that says what it pays.
     const card = screen.getByRole('group', { name: 'Greetings' });
-    expect(within(card).getByRole('link', { name: /Hello.*Done/ })).toHaveAttribute('href', '/app/learn/lesson/l1?course=c1');
-    expect(within(card).getByRole('link', { name: /Goodbye.*Up next/ })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
-    expect(within(card).getByText('1 of 2 lessons done')).toBeInTheDocument();
-    expect(within(card).getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
+    expect(card).toHaveClass('is-go');
+    expect(within(card).getByText('Lesson 2 of 2')).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'Continue +10–20 XP' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
 
     // Its Tips, fetched once, in a sheet of their own.
     await userEvent.click(within(card).getByRole('button', { name: 'Tips' }));
@@ -543,12 +543,12 @@ describe('a course map', () => {
     });
   });
 
-  it('stands the learner on the stop to do now, and lists every unit on a rail that goes to it', async () => {
+  it('marks no learner on the road, and lists every unit on a rail that goes to it', async () => {
     serve({ 'GET /courses/c1/map': basics, 'GET /courses': courses, 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
     await screen.findByRole('button', { name: /^Greetings/ });
-    expect(screen.getAllByTestId('lp-learner')).toHaveLength(1);
-    expect(screen.getByTestId('lp-learner')).toHaveAttribute('aria-hidden', 'true');
+    // The stop to do now says where the learner is; no figure stands on it.
+    expect(screen.queryByTestId('lp-learner')).not.toBeInTheDocument();
     // The rail beside the path: every unit by its number and name, the one the learner is in marked.
     const rail = screen.getAllByRole('navigation', { name: 'Course map' })[0]!;
     const here = within(rail).getByRole('button', { name: 'Chapter 1, Basics' });
@@ -651,15 +651,14 @@ describe('a course map', () => {
     expect(within(screen.getByRole('dialog', { name: 'Jump to Chapter 4?' })).getByRole('link', { name: 'Start the test' })).toHaveAttribute('href', '/app/learn/jump/c1/r4');
   });
 
-  it('rings each topic with a piece for each lesson, stands a star on its coin for each round, and says the round in its card', async () => {
+  it('rings the topic to do now with a piece for each lesson, stands a star on a coin for each round, and says the round in its card', async () => {
     serve({ 'GET /courses/c1/map': sections(), 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
 
-    // Topic c has all three rounds: its ring whole and gold, three stars on its coin.
+    // Topic c has all three rounds: three stars on its coin, and no ring, which is for the topic to do now.
     const c = await screen.findByRole('button', { name: 'Topic c, Done — strong, all 3 rounds done' });
-    expect(within(c).getByTestId('lp-ring')).toHaveClass('is-whole');
+    expect(within(c).queryByTestId('lp-ring')).not.toBeInTheDocument();
     expect(within(c).getAllByTestId('lp-stars-3')).toHaveLength(1);
-    expect(c.querySelectorAll('.lp-ring-piece')).toHaveLength(2);
     // Topic d, the one to do now: a piece filled of two, and no stars yet.
     const d = screen.getByRole('button', { name: /^Topic d/ });
     expect(d.querySelectorAll('.lp-ring-piece.is-filled')).toHaveLength(1);
@@ -669,7 +668,6 @@ describe('a course map', () => {
     const card = screen.getByRole('group', { name: 'Topic c' });
     expect(within(card).getByTestId('lp-card-stars-3')).toBeInTheDocument();
     expect(within(card).getByText('All 3 rounds done')).toBeInTheDocument();
-    expect(within(card).getByText('Three stars: every lesson here played three times.')).toBeInTheDocument();
   });
 
   it('plays a gold topic again from the lesson finished fewest times, and says the round it is in', async () => {
@@ -679,7 +677,7 @@ describe('a course map', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Topic b, Done — strong, round 2 of 3, 1 of 2 lessons' }));
     const card = screen.getByRole('group', { name: 'Topic b' });
     expect(within(card).getByText('Round 2 of 3 · 1 of 2 lessons')).toBeInTheDocument();
-    expect(within(card).getByRole('link', { name: 'Practise again' })).toHaveAttribute('href', '/app/learn/lesson/b2?course=c1');
+    expect(within(card).getByRole('link', { name: 'Practise again +3–5 XP, played again' })).toHaveAttribute('href', '/app/learn/lesson/b2?course=c1');
   });
 
   it('makes a chapter’s story its prize: the chapter complete, the story to read and the chapter to practise', async () => {

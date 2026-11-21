@@ -290,14 +290,14 @@ function SettingsSheet({
 
 const styles = StyleSheet.create({
   card: { gap: spacing.sm },
-  title: { ...display(typography.sizes.lg) },
-  settings: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  title: { ...display(typography.sizes.text) },
+  settings: { fontSize: typography.sizes.text, lineHeight: 20 },
   player: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
   playerMain: { flex: 1, gap: 2 },
-  playerName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  playerName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   playerFacts: { flexDirection: 'row', gap: spacing.sm },
   fact: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  factText: { fontSize: typography.sizes.xs },
+  factText: { fontSize: typography.sizes.text },
   removeButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
-  waiting: { fontSize: typography.sizes.md, textAlign: 'center' },
+  waiting: { fontSize: typography.sizes.text, textAlign: 'center' },
 });

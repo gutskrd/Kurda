@@ -137,17 +137,17 @@ const PICTURE = 44;
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   column: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter, paddingTop: spacing.xs, gap: layout.rowGap },
-  lead: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },
+  lead: { fontSize: typography.sizes.text, marginBottom: spacing.xs },
 
   card: { alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, padding: spacing.md, minHeight: 96 },
   text: { flex: 1, gap: 4 },
-  title: { ...display(typography.sizes.lg), lineHeight: Math.round(typography.sizes.lg * 1.2) },
-  body: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  title: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.2) },
+  body: { fontSize: typography.sizes.text, lineHeight: 20 },
   progress: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
   track: { width: 72, height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radii.pill },
   fillEnd: { alignSelf: 'flex-end' },
-  count: { flexShrink: 1, fontSize: typography.sizes.xs },
+  count: { flexShrink: 1, fontSize: typography.sizes.text },
 
   teaser: { width: TEASER, height: TEASER, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
 });

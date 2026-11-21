@@ -1,7 +1,7 @@
 /**
- * Hevalo's colours: nine hues, each in the same four steps, for light and dark. The app is one ink on a quiet page with
- * its icon's violet; everything else needing a colour of its own (a game's stamp, a practice kind, a chapter of the book)
- * takes one of these, never a colour mixed on the spot. The steps sit at the same lightness in a perceptual space, so a
+ * Hevalo's colours: nine hues, each in the same four steps, for light and dark, for drawings (a share card, a chapter of
+ * the book). The interface is one ink on a quiet page with its icon's violet on the main button alone, so there every
+ * hue is the page's greys (`hueSteps`). The steps sit at the same lightness in a perceptual space, so a
  * row reads as one family:
  *
  *   tint  the palest: a stamp's paper, a card's ground
@@ -54,7 +54,16 @@ export function isHueName(v: unknown): v is HueName {
   return (HUE_NAMES as readonly unknown[]).includes(v);
 }
 
-/** A hue's four steps in a theme. */
-export function hueSteps(scheme: HueScheme, name: HueName): HueSteps {
-  return HUES[scheme][name];
+/**
+ * The page's greys in the same four steps: what every hue becomes in the interface, where colour is the main button's
+ * alone. `deep` on `tint` and `wash` still clears 7:1.
+ */
+export const UI_GREY: Readonly<Record<HueScheme, HueSteps>> = {
+  light: { tint: '#f3f2f8', wash: '#e8e6f0', base: '#8a879e', deep: '#1f1c38' },
+  dark: { tint: '#1d1b2c', wash: '#282539', base: '#8f8ca3', deep: '#ebe9f5' },
+};
+
+/** A hue's four steps as the interface draws them (a ground, a mark, a stamp's paper): the page's greys. Drawings take `HUES`. */
+export function hueSteps(scheme: HueScheme, _name: HueName): HueSteps {
+  return UI_GREY[scheme];
 }

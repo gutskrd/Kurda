@@ -31,6 +31,31 @@ export function springFor(spec: SpringSpec): Spring {
 }
 
 /**
+ * A spring from rest to 1 as a CSS easing, for a transition that should move as the phone's springs do: the curve
+ * sampled into `linear()`, overshoot included, and how long it takes to come within a thousandth of 1 and stay there.
+ */
+export function springEasing(spec: SpringSpec, samples = 40): { easing: string; ms: number } {
+  const { stiffness, damping } = springFor(spec);
+  const omega = Math.sqrt(stiffness);
+  const zeta = damping / (2 * omega);
+  let at: (t: number) => number;
+  let settle: number;
+  if (zeta < 1) {
+    const wd = omega * Math.sqrt(1 - zeta * zeta);
+    const k = zeta / Math.sqrt(1 - zeta * zeta);
+    at = (t) => 1 - Math.exp(-zeta * omega * t) * (Math.cos(wd * t) + k * Math.sin(wd * t));
+    settle = Math.log(Math.sqrt(1 + k * k) / 0.001) / (zeta * omega);
+  } else {
+    // Critically damped: an underdamped spring's limit, and as close as the presets come to overdamped.
+    at = (t) => 1 - Math.exp(-omega * t) * (1 + omega * t);
+    settle = 9.23 / omega;
+  }
+  const points: string[] = [];
+  for (let i = 0; i <= samples; i += 1) points.push(i === samples ? '1' : String(Math.round(at((settle * i) / samples) * 10000) / 10000));
+  return { easing: `linear(${points.join(', ')})`, ms: Math.round(settle * 1000) };
+}
+
+/**
  * The system's named springs: `default` (since version 17), the `smooth`, `snappy` and `bouncy` presets, and `interactive`,
  * the quick, nearly critical one used while a finger still holds what moves. The platform's advice: no bounce unless a
  * gesture with momentum just ended, and little even then.

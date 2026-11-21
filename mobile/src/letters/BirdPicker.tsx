@@ -109,7 +109,7 @@ export function BirdPicker({
 
 const styles = StyleSheet.create({
   picker: { alignItems: 'center', gap: spacing.sm, alignSelf: 'stretch' },
-  status: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center', maxWidth: 360 },
+  status: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center', maxWidth: 360 },
   strong: { fontWeight: typography.weights.bold },
   // Two even rows of four.
   birds: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm, maxWidth: 4 * (48 + 10) + 3 * spacing.sm + 2, marginVertical: spacing.xs },

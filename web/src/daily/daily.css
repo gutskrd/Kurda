@@ -38,7 +38,7 @@
 }
 .daily-number {
   font-family: var(--font-sans);
-  font-size: 3.5rem;
+  font-size: var(--text-title);
   font-weight: 800;
   line-height: 1;
   letter-spacing: -0.02em;
@@ -48,12 +48,12 @@
   margin-top: 4px;
   color: var(--ink-3);
   font-family: var(--font-sans);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
 }
 .daily-restored-title {
   margin: 0;
-  font-size: var(--text-section);
+  font-size: var(--text);
   line-height: 1.2;
 }
 .daily-restored-title:focus {
@@ -82,7 +82,7 @@
 }
 .week-day-name {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1;
 }
@@ -156,12 +156,12 @@
 .daily-zer-title {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 700;
 }
 .daily-card-note {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .daily-stats-grid {
   display: grid;
@@ -182,12 +182,12 @@
   max-width: 100%;
   overflow-wrap: anywhere;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   line-height: 1.25;
 }
 .daily-stat dd {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--text-title);
   font-weight: 750;
   line-height: 1.15;
 }
@@ -240,7 +240,7 @@
 .daily-zer-line {
   margin: 0;
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.4;
 }
 .daily-zer-cycle {
@@ -278,7 +278,7 @@
   gap: 6px;
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .daily-zer-problem {
   color: var(--danger);
@@ -336,12 +336,12 @@
 }
 .daily-badge-label {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
 }
 .daily-badge-meaning {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 400;
 }
 
@@ -353,7 +353,7 @@
   gap: 6px;
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   line-height: 1.4;
   text-align: center;
 }
@@ -370,7 +370,7 @@
 .streak-repair-text {
   margin: 0;
   color: var(--ink);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.45;
 }
 .streak-repair .btn {
@@ -390,12 +390,12 @@
 .streak-repair-hint {
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .streak-repair-problem {
   margin: 0;
   color: var(--danger);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 
 /* ---- the fire's stages in one row ----------------------------------------------------------------------------------- */
@@ -437,7 +437,7 @@
 }
 .fire-step-day {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .fire-step.is-now .fire-step-day {
@@ -454,7 +454,7 @@
   gap: 8px;
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 .daily-longest strong {
   color: var(--ink);
@@ -495,7 +495,7 @@
 }
 .daily-step-title {
   margin: 0;
-  font-size: var(--text-section);
+  font-size: var(--text);
 }
 .insights {
   display: grid;
@@ -507,14 +507,14 @@
 }
 .insights-lead {
   margin: 0;
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.35;
 }
 .insights-line {
   margin: 0;
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.4;
 }
 .insights-chart {
@@ -531,14 +531,14 @@
 }
 .insights-title {
   color: var(--ink-2);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
 }
 .insights-legend {
   display: inline-flex;
   gap: 12px;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 /* A short stroke of each week's colour, as the lines are drawn. */
 .insights-key {
@@ -573,7 +573,7 @@
 .insights-tick,
 .insights-day {
   fill: var(--ink-3);
-  font-size: 11px;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .insights-day.is-today {
@@ -608,7 +608,7 @@
 }
 .insights-value {
   fill: var(--ink);
-  font-size: 12px;
+  font-size: var(--text);
   font-weight: 750;
 }
 .insights-tip {
@@ -621,7 +621,7 @@
   border-radius: var(--r-md);
   background: var(--surface-solid);
   box-shadow: var(--shadow-raised);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   pointer-events: none;
   transform: translateX(12px);
 }
@@ -695,13 +695,13 @@
   min-width: 0;
 }
 .daily-home-number {
-  font-size: 1.5rem;
+  font-size: var(--text-title);
   font-weight: 800;
   line-height: 1.05;
 }
 .daily-home-unit {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -718,7 +718,7 @@
   border-radius: var(--r-pill);
   box-shadow: inset 0 0 0 1px var(--border-strong);
   color: var(--ink-2);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }

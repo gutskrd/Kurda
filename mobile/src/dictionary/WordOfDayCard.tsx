@@ -75,15 +75,15 @@ function WordOfDaySkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }]}>
-      <SkeletonText size={typography.sizes.xs} width={112} />
-      <SkeletonText size={typography.sizes.xl} lineHeight={HEADWORD_LINE} width={96} />
-      <SkeletonText size={typography.sizes.sm} width="40%" />
+      <SkeletonText size={typography.sizes.text} width={112} />
+      <SkeletonText size={typography.sizes.title} lineHeight={HEADWORD_LINE} width={96} />
+      <SkeletonText size={typography.sizes.text} width="40%" />
     </View>
   );
 }
 
 /** display(28) sets 1.12. */
-const HEADWORD_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
+const HEADWORD_LINE = Math.round(typography.sizes.title * typography.displayLineHeight);
 
 const styles = StyleSheet.create({
   card: {
@@ -93,6 +93,6 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   label: { ...sectionLabel },
-  headword: { ...display(typography.sizes.xl) },
-  def: { fontSize: typography.sizes.sm },
+  headword: { ...display(typography.sizes.title) },
+  def: { fontSize: typography.sizes.text },
 });

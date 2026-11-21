@@ -28,7 +28,7 @@ export function CalmCard({
   children: ReactNode;
 }): React.JSX.Element {
   return (
-    <CalmFrame name={group.name} picture={(size) => <GroupAvatar name={group.name} id={group.id} size={size} photoUrl={group.photoUrl} />}>
+    <CalmFrame name={group.name} picture={(size) => <GroupAvatar name={group.name} size={size} photoUrl={group.photoUrl} />}>
       {children}
     </CalmFrame>
   );
@@ -162,19 +162,19 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
   },
   compact: { paddingVertical: spacing.lg, paddingHorizontal: spacing.md },
-  name: { ...display(typography.sizes.lg), textAlign: 'center', marginTop: spacing.xs },
-  line: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
+  name: { ...display(typography.sizes.text), textAlign: 'center', marginTop: spacing.xs },
+  line: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
   greet: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
-  label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  label: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   // Snug enough that the three greetings share one line on a phone.
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
   chip: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm + 4, borderRadius: radii.pill },
-  chipText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  chipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   pressed: { opacity: pressedDim },
   add: { marginTop: spacing.md, alignSelf: 'stretch' },
   system: { alignItems: 'center', paddingVertical: spacing.sm },
   systemText: {
-    fontSize: typography.sizes.xs,
+    fontSize: typography.sizes.text,
     textAlign: 'center',
     overflow: 'hidden',
     borderRadius: radii.pill,

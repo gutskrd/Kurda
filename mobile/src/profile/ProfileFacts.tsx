@@ -52,7 +52,7 @@ function Fact({ fact }: { fact: ProfileFact }): React.JSX.Element {
   const body = (
     <>
       {fact.value === null ? (
-        <SkeletonText size={typography.sizes.lg} width={28} align="center" />
+        <SkeletonText size={typography.sizes.text} width={28} align="center" />
       ) : (
         <View style={[styles.figureRow, { flexDirection: dir.row }]}>
           {fact.art}
@@ -142,18 +142,18 @@ const styles = StyleSheet.create({
   fact: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: spacing.xs },
   figureRow: { alignItems: 'center', gap: 4 },
   figure: { ...statValue },
-  label: { fontSize: typography.sizes.sm },
+  label: { fontSize: typography.sizes.text },
   // A figure with a page behind it is underlined, as a link on the website.
   labelLink: { textDecorationLine: 'underline' },
   level: { alignSelf: 'stretch', gap: spacing.xs },
   levelHead: { justifyContent: 'space-between', alignItems: 'baseline', gap: spacing.sm },
-  levelName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  levelNext: { flexShrink: 1, fontSize: typography.sizes.sm },
+  levelName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  levelNext: { flexShrink: 1, fontSize: typography.sizes.text },
   track: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 6, borderRadius: radii.pill },
   yours: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   yoursHead: { justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   onlyYou: { alignItems: 'center', gap: 4 },
-  onlyYouText: { fontSize: typography.sizes.xs },
+  onlyYouText: { fontSize: typography.sizes.text },
   yoursCard: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md },
 });

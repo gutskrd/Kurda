@@ -17,7 +17,7 @@ const TICK_HAPTIC_MS = 40;
 const FADE = 56;
 
 /** How tall the big number is drawn. */
-const NUMBER_SIZE = 72;
+const NUMBER_SIZE = typography.sizes.title;
 
 /** What stands where the number goes while no age is chosen: a mark, not a word, so it needs no translating. */
 const NO_NUMBER = '–';
@@ -182,7 +182,7 @@ const LABEL_WIDTH = 44;
 const styles = StyleSheet.create({
   root: { alignItems: 'center' },
   number: { ...display(NUMBER_SIZE), lineHeight: Math.round(NUMBER_SIZE * 1.05), fontVariant: ['tabular-nums'] },
-  unit: { fontSize: typography.sizes.md, marginTop: -spacing.xs, marginBottom: spacing.lg },
+  unit: { fontSize: typography.sizes.text, marginTop: -spacing.xs, marginBottom: spacing.lg },
   ruler: { alignSelf: 'stretch', height: RULER.tall + 28, justifyContent: 'flex-start' },
   ticks: { flex: 1 },
   slot: { width: RULER.tick, alignItems: 'center', height: RULER.tall + 28 },
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     width: LABEL_WIDTH,
     left: (RULER.tick - LABEL_WIDTH) / 2,
     textAlign: 'center',
-    fontSize: typography.sizes.xs,
+    fontSize: typography.sizes.text,
     fontVariant: ['tabular-nums'],
   },
   pointer: { position: 'absolute', top: -spacing.xs, left: '50%', marginLeft: -2, width: 4, height: RULER.tall + spacing.sm, borderRadius: radii.pill },

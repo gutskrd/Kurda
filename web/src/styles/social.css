@@ -33,7 +33,7 @@
   border-radius: var(--r-sm);
   background: var(--surface-2);
   color: var(--ink);
-  font-size: 0.92rem;
+  font-size: var(--text);
   line-height: 1.45;
   text-align: start;
 }
@@ -138,7 +138,7 @@
 
 /* ---- the report sheet (reports/ReportSheet.tsx) -------------------------- */
 .report-eyebrow {
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -151,7 +151,7 @@
   text-transform: none;
 }
 .report-heading {
-  font-size: 1.4rem;
+  font-size: var(--text);
   margin: 6px 0 4px;
   outline: none;
 }
@@ -162,7 +162,7 @@
 }
 .report-intro {
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text);
   margin-top: 8px;
 }
 .report-cats {
@@ -210,7 +210,7 @@
   line-height: 1.3;
 }
 .report-cat-hint {
-  font-size: 0.84rem;
+  font-size: var(--text);
   line-height: 1.35;
   color: var(--ink-3);
 }
@@ -222,7 +222,7 @@
   transform: scaleX(-1);
 }
 .report-privacy {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .report-help p {
@@ -240,7 +240,7 @@
   padding: 5px 12px;
   border-radius: var(--r-pill);
   background: var(--surface-2);
-  font-size: 0.88rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 /* the chip is a pill, but the label below it starts its own line */
@@ -275,7 +275,7 @@
 }
 .report-subheading {
   font-family: var(--font-sans);
-  font-size: 0.95rem;
+  font-size: var(--text);
   font-weight: 700;
   margin: 20px 0 6px;
 }
@@ -283,7 +283,7 @@
   margin: 0;
   padding-inline-start: 20px;
   color: var(--ink-2);
-  font-size: 0.93rem;
+  font-size: var(--text);
 }
 .report-next li + li {
   margin-top: 4px;
@@ -307,7 +307,7 @@
   min-height: 44px;
 }
 .report-also-note {
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 
@@ -320,7 +320,7 @@
   min-height: 44px;
   margin-bottom: 6px;
   color: var(--ink-3);
-  font-size: 0.92rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .standing-back:hover {
@@ -364,7 +364,7 @@
 }
 .myreport-what {
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text);
   overflow-wrap: anywhere;
 }
 .myreport-pill,
@@ -372,7 +372,7 @@
   flex: none;
   padding: 3px 10px;
   border-radius: var(--r-pill);
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-weight: 700;
   background: var(--surface-2);
   color: var(--ink-2);
@@ -393,7 +393,7 @@
 }
 .myreport-dates {
   margin: 6px 0 12px;
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .appeal-form {
@@ -417,7 +417,7 @@
   margin-top: 14px;
 }
 .appeal-deadline {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .appeal-state {
@@ -426,7 +426,7 @@
   border-radius: var(--r-sm);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .appeal-state.is-overturned,
 .appeal-state.is-modified {
@@ -459,7 +459,7 @@
   color: var(--success);
 }
 .standing-status-title {
-  font-size: 1.25rem;
+  font-size: var(--text);
   margin-bottom: 6px;
 }
 .standing-limits {
@@ -492,18 +492,18 @@
 }
 .sanction-kind {
   font-family: var(--font-sans);
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 .sanction-rule {
   margin-top: 6px;
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .sanction-when {
   margin-top: 2px;
   color: var(--ink-3);
-  font-size: 0.88rem;
+  font-size: var(--text);
 }
 .sanction-statement {
   margin: 12px 0 0;
@@ -515,7 +515,7 @@
   line-height: 1.5;
 }
 .sanction-statement figcaption {
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
@@ -534,7 +534,7 @@
   margin: 12px 0 0;
 }
 .sanction-picture figcaption {
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--ink-3);
 }
@@ -559,7 +559,7 @@
 }
 .sanction-origin {
   margin-top: 10px;
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 
@@ -605,15 +605,15 @@
 }
 .suspension-title {
   margin-top: 12px;
-  font-size: clamp(1.6rem, 4vw, 2.1rem);
+  font-size: var(--text-title);
 }
 .suspension-until {
   margin-top: 8px;
   color: var(--ink-2);
-  font-size: 1.05rem;
+  font-size: var(--text);
 }
 .suspension-note {
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 .suspension-actions {
   display: flex;
@@ -745,7 +745,7 @@
   border-radius: var(--r-pill);
   background: var(--surface-2);
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--text);
 }
 .bubble-menu {
   position: absolute;
@@ -793,7 +793,7 @@
   border-radius: var(--r-pill);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: 12px;
+  font-size: var(--text);
   font-weight: 600;
 }
 .bubble-line.mine .bubble-copied {
@@ -939,7 +939,7 @@ button.gift-bubble:active {
 }
 .gift-bubble-title {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: var(--text);
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
@@ -947,7 +947,7 @@ button.gift-bubble:active {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .gift-bubble.is-opened .gift-bubble-sub,
@@ -957,7 +957,7 @@ button.gift-bubble:active {
 .gift-bubble-error {
   display: block;
   margin-top: 4px;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--danger);
 }
 .gift-recipients {
@@ -973,7 +973,7 @@ button.gift-bubble:active {
   padding: 2px 8px 2px 2px;
   border-radius: var(--r-pill);
   background: var(--surface);
-  font-size: 0.76rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .gift-recipient .friend-avatar {
@@ -1155,18 +1155,18 @@ button.gift-bubble:active {
   }
 }
 .gift-reveal-name {
-  font-size: 1.35rem;
+  font-size: var(--text);
   outline: none;
   overflow-wrap: anywhere;
 }
 .gift-reveal.is-compact .gift-reveal-name {
   font-family: var(--font-sans);
-  font-size: 1.02rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 .gift-reveal-from {
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 .gift-reveal-actions {
   display: flex;
@@ -1185,7 +1185,7 @@ button.gift-bubble:active {
   min-height: 44px;
   padding: 0 10px;
   color: var(--success);
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .gift-reveal-error {
@@ -1248,7 +1248,7 @@ button.gift-bubble:active {
   background: transparent;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: var(--text);
   cursor: pointer;
 }
 .gift-skip:hover {
@@ -1526,13 +1526,13 @@ button.gift-bubble:active {
 
 /* ---- the picker ------------------------------------------------------------ */
 .gift-picker-title {
-  font-size: 1.35rem;
+  font-size: var(--text);
   padding-inline-end: 48px;
   margin-bottom: 10px;
 }
 .gift-picker-intro {
   color: var(--ink-2);
-  font-size: 0.92rem;
+  font-size: var(--text);
   margin-bottom: 12px;
 }
 .gift-picker-meta {
@@ -1549,7 +1549,7 @@ button.gift-bubble:active {
   padding: 4px 12px;
   border-radius: var(--r-pill);
   background: var(--surface-2);
-  font-size: 0.86rem;
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -1606,7 +1606,7 @@ button.gift-bubble:active {
   cursor: default;
 }
 .gift-tile-name {
-  font-size: 0.86rem;
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.25;
   text-align: center;
@@ -1616,7 +1616,7 @@ button.gift-bubble:active {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 700;
   color: var(--gold-ink);
   font-variant-numeric: tabular-nums;
@@ -1630,7 +1630,7 @@ button.gift-bubble:active {
   inset-inline-start: 6px;
   padding: 1px 7px;
   border-radius: var(--r-pill);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -1650,7 +1650,7 @@ button.gift-bubble:active {
   color: #96301b;
 }
 .gift-tile-owned {
-  font-size: 0.74rem;
+  font-size: var(--text);
   color: var(--ink-3);
   text-align: center;
 }
@@ -1682,7 +1682,7 @@ button.gift-bubble:active {
   flex: 1 1 180px;
   display: flex;
   flex-direction: column;
-  font-size: 0.92rem;
+  font-size: var(--text);
   overflow-wrap: anywhere;
 }
 .gift-confirm-cost {
@@ -1693,7 +1693,7 @@ button.gift-bubble:active {
   font-variant-numeric: tabular-nums;
 }
 .gift-confirm-short {
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .gift-confirm .btn {
@@ -1710,7 +1710,7 @@ button.gift-bubble:active {
 }
 /* chosen, though the filters above now hide it */
 .gift-confirm-hidden {
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 /* the shelf by kind (shop/ItemBrowser): one titled shelf per kind under All */
@@ -1719,7 +1719,7 @@ button.gift-bubble:active {
 }
 .gift-tile-desc {
   margin-top: -4px;
-  font-size: 0.74rem;
+  font-size: var(--text);
   color: var(--ink-3);
   text-align: center;
   overflow-wrap: anywhere;
@@ -1819,7 +1819,7 @@ button.gift-bubble:active {
   flex: 1;
   min-width: 0;
   font-weight: 600;
-  font-size: 0.92rem;
+  font-size: var(--text);
   overflow-wrap: anywhere;
 }
 .gift-arrival-open {

@@ -149,6 +149,6 @@ const styles = StyleSheet.create({
   picture: { position: 'absolute', top: 0, left: 0, width: SPLASH_IMAGE_WIDTH, height: SPLASH_IMAGE_WIDTH },
   hero: { position: 'absolute' },
   words: { position: 'absolute', left: -WORDS_REACH, right: -WORDS_REACH, alignItems: 'center', gap: spacing.xs },
-  brand: { ...display(typography.sizes.xxl), textAlign: 'center' },
-  slogan: { fontSize: typography.sizes.sm, textAlign: 'center', fontStyle: 'italic' },
+  brand: { ...display(typography.sizes.title), textAlign: 'center' },
+  slogan: { fontSize: typography.sizes.text, textAlign: 'center', fontStyle: 'italic' },
 });

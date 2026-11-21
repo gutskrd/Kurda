@@ -151,7 +151,7 @@ export function ChangePassword({ onChanged }: { onChanged?: () => void }): React
   return (
     <section className="card" style={{ marginTop: 20 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.password.title')}</h2>
-      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>{t('settings.password.help')}</p>
+      <p className="muted" style={{ fontSize: 'var(--text)', marginBottom: 14 }}>{t('settings.password.help')}</p>
 
       {done && (
         <div className="msg msg-success" role="status">

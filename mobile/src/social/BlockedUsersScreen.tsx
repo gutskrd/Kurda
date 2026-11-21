@@ -174,7 +174,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   list: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.xs },
-  help: { fontSize: typography.sizes.sm, marginBottom: spacing.sm },
+  help: { fontSize: typography.sizes.text, marginBottom: spacing.sm },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -183,9 +183,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   main: { flex: 1 },
-  name: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  meta: { fontSize: typography.sizes.sm },
-  action: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  meta: { fontSize: typography.sizes.text },
+  action: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   more: { alignItems: 'center', paddingVertical: spacing.md },
-  error: { fontSize: typography.sizes.sm, marginBottom: spacing.sm },
+  error: { fontSize: typography.sizes.text, marginBottom: spacing.sm },
 });

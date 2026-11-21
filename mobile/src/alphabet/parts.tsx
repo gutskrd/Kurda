@@ -194,9 +194,9 @@ export function CardLabel({ children, style }: { children: string; style?: Style
 
 const styles = StyleSheet.create({
   play: { borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
-  like: { ...display(typography.sizes.lg), lineHeight: Math.round(typography.sizes.lg * 1.35) },
+  like: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.35) },
   mark: { textDecorationLine: 'underline' },
-  word: { ...display(typography.sizes.xl), lineHeight: Math.round(typography.sizes.xl * 1.2) },
-  meaning: { fontSize: typography.sizes.sm },
+  word: { ...display(typography.sizes.title), lineHeight: Math.round(typography.sizes.title * 1.2) },
+  meaning: { fontSize: typography.sizes.text },
   untracked: { letterSpacing: 0 },
 });

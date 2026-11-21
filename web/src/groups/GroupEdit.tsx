@@ -129,7 +129,7 @@ export function GroupEdit({
 
       <div className="gedit-photo">
         <span className={`gedit-photo-pic${busy === 'photo' ? ' is-busy' : ''}`}>
-          <GroupAvatar id={detail.id} name={trimmed || detail.name} photoUrl={photo} size={96} />
+          <GroupAvatar name={trimmed || detail.name} photoUrl={photo} size={96} />
           {busy === 'photo' && <span className="gedit-spinner" role="status" aria-label={t('common.loading')} />}
         </span>
         <span className="gedit-photo-actions">

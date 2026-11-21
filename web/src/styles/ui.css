@@ -1,6 +1,6 @@
 /* ---- buttons ----------------------------------------------------------- */
 /*
- * One button in three weights, all pills: primary for a screen's next step, secondary in a surface tone, and ghost as a
+ * One button in three weights, all pills: primary (in the accent) for a screen's next step, secondary in a surface tone, and ghost as a
  * word that lights up on hover; destructive is red. 44px tall by default; `btn-sm` suits rows on a pointer and grows
  * back to 44px on touch.
  */
@@ -10,7 +10,7 @@
   justify-content: center;
   gap: 8px;
   font-family: var(--font-sans);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1;
   padding: 0 20px;
@@ -40,25 +40,26 @@
 .btn-sm {
   height: 36px;
   padding: 0 14px;
-  font-size: 0.875rem;
+  font-size: var(--text);
 }
 .btn-lg {
   height: 52px;
   padding: 0 26px;
-  font-size: var(--text-body);
+  font-size: var(--text);
 }
 .btn-block {
   width: 100%;
 }
 
+/* the main button, the one thing in the accent */
 .btn-primary {
-  background: var(--primary);
-  color: var(--primary-ink);
-  border-color: var(--primary);
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-color: var(--accent);
 }
 .btn-primary:hover:not(:disabled) {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 /* the surface-tone pill */
 .btn-secondary {
@@ -175,12 +176,12 @@
   margin-bottom: 16px;
 }
 .field-label {
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-weight: 550;
   color: var(--ink-2);
 }
 .field-hint {
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 /* what is wrong with this field, under it, rather than in a banner above the form */
@@ -188,12 +189,12 @@
   border-color: var(--danger);
 }
 .field-problem {
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--danger);
 }
 /* and what is right with it, where the reader was waiting to be told (a username that is free) */
 .field-ok {
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--success);
 }
 /* Hide the browser's own password reveal/clear control (Edge/IE ::-ms-reveal,
@@ -208,7 +209,7 @@ input[type='password']::-ms-clear {
   height: 46px;
   padding: 0 14px;
   /* 16px at least, or a phone zooms the page in when the field is touched */
-  font-size: 1rem;
+  font-size: var(--text);
   font-family: var(--font-sans);
   color: var(--ink);
   background: var(--input-bg);
@@ -346,7 +347,7 @@ input[type='password']::-ms-clear {
 
 /* ---- inline messages --------------------------------------------------- */
 .msg {
-  font-size: 0.88rem;
+  font-size: var(--text);
   padding: 10px 12px;
   border-radius: var(--r-sm);
   margin-bottom: 14px;
@@ -399,7 +400,7 @@ input[type='password']::-ms-clear {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -430,14 +431,14 @@ input[type='password']::-ms-clear {
 }
 .state-title {
   font-family: var(--font-sans);
-  font-size: var(--text-body);
+  font-size: var(--text);
   color: var(--ink);
   margin-bottom: 6px;
 }
 .state p {
   max-width: 42ch;
   margin: 0 auto;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 
 .spinner {

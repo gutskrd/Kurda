@@ -120,7 +120,7 @@ function ClaimedCoin(): React.JSX.Element {
   return (
     <View style={styles.stage} testID="daily-zer-landed">
       {moment.plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={COIN_STAGE + 16} /> : null}
-      {moment.plan.travel ? <ConfettiBurst progress={moment.burst} count={8} seed={7} colours={[colors.gold, colors.accent, colors.primary]} reach={40} /> : null}
+      {moment.plan.travel ? <ConfettiBurst progress={moment.burst} count={8} seed={7} colours={[colors.primary, colors.textSecondary]} reach={40} /> : null}
       <Animated.View style={{ opacity, transform: [{ scale }] }}>
         <Icon name="coin" size={COIN} />
       </Animated.View>
@@ -134,12 +134,12 @@ const styles = StyleSheet.create({
   coin: { width: COIN_STAGE, height: COIN_STAGE, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-start' },
   stage: { width: COIN_STAGE, height: COIN_STAGE, alignItems: 'center', justifyContent: 'center' },
   words: { flex: 1, gap: 3 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  line: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  line: { fontSize: typography.sizes.text, lineHeight: 21 },
   cycle: { gap: 5, marginTop: 4 },
   cycleDay: { width: 8, height: 8, borderRadius: radii.pill },
   done: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   under: { paddingStart: COIN_STAGE + spacing.sm + 4 },
   plus: { alignItems: 'center', gap: spacing.xs },
-  plusText: { fontSize: typography.sizes.xs },
+  plusText: { fontSize: typography.sizes.text },
 });

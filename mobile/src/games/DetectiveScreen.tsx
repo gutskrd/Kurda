@@ -179,7 +179,7 @@ function EvidenceCard({
             style={[styles.translate, { flexDirection: dir.row, borderColor: colors.separator, opacity: canSpend ? 1 : 0.5 }]}
           >
             <Icon name="lightbulb" size={16} color={colors.textPrimary} />
-            <Text style={{ color: colors.textPrimary, fontSize: typography.sizes.sm }}>{t('games.detective.translate')}</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: typography.sizes.text }}>{t('games.detective.translate')}</Text>
           </PressableScale>
         </View>
       )}
@@ -205,7 +205,7 @@ function Choice({ label, state, onPress, disabled, children }: { label: string; 
       accessibilityState={{ selected: state === 'picked', disabled }}
       style={[styles.option, { borderColor: border, backgroundColor: fill, opacity: state === 'dim' ? 0.6 : 1 }]}
     >
-      {children ?? <Text style={[dir.text, { color: colors.textPrimary, fontSize: typography.sizes.md }]}>{label}</Text>}
+      {children ?? <Text style={[dir.text, { color: colors.textPrimary, fontSize: typography.sizes.text }]}>{label}</Text>}
     </PressableScale>
   );
 }
@@ -470,35 +470,35 @@ export function DetectiveScreen({ onExit }: { onExit: () => void }): React.JSX.E
 const styles = StyleSheet.create({
   case: { gap: spacing.md },
   file: { borderRadius: radii.lg, borderWidth: 1, padding: spacing.md, gap: spacing.xs },
-  caseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
-  muted: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  caseTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  muted: { fontSize: typography.sizes.text, lineHeight: 20 },
   boardField: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md },
-  section: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  section: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   suspects: { flexWrap: 'wrap', gap: spacing.sm },
   suspect: { flexGrow: 1, flexBasis: 96, alignItems: 'center', gap: 4, padding: spacing.sm, borderRadius: radii.md },
   suspectName: { fontWeight: typography.weights.semibold },
-  suspectAbout: { fontSize: typography.sizes.xs, textAlign: 'center' },
+  suspectAbout: { fontSize: typography.sizes.text, textAlign: 'center' },
   marks: { flexWrap: 'wrap', justifyContent: 'center', gap: 4 },
   mark: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm, borderWidth: 1.5, borderRadius: radii.pill },
-  markText: { fontSize: typography.sizes.xs },
+  markText: { fontSize: typography.sizes.text },
   portrait: { borderRadius: radii.pill, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
-  initial: { position: 'absolute', bottom: 4, fontSize: 12, fontWeight: '700' },
+  initial: { position: 'absolute', bottom: 4, fontSize: typography.sizes.text, fontWeight: '700' },
   card: { borderWidth: 2, borderRadius: radii.sm, padding: spacing.md, paddingTop: spacing.lg, gap: spacing.sm },
   cardLook: { borderWidth: 3 },
   pin: { position: 'absolute', top: -9, alignSelf: 'center' },
   cardKind: { alignItems: 'center', gap: 4 },
-  cardKindText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  cardKu: { fontSize: typography.sizes.md, lineHeight: 24 },
+  cardKindText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  cardKu: { fontSize: typography.sizes.text, lineHeight: 24 },
   listen: { alignSelf: 'flex-start', alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderWidth: 1.5, borderRadius: radii.pill },
-  cardMeaning: { paddingTop: spacing.sm, borderTopWidth: 1, fontSize: typography.sizes.sm },
+  cardMeaning: { paddingTop: spacing.sm, borderTopWidth: 1, fontSize: typography.sizes.text },
   unknown: { flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: spacing.xs, paddingTop: spacing.sm, borderTopWidth: 1 },
-  unknownText: { fontSize: typography.sizes.sm },
+  unknownText: { fontSize: typography.sizes.text },
   translate: { alignItems: 'center', gap: 4, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderWidth: 1, borderRadius: radii.pill },
   panel: { borderRadius: radii.lg, borderWidth: 1, padding: spacing.md, gap: spacing.sm },
-  panelTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  panelTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   titleRow: { alignItems: 'center', gap: spacing.sm },
-  count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  question: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
+  count: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  question: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   options: { gap: spacing.sm },
   option: { minHeight: MIN_TOUCH_TARGET + 4, borderWidth: 2, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, justifyContent: 'center' },
   accused: { flexWrap: 'wrap', gap: spacing.sm },

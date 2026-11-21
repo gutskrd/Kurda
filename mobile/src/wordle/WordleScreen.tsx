@@ -448,20 +448,20 @@ const styles = StyleSheet.create({
   keyboardDock: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm, alignItems: 'center' },
   // The night the game opens on: its emblem acting the game out, its name and how it is played.
   stage: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
-  stageName: { ...display(typography.sizes.xxl), color: TABLE.ink, textAlign: 'center', marginTop: spacing.sm },
-  stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  stageName: { ...display(typography.sizes.title), color: TABLE.ink, textAlign: 'center', marginTop: spacing.sm },
+  stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
   startActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },
-  startStats: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
+  startStats: { fontSize: typography.sizes.text, textAlign: 'center' },
+  note: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center' },
   result: { gap: spacing.md, marginTop: spacing.md },
   // Lay out a card's contents on an inner View: a GlassCard's own style only dresses its outside.
   resultCard: { gap: spacing.sm },
   resultMark: { alignSelf: 'center' },
   // The spark's own stage while it celebrates; the flecks may fly past its edges.
   winStage: { alignSelf: 'center', width: WIN_STAGE, height: WIN_STAGE / 2, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
-  resultTitle: { ...display(typography.sizes.xl), textAlign: 'center' },
-  resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
-  resultNote: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
+  resultTitle: { ...display(typography.sizes.title), textAlign: 'center' },
+  resultLine: { fontSize: typography.sizes.text, textAlign: 'center' },
+  resultNote: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center' },
   nextDifficulty: { marginTop: spacing.sm },
   again: { marginTop: spacing.sm },
   resultActions: { gap: spacing.sm },
@@ -471,6 +471,6 @@ const styles = StyleSheet.create({
   // Five figures, three and two, spaced evenly so the two under the three sit centred.
   statsGrid: { flexWrap: 'wrap', justifyContent: 'space-evenly', rowGap: spacing.md },
   stat: { width: '30%', alignItems: 'center' },
-  statValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
-  statLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },
+  statValue: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold },
+  statLabel: { fontSize: typography.sizes.text, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },
 });

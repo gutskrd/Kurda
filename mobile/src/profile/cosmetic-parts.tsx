@@ -122,11 +122,11 @@ export function FavoriteRow({ label, title }: { label: string; title: string }):
 
 const styles = StyleSheet.create({
   premium: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  premiumText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
+  premiumText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
   gifts: { gap: 2, marginTop: spacing.xs },
   gift: { alignItems: 'center', gap: spacing.xs },
-  giftText: { fontSize: typography.sizes.xs },
+  giftText: { fontSize: typography.sizes.text },
   favorite: { alignSelf: 'stretch', gap: 2, marginTop: spacing.md },
-  favoriteLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5 },
-  favoriteTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  favoriteLabel: { fontSize: typography.sizes.text, textTransform: 'uppercase', letterSpacing: 0.5 },
+  favoriteTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
 });

@@ -104,8 +104,8 @@ function LeagueLineSkeleton(): React.JSX.Element {
     <View style={[styles.row, { backgroundColor: colors.surface, flexDirection: dir.row }]}>
       <Skeleton width={44} height={44} radius={radii.pill} />
       <View style={styles.text}>
-        <SkeletonText size={typography.sizes.md} width="58%" style={start} />
-        <SkeletonText size={typography.sizes.sm} width="36%" style={start} />
+        <SkeletonText size={typography.sizes.text} width="58%" style={start} />
+        <SkeletonText size={typography.sizes.text} width="36%" style={start} />
       </View>
       <Skeleton width={44} height={44} radius={radii.pill} />
     </View>
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
   row: { alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: MIN_TOUCH_TARGET + 16, alignSelf: 'stretch' },
   iconBox: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  title: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   subRow: { alignItems: 'center', gap: 4 },
-  sub: { fontSize: typography.sizes.sm, flexShrink: 1 },
+  sub: { fontSize: typography.sizes.text, flexShrink: 1 },
 });

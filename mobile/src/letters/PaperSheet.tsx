@@ -1,5 +1,5 @@
 import { memo, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions, type GestureResponderHandlers, type TextStyle, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type GestureResponderHandlers, type TextStyle, type ViewStyle } from 'react-native';
 import Svg, { Path, SvgXml } from 'react-native-svg';
 import {
   DEFAULT_PAPER,
@@ -29,9 +29,9 @@ import type { TranslationKey } from '../i18n/translations';
 import type { Translate } from '../api/errors';
 import { useTheme } from '../theme/ThemeProvider';
 import { fontScaleCap, layout, radii, typography } from '../theme/tokens';
-import { displayFont } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { DRAWING_DEEPEST, NOTE_WIDTH, WRITING_TOP, pagesFor, writingInsets } from './paperKit';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * A sheet of letter paper, as read and as written on (LetterComposer.tsx): the paper from the shared picture
@@ -93,7 +93,7 @@ export function describePaper(t: Translate, decor: { paper: LetterPaper; strokes
 
 /** A sheet's width before layout reports it: the screen width inside its gutters, or a phone's where there is no screen (tests). */
 export function useSheetWidth(): [number, (w: number) => void] {
-  const { width: screen } = useWindowDimensions();
+  const screen = usePageWidth();
   const [measured, setMeasured] = useState(0);
   const guess = screen > 0 ? screen - layout.gutter * 2 : 340;
   return [measured > 0 ? measured : guess, setMeasured];
@@ -334,10 +334,10 @@ const styles = StyleSheet.create({
   picture: { position: 'absolute', left: 0, right: 0, top: 0 },
   head: { position: 'absolute', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 },
   headEnd: { alignItems: 'center', gap: 4, flexShrink: 0 },
-  from: { flexShrink: 1, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  when: { fontSize: typography.sizes.xs },
+  from: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  when: { fontSize: typography.sizes.text },
   noteBox: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   note: { borderRadius: radii.xs, maxWidth: '100%' },
   noteQuiet: { borderWidth: 1.5, borderColor: 'transparent' },
-  noteText: { fontFamily: displayFont, fontWeight: typography.weights.semibold },
+  noteText: { fontWeight: typography.weights.semibold },
 });

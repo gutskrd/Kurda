@@ -1,5 +1,6 @@
 import { StyleSheet, Text } from 'react-native';
 import { display } from '../../theme/fonts';
+import { typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useDirection } from '../../reports/direction';
 
@@ -15,7 +16,7 @@ export function ExerciseHeadline({ children }: { children: string }): React.JSX.
 }
 
 /** A step under the scale's large title, so the question reads as one heading with the lesson's name. */
-const HEADLINE = 26;
+const HEADLINE = typography.sizes.title;
 
 const styles = StyleSheet.create({
   headline: { ...display(HEADLINE) },

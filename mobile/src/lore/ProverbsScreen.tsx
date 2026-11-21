@@ -84,9 +84,9 @@ export function ProverbsScreen({ dialect: asked, theme, onExit }: { dialect?: Ga
     body = (
       <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
         <View style={[styles.today, { backgroundColor: colors.surface }]}>
-          <SkeletonText size={typography.sizes.xs} width={120} />
-          <SkeletonText size={typography.sizes.lg} width="80%" />
-          <SkeletonText size={typography.sizes.md} width="60%" />
+          <SkeletonText size={typography.sizes.text} width={120} />
+          <SkeletonText size={typography.sizes.text} width="80%" />
+          <SkeletonText size={typography.sizes.text} width="60%" />
         </View>
       </View>
     );
@@ -230,19 +230,19 @@ const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
   today: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   kicker: { alignItems: 'center', gap: spacing.xs },
-  todayText: { ...display(typography.sizes.lg), lineHeight: Math.round(typography.sizes.lg * 1.35) },
-  todayTranslation: { fontSize: typography.sizes.md, lineHeight: 24 },
+  todayText: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.35) },
+  todayTranslation: { fontSize: typography.sizes.text, lineHeight: 24 },
   todayFoot: { alignItems: 'center', justifyContent: 'flex-end', gap: spacing.xs, minHeight: 28 },
-  go: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  go: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   round: { alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2, minHeight: 64 },
   roundIcon: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  roundTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  roundLine: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  roundTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  roundLine: { fontSize: typography.sizes.text, lineHeight: 20 },
   group: { gap: spacing.sm, marginBottom: -spacing.sm },
   rows: { borderRadius: radii.lg, paddingHorizontal: spacing.md },
   row: { alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET + 16, paddingVertical: spacing.md - 4 },
   rowMain: { flex: 1, gap: 3 },
-  rowText: { fontSize: typography.sizes.md, lineHeight: 24, fontWeight: typography.weights.medium },
-  rowTranslation: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  rowMark: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, marginTop: 2 },
+  rowText: { fontSize: typography.sizes.text, lineHeight: 24, fontWeight: typography.weights.medium },
+  rowTranslation: { fontSize: typography.sizes.text, lineHeight: 20 },
+  rowMark: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: 2 },
 });

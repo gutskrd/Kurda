@@ -51,7 +51,7 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.875rem;
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
 }
@@ -143,7 +143,7 @@
 }
 .ffilter-title {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -163,7 +163,7 @@
   margin: 0;
   padding: 10px 10px 4px;
   color: var(--ink-3);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -180,7 +180,7 @@
 .ffilter-heading {
   padding: 6px 10px 2px;
   color: var(--ink-2);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 600;
 }
 .ffilter-item {
@@ -195,7 +195,7 @@
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 0.95rem;
+  font-size: var(--text);
   text-align: start;
   cursor: pointer;
 }
@@ -207,7 +207,7 @@
 }
 .ffilter-item-hint {
   color: var(--ink-3);
-  font-size: 0.8rem;
+  font-size: var(--text);
 }
 .ffilter-item.is-on .ffilter-item-text > span:first-child {
   font-weight: 600;
@@ -237,7 +237,7 @@
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 0.85rem;
+  font-size: var(--text);
   font-weight: 500;
   cursor: pointer;
 }
@@ -255,7 +255,7 @@
 }
 .ffilter-pill-count {
   color: var(--ink-3);
-  font-size: 0.78rem;
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .ffilter-period.is-on .ffilter-pill-count {
@@ -357,7 +357,7 @@
   }
   .ffilter-item {
     min-height: 48px;
-    font-size: 1rem;
+    font-size: var(--text);
   }
   .ffilter-period {
     height: 38px;

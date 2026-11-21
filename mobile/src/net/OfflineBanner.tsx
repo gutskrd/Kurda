@@ -58,5 +58,5 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 6,
   },
-  text: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  text: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 });

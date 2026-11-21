@@ -55,7 +55,7 @@
 .gs-hero-meta {
   margin: var(--space-2) 0 0;
   color: #f2c95a;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -64,8 +64,8 @@
   margin: 0;
   /* a heading takes the page's own ink unless told: the stage is night in both themes */
   color: var(--gs-night-ink);
-  font-family: var(--font-display);
-  font-size: clamp(1.7rem, 6.6vw, 2.25rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.12;
   text-wrap: balance;
@@ -77,7 +77,7 @@
   max-width: 36ch;
   margin: 0;
   color: rgba(244, 239, 255, 0.82);
-  font-size: var(--text-body);
+  font-size: var(--text);
   line-height: 1.45;
   text-wrap: balance;
 }
@@ -86,7 +86,7 @@
 .gs .solo-difficulty legend {
   margin-bottom: var(--space-2);
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -107,7 +107,7 @@
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-size: 0.9375rem;
+  font-size: var(--text);
   font-weight: 600;
   text-align: center;
   cursor: pointer;
@@ -171,7 +171,7 @@
   width: min(100%, 440px);
   height: 58px;
   margin-inline: auto;
-  font-size: 1.125rem;
+  font-size: var(--text);
   letter-spacing: 0.01em;
   box-shadow: 0 5px 0 var(--lip);
 }
@@ -225,7 +225,7 @@
   border-color: var(--border-strong);
 }
 .gs .solo-verdict {
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 700;
 }
 .gs .solo-feedback.is-right .solo-verdict {
@@ -254,8 +254,8 @@
 .gs-hero--result .solo-score {
   margin: 0;
   color: var(--gs-night-ink);
-  font-family: var(--font-display);
-  font-size: clamp(2.25rem, 10vw, 3rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.05;
 }
@@ -312,7 +312,7 @@
   max-width: 44ch;
   margin: 0;
   color: var(--ink-3);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.4;
   text-wrap: balance;
 }
@@ -376,7 +376,7 @@ button.gs-back {
 }
 .gs-head-eyebrow {
   color: var(--ink-3);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -384,8 +384,8 @@ button.gs-back {
 /* a game's name is never cut short: the longer Kurmancî ones take a second line on a narrow screen */
 .gs-head-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-section);
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.15;
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -490,8 +490,8 @@ button.gs-back {
 }
 .gs .wordle-result-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-section);
+  font-family: var(--font-sans);
+  font-size: var(--text);
   text-wrap: balance;
 }
 /* ---- Rhyming Words: the word to rhyme with, on the night, with the clock beside it ------ */
@@ -512,8 +512,8 @@ button.gs-back {
 }
 .gs .rhyme-prompt {
   color: var(--gs-night-ink);
-  font-family: var(--font-display);
-  font-size: clamp(2rem, 9vw, 2.75rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.1;
 }
 .gs .rhyme-timer {
@@ -536,7 +536,7 @@ button.gs-back {
 .gs .rhyme-compose .input {
   min-height: 56px;
   border-radius: var(--r-lg);
-  font-size: var(--text-body);
+  font-size: var(--text);
 }
 .gs .rhyme-compose .btn {
   min-height: 56px;
@@ -562,7 +562,7 @@ button.gs-back {
 }
 .gs .race-choice-label {
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;

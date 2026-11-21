@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   // A word tile: a smaller card than an answer, on the same hairline edge.
   face: { borderRadius: radii.md + 2, borderWidth: CARD.edge },
   // The Kurdish words in the headings' display face.
-  word: { ...display(typography.sizes.md + 1) },
+  word: { ...display(typography.sizes.text) },
   ghost: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.md + 2 },
   hidden: { opacity: 0 },
   rtl: { writingDirection: 'rtl' },

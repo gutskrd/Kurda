@@ -49,5 +49,5 @@ const styles = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 34, paddingHorizontal: spacing.md, borderRadius: radii.pill },
   pillDim: { opacity: 0.6 },
   pillBusy: { marginEnd: 2 },
-  pillText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  pillText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

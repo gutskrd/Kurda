@@ -108,6 +108,6 @@ const styles = StyleSheet.create({
   row: { gap: spacing.md, paddingVertical: 2 },
   rowMirrored: { flexGrow: 1 },
   friend: { width: 60, alignItems: 'center', gap: 4 },
-  name: { fontSize: typography.sizes.xs, textAlign: 'center' },
-  more: { fontSize: typography.sizes.sm },
+  name: { fontSize: typography.sizes.text, textAlign: 'center' },
+  more: { fontSize: typography.sizes.text },
 });

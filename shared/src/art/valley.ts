@@ -432,22 +432,24 @@ export interface ValleyLandmark {
  * The flag's colours, softened to sit in the painting but true enough that it cannot be mistaken for another flag, with
  * each band a step darker where the cloth folds away from the light.
  */
+// The flag's own colours, with a shade of each for the fold.
 const FLAG = {
-  red: '#dc3a32',
-  redShade: '#b42d27',
-  white: '#fbf9f3',
-  whiteShade: '#dcd7cb',
-  green: '#2f9247',
-  greenShade: '#237238',
-  sun: '#f6b821',
+  red: '#ed2024',
+  redShade: '#c0191c',
+  white: '#ffffff',
+  whiteShade: '#dedad2',
+  green: '#278e43',
+  greenShade: '#1e6f34',
+  sun: '#febd11',
 } as const;
 
 type Cubic = readonly [Pt, Pt, Pt, Pt];
 
 /**
  * The flag of Kurdistan as the school flies it, on a 20 × 16 canvas with the pole along the left edge: equal bands of
- * red, white and green with the golden sun of twenty-one rays (one straight up) in the white. The cloth is 2:3. `top`
- * is its upper edge from pole to free end, one easy wave; every band follows it.
+ * red, white and green, and in the middle the golden sun of twenty-one rays (one straight up), half as tall as the
+ * flag, its rays reaching into the red and the green. The cloth is 2:3. `top` is its upper edge from pole to free end,
+ * one easy wave; every band follows it.
  */
 export const KURDISTAN_FLAG = {
   w: 20,
@@ -483,7 +485,10 @@ function cloth(edge: Cubic, from: number, to: number): string {
   return `M${at(a, from)}C${at(b, from)} ${at(c, from)} ${at(d, from)}L${at(d, to)}C${at(c, to)} ${at(b, to)} ${at(a, to)}Z`;
 }
 
-/** The sun's centre and size: in the middle of the white, halfway along the cloth, its rays almost reaching the red and green. */
+/**
+ * The sun's centre and size: in the middle of the cloth, the tips of its rays a quarter of the cloth's depth out and the
+ * notches between them half as far, as on the flag itself.
+ */
 export function kurdistanSun(): { x: number; y: number; r: number; disc: number } {
   const { top, depth } = KURDISTAN_FLAG;
   const middle = (top[0][0] + top[3][0]) / 2;
@@ -494,13 +499,13 @@ export function kurdistanSun(): { x: number; y: number; r: number; disc: number 
     if (cubicAt(top, t)[0] < middle) lo = t;
     else hi = t;
   }
-  const r = (depth / 3) * 0.47;
-  return { x: middle, y: cubicAt(top, lo)[1] + depth / 2, r, disc: r * 0.56 };
+  const r = depth / 4;
+  return { x: middle, y: cubicAt(top, lo)[1] + depth / 2, r, disc: r * 0.51 };
 }
 
 /**
  * The flag of Kurdistan (`KURDISTAN_FLAG`) painted flat on its own canvas: the three bands, one shaded fold toward the
- * free end, and the sun clear of the fold. The school draws it at rest and the apps lay the same cloth over it to move
+ * free end, and the sun over them. The school draws it at rest and the apps lay the same cloth over it to move
  * in the wind (`pathLoopSvg`), so the two always match.
  */
 export function kurdistanFlag(dark: boolean): string {

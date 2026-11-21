@@ -98,7 +98,7 @@ export function GoalRing({
           <Icon name="seal-check" size={Math.round(size * (showNumbers ? 0.3 : 0.45))} color={tint[1]} />
         ) : showNumbers ? (
           <>
-            <Text style={[styles.xp, { color: colors.textPrimary, fontSize: Math.round(size / 4.2) }]} numberOfLines={1}>
+            <Text style={[styles.xp, { color: colors.textPrimary, fontSize: size >= 100 ? typography.sizes.title : typography.sizes.text }]} numberOfLines={1}>
               {formatNumber(xp, locale)}
             </Text>
             <Text style={[styles.of, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -114,5 +114,5 @@ export function GoalRing({
 const styles = StyleSheet.create({
   center: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
   xp: { fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  of: { fontSize: typography.sizes.xs },
+  of: { fontSize: typography.sizes.text },
 });

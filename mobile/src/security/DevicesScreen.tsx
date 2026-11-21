@@ -275,11 +275,11 @@ function DeviceListSkeleton(): React.JSX.Element {
         <View key={i} style={[styles.row, { flexDirection: dir.row }]}>
           <Skeleton width={ROW.tile} height={ROW.tile} radius={radii.pill} />
           <View style={styles.main}>
-            <SkeletonText size={typography.ios.row} lineHeight={ROW.nameLine} width={width} align={start} />
-            <SkeletonText size={typography.sizes.sm} lineHeight={ROW.metaLine} width="44%" align={start} />
+            <SkeletonText size={typography.sizes.text} lineHeight={ROW.nameLine} width={width} align={start} />
+            <SkeletonText size={typography.sizes.text} lineHeight={ROW.metaLine} width="44%" align={start} />
           </View>
           <View style={styles.action}>
-            <SkeletonText size={typography.sizes.sm} width={64} align="center" />
+            <SkeletonText size={typography.sizes.text} width={64} align="center" />
           </View>
         </View>
       ))}
@@ -291,8 +291,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   // A column in the middle of a tablet, on the 16pt gutter on a phone.
   column: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter, gap: spacing.md },
-  intro: { fontSize: typography.sizes.sm, lineHeight: 21 },
-  notice: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  intro: { fontSize: typography.sizes.text, lineHeight: 21 },
+  notice: { fontSize: typography.sizes.text, lineHeight: 21 },
   rows: { gap: ROW.rowGap },
   row: {
     alignItems: 'center',
@@ -304,13 +304,13 @@ const styles = StyleSheet.create({
   },
   tile: { width: ROW.tile, height: ROW.tile, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   main: { flex: 1, minWidth: 0 },
-  name: { fontSize: typography.ios.row, lineHeight: ROW.nameLine, fontWeight: typography.weights.semibold },
-  meta: { fontSize: typography.sizes.sm, lineHeight: ROW.metaLine },
+  name: { fontSize: typography.sizes.text, lineHeight: ROW.nameLine, fontWeight: typography.weights.semibold },
+  meta: { fontSize: typography.sizes.text, lineHeight: ROW.metaLine },
   metaCurrent: { fontWeight: typography.weights.semibold },
   action: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   actionHit: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },
-  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
+  actionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   pressed: { opacity: pressedDim },
   others: { marginTop: spacing.sm },
-  only: { fontSize: typography.sizes.sm, lineHeight: 21, marginTop: spacing.sm, textAlign: 'center' },
+  only: { fontSize: typography.sizes.text, lineHeight: 21, marginTop: spacing.sm, textAlign: 'center' },
 });

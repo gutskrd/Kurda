@@ -22,7 +22,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
 import type { Translate } from '../i18n/I18nProvider';
 import { leagueName, leagueNamed, withMeaning } from '../ranks/names';
-import { colourFor, initialsOf } from '../lib/initials';
+import { initialsOf } from '../lib/initials';
 import { RankList, RankRow } from '../ui/RankRow';
 import { GoalRing } from './GoalRing';
 import { LeagueMoment } from './LeagueMoment';
@@ -313,14 +313,10 @@ function Standings({ league }: { league: LeagueView }): React.JSX.Element {
   );
 }
 
-/** A row's face: the learner's initials on their colour, as on the phone, or a silhouette for someone not named. */
+/** A row's face: the learner's initials in ink on grey, as on the phone, or a silhouette for someone not named. */
 function Face({ row }: { row: LeagueStandingRow }): React.JSX.Element {
   if (!row.username) return <PersonGlyph size={16} />;
-  return (
-    <span className="rank-initials" style={{ background: colourFor(row.userId ?? `row-${row.rank}`) }}>
-      {initialsOf(row.username)}
-    </span>
-  );
+  return <span className="rank-initials">{initialsOf(row.username)}</span>;
 }
 
 function findLastIndex<T>(list: readonly T[], test: (v: T) => boolean): number {

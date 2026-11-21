@@ -24,5 +24,5 @@ const TROPHY = 36;
 
 const styles = StyleSheet.create({
   verdict: { alignItems: 'center', gap: spacing.xs },
-  words: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  words: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },
 });

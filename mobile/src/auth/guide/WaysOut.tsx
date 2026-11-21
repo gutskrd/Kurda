@@ -44,5 +44,5 @@ export function WaysOut({ ways }: { ways: readonly WayOut[] }): React.JSX.Elemen
 const styles = StyleSheet.create({
   ways: { flexWrap: 'wrap', columnGap: spacing.lg, rowGap: 0, marginTop: spacing.sm },
   way: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  text: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  text: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
 });

@@ -25,12 +25,12 @@
   flex: 1 1 260px;
 }
 .learn-review-title {
-  font-size: 1.2rem;
+  font-size: var(--text);
 }
 .learn-review-body {
   margin: 0;
   color: var(--ink-3);
-  font-size: 0.95rem;
+  font-size: var(--text);
 }
 .learn-courses {
   display: grid;
@@ -69,7 +69,7 @@
   background: var(--ink);
 }
 .course-progress-text {
-  font-size: 0.85rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .course-card .course-next {
@@ -99,11 +99,11 @@
   margin: 0;
 }
 .grammar-note .grammar-head {
-  font-size: 1.15rem;
+  font-size: var(--text);
   color: var(--ink);
 }
 .grammar-note .grammar-subhead {
-  font-size: 1rem;
+  font-size: var(--text);
   color: var(--ink);
 }
 .grammar-note ul {
@@ -114,8 +114,8 @@
 }
 .grammar-note code,
 .grammar-note pre {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.9em;
+  font-family: var(--font-sans);
+  font-size: var(--text);
 }
 .grammar-note pre {
   overflow-x: auto;
@@ -125,7 +125,7 @@
 }
 .grammar-title {
   margin-bottom: 12px;
-  font-size: 1.3rem;
+  font-size: var(--text);
 }
 
 /* ---- the lesson player -------------------------------------------------------- */
@@ -350,7 +350,7 @@ html:has(.lesson-bar) {
   align-items: center;
   gap: 4px;
   color: var(--gold-ink);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1;
   white-space: nowrap;
@@ -411,7 +411,7 @@ html:has(.lesson-bar) {
   border: 1.5px solid var(--vale-line);
   background: var(--vale-card);
   color: var(--ink);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
 }
 .lesson-top .lesson-tips-btn:hover:not(:disabled) {
@@ -426,7 +426,7 @@ html:has(.lesson-bar) {
 .lesson-kicker {
   margin: 0 0 -16px;
   color: var(--vale-red-ink);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1.35;
   letter-spacing: 0.13em;
@@ -444,7 +444,7 @@ html:has(.lesson-bar) {
   border-radius: var(--r-pill);
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: 0.8rem;
+  font-size: var(--text);
   font-weight: 650;
 }
 /* The new-words pill in the kicker's place: soft pomegranate with red words and a gold sparkle (5:1 or more). */
@@ -459,7 +459,7 @@ html:has(.lesson-bar) {
   border-radius: var(--r-pill);
   background: var(--vale-red-soft);
   color: var(--vale-red-ink);
-  font-size: var(--text-tab);
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1.35;
   letter-spacing: 0.12em;
@@ -488,8 +488,8 @@ html:has(.lesson-bar) {
 /* what to do, in the display face: the first thing read on every exercise */
 .lesson-ask {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 6.6vw, 1.875rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.005em;
@@ -502,8 +502,8 @@ html:has(.lesson-bar) {
 }
 .lesson-prompt {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.45rem, 4.6vw, 1.9rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
@@ -581,7 +581,7 @@ html:has(.lesson-bar) {
   box-shadow: 0 var(--lip) 0 var(--tile-lip);
   color: var(--tile-ink);
   font: inherit;
-  font-size: 1.1rem;
+  font-size: var(--text);
   line-height: 1.25;
   text-align: center;
   overflow: hidden;
@@ -664,7 +664,7 @@ html:has(.lesson-bar) {
   border-width: 1.5px;
   border-bottom-color: var(--tile-lip);
   border-radius: var(--r-lg);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 600;
 }
 @media (hover: hover) {
@@ -740,7 +740,7 @@ html:has(.lesson-bar) {
   border-radius: 50%;
   background: var(--vale-chip);
   color: var(--vale-muted);
-  font-size: 0.75rem;
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -786,8 +786,8 @@ html:has(.lesson-bar) {
 }
 /* options in Kurdish — a reply, a missing word, the Kurdish for an English line — in the display face, as the line itself is */
 .lesson-options.is-kurdish .lesson-option-text {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -804,8 +804,8 @@ html:has(.lesson-bar) {
   min-height: 52px;
   padding-inline: 18px;
   border-radius: 14px;
-  font-family: var(--font-display);
-  font-size: 1.3125rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
 }
 /* once graded, the tick or the cross before the word, in its own colour */
@@ -887,20 +887,20 @@ html:has(.lesson-bar) {
   display: grid;
   place-items: center;
   aspect-ratio: auto;
-  font-size: 1rem;
+  font-size: var(--text);
 }
 .lesson .lesson-picture.is-dim {
   opacity: 0.45;
 }
 .lesson-hint {
   margin: 0;
-  font-size: 0.86rem;
+  font-size: var(--text);
   line-height: 1.45;
   color: var(--ink-3);
 }
 .lesson-hint--keys {
   display: none;
-  font-size: 0.78rem;
+  font-size: var(--text);
   color: var(--ink-4);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -925,8 +925,8 @@ html:has(.lesson-bar) {
   border-width: 1.5px;
   border-radius: var(--r-lg);
   background: var(--vale-card);
-  font-family: var(--font-display);
-  font-size: 1.375rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
 }
 .lesson-input:read-only {
@@ -949,7 +949,7 @@ html:has(.lesson-bar) {
   background: var(--vale-card);
   color: var(--ink);
   font: inherit;
-  font-size: 1.15rem;
+  font-size: var(--text);
   font-weight: 600;
   cursor: pointer;
 }
@@ -961,7 +961,7 @@ html:has(.lesson-bar) {
   cursor: default;
 }
 .lesson-skip {
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 
 /* match pairs: two columns of tiles, the Kurdish at the start */
@@ -982,8 +982,8 @@ html:has(.lesson-bar) {
 }
 /* the Kurdish cards in the display face, a little larger than their meanings */
 .lesson-match-col:first-child .lesson-card {
-  font-family: var(--font-display);
-  font-size: 1.1875rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
 }
 /* made but not yet checked (pairs made freely): edged in dashes, the pair's number on both cards */
@@ -1002,7 +1002,7 @@ html:has(.lesson-bar) {
   border-radius: 50%;
   background: var(--ink);
   color: var(--primary-ink);
-  font-size: 0.75rem;
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -1015,7 +1015,7 @@ html:has(.lesson-bar) {
   .lesson-card,
   .lesson-match-col:first-child .lesson-card {
     padding-inline: 24px;
-    font-size: 1rem;
+    font-size: var(--text);
   }
   .lesson-card-pair {
     inset-inline-end: 3px;
@@ -1039,7 +1039,7 @@ html:has(.lesson-bar) {
 }
 .lesson-bubble .lesson-prompt {
   min-width: 0;
-  font-size: clamp(1rem, 2.6vw + 0.4rem, 1.45rem);
+  font-size: var(--text);
   line-height: 1.32;
 }
 /* the speaker at the start of what is said: a round red button, its reach still a fingertip's */
@@ -1084,18 +1084,18 @@ html:has(.lesson-bar) {
   padding-inline: 14px 20px;
 }
 .lesson-bubble .lesson-line-text {
-  font-size: clamp(1.3rem, 2.4vw + 0.75rem, 1.75rem);
+  font-size: var(--text-title);
   font-weight: 600;
   line-height: 1.3;
 }
 .lesson-bubble .lesson-line-text.is-big {
-  font-size: clamp(1.9rem, 4vw + 1rem, 2.5rem);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.15;
 }
 .lesson-bubble .lesson-line-text.is-english {
   font-family: var(--font-sans);
-  font-size: clamp(1.15rem, 1.6vw + 0.75rem, 1.4rem);
+  font-size: var(--text);
   line-height: 1.35;
 }
 .lesson-bubble.is-line:not(:has(.lesson-line-play)) {
@@ -1128,7 +1128,7 @@ html:has(.lesson-bar) {
   color: var(--vale-muted);
   font: inherit;
   font-family: var(--font-sans);
-  font-size: 0.72rem;
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -1209,7 +1209,7 @@ html:has(.lesson-bar) {
   border-radius: var(--r-pill);
   background: var(--vale-track);
   color: var(--vale-muted);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   line-height: 1.4;
   overflow-wrap: anywhere;
@@ -1244,7 +1244,7 @@ html:has(.lesson-bar) {
   border-radius: 18px;
   border-end-start-radius: 6px;
   background: var(--vale-card);
-  font-size: clamp(1rem, 2.6vw + 0.4rem, 1.45rem);
+  font-size: var(--text);
   line-height: 1.32;
 }
 .lesson .character-stage-side .lesson-listen .lesson-play-round {
@@ -1304,7 +1304,7 @@ html:has(.lesson-bar) {
   background: var(--panel-bg);
   box-shadow: var(--shadow);
   font-family: var(--font-sans);
-  font-size: 1.05rem;
+  font-size: var(--text);
   line-height: 1.3;
   text-align: center;
   transform: translateX(calc(-50% + var(--shift, 0px)));
@@ -1390,7 +1390,7 @@ html:has(.lesson-bar) {
   background: none;
   color: var(--ink-2);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -1448,7 +1448,7 @@ html:has(.lesson-bar) {
   border-radius: var(--r-md);
   background: var(--surface-2);
   color: transparent;
-  font-size: 1.1rem;
+  font-size: var(--text);
   line-height: 1.25;
   user-select: none;
 }
@@ -1456,8 +1456,8 @@ html:has(.lesson-bar) {
 .lesson .lesson-word-tile,
 .lesson .tile-ghost {
   border-radius: 14px;
-  font-family: var(--font-display);
-  font-size: 1.1875rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
 }
 .lesson .tile-ghost {
@@ -1473,7 +1473,7 @@ html:has(.lesson-bar) {
   background: none;
   color: var(--ink-3);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: var(--text);
   font-weight: 700;
   cursor: pointer;
 }
@@ -1505,7 +1505,7 @@ html:has(.lesson-bar) {
   align-items: center;
   gap: 8px;
   color: var(--gold-ink);
-  font-size: clamp(2.4rem, 11vw, 4rem);
+  font-size: var(--text-title);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.01em;
@@ -1518,8 +1518,8 @@ html:has(.lesson-bar) {
  */
 .lesson-conversation-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
@@ -1590,19 +1590,19 @@ html:has(.lesson-bar) {
   box-shadow: 0 0 0 1px var(--ink);
 }
 .lesson-line-name {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--ink-3);
 }
 .lesson-line-text {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 .lesson-line-meaning {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   line-height: 1.35;
   color: var(--ink-3);
   overflow-wrap: anywhere;
@@ -1626,7 +1626,7 @@ html:has(.lesson-bar) {
 }
 .lesson-note {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .lesson-recording {
@@ -1729,7 +1729,7 @@ html:has(.lesson-bar) {
   background: var(--go-fill);
   box-shadow: 0 3.5px 0 var(--go-lip);
   color: var(--go-ink);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -1768,7 +1768,7 @@ html:has(.lesson-bar) {
   align-items: baseline;
   gap: 4px 10px;
   margin: 0;
-  font-size: 0.9rem;
+  font-size: var(--text);
   color: var(--ink-2);
 }
 .lesson-bar-note:empty {
@@ -1942,8 +1942,8 @@ html:has(.lesson-bar) {
   gap: 8px 12px;
   margin: 0;
   color: var(--verdict-ink);
-  font-family: var(--font-display);
-  font-size: clamp(1.4rem, 6vw, 1.6rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.15;
 }
@@ -1957,7 +1957,7 @@ html:has(.lesson-bar) {
 /* what the Kurdish praise means, small, beside it */
 .lesson-praise-gloss {
   font-family: var(--font-sans);
-  font-size: 0.82rem;
+  font-size: var(--text);
   font-weight: 500;
   color: var(--ink-3);
 }
@@ -1971,13 +1971,13 @@ html:has(.lesson-bar) {
   background: var(--vale-card);
   font-family: var(--font-sans);
   color: var(--gold-ink);
-  font-size: 0.75rem;
+  font-size: var(--text);
   font-weight: 700;
   white-space: nowrap;
 }
 .lesson-hint-line {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: var(--text);
   font-weight: 600;
   color: var(--gold-ink);
 }
@@ -1998,13 +1998,13 @@ html:has(.lesson-bar) {
   margin: 0;
 }
 .lesson-compare dt {
-  font-size: 0.82rem;
+  font-size: var(--text);
   color: var(--ink-3);
   align-self: center;
 }
 .lesson-compare dd {
   margin: 0;
-  font-size: 1.2rem;
+  font-size: var(--text);
   overflow-wrap: anywhere;
 }
 .lesson-compare mark {
@@ -2025,11 +2025,11 @@ html:has(.lesson-bar) {
 }
 .lesson-correction-label {
   color: var(--verdict-ink);
-  font-size: 1.05rem;
+  font-size: var(--text);
   font-weight: 800;
 }
 .lesson-correction strong {
-  font-size: 1.15rem;
+  font-size: var(--text);
   font-weight: 500;
   overflow-wrap: anywhere;
 }
@@ -2042,7 +2042,7 @@ html:has(.lesson-bar) {
 }
 .lesson-saved {
   margin: 8px 0 0;
-  font-size: 0.8rem;
+  font-size: var(--text);
   color: var(--ink-4);
 }
 
@@ -2055,7 +2055,7 @@ html:has(.lesson-bar) {
   gap: 18px;
 }
 .lesson-results-title {
-  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-size: var(--text-title);
   text-align: center;
 }
 .lesson-results-title:focus {
@@ -2096,7 +2096,7 @@ html:has(.lesson-bar) {
   gap: 4px;
   margin-inline-start: auto;
   color: var(--success);
-  font-size: 0.85rem;
+  font-size: var(--text);
 }
 .lesson-moment .lesson-league-up svg {
   color: inherit;
@@ -2133,11 +2133,11 @@ html:has(.lesson-bar) {
 }
 .lesson-mistakes-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--text);
   font-weight: 700;
 }
 .lesson-results-back {
-  font-size: 0.92rem;
+  font-size: var(--text);
 }
 
 .lesson-mistakes ul {
@@ -2156,7 +2156,7 @@ html:has(.lesson-bar) {
   background: var(--vale-card);
 }
 .lesson-mistake-prompt {
-  font-size: 0.9rem;
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .lesson-mistake-answer {
@@ -2174,7 +2174,7 @@ html:has(.lesson-bar) {
   backdrop-filter: none;
 }
 .lesson-tips .grammar-title {
-  font-size: 1.5rem;
+  font-size: var(--text-title);
   font-weight: 700;
 }
 .lesson-tips .grammar-note {
@@ -2186,5 +2186,5 @@ html:has(.lesson-bar) {
 /* Soranî in an Arabic-script face, last so it beats display faces set above, including word tiles under a Soranî line. */
 .lesson [lang='ckb'],
 .lesson [lang='ckb'] :is(.tile, .tile-ghost) {
-  font-family: 'Vazirmatn Variable', var(--font-sans);
+  font-family: var(--font-sans);
 }

@@ -59,5 +59,5 @@ const styles = StyleSheet.create({
   track: { flex: 1, gap: 4 },
   trackBg: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   trackFill: { height: 6, borderRadius: radii.pill },
-  time: { fontSize: typography.sizes.xs },
+  time: { fontSize: typography.sizes.text },
 });

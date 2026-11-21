@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 // Soranî in a face made for Arabic script.
-import '@fontsource-variable/vazirmatn';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { MAX_PLAYERS, storyTextDirection, type StoryGameView } from '@kurda/shared';
 import { ConfirmButton } from '../components/ConfirmButton';

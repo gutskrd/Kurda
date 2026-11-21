@@ -22,9 +22,10 @@ import { Icon, type IconName } from '../theme/Icon';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { useTabFocusLoad } from '../navigation/tabFocusLoad';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, UnitFace, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
-import { TONES, awayFrom, centredOffset, firstCourse } from '../coursemap/path';
+import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
 import { courseName } from '../coursemap/courseName';
 import { UnitRailSheet, type RailSection } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -158,6 +159,8 @@ export function LessonsView({
   const [units, setUnits] = useState<UnitPlace[]>([]);
   const [viewport, setViewport] = useState(0);
   const [scrollY, setScrollY] = useState(0);
+  // The page's own reading of its scroll, and the tab bar's (tabBarScroll.ts).
+  const tabScroll = useTabBarScroll(useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => setScrollY(e.nativeEvent.contentOffset.y), []));
   const scrolledFor = useRef<string | null>(null);
   /*
    * Content above the path (the next-step card, a tile's review count) arrives with its own answer and would push
@@ -267,6 +270,25 @@ export function LessonsView({
     [reduceMotion],
   );
 
+  // A stop's card opening low on the screen, or under the pinned unit, scrolls until it and its stop are both in view.
+  const scrollAt = useRef(0);
+  scrollAt.current = scrollY;
+  const onCard = useCallback(
+    (from: number, to: number) => {
+      const top = pathTopRef.current;
+      if (top === null || viewport === 0) return;
+      const now = scrollAt.current;
+      const fits = top + to + spacing.md - (viewport - tabBarInset);
+      const keepsStop = top + from - PIN_HEIGHT - spacing.sm;
+      // The stop wins where both cannot be in view.
+      const next = Math.min(Math.max(now, fits), keepsStop);
+      if (Math.abs(next - now) < 1) return;
+      touched.current = true;
+      scroller.current?.scrollTo({ y: Math.max(0, next), animated: !reduceMotion });
+    },
+    [viewport, tabBarInset, reduceMotion],
+  );
+
   const lastUnit = units[units.length - 1];
   const pinned =
     pathTopOnPage === null || !lastUnit || scrollY >= pathTopOnPage + lastUnit.bottom - PIN_CLEAR
@@ -291,7 +313,7 @@ export function LessonsView({
         contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.xl }]}
         showsVerticalScrollIndicator={false}
         onLayout={(e: LayoutChangeEvent) => setViewport(e.nativeEvent.layout.height)}
-        onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => setScrollY(e.nativeEvent.contentOffset.y)}
+        onScroll={tabScroll}
         onScrollBeginDrag={() => {
           touched.current = true;
         }}
@@ -386,6 +408,7 @@ export function LessonsView({
                   onOpenRail={openRail}
                   reveal={reveal}
                   onReveal={onReveal}
+                  onCard={onCard}
                 />
               </View>
             ) : entry?.map ? (
@@ -469,7 +492,7 @@ const FOLLOW_MS = 4000;
 /** The next step: course and unit, the lesson's name, the course's progress, and one button. */
 function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
   const share = fraction(step.done, step.total);
@@ -483,7 +506,7 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
     <View style={[styles.hero, { backgroundColor: colors.surface }]} testID="learn-continue">
       {/* The chapter's heading in its colour, as the path and the website head it; with everything done, nothing to head. */}
       {step.kind === 'review' ? null : (
-        <UnitFace number={step.unit.number} title={step.unitTitle} tone={TONES[scheme][step.unit.tone]} section={step.unit.section} testID="learn-continue-chapter" />
+        <UnitFace number={step.unit.number} title={step.unitTitle} section={step.unit.section} testID="learn-continue-chapter" />
       )}
       <Text style={[styles.heroTitle, step.kind === 'review' ? dir.text : dir.free, { color: colors.textPrimary }]} numberOfLines={2} accessibilityRole="header">
         {title}
@@ -534,9 +557,9 @@ function ContinueSkeleton(): React.JSX.Element {
   return (
     <View style={[styles.hero, { backgroundColor: colors.surface }]}>
       <Skeleton height={CHAPTER_BAND} radius={radii.lg} />
-      <SkeletonText size={typography.sizes.lg} lineHeight={HERO_TITLE_LINE} width="38%" style={start} />
+      <SkeletonText size={typography.sizes.text} lineHeight={HERO_TITLE_LINE} width="38%" style={start} />
       <Skeleton height={6} radius={radii.pill} />
-      <SkeletonText size={typography.sizes.xs} width={96} style={start} />
+      <SkeletonText size={typography.sizes.text} width={96} style={start} />
       <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.heroButton} />
     </View>
   );
@@ -547,8 +570,8 @@ function CourseSkeleton(): React.JSX.Element {
   const start = useStartEdge();
   return (
     <View style={styles.course}>
-      <SkeletonText size={typography.sizes.xs} width={96} style={start} />
-      <SkeletonText size={typography.sizes.lg} width="56%" style={[start, styles.courseTitleSkeleton]} />
+      <SkeletonText size={typography.sizes.text} width={96} style={start} />
+      <SkeletonText size={typography.sizes.text} width="56%" style={[start, styles.courseTitleSkeleton]} />
       <LessonPathSkeleton />
     </View>
   );
@@ -560,7 +583,7 @@ function useStartEdge(): { alignItems: 'flex-start' | 'flex-end' } {
 }
 
 /** display(22) sets 1.12. */
-const HERO_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
+const HERO_TITLE_LINE = Math.round(typography.sizes.text * typography.displayLineHeight);
 /** ClayButton's large size. */
 const LARGE_BUTTON = 50;
 
@@ -633,8 +656,8 @@ const styles = StyleSheet.create({
   header: { gap: layout.rowGap, marginBottom: spacing.sm },
 
   hero: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm },
-  heroTitle: { ...display(typography.sizes.lg) },
-  heroProgress: { fontSize: typography.sizes.xs },
+  heroTitle: { ...display(typography.sizes.text) },
+  heroProgress: { fontSize: typography.sizes.text },
   heroButton: { marginTop: spacing.xs },
   bar: { height: 6, borderRadius: radii.pill, overflow: 'hidden', alignSelf: 'stretch' },
   barFill: { height: 6, borderRadius: radii.pill },
@@ -642,26 +665,26 @@ const styles = StyleSheet.create({
 
   reviewOpen: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   reviewOpenRow: { alignItems: 'center', gap: spacing.sm + 4 },
-  reviewOpenText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
+  reviewOpenText: { flex: 1, fontSize: typography.sizes.text, lineHeight: 20 },
 
   // Two to a row: the path is what this screen is for, and the tools sit above it, small.
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: { flexGrow: 1, flexBasis: '40%', minHeight: 76, borderRadius: radii.lg, paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.sm + 4, gap: 2 },
-  tileLetters: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, lineHeight: 22 },
-  tileTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
-  tileDetail: { fontSize: typography.sizes.xs },
+  tileLetters: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, lineHeight: 22 },
+  tileTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
+  tileDetail: { fontSize: typography.sizes.text },
 
   course: { gap: spacing.sm + 4, marginTop: spacing.md },
   more: { gap: layout.rowGap, marginTop: spacing.xl },
   mapLabel: { ...sectionLabel },
-  courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
+  courseTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
   courseTitleSkeleton: { marginBottom: spacing.xs },
   flex: { flex: 1 },
   switcher: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xs },
   chip: { minHeight: MIN_TOUCH_TARGET, maxWidth: '100%', paddingHorizontal: spacing.md, borderRadius: radii.pill, justifyContent: 'center' },
-  chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  chipText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   failed: { gap: spacing.sm, marginTop: spacing.xs },
-  failedText: { fontSize: typography.sizes.sm },
+  failedText: { fontSize: typography.sizes.text },
 
   pinned: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: spacing.xs, paddingHorizontal: layout.gutter },
   jumpWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
@@ -672,5 +695,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md + 4,
     borderRadius: radii.pill,
   },
-  jumpText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  jumpText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
 });

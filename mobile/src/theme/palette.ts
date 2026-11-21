@@ -1,8 +1,7 @@
 /**
- * The light and dark palettes. Hevalo's colour is its icon's violet, kept for what can be pressed or is chosen; the
- * page is a faintly violet white with deep indigo ink, so the eye goes to the one violet thing. Gold is for what is
- * earned (XP, Zêr, the streak, medals); green and red mean right and wrong but are never the only signal; anything
- * else needing its own colour uses the shared hues (shared `hues.ts`).
+ * The light and dark palettes. One accent, the icon's violet, is worn by the main button alone (`accent`); the page is
+ * a faintly violet white with deep indigo ink, and everything pressable, chosen or earned is drawn in that ink, so the
+ * eye goes to the one violet thing. Green and red mean right and wrong but are never the only signal.
  *
  * By night the page is the indigo taken almost to black, never a neutral grey, with the violet lifted so it does not
  * glare. Components read the active `Palette` from ThemeProvider, and `palette.contrast.test.ts` holds every
@@ -14,9 +13,8 @@ export interface Palette {
   scheme: ColorScheme;
 
   /*
-   * The brand: `primary` is the violet (button fills, pressable glyphs, links, what is chosen) and `textPrimary` the
-   * ink for everything else, one of each so two buttons are never two colours. `accent` is the violet a step deeper
-   * (paler by night) for the few places needing a second tone.
+   * `accent` is the violet, the main button's fill and nothing else's. `primary` is the ink for what is pressable or
+   * chosen (a glyph, a link, a chosen chip, a switch), the same as `textPrimary`, with `textOnPrimary` written on it.
    */
   primary: string;
   accent: string;
@@ -100,24 +98,34 @@ export interface Palette {
   bubbleTheirsInk: string;
 
   /**
-   * The tab bar's fill, solid: nothing blurs behind it, so any translucency shows content scrolling beneath as a ghost.
-   * A hairline along its top separates it from the page.
+   * The fill of what floats over the page (the tab bar, the back button, the pill of top actions) where the system has
+   * no Liquid Glass to draw: solid, since nothing blurs behind it and translucency would show the page beneath as a ghost.
    */
   barFill: string;
+  /** The line of light round that floating shape's edge, on its upper side and on the rest (LiquidGlass.tsx). */
+  glassRim: string;
+  glassRimFar: string;
+  /** The breath of tint on clear glass that bends the page, so the words on it stay readable. */
+  glassTint: string;
+  /** A control's disc where it stands on a drawing (a chapter's banner): the page's colour, mostly opaque. */
+  onArt: string;
 
   /*
    * Gold for text, which is not gold for fills. The sun's gold (`gold`) reads as text on the dark page, but is 1.9:1
    * on the light one, so light-mode gold text uses this darker ochre, which clears 4.5:1 on the page and a white card.
    */
   goldText: string;
+
+  /** Something new waiting (an unread message, a gift): the small dot on a tab, in the red every phone uses for it. */
+  notice: string;
 }
 
 export const LIGHT: Palette = {
   scheme: 'light',
-  // The icon's violet, deepened until white reads on it: 6.1:1 under a button's label, 5.6:1 as a link on the page.
-  primary: '#862BE2',
-  accent: '#611BA7',
-  gold: '#EBA905',
+  // The ink for what is pressable or chosen; the icon's violet, deep enough for white (6.1:1), on the main button alone.
+  primary: '#14112E',
+  accent: '#862BE2',
+  gold: '#14112E',
   danger: '#C0392B',
   success: '#2E7D32',
   successFill: '#DCF7E1',
@@ -129,7 +137,7 @@ export const LIGHT: Palette = {
   textSecondary: '#595870',
   textOnPrimary: '#FFFFFF',
   // 6.8:1 on the gold.
-  textOnGold: '#3A2A00',
+  textOnGold: '#FFFFFF',
 
   // White with a breath of violet, so white cards lift off it without an edge.
   background: '#F6F4FD',
@@ -150,7 +158,7 @@ export const LIGHT: Palette = {
 
   controlTrack: 'rgba(20,17,46,0.05)',
   // On is the violet, as everything chosen is; the knob's side says it too.
-  switchOn: '#862BE2',
+  switchOn: '#14112E',
   switchOnThumb: '#FFFFFF',
   switchOff: '#7F7E91',
   switchOffThumb: '#FFFFFF',
@@ -161,20 +169,25 @@ export const LIGHT: Palette = {
   surface: '#FFFFFF',
   surfaceRaised: '#FFFFFF',
   // White on the violet is 6.1:1; the neutral is a step under the page, and 14.6:1 under its ink.
-  bubbleMine: '#862BE2',
+  bubbleMine: '#14112E',
   bubbleMineInk: '#FFFFFF',
   bubbleTheirs: '#E7E4F1',
   bubbleTheirsInk: '#14112E',
   barFill: '#FFFFFF',
-  goldText: '#8A6400',
+  glassRim: 'rgba(255,255,255,0.9)',
+  glassRimFar: 'rgba(20,17,46,0.07)',
+  glassTint: 'rgba(255,255,255,0.22)',
+  onArt: 'rgba(255,255,255,0.78)',
+  goldText: '#14112E',
+  notice: '#FF3B30',
 };
 
 export const DARK: Palette = {
   scheme: 'dark',
-  // The violet lifted for the night: 8.5:1 on the page, and the day's ink is written on it (8.1:1).
-  primary: '#BF9BFE',
-  accent: '#D3BDFE',
-  gold: '#F0C24A',
+  // The night's ink; the violet lifted for the night, with the day's ink written on it (8.1:1), on the main button alone.
+  primary: '#F3F1FB',
+  accent: '#BF9BFE',
+  gold: '#F3F1FB',
   danger: '#FF9C90',
   success: '#86E2A4',
   successFill: 'rgba(87,185,107,0.18)',
@@ -185,7 +198,7 @@ export const DARK: Palette = {
   textSecondary: '#ADABC0',
   textOnPrimary: '#14112E',
   // 8.3:1 on the evening's paler gold.
-  textOnGold: '#3A2A00',
+  textOnGold: '#14112E',
 
   // The ink taken almost to black: a night with a colour, where a neutral grey reads as a screen switched off.
   background: '#100E1D',
@@ -203,7 +216,7 @@ export const DARK: Palette = {
   softShadow: '#000000',
 
   controlTrack: 'rgba(255,255,255,0.11)',
-  switchOn: '#BF9BFE',
+  switchOn: '#F3F1FB',
   switchOnThumb: '#14112E',
   switchOff: '#716E85',
   switchOffThumb: '#FFFFFF',
@@ -215,12 +228,17 @@ export const DARK: Palette = {
   surfaceRaised: '#27243A',
   // By night your words are on a deeper violet so white reads on it (6.7:1); the neutral is a step over the raised
   // surface, 11.9:1 under its ink.
-  bubbleMine: '#7935C6',
-  bubbleMineInk: '#FFFFFF',
+  bubbleMine: '#F3F1FB',
+  bubbleMineInk: '#14112E',
   bubbleTheirs: '#302C46',
   bubbleTheirsInk: '#F3F1FB',
   barFill: '#27243A',
-  goldText: '#F0C24A',
+  glassRim: 'rgba(255,255,255,0.3)',
+  glassRimFar: 'rgba(255,255,255,0.1)',
+  glassTint: 'rgba(30,27,46,0.3)',
+  onArt: 'rgba(16,14,29,0.6)',
+  goldText: '#F3F1FB',
+  notice: '#FF453A',
 };
 
 export const PALETTES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK };

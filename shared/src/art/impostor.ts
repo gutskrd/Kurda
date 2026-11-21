@@ -445,13 +445,15 @@ const kurdistan: Draw = (dr) => {
   fill(dr, 'M25 37C48 31 70 45 104 37V57C70 65 48 51 25 57Z', WHITE.light);
   fill(dr, 'M25 57C48 51 70 65 104 57V76C70 84 48 70 25 76Z', GREEN);
   fill(dr, 'M25 19C48 13 70 27 104 19V22C70 30 48 16 25 22Z', tint(RED, 0.3));
-  const [cx, cy] = [64, 47];
-  for (let i = 0; i < 21; i++) {
-    const a = (i * 2 * Math.PI) / 21 - Math.PI / 2;
-    const p = (r: number, da: number): string => `${n(cx + r * Math.cos(a + da))} ${n(cy + r * Math.sin(a + da))}`;
-    fill(dr, `M${p(6, -0.13)}L${p(10.5, 0)}L${p(6, 0.13)}Z`, GOLD);
+  // The sun in the middle of the cloth, half as tall as it: twenty-one rays, one straight up, notched half way in.
+  const [cx, cy, tip] = [64.5, 47.75, 14.5];
+  const points: string[] = [];
+  for (let k = 0; k < 42; k++) {
+    const a = (k * Math.PI) / 21 - Math.PI / 2;
+    const r = k % 2 === 0 ? tip : tip * 0.51;
+    points.push(`${n(cx + r * Math.cos(a))} ${n(cy + r * Math.sin(a))}`);
   }
-  dot(dr, cx, cy, 6.4, GOLD);
+  fill(dr, `M${points.join('L')}Z`, GOLD);
 };
 
 /** Şahmaran, queen of the snakes: a coiled green snake with a crown. */

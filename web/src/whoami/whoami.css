@@ -43,7 +43,7 @@
 .wa-title,
 .wa-way-title {
   margin: 0;
-  font-size: var(--text-section);
+  font-size: var(--text);
 }
 .wa-hint {
   margin: 0;
@@ -53,7 +53,7 @@
   margin: 0;
   color: var(--ink-3);
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -67,7 +67,7 @@
   padding: 4px 12px;
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--gs-gold) 18%, transparent);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
 }
 
@@ -106,7 +106,7 @@
   box-shadow: none;
 }
 .wa-way.is-quiet .wa-way-title {
-  font-size: var(--text-body);
+  font-size: var(--text);
 }
 .wa-way-go {
   justify-self: stretch;
@@ -164,23 +164,23 @@
   animation: wa-turn 520ms var(--ease-emphasis) both;
 }
 .wa-card-mark {
-  font-size: 30px;
+  font-size: var(--text-title);
   font-weight: 800;
   line-height: 1;
 }
 .wa-card-kind {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   color: var(--wa-paper-soft);
 }
 .wa-card-word {
-  font-size: 20px;
+  font-size: var(--text);
   font-weight: 800;
   /* only a word too long for the widest card is broken at all */
   overflow-wrap: break-word;
 }
 .wa-card-meaning {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--wa-paper-soft);
 }
 
@@ -223,19 +223,19 @@
   min-width: 0;
 }
 .wa-turn-whose {
-  font-family: var(--font-display);
-  font-size: var(--text-section);
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
 .wa-turn-wait {
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .wa-turn-game {
   grid-column: 1 / -1;
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 /* On one phone the holder's hidden card is small beside the headline, so the questions fit on the first screen. */
 .wa-turn.is-couch {
@@ -252,19 +252,19 @@
   box-shadow: 0 0 0 2px var(--u-fill);
 }
 .wa-turn .wa-card-mark {
-  font-size: 18px;
+  font-size: var(--text);
 }
 .wa-turn-kind {
   justify-self: start;
   padding: 2px 10px;
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--gs-gold) 22%, transparent);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
 }
 .wa-turn-worth {
   color: var(--ink-2);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -280,7 +280,7 @@
   min-width: 56px;
 }
 .wa-timer-left {
-  font-size: 1.5rem;
+  font-size: var(--text-title);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -365,17 +365,17 @@
   box-shadow: 0 0 0 2px var(--u-fill);
 }
 .wa-seat-card .wa-card-mark {
-  font-size: 22px;
+  font-size: var(--text);
   align-self: center;
 }
 .wa-seat-word {
-  font-size: 15px;
+  font-size: var(--text);
   font-weight: 800;
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
 .wa-seat-meaning {
-  font-size: var(--text-tab);
+  font-size: var(--text);
   line-height: 1.2;
   color: var(--wa-paper-soft);
   overflow-wrap: anywhere;
@@ -391,7 +391,7 @@
 .wa-seat-meta {
   display: grid;
   color: var(--ink-3);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-variant-numeric: tabular-nums;
 }
 .wa-chip {
@@ -400,7 +400,7 @@
   border-radius: var(--r-md);
   background: var(--wa-yes-fill);
   color: var(--wa-verdict-ink);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
 }
 .wa-chip.is-out {
@@ -425,8 +425,8 @@
   display: none;
 }
 .wa-mine-line.is-strong {
-  font-family: var(--font-display);
-  font-size: var(--text-section);
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.2;
 }
@@ -469,19 +469,19 @@
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 1.25rem;
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.3;
   text-align: center;
   cursor: pointer;
 }
 .wa-asked.is-large .wa-asked-text {
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 6.4vw, 2rem);
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   line-height: 1.2;
 }
 .wa-asked .wa-hint {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   text-align: center;
 }
 .wa-asked-text:focus-visible,
@@ -496,7 +496,7 @@
 }
 .wa-q-meaning {
   font-family: var(--font-sans);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 500;
   color: var(--ink-3);
 }
@@ -564,7 +564,7 @@ p.wa-q-text {
   box-shadow: 0 3px 0 var(--lip);
 }
 .wa-answer-btn.is-unsure .wa-answer-ku {
-  font-size: 1.375rem;
+  font-size: var(--text);
 }
 .wa-answer-mark {
   display: inline-flex;
@@ -580,19 +580,19 @@ p.wa-q-text {
   cursor: default;
 }
 .wa-answer-ku {
-  font-family: var(--font-display);
-  font-size: 1.75rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.1;
 }
 .wa-answer-gloss {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   opacity: 0.86;
 }
 /* the same keys saying a short sentence in the reader's language: smaller, so it fits half a phone's width */
 .wa-answer-say {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
@@ -619,7 +619,7 @@ p.wa-q-text {
   padding: 6px 12px;
   border-radius: var(--r-pill);
   background: var(--surface-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .wa-who li.is-done {
   background: color-mix(in srgb, var(--gs-gold) 22%, var(--surface));
@@ -662,14 +662,14 @@ p.wa-q-text {
   font-weight: 700;
 }
 .wa-verdict-by {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0.86;
 }
 .wa-verdict .wa-asked-text {
-  font-size: 1.125rem;
+  font-size: var(--text);
 }
 .wa-verdict .wa-q-meaning {
   color: inherit;
@@ -683,13 +683,13 @@ p.wa-q-text {
   gap: var(--space-3);
   margin: 0;
   color: inherit;
-  font-family: var(--font-display);
-  font-size: var(--text-section);
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.2;
 }
 .wa-verdict-gloss {
   font-family: var(--font-sans);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 500;
   opacity: 0.86;
 }
@@ -698,7 +698,7 @@ p.wa-q-text {
 .wa-verdict .wa-stamp.is-sometimes,
 .wa-verdict .wa-stamp.is-no {
   color: inherit;
-  font-size: 1.5rem;
+  font-size: var(--text-title);
 }
 .wa-verdict-you {
   font-weight: 700;
@@ -741,7 +741,7 @@ p.wa-q-text {
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   text-decoration: underline;
   text-underline-offset: 3px;
   opacity: 0.86;
@@ -761,7 +761,7 @@ p.wa-q-text {
 .wa-reported,
 .wa-report-error {
   margin: 0;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 /* the thank-you takes the focus by the page's doing, in place of the button pressed, and not by a key: no ring to draw */
 .wa-reported:focus {
@@ -840,7 +840,7 @@ p.wa-q-text {
   box-shadow: 0 1px 0 var(--border-strong);
 }
 .wa-suggest-ku {
-  font-size: 1.25rem;
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.3;
 }
@@ -878,7 +878,7 @@ p.wa-q-text {
 }
 .wa-known-own {
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .wa-questions {
   display: grid;
@@ -912,7 +912,7 @@ p.wa-q-text {
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 18px;
+  font-size: var(--text);
   font-weight: 600;
   text-align: start;
   cursor: pointer;
@@ -926,7 +926,7 @@ p.wa-q-text {
   border-radius: 8px;
   font-family: var(--font-sans);
   font-weight: 900;
-  font-size: 17px;
+  font-size: var(--text);
   line-height: 1.2;
   text-align: center;
   text-transform: uppercase;
@@ -979,12 +979,12 @@ p.wa-q-text {
   cursor: default;
 }
 .wa-tile-word {
-  font-size: 18px;
+  font-size: var(--text);
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 .wa-tile-meaning {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .wa-guess-actions {
@@ -999,7 +999,7 @@ p.wa-q-text {
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
 }
 .wa-scoring summary {
   min-height: 44px;
@@ -1036,7 +1036,7 @@ p.wa-q-text {
 }
 .wa-end-title {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: var(--text-title);
   text-align: center;
 }
@@ -1077,7 +1077,7 @@ p.wa-q-text {
   border-radius: 50%;
   background: var(--gold-soft);
   color: var(--gold-ink);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 800;
 }
 .wa-setup-card {
@@ -1095,8 +1095,8 @@ p.wa-q-text {
   /* a legend is not laid out by its fieldset's grid: it carries its own space */
   margin-bottom: var(--space-3);
   padding: 0;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
   color: var(--ink);
 }
@@ -1133,7 +1133,7 @@ p.wa-q-text {
   border-radius: 50%;
   background: transparent;
   color: var(--ink-3);
-  font-size: 22px;
+  font-size: var(--text);
   line-height: 1;
   cursor: pointer;
 }
@@ -1150,7 +1150,7 @@ p.wa-q-text {
   text-align: center;
 }
 .wa-setup-note {
-  font-size: var(--text-caption);
+  font-size: var(--text);
 }
 
 /* ---- on one phone: what the room looks at ------------------------------------------------------ */
@@ -1175,7 +1175,7 @@ p.wa-q-text {
 .wa-night-title {
   margin: 0;
   color: var(--gs-night-ink);
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-size: var(--text-title);
   font-weight: 700;
   line-height: 1.2;
@@ -1184,7 +1184,7 @@ p.wa-q-text {
 }
 .wa-night-shout {
   color: #f2c95a;
-  font-size: var(--text-section);
+  font-size: var(--text);
   font-weight: 800;
   overflow-wrap: anywhere;
 }
@@ -1193,7 +1193,7 @@ p.wa-q-text {
   color: #f2c95a;
   /* a headline where it names the screen: it keeps the look of a label all the same */
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: 0.08em;
@@ -1201,8 +1201,8 @@ p.wa-q-text {
 }
 /* a sentence the holder acts on, where it is too long for a headline */
 .wa-night-lead {
-  font-family: var(--font-display);
-  font-size: var(--text-section);
+  font-family: var(--font-sans);
+  font-size: var(--text);
   font-weight: 700;
   line-height: 1.25;
   text-wrap: balance;
@@ -1230,8 +1230,8 @@ p.wa-q-text {
   border-radius: 50%;
   background: var(--gs-gold);
   color: var(--gs-gold-ink);
-  font-family: var(--font-display);
-  font-size: 52px;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
   font-weight: 700;
   box-shadow:
     0 0 0 8px rgba(242, 182, 50, 0.18),
@@ -1247,11 +1247,11 @@ p.wa-q-text {
   padding: 10px 14px;
 }
 .wa-friends .wa-card-word {
-  font-size: 1.75rem;
+  font-size: var(--text-title);
   line-height: 1.15;
 }
 .wa-friends .wa-card-meaning {
-  font-size: var(--text-body);
+  font-size: var(--text);
 }
 /* A found card inside the app's celebration (styles/motion.css), keeping the stage's width and the words' line. */
 .wa-cheer,
@@ -1274,7 +1274,7 @@ p.wa-q-text {
 }
 .wa-leave-title {
   margin: 0;
-  font-size: var(--text-section);
+  font-size: var(--text);
 }
 .wa-leave-body {
   margin: 0;

@@ -63,7 +63,7 @@
 .fcard-name {
   display: block;
   min-width: 0;
-  font-size: 0.9rem;
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.25;
   overflow: hidden;
@@ -79,7 +79,7 @@
   min-width: 0;
   overflow: hidden;
   color: var(--ink-3);
-  font-size: 0.82rem;
+  font-size: var(--text);
   line-height: 1.25;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -111,7 +111,7 @@
   overflow: hidden;
   /* the house serif is for headings of pages; a post's title is read in a list, in the text face */
   font-family: var(--font-sans);
-  font-size: 1.19rem;
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: -0.005em;
   line-height: 1.3;
@@ -123,16 +123,16 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   color: var(--ink-2);
-  font-size: 0.95rem;
+  font-size: var(--text);
   line-height: 1.5;
   /* a poem's line breaks are the poem, and an excerpt keeps them */
   white-space: pre-wrap;
 }
 /* a poem's lines are still set as verse: in italic, the way the front page sets one */
 .fcard-poem .fcard-text {
-  font-family: var(--font-display);
+  font-family: var(--font-sans);
   font-style: italic;
-  font-size: 1.08rem;
+  font-size: var(--text);
   line-height: 1.5;
 }
 /* on its own page a post is read whole */
@@ -215,7 +215,7 @@
   background: var(--surface-2);
   color: var(--ink);
   font: inherit;
-  font-size: 0.88rem;
+  font-size: var(--text);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-decoration: none;
@@ -234,7 +234,7 @@
 .fcard-refused {
   margin: 0;
   color: var(--danger);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   line-height: 1.4;
 }
 /* share and save sit at the far end, away from the counts */
@@ -371,7 +371,7 @@
   padding: 0;
 }
 .seg-sub .seg-btn {
-  font-size: 0.8rem;
+  font-size: var(--text);
   padding: 5px 11px;
 }
 /* its chosen one is no longer a gold tint of its own: it is drawn as every chosen one is (shell.css) */

@@ -129,7 +129,7 @@ export function SignedInDevices({ refreshKey = 0 }: { refreshKey?: number }): Re
       <h2 className="friend-heading" style={{ marginTop: 0 }}>
         {t('settings.devices.title')}
       </h2>
-      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
+      <p className="muted" style={{ fontSize: 'var(--text)', marginBottom: 14 }}>
         {t('settings.devices.help')}
       </p>
 

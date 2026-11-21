@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   alignLeft: { alignItems: 'flex-start' },
   alignRight: { alignItems: 'flex-end' },
   noFace: { width: RUN_FACE },
-  who: { fontSize: typography.sizes.xs, marginBottom: 2, marginHorizontal: spacing.xs },
+  who: { fontSize: typography.sizes.text, marginBottom: 2, marginHorizontal: spacing.xs },
   bubble: { paddingVertical: 14, paddingHorizontal: spacing.md },
   dots: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   dot: { width: DOT, height: DOT, borderRadius: radii.pill },

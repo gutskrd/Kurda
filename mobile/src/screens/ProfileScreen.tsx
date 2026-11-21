@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { ActivityIndicator, Image, RefreshControl, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
@@ -15,6 +15,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon } from '../theme/Icon';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { TabHeader } from '../navigation/TopBar';
 import { useOpenMenu } from '../navigation/SideMenu';
 import { HeaderButton } from '../navigation/HeaderButton';
@@ -58,6 +59,7 @@ import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 import type { Visibility } from '../social/format';
+import { usePageWidth } from '../theme/pageWidth';
 
 /** The avatar's size: the largest thing on the screen. */
 const AVATAR = 96;
@@ -144,12 +146,13 @@ function AccountProfile() {
   const { user, client, refreshUser } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { width: windowWidth } = useWindowDimensions();
+  const windowWidth = usePageWidth();
   const tabBarInset = useTabBarInset();
   const openMenu = useOpenMenu();
   const { counts } = useUnread();
   const dir = useDirection();
   const scrollRef = useRef<ScrollView>(null);
+  const tabScroll = useTabBarScroll();
   // Tapping the Profile tab while on it scrolls to the top.
   useScrollToTop(scrollRef);
   const [streak, setStreak] = useState<Streak | null>(null);
@@ -362,6 +365,8 @@ function AccountProfile() {
       />
       <ScrollView
         ref={scrollRef}
+        onScroll={tabScroll}
+        scrollEventThrottle={64}
         contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -422,6 +427,8 @@ function AccountProfile() {
             <Pressable
               onPress={() => navigation.navigate('SettingsPage', { page: 'visibility' })}
               accessibilityRole="link"
+              // A line of small text, reached for as a finger-sized target.
+              reachSize={{ height: 20 }}
               style={({ pressed }) => [styles.seen, { flexDirection: dir.row }, pressed && heldDim]}
               testID="profile-seen-by"
             >
@@ -432,7 +439,13 @@ function AccountProfile() {
           {me?.bio ? (
             <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{me.bio}</Text>
           ) : me ? (
-            <Pressable onPress={() => navigation.navigate('EditProfile')} accessibilityRole="link" style={({ pressed }) => pressed && heldDim} testID="profile-add-bio">
+            <Pressable
+              onPress={() => navigation.navigate('EditProfile')}
+              accessibilityRole="link"
+              reachSize={{ height: 24 }}
+              style={({ pressed }) => pressed && heldDim}
+              testID="profile-add-bio"
+            >
               <Text style={[styles.addBio, { color: colors.primary }]}>{t('profile.addBio')}</Text>
             </Pressable>
           ) : null}
@@ -497,7 +510,7 @@ function AccountProfile() {
         {!progress && !progressSettled ? (
           // Your own profile always has the badges row, chosen or not.
           <View style={styles.showcaseSkeleton}>
-            <SkeletonText size={typography.sizes.xs} width={64} />
+            <SkeletonText size={typography.sizes.text} width={64} />
             <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
           </View>
         ) : null}
@@ -567,18 +580,18 @@ const styles = StyleSheet.create({
 
 
   nameRow: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
-  name: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
-  handle: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
+  handle: { fontSize: typography.sizes.text, textAlign: 'center' },
   country: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
   // A plain 22x16 image, as on the website; a radius this small would be a rounding error.
   flag: { width: 22, height: 16 },
-  countryName: { fontSize: typography.sizes.sm },
-  bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
+  countryName: { fontSize: typography.sizes.text },
+  bio: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
   level: { alignSelf: 'stretch', marginTop: spacing.sm },
   seen: { alignItems: 'center', gap: spacing.xs, marginTop: 2 },
-  seenText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
-  addBio: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
-  hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  seenText: { fontSize: typography.sizes.text, textDecorationLine: 'underline' },
+  addBio: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
+  hint: { fontSize: typography.sizes.text, lineHeight: 20 },
   showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
 
   // The buttons wrap to a second row where they do not fit, and each row's buttons share its width.
@@ -596,7 +609,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm + spacing.xs,
     paddingVertical: spacing.xs,
   },
-  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  actionText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   // Find friends: the one filled control of the three, round, and at least as tall as its neighbours.
   actionIcon: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignSelf: 'center', borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
@@ -604,8 +617,8 @@ const styles = StyleSheet.create({
   guestCard: { marginTop: spacing.md },
   guestInner: { gap: spacing.md },
   guestHead: { alignItems: 'center', gap: spacing.sm },
-  guestName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  guestTitle: { ...display(typography.sizes.lg), textAlign: 'center', marginTop: spacing.xs },
-  guestBody: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
+  guestName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  guestTitle: { ...display(typography.sizes.text), textAlign: 'center', marginTop: spacing.xs },
+  guestBody: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center' },
   guestActions: { gap: spacing.sm },
 });

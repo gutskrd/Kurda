@@ -111,8 +111,8 @@ const PILL_REACH = reachSlop(null, PILL_HEIGHT, { limit: { top: spacing.sm / 2 }
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   player: { flex: 1 },
-  action: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  action: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radii.pill, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
-  pillText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  pillText: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
   dot: { width: 10, height: 10, borderRadius: radii.pill },
 });

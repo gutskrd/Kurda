@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import {
   NEWROZ,
   RELATIVE_DAYS,
@@ -43,6 +43,7 @@ import { useWordsSeen } from './seen';
 import { WordPractice } from './WordPractice';
 import { WordSheet } from './WordSheet';
 import { dialectNameKey } from '../i18n/dialectName';
+import { usePageWidth } from '../theme/pageWidth';
 
 const DIALECTS: readonly AlphabetScript[] = ['kmr', 'ckb'];
 
@@ -83,7 +84,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
   const dir = useDirection();
   const reduceMotion = useReducedMotion();
   const bottom = useScreenBottomInset(spacing.xl);
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const fontScale = useFontScale();
   const grid = wordGrid(Math.min(width, layout.column) - layout.gutter * 2, set, fontScale);
 
@@ -332,50 +333,50 @@ function SeasonLegend({ dialect }: { dialect: AlphabetScript }): React.JSX.Eleme
   );
 }
 
-const DIGITS = 28;
+const DIGITS = typography.sizes.title;
 /** display(22) at the summary's own leading. */
-const SUMMARY_LINE = Math.round(typography.sizes.lg * 1.3);
+const SUMMARY_LINE = Math.round(typography.sizes.text * 1.3);
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   column: { width: '100%', maxWidth: layout.column, alignSelf: 'center', paddingHorizontal: layout.gutter, paddingTop: spacing.xs, gap: spacing.lg },
 
   intro: { gap: spacing.sm },
-  summary: { ...display(typography.sizes.lg), lineHeight: SUMMARY_LINE },
-  lead: { fontSize: typography.sizes.sm },
+  summary: { ...display(typography.sizes.text), lineHeight: SUMMARY_LINE },
+  lead: { fontSize: typography.sizes.text },
 
   group: { gap: spacing.sm },
   groupHead: { alignItems: 'baseline', gap: spacing.sm },
-  groupTitle: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  groupBody: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  groupTitle: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  count: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  groupBody: { fontSize: typography.sizes.text, lineHeight: 21 },
   grid: { flexWrap: 'wrap', gap: TILE_GAP, marginTop: spacing.xs },
 
   tile: { minHeight: TILE_HEIGHT, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', gap: 2, paddingHorizontal: 6, paddingVertical: spacing.sm + 2, overflow: 'hidden' },
-  tileWord: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  tileMeaning: { fontSize: typography.sizes.xs, textAlign: 'center' },
+  tileWord: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  tileMeaning: { fontSize: typography.sizes.text, textAlign: 'center' },
   corner: { position: 'absolute', top: 7 },
   left: { left: 8 },
   right: { right: 8 },
 
   colourTile: { minHeight: 96, borderRadius: radii.md, borderWidth: StyleSheet.hairlineWidth, justifyContent: 'flex-end', padding: 6 },
   chip: { alignItems: 'center', justifyContent: 'center', gap: 4, borderRadius: radii.sm, paddingHorizontal: spacing.sm, paddingVertical: 5 },
-  chipText: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  chipText: { flexShrink: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
 
   dayTile: { minHeight: 84, gap: 4 },
-  dayName: { ...display(typography.sizes.lg), lineHeight: Math.round(typography.sizes.lg * 1.2), textAlign: 'center' },
-  dayNameArabic: { fontSize: typography.sizes.lg, lineHeight: Math.round(typography.sizes.lg * 1.5), textAlign: 'center' },
+  dayName: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.2), textAlign: 'center' },
+  dayNameArabic: { fontSize: typography.sizes.text, lineHeight: Math.round(typography.sizes.text * 1.5), textAlign: 'center' },
   today: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  todayText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  todayText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
 
   tint: { borderRadius: radii.md },
-  monthNumber: { position: 'absolute', top: 6, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  month: { ...display(typography.sizes.md), lineHeight: Math.round(typography.sizes.md * 1.25), textAlign: 'center', marginTop: spacing.sm },
-  monthArabic: { fontSize: typography.sizes.md, lineHeight: Math.round(typography.sizes.md * 1.6), textAlign: 'center', marginTop: spacing.sm },
+  monthNumber: { position: 'absolute', top: 6, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  month: { ...display(typography.sizes.text), lineHeight: Math.round(typography.sizes.text * 1.25), textAlign: 'center', marginTop: spacing.sm },
+  monthArabic: { fontSize: typography.sizes.text, lineHeight: Math.round(typography.sizes.text * 1.6), textAlign: 'center', marginTop: spacing.sm },
 
   legend: { flexWrap: 'wrap', gap: spacing.sm },
   legendItem: { alignItems: 'center', gap: 6, borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 5 },
   legendDot: { width: 8, height: 8, borderRadius: radii.pill },
-  legendWord: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  legendGloss: { fontSize: typography.sizes.xs },
+  legendWord: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  legendGloss: { fontSize: typography.sizes.text },
 });

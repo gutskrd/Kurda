@@ -105,7 +105,7 @@ export function BlockedUsers(): React.JSX.Element {
       <h2 className="friend-heading" style={{ marginTop: 0 }}>
         {t('settings.blocked.title')} {total > 0 && <span className="mkp-friends-count">{total}</span>}
       </h2>
-      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
+      <p className="muted" style={{ fontSize: 'var(--text)', marginBottom: 14 }}>
         {t('settings.blocked.help')}
       </p>
 

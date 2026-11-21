@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import {
   characterArt,
@@ -19,6 +19,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing } from '../theme/tokens';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import { STAGE_HEIGHT, type PlaybackClock } from './voice';
+import { usePageWidth } from '../theme/pageWidth';
 
 export interface ConversationStageProps {
   /** The conversation's parts, each played by a character of its own (`conversationCast`). */
@@ -73,11 +74,11 @@ export function ConversationStage({
   reaction = null,
 }: ConversationStageProps): React.JSX.Element {
   const { colors } = useTheme();
-  const screen = useWindowDimensions();
+  const pageWide = usePageWidth();
   const [width, setWidth] = useState(0);
   const height = STAGE_HEIGHT.card;
   // Until the stage is laid out, the window width minus the screen margins stands in for its own.
-  const across = width > 0 ? width : screen.width - spacing.lg * 2;
+  const across = width > 0 ? width : pageWide - spacing.lg * 2;
   const places = useMemo(
     () => standTogether((conversationCast(speakers) ?? []).map((id) => characterArt(id)), across, height, HEADROOM, rtl),
     [speakers, across, height, rtl],

@@ -134,6 +134,6 @@ const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },
   players: { gap: spacing.xs },
   player: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
-  name: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  name: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   remove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
 });

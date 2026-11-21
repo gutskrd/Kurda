@@ -1,28 +1,23 @@
 /*
  * The lesson path (pages/CourseMap.tsx). Calm on purpose: soft colours, one line to follow, nothing counting down.
- * Each unit has its own tone (`lp-tone-*`, in @kurda/shared's UNIT_TONES order) for its heading, finished lessons and
- * walked line; gold is for what was earned and violet for where the learner is.
- *
- * Every tone has a light and a dark set cut from the app's hues: light colours with dark words on the dark page, deep
- * ones with white words on the light page (saffron keeps dark brown words). Banner text is 4.5:1 or better and every
- * filled stop 3:1 or better against the page.
+ * A unit's heading, finished lessons and walked line are in the page's ink (`lp-tone-*` names the unit's drawn stops,
+ * which keep their own colours), so the main button stays the one coloured thing. Banner text is 4.5:1 or better and
+ * every filled stop 3:1 or better against the page.
  */
 
-.lp-tone-meadow { --u-fill: #78d694; --u-lip: #459b61; --u-ink: #011c0a; --u-text: #92dfa7; }
-.lp-tone-river { --u-fill: #91c1ff; --u-lip: #5188cd; --u-ink: #05162c; --u-text: #a8ceff; }
-.lp-tone-clay { --u-fill: #ffa47a; --u-lip: #c16d45; --u-ink: #280d02; --u-text: #ffb798; }
-.lp-tone-dusk { --u-fill: #aeb8fe; --u-lip: #767ecd; --u-ink: #11132c; --u-text: #bec6ff; }
-.lp-tone-saffron { --u-fill: #eeb154; --u-lip: #b07a20; --u-ink: #221200; --u-text: #f5c076; }
-.lp-tone-pine { --u-fill: #57d4d4; --u-lip: #009a9a; --u-ink: #001b1b; --u-text: #65e1e1; }
-.lp-tone-rose { --u-fill: #fd9ac6; --u-lip: #bc668e; --u-ink: #260b18; --u-text: #ffafd1; }
-
-:root[data-theme='light'] .lp-tone-meadow { --u-fill: #058644; --u-lip: #006531; --u-ink: #ffffff; --u-text: #00783b; }
-:root[data-theme='light'] .lp-tone-river { --u-fill: #0073df; --u-lip: #0157ac; --u-ink: #ffffff; --u-text: #0161bd; }
-:root[data-theme='light'] .lp-tone-clay { --u-fill: #c45001; --u-lip: #973c00; --u-ink: #ffffff; --u-text: #a24102; }
-:root[data-theme='light'] .lp-tone-dusk { --u-fill: #6363eb; --u-lip: #4a47c0; --u-ink: #ffffff; --u-text: #504bd1; }
-:root[data-theme='light'] .lp-tone-saffron { --u-fill: #c37902; --u-lip: #8f5d04; --u-ink: #241600; --u-text: #885703; }
-:root[data-theme='light'] .lp-tone-pine { --u-fill: #008282; --u-lip: #006262; --u-ink: #ffffff; --u-text: #067272; }
-:root[data-theme='light'] .lp-tone-rose { --u-fill: #cd3688; --u-lip: #a51a6a; --u-ink: #ffffff; --u-text: #af0f6f; }
+/* Every unit wears the ink, as what is chosen or earned does everywhere; only the drawn stops keep their colours. */
+[class*='lp-tone-'] {
+  --u-fill: #f3f1fb;
+  --u-lip: #a9a6bb;
+  --u-ink: #14112e;
+  --u-text: #f3f1fb;
+}
+:root[data-theme='light'] [class*='lp-tone-'] {
+  --u-fill: #14112e;
+  --u-lip: #050410;
+  --u-ink: #ffffff;
+  --u-text: #14112e;
+}
 
 .lp {
   /* The grey of what is not open yet, and of the line still ahead. */
@@ -67,7 +62,7 @@
   border-radius: var(--r-pill);
   background: var(--surface-2);
   color: var(--ink-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
 }
 .lp-course:hover {
@@ -105,14 +100,27 @@
   position: sticky;
   top: calc(var(--nav-bottom) + var(--space-2));
   z-index: 8;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-2);
-  padding: var(--space-3) var(--space-2) var(--space-3) var(--space-5);
-  border-radius: 18px;
-  background: var(--u-fill);
-  color: var(--u-ink);
-  box-shadow: 0 4px 0 var(--u-lip);
+  min-height: 112px;
+  /* the words on the open sky across its whole width, the hills and the buttons below them */
+  padding: var(--space-4) var(--space-5) 60px;
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+  color: var(--ink);
+  box-shadow: var(--shadow-raised);
+}
+/* The chapter's painted horizon (PathSections.tsx), behind the words and buttons. */
+.lp-pin-art {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+.lp-pin-art > svg {
+  display: block;
 }
 @media (prefers-reduced-motion: no-preference) {
   .lp-pin {
@@ -130,17 +138,25 @@
 }
 .lp-pin-eyebrow {
   margin: 0;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 .lp-pin-title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-title);
+  font-weight: 600;
   line-height: 1.15;
   overflow-wrap: anywhere;
+}
+.lp-pin-actions {
+  position: absolute;
+  inset-inline-end: var(--space-3);
+  bottom: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
 }
 .lp-pin-button {
   flex: none;
@@ -150,12 +166,12 @@
   height: 44px;
   border: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--u-ink) 12%, transparent);
+  background: var(--on-art);
   color: inherit;
   cursor: pointer;
 }
 .lp-pin-button:focus-visible {
-  outline: 2px solid var(--u-ink);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -176,7 +192,7 @@
   display: block;
 }
 .lp-divider-eyebrow {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -184,7 +200,7 @@
 }
 .lp-divider-title {
   max-width: 24ch;
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 700;
   color: var(--ink);
 }
@@ -261,19 +277,19 @@ button.lp-scard:focus-visible {
   gap: 2px;
 }
 .lp-scard-eyebrow {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
 .lp-scard-title {
-  font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-family: var(--font-sans);
+  font-size: var(--text);
   line-height: 1.2;
 }
 .lp-scard-line {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .lp-scard-line.is-here {
@@ -329,7 +345,7 @@ button.lp-scard:focus-visible {
 }
 .lp-next-eyebrow {
   margin: 0;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -337,7 +353,7 @@ button.lp-scard:focus-visible {
 }
 .lp-next-title {
   margin: 0;
-  font-size: var(--text-section);
+  font-size: var(--text);
 }
 .lp-next-line {
   display: flex;
@@ -411,7 +427,7 @@ button.lp-scard:focus-visible {
 }
 .lp-rail-section-name {
   margin: 0 0 var(--space-2);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -476,7 +492,7 @@ button.lp-scard:focus-visible {
   min-width: 0;
 }
 .lp-rail-number {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -486,7 +502,7 @@ button.lp-scard:focus-visible {
   color: var(--u-text);
 }
 .lp-rail-title {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 600;
   line-height: 1.25;
   color: var(--ink);
@@ -498,16 +514,13 @@ button.lp-scard:focus-visible {
   height: 44px;
   border: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--u-ink) 12%, transparent);
+  background: var(--on-art);
   color: inherit;
   cursor: pointer;
 }
 .lp-unit-rail:focus-visible {
-  outline: 2px solid var(--u-ink);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
-}
-:root[data-theme='light'] .lp-unit-rail {
-  background: color-mix(in srgb, var(--u-lip) 55%, transparent);
 }
 /* Where the rail stands beside the path, the heading needs no button for it (after the rule above, which shows it). */
 @media (min-width: 1100px) {
@@ -658,7 +671,7 @@ button.lp-scard:focus-visible {
   outline-offset: 4px;
 }
 .lp-node-num {
-  font-size: 1.6rem;
+  font-size: var(--text-title);
   font-weight: 750;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -669,7 +682,7 @@ button.lp-scard:focus-visible {
   color: #fffaf0;
 }
 .lp-node.is-current .lp-node-glyph {
-  color: var(--u-ink);
+  color: var(--accent-ink);
 }
 /* On an open stop's cream: deep by day; by evening the cream stays light, so the valley's ink. */
 .lp-node.is-available .lp-node-glyph,
@@ -701,19 +714,6 @@ button.lp-scard:focus-visible {
   box-shadow: 0 0 0 2px var(--u-fill);
 }
 
-/* The current stop sits in a soft pool of its unit's light. */
-.lp-glow {
-  /* The stop's own base draws its ring of light on the road now. */
-  display: none;
-  position: absolute;
-  inset-inline-start: -30px;
-  top: 14px;
-  width: 132px;
-  height: 64px;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--u-fill) 60%, transparent), color-mix(in srgb, var(--u-fill) 25%, transparent) 55%, transparent);
-  pointer-events: none;
-}
 /*
  * A topic's ring (learn/PathRing.tsx): a piece per lesson, the track until finished in the current round, violet then,
  * and gold all round after three rounds, each piece edged a step darker. Returning from a lesson the new pieces fill in
@@ -730,9 +730,6 @@ button.lp-scard:focus-visible {
 }
 [dir='rtl'] .lp-ring {
   scale: -1 1;
-}
-.lp-ring.is-faint {
-  opacity: 0.6;
 }
 .lp-ring-edge,
 .lp-ring-piece {
@@ -803,43 +800,11 @@ button.lp-scard:focus-visible {
   stroke: #a8691a;
 }
 
-/* The learner on the current stop: their picture in a ring of the unit's colour, on a stem standing on the stop's face. */
-.lp-learner {
-  position: absolute;
-  z-index: 3;
-  inset-inline-start: calc(50% + var(--tx, 0px) - 25px);
-  width: 50px;
-  margin-top: -70px;
-  display: grid;
-  justify-items: center;
-  pointer-events: none;
-  list-style: none;
-}
-.lp-learner-ring {
-  display: grid;
-  place-items: center;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  border: 3px solid var(--u-fill);
-  background: var(--surface-solid);
-  overflow: hidden;
-}
-.lp-learner-ring .friend-avatar {
-  width: 42px;
-  height: 42px;
-}
-.lp-learner-stem {
-  width: 4px;
-  height: 12px;
-  border-radius: 0 0 2px 2px;
-  background: var(--u-fill);
-}
-
-/* "Start" over the learner: a chunky flag in the unit's colour on its darker lip, outlined like the stops. */
+/* "Start" over the stop to do now: a chunky flag in the page's ink, on a darker lip. */
 .lp-callout {
   position: absolute;
-  bottom: 118px;
+  /* clear of the stop's ring */
+  bottom: calc(var(--node) + 20px);
   inset-inline-start: calc(50% + var(--x, 0px));
   translate: -50% 0;
   z-index: 4;
@@ -849,20 +814,14 @@ button.lp-scard:focus-visible {
   padding: 0 var(--space-4);
   border: 0;
   border-radius: var(--r-pill);
-  /* By evening a cream pill with the valley's ink; by day an ink pill with cream words. */
-  background: #fffaf0;
-  color: #3d2a1f;
-  font-size: var(--text-secondary);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-size: var(--text);
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 0 3px 0 #d6c7a6;
-}
-:root[data-theme='light'] .lp-callout {
-  background: #3d2a1f;
-  color: #fffaf0;
-  box-shadow: 0 3px 0 #24170f;
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.28);
 }
 [dir='rtl'] .lp-callout {
   translate: 50% 0;
@@ -880,11 +839,8 @@ button.lp-scard:focus-visible {
   margin-top: -7px;
 }
 .lp-callout:hover {
-  color: #3d2a1f;
+  color: var(--primary-ink);
   text-decoration: none;
-}
-:root[data-theme='light'] .lp-callout:hover {
-  color: #fffaf0;
 }
 .lp-callout:focus-visible {
   outline: 3px solid var(--focus);
@@ -942,7 +898,7 @@ button.lp-scard:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 650;
 }
 .lp-jump-facts svg {
@@ -992,13 +948,12 @@ button.lp-scard:focus-visible {
 /* ---- motion ----------------------------------------------------------------- */
 
 /*
- * Only the unit in view (`is-seen`) moves, and nothing under reduced motion: the current stop and learner bob, a unit's
+ * Only the unit in view (`is-seen`) moves, and nothing under reduced motion: the current stop bobs, a unit's
  * stops rise into place the first time it is seen (`is-rising`; `is-waiting` keeps them underground until then), and
  * the landmark's loop turns.
  */
 @media (prefers-reduced-motion: no-preference) {
-  .lp-unit.is-seen .lp-stop.is-here:not(.is-open),
-  .lp-unit.is-seen .lp-learner:not(.is-hopping) {
+  .lp-unit.is-seen .lp-stop.is-here:not(.is-open) {
     animation: lp-bob 1.2s ease-in-out infinite alternate;
   }
   .lp-unit.is-waiting .lp-node {
@@ -1029,10 +984,6 @@ button.lp-scard:focus-visible {
   .lp-unit.is-seen .lp-loop.is-sign {
     transform-origin: 50% 0;
     animation: lp-swing 2.8s ease-in-out infinite;
-  }
-  /* The learner hops from the finished stop to the current one. */
-  .lp-learner.is-hopping {
-    animation: lp-hop 520ms ease-in-out both;
   }
   /* A chest the lesson earned wobbles as the skill pops, then bursts open. */
   .lp-node.is-wobbling .lp-node-face {
@@ -1117,17 +1068,6 @@ button.lp-scard:focus-visible {
     rotate: -9deg;
   }
 }
-@keyframes lp-hop {
-  from {
-    translate: var(--hx) var(--hy);
-  }
-  50% {
-    translate: calc(var(--hx) / 2) calc(var(--hy) / 2 - 46px);
-  }
-  to {
-    translate: 0 0;
-  }
-}
 @keyframes lp-wobble {
   25% {
     rotate: -9deg;
@@ -1185,6 +1125,86 @@ button.lp-scard:focus-visible {
   }
 }
 
+/* ---- the stop to do now ------------------------------------------------------ */
+
+/* The road's main button: its ring fills in the main button's violet, as its face is drawn. */
+.lp-node.is-current .lp-ring-piece.is-filled {
+  stroke: var(--accent);
+}
+/* Now and then a glint sweeps its face (shared PATH_STOP_ART: centre 56,58 and radii 36 by 31 in a 112 box) and a few
+   sparks wink on it after. */
+.lp-shine {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  clip-path: ellipse(32.1% 27.7% at 50% 51.8%);
+  pointer-events: none;
+}
+.lp-shine::before {
+  content: '';
+  position: absolute;
+  inset: 0 -40%;
+  background: linear-gradient(105deg, transparent 40%, rgb(255 255 255 / 0.6) 50%, rgb(255 255 255 / 0.12) 57%, transparent 64%);
+  translate: -70% 0;
+  animation: lp-glint 3.6s ease-in-out 1s infinite;
+}
+.lp-spark {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  background: #ffffff;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  scale: 0;
+  animation: lp-twinkle 3.6s ease-out 1s infinite;
+}
+.lp-spark:nth-child(1) {
+  inset-inline-start: 31%;
+  top: 33%;
+  animation-delay: 1.5s;
+}
+.lp-spark:nth-child(2) {
+  inset-inline-start: 63%;
+  top: 41%;
+  width: 8px;
+  height: 8px;
+  animation-delay: 1.7s;
+}
+.lp-spark:nth-child(3) {
+  inset-inline-start: 50%;
+  top: 63%;
+  width: 7px;
+  height: 7px;
+  animation-delay: 1.9s;
+}
+@keyframes lp-glint {
+  0% {
+    translate: -70% 0;
+  }
+  38%,
+  100% {
+    translate: 70% 0;
+  }
+}
+@keyframes lp-twinkle {
+  0%,
+  100% {
+    scale: 0;
+  }
+  7% {
+    scale: 1;
+    rotate: 45deg;
+  }
+  16% {
+    scale: 0;
+    rotate: 90deg;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-shine {
+    display: none;
+  }
+}
+
 /* ---- the card a stop opens -------------------------------------------------- */
 
 .lp-pop {
@@ -1234,28 +1254,28 @@ button.lp-scard:focus-visible {
   margin: 0;
 }
 .lp-pop-eyebrow {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--u-text);
 }
 .lp-pop-tale {
   margin: 0 0 var(--space-2);
-  font-size: var(--text-body);
+  font-size: var(--text);
   font-weight: 700;
   font-style: italic;
 }
 .lp-pop-title {
-  font-size: var(--text-section);
+  font-size: var(--text);
   line-height: 1.2;
 }
 .lp-pop-line {
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   color: var(--ink-3);
 }
 .lp-pop-progress {
   display: grid;
   gap: 6px;
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
@@ -1282,13 +1302,73 @@ button.lp-scard:focus-visible {
   border-radius: var(--r-pill);
   background: var(--gold);
   color: var(--lp-gold-ink);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 750;
 }
 .lp-pop-tips {
   justify-self: center;
   gap: 6px;
 }
+/* A topic to play now: the card is the road's main button, in its violet, with one light button that says what the
+   lesson pays and that a glint crosses now and then. */
+.lp-pop.is-go {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.lp-pop.is-go .lp-pop-arrow {
+  border-color: transparent;
+  background: var(--accent);
+}
+.lp-pop.is-go .lp-pop-title {
+  color: inherit;
+  font-weight: 750;
+}
+.lp-pop.is-go .lp-pop-line {
+  color: inherit;
+  opacity: 0.85;
+}
+.lp-pop.is-go .lp-pop-tips {
+  color: inherit;
+}
+.lp-pop.is-go .lp-pop-start {
+  position: relative;
+  overflow: hidden;
+  justify-content: center;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+  border: 0;
+  background: #ffffff;
+  color: var(--accent-ink);
+  box-shadow: 0 4px 0 rgb(0 0 0 / 0.18);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+:root[data-theme='light'] .lp-pop.is-go .lp-pop-start {
+  color: var(--accent);
+}
+.lp-pop.is-go .lp-pop-start:active {
+  translate: 0 3px;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.18);
+}
+.lp-pop.is-go .lp-pop-start::after {
+  content: '';
+  position: absolute;
+  inset: 0 -60%;
+  background: linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0) 44%, color-mix(in srgb, var(--accent) 22%, transparent) 50%, transparent 58%);
+  translate: -60% 0;
+  animation: lp-glint 2.8s ease-in-out 0.6s infinite;
+}
+.lp-pop-start-xp {
+  font-variant-numeric: tabular-nums;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-pop.is-go .lp-pop-start::after {
+    display: none;
+  }
+}
+
 /* The card's one action, with what its lesson pays under it. */
 .lp-pop-go {
   display: grid;
@@ -1296,7 +1376,7 @@ button.lp-scard:focus-visible {
   gap: 6px;
 }
 .lp-pop-xp {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 650;
   color: var(--gold-ink);
   font-variant-numeric: tabular-nums;
@@ -1333,7 +1413,7 @@ a.lp-part-row:hover {
   height: 26px;
   border-radius: 50%;
   background: var(--surface-2);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -1370,11 +1450,15 @@ a.lp-part-row:hover {
   background: var(--primary);
   color: var(--primary-ink);
   font: inherit;
-  font-size: var(--text-secondary);
+  font-size: var(--text);
   font-weight: 650;
   box-shadow: var(--shadow);
   cursor: pointer;
   animation: lp-pop-in var(--dur) var(--ease-out);
+}
+/* while the way back floats over the page's foot, the page ends above it, so it never covers the last buttons */
+:root:has(.places-bar):has(.lp-jump) main.app-main {
+  padding-bottom: calc(var(--bottom-chrome) + 44px + 2 * var(--space-4) + var(--rb-space, 0px));
 }
 .lp-jump:focus-visible {
   outline: 3px solid var(--focus);
@@ -1399,7 +1483,7 @@ a.lp-part-row:hover {
 
 .lp-guide-title {
   margin: 0 0 var(--space-3);
-  font-size: var(--text-section);
+  font-size: var(--text);
   padding-inline-end: 40px;
 }
 .lp-guide-skill {
@@ -1411,7 +1495,7 @@ a.lp-part-row:hover {
 .lp-guide-skill-title {
   margin: 0;
   font-family: var(--font-sans);
-  font-size: var(--text-caption);
+  font-size: var(--text);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;

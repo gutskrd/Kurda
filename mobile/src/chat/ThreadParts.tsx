@@ -96,7 +96,7 @@ const COUNT = 20;
 const styles = StyleSheet.create({
   day: { alignItems: 'center', paddingTop: spacing.md, paddingBottom: spacing.xs },
   dayText: {
-    fontSize: typography.sizes.xs,
+    fontSize: typography.sizes.text,
     fontWeight: typography.weights.semibold,
     overflow: 'hidden',
     borderRadius: radii.pill,
@@ -129,6 +129,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  countText: { fontSize: 11, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  countText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   pressed: { opacity: pressedDim },
 });

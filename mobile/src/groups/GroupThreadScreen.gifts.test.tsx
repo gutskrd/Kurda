@@ -74,7 +74,7 @@ describe('GroupThreadScreen gifts', () => {
     expect(await screen.findByText('azad already has it.')).toBeTruthy();
     await waitFor(() => expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ toUserIds: ['u2', 'u3'] }));
     // Typing again clears it.
-    fireEvent.change(screen.getByLabelText('Write a message…'), { target: { value: 'spas' } });
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'spas' } });
     expect(screen.queryByText('azad already has it.')).toBeNull();
   });
 });

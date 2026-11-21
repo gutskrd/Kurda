@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { matchedParts } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
@@ -37,6 +37,7 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { DiscoverGrid } from './DiscoverGrid';
 import { heldDim } from '../theme/MotionParts';
+import { usePageWidth } from '../theme/pageWidth';
 
 interface UserRow {
   userId: string;
@@ -104,7 +105,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   // How many pictures the grid found (null while loading); with none, the empty state suggests where to start.
   const [discovered, setDiscovered] = useState<number | null>(null);
-  const { width: screenWidth } = useWindowDimensions();
+  const screenWidth = usePageWidth();
   // People you may know are loading, so their place is held rather than flashing the empty prompt.
   const [suggestionsSettled, setSuggestionsSettled] = useState(false);
 
@@ -503,14 +504,14 @@ function RowsSkeleton({ rows, testID }: { rows: number; testID: string }): React
   const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
   return (
     <View style={styles.section} accessibilityLabel={t('common.loading')} testID={testID}>
-      <SkeletonText size={typography.sizes.xs} width={140} style={[styles.sectionTitleSkeleton, start]} />
+      <SkeletonText size={typography.sizes.text} width={140} style={[styles.sectionTitleSkeleton, start]} />
       <View style={styles.rows}>
         {Array.from({ length: rows }, (_, i) => i).map((i) => (
           <View key={i} style={[styles.row, { flexDirection: dir.row }]}>
             <Skeleton width={40} height={40} radius={radii.pill} />
             <View style={styles.rowMain}>
-              <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '48%'} style={start} />
-              <SkeletonText size={typography.sizes.sm} width={i % 2 ? '52%' : '30%'} style={start} />
+              <SkeletonText size={typography.sizes.text} width={i % 2 ? '36%' : '48%'} style={start} />
+              <SkeletonText size={typography.sizes.text} width={i % 2 ? '52%' : '30%'} style={start} />
             </View>
           </View>
         ))}
@@ -528,7 +529,7 @@ const styles = StyleSheet.create({
   sectionHead: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm },
   sectionTitle: { ...sectionLabel, paddingHorizontal: spacing.sm },
   sectionTitleSkeleton: { paddingHorizontal: spacing.sm },
-  sectionAction: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  sectionAction: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   rows: { gap: ROWS_GAP },
   // Edge to edge, out past the list's own inset.
   discover: { marginHorizontal: -spacing.sm },
@@ -544,8 +545,8 @@ const styles = StyleSheet.create({
   recent: { alignItems: 'center', gap: spacing.md - 4, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.sm + 2 },
   glyph: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   rowMain: { flex: 1, gap: 2 },
-  rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  rowSub: { fontSize: typography.sizes.sm },
+  rowTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
+  rowSub: { fontSize: typography.sizes.text },
   /** The part of a line that matches the query. */
   match: { fontWeight: typography.weights.bold },
 });

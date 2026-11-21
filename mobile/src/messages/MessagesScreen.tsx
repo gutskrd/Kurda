@@ -22,6 +22,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { useTabBarInset } from '../navigation/tabBarLayout';
+import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { TabHeader } from '../navigation/TopBar';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useOpenSlide } from '../social/SocialSlide';
@@ -79,6 +80,7 @@ export function MessagesScreen(): React.JSX.Element {
   const dir = useDirection();
   const openSlide = useOpenSlide();
   const bottomInset = useTabBarInset();
+  const tabScroll = useTabBarScroll();
   const { report } = useUnread();
 
   const [filter, setFilter] = useState<MessageFilter>('all');
@@ -350,6 +352,8 @@ export function MessagesScreen(): React.JSX.Element {
 
       <FlatList
         ref={listRef}
+        onScroll={tabScroll}
+        scrollEventThrottle={64}
         data={rows}
         keyExtractor={(r) => r.key}
         renderItem={({ item, index }) => (
@@ -431,7 +435,7 @@ function ConversationRow({
         <Avatar name={row.name} size={52} photoUrl={row.chat.avatarUrl ?? undefined} />
       ) : (
         // A group in its rounded square, so it is never mistaken for a person with that name.
-        <GroupAvatar name={row.name} id={row.group.id} size={52} photoUrl={row.group.photoUrl} />
+        <GroupAvatar name={row.name} size={52} photoUrl={row.group.photoUrl} />
       )}
       <View style={styles.rowMain}>
         <View style={[styles.rowTop, { flexDirection: dir.row }]}>
@@ -476,10 +480,10 @@ function ConversationsSkeleton(): React.JSX.Element {
           <Skeleton width={52} height={52} radius={radii.pill} />
           <View style={styles.rowMain}>
             <View style={[styles.rowTop, { flexDirection: dir.row }]}>
-              <SkeletonText size={typography.sizes.md} width={i % 2 ? '42%' : '56%'} style={[styles.flex, start]} />
-              <SkeletonText size={typography.sizes.xs} width={36} />
+              <SkeletonText size={typography.sizes.text} width={i % 2 ? '42%' : '56%'} style={[styles.flex, start]} />
+              <SkeletonText size={typography.sizes.text} width={36} />
             </View>
-            <SkeletonText size={typography.sizes.sm} width={i % 3 === 1 ? '58%' : '78%'} style={start} />
+            <SkeletonText size={typography.sizes.text} width={i % 3 === 1 ? '58%' : '78%'} style={start} />
           </View>
         </View>
       ))}
@@ -544,7 +548,7 @@ const styles = StyleSheet.create({
   list: { paddingHorizontal: spacing.sm, paddingTop: spacing.xs },
   listHead: { gap: spacing.sm, paddingHorizontal: spacing.sm, marginBottom: spacing.xs },
   error: { paddingTop: spacing.xxl },
-  note: { textAlign: 'center', fontSize: typography.sizes.sm, marginTop: spacing.xl, paddingHorizontal: layout.gutter },
+  note: { textAlign: 'center', fontSize: typography.sizes.text, marginTop: spacing.xl, paddingHorizontal: layout.gutter },
 
   pinned: { alignItems: 'center', gap: spacing.md - 4, borderRadius: radii.md, padding: spacing.md - 4 },
   requests: { alignItems: 'center', gap: spacing.md - 4, borderRadius: radii.md, paddingVertical: spacing.sm + 2, paddingHorizontal: spacing.md - 4, minHeight: MIN_TOUCH_TARGET + 12 },
@@ -565,19 +569,19 @@ const styles = StyleSheet.create({
   },
   rowMain: { flex: 1, gap: 2 },
   rowTop: { alignItems: 'center', gap: spacing.sm },
-  rowName: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  rowName: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
   unreadName: { fontWeight: typography.weights.bold },
-  rowPreview: { flex: 1, fontSize: typography.sizes.sm },
-  when: { fontSize: typography.sizes.xs },
+  rowPreview: { flex: 1, fontSize: typography.sizes.text },
+  when: { fontSize: typography.sizes.text },
   count: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  countText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  countText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
   // "New group": a row shaped like the requests row above it, its mark where the faces are.
   newGroupMark: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
   // A guest's tab: the offer, centred under the title with room above it.
   guest: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xl },
   guestMark: { width: 64, height: 64, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
-  guestTitle: { ...display(typography.sizes.lg), textAlign: 'center' },
-  guestBody: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center', maxWidth: 300 },
+  guestTitle: { ...display(typography.sizes.text), textAlign: 'center' },
+  guestBody: { fontSize: typography.sizes.text, lineHeight: 21, textAlign: 'center', maxWidth: 300 },
   guestAction: { alignSelf: 'stretch', marginTop: spacing.sm },
 });

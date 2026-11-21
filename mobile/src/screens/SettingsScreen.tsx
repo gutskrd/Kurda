@@ -489,6 +489,6 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
 const styles = StyleSheet.create({
   search: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
-  sheetBody: { fontSize: typography.sizes.md, lineHeight: 22 },
+  sheetBody: { fontSize: typography.sizes.text, lineHeight: 22 },
   sheetActions: { gap: spacing.sm, marginTop: spacing.sm },
 });

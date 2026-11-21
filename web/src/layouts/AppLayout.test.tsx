@@ -87,7 +87,7 @@ describe('the app’s shell on a phone', () => {
 
     const bar = placesBar()!;
     expect(bar).toHaveClass('places-bar');
-    expect(within(bar).getAllByRole('link').map((link) => link.textContent)).toEqual(['Home', 'Learn', 'Messages', 'Profile']);
+    expect(within(bar).getAllByRole('link').map((link) => link.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Profile']);
     // one list of the places, not the top bar's as well: it would be read out twice
     expect(screen.getAllByRole('navigation', { name: 'Primary' })).toHaveLength(1);
     expect(screen.getAllByRole('link', { name: 'Learn' })).toHaveLength(1);
@@ -182,7 +182,7 @@ describe('the app’s shell on a phone', () => {
     width(true);
     const root = visit('/app');
     expect(await topBar().findByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/register');
-    expect(within(placesBar()!).getAllByRole('link').map((link) => link.textContent)).toEqual(['Home', 'Learn', 'Sign in']);
+    expect(within(placesBar()!).getAllByRole('link').map((link) => link.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Sign in']);
     expect(within(placesBar()!).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
     // no account, so nothing to be notified of: the pill is the search alone
     expect(screen.queryByRole('button', { name: /Notifications/ })).toBeNull();

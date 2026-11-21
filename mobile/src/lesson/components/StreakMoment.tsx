@@ -51,6 +51,7 @@ import { duration, easeOut } from '../../theme/motion';
 import { useTheme } from '../../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
 import type { Streak } from '../types';
+import { usePageWidth } from '../../theme/pageWidth';
 
 /** Room the flame screen keeps for the day's number, its words and the line under them; and the fire's maximum size. */
 const FLAME_WORDS = 330;
@@ -59,7 +60,7 @@ const FLAME_MOST = 400;
 const RING = 168;
 const GLOW = RING * 1.6;
 /** The day's number on the flame screen. */
-const NUMBER = 112;
+const NUMBER = typography.sizes.title;
 /** The streak medal, standing half over the card's top edge; it squashes and hops about its foot. */
 const MEDAL = 132;
 const MEDAL_FOOT = '50% 88%';
@@ -135,7 +136,8 @@ function unitFor(n: number): TranslationKey {
 function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const width = usePageWidth();
   const day = Math.max(1, streak.current);
   const [fire] = useState(() => flameMoment(day));
   // The one celebration plays as it lights, or on a growth day as the growth lands.
@@ -784,16 +786,16 @@ const styles = StyleSheet.create({
   flameMiddle: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   flameStage: { alignItems: 'center', justifyContent: 'center' },
   flood: { position: 'absolute' },
-  flameUnit: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, marginTop: -spacing.xs },
+  flameUnit: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, marginTop: -spacing.xs },
   // Narrow enough that a sentence wraps into two even lines rather than leaving one word over.
-  grew: { maxWidth: 320, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, lineHeight: 26, textAlign: 'center', marginTop: spacing.md, paddingHorizontal: layout.gutter },
+  grew: { maxWidth: 320, fontSize: typography.sizes.text, fontWeight: typography.weights.bold, lineHeight: 26, textAlign: 'center', marginTop: spacing.md, paddingHorizontal: layout.gutter },
   rolling: { flexDirection: 'row', justifyContent: 'center' },
   leaving: { position: 'absolute', top: 0, left: 0, right: 0, textAlign: 'center' },
   weekBody: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: layout.gutter, paddingVertical: spacing.md, maxWidth: layout.column, width: '100%', alignSelf: 'center' },
   weekTap: { gap: spacing.md },
   // The panel leaves the medal room above the card.
   panel: { borderRadius: radii.xl, paddingTop: spacing.md + 4, paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
-  panelName: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center', marginBottom: MEDAL / 2 + spacing.sm },
+  panelName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textAlign: 'center', marginBottom: MEDAL / 2 + spacing.sm },
   card: { alignItems: 'center', borderRadius: radii.lg, paddingTop: MEDAL / 2 + spacing.sm, paddingBottom: spacing.md + 4, paddingHorizontal: spacing.sm },
   cardWords: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.xs + 2 },
   // Half over the card's top edge.
@@ -804,23 +806,23 @@ const styles = StyleSheet.create({
   spark: { position: 'absolute', top: '26%', left: '50%', borderRadius: radii.pill },
   // The number and its words on one line, a space apart.
   titleRow: { alignItems: 'flex-end', justifyContent: 'center', columnGap: 7, flexWrap: 'wrap' },
-  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, lineHeight: 34, textAlign: 'center', letterSpacing: -0.4 },
-  cheer: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.sm },
+  title: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, lineHeight: 34, textAlign: 'center', letterSpacing: -0.4 },
+  cheer: { fontSize: typography.sizes.text, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.sm },
   under: { gap: spacing.md },
-  stage: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  stage: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, textAlign: 'center' },
   stageName: { fontWeight: typography.weights.bold },
   week: { alignSelf: 'stretch', justifyContent: 'space-between', marginTop: spacing.md },
   dayColumn: { flex: 1, alignItems: 'center', gap: spacing.sm },
-  dayName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
+  dayName: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
   dayNameToday: { fontWeight: typography.weights.bold },
   day: { width: DAY, height: DAY, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   // Today, still to learn: its date in a ring.
   dayRing: { borderWidth: 2 },
-  dayDate: { fontSize: typography.sizes.md + 1, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  dayDate: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   dayGone: { opacity: 0.7 },
   freeze: { alignSelf: 'stretch', gap: spacing.sm },
   freezeHead: { alignItems: 'center', gap: spacing.sm },
-  freezeText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  freezeText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   track: { height: 10, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { width: '100%', height: '100%', borderRadius: radii.pill },
   bar: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.sm },

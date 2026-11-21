@@ -5,6 +5,7 @@
  */
 import type { PathGround, PathLandmark } from '../path-world.js';
 import { pathGroundShade } from './path-land.js';
+import { moonlitKeepingLamps, relight } from './light.js';
 import { CANVAS, escapeXml, n2, prefixFor, seeded } from './svg.js';
 import { KURDISTAN_FLAG, VALLEY, dusk, ellipsePath, fill, kurdistanFlag, stroke, warm, type ValleyLandmark, type ValleyLoopKind } from './valley.js';
 import { VALLEY_LANDMARKS_1 } from './valley-landmarks-1.js';
@@ -50,11 +51,13 @@ export function pathLandmarkSvg(opts: PathLandmarkOptions): string {
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   if (opts.shade !== undefined && !/^#[0-9a-f]{6}$/.test(opts.shade)) throw new RangeError(`art: a landmark's shade is a six-digit colour, not ${String(opts.shade)}`);
   const prefix = prefixFor(opts.idPrefix, 'landmark', landmark, dark);
+  // By night it stands under the road's moonlight (light.ts), its windows and fires still burning.
+  const night = (hex: string): string => (dark ? moonlitKeepingLamps(hex) : hex);
   // Drawn with the meadow's shade, then recoloured to the shade of the land it stands on, so a market's shadow is not grass.
-  const meadow = dusk(VALLEY.meadowShade, dark);
+  const meadow = night(dusk(VALLEY.meadowShade, dark));
   const shade = opts.shade ?? (opts.ground ? pathGroundShade(opts.ground, dark) : meadow);
-  const body = art
-    .draw(dark, seeded(`valley-landmark|${landmark}`), opts.shade !== undefined)
+  const drawn = art.draw(dark, seeded(`valley-landmark|${landmark}`), opts.shade !== undefined);
+  const body = (dark ? relight(drawn, moonlitKeepingLamps) : drawn)
     .split(`fill="${meadow}"`)
     .join(`fill="${shade}"`)
     // A pole's shadow is a stroke in the meadow's shade; recolour it too, so it is never a green stick.
@@ -127,5 +130,7 @@ export function pathLoopSvg(opts: PathLoopOptions): string {
   }
   const prefix = prefixFor(opts.idPrefix, 'loop', kind, dark);
   const height = (size * view.h) / view.w;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(height)}" viewBox="0 0 ${view.w} ${view.h}" aria-hidden="true" focusable="false" id="${prefix}">${body}</svg>`;
+  // Under the same moonlight as the landmark it moves on (flames still burning), so it lies over it exactly.
+  const lit = dark ? relight(body, moonlitKeepingLamps) : body;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(height)}" viewBox="0 0 ${view.w} ${view.h}" aria-hidden="true" focusable="false" id="${prefix}">${lit}</svg>`;
 }

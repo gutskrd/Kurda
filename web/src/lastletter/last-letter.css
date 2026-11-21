@@ -21,7 +21,7 @@
 }
 .ll-way-title {
   margin: 0;
-  font-size: var(--text-section);
+  font-size: var(--text);
 }
 .ll-not-offered {
   display: grid;
@@ -58,7 +58,7 @@
 }
 .ll-whose {
   margin: 0;
-  font-size: var(--text-section);
+  font-size: var(--text);
   font-weight: 700;
 }
 .ll-whose.is-mine {
@@ -103,13 +103,13 @@
   place-items: center;
 }
 .ll-letter {
-  font-size: 34px;
+  font-size: var(--text-title);
   font-weight: 800;
   line-height: 1;
   color: var(--ll-link);
 }
 .ll-letter.is-any {
-  font-size: 22px;
+  font-size: var(--text);
   color: var(--ink-3, var(--ink));
 }
 
@@ -172,7 +172,7 @@
   border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
 }
 .ll-word {
-  font-size: 20px;
+  font-size: var(--text);
   font-weight: 700;
   overflow-wrap: anywhere;
 }
@@ -184,11 +184,11 @@
   text-underline-offset: 3px;
 }
 .ll-meaning {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3, var(--ink));
 }
 .ll-by {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3, var(--ink));
 }
 
@@ -239,7 +239,7 @@
   background: var(--danger);
 }
 .ll-tag {
-  font-size: var(--text-caption);
+  font-size: var(--text);
   color: var(--ink-3, var(--ink));
 }
 .ll-tag.is-away {
@@ -260,7 +260,7 @@
 }
 .ll-input {
   min-height: 48px;
-  font-size: 20px;
+  font-size: var(--text);
 }
 .ll-hint {
   grid-column: 1 / -1;
@@ -329,20 +329,20 @@
     gap: var(--space-3, 12px);
   }
   .ll-word {
-    font-size: 18px;
+    font-size: var(--text);
   }
 }
 
 /* The note under the letter: why it is this letter (a soft ending), or why any letter will do. */
 .ll-note {
   margin: 0.15rem 0 0;
-  font-size: 0.85rem;
+  font-size: var(--text);
   line-height: 1.35;
 }
 
 .ll-soft-rule {
   margin: 0.25rem 0 0;
-  font-size: 0.9rem;
+  font-size: var(--text);
 }
 
 /* The finished game's words. */
@@ -352,7 +352,7 @@
 }
 
 .ll-review-title {
-  font-size: 1rem;
+  font-size: var(--text);
   margin: 0 0 0.5rem;
 }
 
@@ -380,5 +380,5 @@
 
 .ll-review-by {
   margin-inline-start: auto;
-  font-size: 0.85rem;
+  font-size: var(--text);
 }

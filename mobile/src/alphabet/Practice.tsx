@@ -283,7 +283,7 @@ export function Practice({
                       accessibilityLabel={text}
                       style={({ pressed }) => [styles.reviewTile, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
-                      <Glyph o={{ id: m.id, text, script: m.script }} size={typography.sizes.xl} />
+                      <Glyph o={{ id: m.id, text, script: m.script }} size={typography.sizes.title} />
                     </Pressable>
                   );
                 })}
@@ -300,7 +300,7 @@ export function Practice({
   );
 }
 
-const PROMPT_GLYPH = 44;
+const PROMPT_GLYPH = typography.sizes.title;
 
 /** A letter or a word in its own script, the way it is written there. */
 function Glyph({ o, size }: { o: AlphabetOption; size: number }): React.JSX.Element {
@@ -352,7 +352,7 @@ function Choice({
           { backgroundColor: fill, borderColor: edge, opacity: state === 'dim' ? 0.45 : pressed ? pressedDim : 1 },
         ]}
       >
-        <Glyph o={option} size={words ? typography.sizes.lg : typography.sizes.xl + 4} />
+        <Glyph o={option} size={words ? typography.sizes.text : typography.sizes.title} />
         {state === 'right' ? <Icon name="check" size={16} color={colors.success} style={styles.choiceMark} /> : null}
         {state === 'wrong' ? <Icon name="close" size={16} color={colors.danger} style={styles.choiceMark} /> : null}
       </Pressable>
@@ -398,7 +398,7 @@ function Explain({ q, audio, player }: { q: AlphabetQuestion; audio: AlphabetAud
         {[q.pair.a, q.pair.b].map((w) =>
           line(
             <>
-              <Glyph o={{ id: w.word, text: w.word, script: 'kmr' }} size={typography.sizes.lg} />
+              <Glyph o={{ id: w.word, text: w.word, script: 'kmr' }} size={typography.sizes.text} />
               <Meaning meaning={w.meaning} script="kmr" style={styles.flex} />
               <PlayButton src={audio.sounds.pairWord(w.word)} label={t('alphabet.listenWord')} player={player} />
             </>,
@@ -417,7 +417,7 @@ function Explain({ q, audio, player }: { q: AlphabetQuestion; audio: AlphabetAud
       <View style={box}>
         {line(
           <>
-            <Glyph o={{ id: l.id, text: `${l.upper} ${l.id}`, script: 'kmr' }} size={typography.sizes.xl} />
+            <Glyph o={{ id: l.id, text: `${l.upper} ${l.id}`, script: 'kmr' }} size={typography.sizes.title} />
             <View style={styles.flex}>
               {like ? (
                 <Like like={like} style={[styles.explainLike, dir.text]} />
@@ -432,7 +432,7 @@ function Explain({ q, audio, player }: { q: AlphabetQuestion; audio: AlphabetAud
         )}
         {line(
           <>
-            <Glyph o={{ id: l.word, text: l.word, script: 'kmr' }} size={typography.sizes.lg} />
+            <Glyph o={{ id: l.word, text: l.word, script: 'kmr' }} size={typography.sizes.text} />
             <Meaning meaning={l.meaning} script="kmr" style={styles.flex} />
             <PlayButton src={audio.sounds.latinWord(l.id)} label={t('alphabet.listenWord')} player={player} />
           </>,
@@ -447,7 +447,7 @@ function Explain({ q, audio, player }: { q: AlphabetQuestion; audio: AlphabetAud
     <View style={box}>
       {line(
         <>
-          <Glyph o={{ id: l.id, text: l.char, script: 'ckb' }} size={typography.sizes.xl} />
+          <Glyph o={{ id: l.id, text: l.char, script: 'ckb' }} size={typography.sizes.title} />
           <View style={styles.flex}>
             {l.latin ? <Text style={[styles.explainNote, dir.text, { color: colors.textSecondary }]}>{`${t('alphabet.inKurmanci')}: ${l.latin}`}</Text> : null}
           </View>
@@ -456,7 +456,7 @@ function Explain({ q, audio, player }: { q: AlphabetQuestion; audio: AlphabetAud
       )}
       {line(
         <>
-          <Glyph o={{ id: l.word, text: l.word, script: 'ckb' }} size={typography.sizes.lg} />
+          <Glyph o={{ id: l.word, text: l.word, script: 'ckb' }} size={typography.sizes.text} />
           <Meaning meaning={l.meaning} script="ckb" style={styles.flex} />
           <PlayButton src={audio.sounds.soraniWord(l)} label={t('alphabet.listenWord')} player={player} />
         </>,
@@ -467,8 +467,8 @@ function Explain({ q, audio, player }: { q: AlphabetQuestion; audio: AlphabetAud
 
 const styles = StyleSheet.create({
   card: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.sm + 4 },
-  title: { ...display(typography.sizes.lg) },
-  body: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  title: { ...display(typography.sizes.text) },
+  body: { fontSize: typography.sizes.text, lineHeight: 21 },
   // At the reading side: the right, in Soranî and Arabic.
   action: { alignSelf: 'flex-start' },
   actionEnd: { alignSelf: 'flex-end' },
@@ -477,14 +477,14 @@ const styles = StyleSheet.create({
   question: { gap: spacing.sm + 4 },
   top: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, minHeight: 22 },
   pill: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 3 },
-  pillText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  ask: { fontSize: typography.sizes.md },
+  pillText: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  ask: { fontSize: typography.sizes.text },
   prompt: { alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm + 6, minHeight: 56 },
   staged: { alignItems: 'center', gap: spacing.sm },
-  promptMeaning: { fontSize: typography.sizes.md, flexShrink: 1 },
+  promptMeaning: { fontSize: typography.sizes.text, flexShrink: 1 },
   promptLike: { flexShrink: 1 },
   form: { alignItems: 'center', gap: 2, minWidth: 84, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.sm },
-  formLabel: { fontSize: typography.sizes.xs },
+  formLabel: { fontSize: typography.sizes.text },
 
   options: { gap: spacing.sm + 2 },
   choiceWrap: { flex: 1 },
@@ -500,12 +500,12 @@ const styles = StyleSheet.create({
   choiceMark: { position: 'absolute', top: 6, right: 6 },
 
   feedback: { gap: spacing.sm + 4 },
-  verdict: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  verdict: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   comeback: { fontWeight: typography.weights.regular },
   explain: { borderRadius: radii.md, padding: spacing.sm + 4, gap: spacing.sm },
   explainLine: { alignItems: 'center', gap: spacing.sm + 4 },
-  explainLike: { fontSize: typography.sizes.md, lineHeight: 22 },
-  explainNote: { fontSize: typography.sizes.sm },
+  explainLike: { fontSize: typography.sizes.text, lineHeight: 22 },
+  explainNote: { fontSize: typography.sizes.text },
 
   dots: { flexWrap: 'wrap', gap: 6 },
   dot: { width: 10, height: 10, borderRadius: radii.pill },
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   dotOpen: { opacity: 0.3 },
 
   done: { gap: spacing.sm + 4 },
-  score: { ...display(typography.sizes.xl) },
+  score: { ...display(typography.sizes.title) },
   review: { flexWrap: 'wrap', gap: spacing.sm },
   reviewTile: { minWidth: 56, minHeight: 56, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.sm },
   actions: { flexWrap: 'wrap', gap: spacing.sm },

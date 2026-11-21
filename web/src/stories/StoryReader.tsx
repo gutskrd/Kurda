@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // Soranî in a face made for Arabic script, fetched only when a story page opens.
-import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   PAID_STORY_REPEATS_PER_DAY,

@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
   sheet: { paddingHorizontal: 0 },
   body: { paddingBottom: spacing.md },
   loading: { marginVertical: spacing.xl },
-  empty: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', paddingHorizontal: layout.gutter, paddingVertical: spacing.xl },
+  empty: { fontSize: typography.sizes.text, lineHeight: 23, textAlign: 'center', paddingHorizontal: layout.gutter, paddingVertical: spacing.xl },
   row: { alignItems: 'center', gap: spacing.md, minHeight: 60, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
   words: { flex: 1, minWidth: 0, gap: 1 },
-  name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  sub: { fontSize: typography.sizes.xs },
-  error: { fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
+  name: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
+  sub: { fontSize: typography.sizes.text },
+  error: { fontSize: typography.sizes.text, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
   // The sheet's one button, clear of the list and inside the rows' gutter.
   foot: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
 });
