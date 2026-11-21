@@ -795,10 +795,7 @@ export type TranslationKey =
   | 'profile.addFriends'
   | 'profile.stat.xp'
   | 'badges.new'
-  | 'profile.showcase'
-  | 'profile.showcaseA11y'
   | 'profile.showcaseChoose'
-  | 'profile.progress'
   | 'profile.rankBest'
   | 'notifications.pref.progress'
   | 'notifications.badge.title'
@@ -2600,7 +2597,6 @@ export type TranslationKey =
   | 'profile.addBio'
   | 'profile.stat.streak'
   | 'profile.offline'
-  | 'profile.activity'
   | 'profile.tab.posts'
   | 'profile.tab.likes'
   | 'repost.tab'
@@ -2715,7 +2711,6 @@ export type TranslationKey =
   | 'profile.stat.icons'
   | 'civak.empty.body'
   | 'inbox.empty.body'
-  | 'profile.nothingHere.body'
   | 'friends.sent'
   | 'friends.cancel'
   | 'friends.cancelRequest'
@@ -6041,7 +6036,6 @@ const en: Catalog = {
   'profile.addBio': 'Add a few words about yourself',
   'profile.stat.streak': 'Streak',
   'profile.offline': 'Offline',
-  'profile.activity': 'Activity',
   'profile.tab.posts': 'Posts',
   'profile.tab.likes': 'Likes',
   'repost.tab': 'Reposts',
@@ -6131,7 +6125,6 @@ const en: Catalog = {
   'profile.stat.icons': 'Icons',
   'civak.empty.body': 'Stories, poems and pictures from everyone show up here.',
   'inbox.empty.body': 'Friend requests, messages and notifications arrive here.',
-  'profile.nothingHere.body': 'What you post and play shows up here.',
   'friends.sent': 'Sent',
   'friends.cancel': 'Cancel',
   'friends.cancelRequest': 'Cancel your request to {name}',
@@ -6340,10 +6333,7 @@ const en: Catalog = {
   'profile.addFriends': 'Add friends',
   'profile.stat.xp': 'XP',
   'badges.new': 'New',
-  'profile.showcase': 'Badges',
-  'profile.showcaseA11y': 'Badges: {badges}',
   'profile.showcaseChoose': 'Choose badges for your profile',
-  'profile.progress': 'Ranks and league',
   'profile.rankBest': 'Best: {rank}',
   'notifications.pref.progress': 'Leagues and badges',
   'notifications.badge.title': 'A new badge',
@@ -9934,7 +9924,6 @@ const ku: Catalog = {
   'profile.addBio': 'Çend peyvan li ser xwe binivîse',
   'profile.stat.streak': 'Rêze',
   'profile.offline': 'Derhêl',
-  'profile.activity': 'Çalakî',
   'profile.tab.posts': 'Şandî',
   'profile.tab.likes': 'Ecibandin',
   'repost.tab': 'Ji nû ve weşandin',
@@ -10024,7 +10013,6 @@ const ku: Catalog = {
   'profile.stat.icons': 'Îkon',
   'civak.empty.body': 'Çîrok, helbest û wêneyên ji her kesî li vir xuya dibin.',
   'inbox.empty.body': 'Daxwazên hevaltiyê, peyam û agahdarî li vir tên.',
-  'profile.nothingHere.body': 'Tiştên ku tu diweşînî û dilîzî li vir xuya dibin.',
   'friends.sent': 'Şandin',
   'friends.cancel': 'Betal bike',
   'friends.cancelRequest': 'Daxwaza xwe ya ji {name} betal bike',
@@ -10233,10 +10221,7 @@ const ku: Catalog = {
   'profile.addFriends': 'Hevalan zêde bike',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nû',
-  'profile.showcase': 'Nîşan',
-  'profile.showcaseA11y': 'Nîşan: {badges}',
   'profile.showcaseChoose': 'Ji bo profîla xwe nîşanan hilbijêre',
-  'profile.progress': 'Rêz û lîg',
   'profile.rankBest': 'Ya herî baş: {rank}',
   'notifications.pref.progress': 'Lîg û nîşan',
   'notifications.badge.title': 'Nîşaneke nû',
@@ -13827,7 +13812,6 @@ const de: Catalog = {
   'profile.addBio': 'Schreib ein paar Worte über dich',
   'profile.stat.streak': 'Serie',
   'profile.offline': 'Offline',
-  'profile.activity': 'Aktivität',
   'profile.tab.posts': 'Beiträge',
   'profile.tab.likes': 'Gefällt mir',
   'repost.tab': 'Reposts',
@@ -13917,7 +13901,6 @@ const de: Catalog = {
   'profile.stat.icons': 'Symbole',
   'civak.empty.body': 'Geschichten, Gedichte und Bilder von allen erscheinen hier.',
   'inbox.empty.body': 'Freundschaftsanfragen, Nachrichten und Mitteilungen landen hier.',
-  'profile.nothingHere.body': 'Was du veröffentlichst und spielst, erscheint hier.',
   'friends.sent': 'Gesendet',
   'friends.cancel': 'Abbrechen',
   'friends.cancelRequest': 'Deine Anfrage an {name} zurückziehen',
@@ -14126,10 +14109,7 @@ const de: Catalog = {
   'profile.addFriends': 'Freunde hinzufügen',
   'profile.stat.xp': 'XP',
   'badges.new': 'Neu',
-  'profile.showcase': 'Abzeichen',
-  'profile.showcaseA11y': 'Abzeichen: {badges}',
   'profile.showcaseChoose': 'Abzeichen für dein Profil wählen',
-  'profile.progress': 'Ränge und Liga',
   'profile.rankBest': 'Bester Rang: {rank}',
   'notifications.pref.progress': 'Ligen und Abzeichen',
   'notifications.badge.title': 'Ein neues Abzeichen',
@@ -17720,7 +17700,6 @@ const es: Catalog = {
   'profile.addBio': 'Añade unas palabras sobre ti',
   'profile.stat.streak': 'Racha',
   'profile.offline': 'Desconectado',
-  'profile.activity': 'Actividad',
   'profile.tab.posts': 'Publicaciones',
   'profile.tab.likes': 'Me gusta',
   'repost.tab': 'Republicados',
@@ -17810,7 +17789,6 @@ const es: Catalog = {
   'profile.stat.icons': 'Iconos',
   'civak.empty.body': 'Aquí aparecen relatos, poemas e imágenes de todos.',
   'inbox.empty.body': 'Aquí llegan las solicitudes de amistad, los mensajes y las notificaciones.',
-  'profile.nothingHere.body': 'Lo que publicas y juegas aparece aquí.',
   'friends.sent': 'Enviadas',
   'friends.cancel': 'Cancelar',
   'friends.cancelRequest': 'Cancelar tu solicitud a {name}',
@@ -18019,10 +17997,7 @@ const es: Catalog = {
   'profile.addFriends': 'Añadir amigos',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nueva',
-  'profile.showcase': 'Insignias',
-  'profile.showcaseA11y': 'Insignias: {badges}',
   'profile.showcaseChoose': 'Elige insignias para tu perfil',
-  'profile.progress': 'Rangos y liga',
   'profile.rankBest': 'Mejor: {rank}',
   'notifications.pref.progress': 'Ligas e insignias',
   'notifications.badge.title': 'Una insignia nueva',
@@ -21613,7 +21588,6 @@ const tr: Catalog = {
   'profile.addBio': 'Kendin hakkında birkaç söz ekle',
   'profile.stat.streak': 'Seri',
   'profile.offline': 'Çevrimdışı',
-  'profile.activity': 'Etkinlik',
   'profile.tab.posts': 'Gönderiler',
   'profile.tab.likes': 'Beğeniler',
   'repost.tab': 'Yeniden paylaşılanlar',
@@ -21703,7 +21677,6 @@ const tr: Catalog = {
   'profile.stat.icons': 'Simgeler',
   'civak.empty.body': 'Herkesin hikâyeleri, şiirleri ve resimleri burada görünür.',
   'inbox.empty.body': 'Arkadaşlık istekleri, mesajlar ve bildirimler buraya gelir.',
-  'profile.nothingHere.body': 'Paylaştıkların ve oynadıkların burada görünür.',
   'friends.sent': 'Gönderilen',
   'friends.cancel': 'Vazgeç',
   'friends.cancelRequest': '{name} kişisine gönderdiğin isteği geri al',
@@ -21912,10 +21885,7 @@ const tr: Catalog = {
   'profile.addFriends': 'Arkadaş ekle',
   'profile.stat.xp': 'XP',
   'badges.new': 'Yeni',
-  'profile.showcase': 'Rozetler',
-  'profile.showcaseA11y': 'Rozetler: {badges}',
   'profile.showcaseChoose': 'Profilin için rozet seç',
-  'profile.progress': 'Rütbeler ve lig',
   'profile.rankBest': 'En iyi: {rank}',
   'notifications.pref.progress': 'Ligler ve rozetler',
   'notifications.badge.title': 'Yeni bir rozet',
@@ -25506,7 +25476,6 @@ const ar: Catalog = {
   'profile.addBio': 'أضف بضع كلمات عن نفسك',
   'profile.stat.streak': 'السلسلة',
   'profile.offline': 'غير متصل',
-  'profile.activity': 'النشاط',
   'profile.tab.posts': 'المنشورات',
   'profile.tab.likes': 'الإعجابات',
   'repost.tab': 'المعاد نشرها',
@@ -25596,7 +25565,6 @@ const ar: Catalog = {
   'profile.stat.icons': 'الأيقونات',
   'civak.empty.body': 'تظهر هنا القصص والقصائد والصور من الجميع.',
   'inbox.empty.body': 'تصل هنا طلبات الصداقة والرسائل والإشعارات.',
-  'profile.nothingHere.body': 'يظهر هنا ما تنشره وما تلعبه.',
   'friends.sent': 'المُرسَلة',
   'friends.cancel': 'إلغاء',
   'friends.cancelRequest': 'إلغاء طلبك إلى {name}',
@@ -25805,10 +25773,7 @@ const ar: Catalog = {
   'profile.addFriends': 'إضافة أصدقاء',
   'profile.stat.xp': 'XP',
   'badges.new': 'جديد',
-  'profile.showcase': 'الشارات',
-  'profile.showcaseA11y': 'الشارات: {badges}',
   'profile.showcaseChoose': 'اختر شارات لملفك الشخصي',
-  'profile.progress': 'الرتب والدوري',
   'profile.rankBest': 'الأفضل: {rank}',
   'notifications.pref.progress': 'الدوريات والشارات',
   'notifications.badge.title': 'شارة جديدة',
@@ -29399,7 +29364,6 @@ const fr: Catalog = {
   'profile.addBio': 'Ajoute quelques mots sur toi',
   'profile.stat.streak': 'Série',
   'profile.offline': 'Hors ligne',
-  'profile.activity': 'Activité',
   'profile.tab.posts': 'Publications',
   'profile.tab.likes': 'J’aime',
   'repost.tab': 'Republications',
@@ -29489,7 +29453,6 @@ const fr: Catalog = {
   'profile.stat.icons': 'Icônes',
   'civak.empty.body': 'Les récits, poèmes et images de tout le monde apparaissent ici.',
   'inbox.empty.body': 'Les demandes d’ami, les messages et les notifications arrivent ici.',
-  'profile.nothingHere.body': 'Tes publications et tes parties apparaissent ici.',
   'friends.sent': 'Envoyées',
   'friends.cancel': 'Annuler',
   'friends.cancelRequest': 'Annuler ta demande à {name}',
@@ -29698,10 +29661,7 @@ const fr: Catalog = {
   'profile.addFriends': 'Ajouter des amis',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nouveau',
-  'profile.showcase': 'Badges',
-  'profile.showcaseA11y': 'Badges : {badges}',
   'profile.showcaseChoose': 'Choisir des badges pour ton profil',
-  'profile.progress': 'Rangs et ligue',
   'profile.rankBest': 'Record : {rank}',
   'notifications.pref.progress': 'Ligues et badges',
   'notifications.badge.title': 'Un nouveau badge',
@@ -33292,7 +33252,6 @@ const nl: Catalog = {
   'profile.addBio': 'Schrijf een paar woorden over jezelf',
   'profile.stat.streak': 'Reeks',
   'profile.offline': 'Offline',
-  'profile.activity': 'Activiteit',
   'profile.tab.posts': 'Berichten',
   'profile.tab.likes': 'Likes',
   'repost.tab': 'Opnieuw geplaatst',
@@ -33382,7 +33341,6 @@ const nl: Catalog = {
   'profile.stat.icons': 'Iconen',
   'civak.empty.body': 'Verhalen, gedichten en afbeeldingen van iedereen verschijnen hier.',
   'inbox.empty.body': 'Vriendschapsverzoeken, berichten en meldingen komen hier binnen.',
-  'profile.nothingHere.body': 'Wat je plaatst en speelt verschijnt hier.',
   'friends.sent': 'Verzonden',
   'friends.cancel': 'Annuleren',
   'friends.cancelRequest': 'Je verzoek aan {name} annuleren',
@@ -33591,10 +33549,7 @@ const nl: Catalog = {
   'profile.addFriends': 'Vrienden toevoegen',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nieuw',
-  'profile.showcase': 'Badges',
-  'profile.showcaseA11y': 'Badges: {badges}',
   'profile.showcaseChoose': 'Kies badges voor je profiel',
-  'profile.progress': 'Rangen en competitie',
   'profile.rankBest': 'Beste: {rank}',
   'notifications.pref.progress': 'Competities en badges',
   'notifications.badge.title': 'Een nieuwe badge',
@@ -37186,7 +37141,6 @@ const ckb: Catalog = {
   'profile.addBio': 'چەند وشەیەک دەربارەی خۆت بنووسە',
   'profile.stat.streak': 'زنجیرە',
   'profile.offline': 'دەرهێڵ',
-  'profile.activity': 'چالاکی',
   'profile.tab.posts': 'پۆستەکان',
   'profile.tab.likes': 'بەدڵبووەکان',
   'repost.tab': 'دووبارە بڵاوکراوەکان',
@@ -37276,7 +37230,6 @@ const ckb: Catalog = {
   'profile.stat.icons': 'ئایکۆنەکان',
   'civak.empty.body': 'چیرۆک و هۆنراوە و وێنەی هەمووان لێرە دەردەکەون.',
   'inbox.empty.body': 'داواکاری هاوڕێیەتی و نامە و ئاگادارکردنەوەکان لێرە دەگەن.',
-  'profile.nothingHere.body': 'ئەوەی بڵاوی دەکەیتەوە و یاری دەکەیت لێرە دەردەکەوێت.',
   'friends.sent': 'نێردراو',
   'friends.cancel': 'پاشگەزبوونەوە',
   'friends.cancelRequest': 'داواکارییەکەت بۆ {name} هەڵبوەشێنەوە',
@@ -37485,10 +37438,7 @@ const ckb: Catalog = {
   'profile.addFriends': 'هاوڕێ زیاد بکە',
   'profile.stat.xp': 'XP',
   'badges.new': 'نوێ',
-  'profile.showcase': 'نیشانەکان',
-  'profile.showcaseA11y': 'نیشانەکان: {badges}',
   'profile.showcaseChoose': 'نیشانە بۆ پرۆفایلەکەت هەڵبژێرە',
-  'profile.progress': 'پلە و لیگ',
   'profile.rankBest': 'باشترین: {rank}',
   'notifications.pref.progress': 'لیگ و نیشانەکان',
   'notifications.badge.title': 'نیشانەیەکی نوێ',

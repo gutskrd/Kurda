@@ -16,6 +16,7 @@ import './styles/filter.css';
 import './styles/rail.css';
 import './styles/editor.css';
 import './styles/product.css';
+import './styles/profile.css';
 import './styles/alphabet.css';
 // The words after the letters: colours, numbers, days and months.
 import './styles/words.css';

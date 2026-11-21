@@ -1203,15 +1203,13 @@
 .switch-btn.is-active,
 .rank-by-btn.is-active,
 .seg-btn.is-active,
-.mkp-tab.is-active,
 .wordle-layout-option.is-on {
   border-color: var(--primary);
   background: var(--primary);
   color: var(--primary-ink);
 }
 /* what sits inside a chosen one takes its ink: a mark coloured for the page would be lost on it */
-.rank-by-btn.is-active .rank-by-xp,
-.mkp-tab.is-active .mkp-tab-hidden {
+.rank-by-btn.is-active .rank-by-xp {
   border-color: currentColor;
   color: inherit;
 }
@@ -2181,7 +2179,6 @@
   .switch-btn,
   .seg-btn,
   .search-clear,
-  .mkp-tab,
   .fcard-who,
   .friend-id {
     min-height: 44px;
@@ -2251,14 +2248,12 @@
  */
 .fcard-act,
 .seg-btn,
-.mkp-tab,
 .post-plus {
   transition: transform var(--dur) var(--ease-spring);
 }
 .fcard-act:active:not(:disabled),
 .switch-btn:active,
 .seg-btn:active:not(:disabled),
-.mkp-tab:active:not(:disabled),
 .post-plus:active:not(:disabled) {
   transform: scale(var(--press-scale));
   transition-duration: 80ms;
@@ -2280,14 +2275,12 @@
   .fcard-act:active:not(:disabled),
   .switch-btn:active,
   .seg-btn:active:not(:disabled),
-  .mkp-tab:active:not(:disabled),
   .post-plus:active:not(:disabled) {
     transform: none;
   }
   .fcard-act:active:not(:disabled),
   .switch-btn:active:not(.is-active),
-  .seg-btn:active:not(:disabled, .is-active),
-  .mkp-tab:active:not(:disabled, .is-active) {
+  .seg-btn:active:not(:disabled, .is-active) {
     background: var(--surface-3);
   }
   .post-plus:active:not(:disabled) {

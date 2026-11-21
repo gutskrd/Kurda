@@ -10,6 +10,7 @@ import { COVERS } from './game-covers.js';
 import { Drawing, checkSize, prefixFor } from './svg.js';
 import type { HueName } from '../hues.js';
 import type { PlayGame } from '../play.js';
+import { GAME_NAMES } from '../games/names.js';
 
 export { GAME_EMBLEM_SAMPLES, type GamePose };
 
@@ -82,6 +83,17 @@ export const PLAY_GAME_EMBLEM: Readonly<Partial<Record<PlayGame, GameEmblem>>> =
   impostor: 'impostor',
   'who-am-i': 'who-am-i',
 };
+
+/**
+ * The cover for a game known only by its name, as a profile's list of games played gives it (`GAME_NAMES`); null for a
+ * name with no cover, such as a game no longer offered.
+ */
+export function gameEmblemNamed(name: string): GameEmblem | null {
+  const id = (Object.keys(GAME_NAMES) as (keyof typeof GAME_NAMES)[]).find((k) => GAME_NAMES[k] === name);
+  if (!id) return null;
+  if (isGameEmblem(id)) return id;
+  return PLAY_GAME_EMBLEM[id as PlayGame] ?? null;
+}
 
 /** A game's stamp hue; null for a story game, which has none and uses the page's violet. */
 export function playGameHue(game: PlayGame): HueName | null {

@@ -109,24 +109,10 @@ export function flagUrl(code: string): string {
   return `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 }
 
-/** A poem or story somebody pinned to their profile, shared by your own profile and somebody else's. */
-export function FavoriteRow({ label, title }: { label: string; title: string }): React.JSX.Element {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.favorite}>
-      <Text style={[styles.favoriteLabel, { color: colors.textSecondary }]}>{label}</Text>
-      <Text style={[styles.favoriteTitle, { color: colors.textPrimary }]}>{title}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   premium: { borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
   premiumText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
   gifts: { gap: 2, marginTop: spacing.xs },
   gift: { alignItems: 'center', gap: spacing.xs },
   giftText: { fontSize: typography.sizes.text },
-  favorite: { alignSelf: 'stretch', gap: 2, marginTop: spacing.md },
-  favoriteLabel: { fontSize: typography.sizes.text, textTransform: 'uppercase', letterSpacing: 0.5 },
-  favoriteTitle: { fontSize: typography.sizes.text, fontWeight: typography.weights.medium },
 });

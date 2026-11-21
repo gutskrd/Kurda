@@ -56,8 +56,8 @@ describe('UserProfile (other user, full page)', () => {
     // Country: real flag image + name under the username.
     expect(screen.getByText('Germany')).toBeInTheDocument();
     expect((document.querySelector('.mkp-country .flag') as HTMLImageElement | null)?.src).toContain('flagcdn.com/w40/de.png');
-    expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 5');
-    expect((document.querySelector('.pc-banner .pcard-bg-media') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
+    expect(document.querySelector('.ph-level-n')?.textContent).toBe('5');
+    expect((document.querySelector('.ph-banner .pcard-bg-media') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
     expect(screen.getByText('River Song')).toBeInTheDocument();
     // No self-only Edit Profile button; a friend action instead.
     expect(screen.queryByRole('link', { name: /edit profile/i })).not.toBeInTheDocument();
@@ -70,7 +70,7 @@ describe('UserProfile (other user, full page)', () => {
     render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'friends', private: false, bio: null, xp: 410, streak: 3, achievements: 5, online: true });
     expect(await screen.findByRole('heading', { level: 1, name: 'Zana K' })).toBeInTheDocument();
 
-    const card = document.querySelector<HTMLElement>('.pc')!;
+    const card = document.querySelector<HTMLElement>('.ph')!;
     const figure = (label: string) => within(card).getByText(label, { selector: '.mkp-fact-label' }).parentElement?.querySelector('.mkp-fact-value')?.textContent;
     expect(figure('Streak')).toBe('3');
     expect(figure('XP')).toBe('410');
@@ -96,7 +96,7 @@ describe('UserProfile (other user, full page)', () => {
   it('keeps what can be done about them in the corner menu: share, and report and block apart', async () => {
     render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'none', private: false });
     const more = await screen.findByRole('button', { name: 'More about Zana K' });
-    expect(document.querySelector('.pc-corner')).toContainElement(more);
+    expect(document.querySelector('.ph-corner')).toContainElement(more);
     await userEvent.click(more);
     expect(screen.getAllByRole('menuitem').map((item) => item.textContent?.trim())).toEqual(['Share profile', 'Report', 'Block']);
     // None of it is among the buttons under their words.

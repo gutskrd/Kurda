@@ -29,6 +29,9 @@ const meUser = {
 /** The figure under one of the profile's numbers, found by the word for it. */
 const fact = (label: string): string | null | undefined => screen.getByText(label, { selector: '.mkp-fact-label' }).parentElement?.querySelector('.mkp-fact-value')?.textContent;
 
+/** Opens what only you see, from its row above the actions. */
+const openYours = (): Promise<void> => userEvent.click(screen.getByRole('button', { name: /Your progress/ }));
+
 describe('Profile view (full, read-only)', () => {
   it('renders identity, stats and an Edit Profile link — no edit controls', async () => {
     vi.stubGlobal(
@@ -44,9 +47,10 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
-    expect(document.querySelector('.pc-handle')?.textContent).toBe('@ada');
+    expect(document.querySelector('.ph-handle')?.textContent).toBe('@ada');
     expect(screen.getByText('Learning Kurdish.', { selector: 'p.mkp-bio' })).toBeInTheDocument();
     expect(fact('XP')).toBe('3,200');
+    await openYours();
     expect(fact('Zêr')).toBe('450');
     expect(fact('Friends')).toBe('2');
 
@@ -79,6 +83,7 @@ describe('Profile view (full, read-only)', () => {
     await screen.findByText('Ada Lovelace');
 
     expect(fact(en['profile.stat.streak'])).toBe('0');
+    await openYours();
     expect(fact(en['profile.stat.longestStreak'])).toBe('12');
     expect(fact(en['profile.stat.daysLearned'])).toBe('41');
     expect(fact(en['profile.stat.freezes'])).toBe('1');
@@ -108,8 +113,8 @@ describe('Profile view (full, read-only)', () => {
     expect(await within(sheet).findByRole('heading', { name: '5-day streak' })).toBeInTheDocument();
   });
 
-  // The numbers sit in the card with your name, ahead of the activity, in one column on any screen.
-  it('keeps the numbers with the name, ahead of the activity, in one column', async () => {
+  // The numbers sit beside your face at the head of the page, ahead of the activity, in one column on any screen.
+  it('keeps the numbers beside your face, ahead of the activity, in one column', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(
@@ -124,8 +129,8 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
 
-    const card = document.querySelector<HTMLElement>('.pc')!;
-    const strip = card.querySelector<HTMLElement>('.mkp-facts')!;
+    const card = document.querySelector<HTMLElement>('.ph')!;
+    const strip = card.querySelector<HTMLElement>('.ph-stats .mkp-facts')!;
     expect(within(strip).getAllByRole('listitem').map((li) => li.querySelector('.mkp-fact-label')?.textContent)).toEqual(['Streak', 'XP', 'Friends', 'Badges']);
     // A number with a page of its own is the way into it; the others are only numbers.
     expect(within(strip).getByRole('link', { name: /Friends/ })).toHaveAttribute('href', '/app/friends');
@@ -138,8 +143,8 @@ describe('Profile view (full, read-only)', () => {
     expect(document.querySelector('aside')).toBeNull();
     const tabs = await screen.findByRole('tablist');
     expect(card.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const sections = [...document.querySelectorAll('.mkp-sections > *')];
-    expect(sections[sections.length - 1]).toContainElement(tabs);
+    const parts = [...document.querySelectorAll('.mkp-wrap > *')];
+    expect(parts[parts.length - 1]).toContainElement(tabs);
   });
 
   it('says which part only you are shown, and does not say you are online on your own profile', async () => {
@@ -150,8 +155,11 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
 
-    const yours = screen.getByRole('heading', { level: 2, name: 'Your progress' }).closest('section')!;
-    expect(within(yours).getByText('Only you can see this')).toBeInTheDocument();
+    // One quiet row says it is yours alone, and opens the whole of it.
+    const row = screen.getByRole('button', { name: /Your progress/ });
+    expect(within(row).getByText('Only you can see this')).toBeInTheDocument();
+    await userEvent.click(row);
+    const yours = screen.getByRole('dialog', { name: 'Your progress' });
     expect(within(yours).getByRole('link', { name: /Zêr/ })).toHaveAttribute('href', '/app/shop');
     expect(screen.queryByText('Online')).toBeNull();
   });
@@ -205,14 +213,15 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     await screen.findByText('Ada Lovelace');
-    const bg = document.querySelector('.pc-banner .pcard-bg-media') as HTMLImageElement | null;
+    const bg = document.querySelector('.ph-banner .pcard-bg-media') as HTMLImageElement | null;
     expect(bg?.src).toContain('/cosmetics/backgrounds/b.webp');
-    const avatar = document.querySelector('img.pc-face-img') as HTMLImageElement | null;
+    const avatar = document.querySelector('img.ph-face-img') as HTMLImageElement | null;
     expect(avatar?.src).toBe('https://cdn.test/a.png');
     expect(screen.getByText('Hevalo+')).toBeInTheDocument();
     expect(screen.getByText('River Song')).toBeInTheDocument();
-    // The level badge on the card says 3.
-    expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 3');
+    // The level stands by the name as a number in its ring, and says what is left to the next one.
+    expect(document.querySelector('.ph-level-n')?.textContent).toBe('3');
+    expect(screen.getByRole('img', { name: /^Level 3, .* XP to level 4$/ })).toBeInTheDocument();
   });
 
   it('makes your name the page’s heading, with Edit and Share under your words and everything else that is yours behind the menu in the banner’s corner', async () => {
@@ -230,7 +239,7 @@ describe('Profile view (full, read-only)', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Ada Lovelace' })).toBeInTheDocument();
     // The two things done to the page itself, and nothing else, in the row of actions.
-    const actions = document.querySelector<HTMLElement>('.pc-aside .pc-acts')!;
+    const actions = document.querySelector<HTMLElement>('.ph-actions .pc-acts')!;
     expect(within(actions).getByRole('link', { name: /edit profile/i })).toHaveAttribute('href', '/app/profile/edit');
     expect(within(actions).getByRole('button', { name: /share profile/i })).toBeInTheDocument();
     expect(within(actions).getAllByRole('button')).toHaveLength(1);
@@ -238,7 +247,7 @@ describe('Profile view (full, read-only)', () => {
     // The button says what it holds, in the items’ own words, rather than “Menu”.
     const menu = screen.getByRole('button', { name: 'Shop, Saved, Friends, Badges, Rankings, Settings' });
     // And it is where the menu of a profile is looked for: the far corner of the banner.
-    expect(document.querySelector('.pc-corner')).toContainElement(menu);
+    expect(document.querySelector('.ph-corner')).toContainElement(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'true');
@@ -290,10 +299,10 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
 
-    const horizon = document.querySelector('.pc-banner .pc-horizon');
+    const horizon = document.querySelector('.ph-banner .pc-horizon');
     expect(horizon?.querySelector('svg')).not.toBeNull();
     // It is decoration: the page is about the person, not their weather.
     expect(horizon).toHaveAttribute('aria-hidden', 'true');
-    expect(document.querySelector('.pc-banner .pcard-bg-media')).toBeNull();
+    expect(document.querySelector('.ph-banner .pcard-bg-media')).toBeNull();
   });
 });

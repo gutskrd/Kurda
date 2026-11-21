@@ -39,7 +39,6 @@ export const REACH_CONTROLS = [
   '.yours-link',
   '.letter-sheet-report',
   '.cmp-kind-option',
-  '.mkp-tab',
   '.mkp-more',
   '.mkp-bio-add',
   '.msg-menu-btn',
@@ -127,12 +126,20 @@ export const LARGE_ENOUGH = [
   '.daily-row',
   '.daily-back',
   '.mkp-fact--link',
+  // A full profile's highlights, its icon tabs and its grid's tiles, and the line of who they know (styles/profile.css):
+  // each at least 48px tall and wider still.
+  '.hl',
+  '.pg-tab',
+  '.pg-tile',
+  '.mkp-friends-line',
+  // Your progress, a row across the column at least 52px tall.
+  '.mkp-yours-row',
 ] as const;
 
 /** Sideways-scrolling rows of controls, padded above and below for their reach. */
 export const SCROLLERS = [
   '.note-filters',
-  '.mkp-tabs',
+  '.hl-row',
   '.story-shelf-row',
   '.league-ladder',
   '.imp-cat-strip',

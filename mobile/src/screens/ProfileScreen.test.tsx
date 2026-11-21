@@ -89,11 +89,10 @@ describe('your profile', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('EditProfile');
   });
 
-  it('keeps the numbers only you see in a card that says so, Zêr leading to the shop', async () => {
+  it('keeps the numbers only you see behind a row that says so, Zêr leading to the shop', async () => {
     open();
-    expect(await screen.findByRole('heading', { name: 'Your progress' })).toBeTruthy();
-    expect(screen.getByText('Only you can see this')).toBeTruthy();
-    expect(screen.getByLabelText('14 Longest streak')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Your progress, Only you can see this' }));
+    expect(await screen.findByLabelText('14 Longest streak')).toBeTruthy();
     expect(screen.getByLabelText('31 Days learned')).toBeTruthy();
     expect(screen.getByLabelText('1 Streak freezes')).toBeTruthy();
     expect(screen.getByText(/Every 5 lessons or practice sessions you finish earn a streak freeze/)).toBeTruthy();
@@ -113,7 +112,7 @@ describe('your profile', () => {
     expect(screen.getByLabelText('Longest streak: 14')).toBeTruthy();
   });
 
-  it('keeps editing and sharing side by side under your words, ahead of the numbers, with the way to more friends beside them', async () => {
+  it('keeps editing and sharing side by side under your words, the figures beside your face, with the way to more friends beside them', async () => {
     open();
     const edit = await screen.findByRole('button', { name: 'Edit profile' });
     const share = screen.getByRole('button', { name: 'Share profile' });
@@ -123,9 +122,9 @@ describe('your profile', () => {
     expect(share.parentElement).toBe(add.parentElement);
     expect(edit.compareDocumentPosition(share) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(share.compareDocumentPosition(add) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // Actions come before progress.
+    // The figures stand beside the face, above the name and the actions.
     const friends = await screen.findByRole('button', { name: /Friends$/ });
-    expect(edit.compareDocumentPosition(friends) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(friends.compareDocumentPosition(edit) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
     fireEvent.click(add);
     expect(navigation.navigate).toHaveBeenCalledWith('Friends');

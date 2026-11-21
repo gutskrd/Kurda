@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Image, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, ScrollView, Share, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
@@ -18,20 +18,19 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { showActions } from '../theme/actionSheet';
 import { SITE_ORIGIN } from '../feed/api';
-import { Horizon } from '../profile/Horizon';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
 import { knownTier, leagueName } from '../leagues/format';
-import { ProfileTree } from '../tree/ProfileTree';
-import { ProgressShowcase } from '../profile/ProgressShowcase';
-import { Framed } from '../ranks/art';
+import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
-import { FavoriteRow, flagUrl } from '../profile/cosmetic-parts';
+import { countryName, fireLevel, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { flagUrl } from '../profile/cosmetic-parts';
 import { Avatar } from '../profile/Avatar';
-import { ProfileActivity, ProfileActivitySkeleton } from '../profile/ProfileActivity';
+import { ActivityGrid, ActivityTabs, ProfileActivitySkeleton, nearEnd, useProfileActivity } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends } from '../profile/ProfileFriends';
-import { LevelBar, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
+import { ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
+import { FACE, FRAMED, ProfileHead } from '../profile/ProfileHead';
+import { ProfileHighlights } from '../profile/ProfileHighlights';
 import type { LevelInfo } from '../profile/types';
 import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
@@ -43,6 +42,7 @@ import { useAnnouncer } from '../stories/ui';
 import { useDirection } from '../reports/direction';
 import { TicketSlip } from './FriendTicket';
 import { usePageWidth } from '../theme/pageWidth';
+import { Icon } from '../theme/Icon';
 
 interface Profile {
   userId: string;
@@ -82,11 +82,6 @@ interface Profile {
   favoritePoem?: FavoriteRef | null;
   favoriteStory?: FavoriteRef | null;
 }
-
-/** How tall the band of sky behind their face is. */
-const BANNER = 104;
-/** How big their face is, and so how far it stands over the band's lower edge. */
-const FACE = 96;
 
 /**
  * Somebody else's profile: who they are first (their sky and face, the name they chose, where they are from, their
@@ -247,6 +242,12 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   // Nothing to end, report or block about yourself.
   const menu = profile && profile.friendStatus !== 'self' ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} testID="profile-more" /> : null;
 
+  // What they posted and played, for a profile you may see; the tabs stay under the top bar while the grid scrolls.
+  const activity = useProfileActivity({ userId: profile && !profile.private ? profile.userId : null, sections: profile?.sections });
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>): void => {
+    if (nearEnd(e)) activity.more();
+  };
+
   if (notFound) {
     return (
       <GradientBackground>
@@ -261,130 +262,126 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     <GradientBackground>
       <View style={styles.screen}>
         <Header onExit={onExit} right={menu} />
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <AsyncBoundary
-          loading={!profile}
-          error={!profile ? error : null}
-          onRetry={load}
-          skeleton={
-            <>
-              <ProfileCardSkeleton />
-              <ProfileActivitySkeleton />
-            </>
-          }
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          // Runs to the screen's edges, so the banner, the tabs and the grid can; the words keep the page's gutter.
+          showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={64}
+          stickyHeaderIndices={[1]}
         >
-          {() => {
-            if (!profile) return null;
-            // A friend's button would only say so: ending it is in the menu, and what you do with a friend is write and
-            // play.
-            const shown = status ?? profile.friendStatus;
-            const labelKey = shown === 'friends' ? null : friendActionLabel(shown);
-            const cardWidth = windowWidth - layout.gutter * 2;
-            return (
-        <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
-          {/* Their own sky behind their face: the picture the website draws in their banner. */}
-          <Horizon seed={profile.userId} width={cardWidth} height={BANNER} style={styles.banner} />
-          <View style={[styles.face, { borderColor: colors.background, backgroundColor: colors.background }]}>
-          <Framed
-            sku={profile.frameSku}
-            url={profile.frameUrl}
-            size={Math.round(96 / SEASON_FRAME_INNER)}
-            label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}
-          >
-            <Avatar name={profile.displayName ?? profile.username} size={FACE} photoUrl={profile.avatarUrl} />
-          </Framed>
+          <View>
+            <AsyncBoundary loading={!profile} error={!profile ? error : null} onRetry={load} skeleton={<ProfileHeadSkeleton width={windowWidth} />}>
+              {() => {
+                if (!profile) return null;
+                // A friend's button would only say so: ending it is in the menu, and what you do with a friend is write and play.
+                const shown = status ?? profile.friendStatus;
+                const labelKey = shown === 'friends' ? null : friendActionLabel(shown);
+                const shownName = profile.displayName ?? profile.username;
+                const level = profile.level && typeof profile.level.progress === 'number' && typeof profile.level.nextLevelXp === 'number' ? profile.level : null;
+                return (
+                  <>
+                    <ProfileHead
+                      seed={profile.userId}
+                      width={windowWidth}
+                      face={
+                        <Framed sku={profile.frameSku} url={profile.frameUrl} size={FRAMED} label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
+                          <Avatar name={shownName} size={FACE} photoUrl={profile.avatarUrl} />
+                        </Framed>
+                      }
+                      framed={!!frameTierOf(profile.frameSku) || !!(profile.frameSku && profile.frameUrl)}
+                      // The figures as on their own profile and the website, in the reader's own digits.
+                      stats={profile.private ? undefined : <ProfileFacts facts={facts(profile)} head />}
+                      name={shownName}
+                      level={profile.private ? null : level}
+                      handle={`@${profile.username}`}
+                      actions={
+                        profile.friendStatus !== 'self' ? (
+                          <View style={[styles.actions, { flexDirection: dir.row }]}>
+                            {shown === 'friends' ? (
+                              <>
+                                <View style={styles.action}>
+                                  <ClayButton
+                                    label={t('profile.message')}
+                                    icon="send"
+                                    tone="primary"
+                                    size="large"
+                                    onPress={() => require('message') && navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
+                                  />
+                                </View>
+                                {/* A challenge is any game, through the invite sheet. */}
+                                <View style={styles.action}>
+                                  <PlayWithButton friendId={profile.userId} name={shownName} />
+                                </View>
+                              </>
+                            ) : null}
+                            {labelKey ? (
+                              // A request is a ticket handed over: it slips away from the button, and home again when taken back.
+                              <View style={styles.action}>
+                                <TicketSlip sent={shown === 'pending_out'}>
+                                  <ClayButton
+                                    label={t(labelKey)}
+                                    icon={shown === 'pending_out' ? 'ticket' : shown === 'none' ? 'user-plus' : undefined}
+                                    // An undo is pressable but not an invitation, so it stays neutral.
+                                    tone={isActionable(shown) && !isUndo(shown) ? 'primary' : 'neutral'}
+                                    size="large"
+                                    disabled={!isActionable(shown)}
+                                    onPress={() => require('friends') && act(shown)}
+                                  />
+                                </TicketSlip>
+                              </View>
+                            ) : null}
+                          </View>
+                        ) : null
+                      }
+                    >
+                      {!profile.private && profile.country ? (
+                        <View style={[styles.country, { flexDirection: dir.row }]}>
+                          <Image source={{ uri: flagUrl(profile.country) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
+                          <Text style={[styles.countryName, { color: colors.textSecondary }]}>{countryName(profile.country, locale) ?? profile.country}</Text>
+                        </View>
+                      ) : null}
+                      {/* Their own words: the one part of a profile that is not a number. */}
+                      {!profile.private && profile.bio ? <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{profile.bio}</Text> : null}
+                      {profile.private ? (
+                        <View style={[styles.private, { flexDirection: dir.row }]}>
+                          <Icon name="lock" size={15} tone="secondary" />
+                          <Text style={[styles.dim, dir.text, { color: colors.textSecondary }]}>{t('profile.private')}</Text>
+                        </View>
+                      ) : null}
+                      {profile.private ? null : <ProfileFriends userId={profile.userId} />}
+                    </ProfileHead>
+
+                    {profile.private ? null : (
+                      <ProfileHighlights
+                        tree={profile.tree}
+                        badges={profile.badges ?? []}
+                        league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
+                        favPoem={profile.favoritePoem}
+                        favStory={profile.favoriteStory}
+                      />
+                    )}
+
+                    {/* The same report sheet as everywhere, opened from the top menu. */}
+                    <ReportSheet
+                      visible={reporting}
+                      target={{ type: 'user', userId: profile.userId }}
+                      name={shownName}
+                      blockable={{ userId: profile.userId, name: shownName }}
+                      onClose={() => setReporting(false)}
+                      // Blocked from the report: the profile is gone to you now.
+                      onBlocked={() => {
+                        setReporting(false);
+                        onExit();
+                      }}
+                    />
+                  </>
+                );
+              }}
+            </AsyncBoundary>
           </View>
-          {/* The name they chose leads and the handle follows, as on your own profile and the website. */}
-          <Text style={[styles.username, { color: colors.textPrimary }]} accessibilityRole="header">
-            {profile.displayName ?? profile.username}
-          </Text>
-          <Text style={[styles.display, { color: colors.textSecondary }]}>{`@${profile.username}`}</Text>
-          {!profile.private && profile.country ? (
-            <View style={[styles.country, { flexDirection: dir.row }]}>
-              <Image source={{ uri: flagUrl(profile.country) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
-              <Text style={[styles.countryName, { color: colors.textSecondary }]}>{countryName(profile.country, locale) ?? profile.country}</Text>
-            </View>
-          ) : null}
-          {/* Their own words: the one part of a profile that is not a number. */}
-          {!profile.private && profile.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{profile.bio}</Text> : null}
-          {profile.private ? <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text> : null}
-
-          {/* What you can do sits with who they are, above the numbers, within thumb reach without scrolling. */}
-          {profile.friendStatus !== 'self' ? (
-            <View style={styles.actions}>
-              {shown === 'friends' ? (
-                <>
-                  <ClayButton
-                    label={t('profile.message')}
-                    tone="primary"
-                    size="large"
-                    onPress={() => require('message') && navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
-                  />
-                  {/* A challenge is any game, through the invite sheet. */}
-                  <PlayWithButton friendId={profile.userId} name={profile.displayName ?? profile.username} />
-                </>
-              ) : null}
-              {labelKey ? (
-                // A request is a ticket handed over: it slips away from the button, and home again when taken back.
-                <TicketSlip sent={shown === 'pending_out'}>
-                  <ClayButton
-                    label={t(labelKey)}
-                    icon={shown === 'pending_out' ? 'ticket' : shown === 'none' ? 'user-plus' : undefined}
-                    // An undo is pressable but not an invitation, so it stays neutral.
-                    tone={isActionable(shown) && !isUndo(shown) ? 'primary' : 'neutral'}
-                    size="large"
-                    disabled={!isActionable(shown)}
-                    onPress={() => require('friends') && act(shown)}
-                  />
-                </TicketSlip>
-              ) : null}
-            </View>
-          ) : null}
-
-          {profile.private ? null : (
-            <>
-              {/* The level and the figures as on their own profile and the website, in the reader's own digits. */}
-              <View style={styles.stats}>
-                {profile.level ? <LevelBar level={profile.level} /> : null}
-                <ProfileFacts facts={facts(profile)} />
-              </View>
-
-              <ProfileTree tree={profile.tree} />
-              <ProgressShowcase
-                own={false}
-                league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
-                badges={profile.badges ?? []}
-              />
-
-              {/* Behind the same privacy check as the stats: a pinned poem is for people who can see the profile. */}
-              {profile.favoritePoem ? (
-                <FavoriteRow label={t('profile.favoritePoem')} title={profile.favoritePoem.title} />
-              ) : null}
-              {profile.favoriteStory ? (
-                <FavoriteRow label={t('profile.favoriteStory')} title={profile.favoriteStory.title} />
-              ) : null}
-            </>
-          )}
-
-          {/* The same report sheet as everywhere, opened from the top menu. */}
-          <ReportSheet
-            visible={reporting}
-            target={{ type: 'user', userId: profile.userId }}
-            name={profile.displayName ?? profile.username}
-            blockable={{ userId: profile.userId, name: profile.displayName ?? profile.username }}
-            onClose={() => setReporting(false)}
-            // Blocked from the report: the profile is gone to you now.
-            onBlocked={() => {
-              setReporting(false);
-              onExit();
-            }}
-          />
-        </View>
-            );
-          }}
-        </AsyncBoundary>
-        {profile && !profile.private ? <ProfileFriends userId={profile.userId} /> : null}
-        {profile && !profile.private ? <ProfileActivity userId={profile.userId} sections={profile.sections} /> : null}
+          <View style={styles.bleed}>{profile ? <ActivityTabs activity={activity} width={windowWidth} /> : null}</View>
+          <View style={styles.bleed}>{profile ? <ActivityGrid activity={activity} width={windowWidth} /> : <ProfileActivitySkeleton width={windowWidth} />}</View>
         </ScrollView>
       </View>
       {region}
@@ -392,29 +389,32 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 }
 
-/** The card while it loads, in its own shape, so the card that arrives is the one that was standing there. */
-function ProfileCardSkeleton(): React.JSX.Element {
+/** The head while it loads, in its own shape, so what arrives is what was standing there. */
+function ProfileHeadSkeleton({ width }: { width: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   return (
-    <View style={[styles.card, { backgroundColor: colors.controlTrack }]} accessibilityLabel={t('common.loading')}>
-      <View style={styles.banner} />
-      <View style={[styles.face, { borderColor: colors.background, backgroundColor: colors.background }]}>
-        <Skeleton width={FACE} height={FACE} radius={radii.pill} raised />
+    <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
+      <View style={[styles.skeletonBanner, { width, backgroundColor: colors.controlTrack }]} />
+      <View style={[styles.skeletonTop, { flexDirection: dir.row }]}>
+        <View style={[styles.skeletonFace, { borderColor: colors.background, backgroundColor: colors.background }]}>
+          <Skeleton width={FACE} height={FACE} radius={radii.pill} />
+        </View>
+        <View style={[styles.skeletonStats, { flexDirection: dir.row }]}>
+          {[0, 1, 2, 3].map((i) => (
+            <View key={i} style={styles.statSkeleton}>
+              <SkeletonText size={typography.sizes.title} width={28} align="center" />
+              <SkeletonText size={typography.sizes.text} width={44} align="center" />
+            </View>
+          ))}
+        </View>
       </View>
-      <SkeletonText size={typography.sizes.title} width={120} align="center" raised />
-      <SkeletonText size={typography.sizes.text} width={72} align="center" raised />
-      <View style={[styles.stats, styles.statsSkeleton]}>
-        {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={styles.statSkeleton}>
-            <SkeletonText size={typography.sizes.text} width={36} align="center" raised />
-            <SkeletonText size={typography.sizes.text} width={48} align="center" raised />
-          </View>
-        ))}
-      </View>
-      <View style={styles.actions}>
-        <Skeleton height={LARGE_BUTTON} radius={radii.pill} raised />
-        <Skeleton height={LARGE_BUTTON} radius={radii.pill} raised />
+      <SkeletonText size={typography.sizes.title} width={140} />
+      <SkeletonText size={typography.sizes.text} width={80} />
+      <View style={[styles.actions, { flexDirection: dir.row }]}>
+        <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.action} />
+        <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.action} />
       </View>
     </View>
   );
@@ -450,27 +450,27 @@ function useFacts(): (profile: Profile) => ProfileFact[] {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: layout.gutter },
-  scroll: { paddingBottom: spacing.xxl },
-
+  screen: { flex: 1 },
+  scroll: { paddingHorizontal: layout.gutter, paddingBottom: spacing.xxl },
+  // The tabs and the grid run to the screen's edges.
+  bleed: { marginHorizontal: -layout.gutter },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  // The band of sky runs to the card's edges, so the card clips it to its corners.
-  card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, overflow: 'hidden' },
-  banner: { height: BANNER, alignSelf: 'stretch', marginHorizontal: -spacing.xl },
-  // Their face stands half over the band's lower edge, ringed in the page's colour.
-  face: { marginTop: -(FACE / 2 + 4 + spacing.sm), borderRadius: radii.pill, borderWidth: 4 },
-  username: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },
-  display: { fontSize: typography.sizes.text },
   // The flag and the name of where they are from, as your own profile draws them.
-  country: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  country: { alignItems: 'center', gap: spacing.xs },
   flag: { width: 22, height: 16 },
   countryName: { fontSize: typography.sizes.text },
-  bio: { fontSize: typography.sizes.text, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
-  stats: { alignSelf: 'stretch', gap: spacing.md, marginTop: spacing.md },
-  statsSkeleton: { flexDirection: 'row', justifyContent: 'space-around' },
+  bio: { fontSize: typography.sizes.text, lineHeight: 21 },
+  private: { alignItems: 'center', gap: spacing.xs },
+  dim: { fontSize: typography.sizes.text, textAlign: 'center' },
+  // Two buttons share the row evenly, as a social app's do.
+  actions: { gap: spacing.sm },
+  action: { flex: 1, minWidth: 0 },
+  skeleton: { gap: spacing.sm + 2, paddingBottom: spacing.md },
+  skeletonBanner: { height: 128, marginHorizontal: -layout.gutter },
+  skeletonTop: { alignItems: 'flex-start', gap: spacing.sm, marginTop: -(FACE / 2 + 4) },
+  skeletonFace: { borderRadius: radii.pill, borderWidth: 4 },
+  skeletonStats: { flex: 1, justifyContent: 'space-around', marginTop: FACE / 2 + 4 + spacing.xs },
   statSkeleton: { alignItems: 'center', gap: 2 },
-  actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
-  dim: { textAlign: 'center', marginTop: spacing.md },
 });
 
 /** Where the two of you stand once the server has answered: a request to someone who had asked you makes you friends. */

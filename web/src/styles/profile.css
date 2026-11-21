@@ -1,0 +1,633 @@
+/*
+ * A full profile laid out as a social app's (profile/ProfileHead.tsx, ProfileHighlights.tsx, ProfileActivity.tsx): the
+ * banner with the face and the figures beside it, the name with its level ring, the actions, a row of round
+ * highlights, then icon tabs that stay under the top bar over a grid of tiles. It sits on the page, not in a card.
+ */
+
+/* ---- the head ---------------------------------------------------------- */
+.ph {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding-bottom: 16px;
+  /* the ring round the face and the presence dot are the page's own colour, so they read as cut out of it */
+  --ph-ring: var(--app-bg);
+}
+.ph-banner {
+  position: relative;
+  height: 128px;
+  margin-inline: -16px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.ph-banner .pcard-bg-media {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+@media (min-width: 641px) {
+  .ph-banner {
+    margin-inline: 0;
+    border-radius: var(--r-xl);
+  }
+}
+.ph-corner {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 0;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+}
+@media (min-width: 641px) {
+  .ph-corner {
+    inset-inline-end: 10px;
+  }
+}
+/* the corner's buttons are the card's: solid discs over any sky (styles/product.css) */
+.ph-corner .user-actions-btn,
+.ph-corner .profile-menu-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.ph-corner .user-menu {
+  top: calc(100% + 8px);
+  bottom: auto;
+  inset-inline: auto 0;
+  z-index: 30;
+  text-align: start;
+}
+
+/* the face overlapping the banner, the figures beside it */
+.ph-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: end;
+  gap: 16px;
+  margin-top: -48px;
+}
+.ph-face {
+  position: relative;
+  z-index: 2;
+  width: 96px;
+  height: 96px;
+  border: 4px solid var(--ph-ring);
+  border-radius: 50%;
+  background: var(--ph-ring);
+  line-height: 0;
+  box-sizing: content-box;
+}
+.ph-face-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+.ph-face-glyph {
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+}
+.ph-face .cosmetic-icon-overlay {
+  width: 40px;
+  height: 40px;
+  top: -8px;
+  inset-inline-end: -12px;
+}
+.ph-presence {
+  position: absolute;
+  inset-inline-end: 4px;
+  bottom: 4px;
+  z-index: 3;
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--ph-ring);
+  border-radius: 50%;
+  background: var(--online, var(--success));
+}
+/* the figures: number over word, in a row like a social app's counts, with no rules between them */
+.ph-stats .mkp-facts {
+  margin: 0;
+  padding: 0 0 6px;
+  border-top: 0;
+}
+.ph-stats .mkp-facts > li + li {
+  border-inline-start: 0;
+}
+.ph-stats .mkp-fact {
+  margin-inline: 0;
+  padding-inline: 2px;
+}
+.ph-stats .mkp-fact-value {
+  font-size: calc(var(--text-title) * var(--value-fit, 1));
+}
+.ph-stats .mkp-fact-label {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* the name with its level ring, and the handle */
+.ph-names {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.ph-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+}
+.ph-name {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.ph-handle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  color: var(--ink-3);
+}
+.ph-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--online, var(--success));
+}
+.ph-online::before {
+  content: '';
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--ink-3);
+}
+/* The level as a games platform shows it: the number in a ring that fills toward the next one. */
+.ph-level {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+}
+.ph-level .level-ring-track {
+  stroke: var(--separator);
+}
+.ph-level .level-ring-fill {
+  stroke: var(--ink);
+  stroke-linecap: butt;
+  filter: none;
+}
+.ph-level-n {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.ph .mkp-about {
+  margin: 0;
+}
+.ph .mkp-bio {
+  color: var(--ink);
+}
+.ph .gifted-note {
+  margin: 0;
+}
+
+/* the actions, shared evenly as a social app's two grey buttons are */
+.ph-actions {
+  margin-top: 4px;
+}
+.ph-actions .pc-acts {
+  flex-wrap: nowrap;
+}
+.ph-actions .pc-acts > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* what only you see: one quiet row above the actions, as a social app shows your dashboard, opening the whole of it */
+.mkp-yours-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.mkp-yours-row:hover {
+  background: var(--surface-3);
+}
+.mkp-yours-row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.mkp-yours-row-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.mkp-yours-row .mkp-yours-title {
+  font-weight: 600;
+}
+.mkp-yours-go {
+  flex: none;
+  color: var(--ink-3);
+}
+[dir='rtl'] .mkp-yours-go {
+  transform: scaleX(-1);
+}
+.mkp-yours-sheet {
+  display: grid;
+  gap: 14px;
+}
+
+/* who they know, in one line that opens the list */
+.mkp-friends-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.mkp-friends-faces {
+  display: flex;
+  flex: none;
+}
+.mkp-friends-faces > * {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--app-bg);
+  border-radius: 50%;
+}
+.mkp-friends-faces > * + * {
+  margin-inline-start: -10px;
+}
+.mkp-friends-said {
+  display: grid;
+  min-width: 0;
+}
+.mkp-friends-said .mkp-friends-count {
+  font-weight: 600;
+  color: var(--ink);
+}
+.mkp-friends-names {
+  overflow: hidden;
+  color: var(--ink-3);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ---- the highlights: round tiles under the actions --------------------- */
+.hl-row {
+  display: flex;
+  gap: 14px;
+  /* room above and below for the rings' reach, taken back in the margin so the row sits where it would */
+  margin: -8px -16px 6px;
+  padding: 8px 16px;
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+.hl-row::-webkit-scrollbar {
+  display: none;
+}
+.hl {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  width: 76px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.hl:hover {
+  text-decoration: none;
+}
+/* a ring with a hairline of air inside it, round the art */
+.hl-ring {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  padding: 3px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  transition: transform var(--dur) var(--ease-spring);
+}
+.hl:active .hl-ring {
+  transform: scale(var(--press-scale));
+}
+.hl-art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.hl-art svg {
+  display: block;
+}
+.hl-ring.is-add .hl-art {
+  background: none;
+}
+.hl-label {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink-2);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.hl:focus-visible {
+  outline: none;
+}
+.hl:focus-visible .hl-ring {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* what a highlight opens: its art large, its name and what it means */
+.hl-sheet {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 8px 4px 4px;
+  text-align: center;
+}
+.hl-sheet-art {
+  line-height: 0;
+}
+.hl-sheet-title {
+  margin: 0;
+  font-size: var(--text-title);
+}
+.hl-sheet-text {
+  margin: 0;
+  color: var(--ink-2);
+}
+.hl-sheet-action {
+  margin-top: 6px;
+}
+
+/* ---- the grid: icon tabs over tiles ------------------------------------ */
+.pg {
+  margin-inline: -16px;
+}
+@media (min-width: 641px) {
+  .pg {
+    margin-inline: 0;
+  }
+}
+/* the tabs stay under the top bar while the grid scrolls, on the page's own colour */
+.pg-tabs {
+  position: sticky;
+  top: var(--nav-bottom);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  border-bottom: 1px solid var(--separator);
+  background: var(--app-bg);
+}
+.pg-tab {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+.pg-tab:hover,
+.pg-tab.is-active {
+  color: var(--ink);
+}
+.pg-tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.pg-tab-lock {
+  position: absolute;
+  top: 9px;
+  inset-inline-end: calc(50% - 22px);
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+/* the line under the open tab, sliding to the one chosen */
+.pg-ink {
+  position: absolute;
+  bottom: -1px;
+  inset-inline-start: 0;
+  width: calc(100% / var(--n));
+  height: 2px;
+  background: var(--ink);
+  transform: translateX(calc(100% * var(--at)));
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+[dir='rtl'] .pg-ink {
+  transform: translateX(calc(-100% * var(--at)));
+}
+.pg-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.pg-grid > li {
+  min-width: 0;
+}
+/* a tile is a little taller than wide, as a social app's grid now is */
+.pg-tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--surface-2);
+  color: var(--ink);
+  text-decoration: none;
+}
+.pg-tile:hover {
+  text-decoration: none;
+}
+.pg-tile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.pg-tile-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pg-tile.is-held .pg-tile-img {
+  opacity: 0.55;
+}
+/* a post of words: its title and opening lines, set on the tile itself and clipped to a box clear of its mark and its count */
+.pg-tile-words {
+  position: absolute;
+  inset: 10px 10px 30px;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  overflow: hidden;
+}
+/* a game with no cover of its own: its glyph in the middle of the tile */
+.pg-tile-glyph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+}
+.pg-tile-words > :first-child {
+  padding-inline-end: 18px;
+}
+.pg-tile-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-weight: 700;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.pg-tile-excerpt {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ink-2);
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+.pg-tile-mark {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  color: var(--on-art);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+}
+.pg-tile-mark.is-words {
+  color: var(--ink-3);
+  filter: none;
+}
+/* how often it was seen, or a game's result, at the tile's foot over a soft shade */
+.pg-tile-foot {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 18px 8px 6px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.62), transparent);
+  color: var(--on-art);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.pg-tile.is-words .pg-tile-foot {
+  background: none;
+  color: var(--ink-3);
+}
+.pg-tile.is-game .gp-art,
+.pg-tile.is-game .gp-art svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pg-tile.is-game .gp-art {
+  border-radius: 0;
+}
+.pg-tile-foot.is-game {
+  display: grid;
+  gap: 0;
+}
+.pg-tile-game {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.pg-tile-foot time {
+  font-weight: 500;
+  opacity: 0.85;
+}
+/* an empty tab: its icon in a ring, and a line */
+.pg-empty {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 40px 16px 24px;
+  text-align: center;
+}
+.pg-empty-mark {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  color: var(--ink);
+}
+.pg-empty-title {
+  margin: 0;
+  font-size: var(--text-title);
+  font-weight: 700;
+}
+.pg-note {
+  padding: 24px 16px;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pg-ink,
+  .hl-ring {
+    transition: none;
+  }
+}

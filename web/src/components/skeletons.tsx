@@ -685,32 +685,6 @@ export function BadgesSkeleton({ count = 8 }: { count?: number }): React.JSX.Ele
   );
 }
 
-/** A profile's activity as a list (games played, things liked). */
-export function ActivityRowsSkeleton({ count = 4 }: { count?: number }): React.JSX.Element {
-  const t = useT();
-  return (
-    <SkeletonRegion label={t('common.loading')}>
-      <ul className="mkp-activity-list">
-        {times(count, (i) => (
-          <li key={i}>
-            <div className="mkp-activity-row">
-              <Skeleton className="mkp-activity-glyph" />
-              <span className="mkp-activity-meta">
-                <span className="mkp-activity-title">
-                  <Skeleton line w={['54%', '42%', '60%', '36%'][i % 4]} />
-                </span>
-              </span>
-              <span className="mkp-activity-when">
-                <Skeleton line w={36} />
-              </span>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </SkeletonRegion>
-  );
-}
-
 /** Comments under a post. */
 export function CommentsSkeleton({ count = 3 }: { count?: number }): React.JSX.Element {
   const t = useT();
@@ -816,126 +790,71 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
   return (
     <SkeletonRegion label={t(label ?? 'profile.loading')} className="mkp-page">
       <div className="mkp-wrap">
-        <div className="pc pc--wide">
-          <Skeleton className="pc-banner" radius={0} />
-          <div className="pc-body">
-            <div className="pc-id">
-              <span className="pc-face">
-                <Skeleton className="pc-face-img" circle />
-              </span>
-              <div className="pc-names">
-                <div className="pc-name-row">
-                  <span className="pc-name">
-                    <Skeleton line w={150} />
-                  </span>
-                </div>
-                <div className="pc-handle">
-                  <Skeleton line w={84} />
-                </div>
-                <p className="mkp-bio">
-                  <Skeleton line w={own ? 190 : 210} />
-                </p>
-              </div>
-              <div className="pc-aside">
-                <div className="pc-acts">
-                  <ButtonBox size="sm" w={own ? 118 : 106} />
-                  <ButtonBox size="sm" w={own ? 136 : 84} />
-                </div>
-              </div>
-            </div>
-            <div className="pcard-level">
-              <span className="pcard-level-badge">
-                <Skeleton line w={56} />
-              </span>
-              <div className="pcard-level-track" />
-              <span className="pcard-level-next">
-                <Skeleton line w={104} />
-              </span>
-            </div>
-            <ul className="mkp-facts">
-              {times(4, (i) => (
-                <li key={i}>
-                  <span className="mkp-fact">
-                    <span className="mkp-fact-label">
-                      <Skeleton line w={[40, 22, 44, 42][i]} />
+        {/* The head as it will stand: banner, face with its four figures, name and handle, the actions. */}
+        <div className="ph">
+          <Skeleton className="ph-banner" radius={0} />
+          <div className="ph-top">
+            <span className="ph-face">
+              <Skeleton className="ph-face-img" circle />
+            </span>
+            <div className="ph-stats">
+              <ul className="mkp-facts">
+                {times(4, (i) => (
+                  <li key={i}>
+                    <span className="mkp-fact">
+                      <span className="mkp-fact-label">
+                        <Skeleton line w={[40, 22, 44, 42][i]} />
+                      </span>
+                      <span className="mkp-fact-value">
+                        <Skeleton line w={24} />
+                      </span>
                     </span>
-                    <span className="mkp-fact-value">
-                      <Skeleton line w={28} />
-                    </span>
-                  </span>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="ph-names">
+            <span className="ph-name">
+              <Skeleton line w={150} />
+            </span>
+            <span className="ph-handle">
+              <Skeleton line w={84} />
+            </span>
+          </div>
+          <p className="mkp-bio">
+            <Skeleton line w={own ? 190 : 210} />
+          </p>
+          <div className="ph-actions">
+            <div className="pc-acts">
+              <ButtonBox size="sm" w={120} />
+              <ButtonBox size="sm" w={120} />
+            </div>
           </div>
         </div>
-
-        <div className="mkp-sections">
-          {own ? (
-            <>
-              <div className="mkp-showcase-block">
-                <div className="mkp-showcase-label">
-                  <Skeleton line w={56} />
-                </div>
-                <div className="mkp-showcase">
-                  <p className="mkp-bio">
-                    <Skeleton line w="38%" />
-                  </p>
-                </div>
-              </div>
-              <div className="mkp-showcase-block">
-                <div className="mkp-showcase-label">
-                  <Skeleton line w={96} />
-                </div>
-                <div className="mkp-showcase mkp-yours">
-                  <ul className="mkp-facts">
-                    {times(4, (i) => (
-                      <li key={i}>
-                        <span className="mkp-fact">
-                          <span className="mkp-fact-label">
-                            <Skeleton line w={[84, 76, 88, 28][i]} />
-                          </span>
-                          <span className="mkp-fact-value">
-                            <Skeleton line w={24} />
-                          </span>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <p className="field-hint mkp-yours-hint">
-                    <Skeleton line w="86%" />
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="mkp-friends">
-              <div className="friend-heading">
-                <Skeleton line w={72} />
-              </div>
-              <div className="mkp-friends-list">
-                {times(2, (i) => (
-                  <Skeleton key={i} w={i === 0 ? 92 : 80} h={40} radius="var(--r-pill)" />
-                ))}
-              </div>
-            </div>
-          )}
-          <div className="mkp-showcase-block">
-            <div className="mkp-showcase-label">
-              <Skeleton line w={60} />
-            </div>
-            <div className="mkp-showcase mkp-activity">
-              <div className="mkp-tabs">
-                {times(4, (i) => (
-                  <span className="mkp-tab" key={i}>
-                    <Skeleton line w={[44, 40, 36, 52][i]} />
-                  </span>
-                ))}
-              </div>
-              {/* The first tab is their posts, as two cards. */}
-              <div className="feed mkp-activity-feed">
-                <FeedCards count={2} />
-              </div>
-            </div>
+        {/* The highlights, then the tabs over the grid's first tiles. */}
+        <ul className="hl-row">
+          {times(3, (i) => (
+            <li key={i}>
+              <span className="hl">
+                <Skeleton w={68} h={68} circle />
+                <Skeleton line w={48} />
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className="pg">
+          <div className="pg-tabs" style={{ '--n': 5 } as React.CSSProperties}>
+            {times(5, (i) => (
+              <span className="pg-tab" key={i}>
+                <Skeleton w={24} h={24} radius="var(--r-sm)" />
+              </span>
+            ))}
+          </div>
+          <div className="pg-grid">
+            {times(6, (i) => (
+              <span key={i} className="pg-tile skeleton" />
+            ))}
           </div>
         </div>
       </div>

@@ -108,6 +108,7 @@ export {
   GAME_EMBLEM_SAMPLES,
   gameEmblemLayers,
   gameEmblemLoopMs,
+  gameEmblemNamed,
   gameEmblemSvg,
   gameEmblemHue,
   gameEmblemTone,

@@ -15,9 +15,23 @@ function measuringPen(): CanvasRenderingContext2D | OffscreenCanvasRenderingCont
  */
 export function useWordFit<T extends HTMLElement>(
   words: readonly string[],
-  { typeOf, weight, inset }: { typeOf: string; weight: number; inset: number },
+  {
+    typeOf,
+    weight,
+    inset,
+    scale = 1,
+  }: {
+    typeOf: string;
+    weight: number;
+    inset: number;
+    /** how much larger the words are drawn than `typeOf`'s size: the title size is 1.75 times the text size */
+    scale?: number;
+  },
+  /** a row another call already measures, so one element can have its labels and its figures fitted */
+  shared?: React.RefObject<T | null>,
 ): [React.RefObject<T | null>, number] {
-  const row = useRef<T>(null);
+  const own = useRef<T>(null);
+  const row = shared ?? own;
   const [fit, setFit] = useState(1);
   const key = words.join('\n');
   useLayoutEffect(() => {
@@ -28,7 +42,7 @@ export function useWordFit<T extends HTMLElement>(
       const style = getComputedStyle(el.querySelector(typeOf) ?? el);
       pen.font = `${weight} ${style.fontSize} ${style.fontFamily}`;
       const all = key.split('\n');
-      const widest = Math.max(...all.map((w) => pen.measureText(w).width));
+      const widest = Math.max(...all.map((w) => pen.measureText(w).width)) * scale;
       const room = el.clientWidth / Math.max(1, all.length) - inset;
       if (widest > 0 && room > 0) setFit(Math.min(1, room / widest));
     };
@@ -37,6 +51,6 @@ export function useWordFit<T extends HTMLElement>(
     const watch = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
     watch?.observe(el);
     return () => watch?.disconnect();
-  }, [key, typeOf, weight, inset]);
+  }, [key, typeOf, weight, inset, scale, row]);
   return [row, fit];
 }

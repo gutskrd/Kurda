@@ -43,6 +43,7 @@ import {
   GAME_EMBLEMS,
   GAME_EMBLEM_SAMPLES,
   PLAY_GAME_EMBLEM,
+  gameEmblemNamed,
   gameEmblemHue,
   gameEmblemLayers,
   gameEmblemLoopMs,
@@ -53,6 +54,7 @@ import {
 } from './games.js';
 import { isHueName } from '../hues.js';
 import { PLAY_GAMES } from '../play.js';
+import { GAME_NAMES } from '../games/names.js';
 import { LETTERS, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
@@ -2462,5 +2464,18 @@ describe('the word pictures', () => {
     // the apps and the server read the catalogue from the package itself
     expect(SHARED_WORD_PICTURES).toBe(WORD_PICTURES);
     expect(sharedWordPictureSvg).toBe(wordPictureSvg);
+  });
+});
+
+describe('gameEmblemNamed', () => {
+  it('finds a game’s cover from the name a profile’s games list gives it', () => {
+    expect(gameEmblemNamed(GAME_NAMES.peyvok)).toBe('peyvok');
+    expect(gameEmblemNamed(GAME_NAMES['wordle-battle'])).toBe('peyvok');
+    expect(gameEmblemNamed(GAME_NAMES['rhyme-match'])).toBe('rhyme');
+    expect(gameEmblemNamed(GAME_NAMES['who-am-i'])).toBe('who-am-i');
+  });
+
+  it('has none for a name it does not know', () => {
+    expect(gameEmblemNamed('Something else')).toBeNull();
   });
 });
