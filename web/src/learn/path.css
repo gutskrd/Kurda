@@ -106,8 +106,8 @@
   align-items: flex-start;
   gap: var(--space-2);
   min-height: 112px;
-  /* the words on the open sky, the hills below them */
-  padding: var(--space-4) var(--space-2) 48px var(--space-5);
+  /* the words on the open sky across its whole width, the hills and the buttons below them */
+  padding: var(--space-4) var(--space-5) 60px;
   border-radius: var(--r-lg);
   background: var(--surface-solid);
   color: var(--ink);
@@ -150,6 +150,13 @@
   font-weight: 600;
   line-height: 1.15;
   overflow-wrap: anywhere;
+}
+.lp-pin-actions {
+  position: absolute;
+  inset-inline-end: var(--space-3);
+  bottom: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
 }
 .lp-pin-button {
   flex: none;
@@ -737,8 +744,9 @@ button.lp-scard:focus-visible {
 [dir='rtl'] .lp-ring {
   scale: -1 1;
 }
+/* barely there: the lessons waiting in a topic not open yet, without crowding the road */
 .lp-ring.is-faint {
-  opacity: 0.6;
+  opacity: 0.35;
 }
 .lp-ring-edge,
 .lp-ring-piece {

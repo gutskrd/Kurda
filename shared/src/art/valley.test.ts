@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { PATH_LANDMARKS } from '../path-world.js';
 import { BOOK_SPOTS, bookSpotSvg } from './book.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
+import { moonlitKeepingLamps, relight } from './light.js';
 import { seeded } from './svg.js';
 import { KURDISTAN_FLAG, VALLEY, bark, foliage, grownTree, kurdistanFlag, kurdistanSun, limbsReachCrown, orchardTree, poplar, poplarLeaves, roundTree, type TreeShape } from './valley.js';
 
@@ -171,7 +172,8 @@ describe('the school’s flag', () => {
     expect(loop.kind).toBe('colours');
     expect(loop.w / loop.h).toBeCloseTo(KURDISTAN_FLAG.w / KURDISTAN_FLAG.h, 2);
     for (const dark of [false, true]) {
-      const cloth = kurdistanFlag(dark);
+      // By night both are under the road's moonlight (light.ts).
+      const cloth = dark ? relight(kurdistanFlag(dark), moonlitKeepingLamps) : kurdistanFlag(dark);
       expect(pathLandmarkSvg({ landmark: 'school', dark })).toContain(`<g transform="translate(${loop.x} ${loop.y}) scale(${loop.w / KURDISTAN_FLAG.w})">${cloth}</g>`);
       const moving = pathLoopSvg({ kind: 'colours', dark });
       expect(moving).toContain(`viewBox="0 0 ${KURDISTAN_FLAG.w} ${KURDISTAN_FLAG.h}"`);
@@ -185,7 +187,8 @@ describe('the school’s flag', () => {
     expect(loop.kind).toBe('colours');
     expect(loop.w / loop.h).toBeCloseTo(KURDISTAN_FLAG.w / KURDISTAN_FLAG.h, 2);
     for (const dark of [false, true]) {
-      expect(pathLandmarkSvg({ landmark: 'citywall', dark })).toContain(`<g transform="translate(${loop.x} ${loop.y}) scale(${loop.w / KURDISTAN_FLAG.w})">${kurdistanFlag(dark)}</g>`);
+      const cloth = dark ? relight(kurdistanFlag(dark), moonlitKeepingLamps) : kurdistanFlag(dark);
+      expect(pathLandmarkSvg({ landmark: 'citywall', dark })).toContain(`<g transform="translate(${loop.x} ${loop.y}) scale(${loop.w / KURDISTAN_FLAG.w})">${cloth}</g>`);
     }
   });
 

@@ -186,7 +186,8 @@ export function RoundStars({ rounds, earned = false }: { rounds: number; earned?
 const styles = StyleSheet.create({
   // The ring's square, laid over the stop's 72-point button from `pad` out.
   box: { position: 'absolute', left: -pad, top: -pad, width: box, height: box },
-  faint: { opacity: 0.6 },
+  // Barely there: the lessons waiting in a topic not open yet, without crowding the road.
+  faint: { opacity: 0.35 },
   mirrored: { transform: [{ scaleX: -1 }] },
   stars: { position: 'absolute', left: 0, top: 0, width: 72, height: 72 },
   falling: { position: 'absolute' },

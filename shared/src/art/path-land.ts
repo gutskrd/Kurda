@@ -7,6 +7,7 @@
 import type { UnitTone } from '../lesson-path.js';
 import { PATH_GEOMETRY } from '../lesson-path.js';
 import { PATH_CAIRN_GROUNDS, cairnBox, landClear, type PathBox, type PathGround, type TrailStone, type WorldStop } from '../path-world.js';
+import { lamplit, relight, roadLight } from './light.js';
 import { CANVAS, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 import {
   VALLEY,
@@ -84,14 +85,14 @@ const LANDS: Record<PathGround, Land> = {
 export function pathGroundColour(ground: PathGround, dark = false): string {
   const land = LANDS[ground];
   if (!land) throw new RangeError(`art: no ground ${String(ground)}`);
-  return dusk(land.base, dark);
+  return roadLight(dark)(land.base);
 }
 
 /** The shade cast on a land's ground by day or evening; a landmark stands in it as the trees do. */
 export function pathGroundShade(ground: PathGround, dark = false): string {
   const land = LANDS[ground];
   if (!land) throw new RangeError(`art: no ground ${String(ground)}`);
-  return dusk(land.shade, dark);
+  return roadLight(dark)(land.shade);
 }
 
 /** A land's far and near hills and its ground, by day or evening, for a picture of the land seen from afar (a chapter's banner). */
@@ -99,10 +100,10 @@ export function pathGroundView(ground: PathGround, dark = false): { far: string;
   const land = LANDS[ground];
   if (!land) throw new RangeError(`art: no ground ${String(ground)}`);
   return {
-    far: dusk(land.hills.far, dark),
-    near: dusk(land.hills.near, dark),
-    base: dusk(land.base, dark),
-    shade: dusk(land.shade, dark),
+    far: roadLight(dark)(land.hills.far),
+    near: roadLight(dark)(land.hills.near),
+    base: roadLight(dark)(land.base),
+    shade: roadLight(dark)(land.shade),
     snow: land.hills.snow === true,
   };
 }
@@ -153,7 +154,8 @@ export function pathLandSvg(opts: PathLandOptions): string {
   const sign = rtl ? -1 : 1;
   const X = (x: number): number => W / 2 + sign * x;
   const random = seeded(`valley|${opts.ground}|${opts.seed ?? ''}|${Math.round(W)}|${Math.round(H)}`);
-  const c = (hex: string, amount?: number): string => dusk(hex, dark, amount);
+  // Everything is drawn by day and relit at the end (light.ts), so the night is one moonlight over the whole land.
+  const c = (hex: string): string => hex;
   const ground = c(land.shade);
   const out: string[] = [];
 
@@ -166,10 +168,10 @@ export function pathLandSvg(opts: PathLandOptions): string {
     return pts;
   };
   const far = ridge(54, 34, Math.max(26, W / 13));
-  out.push(fill(`M${far.map(([x, y]) => `${n(x)} ${n(y)}`).join('L')}L${n(W + 60)} 120L-60 120Z`, c(land.hills.far, 0.32)));
+  out.push(fill(`M${far.map(([x, y]) => `${n(x)} ${n(y)}`).join('L')}L${n(W + 60)} 120L-60 120Z`, c(land.hills.far)));
   if (land.hills.snow) {
     const peaks = far.filter((p, i) => i > 0 && i < far.length - 1 && p[1] < far[i - 1]![1] && p[1] < far[i + 1]![1] && p[1] < 36);
-    out.push(fill(peaks.map(([x, y]) => `M${n(x)} ${n(y)}l-7 7l3 -1l4 3l4 -3l3 1Z`).join(''), c(VALLEY.farSnow, 0.32)));
+    out.push(fill(peaks.map(([x, y]) => `M${n(x)} ${n(y)}l-7 7l3 -1l4 3l4 -3l3 1Z`).join(''), c(VALLEY.farSnow)));
   }
   const near: Pt[] = [];
   for (let x = -40; x <= W + 40; x += Math.max(60, W / 6)) near.push([x, 62 + (random() - 0.5) * 22]);
@@ -230,10 +232,17 @@ export function pathLandSvg(opts: PathLandOptions): string {
     out.push(stroke(ripples, c(VALLEY.waterLight), 2));
   }
 
-  // The road ahead, pale; walked stretches are laid over it in warm dirt (`pathStonesSvg`).
-  const roadD = smoothPath(road.map(([x, y]) => [X(x), y] as Pt));
+  // The road ahead, sunk a little into the land: its shoulder in the ground's shade, its edge, the packed track worn
+  // paler down the middle, and a row of field stones along each side. Walked stretches are laid over it (`pathStonesSvg`).
+  // Every other sample is enough for a smooth curve, and keeps the five strokes of the road light.
+  const roadD = smoothPath(road.filter((_, i) => i % 2 === 0 || i === road.length - 1).map(([x, y]) => [X(x), y] as Pt));
+  const roadFace = c(land.road?.face ?? VALLEY.path);
+  out.push(`<g transform="translate(0 3)">${stroke(roadD, c(land.shade), ROAD.edge + 8)}</g>`);
+  // The stones: short bars across the road, wider than it, whose ends the road's edge leaves showing on either side.
+  out.push(`<path d="${roadD}" fill="none" stroke="${c(VALLEY.pebble)}" stroke-width="${ROAD.edge + 11}" stroke-linecap="round" stroke-dasharray="5 15"/>`);
   out.push(stroke(roadD, c(land.road?.edge ?? VALLEY.pathEdge), ROAD.edge));
-  out.push(stroke(roadD, c(land.road?.face ?? VALLEY.path), ROAD.face));
+  out.push(stroke(roadD, roadFace, ROAD.face));
+  out.push(stroke(roadD, mix(roadFace, '#ffffff', 0.4), 10));
 
   // A plank bridge where the road crosses the stream.
   if (streamY !== null) {
@@ -260,7 +269,7 @@ export function pathLandSvg(opts: PathLandOptions): string {
     if (k < blooms.length) blooms[k] += flowersPath(X(lx), y);
     else pebbles += ellipsePath(X(lx), y, 2.6, 1.7);
   }
-  blooms.forEach((d, i) => out.push(fill(d, dark ? mix(land.flowers[i]!, '#2a2448', 0.3) : land.flowers[i]!)));
+  blooms.forEach((d, i) => out.push(fill(d, land.flowers[i]!)));
   out.push(fill(pebbles, c(VALLEY.pebble)));
 
   // Trees, rocks and hay, back to front, clear of the road and anyone standing by it.
@@ -287,15 +296,34 @@ export function pathLandSvg(opts: PathLandOptions): string {
     flock.push([lx, y]);
   }
   const things: { y: number; svg: string }[] = [
-    ...placed.map((p) => ({ y: p.y, svg: growth(X(p.x), p.y, p.kind, p.s, dark, ground, random) })),
-    ...flock.map(([x, y], i) => ({ y, svg: sheep(X(x), y, i % 2 === 0 ? 1 : -1, ground, dark) })),
+    ...placed.map((p) => ({ y: p.y, svg: growth(X(p.x), p.y, p.kind, p.s, false, ground, random) })),
+    ...flock.map(([x, y], i) => ({ y, svg: sheep(X(x), y, i % 2 === 0 ? 1 : -1, ground, false) })),
   ];
-  if (cairnAt) things.push({ y: cairnAt.y + cairnAt.h, svg: cairnOn(cairnAt, X, dark) });
+  if (cairnAt) things.push({ y: cairnAt.y + cairnAt.h, svg: cairnOn(cairnAt, X, false) });
   things.sort((a, b) => a.y - b.y);
   for (const t of things) out.push(t.svg);
 
+  // By night, fireflies over the grass: the land's only lights besides its landmark's.
+  const lights = dark ? fireflies(W, H, (lx, y) => free(lx, y - 4, 10, 8), X, random) : '';
+
   const prefix = prefixFor(opts.idPrefix, 'land', opts.ground, dark, rtl, opts.seed ?? '', Math.round(W), Math.round(H));
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n(W)}" height="${n(H)}" viewBox="0 0 ${n(W)} ${n(H)}" aria-hidden="true" focusable="false" id="${prefix}">${out.join('')}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${n(W)}" height="${n(H)}" viewBox="0 0 ${n(W)} ${n(H)}" aria-hidden="true" focusable="false" id="${prefix}">${relight(out.join(''), roadLight(dark))}${lights}</svg>`;
+}
+
+/** A few fireflies over the grass by night, each a warm point in a faint glow, where `free` says there is room. */
+function fireflies(W: number, H: number, free: (x: number, y: number) => boolean, X: (x: number) => number, random: () => number): string {
+  const want = Math.round((W * H) / 26000);
+  let glow = '';
+  let core = '';
+  for (let tries = 0; tries < want * 6 && want > 0; tries++) {
+    const lx = (random() - 0.5) * (W - 30);
+    const y = 110 + random() * (H - 140);
+    if (!free(lx, y)) continue;
+    glow += ellipsePath(X(lx), y, 6, 6);
+    core += ellipsePath(X(lx), y, 1.6, 1.6);
+    if (glow.length / 40 > want) break;
+  }
+  return `<path d="${glow}" fill="${lamplit('#ffe58a')}" fill-opacity="0.18"/>${fill(core, lamplit('#fff3b0'))}`;
 }
 
 /** Four small flowers in a patch, as one path. */
@@ -444,9 +472,12 @@ export function pathStonesSvg(opts: PathStonesOptions): string {
     }
   }
   const body = d
-    ? stroke(d, dusk(VALLEY.dirtEdge, dark), ROAD.edge) +
-      stroke(d, dusk(VALLEY.dirt, dark), ROAD.face) +
-      `<path d="${d}" fill="none" stroke="${dusk(VALLEY.dirtTrack, dark)}" stroke-width="${ROAD.ruts}" stroke-dasharray="2 9" stroke-linecap="round"/>`
+    ? relight(
+        stroke(d, VALLEY.dirtEdge, ROAD.edge) +
+          stroke(d, VALLEY.dirt, ROAD.face) +
+          `<path d="${d}" fill="none" stroke="${VALLEY.dirtTrack}" stroke-width="${ROAD.ruts}" stroke-dasharray="2 9" stroke-linecap="round"/>`,
+        roadLight(dark),
+      )
     : '';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${n(W)}" height="${n(H)}" viewBox="0 0 ${n(W)} ${n(H)}" aria-hidden="true" focusable="false">${body}</svg>`;
 }
@@ -457,7 +488,10 @@ export function pathStonesSvg(opts: PathStonesOptions): string {
  * A stop's picture: `box` points square with the stop's centre at (`cx`, `cy`). The token's face is `rx` × `ry`,
  * standing `side` above the road (`raised` for the current skill); `press` is how far the face sinks under a finger.
  */
-export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 31, side: 8, raised: 12, press: 6 } as const;
+export const PATH_STOP_ART = { box: 112, cx: 56, cy: 58, rx: 36, ry: 31, side: 10, raised: 13, press: 6 } as const;
+
+/** The app's violet, the main button's colour, which the current stop wears as the road's one way forward. */
+const NOW = { light: { face: '#862be2', side: '#5b179f', ring: '#c7a2f5' }, dark: { face: '#bf9bfe', side: '#8559d8', ring: '#e6d7ff' } } as const;
 
 /** What a stop looks like, by what it is and how it stands. */
 export const PATH_STOP_LOOKS = [
@@ -513,9 +547,10 @@ interface Token {
 
 /** Every look's colours, by day and by evening. */
 function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boolean): Token {
+  // A smooth river stone: pale by day, moonlit blue by night.
   const stone: Token = dark
-    ? { face: '#6a6670', side: '#4a4651', ring: '#7a7680', glint: '#8f8b95' }
-    : { face: '#e6ddca', side: '#bdb09a', ring: '#f3ede1', glint: '#ffffff' };
+    ? { face: '#4b5370', side: '#2f3550', ring: '#5b6484', glint: '#8a95bb' }
+    : { face: '#ece8e1', side: '#c6beb0', ring: '#f7f5f1', glint: '#ffffff' };
   const cream: Token = dark
     ? { face: '#efe4cc', side: t.lip, ring: t.fill, glint: '#fff8ea' }
     : { face: VALLEY.cream, side: t.lip, ring: t.fill, glint: '#ffffff' };
@@ -528,7 +563,7 @@ function tokenOf(look: PathStopLook, t: { fill: string; lip: string }, dark: boo
     case 'refresh':
       return { face: mix(gold.face, stone.face, 0.5), side: mix(gold.side, stone.side, 0.5), ring: mix(gold.ring, stone.ring, 0.5), glint: stone.glint };
     case 'current':
-      return { face: t.fill, side: t.lip, ring: mix(t.fill, '#ffffff', dark ? 0.45 : 0.55), glint: '#ffffff' };
+      return { ...NOW[dark ? 'dark' : 'light'], glint: '#ffffff' };
     case 'available':
       return cream;
     case 'review':
@@ -575,10 +610,11 @@ export function pathStopSvg(opts: PathStopOptions): string {
 
   if (part === 'base') {
     let body = '';
-    // The current stop sits in a soft ring of its own colour, so the eye finds it.
+    // The current stop sits in a soft pool of its violet, so the eye finds it.
     if (look === 'current') {
-      body += `<path d="${ellipsePath(cx, cy + 4, rx + 16, ry + 13)}" fill="${t.fill}" fill-opacity="0.16"/>`;
-      body += `<path d="${ellipsePath(cx, cy + 4, rx + 9, ry + 7)}" fill="${t.fill}" fill-opacity="0.18"/>`;
+      const glow = NOW[dark ? 'dark' : 'light'].face;
+      body += `<path d="${ellipsePath(cx, cy + 4, rx + 16, ry + 13)}" fill="${glow}" fill-opacity="${dark ? 0.2 : 0.14}"/>`;
+      body += `<path d="${ellipsePath(cx, cy + 4, rx + 9, ry + 7)}" fill="${glow}" fill-opacity="${dark ? 0.24 : 0.18}"/>`;
     }
     // Its shade on the road, then its side: the face extended down by `side`.
     body += `<path d="${ellipsePath(cx + 4, cy + side + ry * 0.55, rx * 0.98, ry * 0.4)}" fill="${shade}" fill-opacity="${dark ? 0.32 : 0.16}"/>`;
@@ -587,13 +623,12 @@ export function pathStopSvg(opts: PathStopOptions): string {
     return wrap(prefix, size, B, body);
   }
 
-  // The face: its colour, the ring inside its rim, and its highlight along the upper left.
+  // The face: its colour, the ring inside its rim, and one highlight where the light falls on its upper left.
   let body = '';
   if (look === 'strong') body += fill(ellipsePath(cx, cy, rx + 3, ry + 3), warm('#ffd96a', dark));
   body += fill(ellipsePath(cx, cy, rx, ry), k.face);
   body += `<path d="${ellipsePath(cx, cy, rx - 6, ry - 5.5)}" fill="none" stroke="${k.ring}" stroke-width="2.6"/>`;
-  body += `<path d="M${n(cx - rx * 0.74)} ${n(cy - ry * 0.28)}A${n(rx - 4)} ${n(ry - 4)} 0 0 1 ${n(cx - rx * 0.18)} ${n(cy - ry * 0.84)}" fill="none" stroke="${k.glint}" stroke-width="3" stroke-linecap="round" stroke-opacity="${dark ? 0.4 : 0.6}"/>`;
-  if (look === 'locked') body += fill(ellipsePath(cx + 14, cy + 10, 3.6, 2.2) + ellipsePath(cx - 16, cy + 8, 2.4, 1.5), k.side);
+  body += `<path d="M${n(cx - rx * 0.78)} ${n(cy - ry * 0.12)}C${n(cx - rx * 0.78)} ${n(cy - ry * 0.7)} ${n(cx - rx * 0.3)} ${n(cy - ry * 0.92)} ${n(cx + rx * 0.08)} ${n(cy - ry * 0.86)}C${n(cx - rx * 0.32)} ${n(cy - ry * 0.7)} ${n(cx - rx * 0.6)} ${n(cy - ry * 0.46)} ${n(cx - rx * 0.78)} ${n(cy - ry * 0.12)}Z" fill="${k.glint}" fill-opacity="${dark ? 0.3 : 0.55}"/>`;
   if (look === 'guide' || look === 'guideLocked') body += book(cx, cy - 2, look === 'guide' ? t : { fill: '#bdb09a', lip: '#9c8f78' }, dark);
   if (look === 'story') body += scroll(cx, cy - 2, dark, false);
   if (look === 'storyLocked') body += scroll(cx, cy - 2, dark, true);

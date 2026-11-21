@@ -109,15 +109,18 @@ export function UnitPin({
         <p className="lp-pin-eyebrow">{section !== null ? t('coursemap.sectionUnit', { section: n(section), unit: n(unit.number) }) : t('coursemap.unit', { n: n(unit.number) })}</p>
         <p className="lp-pin-title">{unit.title}</p>
       </div>
-      {onGuide && (
-        <button type="button" className="lp-pin-button" aria-label={t('coursemap.guideFor', { unit: unit.title })} onClick={onGuide}>
-          <BookIcon size={20} />
+      {/* On the hills in the far corner, so the words have the whole width of the sky. */}
+      <div className="lp-pin-actions">
+        {onGuide && (
+          <button type="button" className="lp-pin-button" aria-label={t('coursemap.guideFor', { unit: unit.title })} onClick={onGuide}>
+            <BookIcon size={20} />
+          </button>
+        )}
+        {/* The rail of units, where there is no room for it beside the path. */}
+        <button type="button" className="lp-pin-button lp-unit-rail" aria-label={t('learn.openMap')} onClick={onRail}>
+          <FlagIcon size={20} />
         </button>
-      )}
-      {/* The rail of units, where there is no room for it beside the path. */}
-      <button type="button" className="lp-pin-button lp-unit-rail" aria-label={t('learn.openMap')} onClick={onRail}>
-        <FlagIcon size={20} />
-      </button>
+      </div>
     </div>
   );
 }

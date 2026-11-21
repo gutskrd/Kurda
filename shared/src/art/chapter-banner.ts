@@ -5,11 +5,12 @@
  * the chapter's name, which the apps set over it in the page's own type.
  */
 import type { PathGround, PathLandmark } from '../path-world.js';
+import { roadLight, relight } from './light.js';
 import { pathGroundView } from './path-land.js';
 import { pathLandmarkSvg } from './path-landmark.js';
 import { Drawing, linearAt, mix, n, prefixFor, radialAt, seeded, type Pt } from './svg.js';
 import { SKIES } from './tree-scene.js';
-import { VALLEY, bush, dusk, fill, foliage, poplar, poplarLeaves, smoothPath } from './valley.js';
+import { VALLEY, bush, fill, foliage, poplar, poplarLeaves, smoothPath } from './valley.js';
 
 export interface ChapterBannerOptions {
   ground: PathGround;
@@ -26,6 +27,9 @@ export interface ChapterBannerOptions {
   idPrefix?: string;
 }
 
+/** A colour no drawing uses, marking a tree's shadow until it is given the land's shade. */
+const SHADOW = '#000001';
+
 /** A ridge of soft peaks about `base`, up to `rise` high, filled down to the foot of the picture. */
 function ridge(width: number, height: number, base: number, rise: number, step: number, rand: () => number): string {
   const pts: Pt[] = [[-10, height + 2], [-10, base]];
@@ -40,7 +44,7 @@ function ridge(width: number, height: number, base: number, rise: number, step: 
 /** The snow on a ridge's peaks: the part of it above `line`. */
 function snowCaps(d: string, line: number, width: number, dark: boolean, dr: Drawing): string {
   const clip = dr.clip(`M-10 -10H${n(width + 10)}V${n(line)}H-10Z`);
-  return `<g clip-path="url(#${clip})">${fill(d, dusk(VALLEY.snow, dark))}</g>`;
+  return `<g clip-path="url(#${clip})">${fill(d, roadLight(dark)(VALLEY.snow))}</g>`;
 }
 
 /** The banner as an SVG the given size. Decorative: the apps set the chapter's name beside it as text. */
@@ -113,8 +117,9 @@ export function chapterBannerSvg(opts: ChapterBannerOptions): string {
   dr.add(fill(`M-10 ${n(top + S * 0.95)}Q${n(W * 0.5)} ${n(top + S * 0.91)} ${n(W + 10)} ${n(top + S * 0.95)}V${n(H + 2)}H-10Z`, view.base));
 
   // A few poplars and bushes along the near hill, away from the open sky where the name is.
-  const leaf = foliage(dark);
-  const tall = poplarLeaves(dark);
+  // Drawn by day and relit, so the trees stand under the same light as the land (light.ts).
+  const leaf = foliage(false);
+  const tall = poplarLeaves(false);
   const trees = [
     { x: 0.08, k: 'poplar', s: 0.36 },
     { x: 0.14, k: 'bush', s: 0.5 },
@@ -124,7 +129,9 @@ export function chapterBannerSvg(opts: ChapterBannerOptions): string {
   for (const t of trees) {
     const x = far(S * 1.2 + W * t.x);
     const y = top + S * 0.9 + rand() * S * 0.03;
-    dr.add(t.k === 'poplar' ? poplar(x, y, (t.s * S) / 60, tall, view.shade) : bush(x, y, (t.s * S) / 60, leaf, view.shade, rand));
+    // Its shadow is marked, relit with the tree, then given the land's own shade, which is lit already.
+    const tree = t.k === 'poplar' ? poplar(x, y, (t.s * S) / 60, tall, SHADOW) : bush(x, y, (t.s * S) / 60, leaf, SHADOW, rand);
+    dr.add(relight(tree, roadLight(dark)).split(roadLight(dark)(SHADOW)).join(view.shade));
   }
 
   // The chapter's landmark at the far end, standing on the ground.

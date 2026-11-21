@@ -58,6 +58,7 @@ import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg,
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import { PATH_STOP_ART, PATH_STOP_LOOKS, PATH_STOP_TONES, pathSignpostSvg, pathLandSvg, pathStonesSvg, pathStopSvg, type PathStopLook } from './path-land.js';
 import { PATH_LANDMARK_LOOP, pathLandmarkSvg, pathLoopSvg } from './path-landmark.js';
+import { moonlit, sunlit } from './light.js';
 import { PATH_CAIRN_GROUNDS, PATH_LANDMARKS, PATH_LANDS, cairnBox, trailStones } from '../path-world.js';
 import { lessonPath } from '../lesson-path.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
@@ -1545,12 +1546,13 @@ describe('the lesson path’s world', () => {
         }
       }
     }
-    // every look its own: the stop to do now in its chapter's colour, a finished one in gold
+    // every look its own: the stop to do now in the app's violet in every chapter, a finished one in gold
     const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
     expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
-    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain(PATH_STOP_TONES.light.clay.fill);
-    expect(pathStopSvg({ look: 'current', tone: 'river', part: 'face' })).toContain(PATH_STOP_TONES.light.river.fill);
-    expect(PATH_STOP_TONES.light.clay.fill).not.toBe(PATH_STOP_TONES.light.river.fill);
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'current', tone: 'river', part: 'face', idPrefix: 's' }));
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).toContain('#862be2');
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', dark: true })).toContain('#bf9bfe');
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face' })).not.toContain(PATH_STOP_TONES.light.clay.fill);
     // gold is gold in every chapter: what was earned looks the same wherever it was earned
     expect(pathStopSvg({ look: 'done', tone: 'river', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
     expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);
@@ -1566,8 +1568,8 @@ describe('the lesson path’s world', () => {
         const day = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, seed: 'u' });
         const dusk = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark: true, seed: 'u' });
         const has = PATH_CAIRN_GROUNDS.includes(land.ground);
-        expect(day.includes('#e2a334'), `${land.ground} ${width}`).toBe(has);
-        expect(dusk.includes('#c98f3c'), `${land.ground} ${width} dusk`).toBe(has);
+        expect(day.includes(sunlit('#e2a334')), `${land.ground} ${width}`).toBe(has);
+        expect(dusk.includes(moonlit('#e2a334')), `${land.ground} ${width} dusk`).toBe(has);
         if (!has) continue;
         // its box lies inside the land, out of the river where one runs across it
         const streams = land.ground === 'valley' || land.ground === 'alpine';
@@ -1592,9 +1594,10 @@ describe('the lesson path’s world', () => {
           const svg = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark, seed: 'u' });
           const elements = sound(svg, `0 0 ${width} ${unit.height}`);
           expect(parse(svg).attrs['aria-hidden']).toBe('true');
-          // A few hundred elements, and a capped size, since a path draws two or three lands at once.
+          // A few hundred elements, and a capped size, since a path draws two or three lands at once; the road's shoulder,
+          // edge stones and worn middle are a few strokes more.
           expect(elements, `${land.ground} ${width}`).toBeLessThan(width > 400 ? 420 : 260);
-          expect(svg.length, `${land.ground} ${width}`).toBeLessThan((width > 400 ? 64 : 36) * 1024);
+          expect(svg.length, `${land.ground} ${width}`).toBeLessThan((width > 400 ? 64 : 40) * 1024);
           drawings.add(svg);
         }
       }

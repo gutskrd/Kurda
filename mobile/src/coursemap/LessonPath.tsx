@@ -739,17 +739,20 @@ export function UnitFace({
       }}
     >
       {art && box ? <SvgXml xml={art} width={box.width} height={box.height} style={StyleSheet.absoluteFill} /> : null}
-      <View style={[styles.pin, { flexDirection: dir.row }]}>
+      <View style={styles.pin}>
         <View
           style={styles.pinWords}
           accessible
           accessibilityRole="header"
           accessibilityLabel={unitHeading(chapter, title, sectionWords)}
         >
-          {/* Both wrap: "Abschnitt 1 · Kapitel 2" is long beside two buttons on a narrow phone. */}
+          {/* Both may wrap, though with the buttons below on the hills "Abschnitt 1 · Kapitel 2" has the whole width. */}
           <Text style={[styles.eyebrow, dir.text, { color: colors.textPrimary }]}>{eyebrow}</Text>
           <Text style={[styles.pinTitle, dir.free, buttons ? null : styles.pinTitleBesideLandmark, { color: colors.textPrimary }]}>{title}</Text>
         </View>
+      </View>
+      {/* On the hills in the far corner, so the words have the whole width of the sky. */}
+      <View style={[styles.pinActions, { flexDirection: dir.row }, dir.rtl ? { left: spacing.sm } : { right: spacing.sm }]}>
         {openGuide ? (
           <Pressable
             onPress={openGuide}
@@ -969,7 +972,8 @@ const styles = StyleSheet.create({
   pinLip: { borderRadius: radii.lg, paddingBottom: 4, zIndex: 2 },
   // The painted horizon: tall enough for its hills under the words, clipped to the card's corner.
   banner: { borderRadius: radii.lg, overflow: 'hidden', zIndex: 2, minHeight: 112 },
-  pin: { alignItems: 'flex-start', gap: spacing.xs, borderRadius: radii.lg, paddingTop: spacing.md, paddingBottom: 48, paddingStart: spacing.md, paddingEnd: spacing.sm },
+  pin: { borderRadius: radii.lg, paddingTop: spacing.md, paddingBottom: 60, paddingHorizontal: spacing.md },
+  pinActions: { position: 'absolute', bottom: spacing.sm, gap: spacing.xs },
   pinWords: { flex: 1, gap: 2 },
   pinTitle: { ...display(typography.sizes.title) },
   // The name keeps clear of the landmark at the far end, which stands below the line above it.
