@@ -619,8 +619,8 @@
                     "voice": "hamo",
                     "prompt": "Ez diçim nexweşxaneyê, û ez gelek ditirsim!",
                     "options": [
-                      "I go to the hospital, and I’m very scared!",
-                      "Two hours? I’m scared, I’m off!",
+                      "I’m going to the hospital, and I’m very scared!",
+                      "I’m going to the market, and I’m very happy!",
                       "I’m very tired."
                     ],
                     "correctIndex": 0,
@@ -680,13 +680,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Hemû laşê min diêşe, û pêlava min winda dibe!",
+                    "say": "Hemû laşê min diêşe, û ez nikarim rabim!",
                     "voice": "hamo",
-                    "prompt": "Hemû laşê min diêşe, û pêlava min winda dibe!",
+                    "prompt": "Hemû laşê min diêşe, û ez nikarim rabim!",
                     "options": [
-                      "My whole body hurts, and I lose my shoe!",
-                      "I light the fire… oh no! My moustache is getting lost in the smoke!",
-                      "Nazê hands me the handkerchief, for my moustache, and everyone laughs."
+                      "My whole body hurts, and I can’t get up!",
+                      "My whole body is well, and I can get up!",
+                      "My back hurts, and I can’t sit down!"
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -731,10 +731,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Then, in the autumn, in a storm, Bozo bolts.",
+                    "prompt": "I don’t want to go to the hospital!",
                     "options": [
-                      "Piştre, payîzê, di bahozê de, Bozo dibeze.",
-                      "Piştre, payîz, di bahozê de, Bozo dibeze.",
+                      "Ez naxwazim biçim nexweşxaneyê!",
+                      "Ez naxwazim biçî nexweşxaneyê!",
                       "Rojbûna Baran di Gulanê de ye."
                     ],
                     "correctIndex": 0
@@ -746,10 +746,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "My whole body hurts, and I lose my shoe!",
+                    "prompt": "My whole body hurts, and I can’t get up!",
                     "options": [
-                      "Hemû laşê min diêşe, û pêlava min winda dibe!",
-                      "Hemû laş min diêşe, û pêlava min winda dibe!",
+                      "Hemû laşê min diêşe, û ez nikarim rabim!",
+                      "Hemû laş min diêşe, û ez nikarim rabim!",
                       "Doktor Azad Çarşemê û Pêncşemê tê gund. Ew ne dereng e, ez dereng im!"
                     ],
                     "correctIndex": 0
@@ -761,9 +761,9 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "Then, in the autumn, in a storm, Bozo bolts.",
+                    "prompt": "I don’t want to go to the hospital!",
                     "accepted": [
-                      "Piştre, payîzê, di bahozê de, Bozo dibeze."
+                      "Ez naxwazim biçim nexweşxaneyê!"
                     ]
                   }
                 },
@@ -790,28 +790,28 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Na! Ez gelek baş im! Tu dizanî, rojeke havînê li Kobaniyê diranê min gelek diêşe.",
-                        "en": "No! I’m very well! You know, one summer’s day in Kobanî my tooth hurts terribly."
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Ez diçim nexweşxaneyê, û ez gelek ditirsim!",
-                        "en": "I go to the hospital, and I’m very scared!"
+                        "text": "Ez naxwazim biçim nexweşxaneyê!",
+                        "en": "I don’t want to go to the hospital!"
                       },
                       {
                         "speaker": 1,
-                        "text": "Û piştre?",
-                        "en": "And then?"
+                        "text": "Li ku diêşe?",
+                        "en": "Where does it hurt?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Piştre, payîzê, di bahozê de, Bozo dibeze.",
-                        "en": "Then, in the autumn, in a storm, Bozo bolts."
+                        "text": "Diranê min û singê min diêşin.",
+                        "en": "My tooth and my chest hurt."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û pişta te?",
+                        "en": "And your back?"
                       },
                       {
                         "speaker": 0,
-                        "text": "Hemû laşê min diêşe, û pêlava min winda dibe!",
-                        "en": "My whole body hurts, and I lose my shoe!"
+                        "text": "Hemû laşê min diêşe, û ez nikarim rabim!",
+                        "en": "My whole body hurts, and I can’t get up!"
                       },
                       {
                         "speaker": 1,
@@ -838,11 +838,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Hemû laşê min diêşe, û pêlava min winda dibe!",
+                    "say": "Hemû laşê min diêşe, û ez nikarim rabim!",
                     "voice": "hamo",
-                    "prompt": "Hemû laşê min diêşe, û pêlava min winda dibe!",
+                    "prompt": "Hemû laşê min diêşe, û ez nikarim rabim!",
                     "accepted": [
-                      "My whole body hurts, and I lose my shoe!"
+                      "My whole body hurts, and I can’t get up!",
+                      "My whole body hurts, and I cannot get up!"
                     ]
                   }
                 },
@@ -851,13 +852,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Piştre, payîzê, di bahozê de, Bozo dibeze.",
+                    "say": "Ez naxwazim biçim nexweşxaneyê!",
                     "voice": "hamo",
-                    "prompt": "Piştre, payîzê, di bahozê de, Bozo dibeze.",
+                    "prompt": "Ez naxwazim biçim nexweşxaneyê!",
                     "options": [
-                      "Then, in the autumn, in a storm, Bozo bolts.",
-                      "Bozo has flowers in his mouth!",
-                      "In the autumn, when the apples come."
+                      "I don’t want to go to the hospital!",
+                      "I want to go to the hospital!",
+                      "I don’t want to go to school!"
                     ],
                     "correctIndex": 0
                   }
@@ -897,7 +898,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "I go to the hospital, and I’m very scared!",
+                    "prompt": "I’m going to the hospital, and I’m very scared!",
                     "accepted": [
                       "Ez diçim nexweşxaneyê, û ez gelek ditirsim!"
                     ]
@@ -967,7 +968,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "I go to the hospital, and I’m very scared!",
+                    "prompt": "I’m going to the hospital, and I’m very scared!",
                     "accepted": [
                       "Ez diçim nexweşxaneyê, û ez gelek ditirsim!"
                     ]
@@ -988,16 +989,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Hemû laşê min diêşe, û pêlava min winda dibe!",
+                    "say": "Hemû laşê min diêşe, û ez nikarim rabim!",
                     "voice": "hamo",
-                    "prompt": "Hemû ___ min diêşe, û pêlava min winda dibe!",
+                    "prompt": "Hemû ___ min diêşe, û ez nikarim rabim!",
                     "options": [
                       "laşê",
                       "laş",
                       "tiliyê"
                     ],
                     "correctIndex": 0,
-                    "cue": "My whole body hurts, and I lose my shoe!"
+                    "cue": "My whole body hurts, and I can’t get up!"
                   }
                 },
                 {
@@ -1039,10 +1040,10 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "Then, in the autumn, in a storm, Bozo bolts.",
+                    "prompt": "I don’t want to go to the hospital!",
                     "options": [
-                      "Piştre, payîzê, di bahozê de, Bozo dibeze.",
-                      "Piştre, payîz, di bahozê de, Bozo dibeze.",
+                      "Ez naxwazim biçim nexweşxaneyê!",
+                      "Ez naxwazim biçin nexweşxaneyê!",
                       "Havînê li baxçe gul hene, û payîzê sêv."
                     ],
                     "correctIndex": 0
@@ -1070,7 +1071,7 @@
                     "options": [
                       "Niha kuxika min jî heye.",
                       "Niha kuxik min jî heye.",
-                      "Li pişt wêneyî, soza du zarokan heye."
+                      "Niha taya min jî heye."
                     ],
                     "correctIndex": 0
                   }
@@ -1101,8 +1102,8 @@
                     "prompt": "Ew dibêje ku ez sax im, û ez tenê gelek diaxivim!",
                     "options": [
                       "He says I’m healthy, and I just talk a lot!",
-                      "He gives me the flute, and tells me to keep the song going.",
-                      "Then he gives me the flute and tells me to keep the song going."
+                      "He says I’m ill, and I must go to the hospital.",
+                      "He says I’m tired, and I must rest."
                     ],
                     "correctIndex": 0
                   }
@@ -1856,9 +1857,9 @@
                     "voice": "hamo",
                     "prompt": "Ez bêguneh im! Tu ji min bawer dikî?",
                     "options": [
-                      "Hevalo li te dinêre. Ew bawer nake.",
-                      "Hevalo li te dinêrim. Ew bawer nake.",
-                      "Binêre, kûpek vala ye!"
+                      "Belê, ez ji te bawer dikim.",
+                      "Spas, ez baş im.",
+                      "Bi xêr hatî!"
                     ],
                     "correctIndex": 0
                   }
@@ -1973,8 +1974,8 @@
                     "prompt": "I’m innocent! Do you believe me?",
                     "options": [
                       "Ez bêguneh im! Tu ji min bawer dikî?",
-                      "Pirtûkeke gotinên pêşiyan, ji bo bavê min.",
-                      "Ji bo diya min, ez zarok im; ji bo xwarziyan, ez xal im!"
+                      "Ez diz im! Tu ji min bawer dikî?",
+                      "Pirtûkeke gotinên pêşiyan, ji bo te."
                     ],
                     "correctIndex": 0
                   }
@@ -2015,7 +2016,7 @@
                     "prompt": "Ez bêguneh im! Tu ji min bawer dikî?",
                     "options": [
                       "I’m innocent! Do you believe me?",
-                      "I’m fine. And you?",
+                      "I’m the thief! Do you believe me?",
                       "I’m fine, thanks. And you?"
                     ],
                     "correctIndex": 0
@@ -2083,7 +2084,7 @@
                     "prompt": "His advice is that I walk a little every day.",
                     "options": [
                       "Şîreta wî ev e, ku ez her roj hinek bimeşim.",
-                      "Bavê min dibêje ku ev jiyan e, û jiyan berdewam dike.",
+                      "Ev jiyan e, û jiyan berdewam dike.",
                       "Ev gir e. Li Newrozê, em li vir seyranê dikin û agir vêdixin."
                     ],
                     "correctIndex": 0
@@ -2323,13 +2324,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Kurên Lorînê şanzdeh û hivdeh salî ne.",
+                    "say": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye.",
                     "voice": "hamo",
-                    "prompt": "Kurên Lorînê şanzdeh û hivdeh salî ne.",
+                    "prompt": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye.",
                     "options": [
-                      "Lorîn’s sons are sixteen and seventeen.",
-                      "Baran is not ten.",
-                      "Six! And Hevalo is five."
+                      "She is sixteen, and her brother is seventeen.",
+                      "She is six, and her brother is seven.",
+                      "She is sixteen, and her sister is seventeen."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -2371,16 +2372,16 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "missing",
-                    "say": "Kurên Lorînê şanzdeh û hivdeh salî ne.",
+                    "say": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye.",
                     "voice": "hamo",
-                    "prompt": "Kurên Lorînê şanzdeh û ___ salî ne.",
+                    "prompt": "Ew şanzdeh salî ye, û birayê wê ___ salî ye.",
                     "options": [
                       "hivdeh",
                       "hivdehan",
                       "şanzdeh"
                     ],
                     "correctIndex": 0,
-                    "cue": "Lorîn’s sons are sixteen and seventeen."
+                    "cue": "Her brother is seventeen."
                   }
                 },
                 {
@@ -2441,8 +2442,8 @@
                   "payload": {
                     "ask": "repeat",
                     "voice": "hamo",
-                    "prompt": "Kurên Lorînê şanzdeh û hivdeh salî ne.",
-                    "reference": "Kurên Lorînê şanzdeh û hivdeh salî ne."
+                    "prompt": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye.",
+                    "reference": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye."
                   }
                 },
                 {
@@ -2507,11 +2508,12 @@
                   "type": "translate",
                   "payload": {
                     "ask": "to-english",
-                    "say": "Kurên Lorînê şanzdeh û hivdeh salî ne.",
+                    "say": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye.",
                     "voice": "hamo",
-                    "prompt": "Kurên Lorînê şanzdeh û hivdeh salî ne.",
+                    "prompt": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye.",
                     "accepted": [
-                      "Lorîn’s sons are sixteen and seventeen."
+                      "She is sixteen, and her brother is seventeen.",
+                      "She’s sixteen, and her brother is seventeen."
                     ]
                   }
                 },
@@ -2565,7 +2567,7 @@
                     "options": [
                       "Bi destûra te, ez herî jîr im, û simbêlê min herî dirêj e!",
                       "Baran ji Hêviyê mezintir e.",
-                      "Şîreta min ev e: bi şev stêrk alîkariya te dikin."
+                      "Hevalo ji Bozo zûtir dibeze."
                     ],
                     "correctIndex": 0
                   }
@@ -3031,7 +3033,7 @@
                     "options": [
                       "Come, look at the sky! How big the moon is!",
                       "It’s from the old shop, on the big street.",
-                      "Lorîn is upstairs."
+                      "Come, look at the sky! How small the moon is!"
                     ],
                     "correctIndex": 0
                   }
@@ -3245,7 +3247,8 @@
                     "options": [
                       "Spas! Bi ser ketin xweş e, lê heval xweştir in.",
                       "Spas! Bi serên ketin xweş e, lê heval xweştir in.",
-                      "Em kûpên hingiv diparêzin."
+                      "Em kûpên hingiv diparêzin.",
+                      "Hamo hêdî dimeşe, û li cem her kesî disekine."
                     ],
                     "correctIndex": 0
                   }
@@ -3320,13 +3323,13 @@
                   "type": "multiple_choice",
                   "payload": {
                     "ask": "meaning",
-                    "say": "Kurên Lorînê şanzdeh û hivdeh salî ne.",
+                    "say": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye.",
                     "voice": "hamo",
-                    "prompt": "Kurên Lorînê şanzdeh û hivdeh salî ne.",
+                    "prompt": "Ew şanzdeh salî ye, û birayê wê hivdeh salî ye.",
                     "options": [
-                      "Lorîn’s sons are sixteen and seventeen.",
-                      "Baran is not ten.",
-                      "Six! And Hevalo is five."
+                      "She is sixteen, and her brother is seventeen.",
+                      "She is six, and her brother is seven.",
+                      "She is sixteen, and her sister is seventeen."
                     ],
                     "correctIndex": 0
                   }
@@ -3451,8 +3454,8 @@
                     "prompt": "Hêrs an şerm? Ez nizanim, lê hestekî min heye.",
                     "options": [
                       "Anger or shame? I don’t know, but I have a feeling.",
-                      "I don’t know when my birthday is, but my mother knows.",
-                      "My map? No! I know nothing about it."
+                      "Anger or shame? I know: it’s anger.",
+                      "Joy or fear? I don’t know, but I have a feeling."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -3879,8 +3882,8 @@
                     "prompt": "Hêrs an şerm? Ez nizanim, lê hestekî min heye.",
                     "options": [
                       "Anger or shame? I don’t know, but I have a feeling.",
-                      "I don’t know when my birthday is, but my mother knows.",
-                      "My map? No! I know nothing about it."
+                      "Anger or shame? I know: it’s anger.",
+                      "Joy or fear? I don’t know, but I have a feeling."
                     ],
                     "correctIndex": 0
                   }
@@ -3927,7 +3930,7 @@
                     "options": [
                       "Baran guhdarî dike, û dibêje ku ew tê digihîje. Ew derewan nake.",
                       "Meta Baran tê, û ez dibêjim ku çokên min diêşin.",
-                      "Li ber çirayê, bavê min dibêje bila baran bibare, ew bereket e."
+                      "Baran guhdarî dike, û dibêje ku ew nizane."
                     ],
                     "correctIndex": 0
                   }
@@ -4027,7 +4030,7 @@
                     "voice": "hamo",
                     "prompt": "Beran bi xwe tê malê, bi kelecan!",
                     "options": [
-                      "The ram comes home by itself, very excited!",
+                      "The ram comes home by itself, full of excitement!",
                       "A boy is coming with his father.",
                       "A boy is going home with his goat."
                     ],
@@ -4051,7 +4054,7 @@
                     "options": [
                       "He says I’m honest, and I’m brave.",
                       "He says I’m healthy, and I just talk a lot!",
-                      "He gives me the flute, and tells me to keep the song going."
+                      "He says I’m a coward, and I tell lies."
                     ],
                     "correctIndex": 0,
                     "new": [
@@ -4168,7 +4171,7 @@
                   "payload": {
                     "ask": "to-kurdish",
                     "voice": "hamo",
-                    "prompt": "The ram comes home by itself, very excited!",
+                    "prompt": "The ram comes home by itself, full of excitement!",
                     "accepted": [
                       "Beran bi xwe tê malê, bi kelecan!"
                     ]
@@ -4202,8 +4205,18 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Û bavê te çi dibêje?",
-                        "en": "And what does your father say?"
+                        "text": "Û tu çi dikî?",
+                        "en": "And what do you do?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Êvarê ez rastiyê ji cîranê me re dibêjim.",
+                        "en": "In the evening I tell our neighbour the truth."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û cîranê we çi dibêje?",
+                        "en": "And what does your neighbour say?"
                       },
                       {
                         "speaker": 0,
@@ -4218,23 +4231,18 @@
                       {
                         "speaker": 0,
                         "text": "Beran bi xwe tê malê, bi kelecan!",
-                        "en": "The ram comes home by itself, very excited!"
+                        "en": "The ram comes home by itself, full of excitement!"
                       },
                       {
                         "speaker": 1,
                         "text": "Kesên wêrek rastiyê dibêjin.",
                         "en": "Brave people tell the truth."
-                      },
-                      {
-                        "speaker": 0,
-                        "text": "Belê. Tu çi dihizirî, Baran dê çi bike?",
-                        "en": "Yes. What do you think Baran will do?"
                       }
                     ],
-                    "prompt": "Bavê Hamo çi dibêje?",
+                    "prompt": "Cîran çi dibêje?",
                     "options": [
-                      "Tu wêrek î.",
-                      "Tu tirsonek î.",
+                      "Hamo wêrek e.",
+                      "Hamo tirsonek e.",
                       "Beran winda ye."
                     ],
                     "correctIndex": 0
@@ -4416,7 +4424,7 @@
                   "payload": {
                     "ask": "choose-kurdish",
                     "voice": "hamo",
-                    "prompt": "The ram comes home by itself, very excited!",
+                    "prompt": "The ram comes home by itself, full of excitement!",
                     "options": [
                       "Beran bi xwe tê malê, bi kelecan!",
                       "Beran bi xwe têm malê, bi kelecan!",
@@ -4475,8 +4483,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Baran çawa ye?",
-                        "en": "How is Baran?"
+                        "text": "Baran li jor, li ser banî ye. Ew tiştekî nabêje.",
+                        "en": "Baran is up on the roof. He isn’t saying anything."
                       },
                       {
                         "speaker": 0,
@@ -4495,8 +4503,18 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Baran dibêje: Sibe ez ê bibêjim.",
-                        "en": "Baran says: I’ll tell you tomorrow."
+                        "text": "Ew dibêje ku ew ê sibe rastiyê bibêje.",
+                        "en": "He says he’ll tell the truth tomorrow."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Binêre, bahoz tê, û Baran tê hundir!",
+                        "en": "Look, a storm is coming, and Baran is coming inside!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bila baran bibare, ew bereket e.",
+                        "en": "Let the rain fall, it’s a blessing."
                       },
                       {
                         "speaker": 1,
@@ -4506,7 +4524,7 @@
                       {
                         "speaker": 0,
                         "text": "Ev sêva herî şîrîn e. Ev ji pîrozbahiya Newrozê jî xweştir e!",
-                        "en": "That’s the sweetest apple there is. This is even better than the Newroz celebration!"
+                        "en": "This is the sweetest apple. It’s even nicer than the Newroz celebration!"
                       }
                     ],
                     "prompt": "Hevalo çi dide Baran?",

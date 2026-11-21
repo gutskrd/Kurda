@@ -1719,7 +1719,7 @@
       "cefr": "A2",
       "titleKu": "Hewa û Newroz",
       "titleEn": "Weather and Newroz",
-      "story": "The minibus climbs the pass in the first snow, and Sêvan waits out the end of winter by the stove. Then the sun comes back, the snow melts, the stream by the walnut tree sings again, and the whole village gets ready for Newroz: Nazê sews new clothes, Baran gathers firewood, Xezo teaches the schoolchildren the steps of the govend, and Hamo practises a speech that the hens will not stay to hear. The future is on everyone’s lips (ez ê …, em ê …), and so is what everyone wants to do. On Newroz eve a car comes up the road from Kobanî: Hamo’s parents, as promised. By the fire on the hill Ibrahîm plays his old shepherd’s flute and then puts it into his son’s hands: keep the song going. The next morning, after a whole night of govend, Hamo cannot get out of bed. His back!",
+      "story": "The minibus climbs the pass in the first snow, and Sêvan waits out the end of winter by the stove. Then the sun comes back, the snow melts, the stream by the walnut tree sings again, and the whole village gets ready for Newroz: Nazê sews new clothes, Baran gathers firewood, Xezo teaches the schoolchildren the steps of the govend, and Hamo practises a speech that the hens will not stay to hear. The future is on everyone’s lips (ez ê …, em ê …), and so is what everyone wants to do. On Newroz eve the neighbours come round with a lamp, for tea under a sky full of stars. By the fire on the hill everyone jumps over the flames and wishes each other health, Baran’s uncle plays the zurna, and when Hamo tries a shepherd’s flute, his first squeak makes the whole village laugh until they cry. The next morning, after a whole night of govend, Hamo cannot get out of bed. His back!",
       "recorder": "hamo",
       "skills": [
         {
@@ -1786,7 +1786,7 @@
               "titleKu": "Berf dihele",
               "titleEn": "The snow is melting",
               "focus": "review",
-              "beat": "The sun returns, the snow melts and the stream by the walnut tree sings again. Hamo announces “Newroz tê!”, and the phone rings: his mother in Kobanî wants to know if the road is open. His father is ready, and his mother is coming too.",
+              "beat": "The sun returns, the snow melts and the stream by the walnut tree sings again. Hamo goes over the whole winter with you, from the first snow to the storm, then phones every neighbour with the news: Newroz is coming!",
               "voice": "hamo",
               "new": []
             }
@@ -1842,7 +1842,7 @@
               "titleKu": "Newroz çi ye?",
               "titleEn": "What is Newroz?",
               "focus": "talk",
-              "beat": "Baran asks what Newroz really is. Hamo tells the old legend of Kawa the blacksmith, who lit fires on the hills to bring back the spring: the new year, the festival of a whole people. The tale grows longer every year he tells it. The end, he admits, only his father knows, and his father’s version takes two hours.",
+              "beat": "Baran asks what Newroz really is. Hamo tells the old legend of Kawa the blacksmith, who lit fires on the hills to bring back the spring: the new year, the festival of a whole people. Since that day, he says, fires are lit on the hills every Newroz. The tale grows longer every year he tells it, and when you get up to go home, he starts it again from the beginning.",
               "voice": "hamo",
               "new": [
                 {"ku": "hesinkar", "en": "blacksmith", "pos": "noun", "gender": "mf", "forms": ["hesinkar", "hesinkarên", "hesinkaran", "hesinkarek", "hesinkarê", "hesinkarekî", "hesinkarî", "hesinkara", "hesinkareke"]},
@@ -1912,7 +1912,7 @@
               "titleKu": "Stêrk û heyv",
               "titleEn": "Stars and moon",
               "focus": "talk",
-              "beat": "The night before Newroz. Everything is ready; the forecast says rain, and Hamo says rain is a blessing. He asks you to look out with him: a full moon, a sky full of stars, and then a light on the road from Kobanî, then two. A lamp at the blue gate, a car door, and Hamo’s parents are here.",
+              "beat": "The night before Newroz. Everything is ready; the forecast says rain, and Hamo says rain is a blessing. He asks you to look out with him: a full moon, and more stars than you have ever seen, as there always are in the village at night. Then a lamp at the blue gate: it is Nazê’s, and the neighbours have come for tea.",
               "voice": "hamo",
               "new": [
                 {"ku": "stêrk", "en": "star", "pos": "noun", "gender": "f", "forms": ["stêrk", "stêrkên", "stêrkan", "stêrkek", "stêrka", "stêrkê", "stêrkeke"]},
@@ -1927,7 +1927,7 @@
               "titleKu": "Berî Newrozê",
               "titleEn": "Before Newroz",
               "focus": "review",
-              "beat": "Hamo’s parents are at the table, the new clothes are laid out, the firewood is stacked on the hill. Everybody says what they will do tomorrow, and Hamo says he will lead the govend, if his knees allow, and that they will.",
+              "beat": "The neighbours are at the table, the new clothes are laid out, the firewood is stacked on the hill. Everybody says what they will do tomorrow, and Hamo says he will lead the govend, if his knees allow, and that they will.",
               "voice": "hamo",
               "new": []
             }
@@ -1946,7 +1946,7 @@
               "titleKu": "Agirê Newrozê",
               "titleEn": "The Newroz fire",
               "focus": "meet",
-              "beat": "Newroz morning: rain, then sun. The whole village climbs the hill for the picnic, Hamo’s parents with them. At dusk Hamo lights the fire, and the young people jump over it one by one in the smoke, wishing each other health. Hamo jumps too, carefully, holding his moustache out of the way.",
+              "beat": "Newroz morning: rain, then sun. The whole village climbs the hill for the picnic. At dusk Hamo lights the fire, and the young people jump over it one by one in the smoke, wishing each other health. Hamo jumps too, carefully, holding his moustache out of the way.",
               "voice": "hamo",
               "new": [
                 {"ku": "vêxistin", "en": "to light (a fire), to switch on", "pos": "verb", "forms": ["vêxistin", "vêdixim", "vêdixî", "vêdixe", "vêdixin", "vêxim", "vêxe", "vêxin"]},
@@ -1961,10 +1961,10 @@
             {
               "key": "u07s4l2",
               "position": 2,
-              "titleKu": "Bilûra bavê min",
-              "titleEn": "My father’s flute",
+              "titleKu": "Hêsirên xweşiyê",
+              "titleEn": "Tears of joy",
               "focus": "build",
-              "beat": "By the dying fire Ibrahîm takes out his old shepherd’s flute and plays the song he once promised Hamo and Lorîn. Then he puts the flute into his son’s hands: keep the song going. Edûl wipes away a tear and blames the smoke; so does Hamo. This is life, he tells you quietly. Then he tries the flute: a terrible squeak, Hevalo bolts, and everyone laughs until they cry.",
+              "beat": "By the dying fire Baran’s uncle plays the zurna and the children sing. Then Hamo takes out a shepherd’s flute: a terrible squeak, Hevalo bolts, and everyone laughs until tears of joy come. This is life, Hamo tells you, wiping his eyes, and he wishes everyone health and success in the new year.",
               "voice": "hamo",
               "new": [
                 {"ku": "bilûr", "en": "shepherd’s flute", "pos": "noun", "gender": "f", "forms": ["bilûr", "bilûrên", "bilûran", "bilûrek", "bilûra", "bilûrê", "bilûreke"]},
@@ -1982,7 +1982,7 @@
               "titleKu": "Pişta min!",
               "titleEn": "My back!",
               "focus": "talk",
-              "beat": "The next morning, after a whole night of govend, Hamo cannot get out of bed. His parents set off back to Kobanî, and he waves from the pillow. “Pişta min diêşe!” Where is the pain? Everywhere. Is it bad? Very bad, he says, and asks you for tea, honey and sympathy, in that order.",
+              "beat": "The next morning, after a whole night of govend, Hamo cannot get out of bed. “Pişta min diêşe!” Where is the pain? Everywhere. Is it bad? Very bad, he says, and asks you for tea, honey and sympathy, in that order.",
               "voice": "hamo",
               "new": [
                 {"ku": "pişt", "en": "back (of the body)", "pos": "noun", "gender": "f", "forms": ["pişt", "piştên", "piştan", "piştek", "pişta", "piştê", "pişteke"]},
@@ -1997,7 +1997,7 @@
               "titleKu": "Newroz pîroz be!",
               "titleEn": "Happy Newroz!",
               "focus": "review",
-              "beat": "Hamo, from his bed, tells everyone who comes to see him about Newroz: the fire, the flute, the govend, the speech nobody heard. His mother phones from the road to ask about his back; he says it is a little better, which is almost true.",
+              "beat": "Hamo, from his bed, tells everyone who comes to see him about Newroz: the fire, the flute, the govend, the speech nobody heard. Nazê phones to ask about his back; he says it is a little better, which is almost true.",
               "voice": "hamo",
               "new": []
             }
@@ -2062,7 +2062,7 @@
               "titleKu": "Diranê min",
               "titleEn": "My tooth",
               "focus": "talk",
-              "beat": "Doctor Azad arrives with his old leather bag. Does Hamo need the hospital in the town? Hamo sits up at once: no, he is much better. While the doctor listens to his chest, Hamo tells you about the tooth he had out in Kobanî, and the time he fell off Bozo and hurt his whole body, and the doctor waits, very patiently, for him to stop.",
+              "beat": "Doctor Azad arrives with his old leather bag. Does Hamo need the hospital in the town? Hamo sits up at once: he does not want to go! Then his tooth hurts, and his chest, and his whole body, so that he cannot get up, and while the doctor listens to his chest, Hamo talks and talks, and the doctor waits, very patiently, for him to stop.",
               "voice": "hamo",
               "new": [
                 {"ku": "diran", "en": "tooth", "pos": "noun", "gender": "m", "forms": ["diran", "diranên", "diranan", "diranek", "diranê", "diranekî", "diranî"]},
@@ -2166,7 +2166,7 @@
               "titleKu": "Kî mezintir e?",
               "titleEn": "Who is older?",
               "focus": "meet",
-              "beat": "Back on his feet, Hamo compares everyone in the house and the lane: who is taller, older, cleverer. Lorîn’s eldest is sixteen and her second seventeen, no, the other way round; Hamo phones Kobanî to check. He himself, he says, is the cleverest of all, and his moustache the longest, though his patience is a little short.",
+              "beat": "Back on his feet, Hamo compares everyone in the house and the lane: who is taller, older, cleverer. Baran is older than Hêvî; the girl next door is sixteen and her brother seventeen, no, the other way round, and Hamo goes round to ask. He himself, he says, is the cleverest of all, and his moustache the longest, though his patience is a little short.",
               "voice": "hamo",
               "new": [
                 {"ku": "-tir", "en": "more, -er (the comparative: mezintir)", "pos": "particle", "forms": ["mezintir", "biçûktir", "baştir", "xweştir", "germtir", "sartir", "dirêjtir", "kintir", "zûtir", "bilindtir", "nêzîktir", "dûrtir", "erzantir", "bihatir", "girantir", "xweşiktir", "kevntir", "nûtir", "bihêztir", "lawaztir", "jîrtir"]},
@@ -2255,7 +2255,7 @@
               "titleKu": "Ez tê digihîjim",
               "titleEn": "I understand",
               "focus": "build",
-              "beat": "Baran sits alone on the flat roof. Hamo climbs up, slowly, his back complaining at every rung, and sits beside him without a word, the way his own father used to. Then he talks quietly: about trust, about how a secret is heavy to carry alone and lighter when you share it, about the truth being better than a lie, even a small one. Baran listens.",
+              "beat": "Baran sits alone on the flat roof. Hamo climbs up, slowly, his back complaining at every rung, and sits beside him without a word. Then he talks quietly: about trust, about how a secret is heavy to carry alone and lighter when you share it, about the truth being better than a lie, even a small one. Baran listens.",
               "voice": "hamo",
               "new": [
                 {"ku": "bawerî", "en": "trust; belief", "pos": "noun", "gender": "f", "forms": ["bawerî", "baweriyên", "baweriyan", "baweriyek", "baweriya", "baweriyê", "baweriyeke"]},
@@ -2273,7 +2273,7 @@
               "titleKu": "Beranê winda",
               "titleEn": "The lost ram",
               "focus": "talk",
-              "beat": "By the stove Hamo tells a story from his childhood: at eight he lost his father’s best ram on Miştenûr and hid behind a rock all day, afraid to go home, a coward, he thought. In the evening he told his father everything, and his father called him brave. (The ram came home by itself.) Brave people, Hamo says, are the ones who tell. He asks you what you think Baran will do.",
+              "beat": "By the stove Hamo tells a story from his childhood: at eight he lost the neighbour’s best ram in the melting snow and hid behind a rock all day, afraid to go home, a coward, he thought. In the evening he told the neighbour the truth, and the neighbour called him honest and brave. (The ram came home by itself.) Brave people, you tell Hamo, are the ones who tell the truth.",
               "voice": "hamo",
               "new": [
                 {"ku": "wêrek", "en": "brave", "pos": "adj", "forms": ["wêrek"]},
