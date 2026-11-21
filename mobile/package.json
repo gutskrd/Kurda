@@ -7,7 +7,7 @@
     "dev": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "lint": "eslint App.tsx app.config.ts src && node ../scripts/check-hardcoded-english.mjs mobile && node scripts/generate-icon-paths.mjs --check && node scripts/check-surface-style.mjs && node scripts/check-reach.mjs && node ../scripts/check-design-rules.mjs mobile",
+    "lint": "eslint App.tsx app.config.ts src modules && node ../scripts/check-hardcoded-english.mjs mobile && node scripts/generate-icon-paths.mjs --check && node scripts/check-surface-style.mjs && node scripts/check-reach.mjs && node ../scripts/check-design-rules.mjs mobile",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "web": "expo start --web --port 8081"
@@ -53,6 +53,7 @@
   },
   "main": "index.ts",
   "devDependencies": {
-    "@types/react": "~19.2.18"
+    "@types/react": "~19.2.18",
+    "canvaskit-wasm": "^0.40.0"
   }
 }

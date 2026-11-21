@@ -160,11 +160,13 @@
    */
   --shadow-control: 0 2px 8px rgba(0, 0, 0, 0.1);
   --shadow-raised: 0 6px 16px rgba(0, 0, 0, 0.12);
-  /* liquid glass on the floating chrome (glass.css): its tint, the light on its rim (near side, far side) and its lift */
-  --glass-tint: rgba(39, 36, 58, 0.58);
-  --glass-rim: rgba(255, 255, 255, 0.32);
-  --glass-rim-far: rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  /* liquid glass on the floating chrome (glass.css; its graded tint is drawn by glass/lens.ts): any tint under that,
+     how it lifts the colours behind it, and its lift off the page; where a browser cannot bend the page, the tint is
+     deeper so words behind never fight the chrome's */
+  --glass-tint: transparent;
+  --glass-tint-still: rgba(30, 27, 46, 0.5);
+  --glass-optics: saturate(1.7) brightness(0.92);
+  --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(255, 255, 255, 0.1);
 
   /* layout */
   --container: 1120px;
@@ -259,10 +261,10 @@
   --shadow-lg: 0 24px 64px rgba(46, 40, 74, 0.16);
   --shadow-control: 0 2px 8px rgba(46, 40, 74, 0.1);
   --shadow-raised: 0 6px 16px rgba(46, 40, 74, 0.12);
-  --glass-tint: rgba(255, 255, 255, 0.6);
-  --glass-rim: rgba(255, 255, 255, 0.95);
-  --glass-rim-far: rgba(255, 255, 255, 0.55);
-  --glass-shadow: 0 8px 24px rgba(46, 40, 74, 0.1), 0 0 0 0.5px rgba(46, 40, 74, 0.08);
+  --glass-tint: transparent;
+  --glass-tint-still: rgba(255, 255, 255, 0.55);
+  --glass-optics: saturate(1.8) brightness(1.08);
+  --glass-shadow: 0 10px 30px rgba(46, 40, 74, 0.12), 0 0 0 0.5px rgba(46, 40, 74, 0.08), inset 0 0 0 0.5px rgba(255, 255, 255, 0.5);
 
   color-scheme: light;
 }

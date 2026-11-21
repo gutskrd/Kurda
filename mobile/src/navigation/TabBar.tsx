@@ -83,7 +83,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   return (
     <View pointerEvents="box-none" style={[styles.dock, { bottom: tabBarLift(insets.bottom) }]}>
       <View style={[styles.bar, ...glass]}>
-        <GlassFill />
+        <GlassFill lift="raised" />
         <View
           style={[styles.row, { flexDirection: dir.row }]}
           accessibilityRole="tablist"

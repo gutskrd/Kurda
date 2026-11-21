@@ -105,6 +105,8 @@ export interface Palette {
   /** The line of light round that floating shape's edge, on its upper side and on the rest (LiquidGlass.tsx). */
   glassRim: string;
   glassRimFar: string;
+  /** The breath of tint on clear glass that bends the page, so the words on it stay readable. */
+  glassTint: string;
 
   /*
    * Gold for text, which is not gold for fills. The sun's gold (`gold`) reads as text on the dark page, but is 1.9:1
@@ -169,6 +171,7 @@ export const LIGHT: Palette = {
   barFill: '#FFFFFF',
   glassRim: 'rgba(255,255,255,0.9)',
   glassRimFar: 'rgba(20,17,46,0.07)',
+  glassTint: 'rgba(255,255,255,0.22)',
   goldText: '#14112E',
 };
 
@@ -225,6 +228,7 @@ export const DARK: Palette = {
   barFill: '#27243A',
   glassRim: 'rgba(255,255,255,0.3)',
   glassRimFar: 'rgba(255,255,255,0.1)',
+  glassTint: 'rgba(30,27,46,0.3)',
   goldText: '#F3F1FB',
 };
 

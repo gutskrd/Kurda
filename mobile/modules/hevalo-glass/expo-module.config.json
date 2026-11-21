@@ -1,0 +1,6 @@
+{
+  "platforms": ["android"],
+  "android": {
+    "modules": ["app.hevalo.glass.HevaloGlassModule"]
+  }
+}
