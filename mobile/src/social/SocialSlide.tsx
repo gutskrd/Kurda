@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Animated, Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ import { bucket, type RailFriend, type SocialRailData } from './rail';
 import { elapsed, lastSeen } from './time';
 import { Loading } from '../theme/Loading';
 import { useDirection } from '../reports/direction';
+import { pageWidth } from '../theme/pageWidth';
 
 const WIDTH_RATIO = 0.86;
 
@@ -48,7 +49,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   const [data, setData] = useState<SocialRailData | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
+  const width = Math.round(pageWidth() * WIDTH_RATIO);
   // How far it is from open towards its edge: 0 is open, `width` is gone.
   const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign });
 

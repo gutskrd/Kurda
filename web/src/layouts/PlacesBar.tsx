@@ -1,44 +1,13 @@
-import { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { UserIcon } from '../components/icons';
 import { countLabel, type NavItem } from '../components/TopNav';
 import { useT } from '../i18n/I18nProvider';
 import { useGlass } from '../glass/useGlass';
+import { useWordFit } from '../lib/useWordFit';
 
-/** How far the words may shrink together on a narrow phone before the longest is cut short instead. */
+/** How far the words may shrink together before the longest is cut short instead. */
 const WORD_MIN_FIT = 0.6;
-
-/**
- * The share of the text size every place's word is drawn at: 1 where the longest, in its heavier chosen weight, fits its
- * share of the bar, and less, for all of them together, where it does not. Measured on a canvas, so nothing on the page
- * is laid out twice; without one the words keep their size and the longest is cut short.
- */
-function useWordFit(words: readonly string[]): [React.RefObject<HTMLUListElement | null>, number] {
-  const list = useRef<HTMLUListElement>(null);
-  const [fit, setFit] = useState(1);
-  const key = words.join('\n');
-  useLayoutEffect(() => {
-    const el = list.current;
-    const pen = typeof OffscreenCanvas === 'undefined' ? null : new OffscreenCanvas(1, 1).getContext('2d');
-    if (!el || !pen) return;
-    const measure = () => {
-      // A place's own type, at the full text size the words are shrunk from.
-      const style = getComputedStyle(el.querySelector('.places-link') ?? el);
-      pen.font = `600 ${style.fontSize} ${style.fontFamily}`;
-      const widest = Math.max(...key.split('\n').map((w) => pen.measureText(w).width));
-      // Each place's share, less the word's own padding.
-      const room = el.clientWidth / Math.max(1, words.length) - 4;
-      if (widest > 0 && room > 0) setFit(Math.max(WORD_MIN_FIT, Math.min(1, room / widest)));
-    };
-    measure();
-    void document.fonts?.ready.then(measure);
-    const watch = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
-    watch?.observe(el);
-    return () => watch?.disconnect();
-  }, [key, words.length]);
-  return [list, fit];
-}
 
 /**
  * The phone's bar of places (`useNavLinks`), floating and solid over the bottom of the window like the phone app's
@@ -59,7 +28,10 @@ export function PlacesBar({ links }: { links: readonly NavItem[] }): React.JSX.E
     status === 'signedIn' ? links : [...links, { key: 'login', label: t('nav.login'), to: '/login', icon: <UserIcon size={22} /> }];
   // counted from the reading edge; the styles turn it into a place along the bar, in either direction
   const at = items.findIndex((l) => l.owns?.(pathname));
-  const [list, fit] = useWordFit(items.map((l) => l.label));
+  // Every place's word at one size, smaller together on a narrow phone where the longest would not fit; past that floor
+  // the longest is cut short.
+  const [list, wordFit] = useWordFit<HTMLUListElement>(items.map((l) => l.label), { typeOf: '.places-link', weight: 600, inset: 4 });
+  const fit = Math.max(WORD_MIN_FIT, wordFit);
 
   return (
     <nav ref={glass} className="places-bar glass" aria-label={t('nav.primary')}>

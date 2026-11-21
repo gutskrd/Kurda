@@ -887,7 +887,9 @@
 /* ---- typing a code in (play/JoinCode.tsx) ---------------------------------------- */
 /* Six boxes drawn over one invisible real field of the same size, so a tap anywhere lands in it; the active box is gold. */
 .code-entry {
-  --box: clamp(40px, 11vw, 52px);
+  /* six boxes and the gaps between them share the field's own width, so they fit the narrowest card */
+  container-type: inline-size;
+  --box: clamp(30px, calc((100cqi - 50px) / 6), 52px);
   display: grid;
   justify-items: center;
   gap: var(--space-3);
@@ -935,6 +937,16 @@
   margin-inline: 2px;
   border-radius: 2px;
   background: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+/* a folded phone's cover screen: the boxes stand closer, so six of the smallest still fit */
+@container (max-width: 240px) {
+  .code-boxes {
+    gap: 3px;
+  }
+  .code-boxes-gap {
+    width: 6px;
+    margin-inline: 1px;
+  }
 }
 .code-box {
   position: relative;

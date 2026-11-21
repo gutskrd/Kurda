@@ -8,6 +8,7 @@ import { Button } from '../components/Button';
 import { Skeleton } from '../components/Skeleton';
 import { CheckIcon, ChevronIcon } from '../components/icons';
 import { BirdBadge } from '../letters/LetterParts';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { BIRD_NAMES } from '../letters/BirdPicker';
 import { LETTERS_HOME_PATH } from '../letters/useLettersHome';
 import { BuyConfirm } from './BuyConfirm';
@@ -93,6 +94,8 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
   const t = useT();
   const locale = useLocale();
   const ids = useId().replace(/[^A-Za-z0-9_-]/g, '');
+  // Four birds to a row fit the narrowest phones a little smaller, still a finger wide.
+  const birdSize = useMediaQuery('(max-width: 340px)') ? 40 : 52;
   const [picked, setPicked] = useState<number | null>(null);
   const [asking, setAsking] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -115,7 +118,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
             <Skeleton line w="62%" style={{ marginTop: 8 }} />
             <div className="yours-birds yours-birds--waiting">
               {LETTER_BIRD_ORDER.map((bird) => (
-                <Skeleton key={bird} circle size={52} />
+                <Skeleton key={bird} circle size={birdSize} />
               ))}
             </div>
           </div>
@@ -225,7 +228,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
                     setWon(null);
                   }}
                 />
-                <BirdBadge bird={bird} size={52} />
+                <BirdBadge bird={bird} size={birdSize} />
                 <span className="sr-only">{mine ? t('letters.bird.yours', { name: name(bird) }) : name(bird)}</span>
                 {mine && (
                   <span className="yours-bird-mine" aria-hidden="true">

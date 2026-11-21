@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import Svg, { Circle } from 'react-native-svg';
 import { STORY_DIALECTS, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
@@ -40,6 +40,7 @@ import { LoreEntry } from '../lore/LoreEntry';
 import { textIn } from '../lore/labels';
 import { metaFor } from './legend';
 import { dialectNameKey } from '../i18n/dialectName';
+import { usePageWidth } from '../theme/pageWidth';
 
 /** Applies a `me` change to a story in a list, so a bookmark flips everywhere at once. */
 function withMe(list: StoryListItem[], id: string, patch: (me: StoryListItem['me']) => StoryListItem['me']): StoryListItem[] {
@@ -77,7 +78,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
   const { prefs, ready, update } = useStoryPrefs();
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   // The one variety on show: what the switch says and this phone remembers.
   const dialect = shownDialect(locale, prefs.dialect);
 

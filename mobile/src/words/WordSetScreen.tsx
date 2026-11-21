@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import {
   NEWROZ,
   RELATIVE_DAYS,
@@ -43,6 +43,7 @@ import { useWordsSeen } from './seen';
 import { WordPractice } from './WordPractice';
 import { WordSheet } from './WordSheet';
 import { dialectNameKey } from '../i18n/dialectName';
+import { usePageWidth } from '../theme/pageWidth';
 
 const DIALECTS: readonly AlphabetScript[] = ['kmr', 'ckb'];
 
@@ -83,7 +84,7 @@ export function WordSetScreen({ set, script: asked, onExit }: { set: WordSetId; 
   const dir = useDirection();
   const reduceMotion = useReducedMotion();
   const bottom = useScreenBottomInset(spacing.xl);
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const fontScale = useFontScale();
   const grid = wordGrid(Math.min(width, layout.column) - layout.gutter * 2, set, fontScale);
 

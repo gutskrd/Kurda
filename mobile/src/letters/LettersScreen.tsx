@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   BIRD_OUT_DAYS,
   LETTER_FLIGHT,
@@ -61,6 +61,7 @@ import { LetterWidgetButton } from '../widget/LetterWidgetButton';
 import { HeldNote, PictureRefusal } from '../pictures/PictureReview';
 import { HeldNotice, useAccountHeld } from '../reports/HeldNotice';
 import { isHeld, rejectionOf } from '../pictures/review';
+import { usePageWidth } from '../theme/pageWidth';
 
 /** The window's maximum width; below it, the screen's width decides. */
 const WINDOW_MAX = 300;
@@ -111,7 +112,7 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
   const { colors } = useTheme();
   const dir = useDirection();
   const reduce = useReducedMotion();
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const home = useLettersHome();
   const data = home.read?.data ?? null;
   const who = user?.id ?? null;

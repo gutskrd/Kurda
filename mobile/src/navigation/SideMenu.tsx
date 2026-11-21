@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext } from 'react';
-import { Animated, Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -11,6 +11,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 import { useEdgePanel } from './edgePanel';
+import { pageWidth } from '../theme/pageWidth';
 
 /**
  * How much of the screen the panel covers. The strip left over shows the app is still behind it, and a tap there closes
@@ -57,7 +58,7 @@ export function SideMenu({
   const fromRight = (side === 'end') !== (dir.row === 'row-reverse');
   const sign = fromRight ? 1 : -1;
   const insets = useSafeAreaInsets();
-  const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
+  const width = Math.round(pageWidth() * WIDTH_RATIO);
   // The motion every edge panel shares: the interface spring, a drag to close, and Android's back.
   const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign });
 

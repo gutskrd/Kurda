@@ -98,7 +98,8 @@ export function UnitPin({
   const land = pathLand(unit.number - 1);
   // The road below shows the chapter's landmark, and the buttons stand at the far end, so the banner is its sky and hills.
   const art = useMemo(
-    () => (box ? { __html: chapterBannerSvg({ ground: land.ground, width: box.width, height: box.height, dark, rtl, idPrefix: `lppin${unit.number}` }) } : null),
+    // A hidden view measures at no size at all; the art waits for a real one.
+    () => (box && box.width > 0 && box.height > 0 ? { __html: chapterBannerSvg({ ground: land.ground, width: box.width, height: box.height, dark, rtl, idPrefix: `lppin${unit.number}` }) } : null),
     [box, land.ground, dark, rtl, unit.number],
   );
   return (

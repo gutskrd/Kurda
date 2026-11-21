@@ -29,6 +29,7 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { ReportSheet } from '../reports/ReportSheet';
 import { pressedDim } from '../theme/motion';
 import { HeldNote } from '../pictures/PictureReview';
+import { usePageWidth } from '../theme/pageWidth';
 
 /** The author's avatar: big enough to recognise, small enough for one line. */
 const AUTHOR = 32;
@@ -424,7 +425,8 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
 
 /** As many posts as reach the foot of the screen, the way the wall lays them out. */
 export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const width = usePageWidth();
   const { t } = useI18n();
   const count = Math.max(2, Math.ceil(height / 200));
   // A few lines of a post run to two on a phone and fit on one across a tablet.

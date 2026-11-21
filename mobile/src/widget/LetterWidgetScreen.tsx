@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image, PixelRatio, Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, PixelRatio, Platform, StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { DEFAULT_PAPER, letterBirdSvg, letterPaperSvg, paperColors, type WidgetSettings } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -19,6 +19,7 @@ import { loadWidgetSettings, saveWidgetPrefs } from './prefs';
 import { readWidgetConfig } from './storage';
 import { widgetDate, widgetText } from './strings';
 import { removeEveryWidget } from './tokens';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * The letter widget's settings page, opened from the letters screen's header.
@@ -147,7 +148,7 @@ function WidgetSettingsBody({
 }): React.JSX.Element {
   const { t } = useI18n();
   const { colors } = useTheme();
-  const { width: screen } = useWindowDimensions();
+  const screen = usePageWidth();
   const width = Math.max(PREVIEW_MIN, Math.min(PREVIEW_MAX, screen - layout.gutter * 2));
   const iphone = (
     <HowToAdd

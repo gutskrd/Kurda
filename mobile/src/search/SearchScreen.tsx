@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { matchedParts } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import { useAuth } from '../auth/AuthContext';
@@ -37,6 +37,7 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { DiscoverGrid } from './DiscoverGrid';
 import { heldDim } from '../theme/MotionParts';
+import { usePageWidth } from '../theme/pageWidth';
 
 interface UserRow {
   userId: string;
@@ -104,7 +105,7 @@ export function SearchScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   // How many pictures the grid found (null while loading); with none, the empty state suggests where to start.
   const [discovered, setDiscovered] = useState<number | null>(null);
-  const { width: screenWidth } = useWindowDimensions();
+  const screenWidth = usePageWidth();
   // People you may know are loading, so their place is held rather than flashing the empty prompt.
   const [suggestionsSettled, setSuggestionsSettled] = useState(false);
 

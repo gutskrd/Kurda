@@ -1,6 +1,6 @@
 import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { gameOfTheDay, type IncomingInvite } from '@kurda/shared';
@@ -30,6 +30,7 @@ import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GAME_CARDS, GAME_MEANING, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
 import { GameArt } from '../games/GameArt';
 import { GameStamp } from '../games/GameStamp';
+import { usePageWidth } from '../theme/pageWidth';
 
 type Mode = GameMode;
 type Way = GameWay;
@@ -76,7 +77,7 @@ export function GamesView({
   const { t } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
-  const { width: windowWidth } = useWindowDimensions();
+  const windowWidth = usePageWidth();
   // Two stamps to a row, three where there is room; never wider than a reading column, nor narrower than the
   // narrowest phone, which a window reports before it is measured.
   const column = Math.max(NARROWEST, Math.min(windowWidth, layout.column)) - layout.gutter * 2;

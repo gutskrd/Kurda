@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { Animated, Easing, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, Easing, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import {
@@ -49,6 +49,7 @@ import { healthName, stageName, treeAbout, treeNamed, treeTitle } from './names'
 import { TreeArt, WaterDrop, WateringCan } from './TreeArt';
 import { TreePicture, TreeSeasonAmbient, TreeStudioScene, studioColour, treePlace } from './TreeScene';
 import { useTreeSeason } from './season';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * How long the can pours before the screen shows the water's effect, and how long a growing tree is watched
@@ -87,7 +88,7 @@ export function TreeScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const dir = useDirection();
   const reduce = useReducedMotion();
   const season = useTreeSeason();
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const [data, setData] = useState<MyTree | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [missing, setMissing] = useState(false);

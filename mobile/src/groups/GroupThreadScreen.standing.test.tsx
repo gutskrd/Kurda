@@ -77,7 +77,7 @@ describe('opening a group one is banned from', () => {
     expect(screen.queryByRole('button', { name: 'Chat options' })).toBeNull();
     expect(screen.queryByText(/members/)).toBeNull();
     // Nothing to send from outside the group.
-    expect(screen.queryByLabelText('Write a message…')).toBeNull();
+    expect(screen.queryByLabelText('Message')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Ask to come back' }));
     const note = await screen.findByLabelText('A note (optional)');
     expect(screen.getByText('The admins will see this')).toBeTruthy();
@@ -175,7 +175,7 @@ describe('opening a group one is not in', () => {
     expect(screen.getAllByText('Group not found').length).toBeGreaterThan(0);
     // No way in, no chat, and no page of the group to open.
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
-    expect(screen.queryByLabelText('Write a message…')).toBeNull();
+    expect(screen.queryByLabelText('Message')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Group info' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Chat options' })).toBeNull();
     expect(client.calls.some((c) => c.path === '/groups/g1/join')).toBe(false);
@@ -200,7 +200,7 @@ describe('opening a group one is not in', () => {
       fireEvent.click(send);
     });
     expect(await screen.findByText('This is the start of Newroz club')).toBeTruthy();
-    expect(screen.getByLabelText('Write a message…')).toBeTruthy();
+    expect(screen.getByLabelText('Message')).toBeTruthy();
   });
 });
 
@@ -218,7 +218,7 @@ describe('being removed or banned while the chat is open', () => {
       },
     });
     await screen.findByText('Silav');
-    fireEvent.change(screen.getByLabelText('Write a message…'), { target: { value: 'Ez jî' } });
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Ez jî' } });
     const send = screen.getByRole('button', { name: 'Send' });
     await act(async () => {
       fireEvent.click(send);
@@ -228,7 +228,7 @@ describe('being removed or banned while the chat is open', () => {
     expect(await screen.findByText('An admin of the group can add you again.')).toBeTruthy();
     expect(screen.getAllByText('Newroz club').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
-    expect(screen.queryByLabelText('Write a message…')).toBeNull();
+    expect(screen.queryByLabelText('Message')).toBeNull();
     expect(screen.queryByText('Silav')).toBeNull();
   });
 
@@ -243,7 +243,7 @@ describe('being removed or banned while the chat is open', () => {
       },
     });
     await screen.findByText('Silav');
-    fireEvent.change(screen.getByLabelText('Write a message…'), { target: { value: 'Çima?' } });
+    fireEvent.change(screen.getByLabelText('Message'), { target: { value: 'Çima?' } });
     const send = screen.getByRole('button', { name: 'Send' });
     await act(async () => {
       fireEvent.click(send);

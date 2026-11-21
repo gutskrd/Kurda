@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
 import {
   RESULTS_TIMING,
@@ -50,6 +50,7 @@ import { StreakMoment } from './StreakMoment';
 import { PlayDisc } from './ModelButton';
 import { useAudio } from '../useAudio';
 import { CARD } from '../valley';
+import { usePageWidth } from '../../theme/pageWidth';
 
 interface Props {
   results: SessionResults;
@@ -427,7 +428,7 @@ function StatCard({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  const roomy = useWindowDimensions().width >= ICON_ROOM;
+  const roomy = usePageWidth() >= ICON_ROOM;
   const delayMs = RESULTS_TIMING.tilesAtMs + index * RESULTS_TIMING.tileStaggerMs;
   const shown = useCountUp(to, { delayMs: travel ? delayMs : 0 });
   const rise = useRef(new Animated.Value(travel ? 0 : 1)).current;

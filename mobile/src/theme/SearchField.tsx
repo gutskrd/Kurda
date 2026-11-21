@@ -96,6 +96,7 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
   },
   lifted: { borderRadius: radii.pill },
-  input: { flex: 1, fontSize: typography.sizes.text, minHeight: MIN_TOUCH_TARGET, paddingVertical: 0 },
+  // Free to narrow below a browser field's own width, so it never runs past the pill on a narrow phone.
+  input: { flex: 1, minWidth: 0, fontSize: typography.sizes.text, minHeight: MIN_TOUCH_TARGET, paddingVertical: 0 },
   clear: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
 });

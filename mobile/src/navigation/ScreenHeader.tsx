@@ -20,10 +20,10 @@ import { GlobalActions } from './TopBar';
  * cut off at the bar's edge.
  */
 /**
- * How far a title may shrink to fit before it is cut short: the longer Kurmancî game names are a little wider than a
- * narrow phone leaves beside an action.
+ * How far a title may shrink to fit before it is cut short: the longer Kurmancî game names, and any title on a folded
+ * phone's narrow cover screen, are wider than the room beside the actions. At the floor it is the text size.
  */
-const TITLE_FIT = 0.8;
+const TITLE_FIT = 0.6;
 
 /** The room between the way back, the title and the actions; a title that can be pressed shares it with each neighbour. */
 const BAR_GAP = spacing.sm;

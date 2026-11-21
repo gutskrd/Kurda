@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CHEST_HOP_LAND, CHEST_HOP_MS, celebrationPlan, type ChestOpening, type ChestTier } from '@kurda/shared';
@@ -23,6 +23,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { CHEST_RATIO, ChestArt } from './ChestArt';
 import { CHEST_NAME, CHEST_TONE, CLAIM_WORDS, claimProblem, type ClaimProblem } from './model';
+import { usePageWidth } from '../theme/pageWidth';
 
 /** How long one bob of the waiting chest takes, up and back, and how far it goes. */
 const BOB_MS = 1800;
@@ -72,7 +73,7 @@ export function ChestScreen({
   const { t } = useI18n();
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const tone = TONES[scheme][CHEST_TONE[tier]];
   const size = Math.min(220, width * 0.55);
   const [busy, setBusy] = useState(false);

@@ -33,6 +33,7 @@ import { Rise, heldDim } from '../theme/MotionParts';
 import { HevaloPeek } from '../characters/HevaloPeek';
 import { useDirection } from '../reports/direction';
 import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, weekLeftText, zoneRules, type TableItem } from './format';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * The whole league this week, opened from the card at the top of Rankings.
@@ -245,7 +246,7 @@ const LADDER_SIZE = { here: 88, max: 60, min: 36 } as const;
 function Ladder({ tier }: { tier: LeagueTier }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const here = leagueTierIndex(tier);
   const others = LEAGUE_TIERS.length - 1;
   const room = width - 2 * layout.gutter - LADDER_SIZE.here - others * LADDER_GAP;
@@ -377,7 +378,8 @@ function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => void })
  */
 function LeagueSkeleton(): React.JSX.Element {
   const { t } = useI18n();
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const width = usePageWidth();
   const { colors } = useTheme();
   const others = LEAGUE_TIERS.length - 1;
   const size = Math.max(LADDER_SIZE.min, Math.min(LADDER_SIZE.max, Math.floor((width - 2 * layout.gutter - LADDER_SIZE.here - others * LADDER_GAP) / others)));

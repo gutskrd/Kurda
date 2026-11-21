@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import {
   LATIN_LETTERS,
   SORANI_LETTERS,
@@ -38,6 +38,7 @@ import { Practice } from './Practice';
 import { useSeen } from './seen';
 import { useClipPlayer } from './useClipPlayer';
 import { dialectNameKey } from '../i18n/dialectName';
+import { usePageWidth } from '../theme/pageWidth';
 
 const SCRIPTS: readonly AlphabetScript[] = ['kmr', 'ckb'];
 
@@ -93,7 +94,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
   const navigation = useNavigation<RootNavigation>();
   const reduceMotion = useReducedMotion();
   const bottom = useScreenBottomInset(spacing.xl);
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const grid = tileGrid(Math.min(width, layout.column) - layout.gutter * 2);
 
   // A link may ask for either alphabet; anything else it says is ignored.

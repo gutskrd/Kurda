@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useFontScale } from '../a11y/useFontScale';
@@ -12,6 +12,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ToggleRow } from '../theme/Toggle';
 import { layout, radii, spacing, typography } from '../theme/tokens';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * Settings and the app's other lists of rows. Each row shows an icon, a name, the current value and a chevron when a
@@ -98,7 +99,7 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
   const { colors } = useTheme();
   const dir = useDirection();
   const fontScale = useFontScale();
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const ink = destructive ? colors.danger : colors.textPrimary;
   const note = attention ? colors.primary : colors.textSecondary;
   return (

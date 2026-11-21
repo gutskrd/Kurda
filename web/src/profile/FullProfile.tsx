@@ -5,6 +5,7 @@ import { GiftedNote } from './cosmetic-parts';
 import { ProfileCard } from '../ui/ProfileCard';
 import { BookIcon, CalendarIcon, EyeIcon, FeatherIcon, FlameIcon, LockIcon, MedalIcon, UsersIcon, XpIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { useWordFit } from '../lib/useWordFit';
 
 /** Normalized data a Hevalo profile renders (self or another user). */
 export interface FullProfileView {
@@ -52,22 +53,27 @@ export interface ProfileFact {
   onOpen?: () => void;
 }
 
+/** How far the labels may shrink together in one row before four figures stand two by two instead. */
+const FACTS_MIN_FIT = 0.82;
+
 /**
  * A row of up to four figures with their labels; a tile with its own page links there. The label comes first in the
  * markup so screen readers say "Streak, 12 days", while the figure shows first.
  */
 export function ProfileFacts({ facts }: { facts: readonly ProfileFact[] }): React.JSX.Element | null {
+  // The labels at one size in one row, a little smaller together where the longest needs it; where they would have to
+  // shrink further, four figures stand two by two at the full size instead.
+  const [row, fit] = useWordFit<HTMLUListElement>(facts.map((f) => f.label), { typeOf: '.mkp-fact', weight: 600, inset: 16 });
+  const stacked = facts.length === 4 && fit < FACTS_MIN_FIT;
   if (facts.length === 0) return null;
   return (
-    <ul className="mkp-facts">
+    <ul ref={row} className={`mkp-facts${stacked ? ' is-stacked' : ''}`} style={{ '--word-fit': stacked ? 1 : fit } as React.CSSProperties}>
       {facts.map((fact) => {
         const inside = (
           <>
-            <span className="mkp-fact-label">
-              {fact.icon && <span className="mkp-fact-icon">{fact.icon}</span>}
-              {fact.label}
-            </span>
+            <span className="mkp-fact-label">{fact.label}</span>
             <span className="mkp-fact-value" aria-hidden={fact.spoken ? true : undefined}>
+              {fact.icon && <span className="mkp-fact-icon">{fact.icon}</span>}
               {fact.value}
             </span>
             {fact.spoken && <span className="sr-only">{fact.spoken}</span>}

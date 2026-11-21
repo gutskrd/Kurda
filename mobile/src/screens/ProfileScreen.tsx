@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { ActivityIndicator, Image, RefreshControl, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { Pressable, ReachGroup } from '../theme/Pressable';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
@@ -58,6 +58,7 @@ import { Fire } from '../theme/Fire';
 import { pressedDim } from '../theme/motion';
 import { heldDim } from '../theme/MotionParts';
 import type { Visibility } from '../social/format';
+import { usePageWidth } from '../theme/pageWidth';
 
 /** The avatar's size: the largest thing on the screen. */
 const AVATAR = 96;
@@ -144,7 +145,7 @@ function AccountProfile() {
   const { user, client, refreshUser } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { width: windowWidth } = useWindowDimensions();
+  const windowWidth = usePageWidth();
   const tabBarInset = useTabBarInset();
   const openMenu = useOpenMenu();
   const { counts } = useUnread();
@@ -422,6 +423,8 @@ function AccountProfile() {
             <Pressable
               onPress={() => navigation.navigate('SettingsPage', { page: 'visibility' })}
               accessibilityRole="link"
+              // A line of small text, reached for as a finger-sized target.
+              reachSize={{ height: 20 }}
               style={({ pressed }) => [styles.seen, { flexDirection: dir.row }, pressed && heldDim]}
               testID="profile-seen-by"
             >
@@ -432,7 +435,13 @@ function AccountProfile() {
           {me?.bio ? (
             <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{me.bio}</Text>
           ) : me ? (
-            <Pressable onPress={() => navigation.navigate('EditProfile')} accessibilityRole="link" style={({ pressed }) => pressed && heldDim} testID="profile-add-bio">
+            <Pressable
+              onPress={() => navigation.navigate('EditProfile')}
+              accessibilityRole="link"
+              reachSize={{ height: 24 }}
+              style={({ pressed }) => pressed && heldDim}
+              testID="profile-add-bio"
+            >
               <Text style={[styles.addBio, { color: colors.primary }]}>{t('profile.addBio')}</Text>
             </Pressable>
           ) : null}

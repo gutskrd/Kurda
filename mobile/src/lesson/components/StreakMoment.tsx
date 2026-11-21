@@ -51,6 +51,7 @@ import { duration, easeOut } from '../../theme/motion';
 import { useTheme } from '../../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
 import type { Streak } from '../types';
+import { usePageWidth } from '../../theme/pageWidth';
 
 /** Room the flame screen keeps for the day's number, its words and the line under them; and the fire's maximum size. */
 const FLAME_WORDS = 330;
@@ -135,7 +136,8 @@ function unitFor(n: number): TranslationKey {
 function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
-  const { width, height } = useWindowDimensions();
+  const { height } = useWindowDimensions();
+  const width = usePageWidth();
   const day = Math.max(1, streak.current);
   const [fire] = useState(() => flameMoment(day));
   // The one celebration plays as it lights, or on a growth day as the growth lands.

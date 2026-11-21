@@ -238,7 +238,7 @@ describe('bringing friends into a group', () => {
     // Closing reads the group again, for whoever was added, and leaves its chat.
     await waitFor(() => expect(asked()).toBe(before + 1));
     expect(screen.getByText('This is the start of Newroz club')).toBeTruthy();
-    expect(screen.getByLabelText('Write a message…')).toBeTruthy();
+    expect(screen.getByLabelText('Message')).toBeTruthy();
   });
 
   it('tells a new group’s owner with no friends yet so, with the way to find people, not an empty sheet', async () => {

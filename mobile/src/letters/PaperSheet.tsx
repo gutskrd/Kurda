@@ -1,5 +1,5 @@
 import { memo, useMemo, useState } from 'react';
-import { StyleSheet, Text, View, useWindowDimensions, type GestureResponderHandlers, type TextStyle, type ViewStyle } from 'react-native';
+import { StyleSheet, Text, View, type GestureResponderHandlers, type TextStyle, type ViewStyle } from 'react-native';
 import Svg, { Path, SvgXml } from 'react-native-svg';
 import {
   DEFAULT_PAPER,
@@ -31,6 +31,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { fontScaleCap, layout, radii, typography } from '../theme/tokens';
 import { Icon } from '../theme/Icon';
 import { DRAWING_DEEPEST, NOTE_WIDTH, WRITING_TOP, pagesFor, writingInsets } from './paperKit';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * A sheet of letter paper, as read and as written on (LetterComposer.tsx): the paper from the shared picture
@@ -92,7 +93,7 @@ export function describePaper(t: Translate, decor: { paper: LetterPaper; strokes
 
 /** A sheet's width before layout reports it: the screen width inside its gutters, or a phone's where there is no screen (tests). */
 export function useSheetWidth(): [number, (w: number) => void] {
-  const { width: screen } = useWindowDimensions();
+  const screen = usePageWidth();
   const [measured, setMeasured] = useState(0);
   const guess = screen > 0 ? screen - layout.gutter * 2 : 340;
   return [measured > 0 ? measured : guess, setMeasured];

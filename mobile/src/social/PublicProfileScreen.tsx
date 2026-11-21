@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Image, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Image, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
@@ -42,6 +42,7 @@ import { PlayWithButton } from '../play/PlayWithButton';
 import { useAnnouncer } from '../stories/ui';
 import { useDirection } from '../reports/direction';
 import { TicketSlip } from './FriendTicket';
+import { usePageWidth } from '../theme/pageWidth';
 
 interface Profile {
   userId: string;
@@ -103,7 +104,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const facts = useFacts();
   // In right-to-left languages the numbers start on the right, as reading does.
   const dir = useDirection();
-  const { width: windowWidth } = useWindowDimensions();
+  const windowWidth = usePageWidth();
   const [profile, setProfile] = useState<Profile | null>(null);
   // Gone or hidden from you, or an account that is suspended or banned, which is said as that.
   const [notFound, setNotFound] = useState<false | 'profile' | 'account'>(false);

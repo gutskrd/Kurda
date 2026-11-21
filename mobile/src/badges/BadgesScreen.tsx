@@ -43,6 +43,7 @@ import {
   unitWord,
 } from './format';
 import { pressedDim } from '../theme/motion';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * Badges: every badge by family, the tier reached, progress to the next ("7 / 30 days"), secrets as "???" until
@@ -55,7 +56,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const { width } = useWindowDimensions();
+  const width = usePageWidth();
   const [data, setData] = useState<BadgesResponse | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [open, setOpen] = useState<BadgeView | null>(null);

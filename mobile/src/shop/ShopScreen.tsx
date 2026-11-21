@@ -57,6 +57,7 @@ import { FrameArt } from './FrameArt';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SEARCH_MAX, SortChip, ToggleChip } from './ItemFilters';
 import { YourBird, useLettersHome } from './YourBird';
 import { YourTree, useShopTree } from './YourTree';
+import { useNarrowPage } from '../theme/pageWidth';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -84,6 +85,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
+  // A folded phone's cover screen leaves the title little room beside the purse.
+  const narrow = useNarrowPage();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
   // Whether the purse has been read: until it has, the bird and the tree go by the Zêr their own reads report.
@@ -240,7 +243,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           leading="close"
           style={stuck ? { backgroundColor: colors.background } : null}
           right={
-            // Each balance names its currency, so the second is not a number nobody can place.
+            // Each balance names its currency, so the second is not a number nobody can place; on the narrowest phones the
+            // coin and the gem alone name them, leaving the title room.
             <View style={styles.balances}>
               <View style={styles.balanceChip} accessible accessibilityLabel={`${formatNumber(balances.zer, locale)} Zêr`}>
                 <Icon name="coin" size={18} color={colors.gold} />
@@ -249,7 +253,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 ) : (
                   <Counted value={balances.zer} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
-                <Text style={[styles.balanceUnit, { color: colors.textSecondary }]}>Zêr</Text>
+                {narrow ? null : <Text style={[styles.balanceUnit, { color: colors.textSecondary }]}>Zêr</Text>}
               </View>
               <View style={styles.balanceChip} accessible accessibilityLabel={`${formatNumber(balances.gems, locale)} ${t('gift.picker.gems')}`}>
                 <Icon name="gem" size={18} color={colors.primary} />
@@ -258,7 +262,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 ) : (
                   <Counted value={balances.gems} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
-                <Text style={[styles.balanceUnit, { color: colors.textSecondary }]}>{t('gift.picker.gems')}</Text>
+                {narrow ? null : <Text style={[styles.balanceUnit, { color: colors.textSecondary }]}>{t('gift.picker.gems')}</Text>}
               </View>
             </View>
           }

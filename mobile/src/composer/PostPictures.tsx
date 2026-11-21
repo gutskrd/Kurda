@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FlatList, Image, StyleSheet, Text, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import { FlatList, Image, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Pressable } from '../theme/Pressable';
 import type { FeedImage } from '@kurda/shared';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -7,6 +7,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { heldDim } from '../theme/MotionParts';
+import { usePageWidth } from '../theme/pageWidth';
 
 /**
  * A post's pictures, one to four. One picture keeps its own shape within limits (a tall photo cut to 4:5, a panorama to
@@ -131,7 +132,7 @@ function Swiped({
   mirror: boolean;
 }): React.JSX.Element {
   // Inside the page's margins: the phone's width less those until the post has been measured.
-  const screen = useWindowDimensions().width;
+  const screen = usePageWidth();
   const [measured, setMeasured] = useState(0);
   const width = measured || Math.min(MAX_WIDTH, screen - 2 * layout.gutter);
   const ratio = singleRatio(images[0]!);

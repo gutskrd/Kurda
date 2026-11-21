@@ -89,6 +89,12 @@
     justify-content: space-between;
   }
 }
+/* On the narrowest phones the birds are drawn smaller (YourBird.tsx) and stand closer, so four still fit a row. */
+@media (max-width: 340px) {
+  .yours-birds {
+    gap: 10px 4px;
+  }
+}
 .yours-birds--waiting {
   margin-bottom: 4px;
 }

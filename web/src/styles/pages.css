@@ -1707,10 +1707,14 @@ button.chat-run-avatar:hover {
   flex: 1;
   min-width: 0;
   resize: none;
-  /* one line sits in the middle of the field, which stands as tall as the Send beside it */
-  min-height: 38px;
-  max-height: 132px;
-  padding: 8px 0;
+  /* one line sits in the middle of the field, which stands as tall as the Send beside it; the box reaches over the
+     field's own padding, so a tap anywhere in the pill but Send lands in it */
+  min-height: 44px;
+  max-height: 138px;
+  margin: -3px 0;
+  margin-inline-start: -16px;
+  padding: 11px 0;
+  padding-inline-start: 16px;
   border: 0;
   background: none;
   color: var(--ink);
@@ -1936,6 +1940,15 @@ button.chat-run-avatar:hover {
 .mkp-facts > li + li {
   border-inline-start: 1px solid var(--separator);
 }
+/* where the labels would have to shrink too far in one row, four figures stand two by two (FullProfile.tsx) */
+.mkp-facts.is-stacked {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 10px;
+}
+.mkp-facts.is-stacked > li:nth-child(odd) {
+  border-inline-start: 0;
+}
 .mkp-fact {
   display: flex;
   flex-direction: column-reverse;
@@ -1960,6 +1973,9 @@ button.mkp-fact {
   cursor: pointer;
 }
 .mkp-fact-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: var(--text);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -1967,16 +1983,15 @@ button.mkp-fact {
   line-height: 1.1;
 }
 .mkp-fact-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
   max-width: 100%;
+  overflow: hidden;
   color: var(--ink-3);
-  font-size: var(--text);
+  /* every label at one size, a little smaller together where the longest would not fit (FullProfile.tsx) */
+  font-size: calc(var(--text) * var(--word-fit, 1));
   font-weight: 600;
   line-height: 1.25;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .mkp-fact-icon {
   display: inline-flex;

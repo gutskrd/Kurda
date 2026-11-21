@@ -69,6 +69,8 @@ export const layout = {
   rowGap: 12,
   /** The widest a list or reading page gets on a tablet or wide window, past which the eye loses its place between lines. */
   column: 680,
+  /** The widest the whole app gets: an unfolded phone or a tablet shows it in a centred column this wide (pageWidth.ts). */
+  page: 600,
 } as const;
 
 /** The tint behind a chosen or current item, as the tab bar draws it: the colour at 12% (hex alpha 1F). */

@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Animated, Dimensions, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Animated, Easing, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { Pressable } from '../theme/Pressable';
 import {
@@ -44,6 +44,7 @@ import { SkillNodeView, type StopChange } from './SkillNodeView';
 import { StopSheet } from './StopSheet';
 import { UnitGuide } from './UnitGuide';
 import type { CourseMap, SkillNode } from './types';
+import { pageWidth } from '../theme/pageWidth';
 
 const { node: NODE, step: STEP } = PATH_GEOMETRY;
 const PHONE_WIDTH = 390;
@@ -210,7 +211,7 @@ export const LessonPath = memo(function LessonPath({
   const named = path.sections.length > 1;
 
   // The screen width less gutters until the path is measured, so it draws at once.
-  const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
+  const [width, setWidth] = useState(() => (pageWidth() || PHONE_WIDTH) - 2 * layout.gutter);
   const [sheet, setSheet] = useState<{ stop: Stop; unit: Unit } | null>(null);
   const [guide, setGuide] = useState<{ title: string; skills: SkillNode[] } | null>(null);
   const [jumpTo, setJumpTo] = useState<Unit | null>(null);
@@ -714,7 +715,8 @@ export function UnitFace({
   const buttons = Boolean(openGuide || onRail);
   const art = useMemo(
     () =>
-      box
+      // A hidden screen can be laid out at no size at all; the art waits for a real one.
+      box && box.width > 0 && box.height > 0
         ? chapterBannerSvg({
             ground: land.ground,
             landmark: buttons ? undefined : land.landmark,
@@ -918,7 +920,7 @@ const PIN_DROP = 6;
 export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
+  const [width, setWidth] = useState(() => (pageWidth() || PHONE_WIDTH) - 2 * layout.gutter);
   const sign = dir.row === 'row-reverse' ? -1 : 1;
   const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
   return (

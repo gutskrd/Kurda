@@ -16,7 +16,8 @@ import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
 import { inviteRoutePath, isWordSetId } from '@kurda/shared';
 import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { layout } from './src/theme/tokens';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AccountGateProvider, GuestWall, useAccountGate } from './src/auth/AccountGate';
@@ -982,7 +983,9 @@ function ThemedNavigation() {
   return (
     <NavigationContainer key={opened.round} ref={navigation} initialState={opened.state} linking={linking} theme={navTheme} onReady={onScreen} onStateChange={onScreen}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-      <View style={{ flex: 1 }}>
+      {/* On an unfolded phone or a tablet the app stands in a centred column (theme/pageWidth.ts), the page's colour round it. */}
+      <View style={[styles.page, { backgroundColor: colors.background }]}>
+      <View style={styles.pageColumn}>
         {/*
           Inside the container and around the screens only: the fallback needs the palette and translator, and recovery
           should re-enter the navigator at its initial route, not the screen that threw. The offline banner stays outside to
@@ -1002,6 +1005,7 @@ function ThemedNavigation() {
         <ReactionVoices />
         {/* What every "⋯" opens on Android and the web (theme/actionSheet.ts). */}
         <ActionSheetHost />
+      </View>
       </View>
     </NavigationContainer>
   );
@@ -1036,3 +1040,9 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  page: { flex: 1, alignItems: 'center' },
+  // Clipped at its sides as a phone's screen is, so a screen waiting off to the side never shows beside it.
+  pageColumn: { flex: 1, width: '100%', maxWidth: layout.page, overflow: 'hidden' },
+});
