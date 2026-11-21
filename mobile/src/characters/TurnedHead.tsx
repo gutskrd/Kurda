@@ -1,7 +1,7 @@
 import { memo, useEffect, useMemo, useState } from 'react';
 import { Animated, StyleSheet } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { characterArt, roundClipped, roundLayer, roundPoint, turnStep, type BrowState, type EyeState, type MouthShape } from '@kurda/shared';
+import { characterArt, roundLayer, roundPoint, turnStep, type BrowState, type EyeState, type MouthShape } from '@kurda/shared';
 import { useDrawingIds } from './drawingIds';
 import { partStyles, type Turn } from './headTurnMotion';
 import type { CharacterLayers } from './layers';
@@ -22,11 +22,11 @@ function useTurnStep(turn: Turn): number {
 }
 
 /**
- * The deer's head turned aside in the round (shared head-round.ts), laid as the speaking character lays it: the antlers
- * and ears behind, turning on the native driver; then his outline redrawn for the turn, what lies on his face and his
- * eyes with their pupils, lids and brows carried round within it, and the mouth and the nose, each at the step `turn`
- * has reached, so they move as a solid head's do. The player passes what moves of its own: the pupils' look, the ears'
- * twitch and the nose's sniff.
+ * The deer's head turned aside as a whole (shared head-round.ts), laid as the speaking character lays it: the antlers
+ * and ears behind, turning on the native driver; then his outline, what lies on his face, his eyes with their pupils,
+ * lids and brows, and his muzzle with the mouth and nose, each shape kept as drawn and moved with the piece of his head
+ * it sits on at the step `turn` has reached, his face within his outline. The player passes what moves of its own: the
+ * pupils' look, the ears' twitch and the nose's sniff.
  */
 export function TurnedHead({
   layers,
@@ -65,10 +65,10 @@ export function TurnedHead({
   }, [step, layers]);
   const parts = rig?.faceParts;
   if (!rig || !antlers || !parts) return null;
-  const fur = (xml: string): string => roundLayer(xml, step, 'fur');
-  // What lies on his face, and his eyes, are kept within his turned outline, so what goes round the far side is hidden.
-  const onFace = (xml: string): string => roundClipped(xml, step, 'fur', clip);
-  const eye = (xml: string): string => roundClipped(xml, step, 'eyes', clip);
+  // What lies on his face and his eyes stay within his turned outline; his muzzle, mouth and nose may stand out of it.
+  const fur = (xml: string): string => roundLayer(xml, step, 'fur', clip);
+  const eye = (xml: string): string => roundLayer(xml, step, 'eyes', clip);
+  // The pupils move with their look on their own, so they are not clipped where they were drawn.
   const pupil = (xml: string): string => roundLayer(xml, step, 'eyes');
   const at = (s: object | undefined | null, xml: string) => (
     <Animated.View style={[StyleSheet.absoluteFill, s]}>
@@ -82,7 +82,7 @@ export function TurnedHead({
       <Animated.View style={[StyleSheet.absoluteFill, style.earLeft]}>{at(ears?.left, rig.earLeft)}</Animated.View>
       <Animated.View style={[StyleSheet.absoluteFill, style.earRight]}>{at(ears?.right, rig.earRight)}</Animated.View>
       <Layer xml={roundLayer(parts.outline, step, 'outline')} width={width} height={height} />
-      <Layer xml={onFace(parts.features)} width={width} height={height} />
+      <Layer xml={fur(parts.features)} width={width} height={height} />
       <Layer xml={eye(rig.whites)} width={width} height={height} />
       {at(pupils?.left, pupil(rig.pupilLeft))}
       {at(pupils?.right, pupil(rig.pupilRight))}

@@ -1,34 +1,33 @@
 import { useEffect, type RefObject } from 'react';
 import {
+  HEAD_RIG,
   PEEK_LEAN,
   PEEK_TURN,
   TURN_SPRING,
   characterArt,
   headParts,
   leanFor,
-  mapPath,
   partTransforms,
-  roundMap,
+  pieceTransform,
+  readPiece,
+  shareYaw,
   stepLean,
   tiltFromOrientation,
   swingAngle,
   turnForMotion,
-  turnStep,
+  type HeadPiece,
   type LeanState,
-  type RoundLayer,
 } from '@kurda/shared';
 import { prefersReducedMotion } from '../lib/motion';
 
 type Settling = LeanState & { settled?: boolean };
 
-/** How many steps of a turn keep their redrawn paths, so turning back and forth redraws nothing twice. */
-const KEPT_STEPS = 24;
-
 /**
  * Hevalo moving with the phone on the website, as in the phone app (shared peek-lean.ts): the browser's motion events
  * carry the tilt and the swing round, the shared springs carry him, `--peek-lean` on `ref` leans him and his shadows,
- * and his head turns as the phone tilts and swings: its antlers and ears as `data-turn` groups (head-turn.ts), and its
- * outline, face, eyes, mouth and nose redrawn turned in the round (head-round.ts), the other way round when `mirrored`. It never
+ * and his whole head turns as the phone tilts and swings: its antlers and ears as `data-turn` groups (head-turn.ts), and
+ * every shape of his face as a `data-piece` group placed on his turned head (head-round.ts), the other way round when
+ * `mirrored`. It never
  * asks for motion access: where a browser would ask first, or has no sensor, he simply stays as he is. Off under Reduce
  * Motion; each frame runs only while he is moving.
  */
@@ -46,42 +45,29 @@ export function usePeekMotion(ref: RefObject<HTMLElement | null>, active: boolea
     let frame: number | null = null;
     let last = 0;
     let heard = 0;
-    // The paths of his turned head as drawn facing us, each with what it is drawn on: read once, and again should the
-    // drawing be replaced (he dozes off, say), whose fresh paths face us.
+    // The pieces of his face as drawn, read once, and again should the drawing be replaced (he dozes off, say).
     const read = () =>
-      [...el.querySelectorAll<SVGPathElement>('[data-round] path')].map((path) => ({
-        path,
-        front: path.getAttribute('d') ?? '',
-        layer: (path.closest('[data-round]')?.getAttribute('data-round') ?? 'fur') as RoundLayer,
-      }));
-    let round = read();
-    const drawn = new Map<number, string[]>();
-    let shownStep = 0;
-    const redraw = (step: number): void => {
-      if (round.length > 0 && !round[0]!.path.isConnected) {
-        round = read();
-        drawn.clear();
-        shownStep = 0;
+      [...el.querySelectorAll<SVGElement>('[data-piece]')].map((node) => ({ node, piece: readPiece(node.dataset.piece ?? 'skull') as HeadPiece }));
+    let pieces = read();
+    let placed = false;
+    const place = (share: number): void => {
+      if (pieces.length > 0 && !pieces[0]!.node.isConnected) pieces = read();
+      const yaw = shareYaw(share);
+      for (const { node, piece } of pieces) {
+        if (yaw === 0) node.removeAttribute('transform');
+        else node.setAttribute('transform', pieceTransform(piece, yaw));
       }
-      let ds = drawn.get(step);
-      if (!ds) {
-        ds = round.map(({ front, layer }) => (step === 0 ? front : mapPath(front, roundMap(step, layer))));
-        drawn.set(step, ds);
-        if (drawn.size > KEPT_STEPS) drawn.delete(drawn.keys().next().value!);
-      }
-      round.forEach(({ path }, i) => path.setAttribute('d', ds[i]!));
-      shownStep = step;
+      placed = yaw !== 0;
     };
     const show = (): void => {
       el.style.setProperty('--peek-lean', `${lean.angle.toFixed(2)}deg`);
       const share = mirrored ? -turn.angle : turn.angle;
-      const transforms = partTransforms(headParts(art, share, PEEK_TURN.yawDeg));
+      const transforms = partTransforms(headParts(art, share, PEEK_TURN.yawDeg, HEAD_RIG.pivot));
       for (const group of el.querySelectorAll<SVGGElement>('[data-turn]')) {
         const name = group.dataset.turn as keyof typeof transforms;
         if (transforms[name]) group.setAttribute('transform', transforms[name]);
       }
-      const step = turnStep(share);
-      if (step !== shownStep || (round.length > 0 && !round[0]!.path.isConnected)) redraw(step);
+      place(share);
     };
     const tick = (now: number): void => {
       const seconds = last ? (now - last) / 1000 : 1 / 60;
@@ -130,7 +116,7 @@ export function usePeekMotion(ref: RefObject<HTMLElement | null>, active: boolea
       window.removeEventListener('devicemotion', onSwing);
       if (frame != null) cancelAnimationFrame(frame);
       el.style.removeProperty('--peek-lean');
-      if (shownStep !== 0) redraw(0);
+      if (placed) place(0);
     };
   }, [ref, active, mirrored]);
 }

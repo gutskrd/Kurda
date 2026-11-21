@@ -1,11 +1,11 @@
 import { Animated } from 'react-native';
-import { PEEK_TURN, headParts, type CharacterArt, type CharacterBox, type HeadParts, type PartTurn } from '@kurda/shared';
+import { HEAD_RIG, PEEK_TURN, headParts, type CharacterArt, type CharacterBox, type HeadParts, type PartTurn } from '@kurda/shared';
 
 /**
  * The antlers and ears of a head turning aside on the phone, as styles driven by one value: `turn`, a share of a full
- * turn from -1 (to our left) to 1 (to our right). Each follows the shared head (head-turn.ts), sampled along the turn and
- * joined in straight pieces, which is closer than the eye can tell, so they run on the native driver; the face itself
- * is drawn turned (TurnedHead).
+ * turn from -1 (to our left) to 1 (to our right). Each follows the shared head (head-turn.ts), riding with the whole head
+ * as it turns about his neck, sampled along the turn and joined in straight pieces, which is closer than the eye can
+ * tell, so they run on the native driver; the face itself is drawn turned (TurnedHead).
  */
 
 /** Where the turn is sampled; the parts move smoothly between. */
@@ -17,7 +17,7 @@ export type PartStyles = Record<keyof HeadParts, object>;
 
 /** The styles for each antler and ear of `art`'s head drawn `unit` points to its unit in `frame`, turned by `turn`. */
 export function partStyles(turn: Turn, art: CharacterArt, frame: CharacterBox, unit: number): PartStyles {
-  const poses = SAMPLES.map((s) => headParts(art, s, PEEK_TURN.yawDeg));
+  const poses = SAMPLES.map((s) => headParts(art, s, PEEK_TURN.yawDeg, HEAD_RIG.pivot));
   const along = (values: number[]) => turn.interpolate({ inputRange: SAMPLES, outputRange: values, extrapolate: 'clamp' });
   const deg = (values: number[]) => turn.interpolate({ inputRange: SAMPLES, outputRange: values.map((v) => `${v.toFixed(3)}deg`), extrapolate: 'clamp' });
   const at = (x: number, y: number): string => `${(((x - frame.x) / frame.w) * 100).toFixed(3)}% ${(((y - frame.y) / frame.h) * 100).toFixed(3)}%`;

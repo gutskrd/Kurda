@@ -83,7 +83,24 @@ export {
   type Spring,
 } from './peek-lean.js';
 export { HEAD_ROUND, PART_GROUPS, headParts, partTransform, partTransforms, type HeadParts, type PartGroup, type PartTurn } from './head-turn.js';
-export { HEAD_SOLID, roundClipped, roundLayer, roundMap, roundPoint, roundShape, turnStep, turnedFaceMap, turnedOutlineMap, type RoundLayer } from './head-round.js';
+export {
+  HEAD_RIG,
+  SKULL,
+  headPiece,
+  pieceTransform,
+  placePiece,
+  readPiece,
+  rigLayer,
+  roundLayer,
+  roundPoint,
+  shareYaw,
+  skullClip,
+  stepYaw,
+  turnStep,
+  type HeadPiece,
+  type PiecePlace,
+  type RoundLayer,
+} from './head-round.js';
 export {
   COMPANION_DOZE_MS,
   COMPANION_EDGE,

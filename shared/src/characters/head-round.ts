@@ -1,102 +1,109 @@
-import { mapMarkup, mapPath, type PlaneMap } from '../art/warp.js';
+import { mapRuns, pathRuns } from '../art/warp.js';
 import { HEVALO_SILHOUETTE, headHalfWidth } from './hevalo.js';
 import { PEEK_TURN } from './peek-lean.js';
 import type { CharacterPoint } from './types.js';
 
 /**
- * Hevalo's head as a solid, for drawing it turned aside: each point of his front view stands at a depth on a round skull
- * with a short snout coming forward from its lower half, and turning the head carries every point truly round the
- * upright line through its middle, so what lies on his face slides round, closing up as it nears the far side and
- * passing behind the edge there. His outline is redrawn as the turned head's sides at each height: the round of the
- * skull stays where it is, and the snout and chin come out on the side he turns to. In his own units.
+ * Hevalo's head turned aside as a whole, the way a drawn character's head is rigged: every shape of his face keeps its
+ * own shape and rides on a piece set at a depth on his head (his skull, each eye with its lid and socket, his muzzle
+ * with the nose and mouth, each freckle). The head turns about a point behind his face, at his neck, so the whole head
+ * moves the way it turns; each piece moves with the point it sits on and is seen nearer or further, so the far eye is
+ * a little smaller and the muzzle, standing out furthest, swings out past his cheek. What lies on his face stays within
+ * his outline; the muzzle, nose and mouth may stand out of it. In his own units.
  */
-export const HEAD_SOLID = {
-  /** the upright line the head turns about */
-  axis: 255,
-  /** the snout: the middle of its front, how far out its tip stands from that line, and how far it spreads across and up and down */
-  snout: { y: 404, depth: 150, across: 104, up: 92, down: 70 },
-  /** how far his eyes stand proud of his fur */
-  eyeLift: 6,
+export const HEAD_RIG = {
+  /** the middle of his skull, where his outline sits */
+  centre: { x: 255, y: 300 },
+  /** how far behind the middle of his skull the head turns about, at his neck */
+  pivot: 80,
+  /** how deep his face is for its width: a round a little flatter than a ball, as a drawn face is */
+  depth: 0.6,
+  /** each eye's middle, how near a shape's middle must be to ride on that eye, and how far the eyes stand proud */
+  eyes: { left: { x: 177.5, y: 281 }, right: { x: 329.5, y: 281 }, reach: 50, lift: 6 },
+  /** the muzzle's middle and how far it stands out; shapes within `across` of its upright line and below `top` ride on it */
+  muzzle: { x: 255, y: 404, depth: 170, across: 40, top: 360 },
+  /** how far away we see him from, for the far side to be smaller and the near side larger */
+  distance: 800,
+  /** how much a piece narrows as it faces away, and the muzzle, as a share of what a flat card would */
+  narrow: 0.3,
+  narrowMuzzle: 0.2,
 } as const;
 
-/** The larger of two depths, rounded where they are close so the surface has no crease, and exact where either is 0. */
-const smoothMax = (a: number, b: number): number => (a ** 6 + b ** 6) ** (1 / 6);
-
-/** His head's half-width at height `y` on the side of `dx`. */
-const half = (dx: number, y: number): number => Math.max(1, headHalfWidth(y, dx < 0 ? 'left' : 'right'));
-
-/** How far in front of the turning line his head's surface is at `dx` across, height `y`: the skull's round, or the snout's. */
-function surface(dx: number, y: number): number {
-  const h = half(dx, y);
-  const skull = Math.sqrt(Math.max(0, h * h - dx * dx));
-  const s = HEAD_SOLID.snout;
-  const dy = y - s.y;
-  const u = (dx / s.across) ** 2 + (dy / (dy < 0 ? s.up : s.down)) ** 2;
-  const snout = u >= 1 ? 0 : s.depth * Math.pow(1 - u, 0.6);
-  return smoothMax(skull, snout);
-}
-
-/**
- * The map that carries what lies on his face round as the head turns `yaw` radians aside (above 0 to our right), with
- * `lift` more depth for what stands proud of his fur (an eye). A point keeps its depth and turns about the upright
- * line; one carried past the edge stays on it, where the turned outline hides it. Up and down stay where they are.
- */
-export function turnedFaceMap(yaw: number, lift = 0): PlaneMap {
-  const c = HEAD_SOLID.axis;
-  if (yaw === 0) return (x, y) => [x, y];
-  return (x, y) => {
-    const dx = x - c;
-    const s = surface(dx, y);
-    if (s <= 0) return [x, y];
-    // What stands proud stands out from the surface, and so not at all at its edge.
-    const depth = s + lift * Math.min(1, s / half(dx, y));
-    const turned = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, Math.atan2(dx, depth) + yaw));
-    return [c + Math.hypot(dx, depth) * Math.sin(turned), y];
-  };
-}
-
-/** How many samples across his head find the turned head's sides at a height. */
-const ACROSS = 160;
-
-/**
- * The map that redraws his outline for the head turned `yaw` radians aside: at each height the turned head's sides are
- * his own, or further where the turned snout reaches past them, and each point is drawn as far between them as it was
- * between his own sides, so the round of his skull stays put and the snout and chin come out the way he turns.
- */
-export function turnedOutlineMap(yaw: number): PlaneMap {
-  const c = HEAD_SOLID.axis;
-  if (yaw === 0) return (x, y) => [x, y];
-  const sides = new Map<number, readonly [number, number]>();
-  const turnedSides = (y: number): readonly [number, number] => {
-    const key = Math.round(y * 4);
-    let found = sides.get(key);
-    if (!found) {
-      const left = half(-1, y);
-      const right = half(1, y);
-      // A round skull shows the same sides however it turns; the snout and chin can only reach past them.
-      let lo = -left;
-      let hi = right;
-      for (let i = 0; i <= ACROSS; i++) {
-        const dx = -left + ((left + right) * i) / ACROSS;
-        const across = dx * Math.cos(yaw) + surface(dx, y) * Math.sin(yaw);
-        lo = Math.min(lo, across);
-        hi = Math.max(hi, across);
-      }
-      found = [lo, hi];
-      sides.set(key, found);
-    }
-    return found;
-  };
-  return (x, y) => {
-    const dx = x - c;
-    const share = dx / half(dx, y);
-    const [lo, hi] = turnedSides(y);
-    return [c + (lo + hi) / 2 + Math.max(-1.2, Math.min(1.2, share)) * ((hi - lo) / 2), y];
-  };
-}
-
-/** What a layer of his head is drawn on: his outline, his fur (what lies on the face, the mouth and nose), or his eyes. */
+/** What a layer of his head is drawn on: his outline, what lies on his face (and his muzzle, nose and mouth), or his eyes. */
 export type RoundLayer = 'outline' | 'fur' | 'eyes';
+
+/** A piece of his head: the point it sits on, how far in front of his skull's middle, how much it narrows, and whether his outline keeps it in. */
+export interface HeadPiece {
+  x: number;
+  y: number;
+  depth: number;
+  narrow: number;
+  within: boolean;
+}
+
+const R = HEAD_RIG;
+
+/** How far in front of his skull's middle his face is at `dx` across, height `y`. */
+function faceDepth(dx: number, y: number): number {
+  const half = Math.max(1, headHalfWidth(y, dx < 0 ? 'left' : 'right'));
+  return Math.sqrt(Math.max(0, half * half - dx * dx)) * R.depth;
+}
+
+/** The skull: his outline, turning about the neck behind it. */
+export const SKULL: HeadPiece = { x: R.centre.x, y: R.centre.y, depth: 0, narrow: 0, within: false };
+
+/** The piece a shape whose middle is `at` rides on, on `layer`. */
+export function headPiece(at: CharacterPoint, layer: RoundLayer): HeadPiece {
+  if (layer === 'outline') return SKULL;
+  const m = R.muzzle;
+  if (Math.abs(at.x - m.x) < m.across && at.y > m.top) return { x: m.x, y: m.y, depth: m.depth, narrow: R.narrowMuzzle, within: false };
+  for (const e of [R.eyes.left, R.eyes.right]) {
+    if (Math.hypot(at.x - e.x, at.y - e.y) < R.eyes.reach) {
+      return { x: e.x, y: e.y, depth: faceDepth(e.x - R.centre.x, e.y) + (layer === 'eyes' ? R.eyes.lift : 0), narrow: R.narrow, within: true };
+    }
+  }
+  return { x: at.x, y: at.y, depth: faceDepth(at.x - R.centre.x, at.y), narrow: R.narrow, within: true };
+}
+
+/** A piece seen with his head turned: how it is scaled across and up, about where it sits, and where that point goes. */
+export interface PiecePlace {
+  wide: number;
+  tall: number;
+  x: number;
+  y: number;
+}
+
+/** Where a piece is seen and how big, with his head turned `yaw` radians aside (above 0 to our right); facing us, exactly as drawn. */
+export function placePiece(piece: HeadPiece, yaw: number): PiecePlace {
+  const across = piece.x - R.centre.x;
+  const deep = piece.depth + R.pivot;
+  const turnedAcross = across * Math.cos(yaw) + deep * Math.sin(yaw);
+  const turnedDeep = deep * Math.cos(yaw) - across * Math.sin(yaw);
+  // Nearer than it was looks bigger, further smaller, as seen from `distance` away.
+  const near = (R.distance - deep) / (R.distance - turnedDeep);
+  const facing = Math.atan2(across, Math.max(1, piece.depth));
+  const narrow = 1 + piece.narrow * (Math.cos(facing + yaw) / Math.cos(facing) - 1);
+  return {
+    wide: near * Math.max(0.5, narrow),
+    tall: near,
+    x: R.centre.x + turnedAcross * near,
+    y: R.centre.y + (piece.y - R.centre.y) * near,
+  };
+}
+
+const f3 = (v: number): string => String(Math.round(v * 1000) / 1000);
+
+/** A piece's place as an SVG transform of what is drawn on it. */
+export function pieceTransform(piece: HeadPiece, yaw: number): string {
+  const p = placePiece(piece, yaw);
+  return `matrix(${f3(p.wide)} 0 0 ${f3(p.tall)} ${f3(p.x - p.wide * piece.x)} ${f3(p.y - p.tall * piece.y)})`;
+}
+
+/** The turn, in radians, that a step stands for: one of `PEEK_TURN.steps` either way to a full turn of `PEEK_TURN.yawDeg`. */
+export const stepYaw = (step: number): number => (step / PEEK_TURN.steps) * PEEK_TURN.yawDeg * (Math.PI / 180);
+
+/** The turn, in radians, a share of a full turn either way stands for (above 0 to our right). */
+export const shareYaw = (share: number): number => Math.max(-1, Math.min(1, share)) * PEEK_TURN.yawDeg * (Math.PI / 180);
 
 /**
  * A turn as a player draws it: one of `PEEK_TURN.steps` steps either way to a full turn of `PEEK_TURN.yawDeg`, so each
@@ -107,67 +114,149 @@ export function turnStep(share: number): number {
   return Math.max(-s, Math.min(s, Math.round(share * s)));
 }
 
-const maps = new Map<string, PlaneMap>();
-
-/** The map that draws a layer turned `step` steps aside. */
-export function roundMap(step: number, layer: RoundLayer): PlaneMap {
-  const key = `${layer}${step}`;
-  let map = maps.get(key);
-  if (!map) {
-    const yaw = (step / PEEK_TURN.steps) * PEEK_TURN.yawDeg * (Math.PI / 180);
-    map = layer === 'outline' ? turnedOutlineMap(yaw) : turnedFaceMap(yaw, layer === 'eyes' ? HEAD_SOLID.eyeLift : 0);
-    maps.set(key, map);
-  }
-  return map;
-}
-
 /** Where a point of a layer is seen with his head turned `step` steps aside. */
 export function roundPoint(p: CharacterPoint, step: number, layer: RoundLayer): CharacterPoint {
-  const [x, y] = roundMap(step, layer)(p.x, p.y);
-  return { x, y };
+  const piece = headPiece(p, layer);
+  const at = placePiece(piece, stepYaw(step));
+  return { x: at.x + (p.x - piece.x) * at.wide, y: at.y + (p.y - piece.y) * at.tall };
+}
+
+// ─────────────────────────────────────────────────────────────── a drawing in its pieces
+
+/** The top-level elements of some markup, each whole. */
+function elements(markup: string): string[] {
+  const out: string[] = [];
+  const tag = /<\/?[a-zA-Z][^>]*?\/?>/g;
+  let depth = 0;
+  let start = 0;
+  let m: RegExpExecArray | null;
+  while ((m = tag.exec(markup))) {
+    const closing = m[0].startsWith('</');
+    if (depth === 0 && !closing) start = m.index;
+    if (closing) depth--;
+    else if (!m[0].endsWith('/>')) depth++;
+    if (depth === 0) out.push(markup.slice(start, tag.lastIndex));
+  }
+  return out;
+}
+
+const attr = (tag: string, name: string): number => Number(tag.match(new RegExp(`\\s${name}="([^"]+)"`))?.[1] ?? 0);
+
+/** The middle of what an element draws, from its shapes' extents. */
+function middle(el: string): CharacterPoint {
+  const xs: number[] = [];
+  const ys: number[] = [];
+  for (const [shape] of el.matchAll(/<(?:ellipse|circle)\b[^>]*>/g)) {
+    const rx = attr(shape, 'rx') || attr(shape, 'r');
+    const ry = attr(shape, 'ry') || attr(shape, 'r');
+    xs.push(attr(shape, 'cx') - rx, attr(shape, 'cx') + rx);
+    ys.push(attr(shape, 'cy') - ry, attr(shape, 'cy') + ry);
+  }
+  for (const [, d] of el.matchAll(/\sd="([^"]*)"/g)) {
+    for (const run of pathRuns(d!)) {
+      for (const p of [run.start, ...run.curves.flat()]) {
+        xs.push(p[0]);
+        ys.push(p[1]);
+      }
+    }
+  }
+  if (xs.length === 0) return R.centre;
+  return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
+}
+
+/** A group that only names or hides what is in it, drawing nothing differently: its insides are pieces of their own. */
+const WRAPPER = /^<g(?![^>]*\s(?:transform|clip-path|mask|filter|opacity)=)[^>]*>/;
+
+const samePiece = (a: HeadPiece, b: HeadPiece): boolean => a.x === b.x && a.y === b.y && a.depth === b.depth;
+const asIs = (x: number, y: number): readonly [number, number] => [x, y];
+
+/**
+ * Some markup with each of its shapes on its piece: `wrap` is given each shape with the piece it rides on, a path that
+ * draws on two pieces at once (both lids' edges) split into one path for each. Definitions, and groups that only name
+ * or hide, stay as drawn.
+ */
+function onPieces(markup: string, layer: RoundLayer, wrap: (el: string, piece: HeadPiece) => string): string {
+  return elements(markup)
+    .map((el) => {
+      if (el.startsWith('<defs')) return el;
+      const open = el.match(WRAPPER)?.[0];
+      if (open && !open.endsWith('/>')) return open + onPieces(el.slice(open.length, el.length - '</g>'.length), layer, wrap) + '</g>';
+      const d = el.startsWith('<path') ? el.match(/\sd="([^"]*)"/)?.[1] : undefined;
+      if (d !== undefined) {
+        const groups: { piece: HeadPiece; runs: ReturnType<typeof pathRuns> }[] = [];
+        for (const run of pathRuns(d)) {
+          const piece = headPiece(middle(`<path d="${mapRuns([run], asIs)}"/>`), layer);
+          const group = groups.find((g) => samePiece(g.piece, piece));
+          if (group) group.runs.push(run);
+          else groups.push({ piece, runs: [run] });
+        }
+        if (groups.length > 1) return groups.map((g) => wrap(el.replace(/\sd="[^"]*"/, ` d="${mapRuns(g.runs, asIs)}"`), g.piece)).join('');
+      }
+      return wrap(el, headPiece(middle(el), layer));
+    })
+    .join('');
+}
+
+/** A drawing's root kept, its insides given to `inner`. */
+function insideRoot(markup: string, inner: (body: string) => string): string {
+  const open = markup.startsWith('<svg') ? markup.indexOf('>') + 1 : 0;
+  const close = markup.endsWith('</svg>') ? markup.length - '</svg>'.length : markup.length;
+  return markup.slice(0, open) + inner(markup.slice(open, close)) + markup.slice(close);
+}
+
+/** The clip that keeps his face within his outline: the outline placed by `transform`, or marked for a player to place. */
+export function skullClip(clipId: string, transform?: string): string {
+  const place = transform ? ` transform="${transform}"` : ' data-piece="skull"';
+  return `<defs><clipPath id="${clipId}"><path${place} d="${HEVALO_SILHOUETTE.head}"/></clipPath></defs>`;
 }
 
 /** How many drawings of turned layers are kept: every layer a player shows, at every step it has passed lately. */
 const KEPT = 400;
 const drawn = new Map<string, string>();
 
-/** A layer's markup drawn with his head turned `step` steps aside, made once and kept for the steps used lately. */
-export function roundLayer(markup: string, step: number, layer: RoundLayer): string {
+/**
+ * A layer's markup drawn with his head turned `step` steps aside, each shape on its piece; with `clipId`, what lies on
+ * his face is kept within his turned outline under that clip. Made once and kept for the steps used lately.
+ */
+export function roundLayer(markup: string, step: number, layer: RoundLayer, clipId?: string): string {
   if (step === 0 || !markup) return markup;
-  const key = `${layer}${step}|${markup}`;
+  const key = `${layer}${step}|${clipId ?? ''}|${markup}`;
   const kept = drawn.get(key);
   if (kept !== undefined) {
     drawn.delete(key);
     drawn.set(key, kept);
     return kept;
   }
-  const made = mapMarkup(markup, roundMap(step, layer));
+  const yaw = stepYaw(step);
+  const made = insideRoot(markup, (body) => {
+    let clipped = false;
+    const pieces = onPieces(body, layer, (el, piece) => {
+      const g = `<g transform="${pieceTransform(piece, yaw)}">${el}</g>`;
+      if (!clipId || !piece.within) return g;
+      clipped = true;
+      return `<g clip-path="url(#${clipId})">${g}</g>`;
+    });
+    return (clipped ? skullClip(clipId!, pieceTransform(SKULL, yaw)) : '') + pieces;
+  });
   drawn.set(key, made);
   if (drawn.size > KEPT) drawn.delete(drawn.keys().next().value!);
   return made;
 }
 
-const shapes = new Map<number, string>();
-
-/** His head's outline turned `step` steps aside, as a path's `d`: what keeps the turned face within it. */
-export function roundShape(step: number): string {
-  let d = shapes.get(step);
-  if (d === undefined) {
-    d = step === 0 ? HEVALO_SILHOUETTE.head : mapPath(HEVALO_SILHOUETTE.head, roundMap(step, 'outline'));
-    shapes.set(step, d);
-  }
-  return d;
+/**
+ * A layer drawn facing us for a player that places its pieces as he turns: each shape in a group marked with its piece
+ * (`data-piece`, read back with `readPiece`), those on his face within the clip `clipId` (`skullClip`).
+ */
+export function rigLayer(markup: string, layer: RoundLayer, clipId: string): string {
+  return onPieces(markup, layer, (el, piece) => {
+    const g = `<g data-piece="${piece.x} ${piece.y} ${piece.depth} ${piece.narrow}">${el}</g>`;
+    return piece.within ? `<g clip-path="url(#${clipId})">${g}</g>` : g;
+  });
 }
 
-/**
- * A layer drawn on his face turned `step` steps aside and kept within the turned outline, under the clip `clipId`, so
- * what passes the far edge goes out of sight. A whole SVG keeps its root and has the clip put inside it.
- */
-export function roundClipped(markup: string, step: number, layer: RoundLayer, clipId: string): string {
-  if (step === 0 || !markup) return markup;
-  const turned = roundLayer(markup, step, layer);
-  const clip = `<defs><clipPath id="${clipId}"><path d="${roundShape(step)}"/></clipPath></defs><g clip-path="url(#${clipId})">`;
-  const open = turned.startsWith('<svg') ? turned.indexOf('>') + 1 : 0;
-  const close = turned.endsWith('</svg>') ? turned.length - '</svg>'.length : turned.length;
-  return turned.slice(0, open) + clip + turned.slice(open, close) + '</g>' + turned.slice(close);
+/** A piece as a player reads it back from `data-piece`. */
+export function readPiece(value: string): HeadPiece {
+  if (value === 'skull') return SKULL;
+  const [x, y, depth, narrow] = value.split(' ').map(Number);
+  return { x: x!, y: y!, depth: depth!, narrow: narrow!, within: false };
 }

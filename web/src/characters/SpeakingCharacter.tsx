@@ -20,11 +20,12 @@ import {
   eyesMiddle,
   glanceTarget,
   leanToward,
-  mapMarkup,
   lookToward,
   pickAct,
   reactionAct,
+  rigLayer,
   sampleKeys,
+  skullClip,
   speakingFrame,
   tapActs,
   voiceTimeline,
@@ -105,23 +106,20 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     (art.cheeks ? `<g data-cheeks="blush"${hidden}>${own(art.cheeks.blush)}</g>` : '');
   const hair = art.hair ? `<g data-sc="hair"${about(art.hair.pivot)}>${own(art.hair.art)}</g>` : '';
   const ear = (side: 'left' | 'right'): string => `<g data-sc="ear-${side}"${about(rig!.ears[side].pivot)}>${own(rig!.ears[side].art)}</g>`;
-  // Drawn to turn, the antlers and ears are groups the page turns (shared head-turn.ts), and the outline, face, eyes,
-  // mouth and nose are drawn in paths alone, under `data-round`, so the page can redraw each for a turn (head-round.ts).
-  const round = turnable && rig?.antlers ? rig.antlers : null;
+  // Drawn to turn, the antlers and ears are groups the page turns (shared head-turn.ts), and every shape of the face is
+  // a piece the page places as the whole head turns (head-round.ts).
+  const round = turnable && rig?.antlers && rig.faceLayers ? rig.antlers : null;
   const turned = (name: string, inner: string): string => `<g data-turn="${name}">${inner}</g>`;
-  const paths = (markup: string): string => mapMarkup(markup, (x, y) => [x, y]);
-  // Turning, his outline is redrawn for the turn and what lies on his face, with his eyes, is kept within it.
-  const faceParts = round ? rig!.faceLayers : undefined;
+  // Turning, every shape of his face rides on its piece of his head (`data-piece`), placed by the page as he turns,
+  // what lies on his face kept within his outline.
   const clipId = `${prefix}-turnface`;
   const head = round
     ? turned('antler-left', own(round.left.art)) +
       turned('antler-right', own(round.right.art)) +
       turned('ear-left', ear('left')) +
       turned('ear-right', ear('right')) +
-      (faceParts
-        ? `<defs><clipPath id="${clipId}" data-round="outline"><path d="${faceParts.shape}"/></clipPath></defs>` +
-          `<g data-round="outline">${own(paths(faceParts.outline))}</g>`
-        : `<g data-round="fur">${own(paths(rig!.face))}</g>`)
+      skullClip(clipId) +
+      rigLayer(own(rig!.faceLayers!.outline), 'outline', clipId)
     : rig
       ? own(rig.crown) + ear('left') + ear('right') + own(rig.face)
       : own(art.brows?.bare ?? art.head) + hair;
@@ -163,9 +161,7 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     `<g data-sc="head"><g class="sc-drift"${about(art.headPivot)}><g data-sc="tilt"${about(art.headPivot)}>` +
     head +
     (round
-      ? (faceParts
-          ? `<g clip-path="url(#${clipId})"><g data-round="fur">${own(paths(faceParts.features))}</g><g data-round="eyes">${paths(eyes + face)}</g></g>`
-          : `<g data-round="eyes">${paths(eyes + face)}</g>`) + `<g data-round="fur">${paths(mouths + nose)}</g>`
+      ? rigLayer(own(rig!.faceLayers!.features), 'fur', clipId) + rigLayer(eyes + face, 'eyes', clipId) + rigLayer(mouths + nose, 'fur', clipId)
       : eyes + face + mouths + nose) +
     '</g></g></g></g></g></g></g>' +
     snooze +
@@ -254,7 +250,7 @@ export interface SpeakingCharacterProps {
   onPress?: () => void;
   /**
    * Draws the head ready to turn aside, for a character drawn for it (the deer): the antlers and ears as `data-turn`
-   * groups whose transform the page sets, and the rest in paths under `data-round` the page redraws for a turn
+   * groups and every shape of the face as a `data-piece` group, whose transforms the page sets as the head turns
    * (usePeekMotion). Untouched, they face us.
    */
   turnable?: boolean;

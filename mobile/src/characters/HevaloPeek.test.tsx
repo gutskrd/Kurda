@@ -132,11 +132,16 @@ async function swing(rate: number, times = 12): Promise<void> {
   }
 }
 
-/** How far across his nose is drawn, in his own units (the middle of his face is 255): the middle of its outline's points. */
+/** How far across his nose is seen, in his own units (the middle of his face is 255): its outline's points where its piece puts them. */
 function noseX(): number {
   const markup = document.querySelector('svg[data-markup*=\'id="id-nose"\']')?.getAttribute('data-markup') ?? '';
-  const xs = [...markup.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
-    (mapPath(m[1]!, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => Number(pair.split(',')[0])),
+  // Each shape of a turned head sits in its piece's `matrix(wide 0 0 tall x y)`; facing us, it is drawn as it is.
+  const pieces = [...markup.matchAll(/<g transform="matrix\(([^)]+)\)">(.*?)<\/g>/g)];
+  const placed = pieces.length > 0 ? pieces.map((m) => ({ by: m[1]!.split(' ').map(Number), inner: m[2]! })) : [{ by: [1, 0, 0, 1, 0, 0], inner: markup }];
+  const xs = placed.flatMap(({ by, inner }) =>
+    [...inner.matchAll(/ d="([^"]+)"/g)].flatMap((m) =>
+      (mapPath(m[1]!, (x, y) => [x, y]).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map((pair) => by[0]! * Number(pair.split(',')[0]) + by[4]!),
+    ),
   );
   return xs.reduce((a, b) => a + b, 0) / xs.length;
 }
