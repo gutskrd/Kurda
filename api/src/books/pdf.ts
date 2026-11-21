@@ -366,9 +366,6 @@ function alphabetSheets(press: Press, chapters: readonly BookChapter[]): Sheet[]
 
 // ───────────────────────────────────────────────────────────── the people of the road
 
-/** Whether someone the plan names is of Hamo's own family: marked so, or named in the plan as his father, mother, brother or sister. */
-export const isFamily = (p: BookName): boolean => p.kind === 'family' || /^Hamo’s (father|mother|(\p{L}+ )?(brother|sister))\b/u.test(p.en);
-
 /**
  * Bust width of each friend in an 80-point round portrait (Xezo slightly smaller so her hair and chin fit). Each bust
  * stands on the round's foot and runs out of it, so it never ends in a cut.
@@ -384,8 +381,7 @@ function peopleSheets(press: Press, people: readonly BookName[]): Sheet[] {
   ];
   // a book that has not met Xezo yet does not introduce her
   const shown = friends.filter(([id, name]) => id !== 'xezo' || named.has(name) || people.length === 0);
-  // Hamo's own family is his to speak of in the lessons, and is not introduced here
-  const others = people.filter((p) => !friends.some(([, name]) => name === p.name) && !isFamily(p));
+  const others = people.filter((p) => !friends.some(([, name]) => name === p.name));
   const blocks: Block[] = [{ height: 30, gap: 0, keep: true, draw: (y) => void press.line('The people of the road', TEXT.x, y + 2, display(22)) }];
   shown.forEach(([id, name, about, pose], i) => {
     const text = press.para(about, TEXT.w - 94, T.body);

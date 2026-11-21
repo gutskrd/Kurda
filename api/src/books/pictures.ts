@@ -108,9 +108,6 @@ const EMBLEMS: Readonly<Record<string, BookPicture>> = {
   Hêvî: word('hen'),
   // Dapîr is known by the teapot she is never far from, not by a goat
   Şemsê: word('teapot'),
-  Ibrahîm: spot('flute'),
-  Edûl: word('basket'),
-  Lorîn: spot('photo'),
   Ferhad: word('tractor'),
   Mîrza: word('grapes'),
   Azad: spot('doctorBag'),
