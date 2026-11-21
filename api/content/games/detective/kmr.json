@@ -1784,479 +1784,408 @@
       "dialect": "kmr",
       "level": 3,
       "title": {
-        "en": "The book of sayings",
-        "ku": "Pirtûka gotinan",
-        "ckb": "کتێبی پەندەکان",
-        "de": "Das Buch der Sprichwörter",
-        "es": "El libro de los refranes",
-        "tr": "Atasözleri kitabı",
-        "ar": "كتاب الأمثال",
-        "fr": "Le livre des proverbes",
-        "nl": "Het boek met spreekwoorden"
+        "en": "Before the road closes",
+        "ku": "Berî ku rê girtî be",
+        "ckb": "پێش ئەوەی ڕێگاکە دابخرێت",
+        "de": "Bevor die Straße gesperrt wird",
+        "es": "Antes de que cierren la carretera",
+        "tr": "Yol kapanmadan önce",
+        "ar": "قبل أن يُغلق الطريق",
+        "fr": "Avant que la route ferme",
+        "nl": "Voordat de weg dichtgaat"
       },
       "intro": {
-        "en": "Hamo buys a book of proverbs in town, but on the minibus home it is gone. Who has it? Read the cards, answer each question, then say who has the book.",
-        "ku": "Hamo li bajêr pirtûkeke gotinên pêşiyan dikire, lê li minîbûsê pirtûk tune ye. Pirtûk li cem kê ye? Li kartan binêre, bersiva her pirsê bide, paşê bibêje pirtûk li cem kê ye.",
-        "ckb": "حەمۆ لە شار کتێبێکی پەندی پێشینان دەکڕێت، بەڵام لە مینیبووسەکەدا کتێبەکە نەماوە. کتێبەکە لای کێیە؟ کارتەکان بخوێنەوە، وەڵامی هەر پرسیارێک بدەرەوە، پاشان بڵێ کتێبەکە لای کێیە.",
-        "de": "Hamo kauft in der Stadt ein Buch mit Sprichwörtern, aber im Minibus nach Hause ist es weg. Wer hat es? Lies die Karten, beantworte jede Frage und sag dann, wer das Buch hat.",
-        "es": "Hamo compra un libro de refranes en el pueblo, pero en el minibús de vuelta ha desaparecido. ¿Quién lo tiene? Lee las tarjetas, responde cada pregunta y di quién tiene el libro.",
-        "tr": "Hamo kasabada bir atasözleri kitabı alıyor, ama eve dönerken minibüste kitap yok. Kitap kimde? Kartları oku, her soruyu yanıtla, sonra kitabın kimde olduğunu söyle.",
-        "ar": "يشتري حمو كتاب أمثال في البلدة، لكنه يختفي في الحافلة الصغيرة في طريق العودة. مع من الكتاب؟ اقرأ البطاقات، وأجب عن كل سؤال، ثم قل مع من الكتاب.",
-        "fr": "Hamo achète un livre de proverbes en ville, mais dans le minibus du retour il a disparu. Qui l’a ? Lis les cartes, réponds à chaque question, puis dis qui a le livre.",
-        "nl": "Hamo koopt in de stad een boek met spreekwoorden, maar in het busje naar huis is het weg. Wie heeft het? Lees de kaarten, beantwoord elke vraag en zeg dan wie het boek heeft."
+        "en": "Everyone has to leave town at six o’clock, with no time for sleep. Who or what is to blame? Read the cards, answer each question, then say.",
+        "ku": "Divê her kes di demjimêr şeşan de ji bajêr derkeve, û ji bo xewê dem tune. Sûcê kê an çi ye? Li kartan binêre, bersiva her pirsê bide, paşê bibêje.",
+        "ckb": "هەموو کەس دەبێت کاتژمێر شەش لە شار بڕوات، و کات بۆ خەوتن نییە. تاوانی کێ یان چییە؟ کارتەکان بخوێنەوە، وەڵامی هەر پرسیارێک بدەرەوە، پاشان بیڵێ.",
+        "de": "Alle müssen um sechs Uhr aus der Stadt aufbrechen, und für Schlaf ist keine Zeit. Wer oder was ist schuld? Lies die Karten, beantworte jede Frage und sag es dann.",
+        "es": "Todos tienen que salir del pueblo a las seis, sin tiempo para dormir. ¿Quién o qué tiene la culpa? Lee las tarjetas, responde cada pregunta y dilo.",
+        "tr": "Herkes saat altıda kasabadan ayrılmak zorunda ve uykuya vakit yok. Suçlu kim ya da ne? Kartları oku, her soruyu yanıtla, sonra söyle.",
+        "ar": "على الجميع مغادرة البلدة في الساعة السادسة، ولا وقت للنوم. من أو ما المذنب؟ اقرأ البطاقات، وأجب عن كل سؤال، ثم قل.",
+        "fr": "Tout le monde doit quitter la ville à six heures, sans le temps de dormir. Qui ou quoi est en cause ? Lis les cartes, réponds à chaque question, puis dis-le.",
+        "nl": "Iedereen moet om zes uur de stad uit, zonder tijd om te slapen. Wie of wat is de schuldige? Lees de kaarten, beantwoord elke vraag en zeg het dan."
       },
       "suspects": [
         {
-          "id": "firoskar",
-          "name": "Firoşkar",
+          "id": "reya-ciye",
+          "name": "Rêya çiyê",
           "about": {
-            "en": "The old bookseller, who knows everyone.",
-            "ku": "Firoşkarê pîr ê pirtûkan, ku her kesî nas dike.",
-            "ckb": "کتێبفرۆشە پیرەکە، کە هەموو کەس دەناسێت.",
-            "de": "Der alte Buchhändler, der jeden kennt.",
-            "es": "El viejo librero, que conoce a todo el mundo.",
-            "tr": "Herkesi tanıyan yaşlı kitapçı.",
-            "ar": "بائع الكتب العجوز، الذي يعرف الجميع.",
-            "fr": "Le vieux libraire, qui connaît tout le monde.",
-            "nl": "De oude boekverkoper, die iedereen kent."
+            "en": "The mountain road, the way back to the village.",
+            "ku": "Rêya ser çiyê, ku ber bi gund diçe.",
+            "ckb": "ڕێگای چیاکە، ڕێگای گەڕانەوە بۆ گوندەکە.",
+            "de": "Die Bergstraße, der Weg zurück ins Dorf.",
+            "es": "La carretera de la montaña, el camino de vuelta al pueblo.",
+            "tr": "Köye dönüş yolu olan dağ yolu.",
+            "ar": "طريق الجبل، طريق العودة إلى القرية.",
+            "fr": "La route de la montagne, le chemin du retour au village.",
+            "nl": "De bergweg, de weg terug naar het dorp."
           }
         },
         {
           "id": "ajovan",
           "name": "Ajovan",
           "about": {
-            "en": "The minibus driver, who drives very fast.",
-            "ku": "Ajovanê minîbûsê, ku gelek zû diajo.",
-            "ckb": "شۆفێری مینیبووسەکە، کە زۆر خێرا لێدەخوڕێت.",
-            "de": "Der Minibusfahrer, der sehr schnell fährt.",
-            "es": "El conductor del minibús, que conduce muy deprisa.",
-            "tr": "Çok hızlı süren minibüs şoförü.",
-            "ar": "سائق الحافلة الصغيرة، الذي يقود بسرعة كبيرة.",
-            "fr": "Le chauffeur du minibus, qui roule très vite.",
-            "nl": "De chauffeur van het busje, die heel hard rijdt."
+            "en": "The minibus driver, who leaves at six.",
+            "ku": "Ajovanê minîbûsê, ku di şeşan de diçe.",
+            "ckb": "شۆفێری مینیبووسەکە، کە کاتژمێر شەش دەڕوات.",
+            "de": "Der Minibusfahrer, der um sechs losfährt.",
+            "es": "El conductor del minibús, que sale a las seis.",
+            "tr": "Saat altıda yola çıkan minibüs şoförü.",
+            "ar": "سائق الحافلة الصغيرة، الذي ينطلق في السادسة.",
+            "fr": "Le chauffeur du minibus, qui part à six heures.",
+            "nl": "De chauffeur van het busje, die om zes uur vertrekt."
           }
         },
         {
-          "id": "nanpej",
-          "name": "Nanpêj",
+          "id": "taksi",
+          "name": "Taksî",
           "about": {
-            "en": "The baker in town, who knows Hamo.",
-            "ku": "Nanpêjê bajêr, ku Hamo nas dike.",
-            "ckb": "نانەواکەی شار، کە حەمۆ دەناسێت.",
-            "de": "Der Bäcker in der Stadt, der Hamo kennt.",
-            "es": "El panadero del pueblo, que conoce a Hamo.",
-            "tr": "Hamo’yu tanıyan kasaba fırıncısı.",
-            "ar": "خبّاز البلدة، الذي يعرف حمو.",
-            "fr": "Le boulanger de la ville, qui connaît Hamo.",
-            "nl": "De bakker in de stad, die Hamo kent."
+            "en": "The taxi, which costs a lot.",
+            "ku": "Taksî, ku biha ye.",
+            "ckb": "تەکسییەکە، کە گرانە.",
+            "de": "Das Taxi, das viel kostet.",
+            "es": "El taxi, que cuesta mucho.",
+            "tr": "Pahalı olan taksi.",
+            "ar": "سيارة الأجرة، التي تكلّف كثيرًا.",
+            "fr": "Le taxi, qui coûte cher.",
+            "nl": "De taxi, die veel kost."
           }
         },
         {
           "id": "hamo",
           "name": "Hamo",
           "about": {
-            "en": "Hevalo’s friend, who tells the stories.",
-            "ku": "Hevalê Hevalo, ku çîrokan dibêje.",
-            "ckb": "هاوڕێکەی هەڤاڵۆ، کە چیرۆکەکان دەگێڕێتەوە.",
-            "de": "Hevalos Freund, der die Geschichten erzählt.",
-            "es": "El amigo de Hevalo, que cuenta las historias.",
-            "tr": "Hikâyeleri anlatan, Hevalo’nun arkadaşı.",
-            "ar": "صديق هيفالو، الذي يروي الحكايات.",
-            "fr": "L’ami de Hevalo, qui raconte les histoires.",
-            "nl": "De vriend van Hevalo, die de verhalen vertelt."
+            "en": "Hevalo’s friend, who loves his sleep.",
+            "ku": "Hevalê Hevalo, ku ji xewê hez dike.",
+            "ckb": "هاوڕێکەی هەڤاڵۆ، کە حەزی لە خەوە.",
+            "de": "Hevalos Freund, der gern schläft.",
+            "es": "El amigo de Hevalo, al que le encanta dormir.",
+            "tr": "Uykuyu çok seven, Hevalo’nun arkadaşı.",
+            "ar": "صديق هيفالو، الذي يحب النوم.",
+            "fr": "L’ami de Hevalo, qui aime tant dormir.",
+            "nl": "De vriend van Hevalo, die dol is op slapen."
           },
           "portrait": "hamo"
         }
       ],
       "evidence": [
         {
-          "id": "girti",
+          "id": "nuce",
           "kind": "statement",
           "line": {
-            "story": "road-06-nameya-bave-me",
-            "paragraph": 3,
-            "sentence": 1,
-            "opens": "Niha dikan",
-            "en": "Now the shop is in front of me, but it is closed!",
+            "conversation": "roadu06s4l3a",
+            "en": "The news says the mountain road will close tomorrow.",
             "meanings": {
-              "ckb": "ئێستا دووکانەکە لەبەردەممە، بەڵام داخراوە!",
-              "de": "Jetzt ist der Laden vor mir, aber er ist geschlossen!",
-              "es": "Ahora la tienda está delante de mí, ¡pero está cerrada!",
-              "tr": "Şimdi dükkân önümde, ama kapalı!",
-              "ar": "الآن المتجر أمامي، لكنه مغلق!",
-              "fr": "Maintenant la boutique est devant moi, mais elle est fermée !",
-              "nl": "Nu staat de winkel voor me, maar hij is dicht!"
+              "ckb": "هەواڵەکان دەڵێن سبەی ڕێگای چیاکە دادەخرێت.",
+              "de": "Die Nachrichten sagen, dass die Bergstraße morgen gesperrt wird.",
+              "es": "Las noticias dicen que mañana cierran la carretera de la montaña.",
+              "tr": "Haberler yarın dağ yolunun kapanacağını söylüyor.",
+              "ar": "تقول الأخبار إن طريق الجبل سيُغلق غدًا.",
+              "fr": "Les nouvelles disent que la route de la montagne sera fermée demain.",
+              "nl": "Het nieuws zegt dat de bergweg morgen dichtgaat."
             }
-          }
+          },
+          "from": "hamo"
         },
         {
-          "id": "vedike",
+          "id": "zu",
           "kind": "statement",
           "line": {
-            "story": "road-06-nameya-bave-me",
-            "paragraph": 3,
-            "sentence": 2,
-            "opens": "Firoşkar derî vedike",
-            "en": "The bookseller opens the door, and I go inside.",
+            "conversation": "roadu06s4l3a",
+            "en": "We must go back early, before the road is closed.",
             "meanings": {
-              "ckb": "کتێبفرۆشەکە دەرگاکە دەکاتەوە، و من دەچمە ژوورەوە.",
-              "de": "Der Buchhändler öffnet die Tür, und ich gehe hinein.",
-              "es": "El librero abre la puerta, y yo entro.",
-              "tr": "Kitapçı kapıyı açıyor, ben de içeri giriyorum.",
-              "ar": "يفتح بائع الكتب الباب، وأدخل.",
-              "fr": "Le libraire ouvre la porte, et j’entre.",
-              "nl": "De boekverkoper doet de deur open, en ik ga naar binnen."
+              "ckb": "دەبێت زوو بگەڕێینەوە، پێش ئەوەی ڕێگاکە دابخرێت.",
+              "de": "Wir müssen früh zurückfahren, bevor die Straße gesperrt ist.",
+              "es": "Tenemos que volver temprano, antes de que cierren la carretera.",
+              "tr": "Yol kapanmadan erken dönmeliyiz.",
+              "ar": "يجب أن نعود باكرًا، قبل أن يُغلق الطريق.",
+              "fr": "Nous devons rentrer tôt, avant que la route soit fermée.",
+              "nl": "We moeten vroeg teruggaan, voordat de weg dicht is."
             }
-          }
+          },
+          "from": "hamo"
         },
         {
-          "id": "kirin",
+          "id": "minibus",
           "kind": "statement",
           "line": {
-            "story": "road-06-nameya-bave-me",
-            "paragraph": 4,
-            "sentence": 0,
-            "opens": "Ez pirtûkeke gotinên pêşiyan dikirim",
-            "en": "I buy a book of proverbs.",
+            "conversation": "roadu06s4l3a",
+            "en": "By minibus. There’s no train, and a taxi is expensive.",
             "meanings": {
-              "ckb": "کتێبێکی پەندی پێشینان دەکڕم.",
-              "de": "Ich kaufe ein Buch mit Sprichwörtern.",
-              "es": "Compro un libro de refranes.",
-              "tr": "Bir atasözleri kitabı alıyorum.",
-              "ar": "أشتري كتاب أمثال.",
-              "fr": "J’achète un livre de proverbes.",
-              "nl": "Ik koop een boek met spreekwoorden."
+              "ckb": "بە مینیبووس. شەمەندەفەر نییە، و تەکسی گرانە.",
+              "de": "Mit dem Minibus. Es gibt keinen Zug, und ein Taxi ist teuer.",
+              "es": "En minibús. No hay tren, y un taxi es caro.",
+              "tr": "Minibüsle. Tren yok, taksi de pahalı.",
+              "ar": "بالحافلة الصغيرة. لا يوجد قطار، وسيارة الأجرة غالية.",
+              "fr": "En minibus. Il n’y a pas de train, et un taxi coûte cher.",
+              "nl": "Met het busje. Er is geen trein, en een taxi is duur."
             }
-          }
+          },
+          "from": "hamo"
         },
         {
-          "id": "firne",
+          "id": "sesan",
           "kind": "statement",
           "line": {
-            "story": "road-06-nameya-bave-me",
-            "paragraph": 5,
-            "sentence": 0,
-            "opens": "Piştî dikanê",
-            "en": "After the bookshop I go to the bakery.",
+            "conversation": "roadu06s4l3a",
+            "en": "At six o’clock. There’s no time for sleep!",
             "meanings": {
-              "ckb": "دوای کتێبفرۆشییەکە دەچمە نانەواخانەکە.",
-              "de": "Nach dem Buchladen gehe ich zur Bäckerei.",
-              "es": "Después de la librería voy a la panadería.",
-              "tr": "Kitapçıdan sonra fırına gidiyorum.",
-              "ar": "بعد المكتبة أذهب إلى المخبز.",
-              "fr": "Après la librairie, je vais à la boulangerie.",
-              "nl": "Na de boekwinkel ga ik naar de bakkerij."
+              "ckb": "کاتژمێر شەش. کات بۆ خەوتن نییە!",
+              "de": "Um sechs Uhr. Für Schlaf ist keine Zeit!",
+              "es": "A las seis. ¡No hay tiempo para dormir!",
+              "tr": "Saat altıda. Uykuya vakit yok!",
+              "ar": "في الساعة السادسة. لا وقت للنوم!",
+              "fr": "À six heures. Pas le temps de dormir !",
+              "nl": "Om zes uur. Geen tijd om te slapen!"
             }
-          }
-        },
-        {
-          "id": "tune",
-          "kind": "statement",
-          "line": {
-            "story": "road-06-nameya-bave-me",
-            "paragraph": 6,
-            "sentence": 1,
-            "opens": "Li minîbûsê",
-            "en": "On the minibus I look for my book, but it isn’t there!",
-            "meanings": {
-              "ckb": "لە مینیبووسەکەدا بە دوای کتێبەکەمدا دەگەڕێم، بەڵام نییە!",
-              "de": "Im Minibus suche ich mein Buch, aber es ist nicht da!",
-              "es": "En el minibús busco mi libro, ¡pero no está!",
-              "tr": "Minibüste kitabımı arıyorum, ama yok!",
-              "ar": "في الحافلة الصغيرة أبحث عن كتابي، لكنه ليس هناك!",
-              "fr": "Dans le minibus, je cherche mon livre, mais il n’est pas là !",
-              "nl": "In het busje zoek ik mijn boek, maar het is er niet!"
-            }
-          }
-        },
-        {
-          "id": "telefon",
-          "kind": "statement",
-          "line": {
-            "story": "road-06-nameya-bave-me",
-            "paragraph": 7,
-            "sentence": 0,
-            "opens": "Nanpêj telefonî min dike",
-            "en": "The baker phones me.",
-            "meanings": {
-              "ckb": "نانەواکە تەلەفۆنم بۆ دەکات.",
-              "de": "Der Bäcker ruft mich an.",
-              "es": "El panadero me llama.",
-              "tr": "Fırıncı beni arıyor.",
-              "ar": "يتصل بي الخبّاز.",
-              "fr": "Le boulanger me téléphone.",
-              "nl": "De bakker belt me."
-            }
-          }
-        },
-        {
-          "id": "cem",
-          "kind": "statement",
-          "line": {
-            "story": "road-06-nameya-bave-me",
-            "paragraph": 7,
-            "sentence": 1,
-            "opens": "Pirtûka min li firneyê",
-            "en": "My book is at the bakery, on the table, next to the bread.",
-            "meanings": {
-              "ckb": "کتێبەکەم لە نانەواخانەکەیە، لەسەر مێزەکە، لە تەنیشت نانەکە.",
-              "de": "Mein Buch ist in der Bäckerei, auf dem Tisch, neben dem Brot.",
-              "es": "Mi libro está en la panadería, sobre la mesa, junto al pan.",
-              "tr": "Kitabım fırında, masanın üstünde, ekmeğin yanında.",
-              "ar": "كتابي في المخبز، على الطاولة، بجانب الخبز.",
-              "fr": "Mon livre est à la boulangerie, sur la table, à côté du pain.",
-              "nl": "Mijn boek ligt in de bakkerij, op de tafel, naast het brood."
-            }
-          }
+          },
+          "from": "hamo"
         }
       ],
       "steps": [
         {
           "prompt": {
-            "en": "What is the bookshop like when Hamo gets there?",
-            "ku": "Dema Hamo tê, dikana pirtûkan çawa ye?",
-            "ckb": "کاتێک حەمۆ دەگات، کتێبفرۆشییەکە چۆنە؟",
-            "de": "Wie ist der Buchladen, als Hamo ankommt?",
-            "es": "¿Cómo está la librería cuando llega Hamo?",
-            "tr": "Hamo vardığında kitapçı nasıl?",
-            "ar": "كيف هي المكتبة عندما يصل حمو؟",
-            "fr": "Comment est la librairie quand Hamo arrive ?",
-            "nl": "Hoe is de boekwinkel als Hamo aankomt?"
+            "en": "What does the news say?",
+            "ku": "Nûçe çi dibêjin?",
+            "ckb": "هەواڵەکان چی دەڵێن؟",
+            "de": "Was sagen die Nachrichten?",
+            "es": "¿Qué dicen las noticias?",
+            "tr": "Haberler ne diyor?",
+            "ar": "ماذا تقول الأخبار؟",
+            "fr": "Que disent les nouvelles ?",
+            "nl": "Wat zegt het nieuws?"
           },
           "options": [
             {
-              "en": "Closed",
-              "ku": "Girtî ye",
-              "ckb": "داخراوە",
-              "de": "Geschlossen",
-              "es": "Cerrada",
-              "tr": "Kapalı",
-              "ar": "مغلقة",
-              "fr": "Fermée",
-              "nl": "Dicht"
+              "en": "Tomorrow the road over the mountain closes",
+              "ku": "Sibe rê girtî dibe",
+              "ckb": "سبەی ڕێگاکە دادەخرێت",
+              "de": "Morgen wird die Straße über den Berg gesperrt",
+              "es": "Mañana cierran la carretera de la montaña",
+              "tr": "Yarın dağ yolu kapanıyor",
+              "ar": "غدًا يُغلق الطريق عبر الجبل",
+              "fr": "Demain, la route de la montagne ferme",
+              "nl": "Morgen gaat de weg over de berg dicht"
             },
             {
-              "en": "Crowded",
-              "ku": "Qelebalix e",
-              "ckb": "قەرەباڵغە",
-              "de": "Voller Leute",
-              "es": "Llena de gente",
-              "tr": "Kalabalık",
-              "ar": "مزدحمة",
-              "fr": "Pleine de monde",
-              "nl": "Vol mensen"
+              "en": "It will snow all week",
+              "ku": "Hemû hefteyê berf dibare",
+              "ckb": "هەموو هەفتەکە بەفر دەبارێت",
+              "de": "Die ganze Woche schneit es",
+              "es": "Nevará toda la semana",
+              "tr": "Bütün hafta kar yağacak",
+              "ar": "سيتساقط الثلج طوال الأسبوع",
+              "fr": "Il va neiger toute la semaine",
+              "nl": "Het sneeuwt de hele week"
             },
             {
-              "en": "Empty",
-              "ku": "Vala ye",
-              "ckb": "بەتاڵە",
-              "de": "Leer",
-              "es": "Vacía",
-              "tr": "Boş",
-              "ar": "فارغة",
-              "fr": "Vide",
-              "nl": "Leeg"
+              "en": "The market is closed",
+              "ku": "Bazar girtî ye",
+              "ckb": "بازاڕەکە داخراوە",
+              "de": "Der Markt ist geschlossen",
+              "es": "El mercado está cerrado",
+              "tr": "Pazar kapalı",
+              "ar": "السوق مغلق",
+              "fr": "Le marché est fermé",
+              "nl": "De markt is dicht"
             }
           ],
           "correctIndex": 0,
           "evidence": [
-            "girti",
-            "vedike"
+            "nuce"
           ]
         },
         {
           "prompt": {
-            "en": "What does Hamo buy at the bookshop?",
-            "ku": "Hamo li dikana pirtûkan çi dikire?",
-            "ckb": "حەمۆ لە کتێبفرۆشییەکە چی دەکڕێت؟",
-            "de": "Was kauft Hamo im Buchladen?",
-            "es": "¿Qué compra Hamo en la librería?",
-            "tr": "Hamo kitapçıdan ne alıyor?",
-            "ar": "ماذا يشتري حمو من المكتبة؟",
-            "fr": "Qu’achète Hamo à la librairie ?",
-            "nl": "Wat koopt Hamo in de boekwinkel?"
+            "en": "What must they do?",
+            "ku": "Divê ew çi bikin?",
+            "ckb": "دەبێت چی بکەن؟",
+            "de": "Was müssen sie tun?",
+            "es": "¿Qué tienen que hacer?",
+            "tr": "Ne yapmaları gerekiyor?",
+            "ar": "ماذا يجب أن يفعلوا؟",
+            "fr": "Que doivent-ils faire ?",
+            "nl": "Wat moeten ze doen?"
           },
           "options": [
             {
-              "en": "A book of proverbs",
-              "ku": "Pirtûkeke gotinên pêşiyan",
-              "ckb": "کتێبێکی پەندی پێشینان",
-              "de": "Ein Buch mit Sprichwörtern",
-              "es": "Un libro de refranes",
-              "tr": "Bir atasözleri kitabı",
-              "ar": "كتاب أمثال",
-              "fr": "Un livre de proverbes",
-              "nl": "Een boek met spreekwoorden"
+              "en": "Go back early, before the road closes",
+              "ku": "Zû vegerin, berî ku rê girtî be",
+              "ckb": "زوو بگەڕێنەوە، پێش ئەوەی ڕێگاکە دابخرێت",
+              "de": "Früh zurückfahren, bevor die Straße gesperrt ist",
+              "es": "Volver temprano, antes de que cierren la carretera",
+              "tr": "Yol kapanmadan erken dönmek",
+              "ar": "العودة باكرًا قبل أن يُغلق الطريق",
+              "fr": "Rentrer tôt, avant que la route ferme",
+              "nl": "Vroeg teruggaan, voordat de weg dichtgaat"
             },
             {
-              "en": "A map of the town",
-              "ku": "Nexşeya bajêr",
-              "ckb": "نەخشەی شارەکە",
-              "de": "Einen Stadtplan",
-              "es": "Un mapa del pueblo",
-              "tr": "Kasabanın haritası",
-              "ar": "خريطة البلدة",
-              "fr": "Un plan de la ville",
-              "nl": "Een plattegrond van de stad"
+              "en": "Stay in town for a week",
+              "ku": "Hefteyekê li bajêr bimînin",
+              "ckb": "هەفتەیەک لە شار بمێننەوە",
+              "de": "Eine Woche in der Stadt bleiben",
+              "es": "Quedarse una semana en el pueblo",
+              "tr": "Bir hafta kasabada kalmak",
+              "ar": "البقاء في البلدة أسبوعًا",
+              "fr": "Rester une semaine en ville",
+              "nl": "Een week in de stad blijven"
             },
             {
-              "en": "A notebook",
-              "ku": "Defterek",
-              "ckb": "دەفتەرێک",
-              "de": "Ein Heft",
-              "es": "Un cuaderno",
-              "tr": "Bir defter",
-              "ar": "دفتر",
-              "fr": "Un cahier",
-              "nl": "Een schrift"
+              "en": "Wait for the market to open",
+              "ku": "Li benda vekirina bazarê bimînin",
+              "ckb": "چاوەڕێی کرانەوەی بازاڕەکە بکەن",
+              "de": "Warten, bis der Markt aufmacht",
+              "es": "Esperar a que abra el mercado",
+              "tr": "Pazarın açılmasını beklemek",
+              "ar": "انتظار فتح السوق",
+              "fr": "Attendre que le marché ouvre",
+              "nl": "Wachten tot de markt opengaat"
             }
           ],
           "correctIndex": 0,
           "evidence": [
-            "kirin"
+            "zu"
           ]
         },
         {
           "prompt": {
-            "en": "Where does Hamo go after the bookshop?",
-            "ku": "Piştî dikana pirtûkan Hamo diçe ku?",
-            "ckb": "حەمۆ دوای کتێبفرۆشییەکە دەچێتە کوێ؟",
-            "de": "Wohin geht Hamo nach dem Buchladen?",
-            "es": "¿Adónde va Hamo después de la librería?",
-            "tr": "Hamo kitapçıdan sonra nereye gidiyor?",
-            "ar": "إلى أين يذهب حمو بعد المكتبة؟",
-            "fr": "Où va Hamo après la librairie ?",
-            "nl": "Waar gaat Hamo na de boekwinkel heen?"
+            "en": "Why don’t they go by train or by taxi?",
+            "ku": "Çima ew bi trênê an bi taksiyê naçin?",
+            "ckb": "بۆچی بە شەمەندەفەر یان بە تەکسی ناچن؟",
+            "de": "Warum fahren sie nicht mit dem Zug oder mit dem Taxi?",
+            "es": "¿Por qué no van en tren ni en taxi?",
+            "tr": "Neden trenle ya da taksiyle gitmiyorlar?",
+            "ar": "لماذا لا يذهبون بالقطار أو بسيارة الأجرة؟",
+            "fr": "Pourquoi ne partent-ils pas en train ou en taxi ?",
+            "nl": "Waarom gaan ze niet met de trein of de taxi?"
           },
           "options": [
             {
-              "en": "To the bakery",
-              "ku": "Firneyê",
-              "ckb": "بۆ نانەواخانەکە",
-              "de": "Zur Bäckerei",
-              "es": "A la panadería",
-              "tr": "Fırına",
-              "ar": "إلى المخبز",
-              "fr": "À la boulangerie",
-              "nl": "Naar de bakkerij"
+              "en": "There’s no train, and a taxi is expensive",
+              "ku": "Trên tune, û taksî biha ye",
+              "ckb": "شەمەندەفەر نییە، و تەکسی گرانە",
+              "de": "Es gibt keinen Zug, und ein Taxi ist teuer",
+              "es": "No hay tren, y un taxi es caro",
+              "tr": "Tren yok, taksi de pahalı",
+              "ar": "لا يوجد قطار، وسيارة الأجرة غالية",
+              "fr": "Il n’y a pas de train, et un taxi coûte cher",
+              "nl": "Er is geen trein, en een taxi is duur"
             },
             {
-              "en": "Home",
-              "ku": "Malê",
-              "ckb": "بۆ ماڵەوە",
-              "de": "Nach Hause",
-              "es": "A casa",
-              "tr": "Eve",
-              "ar": "إلى البيت",
-              "fr": "À la maison",
-              "nl": "Naar huis"
+              "en": "The train is full",
+              "ku": "Trên tije ye",
+              "ckb": "شەمەندەفەرەکە پڕە",
+              "de": "Der Zug ist voll",
+              "es": "El tren está lleno",
+              "tr": "Tren dolu",
+              "ar": "القطار ممتلئ",
+              "fr": "Le train est plein",
+              "nl": "De trein zit vol"
             },
             {
-              "en": "To the market",
-              "ku": "Bazarê",
-              "ckb": "بۆ بازاڕ",
-              "de": "Zum Markt",
-              "es": "Al mercado",
-              "tr": "Pazara",
-              "ar": "إلى السوق",
-              "fr": "Au marché",
-              "nl": "Naar de markt"
+              "en": "Hevalo is afraid of trains",
+              "ku": "Hevalo ji trênan ditirse",
+              "ckb": "هەڤاڵۆ لە شەمەندەفەر دەترسێت",
+              "de": "Hevalo hat Angst vor Zügen",
+              "es": "Hevalo tiene miedo de los trenes",
+              "tr": "Hevalo trenlerden korkuyor",
+              "ar": "هيفالو يخاف من القطارات",
+              "fr": "Hevalo a peur des trains",
+              "nl": "Hevalo is bang voor treinen"
             }
           ],
           "correctIndex": 0,
           "evidence": [
-            "firne"
+            "minibus"
           ]
         },
         {
           "prompt": {
-            "en": "Where is the book?",
-            "ku": "Pirtûk li ku ye?",
-            "ckb": "کتێبەکە لە کوێیە؟",
-            "de": "Wo ist das Buch?",
-            "es": "¿Dónde está el libro?",
-            "tr": "Kitap nerede?",
-            "ar": "أين الكتاب؟",
-            "fr": "Où est le livre ?",
-            "nl": "Waar is het boek?"
+            "en": "When do they leave?",
+            "ku": "Ew kengî diçin?",
+            "ckb": "کەی دەڕۆن؟",
+            "de": "Wann fahren sie los?",
+            "es": "¿Cuándo salen?",
+            "tr": "Ne zaman yola çıkıyorlar?",
+            "ar": "متى يغادرون؟",
+            "fr": "Quand partent-ils ?",
+            "nl": "Wanneer vertrekken ze?"
           },
           "options": [
             {
-              "en": "At the bakery, next to the bread",
-              "ku": "Li firneyê, li cem nan",
-              "ckb": "لە نانەواخانەکە، لە تەنیشت نانەکە",
-              "de": "In der Bäckerei, neben dem Brot",
-              "es": "En la panadería, junto al pan",
-              "tr": "Fırında, ekmeğin yanında",
-              "ar": "في المخبز، بجانب الخبز",
-              "fr": "À la boulangerie, à côté du pain",
-              "nl": "In de bakkerij, naast het brood"
+              "en": "At six o’clock",
+              "ku": "Di demjimêr şeşan de",
+              "ckb": "کاتژمێر شەش",
+              "de": "Um sechs Uhr",
+              "es": "A las seis",
+              "tr": "Saat altıda",
+              "ar": "في الساعة السادسة",
+              "fr": "À six heures",
+              "nl": "Om zes uur"
             },
             {
-              "en": "On the minibus",
-              "ku": "Li minîbûsê",
-              "ckb": "لە مینیبووسەکە",
-              "de": "Im Minibus",
-              "es": "En el minibús",
-              "tr": "Minibüste",
-              "ar": "في الحافلة الصغيرة",
-              "fr": "Dans le minibus",
-              "nl": "In het busje"
+              "en": "At noon",
+              "ku": "Nîvro",
+              "ckb": "نیوەڕۆ",
+              "de": "Mittags",
+              "es": "A mediodía",
+              "tr": "Öğlen",
+              "ar": "عند الظهر",
+              "fr": "À midi",
+              "nl": "Om twaalf uur ’s middags"
             },
             {
-              "en": "In the bookshop",
-              "ku": "Li dikana pirtûkan",
-              "ckb": "لە کتێبفرۆشییەکە",
-              "de": "Im Buchladen",
-              "es": "En la librería",
-              "tr": "Kitapçıda",
-              "ar": "في المكتبة",
-              "fr": "À la librairie",
-              "nl": "In de boekwinkel"
+              "en": "The day after tomorrow",
+              "ku": "Dusibe",
+              "ckb": "دووسبەی",
+              "de": "Übermorgen",
+              "es": "Pasado mañana",
+              "tr": "Öbür gün",
+              "ar": "بعد غد",
+              "fr": "Après-demain",
+              "nl": "Overmorgen"
             }
           ],
           "correctIndex": 0,
           "evidence": [
-            "tune",
-            "telefon",
-            "cem"
+            "sesan"
           ]
         }
       ],
-      "culprit": "nanpej",
+      "culprit": "reya-ciye",
       "solution": {
-        "en": "Hamo buys a book of proverbs at the bookshop, and then goes to the bakery. On the minibus home the book is gone. Then the baker phones: the book is at the bakery, on the table, next to the bread. The baker has it.",
-        "ku": "Hamo li dikana pirtûkan pirtûkeke gotinên pêşiyan dikire, û paşê diçe firneyê. Li minîbûsê pirtûk tune ye. Paşê nanpêj telefonî wî dike: pirtûk li firneyê ye, li ser maseyê, li cem nan. Pirtûk li cem nanpêj e.",
-        "ckb": "حەمۆ لە کتێبفرۆشییەکە کتێبێکی پەندی پێشینان دەکڕێت، پاشان دەچێتە نانەواخانەکە. لە مینیبووسەکەدا کتێبەکە نەماوە. پاشان نانەواکە تەلەفۆنی بۆ دەکات: کتێبەکە لە نانەواخانەکەیە، لەسەر مێزەکە، لە تەنیشت نانەکە. کتێبەکە لای نانەواکەیە.",
-        "de": "Hamo kauft im Buchladen ein Buch mit Sprichwörtern und geht dann zur Bäckerei. Im Minibus nach Hause ist das Buch weg. Dann ruft der Bäcker an: Das Buch ist in der Bäckerei, auf dem Tisch, neben dem Brot. Der Bäcker hat es.",
-        "es": "Hamo compra un libro de refranes en la librería y luego va a la panadería. En el minibús de vuelta, el libro no está. Entonces llama el panadero: el libro está en la panadería, sobre la mesa, junto al pan. Lo tiene el panadero.",
-        "tr": "Hamo kitapçıdan bir atasözleri kitabı alıyor, sonra fırına gidiyor. Eve dönerken minibüste kitap yok. Sonra fırıncı telefon ediyor: kitap fırında, masanın üstünde, ekmeğin yanında. Kitap fırıncıda.",
-        "ar": "يشتري حمو كتاب أمثال من المكتبة، ثم يذهب إلى المخبز. في الحافلة الصغيرة في طريق العودة لا يجد الكتاب. ثم يتصل الخبّاز: الكتاب في المخبز، على الطاولة، بجانب الخبز. الكتاب عند الخبّاز.",
-        "fr": "Hamo achète un livre de proverbes à la librairie, puis il va à la boulangerie. Dans le minibus du retour, le livre a disparu. Puis le boulanger téléphone : le livre est à la boulangerie, sur la table, à côté du pain. C’est le boulanger qui l’a.",
-        "nl": "Hamo koopt in de boekwinkel een boek met spreekwoorden en gaat daarna naar de bakkerij. In het busje naar huis is het boek weg. Dan belt de bakker: het boek ligt in de bakkerij, op de tafel, naast het brood. De bakker heeft het."
+        "en": "The news says the mountain road will close tomorrow, so everyone must go back early, before it is closed. There’s no train and a taxi is expensive, so they take the minibus at six. It isn’t the driver’s fault, or Hamo’s: the mountain road is to blame. No time for sleep!",
+        "ku": "Nûçe dibêjin ku sibe rêya çiyê girtî dibe, loma divê her kes zû vegere, berî ku rê girtî be. Trên tune û taksî biha ye, loma ew di demjimêr şeşan de bi minîbûsê diçin. Ne sûcê ajovan e, ne jî yê Hamo: sûcê rêya çiyê ye. Ji bo xewê dem tune!",
+        "ckb": "هەواڵەکان دەڵێن سبەی ڕێگای چیاکە دادەخرێت، بۆیە هەموو کەس دەبێت زوو بگەڕێتەوە، پێش ئەوەی دابخرێت. شەمەندەفەر نییە و تەکسی گرانە، بۆیە کاتژمێر شەش بە مینیبووس دەڕۆن. تاوانی شۆفێرەکە نییە، هی حەمۆش نییە: تاوانی ڕێگای چیاکەیە. کات بۆ خەوتن نییە!",
+        "de": "Die Nachrichten sagen, dass die Bergstraße morgen gesperrt wird, also müssen alle früh zurück, bevor sie zu ist. Es gibt keinen Zug, und ein Taxi ist teuer, also nehmen sie um sechs den Minibus. Der Fahrer ist nicht schuld, Hamo auch nicht: Schuld ist die Bergstraße. Keine Zeit zum Schlafen!",
+        "es": "Las noticias dicen que mañana cierran la carretera de la montaña, así que todos tienen que volver temprano, antes de que la cierren. No hay tren y un taxi es caro, así que toman el minibús a las seis. No es culpa del conductor ni de Hamo: la culpa es de la carretera de la montaña. ¡No hay tiempo para dormir!",
+        "tr": "Haberlere göre dağ yolu yarın kapanıyor, bu yüzden herkes yol kapanmadan erken dönmeli. Tren yok, taksi de pahalı, bu yüzden saat altıda minibüse biniyorlar. Suç şoförün de değil, Hamo’nun da değil: suçlu dağ yolu. Uykuya vakit yok!",
+        "ar": "تقول الأخبار إن طريق الجبل سيُغلق غدًا، لذا على الجميع العودة باكرًا قبل أن يُغلق. لا يوجد قطار وسيارة الأجرة غالية، لذا يركبون الحافلة الصغيرة في السادسة. ليس الذنب ذنب السائق ولا حمو: المذنب طريق الجبل. لا وقت للنوم!",
+        "fr": "Les nouvelles disent que la route de la montagne sera fermée demain, alors tout le monde doit rentrer tôt, avant qu’elle ferme. Il n’y a pas de train et un taxi coûte cher, alors ils prennent le minibus à six heures. Ce n’est la faute ni du chauffeur ni de Hamo : c’est la route de la montagne. Pas le temps de dormir !",
+        "nl": "Het nieuws zegt dat de bergweg morgen dichtgaat, dus iedereen moet vroeg terug, voordat hij dicht is. Er is geen trein en een taxi is duur, dus nemen ze om zes uur het busje. Het is niet de schuld van de chauffeur, en ook niet van Hamo: de bergweg is de schuldige. Geen tijd om te slapen!"
       },
       "hints": [
         {
-          "en": "Follow Hamo from shop to shop.",
-          "ku": "Li pey Hamo here, ji dikanekê heta dikaneke din.",
-          "ckb": "شوێن حەمۆ بکەوە، لە دووکانێکەوە بۆ دووکانێکی تر.",
-          "de": "Folge Hamo von Laden zu Laden.",
-          "es": "Sigue a Hamo de tienda en tienda.",
-          "tr": "Hamo’yu dükkândan dükkâna izle.",
-          "ar": "اتبع حمو من متجر إلى متجر.",
-          "fr": "Suis Hamo de boutique en boutique.",
-          "nl": "Volg Hamo van winkel naar winkel."
+          "en": "Listen to the news.",
+          "ku": "Guhdariya nûçeyan bike.",
+          "ckb": "گوێ لە هەواڵەکان بگرە.",
+          "de": "Hör auf die Nachrichten.",
+          "es": "Escucha las noticias.",
+          "tr": "Haberleri dinle.",
+          "ar": "استمع إلى الأخبار.",
+          "fr": "Écoute les nouvelles.",
+          "nl": "Luister naar het nieuws."
         },
         {
-          "en": "Who phones Hamo?",
-          "ku": "Kî telefonî Hamo dike?",
-          "ckb": "کێ تەلەفۆن بۆ حەمۆ دەکات؟",
-          "de": "Wer ruft Hamo an?",
-          "es": "¿Quién llama a Hamo?",
-          "tr": "Hamo’yu kim arıyor?",
-          "ar": "من يتصل بحمو؟",
-          "fr": "Qui téléphone à Hamo ?",
-          "nl": "Wie belt Hamo?"
+          "en": "What will be closed tomorrow?",
+          "ku": "Sibe çi girtî dibe?",
+          "ckb": "سبەی چی دادەخرێت؟",
+          "de": "Was wird morgen gesperrt?",
+          "es": "¿Qué cerrarán mañana?",
+          "tr": "Yarın ne kapanacak?",
+          "ar": "ما الذي سيُغلق غدًا؟",
+          "fr": "Qu’est-ce qui sera fermé demain ?",
+          "nl": "Wat gaat er morgen dicht?"
         }
       ]
     },
