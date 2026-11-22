@@ -133,11 +133,14 @@ describe('Profile view (full, read-only)', () => {
 
     const card = document.querySelector<HTMLElement>('.ph')!;
     const strip = card.querySelector<HTMLElement>('.ph-stats .mkp-facts')!;
-    expect(within(strip).getAllByRole('listitem').map((li) => li.querySelector('.mkp-fact-label')?.textContent)).toEqual(['Streak', 'XP', 'Friends', 'Badges']);
+    // Three figures beside the face; how many badges is on the badge case, which opens your badges.
+    expect(within(strip).getAllByRole('listitem').map((li) => li.querySelector('.mkp-fact-label')?.textContent)).toEqual(['Streak', 'XP', 'Friends']);
     // A number with a page of its own is the way into it; the others are only numbers.
     expect(within(strip).getByRole('link', { name: /Friends/ })).toHaveAttribute('href', '/app/friends');
-    expect(within(strip).getByRole('link', { name: /Badges/ })).toHaveAttribute('href', '/app/badges');
     expect(within(strip).queryByRole('link', { name: /XP/ })).toBeNull();
+    const badgeCase = await screen.findByRole('link', { name: 'Badges: 4' });
+    expect(badgeCase).toHaveAttribute('href', '/app/badges');
+    expect(badgeCase.querySelector('.hl-count')).toHaveTextContent('4');
     // Read aloud, a streak is days.
     expect(within(strip).getByText('5 days')).toHaveClass('sr-only');
 

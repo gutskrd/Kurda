@@ -356,6 +356,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                       <ProfileHighlights
                         tree={profile.tree}
                         badges={profile.badges ?? []}
+                        earned={profile.achievements ?? null}
                         league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
                         favPoem={profile.favoritePoem}
                         favStory={profile.favoriteStory}
@@ -402,7 +403,7 @@ function ProfileHeadSkeleton({ width }: { width: number }): React.JSX.Element {
           <Skeleton width={FACE} height={FACE} radius={radii.pill} />
         </View>
         <View style={[styles.skeletonStats, { flexDirection: dir.row }]}>
-          {[0, 1, 2, 3].map((i) => (
+          {[0, 1, 2].map((i) => (
             <View key={i} style={styles.statSkeleton}>
               <SkeletonText size={typography.sizes.title} width={28} align="center" />
               <SkeletonText size={typography.sizes.text} width={44} align="center" />
@@ -427,7 +428,7 @@ const LARGE_BUTTON = 50;
 function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode }) {
   return <ScreenHeader onBack={onExit} right={right} />;
 }
-/** Their streak, XP, league while they take part (nothing for somebody never in one), and badges. */
+/** Their streak, XP, and league while they take part (nothing for somebody never in one); badges are in the highlights. */
 function useFacts(): (profile: Profile) => ProfileFact[] {
   const { t, locale } = useI18n();
   return (profile) => {
@@ -437,7 +438,6 @@ function useFacts(): (profile: Profile) => ProfileFact[] {
     const short = (n: number): string => formatCompact(n, locale);
     const whole = (n: number): string | undefined => (short(n) === formatNumber(n, locale) ? undefined : formatNumber(n, locale));
     const xp = profile.level?.xp ?? profile.xp ?? 0;
-    const badges = profile.achievements ?? 0;
     return [
       {
         key: 'streak',
@@ -449,7 +449,6 @@ function useFacts(): (profile: Profile) => ProfileFact[] {
       },
       { key: 'xp', label: t('profile.stat.xp'), value: short(xp), whole: whole(xp) },
       ...(tier ? [{ key: 'league', label: t('profile.league'), value: leagueName(t, tier) }] : []),
-      { key: 'badges', label: t('profile.badges'), value: short(badges), whole: whole(badges) },
     ];
   };
 }
@@ -473,7 +472,7 @@ const styles = StyleSheet.create({
   skeletonBanner: { height: 128, marginHorizontal: -layout.gutter },
   skeletonTop: { alignItems: 'flex-start', gap: spacing.sm, marginTop: -(FACE / 2 + 4) },
   skeletonFace: { borderRadius: radii.pill, borderWidth: 4 },
-  skeletonStats: { flex: 1, justifyContent: 'space-around', marginTop: FACE / 2 + 4 + spacing.xs },
+  skeletonStats: { flex: 1, justifyContent: 'space-around', marginTop: FACE / 2 + 4 + spacing.md },
   statSkeleton: { alignItems: 'center', gap: 2 },
 });
 

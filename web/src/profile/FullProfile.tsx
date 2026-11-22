@@ -219,7 +219,8 @@ export function FullProfile({
   const t = useT();
   const locale = useLocale();
   const number = (n: number): string => n.toLocaleString(locale);
-  // Figures beside the face are shortened (5230 → 5.2K) so four always fit; a screen reader is given the whole number.
+  // Figures beside the face are shortened (5230 → 5.2K) so all three fit; a screen reader is given the whole number.
+  // How many badges sits on the badge case in the highlights rather than as a fourth figure.
   const short = (n: number): string => compactCount(n, locale);
   const whole = (n: number): string | undefined => (short(n) === number(n) ? undefined : number(n));
   const facts: ProfileFact[] = [
@@ -234,7 +235,6 @@ export function FullProfile({
     },
     { key: 'xp', label: t('profile.stat.xp'), value: short(view.xp), spoken: whole(view.xp) },
     ...(view.friends != null ? [{ key: 'friends', label: t('nav.friends'), value: short(view.friends), spoken: whole(view.friends), to: own ? '/app/friends' : undefined }] : []),
-    ...(view.badges != null ? [{ key: 'badges', label: t('profile.badges'), value: short(view.badges), spoken: whole(view.badges), to: own ? '/app/badges' : undefined }] : []),
   ];
 
   return (
@@ -300,7 +300,15 @@ export function FullProfile({
           {yours}
         </ProfileHead>
 
-        <ProfileHighlights own={own} tree={showcase?.tree} badges={showcase?.badges} league={showcase?.league} favPoem={view.favPoem} favStory={view.favStory} />
+        <ProfileHighlights
+          own={own}
+          tree={showcase?.tree}
+          badges={showcase?.badges}
+          earned={view.badges}
+          league={showcase?.league}
+          favPoem={view.favPoem}
+          favStory={view.favStory}
+        />
         {notice}
         {activity}
       </div>

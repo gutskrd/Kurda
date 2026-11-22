@@ -799,7 +799,7 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
             </span>
             <div className="ph-stats">
               <ul className="mkp-facts">
-                {times(4, (i) => (
+                {times(3, (i) => (
                   <li key={i}>
                     <span className="mkp-fact">
                       <span className="mkp-fact-label">

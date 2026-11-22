@@ -72,11 +72,13 @@
 
 /* the face overlapping the banner, the figures beside it */
 .ph-top {
+  /* how far the face rises into the banner */
+  --ph-rise: 48px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  align-items: end;
+  align-items: start;
   gap: 16px;
-  margin-top: -48px;
+  margin-top: calc(-1 * var(--ph-rise));
 }
 .ph-face {
   position: relative;
@@ -121,11 +123,15 @@
 }
 /* the figures: number over word, in a row like a social app's counts, with no rules between them; each as wide as it
    needs, the row shrinking together only where it would overflow (FullProfile.tsx) */
+/* the figures start a clear step below the banner, never on its edge */
+.ph-stats {
+  margin-top: calc(var(--ph-rise) + 14px);
+}
 .ph-stats .mkp-facts {
   display: flex;
   gap: 6px;
   margin: 0;
-  padding: 0 0 6px;
+  padding: 0;
   border-top: 0;
 }
 .ph-stats .mkp-facts > li {
@@ -140,6 +146,7 @@
   grid-template-columns: minmax(0, 1fr);
 }
 .ph-top:has(.mkp-facts[data-crowded]) .ph-stats {
+  margin-top: 0;
   padding-top: 4px;
 }
 .ph-stats .mkp-fact {
@@ -385,9 +392,6 @@
 }
 .hl-art svg {
   display: block;
-}
-.hl-ring.is-add .hl-art {
-  background: none;
 }
 .hl-label {
   max-width: 100%;
@@ -657,4 +661,83 @@
   .hl-ring {
     transition: none;
   }
+}
+
+/* ---- the badge case: the chosen badges fanned in the first ring, how many across its foot ---- */
+.hl-ring.is-case {
+  position: relative;
+}
+.hl-fan {
+  position: relative;
+  display: block;
+  line-height: 0;
+}
+.hl-fan.is-empty {
+  display: grid;
+  place-items: center;
+  color: var(--ink-3);
+}
+.hl-fan-medal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  line-height: 0;
+}
+.hl-fan-medal.is-only {
+  transform: translate(-50%, -50%);
+}
+.hl-fan-medal.is-front {
+  transform: translate(-50%, -40%);
+}
+.hl-fan-medal.is-left {
+  transform: translate(-86%, -62%) rotate(-16deg);
+}
+.hl-fan-medal.is-right {
+  transform: translate(-14%, -62%) rotate(16deg);
+}
+.hl-count {
+  position: absolute;
+  bottom: -4px;
+  inset-inline-end: -8px;
+  min-width: 26px;
+  padding: 1px 8px;
+  border: 2px solid var(--app-bg);
+  border-radius: var(--r-pill);
+  background: var(--ink);
+  color: var(--app-bg);
+  font-size: var(--text);
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.hl-count.is-inline {
+  position: static;
+  border: 0;
+}
+.hl-case-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.hl-case-list {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: start;
+}
+.hl-case-list > li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.hl-case-list p {
+  margin: 0;
+}
+.hl-case-name {
+  font-weight: 700;
 }

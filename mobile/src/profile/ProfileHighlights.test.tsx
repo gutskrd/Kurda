@@ -41,12 +41,25 @@ describe('the highlights', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('League');
   });
 
-  it('opens somebody else’s badge in a sheet with its name and meaning, and leaves the choosing to its owner', async () => {
-    renderWithProviders(<ProfileHighlights badges={[badge]} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Wane' }));
-    expect(await screen.findByText('Lessons')).toBeTruthy();
+  it('gathers somebody else’s badges in one case with how many they have, and opens it to their names and meanings', async () => {
+    renderWithProviders(<ProfileHighlights badges={[badge]} earned={12} />);
+    // One tile for the badges, not one per badge.
+    expect(screen.queryByRole('button', { name: 'Wane' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Badges: 12' }));
+    expect(await screen.findByText('Wane')).toBeTruthy();
+    expect(screen.getByText('Lessons')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Choose badges for your profile' })).toBeNull();
     expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  it('keeps your empty case without a nought and opens your badges, and shows no case for somebody with none', () => {
+    const { unmount } = renderWithProviders(<ProfileHighlights own earned={0} />);
+    expect(screen.queryByText('0')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Badges: 0' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Badges');
+    unmount();
+    renderWithProviders(<ProfileHighlights earned={0} />);
+    expect(screen.queryByTestId('profile-highlights')).toBeNull();
   });
 
   it('opens somebody else’s league in a sheet rather than your own league', async () => {

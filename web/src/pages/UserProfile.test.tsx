@@ -74,7 +74,9 @@ describe('UserProfile (other user, full page)', () => {
     const figure = (label: string) => within(card).getByText(label, { selector: '.mkp-fact-label' }).parentElement?.querySelector('.mkp-fact-value')?.textContent;
     expect(figure('Streak')).toBe('3');
     expect(figure('XP')).toBe('410');
-    expect(figure('Badges')).toBe('5');
+    // How many badges is on the badge case in the highlights, not a fourth figure.
+    expect(within(card).queryByText('Badges', { selector: '.mkp-fact-label' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Badges: 5' }).querySelector('.hl-count')).toHaveTextContent('5');
     // How many friends they have was not sent, so it is not guessed at.
     expect(within(card).queryByText('Friends', { selector: '.mkp-fact-label' })).toBeNull();
     expect(within(card).getByRole('list').querySelectorAll('a')).toHaveLength(0);

@@ -6,12 +6,12 @@ import { reachRoom } from '../a11y/a11y';
 import { badgeLabel, badgeMeaning, badgeName } from '../badges/format';
 import { NewChip } from '../badges/NewChip';
 import { useI18n } from '../i18n/I18nContext';
+import { formatCompact, formatNumber } from '../i18n/format';
 import { knownTier, leagueLabel, leagueMeaning, leagueName } from '../leagues/format';
 import type { RootNavigation } from '../navigation/rootStack';
 import { BadgeMedal, LeagueEmblem } from '../ranks/art';
 import { useDirection } from '../reports/direction';
 import { BottomSheet } from '../theme/BottomSheet';
-import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
@@ -36,7 +36,10 @@ interface Highlight {
   sheet?: ReactNode;
   /** A badge earned since the app opened wears a "New" chip. */
   fresh?: boolean;
-  add?: boolean;
+  /** The badge case: how many badges, on a chip at the ring's corner. */
+  count?: string;
+  /** What a screen reader hears, where the label alone does not say it all. */
+  spoken?: string;
 }
 
 /** A badge or a league, large, with its name and what it means. */
@@ -54,15 +57,82 @@ function Shown({ art, title, meaning, action }: { art: ReactNode; title: string;
   );
 }
 
+/** Where each of up to three fanned badges sits in the case, as a share of its size: across, down, turn and scale. */
+const FAN: Record<number, readonly (readonly [number, number, number, number])[]> = {
+  1: [[0, 0, 0, 0.72]],
+  // Back to front: the first badge is drawn last, over the others.
+  2: [
+    [0.18, -0.04, 14, 0.56],
+    [-0.18, -0.04, -14, 0.56],
+  ],
+  3: [
+    [-0.2, -0.1, -16, 0.52],
+    [0.2, -0.1, 16, 0.52],
+    [0, 0.06, 0, 0.64],
+  ],
+};
+
+/** The badge case's picture: up to three chosen badges fanned like a hand of cards; the medal glyph while none is chosen. */
+function BadgeFan({ badges, size }: { badges: readonly ShowcaseBadge[]; size: number }): React.JSX.Element {
+  const three = badges.slice(0, 3);
+  if (three.length === 0) {
+    return (
+      <View style={[styles.fan, styles.fanEmpty, { width: size, height: size }]}>
+        <Icon name="medal" size={Math.round(size * 0.45)} tone="secondary" />
+      </View>
+    );
+  }
+  // The slots are listed back to front, so the badges are laid in that order: the first one last.
+  const order = three.length === 1 ? [0] : three.length === 2 ? [1, 0] : [1, 2, 0];
+  return (
+    <View style={[styles.fan, { width: size, height: size }]}>
+      {order.map((index, slot) => {
+        const b = three[index]!;
+        const [dx, dy, turn, k] = FAN[three.length]![slot]!;
+        const medal = Math.round(size * k);
+        const tierCount = badgeDef(b.key)?.tiers.length ?? 4;
+        return (
+          <View
+            key={b.key}
+            style={{
+              position: 'absolute',
+              left: (size - medal) / 2 + dx * size,
+              top: (size - medal) / 2 + dy * size,
+              transform: [{ rotate: `${turn}deg` }],
+            }}
+          >
+            <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={tierCount} size={medal} label="" />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+/** How many badges, on a chip cut out of the page at the ring's corner, or beside the title in the sheet. */
+function CountChip({ count, inline = false }: { count: string; inline?: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View
+      style={[styles.count, inline ? null : styles.countOnRing, { backgroundColor: colors.textPrimary, borderColor: inline ? 'transparent' : colors.background }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Text style={[styles.countText, { color: colors.background }]}>{count}</Text>
+    </View>
+  );
+}
+
 /**
  * What a profile shows off, as a row of round tiles under the actions, as on the website
- * (web/src/profile/ProfileHighlights.tsx): the tree, the league, the chosen badges and the favourite poem and story.
- * Your own row starts with the way to choose badges, and your tree and league open their pages; somebody else's open a
- * sheet with their name and meaning. Nothing shows when there is nothing to show.
+ * (web/src/profile/ProfileHighlights.tsx): the badge case, the tree, the league and the favourite poem and story. Your
+ * own open their pages; somebody else's open a sheet with their names and meanings. Nothing shows when there is nothing
+ * to show.
  */
 export function ProfileHighlights({
   tree,
   badges,
+  earned,
   league,
   favPoem,
   favStory,
@@ -70,7 +140,10 @@ export function ProfileHighlights({
   own = false,
 }: {
   tree?: TreeGlimpse | null;
+  /** The badges chosen to show. */
   badges?: readonly ShowcaseBadge[];
+  /** How many badges have been earned; left out where the server does not say. */
+  earned?: number | null;
   league?: ProfileLeague | null;
   favPoem?: FavoriteRef | null;
   favStory?: FavoriteRef | null;
@@ -80,13 +153,54 @@ export function ProfileHighlights({
 }): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const strip = useRef<ScrollView>(null);
   const [open, setOpen] = useState<Highlight | null>(null);
   const items: Highlight[] = [];
 
-  if (own) items.push({ key: 'choose', label: t('profile.badges'), art: <Icon name="plus" size={28} />, onOpen: () => navigation.navigate('Badges'), add: true });
+  // The badge case leads: the chosen badges fanned in one ring with how many have been earned at its corner, as on the
+  // website. Yours opens the badges, where the three on show are chosen; somebody else's lays out the ones they show.
+  const shown = badges ?? [];
+  if (own || shown.length > 0 || (earned ?? 0) > 0) {
+    // No chip while there are none: an empty case invites, a nought would only look bare.
+    const count = earned ? formatCompact(earned, locale) : undefined;
+    items.push({
+      key: 'badges',
+      label: t('profile.badges'),
+      spoken: earned != null ? `${t('profile.badges')}: ${formatNumber(earned, locale)}` : undefined,
+      art: <BadgeFan badges={shown} size={RING - 8} />,
+      count,
+      fresh: shown.some((b) => fresh?.has(b.key)),
+      ...(own
+        ? { onOpen: () => navigation.navigate('Badges') }
+        : {
+            sheet: (
+              <View style={styles.shown}>
+                <BadgeFan badges={shown} size={128} />
+                <View style={[styles.caseTitle, { flexDirection: dir.row }]}>
+                  <Text style={[styles.shownTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+                    {t('profile.badges')}
+                  </Text>
+                  {count ? <CountChip count={count} inline /> : null}
+                </View>
+                {shown.map((b) => {
+                  const tierCount = badgeDef(b.key)?.tiers.length ?? 4;
+                  return (
+                    <View key={b.key} style={[styles.caseRow, { flexDirection: dir.row }]}>
+                      <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={tierCount} size={48} label={badgeLabel(t, { key: b.key, tier: b.tier, tierKey: b.tierKey, tierCount, hidden: false })} />
+                      <View style={styles.caseText}>
+                        <Text style={[styles.caseName, dir.text, { color: colors.textPrimary }]}>{badgeName(t, b.key)}</Text>
+                        {badgeMeaning(t, b.key) ? <Text style={[styles.caseMeaning, dir.text, { color: colors.textSecondary }]}>{badgeMeaning(t, b.key)}</Text> : null}
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            ),
+          }),
+    });
+  }
 
   if (tree && hasTreeArt(tree.species)) {
     const named = treeNamed(t, tree.species);
@@ -110,35 +224,6 @@ export function ProfileHighlights({
       ...(own
         ? { onOpen: () => navigation.navigate('League') }
         : { sheet: <Shown art={<LeagueEmblem tier={tier} size={112} label={leagueLabel(t, tier)} />} title={leagueName(t, tier)} meaning={leagueMeaning(t, tier)} /> }),
-    });
-  }
-
-  for (const b of badges ?? []) {
-    const tierCount = badgeDef(b.key)?.tiers.length ?? 4;
-    const said = badgeLabel(t, { key: b.key, tier: b.tier, tierKey: b.tierKey, tierCount, hidden: false });
-    items.push({
-      key: `badge:${b.key}`,
-      label: badgeName(t, b.key),
-      art: <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={tierCount} size={56} label="" />,
-      fresh: fresh?.has(b.key),
-      sheet: (
-        <Shown
-          art={<BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={tierCount} size={128} label={said} shine="once" />}
-          title={badgeName(t, b.key)}
-          meaning={badgeMeaning(t, b.key)}
-          action={
-            own ? (
-              <ClayButton
-                label={t('profile.showcaseChoose')}
-                onPress={() => {
-                  setOpen(null);
-                  navigation.navigate('Badges');
-                }}
-              />
-            ) : undefined
-          }
-        />
-      ),
     });
   }
 
@@ -168,12 +253,13 @@ export function ProfileHighlights({
             key={item.key}
             onPress={item.onOpen ?? (() => setOpen(item))}
             accessibilityRole="button"
-            accessibilityLabel={item.label}
+            accessibilityLabel={item.spoken ?? item.label}
             style={styles.tile}
           >
             <View style={[styles.ring, { borderColor: colors.clayBorder }]}>
-              <View style={[styles.art, { backgroundColor: item.add ? 'transparent' : colors.controlTrack }]}>{item.art}</View>
+              <View style={[styles.art, { backgroundColor: colors.controlTrack }]}>{item.art}</View>
               {item.fresh ? <NewChip delayMs={120 + i * 80} style={styles.fresh} /> : null}
+              {item.count ? <CountChip count={item.count} /> : null}
             </View>
             <Text style={[styles.label, { color: colors.textSecondary }]} numberOfLines={1}>
               {item.label}
@@ -203,4 +289,14 @@ const styles = StyleSheet.create({
   shown: { alignItems: 'center', gap: spacing.sm + 2, paddingTop: spacing.sm },
   shownTitle: { fontSize: typography.sizes.title, fontWeight: typography.weights.bold, textAlign: 'center' },
   shownText: { fontSize: typography.sizes.text, lineHeight: 22, textAlign: 'center' },
+  fan: { position: 'relative' },
+  fanEmpty: { alignItems: 'center', justifyContent: 'center' },
+  count: { minWidth: 26, paddingHorizontal: spacing.sm, paddingVertical: 1, borderWidth: 2, borderRadius: radii.pill, alignItems: 'center' },
+  countOnRing: { position: 'absolute', bottom: -4, end: -8 },
+  countText: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  caseTitle: { alignItems: 'center', gap: spacing.sm },
+  caseRow: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md - 4 },
+  caseText: { flex: 1, minWidth: 0 },
+  caseName: { fontSize: typography.sizes.text, fontWeight: typography.weights.bold },
+  caseMeaning: { fontSize: typography.sizes.text, lineHeight: 22 },
 });

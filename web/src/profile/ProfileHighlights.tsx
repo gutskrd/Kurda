@@ -1,10 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { hasTreeArt, toLeagueTier, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
+import { compactCount, hasTreeArt, toLeagueTier, type ProfileLeague, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import type { FavoriteRef } from '../lib/types';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { Sheet } from '../components/Sheet';
-import { BookIcon, FeatherIcon, PlusIcon } from '../components/icons';
+import { BookIcon, FeatherIcon, MedalIcon } from '../components/icons';
 import { Medal } from '../badges/parts';
 import { LeagueEmblem } from '../ranks/art';
 import { badgeNamed, leagueName, leagueNamed } from '../ranks/names';
@@ -20,6 +20,10 @@ interface Highlight {
   to?: string;
   /** what the sheet holds, for a highlight with no page of its own */
   sheet?: ReactNode;
+  /** the badge case: how many badges, on a chip across the ring's foot */
+  count?: string;
+  /** what a screen reader hears, where the label alone does not say it all */
+  spoken?: string;
 }
 
 /** A badge or a league, large, with its name and what it means. */
@@ -35,30 +39,117 @@ function Shown({ art, title, meaning, action }: { art: ReactNode; title: string;
 }
 
 /**
- * What a profile shows off, as a row of round tiles under the actions: the tree, the league, the chosen badges and the
- * favourite poem and story. Each opens its page, or a sheet with its name and meaning; your own row starts with the way
- * to choose badges. Nothing shows when there is nothing to show.
+ * The badge case's picture: up to three chosen badges fanned like a hand of cards, the first in front; the medal glyph
+ * while none is chosen. Drawn in a square `size` across.
+ */
+function BadgeFan({ badges, size }: { badges: readonly ShowcaseBadge[]; size: number }): React.JSX.Element {
+  const three = badges.slice(0, 3);
+  if (three.length === 0) {
+    return (
+      <span className="hl-fan is-empty" style={{ width: size, height: size }}>
+        <MedalIcon size={Math.round(size * 0.45)} />
+      </span>
+    );
+  }
+  // Back to front: the first badge is drawn last, over the others; one alone stands larger in the middle.
+  const laid: [ShowcaseBadge, 'only' | 'left' | 'right' | 'front', number][] =
+    three.length === 1
+      ? [[three[0]!, 'only', 0.72]]
+      : three.length === 2
+        ? [
+            [three[1]!, 'right', 0.56],
+            [three[0]!, 'left', 0.56],
+          ]
+        : [
+            [three[1]!, 'left', 0.52],
+            [three[2]!, 'right', 0.52],
+            [three[0]!, 'front', 0.64],
+          ];
+  return (
+    <span className="hl-fan" style={{ width: size, height: size }}>
+      {laid.map(([b, slot, k]) => (
+        <span key={b.key} className={`hl-fan-medal is-${slot}`}>
+          <Medal view={b} size={Math.round(size * k)} shine={false} />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/**
+ * What a profile shows off, as a row of round tiles under the actions: the badge case, the tree, the league and the
+ * favourite poem and story. Each opens its page, or a sheet with its name and meaning. Nothing shows when there is
+ * nothing to show.
  */
 export function ProfileHighlights({
   tree,
   badges,
+  earned,
   league,
   favPoem,
   favStory,
   own = false,
 }: {
   tree?: TreeGlimpse | null;
+  /** the badges chosen to show */
   badges?: readonly ShowcaseBadge[];
+  /** how many badges have been earned; left out where the server does not say */
+  earned?: number | null;
   league?: ProfileLeague | null;
   favPoem?: FavoriteRef | null;
   favStory?: FavoriteRef | null;
   own?: boolean;
 }): React.JSX.Element | null {
   const t = useT();
+  const locale = useLocale();
   const [open, setOpen] = useState<Highlight | null>(null);
   const items: Highlight[] = [];
 
-  if (own) items.push({ key: 'choose', label: t('profile.badges'), art: <PlusIcon size={28} />, to: '/app/badges' });
+  // The badge case leads: the chosen badges fanned in one ring with how many have been earned across its foot. Yours
+  // opens the badges, where the three on show are chosen; somebody else's lays out the ones they show, with meanings.
+  const shown = badges ?? [];
+  if (own || shown.length > 0 || (earned ?? 0) > 0) {
+    // No chip while there are none: an empty case invites, a nought would only look bare.
+    const count = earned ? compactCount(earned, locale) : undefined;
+    items.push({
+      key: 'badges',
+      label: t('profile.badges'),
+      spoken: earned != null ? `${t('profile.badges')}: ${earned.toLocaleString(locale)}` : undefined,
+      art: <BadgeFan badges={shown} size={62} />,
+      count,
+      ...(own
+        ? { to: '/app/badges' }
+        : {
+            sheet: (
+              <div className="hl-sheet">
+                <span className="hl-sheet-art">
+                  <BadgeFan badges={shown} size={128} />
+                </span>
+                <h2 className="hl-sheet-title hl-case-title">
+                  {t('profile.badges')}
+                  {count && <span className="hl-count is-inline">{count}</span>}
+                </h2>
+                {shown.length > 0 && (
+                  <ul className="hl-case-list">
+                    {shown.map((b) => {
+                      const named = badgeNamed(t, b.key);
+                      return (
+                        <li key={b.key}>
+                          <Medal view={b} size={48} shine={false} />
+                          <div>
+                            <p className="hl-case-name">{named.name}</p>
+                            {named.meaning && <p className="hl-sheet-text">{named.meaning}</p>}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            ),
+          }),
+    });
+  }
 
   if (tree && hasTreeArt(tree.species)) {
     const named = treeNamed(t, tree.species);
@@ -86,29 +177,6 @@ export function ProfileHighlights({
     });
   }
 
-  for (const b of badges ?? []) {
-    const named = badgeNamed(t, b.key);
-    items.push({
-      key: `badge:${b.key}`,
-      label: named.name,
-      art: <Medal view={b} size={56} shine={false} />,
-      sheet: (
-        <Shown
-          art={<Medal view={b} size={128} />}
-          title={named.name}
-          meaning={named.meaning}
-          action={
-            own ? (
-              <Link to="/app/badges" className="btn btn-secondary btn-sm hl-sheet-action">
-                {t('profile.allBadges')}
-              </Link>
-            ) : undefined
-          }
-        />
-      ),
-    });
-  }
-
   if (favPoem) items.push({ key: 'poem', label: favPoem.title, art: <FeatherIcon size={28} />, to: '/poems' });
   if (favStory) items.push({ key: 'story', label: favStory.title, art: <BookIcon size={28} />, to: '/stories' });
 
@@ -120,8 +188,9 @@ export function ProfileHighlights({
         {items.map((item) => {
           const inside = (
             <>
-              <span className={`hl-ring${item.key === 'choose' ? ' is-add' : ''}`} aria-hidden="true">
+              <span className={`hl-ring${item.key === 'badges' ? ' is-case' : ''}`} aria-hidden="true">
                 <span className="hl-art">{item.art}</span>
+                {item.count && <span className="hl-count">{item.count}</span>}
               </span>
               <span className="hl-label" dir="auto">
                 {item.label}
@@ -131,11 +200,11 @@ export function ProfileHighlights({
           return (
             <li key={item.key}>
               {item.to ? (
-                <Link to={item.to} className="hl">
+                <Link to={item.to} className="hl" aria-label={item.spoken}>
                   {inside}
                 </Link>
               ) : (
-                <button type="button" className="hl" aria-haspopup="dialog" onClick={() => setOpen(item)}>
+                <button type="button" className="hl" aria-haspopup="dialog" aria-label={item.spoken} onClick={() => setOpen(item)}>
                   {inside}
                 </button>
               )}

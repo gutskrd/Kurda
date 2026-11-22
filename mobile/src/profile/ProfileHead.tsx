@@ -113,10 +113,10 @@ export function ProfileHead({
         {background ? <CosmeticBackground background={background} style={StyleSheet.absoluteFill} /> : null}
       </View>
 
-      {/* Half the face over the banner's lower edge; the figures beside it start under the banner, clear of the picture. */}
+      {/* Half the face over the banner's lower edge; the figures beside it start a clear step under the banner, never on its edge. */}
       <View style={[styles.top, { flexDirection: dir.row, marginTop: -overlap(framed) }]}>
         <View style={[styles.face, { borderColor: colors.background, backgroundColor: colors.background }]}>{face}</View>
-        {stats ? <View style={[styles.stats, { marginTop: overlap(framed) + spacing.xs }]}>{stats}</View> : null}
+        {stats ? <View style={[styles.stats, { marginTop: overlap(framed) + spacing.md }]}>{stats}</View> : null}
       </View>
 
       <View style={styles.names}>

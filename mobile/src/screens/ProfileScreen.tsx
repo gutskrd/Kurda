@@ -302,12 +302,13 @@ function AccountProfile() {
   const handleLine = `@${username}`;
 
   const number = (n: number | null | undefined): string | null => (n == null ? null : formatNumber(n, locale));
-  // The figures beside the face are shortened (5230 → 5.2K) so four always fit; a screen reader hears the whole number.
+  // The figures beside the face are shortened (5230 → 5.2K) so all three fit; a screen reader hears the whole number.
   const short = (n: number | null | undefined): string | null => (n == null ? null : formatCompact(n, locale));
   const whole = (n: number | null | undefined): string | undefined => (n == null || short(n) === number(n) ? undefined : (number(n) ?? undefined));
   const streakDays = streak?.current ?? 0;
   const xp = me?.level?.xp ?? me?.xp ?? 0;
-  // The four figures the website shows. The streak opens its sheet; friends and badges open their pages.
+  // The three figures the website shows; how many badges sits on the badge case in the highlights. The streak opens its
+  // sheet and friends their page.
   const facts: ProfileFact[] = [
     {
       key: 'streak',
@@ -319,14 +320,6 @@ function AccountProfile() {
     },
     { key: 'xp', label: t('profile.stat.xp'), value: settled ? short(xp) : null, whole: whole(xp) },
     { key: 'friends', label: t('nav.friends'), value: settled ? (short(friends) ?? '—') : null, whole: whole(friends), onPress: () => navigation.navigate('Friends') },
-    // The count arrives with the public profile, after the first answers.
-    {
-      key: 'badges',
-      label: t('profile.badges'),
-      value: progressSettled ? (short(progress?.achievements) ?? '—') : null,
-      whole: whole(progress?.achievements),
-      onPress: () => navigation.navigate('Badges'),
-    },
   ];
   const stats = streak ? learningStats(streak) : null;
   // A Hevalo+ member has room for a second freeze, and the hint says how many rather than "one".
@@ -526,9 +519,18 @@ function AccountProfile() {
             ) : null}
           </ProfileHead>
 
-          {/* The tree, league, chosen badges and favourites; until the public profile answers, the row's shape in grey. */}
+          {/* The badge case, tree, league and favourites; until the public profile answers, the row's shape in grey. */}
           {progress ? (
-            <ProfileHighlights own tree={progress.tree} badges={progress.badges} league={progress.league} favPoem={me?.favoritePoem} favStory={me?.favoriteStory} fresh={fresh} />
+            <ProfileHighlights
+              own
+              tree={progress.tree}
+              badges={progress.badges}
+              earned={progress.achievements}
+              league={progress.league}
+              favPoem={me?.favoritePoem}
+              favStory={me?.favoriteStory}
+              fresh={fresh}
+            />
           ) : !progressSettled ? (
             <View style={[styles.highlightsSkeleton, { flexDirection: dir.row }]}>
               {[0, 1, 2].map((i) => (
