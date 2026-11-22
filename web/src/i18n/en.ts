@@ -1999,6 +1999,7 @@ export const en = {
   'lesson.conversation.you': 'You',
   'lesson.conversation.first': 'Play the first line',
   'lesson.conversation.next': 'Next line',
+  'lesson.conversation.said': 'I said it',
   'lesson.conversation.again': 'Start again',
   'lesson.conversation.showTranslation': 'Show translation',
   'lesson.conversation.hideTranslation': 'Hide translation',

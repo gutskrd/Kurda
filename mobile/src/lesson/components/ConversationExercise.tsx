@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Pressable } from '../../theme/Pressable';
-import { isSoraniDialect, type ConversationLine, type ConversationSpeaker, type RecordingVoice } from '@kurda/shared';
+import { isSoraniDialect, nextConversationLine, type ConversationLine, type ConversationSpeaker, type RecordingVoice } from '@kurda/shared';
 import { AAA_NORMAL } from '../../a11y/contrast';
 import { ensureContrast } from '../../a11y/ensureContrast';
 import { ConversationStage, conversationCast } from '../../characters/ConversationStage';
@@ -55,7 +55,8 @@ const NONE: readonly never[] = [];
 /**
  * A conversation, then a question about it. Lines read as a chat: the first part's at the line start and others' at
  * the end, each in its own colour with an initial, so name, side and colour all tell who is talking. Recorded lines
- * have play buttons; the first plays by itself and the main button plays the next one, highlighting each.
+ * have play buttons. The main button takes the conversation a turn at a time, waiting for the learner to say their own
+ * lines ("I said it") before the answer plays, and marks the line heard or waiting.
  *
  * When every part has a character, they stand together on one stage (`ConversationStage`), the speaker lip-synced
  * and the others looking at them; a line is always said by its own part's character. The question is a
@@ -73,7 +74,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
   const [translated, setTranslated] = useState(false);
 
   const listenable = canPlayAudio() && lineAudio.some((url) => !!url);
-  const audio = useConversationAudio(lineAudio, listenable && !disabled && autoplayOn());
+  const audio = useConversationAudio(speakers, lines, lineAudio, listenable && !disabled && autoplayOn());
   const meanings = lines.some((line) => !!line.en);
   // Kurdish in its own direction, whatever the app's language.
   const sorani = isSoraniDialect(dialect ?? exercise.dialect);
@@ -110,7 +111,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
       {listenable || meanings ? (
         <View style={[styles.controls, { flexDirection: dir.row }]}>
           {listenable ? (
-            <ClayButton label={t(STEP_LABEL[audio.step])} icon="play" tone="primary" variant="outline" onPress={audio.playNext} />
+            <ClayButton label={t(STEP_LABEL[audio.step])} icon="play" tone="primary" variant="outline" onPress={audio.advance} />
           ) : null}
           {meanings ? (
             <ClayButton
@@ -136,6 +137,8 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
           const url = listenable ? lineAudio[i] : null;
           const heard = audio.turn?.line === i;
           const sounding = heard && audio.playing;
+          // The learner's own line, waiting for them to say it.
+          const waiting = audio.waiting === i;
           // The first part's initial at the line start and everyone else's at the end.
           const row = first ? dir.row : mirrored ? 'row' : 'row-reverse';
           return (
@@ -148,8 +151,12 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
                 <Text style={[styles.initialText, { color: AVATAR_TEXT_COLOR }]}>{Array.from(deriveInitials(name))[0]}</Text>
               </View>
               <View
-                testID={heard ? 'conversation-heard' : undefined}
-                style={[styles.bubble, { flexDirection: dir.row, backgroundColor: `${tint}${wash}`, borderColor: heard ? colors.gold : 'transparent' }]}
+                testID={heard ? 'conversation-heard' : waiting ? 'conversation-turn' : undefined}
+                style={[
+                  styles.bubble,
+                  { flexDirection: dir.row, backgroundColor: `${tint}${wash}`, borderColor: heard || waiting ? colors.gold : 'transparent' },
+                  waiting ? styles.waiting : null,
+                ]}
               >
                 {/* Speaker, words and meaning, read as one. */}
                 <View accessible style={styles.said}>
@@ -189,25 +196,27 @@ interface Turn {
   n: number;
 }
 
-/** What the main button does next: the first line, the one after the line heard last, or the first again after the end. */
-type Step = 'first' | 'next' | 'again';
+/** What the main button does next: hear the first line, say the learner's own line, hear the next, or start again. */
+type Step = 'first' | 'yours' | 'next' | 'again';
 
 /** The main button's words for each step. */
-const STEP_LABEL = { first: 'lesson.conversation.first', next: 'lesson.conversation.next', again: 'lesson.conversation.again' } as const;
-
-/** The first line from `from` on with a recording, or null. */
-function nextRecorded(lineAudio: ReadonlyArray<string | null>, from: number): number | null {
-  for (let i = from; i < lineAudio.length; i++) if (lineAudio[i]) return i;
-  return null;
-}
+const STEP_LABEL = {
+  first: 'lesson.conversation.first',
+  yours: 'lesson.conversation.said',
+  next: 'lesson.conversation.next',
+  again: 'lesson.conversation.again',
+} as const;
 
 /**
  * The conversation's recordings through the lesson's one player (useAudio), so one sounds at a time and sound stops
- * when the exercise goes. One line at a time: with `auto`, the first recorded line by itself AUTOPLAY_MS after the
- * exercise appears, then the next each time the learner asks, so nobody is talked at for a whole dialogue in one go.
- * A line plays once loaded, and its turn ends when the player stops or when it cannot play.
+ * when the exercise goes. A turn at a time, as a real exchange: with `auto`, the first line by itself AUTOPLAY_MS after
+ * the exercise appears; when the learner's own line comes, the main button waits for them to say it and then plays the
+ * answer; otherwise it plays the next line (the shared `nextConversationLine`). A line plays once loaded, and its turn
+ * ends when the player stops or when it cannot play.
  */
 function useConversationAudio(
+  speakers: readonly ConversationSpeaker[],
+  lines: readonly ConversationLine[],
   lineAudio: ReadonlyArray<string | null>,
   auto: boolean,
 ): {
@@ -219,11 +228,14 @@ function useConversationAudio(
   clock: PlaybackClock | null;
   source: string | null;
   step: Step;
+  /** The learner's own line waiting to be said, or null. */
+  waiting: number | null;
   playLine: (line: number) => void;
-  playNext: () => void;
+  advance: () => void;
 } {
   const [turn, setTurn] = useState<Turn | null>(null);
-  // The last line heard, kept after its turn so the stage still shows who said it and the button knows what is next.
+  // The last line reached, heard or said, kept after its turn so the stage still shows who said it and the button knows
+  // what is next.
   const [last, setLast] = useState<number | null>(null);
   const url = turn ? (lineAudio[turn.line] ?? undefined) : undefined;
   const { source, playing, error, clock, play } = useAudio(url);
@@ -238,15 +250,18 @@ function useConversationAudio(
     setTurn({ line, n: ++asked.current });
   }, []);
 
-  const first = nextRecorded(lineAudio, 0);
-  // The first line by itself, unless the learner has already asked for one.
+  const from = (i: number): number | null => nextConversationLine(speakers, lines, lineAudio, i);
+  const yours = (i: number | null): boolean => i !== null && speakers[lines[i]?.speaker ?? -1]?.learner === true;
+  const first = from(0);
+  // The first line by itself, unless the learner has already asked for one or the conversation opens on their own line.
+  const opener = first !== null && !yours(first) ? first : null;
   useEffect(() => {
-    if (!auto || first === null) return;
+    if (!auto || opener === null) return;
     const id = setTimeout(() => {
-      if (asked.current === 0) ask(first);
+      if (asked.current === 0) ask(opener);
     }, AUTOPLAY_MS);
     return () => clearTimeout(id);
-  }, [auto, first, ask]);
+  }, [auto, opener, ask]);
 
   useEffect(() => {
     if (turn) setLast(turn.line);
@@ -276,18 +291,30 @@ function useConversationAudio(
   }, [turn, url, playing, error]);
 
   const at = turn ? turn.line : last;
-  const after = at === null ? first : nextRecorded(lineAudio, at + 1);
+  const next = from(at === null ? 0 : at + 1);
+  const step: Step = next === null ? 'again' : yours(next) ? 'yours' : at === null ? 'first' : 'next';
   return {
     turn,
     at,
     playing: playing && !!url && source === url,
     clock: url && source === url ? clock : null,
     source,
-    step: at === null ? 'first' : after === null ? 'again' : 'next',
+    step,
+    waiting: step === 'yours' ? next : null,
     playLine: (line) => (lineAudio[line] ? ask(line) : undefined),
-    playNext: () => {
-      const line = after ?? first;
-      if (line !== null) ask(line);
+    advance: () => {
+      if (next === null) {
+        setLast(null);
+        if (opener !== null) ask(opener);
+      } else if (yours(next)) {
+        // Said: on to whoever answers.
+        setTurn(null);
+        setLast(next);
+        const then = from(next + 1);
+        if (then !== null && !yours(then)) ask(then);
+      } else {
+        ask(next);
+      }
     },
   };
 }
@@ -316,6 +343,8 @@ const styles = StyleSheet.create({
   // What is said, in the lesson's Kurdish display face.
   text: { ...display(typography.sizes.text) },
   meaning: { fontSize: typography.sizes.text, fontStyle: 'italic' },
+  // The learner's own line, waiting for them to say it.
+  waiting: { borderStyle: 'dashed' },
   play: { width: PLAY, height: PLAY, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', borderWidth: 2 },
   ltr: { writingDirection: 'ltr' },
   rtl: { writingDirection: 'rtl', textAlign: 'right' },

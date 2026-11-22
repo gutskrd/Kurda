@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { CONVERSATION_LIMITS } from '@kurda/shared';
+import { useEffect, useRef, useState } from 'react';
+import { CONVERSATION_LIMITS, nextConversationLine, type ConversationLine, type ConversationSpeaker } from '@kurda/shared';
 import { ConversationStage } from '../characters/ConversationStage';
 import { Button } from '../components/Button';
 import { PlayIcon } from '../components/icons';
@@ -14,35 +14,35 @@ import { useAutoplay } from './useAutoplay';
 /** A conversation with no line recorded yet sends no `lineAudio` at all. */
 const NO_AUDIO: ReadonlyArray<string | null> = [];
 
-/** What the main button does next: the first line, the one after the line heard last, or the first again after the end. */
-type Step = 'first' | 'next' | 'again';
+/** What the main button does next: hear the first line, say the learner's own line, hear the next, or start again. */
+type Step = 'first' | 'yours' | 'next' | 'again';
 
 interface LineByLine {
-  /** The line heard last, by any of its buttons or by itself; null before any. */
+  /** The line reached last, heard or said; null before any. */
   at: number | null;
+  /** The learner's own line waiting to be said, or null. */
+  turn: number | null;
   step: Step;
-  playNext: () => void;
-}
-
-/** The first line from `from` on with a recording, or null. */
-function nextRecorded(audio: ReadonlyArray<string | null>, from: number): number | null {
-  for (let i = from; i < audio.length; i++) if (audio[i]) return i;
-  return null;
+  advance: () => void;
 }
 
 /**
- * The conversation one line at a time through the app's one player (lib/sound.ts): the first recorded line by itself as
- * the exercise appears (`useAutoplay`), then the next each time the learner asks, so nobody is talked at for a whole
- * dialogue in one go. Unrecorded lines are skipped. A line started from its own button moves the place along too.
+ * The conversation one line at a time, as a real exchange, through the app's one player (lib/sound.ts). The first line
+ * plays by itself as the exercise appears (`useAutoplay`); when the learner's own line comes, the main button waits for
+ * them to say it ("I said it") and then plays the character's answer; otherwise it plays the next line. A line played
+ * from its own button moves the place along too. Lines come in the order of the shared `nextConversationLine`.
  */
-function useLineByLine(audio: ReadonlyArray<string | null>): LineByLine {
+function useLineByLine(speakers: readonly ConversationSpeaker[], lines: readonly ConversationLine[], audio: ReadonlyArray<string | null>): LineByLine {
   const [at, setAt] = useState<number | null>(null);
   // Player events can arrive before React re-renders, so they read this, not the state; `asked` tells a line said twice
   // in the conversation apart from its first time.
   const live = useRef({ asked: null as number | null, audio });
   live.current.audio = audio;
-  const first = nextRecorded(audio, 0);
-  useAutoplay(first === null ? null : audio[first]);
+  const from = (i: number): number | null => nextConversationLine(speakers, lines, audio, i);
+  const yours = (i: number | null): boolean => i !== null && speakers[lines[i]?.speaker ?? -1]?.learner === true;
+  const first = from(0);
+  // A conversation the learner opens waits for them rather than playing past their line.
+  useAutoplay(first !== null && !yours(first) ? audio[first] : null);
 
   useEffect(
     () =>
@@ -65,28 +65,46 @@ function useLineByLine(audio: ReadonlyArray<string | null>): LineByLine {
     [],
   );
 
-  const after = at === null ? first : nextRecorded(audio, at + 1);
-  const step: Step = at === null ? 'first' : after === null ? 'again' : 'next';
-  const playNext = useCallback(() => {
-    const i = after ?? first;
-    const src = i === null ? null : live.current.audio[i];
-    if (i === null || !src) return;
+  const hear = (i: number): void => {
+    const src = live.current.audio[i];
+    if (!src) return;
     live.current.asked = i;
     play(src);
-  }, [after, first]);
-  return { at, step, playNext };
+  };
+  const next = from(at === null ? 0 : at + 1);
+  const step: Step = next === null ? 'again' : yours(next) ? 'yours' : at === null ? 'first' : 'next';
+  const advance = (): void => {
+    if (next === null) {
+      setAt(null);
+      if (first !== null && !yours(first)) hear(first);
+    } else if (yours(next)) {
+      // Said: on to whoever answers.
+      setAt(next);
+      const then = from(next + 1);
+      if (then !== null && !yours(then)) hear(then);
+    } else {
+      hear(next);
+    }
+  };
+  return { at, turn: step === 'yours' ? next : null, step, advance };
 }
 
 /** The main button's words for each step. */
-const STEP_LABEL = { first: 'lesson.conversation.first', next: 'lesson.conversation.next', again: 'lesson.conversation.again' } as const;
+const STEP_LABEL = {
+  first: 'lesson.conversation.first',
+  yours: 'lesson.conversation.said',
+  next: 'lesson.conversation.next',
+  again: 'lesson.conversation.again',
+} as const;
 
 /**
  * Two or three characters talking, or one with the learner, then a question on what they said, graded as multiple choice
  * (`Choices`). They stand together on a stage, and each line's own character speaks it (`ConversationStage`). Lines are
  * bubbles in order: the first speaker on the start side, others across, each tinted and named so who speaks never rests
  * on colour. The learner's own lines sit on the end side under "You", to read and say, never recorded. Recorded lines
- * have their own button; the first plays by itself and the main button plays the next (`useLineByLine`), marking the
- * line heard last (`aria-current`) and keeping it in view. Each line's English is there on request.
+ * have their own button. The main button takes the conversation a turn at a time (`useLineByLine`), marking the line
+ * reached last (`aria-current`) or the learner's line waiting to be said, and keeping it in view. Each line's English is
+ * there on request.
  */
 export function Conversation(props: ExerciseProps): React.JSX.Element {
   const { exercise, dialect, feedback } = props;
@@ -95,7 +113,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
   const lines = exercise.lines ?? [];
   const audio = exercise.lineAudio ?? NO_AUDIO;
   const { lang, dir } = kurdishText(dialect);
-  const { at, step, playNext } = useLineByLine(audio);
+  const { at, turn, step, advance } = useLineByLine(speakers, lines, audio);
   const [translated, setTranslated] = useState(false);
   const recorded = audio.some(Boolean);
   const meanings = lines.some((line) => !!line.en);
@@ -103,10 +121,10 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
   const heard = useRef<HTMLLIElement | null>(null);
   const verdict = verdictOf(feedback);
 
-  // The line heard last stays in view; under reduced motion it jumps.
+  // The line reached last, or the learner's line waiting, stays in view; under reduced motion it jumps.
   useEffect(() => {
-    if (at !== null) heard.current?.scrollIntoView({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' });
-  }, [at, calm]);
+    if (at !== null || turn !== null) heard.current?.scrollIntoView({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' });
+  }, [at, turn, calm]);
 
   return (
     <div className="lesson-exercise lesson-conversation">
@@ -127,7 +145,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
       {(recorded || meanings) && (
         <div className="lesson-conversation-tools">
           {recorded && (
-            <Button size="sm" className="lesson-play" onClick={playNext}>
+            <Button size="sm" className="lesson-play" onClick={advance}>
               <PlayIcon size={17} />
               {t(STEP_LABEL[step])}
             </Button>
@@ -144,6 +162,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
           const who = speakers[line.speaker];
           const src = audio[i];
           const now = at === i;
+          const waiting = turn === i;
           const yours = who?.learner === true;
           // At most three speakers with their own tints; anything out of range reads as the first.
           const tint = line.speaker > 0 && line.speaker < CONVERSATION_LIMITS.speakersMax ? line.speaker : 0;
@@ -151,8 +170,8 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
           return (
             <li
               key={i}
-              ref={now ? heard : undefined}
-              className={`lesson-line ${yours ? 'is-you is-end' : `is-part-${tint}${tint > 0 ? ' is-end' : ''}`}${now ? ' is-heard' : ''}`}
+              ref={(turn === null ? now : waiting) ? heard : undefined}
+              className={`lesson-line ${yours ? 'is-you is-end' : `is-part-${tint}${tint > 0 ? ' is-end' : ''}`}${now ? ' is-heard' : ''}${waiting ? ' is-turn' : ''}`}
               aria-current={now || undefined}
             >
               <div className="lesson-line-bubble">

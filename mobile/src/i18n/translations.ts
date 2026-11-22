@@ -3430,6 +3430,7 @@ export type TranslationKey =
   | 'lesson.conversation.promptRead'
   | 'lesson.conversation.first'
   | 'lesson.conversation.next'
+  | 'lesson.conversation.said'
   | 'lesson.conversation.again'
   | 'lesson.conversation.you'
   | 'lesson.conversation.playLine'
@@ -7322,6 +7323,7 @@ const en: Catalog = {
   'lesson.conversation.promptRead': 'Read the conversation, then answer',
   'lesson.conversation.first': 'Play the first line',
   'lesson.conversation.next': 'Next line',
+  'lesson.conversation.said': 'I said it',
   'lesson.conversation.again': 'Start again',
   'lesson.conversation.you': 'You',
   'lesson.conversation.playLine': 'Play line {n}, said by {name}',
@@ -11210,6 +11212,7 @@ const ku: Catalog = {
   'lesson.conversation.promptRead': 'Axaftinê bixwîne, paşê bersiva pirsê bide',
   'lesson.conversation.first': 'Rêza yekem lêxe',
   'lesson.conversation.next': 'Rêza piştre',
+  'lesson.conversation.said': 'Min got',
   'lesson.conversation.again': 'Ji serî ve',
   'lesson.conversation.you': 'Tu',
   'lesson.conversation.playLine': 'Rêza {n} ya ku {name} dibêje lêxe',
@@ -15098,6 +15101,7 @@ const de: Catalog = {
   'lesson.conversation.promptRead': 'Lies das Gespräch und antworte dann',
   'lesson.conversation.first': 'Erste Zeile abspielen',
   'lesson.conversation.next': 'Nächste Zeile',
+  'lesson.conversation.said': 'Ich hab’s gesagt',
   'lesson.conversation.again': 'Von vorn',
   'lesson.conversation.you': 'Du',
   'lesson.conversation.playLine': 'Zeile {n} abspielen, gesprochen von {name}',
@@ -18986,6 +18990,7 @@ const es: Catalog = {
   'lesson.conversation.promptRead': 'Lee la conversación y luego responde',
   'lesson.conversation.first': 'Reproducir la primera línea',
   'lesson.conversation.next': 'Siguiente línea',
+  'lesson.conversation.said': 'Ya lo dije',
   'lesson.conversation.again': 'Desde el principio',
   'lesson.conversation.you': 'Tú',
   'lesson.conversation.playLine': 'Reproducir la línea {n}, dicha por {name}',
@@ -22874,6 +22879,7 @@ const tr: Catalog = {
   'lesson.conversation.promptRead': 'Konuşmayı oku, sonra cevap ver',
   'lesson.conversation.first': 'İlk satırı oynat',
   'lesson.conversation.next': 'Sonraki satır',
+  'lesson.conversation.said': 'Söyledim',
   'lesson.conversation.again': 'Baştan başla',
   'lesson.conversation.you': 'Sen',
   'lesson.conversation.playLine': '{n}. satırı oynat ({name})',
@@ -26762,6 +26768,7 @@ const ar: Catalog = {
   'lesson.conversation.promptRead': 'اقرأ المحادثة ثم أجب',
   'lesson.conversation.first': 'تشغيل السطر الأول',
   'lesson.conversation.next': 'السطر التالي',
+  'lesson.conversation.said': 'قلتُها',
   'lesson.conversation.again': 'من البداية',
   'lesson.conversation.you': 'أنت',
   'lesson.conversation.playLine': 'تشغيل السطر {n} بصوت {name}',
@@ -30650,6 +30657,7 @@ const fr: Catalog = {
   'lesson.conversation.promptRead': 'Lis la conversation, puis réponds',
   'lesson.conversation.first': 'Écouter la première réplique',
   'lesson.conversation.next': 'Réplique suivante',
+  'lesson.conversation.said': 'Je l’ai dit',
   'lesson.conversation.again': 'Recommencer',
   'lesson.conversation.you': 'Toi',
   'lesson.conversation.playLine': 'Écouter la réplique {n}, dite par {name}',
@@ -34538,6 +34546,7 @@ const nl: Catalog = {
   'lesson.conversation.promptRead': 'Lees het gesprek en antwoord dan',
   'lesson.conversation.first': 'Eerste regel afspelen',
   'lesson.conversation.next': 'Volgende regel',
+  'lesson.conversation.said': 'Ik heb het gezegd',
   'lesson.conversation.again': 'Opnieuw beginnen',
   'lesson.conversation.you': 'Jij',
   'lesson.conversation.playLine': 'Regel {n} afspelen, gezegd door {name}',
@@ -38427,6 +38436,7 @@ const ckb: Catalog = {
   'lesson.conversation.promptRead': 'گفتوگۆکە بخوێنەوە، پاشان وەڵامی پرسیارەکە بدەرەوە',
   'lesson.conversation.first': 'دێڕی یەکەم لێبدە',
   'lesson.conversation.next': 'دێڕی دواتر',
+  'lesson.conversation.said': 'وتم',
   'lesson.conversation.again': 'لە سەرەتاوە',
   'lesson.conversation.you': 'تۆ',
   'lesson.conversation.playLine': 'دێڕی {n} کە {name} دەیڵێت لێبدە',

@@ -1910,6 +1910,7 @@ export const nl: Catalogue = {
   'lesson.conversation.you': 'Jij',
   'lesson.conversation.first': 'Eerste zin afspelen',
   'lesson.conversation.next': 'Volgende zin',
+  'lesson.conversation.said': 'Ik heb het gezegd',
   'lesson.conversation.again': 'Opnieuw beginnen',
   'lesson.conversation.showTranslation': 'Vertaling tonen',
   'lesson.conversation.hideTranslation': 'Vertaling verbergen',

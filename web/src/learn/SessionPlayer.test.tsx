@@ -759,6 +759,47 @@ describe('a conversation', () => {
     expect(screen.getByRole('button', { name: 'Next line' })).toBeInTheDocument();
   });
 
+  it('waits for the learner to say their own line, then plays the answer to it', async () => {
+    sounding();
+    serve({});
+    const turns: DeliveredExercise = {
+      ...talk,
+      speakers: [
+        { name: 'Hamo', character: 'hamo' },
+        { name: 'Tu', character: null, learner: true },
+      ],
+      lines: [
+        { speaker: 0, text: 'Bi xêr hatî!' },
+        { speaker: 1, text: 'Xêra Xwedê li we bê!' },
+        { speaker: 0, text: 'Tu çawa yî?' },
+        { speaker: 1, text: 'Ez baş im, spas.' },
+      ],
+      lineAudio: [clip(0), null, clip(2), null],
+      lineVoices: [{ speaker: 'hamo' }, null, { speaker: 'hamo' }, null],
+    };
+    play({ sessionId: 's1', exercises: [turns], answered: {} });
+    const items = await lines();
+    const current = (): number[] => items.flatMap((li, i) => (li.getAttribute('aria-current') === 'true' ? [i] : []));
+
+    await waitFor(() => expect(played.map((p) => p.src)).toEqual([clip(0)]));
+    ended();
+    // The learner's turn: their line waits for them, and Hamo says nothing more until they have said it.
+    expect(items[1]).toHaveClass('is-turn');
+    expect(played).toHaveLength(1);
+    await userEvent.click(screen.getByRole('button', { name: 'I said it' }));
+    expect(played.map((p) => p.src)).toEqual([clip(0), clip(2)]);
+    expect(current()).toEqual([2]);
+    expect(items[1]).not.toHaveClass('is-turn');
+    ended();
+
+    expect(items[3]).toHaveClass('is-turn');
+    await userEvent.click(screen.getByRole('button', { name: 'I said it' }));
+    expect(current()).toEqual([3]);
+    expect(played).toHaveLength(2);
+    await userEvent.click(screen.getByRole('button', { name: 'Start again' }));
+    expect(played.map((p) => p.src)).toEqual([clip(0), clip(2), clip(0)]);
+  });
+
   it('waits for a tap when lines do not play by themselves, and goes on from a line played by its own button', async () => {
     localStorage.setItem('hevalo_autoplay_audio', 'off');
     sounding();

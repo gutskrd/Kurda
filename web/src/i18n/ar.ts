@@ -1903,6 +1903,7 @@ export const ar: Catalogue = {
   'lesson.conversation.you': 'أنت',
   'lesson.conversation.first': 'استمع إلى الجملة الأولى',
   'lesson.conversation.next': 'الجملة التالية',
+  'lesson.conversation.said': 'قلتُها',
   'lesson.conversation.again': 'من البداية',
   'lesson.conversation.showTranslation': 'إظهار الترجمة',
   'lesson.conversation.hideTranslation': 'إخفاء الترجمة',

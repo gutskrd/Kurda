@@ -1910,6 +1910,7 @@ export const de: Catalogue = {
   'lesson.conversation.you': 'Du',
   'lesson.conversation.first': 'Ersten Satz abspielen',
   'lesson.conversation.next': 'Nächster Satz',
+  'lesson.conversation.said': 'Ich hab’s gesagt',
   'lesson.conversation.again': 'Von vorn',
   'lesson.conversation.showTranslation': 'Übersetzung zeigen',
   'lesson.conversation.hideTranslation': 'Übersetzung ausblenden',

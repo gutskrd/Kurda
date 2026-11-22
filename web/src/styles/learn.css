@@ -1369,6 +1369,11 @@ html:has(.lesson-bar) {
   border-color: var(--ink);
   box-shadow: 0 0 0 1px var(--ink);
 }
+/* the learner's own line, waiting for them to say it */
+.lesson-line.is-turn .lesson-line-bubble {
+  border-style: dashed;
+  border-color: var(--ink);
+}
 .lesson-line-name {
   font-size: var(--text);
   font-weight: 650;

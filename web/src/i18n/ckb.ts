@@ -1915,6 +1915,7 @@ export const ckb: Catalogue = {
   'lesson.conversation.you': 'تۆ',
   'lesson.conversation.first': 'دێڕی یەکەم لێبدە',
   'lesson.conversation.next': 'دێڕی دواتر',
+  'lesson.conversation.said': 'وتم',
   'lesson.conversation.again': 'لە سەرەتاوە',
   'lesson.conversation.showTranslation': 'وەرگێڕان پیشان بدە',
   'lesson.conversation.hideTranslation': 'وەرگێڕان بشارەوە',

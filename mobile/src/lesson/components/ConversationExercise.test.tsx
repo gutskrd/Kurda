@@ -195,6 +195,38 @@ describe('a conversation in a lesson', () => {
     expect(screen.getByRole('button', { name: 'Next line' })).toBeTruthy();
   });
 
+  it('waits for the learner to say their own line, then plays the answer to it', async () => {
+    show(
+      conversation({
+        speakers: [
+          { name: 'Hamo', character: 'hamo' },
+          { name: 'Tu', character: null, learner: true },
+        ],
+        lines: [
+          { speaker: 0, text: 'Bi xêr hatî!' },
+          { speaker: 1, text: 'Xêra Xwedê li we bê!' },
+          { speaker: 0, text: 'Tu çawa yî?' },
+        ],
+        lineAudio: [SILAV, null, BAS],
+        lineVoices: [null, null, null],
+      }),
+    );
+    await waitFor(() => expect(FakeAudio.of(SILAV)?.paused).toBe(false));
+    act(() => FakeAudio.of(SILAV)!.finish());
+    await settle();
+    // The learner's turn: their line waits for them, and Hamo says nothing more until they have said it.
+    expect(within(screen.getByTestId('conversation-turn')).getByText('Xêra Xwedê li we bê!')).toBeTruthy();
+    expect(FakeAudio.made.filter((a) => !a.paused)).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'I said it' }));
+    await settle();
+    expect(FakeAudio.of(BAS)!.paused).toBe(false);
+    expect(screen.queryByTestId('conversation-turn')).toBeNull();
+    act(() => FakeAudio.of(BAS)!.finish());
+    await settle();
+    expect(screen.getByRole('button', { name: 'Start again' })).toBeTruthy();
+  });
+
   it('waits for a tap when lines do not play by themselves, goes on from a line played by its own button, and stops when the exercise goes', async () => {
     await setAutoplay(false);
     const view = show(conversation());

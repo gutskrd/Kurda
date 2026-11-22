@@ -1908,6 +1908,7 @@ export const es: Catalogue = {
   'lesson.conversation.you': 'Tú',
   'lesson.conversation.first': 'Escuchar la primera frase',
   'lesson.conversation.next': 'Siguiente frase',
+  'lesson.conversation.said': 'Ya lo dije',
   'lesson.conversation.again': 'Desde el principio',
   'lesson.conversation.showTranslation': 'Mostrar la traducción',
   'lesson.conversation.hideTranslation': 'Ocultar la traducción',

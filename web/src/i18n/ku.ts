@@ -1912,6 +1912,7 @@ export const ku: Catalogue = {
   'lesson.conversation.you': 'Tu',
   'lesson.conversation.first': 'Rêza yekem lêxe',
   'lesson.conversation.next': 'Rêza piştre',
+  'lesson.conversation.said': 'Min got',
   'lesson.conversation.again': 'Ji serî ve',
   'lesson.conversation.showTranslation': 'Wergerê nîşan bide',
   'lesson.conversation.hideTranslation': 'Wergerê veşêre',

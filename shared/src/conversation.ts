@@ -168,3 +168,17 @@ export function conversationLineVoice(
   if (!isSpeakerId(character)) return null;
   return voice ? { ...voice, speaker: character } : { speaker: character };
 }
+
+/**
+ * Where a conversation goes next from line `from` on, as a learner plays it through a line at a time: their own line to
+ * say, or a recorded line to hear. A character's line not yet recorded is passed over. Null at the end.
+ */
+export function nextConversationLine(
+  speakers: readonly { learner?: boolean }[],
+  lines: readonly { speaker: number }[],
+  audio: ReadonlyArray<string | null | undefined>,
+  from: number,
+): number | null {
+  for (let i = Math.max(0, from); i < lines.length; i++) if (speakers[lines[i]!.speaker]?.learner === true || audio[i]) return i;
+  return null;
+}

@@ -1909,6 +1909,7 @@ export const fr: Catalogue = {
   'lesson.conversation.you': 'Toi',
   'lesson.conversation.first': 'Écouter la première réplique',
   'lesson.conversation.next': 'Réplique suivante',
+  'lesson.conversation.said': 'Je l’ai dit',
   'lesson.conversation.again': 'Recommencer',
   'lesson.conversation.showTranslation': 'Afficher la traduction',
   'lesson.conversation.hideTranslation': 'Masquer la traduction',

@@ -1905,6 +1905,7 @@ export const tr: Catalogue = {
   'lesson.conversation.you': 'Sen',
   'lesson.conversation.first': 'İlk cümleyi dinle',
   'lesson.conversation.next': 'Sonraki cümle',
+  'lesson.conversation.said': 'Söyledim',
   'lesson.conversation.again': 'Baştan başla',
   'lesson.conversation.showTranslation': 'Çeviriyi göster',
   'lesson.conversation.hideTranslation': 'Çeviriyi gizle',
