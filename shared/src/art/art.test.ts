@@ -1192,7 +1192,7 @@ describe('Xapînok’s pictures', () => {
     expect(impostorWaySvg({ way: 'odd', idPrefix: 'mine' })).toContain('id="minet"');
   });
 
-  it('keeps every head on a fanned card inside the card’s face, clear of its rim and edges', () => {
+  it('centres every head on a fanned card’s face, clear of its rim and edges', () => {
     // A card is a turned group: its outline first (M x+r y H x+w-r A r … V y+h-r …) and its head last.
     const card = /<g transform="rotate\([^)]+\)"><path d="M([\d.]+) ([\d.]+)H([\d.]+)A([\d.]+) [^V]+V([\d.]+).*?<path d="(M60,[^"]+)"[^>]*transform="translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\) translate\(-60 -58\)"\/><\/g>/g;
     /** An outline's knots, where each of its curves starts and ends, which is its edge near enough. */
@@ -1220,10 +1220,13 @@ describe('Xapînok’s pictures', () => {
       const outline = knots(m[6]!).map(([x, y]) => [cx + k * (x - 60), cy + k * (y - 58)] as const);
       const xs = outline.map(([x]) => x);
       const ys = outline.map(([, y]) => y);
-      expect(Math.min(...xs)).toBeGreaterThanOrEqual(mx - r + CARD_RIM + clear);
-      expect(Math.max(...xs)).toBeLessThanOrEqual(hx + r - clear);
-      expect(Math.min(...ys)).toBeGreaterThanOrEqual(top + CARD_RIM + clear);
-      expect(Math.max(...ys)).toBeLessThanOrEqual(vy + r - clear);
+      const face = { left: mx - r + CARD_RIM, top: top + CARD_RIM, right: hx + r, bottom: vy + r };
+      expect(Math.min(...xs)).toBeGreaterThanOrEqual(face.left + clear);
+      expect(Math.max(...xs)).toBeLessThanOrEqual(face.right - clear);
+      expect(Math.min(...ys)).toBeGreaterThanOrEqual(face.top + clear);
+      expect(Math.max(...ys)).toBeLessThanOrEqual(face.bottom - clear);
+      expect(Math.abs((Math.min(...xs) + Math.max(...xs)) / 2 - (face.left + face.right) / 2)).toBeLessThan(0.3);
+      expect(Math.abs((Math.min(...ys) + Math.max(...ys)) / 2 - (face.top + face.bottom) / 2)).toBeLessThan(0.3);
     }
   });
 
