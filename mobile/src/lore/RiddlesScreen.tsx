@@ -348,15 +348,15 @@ function ListSkeleton(): React.JSX.Element {
       <View style={styles.group}>
         <SkeletonText size={text} width={48} />
         <View style={[styles.rows, { backgroundColor: colors.surface }]}>
-          {['58%', '74%', '46%', '66%'].map((w, i) => (
+          {(['58%', '74%', '46%', '66%'] as const).map((w, i) => (
             <View
               key={i}
               style={[styles.row, { flexDirection: dir.row }, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator }]}
             >
-              <Skeleton width={24} height={24} radius={radii.pill} />
+              <Skeleton width={styles.mark.width} height={styles.mark.height} radius={radii.pill} />
               <View style={styles.rowMain}>
                 <SkeletonText size={text} lineHeight={styles.question.lineHeight} />
-                <SkeletonText size={text} lineHeight={styles.question.lineHeight} width={w as `${number}%`} />
+                <SkeletonText size={text} lineHeight={styles.question.lineHeight} width={w} />
               </View>
             </View>
           ))}

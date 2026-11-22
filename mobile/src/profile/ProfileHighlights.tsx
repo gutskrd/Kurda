@@ -276,19 +276,19 @@ export function ProfileHighlights({
 }
 
 /** The row while the highlights load: two rings with their labels, as most profiles show (badges and tree). */
-export function ProfileHighlightsSkeleton({ count = 2 }: { count?: number }): React.JSX.Element {
+export function ProfileHighlightsSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const rr = reachRoom(ROOM);
   return (
     <View style={[styles.strip, rr.scroller]}>
       <View style={[rr.content, styles.row, { flexDirection: dir.row }]}>
-        {Array.from({ length: count }, (_, i) => (
+        {[48, 32].map((label, i) => (
           <View key={i} style={styles.tile}>
             <View style={[styles.ring, { borderColor: colors.clayBorder }]}>
               <Skeleton height="100%" radius={radii.pill} />
             </View>
-            <SkeletonText size={typography.sizes.text} width={i % 2 ? 32 : 48} align="center" />
+            <SkeletonText size={typography.sizes.text} width={label} align="center" />
           </View>
         ))}
       </View>

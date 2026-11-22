@@ -8,9 +8,9 @@ import {
   PATH_MOTION,
   PATH_RETURN,
   chapterBannerSvg,
-  lean,
   lessonPath,
   mascotSpot,
+  openingStops,
   pathChanges,
   pathLand,
   pathSnapshot,
@@ -45,7 +45,7 @@ import { UnitGuide } from './UnitGuide';
 import type { CourseMap, SkillNode } from './types';
 import { pageWidth } from '../theme/pageWidth';
 
-const { node: NODE, step: STEP } = PATH_GEOMETRY;
+const { node: NODE } = PATH_GEOMETRY;
 const PHONE_WIDTH = 390;
 /** How far under its stop's button a card begins: the stop's base and a little air, as on the website. */
 const CARD_BELOW = 26;
@@ -975,35 +975,35 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
 const PIN_DROP = 6;
 
 /**
- * The path while the course loads, on the same zigzag and spacing as the real one (shared `PATH_GEOMETRY`), the first
- * stop raised for its Start bubble as a new learner's current one is, so the course drops into place.
+ * The path while the course loads, its stops where the shared layout puts a new learner's (`openingStops`), so the
+ * course drops into place.
  */
 export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const [width, setWidth] = useState(() => (pageWidth() || PHONE_WIDTH) - 2 * layout.gutter);
   const sign = dir.row === 'row-reverse' ? -1 : 1;
-  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
+  const opening = openingStops(stops);
   return (
     <View style={styles.units}>
       <View style={styles.unit}>
         <View style={[styles.pinLip, { backgroundColor: colors.surface }]}>
           <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: colors.surface }]}>
             <View style={styles.pinWords}>
-              <SkeletonText size={typography.sizes.text} width={112} style={start} />
-              <SkeletonText size={typography.sizes.text} width="48%" style={start} />
+              <SkeletonText size={typography.sizes.text} width={112} />
+              <SkeletonText size={typography.sizes.text} width="48%" />
             </View>
             <Skeleton width={MIN_TOUCH_TARGET} height={MIN_TOUCH_TARGET} radius={radii.pill} />
           </View>
         </View>
-        <View style={[styles.path, styles.pathUnderHead, { height: PATH_GEOMETRY.pad + PATH_GEOMETRY.lift + (stops - 1) * STEP + NODE }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
-          {Array.from({ length: stops }, (_, i) => (
+        <View style={[styles.path, styles.pathUnderHead, { height: opening.height }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+          {opening.stops.map(({ x, y }, i) => (
             <Skeleton
               key={i}
               width={NODE}
               height={NODE}
               radius={radii.pill}
-              style={[styles.stopSkeleton, { left: width / 2 + sign * lean(i) * PATH_GEOMETRY.sway - NODE / 2, top: PATH_GEOMETRY.pad + PATH_GEOMETRY.lift + i * STEP - NODE / 2 }]}
+              style={[styles.stopSkeleton, { left: width / 2 + sign * x - NODE / 2, top: y - NODE / 2 }]}
             />
           ))}
         </View>

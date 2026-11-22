@@ -132,7 +132,7 @@ export function Friends(): React.JSX.Element {
       {requests.loading && waiting > 0 && (
         <section className="friend-section">
           <h2 className="friend-heading">{t('friends.requests')}</h2>
-          <FriendListSkeleton count={waiting} actions={2} />
+          <FriendListSkeleton count={waiting} />
         </section>
       )}
       {!requests.loading && (requests.data?.requests.length ?? 0) > 0 && (

@@ -233,14 +233,6 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       })),
     [kinds, counts, t],
   );
-  // Your bird and your tree, each loading on its own: above the catalogue, and above its placeholder while it loads.
-  const ownRows = (
-    <View style={styles.ownRows}>
-      <YourBird home={letters} zer={purse} onZer={learnZer} />
-      <YourTree tree={tree} zer={purse} onZer={learnZer} />
-    </View>
-  );
-
   return (
     <GradientBackground>
       <View style={styles.screen}>
@@ -275,53 +267,61 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           }
         />
 
-        <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load} skeleton={<ShopSkeleton head={ownRows} />}>
-          {/* One scroll in three parts, the second sticky: received gifts, then the search and kinds, then the
-             catalogue. The first two are always rendered, empty or not, since the sticky index counts children. */}
-          <ScrollView
-            ref={scroller}
-            stickyHeaderIndices={[1]}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            contentContainerStyle={styles.content}
-            refreshControl={pull}
-            scrollEventThrottle={16}
-            onScroll={(e) => {
-              scrollY.current = e.nativeEvent.contentOffset.y;
-              setStuck(scrollY.current > inboxHeight + 0.5);
-            }}
+        {/*
+          One scroll in three parts, the second sticky: received gifts with your bird and tree, then the search and kinds,
+          then the catalogue. The first two are always rendered, empty or not, since the sticky index counts children, and
+          the scroll stays while the catalogue loads, so the rows above it keep what they hold (an open sheet) when it lands.
+        */}
+        <ScrollView
+          ref={scroller}
+          stickyHeaderIndices={[1]}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={styles.content}
+          refreshControl={pull}
+          scrollEventThrottle={16}
+          onScroll={(e) => {
+            scrollY.current = e.nativeEvent.contentOffset.y;
+            setStuck(scrollY.current > inboxHeight + 0.5);
+          }}
+        >
+          <View style={[styles.inbox, styles.column]} onLayout={(e) => setInboxHeight(e.nativeEvent.layout.height)}>
+            <ReceivedGifts />
+            <View style={styles.ownRows}>
+              <YourBird home={letters} zer={purse} onZer={learnZer} />
+              <YourTree tree={tree} zer={purse} onZer={learnZer} />
+            </View>
+          </View>
+
+          <View
+            style={[
+              styles.toolbar,
+              stuck ? { backgroundColor: colors.background, borderBottomColor: colors.separator } : null,
+            ]}
           >
-            <View style={[styles.inbox, styles.column]} onLayout={(e) => setInboxHeight(e.nativeEvent.layout.height)}>
-              <ReceivedGifts />
-              {ownRows}
-            </View>
+            {loading ? (
+              <ToolbarSkeleton />
+            ) : items.length > 0 ? (
+              <View style={[styles.column, styles.toolbarInner]}>
+                <SearchField
+                  value={filter.query}
+                  onChangeText={(query) => setFilter((f) => ({ ...f, query }))}
+                  label={t('shop.search.label')}
+                  maxLength={SEARCH_MAX}
+                  style={styles.gutter}
+                />
+                <KindChips
+                  options={kindOptions}
+                  value={category}
+                  onChange={(next) => setFilter((f) => ({ ...f, category: next }))}
+                  label={t('shop.kind.label')}
+                  inset={GUTTER}
+                />
+              </View>
+            ) : null}
+          </View>
 
-            <View
-              style={[
-                styles.toolbar,
-                stuck ? { backgroundColor: colors.background, borderBottomColor: colors.separator } : null,
-              ]}
-            >
-              {items.length > 0 ? (
-                <View style={[styles.column, styles.toolbarInner]}>
-                  <SearchField
-                    value={filter.query}
-                    onChangeText={(query) => setFilter((f) => ({ ...f, query }))}
-                    label={t('shop.search.label')}
-                    maxLength={SEARCH_MAX}
-                    style={styles.gutter}
-                  />
-                  <KindChips
-                    options={kindOptions}
-                    value={category}
-                    onChange={(next) => setFilter((f) => ({ ...f, category: next }))}
-                    label={t('shop.kind.label')}
-                    inset={GUTTER}
-                  />
-                </View>
-              ) : null}
-            </View>
-
+          <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load} skeleton={<CatalogueSkeleton />}>
             {items.length === 0 ? (
               <EmptyState title={t('shop.empty')} />
             ) : (
@@ -355,8 +355,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 )}
               </View>
             )}
-          </ScrollView>
-        </AsyncBoundary>
+          </AsyncBoundary>
+        </ScrollView>
 
         {/* No title in the header: the item's own name heads the sheet, under its picture. */}
         <BottomSheet visible={selected !== null} onClose={closeItem}>
@@ -416,53 +416,55 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   );
 }
 
-/**
- * The shop while its catalogue loads, laid out by its own styles: `head` (the bird and tree rows, which load on their
- * own), then the search, the kinds and a grid of cards.
- */
-function ShopSkeleton({ head }: { head: React.ReactNode }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
+/** A row of chip placeholders at a chip's height, cut off at the screen's edge as the real row scrolls on past it. */
+function ChipRowSkeleton({ widths }: { widths: readonly number[] }): React.JSX.Element {
   const dir = useDirection();
-  const { height } = useWindowDimensions();
-  // Cards enough to reach the foot of the screen, two to a row.
-  const cards = Math.max(4, Math.ceil((height - 300) / CARD_HEIGHT) * 2);
-  const chips = (widths: number[]) => (
+  return (
     <View style={[styles.skeletonChips, { flexDirection: dir.row }]}>
       {widths.map((w, i) => (
         <Skeleton key={i} width={w} height={MIN_TOUCH_TARGET} radius={radii.pill} />
       ))}
     </View>
   );
-  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
+}
+
+/** The search and the kinds while the catalogue loads, in the toolbar's own styles. */
+function ToolbarSkeleton(): React.JSX.Element {
   return (
-    <View style={styles.content} accessibilityLabel={t('common.loading')}>
-      <View style={[styles.inbox, styles.column]}>{head}</View>
-      <View style={styles.toolbar}>
-        <View style={[styles.column, styles.toolbarInner]}>
-          <View style={styles.gutter}>
-            <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
-          </View>
-          {chips([72, 136, 84, 80])}
-        </View>
+    <View style={[styles.column, styles.toolbarInner]}>
+      <View style={styles.gutter}>
+        <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
       </View>
-      <View style={[styles.catalogue, styles.column]}>
-        {chips([136, 180])}
-        <View style={[styles.gutter, styles.skeletonResults, start]}>
-          <SkeletonText size={typography.sizes.text} width={64} />
-        </View>
-        <View style={[styles.section, styles.gutter]}>
-          <SkeletonText size={typography.sizes.text} width={96} style={start} />
-          <View style={[styles.grid, { flexDirection: dir.row }]}>
-            {Array.from({ length: cards }, (_, i) => (
-              <View key={i} style={[styles.card, { backgroundColor: colors.glassFill }]}>
-                <Skeleton height={ART_HEIGHT} radius={radii.sm} />
-                <SkeletonText size={typography.sizes.text} width={i % 2 ? '54%' : '68%'} style={start} />
-                <SkeletonText size={typography.sizes.text} width="80%" style={start} />
-                <SkeletonText size={typography.sizes.text} width={48} style={start} />
-              </View>
-            ))}
-          </View>
+      <ChipRowSkeleton widths={[72, 136, 84, 80]} />
+    </View>
+  );
+}
+
+/** The catalogue while it loads: sort and filter, the count, then a section of cards to the foot of the screen. */
+function CatalogueSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const { height } = useWindowDimensions();
+  // Cards enough to reach the foot of the screen, two to a row.
+  const cards = Math.max(4, Math.ceil((height - 300) / CARD_HEIGHT) * 2);
+  return (
+    <View style={[styles.catalogue, styles.column]} accessibilityLabel={t('common.loading')}>
+      <ChipRowSkeleton widths={[136, 180]} />
+      <View style={[styles.gutter, styles.skeletonResults]}>
+        <SkeletonText size={typography.sizes.text} width={64} />
+      </View>
+      <View style={[styles.section, styles.gutter]}>
+        <SkeletonText size={typography.sizes.text} width={96} />
+        <View style={[styles.grid, { flexDirection: dir.row }]}>
+          {Array.from({ length: cards }, (_, i) => (
+            <View key={i} style={[styles.card, { backgroundColor: colors.glassFill }]}>
+              <Skeleton height={ART_HEIGHT} radius={radii.sm} />
+              <SkeletonText size={typography.sizes.text} width={i % 2 ? '54%' : '68%'} />
+              <SkeletonText size={typography.sizes.text} width="80%" />
+              <SkeletonText size={typography.sizes.text} width={48} />
+            </View>
+          ))}
         </View>
       </View>
     </View>

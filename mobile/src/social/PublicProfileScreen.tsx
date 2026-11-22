@@ -391,8 +391,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
 }
 
 /**
- * The profile while it loads, in the shape it arrives in: the head with their two figures, where they are from and a
- * two-line bio, who they know and the two buttons, then the highlights.
+ * The profile while it loads, in the shape it arrives in. Its figures include the league, as for anyone taking part,
+ * which weekly leagues make most people.
  */
 function PublicProfileSkeleton({ width }: { width: number }): React.JSX.Element {
   const { t } = useI18n();
@@ -400,6 +400,7 @@ function PublicProfileSkeleton({ width }: { width: number }): React.JSX.Element 
   const figures: ProfileFact[] = [
     { key: 'streak', label: t('profile.stat.streak'), value: null },
     { key: 'xp', label: t('profile.stat.xp'), value: null },
+    { key: 'league', label: t('profile.league'), value: null },
   ];
   return (
     <View accessibilityLabel={t('common.loading')}>

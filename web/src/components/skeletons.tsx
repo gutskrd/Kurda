@@ -5,19 +5,14 @@
  * keep a spinner. `label` is the key a screen reader hears, defaulting to "Loading…".
  */
 import { Fragment } from 'react';
-import { PATH_GEOMETRY, lean } from '@kurda/shared';
-import { Skeleton, SkeletonRegion, SkeletonText } from './Skeleton';
+import { PATH_GEOMETRY, openingStops } from '@kurda/shared';
+import { Skeleton, SkeletonButton, SkeletonRegion, SkeletonText } from './Skeleton';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /** Repeats a row `n` times. */
 function times(n: number, render: (i: number) => React.ReactNode): React.ReactNode[] {
   return Array.from({ length: n }, (_, i) => render(i));
-}
-
-/** A button's place: a pill at that button size's height (ui.css). */
-function ButtonBox({ w, size = 'md' }: { w: number | string; size?: 'sm' | 'md' | 'lg' }): React.JSX.Element {
-  return <Skeleton w={w} className={`skeleton-btn${size === 'md' ? '' : ` skeleton-btn-${size}`}`} />;
 }
 
 /** The avatar a list or card starts with, sized by its CSS. */
@@ -111,24 +106,11 @@ function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
 }
 
 /**
- * The Friends page's people: a face, a name and a handle, then the row's buttons as the page has them: a friend's game
- * and ⋯ (`friends`), whose row keeps them beside the name on a phone, or a request's worded ones.
+ * The Friends page's people: a face, a name and a handle, then a request's Accept and Decline, or for `friends` the
+ * game button and ⋯ (pages/Friends).
  */
-export function FriendListSkeleton({
-  count = 6,
-  actions = 1,
-  friends = false,
-  label,
-}: {
-  count?: number;
-  /** How many worded buttons each row carries, as the page's own request rows do. */
-  actions?: number;
-  /** Rows of friends: the game button and ⋯ instead of words. */
-  friends?: boolean;
-  label?: MessageKey;
-}): React.JSX.Element {
+export function FriendListSkeleton({ count = 6, friends = false, label }: { count?: number; friends?: boolean; label?: MessageKey }): React.JSX.Element {
   const t = useT();
-  const worded = [44, 84, 64].slice(3 - actions);
   return (
     <SkeletonRegion label={t(label ?? 'common.loading')} className="post-list">
       {times(count, (i) => (
@@ -145,13 +127,15 @@ export function FriendListSkeleton({
           {friends ? (
             <>
               <Skeleton className="friend-play" size={44} circle />
-              <Skeleton className="user-actions-btn" size={34} circle />
+              {/* The ⋯ keeps its own ring and surface, with the grey inside it. */}
+              <span className="user-actions-btn">
+                <Skeleton w="100%" h="100%" radius="inherit" />
+              </span>
             </>
           ) : (
             <span className="friend-actions">
-              {worded.map((w, j) => (
-                <ButtonBox key={j} size="sm" w={w} />
-              ))}
+              <SkeletonButton size="sm" w={84} />
+              <SkeletonButton size="sm" w={64} />
             </span>
           )}
         </div>
@@ -177,7 +161,7 @@ export function BlocklistSkeleton({ count = 3, label }: { count?: number; label?
                 <Skeleton line w={[148, 128, 160][i % 3]} />
               </span>
             </span>
-            <ButtonBox size="sm" w={84} />
+            <SkeletonButton size="sm" w={84} />
           </li>
         ))}
       </ul>
@@ -202,7 +186,7 @@ export function DeviceListSkeleton({ count = 2, label }: { count?: number; label
                 <Skeleton line w={[148, 128, 112][i % 3]} />
               </span>
             </span>
-            {i > 0 && <ButtonBox size="sm" w={84} />}
+            {i > 0 && <SkeletonButton size="sm" w={84} />}
           </li>
         ))}
       </ul>
@@ -602,7 +586,7 @@ export function EntrySkeleton(): React.JSX.Element {
             </span>
           </div>
           <div className="dict-entry-actions">
-            <ButtonBox size="sm" w={88} />
+            <SkeletonButton size="sm" w={88} />
           </div>
         </header>
         <ol className="dict-senses">
@@ -633,7 +617,7 @@ export function BadgesSkeleton({ count = 8 }: { count?: number }): React.JSX.Ele
             <h2 className="badges-section-title">
               <Skeleton line w={112} />
             </h2>
-            <ButtonBox size="sm" w={92} />
+            <SkeletonButton size="sm" w={92} />
           </div>
           <ol className="badges-showcase-slots">
             {times(3, (i) => (
@@ -779,23 +763,19 @@ export function ProfileCardSkeleton(): React.JSX.Element {
             </dl>
             {/* One full-width button: Message, Add friend or Accept. */}
             <div className="pc-actions">
-              <ButtonBox size="sm" w="100%" />
+              <SkeletonButton size="sm" w="100%" />
             </div>
           </div>
         </div>
         <div className="profile-actions">
-          <ButtonBox size="sm" w={136} />
+          <SkeletonButton size="sm" w={136} />
         </div>
       </article>
     </SkeletonRegion>
   );
 }
 
-/**
- * The top of a full profile as ProfileHead lays it out: banner, face and figures, name with its level, what is known
- * about them and the bio, then what sits above the actions (the owner's own row, or the friends they share) and the two
- * actions. The owner's page has more about lines and an unwritten bio; somebody else's has a written one.
- */
+/** The top of a full profile in ProfileHead's own classes. Your own has more about lines and an unwritten bio. */
 function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
   return (
     <div className="ph">
@@ -886,24 +866,24 @@ function ProfileHeadSkeleton({ own }: { own: boolean }): React.JSX.Element {
       )}
       <div className="ph-actions">
         <div className="pc-acts">
-          <ButtonBox size="sm" w="100%" />
-          <ButtonBox size="sm" w="100%" />
+          <SkeletonButton size="sm" w="100%" />
+          <SkeletonButton size="sm" w="100%" />
         </div>
       </div>
     </div>
   );
 }
 
-/** The highlights row (ProfileHighlights): a ring with its label, two of them as most profiles show (badges, tree). */
-function ProfileHighlightsSkeleton({ count = 2 }: { count?: number }): React.JSX.Element {
+/** The highlights row (ProfileHighlights) with the two most profiles show, badges and the tree. */
+function ProfileHighlightsSkeleton(): React.JSX.Element {
   return (
     <ul className="hl-row">
-      {times(count, (i) => (
+      {times(2, (i) => (
         <li key={i}>
           <span className="hl">
             <Skeleton className="hl-ring" circle />
             <span className="hl-label">
-              <Skeleton line w={[48, 32, 56][i % 3]} />
+              <Skeleton line w={[48, 32][i]} />
             </span>
           </span>
         </li>
@@ -912,13 +892,10 @@ function ProfileHighlightsSkeleton({ count = 2 }: { count?: number }): React.JSX
   );
 }
 
-/**
- * A profile tab's grid while it loads (ProfileActivity): posts as their tiles, games as a square cover with the result
- * and the day under it, two rows either way.
- */
+/** Two rows of a profile tab's grid (ProfileActivity): post tiles, or game covers with their captions. */
 export function ProfileGridSkeleton({ games = false }: { games?: boolean }): React.JSX.Element {
   return (
-    <div className="pg-grid" aria-hidden="true">
+    <div className="pg-grid skeleton-late" aria-hidden="true">
       {times(6, (i) =>
         games ? (
           <span key={i} className="pg-tile is-game">
@@ -942,10 +919,7 @@ export function ProfileGridSkeleton({ games = false }: { games?: boolean }): Rea
   );
 }
 
-/**
- * The full profile page as FullProfile lays it out: the head, the highlights, then the activity tabs over the first
- * rows of the grid. The banner is the drawn horizon's height, which a worn background keeps too.
- */
+/** The full profile page (FullProfile): the head, the highlights, and the tabs over the first rows of the grid. */
 export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey; own?: boolean }): React.JSX.Element {
   const t = useT();
   return (
@@ -969,18 +943,16 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
   );
 }
 
-/**
- * Editing your profile (pages/ProfileEdit) while it loads: the picture card (the face and its buttons), then the details
- * form with its three fields (name, bio, country), each with its label, its box and its hint, in the form's own classes.
- */
+/** Editing your profile (pages/ProfileEdit) while it loads: the picture card, then the details form and its Save. */
 export function ProfileEditSkeleton({ label }: { label: MessageKey }): React.JSX.Element {
   const t = useT();
-  const field = (labelWidth: number, box: number, hint: string) => (
+  // A field's box at its own height and corner (ui.css `.input`); the bio's is taller, as the form sets it.
+  const field = (labelWidth: number, hint: string, box = 46) => (
     <div className="field">
       <span className="field-label">
         <Skeleton line w={labelWidth} />
       </span>
-      <Skeleton className="input" h={box} radius="var(--r-sm)" />
+      <Skeleton className="input" h={box} radius="var(--r-md)" />
       <span className="field-hint">
         <Skeleton line w={hint} />
       </span>
@@ -997,7 +969,7 @@ export function ProfileEditSkeleton({ label }: { label: MessageKey }): React.JSX
             <Skeleton className="pcard-avatar" circle />
           </span>
           <div className="edit-photo-actions">
-            <ButtonBox size="sm" w={132} />
+            <SkeletonButton size="sm" w={132} />
           </div>
         </div>
       </section>
@@ -1005,9 +977,10 @@ export function ProfileEditSkeleton({ label }: { label: MessageKey }): React.JSX
         <h2 className="friend-heading" style={{ marginTop: 0 }}>
           <Skeleton line w={72} />
         </h2>
-        {field(96, 44, '82%')}
-        {field(32, 96, '64%')}
-        {field(56, 44, '76%')}
+        {field(96, '82%')}
+        {field(32, '64%', 96)}
+        {field(56, '76%')}
+        <SkeletonButton w={148} />
       </section>
     </SkeletonRegion>
   );
@@ -1117,7 +1090,7 @@ export function LettersHeroSkeleton(): React.JSX.Element {
   );
 }
 
-/** Hevalo's book card (learn/BookCard) while the server says whether there is a book: the face, its two lines, the arrow. */
+/** Hevalo's book card (learn/BookCard) while the server says whether there is a book: the face, its lines, the icon. */
 export function BookCardSkeleton(): React.JSX.Element {
   return (
     <span className="tree-card book-card skeleton-late" aria-hidden="true">
@@ -1130,6 +1103,7 @@ export function BookCardSkeleton(): React.JSX.Element {
           <SkeletonText lines={2} lastWidth="54%" />
         </span>
       </span>
+      <Skeleton className="tree-card-go" size={20} radius="var(--r-sm)" />
     </span>
   );
 }
@@ -1158,10 +1132,7 @@ export function StoryProgressSkeleton(): React.JSX.Element {
   );
 }
 
-/**
- * The riddles or the proverbs (lore/RiddlesList, lore/ProverbsList) in their own classes: the one of the day set large
- * with its button, the riddles' solved count, then the section heading, the filter chips and the first rows.
- */
+/** The riddles or the proverbs (lore/RiddlesList, lore/ProverbsList) in their own classes, the day's one first. */
 export function LoreListSkeleton({ kind, label }: { kind: 'riddles' | 'proverbs'; label: MessageKey }): React.JSX.Element {
   const t = useT();
   const riddles = kind === 'riddles';
@@ -1184,7 +1155,7 @@ export function LoreListSkeleton({ kind, label }: { kind: 'riddles' | 'proverbs'
           </p>
         )}
         <p className="lore-daily-go">
-          <ButtonBox w="100%" />
+          <SkeletonButton />
         </p>
       </section>
       {riddles && (
@@ -1200,8 +1171,9 @@ export function LoreListSkeleton({ kind, label }: { kind: 'riddles' | 'proverbs'
           <Skeleton line w={96} />
         </h2>
         <div className="lore-filter">
-          {[44, 52, 68, 48].map((w, i) => (
-            <Skeleton key={i} className="story-chip" w={w + 32} />
+          {/* Each chip's words with its padding. */}
+          {[76, 84, 100, 80].map((w, i) => (
+            <Skeleton key={i} className="story-chip" w={w} />
           ))}
         </div>
         <ol className="lore-list">
@@ -1225,20 +1197,46 @@ export function LoreListSkeleton({ kind, label }: { kind: 'riddles' | 'proverbs'
   );
 }
 
-/** Where the road's first stops stand: the shared geometry the real road is laid out by, the first raised for its bubble. */
-function roadStops(count: number): { x: number; y: number }[] {
-  const { step, sway, lift, pad } = PATH_GEOMETRY;
-  return Array.from({ length: count }, (_, i) => ({ x: lean(i) * sway, y: pad + lift + i * step }));
+/** The unit rail beside the road on a wide screen (PathWorld's UnitRail): the section's name, then a few units. */
+function UnitRailSkeleton(): React.JSX.Element {
+  return (
+    <div className="lp-rail">
+      <div className="lp-rail-section">
+        <p className="lp-rail-section-name">
+          <Skeleton line w={96} />
+        </p>
+        <ol>
+          {[64, 88, 72, 96, 80].map((w, i) => (
+            <li key={i} className="lp-rail-unit">
+              <span className="lp-rail-row">
+                <span className="lp-rail-dot">
+                  <Skeleton w="100%" h="100%" radius="inherit" />
+                </span>
+                <span className="lp-rail-words">
+                  <span className="lp-rail-number">
+                    <Skeleton line w={48} />
+                  </span>
+                  <span className="lp-rail-title">
+                    <Skeleton line w={w} />
+                  </span>
+                </span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
 }
 
 /**
- * The road while it loads (CoursePath): on a course's own page its heading, then the pinned chapter banner with its
- * eyebrow, title and buttons, and the first stops exactly where the real ones stand, as a new learner's road opens.
+ * The road while it loads (CoursePath), as a new learner's road opens: the chapter banner and the first stops where the
+ * shared layout puts them, so the course drops into place. A course's own page adds its heading and Continue.
  */
 export function CourseMapSkeleton({ header = false }: { header?: boolean }): React.JSX.Element {
   const t = useT();
-  const stops = roadStops(5);
-  const { node, pad } = PATH_GEOMETRY;
+  const { stops, height } = openingStops(5);
+  const { node } = PATH_GEOMETRY;
   return (
     <SkeletonRegion label={t('common.loading')} className="lp">
       {header && (
@@ -1252,9 +1250,11 @@ export function CourseMapSkeleton({ header = false }: { header?: boolean }): Rea
           <p className="page-sub">
             <Skeleton line w={150} />
           </p>
+          <SkeletonButton w={128} className="lp-continue" />
         </div>
       )}
       <div className="lp-world">
+        <UnitRailSkeleton />
         <div className="lp-map">
           <div className="lp-open-section">
             <div className="lp-pin">
@@ -1268,14 +1268,20 @@ export function CourseMapSkeleton({ header = false }: { header?: boolean }): Rea
               </div>
               <div className="lp-pin-actions">
                 <Skeleton className="lp-pin-button" circle />
-                <Skeleton className="lp-pin-button" circle />
+                {/* The map's button, which a wide screen hides for the rail beside the road. */}
+                <span className="lp-pin-button lp-unit-rail">
+                  <Skeleton w="100%" h="100%" radius="inherit" />
+                </span>
               </div>
             </div>
             <section className="lp-unit">
-              <ol className="lp-path is-first" style={{ height: stops[stops.length - 1]!.y + pad }}>
+              <ol className="lp-path is-first" style={{ height }}>
                 {stops.map(({ x, y }, i) => (
                   <li key={i} className="lp-stop" style={{ top: y - node / 2, '--x': `${x}px` } as React.CSSProperties}>
-                    <Skeleton className="lp-node" circle />
+                    {/* The stop's own box is see-through, so the grey goes inside it. */}
+                    <span className="lp-node">
+                      <Skeleton fill />
+                    </span>
                   </li>
                 ))}
               </ol>

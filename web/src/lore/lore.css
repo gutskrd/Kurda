@@ -206,12 +206,17 @@
 .lore-daily-go {
   margin: var(--space-2) 0 0;
 }
+/* The button's place while the day's one loads, about as wide as its words. */
+.lore-daily-go .skeleton-btn {
+  width: 168px;
+}
 @media (max-width: 520px) {
   .lore-daily {
     padding: var(--space-5) var(--space-4);
     border-radius: var(--r-lg);
   }
-  .lore-daily-go .btn {
+  .lore-daily-go .btn,
+  .lore-daily-go .skeleton-btn {
     width: 100%;
   }
 }

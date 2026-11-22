@@ -443,7 +443,7 @@ button.lp-scard:focus-visible {
   border-radius: var(--r-pill);
   background: var(--border);
 }
-.lp-rail-unit button {
+.lp-rail-unit > :is(button, .lp-rail-row) {
   position: relative;
   display: flex;
   align-items: center;

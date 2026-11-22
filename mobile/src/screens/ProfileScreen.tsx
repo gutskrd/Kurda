@@ -452,7 +452,6 @@ function AccountProfile() {
               </View>
             }
           >
-            {/* Until your profile answers: where you are from, who can see the page and the bio, in their own lines. */}
             {!settled ? <AboutSkeleton /> : null}
             {/* Where they are from and since when, on one row that wraps, as on the website. */}
             {country || joinedYear ? (

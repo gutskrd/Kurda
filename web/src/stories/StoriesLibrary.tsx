@@ -305,10 +305,15 @@ function Library(): React.JSX.Element {
     );
   }
 
+  // Your progress, with its placeholder held while the library loads; none for a visitor or once the load fails.
+  let progress: React.ReactNode = null;
+  if (signedIn && library?.me) progress = <ProgressCard me={library.me} />;
+  else if (signedIn && !library && !error) progress = <StoryProgressSkeleton />;
+
   return (
     <>
       {variety}
-      {signedIn && (library ? library.me && <ProgressCard me={library.me} /> : !error && <StoryProgressSkeleton />)}
+      {progress}
       <LibraryFilterBar
         q={q}
         typed={typed}

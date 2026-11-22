@@ -241,7 +241,10 @@ function KindsSkeleton(): React.JSX.Element {
       {[96, 64, 120, 56, 72, 132].map((title, i) => (
         <li key={i} className="list-row">
           <span className="list-row-main">
-            <Skeleton className="practice-badge" />
+            {/* The badge's own fill is its kind's colour, which a placeholder has none of, so the grey goes inside. */}
+            <span className="practice-badge">
+              <Skeleton w="100%" h="100%" radius="inherit" />
+            </span>
             <span className="list-row-text">
               <span className="list-row-title">
                 <Skeleton line w={title} />

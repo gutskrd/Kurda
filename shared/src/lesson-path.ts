@@ -242,6 +242,16 @@ export function lean(index: number): number {
   return LEAN[((index % LEAN.length) + LEAN.length) % LEAN.length]!;
 }
 
+/**
+ * Where a new learner's first `count` stops stand, the first raised for its Start bubble, laid out as `place` lays the
+ * real road: the road's loading placeholder in both apps, so the stops drop into place when the course arrives.
+ */
+export function openingStops(count: number): { stops: { x: number; y: number }[]; height: number } {
+  const { step, sway, lift, pad } = PATH_GEOMETRY;
+  const stops = Array.from({ length: count }, (_, i) => ({ x: lean(i) * sway, y: pad + lift + i * step }));
+  return { stops, height: count > 0 ? stops[count - 1]!.y + pad : 0 };
+}
+
 const FINISHED: ReadonlySet<PathSkillState> = new Set(['completed', 'gold', 'decayed']);
 
 function finishOf(state: PathSkillState): Finish | null {

@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { Button } from '../components/Button';
-import { Skeleton, SkeletonText } from '../components/Skeleton';
+import { Skeleton, SkeletonButton, SkeletonText } from '../components/Skeleton';
 import { ChevronIcon, CoinIcon } from '../components/icons';
 import { withMeaning } from '../ranks/names';
 import { TreeArt } from '../tree/TreeArt';
@@ -55,7 +55,7 @@ function TreeTileSkeleton(): React.JSX.Element {
       <span className="yours-tree-state">
         <Skeleton line w="58%" />
       </span>
-      <Skeleton className="skeleton-btn skeleton-btn-sm yours-tree-act" />
+      <SkeletonButton size="sm" className="yours-tree-act" />
     </div>
   );
 }

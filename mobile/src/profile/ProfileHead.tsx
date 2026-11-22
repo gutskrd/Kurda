@@ -140,11 +140,7 @@ export function ProfileHead({
   );
 }
 
-/**
- * The head while a profile loads, in `ProfileHead`'s own layout, so what arrives stands where its grey stood: the
- * banner, the face, the figures (`stats`, the real row with its values still loading), the name with its level ring and
- * the handle, then the screen's own placeholders for what sits under the handle and for the actions.
- */
+/** The head while a profile loads, in `ProfileHead`'s own layout; each screen passes what sits under it. */
 export function ProfileHeadSkeleton({
   width,
   stats,

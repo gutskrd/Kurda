@@ -5,6 +5,7 @@ import { radii, spacing } from './tokens';
 import { useTheme } from './ThemeProvider';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 
 /**
  * The light crossing every skeleton on screen: one value and one loop for all of them, started by the first and
@@ -105,14 +106,14 @@ export function lineOf(size: number): number {
 
 /**
  * One grey text line: as tall as the line it stands for, with a letter-height bar centred in it, so a stack matches
- * the paragraph and each bar sits where the words will. `align` is the bar's starting edge: the reading edge
- * (`start`, mirrored by the caller in Soranî) or the centre for centred text.
+ * the paragraph and each bar sits where the words will. The bar starts on the reading edge, mirrored in Soranî and
+ * Arabic, unless `align` centres it for centred text.
  */
 export function SkeletonText({
   size,
   lineHeight,
   width = '100%',
-  align = 'flex-start',
+  align,
   raised = false,
   style,
 }: {
@@ -124,8 +125,10 @@ export function SkeletonText({
   raised?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
+  const dir = useDirection();
+  const start = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
   return (
-    <View style={[{ height: lineHeight ?? lineOf(size), justifyContent: 'center', alignItems: align }, style]}>
+    <View style={[{ height: lineHeight ?? lineOf(size), justifyContent: 'center', alignItems: align ?? start }, style]}>
       <Skeleton width={width} height={Math.max(8, Math.round(size * 0.68))} raised={raised} />
     </View>
   );

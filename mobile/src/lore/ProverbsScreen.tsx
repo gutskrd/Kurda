@@ -166,7 +166,7 @@ function ListSkeleton(): React.JSX.Element {
         </View>
       </View>
       <View style={[styles.round, { backgroundColor: colors.surface, flexDirection: dir.row }]}>
-        <Skeleton width={40} height={40} radius={radii.pill} />
+        <Skeleton width={styles.roundIcon.width} height={styles.roundIcon.height} radius={radii.pill} />
         <View style={styles.flex}>
           <SkeletonText size={text} width={96} />
           <SkeletonText size={text} lineHeight={styles.roundLine.lineHeight} width="88%" />
@@ -177,15 +177,15 @@ function ListSkeleton(): React.JSX.Element {
         <ChipsSkeleton />
       </View>
       <View style={[styles.rows, { backgroundColor: colors.surface }]}>
-        {['70%', '56%', '64%'].map((w, i) => (
+        {(['70%', '56%', '64%'] as const).map((w, i) => (
           <View
             key={i}
             style={[styles.row, { flexDirection: dir.row }, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator }]}
           >
             <View style={styles.rowMain}>
-              <SkeletonText size={text} lineHeight={styles.rowText.lineHeight} width={w as `${number}%`} />
+              <SkeletonText size={text} lineHeight={styles.rowText.lineHeight} width={w} />
               <SkeletonText size={text} lineHeight={styles.rowTranslation.lineHeight} width="52%" />
-              <SkeletonText size={text} width={72} style={styles.rowMark} />
+              <SkeletonText size={text} width={72} style={{ marginTop: styles.rowMark.marginTop }} />
             </View>
           </View>
         ))}

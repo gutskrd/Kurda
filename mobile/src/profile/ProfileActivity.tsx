@@ -221,8 +221,8 @@ export function ActivityGrid({ activity, width }: { activity: ProfileActivitySta
   const size = { width: tile, height: Math.round(tile * 1.25) };
   if (!activity.active) return null;
 
-  if (activity.loading) return <TileSkeletons size={size} width={width} games={activity.active === 'games'} />;
   const games = activity.active === 'games';
+  if (activity.loading) return <TileSkeletons size={size} width={width} games={games} />;
   const count = games ? activity.entries.length : activity.items.length;
   if (count === 0) {
     return (
@@ -262,6 +262,9 @@ export function ProfileActivitySkeleton({ width }: { width: number }): React.JSX
   );
 }
 
+/** The game captions' first lines, varied so the row reads as different games. */
+const CAPTION_WIDTHS = ['72%', '56%', '64%'] as const;
+
 /** Two rows of tiles in the grid's own layout: posts as plain tiles, games as a square cover over the result and the day. */
 function TileSkeletons({ size, width, games = false }: { size: { width: number; height: number }; width: number; games?: boolean }): React.JSX.Element {
   const { t } = useI18n();
@@ -271,11 +274,12 @@ function TileSkeletons({ size, width, games = false }: { size: { width: number; 
     <View style={[styles.grid, { width, flexDirection: dir.row }]} accessibilityLabel={t('common.loading')}>
       {Array.from({ length: 6 }, (_, i) =>
         games ? (
+          // A game tile is painted the placeholder grey, so its boxes take the raised grey to show on it.
           <View key={i} style={[styles.tile, { width: size.width, backgroundColor: colors.controlTrack }]}>
-            <Skeleton width={size.width} height={size.width} radius={radii.none} />
+            <Skeleton width={size.width} height={size.width} radius={radii.none} raised />
             <View style={styles.gameCaption}>
-              <SkeletonText size={typography.sizes.text} width={['72%', '56%', '64%'][i % 3] as `${number}%`} />
-              <SkeletonText size={typography.sizes.text} width="40%" />
+              <SkeletonText size={typography.sizes.text} width={CAPTION_WIDTHS[i % CAPTION_WIDTHS.length]} raised />
+              <SkeletonText size={typography.sizes.text} width="40%" raised />
             </View>
           </View>
         ) : (

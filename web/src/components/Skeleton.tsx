@@ -56,6 +56,15 @@ export function Skeleton({
   );
 }
 
+/**
+ * A button's place, as a pill at that button size's height (`.skeleton-btn`, ui.css). Without `w` it takes the width its
+ * container's rules give it, as a full-width button does.
+ */
+export function SkeletonButton({ w, size = 'md', className = '' }: { w?: number | string; size?: 'sm' | 'md' | 'lg'; className?: string }): React.JSX.Element {
+  const sized = size === 'md' ? 'skeleton-btn' : `skeleton-btn skeleton-btn-${size}`;
+  return <Skeleton w={w} className={className ? `${sized} ${className}` : sized} />;
+}
+
 /** A paragraph's lines at its own line height, the last one short so it reads as prose rather than a table. */
 export function SkeletonText({
   lines = 3,

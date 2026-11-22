@@ -96,12 +96,12 @@ export function Chips<T extends string>({
 }
 
 /** The chips while what they filter loads: pills of their height, in the row's own place. */
-export function ChipsSkeleton({ widths = [56, 72, 88, 64] }: { widths?: readonly number[] }): React.JSX.Element {
+export function ChipsSkeleton(): React.JSX.Element {
   const dir = useDirection();
   return (
     <View style={styles.scroller}>
       <View style={[styles.row, { flexDirection: dir.row }]}>
-        {widths.map((w, i) => (
+        {[56, 72, 88, 64].map((w, i) => (
           <Skeleton key={i} width={w} height={CHIP} radius={radii.pill} />
         ))}
       </View>

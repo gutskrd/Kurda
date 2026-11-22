@@ -244,14 +244,19 @@ export function LettersPage(): React.JSX.Element {
     [choosing, scene, pick],
   );
 
+  // Fixed words, so they stand from the first frame, the loading placeholder included.
+  const head = (
+    <header className="letters-head">
+      <h1 className="page-title">{t('letters.title')}</h1>
+      <p className="letters-lead">{t('letters.lead')}</p>
+    </header>
+  );
+
   if (home.error && !data) return <ErrorState message={home.error} onRetry={home.reload} />;
   if (!data || !scene || !look) {
     return (
       <div className="container letters-page">
-        <header className="letters-head">
-          <h1 className="page-title">{t('letters.title')}</h1>
-          <p className="letters-lead">{t('letters.lead')}</p>
-        </header>
+        {head}
         <LettersHeroSkeleton />
       </div>
     );
@@ -610,10 +615,7 @@ export function LettersPage(): React.JSX.Element {
 
   return (
     <div className="container letters-page">
-      <header className="letters-head">
-        <h1 className="page-title">{t('letters.title')}</h1>
-        <p className="letters-lead">{t('letters.lead')}</p>
-      </header>
+      {head}
 
       <section className="letters-hero">
         <div className="letters-window">

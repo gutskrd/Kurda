@@ -936,14 +936,12 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
 /** The loading state in the screen's own shape: the intro (`lead`), the window, its button and the pen pals' heading. */
 function LettersSkeleton({ size, lead }: { size: number; lead: React.ReactNode }): React.JSX.Element {
   const { t } = useI18n();
-  const dir = useDirection();
-  const start = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
   return (
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')} testID="letters-loading">
       {lead}
       {size > 0 ? <Skeleton width={size} height={size} radius={radii.xl} style={styles.skeletonWindow} /> : null}
       <Skeleton height={50} radius={radii.pill} />
-      <SkeletonText size={typography.sizes.text} width={96} align={start} />
+      <SkeletonText size={typography.sizes.text} width={96} />
     </View>
   );
 }

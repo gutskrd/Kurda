@@ -1,5 +1,5 @@
 import { LinkButton } from '../components/Button';
-import { Skeleton, SkeletonText } from '../components/Skeleton';
+import { SkeletonButton, SkeletonText } from '../components/Skeleton';
 import { useT } from '../i18n/I18nProvider';
 import type { ApiState } from '../lib/useApi';
 import type { PracticeDue } from './types';
@@ -27,7 +27,7 @@ export function ReviewEntry({
   if (pending) {
     // What most answers hold: two lines and a small button.
     body = <SkeletonText lines={2} lastWidth="48%" />;
-    action = <Skeleton className="skeleton-btn skeleton-btn-sm" w={96} />;
+    action = <SkeletonButton size="sm" w={96} />;
   } else if (error || !data) {
     body = t('review.dueFailed');
     action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.start')}</LinkButton>;
