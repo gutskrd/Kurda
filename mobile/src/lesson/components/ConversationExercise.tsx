@@ -21,6 +21,8 @@ import { canPlayAudio, useAudio } from '../useAudio';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { MultipleChoiceExercise } from './MultipleChoiceExercise';
 import { pressedDim } from '../../theme/motion';
+import { autoplayOn } from '../../feedback/autoplayPref';
+import { AUTOPLAY_MS } from '../useAutoplay';
 
 interface Props {
   exercise: Exercise;
@@ -53,7 +55,7 @@ const NONE: readonly never[] = [];
 /**
  * A conversation, then a question about it. Lines read as a chat: the first part's at the line start and others' at
  * the end, each in its own colour with an initial, so name, side and colour all tell who is talking. Recorded lines
- * have play buttons, and "Play conversation" plays them in order, highlighting each.
+ * have play buttons; the first plays by itself and the main button plays the next one, highlighting each.
  *
  * When every part has a character, they stand together on one stage (`ConversationStage`), the speaker lip-synced
  * and the others looking at them; a line is always said by its own part's character. The question is a
@@ -68,12 +70,11 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
   const lines: readonly ConversationLine[] = exercise.lines ?? NONE;
   const lineAudio: ReadonlyArray<string | null> = exercise.lineAudio ?? NONE;
   const voices: ReadonlyArray<RecordingVoice | null> = exercise.lineVoices ?? NONE;
-  const audio = useConversationAudio(lineAudio);
   const [translated, setTranslated] = useState(false);
 
   const listenable = canPlayAudio() && lineAudio.some((url) => !!url);
+  const audio = useConversationAudio(lineAudio, listenable && !disabled && autoplayOn());
   const meanings = lines.some((line) => !!line.en);
-  const playingAll = !!audio.turn?.all;
   // Kurdish in its own direction, whatever the app's language.
   const sorani = isSoraniDialect(dialect ?? exercise.dialect);
   const kurdish = sorani ? styles.rtl : styles.ltr;
@@ -109,13 +110,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
       {listenable || meanings ? (
         <View style={[styles.controls, { flexDirection: dir.row }]}>
           {listenable ? (
-            <ClayButton
-              label={playingAll ? t('lesson.conversation.stop') : t('lesson.conversation.playAll')}
-              icon={playingAll ? 'stop' : 'play'}
-              tone="primary"
-              variant="outline"
-              onPress={playingAll ? audio.stop : audio.playAll}
-            />
+            <ClayButton label={t(STEP_LABEL[audio.step])} icon="play" tone="primary" variant="outline" onPress={audio.playNext} />
           ) : null}
           {meanings ? (
             <ClayButton
@@ -187,13 +182,18 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
   );
 }
 
-/** A requested line, and whether the rest of the conversation follows it. */
+/** A requested line. */
 interface Turn {
   line: number;
-  all: boolean;
   /** Counts requests, so the same line asked for twice is two turns. */
   n: number;
 }
+
+/** What the main button does next: the first line, the one after the line heard last, or the first again after the end. */
+type Step = 'first' | 'next' | 'again';
+
+/** The main button's words for each step. */
+const STEP_LABEL = { first: 'lesson.conversation.first', next: 'lesson.conversation.next', again: 'lesson.conversation.again' } as const;
 
 /** The first line from `from` on with a recording, or null. */
 function nextRecorded(lineAudio: ReadonlyArray<string | null>, from: number): number | null {
@@ -203,10 +203,14 @@ function nextRecorded(lineAudio: ReadonlyArray<string | null>, from: number): nu
 
 /**
  * The conversation's recordings through the lesson's one player (useAudio), so one sounds at a time and sound stops
- * when the exercise goes: a single line, or every recorded line in order. A line plays once loaded, and its turn
- * ends when the player stops, or when it cannot play, which moves on rather than stalling.
+ * when the exercise goes. One line at a time: with `auto`, the first recorded line by itself AUTOPLAY_MS after the
+ * exercise appears, then the next each time the learner asks, so nobody is talked at for a whole dialogue in one go.
+ * A line plays once loaded, and its turn ends when the player stops or when it cannot play.
  */
-function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
+function useConversationAudio(
+  lineAudio: ReadonlyArray<string | null>,
+  auto: boolean,
+): {
   turn: Turn | null;
   /** The line playing now, or the one heard last; null before any was requested. */
   at: number | null;
@@ -214,12 +218,12 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
   playing: boolean;
   clock: PlaybackClock | null;
   source: string | null;
+  step: Step;
   playLine: (line: number) => void;
-  playAll: () => void;
-  stop: () => void;
+  playNext: () => void;
 } {
   const [turn, setTurn] = useState<Turn | null>(null);
-  // The last line heard, kept after its turn so the stage still shows who said it.
+  // The last line heard, kept after its turn so the stage still shows who said it and the button knows what is next.
   const [last, setLast] = useState<number | null>(null);
   const url = turn ? (lineAudio[turn.line] ?? undefined) : undefined;
   const { source, playing, error, clock, play } = useAudio(url);
@@ -230,9 +234,19 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
   // The recording the player had last time: a failure belongs to the old one until the player moves on.
   const loaded = useRef<string | undefined>(undefined);
 
-  const ask = useCallback((line: number | null, all: boolean) => {
-    setTurn(line === null ? null : { line, all, n: ++asked.current });
+  const ask = useCallback((line: number) => {
+    setTurn({ line, n: ++asked.current });
   }, []);
+
+  const first = nextRecorded(lineAudio, 0);
+  // The first line by itself, unless the learner has already asked for one.
+  useEffect(() => {
+    if (!auto || first === null) return;
+    const id = setTimeout(() => {
+      if (asked.current === 0) ask(first);
+    }, AUTOPLAY_MS);
+    return () => clearTimeout(id);
+  }, [auto, first, ask]);
 
   useEffect(() => {
     if (turn) setLast(turn.line);
@@ -258,20 +272,23 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
       if (!heard.current) return;
     }
     heard.current = false;
-    // The next recorded line follows when the whole conversation is playing.
-    const next = turn.all ? nextRecorded(lineAudio, turn.line + 1) : null;
-    setTurn(next === null ? null : { line: next, all: true, n: ++asked.current });
-  }, [turn, url, playing, error, lineAudio]);
+    setTurn(null);
+  }, [turn, url, playing, error]);
 
+  const at = turn ? turn.line : last;
+  const after = at === null ? first : nextRecorded(lineAudio, at + 1);
   return {
     turn,
-    at: turn ? turn.line : last,
+    at,
     playing: playing && !!url && source === url,
     clock: url && source === url ? clock : null,
     source,
-    playLine: (line) => (lineAudio[line] ? ask(line, false) : undefined),
-    playAll: () => ask(nextRecorded(lineAudio, 0), true),
-    stop: () => ask(null, false),
+    step: at === null ? 'first' : after === null ? 'again' : 'next',
+    playLine: (line) => (lineAudio[line] ? ask(line) : undefined),
+    playNext: () => {
+      const line = after ?? first;
+      if (line !== null) ask(line);
+    },
   };
 }
 

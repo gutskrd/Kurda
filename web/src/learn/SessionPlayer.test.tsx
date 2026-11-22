@@ -664,7 +664,7 @@ describe('a conversation', () => {
     delete plain.lineVoices;
     play({ sessionId: 's1', exercises: [plain], answered: {} });
     expect(await lines()).toHaveLength(4);
-    expect(screen.queryByRole('button', { name: 'Play conversation' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^(Play the first line|Next line|Start again)$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Show translation' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Hear line/ })).not.toBeInTheDocument();
     expect([...document.querySelectorAll('.conversation-stage .speaking-character')].map((f) => f.getAttribute('data-speaker'))).toEqual(['xezo', 'hamo']);
@@ -721,58 +721,65 @@ describe('a conversation', () => {
     expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'c', answer: { choice: 1 } });
   });
 
-  it('plays every recorded line in order, passing over the one not recorded, each said by its own character as it is heard', async () => {
+  it('plays the first line by itself, then one more line per tap, passing over the one not recorded, each said by its own character', async () => {
     sounding();
     serve({});
     play({ sessionId: 's1', exercises: [talk], answered: {} });
     const items = await lines();
     const current = (): number[] => items.flatMap((li, i) => (li.getAttribute('aria-current') === 'true' ? [i] : []));
     const speaker = (): string | null | undefined => document.querySelector('.conversation-stage [data-saying] .speaking-character')?.getAttribute('data-speaker');
-    expect(current()).toEqual([]);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
-    expect(played.map((p) => p.src)).toEqual([clip(0)]);
+    await waitFor(() => expect(played.map((p) => p.src)).toEqual([clip(0)]));
     expect(current()).toEqual([0]);
     expect(items[0]).toHaveClass('is-heard');
     // Her own line, said by her though the recording was saved under the deer's voice: he is not even on the stage.
     expect(speaker()).toBe('xezo');
     expect(document.querySelector('.speaking-character[data-speaker="hevalo"]')).toBeNull();
-    // The line's own button lights as it plays, and the button now stops it all.
     expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Xezo)' })).toHaveClass('is-on');
-    expect(screen.queryByRole('button', { name: 'Play conversation' })).not.toBeInTheDocument();
 
+    // The first line ends and nothing follows it until the learner asks.
     ended();
+    expect(played.map((p) => p.src)).toEqual([clip(0)]);
+    expect(current()).toEqual([0]);
+    await userEvent.click(screen.getByRole('button', { name: 'Next line' }));
     expect(current()).toEqual([1]);
     expect(speaker()).toBe('hamo');
     ended();
     // The third line has no recording: on to the fourth, Hamo's, which was saved with no voice at all.
+    await userEvent.click(screen.getByRole('button', { name: 'Next line' }));
     expect(current()).toEqual([3]);
     expect(speaker()).toBe('hamo');
     ended();
-    expect(current()).toEqual([]);
     expect(played.map((p) => p.src)).toEqual([clip(0), clip(1), clip(3)]);
-    expect(screen.getByRole('button', { name: 'Play conversation' })).toBeInTheDocument();
+
+    // After the last line, the button starts again from the first.
+    await userEvent.click(screen.getByRole('button', { name: 'Start again' }));
+    expect(current()).toEqual([0]);
+    expect(played.map((p) => p.src)).toEqual([clip(0), clip(1), clip(3), clip(0)]);
+    expect(screen.getByRole('button', { name: 'Next line' })).toBeInTheDocument();
   });
 
-  it('stops on Stop, and lets go when another line’s button takes the player', async () => {
+  it('waits for a tap when lines do not play by themselves, and goes on from a line played by its own button', async () => {
+    localStorage.setItem('hevalo_autoplay_audio', 'off');
     sounding();
     serve({});
     play({ sessionId: 's1', exercises: [talk], answered: {} });
     const items = await lines();
+    const current = (): number[] => items.flatMap((li, i) => (li.getAttribute('aria-current') === 'true' ? [i] : []));
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(played).toEqual([]);
+    expect(current()).toEqual([]);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
-    expect(items.some((li) => li.hasAttribute('aria-current'))).toBe(false);
+    await userEvent.click(screen.getByRole('button', { name: 'Play the first line' }));
+    expect(current()).toEqual([0]);
     ended();
-    expect(played.map((p) => p.src)).toEqual([clip(0)]);
-
-    await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
     await userEvent.click(within(items[3]!).getByRole('button', { name: 'Hear line 4 (Hamo)' }));
-    expect(items.some((li) => li.hasAttribute('aria-current'))).toBe(false);
-    // The line asked for plays to its end, and nothing follows it.
+    expect(current()).toEqual([3]);
     ended();
-    expect(played.map((p) => p.src)).toEqual([clip(0), clip(0), clip(3)]);
-    expect(screen.getByRole('button', { name: 'Play conversation' })).toBeInTheDocument();
+    expect(played.map((p) => p.src)).toEqual([clip(0), clip(3)]);
+    await userEvent.click(screen.getByRole('button', { name: 'Start again' }));
+    expect(current()).toEqual([0]);
+    localStorage.removeItem('hevalo_autoplay_audio');
   });
 });
 

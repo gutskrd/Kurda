@@ -26,7 +26,7 @@ const HOP_ROOM = 0.3;
 const NO_VOICES: ReadonlyArray<RecordingVoice | null> = [];
 
 /**
- * The line heard last: the one being played through (`at`), else the last line the app's player started, however it
+ * The line heard last: the exercise's own count of it (`at`), else the last line the app's player started, however it
  * was started. Null before any has been heard.
  */
 function useHeardLine(audio: ReadonlyArray<string | null>, at: number | null): number | null {
@@ -38,7 +38,7 @@ function useHeardLine(audio: ReadonlyArray<string | null>, at: number | null): n
       if (src !== null && list.includes(src)) setHeard(src);
     });
   }, [key]);
-  // A part saying the same words twice is one recording, so the play-through decides which line it is.
+  // A part saying the same words twice is one recording, so the exercise's count decides which line it is.
   if (at !== null && (heard === null || audio[at] === heard)) return at;
   const i = heard === null ? -1 : audio.indexOf(heard);
   return i >= 0 ? i : null;
@@ -67,7 +67,7 @@ export function ConversationStage({
   /** Each line's recording by position; null for one not recorded. */
   audio: ReadonlyArray<string | null>;
   voices?: ReadonlyArray<RecordingVoice | null>;
-  /** The line being played through, if any. */
+  /** The line heard last, as the exercise counts it, if any. */
   at?: number | null;
   reaction?: CharacterReaction | null;
   height?: number;
