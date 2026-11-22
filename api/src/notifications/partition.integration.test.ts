@@ -4,6 +4,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
+import { upkeepPartitions } from '../db/partition-upkeep.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -91,5 +92,18 @@ describe.skipIf(!DATABASE_URL)('notifications partitioning (integration)', () =>
     await expect(pool.query(`SELECT ensure_partitions('notifications', -1, NULL)`)).rejects.toThrow(/months_ahead/);
     await expect(pool.query(`SELECT ensure_partitions('notifications', 1000, NULL)`)).rejects.toThrow(/months_ahead/);
     expect((await pool.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [partName(monthStart(0))])).rows[0]!.ok).toBe(true);
+  });
+
+  it('the daily upkeep drops notification months past six, and keeps every month of rhyme games', async () => {
+    const exists = async (name: string): Promise<boolean> =>
+      (await pool.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [name])).rows[0]!.ok as boolean;
+    await pool.query(`CREATE TABLE IF NOT EXISTS notifications_2019_02 PARTITION OF notifications FOR VALUES FROM ('2019-02-01') TO ('2019-03-01')`);
+    await pool.query(`CREATE TABLE IF NOT EXISTS rhyme_games_2019_02 PARTITION OF rhyme_games FOR VALUES FROM ('2019-02-01') TO ('2019-03-01')`);
+    await upkeepPartitions(pool);
+    expect(await exists('notifications_2019_02')).toBe(false);
+    expect(await exists(partName(monthStart(0)))).toBe(true);
+    expect(await exists(partName(monthStart(3)))).toBe(true);
+    expect(await exists('rhyme_games_2019_02')).toBe(true);
+    await pool.query(`DROP TABLE IF EXISTS rhyme_games_2019_02`);
   });
 });

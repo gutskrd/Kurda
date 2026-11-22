@@ -73,6 +73,15 @@ export function exceedsUploadSize(byteLength: number, maxUploadBytes: number): b
   return byteLength > maxUploadBytes;
 }
 
+/**
+ * Bytes one account's uploads may hold in all, pictures, photos and recordings together: hundreds of posts' worth, so
+ * only a script meets it, and one account can no longer fill the bucket the whole service shares.
+ */
+export const ACCOUNT_STORAGE_LIMIT_BYTES = 100 * 1024 * 1024;
+
+/** What an upload past `ACCOUNT_STORAGE_LIMIT_BYTES` is told, under the shared storage ceiling's code. */
+export const ACCOUNT_STORAGE_MESSAGE = 'your uploads have reached the storage one account may use; remove some posts to add more';
+
 /** Fail-closed storage gate: unknown usage (`null`, e.g. a failed count) blocks the upload. */
 export function wouldExceedStorage(currentBytes: number | null, addBytes: number, limitBytes: number): boolean {
   if (currentBytes === null) return true;

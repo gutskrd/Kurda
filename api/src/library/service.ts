@@ -178,6 +178,9 @@ export function changedWords(current: LibraryPost, patch: UpdateInput): string {
   });
 }
 
+/** Posts and drafts one member may start a day (rolling 24 hours): a prolific writer's day, never a script's. */
+export const POSTS_PER_DAY = 30;
+
 /**
  * Library writing and browsing. A post is words, up to four of its author's own pictures, or both, with optional
  * audio. Text is stripped of control characters on input (newlines kept for poems) and escaped by the apps. Removal
@@ -197,6 +200,20 @@ export class LibraryService {
     const publish = input.publish !== false;
 
     return this.inTransaction(async (client) => {
+      // A member's new posts and drafts are counted under their lock, so a burst cannot pass POSTS_PER_DAY together;
+      // staff writing for the library are not counted.
+      if (authorRole !== 'admin') {
+        await lockPersonFor(client, 'posts', authorId);
+        const today = await client.query<{ n: number; wait: number | null }>(
+          `SELECT count(*)::int AS n, ceil(extract(epoch FROM min(created_at) + interval '24 hours' - now()))::int AS wait
+             FROM library_posts WHERE author_id = $1 AND created_at > now() - interval '24 hours'`,
+          [authorId],
+        );
+        const { n, wait } = today.rows[0]!;
+        if (n >= POSTS_PER_DAY) {
+          throw new AppError('RATE_LIMITED', 429, 'too many posts today; try again later', { retryAfterSec: Math.max(1, wait ?? 3_600) });
+        }
+      }
       // New drafts are counted under the author's lock, so a burst of saves cannot pass MAX_OPEN_DRAFTS together.
       if (!publish) {
         await lockPersonFor(client, 'drafts', authorId);

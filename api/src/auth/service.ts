@@ -131,8 +131,9 @@ export interface AuthServiceDeps {
   security?: SecurityRecorder;
 }
 
-/** Most reset emails one account is sent in an hour; more are quietly not sent. */
+/** Most reset emails one account is sent in an hour, and in a day; more are quietly not sent. */
 export const RESET_EMAILS_PER_HOUR = 3;
+export const RESET_EMAILS_PER_DAY = 5;
 
 /** Why a sign-in asks for the CAPTCHA: the account's failures, the network's, or a surge everywhere. */
 export type CaptchaReason = 'attempts' | 'network' | 'surge';
@@ -195,8 +196,8 @@ export class AuthService {
   }
 
   /**
-   * A security email, at most once a day per account and kind when `daily`. Best-effort: sign-in never fails because a
-   * notice could not be queued.
+   * A security email, at most once a day per account and kind when `daily`, and within the few a day one address is sent
+   * of them all (email/send-limits.ts). Best-effort: sign-in never fails because a notice could not be queued.
    */
   private async securityNotice(
     user: { id: string; email: string | null; username: string; locale?: string },
@@ -240,29 +241,6 @@ export class AuthService {
       ? this.config.APP_BASE_URL.slice(0, -1)
       : this.config.APP_BASE_URL;
     return `${base}${path}?token=${encodeURIComponent(token)}`;
-  }
-
-  /** Legacy link-based verification, still served by /auth/resend-verification. */
-  private async sendVerificationEmail(user: {
-    id: string;
-    email: string | null;
-    username: string;
-    locale?: string;
-  }) {
-    if (user.email === null) return;
-    try {
-      const token = await createEmailToken(this.pool, user.id, 'verify_email');
-      if (this.deps.jobs) {
-        await this.deps.jobs.enqueue(sendEmailJob, {
-          to: user.email,
-          template: 'verify-email',
-          vars: { link: this.emailLink('/verify-email', token), username: user.username },
-          locale: emailLocaleFor(user.locale),
-        });
-      }
-    } catch (err) {
-      this.deps.log?.warn({ err, userId: user.id }, 'failed to enqueue verification email');
-    }
   }
 
   /**
@@ -412,14 +390,16 @@ export class AuthService {
     const user = await this.users.findByEmail(email);
     // found by its address, so it has one; the check keeps the type honest
     if (!user || user.email === null) return;
-    // a mailbox is not a target: past RESET_EMAILS_PER_HOUR, nothing more is
-    // sent, and the answer is the same as ever
-    const recent = await this.pool.query<{ n: number }>(
-      `SELECT count(*)::int AS n FROM email_tokens
-        WHERE user_id = $1 AND purpose = 'password_reset' AND created_at > now() - interval '1 hour'`,
+    // a mailbox is not a target: past RESET_EMAILS_PER_HOUR or RESET_EMAILS_PER_DAY, nothing more is sent, and the
+    // answer is the same as ever
+    const recent = await this.pool.query<{ hour: number; day: number }>(
+      `SELECT count(*) FILTER (WHERE created_at > now() - interval '1 hour')::int AS hour, count(*)::int AS day
+         FROM email_tokens
+        WHERE user_id = $1 AND purpose = 'password_reset' AND created_at > now() - interval '24 hours'`,
       [user.id],
     );
-    if ((recent.rows[0]?.n ?? 0) >= RESET_EMAILS_PER_HOUR) return;
+    const sent = recent.rows[0] ?? { hour: 0, day: 0 };
+    if (sent.hour >= RESET_EMAILS_PER_HOUR || sent.day >= RESET_EMAILS_PER_DAY) return;
     await this.deps.security?.record('password.reset_requested', { userId: user.id, staff: isPrivileged(user.roles) });
     try {
       if (!user.password_hash) {
@@ -558,18 +538,6 @@ export class AuthService {
       [userId],
     );
     await this.reconcileBootstrapAdmins();
-  }
-
-  /** Always succeeds from the caller's perspective (no enumeration). */
-  async resendVerification(email: string): Promise<void> {
-    const user = await this.users.findByEmail(email);
-    if (!user || user.email === null) return;
-    const verified = await this.pool.query<{ email_verified_at: Date | null }>(
-      `SELECT email_verified_at FROM users WHERE id = $1`,
-      [user.id],
-    );
-    if (verified.rows[0]?.email_verified_at) return;
-    await this.sendVerificationEmail(user);
   }
 
   async register(input: RegisterInput): Promise<{ user: PublicUser; tokens: IssuedTokens }> {

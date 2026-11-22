@@ -41,7 +41,6 @@ const EXEMPT = new Set([
   // confirming, which is the gate itself
   'POST /auth/verify-email',
   'POST /auth/verify-email-code',
-  'POST /auth/resend-verification',
   'POST /auth/resend-verification-code',
   // putting a mistyped address right, which only an unconfirmed account can do
   'POST /auth/change-pending-email',

@@ -445,7 +445,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
    * GDPR: starts the 14-day deletion grace period. A guest is closed at once instead, having no way to sign in again and
    * no address for the notice.
    */
-  app.delete('/me', { config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } } }, async (req) => {
+  // it emails the deletion notice, so its limit keeps counting while Redis is down
+  app.delete('/me', { config: { rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const, onStoreDown: 'local' as const } } }, async (req) => {
     const caller = await requireAccountCaller(config, req);
     if (caller.guest) {
       await gdpr.closeNow(caller.id, 'guest_left');
@@ -653,7 +654,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       schema: { body: changeUsernameBodySchema },
       // a username is published, so a held account keeps its own until a person has looked
       preHandler: [requireAuth, requireNotHeld],
-      config: { rateLimit: { max: 5, windowMs: 15 * 60_000, per: 'user-or-ip' as const } },
+      config: { rateLimit: { max: 5, windowMs: 15 * 60_000, per: 'user-or-ip' as const, onStoreDown: 'local' as const } },
     },
     async (req) => {
       const userId = await requireNamed(req);

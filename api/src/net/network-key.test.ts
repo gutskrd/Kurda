@@ -4,7 +4,7 @@ import { DEV_JWT_SECRET } from '../config/env.js';
 import { setModerationKey } from '../moderation/pseudonym.js';
 import { isCloudflareAddress } from './cloudflare.js';
 import { parseIp } from './ip.js';
-import { networkHashOf, networkKey } from './network-key.js';
+import { networkHashOf, networkKey, siteKey } from './network-key.js';
 
 describe('networkKey', () => {
   it('is the address itself for IPv4', () => {
@@ -65,6 +65,22 @@ describe('networkKey', () => {
     ]) {
       expect(networkKey(bad)).toBeNull();
     }
+  });
+});
+
+describe('siteKey', () => {
+  it('is the address itself for IPv4, as networkKey is', () => {
+    expect(siteKey('203.0.113.7')).toBe('203.0.113.7');
+    expect(siteKey('::ffff:203.0.113.7')).toBe('203.0.113.7');
+  });
+
+  it('is the /56 for IPv6, so the /64s of one customer share it', () => {
+    for (const a of ['2001:db8:abcd:1200::1', '2001:db8:abcd:12ff:ffff::1', '[2001:db8:abcd:1234::99]:443']) {
+      expect(siteKey(a)).toBe('2001:db8:abcd:1200::/56');
+    }
+    expect(siteKey('2001:db8:abcd:1300::1')).toBe('2001:db8:abcd:1300::/56');
+    expect(siteKey('2001:db8::1')).toBe('2001:db8::/56');
+    expect(siteKey('nope')).toBeNull();
   });
 });
 

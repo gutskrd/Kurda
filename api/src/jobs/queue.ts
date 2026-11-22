@@ -3,6 +3,8 @@ import { Redis } from 'ioredis';
 import type { AppConfig } from '../config/env.js';
 import type { JobDefinition } from './registry.js';
 import { priorityForJob, shouldShed } from './backpressure.js';
+import { SEND_EMAIL_JOB_NAME, type SendEmailPayload } from './email.js';
+import { EmailSendLimits } from '../email/send-limits.js';
 
 export const QUEUE_NAME = 'kurda-jobs';
 
@@ -59,21 +61,37 @@ function validPayload<T>(def: JobDefinition<T>, payload: T): T {
   return parsed.data;
 }
 
-export class JobQueue {
-  constructor(private readonly queue: Queue) {}
+interface QueueLog {
+  warn: (obj: unknown, msg?: string) => void;
+  error: (obj: unknown, msg?: string) => void;
+}
 
-  static create(config: AppConfig): JobQueue {
-    return new JobQueue(
-      new Queue(QUEUE_NAME, {
-        connection: createQueueConnection(config),
-        defaultJobOptions: DEFAULT_JOB_OPTIONS,
-      }),
-    );
+export class JobQueue {
+  constructor(
+    private readonly queue: Queue,
+    /** the email ceilings every queued email is checked against (email/send-limits.ts) */
+    private readonly emailLimits: EmailSendLimits | null = null,
+  ) {}
+
+  /** A queue on REDIS_URL whose emails are held to EMAIL_DAILY_CEILING and the per-address limits, wherever it is made. */
+  static create(config: AppConfig, opts: { log?: QueueLog } = {}): JobQueue {
+    const connection = createQueueConnection(config);
+    const queue = new Queue(QUEUE_NAME, { connection, defaultJobOptions: DEFAULT_JOB_OPTIONS });
+    // the counters share the queue's connection, so an email is counted wherever it can be queued
+    return new JobQueue(queue, new EmailSendLimits(async () => connection, config.EMAIL_DAILY_CEILING, opts.log));
   }
 
-  /** Validates the payload against the job's schema before it reaches Redis, so a bad producer fails its own request. */
+  /**
+   * Validates the payload against the job's schema before it reaches Redis, so a bad producer fails its own request. An
+   * email past one of its ceilings throws `EmailNotQueued` (email/send-limits.ts) and is not queued.
+   */
   async enqueue<T>(def: JobDefinition<T>, payload: T, opts: EnqueueOptions = {}): Promise<string> {
-    const job = await this.queue.add(def.name, validPayload(def, payload), {
+    const data = validPayload(def, payload);
+    if (def.name === SEND_EMAIL_JOB_NAME && this.emailLimits) {
+      const email = data as SendEmailPayload;
+      await this.emailLimits.admit(email.template, email.to);
+    }
+    const job = await this.queue.add(def.name, data, {
       jobId: opts.idempotencyKey,
       delay: opts.delayMs,
       // Priority: auth emails, then push, then analytics.
@@ -89,7 +107,17 @@ export class JobQueue {
    */
   async enqueueMany<T>(def: JobDefinition<T>, payloads: readonly T[]): Promise<void> {
     const opts = { priority: priorityForJob(def.name), ...jobRetryOptions(def) };
-    const jobs = payloads.map((payload) => ({ name: def.name, data: validPayload(def, payload), opts }));
+    let jobs = payloads.map((payload) => ({ name: def.name, data: validPayload(def, payload), opts }));
+    // emails in a batch meet the same ceilings, each; one past them is left out rather than failing the rest
+    if (def.name === SEND_EMAIL_JOB_NAME && this.emailLimits) {
+      const limits = this.emailLimits;
+      const admitted: typeof jobs = [];
+      for (const job of jobs) {
+        const email = job.data as SendEmailPayload;
+        if (await limits.admit(email.template, email.to).then(() => true, () => false)) admitted.push(job);
+      }
+      jobs = admitted;
+    }
     for (let i = 0; i < jobs.length; i += ENQUEUE_BATCH) await this.queue.addBulk(jobs.slice(i, i + ENQUEUE_BATCH));
   }
 

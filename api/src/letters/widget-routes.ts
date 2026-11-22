@@ -50,7 +50,7 @@ export function registerLetterWidgetRoutes(app: FastifyInstance, widget: LetterW
     if (!caller) return reply.code(401).send({ code: 'WIDGET_UNAUTHORIZED', message: 'this widget is signed out', requestId: req.id });
     const now = Date.now();
     try {
-      const hit = await budget.hit(`ratelimit:letters-widget:${caller.tokenId}`, HOUR_MS, now);
+      const hit = await budget.hit(`ratelimit:letters-widget:${caller.tokenId}`, HOUR_MS, now, WIDGET_HITS_PER_HOUR);
       if (hit.count > WIDGET_HITS_PER_HOUR) {
         const retry = Math.max(1, Math.ceil((hit.oldestMs + HOUR_MS - now) / 1000));
         return reply.code(429).header('retry-after', String(retry)).send({ code: 'RATE_LIMITED', message: 'too many requests', requestId: req.id });

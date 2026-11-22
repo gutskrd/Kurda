@@ -1,5 +1,14 @@
 import type pg from 'pg';
 import { validateEvent } from './registry.js';
+import { deleteInBatches } from '../db/batches.js';
+
+/** How long a stored event is kept: the dashboards' rollups have counted it within days, so the row is not needed after. */
+export const ANALYTICS_RETENTION_DAYS = 90;
+
+/** Deletes events older than `days` (UTC days), a batch per statement; idempotent, so any instance may run it daily. */
+export function pruneAnalyticsEvents(pool: Pick<pg.Pool, 'query'>, days = ANALYTICS_RETENTION_DAYS): Promise<number> {
+  return deleteInBatches(pool, 'analytics_events', `day < (now() AT TIME ZONE 'UTC')::date - $1::int`, [days]);
+}
 
 export interface RawEvent {
   /** Client-generated id — the dedupe key across retries/offline replay. */

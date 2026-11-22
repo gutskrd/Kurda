@@ -4,11 +4,21 @@ import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import type { GroupChatService } from './chat-service.js';
 import { MAX_GROUP_MESSAGE_LEN } from './chat-service.js';
+import type { TrustService } from '../trust/service.js';
+import { AppError } from '../plugins/errors.js';
+import { secondsToUtcMidnight, takeDaily } from '../limits/counters.js';
 
 const idParam = z.object({ id: z.uuid() });
 
-/** Group chat channel and its moderation. */
-export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatService): void {
+/** Group messages one account may send a day (UTC), over every group: a very talkative day, never a flood. */
+export const GROUP_MESSAGES_PER_DAY = 2_000;
+
+/**
+ * Group chat channel and its moderation. A message meets what a direct message does first (trust/service.ts): the
+ * hourly cap for the sender's trust level, shared with direct messages, and the duplicate and burst spam check; then
+ * `GROUP_MESSAGES_PER_DAY`. Without Redis those counts read empty, and only the route's rate limit applies.
+ */
+export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatService, trust?: TrustService): void {
   /** Send to the group channel (member-only, blocked if muted). */
   app.post(
     '/groups/:id/chat',
@@ -19,10 +29,27 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
       // second check would cost a query per message.
       preHandler: [requireAccount, requireBirthMonth],
     },
-    async (req) =>
-      chat.send(req.user!.id, (req.params as { id: string }).id, (req.body as { body: string }).body, (k) =>
-        app.storage ? app.storage.publicUrl(k) : null,
-      ),
+    async (req, reply) => {
+      const userId = req.user!.id;
+      const body = (req.body as { body: string }).body;
+      if (trust) {
+        const gate = await trust.checkAction(userId, 'message');
+        if (!gate.allowed) {
+          return reply.code(429).send({ code: 'TRUST_VELOCITY', message: 'you are messaging too fast — slow down for new accounts' });
+        }
+        if (!(await takeDaily(app.redis, 'group-chat', userId, GROUP_MESSAGES_PER_DAY, app.log))) {
+          throw new AppError('RATE_LIMITED', 429, 'too many messages today; try again tomorrow', { retryAfterSec: secondsToUtcMidnight() });
+        }
+        // duplicate/burst spam → auto-mute/suspend before the message lands
+        const spam = await trust.assessContent(userId, body);
+        if (spam.enforced) {
+          return reply.code(403).send({ code: 'AUTO_MODERATED', message: 'your account has been restricted for spam-like activity' });
+        }
+      }
+      const message = await chat.send(userId, (req.params as { id: string }).id, body, (k) => (app.storage ? app.storage.publicUrl(k) : null));
+      if (trust) await trust.recordAction(userId, 'message');
+      return message;
+    },
   );
 
   /** Channel history and what the reader has cleared; membership is checked on every fetch, so removal revokes access at once. */

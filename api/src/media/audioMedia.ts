@@ -3,7 +3,14 @@ import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
 import { mediaKey, type MediaStorage } from './storage.js';
 import { checkAudio, type AudioReject } from './audioCheck.js';
-import { exceedsUploadSize, opLimitReached, wouldExceedStorage, type AudioLimits } from './mediaLimits.js';
+import {
+  ACCOUNT_STORAGE_LIMIT_BYTES,
+  ACCOUNT_STORAGE_MESSAGE,
+  exceedsUploadSize,
+  opLimitReached,
+  wouldExceedStorage,
+  type AudioLimits,
+} from './mediaLimits.js';
 import type { MediaUsageService } from './mediaUsage.js';
 
 /** The kinds an audio upload is stored under: a voice note for a post or a comment, and a speaking-practice recording. */
@@ -14,6 +21,10 @@ export const AUDIO_KINDS = ['voice-note', 'speaking'] as const;
  * gigabytes on the bucket between sweeps, and the shared storage ceiling then paused everyone's pictures.
  */
 export const AUDIO_DAILY_UPLOADS = 30;
+
+/** The day's recordings for an account younger than `NEW_ACCOUNT_DAYS`, the age a throwaway account rarely reaches. */
+export const AUDIO_DAILY_UPLOADS_NEW_ACCOUNT = 5;
+export const NEW_ACCOUNT_DAYS = 7;
 
 export type StoreAudioResult =
   | { ok: true; mediaId: string; url: string; contentType: string; reused: boolean }
@@ -77,10 +88,10 @@ export function registerAudioParser(app: FastifyInstance, maxUploadBytes: number
  * length, anything riding along emptied), storage ceiling (fail-closed), PUT of the checked bytes, confirm. Keys are
  * hashes of the checked bytes, so re-uploads are idempotent. Audio is not image-scanned; reports are its moderation path.
  *
- * The file is kept under its uploader, so it counts against them (`AUDIO_DAILY_UPLOADS`), goes with their account and
- * can be traced when reported; one no post or comment uses is removed a day later (media/service.ts
- * `cleanupOrphans`). The course's own audio, uploaded by staff, has no uploader (`null`), so it stays when its
- * recorder closes their account.
+ * The file is kept under its uploader, so it counts against them (`AUDIO_DAILY_UPLOADS`, fewer for a new account, and
+ * the account's storage, `ACCOUNT_STORAGE_LIMIT_BYTES`), goes with their account and can be traced when reported; one
+ * no post or comment uses is removed a day later (media/service.ts `cleanupOrphans`). The course's own audio, uploaded
+ * by staff, has no uploader (`null`), so it stays when its recorder closes their account.
  */
 export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: Buffer, uploaderId: string | null): Promise<StoreAudioResult> {
   const { pool, storage, usage, limits, log } = deps;
@@ -100,12 +111,14 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
 
   // A member's own recordings are counted; staff upload course audio by the hundred and are not.
   if (uploaderId !== null && (AUDIO_KINDS as readonly string[]).includes(kind)) {
-    const today = await pool.query<{ n: number }>(
-      `SELECT count(*)::int AS n FROM media_uploads
-        WHERE uploader_id = $1 AND kind = ANY($2::text[]) AND created_at > now() - interval '24 hours'`,
-      [uploaderId, [...AUDIO_KINDS]],
+    const today = await pool.query<{ n: number; young: boolean | null }>(
+      `SELECT (SELECT count(*)::int FROM media_uploads
+                WHERE uploader_id = $1 AND kind = ANY($2::text[]) AND created_at > now() - interval '24 hours') AS n,
+              (SELECT created_at > now() - make_interval(days => $3) FROM users WHERE id = $1) AS young`,
+      [uploaderId, [...AUDIO_KINDS], NEW_ACCOUNT_DAYS],
     );
-    if ((today.rows[0]?.n ?? 0) >= AUDIO_DAILY_UPLOADS) {
+    const { n, young } = today.rows[0] ?? { n: 0, young: true };
+    if (n >= (young === false ? AUDIO_DAILY_UPLOADS : AUDIO_DAILY_UPLOADS_NEW_ACCOUNT)) {
       return reject(429, 'MEDIA_DAILY_LIMIT_REACHED', 'too many recordings today; try again tomorrow', 'daily-limit');
     }
   }
@@ -119,6 +132,9 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
 
   if (wouldExceedStorage(await usage.totalStoredBytes(), bytes.length, limits.storageLimitBytes)) {
     return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
+  }
+  if (uploaderId !== null && wouldExceedStorage(await usage.storedBytesFor(uploaderId), bytes.length, ACCOUNT_STORAGE_LIMIT_BYTES)) {
+    return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', ACCOUNT_STORAGE_MESSAGE, 'account-storage-limit');
   }
 
   const existing = await pool.query<{ confirmed: boolean; taken_down: boolean }>(

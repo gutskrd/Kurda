@@ -8,10 +8,11 @@ import type { Executor } from './tx.js';
  * The automatic check every picture goes through before anyone else sees it, and its record. `check` asks the scanner
  * (vision-scanner.ts) and applies the policy (image-scan.ts); with no scanner, in `people` mode, or past the service's
  * daily limit, every picture is held for a person instead, and any failure of the scanner holds it too: nothing unclear
- * is ever cleared. One account past its own daily limit is told to wait instead (429), so it can neither run up the
- * cost nor fill the review queue. Both limits are counted atomically in Redis, in Postgres while Redis is down, and an
- * unknown count is taken as reached. `record` writes each check to `image_scans`, with the findings, the model, what it
- * cost and how it came to be held.
+ * is ever cleared. One account past its own daily limit, or with `MAX_WAITING_PER_UPLOADER` pictures already waiting for
+ * a person, is told to wait instead (429), in every mode, so it can neither run up the cost nor fill the review queue.
+ * Both daily limits are counted atomically in Redis, in Postgres while Redis is down, and an unknown count is taken as
+ * reached. `record` writes each check to `image_scans`, with the findings, the model, what it cost and how it came to be
+ * held.
  */
 
 export type CheckedBy = 'auto' | 'people_only' | 'checker_unavailable';
@@ -85,6 +86,12 @@ const held = (checkedBy: CheckedBy, model: string): PictureCheck => ({ outcome: 
 
 const COUNTER_PREFIX = 'picture-checks';
 
+/** Pictures one account may have waiting for a person at once; the next waits until one of them is decided. */
+export const MAX_WAITING_PER_UPLOADER = 5;
+
+/** How long an account with a full queue of waiting pictures is told to wait: a person may decide within the hour. */
+export const WAITING_RETRY_SEC = 3_600;
+
 /** The model column of a verdict reused for the same bytes, so the daily counts never count it as a call. */
 export const REUSED_SUFFIX = ' (reused)';
 
@@ -124,8 +131,10 @@ export class ImageModerationService {
    * service takes itself). Never throws for the scanner's sake.
    */
   async check(bytes: Buffer, surface: PictureSurface, uploaderId: string | null = null): Promise<PictureCheck | PersonOverLimit> {
-    if (!this.scanner || this.mode === 'people') return held('people_only', 'people');
+    // the waiting count first, since it only reads; then the day's, which counts this picture
+    if (uploaderId && (await this.waitingFull(uploaderId))) return { limited: true, retryAfterSec: WAITING_RETRY_SEC };
     if (uploaderId && (await this.overPersonLimit(uploaderId))) return { limited: true, retryAfterSec: secondsToUtcMidnight() };
+    if (!this.scanner || this.mode === 'people') return held('people_only', 'people');
     if (await this.limitReached()) {
       await this.tellLimitReached().catch((err) => this.opts.log?.warn({ err }, 'could not tell moderators the picture check limit was reached'));
       return held('people_only', 'daily-limit');
@@ -178,16 +187,28 @@ export class ImageModerationService {
     );
   }
 
-  /** One account's checks today (UTC) against its own daily limit. */
+  /** One account's pictures today (UTC), checked or held, against its own daily limit. */
   private async overPersonLimit(uploaderId: string): Promise<boolean> {
     return this.takeOne(
       `${this.opts.counterPrefix ?? COUNTER_PREFIX}:${utcDay()}:${uploaderId}`,
       this.perUserDaily,
       `SELECT count(*)::int AS n FROM image_scans
-        WHERE uploader_id = $1 AND checked_by = 'auto' AND created_at >= date_trunc('day', now(), 'UTC')
-          AND model_version NOT LIKE '%${REUSED_SUFFIX}'`,
+        WHERE uploader_id = $1 AND created_at >= date_trunc('day', now(), 'UTC') AND model_version NOT LIKE '%${REUSED_SUFFIX}'`,
       [uploaderId],
     );
+  }
+
+  /** Whether the account already has `MAX_WAITING_PER_UPLOADER` pictures waiting for a person; unknown reads as full. */
+  private async waitingFull(uploaderId: string): Promise<boolean> {
+    try {
+      const r = await this.pool.query<{ n: number }>(
+        `SELECT count(*)::int AS n FROM (SELECT 1 FROM image_scans WHERE uploader_id = $1 AND status = 'pending' LIMIT $2) w`,
+        [uploaderId, MAX_WAITING_PER_UPLOADER],
+      );
+      return (r.rows[0]?.n ?? 0) >= MAX_WAITING_PER_UPLOADER;
+    } catch {
+      return true;
+    }
   }
 
   /** Write one check, in the caller's transaction; returns its id (the `reviewId` of a refusal). */

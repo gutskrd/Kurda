@@ -16,6 +16,7 @@ import { BREACH_RANGE_URL } from './breached-password.js';
 import { CAPTCHA_AFTER_FAILURES, LockoutService } from './lockout.js';
 import { LoginSurge, SURGE_FAILURES_PER_MINUTE, SURGE_FLAG_KEY } from './login-surge.js';
 import { AuthService, RESET_EMAILS_PER_HOUR } from './service.js';
+import { KnownDevices, MAX_KNOWN_DEVICES } from './known-devices.js';
 import { GdprService, DELETION_GRACE_DAYS } from '../gdpr/service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -455,5 +456,23 @@ describe.skipIf(!DATABASE_URL)('sign-in protection (integration)', () => {
     const ended = await refresh(refreshed.json().refreshToken);
     expect(ended.statusCode).toBe(401);
     expect(ended.json().code).toBe('REFRESH_EXPIRED');
+  });
+
+  it('keeps a bounded list of known devices, letting go of the one seen longest ago', async () => {
+    const owner = await account('kdcap');
+    const devices = new KnownDevices(pool, config.JWT_SECRET);
+    for (let i = 0; i < MAX_KNOWN_DEVICES + 5; i++) {
+      await devices.remember(owner.id, 'device', `phone-${i}`);
+      // a distinct moment each, so "seen longest ago" is one device
+      await pool.query(`UPDATE known_devices SET last_seen_at = now() - make_interval(secs => $2) WHERE user_id = $1 AND device_hash = $3`, [
+        owner.id,
+        MAX_KNOWN_DEVICES + 5 - i,
+        devices.hash(owner.id, 'device', `phone-${i}`),
+      ]);
+    }
+    const kept = await pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM known_devices WHERE user_id = $1`, [owner.id]);
+    expect(kept.rows[0]!.n).toBe(MAX_KNOWN_DEVICES);
+    expect(await devices.isKnown(owner.id, 'device', `phone-${MAX_KNOWN_DEVICES + 4}`)).toBe(true);
+    expect(await devices.isKnown(owner.id, 'device', 'phone-0')).toBe(false);
   });
 });

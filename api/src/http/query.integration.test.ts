@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
+import { MAX_OFFSET } from './query.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const NO_SUCH = '00000000-0000-4000-8000-000000000000';
@@ -58,6 +59,15 @@ describe.skipIf(!DATABASE_URL)('public list query strings (integration)', () => 
     ]) {
       const res = await get(url);
       expect(res.statusCode, `${url}: ${res.body}`).toBe(200);
+    }
+  });
+
+  it('pages no deeper than the deepest offset a list serves', async () => {
+    expect((await get(`/library/posts?offset=${MAX_OFFSET}`)).statusCode).toBe(200);
+    for (const url of [`/library/posts?offset=${MAX_OFFSET + 1}`, `/images?offset=${MAX_OFFSET + 1}`, `/library/posts/${NO_SUCH}/comments?offset=999999`]) {
+      const res = await get(url);
+      expect(res.statusCode, url).toBe(400);
+      expect(res.json().code, url).toBe('VALIDATION_ERROR');
     }
   });
 });

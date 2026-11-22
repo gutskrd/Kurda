@@ -59,7 +59,7 @@ export function registerChatRoutes(
         if (!gate.allowed) {
           return reply
             .code(429)
-            .send({ code: 'TRUST_VELOCITY', message: 'you are messaging too fast — slows down for new accounts' });
+            .send({ code: 'TRUST_VELOCITY', message: 'you are messaging too fast — slow down for new accounts' });
         }
         // duplicate/burst spam → auto-mute/suspend before the message lands
         const spam = await trust.assessContent(req.user!.id, body);

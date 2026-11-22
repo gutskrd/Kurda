@@ -4,6 +4,9 @@ import type pg from 'pg';
 /** How long a device or network stays known after it last signed in. */
 export const KNOWN_DEVICE_DAYS = 180;
 
+/** Devices and networks one account keeps known at once; a new one past it lets go of the one seen longest ago. */
+export const MAX_KNOWN_DEVICES = 50;
+
 /**
  * What an account has signed in from before:
  * - 'device'  — the app's `X-Device-Id` (a random id the app keeps per install);
@@ -74,8 +77,15 @@ export class KnownDevices {
          SET last_seen_at = now(), expires_at = EXCLUDED.expires_at`,
       [userId, hashed, kind, String(KNOWN_DEVICE_DAYS)],
     );
-    // the account's devices and networks that have lapsed go with this sign-in
-    await this.pool.query(`DELETE FROM known_devices WHERE user_id = $1 AND expires_at < now()`, [userId]);
+    // the account's devices and networks that have lapsed go with this sign-in, and the oldest past MAX_KNOWN_DEVICES
+    await this.pool.query(
+      `DELETE FROM known_devices
+        WHERE user_id = $1 AND device_hash <> $2
+          AND (expires_at < now()
+               OR device_hash IN (SELECT device_hash FROM known_devices WHERE user_id = $1
+                                   ORDER BY last_seen_at DESC, device_hash OFFSET $3))`,
+      [userId, hashed, MAX_KNOWN_DEVICES],
+    );
     return { isNew: !row.known, firstForAccount: row.n === 0 };
   }
 }

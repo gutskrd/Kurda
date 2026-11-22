@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { describe, expect, it } from 'vitest';
-import { ImageModerationService, secondsToUtcMidnight, type CounterStore } from './image-moderation-service.js';
+import { ImageModerationService, MAX_WAITING_PER_UPLOADER, WAITING_RETRY_SEC, secondsToUtcMidnight, type CounterStore } from './image-moderation-service.js';
 import { StubImageScanner } from './image-scanner.js';
 
 /** Counts in memory, as Redis would, or fails like a Redis that is down. */
@@ -18,12 +18,12 @@ function counters(down = false): CounterStore & { counts: Map<string, number> } 
   };
 }
 
-/** A pool whose count query answers `n`, or fails. */
-const poolCounting = (n: number | 'down') =>
+/** A pool whose day counts answer `n` and whose count of pictures waiting for a person answers `waiting`, or fails. */
+const poolCounting = (n: number | 'down', waiting = 0) =>
   ({
-    query: async () => {
+    query: async (sql: string) => {
       if (n === 'down') throw new Error('database down');
-      return { rows: [{ n }] };
+      return { rows: [{ n: sql.includes("status = 'pending'") ? waiting : n }] };
     },
     connect: async () => ({ query: async () => ({ rows: [{ ok: false }] }), release: () => undefined }),
   }) as unknown as pg.Pool;
@@ -80,6 +80,30 @@ describe('the picture check limits', () => {
     const down = new ImageModerationService(poolCounting(0), { scanner: new StubImageScanner().answer('unavailable'), counters: counters(), onCheck: (c) => seen.push(c) });
     expect(await down.check(bytes, 'post', 'u1')).toMatchObject({ checkedBy: 'checker_unavailable' });
     expect(seen).toEqual([{ outcome: 'clear', usage: { inputTokens: 900, outputTokens: 120 } }, { outcome: 'unavailable' }]);
+  });
+
+  it('holds an account to its daily limit in people mode and with no checker too', async () => {
+    for (const opts of [{ scanner: new StubImageScanner(), mode: 'people' as const }, { scanner: null }]) {
+      const svc = new ImageModerationService(poolCounting(0), { ...opts, perUserDaily: 2, counters: counters() });
+      expect(await svc.check(bytes, 'post', 'u1')).toMatchObject({ checkedBy: 'people_only' });
+      expect(await svc.check(bytes, 'post', 'u1')).toMatchObject({ checkedBy: 'people_only' });
+      expect(await svc.check(bytes, 'post', 'u1')).toMatchObject({ limited: true });
+      expect(await svc.check(bytes, 'post', 'u2')).toMatchObject({ checkedBy: 'people_only' });
+    }
+  });
+
+  it('tells an account with a full queue of pictures waiting for a person to wait, without counting the picture', async () => {
+    const store = counters();
+    const stub = new StubImageScanner();
+    const svc = new ImageModerationService(poolCounting(0, MAX_WAITING_PER_UPLOADER), { scanner: stub, perUserDaily: 30, counters: store });
+    expect(await svc.check(bytes, 'post', 'u1')).toEqual({ limited: true, retryAfterSec: WAITING_RETRY_SEC });
+    expect(stub.calls).toBe(0);
+    expect([...store.counts.keys()]).toEqual([]);
+    // one fewer waiting, and the picture goes to the check
+    const room = new ImageModerationService(poolCounting(0, MAX_WAITING_PER_UPLOADER - 1), { scanner: stub, perUserDaily: 30, counters: counters() });
+    expect(await room.check(bytes, 'post', 'u1')).toMatchObject({ checkedBy: 'auto' });
+    // the service's own second looks have no uploader and never wait on it
+    expect(await svc.check(bytes, 'post', null)).toMatchObject({ checkedBy: 'auto' });
   });
 
   it('starts the counts again at midnight UTC', () => {

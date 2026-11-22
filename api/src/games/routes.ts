@@ -182,6 +182,7 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
     goals: new DailyGoalService(app.db),
     milestones: deps.milestones,
     log: app.log,
+    redis: app.hasDecorator('redis') ? app.redis : undefined,
   });
   solo.register(sentences);
   solo.register(memory);

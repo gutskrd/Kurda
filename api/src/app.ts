@@ -2,7 +2,7 @@ import Fastify, { type FastifyInstance, type RouteOptions } from 'fastify';
 import { readFileSync } from 'node:fs';
 import type pg from 'pg';
 import type { Redis } from 'ioredis';
-import { registerAuthRoutes } from './auth/routes.js';
+import { registerAuthRoutes, signupCeiling } from './auth/routes.js';
 import { setShuffleKey } from './content/exercises.js';
 import { Cache } from './cache/cache.js';
 import { JobQueue } from './jobs/queue.js';
@@ -190,8 +190,8 @@ import { installRawBodyGate } from './plugins/raw-body-gate.js';
 import { MaintenanceService } from './maintenance/service.js';
 import { installMaintenanceGate, registerMaintenanceRoutes } from './maintenance/routes.js';
 import { Counter } from 'prom-client';
-import { AnalyticsService } from './analytics/service.js';
-import { registerAnalyticsRoutes } from './analytics/routes.js';
+import { AnalyticsService, pruneAnalyticsEvents } from './analytics/service.js';
+import { upkeepPartitions } from './db/partition-upkeep.js';
 import { FeedbackService } from './feedback/service.js';
 import { registerFeedbackRoutes } from './feedback/routes.js';
 import { EmailService } from './email/service.js';
@@ -300,7 +300,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     app.decorate('redis', redis);
     app.decorate('cache', new Cache(redis, app.log));
     health.register('redis', redisHealthCheck(redis));
-    const jobs = JobQueue.create(config);
+    const jobs = JobQueue.create(config, { log: app.log });
     app.decorate('jobs', jobs);
     // The API only enqueues, so something must consume the queue or verification and reset mail is never sent. The
     // worker runs in-process by default, which is safe alongside a dedicated worker; skipped under test.
@@ -474,18 +474,24 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // Game ranks and seasons have ended; their routes answer older phone builds with empty shapes.
     registerRankRoutes(app);
 
-    // Monthly partitions created ahead of time so inserts always have a home. Runs in the API process and is idempotent,
-    // so several replicas are harmless. Retention is off by default; nothing is deleted automatically.
-    const PARTITIONED_TABLES = ['notifications', 'rhyme_games'];
+    // The daily upkeep of tables that only grow: monthly partitions made ahead and old notification months dropped
+    // (db/partition-upkeep.ts), and stored analytics events past their retention. Runs in the API process and is
+    // idempotent, so several replicas are harmless.
     const ensurePartitions = async (): Promise<void> => {
-      for (const tbl of PARTITIONED_TABLES) {
-        await app.db.query('SELECT ensure_partitions($1, 3, NULL)', [tbl]).catch((err) => app.log.warn({ err, tbl }, 'ensure_partitions failed'));
-      }
+      await upkeepPartitions(app.db, app.log);
+      await pruneAnalyticsEvents(app.db).catch((err) => app.log.warn({ err }, 'analytics event retention failed'));
     };
     void ensurePartitions();
     const partitionSweep = setInterval(() => void ensurePartitions(), 24 * 60 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(partitionSweep));
 
+    // said on every production boot until it is set: without it nothing but the caps stands between a script and sign-up
+    if (config.NODE_ENV === 'production' && !config.TURNSTILE_SECRET) {
+      app.log.error(
+        { signupDailyCeiling: signupCeiling(config) },
+        'TURNSTILE_SECRET is not set: sign-up and the copyright form ask for no CAPTCHA, and sign-ups are held to SIGNUP_DAILY_CEILING_WITHOUT_CAPTCHA a day',
+      );
+    }
     registerAuthRoutes(app, config, adminAccess);
     // Optional phone verification with a stub sender until a provider is configured; it raises trust and is exported and
     // deleted with the account.
@@ -742,8 +748,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       labelNames: ['reason'],
       registers: [metricsRegistry],
     });
+    // Only experiment exposures are stored now; no app sends events of its own.
     const analytics = new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) });
-    registerAnalyticsRoutes(app, analytics);
     // The one-time rating box, Send feedback, the store prompt's limits, and the admin's feedback inbox.
     registerFeedbackRoutes(app, new FeedbackService(app.db, { secret: config.JWT_SECRET }));
     // Transactional email: the bounce and complaint webhook feeds suppression; sends run in the worker's job.
@@ -821,7 +827,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       { publish: (r, ev) => realtime.publish(r, ev as never), invite: (r, uid, ttl) => realtime.invite(r, uid, ttl) },
       moderation,
     );
-    registerGroupChatRoutes(app, groupChat);
+    registerGroupChatRoutes(app, groupChat, trust);
     // The badges' unread counts, direct and group, without the conversation list.
     registerChatUnreadRoute(app, chat, groupChat);
 
