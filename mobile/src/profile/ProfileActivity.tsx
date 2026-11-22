@@ -17,7 +17,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { duration } from '../theme/motion';
 import { PressableScale } from '../theme/MotionParts';
 import { Pressable } from '../theme/Pressable';
-import { Skeleton } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
@@ -221,7 +221,7 @@ export function ActivityGrid({ activity, width }: { activity: ProfileActivitySta
   const size = { width: tile, height: Math.round(tile * 1.25) };
   if (!activity.active) return null;
 
-  if (activity.loading) return <TileSkeletons size={size} width={width} />;
+  if (activity.loading) return <TileSkeletons size={size} width={width} games={activity.active === 'games'} />;
   const games = activity.active === 'games';
   const count = games ? activity.entries.length : activity.items.length;
   if (count === 0) {
@@ -241,25 +241,47 @@ export function ActivityGrid({ activity, width }: { activity: ProfileActivitySta
   );
 }
 
-/** The tabs and a screenful of grey tiles, for a profile still loading. */
+/** The tabs and two rows of tiles, for a profile still loading: the tabs' icons in their cells, the first one marked. */
 export function ProfileActivitySkeleton({ width }: { width: number }): React.JSX.Element {
   const { colors } = useTheme();
+  const dir = useDirection();
   const tile = Math.floor((width - 2 * GAP) / 3);
+  const tab = width / PROFILE_SECTIONS.length;
   return (
     <View>
-      <View style={[styles.tabs, { width, borderBottomColor: colors.separator }]} />
+      <View style={[styles.tabs, { width, flexDirection: dir.row, borderBottomColor: colors.separator }]}>
+        {PROFILE_SECTIONS.map((s) => (
+          <View key={s} style={styles.tab}>
+            <Skeleton width={24} height={24} radius={radii.sm} />
+          </View>
+        ))}
+        <View style={[styles.ink, { left: dir.row === 'row' ? 0 : width - tab, width: tab, backgroundColor: colors.textPrimary }]} />
+      </View>
       <TileSkeletons size={{ width: tile, height: Math.round(tile * 1.25) }} width={width} />
     </View>
   );
 }
 
-function TileSkeletons({ size, width }: { size: { width: number; height: number }; width: number }): React.JSX.Element {
+/** Two rows of tiles in the grid's own layout: posts as plain tiles, games as a square cover over the result and the day. */
+function TileSkeletons({ size, width, games = false }: { size: { width: number; height: number }; width: number; games?: boolean }): React.JSX.Element {
   const { t } = useI18n();
+  const { colors } = useTheme();
+  const dir = useDirection();
   return (
-    <View style={[styles.grid, { width }]} accessibilityLabel={t('common.loading')}>
-      {Array.from({ length: 6 }, (_, i) => (
-        <Skeleton key={i} width={size.width} height={size.height} radius={radii.none} />
-      ))}
+    <View style={[styles.grid, { width, flexDirection: dir.row }]} accessibilityLabel={t('common.loading')}>
+      {Array.from({ length: 6 }, (_, i) =>
+        games ? (
+          <View key={i} style={[styles.tile, { width: size.width, backgroundColor: colors.controlTrack }]}>
+            <Skeleton width={size.width} height={size.width} radius={radii.none} />
+            <View style={styles.gameCaption}>
+              <SkeletonText size={typography.sizes.text} width={['72%', '56%', '64%'][i % 3] as `${number}%`} />
+              <SkeletonText size={typography.sizes.text} width="40%" />
+            </View>
+          </View>
+        ) : (
+          <Skeleton key={i} width={size.width} height={size.height} radius={radii.none} />
+        ),
+      )}
     </View>
   );
 }

@@ -14,6 +14,7 @@ import { useDirection } from '../reports/direction';
 import { BottomSheet } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ProfileTree } from '../tree/ProfileTree';
@@ -271,6 +272,27 @@ export function ProfileHighlights({
         {open?.sheet ?? null}
       </BottomSheet>
     </>
+  );
+}
+
+/** The row while the highlights load: two rings with their labels, as most profiles show (badges and tree). */
+export function ProfileHighlightsSkeleton({ count = 2 }: { count?: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  const dir = useDirection();
+  const rr = reachRoom(ROOM);
+  return (
+    <View style={[styles.strip, rr.scroller]}>
+      <View style={[rr.content, styles.row, { flexDirection: dir.row }]}>
+        {Array.from({ length: count }, (_, i) => (
+          <View key={i} style={styles.tile}>
+            <View style={[styles.ring, { borderColor: colors.clayBorder }]}>
+              <Skeleton height="100%" radius={radii.pill} />
+            </View>
+            <SkeletonText size={typography.sizes.text} width={i % 2 ? 32 : 48} align="center" />
+          </View>
+        ))}
+      </View>
+    </View>
   );
 }
 

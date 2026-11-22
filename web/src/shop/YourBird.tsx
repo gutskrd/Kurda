@@ -5,7 +5,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { Button } from '../components/Button';
-import { Skeleton } from '../components/Skeleton';
+import { Skeleton, SkeletonText } from '../components/Skeleton';
 import { CheckIcon, ChevronIcon } from '../components/icons';
 import { BirdBadge } from '../letters/LetterParts';
 import { useMediaQuery } from '../lib/useMediaQuery';
@@ -89,6 +89,34 @@ function Heading({ id }: { id: string }): React.JSX.Element {
   );
 }
 
+/** The card while the letters page loads, in the card's own classes: title, a two-line lead, the eight birds, the foot. */
+function BirdCardSkeleton({ birdSize }: { birdSize: number }): React.JSX.Element {
+  const t = useT();
+  return (
+    <div className="yours-card yours-bird-card">
+      <span className="sr-only">{t('common.loading')}</span>
+      <p className="yours-title">
+        <Skeleton line w="38%" />
+      </p>
+      <p className="yours-lead">
+        <SkeletonText lines={2} lastWidth="56%" />
+      </p>
+      <div className="yours-birds" aria-hidden="true">
+        {LETTER_BIRD_ORDER.map((bird) => (
+          <span key={bird} className="yours-bird">
+            <Skeleton circle size={birdSize} />
+          </span>
+        ))}
+      </div>
+      <div className="yours-foot">
+        <span className="yours-picked">
+          <Skeleton line w={96} />
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: number | null; onZer: (zer: number) => void }): React.JSX.Element | null {
   const { client } = useAuth();
   const t = useT();
@@ -112,16 +140,7 @@ export function YourBird({ home, zer, onZer }: { home: LettersHomeState; zer: nu
       return (
         <section className="yours" aria-labelledby={headingId} aria-busy="true">
           <Heading id={headingId} />
-          <div className="yours-card">
-            <span className="sr-only">{t('common.loading')}</span>
-            <Skeleton line w="38%" />
-            <Skeleton line w="62%" style={{ marginTop: 8 }} />
-            <div className="yours-birds yours-birds--waiting">
-              {LETTER_BIRD_ORDER.map((bird) => (
-                <Skeleton key={bird} circle size={birdSize} />
-              ))}
-            </div>
-          </div>
+          <BirdCardSkeleton birdSize={birdSize} />
         </section>
       );
     if (home.error)

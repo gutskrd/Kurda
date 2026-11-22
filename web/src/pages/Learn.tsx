@@ -203,7 +203,9 @@ function Lessons(): React.JSX.Element {
           <EmptyState title={t('learn.noCourses')} message={t('learn.noCoursesBody')} />
         </div>
       ) : (
-        <CourseMapSkeleton />
+        <div className="learn-path">
+          <CourseMapSkeleton />
+        </div>
       )}
     </>
   );
@@ -221,7 +223,9 @@ export function Learn(): React.JSX.Element {
       {status === 'signedIn' ? (
         <Lessons />
       ) : status === 'restoring' ? (
-        <CourseMapSkeleton />
+        <div className="learn-path">
+          <CourseMapSkeleton />
+        </div>
       ) : (
         <>
           <div className="learn-top">

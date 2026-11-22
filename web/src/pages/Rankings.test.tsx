@@ -71,7 +71,6 @@ describe('Rankings', () => {
     expect(card.textContent).toContain(en['leagues.card.down'].replace('{count}', '3'));
     expect(await screen.findByText('rojda')).toBeInTheDocument();
     expect(asked(fetch, '/leaderboards/weekly_xp?scope=global&limit=25&offset=0')).toBe(true);
-    expect(screen.getByText(en['rankings.board.weeklyXpBlurb'])).toBeInTheDocument();
   });
 
   it('says the week starts with a lesson before the first one, and leaves the league out for a visitor', async () => {
@@ -95,7 +94,6 @@ describe('Rankings', () => {
     await screen.findByRole('link', { name: /Çem League/ });
     await userEvent.click(screen.getByRole('radio', { name: en['rankings.span.all'] }));
     expect(screen.getByRole('radio', { name: en['rankings.span.all'] })).toBeChecked();
-    expect(await screen.findByText(en['rankings.board.allTimeXpBlurb'])).toBeInTheDocument();
     expect(asked(fetch, '/leaderboards/all_time_xp?scope=global&limit=25&offset=0')).toBe(true);
     expect(screen.queryByRole('link', { name: /Çem League/ })).toBeNull();
     expect(await screen.findByRole('list', { name: en['rankings.board.allTimeXp'] })).toBeInTheDocument();
@@ -178,7 +176,6 @@ describe('Rankings, by Zêr and Gewher', () => {
     expect(within(rankBy).getByRole('radio', { name: en['rankings.board.zer'] })).toBeChecked();
     expect(await screen.findByText('dilan')).toBeInTheDocument();
     expect(fetch.mock.calls.some(([url]) => String(url).includes('/leaderboards/zer?scope=global&limit=25&offset=0'))).toBe(true);
-    expect(screen.getByText(en['rankings.board.zerBlurb'])).toBeInTheDocument();
     // this week or all time is for XP alone
     expect(screen.queryByRole('group', { name: en['rankings.span'] })).toBeNull();
     // Most to least, the tie sharing second, each amount with the coin beside it and its name for a screen reader.

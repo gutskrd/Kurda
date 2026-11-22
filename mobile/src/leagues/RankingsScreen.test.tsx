@@ -108,7 +108,6 @@ describe('rankings by XP', () => {
     await screen.findByTestId('league-card');
     fireEvent.click(screen.getByRole('button', { name: 'All time' }));
     expect(await screen.findByLabelText('#1, nazdar, 48,000 XP')).toBeTruthy();
-    expect(screen.getByText('Everyone by all the XP they have earned so far.')).toBeTruthy();
     expect(asked(client)).toContain(page('all_time_xp', 0));
     expect(screen.queryByTestId('league-card')).toBeNull();
     // The league is this week’s, so it comes back with the week.
@@ -159,7 +158,6 @@ describe('rankings by Zêr and Gewher', () => {
     expect(await screen.findByLabelText('#1, dilan, 900 Zêr')).toBeTruthy();
     expect(screen.getByRole('radio', { name: 'Zêr' }).getAttribute('aria-checked')).toBe('true');
     expect(asked(client)).toContain(page('zer', 0));
-    expect(screen.getByText('The learners holding the most Zêr right now.')).toBeTruthy();
     // The week’s league and its span belong to XP.
     expect(screen.queryByTestId('league-card')).toBeNull();
     expect(screen.queryByRole('button', { name: 'This week' })).toBeNull();

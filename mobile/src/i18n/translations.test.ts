@@ -87,7 +87,6 @@ describe('translation catalogs', () => {
     for (const locale of LOCALES) {
       const c = TRANSLATIONS[locale];
       expect(c['rankings.board.zer'], locale).toBe('Zêr');
-      expect(c['rankings.board.zerBlurb'], locale).toContain('Zêr');
       // The shop says where gems come from in the same word the board ranks them by.
       expect(c['shop.earnMoreGems'].toLocaleLowerCase(locale), locale).toContain(c['rankings.board.gewher'].toLocaleLowerCase(locale));
     }

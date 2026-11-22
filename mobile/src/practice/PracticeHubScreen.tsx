@@ -22,7 +22,7 @@ import { BottomSheet } from '../theme/BottomSheet';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { PressableScale, Rise } from '../theme/MotionParts';
-import { Skeleton } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -322,23 +322,15 @@ function UnitPicker({
   );
 }
 
-/** How long a load may take before its placeholder shows, so a quick answer arrives without a grey flash. */
-const PLACEHOLDER_AFTER_MS = 300;
-
-/** The hub while it loads, shape for shape: the card, the heading, the five rows. */
+/** The hub while it loads, shape for shape: the card, the heading, the five kinds and the sentence-building row. */
 function HubSkeleton(): React.JSX.Element {
   const { t } = useI18n();
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    const id = setTimeout(() => setShown(true), PLACEHOLDER_AFTER_MS);
-    return () => clearTimeout(id);
-  }, []);
   return (
-    <View style={[styles.content, { opacity: shown ? 1 : 0 }]} accessibilityLabel={t('common.loading')}>
+    <View style={styles.content} accessibilityLabel={t('common.loading')}>
       <Skeleton height={HERO_HEIGHT} radius={radii.lg} />
-      <Skeleton width={96} height={12} style={styles.section} />
+      <SkeletonText size={typography.sizes.text} width={96} style={styles.section} />
       <View style={styles.rows}>
-        {Array.from({ length: 5 }, (_, i) => (
+        {Array.from({ length: 6 }, (_, i) => (
           <Skeleton key={i} height={ROW_HEIGHT} radius={radii.lg} />
         ))}
       </View>

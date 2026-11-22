@@ -27,10 +27,10 @@ import { Flag } from '../profile/cosmetic-parts';
 import { Avatar } from '../profile/Avatar';
 import { ActivityGrid, ActivityTabs, ProfileActivitySkeleton, nearEnd, useProfileActivity } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
-import { ProfileFriends } from '../profile/ProfileFriends';
+import { ProfileFriends, ProfileFriendsSkeleton } from '../profile/ProfileFriends';
 import { ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
-import { FACE, FRAMED, ProfileHead } from '../profile/ProfileHead';
-import { ProfileHighlights } from '../profile/ProfileHighlights';
+import { FACE, FRAMED, ProfileHead, ProfileHeadSkeleton } from '../profile/ProfileHead';
+import { ProfileHighlights, ProfileHighlightsSkeleton } from '../profile/ProfileHighlights';
 import type { LevelInfo } from '../profile/types';
 import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
@@ -271,7 +271,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           stickyHeaderIndices={[1]}
         >
           <View>
-            <AsyncBoundary loading={!profile} error={!profile ? error : null} onRetry={load} skeleton={<ProfileHeadSkeleton width={windowWidth} />}>
+            <AsyncBoundary loading={!profile} error={!profile ? error : null} onRetry={load} skeleton={<PublicProfileSkeleton width={windowWidth} />}>
               {() => {
                 if (!profile) return null;
                 // A friend's button would only say so: ending it is in the menu, and what you do with a friend is write and play.
@@ -390,33 +390,37 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   );
 }
 
-/** The head while it loads, in its own shape, so what arrives is what was standing there. */
-function ProfileHeadSkeleton({ width }: { width: number }): React.JSX.Element {
-  const { colors } = useTheme();
+/**
+ * The profile while it loads, in the shape it arrives in: the head with their two figures, where they are from and a
+ * two-line bio, who they know and the two buttons, then the highlights.
+ */
+function PublicProfileSkeleton({ width }: { width: number }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
+  const figures: ProfileFact[] = [
+    { key: 'streak', label: t('profile.stat.streak'), value: null },
+    { key: 'xp', label: t('profile.stat.xp'), value: null },
+  ];
   return (
-    <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
-      <View style={[styles.skeletonBanner, { width, backgroundColor: colors.controlTrack }]} />
-      <View style={[styles.skeletonTop, { flexDirection: dir.row }]}>
-        <View style={[styles.skeletonFace, { borderColor: colors.background, backgroundColor: colors.background }]}>
-          <Skeleton width={FACE} height={FACE} radius={radii.pill} />
+    <View accessibilityLabel={t('common.loading')}>
+      <ProfileHeadSkeleton
+        width={width}
+        stats={<ProfileFacts facts={figures} head />}
+        actions={
+          <View style={[styles.actions, { flexDirection: dir.row }]}>
+            <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.action} />
+            <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.action} />
+          </View>
+        }
+      >
+        <SkeletonText size={typography.sizes.text} width={112} />
+        <View>
+          <SkeletonText size={typography.sizes.text} lineHeight={styles.bio.lineHeight} />
+          <SkeletonText size={typography.sizes.text} lineHeight={styles.bio.lineHeight} width="58%" />
         </View>
-        <View style={[styles.skeletonStats, { flexDirection: dir.row }]}>
-          {[0, 1, 2].map((i) => (
-            <View key={i} style={styles.statSkeleton}>
-              <SkeletonText size={typography.sizes.title} width={28} align="center" />
-              <SkeletonText size={typography.sizes.text} width={44} align="center" />
-            </View>
-          ))}
-        </View>
-      </View>
-      <SkeletonText size={typography.sizes.title} width={140} />
-      <SkeletonText size={typography.sizes.text} width={80} />
-      <View style={[styles.actions, { flexDirection: dir.row }]}>
-        <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.action} />
-        <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.action} />
-      </View>
+        <ProfileFriendsSkeleton />
+      </ProfileHeadSkeleton>
+      <ProfileHighlightsSkeleton />
     </View>
   );
 }
@@ -468,12 +472,6 @@ const styles = StyleSheet.create({
   // Two buttons share the row evenly, as a social app's do.
   actions: { gap: spacing.sm },
   action: { flex: 1, minWidth: 0 },
-  skeleton: { gap: spacing.sm + 2, paddingBottom: spacing.md },
-  skeletonBanner: { height: 128, marginHorizontal: -layout.gutter },
-  skeletonTop: { alignItems: 'flex-start', gap: spacing.sm, marginTop: -(FACE / 2 + 4) },
-  skeletonFace: { borderRadius: radii.pill, borderWidth: 4 },
-  skeletonStats: { flex: 1, justifyContent: 'space-around', marginTop: FACE / 2 + 4 + spacing.md },
-  statSkeleton: { alignItems: 'center', gap: 2 },
 });
 
 /** Where the two of you stand once the server has answered: a request to someone who had asked you makes you friends. */

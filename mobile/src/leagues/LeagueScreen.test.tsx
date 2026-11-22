@@ -87,8 +87,8 @@ describe('the league page', () => {
     await act(() => new Promise((r) => setTimeout(r, PEEK_POP.delayMs + PEEK_POP.ms + 200)));
     expect(drawn()).toContain(head.eyes.closed);
     expect(drawn()).not.toContain(head.eyes.happy);
-    // And his own word on it.
-    expect(screen.getByText('Do a lesson and I’ll wake up — then we take our place at this week’s table.')).toBeTruthy();
+    // One line under him, and the way in.
+    expect(screen.getByText('Your week starts with a lesson')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Start a lesson' }));
     expect(navigation.popTo).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
   });

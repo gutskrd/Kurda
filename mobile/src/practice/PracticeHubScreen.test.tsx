@@ -189,12 +189,14 @@ describe('the practice hub', () => {
     try {
       testAuth.client = fakeClient({ 'GET /practice/hub': () => new Promise(() => undefined) });
       renderWithProviders(<PracticeHubScreen onExit={() => undefined} />);
-      const loading = screen.getByLabelText('Loading…');
-      expect(loading.style.opacity).toBe('0');
+      expect(screen.getByLabelText('Loading…')).toBeTruthy();
+      // Each placeholder block waits before it shows (theme/Skeleton), so a quick answer never flashes grey.
+      const blocks = screen.getAllByTestId('skeleton');
+      expect(blocks.every((b) => b.style.opacity === '0')).toBe(true);
       act(() => {
         vi.advanceTimersByTime(300);
       });
-      expect(loading.style.opacity).toBe('1');
+      expect(blocks.every((b) => b.style.opacity === '1')).toBe(true);
     } finally {
       vi.useRealTimers();
     }

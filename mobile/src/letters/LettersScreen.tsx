@@ -703,6 +703,8 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
   // A called bird's letter unfolds once it has landed; under Reduce Motion, at once.
   const unfold = scene?.visitor.kind === 'arriving' && !reduce ? LETTER_FLIGHT.ms : null;
   const shownError = error && !here && moment.kind !== 'writing';
+  // Fixed words, so they stand from the first frame, the loading placeholder included.
+  const lead = <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('letters.lead')}</Text>;
 
   return (
     <GradientBackground>
@@ -713,11 +715,11 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
             home.error && !data ? (
               <ErrorRetry message={describeError(home.error, t)} onRetry={home.reload} />
             ) : (
-              <LettersSkeleton size={size} />
+              <LettersSkeleton size={size} lead={lead} />
             )
           ) : (
             <>
-              <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('letters.lead')}</Text>
+              {lead}
               {shown ? (
                 // As wide as the window, so what sits on the window sits on it rather than past its edge.
                 <View style={[styles.windowSpot, { width: size }]}>
@@ -931,17 +933,14 @@ export function LettersScreen({ onExit, bird, onBirdUsed }: { onExit: () => void
   );
 }
 
-/** The loading state in the screen's own shape: the line over the window, the window, its button and the pen pals' heading. */
-function LettersSkeleton({ size }: { size: number }): React.JSX.Element {
+/** The loading state in the screen's own shape: the intro (`lead`), the window, its button and the pen pals' heading. */
+function LettersSkeleton({ size, lead }: { size: number; lead: React.ReactNode }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   const start = dir.row === 'row-reverse' ? 'flex-end' : 'flex-start';
   return (
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')} testID="letters-loading">
-      <View>
-        <SkeletonText size={typography.sizes.text} lineHeight={20} width="92%" align={start} />
-        <SkeletonText size={typography.sizes.text} lineHeight={20} width="58%" align={start} />
-      </View>
+      {lead}
       {size > 0 ? <Skeleton width={size} height={size} radius={radii.xl} style={styles.skeletonWindow} /> : null}
       <Skeleton height={50} radius={radii.pill} />
       <SkeletonText size={typography.sizes.text} width={96} align={start} />

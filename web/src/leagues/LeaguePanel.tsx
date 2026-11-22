@@ -110,11 +110,11 @@ export function weekLeft(t: Translate, endsAt: string, locale: string, now: numb
   return t('leagues.weekEnds', { when: weekEnds(endsAt, locale) });
 }
 
-/** When the week closes on the reader's clock, such as "Monday 02:00". */
+/** When the week closes on the reader's clock, such as "Mon 02:00", short enough to stay on one line on a phone. */
 export function weekEnds(endsAt: string, locale: string): string {
   const d = new Date(endsAt);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleString(locale, { weekday: 'long', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString(locale, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 /** The league's name, what it means, and how many days the week has left. */
@@ -186,7 +186,7 @@ function GoalRow({ league }: { league: LeagueView }): React.JSX.Element {
   );
 }
 
-/** Not in a group yet this week: Hevalo dozing through the page and the invitation to start a lesson, instead of a table. */
+/** Not in a group yet this week: Hevalo dozing through the page, one line and the lesson, instead of a table. */
 function Resting(): React.JSX.Element {
   const t = useT();
   const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
@@ -194,7 +194,6 @@ function Resting(): React.JSX.Element {
     <div className="league-resting">
       <HevaloPeek size={150} resting pop={false} flip={rtl} className="league-resting-figure" />
       <h3 className="league-resting-title">{t('leagues.resting.title')}</h3>
-      <p className="league-resting-body">{t('leagues.joinHint')}</p>
       <LinkButton to="/app/learn" block className="league-resting-go">
         <BookIcon size={20} />
         {t('leagues.notJoined.start')}

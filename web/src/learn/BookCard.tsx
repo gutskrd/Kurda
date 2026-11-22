@@ -1,6 +1,7 @@
 import { characterSvg } from '@kurda/shared';
 import { useMemo } from 'react';
 import { API_URL } from '../lib/config';
+import { BookCardSkeleton } from '../components/skeletons';
 import { useApiGet } from '../lib/useApi';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { BookIcon } from '../components/icons';
@@ -13,10 +14,11 @@ import '../tree/tree.css';
 export function BookCard(): React.JSX.Element | null {
   const t = useT();
   const locale = useLocale();
-  const { data } = useApiGet<{ chapters: number[] }>('/books/road');
+  const { data, loading } = useApiGet<{ chapters: number[] }>('/books/road');
   const face = useMemo(() => ({ __html: characterSvg('hamo', { crop: 'head', width: 48, idPrefix: 'book-card', title: '' }) }), []);
   // An answer without a chapter list (an older server, a stand-in) shows no card.
   const count = Array.isArray(data?.chapters) ? data.chapters.length : 0;
+  if (loading) return <BookCardSkeleton />;
   if (count === 0) return null;
   const chapters = new Intl.NumberFormat(locale).format(count);
   return (

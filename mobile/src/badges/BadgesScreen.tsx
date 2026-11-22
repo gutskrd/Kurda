@@ -259,16 +259,17 @@ function MonthlyChallenge({ month }: { month: BadgesResponse['monthlyChallenge']
 }
 
 /**
- * The loading placeholder: the showcase card's three places, then each family's heading over a grid with the real
- * column count and tile width.
+ * The loading placeholder, in the screen's own styles: the showcase card as a new learner sees it (heading, Choose, three
+ * empty places and the hint), then each family's heading over a grid with the real column count and tile width.
  */
 function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): React.JSX.Element {
   const dir = useDirection();
   const { t } = useI18n();
-  const medal = Math.min(76, tile - spacing.sm * 2);
+  const medal = tileMedal(tile);
+  const face = Math.round(medal * MEDAL_FACE);
   const { height } = useWindowDimensions();
   // A family is its heading and two rows of tiles: as many as reach the foot of the screen.
-  const families = Math.max(2, Math.ceil((height - 260) / (2 * (medal + 64) + 40)));
+  const families = Math.max(2, Math.ceil((height - 260) / (2 * (medal + 48) + 40)));
   return (
     <View style={styles.content} accessibilityLabel={t('common.loading')}>
       <GlassCard>
@@ -277,14 +278,18 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
             <SkeletonText size={typography.sizes.text} width={96} />
             <SkeletonText size={typography.sizes.text} lineHeight={SUMMARY_LINE} width="52%" />
           </View>
+          <Skeleton width={96} height={MIN_TOUCH_TARGET} radius={radii.pill} />
         </View>
         <View style={[styles.slots, { flexDirection: dir.row }]}>
-          {[0, 1, 2].map((i) => (
-            <View key={i} style={styles.slot}>
-              <Skeleton width={72} height={72} radius={radii.pill} style={styles.slotSkeleton} />
-              <SkeletonText size={typography.sizes.text} width={56} align="center" />
+          {Array.from({ length: SHOWCASE_SIZE }, (_, i) => (
+            <View key={i} style={[styles.slot, { width: SLOT }]}>
+              <Skeleton width={SLOT_EMPTY} height={SLOT_EMPTY} radius={radii.pill} style={styles.emptySlot} />
             </View>
           ))}
+        </View>
+        <View style={styles.hintLines}>
+          <SkeletonText size={typography.sizes.text} lineHeight={styles.hint.lineHeight} width="94%" />
+          <SkeletonText size={typography.sizes.text} lineHeight={styles.hint.lineHeight} width="58%" />
         </View>
       </GlassCard>
       {Array.from({ length: families }, (_, f) => (
@@ -296,9 +301,11 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
           <View style={[styles.grid, { flexDirection: dir.row }]}>
             {Array.from({ length: columns * 2 }, (_, i) => (
               <View key={i} style={[styles.tile, { width: tile }]}>
-                <Skeleton width={medal} height={medal} radius={radii.pill} />
+                <View style={[styles.medalBox, { width: medal, height: medal }]}>
+                  <Skeleton width={face} height={face} radius={radii.pill} />
+                </View>
                 <SkeletonText size={typography.sizes.text} width="70%" align="center" style={styles.tileNameSkeleton} />
-                <SkeletonText size={typography.sizes.text} width="44%" align="center" style={styles.tileTierSkeleton} />
+                <Skeleton width="62%" height={4} radius={radii.pill} style={styles.tileMeter} />
               </View>
             ))}
           </View>
@@ -307,6 +314,12 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
     </View>
   );
 }
+
+/** A grid medal's square, as wide as its tile allows. */
+const tileMedal = (tile: number): number => Math.min(76, tile - spacing.sm * 2);
+
+/** How much of its square a medal's face fills (shared/src/art/badges.ts), so its placeholder is the face, not the box. */
+const MEDAL_FACE = 0.78;
 
 /** The stage a badge stands on in its sheet, and the ellipse of the sheet surface rising under it. */
 const STAGE = 196;
@@ -323,7 +336,7 @@ function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView;
   const name = badge.hidden ? t('badges.secretName') : badgeName(t, badge.key);
   const tier = badge.hidden ? null : tierName(t, badge.tierKey, badge.tierCount);
   const progress = badge.hidden ? null : progressText(t, badge, (v) => formatNumber(v, locale));
-  const size = Math.min(76, width - spacing.sm * 2);
+  const size = tileMedal(width);
   return (
     <PressableScale
       onPress={onPress}
@@ -564,6 +577,7 @@ const styles = StyleSheet.create({
   emptySlot: { borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', margin: 6 },
   slotName: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   hint: { fontSize: typography.sizes.text, lineHeight: 22, marginTop: spacing.sm },
+  hintLines: { marginTop: spacing.sm },
   family: { gap: spacing.sm },
   familyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   familyCount: { fontSize: typography.sizes.text, fontVariant: ['tabular-nums'] },
@@ -574,8 +588,7 @@ const styles = StyleSheet.create({
   tileTier: { fontSize: typography.sizes.text },
   tileMeter: { width: '62%', alignSelf: 'center', marginTop: 4 },
   tileNameSkeleton: { alignSelf: 'stretch', marginTop: spacing.xs },
-  tileTierSkeleton: { alignSelf: 'stretch' },
-  slotSkeleton: { margin: 6 },
+  medalBox: { alignItems: 'center', justifyContent: 'center' },
   month: { borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
   monthHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   monthText: { flex: 1, fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },

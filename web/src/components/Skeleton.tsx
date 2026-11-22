@@ -15,6 +15,8 @@ interface BoxProps {
   radius?: string | number;
   /** One line of text: inside the real element, it is exactly that element's line height. */
   line?: boolean;
+  /** A picture's place: fills the real element it is put in (a banner, a tile), whose own rules give the size. */
+  fill?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -29,6 +31,7 @@ export function Skeleton({
   size,
   circle,
   line,
+  fill,
   radius,
   className = '',
   style,
@@ -36,6 +39,7 @@ export function Skeleton({
   const classes = ['skeleton'];
   if (circle) classes.push('skeleton-circle');
   if (line) classes.push('skeleton-line');
+  if (fill) classes.push('skeleton-fill');
   if (className) classes.push(className);
   return (
     <span

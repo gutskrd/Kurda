@@ -1513,22 +1513,3 @@ a.lp-part-row:hover {
   text-transform: uppercase;
   color: var(--ink-3);
 }
-
-/* ---- the path while it loads ------------------------------------------------- */
-
-/* The banner's box and lip in the grey of something not loaded yet. */
-.lp-skel-banner {
-  background: var(--surface);
-  box-shadow: 0 5px 0 var(--surface-2);
-}
-.lp-skel-path {
-  position: relative;
-  height: 420px;
-}
-.lp-skel-node {
-  position: absolute;
-  inset-inline-start: calc(50% + var(--x, 0px) - 36px);
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-}

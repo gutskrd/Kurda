@@ -95,9 +95,6 @@
     gap: 10px 4px;
   }
 }
-.yours-birds--waiting {
-  margin-bottom: 4px;
-}
 /* Each bird is a round button at least a finger wide; the picked one has an ink ring that also shows in forced colours. */
 .yours-bird {
   position: relative;
@@ -106,12 +103,15 @@
   padding: 3px;
   border: 2px solid transparent;
   border-radius: 50%;
-  cursor: pointer;
   transition:
     transform var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out);
 }
-.yours-bird:hover {
+/* Only a real bird answers the pointer; the placeholder in its place while the card loads does not. */
+label.yours-bird {
+  cursor: pointer;
+}
+label.yours-bird:hover {
   transform: translateY(-2px);
 }
 .yours-bird.is-picked {

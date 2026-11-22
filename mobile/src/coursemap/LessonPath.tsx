@@ -974,7 +974,10 @@ export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => v
 /** How far the pinned unit settles down as it arrives. */
 const PIN_DROP = 6;
 
-/** The path while the course loads, on the same zigzag and spacing as the real one, so the course drops into place. */
+/**
+ * The path while the course loads, on the same zigzag and spacing as the real one (shared `PATH_GEOMETRY`), the first
+ * stop raised for its Start bubble as a new learner's current one is, so the course drops into place.
+ */
 export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
@@ -993,14 +996,14 @@ export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX
             <Skeleton width={MIN_TOUCH_TARGET} height={MIN_TOUCH_TARGET} radius={radii.pill} />
           </View>
         </View>
-        <View style={[styles.path, styles.pathUnderHead, { height: PATH_GEOMETRY.pad + (stops - 1) * STEP + NODE }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+        <View style={[styles.path, styles.pathUnderHead, { height: PATH_GEOMETRY.pad + PATH_GEOMETRY.lift + (stops - 1) * STEP + NODE }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
           {Array.from({ length: stops }, (_, i) => (
             <Skeleton
               key={i}
               width={NODE}
               height={NODE}
               radius={radii.pill}
-              style={[styles.stopSkeleton, { left: width / 2 + sign * lean(i) * PATH_GEOMETRY.sway - NODE / 2, top: PATH_GEOMETRY.pad + i * STEP - NODE / 2 }]}
+              style={[styles.stopSkeleton, { left: width / 2 + sign * lean(i) * PATH_GEOMETRY.sway - NODE / 2, top: PATH_GEOMETRY.pad + PATH_GEOMETRY.lift + i * STEP - NODE / 2 }]}
             />
           ))}
         </View>

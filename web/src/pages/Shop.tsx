@@ -283,6 +283,9 @@ export function Shop(): React.JSX.Element {
     return (
       <div className="container">
         {header}
+        {/* The bird and the tree load on their own, so they stand in their places while the catalogue arrives. */}
+        <YourBird home={letters} zer={zer} onZer={learnZer} />
+        <YourTree tree={tree} zer={zer} onZer={learnZer} />
         <ShopSkeleton label="shop.loading" />
       </div>
     );

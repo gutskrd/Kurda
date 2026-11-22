@@ -7,6 +7,7 @@ import { useTheme } from './ThemeProvider';
 import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
 import { pressedDim } from './motion';
+import { Skeleton } from './Skeleton';
 
 /**
  * A row of filter chips (All · Unread · Groups). Unlike the segmented control, which splits a screen into equal
@@ -94,6 +95,23 @@ export function Chips<T extends string>({
   );
 }
 
+/** The chips while what they filter loads: pills of their height, in the row's own place. */
+export function ChipsSkeleton({ widths = [56, 72, 88, 64] }: { widths?: readonly number[] }): React.JSX.Element {
+  const dir = useDirection();
+  return (
+    <View style={styles.scroller}>
+      <View style={[styles.row, { flexDirection: dir.row }]}>
+        {widths.map((w, i) => (
+          <Skeleton key={i} width={w} height={CHIP} radius={radii.pill} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** A chip's height, which its placeholder shares. */
+const CHIP = 36;
+
 const styles = StyleSheet.create({
   scroller: { flexGrow: 0, marginHorizontal: -layout.gutter },
   row: { gap: spacing.sm, alignItems: 'center', paddingHorizontal: layout.gutter },
@@ -102,7 +120,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    minHeight: 36,
+    minHeight: CHIP,
     paddingHorizontal: spacing.md - 2,
     borderRadius: radii.pill,
   },

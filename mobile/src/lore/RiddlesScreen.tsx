@@ -18,13 +18,13 @@ import { usePullRefresh } from '../net/usePullRefresh';
 import { useDirection } from '../reports/direction';
 import { COLUMN, Note, Pill } from '../stories/ui';
 import { useListEntrance } from '../theme/animate';
-import { Chips } from '../theme/Chips';
+import { Chips, ChipsSkeleton } from '../theme/Chips';
 import { display, sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { PressableScale, Rise, heldDim, heldRow } from '../theme/MotionParts';
 import { Pressable } from '../theme/Pressable';
-import { SkeletonText } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { getRiddles } from './api';
@@ -171,13 +171,14 @@ export function RiddlesScreen({ dialect: asked, onExit }: { dialect?: GameDialec
   }
 
   const solvedLine = list && list.total > 0 ? t('lore.riddles.solved', { solved: formatNumber(list.solved, locale), total: formatNumber(list.total, locale) }) : null;
+  const loading = !list && !error;
 
   return (
     <GradientBackground>
       <ScreenHeader title={t('lore.riddles.name')} onBack={onExit} browse />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottom + spacing.lg }]} showsVerticalScrollIndicator={false} refreshControl={pull}>
-        <CollectionTitle kurmanci={RIDDLES_NAME} localized={t('lore.riddles.name')} line={solvedLine} />
-        {list && list.total > 0 ? <SolvedBar solved={list.solved} total={list.total} /> : null}
+        <CollectionTitle kurmanci={RIDDLES_NAME} localized={t('lore.riddles.name')} line={solvedLine} pending={loading} />
+        {loading || (list && list.total > 0) ? <SolvedBar solved={list?.solved ?? 0} total={list?.total ?? 0} /> : null}
         <VarietySwitch value={dialect} onChange={switchDialect} />
         {guestNote ? (
           <View style={[styles.guest, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
@@ -316,22 +317,50 @@ function RiddleRow({
   );
 }
 
+/**
+ * The list while it loads, in its own styles: the riddle of the day (label, question, difficulty and the way in), the
+ * list's heading with the translations switch, the filter chips, then a difficulty's first rows.
+ */
 function ListSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
+  const text = typography.sizes.text;
   return (
     <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
       <View style={[styles.daily, { backgroundColor: colors.surface }]}>
-        <SkeletonText size={typography.sizes.text} width={120} />
-        <SkeletonText size={typography.sizes.text} width="90%" />
-        <SkeletonText size={typography.sizes.text} width="60%" />
+        <SkeletonText size={text} width={120} />
+        <View>
+          <SkeletonText size={text} lineHeight={styles.dailyQuestion.lineHeight} />
+          <SkeletonText size={text} lineHeight={styles.dailyQuestion.lineHeight} width="62%" />
+        </View>
+        <View style={[styles.dailyFoot, { flexDirection: dir.row }]}>
+          <Skeleton width={56} height={24} radius={radii.pill} />
+          <View style={styles.flex} />
+          <SkeletonText size={text} width={64} />
+        </View>
       </View>
-      <View style={[styles.rows, { backgroundColor: colors.surface }]}>
-        {[0.8, 0.65, 0.9].map((w, i) => (
-          <View key={i} style={styles.row}>
-            <SkeletonText size={typography.sizes.text} width={`${Math.round(w * 100)}%`} />
-          </View>
-        ))}
+      <View style={[styles.listHead, { flexDirection: dir.row }]}>
+        <SkeletonText size={text} width={88} />
+        <SkeletonText size={text} width={132} />
+      </View>
+      <ChipsSkeleton />
+      <View style={styles.group}>
+        <SkeletonText size={text} width={48} />
+        <View style={[styles.rows, { backgroundColor: colors.surface }]}>
+          {['58%', '74%', '46%', '66%'].map((w, i) => (
+            <View
+              key={i}
+              style={[styles.row, { flexDirection: dir.row }, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.separator }]}
+            >
+              <Skeleton width={24} height={24} radius={radii.pill} />
+              <View style={styles.rowMain}>
+                <SkeletonText size={text} lineHeight={styles.question.lineHeight} />
+                <SkeletonText size={text} lineHeight={styles.question.lineHeight} width={w as `${number}%`} />
+              </View>
+            </View>
+          ))}
+        </View>
       </View>
     </View>
   );

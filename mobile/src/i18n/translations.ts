@@ -751,7 +751,6 @@ export type TranslationKey =
   | 'leagues.zone.promotion'
   | 'leagues.zone.demotion'
   | 'leagues.notJoined.title'
-  | 'leagues.notJoined.body'
   | 'leagues.notJoined.start'
   | 'leagues.daysLeft'
   | 'leagues.dayLeft'
@@ -790,7 +789,6 @@ export type TranslationKey =
   | 'leagues.ceremony.freshStart'
   | 'leagues.ceremony.trophy'
   | 'leagues.ceremony.inLeague'
-  | 'leagues.resting.hevalo'
   | 'profile.joined'
   | 'profile.addFriends'
   | 'profile.stat.xp'
@@ -1485,10 +1483,8 @@ export type TranslationKey =
   | 'tags.add'
 
   | 'tags.sensitiveConsent'
-  | 'rankings.board.weeklyXpBlurb'
   | 'rankings.title'
   | 'rankings.board.xp'
-  | 'rankings.board.allTimeXpBlurb'
   | 'rankings.span.week'
   | 'rankings.span.all'
   | 'rankings.scope.global'
@@ -1507,8 +1503,6 @@ export type TranslationKey =
   | 'rankings.rankBy'
   | 'rankings.board.zer'
   | 'rankings.board.gewher'
-  | 'rankings.board.zerBlurb'
-  | 'rankings.board.gewherBlurb'
   | 'rankings.topOnly'
   | 'rankings.notInTop'
   | 'rankings.empty.balanceGlobalBody'
@@ -4871,10 +4865,8 @@ const en: Catalog = {
   'tags.none': 'You haven’t added any tags yet.',
   'tags.add': 'Add a tag',
   'tags.sensitiveConsent': 'I consent to showing this sensitive tag. It’s optional and can be removed anytime.',
-  'rankings.board.weeklyXpBlurb': 'This week’s top learners by experience earned.',
   'rankings.title': 'Rankings',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'Everyone by all the XP they have earned so far.',
   'rankings.span.week': 'This week',
   'rankings.span.all': 'All time',
   'rankings.scope.global': 'Global',
@@ -4893,8 +4885,6 @@ const en: Catalog = {
   'rankings.rankBy': 'Rank by',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'Gems',
-  'rankings.board.zerBlurb': 'The learners holding the most Zêr right now.',
-  'rankings.board.gewherBlurb': 'The learners holding the most gems right now.',
   'rankings.topOnly': 'The top {count}, from most to least.',
   'rankings.notInTop': 'Not in the top {count} yet.',
   'rankings.empty.balanceGlobalBody': 'Once learners start collecting, the leaderboard will fill up here.',
@@ -6290,7 +6280,6 @@ const en: Catalog = {
   'leagues.zone.promotion': 'Moving up',
   'leagues.zone.demotion': 'Moving down',
   'leagues.notJoined.title': 'Your group is waiting',
-  'leagues.notJoined.body': 'Earn XP in a lesson, practice or a story and you join this week’s group.',
   'leagues.notJoined.start': 'Start a lesson',
   'leagues.daysLeft': '{count} days left',
   'leagues.dayLeft': '1 day left',
@@ -6329,7 +6318,6 @@ const en: Catalog = {
   'leagues.ceremony.freshStart': 'A fresh start',
   'leagues.ceremony.trophy': 'Pêla week',
   'leagues.ceremony.inLeague': 'You’re in the {tier} League',
-  'leagues.resting.hevalo': 'Do a lesson and I’ll wake up — then we take our place at this week’s table.',
   'profile.joined': 'Joined {year}',
   'profile.addFriends': 'Add friends',
   'profile.stat.xp': 'XP',
@@ -8761,10 +8749,8 @@ const ku: Catalog = {
   'tags.none': 'Te hê tu etîket zêde nekiriye.',
   'tags.add': 'Etîketekê zêde bike',
   'tags.sensitiveConsent': 'Ez razî me ku ev etîketa hestyar bê nîşandan. Ne pêwîst e û her dem tê rakirin.',
-  'rankings.board.weeklyXpBlurb': 'Fêrbûyerên herî serkeftî yên vê hefteyê li gorî ezmûna ku bi dest xistiye.',
   'rankings.title': 'Rêzbendî',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'Fêrbûyer li gorî hemû XP-ya ku heta niha bi dest xistine.',
   'rankings.span.week': 'Vê hefteyê',
   'rankings.span.all': 'Hemû dem',
   'rankings.scope.global': 'Cîhanî',
@@ -8783,8 +8769,6 @@ const ku: Catalog = {
   'rankings.rankBy': 'Rêzbendî li gorî',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'Gewher',
-  'rankings.board.zerBlurb': 'Fêrbûyerên ku niha herî zêde Zêrê wan heye.',
-  'rankings.board.gewherBlurb': 'Fêrbûyerên ku niha herî zêde gewherên wan hene.',
   'rankings.topOnly': '{count} kesên serî, ji yê herî zêde heta yê herî kêm.',
   'rankings.notInTop': 'Tu hê ne di nav {count} kesên serî de yî.',
   'rankings.empty.balanceGlobalBody': 'Gava fêrbûyer dest bi berhevkirinê bikin, lîsteya pêşeng dê li vir tije bibe.',
@@ -10179,7 +10163,6 @@ const ku: Catalog = {
   'leagues.zone.promotion': 'Derdikevin jor',
   'leagues.zone.demotion': 'Dadikevin',
   'leagues.notJoined.title': 'Koma te li bendê ye',
-  'leagues.notJoined.body': 'Di waneyekê, rahênanekê an çîrokekê de XP bi dest bixe û tu dikevî koma vê hefteyê.',
   'leagues.notJoined.start': 'Waneyekê dest pê bike',
   'leagues.daysLeft': '{count} roj mane',
   'leagues.dayLeft': '1 roj maye',
@@ -10218,7 +10201,6 @@ const ku: Catalog = {
   'leagues.ceremony.freshStart': 'Destpêkeke nû',
   'leagues.ceremony.trophy': 'Hefteya Pêla',
   'leagues.ceremony.inLeague': 'Tu di Lîga {tier} de yî',
-  'leagues.resting.hevalo': 'Waneyekê bike û ez ê hişyar bibim — paşê em cihê xwe li tabloya vê hefteyê digirin.',
   'profile.joined': 'Di {year} de tevlî bû',
   'profile.addFriends': 'Hevalan zêde bike',
   'profile.stat.xp': 'XP',
@@ -12650,10 +12632,8 @@ const de: Catalog = {
   'tags.none': 'Du hast noch keine Tags hinzugefügt.',
   'tags.add': 'Tag hinzufügen',
   'tags.sensitiveConsent': 'Ich stimme zu, dass dieser sensible Tag gezeigt wird. Er ist freiwillig und jederzeit entfernbar.',
-  'rankings.board.weeklyXpBlurb': 'Die besten Lernenden dieser Woche nach gesammelter Erfahrung.',
   'rankings.title': 'Rangliste',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'Alle Lernenden nach der XP, die sie bisher gesammelt haben.',
   'rankings.span.week': 'Diese Woche',
   'rankings.span.all': 'Insgesamt',
   'rankings.scope.global': 'Weltweit',
@@ -12672,8 +12652,6 @@ const de: Catalog = {
   'rankings.rankBy': 'Rangliste nach',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'Edelsteine',
-  'rankings.board.zerBlurb': 'Die Lernenden, die gerade am meisten Zêr haben.',
-  'rankings.board.gewherBlurb': 'Die Lernenden, die gerade die meisten Edelsteine haben.',
   'rankings.topOnly': 'Die Top {count}, absteigend sortiert.',
   'rankings.notInTop': 'Noch nicht unter den Top {count}.',
   'rankings.empty.balanceGlobalBody': 'Sobald Lernende etwas sammeln, füllt sich hier die Bestenliste.',
@@ -14068,7 +14046,6 @@ const de: Catalog = {
   'leagues.zone.promotion': 'Aufstieg',
   'leagues.zone.demotion': 'Abstieg',
   'leagues.notJoined.title': 'Deine Gruppe wartet',
-  'leagues.notJoined.body': 'Sammle XP in einer Lektion, Übung oder Geschichte, dann bist du in der Gruppe dieser Woche.',
   'leagues.notJoined.start': 'Lektion beginnen',
   'leagues.daysLeft': 'Noch {count} Tage',
   'leagues.dayLeft': 'Noch 1 Tag',
@@ -14107,7 +14084,6 @@ const de: Catalog = {
   'leagues.ceremony.freshStart': 'Ein Neuanfang',
   'leagues.ceremony.trophy': 'Pêla-Woche',
   'leagues.ceremony.inLeague': 'Du bist in der Liga {tier}',
-  'leagues.resting.hevalo': 'Mach eine Lektion und ich wache auf – dann nehmen wir unseren Platz in der Tabelle dieser Woche ein.',
   'profile.joined': 'Dabei seit {year}',
   'profile.addFriends': 'Freunde hinzufügen',
   'profile.stat.xp': 'XP',
@@ -16539,10 +16515,8 @@ const es: Catalog = {
   'tags.none': 'Aún no has añadido ninguna etiqueta.',
   'tags.add': 'Añadir una etiqueta',
   'tags.sensitiveConsent': 'Doy mi consentimiento para mostrar esta etiqueta sensible. Es opcional y se puede quitar en cualquier momento.',
-  'rankings.board.weeklyXpBlurb': 'Quienes más han aprendido esta semana según la experiencia ganada.',
   'rankings.title': 'Clasificación',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'Todos según la XP que han ganado hasta ahora.',
   'rankings.span.week': 'Esta semana',
   'rankings.span.all': 'Histórico',
   'rankings.scope.global': 'Global',
@@ -16561,8 +16535,6 @@ const es: Catalog = {
   'rankings.rankBy': 'Clasificar por',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'Gemas',
-  'rankings.board.zerBlurb': 'Quienes tienen más Zêr ahora mismo.',
-  'rankings.board.gewherBlurb': 'Quienes tienen más gemas ahora mismo.',
   'rankings.topOnly': 'Los {count} primeros, de más a menos.',
   'rankings.notInTop': 'Todavía no estás entre los {count} primeros.',
   'rankings.empty.balanceGlobalBody': 'En cuanto la gente empiece a acumular, la clasificación se llenará aquí.',
@@ -17957,7 +17929,6 @@ const es: Catalog = {
   'leagues.zone.promotion': 'Suben',
   'leagues.zone.demotion': 'Bajan',
   'leagues.notJoined.title': 'Tu grupo te espera',
-  'leagues.notJoined.body': 'Gana XP en una lección, una práctica o una historia y entrarás en el grupo de esta semana.',
   'leagues.notJoined.start': 'Empezar una lección',
   'leagues.daysLeft': 'Quedan {count} días',
   'leagues.dayLeft': 'Queda 1 día',
@@ -17996,7 +17967,6 @@ const es: Catalog = {
   'leagues.ceremony.freshStart': 'Un nuevo comienzo',
   'leagues.ceremony.trophy': 'Semana Pêla',
   'leagues.ceremony.inLeague': 'Estás en la Liga {tier}',
-  'leagues.resting.hevalo': 'Haz una lección y me despierto; luego ocupamos nuestro sitio en la tabla de esta semana.',
   'profile.joined': 'Desde {year}',
   'profile.addFriends': 'Añadir amigos',
   'profile.stat.xp': 'XP',
@@ -20428,10 +20398,8 @@ const tr: Catalog = {
   'tags.none': 'Henüz etiket eklemedin.',
   'tags.add': 'Etiket ekle',
   'tags.sensitiveConsent': 'Bu hassas etiketin gösterilmesine onay veriyorum. İsteğe bağlıdır ve her zaman kaldırılabilir.',
-  'rankings.board.weeklyXpBlurb': 'Bu haftanın kazanılan deneyime göre en iyi öğrenenleri.',
   'rankings.title': 'Sıralama',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'Şimdiye kadar kazandıkları tüm XP’ye göre herkes.',
   'rankings.span.week': 'Bu hafta',
   'rankings.span.all': 'Tüm zamanlar',
   'rankings.scope.global': 'Küresel',
@@ -20450,8 +20418,6 @@ const tr: Catalog = {
   'rankings.rankBy': 'Sıralama ölçütü',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'Mücevherler',
-  'rankings.board.zerBlurb': 'Şu anda en çok Zêr’e sahip öğrenenler.',
-  'rankings.board.gewherBlurb': 'Şu anda en çok mücevhere sahip öğrenenler.',
   'rankings.topOnly': 'İlk {count}, en çoktan en aza.',
   'rankings.notInTop': 'Henüz ilk {count} içinde değilsin.',
   'rankings.empty.balanceGlobalBody': 'Öğrenenler biriktirmeye başlayınca sıralama tablosu burada dolacak.',
@@ -21846,7 +21812,6 @@ const tr: Catalog = {
   'leagues.zone.promotion': 'Yükselenler',
   'leagues.zone.demotion': 'Düşenler',
   'leagues.notJoined.title': 'Grubun seni bekliyor',
-  'leagues.notJoined.body': 'Bir derste, alıştırmada ya da hikâyede XP kazan, bu haftanın grubuna katıl.',
   'leagues.notJoined.start': 'Bir derse başla',
   'leagues.daysLeft': '{count} gün kaldı',
   'leagues.dayLeft': '1 gün kaldı',
@@ -21885,7 +21850,6 @@ const tr: Catalog = {
   'leagues.ceremony.freshStart': 'Yeni bir başlangıç',
   'leagues.ceremony.trophy': 'Pêla haftası',
   'leagues.ceremony.inLeague': '{tier} Ligindesin',
-  'leagues.resting.hevalo': 'Bir ders yap, ben de uyanayım — sonra bu haftanın tablosunda yerimizi alırız.',
   'profile.joined': 'Katılım: {year}',
   'profile.addFriends': 'Arkadaş ekle',
   'profile.stat.xp': 'XP',
@@ -24317,10 +24281,8 @@ const ar: Catalog = {
   'tags.none': 'لم تُضف أي وسم بعد.',
   'tags.add': 'إضافة وسم',
   'tags.sensitiveConsent': 'أوافق على إظهار هذا الوسم الحسّاس. وهو اختياري ويمكن إزالته في أي وقت.',
-  'rankings.board.weeklyXpBlurb': 'أفضل المتعلّمين هذا الأسبوع حسب نقاط XP المكتسبة.',
   'rankings.title': 'الترتيب',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'المتعلّمون حسب كل نقاط XP التي جمعوها حتى الآن.',
   'rankings.span.week': 'هذا الأسبوع',
   'rankings.span.all': 'كل الأوقات',
   'rankings.scope.global': 'عالمي',
@@ -24339,8 +24301,6 @@ const ar: Catalog = {
   'rankings.rankBy': 'الترتيب حسب',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'الجواهر',
-  'rankings.board.zerBlurb': 'المتعلّمون الذين يملكون أكبر قدر من Zêr الآن.',
-  'rankings.board.gewherBlurb': 'المتعلّمون الذين يملكون أكبر عدد من الجواهر الآن.',
   'rankings.topOnly': 'أفضل {count}، من الأكثر إلى الأقل.',
   'rankings.notInTop': 'لست ضمن أفضل {count} بعد.',
   'rankings.empty.balanceGlobalBody': 'ما إن يبدأ المتعلّمون بالجمع حتى تمتلئ لوحة الصدارة هنا.',
@@ -25735,7 +25695,6 @@ const ar: Catalog = {
   'leagues.zone.promotion': 'صاعدون',
   'leagues.zone.demotion': 'نازلون',
   'leagues.notJoined.title': 'مجموعتك بانتظارك',
-  'leagues.notJoined.body': 'اكسب XP في درس أو تدريب أو قصة لتنضم إلى مجموعة هذا الأسبوع.',
   'leagues.notJoined.start': 'ابدأ درسًا',
   'leagues.daysLeft': 'الأيام المتبقية: {count}',
   'leagues.dayLeft': 'باقٍ يوم واحد',
@@ -25774,7 +25733,6 @@ const ar: Catalog = {
   'leagues.ceremony.freshStart': 'بداية جديدة',
   'leagues.ceremony.trophy': 'أسبوع Pêla',
   'leagues.ceremony.inLeague': 'أنت في دوري {tier}',
-  'leagues.resting.hevalo': 'أكمل درسًا وسأستيقظ — ثم نأخذ مكاننا في جدول ترتيب هذا الأسبوع.',
   'profile.joined': 'عضو منذ {year}',
   'profile.addFriends': 'إضافة أصدقاء',
   'profile.stat.xp': 'XP',
@@ -28206,10 +28164,8 @@ const fr: Catalog = {
   'tags.none': 'Tu n’as pas encore ajouté d’étiquette.',
   'tags.add': 'Ajouter une étiquette',
   'tags.sensitiveConsent': 'J’accepte d’afficher cette étiquette sensible. Elle est facultative et peut être retirée à tout moment.',
-  'rankings.board.weeklyXpBlurb': 'Les meilleurs apprenants de la semaine selon l’expérience gagnée.',
   'rankings.title': 'Classement',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'Tout le monde selon l’XP gagnée jusqu’ici.',
   'rankings.span.week': 'Cette semaine',
   'rankings.span.all': 'Depuis le début',
   'rankings.scope.global': 'Mondial',
@@ -28228,8 +28184,6 @@ const fr: Catalog = {
   'rankings.rankBy': 'Classer selon',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'Gemmes',
-  'rankings.board.zerBlurb': 'Les apprenants qui ont le plus de Zêr en ce moment.',
-  'rankings.board.gewherBlurb': 'Les apprenants qui ont le plus de gemmes en ce moment.',
   'rankings.topOnly': 'Les {count} premiers, du plus au moins.',
   'rankings.notInTop': 'Pas encore dans le top {count}.',
   'rankings.empty.balanceGlobalBody': 'Dès que les apprenants commenceront à en gagner, le classement se remplira ici.',
@@ -29624,7 +29578,6 @@ const fr: Catalog = {
   'leagues.zone.promotion': 'Montée',
   'leagues.zone.demotion': 'Descente',
   'leagues.notJoined.title': 'Ton groupe t’attend',
-  'leagues.notJoined.body': 'Gagne des XP dans une leçon, un entraînement ou une histoire et tu rejoins le groupe de la semaine.',
   'leagues.notJoined.start': 'Commencer une leçon',
   'leagues.daysLeft': 'Encore {count} jours',
   'leagues.dayLeft': 'Encore 1 jour',
@@ -29663,7 +29616,6 @@ const fr: Catalog = {
   'leagues.ceremony.freshStart': 'Un nouveau départ',
   'leagues.ceremony.trophy': 'Semaine Pêla',
   'leagues.ceremony.inLeague': 'Tu es dans la Ligue {tier}',
-  'leagues.resting.hevalo': 'Fais une leçon et je me réveille — puis on prend notre place dans le classement de la semaine.',
   'profile.joined': 'Membre depuis {year}',
   'profile.addFriends': 'Ajouter des amis',
   'profile.stat.xp': 'XP',
@@ -32095,10 +32047,8 @@ const nl: Catalog = {
   'tags.none': 'Je hebt nog geen tags toegevoegd.',
   'tags.add': 'Tag toevoegen',
   'tags.sensitiveConsent': 'Ik geef toestemming om deze gevoelige tag te tonen. Dit is optioneel en altijd te verwijderen.',
-  'rankings.board.weeklyXpBlurb': 'De beste leerlingen van deze week op basis van verdiende ervaring.',
   'rankings.title': 'Ranglijst',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'Iedereen op basis van alle XP die ze tot nu toe hebben verdiend.',
   'rankings.span.week': 'Deze week',
   'rankings.span.all': 'Aller tijden',
   'rankings.scope.global': 'Wereldwijd',
@@ -32117,8 +32067,6 @@ const nl: Catalog = {
   'rankings.rankBy': 'Rangschikken op',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'Edelstenen',
-  'rankings.board.zerBlurb': 'De leerlingen met nu de meeste Zêr.',
-  'rankings.board.gewherBlurb': 'De leerlingen met nu de meeste edelstenen.',
   'rankings.topOnly': 'De top {count}, van meeste naar minste.',
   'rankings.notInTop': 'Nog niet in de top {count}.',
   'rankings.empty.balanceGlobalBody': 'Zodra leerlingen gaan sparen, vult de ranglijst zich hier.',
@@ -33513,7 +33461,6 @@ const nl: Catalog = {
   'leagues.zone.promotion': 'Stijgen',
   'leagues.zone.demotion': 'Zakken',
   'leagues.notJoined.title': 'Je groep wacht',
-  'leagues.notJoined.body': 'Verdien XP in een les, oefening of verhaal en je komt in de groep van deze week.',
   'leagues.notJoined.start': 'Begin een les',
   'leagues.daysLeft': 'Nog {count} dagen',
   'leagues.dayLeft': 'Nog 1 dag',
@@ -33552,7 +33499,6 @@ const nl: Catalog = {
   'leagues.ceremony.freshStart': 'Een frisse start',
   'leagues.ceremony.trophy': 'Pêla-week',
   'leagues.ceremony.inLeague': 'Je zit in Competitie {tier}',
-  'leagues.resting.hevalo': 'Doe een les en ik word wakker — dan nemen we onze plek in op de ranglijst van deze week.',
   'profile.joined': 'Lid sinds {year}',
   'profile.addFriends': 'Vrienden toevoegen',
   'profile.stat.xp': 'XP',
@@ -35985,10 +35931,8 @@ const ckb: Catalog = {
   'tags.none': 'هێشتا هیچ تاگێکت زیاد نەکردووە.',
   'tags.add': 'تاگێک زیاد بکە',
   'tags.sensitiveConsent': 'ڕازیم ئەم تاگە هەستیارە پیشان بدرێت. ئارەزوومەندانەیە و هەر کاتێک دەتوانرێت لاببرێت.',
-  'rankings.board.weeklyXpBlurb': 'باشترین فێرخوازانی ئەم هەفتەیە بەپێی ئەزموونی بەدەستهاتوو.',
   'rankings.title': 'ڕیزبەندی',
   'rankings.board.xp': 'XP',
-  'rankings.board.allTimeXpBlurb': 'فێرخوازان بەپێی هەموو ئەو XPیەی تا ئێستا بەدەستیان هێناوە.',
   'rankings.span.week': 'ئەم هەفتەیە',
   'rankings.span.all': 'هەموو کات',
   'rankings.scope.global': 'جیهانی',
@@ -36007,8 +35951,6 @@ const ckb: Catalog = {
   'rankings.rankBy': 'ڕیزبەندی بەپێی',
   'rankings.board.zer': 'Zêr',
   'rankings.board.gewher': 'گەوهەر',
-  'rankings.board.zerBlurb': 'ئەو فێرخوازانەی کە ئێستا زۆرترین Zêr لایانە.',
-  'rankings.board.gewherBlurb': 'ئەو فێرخوازانەی کە ئێستا زۆرترین گەوهەر لایانە.',
   'rankings.topOnly': '{count} کەسی سەرەوە، لە زۆرترینەوە بۆ کەمترین.',
   'rankings.notInTop': 'هێشتا لەناو {count} کەسی سەرەوەدا نیت.',
   'rankings.empty.balanceGlobalBody': 'کاتێک فێرخوازان دەست بە کۆکردنەوە بکەن، خشتەی پێشەنگان لێرە پڕ دەبێت.',
@@ -37403,7 +37345,6 @@ const ckb: Catalog = {
   'leagues.zone.promotion': 'سەردەکەون',
   'leagues.zone.demotion': 'دادەبەزن',
   'leagues.notJoined.title': 'گرووپەکەت چاوەڕێیە',
-  'leagues.notJoined.body': 'لە وانەیەک، ڕاهێنانێک یان چیرۆکێکدا XP بەدەست بهێنە و دەچیتە گرووپی ئەم هەفتەیە.',
   'leagues.notJoined.start': 'وانەیەک دەست پێبکە',
   'leagues.daysLeft': '{count} ڕۆژ ماوە',
   'leagues.dayLeft': '1 ڕۆژ ماوە',
@@ -37442,7 +37383,6 @@ const ckb: Catalog = {
   'leagues.ceremony.freshStart': 'دەستپێکێکی نوێ',
   'leagues.ceremony.trophy': 'هەفتەی شەپۆل',
   'leagues.ceremony.inLeague': 'تۆ لە لیگی {tier}یت',
-  'leagues.resting.hevalo': 'وانەیەک بکە و من بەئاگا دێمەوە — پاشان شوێنی خۆمان لە خشتەی ئەم هەفتەیە دەگرین.',
   'profile.joined': 'ئەندامە لە {year}ەوە',
   'profile.addFriends': 'هاوڕێ زیاد بکە',
   'profile.stat.xp': 'XP',

@@ -13,7 +13,7 @@ import { ClayButton, ErrorRetry, GlassCard, GradientBackground } from '../theme/
 import { display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
-import { Skeleton } from '../theme/Skeleton';
+import { SkeletonText } from '../theme/Skeleton';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useTabBarScroll } from '../navigation/tabBarScroll';
 import { TabHeader } from '../navigation/TopBar';
@@ -36,7 +36,7 @@ import {
 } from '@kurda/shared';
 import { OnlyYou, ProfileFacts, type ProfileFact } from '../profile/ProfileFacts';
 import { FACE, FRAMED, ProfileHead } from '../profile/ProfileHead';
-import { ProfileHighlights } from '../profile/ProfileHighlights';
+import { ProfileHighlights, ProfileHighlightsSkeleton } from '../profile/ProfileHighlights';
 import { Framed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { VISIBILITY_LABEL } from '../social/format';
@@ -452,6 +452,8 @@ function AccountProfile() {
               </View>
             }
           >
+            {/* Until your profile answers: where you are from, who can see the page and the bio, in their own lines. */}
+            {!settled ? <AboutSkeleton /> : null}
             {/* Where they are from and since when, on one row that wraps, as on the website. */}
             {country || joinedYear ? (
               <View style={[styles.aboutRow, { flexDirection: dir.row }]}>
@@ -501,7 +503,8 @@ function AccountProfile() {
             {refusal ? <PictureRefusal rejection={refusal} testID="profile-photo-refused" /> : null}
             {settled && !me ? <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} /> : null}
 
-            {me ? (
+            {/* Its row is the same whatever loads, so it stands from the start; the figures inside wait for their numbers. */}
+            {me || !settled ? (
               <OnlyYou title={t('profile.yourProgress')}>
                 <ProfileFacts facts={yours} />
                 <ProfileFacts facts={yoursMore} />
@@ -532,11 +535,7 @@ function AccountProfile() {
               fresh={fresh}
             />
           ) : !progressSettled ? (
-            <View style={[styles.highlightsSkeleton, { flexDirection: dir.row }]}>
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} width={68} height={68} radius={radii.pill} />
-              ))}
-            </View>
+            <ProfileHighlightsSkeleton />
           ) : null}
         </View>
 
@@ -549,6 +548,23 @@ function AccountProfile() {
       </ScrollView>
       <DailySheet visible={streakOpen} onClose={() => setStreakOpen(false)} today={today} onStreak={setStreak} />
     </GradientBackground>
+  );
+}
+
+/** The lines under your handle while your profile loads: where you are from and since when, who can see it, the bio. */
+function AboutSkeleton(): React.JSX.Element {
+  const dir = useDirection();
+  return (
+    <>
+      <View style={[styles.aboutRow, { flexDirection: dir.row }]}>
+        <SkeletonText size={typography.sizes.text} width={96} />
+        <SkeletonText size={typography.sizes.text} width={104} />
+      </View>
+      <SkeletonText size={typography.sizes.text} width={232} />
+      <View style={styles.addBioWrap}>
+        <SkeletonText size={typography.sizes.text} width={212} />
+      </View>
+    </>
   );
 }
 
@@ -567,7 +583,6 @@ const styles = StyleSheet.create({
   addBioWrap: { paddingVertical: 2 },
   addBio: { fontSize: typography.sizes.text, fontWeight: typography.weights.semibold },
   hint: { fontSize: typography.sizes.text, lineHeight: 20 },
-  highlightsSkeleton: { gap: spacing.md - 2, paddingVertical: spacing.sm },
 
   // The buttons wrap to a second row where they do not fit, and each row's buttons share its width.
   actions: { alignSelf: 'stretch', alignItems: 'stretch', flexWrap: 'wrap', gap: spacing.sm },

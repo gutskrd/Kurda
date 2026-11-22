@@ -42,13 +42,6 @@ export const BOARD_NAME: Readonly<Record<BoardType, MessageKey>> = {
   gewher: 'rankings.board.gewher',
 };
 
-/** Each board's line under the switches, saying what it ranks. */
-export const BOARD_BLURB: Readonly<Record<BoardType, MessageKey>> = {
-  weekly_xp: 'rankings.board.weeklyXpBlurb',
-  all_time_xp: 'rankings.board.allTimeXpBlurb',
-  zer: 'rankings.board.zerBlurb',
-  gewher: 'rankings.board.gewherBlurb',
-};
 
 /** Each kind's icon: the XP bolt, the coin or the gem. */
 function KindIcon({ kind, size }: { kind: RankKind; size: number }): React.JSX.Element {

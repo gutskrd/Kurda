@@ -53,8 +53,15 @@ export function LeagueCard(): React.JSX.Element {
       <div className="league-card-mini is-loading" aria-hidden="true">
         <Skeleton circle className="league-card-mini-skel" />
         <span className="league-card-mini-text">
-          <Skeleton line w={150} />
-          <Skeleton line w={210} />
+          <span className="league-card-mini-title">
+            <Skeleton line w={112} />
+          </span>
+          <span className="league-card-mini-meta">
+            <Skeleton line w={176} />
+            <span className="league-card-mini-left">
+              <Skeleton line w={148} />
+            </span>
+          </span>
         </span>
       </div>
     );

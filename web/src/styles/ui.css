@@ -499,6 +499,14 @@ input[type='password']::-ms-clear {
 .skeleton-circle {
   border-radius: 50%;
 }
+/* a picture's place, filling the real element it stands in (positioned), so that element's rules give its size */
+.skeleton-fill {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-radius: inherit;
+}
 
 /*
  * One line of whatever it stands for: the box is `1lh` of the inherited line-height, so a skeleton inside the real

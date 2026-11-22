@@ -233,6 +233,13 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       })),
     [kinds, counts, t],
   );
+  // Your bird and your tree, each loading on its own: above the catalogue, and above its placeholder while it loads.
+  const ownRows = (
+    <View style={styles.ownRows}>
+      <YourBird home={letters} zer={purse} onZer={learnZer} />
+      <YourTree tree={tree} zer={purse} onZer={learnZer} />
+    </View>
+  );
 
   return (
     <GradientBackground>
@@ -268,7 +275,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           }
         />
 
-        <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load} skeleton={<ShopSkeleton />}>
+        <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load} skeleton={<ShopSkeleton head={ownRows} />}>
           {/* One scroll in three parts, the second sticky: received gifts, then the search and kinds, then the
              catalogue. The first two are always rendered, empty or not, since the sticky index counts children. */}
           <ScrollView
@@ -286,10 +293,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           >
             <View style={[styles.inbox, styles.column]} onLayout={(e) => setInboxHeight(e.nativeEvent.layout.height)}>
               <ReceivedGifts />
-              <View style={styles.ownRows}>
-                <YourBird home={letters} zer={purse} onZer={learnZer} />
-                <YourTree tree={tree} zer={purse} onZer={learnZer} />
-              </View>
+              {ownRows}
             </View>
 
             <View
@@ -412,8 +416,11 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   );
 }
 
-/** The shop while it loads, laid out by its own styles: the search, the kinds and a grid of cards. */
-function ShopSkeleton(): React.JSX.Element {
+/**
+ * The shop while its catalogue loads, laid out by its own styles: `head` (the bird and tree rows, which load on their
+ * own), then the search, the kinds and a grid of cards.
+ */
+function ShopSkeleton({ head }: { head: React.ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
@@ -430,6 +437,7 @@ function ShopSkeleton(): React.JSX.Element {
   const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
   return (
     <View style={styles.content} accessibilityLabel={t('common.loading')}>
+      <View style={[styles.inbox, styles.column]}>{head}</View>
       <View style={styles.toolbar}>
         <View style={[styles.column, styles.toolbarInner]}>
           <View style={styles.gutter}>
