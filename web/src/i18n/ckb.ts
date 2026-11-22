@@ -3945,7 +3945,6 @@ export const ckb: Catalogue = {
   'notify.leagueTrophy.title': 'لە سێ یەکەمدا ئەم هەفتەیە',
   'notify.leagueTrophy.body': 'لە نێو سێ یەکەمی {league} تەواوت کرد. جامی شەپۆلەکەت گەورەتر دەبێت.',
   'profile.badges': 'نیشانەکان',
-  'profile.allBadges': 'هەموو نیشانەکان',
   'badges.title': 'نیشانەکان',
   'badges.eyebrow': 'کۆکراوەکەت',
   'badges.sub': 'بە فێربوون، یاریکردن و گەڕانەوە بەدەست دێن. زۆربەیان چوار ئاستیان هەیە: مس، زیو، زێڕ و فیرۆزە.',

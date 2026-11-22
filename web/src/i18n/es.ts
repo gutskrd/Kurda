@@ -3944,7 +3944,6 @@ export const es: Catalogue = {
   'notify.leagueTrophy.title': 'Entre los tres primeros esta semana',
   'notify.leagueTrophy.body': 'Terminaste entre los tres primeros de {league}. Tu trofeo Pêla crece.',
   'profile.badges': 'Insignias',
-  'profile.allBadges': 'Todas las insignias',
   'badges.title': 'Insignias',
   'badges.eyebrow': 'Tu colección',
   'badges.sub': 'Se ganan aprendiendo, jugando y volviendo. La mayoría tiene cuatro niveles: Sifir, Zîv, Zêr y Firûze.',

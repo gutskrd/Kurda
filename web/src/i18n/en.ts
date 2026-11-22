@@ -4047,7 +4047,6 @@ export const en = {
   'notify.leagueTrophy.title': 'Top three this week',
   'notify.leagueTrophy.body': 'You finished in the top three of {league}. Your Pêla trophy grows.',
   'profile.badges': 'Badges',
-  'profile.allBadges': 'All badges',
   'badges.title': 'Badges',
   'badges.eyebrow': 'Your collection',
   'badges.sub': 'Earned by learning, playing and coming back. Most have four tiers: Sifir, Zîv, Zêr and Firûze.',

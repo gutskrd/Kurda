@@ -3946,7 +3946,6 @@ export const nl: Catalogue = {
   'notify.leagueTrophy.title': 'Deze week in de top drie',
   'notify.leagueTrophy.body': 'Je bent in de top drie van {league} geëindigd. Je Pêla-trofee groeit.',
   'profile.badges': 'Badges',
-  'profile.allBadges': 'Alle badges',
   'badges.title': 'Badges',
   'badges.eyebrow': 'Jouw verzameling',
   'badges.sub': 'Verdiend door te leren, te spelen en terug te komen. De meeste hebben vier treden: Sifir, Zîv, Zêr en Firûze.',

@@ -3947,7 +3947,6 @@ export const de: Catalogue = {
   'notify.leagueTrophy.title': 'Diese Woche unter den ersten drei',
   'notify.leagueTrophy.body': 'Du hast in {league} unter den ersten drei abgeschlossen. Deine Pêla-Trophäe wächst.',
   'profile.badges': 'Abzeichen',
-  'profile.allBadges': 'Alle Abzeichen',
   'badges.title': 'Abzeichen',
   'badges.eyebrow': 'Deine Sammlung',
   'badges.sub': 'Verdient durch Lernen, Spielen und Wiederkommen. Die meisten haben vier Stufen: Sifir, Zîv, Zêr und Firûze.',

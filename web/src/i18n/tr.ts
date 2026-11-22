@@ -3942,7 +3942,6 @@ export const tr: Catalogue = {
   'notify.leagueTrophy.title': 'Bu hafta ilk üçte',
   'notify.leagueTrophy.body': '{league} içinde ilk üçte bitirdin. Pêla kupan büyüyor.',
   'profile.badges': 'Rozetler',
-  'profile.allBadges': 'Tüm rozetler',
   'badges.title': 'Rozetler',
   'badges.eyebrow': 'Koleksiyonun',
   'badges.sub': 'Öğrenerek, oynayarak ve geri gelerek kazanılır. Çoğunun dört seviyesi var: Sifir, Zîv, Zêr ve Firûze.',

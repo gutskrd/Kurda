@@ -3954,7 +3954,6 @@ export const ku: Catalogue = {
   'notify.leagueTrophy.title': 'Di sê yên pêşî de vê heftê',
   'notify.leagueTrophy.body': 'Te di nav sê yên pêşî yên {league} de qedand. Kupaya te ya Pêla mezin dibe.',
   'profile.badges': 'Nîşan',
-  'profile.allBadges': 'Hemû nîşan',
   'badges.title': 'Nîşan',
   'badges.eyebrow': 'Berhevoka te',
   'badges.sub': 'Bi fêrbûn, lîstin û vegerê bi dest dikevin. Piraniya wan çar ast hene: Sifir, Zîv, Zêr û Firûze.',

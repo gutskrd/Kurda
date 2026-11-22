@@ -3946,7 +3946,6 @@ export const fr: Catalogue = {
   'notify.leagueTrophy.title': 'Dans le top trois cette semaine',
   'notify.leagueTrophy.body': 'Tu as fini dans le top trois de {league}. Ton trophée Pêla grandit.',
   'profile.badges': 'Badges',
-  'profile.allBadges': 'Tous les badges',
   'badges.title': 'Badges',
   'badges.eyebrow': 'Ta collection',
   'badges.sub': 'Gagnés en apprenant, en jouant et en revenant. La plupart ont quatre paliers : Sifir, Zîv, Zêr et Firûze.',

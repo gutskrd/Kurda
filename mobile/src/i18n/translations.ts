@@ -795,7 +795,6 @@ export type TranslationKey =
   | 'profile.addFriends'
   | 'profile.stat.xp'
   | 'badges.new'
-  | 'profile.showcaseChoose'
   | 'profile.rankBest'
   | 'notifications.pref.progress'
   | 'notifications.badge.title'
@@ -6333,7 +6332,6 @@ const en: Catalog = {
   'profile.addFriends': 'Add friends',
   'profile.stat.xp': 'XP',
   'badges.new': 'New',
-  'profile.showcaseChoose': 'Choose badges for your profile',
   'profile.rankBest': 'Best: {rank}',
   'notifications.pref.progress': 'Leagues and badges',
   'notifications.badge.title': 'A new badge',
@@ -10221,7 +10219,6 @@ const ku: Catalog = {
   'profile.addFriends': 'Hevalan zêde bike',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nû',
-  'profile.showcaseChoose': 'Ji bo profîla xwe nîşanan hilbijêre',
   'profile.rankBest': 'Ya herî baş: {rank}',
   'notifications.pref.progress': 'Lîg û nîşan',
   'notifications.badge.title': 'Nîşaneke nû',
@@ -14109,7 +14106,6 @@ const de: Catalog = {
   'profile.addFriends': 'Freunde hinzufügen',
   'profile.stat.xp': 'XP',
   'badges.new': 'Neu',
-  'profile.showcaseChoose': 'Abzeichen für dein Profil wählen',
   'profile.rankBest': 'Bester Rang: {rank}',
   'notifications.pref.progress': 'Ligen und Abzeichen',
   'notifications.badge.title': 'Ein neues Abzeichen',
@@ -17997,7 +17993,6 @@ const es: Catalog = {
   'profile.addFriends': 'Añadir amigos',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nueva',
-  'profile.showcaseChoose': 'Elige insignias para tu perfil',
   'profile.rankBest': 'Mejor: {rank}',
   'notifications.pref.progress': 'Ligas e insignias',
   'notifications.badge.title': 'Una insignia nueva',
@@ -21885,7 +21880,6 @@ const tr: Catalog = {
   'profile.addFriends': 'Arkadaş ekle',
   'profile.stat.xp': 'XP',
   'badges.new': 'Yeni',
-  'profile.showcaseChoose': 'Profilin için rozet seç',
   'profile.rankBest': 'En iyi: {rank}',
   'notifications.pref.progress': 'Ligler ve rozetler',
   'notifications.badge.title': 'Yeni bir rozet',
@@ -25773,7 +25767,6 @@ const ar: Catalog = {
   'profile.addFriends': 'إضافة أصدقاء',
   'profile.stat.xp': 'XP',
   'badges.new': 'جديد',
-  'profile.showcaseChoose': 'اختر شارات لملفك الشخصي',
   'profile.rankBest': 'الأفضل: {rank}',
   'notifications.pref.progress': 'الدوريات والشارات',
   'notifications.badge.title': 'شارة جديدة',
@@ -29661,7 +29654,6 @@ const fr: Catalog = {
   'profile.addFriends': 'Ajouter des amis',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nouveau',
-  'profile.showcaseChoose': 'Choisir des badges pour ton profil',
   'profile.rankBest': 'Record : {rank}',
   'notifications.pref.progress': 'Ligues et badges',
   'notifications.badge.title': 'Un nouveau badge',
@@ -33549,7 +33541,6 @@ const nl: Catalog = {
   'profile.addFriends': 'Vrienden toevoegen',
   'profile.stat.xp': 'XP',
   'badges.new': 'Nieuw',
-  'profile.showcaseChoose': 'Kies badges voor je profiel',
   'profile.rankBest': 'Beste: {rank}',
   'notifications.pref.progress': 'Competities en badges',
   'notifications.badge.title': 'Een nieuwe badge',
@@ -37438,7 +37429,6 @@ const ckb: Catalog = {
   'profile.addFriends': 'هاوڕێ زیاد بکە',
   'profile.stat.xp': 'XP',
   'badges.new': 'نوێ',
-  'profile.showcaseChoose': 'نیشانە بۆ پرۆفایلەکەت هەڵبژێرە',
   'profile.rankBest': 'باشترین: {rank}',
   'notifications.pref.progress': 'لیگ و نیشانەکان',
   'notifications.badge.title': 'نیشانەیەکی نوێ',

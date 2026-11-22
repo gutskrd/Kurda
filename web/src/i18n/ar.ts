@@ -3937,7 +3937,6 @@ export const ar: Catalogue = {
   'notify.leagueTrophy.title': 'ضمن الثلاثة الأوائل هذا الأسبوع',
   'notify.leagueTrophy.body': 'أنهيت ضمن الثلاثة الأوائل في {league}. كأس Pêla تكبر.',
   'profile.badges': 'الشارات',
-  'profile.allBadges': 'كل الشارات',
   'badges.title': 'الشارات',
   'badges.eyebrow': 'مجموعتك',
   'badges.sub': 'تُكسب بالتعلّم واللعب والعودة. لمعظمها أربعة مستويات: Sifir وZîv وZêr وFirûze.',
