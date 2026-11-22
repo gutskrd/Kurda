@@ -575,10 +575,10 @@ export function impostorCategorySvg(opts: ImpostorArtOptions & { category: strin
 // ────────────────────────────────────────────────────────── the ways to play
 
 /**
- * Who everyone is at the table, both drawn alike: one smooth flat shape in one colour, front on, with no face drawn in.
- * Every player who holds the word is the Zêr coin's deer, soft white, its face narrowing to a small round muzzle; the
- * impostor is a wolf on the same grid in a misty grey, its ears up and its cheeks soft with fur. The deer stands on
- * meadow green and the wolf on night. Both are about 60 units across at `scale` 1, centred on (cx, cy).
+ * Who everyone is at the table, both drawn alike: one smooth flat shape in one colour, front on. Every player who holds
+ * the word is the Zêr coin's deer, soft white, its face narrowing to a small round muzzle; the impostor is a wolf on the
+ * same grid in a misty grey, its ears up, its cheeks soft with fur and only its narrowed eyes cut out. The deer stands
+ * on meadow green and the wolf on night. Both are about 60 units across at `scale` 1, centred on (cx, cy).
  */
 export const DEER_COLOUR = '#fff8ec';
 export const WOLF_COLOUR = '#8f97b3';
@@ -614,12 +614,17 @@ const WOLF_HALF: readonly Knot[] = [
   // The crown between the ears.
   [56.3, 44.6], [60, 44.4],
 ];
-const WOLF_PATH = curve(symmetric(WOLF_HALF, 60));
+/** The wolf's narrowed eyes, cut out of its head and slanting down towards the snout. */
+const WOLF_EYES =
+  curve([[48.6, 58.4, 0], [51.8, 57.6], [55, 58.8], [56.6, 61, 0], [53.4, 61.6], [50.4, 60.6]]) +
+  curve([[71.4, 58.4, 0], [68.2, 57.6], [65, 58.8], [63.4, 61, 0], [66.6, 61.6], [69.6, 60.6]]);
+const WOLF_PATH = curve(symmetric(WOLF_HALF, 60)) + WOLF_EYES;
 
 /** One of the two, its middle moved to (cx, cy), about 60 units across at scale 1. */
 function head(dr: Drawing, d: string, colour: string, cx: number, cy: number, scale: number): void {
   const k = scale * 1.36;
-  dr.add(`<path d="${d}" fill="${colour}" transform="translate(${n(cx)} ${n(cy)}) scale(${n(k)}) translate(-60 -58)"/>`);
+  // Even-odd, so the wolf's eyes are holes; the deer's single outline fills the same either way.
+  dr.add(`<path d="${d}" fill="${colour}" fill-rule="evenodd" transform="translate(${n(cx)} ${n(cy)}) scale(${n(k)}) translate(-60 -58)"/>`);
 }
 
 /** A player: the deer, soft white. */
@@ -627,7 +632,7 @@ export function deerHead(dr: Drawing, cx: number, cy: number, scale = 1, colour 
   head(dr, DEER_PATH, colour, cx, cy, scale);
 }
 
-/** The impostor: the wolf, misty grey. */
+/** The impostor: the wolf, misty grey, its narrowed eyes cut out. */
 export function wolfHead(dr: Drawing, cx: number, cy: number, scale = 1, colour = WOLF_COLOUR): void {
   head(dr, WOLF_PATH, colour, cx, cy, scale);
 }
