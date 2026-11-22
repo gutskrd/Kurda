@@ -10,7 +10,7 @@ import { deerSilhouetteSvg } from '../games/who-am-i/silhouette.js';
 import { GAME_NAMES } from '../games/names.js';
 import { dab, dot, fill, form, line, ring, rr, tones, turned, type Tones } from './cutout.js';
 import type { Cover, Key, Part } from './game-acting.js';
-import { DEER_CARD, deerHead, wolfHead } from './impostor.js';
+import { CARD_RIM, DEER_CARD, deerOnCard, wolfHead, type CardFace } from './impostor.js';
 import { songbird } from './songbird.js';
 import { letter, letterWidth, oval } from './ink.js';
 import { Drawing, n, tint } from './svg.js';
@@ -444,15 +444,19 @@ const MUSTARD = '#f5c451';
 /** The foot of the fan the cards are held in. */
 const FAN = [60, 118] as const;
 
+/** Each card in the fan, upright, and its coloured face inside the rim. */
+const CARD = [39, 26, 42, 62] as const;
+const CARD_FACE: CardFace = { left: CARD[0] + CARD_RIM, top: CARD[1] + CARD_RIM, right: CARD[0] + CARD[2] };
+
 /** One card standing in the fan, turned `angle` about its foot. */
 function card(dr: Drawing, angle: number, face: Tones, mark: () => void): void {
   turned(dr, angle, FAN[0], FAN[1], () => {
-    form(dr, rr(39, 26, 42, 62, 8), face, 4.4, 2.4);
+    form(dr, rr(...CARD, 8), face, 4.4, CARD_RIM);
     mark();
   });
 }
-/** A player's card: the deer on meadow green, as in the game, set toward the card's outer edge so the wolf's card leaves it in view. */
-const deerCard = (dr: Drawing, angle: number): void => card(dr, angle, DEER_CARD, () => deerHead(dr, 60 + Math.sign(angle) * 7, 56, 0.5));
+/** A player's card: the deer on meadow green, as in the game, where the wolf's card in front leaves it in view. */
+const deerCard = (dr: Drawing, angle: number): void => card(dr, angle, DEER_CARD, () => deerOnCard(dr, CARD_FACE, 0.46, angle < 0 ? -1 : 1));
 
 /** The impostor: a hand of three cards, two deer and the wolf in the middle; the wolf rises, looks round and slips back. */
 const impostor: Cover = {
@@ -464,7 +468,7 @@ const impostor: Cover = {
     { draw: (dr) => deerCard(dr, 24), pivot: FAN, keys: [[0, {}], [0.14, {}, 'hold'], [0.22, { r: 5 }, 'out'], [0.62, {}, 'hold'], [0.7, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
     {
       draw: (dr) =>
-        card(dr, 0, tones(NIGHT), () => wolfHead(dr, 60, 58, 0.62)),
+        card(dr, 0, tones(NIGHT), () => wolfHead(dr, (CARD_FACE.left + CARD_FACE.right) / 2, 58, 0.56)),
       pivot: [60, 88],
       keys: [[0, {}], [0.16, {}, 'hold'], [0.24, { y: -9 }, 'out'], [0.32, { r: -5 }, 'inOut'], [0.42, { r: 5 }, 'inOut'], [0.5, { r: 0 }, 'inOut'], [0.6, { y: 0 }, 'back'], [1, {}, 'hold']],
     },

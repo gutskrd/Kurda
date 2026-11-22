@@ -11,7 +11,7 @@ import { bead, dot, fill, form, line, ring, rr, tones, turned, type Tones } from
 import { curve, symmetric, type Knot } from '../characters/pen.js';
 import { ZER_DEER_HALF } from './currency.js';
 import { letter, letterWidth } from './ink.js';
-import { Drawing, checkSize, n, prefixFor, tint } from './svg.js';
+import { Drawing, checkSize, n, n2, prefixFor, tint } from './svg.js';
 
 export type ImpostorWay = 'classic' | 'blind' | 'odd';
 export type ImpostorEmblem = 'cards' | 'back' | 'wolf' | 'deer';
@@ -620,11 +620,14 @@ const WOLF_EYES =
   curve([[71.4, 58.4, 0], [68.2, 57.6], [65, 58.8], [63.4, 61, 0], [66.6, 61.6], [69.6, 60.6]]);
 const WOLF_PATH = curve(symmetric(WOLF_HALF, 60)) + WOLF_EYES;
 
+/** How much each head's outline is enlarged at scale 1, which makes it about 60 units across. */
+const HEAD_SCALE = 1.36;
+
 /** One of the two, its middle moved to (cx, cy), about 60 units across at scale 1. */
 function head(dr: Drawing, d: string, colour: string, cx: number, cy: number, scale: number): void {
-  const k = scale * 1.36;
-  // Even-odd, so the wolf's eyes are holes; the deer's single outline fills the same either way.
-  dr.add(`<path d="${d}" fill="${colour}" fill-rule="evenodd" transform="translate(${n(cx)} ${n(cy)}) scale(${n(k)}) translate(-60 -58)"/>`);
+  // Even-odd, so the wolf's eyes are holes; the deer's single outline fills the same either way. The scale keeps two
+  // decimals, since tenths would draw a head on a small card up to a tenth off its size.
+  dr.add(`<path d="${d}" fill="${colour}" fill-rule="evenodd" transform="translate(${n(cx)} ${n(cy)}) scale(${n2(scale * HEAD_SCALE)}) translate(-60 -58)"/>`);
 }
 
 /** A player: the deer, soft white. */
@@ -640,19 +643,42 @@ export function wolfHead(dr: Drawing, cx: number, cy: number, scale = 1, colour 
 /** A player's card: meadow green, as the impostor's is night. */
 export const DEER_CARD: Tones = tones(MEADOW);
 
-/** A standing playing card with its face in `face`, turned `angle` about the foot of the fan. */
-function card(dr: Drawing, x: number, y: number, w: number, h: number, face: Tones, angle = 0, mark?: () => void): void {
+/** A card's lit edge, down its left side and along its top. */
+export const CARD_RIM = 2.4;
+/** The space a head keeps clear inside its card's face, so no antler, ear or cheek reaches the rim or the edge. */
+export const FACE_CLEAR = 3;
+/** How far the deer reaches from its middle at scale 1, to either side and upward, measured on its outline. */
+const DEER_SIDE = HEAD_SCALE * Math.max(...DEER_HALF.map(([x]) => 60 - x));
+const DEER_UP = HEAD_SCALE * Math.max(...DEER_HALF.map(([, y]) => 58 - y));
+
+/** The coloured face of a card, inside its rim. */
+export interface CardFace {
+  left: number;
+  top: number;
+  right: number;
+}
+
+/**
+ * A deer of `scale` on a card in a fan: high up and toward the card's outer `side` (−1 left, 1 right), as far as its
+ * clear space allows, which is where the card held in front of it hides the least.
+ */
+export function deerOnCard(dr: Drawing, face: CardFace, scale: number, side: -1 | 1): void {
+  const across = DEER_SIDE * scale + FACE_CLEAR;
+  deerHead(dr, side < 0 ? face.left + across : face.right - across, face.top + FACE_CLEAR + DEER_UP * scale, scale);
+}
+
+/** A standing playing card with its face in `face`, turned `angle` about the foot of the fan; `mark` draws on its face. */
+function card(dr: Drawing, x: number, y: number, w: number, h: number, face: Tones, angle = 0, mark?: (on: CardFace) => void): void {
   turned(dr, angle, 60, 118, () => {
-    form(dr, rr(x, y, w, h, 7), face, 4, 2.4);
-    mark?.();
+    form(dr, rr(x, y, w, h, 7), face, 4, CARD_RIM);
+    mark?.({ left: x + CARD_RIM, top: y + CARD_RIM, right: x + w });
   });
 }
 
 /** Classic: everyone holds the same word, deer all, and one card is the wolf's. */
 const classic: Draw = (dr) => {
-  card(dr, 43, 38, 34, 50, DEER_CARD, -27, () => deerHead(dr, 56, 62, 0.42));
-  card(dr, 43, 38, 34, 50, DEER_CARD, 27, () => deerHead(dr, 64, 62, 0.42));
-  card(dr, 40, 22, 40, 58, tones(NIGHT), 0, () => wolfHead(dr, 60, 52, 0.56));
+  for (const side of [-1, 1] as const) card(dr, 43, 38, 34, 50, DEER_CARD, side * 31, (on) => deerOnCard(dr, on, 0.4, side));
+  card(dr, 40, 22, 40, 58, tones(NIGHT), 0, (on) => wolfHead(dr, (on.left + on.right) / 2, 52, 0.53));
 };
 
 /** In the dark: the impostor is told nothing. A night with a moon. */
@@ -696,10 +722,8 @@ export function impostorWaySvg(opts: ImpostorArtOptions & { way: ImpostorWay }):
 
 /** The game itself: five cards, four deer and the wolf in the middle. */
 const cards: Draw = (dr) => {
-  for (const a of [-34, -17, 17, 34]) {
-    card(dr, 44, 38, 32, 46, DEER_CARD, a, () => deerHead(dr, 60 + Math.sign(a) * 3, 60, 0.4));
-  }
-  card(dr, 41, 20, 38, 56, tones(NIGHT), 0, () => wolfHead(dr, 60, 50, 0.54));
+  for (const a of [-34, -17, 17, 34]) card(dr, 44, 38, 32, 46, DEER_CARD, a, (on) => deerOnCard(dr, on, 0.38, a < 0 ? -1 : 1));
+  card(dr, 41, 20, 38, 56, tones(NIGHT), 0, (on) => wolfHead(dr, (on.left + on.right) / 2, 50, 0.5));
 };
 
 /** A card's back: a gold question on the night, the same for everyone, so it gives nothing away. */
