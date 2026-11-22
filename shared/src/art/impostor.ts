@@ -575,48 +575,61 @@ export function impostorCategorySvg(opts: ImpostorArtOptions & { category: strin
 // ────────────────────────────────────────────────────────── the ways to play
 
 /**
- * Who everyone is at the table, each as a flat shape in one colour: a deer for every player who holds the word, the same
- * deer as on the Zêr coin, and a wolf for the impostor, drawn the same way and in a colour of its own. Both are front on
- * and about 60 units across at `scale` 1, centred on (cx, cy).
+ * Who everyone is at the table, both drawn alike: one flat shape in one colour, front on, with the eyes cut out. Every
+ * player who holds the word is the Zêr coin's deer, a soft white with wide round eyes; the impostor is a wolf on the
+ * same grid, grey, with narrowed eyes. The deer stands on meadow green and the wolf on night. Both are about 60 units
+ * across at `scale` 1, centred on (cx, cy).
  */
-export const DEER_COLOUR = '#a8683a';
-export const WOLF_COLOUR = '#c9cfdb';
+export const DEER_COLOUR = '#fff8ec';
+export const WOLF_COLOUR = '#9aa3b5';
+/** The ground the deer stands on: a card or a disc. */
+const MEADOW = '#2f8a52';
+
+/** An oval as a closed path, for an eye cut out of a head. */
+const eye = (cx: number, cy: number, rx: number, ry: number): string =>
+  `M${n(cx - rx)} ${n(cy)}a${n(rx)} ${n(ry)} 0 1 0 ${n(2 * rx)} 0a${n(rx)} ${n(ry)} 0 1 0 ${n(-2 * rx)} 0Z`;
+
+/** The deer's wide, round eyes, set where the coin's head is widest. */
+const DEER_PATH = ZER_DEER_PATH + eye(54.4, 61.6, 2.5, 2.9) + eye(65.6, 61.6, 2.5, 2.9);
 
 /**
- * The wolf, front on, on the coin deer's grid so the two stand alike: tall pointed ears, the fur of the cheeks standing
- * out in points, and a long snout narrowing to the chin. One half from the chin round the cheek and ear to the middle of
- * the crown, mirrored for the other; a 0 marks a sharp corner.
+ * The wolf, front on, on the coin deer's grid so the two stand alike: upright pointed ears, the fur of the cheeks
+ * standing out in points, and a long snout narrowing to the chin. One half from the chin round the cheek and ear to the
+ * middle of the crown, mirrored for the other; a 0 marks a sharp corner.
  */
 const WOLF_HALF: readonly Knot[] = [
   [60, 84], [57.6, 83.5], [56, 81.8], [55.1, 79], [54.6, 75.9], [53.4, 73.2, 0],
   // The ruff: three points of fur down the cheek, each coming back in a little before the next, the widest at the top.
   [46.2, 75.2, 0], [49, 70.8, 0], [40.6, 70.2, 0], [45, 66.2, 0], [36.8, 62.4, 0], [40.4, 57.4], [42.8, 53.4, 0],
-  // The ear, smaller and upright: up its outer edge to the tip and down its inner edge.
+  // The ear: up its outer edge to the tip and down its inner edge.
   [43.1, 48.4], [43.6, 42.8], [44.8, 38.2], [46.4, 35, 0], [49, 38], [51.2, 41.6], [53, 45.6, 0],
   // The crown between the ears.
   [56.4, 44.8], [60, 44.6],
 ];
-/** The wolf's narrowed eyes, cut out of its head, slanting down towards the snout. */
+/** The wolf's narrowed eyes, slanting down towards the snout. */
 const WOLF_EYES =
   curve([[48.6, 58.4, 0], [51.8, 57.6], [55, 58.8], [56.6, 61, 0], [53.4, 61.6], [50.4, 60.6]]) +
   curve([[71.4, 58.4, 0], [68.2, 57.6], [65, 58.8], [63.4, 61, 0], [66.6, 61.6], [69.6, 60.6]]);
 const WOLF_PATH = curve(symmetric(WOLF_HALF, 60)) + WOLF_EYES;
 
-/** One of the two shapes, its middle moved to (cx, cy), about 60 units across at scale 1. */
-function head(dr: Drawing, d: string, colour: string, cx: number, cy: number, scale: number, holes = false): void {
+/** One of the two, its eyes cut out, its middle moved to (cx, cy), about 60 units across at scale 1. */
+function head(dr: Drawing, d: string, colour: string, cx: number, cy: number, scale: number): void {
   const k = scale * 1.36;
-  dr.add(`<path d="${d}" fill="${colour}"${holes ? ' fill-rule="evenodd"' : ''} transform="translate(${n(cx)} ${n(cy)}) scale(${n(k)}) translate(-60 -58)"/>`);
+  dr.add(`<path d="${d}" fill="${colour}" fill-rule="evenodd" transform="translate(${n(cx)} ${n(cy)}) scale(${n(k)}) translate(-60 -58)"/>`);
 }
 
-/** A player: the Zêr coin's deer, in the deer's one colour. */
+/** A player: the Zêr coin's deer, soft white, with wide round eyes. */
 export function deerHead(dr: Drawing, cx: number, cy: number, scale = 1, colour = DEER_COLOUR): void {
-  head(dr, ZER_DEER_PATH, colour, cx, cy, scale);
+  head(dr, DEER_PATH, colour, cx, cy, scale);
 }
 
-/** The impostor: the wolf, in its own colour, with its eyes cut out. */
+/** The impostor: the wolf, grey, with narrowed eyes. */
 export function wolfHead(dr: Drawing, cx: number, cy: number, scale = 1, colour = WOLF_COLOUR): void {
-  head(dr, WOLF_PATH, colour, cx, cy, scale, true);
+  head(dr, WOLF_PATH, colour, cx, cy, scale);
 }
+
+/** A player's card: meadow green, as the impostor's is night. */
+export const DEER_CARD: Tones = tones(MEADOW);
 
 /** A standing playing card with its face in `face`, turned `angle` about the foot of the fan. */
 function card(dr: Drawing, x: number, y: number, w: number, h: number, face: Tones, angle = 0, mark?: () => void): void {
@@ -628,8 +641,8 @@ function card(dr: Drawing, x: number, y: number, w: number, h: number, face: Ton
 
 /** Classic: everyone holds the same word, deer all, and one card is the wolf's. */
 const classic: Draw = (dr) => {
-  card(dr, 43, 38, 34, 50, CREAM, -27, () => deerHead(dr, 56, 62, 0.42));
-  card(dr, 43, 38, 34, 50, CREAM, 27, () => deerHead(dr, 64, 62, 0.42));
+  card(dr, 43, 38, 34, 50, DEER_CARD, -27, () => deerHead(dr, 56, 62, 0.42));
+  card(dr, 43, 38, 34, 50, DEER_CARD, 27, () => deerHead(dr, 64, 62, 0.42));
   card(dr, 40, 22, 40, 58, tones(NIGHT), 0, () => wolfHead(dr, 60, 52, 0.56));
 };
 
@@ -675,7 +688,7 @@ export function impostorWaySvg(opts: ImpostorArtOptions & { way: ImpostorWay }):
 /** The game itself: five cards, four deer and the wolf in the middle. */
 const cards: Draw = (dr) => {
   for (const a of [-34, -17, 17, 34]) {
-    card(dr, 44, 38, 32, 46, CREAM, a, () => deerHead(dr, 60 + Math.sign(a) * 3, 60, 0.4));
+    card(dr, 44, 38, 32, 46, DEER_CARD, a, () => deerHead(dr, 60 + Math.sign(a) * 3, 60, 0.4));
   }
   card(dr, 41, 20, 38, 56, tones(NIGHT), 0, () => wolfHead(dr, 60, 50, 0.54));
 };
@@ -687,17 +700,17 @@ const back: Draw = (dr) => {
   dr.add(letter('?', 60 - letterWidth(44) / 2, 38, 44, GOLD, 8.4));
 };
 
-/** The impostor's own card: the wolf on the night, ringed in gold. */
+/** The impostor's own card: the wolf on the night, ringed in its own lighter night. */
 const wolf: Draw = (dr) => {
   form(dr, ring(60, 60, 44), tones(NIGHT), 4, 2.6);
-  line(dr, ring(60, 60, 36), tint(GOLD, -0.1), 2);
+  line(dr, ring(60, 60, 36), tint(NIGHT, 0.34), 2);
   wolfHead(dr, 60, 62, 0.94);
 };
 
-/** A player's card: the deer on cream, ringed in meadow green. */
+/** A player's card: the deer on meadow green, ringed the same way in its own lighter green. */
 const deer: Draw = (dr) => {
-  form(dr, ring(60, 60, 44), CREAM, 4, 2.6);
-  line(dr, ring(60, 60, 36), GREEN, 2);
+  form(dr, ring(60, 60, 44), DEER_CARD, 4, 2.6);
+  line(dr, ring(60, 60, 36), tint(MEADOW, 0.34), 2);
   deerHead(dr, 60, 63, 0.84);
 };
 

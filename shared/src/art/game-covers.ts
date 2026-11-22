@@ -10,7 +10,7 @@ import { deerSilhouetteSvg } from '../games/who-am-i/silhouette.js';
 import { GAME_NAMES } from '../games/names.js';
 import { dab, dot, fill, form, line, ring, rr, tones, turned, type Tones } from './cutout.js';
 import type { Cover, Key, Part } from './game-acting.js';
-import { deerHead, wolfHead } from './impostor.js';
+import { DEER_CARD, deerHead, wolfHead } from './impostor.js';
 import { songbird } from './songbird.js';
 import { letter, letterWidth, oval } from './ink.js';
 import { Drawing, n, tint } from './svg.js';
@@ -451,8 +451,8 @@ function card(dr: Drawing, angle: number, face: Tones, mark: () => void): void {
     mark();
   });
 }
-/** A player's card: a deer, as every player who holds the word is in the game, set toward the card's outer edge so the wolf's card leaves it in view. */
-const deerCard = (dr: Drawing, angle: number): void => card(dr, angle, CREAM, () => deerHead(dr, 60 + Math.sign(angle) * 7, 56, 0.5));
+/** A player's card: the deer on meadow green, as in the game, set toward the card's outer edge so the wolf's card leaves it in view. */
+const deerCard = (dr: Drawing, angle: number): void => card(dr, angle, DEER_CARD, () => deerHead(dr, 60 + Math.sign(angle) * 7, 56, 0.5));
 
 /** The impostor: a hand of three cards, two deer and the wolf in the middle; the wolf rises, looks round and slips back. */
 const impostor: Cover = {
