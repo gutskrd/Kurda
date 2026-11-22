@@ -452,7 +452,7 @@ function card(dr: Drawing, angle: number, face: Tones, mark: () => void): void {
   });
 }
 /** A player's card: a deer, as every player who holds the word is in the game, set toward the card's outer edge so the wolf's card leaves it in view. */
-const deerCard = (dr: Drawing, angle: number): void => card(dr, angle, CREAM, () => deerHead(dr, 60 + Math.sign(angle) * 4, 58, 0.52));
+const deerCard = (dr: Drawing, angle: number): void => card(dr, angle, CREAM, () => deerHead(dr, 60 + Math.sign(angle) * 7, 56, 0.5));
 
 /** The impostor: a hand of three cards, two deer and the wolf in the middle; the wolf rises, looks round and slips back. */
 const impostor: Cover = {
