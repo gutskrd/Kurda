@@ -71,8 +71,8 @@ const DEER_HALF: readonly Knot[] = [
   [55.7, 48.5], [57.7, 47.7], [60, 47.4],
 ];
 const DEER = curve(symmetric(DEER_HALF, 60));
-/** The coin's deer as one outline on the 120 canvas, about (60, 57): Impostor draws every player who holds the word with it. */
-export const ZER_DEER_PATH = DEER;
+/** The coin's deer, half of it, on the 120 canvas about (60, 57): Impostor's players take its ears and antlers. */
+export const ZER_DEER_HALF = DEER_HALF;
 
 /** The deer in one colour, moved by (dx, dy). */
 const deer = (colour: string, dx = 0, dy = 0): string =>
